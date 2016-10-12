@@ -32,6 +32,8 @@
 #include "ogr_mem.h"
 #include "cpl_sha256.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -42,7 +44,6 @@ OGRGMLASDataSource::OGRGMLASDataSource()
 {
     // FIXME
     XMLPlatformUtils::Initialize();
-    m_bExposeMetadataLayers = false;
     m_fpGML = NULL;
     m_fpGMLParser = NULL;
     m_bLayerInitFinished = false;
@@ -54,8 +55,7 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_nFileSize = 0;
     m_poReader = NULL;
     m_bEndOfReaderLayers = false;
-    m_poCurMetadataLayer = NULL;
-
+    m_nCurMetadataLayerIdx = -1;
     m_poFieldsMetadataLayer = new OGRMemLayer
                                     ("_ogr_fields_metadata", NULL, wkbNone );
     {
@@ -182,8 +182,7 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
 
 int         OGRGMLASDataSource::GetLayerCount()
 {
-    return static_cast<int>(m_apoLayers.size() +
-                            (m_bExposeMetadataLayers ? 3 : 0));
+    return static_cast<int>(m_apoLayers.size() + m_apoRequestedMetadataLayers.size());
 }
 
 /************************************************************************/
@@ -192,14 +191,14 @@ int         OGRGMLASDataSource::GetLayerCount()
 
 OGRLayer    *OGRGMLASDataSource::GetLayer(int i)
 {
-    if( m_bExposeMetadataLayers && i == static_cast<int>(m_apoLayers.size()) )
-        return m_poFieldsMetadataLayer;
-    if( m_bExposeMetadataLayers && i == 1 + static_cast<int>(m_apoLayers.size()) )
-        return m_poLayersMetadataLayer;
-    if( m_bExposeMetadataLayers && i == 2 + static_cast<int>(m_apoLayers.size()) )
-        return m_poRelationshipsLayer;
+    const int nBaseLayers = static_cast<int>(m_apoLayers.size());
+    if( i >= nBaseLayers )
+    {
+        if( i - nBaseLayers < static_cast<int>(m_apoRequestedMetadataLayers.size()) )
+            return m_apoRequestedMetadataLayers[i - nBaseLayers];
+    }
 
-    if( i < 0 || i >= static_cast<int>(m_apoLayers.size()) )
+    if( i < 0 || i >= nBaseLayers )
         return NULL;
     return m_apoLayers[i];
 }
@@ -214,14 +213,23 @@ OGRLayer    *OGRGMLASDataSource::GetLayerByName(const char* pszName)
     if( poLayer )
         return poLayer;
 
-    if( EQUAL(pszName, m_poFieldsMetadataLayer->GetName()) )
-        return m_poFieldsMetadataLayer;
-
-    if( EQUAL(pszName, m_poLayersMetadataLayer->GetName()) )
-        return m_poLayersMetadataLayer;
-
-    if( EQUAL(pszName, m_poRelationshipsLayer->GetName()) )
-        return m_poRelationshipsLayer;
+    OGRLayer* apoLayers[3];
+    apoLayers[0] = m_poFieldsMetadataLayer;
+    apoLayers[1] = m_poLayersMetadataLayer;
+    apoLayers[2] = m_poRelationshipsLayer;
+    for( int i=0;i<3;++i)
+    {
+        if( EQUAL(pszName, apoLayers[i]->GetName()) )
+        {
+            if ( std::find(m_apoRequestedMetadataLayers.begin(),
+                        m_apoRequestedMetadataLayers.end(),
+                        apoLayers[i]) == m_apoRequestedMetadataLayers.end() )
+            {
+                m_apoRequestedMetadataLayers.push_back(apoLayers[i]);
+            }
+            return apoLayers[i];
+        }
+    }
 
     return NULL;
 }
@@ -547,9 +555,14 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     m_oMapURIToPrefix = oAnalyzer.GetMapURIToPrefix();
 
-    m_bExposeMetadataLayers = CPLFetchBool(poOpenInfo->papszOpenOptions,
-                                           "EXPOSE_METADATA_LAYERS",
-                                           m_oConf.m_bExposeMetadataLayers);
+    if( CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "EXPOSE_METADATA_LAYERS",
+                     m_oConf.m_bExposeMetadataLayers) )
+    {
+        m_apoRequestedMetadataLayers.push_back(m_poFieldsMetadataLayer);
+        m_apoRequestedMetadataLayers.push_back(m_poLayersMetadataLayer);
+        m_apoRequestedMetadataLayers.push_back(m_poRelationshipsLayer);
+    }
 
     const char* pszSwapCoordinates = CSLFetchNameValueDef(
                                            poOpenInfo->papszOpenOptions,
@@ -693,7 +706,7 @@ void OGRGMLASDataSource::ResetReading()
     m_poLayersMetadataLayer->ResetReading();
     m_poRelationshipsLayer->ResetReading();
     m_bEndOfReaderLayers = false;
-    m_poCurMetadataLayer = NULL;
+    m_nCurMetadataLayerIdx = -1;
 }
 
 /************************************************************************/
@@ -707,26 +720,31 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
 {
     if( m_bEndOfReaderLayers )
     {
-        if( m_bExposeMetadataLayers && m_poCurMetadataLayer != NULL )
+        if( m_nCurMetadataLayerIdx >= 0 &&
+            m_nCurMetadataLayerIdx <
+                    static_cast<int>(m_apoRequestedMetadataLayers.size()) )
         {
             while( true )
             {
-                OGRFeature* poFeature = m_poCurMetadataLayer->GetNextFeature();
+                OGRLayer* poLayer =
+                    m_apoRequestedMetadataLayers[m_nCurMetadataLayerIdx];
+                OGRFeature* poFeature = poLayer->GetNextFeature();
                 if( poFeature != NULL )
                 {
                     if( pdfProgressPct != NULL )
                         *pdfProgressPct = 1.0;
                     if( ppoBelongingLayer != NULL )
-                        *ppoBelongingLayer = m_poCurMetadataLayer;
+                        *ppoBelongingLayer = poLayer;
                     return poFeature;
                 }
-                if( m_poCurMetadataLayer == m_poFieldsMetadataLayer )
-                    m_poCurMetadataLayer = m_poLayersMetadataLayer;
-                else if( m_poCurMetadataLayer == m_poLayersMetadataLayer )
-                    m_poCurMetadataLayer = m_poRelationshipsLayer;
-                else if( m_poCurMetadataLayer == m_poRelationshipsLayer )
+                if( m_nCurMetadataLayerIdx + 1
+                     < static_cast<int>(m_apoRequestedMetadataLayers.size()) )
                 {
-                    m_poCurMetadataLayer = NULL;
+                    m_nCurMetadataLayerIdx ++;
+                }
+                else
+                {
+                    m_nCurMetadataLayerIdx = -1;
                     break;
                 }
             }
@@ -787,9 +805,9 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
             if( poFeature == NULL )
             {
                 m_bEndOfReaderLayers = true;
-                if( m_bExposeMetadataLayers )
+                if( !m_apoRequestedMetadataLayers.empty() )
                 {
-                    m_poCurMetadataLayer = m_poFieldsMetadataLayer;
+                    m_nCurMetadataLayerIdx = 0;
                     return GetNextFeature( ppoBelongingLayer, pdfProgressPct,
                                         pfnProgress, pProgressData );
                 }
