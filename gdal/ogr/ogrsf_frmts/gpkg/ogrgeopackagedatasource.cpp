@@ -573,10 +573,13 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     /* Requirement 7: The SQLite PRAGMA foreign_key_check() SQL with no */
     /* parameter value SHALL return an empty result set */
     /* http://opengis.github.io/geopackage/#_file_integrity */
-    if ( OGRERR_NONE != PragmaCheck("foreign_key_check", "", 0) )
+    if ( CPLTestBool(CPLGetConfigOption("OGR_GPKG_FOREIGN_KEY_CHECK", "YES")) &&
+         OGRERR_NONE != PragmaCheck("foreign_key_check", "", 0) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "pragma foreign_key_check on '%s' failed",
+                  "pragma foreign_key_check on '%s' failed. You can disable "
+                  "this check by setting the OGR_GPKG_FOREIGN_KEY_CHECK "
+                  "configuration option to NO",
                   m_pszFilename);
         return FALSE;
     }
