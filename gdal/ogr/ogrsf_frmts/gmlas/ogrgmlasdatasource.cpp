@@ -53,6 +53,8 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_eSwapCoordinates = GMLAS_SWAP_AUTO;
     m_nFileSize = 0;
     m_poReader = NULL;
+    m_bEndOfReaderLayers = false;
+    m_poCurMetadataLayer = NULL;
 
     m_poFieldsMetadataLayer = new OGRMemLayer
                                     ("_ogr_fields_metadata", NULL, wkbNone );
@@ -636,16 +638,6 @@ int OGRGMLASDataSource::TestCapability( const char * pszCap )
 }
 
 /************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
-
-void OGRGMLASDataSource::ResetReading()
-{
-    delete m_poReader;
-    m_poReader = NULL;
-}
-
-/************************************************************************/
 /*                           CreateReader()                             */
 /************************************************************************/
 
@@ -690,6 +682,21 @@ GMLASReader* OGRGMLASDataSource::CreateReader( VSILFILE*& fpGML,
 }
 
 /************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
+
+void OGRGMLASDataSource::ResetReading()
+{
+    delete m_poReader;
+    m_poReader = NULL;
+    m_poFieldsMetadataLayer->ResetReading();
+    m_poLayersMetadataLayer->ResetReading();
+    m_poRelationshipsLayer->ResetReading();
+    m_bEndOfReaderLayers = false;
+    m_poCurMetadataLayer = NULL;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -698,6 +705,40 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                                                 GDALProgressFunc pfnProgress,
                                                 void* pProgressData )
 {
+    if( m_bEndOfReaderLayers )
+    {
+        if( m_bExposeMetadataLayers && m_poCurMetadataLayer != NULL )
+        {
+            while( true )
+            {
+                OGRFeature* poFeature = m_poCurMetadataLayer->GetNextFeature();
+                if( poFeature != NULL )
+                {
+                    if( pdfProgressPct != NULL )
+                        *pdfProgressPct = 1.0;
+                    if( ppoBelongingLayer != NULL )
+                        *ppoBelongingLayer = m_poCurMetadataLayer;
+                    return poFeature;
+                }
+                if( m_poCurMetadataLayer == m_poFieldsMetadataLayer )
+                    m_poCurMetadataLayer = m_poLayersMetadataLayer;
+                else if( m_poCurMetadataLayer == m_poLayersMetadataLayer )
+                    m_poCurMetadataLayer = m_poRelationshipsLayer;
+                else if( m_poCurMetadataLayer == m_poRelationshipsLayer )
+                {
+                    m_poCurMetadataLayer = NULL;
+                    break;
+                }
+            }
+        }
+
+        if( pdfProgressPct != NULL )
+            *pdfProgressPct = 1.0;
+        if( ppoBelongingLayer != NULL )
+            *ppoBelongingLayer = NULL;
+        return NULL;
+    }
+
     const double dfInitialScanRatio = 0.1;
     if( m_poReader == NULL )
     {
@@ -743,7 +784,22 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                     (1.0 - dfInitialScanRatio) * VSIFTellL(m_fpGMLParser) / m_nFileSize;
             }
             GDALDestroyScaledProgress(pScaledProgress);
-            return poFeature;
+            if( poFeature == NULL )
+            {
+                m_bEndOfReaderLayers = true;
+                if( m_bExposeMetadataLayers )
+                {
+                    m_poCurMetadataLayer = m_poFieldsMetadataLayer;
+                    return GetNextFeature( ppoBelongingLayer, pdfProgressPct,
+                                        pfnProgress, pProgressData );
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
+            else
+                return poFeature;
         }
         delete poFeature;
     }

@@ -1768,6 +1768,50 @@ def ogr_gmlas_dataset_getnextfeature():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml', open_options = ['EXPOSE_METADATA_LAYERS=YES'])
+
+    count = 0
+    while True:
+        f, l = ds.GetNextFeature()
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        count += 1
+
+    expected_count = 53
+    expected_count += ds.GetLayerByName('_ogr_fields_metadata').GetFeatureCount()
+    expected_count += ds.GetLayerByName('_ogr_layers_metadata').GetFeatureCount()
+    expected_count += ds.GetLayerByName('_ogr_layer_relationships').GetFeatureCount()
+
+    if count != expected_count:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+    f, l = ds.GetNextFeature()
+    if f is not None or l is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ResetReading()
+
+    count = 0
+    while True:
+        f, l = ds.GetNextFeature()
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        count += 1
+
+    if count != expected_count:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

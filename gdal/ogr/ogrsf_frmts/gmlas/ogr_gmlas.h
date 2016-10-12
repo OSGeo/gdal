@@ -889,6 +889,10 @@ class OGRGMLASDataSource: public GDALDataset
 
         GMLASReader*                   m_poReader;
 
+        bool                           m_bEndOfReaderLayers;
+
+        OGRLayer                      *m_poCurMetadataLayer;
+
         GMLASXLinkResolver             m_oXLinkResolver;
 
         void TranslateClasses( OGRGMLASLayer* poParentLayer,
