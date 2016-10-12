@@ -187,7 +187,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
     iFIDFieldIndex = poSrcDefn->GetFieldCount();
 
     /* + 1 since we can add an implicit geometry field */
-    panGeomFieldToSrcGeomField = (int*) CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns));
+    panGeomFieldToSrcGeomField = static_cast<int *>(
+        CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns)));
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
@@ -229,7 +230,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
         if( strlen(psColDef->field_name) == 0 && !bIsGeometry )
         {
             CPLFree( psColDef->field_name );
-            psColDef->field_name = (char *) CPLMalloc(40);
+            psColDef->field_name = static_cast<char *>(CPLMalloc(40));
             snprintf( psColDef->field_name, 40, "FIELD_%d", poDefn->GetFieldCount()+1 );
         }
 
@@ -1747,10 +1748,10 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     size_t nFeaturesAlloc = 100;
 
     panFIDIndex = NULL;
-    OGRField *pasIndexFields = (OGRField *)
-        CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc);
-    GIntBig *panFIDList = (GIntBig *)
-        CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc);
+    OGRField *pasIndexFields = static_cast<OGRField *>(
+        CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc));
+    GIntBig *panFIDList = static_cast<GIntBig *>(
+        CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc));
 
 /* -------------------------------------------------------------------- */
 /*      Read in all the key values.                                     */

@@ -277,8 +277,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
     {
       case DGNT_CELL_HEADER:
       {
-          DGNElemCellHeader *psCell = (DGNElemCellHeader *)
-              CPLCalloc(sizeof(DGNElemCellHeader),1);
+          DGNElemCellHeader *psCell = static_cast<DGNElemCellHeader *>(
+              CPLCalloc(sizeof(DGNElemCellHeader), 1));
           psElement = (DGNElemCore *) psCell;
           psElement->stype = DGNST_CELL_HEADER;
           DGNParseCore( psDGN, psElement );
@@ -377,8 +377,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
       case DGNT_CELL_LIBRARY:
       {
-          DGNElemCellLibrary *psCell = (DGNElemCellLibrary *)
-              CPLCalloc(sizeof(DGNElemCellLibrary),1);
+          DGNElemCellLibrary *psCell = static_cast<DGNElemCellLibrary *>(
+              CPLCalloc(sizeof(DGNElemCellLibrary), 1));
           psElement = (DGNElemCore *) psCell;
           psElement->stype = DGNST_CELL_LIBRARY;
           DGNParseCore( psDGN, psElement );
@@ -416,8 +416,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
       case DGNT_LINE:
       {
-          DGNElemMultiPoint *psLine = (DGNElemMultiPoint *)
-              CPLCalloc(sizeof(DGNElemMultiPoint),1);
+          DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
+              CPLCalloc(sizeof(DGNElemMultiPoint), 1));
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
@@ -457,8 +457,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               CPLError(CE_Failure, CPLE_AssertionFailed, "count < 2");
               return NULL;
           }
-          DGNElemMultiPoint *psLine = (DGNElemMultiPoint *)
-              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),1);
+          DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
+              CPLCalloc(sizeof(DGNElemMultiPoint)+(count-2)*sizeof(DGNPoint),
+                        1));
           psElement = (DGNElemCore *) psLine;
           psElement->stype = DGNST_MULTIPOINT;
           DGNParseCore( psDGN, psElement );
@@ -497,8 +498,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
       case DGNT_TEXT_NODE:
       {
-          DGNElemTextNode *psNode =
-              (DGNElemTextNode *) CPLCalloc(sizeof(DGNElemTextNode),1);
+          DGNElemTextNode *psNode = static_cast<DGNElemTextNode *>(
+              CPLCalloc(sizeof(DGNElemTextNode), 1));
           psElement = (DGNElemCore *) psNode;
           psElement->stype = DGNST_TEXT_NODE;
           DGNParseCore( psDGN, psElement );
@@ -543,7 +544,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         }
         else
         {
-            psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+            psElement = static_cast<DGNElemCore *>(
+                CPLCalloc(sizeof(DGNElemCore), 1));
             psElement->stype = DGNST_CORE;
             DGNParseCore( psDGN, psElement );
         }
@@ -552,7 +554,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_ELLIPSE:
       {
           DGNElemArc *psEllipse =
-              (DGNElemArc *) CPLCalloc(sizeof(DGNElemArc),1);
+              static_cast<DGNElemArc *>(CPLCalloc(sizeof(DGNElemArc), 1));
           psElement = (DGNElemCore *) psEllipse;
           psElement->stype = DGNST_ARC;
           DGNParseCore( psDGN, psElement );
@@ -607,7 +609,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           GInt32 nSweepVal = 0;
 
           DGNElemArc *psEllipse =
-              (DGNElemArc *) CPLCalloc(sizeof(DGNElemArc), 1);
+              static_cast<DGNElemArc *>(CPLCalloc(sizeof(DGNElemArc), 1));
           psElement = (DGNElemCore *) psEllipse;
           psElement->stype = DGNST_ARC;
           DGNParseCore( psDGN, psElement );
@@ -680,8 +682,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           else
               num_chars = psDGN->abyElem[74];
 
-          DGNElemText *psText =
-              (DGNElemText *) CPLCalloc(sizeof(DGNElemText)+num_chars,1);
+          DGNElemText *psText = static_cast<DGNElemText *>(
+              CPLCalloc(sizeof(DGNElemText)+num_chars, 1));
           psElement = (DGNElemCore *) psText;
           psElement->stype = DGNST_TEXT;
           DGNParseCore( psDGN, psElement );
@@ -751,8 +753,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_COMPLEX_CHAIN_HEADER:
       case DGNT_COMPLEX_SHAPE_HEADER:
       {
-          DGNElemComplexHeader *psHdr = (DGNElemComplexHeader *)
-              CPLCalloc(sizeof(DGNElemComplexHeader), 1);
+          DGNElemComplexHeader *psHdr = static_cast<DGNElemComplexHeader *>(
+              CPLCalloc(sizeof(DGNElemComplexHeader), 1));
           psElement = (DGNElemCore *) psHdr;
           psElement->stype = DGNST_COMPLEX_HEADER;
           DGNParseCore( psDGN, psElement );
@@ -764,8 +766,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
       case DGNT_TAG_VALUE:
       {
-          DGNElemTagValue *psTag = (DGNElemTagValue *)
-              CPLCalloc(sizeof(DGNElemTagValue),1);
+          DGNElemTagValue *psTag = static_cast<DGNElemTagValue *>(
+              CPLCalloc(sizeof(DGNElemTagValue), 1));
           psElement = (DGNElemCore *) psTag;
           psElement->stype = DGNST_TAG_VALUE;
           DGNParseCore( psDGN, psElement );
@@ -806,7 +808,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         }
         else
         {
-            psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+            psElement = static_cast<DGNElemCore *>(
+                CPLCalloc(sizeof(DGNElemCore), 1));
             psElement->stype = DGNST_CORE;
             DGNParseCore( psDGN, psElement );
         }
@@ -821,7 +824,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           }
 
           DGNElemCone *psCone =
-              (DGNElemCone *) CPLCalloc(sizeof(DGNElemCone),1);
+              static_cast<DGNElemCone *>(CPLCalloc(sizeof(DGNElemCone), 1));
           psElement = (DGNElemCore *) psCone;
           psElement->stype = DGNST_CONE;
           DGNParseCore( psDGN, psElement );
@@ -860,8 +863,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_3DSURFACE_HEADER:
       case DGNT_3DSOLID_HEADER:
         {
-          DGNElemComplexHeader *psShape =
-            (DGNElemComplexHeader *) CPLCalloc(sizeof(DGNElemComplexHeader), 1);
+          DGNElemComplexHeader *psShape = static_cast<DGNElemComplexHeader *>(
+              CPLCalloc(sizeof(DGNElemComplexHeader), 1));
           psElement = (DGNElemCore *) psShape;
           psElement->stype = DGNST_COMPLEX_HEADER;
           DGNParseCore( psDGN, psElement );
@@ -876,8 +879,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_BSPLINE_SURFACE_HEADER:
         {
           DGNElemBSplineSurfaceHeader *psSpline =
-              (DGNElemBSplineSurfaceHeader *)
-              CPLCalloc(sizeof(DGNElemBSplineSurfaceHeader), 1);
+              static_cast<DGNElemBSplineSurfaceHeader *>(
+                  CPLCalloc(sizeof(DGNElemBSplineSurfaceHeader), 1));
           psElement = (DGNElemCore *) psSpline;
           psElement->stype = DGNST_BSPLINE_SURFACE_HEADER;
           DGNParseCore( psDGN, psElement );
@@ -905,8 +908,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       break;
       case DGNT_BSPLINE_CURVE_HEADER:
         {
-          DGNElemBSplineCurveHeader *psSpline = (DGNElemBSplineCurveHeader *)
-              CPLCalloc(sizeof(DGNElemBSplineCurveHeader), 1);
+          DGNElemBSplineCurveHeader *psSpline =
+              static_cast<DGNElemBSplineCurveHeader *>(
+                  CPLCalloc(sizeof(DGNElemBSplineCurveHeader), 1));
           psElement = (DGNElemCore *) psSpline;
           psElement->stype = DGNST_BSPLINE_CURVE_HEADER;
           DGNParseCore( psDGN, psElement );
@@ -933,9 +937,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           }
 
           DGNElemBSplineSurfaceBoundary *psBounds =
-              (DGNElemBSplineSurfaceBoundary *)
-              CPLCalloc(sizeof(DGNElemBSplineSurfaceBoundary) +
-                        (numverts-1)*sizeof(DGNPoint), 1);
+              static_cast<DGNElemBSplineSurfaceBoundary *>(
+                  CPLCalloc(sizeof(DGNElemBSplineSurfaceBoundary) +
+                            (numverts-1)*sizeof(DGNPoint), 1));
           psElement = (DGNElemCore *) psBounds;
           psElement->stype = DGNST_BSPLINE_SURFACE_BOUNDARY;
           DGNParseCore( psDGN, psElement );
@@ -960,8 +964,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
             (psDGN->abyElem[30] + psDGN->abyElem[31]*256)*2 - 32;
           int numelems = (psDGN->nElemBytes - 36 - attr_bytes)/4;
 
-          DGNElemKnotWeight *psArray = (DGNElemKnotWeight *)
-            CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(float), 1);
+          DGNElemKnotWeight *psArray = static_cast<DGNElemKnotWeight *>(
+              CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(float),
+                        1));
 
           psElement = (DGNElemCore *) psArray;
           psElement->stype = DGNST_KNOT_WEIGHT;
@@ -976,8 +981,9 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       break;
       case DGNT_SHARED_CELL_DEFN:
       {
-          DGNElemSharedCellDefn *psShared = (DGNElemSharedCellDefn *)
-              CPLCalloc(sizeof(DGNElemSharedCellDefn),1);
+          DGNElemSharedCellDefn *psShared =
+              static_cast<DGNElemSharedCellDefn *>(
+                  CPLCalloc(sizeof(DGNElemSharedCellDefn), 1));
           psElement = (DGNElemCore *) psShared;
           psElement->stype = DGNST_SHARED_CELL_DEFN;
           DGNParseCore( psDGN, psElement );
@@ -987,7 +993,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       break;
       default:
       {
-          psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
+          psElement = static_cast<DGNElemCore *>(
+              CPLCalloc(sizeof(DGNElemCore), 1));
           psElement->stype = DGNST_CORE;
           DGNParseCore( psDGN, psElement );
       }
@@ -1221,8 +1228,8 @@ int DGNParseCore( DGNInfo *psDGN, DGNElemCore *psElement )
 static DGNElemCore *DGNParseColorTable( DGNInfo * psDGN )
 
 {
-    DGNElemColorTable *psColorTable = (DGNElemColorTable *)
-        CPLCalloc(sizeof(DGNElemColorTable),1);
+    DGNElemColorTable *psColorTable = static_cast<DGNElemColorTable *>(
+        CPLCalloc(sizeof(DGNElemColorTable), 1));
     DGNElemCore *psElement = (DGNElemCore *) psColorTable;
     psElement->stype = DGNST_COLORTABLE;
 
@@ -1253,7 +1260,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 
 {
     DGNElemTagSet *psTagSet =
-        (DGNElemTagSet *) CPLCalloc(sizeof(DGNElemTagSet),1);
+        static_cast<DGNElemTagSet *>(CPLCalloc(sizeof(DGNElemTagSet), 1));
     DGNElemCore *psElement = (DGNElemCore *) psTagSet;
     psElement->stype = DGNST_TAG_SET;
 
@@ -1284,8 +1291,8 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 /* -------------------------------------------------------------------- */
 /*      Parse each of the tag definitions.                              */
 /* -------------------------------------------------------------------- */
-    psTagSet->tagList = (DGNTagDef *)
-        CPLCalloc(sizeof(DGNTagDef), psTagSet->tagCount);
+    psTagSet->tagList = static_cast<DGNTagDef *>(
+        CPLCalloc(sizeof(DGNTagDef), psTagSet->tagCount));
 
     size_t nDataOffset = 48 + strlen(psTagSet->tagSetName) + 1 + 1;
 
@@ -1358,7 +1365,8 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
 static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
 
 {
-    DGNElemTCB *psTCB = (DGNElemTCB *) CPLCalloc(sizeof(DGNElemTCB), 1);
+    DGNElemTCB *psTCB = static_cast<DGNElemTCB *>(
+        CPLCalloc(sizeof(DGNElemTCB), 1));
     DGNElemCore *psElement = (DGNElemCore *) psTCB;
     psElement->stype = DGNST_TCB;
     DGNParseCore( psDGN, psElement );

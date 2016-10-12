@@ -873,9 +873,9 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
 /* -------------------------------------------------------------------- */
-    DGNElemMultiPoint *psMP = (DGNElemMultiPoint *)
+    DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(
         CPLCalloc( sizeof(DGNElemMultiPoint)
-                   + sizeof(DGNPoint) * (nPointCount-2), 1 );
+                   + sizeof(DGNPoint) * (nPointCount-2), 1 ));
     DGNElemCore *psCore = &(psMP->core);
 
     DGNInitializeElemCore( hDGN, psCore );
@@ -898,7 +898,8 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 
         psCore->raw_bytes = 36 + psDGN->dimension* 4 * nPointCount;
 
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+        psCore->raw_data = static_cast<unsigned char *>(
+            CPLCalloc(psCore->raw_bytes, 1));
 
         DGNInverseTransformPointToInt( psDGN, pasVertices + 0,
                                        psCore->raw_data + 36 );
@@ -911,7 +912,8 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
         CPLAssert( nPointCount >= 2 );
 
         psCore->raw_bytes = 38 + psDGN->dimension * 4 * nPointCount;
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+        psCore->raw_data = static_cast<unsigned char *>(
+            CPLCalloc(psCore->raw_bytes, 1));
 
         psCore->raw_data[36] = (unsigned char) (nPointCount % 256);
         psCore->raw_data[37] = (unsigned char) (nPointCount/256);
@@ -1007,7 +1009,8 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Allocate element.                                               */
 /* -------------------------------------------------------------------- */
-    DGNElemArc *psArc = (DGNElemArc *) CPLCalloc( sizeof(DGNElemArc), 1 );
+    DGNElemArc *psArc = static_cast<DGNElemArc *>(
+        CPLCalloc(sizeof(DGNElemArc), 1));
     DGNElemCore *psCore = &(psArc->core);
 
     DGNInitializeElemCore( hDGN, psCore );
@@ -1049,7 +1052,8 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
             psCore->raw_bytes = 100;
         else
             psCore->raw_bytes = 80;
-        psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+        psCore->raw_data = static_cast<unsigned char *>(
+            CPLCalloc(psCore->raw_bytes, 1));
 
         /* start angle */
         nAngle = (int) (dfStartAngle * 360000.0);

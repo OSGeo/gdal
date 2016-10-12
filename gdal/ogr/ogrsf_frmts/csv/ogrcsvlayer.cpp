@@ -115,7 +115,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
     }
 
     if( papszRetList == NULL )
-        papszRetList = (char **) CPLCalloc(sizeof(char *),1);
+        papszRetList = static_cast<char **>(CPLCalloc(sizeof(char *), 1));
 
     CPLFree( pszToken );
 

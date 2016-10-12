@@ -226,7 +226,7 @@ void OGRCloudantTableLayer::GetSpatialView()
         }
 
         const size_t nLen = strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2;
-        pszSpatialDDoc = (char*) CPLCalloc(nLen, 1);
+        pszSpatialDDoc = static_cast<char *>(CPLCalloc(nLen, 1));
 
         snprintf(pszSpatialDDoc, nLen, "%s/%s", papszTokens[0], papszTokens[1]);
 
