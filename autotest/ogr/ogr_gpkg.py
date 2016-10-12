@@ -2780,6 +2780,54 @@ def ogr_gpkg_38():
     return 'success'
 
 ###############################################################################
+# Test checking of IDENTIFIER unicity
+
+def ogr_gpkg_39():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    dbname = '/vsimem/ogr_gpkg_39.gpkg'
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+
+    ds.CreateLayer('test' )
+
+    lyr = ds.CreateLayer('test_with_explicit_identifier', options = ['IDENTIFIER=explicit_identifier'] )
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Allow overwriting
+    lyr = ds.CreateLayer('test_with_explicit_identifier', options = ['IDENTIFIER=explicit_identifier', 'OVERWRITE=YES'] )
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=test'] )
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=explicit_identifier'] )
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ExecuteSQL("INSERT INTO gpkg_contents ( table_name, identifier, data_type ) VALUES ( 'some_table', 'another_identifier', 'some_data_type' )")
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test2', options = ['IDENTIFIER=another_identifier'] )
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(dbname)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -2837,6 +2885,7 @@ gdaltest_list = [
     ogr_gpkg_36,
     ogr_gpkg_37,
     ogr_gpkg_38,
+    ogr_gpkg_39,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
