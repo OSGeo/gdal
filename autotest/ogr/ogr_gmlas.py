@@ -1769,7 +1769,12 @@ def ogr_gmlas_dataset_getnextfeature():
         return 'fail'
 
     ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml', open_options = ['EXPOSE_METADATA_LAYERS=YES'])
+    fc_map = {}
+    for layer_name in ('_ogr_fields_metadata', '_ogr_layers_metadata', '_ogr_layer_relationships' ):
+        fc_map[layer_name] = ds.GetLayerByName(layer_name).GetFeatureCount()
+    ds = None
 
+    ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml', open_options = ['EXPOSE_METADATA_LAYERS=YES'])
     count = 0
     while True:
         f, l = ds.GetNextFeature()
@@ -1781,10 +1786,9 @@ def ogr_gmlas_dataset_getnextfeature():
         count += 1
 
     expected_count = 53
-    expected_count += ds.GetLayerByName('_ogr_fields_metadata').GetFeatureCount()
-    expected_count += ds.GetLayerByName('_ogr_layers_metadata').GetFeatureCount()
-    expected_count += ds.GetLayerByName('_ogr_layer_relationships').GetFeatureCount()
-
+    expected_count += fc_map['_ogr_fields_metadata']
+    expected_count += fc_map['_ogr_layers_metadata']
+    expected_count += fc_map['_ogr_layer_relationships']
     if count != expected_count:
         gdaltest.post_reason('fail')
         print(count)
@@ -1810,7 +1814,44 @@ def ogr_gmlas_dataset_getnextfeature():
     if count != expected_count:
         gdaltest.post_reason('fail')
         print(count)
+        print(expected_count)
         return 'fail'
+
+
+    for layers in [ ['_ogr_fields_metadata'],
+                    ['_ogr_layers_metadata'],
+                    ['_ogr_layer_relationships'],
+                    ['_ogr_fields_metadata', '_ogr_layers_metadata'],
+                    ['_ogr_fields_metadata', '_ogr_layer_relationships'],
+                    ['_ogr_layers_metadata', '_ogr_layer_relationships'],
+                  ]:
+
+        ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml')
+        expected_count = 53
+        for layer in layers:
+            ds.GetLayerByName(layer)
+            expected_count += fc_map[layer]
+
+        count = 0
+        while True:
+            f, l = ds.GetNextFeature()
+            if f is None:
+                if l is not None:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+                break
+            count += 1
+
+        if count != expected_count:
+            gdaltest.post_reason('fail')
+            print(count)
+            print(expected_count)
+            return 'fail'
+
+        f, l = ds.GetNextFeature()
+        if f is not None or l is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 

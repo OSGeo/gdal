@@ -1822,6 +1822,23 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             return NULL;
         }
 
+        // Make sure to probe all layers in case some are by default invisible
+        for( char** papszIter = psOptions->papszLayers;
+                    papszIter && *papszIter; ++papszIter )
+        {
+            OGRLayer        *poLayer = poDS->GetLayerByName(*papszIter);
+
+            if( poLayer == NULL )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Couldn't fetch requested layer %s!",
+                          *papszIter );
+                GDALVectorTranslateOptionsFree(psOptions);
+                if( hDstDS == NULL ) GDALClose( poODS );
+                delete poGCPCoordTrans;
+                return NULL;
+            }
+        }
+
         int nSrcLayerCount = poDS->GetLayerCount();
         AssociatedLayers* pasAssocLayers =
             (AssociatedLayers* ) CPLCalloc(nSrcLayerCount, sizeof(AssociatedLayers));
