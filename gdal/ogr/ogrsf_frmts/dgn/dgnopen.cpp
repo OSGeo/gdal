@@ -127,7 +127,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Create the info structure.                                      */
 /* -------------------------------------------------------------------- */
-    DGNInfo *psDGN = (DGNInfo *) CPLCalloc(sizeof(DGNInfo),1);
+    DGNInfo *psDGN = static_cast<DGNInfo *>(CPLCalloc(sizeof(DGNInfo), 1));
     psDGN->fp = fp;
     psDGN->next_element_id = 0;
 
