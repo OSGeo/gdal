@@ -3476,6 +3476,50 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
+    // Check identifier unicity
+    const char* pszIdentifier = CSLFetchNameValue(papszOptions, "IDENTIFIER");
+    if( pszIdentifier != NULL && pszIdentifier[0] == '\0' )
+        pszIdentifier = NULL;
+    if( pszIdentifier != NULL )
+    {
+        for(int i = 0; i < m_nLayers; ++i )
+        {
+            const char* pszOtherIdentifier =
+                m_papoLayers[i]->GetMetadataItem("IDENTIFIER");
+            if( pszOtherIdentifier == NULL )
+                pszOtherIdentifier = m_papoLayers[i]->GetName();
+            if( pszOtherIdentifier != NULL &&
+                EQUAL(pszOtherIdentifier, pszIdentifier) &&
+                !EQUAL(m_papoLayers[i]->GetName(), pszLayerName) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                     "Identifier %s is already used by table %s",
+                     pszIdentifier, m_papoLayers[i]->GetName());
+                return NULL;
+            }
+        }
+
+        // In case there would be table in gpkg_contents not listed as a
+        // vector layer
+        char* pszSQL = sqlite3_mprintf(
+            "SELECT table_name FROM gpkg_contents WHERE identifier = '%q'",
+            pszIdentifier);
+        SQLResult oResult;
+        OGRErr eErr = SQLQuery (hDB, pszSQL, &oResult);
+        sqlite3_free(pszSQL);
+        if( eErr == OGRERR_NONE && oResult.nRowCount > 0 &&
+            SQLResultGetValue(&oResult, 0, 0) != NULL &&
+            !EQUAL(SQLResultGetValue(&oResult, 0, 0), pszLayerName) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Identifier %s is already used by table %s",
+                     pszIdentifier, SQLResultGetValue(&oResult, 0, 0));
+            SQLResultFree(&oResult);
+            return NULL;
+        }
+        SQLResultFree(&oResult);
+    }
+
     /* Read GEOMETRY_NAME option */
     const char* pszGeomColumnName = CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
     if (pszGeomColumnName == NULL) /* deprecated name */
@@ -3544,7 +3588,7 @@ OGRLayer* GDALGeoPackageDataset::ICreateLayer( const char * pszLayerName,
                                     bGeomNullable,
                                     poSpatialRef,
                                     pszFIDColumnName,
-                                    CSLFetchNameValue(papszOptions, "IDENTIFIER"),
+                                    pszIdentifier,
                                     CSLFetchNameValue(papszOptions, "DESCRIPTION") );
 
     /* Should we create a spatial index ? */
