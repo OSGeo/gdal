@@ -229,7 +229,6 @@ int main( int argc, char ** argv )
 
     }
 
-
     // const Eprj_ProParameters *psProParameters;
     // psProParameters =
     HFAGetProParameters( hHFA );

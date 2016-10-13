@@ -238,7 +238,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     }
 
     GInt32 nMIFObjectSize;
-    // we rudely look before the field data to get at the pointer/size info
+    // We rudely look before the field data to get at the pointer/size info.
     memcpy( &nMIFObjectSize, pszField-8, 4 );
     HFAStandard( 4, &nMIFObjectSize );
     if( nMIFObjectSize <= 0 )
@@ -248,7 +248,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
         return NULL;
     }
 
-    // check that we won't copy more bytes than available in the buffer
+    // Check that we won't copy more bytes than available in the buffer.
     if( nMIFObjectSize > nRemainingDataSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d > %d)",
@@ -575,7 +575,7 @@ GByte *HFAEntry::MakeData( int nSize )
         }
     }
     else
-        LoadData(); // make sure the data is loaded before we return pointer.
+        LoadData(); // Make sure the data is loaded before we return pointer.
 
     return pabyData;
 }
@@ -1017,7 +1017,7 @@ CPLErr HFAEntry::FlushToDisk()
 /*      Write the Ehfa_Entry fields.                                    */
 /* -------------------------------------------------------------------- */
 
-        //VSIFFlushL( psHFA->fp );
+        // VSIFFlushL( psHFA->fp );
         if( VSIFSeekL( psHFA->fp, nFilePos, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
@@ -1072,7 +1072,7 @@ CPLErr HFAEntry::FlushToDisk()
 /* -------------------------------------------------------------------- */
 /*      Write out the data.                                             */
 /* -------------------------------------------------------------------- */
-        //VSIFFlushL( psHFA->fp );
+        // VSIFFlushL( psHFA->fp );
         if( nDataSize > 0 && pabyData != NULL )
         {
             if( VSIFSeekL( psHFA->fp, nDataPos, SEEK_SET ) != 0
@@ -1086,7 +1086,7 @@ CPLErr HFAEntry::FlushToDisk()
             }
         }
 
-        //VSIFFlushL( psHFA->fp );
+        // VSIFFlushL( psHFA->fp );
     }
 
 /* -------------------------------------------------------------------- */
