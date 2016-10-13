@@ -1832,12 +1832,19 @@ CPLErr HFABand::GetPCT( int * pnColors,
             }
 
             if( iColumn == 0 )
+            {
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Red");
+            }
             else if( iColumn == 1 )
+            {
                 poColumnEntry= poNode->GetNamedChild("Descriptor_Table.Green");
+            }
             else if( iColumn == 2 )
+            {
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Blue");
-            else if( iColumn == 3 ) {
+            }
+            else if( iColumn == 3 )
+            {
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Opacity");
             }
 

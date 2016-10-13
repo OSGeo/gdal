@@ -2898,10 +2898,12 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
             HFAEntry *poEntryDescrTbl = poNode->GetNamedChild( "Descriptor_Table" );
             HFAEntry *poHisto = NULL;
-            if( poEntryDescrTbl != NULL) {
+            if( poEntryDescrTbl != NULL)
+            {
                 poHisto = poEntryDescrTbl->GetNamedChild( "Histogram" );
             }
-            if( poHisto != NULL ) {
+            if( poHisto != NULL )
+            {
                 int nOffset = poHisto->GetIntField( "columnDataPtr" );
                 // write out histogram data
                 char * pszWork = pszBinValues;
@@ -2919,7 +2921,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                     if( pszEnd != NULL )
                     {
                         *pszEnd = 0;
-                        if( bCountIsInt ) {
+                        if( bCountIsInt )
+                        {
                             // Histogram counts were written as ints, so re-write them the same way
                             bRet &= VSIFSeekL( hHFA->fp, nOffset + 4*nBin, SEEK_SET ) >= 0;
                             int nValue = atoi( pszWork );
