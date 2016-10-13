@@ -791,6 +791,7 @@ class GMLASSchemaAnalyzer
                             std::set<XSElementDeclaration*>& oSetVisitedEltDecl,
                             std::set<XSModelGroup*>& oSetVisitedModelGroups,
                             std::vector<XSElementDeclaration*>& oVectorEltsForTopClass,
+                            std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
                             bool& bSimpleEnoughOut);
         void BuildMapCountOccurencesOfSameName(

@@ -583,7 +583,7 @@ CPLString GMLASSchemaAnalyzer::TruncateIdentifier(const CPLString& osName)
             }
         }
 
-        if( nMaxSize > 0 )
+        if( nMaxSize > 1 )
         {
             aosTokens[nIdxMaxSize].resize( nMaxSize - 1 );
             bHasDoneSomething = true;
@@ -908,6 +908,13 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     std::set<XSElementDeclaration*> oSetVisitedEltDecl;
     std::set<XSModelGroup*> oSetVisitedModelGroups;
     std::vector<XSElementDeclaration*> oVectorEltsForTopClass;
+
+    // For some reason, different XSElementDeclaration* can point to the
+    // same element, but we only want to instanciate a single class.
+    // This is the case for base:SpatialDataSet in
+    // inspire/geologicalunit/geologicalunit.gml test dataset.
+    std::set<CPLString> aoSetXPathEltsForTopClass;
+
     for( int iPass = 0; iPass < 2; ++iPass )
     {
         for( size_t iNS = 0; iNS < aoNamespaces.size(); iNS++ )
@@ -948,6 +955,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                             oSetVisitedEltDecl.insert( poEltDecl );
                             m_oSetEltsForTopClass.insert( poEltDecl );
                             oVectorEltsForTopClass.push_back( poEltDecl );
+                            aoSetXPathEltsForTopClass.insert( osXPath );
                         }
                         else
                         {
@@ -959,6 +967,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                     oSetVisitedEltDecl,
                                     oSetVisitedModelGroups,
                                     oVectorEltsForTopClass,
+                                    aoSetXPathEltsForTopClass,
                                     poModel,
                                     bSimpleEnoughOut);
                         }
@@ -984,7 +993,6 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     // Instantiate all needed typenames
     std::vector<XSElementDeclaration*>::iterator oIter =
                                         oVectorEltsForTopClass.begin();
-    std::set<CPLString> aoSetInstanciatedXPaths;
     for(; oIter != oVectorEltsForTopClass.end(); ++oIter )
     {
         XSElementDeclaration* poEltDecl = *oIter;
@@ -992,17 +1000,6 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         const CPLString osXPath(MakeXPath(
                             transcode(poEltDecl->getNamespace()),
                             transcode(poEltDecl->getName())));
-
-        // For some reason, different XSElementDeclaration* can point to the
-        // same element, but we only want to instanciate a single class.
-        // This is the case for base:SpatialDataSet in
-        // inspire/geologicalunit/geologicalunit.gml test dataset.
-        if( aoSetInstanciatedXPaths.find(osXPath) !=
-                                            aoSetInstanciatedXPaths.end() )
-        {
-            continue;
-        }
-        aoSetInstanciatedXPaths.insert(osXPath);
 
         bool bError = false;
         bool bResolvedType = InstantiateClassFromEltDeclaration(poEltDecl,
@@ -1435,10 +1432,12 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
         apoImplEltList.insert(apoImplEltList.begin(), poElt);
     }
 
+    std::set<CPLString> aoSetSubEltXPath;
     if( nMaxOccurs == 1 && !bForceJunctionTable )
     {
         // If the field isn't repeated, then we can link to each
         // potential realization types with a field
+
         for( size_t j = 0; j < apoImplEltList.size(); j++ )
         {
             XSElementDeclaration* poSubElt = apoImplEltList[j];
@@ -1446,6 +1445,15 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             const CPLString osSubEltXPath(
                 MakeXPath(transcode(poSubElt->getNamespace()),
                           osSubEltName) );
+
+            // For AbstractFeature_SpatialDataSet_pkid in SpatialDataSet_member
+            if( aoSetSubEltXPath.find(osSubEltXPath) !=
+                                            aoSetSubEltXPath.end() )
+            {
+                continue;
+            }
+            aoSetSubEltXPath.insert(osSubEltXPath);
+
             const CPLString osRealFullXPath( oClass.GetXPath() + "/" +
                                              osSubEltXPath );
 
@@ -1497,6 +1505,14 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             const CPLString osSubEltName( transcode(poSubElt->getName()) );
             const CPLString osSubEltXPath(
                 MakeXPath(transcode(poSubElt->getNamespace()), osSubEltName) );
+
+            // For AbstractFeature_SpatialDataSet_pkid in SpatialDataSet_member
+            if( aoSetSubEltXPath.find(osSubEltXPath) !=
+                                            aoSetSubEltXPath.end() )
+            {
+                continue;
+            }
+            aoSetSubEltXPath.insert(osSubEltXPath);
 
             // Instantiate a junction table
             GMLASFeatureClass oJunctionTable;
@@ -1613,6 +1629,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             std::set<XSModelGroup*>& oSetVisitedModelGroups,
                             std::vector<XSElementDeclaration*>&
                                                         oVectorEltsForTopClass,
+                            std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
                             bool& bSimpleEnoughOut)
 {
@@ -1715,7 +1732,9 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 
                     // Make sure we will instantiate the referenced element
                     if( m_oSetEltsForTopClass.find( poSubElt ) == 
-                                m_oSetEltsForTopClass.end() )
+                                m_oSetEltsForTopClass.end() &&
+                        aoSetXPathEltsForTopClass.find( osSubEltXPath )
+                                == aoSetXPathEltsForTopClass.end() )
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GMLAS", "%s (%s) must be exposed as "
@@ -1728,6 +1747,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         oSetVisitedEltDecl.insert(poSubElt);
                         m_oSetEltsForTopClass.insert(poSubElt);
                         oVectorEltsForTopClass.push_back(poSubElt);
+                        aoSetXPathEltsForTopClass.insert( osSubEltXPath );
 
                         XSComplexTypeDefinition* poSubEltCT =
                                             IsEltCompatibleOfFC(poSubElt);
@@ -1744,6 +1764,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oSetVisitedEltDecl,
                                             oSetVisitedModelGroups,
                                             oVectorEltsForTopClass,
+                                            aoSetXPathEltsForTopClass,
                                             poModel,
                                             bSubSimpleEnoughOut ) )
                             {
@@ -1770,7 +1791,9 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         if( m_oSetEltsForTopClass.find(poElt) ==
                                                 m_oSetEltsForTopClass.end() &&
                             m_oSetSimpleEnoughElts.find(poElt) ==
-                                                m_oSetSimpleEnoughElts.end() )
+                                                m_oSetSimpleEnoughElts.end() &&
+                            aoSetXPathEltsForTopClass.find( osXPath )
+                                == aoSetXPathEltsForTopClass.end() )
                         {
 #ifdef DEBUG_VERBOSE
                             CPLDebug("GMLAS", "%s (%s) must be exposed as "
@@ -1781,6 +1804,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 #endif
                             m_oSetEltsForTopClass.insert(poElt);
                             oVectorEltsForTopClass.push_back(poElt);
+                            aoSetXPathEltsForTopClass.insert( osXPath );
                         }
                     }
                     else
@@ -1799,6 +1823,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oSetVisitedEltDecl,
                                             oSetVisitedModelGroups,
                                             oVectorEltsForTopClass,
+                                            aoSetXPathEltsForTopClass,
                                             poModel,
                                             bSubSimpleEnoughOut ) )
                             {
@@ -1868,7 +1893,9 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         // Make sure we will instantiate the referenced
                         //element
                         if( m_oSetEltsForTopClass.find( poTargetElt ) == 
-                                    m_oSetEltsForTopClass.end() )
+                                    m_oSetEltsForTopClass.end() &&
+                            aoSetXPathEltsForTopClass.find( osTargetEltXPath )
+                                == aoSetXPathEltsForTopClass.end() )
                         {
 #ifdef DEBUG_VERBOSE
                             CPLDebug("GMLAS",
@@ -1882,6 +1909,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             oSetVisitedEltDecl.insert(poTargetElt);
                             m_oSetEltsForTopClass.insert( poTargetElt );
                             oVectorEltsForTopClass.push_back(poTargetElt);
+                            aoSetXPathEltsForTopClass.insert( osTargetEltXPath );
                         }
 
                         XSComplexTypeDefinition* poTargetEltCT =
@@ -1899,6 +1927,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oSetVisitedEltDecl,
                                             oSetVisitedModelGroups,
                                             oVectorEltsForTopClass,
+                                            aoSetXPathEltsForTopClass,
                                             poModel,
                                             bSubSimpleEnoughOut) )
                             {
@@ -1921,6 +1950,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                     oSetVisitedEltDecl,
                                     oSetVisitedModelGroups,
                                     oVectorEltsForTopClass,
+                                    aoSetXPathEltsForTopClass,
                                     poModel,
                                     bSimpleEnoughOut) )
             {
