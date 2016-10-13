@@ -102,12 +102,19 @@ OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
     if (fpWorkbook == NULL)
         return NULL;
 
+    VSILFILE* fpWorkbookRels = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels", pszFilename), "rb");
+    if (fpWorkbookRels == NULL)
+    {
+        VSIFCloseL(fpWorkbook);
+        return NULL;
+    }
+
     VSILFILE* fpSharedStrings = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszFilename), "rb");
     VSILFILE* fpStyles = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszFilename), "rb");
 
     OGRXLSXDataSource   *poDS = new OGRXLSXDataSource();
 
-    if( !poDS->Open( pszFilename, fpWorkbook, fpSharedStrings, fpStyles, bUpdate ) )
+    if( !poDS->Open( pszFilename, fpWorkbook, fpWorkbookRels, fpSharedStrings, fpStyles, bUpdate ) )
     {
         delete poDS;
         poDS = NULL;
