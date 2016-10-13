@@ -323,6 +323,7 @@ class GMLASConfiguration
         static const bool FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
         static const bool EXPOSE_METADATA_LAYERS_DEFAULT = false;
         static const bool WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
+        static const int  MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH = 10;
 
         /** Whether remote schemas are allowed to be download. */
         bool            m_bAllowRemoteSchemaDownload;
@@ -351,6 +352,9 @@ class GMLASConfiguration
             iterates over top level elements of the imported
             schemas. */
         bool            m_bInstantiateGMLFeaturesOnly;
+
+        /** Maximum length of layer and field identifiers*/
+        int             m_nIdentifierMaxLength;
 
         /** Whether remote XSD schemas should be locally cached. */
         bool            m_bAllowXSDCache;
@@ -767,6 +771,9 @@ class GMLASSchemaAnalyzer
             used by Inspire schemas. */
         std::set<XSElementDeclaration*> m_oSetSimpleEnoughElts;
 
+        /** Maximum length of layer and field identifiers*/
+        int             m_nIdentifierMaxLength;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         CPLString GetGroupName( const XSModelGroup* poModelGroup );
@@ -801,7 +808,8 @@ class GMLASSchemaAnalyzer
         CPLString GetPrefix( const CPLString& osNamespaceURI );
         CPLString MakeXPath( const CPLString& osNamespace,
                                           const CPLString& osName );
-        void FixDuplicatedFieldNames( GMLASFeatureClass& oClass );
+        void LaunderFieldNames( GMLASFeatureClass& oClass );
+        void LaunderClassNames();
 
         XSElementDeclaration* GetTopElementDeclarationFromXPath(
                                                     const CPLString& osXPath,
@@ -823,6 +831,12 @@ class GMLASSchemaAnalyzer
 
         bool IsIgnoredXPath(const CPLString& osXPath);
 
+        CPLString TruncateIdentifier(const CPLString& osName);
+
+        void CollectClassesReferences(
+                                GMLASFeatureClass& oClass,
+                                std::vector<GMLASFeatureClass*>& aoClasses );
+
         CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
 
     public:
@@ -830,6 +844,8 @@ class GMLASSchemaAnalyzer
         void SetUseArrays(bool b) { m_bUseArrays = b; }
         void SetInstantiateGMLFeaturesOnly(bool b)
                                     { m_bInstantiateGMLFeaturesOnly = b; }
+        void SetIdentifierMaxLength(int nLength)
+                                    { m_nIdentifierMaxLength = nLength; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,

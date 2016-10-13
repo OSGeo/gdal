@@ -2789,6 +2789,101 @@ def ogr_gmlas_truncated_xml():
     return 'success'
 
 ###############################################################################
+# Test identifier truncation
+
+def ogr_gmlas_identifier_truncation():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_identifier_truncation.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns" 
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="very_long_identifier_class">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="very_long_idenTifier" type="xs:string"/>
+            <xs:element name="another_long_identifier" type="xs:string"/>
+            <xs:element name="another_long_identifierbis" type="xs:string"/>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="another_long_identifier_class">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="another_long_identifier_classbis">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="y">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:', open_options = [
+            'XSD=/vsimem/ogr_gmlas_identifier_truncation.xsd',
+            'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength></LayerBuildingRules></Configuration>'])
+    lyr = ds.GetLayerByName('v_l_i_clas')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(0).GetName())
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(1).GetName()
+    if s != 'v_l_idTifi':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(2).GetName()
+    if s != 'an_lo_ide1':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(3).GetName()
+    if s != 'an_lo_ide2':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(4).GetName()
+    if s != 'x':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    lyr = ds.GetLayerByName('a_l_i_cla1')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(1).GetName())
+        return 'fail'
+    lyr = ds.GetLayerByName('a_l_i_cla2')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(2).GetName())
+        return 'fail'
+    lyr = ds.GetLayerByName('y')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(3).GetName())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_identifier_truncation.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -2844,9 +2939,10 @@ gdaltest_list = [
     ogr_gmlas_recoding,
     ogr_gmlas_schema_without_namespace_prefix,
     ogr_gmlas_truncated_xml,
+    ogr_gmlas_identifier_truncation,
     ogr_gmlas_cleanup ]
 
-#gdaltest_list = [ ogr_gmlas_instantiate_only_gml_feature ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_identifier_truncation ]
 
 if __name__ == '__main__':
 
