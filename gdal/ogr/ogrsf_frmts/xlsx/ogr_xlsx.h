@@ -51,14 +51,14 @@ class OGRXLSXLayer : public OGRMemLayer
 {
     int                bInit;
     OGRXLSXDataSource* poDS;
-    int                nSheetId;
+    CPLString          osFilename;
     void               Init();
     int                bUpdated;
     int                bHasHeaderLine;
 
     public:
         OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
-                      int nSheetIdIn,
+                      const char * pszFilename,
                       const char * pszName,
                       int bUpdateIn = FALSE);
 
@@ -74,6 +74,8 @@ class OGRXLSXLayer : public OGRMemLayer
 
     void                ResetReading()
     { Init(); OGRMemLayer::ResetReading(); }
+
+    const CPLString&    GetFilename() const { return osFilename; }
 
     /* For external usage. Mess with FID */
     virtual OGRFeature *        GetNextFeature();
@@ -157,9 +159,11 @@ class OGRXLSXDataSource : public OGRDataSource
 
     int                 nLayers;
     OGRLayer          **papoLayers;
+    std::map<CPLString, CPLString> oMapRelsIdToTarget;
 
     void                AnalyseSharedStrings(VSILFILE* fpSharedStrings);
     void                AnalyseWorkbook(VSILFILE* fpWorkbook);
+    void                AnalyseWorkbookRels(VSILFILE* fpWorkbookRels);
     void                AnalyseStyles(VSILFILE* fpStyles);
 
     std::vector<std::string>  apoSharedStrings;
@@ -216,6 +220,7 @@ class OGRXLSXDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpWorkbook,
+                              VSILFILE* fpWorkbookRels,
                               VSILFILE* fpSharedStrings,
                               VSILFILE* fpStyles,
                               int bUpdate );
@@ -244,12 +249,14 @@ class OGRXLSXDataSource : public OGRDataSource
     void                endElementSSCbk(const char *pszName);
     void                dataHandlerSSCbk(const char *data, int nLen);
 
+    void                startElementWBRelsCbk(const char *pszName, const char **ppszAttr);
+
     void                startElementWBCbk(const char *pszName, const char **ppszAttr);
 
     void                startElementStylesCbk(const char *pszName, const char **ppszAttr);
     void                endElementStylesCbk(const char *pszName);
 
-    void                BuildLayer(OGRXLSXLayer* poLayer, int nSheetId);
+    void                BuildLayer(OGRXLSXLayer* poLayer);
 
     int                 GetUpdatable() { return bUpdatable; }
     void                SetUpdated() { bUpdated = TRUE; }
