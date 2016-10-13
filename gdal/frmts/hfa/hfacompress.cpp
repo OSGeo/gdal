@@ -161,44 +161,45 @@ GUInt32 HFACompress::findMin( GByte *pNumBits )
   return u32Min;
 }
 
-/* Codes the count in the way expected by Imagine - i.e. the lower 2 bits specify how many bytes
-   the count takes up */
-void HFACompress::makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount )
+// Codes the count in the way expected by Imagine - i.e. the lower 2 bits
+// specify how many bytes the count takes up.
+void HFACompress::makeCount( GUInt32 count, GByte *pCounter,
+                             GUInt32 *pnSizeCount )
 {
-  /* Because Imagine stores the number of bits used in the
-      lower 2 bits of the data it restricts what we can use */
-  if( count < 0x40 )
-  {
-    pCounter[0] = (GByte) count;
-    *pnSizeCount = 1;
-  }
-  else if( count < 0x8000 )
-  {
-    pCounter[1] = count & 0xff;
-    count /= 256;
-    pCounter[0] = (GByte) (count | 0x40);
-    *pnSizeCount = 2;
-  }
-  else if( count < 0x800000 )
-  {
-    pCounter[2] = count & 0xff;
-    count /= 256;
-    pCounter[1] = count & 0xff;
-    count /= 256;
-    pCounter[0] = (GByte) (count | 0x80);
-    *pnSizeCount = 3;
-  }
-  else
-  {
-    pCounter[3] = count & 0xff;
-    count /= 256;
-    pCounter[2] = count & 0xff;
-    count /= 256;
-    pCounter[1] = count & 0xff;
-    count /= 256;
-    pCounter[0] = (GByte) (count | 0xc0);
-    *pnSizeCount = 4;
-  }
+    // Because Imagine stores the number of bits used in the lower 2 bits of the
+    // data it restricts what we can use.
+    if( count < 0x40 )
+    {
+        pCounter[0] = static_cast<GByte>(count);
+        *pnSizeCount = 1;
+    }
+    else if( count < 0x8000 )
+    {
+        pCounter[1] = count & 0xff;
+        count /= 256;
+        pCounter[0] = static_cast<GByte>(count | 0x40);
+        *pnSizeCount = 2;
+    }
+    else if( count < 0x800000 )
+    {
+        pCounter[2] = count & 0xff;
+        count /= 256;
+        pCounter[1] = count & 0xff;
+        count /= 256;
+        pCounter[0] = static_cast<GByte>(count | 0x80);
+        *pnSizeCount = 3;
+    }
+    else
+    {
+        pCounter[3] = count & 0xff;
+        count /= 256;
+        pCounter[2] = count & 0xff;
+        count /= 256;
+        pCounter[1] = count & 0xff;
+        count /= 256;
+        pCounter[0] = static_cast<GByte>(count | 0xc0);
+        *pnSizeCount = 4;
+    }
 }
 
 /* Encodes the value depending on the number of bits we are using */
@@ -270,7 +271,7 @@ bool HFACompress::compressBlock()
       /* The values have changed - i.e. a run has come to and end */
       encodeValue( u32Last, count - nLastUnique );
 
-      if( ( m_pCurrValues - m_pValues ) > (int) m_nBlockSize )
+      if( ( m_pCurrValues - m_pValues ) > static_cast<int>(m_nBlockSize) )
       {
         return false;
       }

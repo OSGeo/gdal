@@ -362,7 +362,8 @@ CPLErr HFABand::LoadBlockInfo()
         char szVarName[64];
         snprintf( szVarName, sizeof(szVarName),
                   "blockinfo[%d].offset", iBlock );
-        panBlockStart[iBlock] = (GUInt32)poDMS->GetIntField( szVarName, &eErr);
+        panBlockStart[iBlock] = static_cast<GUInt32>(
+            poDMS->GetIntField( szVarName, &eErr));
         if( eErr == CE_Failure )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot read %s", szVarName);
@@ -666,32 +667,39 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             else if( eDataType == EPT_u2 )
             {
                 if( (nPixelsOutput & 0x3) == 0 )
-                    pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
+                    pabyDest[nPixelsOutput>>2] = static_cast<GByte>(nDataValue);
                 else if( (nPixelsOutput & 0x3) == 1 )
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<2);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 2);
                 else if( (nPixelsOutput & 0x3) == 2 )
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<4);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 4);
                 else
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 6);
             }
             else if( eDataType == EPT_u4 )
             {
                 if( (nPixelsOutput & 0x1) == 0 )
-                    pabyDest[nPixelsOutput>>1] = (GByte) nDataValue;
+                    pabyDest[nPixelsOutput>>1] = static_cast<GByte>(nDataValue);
                 else
-                    pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
+                    pabyDest[nPixelsOutput>>1] |=
+                        static_cast<GByte>(nDataValue << 4);
             }
             else if( eDataType == EPT_s8 )
             {
-                ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue;
+                ((GByte *) pabyDest)[nPixelsOutput] =
+                    static_cast<GByte>(nDataValue);
             }
             else if( eDataType == EPT_u16 )
             {
-                ((GUInt16 *) pabyDest)[nPixelsOutput] = (GUInt16) nDataValue;
+                ((GUInt16 *) pabyDest)[nPixelsOutput] =
+                    static_cast<GUInt16>(nDataValue);
             }
             else if( eDataType == EPT_s16 )
             {
-                ((GInt16 *) pabyDest)[nPixelsOutput] = (GInt16) nDataValue;
+                ((GInt16 *) pabyDest)[nPixelsOutput] =
+                    static_cast<GInt16>(nDataValue);
             }
             else if( eDataType == EPT_s32 )
             {
@@ -864,14 +872,16 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 // CPLAssert( nDataValue < 256 );
-                ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
+                ((GByte *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GByte>(nDataValue);
             }
         }
         else if( eDataType == EPT_u16 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                ((GUInt16 *) pabyDest)[nPixelsOutput++] = (GUInt16)nDataValue;
+                ((GUInt16 *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GUInt16>(nDataValue);
             }
         }
         else if( eDataType == EPT_s8 )
@@ -879,28 +889,32 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 // CPLAssert( nDataValue < 256 );
-                ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
+                ((GByte *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GByte>(nDataValue);
             }
         }
         else if( eDataType == EPT_s16 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                ((GInt16 *) pabyDest)[nPixelsOutput++] = (GInt16)nDataValue;
+                ((GInt16 *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GInt16>(nDataValue);
             }
         }
         else if( eDataType == EPT_u32 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                ((GUInt32 *) pabyDest)[nPixelsOutput++] = (GUInt32)nDataValue;
+                ((GUInt32 *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GUInt32>(nDataValue);
             }
         }
         else if( eDataType == EPT_s32 )
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                ((GInt32 *) pabyDest)[nPixelsOutput++] = (GInt32)nDataValue;
+                ((GInt32 *) pabyDest)[nPixelsOutput++] =
+                    static_cast<GInt32>(nDataValue);
             }
         }
         else if( eDataType == EPT_f32 )
@@ -943,13 +957,16 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 if( (nPixelsOutput & 0x3) == 0 )
-                    pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
+                    pabyDest[nPixelsOutput>>2] = static_cast<GByte>(nDataValue);
                 else if( (nPixelsOutput & 0x3) == 1 )
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<2);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 2);
                 else if( (nPixelsOutput & 0x3) == 2 )
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<4);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 4);
                 else
-                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
+                    pabyDest[nPixelsOutput>>2] |=
+                        static_cast<GByte>(nDataValue << 6);
                 nPixelsOutput++;
             }
         }
@@ -961,9 +978,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             for( int i = 0; i < nRepeatCount; i++ )
             {
                 if( (nPixelsOutput & 0x1) == 0 )
-                    pabyDest[nPixelsOutput>>1] = (GByte) nDataValue;
+                    pabyDest[nPixelsOutput>>1] = static_cast<GByte>(nDataValue);
                 else
-                    pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
+                    pabyDest[nPixelsOutput>>1] |=
+                        static_cast<GByte>(nDataValue << 4);
 
                 nPixelsOutput++;
             }
@@ -1047,68 +1065,70 @@ void HFABand::NullBlock( void *pData )
 
           case EPT_u8:
             ((unsigned char *) abyTmp)[0] =
-                (unsigned char) MAX(0,MIN(255,(int)dfNoData));
+                static_cast<unsigned char>(
+                    MAX(0,MIN(255,static_cast<int>(dfNoData))));
             break;
 
           case EPT_s8:
-            ((signed char *) abyTmp)[0] =
-                (signed char) MAX(-128,MIN(127,(int)dfNoData));
-            break;
+              ((signed char *) abyTmp)[0] =
+                  static_cast<signed char>(
+                      MAX(-128,MIN(127,static_cast<int>(dfNoData))));
+              break;
 
           case EPT_u16:
           {
-            GUInt16 nTmp = (GUInt16) dfNoData;
-            memcpy(abyTmp, &nTmp, sizeof(nTmp));
-            break;
+              GUInt16 nTmp = static_cast<GUInt16>(dfNoData);
+              memcpy(abyTmp, &nTmp, sizeof(nTmp));
+              break;
           }
 
           case EPT_s16:
           {
-            GInt16 nTmp = (GInt16) dfNoData;
-            memcpy(abyTmp, &nTmp, sizeof(nTmp));
-            break;
+              GInt16 nTmp = static_cast<GInt16>(dfNoData);
+              memcpy(abyTmp, &nTmp, sizeof(nTmp));
+              break;
           }
 
           case EPT_u32:
           {
-            GUInt32 nTmp = (GUInt32) dfNoData;
-            memcpy(abyTmp, &nTmp, sizeof(nTmp));
-            break;
+              GUInt32 nTmp = static_cast<GUInt32>(dfNoData);
+              memcpy(abyTmp, &nTmp, sizeof(nTmp));
+              break;
           }
 
           case EPT_s32:
           {
-            GInt32 nTmp = (GInt32) dfNoData;
-            memcpy(abyTmp, &nTmp, sizeof(nTmp));
-            break;
+              GInt32 nTmp = static_cast<GInt32>(dfNoData);
+              memcpy(abyTmp, &nTmp, sizeof(nTmp));
+              break;
           }
 
           case EPT_f32:
           {
-            float fTmp = (float) dfNoData;
-            memcpy(abyTmp, &fTmp, sizeof(fTmp));
-            break;
+              float fTmp = static_cast<float>(dfNoData);
+              memcpy(abyTmp, &fTmp, sizeof(fTmp));
+              break;
           }
 
           case EPT_f64:
           {
-            memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
-            break;
+              memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
+              break;
           }
 
           case EPT_c64:
           {
-            float fTmp = (float) dfNoData;
-            memcpy(abyTmp, &fTmp, sizeof(fTmp));
-            memset(abyTmp+4, 0, sizeof(float));
-            break;
+              float fTmp = static_cast<float>(dfNoData);
+              memcpy(abyTmp, &fTmp, sizeof(fTmp));
+              memset(abyTmp+4, 0, sizeof(float));
+              break;
           }
 
           case EPT_c128:
           {
-            memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
-            memset(abyTmp+8, 0, sizeof(double));
-            break;
+              memcpy(abyTmp, &dfNoData, sizeof(dfNoData));
+              memset(abyTmp+8, 0, sizeof(double));
+              break;
           }
         }
 
@@ -1176,8 +1196,8 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Seek to %x:%08x on %p failed\n%s",
-                      (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff),
+                      static_cast<int>(nBlockOffset >> 32),
+                      static_cast<int>(nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -1327,7 +1347,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
 
     char szVarName[64];
     snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].offset", iBlock );
-    poDMS->SetIntField( szVarName, (int) panBlockStart[iBlock] );
+    poDMS->SetIntField( szVarName, static_cast<int>(panBlockStart[iBlock]) );
 
     snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].size", iBlock );
     poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
@@ -1435,9 +1455,10 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             // Seek to offset
             if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
             {
-                CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
-                          (int) (nBlockOffset >> 32),
-                          (int) (nBlockOffset & 0xffffffff),
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Seek to %x:%08x on %p failed\n%s",
+                          static_cast<int>(nBlockOffset >> 32),
+                          static_cast<int>(nBlockOffset & 0xffffffff),
                           fpData, VSIStrerror(errno) );
                 return CE_Failure;
             }
@@ -1533,9 +1554,10 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
         if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_FileIO, "Seek to %x:%08x on %p failed\n%s",
-                      (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff),
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Seek to %x:%08x on %p failed\n%s",
+                      static_cast<int>(nBlockOffset >> 32),
+                      static_cast<int>(nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -1581,9 +1603,9 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Write of %d bytes at %x:%08x on %p failed.\n%s",
-                      (int) nBlockSize,
-                      (int) (nBlockOffset >> 32),
-                      (int) (nBlockOffset & 0xffffffff),
+                      static_cast<int>(nBlockSize),
+                      static_cast<int>(nBlockOffset >> 32),
+                      static_cast<int>(nBlockOffset & 0xffffffff),
                       fpData, VSIStrerror(errno) );
             return CE_Failure;
         }
@@ -2086,7 +2108,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
 
     if( (psRRDInfo->nEndOfFile
-         + (nOXSize * (double) nOYSize)
+         + (nOXSize * static_cast<double>(nOYSize))
          * (HFAGetDataTypeBits(eOverviewDataType) / 8)) > 2000000000.0 )
         bCreateLargeRaster = true;
 
