@@ -20,8 +20,9 @@
             <IncludeGeometryXML>false</IncludeGeometryXML>
             <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>
         </GML>
-        <!-- 64 for PostgreSQL compatiblity -->
-        <IdentifierMaxLength>64</IdentifierMaxLength>
+        <!-- 60 for PostgreSQL compatiblity. The maximum is 64 but reserve
+             some space so that the spatial index name can be formed -->
+        <IdentifierMaxLength>60</IdentifierMaxLength>
     </LayerBuildingRules>
 
     <XLinkResolution>
