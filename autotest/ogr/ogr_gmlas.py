@@ -2808,6 +2808,9 @@ def ogr_gmlas_identifier_truncation():
             <xs:element name="another_long_identifier" type="xs:string"/>
             <xs:element name="another_long_identifierbis" type="xs:string"/>
             <xs:element name="x" type="xs:string"/>
+            <xs:element name="noTCAMEL" type="xs:string"/>
+            <xs:element name="suuuuuuuuuuuperlong" type="xs:string"/>
+            <xs:element name="s_u_u_u_u_u_u_u_u_u_u_u_p_e_r_l_o_n_g" type="xs:string"/>
         </xs:sequence>
     </xs:complexType>
 </xs:element>
@@ -2859,6 +2862,21 @@ def ogr_gmlas_identifier_truncation():
         return 'fail'
     s = lyr.GetLayerDefn().GetFieldDefn(4).GetName()
     if s != 'x':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(5).GetName()
+    if s != 'noTCAMEL':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(6).GetName()
+    if s != 'suuuuuuuuu':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(7).GetName()
+    if s != '_r_l_o_n_g':
         gdaltest.post_reason('fail')
         print(s)
         return 'fail'
