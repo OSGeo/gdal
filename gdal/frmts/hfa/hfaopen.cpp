@@ -211,7 +211,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
         CPLFree(psInfo);
         return NULL;
     }
-    psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
+    psInfo->nEndOfFile = static_cast<GUInt32>(VSIFTellL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate the root entry.                                     */
@@ -1320,7 +1320,8 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 
         poProX->SetStringField( "projection.type.string", "PE_COORDSYS" );
         poProX->SetStringField( "projection.MIFDictionary.string",
-                                "{0:pcstring,}Emif_String,{1:x{0:pcstring,}Emif_String,coordSys,}PE_COORDSYS,." );
+                                "{0:pcstring,}Emif_String,{1:x{0:pcstring,}"
+                                "Emif_String,coordSys,}PE_COORDSYS,." );
 
 /* -------------------------------------------------------------------- */
 /*      Use a gross hack to scan ahead to the actual projection         */
@@ -1339,7 +1340,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
             iOffset++;
         }
 
-        CPLAssert( nDataSize > (int) strlen(pszPEString) + 10 );
+        CPLAssert( nDataSize > static_cast<int>(strlen(pszPEString)) + 10 );
 
         pabyData += 14;
         iOffset += 14;
@@ -1932,7 +1933,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 
     psInfo->poDictionary = new HFADictionary( psInfo->pszDictionary );
 
-    psInfo->nEndOfFile = (GUInt32) VSIFTellL( fp );
+    psInfo->nEndOfFile = static_cast<GUInt32>(VSIFTellL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Create a root entry.                                            */
@@ -2022,7 +2023,7 @@ CPLErr HFAFlush( HFAHandle hHFA )
     if( hHFA->poDictionary->bDictionaryTextDirty )
     {
         bRet &= VSIFSeekL( hHFA->fp, 0, SEEK_END ) >= 0;
-        nNewDictionaryPos = (GUInt32) VSIFTellL( hHFA->fp );
+        nNewDictionaryPos = static_cast<GUInt32>(VSIFTellL( hHFA->fp ));
         bRet &= VSIFWriteL( hHFA->poDictionary->osDictionaryText.c_str(),
                     strlen(hHFA->poDictionary->osDictionaryText.c_str()) + 1,
                     1, hHFA->fp ) > 0;
@@ -2227,15 +2228,19 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poEdms_State->SetStringField( "fileName.string",
                                       psInfo->pszIGEFilename );
 
-        poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
-                                 (int) (nStackValidFlagsOffset & 0xFFFFFFFF));
-        poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]",
-                                 (int) (nStackValidFlagsOffset >> 32) );
+        poEdms_State->SetIntField(
+            "layerStackValidFlagsOffset[0]",
+            static_cast<int>(nStackValidFlagsOffset & 0xFFFFFFFF));
+        poEdms_State->SetIntField(
+            "layerStackValidFlagsOffset[1]",
+            static_cast<int>(nStackValidFlagsOffset >> 32) );
 
-        poEdms_State->SetIntField( "layerStackDataOffset[0]",
-                                   (int) (nStackDataOffset & 0xFFFFFFFF) );
-        poEdms_State->SetIntField( "layerStackDataOffset[1]",
-                                   (int) (nStackDataOffset >> 32 ) );
+        poEdms_State->SetIntField(
+            "layerStackDataOffset[0]",
+            static_cast<int>(nStackDataOffset & 0xFFFFFFFF) );
+        poEdms_State->SetIntField(
+            "layerStackDataOffset[1]",
+            static_cast<int>(nStackDataOffset >> 32 ) );
         poEdms_State->SetIntField( "layerStackCount", nStackCount );
         poEdms_State->SetIntField( "layerStackIndex", nStackIndex );
     }
@@ -2400,8 +2405,9 @@ HFAHandle HFACreate( const char * pszFilename,
 /*      We can also force spill file creation using option              */
 /*      SPILL_FILE=YES.                                                 */
 /* -------------------------------------------------------------------- */
-    double dfApproxSize = (double)nBytesPerBlock * (double)nBlocks *
-        (double)nBands + 10000000.0;
+    const double dfApproxSize =
+        static_cast<double>(nBytesPerBlock) * static_cast<double>(nBlocks) *
+        static_cast<double>(nBands) + 10000000.0;
 
     if( dfApproxSize > 2147483648.0 && !bCreateAux )
         bCreateLargeRaster = true;
@@ -3198,7 +3204,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         if( iRemainder )
         {
             for( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
-                pabyBlockMap[i] = (GByte) ((1<<iRemainder) - 1);
+                pabyBlockMap[i] = static_cast<GByte>((1 << iRemainder) - 1);
         }
 
         bRet &= VSIFWriteL( pabyBlockMap, nBlockMapSize, 1, fpVSIL ) > 0;

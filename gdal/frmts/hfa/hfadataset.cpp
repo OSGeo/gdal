@@ -653,7 +653,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
 
     GDALDefaultRasterAttributeTable *poRAT = new GDALDefaultRasterAttributeTable();
 
-    for( int iCol = 0; iCol < (int)aoFields.size(); iCol++)
+    for( int iCol = 0; iCol < static_cast<int>(aoFields.size()); iCol++)
     {
         poRAT->CreateColumn(aoFields[iCol].sName, aoFields[iCol].eType, aoFields[iCol].eUsage);
         poRAT->SetRowCount(this->nRows);
@@ -751,7 +751,7 @@ int HFARasterAttributeTable::GetColumnCount() const
 
 const char *HFARasterAttributeTable::GetNameOfCol( int nCol ) const
 {
-    if( ( nCol < 0 ) || ( nCol >= (int)this->aoFields.size() ) )
+    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
         return NULL;
 
     return this->aoFields[nCol].sName;
@@ -763,7 +763,7 @@ const char *HFARasterAttributeTable::GetNameOfCol( int nCol ) const
 
 GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol( int nCol ) const
 {
-    if( ( nCol < 0 ) || ( nCol >= (int)this->aoFields.size() ) )
+    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
         return GFU_Generic;
 
     return this->aoFields[nCol].eUsage;
@@ -775,7 +775,7 @@ GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol( int nCol ) const
 
 GDALRATFieldType HFARasterAttributeTable::GetTypeOfCol( int nCol ) const
 {
-    if( ( nCol < 0 ) || ( nCol >= (int)this->aoFields.size() ) )
+    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
         return GFT_Integer;
 
     return this->aoFields[nCol].eType;
@@ -893,7 +893,9 @@ void HFARasterAttributeTable::SetValue( int iRow, int iField, int nValue )
 /*                          ValuesIO()                                  */
 /************************************************************************/
 
-CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, double *pdfData)
+CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          double *pdfData )
 {
     if( ( eRWFlag == GF_Write ) && ( this->eAccess == GA_ReadOnly ) )
     {
@@ -902,7 +904,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1102,7 +1104,9 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 /*                          ValuesIO()                                  */
 /************************************************************************/
 
-CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iStartRow, int iLength, int *pnData)
+CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
+                                          int iStartRow, int iLength,
+                                          int *pnData )
 {
     if( ( eRWFlag == GF_Write ) && ( this->eAccess == GA_ReadOnly ) )
     {
@@ -1111,7 +1115,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
         return CE_Failure;
     }
 
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1286,7 +1290,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
         return CE_Failure;
     }
 
-    if( iField < 0 || iField >= (int) aoFields.size() )
+    if( iField < 0 || iField >= static_cast<int>(aoFields.size()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iField (%d) out of range.", iField );
@@ -1299,7 +1303,8 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
         (iStartRow+iLength) > this->nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "iStartRow (%d) + iLength(%d) out of range.", iStartRow, iLength );
+                  "iStartRow (%d) + iLength(%d) out of range.",
+                  iStartRow, iLength );
 
         return CE_Failure;
     }
@@ -1423,10 +1428,13 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
 
             if( eRWFlag == GF_Read )
             {
-                if( (int)VSIFReadL( pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp ) != iLength )
+                if( static_cast<int>(
+                        VSIFReadL( pachColData, aoFields[iField].nElementSize,
+                                   iLength, hHFA->fp ) ) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                        "HFARasterAttributeTable::ValuesIO : Cannot read values");
+                              "HFARasterAttributeTable::ValuesIO: "
+                              "Cannot read values" );
                     CPLFree(pachColData);
                     return CE_Failure;
                 }
@@ -1515,10 +1523,13 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
 
                 // Note: HFAAllocateSpace now called by CreateColumn so space
                 // should exist.
-                if( (int)VSIFWriteL(pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp) != iLength )
+                if( static_cast<int>(
+                        VSIFWriteL(pachColData, aoFields[iField].nElementSize,
+                                   iLength, hHFA->fp)) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                        "HFARasterAttributeTable::ValuesIO : Cannot write values");
+                              "HFARasterAttributeTable::ValuesIO: "
+                              "Cannot write values");
                     CPLFree(pachColData);
                     return CE_Failure;
                 }
@@ -1595,7 +1606,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
         // Copy them back to ints converting 0..1 to 0..255 in
         // the same manner as the color table.
         for( int i = 0; i < iLength; i++ )
-            pnData[i] = MIN(255,(int) (padfData[i] * 256));
+            pnData[i] = MIN(255,static_cast<int>(padfData[i] * 256));
     }
 
     CPLFree(padfData);
@@ -1629,7 +1640,9 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
     {
         // Making the RAT larger - a bit hard.
         // We need to re-allocate space on disc.
-        for( int iCol = 0; iCol < (int)this->aoFields.size(); iCol++ )
+        for( int iCol = 0;
+             iCol < static_cast<int>(this->aoFields.size());
+             iCol++ )
         {
             // New space.
             const int nNewOffset = HFAAllocateSpace( this->hHFA->papoBand[this->nBand-1]->psInfo,
@@ -1645,21 +1658,28 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                     return;
                 }
                 // Read old data.
-                if( VSIFSeekL( hHFA->fp, aoFields[iCol].nDataOffset, SEEK_SET ) != 0 ||
-                    (int)VSIFReadL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
+                if( VSIFSeekL( hHFA->fp, aoFields[iCol].nDataOffset,
+                               SEEK_SET ) != 0 ||
+                    static_cast<int>(
+                        VSIFReadL(pData, aoFields[iCol].nElementSize,
+                                  this->nRows, hHFA->fp)) != this->nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                        "HFARasterAttributeTable::SetRowCount : Cannot read values");
+                              "HFARasterAttributeTable::SetRowCount: "
+                              "Cannot read values" );
                     CPLFree(pData);
                     return;
                 }
 
                 // Write data - new space will be uninitialised.
                 if( VSIFSeekL( hHFA->fp, nNewOffset, SEEK_SET ) != 0 ||
-                    (int)VSIFWriteL(pData, aoFields[iCol].nElementSize, this->nRows, hHFA->fp) != this->nRows )
+                    static_cast<int>(
+                        VSIFWriteL(pData, aoFields[iCol].nElementSize,
+                                   this->nRows, hHFA->fp)) != this->nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
-                            "HFARasterAttributeTable::SetRowCount : Cannot write values");
+                              "HFARasterAttributeTable::SetRowCount: "
+                              "Cannot write values");
                     CPLFree(pData);
                     return;
                 }
@@ -1676,7 +1696,9 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
     else if( iCount < this->nRows )
     {
         // Update the numRows.
-        for( int iCol = 0; iCol < (int)this->aoFields.size(); iCol++ )
+        for( int iCol = 0;
+             iCol < static_cast<int>(this->aoFields.size());
+             iCol++ )
         {
             aoFields[iCol].poColumn->SetIntField( "numRows", iCount);
         }
@@ -1701,7 +1723,8 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
 /* -------------------------------------------------------------------- */
     if( bLinearBinning )
     {
-        const int iBin = (int) floor((dfValue - dfRow0Min) / dfBinSize);
+        const int iBin =
+            static_cast<int>(floor((dfValue - dfRow0Min) / dfBinSize));
         if( iBin < 0 || iBin >= this->nRows )
             return -1;
 
@@ -1757,7 +1780,7 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
 
 int HFARasterAttributeTable::GetRowOfValue( int nValue ) const
 {
-    return GetRowOfValue( (double) nValue );
+    return GetRowOfValue( static_cast<double>(nValue) );
 }
 
 /************************************************************************/

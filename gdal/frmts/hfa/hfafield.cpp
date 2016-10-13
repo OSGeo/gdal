@@ -401,7 +401,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         if( chItemType == 'b' )
             nCount = 1;
 
-        /* Set the size from string length */
+        // Set the size from string length.
         else if( chReqType == 's' && (chItemType == 'c' || chItemType == 'C'))
         {
             if( pValue == NULL )
@@ -410,14 +410,14 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                 nCount = static_cast<GUInt32>(strlen((char *) pValue) + 1);
         }
 
-        /* set size based on index ... assumes in-order setting of array */
+        // Set size based on index. Assumes in-order setting of array.
         else
             nCount = nIndexValue+1;
 
-        if( (int) nCount + 8 > nDataSize )
+        if( static_cast<int>(nCount) + 8 > nDataSize )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to extend field %s in node past end of data,\n"
+                      "Attempt to extend field %s in node past end of data, "
                       "not currently supported.",
                       pszField );
             return CE_Failure;
@@ -503,7 +503,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         else if( dfDoubleValue < INT_MIN )
             nIntValue = INT_MIN;
         else
-            nIntValue = (int) dfDoubleValue;
+            nIntValue = static_cast<int>(dfDoubleValue);
     }
     else if( chReqType == 'i' )
     {
@@ -584,8 +584,6 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'S':
       {
-          short nNumber;
-
           if( nIndexValue*2 + 2 > nDataSize )
           {
               CPLError( CE_Failure, CPLE_AppDefined,
@@ -595,7 +593,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               return CE_Failure;
           }
 
-          nNumber = (short) nIntValue;
+          short nNumber = static_cast<short>(nIntValue);
           HFAStandard( 2, &nNumber );
           memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
       }
@@ -640,7 +638,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'f':
       {
-          float fNumber = (float) dfDoubleValue;
+          const float fNumber = static_cast<float>(dfDoubleValue);
 
           if( nIndexValue*4 + 4 > nDataSize )
           {
@@ -692,7 +690,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         // or type?
 
         if( nIndexValue == -3 )
-            nBaseItemType = (GInt16) nIntValue;
+            nBaseItemType = static_cast<GInt16>(nIntValue);
         else if( nIndexValue == -2 )
             nColumns = nIntValue;
         else if( nIndexValue == -1 )
@@ -865,7 +863,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         memcpy( &nOffset, pabyData+4, 4 );
         HFAStandard( 4, &nOffset );
 
-        if( nOffset != (GUInt32) (nDataOffset + 8) )
+        if( nOffset != static_cast<GUInt32>(nDataOffset + 8) )
         {
 #ifdef notdef
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -988,7 +986,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           memcpy( &fNumber, pabyData + nIndexValue*4, 4 );
           HFAStandard( 4, &fNumber );
           dfDoubleRet = fNumber;
-          nIntRet = (int) fNumber;
+          nIntRet = static_cast<int>(fNumber);
       }
       break;
 
@@ -1185,7 +1183,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               HFAStandard( 4, &fValue );
 
               dfDoubleRet = fValue;
-              nIntRet = (int) fValue;
+              nIntRet = static_cast<int>(fValue);
           }
           else if( nBaseItemType == EPT_f64 )
           {

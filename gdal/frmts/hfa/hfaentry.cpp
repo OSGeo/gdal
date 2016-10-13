@@ -550,7 +550,7 @@ GByte *HFAEntry::MakeData( int nSize )
     if( nSize == 0 && poType->nBytes > 0 )
         nSize = poType->nBytes;
 
-    if( (int) nDataSize < nSize && nSize > 0 )
+    if( static_cast<int>(nDataSize) < nSize && nSize > 0 )
     {
         pabyData = (GByte *) CPLRealloc(pabyData, nSize);
         memset( pabyData + nDataSize, 0, nSize - nDataSize );
@@ -677,10 +677,12 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
 /* -------------------------------------------------------------------- */
 /*      Scan children looking for this name.                            */
 /* -------------------------------------------------------------------- */
-    for( HFAEntry *poEntry = GetChild(); poEntry != NULL; poEntry = poEntry->GetNext() )
+    for( HFAEntry *poEntry = GetChild();
+         poEntry != NULL;
+         poEntry = poEntry->GetNext() )
     {
         if( EQUALN(poEntry->GetName(),pszName,nNameLen)
-            && (int) strlen(poEntry->GetName()) == nNameLen )
+            && static_cast<int>(strlen(poEntry->GetName())) == nNameLen )
         {
             if( pszName[nNameLen] == '.' )
             {
