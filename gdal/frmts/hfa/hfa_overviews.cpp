@@ -79,7 +79,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 /*      base band.                                                      */
 /* -------------------------------------------------------------------- */
         GDALDriver *poHFADriver = (GDALDriver *) GDALGetDriverByName("HFA");
-        if (poHFADriver == NULL)
+        if( poHFADriver == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "HFA driver is unavailable." );

@@ -1031,7 +1031,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 #endif
                     // Note: HFAAllocateSpace now called by CreateColumn so
                     // space should exist.
-                    if((int)VSIFWriteL(pdfData, sizeof(double), iLength, hHFA->fp) != iLength)
+                    if( (int)VSIFWriteL(pdfData, sizeof(double), iLength, hHFA->fp) != iLength )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
                             "HFARasterAttributeTable::ValuesIO : Cannot write values");
@@ -1148,7 +1148,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 
             if( eRWFlag == GF_Read )
             {
-                if ((int)VSIFReadL( panColData, sizeof(GInt32), iLength, hHFA->fp ) != iLength)
+                if( (int)VSIFReadL( panColData, sizeof(GInt32), iLength, hHFA->fp ) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "HFARasterAttributeTable::ValuesIO : Cannot read values");
@@ -1173,7 +1173,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 GDALSwapWords( panColData, 4, iLength, 4 );
 #endif
                 // Note: HFAAllocateSpace now called by CreateColumn so space should exist
-                if((int)VSIFWriteL(panColData, sizeof(GInt32), iLength, hHFA->fp) != iLength)
+                if( (int)VSIFWriteL(panColData, sizeof(GInt32), iLength, hHFA->fp) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "HFARasterAttributeTable::ValuesIO : Cannot write values");
@@ -1420,7 +1420,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
 
             if( eRWFlag == GF_Read )
             {
-                if ((int)VSIFReadL( pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp ) != iLength)
+                if( (int)VSIFReadL( pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp ) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "HFARasterAttributeTable::ValuesIO : Cannot read values");
@@ -1489,7 +1489,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     // re-allocate our buffer
                     CPLFree(pachColData);
                     pachColData = (char*)VSI_MALLOC2_VERBOSE(iLength, nNewMaxChars);
-                    if(pachColData == NULL )
+                    if( pachColData == NULL )
                     {
                         return CE_Failure;
                     }
@@ -1507,7 +1507,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                     strcpy(&pachColData[nNewMaxChars*i], papszStrList[i]);
 
                 // Note: HFAAllocateSpace now called by CreateColumn so space should exist
-                if((int)VSIFWriteL(pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp) != iLength)
+                if( (int)VSIFWriteL(pachColData, aoFields[iField].nElementSize, iLength, hHFA->fp) != iLength )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                         "HFARasterAttributeTable::ValuesIO : Cannot write values");
@@ -1555,7 +1555,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
 
     if( eRWFlag == GF_Read )
     {
-        if ((int)VSIFReadL(padfData, sizeof(double), iLength, hHFA->fp ) != iLength)
+        if( (int)VSIFReadL(padfData, sizeof(double), iLength, hHFA->fp ) != iLength )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                 "HFARasterAttributeTable::ColorsIO : Cannot read values");
@@ -1572,7 +1572,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField, int iSt
         GDALSwapWords( padfData, 8, iLength, 8 );
 #endif
         // Note: HFAAllocateSpace now called by CreateColumn so space should exist
-        if((int)VSIFWriteL(padfData, sizeof(double), iLength, hHFA->fp) != iLength)
+        if( (int)VSIFWriteL(padfData, sizeof(double), iLength, hHFA->fp) != iLength )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                 "HFARasterAttributeTable::ColorsIO : Cannot write values");
@@ -1818,7 +1818,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
 
     HFAEntry *poColumn = poDT->GetNamedChild(pszFieldName);
 
-    if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
+    if( poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column") )
         poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszFieldName, "Edsc_Column",
                                      poDT );
@@ -2245,7 +2245,7 @@ void HFARasterBand::ReadHistogramMetadata()
         return;
 
     int nNumBins = poEntry->GetIntField( "numRows" );
-    if(nNumBins < 0)
+    if( nNumBins < 0 )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -2375,12 +2375,12 @@ void HFARasterBand::ReadHistogramMetadata()
     {
         char szBuf[32] = {};
         snprintf( szBuf, 31, CPL_FRMT_GUIB, panHistValues[nBin] );
-        if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
+        if( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
         {
             nBufSize *= 2;
             char* pszNewBinValues = static_cast<char *>(
                 VSI_REALLOC_VERBOSE( pszBinValues, nBufSize ));
-            if (pszNewBinValues == NULL)
+            if( pszNewBinValues == NULL )
             {
                 break;
             }
@@ -2484,7 +2484,7 @@ void HFARasterBand::EstablishOverviews()
         {
             papoOverviewBands[iOvIndex] =
                 new HFARasterBand( (HFADataset *) poDS, nBand, iOvIndex );
-            if (papoOverviewBands[iOvIndex]->GetXSize() == 0)
+            if( papoOverviewBands[iOvIndex]->GetXSize() == 0 )
             {
                 delete papoOverviewBands[iOvIndex];
                 papoOverviewBands[iOvIndex] = NULL;
@@ -3086,7 +3086,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
     poDT->SetIntField( "numrows", nRowCount );
     /* Check if binning is set on this RAT */
     double dfBinSize, dfRow0Min;
-    if(poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize))
+    if( poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize) )
     {
         /* then it should have an Edsc_BinFunction */
         HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
@@ -3104,7 +3104,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 /* -------------------------------------------------------------------- */
 /*      Loop through each column in the RAT                             */
 /* -------------------------------------------------------------------- */
-    for(int col = 0; col < poRAT->GetColumnCount(); col++)
+    for( int col = 0; col < poRAT->GetColumnCount(); col++ )
     {
         const char *pszName = NULL;
 
@@ -3144,7 +3144,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 
         HFAEntry *poColumn = poDT->GetNamedChild(pszName);
 
-        if(poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column"))
+        if( poColumn == NULL || !EQUAL(poColumn->GetType(),"Edsc_Column") )
             poColumn = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                      pszName, "Edsc_Column",
                                      poDT );
@@ -3226,7 +3226,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
             }
             CPLFree( pachColData );
         }
-        else if (poRAT->GetTypeOfCol(col) == GFT_Integer)
+        else if( poRAT->GetTypeOfCol(col) == GFT_Integer )
         {
             int nOffset =
                 HFAAllocateSpace(
@@ -3695,7 +3695,7 @@ CPLErr HFADataset::WriteProjection()
     }
     else if( EQUAL(pszProjName,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
-        if (oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE) == 0.0)
+        if( oSRS.GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE) == 0.0 )
         {
             sPro.proNumber = EPRJ_HOTINE_OBLIQUE_MERCATOR;
             sPro.proName = const_cast<char *>("Oblique Mercator (Hotine)");
@@ -4020,7 +4020,7 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = 0;
         sPro.proParams[7] = 0;
     }
-    else if (EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED))
+    else if( EQUAL(pszProjName, SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED) )
     {
         sPro.proNumber = EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED;
         sPro.proName = const_cast<char *>("Transverse Mercator (South Orientated)");
@@ -4034,7 +4034,7 @@ CPLErr HFADataset::WriteProjection()
     // Anything we can't map, we store as an ESRI PE_STRING.
     else if( oSRS.IsProjected() || oSRS.IsGeographic() )
     {
-        if(!bPEStringStored)
+        if( !bPEStringStored )
         {
             oSRS.morphToESRI();
             char *pszPEString = NULL;
@@ -4504,21 +4504,21 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
           /* Historically, hfa used esri state plane zone code. Try esri pe string first. */
           int zoneCode = ESRIToUSGSZone(psPro->proZone);
           const char* pszDatum;
-          if(psDatum)
+          if( psDatum )
               pszDatum = psDatum->datumname;
           else
               pszDatum = "HARN";
           const char* pszUnits;
-          if(psMapInfo)
+          if( psMapInfo )
               pszUnits = psMapInfo->units;
-          else if(pszUnitsName && strlen(pszUnitsName) > 0)
+          else if( pszUnitsName && strlen(pszUnitsName) > 0 )
               pszUnits = pszUnitsName;
           else
               pszUnits = "meters";
           int proNu = 0;
-          if(psPro)
+          if( psPro )
               proNu = psPro->proNumber;
-          if(oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum, pszUnits, proNu) == OGRERR_NONE)
+          if( oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum, pszUnits, proNu) == OGRERR_NONE )
           {
               CPLFree( pszUnitsName );
               oSRS.morphFromESRI();
@@ -4553,9 +4553,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 
       case EPRJ_LAMBERT_CONFORMAL_CONIC:
         // check the possible Wisconsin first
-        if(psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN"))
+        if( psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN") )
         {
-            if(oSRS.ImportFromESRIWisconsinWKT("Lambert_Conformal_Conic", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE)
+            if( oSRS.ImportFromESRIWisconsinWKT("Lambert_Conformal_Conic", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE )
             {
                 oSRS.morphFromESRI();
                 oSRS.AutoIdentifyEPSG();
@@ -4601,9 +4601,9 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
       case EPRJ_TRANSVERSE_MERCATOR:
       case EPRJ_GAUSS_KRUGER:
         // check the possible Wisconsin first
-        if(psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN"))
+        if( psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN") )
         {
-            if(oSRS.ImportFromESRIWisconsinWKT("Transverse_Mercator", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE)
+            if( oSRS.ImportFromESRIWisconsinWKT("Transverse_Mercator", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE )
             {
                 oSRS.morphFromESRI();
                 oSRS.AutoIdentifyEPSG();
@@ -5062,11 +5062,11 @@ CPLErr HFADataset::ReadProjection()
 
     CPLFree( pszProjection );
 
-    if((psMapInfo == NULL && poMapInformation == NULL) ||
-       ((!psDatum || strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) &&
-       (!psPro || strlen(psPro->proName) == 0 || EQUAL(psPro->proName, "Unknown")) &&
-       (psMapInfo && (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown"))) &&
-       (!psPro || psPro->proZone == 0)) )
+    if( (psMapInfo == NULL && poMapInformation == NULL) ||
+        ((!psDatum || strlen(psDatum->datumname) == 0 || EQUAL(psDatum->datumname, "Unknown")) &&
+         (!psPro || strlen(psPro->proName) == 0 || EQUAL(psPro->proName, "Unknown")) &&
+         (psMapInfo && (strlen(psMapInfo->proName) == 0 || EQUAL(psMapInfo->proName, "Unknown"))) &&
+         (!psPro || psPro->proZone == 0)) )
     {
         pszProjection = CPLStrdup("");
         return CE_None;
@@ -5152,7 +5152,7 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
     {
         for( int i = 0; i < nListBands; i++ )
         {
-            if (HFAGetOverviewCount(hHFA, panBandList[i]) > 0)
+            if( HFAGetOverviewCount(hHFA, panBandList[i]) > 0 )
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                         "Cannot add external overviews when there are already internal overviews");
@@ -5175,7 +5175,7 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
         GDALRasterBand *poBand = GetRasterBand( panBandList[i] );
 
         //GetRasterBand can return NULL
-        if(poBand == NULL)
+        if( poBand == NULL )
         {
             CPLError(CE_Failure, CPLE_ObjectNull,
                         "GetRasterBand failed");

@@ -208,7 +208,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 
     osFieldName.Printf("%s.%s", pszMIFObjectPath, "MIFDictionary" );
     const char *pszField = poContainer->GetStringField( osFieldName.c_str() );
-    if (pszField == NULL)
+    if( pszField == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
                  osFieldName.c_str());
@@ -218,7 +218,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 
     osFieldName.Printf("%s.%s", pszMIFObjectPath, "type.string" );
     pszField = poContainer->GetStringField( osFieldName.c_str() );
-    if (pszField == NULL)
+    if( pszField == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
                  osFieldName.c_str());
@@ -230,7 +230,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     int nRemainingDataSize = 0;
     pszField = poContainer->GetStringField( osFieldName.c_str(),
                                             NULL, &nRemainingDataSize );
-    if (pszField == NULL)
+    if( pszField == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s entry",
                  osFieldName.c_str());
@@ -241,7 +241,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     // we rudely look before the field data to get at the pointer/size info
     memcpy( &nMIFObjectSize, pszField-8, 4 );
     HFAStandard( 4, &nMIFObjectSize );
-    if (nMIFObjectSize <= 0)
+    if( nMIFObjectSize <= 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d)",
                  nMIFObjectSize);
@@ -249,7 +249,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     }
 
     // check that we won't copy more bytes than available in the buffer
-    if (nMIFObjectSize > nRemainingDataSize)
+    if( nMIFObjectSize > nRemainingDataSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d > %d)",
                  nMIFObjectSize, nRemainingDataSize);
@@ -257,7 +257,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     }
 
     GByte* l_pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
-    if (l_pabyData == NULL)
+    if( l_pabyData == NULL )
         return NULL;
 
     memcpy( l_pabyData, pszField, nMIFObjectSize );
@@ -483,7 +483,7 @@ void HFAEntry::LoadData()
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
     pabyData = (GByte *) VSI_MALLOC_VERBOSE(nDataSize + 1);
-    if (pabyData == NULL)
+    if( pabyData == NULL )
     {
         return;
     }
@@ -568,10 +568,10 @@ GByte *HFAEntry::MakeData( int nSize )
         {
             nFilePos = 0;
             nDataPos = 0;
-            if (poPrev != NULL) poPrev->MarkDirty();
-            if (poNext != NULL) poNext->MarkDirty();
-            if (poChild != NULL) poChild->MarkDirty();
-            if (poParent != NULL) poParent->MarkDirty();
+            if( poPrev != NULL ) poPrev->MarkDirty();
+            if( poNext != NULL ) poNext->MarkDirty();
+            if( poChild != NULL ) poChild->MarkDirty();
+            if( poParent != NULL ) poParent->MarkDirty();
         }
     }
     else
