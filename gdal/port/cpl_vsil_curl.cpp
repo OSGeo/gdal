@@ -730,58 +730,6 @@ vsi_l_offset VSICurlHandle::GetFileSize(bool bSetError)
 
     bHasComputedFileSize = true;
 
-    /* Consider that only the files whose extension ends up with one that is */
-    /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
-    /* This can speeds up dramatically open experience, in case the server */
-    /* cannot return a file list */
-    /* {noext} can be used as a special token to mean file with no extension */
-    /* For example : */
-    /* gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif */
-    const char* pszAllowedExtensions =
-        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
-    if (pszAllowedExtensions)
-    {
-        char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
-        const size_t nURLLen = strlen(pszURL);
-        bool bFound = false;
-        for(int i=0;papszExtensions[i] != NULL;i++)
-        {
-            const size_t nExtensionLen = strlen(papszExtensions[i]);
-            if( EQUAL(papszExtensions[i], "{noext}") )
-            {
-                const char* pszLastSlash = strrchr(pszURL, '/');
-                if( pszLastSlash != NULL && strchr(pszLastSlash, '.') == NULL )
-                {
-                    bFound = true;
-                    break;
-                }
-            }
-            else if (nURLLen > nExtensionLen &&
-                EQUAL(pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
-            {
-                bFound = true;
-                break;
-            }
-        }
-
-        if (!bFound)
-        {
-            eExists = EXIST_NO;
-            fileSize = 0;
-
-            CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
-            cachedFileProp->bHasComputedFileSize = true;
-            cachedFileProp->fileSize = fileSize;
-            cachedFileProp->eExists = eExists;
-
-            CSLDestroy(papszExtensions);
-
-            return 0;
-        }
-
-        CSLDestroy(papszExtensions);
-    }
-
 #if LIBCURL_VERSION_NUM < 0x070B00
     /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
     /* previously set, so we have to reinit the connection handle */
@@ -2110,6 +2058,53 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(const char* pszURL)
 }
 
 /************************************************************************/
+/*                        IsAllowedExtension()                          */
+/************************************************************************/
+
+static bool IsAllowedExtension( const char* pszFilename )
+{
+    /* Consider that only the files whose extension ends up with one that is */
+    /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
+    /* This can speeds up dramatically open experience, in case the server */
+    /* cannot return a file list */
+    /* {noext} can be used as a special token to mean file with no extension */
+    /* For example : */
+    /* gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif */
+    const char* pszAllowedExtensions =
+        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
+    if (pszAllowedExtensions)
+    {
+        char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
+        const size_t nURLLen = strlen(pszFilename);
+        bool bFound = false;
+        for(int i=0;papszExtensions[i] != NULL;i++)
+        {
+            const size_t nExtensionLen = strlen(papszExtensions[i]);
+            if( EQUAL(papszExtensions[i], "{noext}") )
+            {
+                const char* pszLastSlash = strrchr(pszFilename, '/');
+                if( pszLastSlash != NULL && strchr(pszLastSlash, '.') == NULL )
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+            else if (nURLLen > nExtensionLen &&
+                EQUAL(pszFilename + nURLLen - nExtensionLen, papszExtensions[i]))
+            {
+                bFound = true;
+                break;
+            }
+        }
+
+        CSLDestroy(papszExtensions);
+
+        return bFound;
+    }
+    return TRUE;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2124,6 +2119,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                  "Only read-only mode is supported for /vsicurl");
         return NULL;
     }
+    if( !IsAllowedExtension( pszFilename ) )
+        return NULL;
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
@@ -3013,6 +3010,9 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
     const CPLString osFilename(pszFilename);
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
+
+    if( !IsAllowedExtension( pszFilename ) )
+        return -1;
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
