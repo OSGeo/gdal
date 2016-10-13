@@ -1081,7 +1081,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
             - padfGeoTransform[5]*0.5;
         padfGeoTransform[4] = 0.0;
 
-        // special logic to fixup odd angular units.
+        // Special logic to fixup odd angular units.
         if( EQUAL(psMapInfo->units,"ds") )
         {
             padfGeoTransform[0] /= 3600.0;
@@ -1119,10 +1119,10 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
         != NULL )
         return FALSE;
 
-    // we should check that the exponent list is 0 0 1 0 0 1 but
-    // we don't because we are lazy
+    // We should check that the exponent list is 0 0 1 0 0 1, but
+    // we don't because we are lazy.
 
-    // fetch geotransform values.
+    // Fetch geotransform values.
     double adfXForm[6];
 
     adfXForm[0] = poXForm0->GetDoubleField( "polycoefvector[0]" );
@@ -1132,7 +1132,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
     adfXForm[2] = poXForm0->GetDoubleField( "polycoefmtx[2]" );
     adfXForm[5] = poXForm0->GetDoubleField( "polycoefmtx[3]" );
 
-    // invert
+    // Invert.
 
     if( !HFAInvGeoTransform( adfXForm, padfGeoTransform ) )
         memset( padfGeoTransform, 0, 6 * sizeof(double) );
@@ -2298,7 +2298,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         chBandType = 'c';
     }
 
-    // the first value in the entry below gives the number of pixels within a block
+    // The first value in the entry below gives the number of pixels
+    // within a block.
     snprintf( szLDict, sizeof(szLDict), "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
 
     poEhfa_Layer = HFAEntry::New( psInfo, "Ehfa_Layer", "Ehfa_Layer",
@@ -2333,7 +2334,7 @@ HFAHandle HFACreate( const char * pszFilename,
     if( pszValue != NULL )
     {
         nBlockSize = atoi( pszValue );
-        // check for sane values
+        // Check for sane values.
         if( nBlockSize == 0 ||
             ((( nBlockSize < 32 ) || (nBlockSize > 2048))
             && !CPLTestBool(CPLGetConfigOption("FORCE_BLOCKSIZE", "NO"))) )
@@ -2405,7 +2406,7 @@ HFAHandle HFACreate( const char * pszFilename,
     if( dfApproxSize > 2147483648.0 && !bCreateAux )
         bCreateLargeRaster = true;
 
-    // erdas imagine creates this entry even if an external spill file is used
+    // Erdas Imagine creates this entry even if an external spill file is used.
     if( !bCreateAux )
     {
         HFAEntry *poImgFormat;
@@ -2730,7 +2731,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     bool bCreatedHistogramParameters = false;
     bool bCreatedStatistics = false;
     const char * const * pszAuxMetaData = GetHFAAuxMetaDataList();
-    // check each metadata item.
+    // Check each metadata item.
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
     {
         char *pszKey = NULL;
@@ -2747,7 +2748,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
         if( pszAuxMetaData[i] != NULL )
         {
-            // found one, get the right entry
+            // Found one, get the right entry.
             HFAEntry *poEntry = NULL;
 
             if( strlen(pszAuxMetaData[i]) > 0 )
@@ -2757,7 +2758,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
             if( poEntry == NULL && strlen(pszAuxMetaData[i+3]) > 0 )
             {
-                // child does not yet exist --> create it
+                // Child does not yet exist --> create it,
                 poEntry = HFAEntry::New( hHFA, pszAuxMetaData[i], pszAuxMetaData[i+3],
                                         poNode );
 
@@ -2766,9 +2767,9 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 
                 if( STARTS_WITH_CI(pszAuxMetaData[i], "HistogramParameters") )
                 {
-                    // this is a bit nasty I need to set the string field for the object
-                    // first because the SetStringField sets the count for the object
-                    // BinFunction to the length of the string
+                    // A bit nasty.  Need to set the string field for the object
+                    // first because the SetStringField sets the count for the
+                    // object BinFunction to the length of the string.
                     poEntry->MakeData( 70 );
                     poEntry->SetStringField( "BinFunction.binFunctionType", "direct" );
 
@@ -2827,7 +2828,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         HFAEntry * poEntry = poNode->GetNamedChild( "HistogramParameters" );
         if( poEntry != NULL && bCreatedHistogramParameters )
         {
-            // if this node exists we have added Histogram data -- complete with some defaults
+            // If this node exists we have added Histogram data -- complete with
+            // some defaults.
             poEntry->SetIntField( "SkipFactorX", 1 );
             poEntry->SetIntField( "SkipFactorY", 1 );
 
@@ -2835,14 +2837,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             double dMinLimit = poEntry->GetDoubleField( "BinFunction.minLimit" );
             double dMaxLimit = poEntry->GetDoubleField( "BinFunction.maxLimit" );
 
-            // fill the descriptor table - check it isn't there already
+            // Fill the descriptor table - check it isn't there already.
             poEntry = poNode->GetNamedChild( "Descriptor_Table" );
             if( poEntry == NULL || !EQUAL(poEntry->GetType(),"Edsc_Table") )
                 poEntry = HFAEntry::New( hHFA, "Descriptor_Table", "Edsc_Table", poNode );
 
             poEntry->SetIntField( "numRows", nNumBins );
 
-            // bin function
+            // Bin function.
             HFAEntry * poBinFunc = poEntry->GetNamedChild( "#Bin_Function#" );
             if( poBinFunc == NULL || !EQUAL(poBinFunc->GetType(),"Edsc_BinFunction") )
                 poBinFunc = HFAEntry::New( hHFA, "#Bin_Function#", "Edsc_BinFunction", poEntry );
@@ -2851,24 +2853,24 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             poBinFunc->SetIntField( "numBins", nNumBins );
             poBinFunc->SetDoubleField( "minLimit", dMinLimit );
             poBinFunc->SetDoubleField( "maxLimit", dMaxLimit );
-            // direct for thematic layers, linear otherwise
+            // Direct for thematic layers, linear otherwise.
             if( STARTS_WITH_CI(poNode->GetStringField("layerType"), "thematic") )
                 poBinFunc->SetStringField( "binFunctionType", "direct" );
             else
                 poBinFunc->SetStringField( "binFunctionType", "linear" );
 
-            // we need a child named histogram
+            // We need a child named histogram.
             HFAEntry * poHisto = poEntry->GetNamedChild( "Histogram" );
             if( poHisto == NULL || !EQUAL(poHisto->GetType(),"Edsc_Column") )
                 poHisto = HFAEntry::New( hHFA, "Histogram", "Edsc_Column", poEntry );
 
             poHisto->SetIntField( "numRows", nNumBins );
-            // allocate space for the bin values
+            // Allocate space for the bin values.
             GUInt32 nOffset = HFAAllocateSpace( hHFA, nNumBins*8 );
             poHisto->SetIntField( "columnDataPtr", nOffset );
             poHisto->SetStringField( "dataType", "real" );
             poHisto->SetIntField( "maxNumChars", 0 );
-            // write out histogram data
+            // Write out histogram data.
             char * pszWork = pszBinValues;
             for( int nBin = 0; nBin < nNumBins; ++nBin )
             {
@@ -2887,13 +2889,14 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
         else if( poEntry != NULL )
         {
-            // In this case, there are HistogramParameters present, but we did not
-            // create them. However, we might be modifying them, in the case where
-            // the data has changed and the histogram counts need to be updated. It could
-            // be worse than that, but that is all we are going to cope with for now.
-            // We are assuming that we did not change any of the other stuff, like
-            // skip factors and so forth. The main need for this case is for programs
-            // (such as Imagine itself) which will happily modify the pixel values
+            // In this case, there are HistogramParameters present, but we did
+            // not create them. However, we might be modifying them, in the case
+            // where the data has changed and the histogram counts need to be
+            // updated. It could be worse than that, but that is all we are
+            // going to cope with for now.  We are assuming that we did not
+            // change any of the other stuff, like skip factors and so
+            // forth. The main need for this case is for programs (such as
+            // Imagine itself) which will happily modify the pixel values
             // without re-calculating the histogram counts.
             int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
             HFAEntry *poEntryDescrTbl = poNode->GetNamedChild( "Descriptor_Table" );
@@ -2905,7 +2908,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             if( poHisto != NULL )
             {
                 int nOffset = poHisto->GetIntField( "columnDataPtr" );
-                // write out histogram data
+                // Write out histogram data.
                 char * pszWork = pszBinValues;
 
                 // Check whether histogram counts were written as int or double
@@ -2954,7 +2957,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                           "Eimg_StatisticsParameters830", poNode );
 
         poEntry->MakeData( 70 );
-        //poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
+        // poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
 
         poEntry->SetIntField( "SkipFactorX", 1 );
         poEntry->SetIntField( "SkipFactorY", 1 );
@@ -3272,7 +3275,7 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
         || (psRetPoly->order == 3 && termcount != 10) )
         return FALSE;
 
-    // we don't check the exponent organization for now.  Hopefully
+    // We don't check the exponent organization for now.  Hopefully
     // it is always standard.
 
 /* -------------------------------------------------------------------- */
@@ -3744,7 +3747,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
         HFAEntry::BuildEntryFromMIFObject( poXForm, "outputElevationInfo" );
     if( poElevInfo )
     {
-        //poElevInfo->DumpFieldValues( stdout, "" );
+        // poElevInfo->DumpFieldValues( stdout, "" );
 
         if( poElevInfo->GetDataSize() != 0 )
         {
@@ -3889,7 +3892,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
             }
         }
 
-        // try to make sure the RRDNamesList is big enough to hold the
+        // Try to make sure the RRDNamesList is big enough to hold the
         // adjusted name list.
         if( strlen(pszNewBase) > strlen(pszOldBase) )
         {

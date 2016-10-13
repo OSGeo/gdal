@@ -79,7 +79,8 @@ static GByte _FindNumBits( GUInt32 range )
   return 32;
 }
 
-/* Gets the value from the uncompressed block as a GUInt32 no matter the data type */
+// Gets the value from the uncompressed block as a GUInt32 no matter
+// the data type.
 GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
 {
   GUInt32 val = 0;
@@ -123,8 +124,8 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   }
   else
   {
-    /* Should not get to here - check in compressBlock() should return false if
-    we can't compress this blcok because we don't know about the type */
+    // Should not get to here.  Check in compressBlock() should return false if
+    // we can't compress this blcok because we don't know about the type.
     CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n",
           m_eDataType,
           m_nDataTypeNumBits );
@@ -134,12 +135,13 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   return val;
 }
 
-/* Finds the minimum value in a type specific fashion. This value is
-  subtracted from each value in the compressed dataset. The maxmimum
-  value is also found and the number of bits that the range can be stored
-  is also returned. */
-/* TODO: Minimum value returned as pNumBits is now 8 - Imagine
-  can handle 1, 2, and 4 bits as well */
+// Finds the minimum value in a type specific fashion. This value is
+// subtracted from each value in the compressed dataset. The maxmimum
+// value is also found and the number of bits that the range can be stored
+// is also returned.
+//
+// TODO: Minimum value returned as pNumBits is now 8 - Imagine
+// can handle 1, 2, and 4 bits as well.
 GUInt32 HFACompress::findMin( GByte *pNumBits )
 {
   GUInt32 u32Min = valueAsUInt32( 0 );

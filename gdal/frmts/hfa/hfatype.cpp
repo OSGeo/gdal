@@ -115,7 +115,7 @@ const char *HFAType::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
 /*      Collect the name.                                               */
 /* -------------------------------------------------------------------- */
-    pszInput++;  // skip `}'
+    pszInput++;  // Skip `}'
     int i = 0;  // Used after for.
     for( ; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
     if( pszInput[i] == '\0' )
@@ -282,9 +282,9 @@ HFAType::GetInstCount( const char * pszFieldPath,
                        GUInt32 /* nDataOffset */,
                        int nDataSize )
 {
-    /* int nArrayIndex = 0; */
+    // int nArrayIndex = 0;
     int nNameLen = 0;
-    /*const char *pszRemainder;*/
+    // const char *pszRemainder;
 
 /* -------------------------------------------------------------------- */
 /*      Parse end of field name, possible index value and               */
@@ -294,12 +294,12 @@ HFAType::GetInstCount( const char * pszFieldPath,
     {
         const char *pszEnd = strchr(pszFieldPath,'[');
 
-        /* nArrayIndex = atoi(pszEnd+1); */
+        // nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        /*pszRemainder = strchr(pszFieldPath,'.');
-        if( pszRemainder != NULL )
-            pszRemainder++;*/
+        // pszRemainder = strchr(pszFieldPath,'.');
+        // if( pszRemainder != NULL )
+        //    pszRemainder++;
     }
     else if( strchr(pszFieldPath,'.') != NULL )
     {
@@ -307,12 +307,12 @@ HFAType::GetInstCount( const char * pszFieldPath,
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        /*pszRemainder = pszEnd + 1;*/
+        // pszRemainder = pszEnd + 1;
     }
     else
     {
         nNameLen = static_cast<int>(strlen(pszFieldPath));
-        /*pszRemainder = NULL;*/
+        // pszRemainder = NULL;
     }
 
 /* -------------------------------------------------------------------- */

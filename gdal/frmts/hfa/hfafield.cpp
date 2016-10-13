@@ -156,7 +156,7 @@ const char *HFAField::Initialize( const char * pszInput )
 
         chItemType = 'o';
 
-        // find the comma terminating the type name.
+        // Find the comma terminating the type name.
         for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
         if( pszInput[i] == '\0' )
             return NULL;
@@ -397,7 +397,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
         // The count returned for BASEDATA's are the contents,
         // but here we really want to mark it as one BASEDATA instance
-        // (see #2144)
+        // (see #2144).
         if( chItemType == 'b' )
             nCount = 1;
 
@@ -423,7 +423,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             return CE_Failure;
         }
 
-        // we will update the object count iff we are writing beyond the end
+        // We will update the object count iff we are writing beyond the end.
         GUInt32 nOffset;
         memcpy( &nOffset, pabyData, 4 );
         HFAStandard( 4, &nOffset );
@@ -688,7 +688,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         memcpy( &nBaseItemType, pabyData+8, 2 );
         HFAStandard( 2, &nBaseItemType );
 
-        // Are we using special index values to update the rows, columnrs
+        // Are we using special index values to update the rows, columns
         // or type?
 
         if( nIndexValue == -3 )
@@ -708,7 +708,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         memcpy( pabyData+4, &nColumns, 4 );
         HFAStandard( 2, &nBaseItemType );
         memcpy ( pabyData + 8, &nBaseItemType, 2 );
-        HFAStandard( 2, &nBaseItemType ); // swap back for our use.
+        HFAStandard( 2, &nBaseItemType );  // Swap back for our use.
 
         if( nBaseItemType < EPT_MIN || nBaseItemType > EPT_MAX )
             return CE_Failure;

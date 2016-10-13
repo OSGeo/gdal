@@ -124,7 +124,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 int nXSize, int nYSize, EPTType eDataType,
                 char **papszOptions,
 
-                // these are only related to external (large) files
+                // These are only related to external (large) files.
                 GIntBig nStackValidFlagsOffset,
                 GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex );
@@ -454,7 +454,7 @@ public:
   // This is the method that does the work.
   bool compressBlock();
 
-  // static method to allow us to query whether HFA type supported
+  // Static method to allow us to query whether HFA type supported.
   static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
@@ -476,7 +476,8 @@ private:
   GUInt32 m_nBlockSize;
   GUInt32 m_nBlockCount;
   EPTType m_eDataType;
-  int m_nDataTypeNumBits; // the number of bits the datatype we are trying to compress takes
+  // The number of bits the datatype we are trying to compress takes.
+  int m_nDataTypeNumBits;
 
   GByte   *m_pCounts;
   GByte   *m_pCurrCount;
@@ -488,8 +489,8 @@ private:
 
   GUInt32  m_nMin;
   GUInt32  m_nNumRuns;
-  GByte    m_nNumBits; // the number of bits needed to compress the range of values in the block
-
+  // The number of bits needed to compress the range of values in the block.
+  GByte    m_nNumBits;
 };
 
 #endif /* ndef HFA_P_H_INCLUDED */

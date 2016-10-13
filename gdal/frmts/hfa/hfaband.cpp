@@ -296,7 +296,7 @@ CPLErr HFABand::LoadOverviews()
             }
         }
 
-        // bubble sort into biggest to smallest order.
+        // Bubble sort into biggest to smallest order.
         for( int i1 = 0; i1 < nOverviews; i1++ )
         {
             for( int i2 = 0; i2 < nOverviews-1; i2++ )
@@ -863,7 +863,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                //CPLAssert( nDataValue < 256 );
+                // CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
@@ -878,7 +878,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                //CPLAssert( nDataValue < 256 );
+                // CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput++] = (GByte)nDataValue;
             }
         }
@@ -1165,7 +1165,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     if( VSIFSeekL( fpData, nBlockOffset, SEEK_SET ) != 0 )
     {
         // XXX: We will not report error here, because file just may be
-        // in update state and data for this block will be available later
+        // in update state and data for this block will be available later.
         if( psInfo->eAccess == HFA_Update )
         {
             memset( pData, 0,
@@ -1288,13 +1288,13 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
-#endif /* def CPL_MSB */
+#endif  // def CPL_MSB
 
     return CE_None;
 }
 
 /************************************************************************/
-/*                           ReAllocBlock()                           */
+/*                           ReAllocBlock()                             */
 /************************************************************************/
 
 void HFABand::ReAllocBlock( int iBlock, int nSize )
@@ -1308,7 +1308,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     if( ( panBlockStart[iBlock] != 0 ) && ( nSize <= panBlockSize[iBlock] ) )
     {
         panBlockSize[iBlock] = nSize;
-        //fprintf( stderr, "Reusing block %d\n", iBlock );
+        // fprintf( stderr, "Reusing block %d\n", iBlock );
         return;
     }
 
@@ -1316,7 +1316,7 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
 
     panBlockSize[iBlock] = nSize;
 
-    // need to re - write this info to the RasterDMS node
+    // Need to rewrite this info to the RasterDMS node.
     HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
 
     if( !poDMS )
@@ -1402,7 +1402,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         /* ------------------------------------------------------------ */
         int nInBlockSize = (nBlockXSize * nBlockYSize * HFAGetDataTypeBits(eDataType) + 7 ) / 8;
 
-        /* create the compressor object */
+        // Create the compressor object.
         HFACompress compress( pData, nInBlockSize, eDataType );
         if( compress.getCounts() == NULL ||
             compress.getValues() == NULL)
@@ -1410,10 +1410,10 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             return CE_Failure;
         }
 
-        /* compress the data */
+        // Compress the data.
         if( compress.compressBlock() )
         {
-            /* get the data out of the object */
+            // Get the data out of the object.
             GByte *pCounts      = compress.getCounts();
             GUInt32 nSizeCount  = compress.getCountSize();
             GByte *pValues      = compress.getValues();
@@ -1422,7 +1422,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             GUInt32 nNumRuns    = compress.getNumRuns();
             GByte nNumBits      = compress.getNumBits();
 
-            /* Compensate for the header info */
+            // Compensate for the header info.
             GUInt32 nDataOffset = nSizeCount + 13;
             int nTotalSize = nSizeCount + nSizeValues + 13;
 
@@ -1454,42 +1454,43 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             CPL_SWAP32PTR( &nNumRuns );
             CPL_SWAP32PTR( &nDataOffset );
 
-#endif /* def CPL_MSB */
+#endif  // def CPL_MSB
 
-       /* Write out the Minimum value */
+            // Write out the Minimum value.
             bool bRet = VSIFWriteL( &nMin, (size_t) sizeof( nMin ), 1, fpData ) > 0;
 
-            /* the number of runs */
+            // The number of runs.
             bRet &= VSIFWriteL( &nNumRuns, (size_t) sizeof( nNumRuns ), 1, fpData ) > 0;
 
-            /* The offset to the data */
+            // The offset to the data.
             bRet &= VSIFWriteL( &nDataOffset, (size_t) sizeof( nDataOffset ), 1, fpData ) > 0;
 
-            /* The number of bits */
+            // The number of bits.
             bRet &= VSIFWriteL( &nNumBits, (size_t) sizeof( nNumBits ), 1, fpData ) > 0;
 
-            /* The counters - MSB stuff handled in HFACompress */
+            // The counters - MSB stuff handled in HFACompress.
             bRet &= VSIFWriteL( pCounts, nSizeCount, 1, fpData ) > 0;
 
-            /* The values - MSB stuff handled in HFACompress */
+            // The values - MSB stuff handled in HFACompress.
             bRet &= VSIFWriteL( pValues, nSizeValues, 1, fpData ) > 0;
 
             if( !bRet )
                 return CE_Failure;
 
-            /* Compressed data is freed in the HFACompress destructor */
+            // Compressed data is freed in the HFACompress destructor.
         }
         else
         {
-            /* If we have actually made the block bigger - i.e. does not compress well */
+            // If we have actually made the block bigger - i.e. does not
+            // compress well.
             panBlockFlag[iBlock] ^= BFLG_COMPRESSED;
-            // alloc more space for the uncompressed block
+            // Alloc more space for the uncompressed block.
             ReAllocBlock( iBlock, nInBlockSize );
 
             nBlockOffset = panBlockStart[iBlock];
             nBlockSize = panBlockSize[iBlock];
 
-            /* Need to change the RasterDMS entry */
+            // Need to change the RasterDMS entry.
             HFAEntry *poDMS = poNode->GetNamedChild( "RasterDMS" );
 
             if( !poDMS )
@@ -1571,7 +1572,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
             for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
                 CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
         }
-#endif /* def CPL_MSB */
+#endif  // def CPL_MSB
 
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.                                        */
@@ -1638,7 +1639,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         for( int ii = 0; ii < nBlockXSize*nBlockYSize*2; ii++ )
             CPL_SWAP64PTR( ((unsigned char *) pData) + ii*8 );
     }
-#endif /* def CPL_MSB */
+#endif  // def CPL_MSB
 
     return CE_None;
 }
@@ -1821,7 +1822,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
         if( poColumnEntry == NULL )
             return CE_Failure;
 
-        /* FIXME? : we could also check that nPCTColors is not too big */
+        // TODO(schwehr): Check that nPCTColors is not too big.
         nPCTColors = poColumnEntry->GetIntField( "numRows" );
         for( int iColumn = 0; iColumn < 4; iColumn++ )
         {
@@ -2145,7 +2146,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
                                        poNode );
         poRRDNamesList->MakeData( 23+16+8+ 3000 /* hack for growth room*/ );
 
-        /* we need to hardcode file offset into the data, so locate it now */
+        // We need to hardcode file offset into the data, so locate it now.
         poRRDNamesList->SetPosition();
 
         poRRDNamesList->SetStringField( "algorithm.string",
