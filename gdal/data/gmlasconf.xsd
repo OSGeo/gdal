@@ -203,6 +203,23 @@
                   </xs:sequence>
                 </xs:complexType>
               </xs:element>
+
+              <xs:element name="IdentifierMaxLength" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Maximum size of layer and field identifiers. If identifiers
+                    are naturally bigger than the limit, a logic truncates
+                    them while ensuring their unicity.
+                    When absent, unlimited size.
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:positiveInteger">
+                        <xs:minInclusive value="10"/>
+                    </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>

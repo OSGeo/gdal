@@ -439,6 +439,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
     oAnalyzer.SetInstantiateGMLFeaturesOnly(m_oConf.m_bInstantiateGMLFeaturesOnly);
+    oAnalyzer.SetIdentifierMaxLength(m_oConf.m_nIdentifierMaxLength);
 
     m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:") ?
         poOpenInfo->pszFilename + strlen("GMLAS:") : poOpenInfo->pszFilename;

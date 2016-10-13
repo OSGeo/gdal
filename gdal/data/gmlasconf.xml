@@ -20,6 +20,8 @@
             <IncludeGeometryXML>false</IncludeGeometryXML>
             <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>
         </GML>
+        <!-- 64 for PostgreSQL compatiblity -->
+        <IdentifierMaxLength>64</IdentifierMaxLength>
     </LayerBuildingRules>
 
     <XLinkResolution>
