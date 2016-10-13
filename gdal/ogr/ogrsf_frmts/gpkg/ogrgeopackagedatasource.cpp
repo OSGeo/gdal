@@ -3771,6 +3771,7 @@ static const char* const apszFuncsWithSideEffects[] =
 {
     "CreateSpatialIndex",
     "DisableSpatialIndex",
+    "HasSpatialIndex",
 };
 
 OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
@@ -4496,6 +4497,46 @@ void OGRGeoPackageDisableSpatialIndex(sqlite3_context* pContext,
 }
 
 /************************************************************************/
+/*                  OGRGeoPackageHasSpatialIndex()                      */
+/************************************************************************/
+
+static
+void OGRGeoPackageHasSpatialIndex(sqlite3_context* pContext,
+                                  CPL_UNUSED int argc,
+                                  sqlite3_value** argv)
+{
+    if( sqlite3_value_type (argv[0]) != SQLITE_TEXT ||
+        sqlite3_value_type (argv[1]) != SQLITE_TEXT )
+    {
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    const char* pszTableName = (const char*)sqlite3_value_text(argv[0]);
+    const char* pszGeomName = (const char*)sqlite3_value_text(argv[1]);
+    GDALGeoPackageDataset* poDS = (GDALGeoPackageDataset* )sqlite3_user_data(pContext);
+
+    OGRGeoPackageTableLayer* poLyr = (OGRGeoPackageTableLayer*)poDS->GetLayerByName(pszTableName);
+    if( poLyr == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+    if( !EQUAL(poLyr->GetGeometryColumn(), pszGeomName) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unknown geometry column name");
+        sqlite3_result_int( pContext, 0 );
+        return;
+    }
+
+    poLyr->RunDeferredCreationIfNecessary();
+    poLyr->CreateSpatialIndexIfNecessary();
+
+    sqlite3_result_int( pContext, poLyr->HasSpatialIndex() );
+}
+
+/************************************************************************/
 /*                       GPKG_hstore_get_value()                        */
 /************************************************************************/
 
@@ -4679,6 +4720,8 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
                             OGRGeoPackageCreateSpatialIndex, NULL, NULL);
     sqlite3_create_function(hDB, "DisableSpatialIndex", 2, SQLITE_ANY, this,
                             OGRGeoPackageDisableSpatialIndex, NULL, NULL);
+    sqlite3_create_function(hDB, "HasSpatialIndex", 2, SQLITE_ANY, this,
+                            OGRGeoPackageHasSpatialIndex, NULL, NULL);
 
     // HSTORE functions
     sqlite3_create_function(hDB, "hstore_get_value", 2, SQLITE_ANY, NULL,
