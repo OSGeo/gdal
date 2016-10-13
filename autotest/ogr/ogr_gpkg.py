@@ -759,11 +759,15 @@ def ogr_gpkg_15():
 
 
     for (sql, expected_result) in [
+            ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
             ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
+            ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
             ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
             ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
+            ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
             ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
             ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', NULL)", 0),
+            ("SELECT HasSpatialIndex('point-with-spi-and-dashes', NULL)", 0),
             ("SELECT CreateSpatialIndex(NULL, 'geom')", 0),
             ("SELECT CreateSpatialIndex('bla', 'geom')", 0),
             ("SELECT CreateSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
@@ -771,6 +775,9 @@ def ogr_gpkg_15():
             ("SELECT DisableSpatialIndex(NULL, 'geom')", 0),
             ("SELECT DisableSpatialIndex('bla', 'geom')", 0),
             ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
+            ("SELECT HasSpatialIndex(NULL, 'geom')", 0),
+            ("SELECT HasSpatialIndex('bla', 'geom')", 0),
+            ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'bla')", 0),
             ("SELECT CreateSpatialIndex('non_spatial', '')", 0),
             ("SELECT CreateSpatialIndex('point_no_spi-but-with-dashes', 'geom')", 1),
             # Final DisableSpatialIndex: will be effectively deleted at dataset closing
