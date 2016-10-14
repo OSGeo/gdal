@@ -57,9 +57,8 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 //  is the data value at each gridpoint
 //
       if (nbits != 0) {
-
-         ifld=(g2int *)calloc(ndpts,sizeof(g2int));
 	 int nbytes = nbits/8;
+         ifld=(g2int *)calloc(ndpts,sizeof(g2int));
          ctemp=(unsigned char *)calloc(ndpts*nbytes,1);
          if ( ifld == 0 || ctemp == 0) {
             fprintf(stderr, "Could not allocate space in jpcunpack.\n"

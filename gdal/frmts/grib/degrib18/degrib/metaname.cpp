@@ -1944,7 +1944,10 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
            {10, 4, 197, "OHC", "Ocean Heat Content", "J/m^2", UC_NONE},
 };
 
-GRIB2LocalTable MRMS_LclTable[] = {
+/*
+  From http://www.nssl.noaa.gov/projects/mrms/operational/tables.php
+*/
+static const GRIB2LocalTable MRMS_LclTable[] = {
    /* 0 */ {209, 2, 0, "LightningDensityNLDN1min", "CG Lightning Density 1-min - NLDN", "flashes/km^2/min", UC_NONE},
    /* 1 */ {209, 2, 1, "LightningDensityNLDN5min", "CG Lightning Density 5-min - NLDN", "flashes/km^2/min", UC_NONE},
    /* 2 */ {209, 2, 2, "LightningDensityNLDN15min", "CG Lightning Density 15-min - NLDN", "flashes/km^2/min", UC_NONE},
@@ -2131,8 +2134,8 @@ static const GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
                return NULL;
          }
       case 161:
-        *tableLen = sizeof (MRMS_LclTable) / sizeof (GRIB2LocalTable);
-               return &MRMS_LclTable[0];
+         *tableLen = sizeof (MRMS_LclTable) / sizeof (GRIB2LocalTable);
+         return &MRMS_LclTable[0];
       default:
          *tableLen = 0;
          return NULL;
