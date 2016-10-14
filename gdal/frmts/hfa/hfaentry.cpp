@@ -503,8 +503,8 @@ void HFAEntry::LoadData()
         return;
     }
 
-    /* Make sure the buffer is always null terminated to avoid */
-    /* issues when extracting strings from a corrupted file */
+    // Make sure the buffer is always null terminated to avoid
+    // issues when extracting strings from a corrupted file.
     pabyData[nDataSize] = '\0';
 
 /* -------------------------------------------------------------------- */
@@ -826,7 +826,7 @@ GIntBig HFAEntry::GetBigIntField( const char *pszFieldPath, CPLErr *peErr )
     if( peErr != NULL && *peErr != CE_None )
         return 0;
 
-    return nLower + (((GIntBig) nUpper) << 32);
+    return nLower + (static_cast<GIntBig>(nUpper) << 32);
 }
 
 /************************************************************************/

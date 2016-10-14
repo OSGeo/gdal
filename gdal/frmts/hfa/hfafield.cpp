@@ -243,7 +243,7 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
 /* -------------------------------------------------------------------- */
     if( chPointer == 'p' )
     {
-        nBytes = -1; /* we can't know the instance size */
+        nBytes = -1;  // We can't know the instance size.
     }
     else if( poItemObjectType != NULL )
     {
@@ -261,7 +261,7 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
             if( nBytes > INT_MAX - 8 )
                 nBytes = -1;
             else
-                nBytes += 8; /* count, and offset */
+                nBytes += 8;  // Count, and offset.
         }
     }
     else
@@ -821,8 +821,9 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
 int
 HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
-                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           char chReqType, void *pReqReturn, int *pnRemainingDataSize )
+                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                            char chReqType, void *pReqReturn,
+                            int *pnRemainingDataSize )
 
 {
     char *pszStringRet = NULL;

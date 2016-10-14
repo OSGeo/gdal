@@ -1919,20 +1919,24 @@ CPLErr HFARasterAttributeTable::SetLinearBinning(
     if( this->poDT == NULL || !EQUAL(this->poDT->GetType(),"Edsc_Table") )
         CreateDT();
 
-    /* we should have an Edsc_BinFunction */
+    // We should have an Edsc_BinFunction.
     HFAEntry *poBinFunction = this->poDT->GetNamedChild( "#Bin_Function#" );
-    if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
+    if( poBinFunction == NULL ||
+        !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
+    {
         poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                        "#Bin_Function#", "Edsc_BinFunction",
                                        poDT );
+    }
 
     // Because of the BaseData we have to hardcode the size.
     poBinFunction->MakeData( 30 );
 
     poBinFunction->SetStringField("binFunction", "direct");
-    poBinFunction->SetDoubleField("minLimit",this->dfRow0Min);
-    poBinFunction->SetDoubleField("maxLimit",(this->nRows -1)*this->dfBinSize+this->dfRow0Min);
-    poBinFunction->SetIntField("numBins",this->nRows);
+    poBinFunction->SetDoubleField("minLimit", dfRow0Min);
+    poBinFunction->SetDoubleField(
+        "maxLimit", (nRows - 1) * dfBinSize + dfRow0Min);
+    poBinFunction->SetIntField("numBins", nRows);
 
     return CE_None;
 }
@@ -1941,7 +1945,8 @@ CPLErr HFARasterAttributeTable::SetLinearBinning(
 /*                          GetLinearBinning()                          */
 /************************************************************************/
 
-int HFARasterAttributeTable::GetLinearBinning( double *pdfRow0Min, double *pdfBinSize ) const
+int HFARasterAttributeTable::GetLinearBinning( double *pdfRow0Min,
+                                               double *pdfBinSize ) const
 {
     if( !bLinearBinning )
         return FALSE;
@@ -3042,12 +3047,14 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                 (*pnBuckets)++;
         }
 
-        *ppanHistogram = (GUIntBig *) CPLCalloc(sizeof(GUIntBig),*pnBuckets);
+        *ppanHistogram =
+            static_cast<GUIntBig *>(CPLCalloc(sizeof(GUIntBig), *pnBuckets));
 
         pszNextBin = pszBinValues;
         for( int i = 0; i < *pnBuckets; i++ )
         {
-            (*ppanHistogram)[i] = (GUIntBig) CPLAtoGIntBig(pszNextBin);
+            (*ppanHistogram)[i] =
+                static_cast<GUIntBig>(CPLAtoGIntBig(pszNextBin));
 
             while( *pszNextBin != '|' && *pszNextBin != '\0' )
                 pszNextBin++;
@@ -3115,20 +3122,24 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
     const int nRowCount = poRAT->GetRowCount();
 
     poDT->SetIntField( "numrows", nRowCount );
-    /* Check if binning is set on this RAT */
+    // Check if binning is set on this RAT.
     double dfBinSize, dfRow0Min;
     if( poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize) )
     {
-        /* then it should have an Edsc_BinFunction */
+        // Then it should have an Edsc_BinFunction.
         HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
-        if( poBinFunction == NULL || !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
+        if( poBinFunction == NULL ||
+            !EQUAL(poBinFunction->GetType(),"Edsc_BinFunction") )
+        {
             poBinFunction = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                                           "#Bin_Function#", "Edsc_BinFunction",
                                           poDT );
+        }
 
         poBinFunction->SetStringField("binFunction", "direct");
         poBinFunction->SetDoubleField("minLimit",dfRow0Min);
-        poBinFunction->SetDoubleField("maxLimit",(nRowCount -1)*dfBinSize+dfRow0Min);
+        poBinFunction->SetDoubleField(
+           "maxLimit", (nRowCount - 1) * dfBinSize + dfRow0Min);
         poBinFunction->SetIntField("numBins",nRowCount);
     }
 
@@ -3184,25 +3195,32 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         poColumn->SetIntField( "numRows", nRowCount );
         // Color cols which are integer in GDAL are written as floats in HFA.
         bool bIsColorCol = false;
-        if( ( poRAT->GetUsageOfCol(col) == GFU_Red ) || ( poRAT->GetUsageOfCol(col) == GFU_Green ) ||
-            ( poRAT->GetUsageOfCol(col) == GFU_Blue) || ( poRAT->GetUsageOfCol(col) == GFU_Alpha ) )
+        if( poRAT->GetUsageOfCol(col) == GFU_Red ||
+            poRAT->GetUsageOfCol(col) == GFU_Green ||
+            poRAT->GetUsageOfCol(col) == GFU_Blue ||
+            poRAT->GetUsageOfCol(col) == GFU_Alpha )
         {
             bIsColorCol = true;
         }
 
         // Write float also if a color column, or histogram.
-        if( ( poRAT->GetTypeOfCol(col) == GFT_Real ) || bIsColorCol || (poRAT->GetUsageOfCol(col) == GFU_PixelCount) )
+        if( poRAT->GetTypeOfCol(col) == GFT_Real ||
+            bIsColorCol ||
+            poRAT->GetUsageOfCol(col) == GFU_PixelCount )
         {
-            int nOffset = HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
-                                            (GUInt32)nRowCount * (GUInt32)sizeof(double) );
+            const int nOffset =
+              HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
+                                static_cast<GUInt32>(nRowCount) *
+                                static_cast<GUInt32>(sizeof(double)) );
             poColumn->SetIntField( "columnDataPtr", nOffset );
             poColumn->SetStringField( "dataType", "real" );
 
-            double *padfColData = (double*)CPLCalloc( nRowCount, sizeof(double) );
+            double *padfColData =
+                static_cast<double *>(CPLCalloc( nRowCount, sizeof(double) ));
             for( int i = 0; i < nRowCount; i++)
             {
                 if( bIsColorCol )
-                    // Stored 0..1.
+                    // Stored 0..1
                     padfColData[i] = poRAT->GetValueAsInt(i,col) / 255.0;
                 else
                     padfColData[i] = poRAT->GetValueAsDouble(i,col);
@@ -3211,7 +3229,8 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
             GDALSwapWords( padfColData, 8, nRowCount, 8 );
 #endif
             if( VSIFSeekL( hHFA->fp, nOffset, SEEK_SET ) != 0 ||
-                VSIFWriteL( padfColData, nRowCount, sizeof(double), hHFA->fp ) != sizeof(double) )
+                VSIFWriteL( padfColData, nRowCount, sizeof(double),
+                            hHFA->fp ) != sizeof(double) )
             {
                 CPLError(CE_Failure, CPLE_FileIO, "WriteNamedRAT() failed");
                 CPLFree( padfColData );
@@ -3222,7 +3241,7 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
         else if( poRAT->GetTypeOfCol(col) == GFT_String )
         {
             unsigned int nMaxNumChars = 0;
-            /* find the length of the longest string */
+            // Find the length of the longest string.
             for( int i = 0; i < nRowCount; i++)
             {
                 // Include terminating byte.
@@ -4393,12 +4412,13 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     {
         if( EQUALN(psPro->proExeName,EPRJ_EXTERNAL_NZMG,4) )
         {
-            /* -------------------------------------------------------------------- */
-            /*         handle NZMG which is an external projection see              */
-            /*         http://www.linz.govt.nz/core/surveysystem/geodeticinfo\      */
-            /*                /datums-projections/projections/nzmg/index.html       */
-            /* -------------------------------------------------------------------- */
-            /* Is there a better way that doesn't require hardcoding of these numbers? */
+            /* -------------------------------------------------------------- */
+            /*     handle NZMG which is an external projection see            */
+            /*     http://www.linz.govt.nz/core/surveysystem/geodeticinfo\    */
+            /*           /datums-projections/projections/nzmg/index.html      */
+            /* -------------------------------------------------------------- */
+            // Is there a better way that doesn't require hardcoding
+            // of these numbers?
             oSRS.SetNZMG(-41.0,173.0,2510000,6023150);
         }
         else
