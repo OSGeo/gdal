@@ -190,12 +190,13 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     bRet &= VSIFReadL( &(psInfo->nVersion), sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &(psInfo->nVersion) );
 
-    bRet &= VSIFReadL( szHeader, 4, 1, fp ) > 0; /* skip freeList */
+    bRet &= VSIFReadL( szHeader, 4, 1, fp ) > 0;  // Skip freeList.
 
     bRet &= VSIFReadL( &(psInfo->nRootPos), sizeof(GInt32), 1, fp ) > 0;
     HFAStandard( 4, &(psInfo->nRootPos) );
 
-    bRet &= VSIFReadL( &(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp ) > 0;
+    bRet &= VSIFReadL( &(psInfo->nEntryHeaderLength),
+                       sizeof(GInt16), 1, fp ) > 0;
     HFAStandard( 2, &(psInfo->nEntryHeaderLength) );
 
     bRet &= VSIFReadL( &(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp ) > 0;
@@ -1013,23 +1014,21 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 /*                        HFAInvGeoTransform()                          */
 /************************************************************************/
 
-static int HFAInvGeoTransform( double *gt_in, double *gt_out )
+static bool HFAInvGeoTransform( const double *gt_in, double *gt_out )
 
 {
-    double det, inv_det;
+    // we assume a 3rd row that is [1 0 0].
 
-    /* we assume a 3rd row that is [1 0 0] */
+    // Compute determinate.
 
-    /* Compute determinate */
+    const double det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
 
-    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+    if( fabs(det) < 1.0e-15 )
+        return false;
 
-    if( fabs(det) < 0.000000000000001 )
-        return 0;
+    const double inv_det = 1.0 / det;
 
-    inv_det = 1.0 / det;
-
-    /* compute adjoint, and divide by determinate */
+    // Compute adjoint, and divide by determinate.
 
     gt_out[1] =  gt_in[5] * inv_det;
     gt_out[4] = -gt_in[4] * inv_det;
@@ -1040,7 +1039,7 @@ static int HFAInvGeoTransform( double *gt_in, double *gt_out )
     gt_out[0] = ( gt_in[2] * gt_in[3] - gt_in[0] * gt_in[5]) * inv_det;
     gt_out[3] = (-gt_in[1] * gt_in[3] + gt_in[0] * gt_in[4]) * inv_det;
 
-    return 1;
+    return true;
 }
 
 /************************************************************************/
@@ -1065,7 +1064,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
     if( psMapInfo != NULL )
     {
         padfGeoTransform[0] = psMapInfo->upperLeftCenter.x
-            - psMapInfo->pixelSize.width*0.5;
+            - psMapInfo->pixelSize.width * 0.5;
         padfGeoTransform[1] = psMapInfo->pixelSize.width;
         if( padfGeoTransform[1] == 0.0 )
             padfGeoTransform[1] = 1.0;
@@ -1259,7 +1258,7 @@ char *HFAGetPEString( HFAHandle hHFA )
 /*      Skip ahead to the actual string.                                */
 /* -------------------------------------------------------------------- */
     pabyData += 30;
-    /*nDataSize -= 30;*/
+    // nDataSize -= 30;
 
     return CPLStrdup( (const char *) pabyData );
 }
@@ -2120,52 +2119,52 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         const int nDmsSize = 14 * nBlocks + 38;
         GByte *pabyData = poEdms_State->MakeData( nDmsSize );
 
-        /* set some simple values */
+        // Set some simple values.
         poEdms_State->SetIntField( "numvirtualblocks", nBlocks );
         poEdms_State->SetIntField( "numobjectsperblock",
                                    nBlockSize*nBlockSize );
         poEdms_State->SetIntField( "nextobjectnum",
                                    nBlockSize*nBlockSize*nBlocks );
 
-        /* Is file compressed or not? */
+        // Is file compressed or not?
         if( bCreateCompressed )
         {
-            poEdms_State->SetStringField( "compressionType", "RLC compression" );
+            poEdms_State->SetStringField("compressionType", "RLC compression");
         }
         else
         {
-            poEdms_State->SetStringField( "compressionType", "no compression" );
+            poEdms_State->SetStringField("compressionType", "no compression");
         }
 
-        /* we need to hardcode file offset into the data, so locate it now */
+        // We need to hardcode file offset into the data, so locate it now.
         poEdms_State->SetPosition();
 
-        /* Set block info headers */
+        // Set block info headers.
 
-        /* blockinfo count */
+        // Blockinfo count.
         GUInt32 nValue = nBlocks;
         HFAStandard( 4, &nValue );
         memcpy( pabyData + 14, &nValue, 4 );
 
-        /* blockinfo position */
+        // Blockinfo position.
         nValue = poEdms_State->GetDataPos() + 22;
         HFAStandard( 4, &nValue );
         memcpy( pabyData + 18, &nValue, 4 );
 
-        /* Set each blockinfo */
+        // Set each blockinfo.
         for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
         {
             int nOffset = 22 + 14 * iBlock;
 
-            /* fileCode */
+            // fileCode.
             GInt16 nValue16 = 0;
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset, &nValue16, 2 );
 
-            /* offset */
+            // Offset.
             if( bCreateCompressed )
             {
-                /* flag it with zero offset - will allocate space when we compress it */
+                // Flag it with zero offset. Allocate space when we compress it.
                 nValue = 0;
             }
             else
@@ -2175,10 +2174,10 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 4, &nValue );
             memcpy( pabyData + nOffset + 2, &nValue, 4 );
 
-            /* size */
+            // Size.
             if( bCreateCompressed )
             {
-                /* flag it with zero size - don't know until we compress it */
+                // Flag with zero size. Don't know until we compress it.
                 nValue = 0;
             }
             else
@@ -2188,12 +2187,12 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 4, &nValue );
             memcpy( pabyData + nOffset + 6, &nValue, 4 );
 
-            /* logValid (false) */
+            // logValid (false).
             nValue16 = 0;
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 10, &nValue16, 2 );
 
-            /* compressionType */
+            // compressionType.
             if( bCreateCompressed )
                 nValue16 = 1;
             else
@@ -2209,12 +2208,11 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /* -------------------------------------------------------------------- */
     else if( bCreateLargeRaster )
     {
-        HFAEntry *poEdms_State;
-
-        poEdms_State =
+        HFAEntry *poEdms_State =
             HFAEntry::New( psInfo, "ExternalRasterDMS",
                           "ImgExternalRaster", poEimg_Layer );
-        poEdms_State->MakeData( static_cast<int>(8 + strlen(psInfo->pszIGEFilename) + 1 + 6 * 4) );
+        poEdms_State->MakeData(
+            static_cast<int>(8 + strlen(psInfo->pszIGEFilename) + 1 + 6 * 4) );
 
         poEdms_State->SetStringField( "fileName.string",
                                       psInfo->pszIGEFilename );
@@ -2711,7 +2709,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     else
         return CE_Failure;
 #ifdef DEBUG
-    /* To please Clang Static Analyzer */
+    // To please Clang Static Analyzer (CSA).
     if( poNode == NULL )
     {
         CPLAssert(false);
@@ -3226,15 +3224,14 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /*                       HFAReadAndValidatePoly()                       */
 /************************************************************************/
 
-static int HFAReadAndValidatePoly( HFAEntry *poTarget,
-                                   const char *pszName,
-                                   Efga_Polynomial *psRetPoly )
+static bool HFAReadAndValidatePoly( HFAEntry *poTarget,
+                                    const char *pszName,
+                                    Efga_Polynomial *psRetPoly )
 
 {
-    CPLString osFldName;
-
     memset( psRetPoly, 0, sizeof(Efga_Polynomial) );
 
+    CPLString osFldName;
     osFldName.Printf( "%sorder", pszName );
     psRetPoly->order = poTarget->GetIntField(osFldName);
 
@@ -3244,7 +3241,9 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
 /* -------------------------------------------------------------------- */
 /*      Validate that things are in a "well known" form.                */
 /* -------------------------------------------------------------------- */
-    int numdimtransform, numdimpolynomial, termcount;
+    int numdimtransform;
+    int numdimpolynomial;
+    int termcount;
 
     osFldName.Printf( "%snumdimtransform", pszName );
     numdimtransform = poTarget->GetIntField(osFldName);
@@ -3256,12 +3255,12 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
     termcount = poTarget->GetIntField(osFldName);
 
     if( numdimtransform != 2 || numdimpolynomial != 2 )
-        return FALSE;
+        return false;
 
     if( (psRetPoly->order == 1 && termcount != 3)
         || (psRetPoly->order == 2 && termcount != 6)
         || (psRetPoly->order == 3 && termcount != 10) )
-        return FALSE;
+        return false;
 
     // We don't check the exponent organization for now.  Hopefully
     // it is always standard.
@@ -3281,7 +3280,7 @@ static int HFAReadAndValidatePoly( HFAEntry *poTarget,
         psRetPoly->polycoefvector[i] = poTarget->GetDoubleField(osFldName);
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -3300,21 +3299,19 @@ int HFAReadXFormStack( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Get the HFA node.                                               */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poXFormHeader;
-
-    poXFormHeader = hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm" );
+    HFAEntry *poXFormHeader =
+        hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm" );
     if( poXFormHeader == NULL )
         return 0;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over children, collecting XForms.                          */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poXForm;
     int nStepCount = 0;
     *ppasPolyListForward = NULL;
     *ppasPolyListReverse = NULL;
 
-    for( poXForm = poXFormHeader->GetChild();
+    for( HFAEntry *poXForm = poXFormHeader->GetChild();
          poXForm != NULL;
          poXForm = poXForm->GetNext() )
     {
@@ -3325,22 +3322,21 @@ int HFAReadXFormStack( HFAHandle hHFA,
 
         if( EQUAL(poXForm->GetType(),"Efga_Polynomial") )
         {
-            bSuccess = CPL_TO_BOOL(
-                HFAReadAndValidatePoly( poXForm, "", &sForward ));
+            bSuccess = HFAReadAndValidatePoly(poXForm, "", &sForward);
 
             if( bSuccess )
             {
-                double adfGT[6];
+                double adfGT[6] = {
+                    sForward.polycoefvector[0],
+                    sForward.polycoefmtx[0],
+                    sForward.polycoefmtx[2],
+                    sForward.polycoefvector[1],
+                    sForward.polycoefmtx[1],
+                    sForward.polycoefmtx[3]
+                };
 
-                adfGT[0] = sForward.polycoefvector[0];
-                adfGT[1] = sForward.polycoefmtx[0];
-                adfGT[2] = sForward.polycoefmtx[2];
-                adfGT[3] = sForward.polycoefvector[1];
-                adfGT[4] = sForward.polycoefmtx[1];
-                adfGT[5] = sForward.polycoefmtx[3];
-
-                double adfInvGT[6];
-                bSuccess = CPL_TO_BOOL(HFAInvGeoTransform( adfGT, adfInvGT ));
+                double adfInvGT[6] = {};
+                bSuccess = HFAInvGeoTransform( adfGT, adfInvGT );
                 if( !bSuccess )
                     memset( adfInvGT, 0, sizeof(adfInvGT) );
 
@@ -3355,10 +3351,9 @@ int HFAReadXFormStack( HFAHandle hHFA,
         }
         else if( EQUAL(poXForm->GetType(),"GM_PolyPair") )
         {
-            bSuccess = CPL_TO_BOOL(
-                HFAReadAndValidatePoly( poXForm, "forward.", &sForward ));
-            bSuccess = bSuccess &&
-                HFAReadAndValidatePoly( poXForm, "reverse.", &sReverse );
+            bSuccess =
+                HFAReadAndValidatePoly(poXForm, "forward.", &sForward) &&
+                HFAReadAndValidatePoly(poXForm, "reverse.", &sReverse);
         }
 
         if( bSuccess )

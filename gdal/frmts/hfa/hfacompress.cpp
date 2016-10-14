@@ -229,21 +229,21 @@ void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
     *(GUInt32*)m_pCurrValues = GUInt32(val - m_nMin);
 #ifndef CPL_MSB
    CPL_SWAP32PTR( m_pCurrValues );
-#endif /* ndef CPL_MSB */
+#endif  // ndef CPL_MSB
     m_pCurrValues += sizeof( GUInt32 );
   }
 }
 
-/* This is the guts of the file - call this to compress the block */
-/* returns false if the compression fails - i.e. compressed block bigger than input */
+// This is the guts of the file - call this to compress the block returns false
+// if the compression fails - i.e. compressed block bigger than input.
 bool HFACompress::compressBlock()
 {
   GUInt32 nLastUnique = 0;
 
-  /* Check we know about the datatype to be compressed.
-     If we can't compress it we should return false so that
-     the block cannot be compressed (we can handle just about
-     any type uncompressed). */
+  // Check we know about the datatype to be compressed.
+  // If we can't compress it we should return false so that
+  // the block cannot be compressed (we can handle just about
+  // any type uncompressed).
   if( ! QueryDataTypeSupported( m_eDataType ) )
   {
     CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). "
@@ -253,22 +253,22 @@ bool HFACompress::compressBlock()
     return false;
   }
 
-  /* reset our pointers */
+  // Reset our pointers.
   m_pCurrCount = m_pCounts;
   m_pCurrValues = m_pValues;
 
-  /* Get the minimum value.  this can be subtracted from each value in
-     the image. */
+  // Get the minimum value.  this can be subtracted from each value in
+  // the image.
   m_nMin = findMin( &m_nNumBits );
 
-  /* Go through the block. */
+  // Go through the block.
   GUInt32 u32Last = valueAsUInt32( 0 );
   for( GUInt32 count = 1; count < m_nBlockCount; count++ )
   {
-    GUInt32 u32Val = valueAsUInt32( count );
+    const GUInt32 u32Val = valueAsUInt32( count );
     if( u32Val != u32Last )
     {
-      /* The values have changed - i.e. a run has come to and end */
+      // The values have changed - i.e. a run has come to and end.
       encodeValue( u32Last, count - nLastUnique );
 
       if( ( m_pCurrValues - m_pValues ) > static_cast<int>(m_nBlockSize) )
@@ -282,12 +282,12 @@ bool HFACompress::compressBlock()
     }
   }
 
-  /* OK we have done the block but have not got the last run because we
-     were only looking for a change in values */
+  // We have done the block but have not got the last run because we
+  // were only looking for a change in values.
   encodeValue( u32Last, m_nBlockCount - nLastUnique );
   m_nNumRuns++;
 
-  /* set the size variables */
+  // Set the size variables.
   m_nSizeCounts = static_cast<GUInt32>(m_pCurrCount - m_pCounts);
   m_nSizeValues = static_cast<GUInt32>(m_pCurrValues - m_pValues);
 
@@ -298,8 +298,13 @@ bool HFACompress::compressBlock()
 
 bool HFACompress::QueryDataTypeSupported( EPTType eHFADataType )
 {
-  int nBits = HFAGetDataTypeBits( eHFADataType );
+    const int nBits = HFAGetDataTypeBits( eHFADataType );
 
-  return ( nBits == 8 ) || ( nBits == 16 ) || ( nBits == 32 ) || (nBits == 4)
-      || (nBits == 2) || (nBits == 1);
+    return
+        nBits == 1 ||
+        nBits == 2 ||
+        nBits == 4 ||
+        nBits == 8 ||
+        nBits == 16 ||
+        nBits == 32;
 }
