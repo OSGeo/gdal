@@ -50,8 +50,12 @@ void thread_func(void* ptr)
     GDALClose(poDSRef);
 }
 
-int main(int /*argc*/, char** /*argv*/)
+int main(int argc, char** argv)
 {
+    bool bEndlessLoop = false;
+    if( argc == 2 && EQUAL(argv[1], "-endlessloops") )
+        bEndlessLoop = true;
+
     CPLJoinableThread* hThread1;
     CPLJoinableThread* hThread2;
 
@@ -60,26 +64,38 @@ int main(int /*argc*/, char** /*argv*/)
 
     int one = 1;
     int two = 2;
-
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
     GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, NULL);
     GDALClose(poDS);
 
-    hThread1 = CPLCreateJoinableThread(thread_func, &one);
-    hThread2 = CPLCreateJoinableThread(thread_func, &two);
+    int counter = 0;
+    int cs = 0;
+    do
+    {
+        ++counter;
+        if( (counter % 20) == 0 ) printf("%d\n", counter);
 
-    CPLJoinThread(hThread1);
-    CPLJoinThread(hThread2);
+        hThread1 = CPLCreateJoinableThread(thread_func, &one);
+        hThread2 = CPLCreateJoinableThread(thread_func, &two);
 
-    GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test1", GA_ReadOnly);
-    int cs = GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
-    if( cs != 29689 )
-        printf("Got cs=%d, expected=%d\n", cs, 29689);
-    GDALClose(poDSRef);
+        CPLJoinThread(hThread1);
+        CPLJoinThread(hThread2);
+
+        GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test1", GA_ReadOnly);
+        cs = GDALChecksumImage(poDSRef->GetRasterBand(1), 0, 0, 100, 2000);
+        if( cs != 29689 )
+        {
+            printf("Got cs=%d, expected=%d\n", cs, 29689);
+            break;
+        }
+        GDALClose(poDSRef);
+
+        poDriver->Delete("/vsimem/test1");
+        poDriver->Delete("/vsimem/test2");
+    }
+    while( bEndlessLoop );
 
     poDriver->Delete("/vsimem/test_ref");
-    poDriver->Delete("/vsimem/test1");
-    poDriver->Delete("/vsimem/test2");
 
     GDALDestroyDriverManager();
 
