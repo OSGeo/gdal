@@ -919,7 +919,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         }
         else if( eDataType == EPT_f32 )
         {
-            float fDataValue;
+            float fDataValue = 0.0f;
 
             memcpy( &fDataValue, &nDataValue, 4);
             for( int i = 0; i < nRepeatCount; i++ )
