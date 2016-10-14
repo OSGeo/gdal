@@ -2028,18 +2028,21 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
 /*      Write the data out.                                             */
 /* -------------------------------------------------------------------- */
-        int nOffset = HFAAllocateSpace( psInfo, 8*nColors);
+        const int nOffset = HFAAllocateSpace( psInfo, 8*nColors);
 
         poEdsc_Column->SetIntField( "columnDataPtr", nOffset );
 
-        double *padfFileData = (double *) CPLMalloc(nColors*sizeof(double));
+        double *padfFileData =
+            static_cast<double *>(CPLMalloc(nColors*sizeof(double)));
         for( int iColor = 0; iColor < nColors; iColor++ )
         {
             padfFileData[iColor] = padfValues[iColor];
             HFAStandard( 8, padfFileData + iColor );
         }
-        bool bRet = VSIFSeekL( psInfo->fp, nOffset, SEEK_SET ) >= 0;
-        bRet &= VSIFWriteL( padfFileData, 8, nColors, psInfo->fp ) == (size_t)nColors;
+        const bool bRet =
+            VSIFSeekL( psInfo->fp, nOffset, SEEK_SET ) >= 0 &&
+            VSIFWriteL( padfFileData, 8, nColors, psInfo->fp ) ==
+                static_cast<size_t>(nColors);
         CPLFree( padfFileData );
         if( !bRet )
             return CE_Failure;

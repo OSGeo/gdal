@@ -488,7 +488,7 @@ CPLErr HFARemove( const char *pszFilename )
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to delete %s, not a file.\n", pszFilename );
+                  "Unable to delete %s, not a file.", pszFilename );
         return CE_Failure;
     }
 }
@@ -2077,7 +2077,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 
     if( nBlockSize <= 0 )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "HFACreateLayer : nBlockXSize < 0");
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "HFACreateLayer : nBlockXSize < 0");
         return FALSE;
     }
 
@@ -3056,11 +3057,10 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Form .ige filename.                                             */
 /* -------------------------------------------------------------------- */
-    char *pszFullFilename;
-
     if( nBlockSize <= 0 )
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "HFACreateSpillStack : nBlockXSize < 0");
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "HFACreateSpillStack : nBlockXSize < 0");
         return FALSE;
     }
 
@@ -3077,18 +3077,18 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
                 CPLStrdup( CPLResetExtension( psInfo->pszFilename, "ige" ) );
     }
 
-    pszFullFilename =
-        CPLStrdup( CPLFormFilename( psInfo->pszPath, psInfo->pszIGEFilename, NULL ) );
+    char *pszFullFilename =
+        CPLStrdup( CPLFormFilename( psInfo->pszPath,
+                                    psInfo->pszIGEFilename, NULL ) );
 
 /* -------------------------------------------------------------------- */
 /*      Try and open it.  If we fail, create it and write the magic     */
 /*      header.                                                         */
 /* -------------------------------------------------------------------- */
     static const char * const pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
-    VSILFILE *fpVSIL;
-    bool bRet = true;
 
-    fpVSIL = VSIFOpenL( pszFullFilename, "r+b" );
+    bool bRet = true;
+    VSILFILE *fpVSIL = VSIFOpenL( pszFullFilename, "r+b" );
     if( fpVSIL == NULL )
     {
         fpVSIL = VSIFOpenL( pszFullFilename, "w+" );
@@ -3387,14 +3387,13 @@ int HFAEvaluateXFormStack( int nStepCount, int bForward,
 {
     for( int iStep = 0; iStep < nStepCount; iStep++ )
     {
-        double dfXOut, dfYOut;
-        Efga_Polynomial *psStep;
+        const Efga_Polynomial *psStep =
+            bForward
+            ? pasPolyList + iStep
+            : pasPolyList + nStepCount - iStep - 1;
 
-        if( bForward )
-            psStep = pasPolyList + iStep;
-        else
-            psStep = pasPolyList + nStepCount - iStep - 1;
-
+        double dfXOut = 0.0;
+        double dfYOut = 0.0;
         if( psStep->order == 1 )
         {
             dfXOut = psStep->polycoefvector[0]
@@ -3473,8 +3472,9 @@ CPLErr HFAWriteXFormStack( HFAHandle hHFA, int nBand, int nXFormCount,
 
     if( ppasPolyListForward[0]->order != 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "For now HFAWriteXFormStack() only supports order 1 polynomials" );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "For now HFAWriteXFormStack() only supports order 1 polynomials" );
         return CE_Failure;
     }
 
@@ -3911,21 +3911,19 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
 
         // Fetch all existing values.
         CPLString osFileName = poERDMS->GetStringField("fileName.string");
-        GInt32 anValidFlagsOffset[2], anStackDataOffset[2];
-        GInt32 nStackCount, nStackIndex;
 
-        anValidFlagsOffset[0] =
-            poERDMS->GetIntField( "layerStackValidFlagsOffset[0]" );
-        anValidFlagsOffset[1] =
-            poERDMS->GetIntField( "layerStackValidFlagsOffset[1]" );
+        GInt32 anValidFlagsOffset[2] = {
+            poERDMS->GetIntField( "layerStackValidFlagsOffset[0]" ),
+            poERDMS->GetIntField( "layerStackValidFlagsOffset[1]" )
+        };
 
-        anStackDataOffset[0] =
-            poERDMS->GetIntField( "layerStackDataOffset[0]" );
-        anStackDataOffset[1] =
-            poERDMS->GetIntField( "layerStackDataOffset[1]" );
+        GInt32 anStackDataOffset[2] = {
+            poERDMS->GetIntField( "layerStackDataOffset[0]" ),
+            poERDMS->GetIntField( "layerStackDataOffset[1]" )
+        };
 
-        nStackCount = poERDMS->GetIntField( "layerStackCount" );
-        nStackIndex = poERDMS->GetIntField( "layerStackIndex" );
+        const GInt32 nStackCount = poERDMS->GetIntField( "layerStackCount" );
+        const GInt32 nStackIndex = poERDMS->GetIntField( "layerStackIndex" );
 
         // Update the filename.
         if( strncmp(osFileName,pszOldBase,strlen(pszOldBase)) == 0 )

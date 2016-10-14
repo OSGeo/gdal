@@ -826,11 +826,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                             int *pnRemainingDataSize )
 
 {
-    char *pszStringRet = NULL;
-    int nIntRet = 0;
-    double dfDoubleRet = 0.0;
     int nInstItemCount = GetInstCount( pabyData, nDataSize );
-    GByte *pabyRawData = NULL;
 
     if( pnRemainingDataSize )
         *pnRemainingDataSize = -1;
@@ -864,15 +860,15 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         memcpy( &nOffset, pabyData+4, 4 );
         HFAStandard( 4, &nOffset );
 
+#if DEBUG_VERBOSE
         if( nOffset != static_cast<GUInt32>(nDataOffset + 8) )
         {
-#ifdef notdef
             CPLError( CE_Warning, CPLE_AppDefined,
                       "%s.%s points at %d, not %d as expected\n",
                       pszFieldName, pszField ? pszField : "",
                       nOffset, nDataOffset+8 );
-#endif
         }
+#endif
 
         pabyData += 8;
 
@@ -895,6 +891,11 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 /* -------------------------------------------------------------------- */
 /*      Handle by type.                                                 */
 /* -------------------------------------------------------------------- */
+    char *pszStringRet = NULL;
+    int nIntRet = 0;
+    double dfDoubleRet = 0.0;
+    GByte *pabyRawData = NULL;
+
     switch( chItemType )
     {
       case 'c':
@@ -1467,8 +1468,9 @@ int HFAField::GetInstCount( GByte * pabyData, int nDataSize )
 /************************************************************************/
 
 void HFAField::DumpInstValue( FILE *fpOut,
-                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           const char *pszPrefix )
+                              GByte *pabyData,
+                              GUInt32 nDataOffset, int nDataSize,
+                              const char *pszPrefix )
 
 {
     const int nEntries = GetInstCount( pabyData, nDataSize );

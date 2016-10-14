@@ -83,7 +83,7 @@ HFAEntry* HFAEntry::New( HFAInfo_t * psHFAIn, GUInt32 nPos,
 /* -------------------------------------------------------------------- */
 /*      Read the entry information from the file.                       */
 /* -------------------------------------------------------------------- */
-    GInt32 anEntryNums[6];
+    GInt32 anEntryNums[6] = {};
 
     if( VSIFSeekL( poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET ) == -1
         || VSIFReadL( anEntryNums, sizeof(GInt32), 6, poEntry->psHFA->fp ) < 1 )

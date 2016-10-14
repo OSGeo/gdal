@@ -429,7 +429,7 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
     void AddColumn( const char *pszName, GDALRATFieldType eType,
                     GDALRATFieldUsage eUsage,
                     int nDataOffset, int nElementSize, HFAEntry *poColumn,
-                    bool bIsBinValues=FALSE,
+                    bool bIsBinValues=false,
                     bool bConvertColors=false )
     {
         HFAAttributeField aField;
@@ -994,10 +994,13 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
             {
                 // Probably could change HFAReadBFUniqueBins to only read needed
                 // rows.
-                double *padfBinValues = HFAReadBFUniqueBins( aoFields[iField].poColumn, iStartRow+iLength );
+                double *padfBinValues =
+                    HFAReadBFUniqueBins( aoFields[iField].poColumn,
+                                         iStartRow+iLength );
                 if( padfBinValues == NULL )
                     return CE_Failure;
-                memcpy(pdfData, &padfBinValues[iStartRow], sizeof(double) * iLength);
+                memcpy(pdfData, &padfBinValues[iStartRow],
+                       sizeof(double) * iLength);
                 CPLFree(padfBinValues);
             }
             else
@@ -3113,7 +3116,8 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 /* -------------------------------------------------------------------- */
 /*      Find the requested table.                                       */
 /* -------------------------------------------------------------------- */
-    HFAEntry * poDT = hHFA->papoBand[nBand-1]->poNode->GetNamedChild( "Descriptor_Table" );
+    HFAEntry *poDT =
+        hHFA->papoBand[nBand-1]->poNode->GetNamedChild( "Descriptor_Table" );
     if( poDT == NULL || !EQUAL(poDT->GetType(),"Edsc_Table") )
         poDT = HFAEntry::New( hHFA->papoBand[nBand-1]->psInfo,
                              "Descriptor_Table", "Edsc_Table",
@@ -3123,7 +3127,8 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 
     poDT->SetIntField( "numrows", nRowCount );
     // Check if binning is set on this RAT.
-    double dfBinSize, dfRow0Min;
+    double dfBinSize = 0.0;
+    double dfRow0Min = 0.0;
     if( poRAT->GetLinearBinning( &dfRow0Min, &dfBinSize) )
     {
         // Then it should have an Edsc_BinFunction.
@@ -5548,12 +5553,14 @@ CPLErr HFADataset::IRasterIO( GDALRWFlag eRWFlag,
         return GDALDataset::BlockBasedRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType,
-            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+            nBandCount, panBandMap,
+            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 
     return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                    pData, nBufXSize, nBufYSize, eBufType,
-                                    nBandCount, panBandMap,
-                                    nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+                                   pData, nBufXSize, nBufYSize, eBufType,
+                                   nBandCount, panBandMap,
+                                   nPixelSpace, nLineSpace, nBandSpace,
+                                   psExtraArg );
 }
 
 /************************************************************************/
@@ -6097,7 +6104,10 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-            double dfMin, dfMax, dfMean, dfStdDev;
+            double dfMin = 0.0;
+            double dfMax = 0.0;
+            double dfMean = 0.0;
+            double dfStdDev = 0.0;
             char **papszStatsMD = NULL;
 
             // -----------------------------------------------------------
