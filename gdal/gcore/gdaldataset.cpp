@@ -74,6 +74,9 @@ class GDALDatasetPrivate
     public:
         CPLMutex* hMutex;
         std::map<GIntBig, int> oMapThreadToMutexTakenCount;
+#ifdef DEBUG_EXTRA
+        std::map<GIntBig, int> oMapThreadToMutexTakenCountSaved;
+#endif
         GDALAllowReadWriteMutexState eStateReadWriteMutex;
 
         GDALDatasetPrivate() :
@@ -5869,8 +5872,12 @@ void GDALDataset::TemporarilyDropReadWriteLock()
                  "Temporarily drop RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
+        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
         const int nCount = psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ];
-        for(int i=0;i<nCount;i++)
+#ifdef DEBUG_EXTRA
+        psPrivate->oMapThreadToMutexTakenCountSaved[ CPLGetPID() ] = nCount;
+#endif
+        for(int i=0;i<nCount + 1;i++)
         {
             CPLReleaseMutex(psPrivate->hMutex);
         }
@@ -5891,8 +5898,14 @@ void GDALDataset::ReacquireReadWriteLock()
                  "Reacquire temporarily dropped RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
+        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
         const int nCount = psPrivate->oMapThreadToMutexTakenCount[ CPLGetPID() ];
-        for(int i=0;i<nCount;i++)
+#ifdef DEBUG_EXTRA
+        CPLAssert( nCount == psPrivate->oMapThreadToMutexTakenCountSaved[ CPLGetPID() ] );
+#endif
+        if( nCount == 0 )
+            CPLReleaseMutex(psPrivate->hMutex);
+        for(int i=0;i<nCount - 1;i++)
         {
             CPLAcquireMutex(psPrivate->hMutex, 1000.0);
         }
