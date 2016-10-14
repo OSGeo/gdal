@@ -459,7 +459,7 @@ _gdal_retile.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-v -q -co -of -ps -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -levels -r -useDirForEachRow -multi -targetDir "
+      key_list="-v -q -co -of -ps -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -levels -r -useDirForEachRow -targetDir "
       COMPREPLY=( $( compgen -W '$key_list' -- $cur) )
       return 0
       ;;
