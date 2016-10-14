@@ -1494,9 +1494,10 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double /* dfWaitInSeconds */ )
     if( err != 0 )
     {
         if( err == EDEADLK )
-            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d/EDEADLK\n", err );
         else
-            fprintf(stderr, "CPLAcquireMutex: Error = %d", err );
+            fprintf(stderr, "CPLAcquireMutex: Error = %d (%s)\n", err,
+                    strerror(err));
 
         return FALSE;
     }
@@ -1512,7 +1513,12 @@ void CPLReleaseMutex( CPLMutex *hMutexIn )
 
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
-    pthread_mutex_unlock( &(psItem->sMutex) );
+    const int err = pthread_mutex_unlock( &(psItem->sMutex) );
+    if( err != 0 )
+    {
+        fprintf(stderr, "CPLReleaseMutex: Error = %d (%s)\n", err,
+                strerror(err));
+    }
 }
 
 /************************************************************************/
@@ -1523,7 +1529,12 @@ void CPLDestroyMutex( CPLMutex *hMutexIn )
 
 {
     MutexLinkedElt* psItem = (MutexLinkedElt *) hMutexIn;
-    pthread_mutex_destroy( &(psItem->sMutex) );
+    const int err = pthread_mutex_destroy( &(psItem->sMutex) );
+        if( err != 0 )
+    {
+        fprintf(stderr, "CPLDestroyMutex: Error = %d (%s)\n", err,
+                strerror(err));
+    }
     pthread_mutex_lock(&global_mutex);
     if( psItem->psPrev )
         psItem->psPrev->psNext = psItem->psNext;
