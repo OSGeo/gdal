@@ -36,6 +36,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "cpl_atomic_ops.h"
 #include <time.h>
 #include <map>
 
@@ -83,7 +84,7 @@ class VSIMemFile
 {
 public:
     CPLString     osFilename;
-    int           nRefCount;
+    volatile int  nRefCount;
 
     int           bIsDirectory;
 
@@ -186,7 +187,8 @@ VSIMemFile::~VSIMemFile()
 
 {
     if( nRefCount != 0 )
-        CPLDebug( "VSIMemFile", "Memory file %s deleted with %d references.",
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Memory file %s deleted with %d references.",
                   osFilename.c_str(), nRefCount );
 
     if( bOwnData && pabyData )
@@ -258,7 +260,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 int VSIMemHandle::Close()
 
 {
-    if( --(poFile->nRefCount) == 0 )
+    if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
         delete poFile;
 
     poFile = NULL;
@@ -443,7 +445,7 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
     for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
     {
-        iter->second->nRefCount--;
+        CPLAtomicDec(&(iter->second->nRefCount));
         delete iter->second;
     }
 
@@ -491,7 +493,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 	poFile = new VSIMemFile;
 	poFile->osFilename = osFilename;
 	oFileList[poFile->osFilename] = poFile;
-	poFile->nRefCount++; // for file list
+	CPLAtomicInc(&(poFile->nRefCount)); // for file list
     } 
 
     if( poFile->bIsDirectory )
@@ -514,7 +516,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     else
         poHandle->bUpdate = FALSE;
 
-    poFile->nRefCount++;
+    CPLAtomicInc(&(poFile->nRefCount));
 
     if( strstr(pszAccess,"a") )
         poHandle->nOffset = poFile->nLength;
@@ -604,7 +606,7 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
     {
         poFile = oFileList[osFilename];
 
-        if( --(poFile->nRefCount) == 0 )
+        if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
             delete poFile;
 
         oFileList.erase( oFileList.find(osFilename) );
@@ -640,7 +642,7 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
     poFile->osFilename = osPathname;
     poFile->bIsDirectory = TRUE;
     oFileList[osPathname] = poFile;
-    poFile->nRefCount++; /* referenced by file list */
+    CPLAtomicInc(&(poFile->nRefCount)); /* referenced by file list */
 
     return 0;
 }
@@ -889,7 +891,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         CPLMutexHolder oHolder( &poHandler->hMutex );
         poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
-        poFile->nRefCount++;
+        CPLAtomicInc(&(poFile->nRefCount));
     }
 
     return (VSILFILE *) poHandler->Open( osFilename, "r+" );
@@ -949,7 +951,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
             poFile->bOwnData = FALSE;
 
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
-        --(poFile->nRefCount);
+        CPLAtomicDec(&(poFile->nRefCount));
         delete poFile;
     }
 
