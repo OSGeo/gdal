@@ -126,9 +126,10 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
   {
     // Should not get to here.  Check in compressBlock() should return false if
     // we can't compress this blcok because we don't know about the type.
-    CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n",
-          m_eDataType,
-          m_nDataTypeNumBits );
+    CPLError( CE_Failure, CPLE_FileIO,
+              "Imagine Datatype 0x%x (0x%x bits) not supported",
+              m_eDataType,
+              m_nDataTypeNumBits );
     CPLAssert( false );
   }
 
@@ -247,7 +248,7 @@ bool HFACompress::compressBlock()
   if( ! QueryDataTypeSupported( m_eDataType ) )
   {
     CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). "
-              "Writing uncompressed instead.\n",
+              "Writing uncompressed instead.",
               m_eDataType,
               m_nDataTypeNumBits );
     return false;
