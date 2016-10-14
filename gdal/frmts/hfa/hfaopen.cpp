@@ -481,7 +481,7 @@ CPLErr HFARemove( const char *pszFilename )
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to unlink %s failed.\n", pszFilename );
+                      "Attempt to unlink %s failed.", pszFilename );
             return CE_Failure;
         }
     }

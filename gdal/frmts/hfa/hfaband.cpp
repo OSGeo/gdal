@@ -1384,8 +1384,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to write to invalid tile with number %d "
-                  "(X position %d, Y position %d).  This\n operation currently "
-                  "unsupported by HFABand::SetRasterBlock().\n",
+                  "(X position %d, Y position %d).  This operation is "
+                  "currently unsupported by HFABand::SetRasterBlock().",
                   iBlock, nXBlock, nYBlock );
 
         return CE_Failure;

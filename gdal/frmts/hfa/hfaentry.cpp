@@ -1082,7 +1082,7 @@ CPLErr HFAEntry::FlushToDisk()
                 || VSIFWriteL( pabyData, nDataSize, 1, psHFA->fp ) != 1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
-                          "Failed to write %d bytes HFAEntry %s(%s) data,\n"
+                          "Failed to write %d bytes HFAEntry %s(%s) data,"
                           "out of disk space?",
                           nDataSize, szName, szType );
                 return CE_Failure;

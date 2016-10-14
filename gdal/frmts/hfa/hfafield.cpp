@@ -468,7 +468,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         if( nBytesToCopy > nDataSize )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to extend field %s in node past end of data,\n"
+                      "Attempt to extend field %s in node past end of data "
                       "not currently supported.",
                       pszField );
             return CE_Failure;
@@ -864,7 +864,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         if( nOffset != static_cast<GUInt32>(nDataOffset + 8) )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "%s.%s points at %d, not %d as expected\n",
+                      "%s.%s points at %d, not %d as expected",
                       pszFieldName, pszField ? pszField : "",
                       nOffset, nDataOffset+8 );
         }

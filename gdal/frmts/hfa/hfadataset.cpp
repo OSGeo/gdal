@@ -4144,21 +4144,22 @@ CPLErr HFADataset::WriteProjection()
         double dfClosestDiff = 100.0;
         int iClosest = -1;
         char *pszUnitName = NULL;
-        double dfActualSize = oSRS.GetLinearUnits( &pszUnitName );
+        const double dfActualSize = oSRS.GetLinearUnits( &pszUnitName );
 
         for( int iUnit = 0; apszUnitMap[iUnit] != NULL; iUnit += 2 )
         {
             if( fabs(CPLAtof(apszUnitMap[iUnit+1]) - dfActualSize) < dfClosestDiff )
             {
                 iClosest = iUnit;
-                dfClosestDiff = fabs(CPLAtof(apszUnitMap[iUnit+1])-dfActualSize);
+                dfClosestDiff =
+                    fabs(CPLAtof(apszUnitMap[iUnit+1])-dfActualSize);
             }
         }
 
         if( iClosest == -1 || fabs(dfClosestDiff/dfActualSize) > 0.0001 )
         {
             CPLError( CE_Warning, CPLE_NotSupported,
-                      "Unable to identify Erdas units matching %s/%gm,\n"
+                      "Unable to identify Erdas units matching %s/%gm, "
                       "output units will be wrong.",
                       pszUnitName, dfActualSize );
         }
@@ -5216,7 +5217,8 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
             if( HFAGetOverviewCount(hHFA, panBandList[i]) > 0 )
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                        "Cannot add external overviews when there are already internal overviews");
+                         "Cannot add external overviews when there are already "
+                         "internal overviews");
                 return CE_Failure;
             }
         }
@@ -5239,7 +5241,7 @@ CPLErr HFADataset::IBuildOverviews( const char *pszResampling,
         if( poBand == NULL )
         {
             CPLError(CE_Failure, CPLE_ObjectNull,
-                        "GetRasterBand failed");
+                     "GetRasterBand failed");
             GDALDestroyScaledProgress(pScaledProgressData);
             return CE_Failure;
         }
@@ -5815,7 +5817,7 @@ GDALDataset *HFADataset::Create( const char * pszFilenameIn,
 
       default:
         CPLError( CE_Failure, CPLE_NotSupported,
-                 "Data type %s not supported by Erdas Imagine (HFA) format.\n",
+                  "Data type %s not supported by Erdas Imagine (HFA) format.",
                   GDALGetDataTypeName( eType ) );
         return NULL;
     }
