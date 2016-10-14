@@ -638,8 +638,6 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
       case 'f':
       {
-          const float fNumber = static_cast<float>(dfDoubleValue);
-
           if( nIndexValue*4 + 4 > nDataSize )
           {
               CPLError( CE_Failure, CPLE_AppDefined,
@@ -649,6 +647,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               return CE_Failure;
           }
 
+          float fNumber = static_cast<float>(dfDoubleValue);
           HFAStandard( 4, &fNumber );
           memcpy( pabyData + nIndexValue*4, &fNumber, 4 );
       }
