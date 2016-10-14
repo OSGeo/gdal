@@ -205,7 +205,7 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter,
 /* Encodes the value depending on the number of bits we are using */
 void HFACompress::encodeValue( GUInt32 val, GUInt32 repeat )
 {
-  GUInt32 nSizeCount;
+  GUInt32 nSizeCount = 0;
 
   makeCount( repeat, m_pCurrCount, &nSizeCount );
   m_pCurrCount += nSizeCount;

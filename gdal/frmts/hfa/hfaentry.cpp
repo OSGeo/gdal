@@ -237,9 +237,9 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
         return NULL;
     }
 
-    GInt32 nMIFObjectSize;
+    GInt32 nMIFObjectSize = 0;
     // We rudely look before the field data to get at the pointer/size info.
-    memcpy( &nMIFObjectSize, pszField-8, 4 );
+    memcpy( &nMIFObjectSize, pszField - 8, 4 );
     HFAStandard( 4, &nMIFObjectSize );
     if( nMIFObjectSize <= 0 )
     {
@@ -251,7 +251,8 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
     // Check that we won't copy more bytes than available in the buffer.
     if( nMIFObjectSize > nRemainingDataSize )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid MIF object size (%d > %d)",
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid MIF object size (%d > %d)",
                  nMIFObjectSize, nRemainingDataSize);
         return NULL;
     }
@@ -785,7 +786,7 @@ int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr * /* peErr */ )
 GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 
 {
-    GInt32 nIntValue;
+    GInt32 nIntValue = 0;
 
     if( !GetFieldValue( pszFieldPath, 'i', &nIntValue, NULL ) )
     {
@@ -835,7 +836,7 @@ GIntBig HFAEntry::GetBigIntField( const char *pszFieldPath, CPLErr *peErr )
 double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 
 {
-    double dfDoubleValue;
+    double dfDoubleValue = 0;
 
     if( !GetFieldValue( pszFieldPath, 'd', &dfDoubleValue, NULL ) )
     {

@@ -4477,14 +4477,15 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
 /* -------------------------------------------------------------------- */
     const char *pszDatumName = psPro->proSpheroid.sphereName;
     const char *pszEllipsoidName = psPro->proSpheroid.sphereName;
-    double dfInvFlattening;
 
     if( psDatum != NULL )
     {
         pszDatumName = psDatum->datumname;
 
-        /* Imagine to WKT translation */
-        for( int i = 0; pszDatumName != NULL && apszDatumMap[i] != NULL; i += 2 )
+        // Imagine to WKT translation.
+        for( int i = 0;
+             pszDatumName != NULL && apszDatumMap[i] != NULL;
+             i += 2 )
         {
             if( EQUAL(pszDatumName,apszDatumMap[i]) )
             {
@@ -4499,7 +4500,8 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
     if( psPro->proSpheroid.b == 0.0 )
         ((Eprj_ProParameters *) psPro)->proSpheroid.b = 6356752.3;
 
-    dfInvFlattening = OSRCalcInvFlattening(psPro->proSpheroid.a, psPro->proSpheroid.b);
+    const double dfInvFlattening =
+        OSRCalcInvFlattening(psPro->proSpheroid.a, psPro->proSpheroid.b);
 
 /* -------------------------------------------------------------------- */
 /*      Handle different projection methods.                            */
@@ -4515,10 +4517,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         oSRS.SetProjCS( "unnamed" );
         oSRS.SetUTM( psPro->proZone, psPro->proParams[3] >= 0.0 );
 
-        // The PCS name from the above function may be different with the input name.
-        // If there is a PCS name in psMapInfo that is different with
-        // the one in psPro, just use it as the PCS name. This case happens
-        // if the dataset's SR was written by the new GDAL.
+        // The PCS name from the above function may be different with the input
+        // name.  If there is a PCS name in psMapInfo that is different with the
+        // one in psPro, just use it as the PCS name. This case happens if the
+        // dataset's SR was written by the new GDAL.
         if( psMapInfo && strlen(psMapInfo->proName) > 0
             && strlen(psPro->proName) > 0
             && !EQUAL(psMapInfo->proName, psPro->proName) )
@@ -4618,23 +4620,26 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
         break;
 
       case EPRJ_EQUIDISTANT_CONIC:
-        double dfStdParallel2;
-
-        if( psPro->proParams[8] != 0.0 )
-            dfStdParallel2 = psPro->proParams[3]*R2D;
-        else
-            dfStdParallel2 = psPro->proParams[2]*R2D;
-        oSRS.SetEC( psPro->proParams[2]*R2D, dfStdParallel2,
-                    psPro->proParams[5]*R2D, psPro->proParams[4]*R2D,
-                    psPro->proParams[6], psPro->proParams[7] );
-        break;
-
+      {
+          const double dfStdParallel2 =
+              psPro->proParams[8] != 0.0
+              ? psPro->proParams[3] * R2D
+              : psPro->proParams[2] * R2D;
+          oSRS.SetEC( psPro->proParams[2] * R2D, dfStdParallel2,
+                      psPro->proParams[5] * R2D, psPro->proParams[4] * R2D,
+                      psPro->proParams[6], psPro->proParams[7] );
+          break;
+      }
       case EPRJ_TRANSVERSE_MERCATOR:
       case EPRJ_GAUSS_KRUGER:
         // Check the possible Wisconsin first.
         if( psDatum && psMapInfo && EQUAL(psDatum->datumname, "HARN") )
         {
-            if( oSRS.ImportFromESRIWisconsinWKT("Transverse_Mercator", psPro->proParams[4]*R2D, psPro->proParams[5]*R2D, psMapInfo->units) == OGRERR_NONE )
+            if( oSRS.ImportFromESRIWisconsinWKT(
+                    "Transverse_Mercator",
+                    psPro->proParams[4]*R2D,
+                    psPro->proParams[5]*R2D,
+                    psMapInfo->units) == OGRERR_NONE )
             {
                 oSRS.morphFromESRI();
                 oSRS.AutoIdentifyEPSG();
@@ -5602,11 +5607,9 @@ void HFADataset::UseXFormStack( int nStepCount,
             continue;
         }
 
-        int nCoefCount;
+        int nCoefCount = 10;
 
-        if( pasPLForward[iStep].order == 2 )
-            nCoefCount = 10;
-        else
+        if( pasPLForward[iStep].order != 2 )
         {
             CPLAssert( pasPLForward[iStep].order == 3 );
             nCoefCount = 18;
@@ -6028,7 +6031,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( strlen(poSrcBand->GetDescription()) > 0 )
             poDstBand->SetDescription( poSrcBand->GetDescription() );
 
-        int bSuccess;
+        int bSuccess = FALSE;
         double dfNoDataValue = poSrcBand->GetNoDataValue( &bSuccess );
         if( bSuccess )
             poDstBand->SetNoDataValue( dfNoDataValue );
@@ -6037,7 +6040,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Copy projection information.                                    */
 /* -------------------------------------------------------------------- */
-    double adfGeoTransform[6];
+    double adfGeoTransform[6] = {};
 
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
         && (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
@@ -6108,7 +6111,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             // Histogram
             // -----------------------------------------------------------
 
-            int nBuckets;
+            int nBuckets = 0;
             GUIntBig *panHistogram = NULL;
 
             if( poSrcBand->GetDefaultHistogram( &dfMin, &dfMax,
@@ -6118,27 +6121,30 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 == CE_None )
             {
                 CPLString osValue;
-                double dfBinWidth = (dfMax - dfMin) / nBuckets;
+                const double dfBinWidth = (dfMax - dfMin) / nBuckets;
 
                 papszStatsMD = CSLSetNameValue(
                     papszStatsMD, "STATISTICS_HISTOMIN",
-                    osValue.Printf( "%.15g", dfMin+dfBinWidth*0.5 ) );
+                    osValue.Printf( "%.15g", dfMin + dfBinWidth * 0.5 ) );
                 papszStatsMD = CSLSetNameValue(
                     papszStatsMD, "STATISTICS_HISTOMAX",
-                    osValue.Printf( "%.15g", dfMax-dfBinWidth*0.5 ) );
+                    osValue.Printf( "%.15g", dfMax - dfBinWidth * 0.5 ) );
                 papszStatsMD =
                     CSLSetNameValue( papszStatsMD, "STATISTICS_HISTONUMBINS",
                                      osValue.Printf( "%d", nBuckets ) );
 
                 int nBinValuesLen = 0;
-                char *pszBinValues = (char *) CPLCalloc(20, nBuckets+1);
+                char *pszBinValues =
+                    static_cast<char *>(CPLCalloc(20, nBuckets+1));
                 for( int iBin = 0; iBin < nBuckets; iBin++ )
                 {
 
                     strcat( pszBinValues+nBinValuesLen,
-                            osValue.Printf( CPL_FRMT_GUIB, panHistogram[iBin]) );
+                            osValue.Printf( CPL_FRMT_GUIB,
+                                            panHistogram[iBin]) );
                     strcat( pszBinValues+nBinValuesLen, "|" );
-                    nBinValuesLen += static_cast<int>(strlen(pszBinValues+nBinValuesLen));
+                    nBinValuesLen +=
+                        static_cast<int>(strlen(pszBinValues+nBinValuesLen));
                 }
                 papszStatsMD =
                     CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOBINVALUES",

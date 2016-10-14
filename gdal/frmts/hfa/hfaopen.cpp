@@ -1160,12 +1160,11 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry *poMIEntry;
-
 /* -------------------------------------------------------------------- */
 /*      Create a new Map_Info if there isn't one present already.       */
 /* -------------------------------------------------------------------- */
-        poMIEntry = hHFA->papoBand[iBand]->poNode->GetNamedChild( "Map_Info" );
+        HFAEntry *poMIEntry =
+            hHFA->papoBand[iBand]->poNode->GetNamedChild( "Map_Info" );
         if( poMIEntry == NULL )
         {
             poMIEntry = HFAEntry::New( hHFA, "Map_Info", "Eprj_MapInfo",
@@ -1177,14 +1176,12 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int nSize;
-        GByte   *pabyData;
-
-        nSize = static_cast<int>(48 + 40
+        const int nSize = static_cast<int>(
+            48 + 40
             + strlen(poMapInfo->proName) + 1
             + strlen(poMapInfo->units) + 1);
 
-        pabyData = poMIEntry->MakeData( nSize );
+        GByte *pabyData = poMIEntry->MakeData( nSize );
         memset( pabyData, 0, nSize );
 
         poMIEntry->SetPosition();
@@ -1277,17 +1274,14 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
 /*      Loop over bands, setting information on each one.               */
 /* -------------------------------------------------------------------- */
-    int iBand;
-
-    for( iBand = 0; iBand < hHFA->nBands; iBand++ )
+    for( int iBand = 0; iBand < hHFA->nBands; iBand++ )
     {
-        HFAEntry *poProX;
-
 /* -------------------------------------------------------------------- */
 /*      Verify we don't already have the node, since update-in-place    */
 /*      is likely to be more complicated.                               */
 /* -------------------------------------------------------------------- */
-        poProX = hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
+        HFAEntry *poProX =
+            hHFA->papoBand[iBand]->poNode->GetNamedChild( "ProjectionX" );
 
 /* -------------------------------------------------------------------- */
 /*      If we are setting an empty string then a missing entry is       */
@@ -1329,12 +1323,12 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /*      handling for MIFObjects.                                        */
 /* -------------------------------------------------------------------- */
         pabyData = poProX->GetData();
-        int    nDataSize = poProX->GetDataSize();
-        GUInt32   iOffset = poProX->GetDataPos();
-        GUInt32   nSize;
+        int nDataSize = poProX->GetDataSize();
+        GUInt32 iOffset = poProX->GetDataPos();
 
         while( nDataSize > 10
-               && !STARTS_WITH_CI((const char *) pabyData, "PE_COORDSYS,.") ) {
+               && !STARTS_WITH_CI((const char *) pabyData, "PE_COORDSYS,.") )
+        {
             pabyData++;
             nDataSize--;
             iOffset++;
@@ -1350,7 +1344,7 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
         iOffset += 8;
 
-        nSize = static_cast<GUInt32>(strlen(pszPEString) + 9);
+        GUInt32 nSize = static_cast<GUInt32>(strlen(pszPEString) + 9);
 
         HFAStandard( 4, &nSize );
         memcpy( pabyData, &nSize, 4 );
@@ -1626,15 +1620,13 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
-        int nSize;
-        GByte *pabyData;
-
-        nSize = static_cast<int>(26 + strlen(poDatum->datumname) + 1 + 7*8);
+        int nSize =
+            static_cast<int>(26 + strlen(poDatum->datumname) + 1 + 7 * 8);
 
         if( poDatum->gridname != NULL )
             nSize += static_cast<int>(strlen(poDatum->gridname) + 1);
 
-        pabyData = poDatumEntry->MakeData( nSize );
+        GByte *pabyData = poDatumEntry->MakeData( nSize );
         if( !pabyData )
             return CE_Failure;
 
@@ -1874,18 +1866,18 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write out the Ehfa_HeaderTag                                    */
 /* -------------------------------------------------------------------- */
-    GInt32 nHeaderPos;
-
     bool bRet = VSIFWriteL( (void *) "EHFA_HEADER_TAG", 1, 16, fp ) > 0;
 
-    nHeaderPos = 20;
+    GInt32 nHeaderPos = 20;
     HFAStandard( 4, &nHeaderPos );
     bRet &= VSIFWriteL( &nHeaderPos, 4, 1, fp ) > 0;
 
 /* -------------------------------------------------------------------- */
 /*      Write the Ehfa_File node, locked in at offset 20.               */
 /* -------------------------------------------------------------------- */
-    GInt32 nVersion = 1, nFreeList = 0, nRootEntry = 0;
+    GInt32 nVersion = 1;
+    GInt32 nFreeList = 0;
+    GInt32 nRootEntry = 0;
     GInt16 nEntryHeaderLength = 128;
     GInt32 nDictionaryPtr = 38;
 
@@ -1912,15 +1904,15 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /*      dictionary in chunks because some compiles (such as VC++)       */
 /*      don't allow particularly large static strings.                  */
 /* -------------------------------------------------------------------- */
-    int      nDictLen = 0, iChunk;
+    int nDictLen = 0;
 
-    for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
+    for( int iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
         nDictLen += static_cast<int>(strlen(aszDefaultDD[iChunk]));
 
-    psInfo->pszDictionary = (char *) CPLMalloc(nDictLen+1);
+    psInfo->pszDictionary = static_cast<char *>(CPLMalloc(nDictLen + 1));
     psInfo->pszDictionary[0] = '\0';
 
-    for( iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
+    for( int iChunk = 0; aszDefaultDD[iChunk] != NULL; iChunk++ )
         strcat( psInfo->pszDictionary, aszDefaultDD[iChunk] );
 
     bRet &= VSIFWriteL( (void *) psInfo->pszDictionary,
@@ -2036,14 +2028,13 @@ CPLErr HFAFlush( HFAHandle hHFA )
     if( hHFA->nRootPos != hHFA->poRoot->GetFilePos()
         || nNewDictionaryPos != hHFA->nDictionaryPos )
     {
-        GUInt32 nOffset;
-        GUInt32 nHeaderPos;
+        GUInt32 nHeaderPos = 0;
 
         bRet &= VSIFSeekL( hHFA->fp, 16, SEEK_SET ) >= 0;
         bRet &= VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp ) > 0;
         HFAStandard( 4, &nHeaderPos );
 
-        nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
+        GUInt32 nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
         HFAStandard( 4, &nOffset );
         bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET ) >= 0;
         bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
@@ -2255,7 +2246,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poDepLayerName =
             HFAEntry::New( psInfo, "DependentLayerName",
                           "Eimg_DependentLayerName", poEimg_Layer );
-        poDepLayerName->MakeData( static_cast<int>(8 + strlen(pszLayerName) + 2) );
+        poDepLayerName->MakeData(
+            static_cast<int>(8 + strlen(pszLayerName) + 2) );
 
         poDepLayerName->SetStringField( "ImageLayerName.string",
                                         pszLayerName );
@@ -2264,9 +2256,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /* -------------------------------------------------------------------- */
 /*      Create the Ehfa_Layer.                                          */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poEhfa_Layer;
-    GUInt32 nLDict;
-    char szLDict[128] = {};
     char chBandType = '\0';
 
     if( eDataType == EPT_u1 )
@@ -2305,19 +2294,23 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 
     // The first value in the entry below gives the number of pixels
     // within a block.
-    snprintf( szLDict, sizeof(szLDict), "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
+    char szLDict[128] = {};
+    snprintf( szLDict, sizeof(szLDict), "{%d:%cdata,}RasterDMS,.",
+              nBlockSize*nBlockSize, chBandType );
 
-    poEhfa_Layer = HFAEntry::New( psInfo, "Ehfa_Layer", "Ehfa_Layer",
-                                 poEimg_Layer );
+    HFAEntry *poEhfa_Layer =
+        HFAEntry::New( psInfo, "Ehfa_Layer", "Ehfa_Layer", poEimg_Layer );
     poEhfa_Layer->MakeData();
     poEhfa_Layer->SetPosition();
-    nLDict = HFAAllocateSpace( psInfo, static_cast<GUInt32>(strlen(szLDict) + 1) );
+    const GUInt32 nLDict =
+        HFAAllocateSpace( psInfo, static_cast<GUInt32>(strlen(szLDict) + 1) );
 
     poEhfa_Layer->SetStringField( "type", "raster" );
     poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
 
     bool bRet = VSIFSeekL( psInfo->fp, nLDict, SEEK_SET ) >= 0;
-    bRet &= VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp ) > 0;
+    bRet &= VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1,
+                        psInfo->fp ) > 0;
 
     return bRet;
 }
@@ -2452,11 +2445,9 @@ HFAHandle HFACreate( const char * pszFilename,
 /* ==================================================================== */
 /*      Create each band (layer)                                        */
 /* ==================================================================== */
-    int iBand;
-
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        char szName[128];
+        char szName[128] = {};
 
         snprintf( szName, sizeof(szName), "Layer_%d", iBand + 1 );
 
@@ -2535,25 +2526,21 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
 /*      the value.  There is only ever one row in GDAL_MetaData         */
 /*      tables.                                                         */
 /* -------------------------------------------------------------------- */
-    HFAEntry *poColumn;
-    char    **papszMD = NULL;
+    char **papszMD = NULL;
 
-    for( poColumn = poTable->GetChild();
+    for( HFAEntry *poColumn = poTable->GetChild();
          poColumn != NULL;
          poColumn = poColumn->GetNext() )
     {
-        const char *pszValue;
-        int        columnDataPtr;
-
         // Skip the #Bin_Function# entry.
         if( STARTS_WITH_CI(poColumn->GetName(), "#") )
             continue;
 
-        pszValue = poColumn->GetStringField( "dataType" );
+        const char *pszValue = poColumn->GetStringField( "dataType" );
         if( pszValue == NULL || !EQUAL(pszValue,"string") )
             continue;
 
-        columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
+        const int columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
         if( columnDataPtr == 0 )
             continue;
 
@@ -2563,7 +2550,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
 /*      nMaxNumChars should have been set by GDAL originally so we      */
 /*      should trust it, but who knows...                               */
 /* -------------------------------------------------------------------- */
-        int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
+        const int nMaxNumChars = poColumn->GetIntField( "maxNumChars" );
 
         if( nMaxNumChars <= 0 )
         {
@@ -2571,7 +2558,8 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
         }
         else
         {
-            char *pszMDValue = (char*) VSI_MALLOC_VERBOSE(nMaxNumChars);
+            char *pszMDValue =
+                static_cast<char*>(VSI_MALLOC_VERBOSE(nMaxNumChars));
             if( pszMDValue == NULL )
             {
                 continue;
@@ -2580,7 +2568,8 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
             if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
                 continue;
 
-            int nMDBytes = static_cast<int>(VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp ));
+            const int nMDBytes = static_cast<int>(
+                VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp ));
             if( nMDBytes == 0 )
             {
                 CPLFree( pszMDValue );
@@ -3113,7 +3102,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
             return FALSE;
         }
 
-        bRet &= VSIFWriteL( (void *) pszMagick, strlen(pszMagick)+1, 1, fpVSIL ) > 0;
+        bRet &= VSIFWriteL( (void *) pszMagick, strlen(pszMagick)+1, 1,
+                            fpVSIL ) > 0;
     }
 
     CPLFree( pszFullFilename );
@@ -3121,30 +3111,25 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
-    int nBlocksPerRow, nBlocksPerColumn, /* nBlocks, */ nBytesPerBlock;
-    int nBytesPerRow, nBlockMapSize /* , iFlagsSize */;
+    const int nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
+    const int nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+    // const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
+    const int nBytesPerBlock =
+        (nBlockSize * nBlockSize * HFAGetDataTypeBits(eDataType) + 7) / 8;
 
-    nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
-    nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
-    /* nBlocks = nBlocksPerRow * nBlocksPerColumn; */
-    nBytesPerBlock = (nBlockSize * nBlockSize
-                      * HFAGetDataTypeBits(eDataType) + 7) / 8;
-
-    nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
-    nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
-    /* iFlagsSize = nBlockMapSize + 20; */
+    const int nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
+    const int nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
+    // const int iFlagsSize = nBlockMapSize + 20;
 
 /* -------------------------------------------------------------------- */
 /*      Write stack prefix information.                                 */
 /* -------------------------------------------------------------------- */
-    GByte bUnknown;
-    GInt32 nValue32;
-
     bRet &= VSIFSeekL( fpVSIL, 0, SEEK_END ) >= 0;
 
-    bUnknown = 1;
+    GByte bUnknown = 1;
     bRet &= VSIFWriteL( &bUnknown, 1, 1, fpVSIL ) > 0;
-    nValue32 = nLayers;
+
+    GInt32 nValue32 = nLayers;
     HFAStandard( 4, &nValue32 );
     bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
     nValue32 = nXSize;
@@ -3165,12 +3150,10 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Write out ValidFlags section(s).                                */
 /* -------------------------------------------------------------------- */
-    unsigned char   *pabyBlockMap;
-    int iBand;
-
     *pnValidFlagsOffset = VSIFTellL( fpVSIL );
 
-    pabyBlockMap = (unsigned char *) VSI_MALLOC_VERBOSE( nBlockMapSize );
+    unsigned char *pabyBlockMap = static_cast<unsigned char *>(
+        VSI_MALLOC_VERBOSE( nBlockMapSize ));
     if( pabyBlockMap == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
@@ -3178,10 +3161,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     }
 
     memset( pabyBlockMap, 0xff, nBlockMapSize );
-    for( iBand = 0; iBand < nLayers; iBand++ )
+    for( int iBand = 0; iBand < nLayers; iBand++ )
     {
-        int i, iRemainder;
-
         nValue32 = 1;  // Unknown
         HFAStandard( 4, &nValue32 );
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
@@ -3197,13 +3178,13 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         HFAStandard( 4, &nValue32 );
         bRet &= VSIFWriteL( &nValue32, 4, 1, fpVSIL ) > 0;
 
-        iRemainder = nBlocksPerRow % 8;
+        const int iRemainder = nBlocksPerRow % 8;
         CPLDebug( "HFACreate",
                   "Block map size %d, bytes per row %d, remainder %d.",
                   nBlockMapSize, nBytesPerRow, iRemainder );
         if( iRemainder )
         {
-            for( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
+            for( int i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
                 pabyBlockMap[i] = static_cast<GByte>((1 << iRemainder) - 1);
         }
 
@@ -3215,7 +3196,8 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Extend the file to account for all the imagery space.           */
 /* -------------------------------------------------------------------- */
-    GIntBig nTileDataSize = ((GIntBig) nBytesPerBlock)
+    const GIntBig nTileDataSize =
+        static_cast<GIntBig>(nBytesPerBlock)
         * nBlocksPerRow * nBlocksPerColumn * nLayers;
 
     *pnDataOffset = VSIFTellL( fpVSIL );
@@ -3224,7 +3206,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         VSIFTruncateL( fpVSIL, nTileDataSize  + *pnDataOffset ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to extend %s to full size (" CPL_FRMT_GIB " bytes),\n"
+                  "Failed to extend %s to full size (" CPL_FRMT_GIB " bytes), "
                   "likely out of disk space.\n%s",
                   psInfo->pszIGEFilename,
                   nTileDataSize + *pnDataOffset,
@@ -3796,9 +3778,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Write MapInformation.                                           */
 /* -------------------------------------------------------------------- */
-    int nBand;
-
-    for( nBand = 1; nBand <= hHFA->nBands; nBand++ )
+    for( int nBand = 1; nBand <= hHFA->nBands; nBand++ )
     {
         HFAEntry *poBandNode = hHFA->papoBand[nBand-1]->poNode;
 
@@ -3807,7 +3787,8 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
         {
             poMI = HFAEntry::New( hHFA, "MapInformation",
                                  "Eimg_MapInformation", poBandNode );
-            poMI->MakeData( static_cast<int>(18 + strlen(pszProName) + strlen(pszUnits)) );
+            poMI->MakeData(
+                static_cast<int>(18 + strlen(pszProName) + strlen(pszUnits)) );
             poMI->SetPosition();
         }
 
@@ -3828,7 +3809,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     adfAdjTransform[3] += adfAdjTransform[4] * 0.5;
     adfAdjTransform[3] += adfAdjTransform[5] * 0.5;
 
-    // Invert
+    // Invert.
     double adfRevTransform[6] = {};
     if( !HFAInvGeoTransform( adfAdjTransform, adfRevTransform ) )
         memset(adfRevTransform, 0, sizeof(adfRevTransform));
@@ -3836,6 +3817,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     // Assign to polynomial object.
 
     Efga_Polynomial sForward;
+    Efga_Polynomial *psForward = &sForward;
     sForward.order = 1;
     sForward.polycoefvector[0] = adfRevTransform[0];
     sForward.polycoefmtx[0]    = adfRevTransform[1];
@@ -3844,9 +3826,8 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     sForward.polycoefmtx[2]    = adfRevTransform[2];
     sForward.polycoefmtx[3]    = adfRevTransform[5];
 
-    Efga_Polynomial sReverse;
-    sReverse = sForward;
-    Efga_Polynomial *psForward=&sForward, *psReverse=&sReverse;
+    Efga_Polynomial sReverse = sForward;
+    Efga_Polynomial *psReverse = &sReverse;
 
     return HFAWriteXFormStack( hHFA, 0, 1, &psForward, &psReverse );
 }
