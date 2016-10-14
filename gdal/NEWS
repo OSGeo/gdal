@@ -1,3 +1,158 @@
+= GDAL/OGR 2.1.2 Release Notes = 
+
+The 2.1.2 release is a bug fix release.
+
+== Port ==
+* Fix deadlock at CPLWorkerThreadPool destruction (#6646)
+* CPLGetSymbol() on Windows: honour GDAL_FILENAME_IS_UTF8 setting to call
+  LoadLibraryW() (#6650)
+* /vsicurl/: take CPL_VSIL_CURL_ALLOWED_EXTENSIONS into account even if
+  GDAL_DISABLE_READDIR_ON_OPEN is defined (#6681)
+
+== GDAL algorithms ==
+
+== GDAL Core ==
+* Nodata comparison: fix test when nodata is FLT_MIN or DBL_MIN (#6578)
+* External overview: fix incorrect overview building when generating from greater
+  overview factors to lower ones, in compressed and single-band case (#6617)
+* Make sure that GDALSetCacheMax() initialize the raster block mutex (#6611)
+* Fix potential deadlock in multithreaded writing scenarios (#6661)
+* Make multi-threaded reading/writing when using GetLockedBlock()/MarkDirty()/
+  DropLock() lower level interfaces (#6665)
+
+== Utilities ==
+* gdal_translate & gdalwarp: lower the default value of GDAL_MAX_DATASET_POOL_SIZE
+  to 100 on MacOSX (#6604)
+* gdalwarp: when -to RPC_DEM is specified, make -et default to 0 as documented (#6608)
+* gdal_translate: when using -projwin with default nearest neighbour resampling,
+  align on integer source pixels (#6610)
+* gdal2xyz: use %d formatting for Int32/UInt32 data types (#6644)
+
+== GDAL drivers ==
+
+AIGRID driver:
+* fix 2.1.0 regression when reading statistics (.sta) file with only 3 values,
+  and fix <2.1 behaviour to read them in LSB order (#6633)
+
+ENVI driver:
+* on closing, pad image file with trailing nul bytes if needed (#6662)
+
+GeoRaster driver:
+* fix for geotransform matrix with rotation terms (#6593)
+
+GPKG driver:
+* check if transaction COMMIT is successful (#6667)
+* fix crash on overview building on big overview factor (#6668)
+
+GTiff driver:
+* fix saving and loading band description (#6592)
+* avoid reading external metadata file that could be related to the target
+  filename when using Create() or CreateCopy() (#6594)
+* do not generate erroneous ExtraSamples tag when translating from a RGB UInt16,
+  without explicit PHOTOMETRIC=RGB (#6647)
+
+HDF4 driver:
+* Fixed erroneous type casting in HDF4Dataset::AnyTypeToDouble() breaking reading
+  georeference data and some other metadata from HDF4-EOS datasets (#6618)
+
+HDF5 driver:
+* correct number of GCPs to avoid dummy trailing (0,0)->(0,0,0) and remove +180
+  offset applied to GCP longitude. Add instead a heuristics to determine if the
+  product is crossing the antimeridian, and a HDF5_SHIFT_GCPX_BY_180 config option
+  to be able to override the heuristics (#6666)
+
+ISCE driver:
+* make parsing of properties case insensitive (#6637)
+
+netCDF driver:
+* fix crash on datasets with 1D variable with 0 record (#6645)
+
+RMF driver:
+* fix wrong counter decrement that caused compressed RMF to be incorrectly
+  decompressed (https://github.com/OSGeo/gdal/pull/153)
+
+ROI_PAC driver:
+* fix computation of line offset for multi-band BIP files, and warn if detecting
+  a wrong file produced by GDAL >= 2.0.0 (#6591)
+
+SRTMHGT driver:
+* accept filenames like NXXEYYY.SRTMGL1.hgt (#6614)
+
+VRT driver:
+* make CheckCompatibleForDatasetIO() return FALSE on VRTDerivedRasterBands (#6599)
+* fix performance issue when nodata set at band level and non-nearest resampling used (#6628)
+* VRTComplexSource: do temp computations on double to avoid precision issues
+  when band data type is Int32/UInt32/CInt32/Float64/CFloat64 (#6642)
+
+== OGR core ==
+
+== OGR utilities ==
+* GDALVectorTranslate(): imply update mode if access mode not explicitly
+  specified and hDstDS != NULL (#6612)
+
+== OGR drivers == 
+
+Carto driver:
+* rebranded from CartoDB to Carto. "CartoDB" is still a valid alias to Carto
+
+GPKG:
+* update schema to reflect CURRENT_TIMESTAMP -> 'now' changes (https://github.com/OSGeo/gdal/pull/155)
+* do not emit error when running ExecuteSQL() with a spatial filter on an empty
+  layer (#6639)
+* list (non spatial) layers not registered in gpkg_contents (#6679)
+* robustified layer deletion and renaming (#6679)
+* implementation of DeleteField, AlterFieldDefn and ReorderFields (#6679)
+* GetExtent() to save computed extent in gpkg_contents if empty (#6679)
+* add 'RECOMPUTE EXTENT ON' special SQL (#6679)
+* update last modified date on tiles update (#6679) 
+* check identifier unicity on layer creation (#6679)
+* add possibility to disable foreign key check by setting
+  OGR_GPKG_FOREIGN_KEY_CHECK=NO config option (#6679)
+* add HasSpatialIndex(tblname,geomcolname) SQL function (#6679)
+
+GML driver:
+* remove hack for CityGML regarding forcing srsDimension to 3 if not specified.
+  Instead add a GML_SRS_DIMENSION_IF_MISSING config option that can be set to
+  3 if needed (#6597)
+* consider srsName with URL like 'http://www.opengis.net/def/crs/EPSG/0/' as
+  following EPSG axis order. Add SWAP_COORDINATES=YES/NO/AUTO (and
+  GML_SWAP_COORDINATES configuration option) to override all auto guessing (#6678)
+
+MSSQLSpatial driver:
+* Fix select layer to recognize geometry column with sqlncli (#6641)
+
+NAS driver:
+* Fix to handle that 'anlass' is optional
+
+OCI driver:
+* 3 new options: MULTI_LOAD, MULTI_LOAD_COUNT, FIRST_ID (#6606)
+
+PG driver:
+* fix errors caused by missing geometry_columns/spatial_ref_sys tables in non
+  PostGIS databases, that prevent reading more than 500 features (http://hub.qgis.org/issues/10904)
+
+PLScenes driver:
+* add HTTP retry logic (#6655)
+* V0 API: workaround limitations on filtering on image_statistics.image_quality (#6657)
+
+S57 driver:
+* fix GDAL 2.1.1 regression where open options are ignored if OGR_S57_OPTIONS
+  config option is not defined (#6609)
+
+Shapefile driver:
+* change REPACK implementation on Windows to be robust to remaining file
+  descriptors openend on the .shp/.shx/.dbf (#6672)
+
+SQLite driver:
+* do not emit error when running ExecuteSQL() with a spatial filter on an
+  empty layer (#6639)
+* Spatialite: avoid crash when creating layer with geom_type = wkbCurve (#6660)
+* don't touch nSoftTransactionLevel in DoTransactionCommand() in case of error,
+  since it can cause later CPLAssert() to trigger (#6667)
+
+XLSX driver:
+* only list worksheets (and no charts) as layers (#6680)
+
 = GDAL/OGR 2.1.1 Release Notes = 
 
 The 2.1.1 release is a bug fix release.
@@ -776,7 +931,7 @@ PG driver:
  * Add PRELUDE_STATEMENTS and CLOSING_STATEMENTS open option to be for example able to specify options, like statement_timeout, with pg_bouncer
  * Fix 2.0 regression when overwriting several existing PostGIS layers with ogr2ogr (#6018)
  * Update PG, PGDump and CartoDB drivers to correctly export POINT EMPTY for PostGIS 2.2
- * avoid reseting error potentially emitted by ExecuteSQL() (#6194)
+ * avoid resetting error potentially emitted by ExecuteSQL() (#6194)
  * sanitize management of quoting for FID column at layer creation
  * fix to get SRID on result layer with PostGIS 2.2
  * in copy mode (the default on layer creation), do not truncate the concatenated string list to the field width (#6356)
@@ -1418,7 +1573,7 @@ Utilities:
  * ogr2ogr: add special case for -update and GPKG and input=output
  * ogr2ogr: when copying a layer that has a source integer/integer64 field with same name as target FID column, avoid creating it into target layer and use its content as the FID value (#5845)
  * ogr2ogr: in non-append mode, if target layer has a FID creation option, reuse source FID name and source FIDs, unless -unsetFid is specified (#5845)
- * ogr2ogr: copy source dataset and layer metadata, unless disabled by -nomd. Additionnal dataset metadata can be set with -mo KEY=VALUE
+ * ogr2ogr: copy source dataset and layer metadata, unless disabled by -nomd. Additional dataset metadata can be set with -mo KEY=VALUE
  * ogr2ogr: add -ds_transaction to force dataset transactions, mainly for FileGDB driver
  * ogr2ogr: fix crash with -clipdst when a reprojection fails before (#5973)
  * ogrlineref: fix project if reper lies on first point or last point of line
@@ -3440,7 +3595,7 @@ Port:
  * /vsicurl/ : fetch more info (size, date) when listing FTP or HTTP directories and save it in cache; use those info for ReadDir() and Stat()
  * /vsicurl/: accept 225 as a valid response code for FTP downloads (#4365)
  * /vsicurl/ : add CPL_VSIL_CURL_ALLOWED_EXTENSIONS configuration option that can be used to restrict files whose existence is going to be tested.
- * /vsitar/ : Recognize additionnal .tar files with slightly header differences
+ * /vsitar/ : Recognize additional .tar files with slightly header differences
  * /vsizip/ : wrap the returned file handle in a BufferedReader
  * /vsizip/ : fix 1900 year offset for year returned by VSIStatL()
  * /vsizip and /vsitar: remove leading './' pattern at the beginning of filenames contained in the archive
@@ -6364,7 +6519,7 @@ NITF driver:
  * Apply untested RPC00A remapping (#2040)
  * Fix #2135 by narrowing workaround test made for #1750
  * Prevent crash on NITF file without image segment (#2362)
- * Additionnal fix for handling 1-bit uncompressed NITF images with NITF_IC=NM  (#1854)
+ * Additional fix for handling 1-bit uncompressed NITF images with NITF_IC=NM  (#1854)
  * Set IREP=RGB implicitly when the first 3 channels of an image are R,G,B (#2343)
  * Allocate one extra byte for the NULL terminating character when reading TEXT data in NITF file (#2366)
  * Fix 'adding BLOCKA TRE precludes writing IGEOLO' (#2475)
