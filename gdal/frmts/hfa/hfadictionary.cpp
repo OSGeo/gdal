@@ -150,8 +150,8 @@ void HFADictionary::AddType( HFAType *poType )
         )
     {
         nTypesMax = nTypes * 2 + 10;
-        papoTypes = (HFAType **) CPLRealloc( papoTypes,
-                                             sizeof(void*) * nTypesMax );
+        papoTypes = static_cast<HFAType **>(
+            CPLRealloc(papoTypes, sizeof(void *) * nTypesMax));
     }
 
     papoTypes[nTypes++] = poType;

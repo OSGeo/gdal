@@ -100,7 +100,7 @@ const char *HFAType::Initialize( const char * pszInput )
         if( pszInput != NULL )
         {
             papoFields = static_cast<HFAField **>(
-                CPLRealloc(papoFields, sizeof(void*) * (nFields + 1) ));
+                CPLRealloc(papoFields, sizeof(void*) * (nFields + 1)));
             papoFields[nFields++] = poNewField;
         }
         else

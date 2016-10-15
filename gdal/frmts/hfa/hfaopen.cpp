@@ -81,7 +81,7 @@ static char * HFAGetDictionary( HFAHandle hHFA )
 
 {
     int nDictMax = 100;
-    char *pszDictionary = (char *) CPLMalloc(nDictMax);
+    char *pszDictionary = static_cast<char *>(CPLMalloc(nDictMax));
     int nDictSize = 0;
 
     if( VSIFSeekL( hHFA->fp, hHFA->nDictionaryPos, SEEK_SET ) < 0 )
@@ -95,7 +95,8 @@ static char * HFAGetDictionary( HFAHandle hHFA )
         if( nDictSize >= nDictMax-1 )
         {
             nDictMax = nDictSize * 2 + 100;
-            pszDictionary = (char *) CPLRealloc(pszDictionary, nDictMax );
+            pszDictionary = static_cast<char *>(
+                CPLRealloc(pszDictionary, nDictMax));
         }
 
         if( VSIFReadL( pszDictionary + nDictSize, 1, 1, hHFA->fp ) < 1
@@ -375,9 +376,9 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
                 return CE_Failure;
             }
 
-            psInfo->papoBand = (HFABand **)
+            psInfo->papoBand = static_cast<HFABand **>(
                 CPLRealloc(psInfo->papoBand,
-                           sizeof(HFABand *) * (psInfo->nBands+1));
+                           sizeof(HFABand *) * (psInfo->nBands+1)));
             psInfo->papoBand[psInfo->nBands] = new HFABand( psInfo, poNode );
             if( psInfo->papoBand[psInfo->nBands]->nWidth == 0 )
             {
@@ -1405,8 +1406,8 @@ const Eprj_ProParameters *HFAGetProParameters( HFAHandle hHFA )
 /* -------------------------------------------------------------------- */
 /*      Allocate the structure.                                         */
 /* -------------------------------------------------------------------- */
-    Eprj_ProParameters *psProParms =
-        (Eprj_ProParameters *)CPLCalloc(sizeof(Eprj_ProParameters),1);
+    Eprj_ProParameters *psProParms = static_cast<Eprj_ProParameters *>(
+        CPLCalloc(sizeof(Eprj_ProParameters), 1));
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the fields.                                               */
@@ -1847,7 +1848,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create the HFAInfo_t                                            */
 /* -------------------------------------------------------------------- */
-    psInfo = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
+    psInfo = static_cast<HFAInfo_t *>(CPLCalloc(sizeof(HFAInfo_t), 1));
 
     psInfo->fp = fp;
     psInfo->eAccess = HFA_Update;
@@ -3359,15 +3360,15 @@ int HFAReadXFormStack( HFAHandle hHFA,
         if( bSuccess )
         {
             nStepCount++;
-            *ppasPolyListForward = (Efga_Polynomial *)
-                CPLRealloc( *ppasPolyListForward,
-                            sizeof(Efga_Polynomial) * nStepCount);
+            *ppasPolyListForward = static_cast<Efga_Polynomial *>(
+                CPLRealloc(*ppasPolyListForward,
+                           sizeof(Efga_Polynomial) * nStepCount));
             memcpy( *ppasPolyListForward + nStepCount - 1,
                     &sForward, sizeof(sForward) );
 
-            *ppasPolyListReverse = (Efga_Polynomial *)
+            *ppasPolyListReverse = static_cast<Efga_Polynomial *>(
                 CPLRealloc( *ppasPolyListReverse,
-                            sizeof(Efga_Polynomial) * nStepCount);
+                            sizeof(Efga_Polynomial) * nStepCount));
             memcpy( *ppasPolyListReverse + nStepCount - 1,
                     &sReverse, sizeof(sReverse) );
         }
