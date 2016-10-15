@@ -153,6 +153,20 @@ if test "x$CXX" == x ; then
   AC_MSG_ERROR("You don't have a working C++ compiler.")
 fi
 
+dnl Check C++ compiler compability with C++11
+CXX11_SUPPORT=no
+
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[#if __cplusplus >= 201103L
+    #error "-std=c++11 extension is not supported"
+    #endif]])],
+  [CXX11_SUPPORT=yes],,
+  )
+AC_LANG_POP([C++])
+
+AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
+
 dnl switch between libtool and native build system
 AC_ARG_WITH(libtool, [  --without-libtool     Don't use libtool to build the library],,)
 
@@ -5237,6 +5251,7 @@ LOC_MSG()
 LOC_MSG([  Installation directory:    ${prefix}])
 LOC_MSG([  C compiler:                ${CC} ${CFLAGS}])
 LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
+LOC_MSG([  C++11 support:             ${CXX11_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
