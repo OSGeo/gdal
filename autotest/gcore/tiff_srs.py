@@ -439,6 +439,22 @@ def tiff_srs_projection_3856():
 
     return 'success'
 
+###############################################################################
+# Test reading a geotiff with a LOCAL_CS and a Imagine citation
+
+def tiff_srs_imagine_localcs_citation():
+
+    ds = gdal.Open('data/imagine_localcs_citation.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt != 'LOCAL_CS["Projection Name = UTM Units = meters GeoTIFF Units = meters",UNIT["unknown",1]]':
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -512,6 +528,7 @@ gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
 gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
 gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
 gdaltest_list.append( tiff_srs_projection_3856 )
+gdaltest_list.append( tiff_srs_imagine_localcs_citation )
 
 if __name__ == '__main__':
 
