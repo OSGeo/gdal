@@ -3843,11 +3843,10 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Handle RRDNamesList updates.                                    */
 /* -------------------------------------------------------------------- */
-    size_t iNode;
     std::vector<HFAEntry*> apoNodeList =
         hHFA->poRoot->FindChildren( "RRDNamesList", NULL );
 
-    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
+    for( size_t iNode = 0; iNode < apoNodeList.size(); iNode++ )
     {
         HFAEntry *poRRDNL = apoNodeList[iNode];
         std::vector<CPLString> aosNL;
@@ -3902,7 +3901,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
     apoNodeList =
         hHFA->poRoot->FindChildren( "ExternalRasterDMS", "ImgExternalRaster" );
 
-    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
+    for( size_t iNode = 0; iNode < apoNodeList.size(); iNode++ )
     {
         HFAEntry *poERDMS = apoNodeList[iNode];
 
@@ -3966,7 +3965,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
     apoNodeList =
         hHFA->poRoot->FindChildren( "DependentFile", "Eimg_DependentFile" );
 
-    for( iNode = 0; iNode < apoNodeList.size(); iNode++ )
+    for( size_t iNode = 0; iNode < apoNodeList.size(); iNode++ )
     {
         CPLString osFileName = apoNodeList[iNode]->
             GetStringField("dependent.string");
@@ -3975,9 +3974,10 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         if( strlen(pszNewBase) > strlen(pszOldBase) )
         {
             CPLDebug( "HFA", "Growing DependentFile to hold new names" );
-            apoNodeList[iNode]->MakeData( static_cast<int>(apoNodeList[iNode]->GetDataSize()
-                                          + (strlen(pszNewBase)
-                                             - strlen(pszOldBase))) );
+            apoNodeList[iNode]->MakeData(
+                static_cast<int>(apoNodeList[iNode]->GetDataSize()
+                                 + (strlen(pszNewBase)
+                                    - strlen(pszOldBase))) );
         }
 
         // Update the filename.
