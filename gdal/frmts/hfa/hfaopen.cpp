@@ -3006,7 +3006,7 @@ const char *HFAGetIGEFilename( HFAHandle hHFA )
         std::vector<HFAEntry*> apoDMSList =
             hHFA->poRoot->FindChildren( NULL, "ImgExternalRaster" );
 
-        if( apoDMSList.size() > 0 )
+        if( !apoDMSList.empty() )
             poDMS = apoDMSList[0];
 
 /* -------------------------------------------------------------------- */
