@@ -179,7 +179,7 @@ const char *HFAField::Initialize( const char * pszInput )
         if( nEnumCount < 0 || nEnumCount > 100000 )
             return NULL;
 
-        pszInput = strchr(pszInput,':');
+        pszInput = strchr(pszInput, ':');
         if( pszInput == NULL )
             return NULL;
 
@@ -1538,7 +1538,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     void *pReturn = NULL;
 
-    for( int iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT,nEntries); iEntry++ )
+    for( int iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT, nEntries); iEntry++ )
     {
         if( nEntries == 1 )
             CPL_IGNORE_RET_VAL(

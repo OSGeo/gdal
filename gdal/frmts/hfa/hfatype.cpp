@@ -208,20 +208,20 @@ HFAType::SetInstValue( const char * pszFieldPath,
 /*      Parse end of field name, possible index value and               */
 /*      establish where the remaining fields (if any) would start.      */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszFieldPath,'[') != NULL )
+    if( strchr(pszFieldPath, '[') != NULL )
     {
-        const char *pszEnd = strchr(pszFieldPath,'[');
+        const char *pszEnd = strchr(pszFieldPath, '[');
 
         nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        pszRemainder = strchr(pszFieldPath,'.');
+        pszRemainder = strchr(pszFieldPath, '.');
         if( pszRemainder != NULL )
             pszRemainder++;
     }
-    else if( strchr(pszFieldPath,'.') != NULL )
+    else if( strchr(pszFieldPath, '.') != NULL )
     {
-        const char *pszEnd = strchr(pszFieldPath,'.');
+        const char *pszEnd = strchr(pszFieldPath, '.');
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
@@ -240,7 +240,7 @@ HFAType::SetInstValue( const char * pszFieldPath,
     int iField = 0;
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
+        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName, nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;
@@ -290,20 +290,20 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /*      Parse end of field name, possible index value and               */
 /*      establish where the remaining fields (if any) would start.      */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszFieldPath,'[') != NULL )
+    if( strchr(pszFieldPath, '[') != NULL )
     {
-        const char *pszEnd = strchr(pszFieldPath,'[');
+        const char *pszEnd = strchr(pszFieldPath, '[');
 
         // nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        // pszRemainder = strchr(pszFieldPath,'.');
+        // pszRemainder = strchr(pszFieldPath, '.');
         // if( pszRemainder != NULL )
         //    pszRemainder++;
     }
-    else if( strchr(pszFieldPath,'.') != NULL )
+    else if( strchr(pszFieldPath, '.') != NULL )
     {
-        const char *pszEnd = strchr(pszFieldPath,'.');
+        const char *pszEnd = strchr(pszFieldPath, '.');
 
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
@@ -322,7 +322,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
     int iField = 0;
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
+        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName,nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;
@@ -384,8 +384,8 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
 /*      Parse end of field name, possible index value and               */
 /*      establish where the remaining fields (if any) would start.      */
 /* -------------------------------------------------------------------- */
-    const char *pszFirstArray = strchr(pszFieldPath,'[');
-    const char *pszFirstDot = strchr(pszFieldPath,'.');
+    const char *pszFirstArray = strchr(pszFieldPath, '[');
+    const char *pszFirstDot = strchr(pszFieldPath, '.');
 
     if( pszFirstArray != NULL
         && (pszFirstDot == NULL
@@ -396,7 +396,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
         nArrayIndex = atoi(pszEnd+1);
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
-        pszRemainder = strchr(pszFieldPath,'.');
+        pszRemainder = strchr(pszFieldPath, '.');
         if( pszRemainder != NULL )
             pszRemainder++;
     }
@@ -421,7 +421,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
     int iField = 0;
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath,papoFields[iField]->pszFieldName,nNameLen)
+        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName, nNameLen)
             && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;

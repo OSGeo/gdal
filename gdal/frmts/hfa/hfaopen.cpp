@@ -170,7 +170,7 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     psInfo->pszFilename = CPLStrdup(CPLGetFilename(pszFilename));
     psInfo->pszPath = CPLStrdup(CPLGetPath(pszFilename));
     psInfo->fp = fp;
-    if( EQUAL(pszAccess,"r") || EQUAL(pszAccess,"rb" ) )
+    if( EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb" ) )
         psInfo->eAccess = HFA_ReadOnly;
     else
         psInfo->eAccess = HFA_Update;
@@ -308,12 +308,12 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 
 {
-    if( EQUAL(pszFilename,psBase->pszFilename) )
+    if( EQUAL(pszFilename, psBase->pszFilename) )
         return psBase;
 
     if( psBase->psDependent != NULL )
     {
-        if( EQUAL(pszFilename,psBase->psDependent->pszFilename) )
+        if( EQUAL(pszFilename, psBase->psDependent->pszFilename) )
             return psBase->psDependent;
         else
             return NULL;
@@ -361,7 +361,7 @@ CPLErr HFAParseBandInfo( HFAInfo_t *psInfo )
     poNode = psInfo->poRoot->GetChild();
     while( poNode != NULL )
     {
-        if( EQUAL(poNode->GetType(),"Eimg_Layer")
+        if( EQUAL(poNode->GetType(), "Eimg_Layer")
             && poNode->GetIntField("width") > 0
             && poNode->GetIntField("height") > 0 )
         {
@@ -511,7 +511,7 @@ CPLErr HFADelete( const char *pszFilename )
         poNode = psInfo->poRoot->GetChild();
         while( ( poNode != NULL ) && ( poLayer == NULL ) )
         {
-            if( EQUAL(poNode->GetType(),"Eimg_Layer") )
+            if( EQUAL(poNode->GetType(), "Eimg_Layer") )
             {
                 poLayer = poNode;
             }
@@ -740,7 +740,7 @@ CPLErr HFAGetRasterBlockEx( HFAHandle hHFA, int nBand,
         return CE_Failure;
 
     return hHFA->papoBand[nBand-1]->
-        GetRasterBlock(nXBlock,nYBlock,pData,nDataSize);
+        GetRasterBlock(nXBlock, nYBlock, pData,nDataSize);
 }
 
 /************************************************************************/
@@ -803,7 +803,7 @@ CPLErr HFASetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
         return CE_Failure;
 
     return hHFA->papoBand[nBand-1]->papoOverviews[iOverview]->
-        SetRasterBlock(nXBlock,nYBlock,pData);
+        SetRasterBlock(nXBlock, nYBlock, pData);
 }
 
 /************************************************************************/
@@ -956,7 +956,7 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
              poChild != NULL && poMIEntry == NULL;
              poChild = poChild->GetNext() )
         {
-            if( EQUAL(poChild->GetType(),"Eprj_MapInfo") )
+            if( EQUAL(poChild->GetType(), "Eprj_MapInfo") )
                 poMIEntry = poChild;
         }
     }
@@ -990,9 +990,9 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
         poMIEntry->GetDoubleField("lowerRightCenter.y");
 
    psMapInfo->pixelSize.width =
-       poMIEntry->GetDoubleField("pixelSize.width",&eErr);
+       poMIEntry->GetDoubleField("pixelSize.width", &eErr);
    psMapInfo->pixelSize.height =
-       poMIEntry->GetDoubleField("pixelSize.height",&eErr);
+       poMIEntry->GetDoubleField("pixelSize.height", &eErr);
 
    // The following is basically a hack to get files with
    // non-standard MapInfo's that misname the pixelSize fields. (#3338)
@@ -1082,7 +1082,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
         padfGeoTransform[4] = 0.0;
 
         // Special logic to fixup odd angular units.
-        if( EQUAL(psMapInfo->units,"ds") )
+        if( EQUAL(psMapInfo->units, "ds") )
         {
             padfGeoTransform[0] /= 3600.0;
             padfGeoTransform[1] /= 3600.0;
@@ -1235,7 +1235,7 @@ char *HFAGetPEString( HFAHandle hHFA )
         return NULL;
 
     const char *pszType = poProX->GetStringField( "projection.type.string" );
-    if( pszType == NULL || !EQUAL(pszType,"PE_COORDSYS") )
+    if( pszType == NULL || !EQUAL(pszType, "PE_COORDSYS") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1295,8 +1295,9 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
         if( poProX == NULL )
         {
-            poProX = HFAEntry::New( hHFA, "ProjectionX","Eprj_MapProjection842",
-                                   hHFA->papoBand[iBand]->poNode );
+            poProX =
+                HFAEntry::New( hHFA, "ProjectionX", "Eprj_MapProjection842",
+                               hHFA->papoBand[iBand]->poNode );
             if( poProX->GetTypeObject() == NULL )
                 return CE_Failure;
         }
@@ -1304,7 +1305,8 @@ CPLErr HFASetPEString( HFAHandle hHFA, const char *pszPEString )
 /* -------------------------------------------------------------------- */
 /*      Prepare the data area with some extra space just in case.       */
 /* -------------------------------------------------------------------- */
-        GByte *pabyData = poProX->MakeData( static_cast<int>(700 + strlen(pszPEString)) );
+        GByte *pabyData =
+            poProX->MakeData( static_cast<int>(700 + strlen(pszPEString)) );
         if( !pabyData )
           return CE_Failure;
 
@@ -1459,7 +1461,7 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
             hHFA->papoBand[iBand]->poNode->GetNamedChild("Projection");
         if( poMIEntry == NULL )
         {
-            poMIEntry = HFAEntry::New( hHFA, "Projection","Eprj_ProParameters",
+            poMIEntry = HFAEntry::New( hHFA, "Projection", "Eprj_ProParameters",
                                        hHFA->papoBand[iBand]->poNode );
         }
 
@@ -1611,7 +1613,7 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
         poDatumEntry = poProParms->GetNamedChild("Datum");
         if( poDatumEntry == NULL )
         {
-            poDatumEntry = HFAEntry::New( hHFA, "Datum","Eprj_Datum",
+            poDatumEntry = HFAEntry::New( hHFA, "Datum", "Eprj_Datum",
                                       poProParms );
         }
 
@@ -1937,7 +1939,7 @@ HFAHandle HFACreateLL( const char * pszFilename )
 /*      delete them.  (#1784)                                           */
 /* -------------------------------------------------------------------- */
     CPLString osExtension = CPLGetExtension(pszFilename);
-    if( !EQUAL(osExtension,"rrd") && !EQUAL(osExtension,"aux") )
+    if( !EQUAL(osExtension, "rrd") && !EQUAL(osExtension, "aux") )
     {
         CPLString osPath = CPLGetPath( pszFilename );
         CPLString osBasename = CPLGetBasename( pszFilename );
@@ -2507,10 +2509,11 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
     else
         return NULL;
 
-    for( ; poTable != NULL && !EQUAL(poTable->GetName(),"GDAL_MetaData");
+    for( ;
+         poTable != NULL && !EQUAL(poTable->GetName(), "GDAL_MetaData");
          poTable = poTable->GetNext() ) {}
 
-    if( poTable == NULL || !EQUAL(poTable->GetType(),"Edsc_Table") )
+    if( poTable == NULL || !EQUAL(poTable->GetType(), "Edsc_Table") )
         return NULL;
 
     if( poTable->GetIntField( "numRows" ) != 1 )
@@ -2537,7 +2540,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
             continue;
 
         const char *pszValue = poColumn->GetStringField( "dataType" );
-        if( pszValue == NULL || !EQUAL(pszValue,"string") )
+        if( pszValue == NULL || !EQUAL(pszValue, "string") )
             continue;
 
         const int columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
@@ -2618,7 +2621,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
     HFAEntry *poEdsc_Table = poNode->GetNamedChild( "GDAL_MetaData" );
 
-    if( poEdsc_Table == NULL || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
+    if( poEdsc_Table == NULL || !EQUAL(poEdsc_Table->GetType(), "Edsc_Table") )
         poEdsc_Table = HFAEntry::New( hHFA, "GDAL_MetaData", "Edsc_Table",
                                  poNode );
 
@@ -2633,7 +2636,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         poEdsc_Table->GetNamedChild( "#Bin_Function#" );
 
     if( poEdsc_BinFunction == NULL
-        || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
+        || !EQUAL(poEdsc_BinFunction->GetType(), "Edsc_BinFunction") )
         poEdsc_BinFunction = HFAEntry::New( hHFA, "#Bin_Function#",
                                            "Edsc_BinFunction", poEdsc_Table );
 
@@ -2666,7 +2669,7 @@ HFASetGDALMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         poEdsc_Column = poEdsc_Table->GetNamedChild(pszKey);
 
         if( poEdsc_Column == NULL
-            || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
+            || !EQUAL(poEdsc_Column->GetType(), "Edsc_Column") )
             poEdsc_Column = HFAEntry::New( hHFA, pszKey, "Edsc_Column",
                                           poEdsc_Table );
 
@@ -2828,36 +2831,45 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             poEntry->SetIntField( "SkipFactorX", 1 );
             poEntry->SetIntField( "SkipFactorY", 1 );
 
-            int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
-            double dMinLimit = poEntry->GetDoubleField( "BinFunction.minLimit" );
-            double dMaxLimit = poEntry->GetDoubleField( "BinFunction.maxLimit" );
+            const int nNumBins = poEntry->GetIntField( "BinFunction.numBins" );
+            const double dMinLimit =
+                poEntry->GetDoubleField( "BinFunction.minLimit" );
+            const double dMaxLimit =
+                poEntry->GetDoubleField( "BinFunction.maxLimit" );
 
             // Fill the descriptor table - check it isn't there already.
             poEntry = poNode->GetNamedChild( "Descriptor_Table" );
-            if( poEntry == NULL || !EQUAL(poEntry->GetType(),"Edsc_Table") )
-                poEntry = HFAEntry::New( hHFA, "Descriptor_Table", "Edsc_Table", poNode );
+            if( poEntry == NULL || !EQUAL(poEntry->GetType(), "Edsc_Table") )
+                poEntry =
+                    HFAEntry::New(hHFA, "Descriptor_Table",
+                                  "Edsc_Table", poNode);
 
             poEntry->SetIntField( "numRows", nNumBins );
 
             // Bin function.
             HFAEntry * poBinFunc = poEntry->GetNamedChild( "#Bin_Function#" );
-            if( poBinFunc == NULL || !EQUAL(poBinFunc->GetType(),"Edsc_BinFunction") )
-                poBinFunc = HFAEntry::New( hHFA, "#Bin_Function#", "Edsc_BinFunction", poEntry );
+            if( poBinFunc == NULL ||
+                !EQUAL(poBinFunc->GetType(), "Edsc_BinFunction") )
+                poBinFunc =
+                    HFAEntry::New(hHFA, "#Bin_Function#",
+                                  "Edsc_BinFunction", poEntry);
 
             poBinFunc->MakeData( 30 );
             poBinFunc->SetIntField( "numBins", nNumBins );
             poBinFunc->SetDoubleField( "minLimit", dMinLimit );
             poBinFunc->SetDoubleField( "maxLimit", dMaxLimit );
             // Direct for thematic layers, linear otherwise.
-            if( STARTS_WITH_CI(poNode->GetStringField("layerType"), "thematic") )
+            if( STARTS_WITH_CI(poNode->GetStringField("layerType"),
+                               "thematic") )
                 poBinFunc->SetStringField( "binFunctionType", "direct" );
             else
                 poBinFunc->SetStringField( "binFunctionType", "linear" );
 
             // We need a child named histogram.
             HFAEntry * poHisto = poEntry->GetNamedChild( "Histogram" );
-            if( poHisto == NULL || !EQUAL(poHisto->GetType(),"Edsc_Column") )
-                poHisto = HFAEntry::New( hHFA, "Histogram", "Edsc_Column", poEntry );
+            if( poHisto == NULL || !EQUAL(poHisto->GetType(), "Edsc_Column") )
+                poHisto =
+                    HFAEntry::New(hHFA, "Histogram", "Edsc_Column", poEntry);
 
             poHisto->SetIntField( "numRows", nNumBins );
             // Allocate space for the bin values.
@@ -2873,7 +2885,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 if( pszEnd != NULL )
                 {
                     *pszEnd = 0;
-                    bRet &= VSIFSeekL( hHFA->fp, nOffset + 8*nBin, SEEK_SET ) >= 0;
+                    bRet &= VSIFSeekL(hHFA->fp, nOffset + 8*nBin,
+                                      SEEK_SET) >= 0;
                     double nValue = CPLAtof( pszWork );
                     HFAStandard( 8, &nValue );
 
@@ -3067,10 +3080,10 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
     if( psInfo->pszIGEFilename == NULL )
     {
-        if( EQUAL(CPLGetExtension(psInfo->pszFilename),"rrd") )
+        if( EQUAL(CPLGetExtension(psInfo->pszFilename), "rrd") )
             psInfo->pszIGEFilename =
                 CPLStrdup( CPLResetExtension( psInfo->pszFilename, "rde" ) );
-        else if( EQUAL(CPLGetExtension(psInfo->pszFilename),"aux") )
+        else if( EQUAL(CPLGetExtension(psInfo->pszFilename), "aux") )
             psInfo->pszIGEFilename =
                 CPLStrdup( CPLResetExtension( psInfo->pszFilename, "axe" ) );
         else
@@ -3321,7 +3334,7 @@ int HFAReadXFormStack( HFAHandle hHFA,
         memset( &sForward, 0, sizeof(sForward) );
         memset( &sReverse, 0, sizeof(sReverse) );
 
-        if( EQUAL(poXForm->GetType(),"Efga_Polynomial") )
+        if( EQUAL(poXForm->GetType(), "Efga_Polynomial") )
         {
             bSuccess = HFAReadAndValidatePoly(poXForm, "", &sForward);
 
@@ -3350,7 +3363,7 @@ int HFAReadXFormStack( HFAHandle hHFA,
                 sReverse.polycoefmtx[3]    = adfInvGT[5];
             }
         }
-        else if( EQUAL(poXForm->GetType(),"GM_PolyPair") )
+        else if( EQUAL(poXForm->GetType(), "GM_PolyPair") )
         {
             bSuccess =
                 HFAReadAndValidatePoly(poXForm, "forward.", &sForward) &&
@@ -3589,7 +3602,7 @@ char **HFAReadCameraModel( HFAHandle hHFA )
     if( poXForm == NULL )
         return NULL;
 
-    if( !EQUAL(poXForm->GetType(),"Camera_ModelX") )
+    if( !EQUAL(poXForm->GetType(), "Camera_ModelX") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -3866,7 +3879,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         // Adjust the names to the new form.
         for( i = 0; i < nNameCount; i++ )
         {
-            if( strncmp(aosNL[i],pszOldBase,strlen(pszOldBase)) == 0 )
+            if( strncmp(aosNL[i], pszOldBase, strlen(pszOldBase)) == 0 )
             {
                 CPLString osNew = pszNewBase;
                 osNew += aosNL[i].c_str() + strlen(pszOldBase);
@@ -3926,7 +3939,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         const GInt32 nStackIndex = poERDMS->GetIntField( "layerStackIndex" );
 
         // Update the filename.
-        if( strncmp(osFileName,pszOldBase,strlen(pszOldBase)) == 0 )
+        if( strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0 )
         {
             CPLString osNew = pszNewBase;
             osNew += osFileName.c_str() + strlen(pszOldBase);
@@ -3982,7 +3995,7 @@ CPLErr HFARenameReferences( HFAHandle hHFA,
         }
 
         // Update the filename.
-        if( strncmp(osFileName,pszOldBase,strlen(pszOldBase)) == 0 )
+        if( strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0 )
         {
             CPLString osNew = pszNewBase;
             osNew += osFileName.c_str() + strlen(pszOldBase);

@@ -174,7 +174,7 @@ CPLErr HFABand::LoadOverviews()
                 break;
 
             char *pszFilename = CPLStrdup(pszName);
-            char *pszEnd = strstr(pszFilename,"(:");
+            char *pszEnd = strstr(pszFilename, "(:");
             if( pszEnd == NULL )
             {
                 CPLFree( pszFilename );
@@ -251,10 +251,10 @@ CPLErr HFABand::LoadOverviews()
     HFAInfo_t *psOvHFA = psInfo;
 
     if( nOverviews == 0
-        && EQUAL(CPLGetExtension(psInfo->pszFilename),"aux") )
+        && EQUAL(CPLGetExtension(psInfo->pszFilename), "aux") )
     {
         const CPLString osRRDFilename =
-            CPLResetExtension( psInfo->pszFilename,"rrd");
+            CPLResetExtension(psInfo->pszFilename, "rrd");
         const CPLString osFullRRD =
             CPLFormFilename( psInfo->pszPath, osRRDFilename, NULL );
         VSIStatBufL sStatBuf;
@@ -1067,13 +1067,13 @@ void HFABand::NullBlock( void *pData )
           case EPT_u8:
             ((unsigned char *) abyTmp)[0] =
                 static_cast<unsigned char>(
-                    MAX(0,MIN(255,static_cast<int>(dfNoData))));
+                    MAX(0, MIN(255, static_cast<int>(dfNoData))));
             break;
 
           case EPT_s8:
               ((signed char *) abyTmp)[0] =
                   static_cast<signed char>(
-                      MAX(-128,MIN(127,static_cast<int>(dfNoData))));
+                      MAX(-128, MIN(127, static_cast<int>(dfNoData))));
               break;
 
           case EPT_u16:
@@ -1763,7 +1763,7 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
         poBinFunc->GetStringField( "binFunction.type.string" );
 
     if( pszBinFunctionType == NULL
-        || !EQUAL(pszBinFunctionType,"BFUnique") )
+        || !EQUAL(pszBinFunctionType, "BFUnique") )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1804,7 +1804,8 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
 /* -------------------------------------------------------------------- */
 /*      Decode bins.                                                    */
 /* -------------------------------------------------------------------- */
-    double *padfBins = (double *) CPLCalloc(sizeof(double),nPCTColors);
+    double *padfBins = static_cast<double *>(
+        CPLCalloc(sizeof(double), nPCTColors));
 
     memcpy( padfBins, pabyMIFObject + 24, sizeof(double) * nPCTColors );
 
@@ -1977,7 +1978,7 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
     poEdsc_Table = poNode->GetNamedChild( "Descriptor_Table" );
     if( poEdsc_Table == NULL
-        || !EQUAL(poEdsc_Table->GetType(),"Edsc_Table") )
+        || !EQUAL(poEdsc_Table->GetType(), "Edsc_Table") )
         poEdsc_Table = HFAEntry::New( psInfo, "Descriptor_Table",
                                      "Edsc_Table", poNode );
 
@@ -1990,7 +1991,7 @@ CPLErr HFABand::SetPCT( int nColors,
     HFAEntry *poEdsc_BinFunction
         = poEdsc_Table->GetNamedChild( "#Bin_Function#" );
     if( poEdsc_BinFunction == NULL
-        || !EQUAL(poEdsc_BinFunction->GetType(),"Edsc_BinFunction") )
+        || !EQUAL(poEdsc_BinFunction->GetType(), "Edsc_BinFunction") )
         poEdsc_BinFunction = HFAEntry::New( psInfo, "#Bin_Function#",
                                            "Edsc_BinFunction",
                                            poEdsc_Table );
@@ -2025,7 +2026,7 @@ CPLErr HFABand::SetPCT( int nColors,
 /* -------------------------------------------------------------------- */
         HFAEntry *poEdsc_Column = poEdsc_Table->GetNamedChild( pszName );
         if( poEdsc_Column == NULL
-            || !EQUAL(poEdsc_Column->GetType(),"Edsc_Column") )
+            || !EQUAL(poEdsc_Column->GetType(), "Edsc_Column") )
             poEdsc_Column = HFAEntry::New( psInfo, pszName, "Edsc_Column",
                                           poEdsc_Table );
 
@@ -2115,7 +2116,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      it on the config options.                                       */
 /* -------------------------------------------------------------------- */
     bool bCreateLargeRaster = CPLTestBool(
-        CPLGetConfigOption("USE_SPILL","NO") );
+        CPLGetConfigOption("USE_SPILL", "NO") );
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
 
     if( (psRRDInfo->nEndOfFile
