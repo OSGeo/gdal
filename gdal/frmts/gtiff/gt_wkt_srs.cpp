@@ -549,7 +549,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected )
     {
         char szCTString[512] = { '\0' };
-        strcpy( szCTString, "unnamed" );
         if( psDefn->PCS != KvUserDefined )
         {
             char *pszPCSName = NULL;
@@ -594,7 +593,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                     oSRS.SetNode( "PROJCS", szCTString );
             }
             else
-                oSRS.SetNode( "PROJCS", szCTString );
+            {
+                oSRS.SetNode( "PROJCS", "unnamed" );
+            }
         }
 
         /* Handle ESRI/Erdas style state plane and UTM in citation key */
