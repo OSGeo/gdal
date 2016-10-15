@@ -2999,19 +2999,16 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-GNM_ENABLED=no
+GNM_ENABLED=yes
 
 AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
-if test "$with_gnm" = "" ; then
+if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo "GNM support disabled."
-elif test "$with_gnm" = "yes"; then
+  echo echo checking for GNM ... support disabled
+else
   echo checking for GNM ... enabled
   GNM_ENABLED=yes
-else
-  echo checking for GNM ... disabled by user
-  GNM_ENABLED=no
 fi
 AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
 

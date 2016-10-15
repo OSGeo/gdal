@@ -25244,7 +25244,7 @@ OPT_GDAL_FORMATS=$OPT_GDAL_FORMATS
 
 
 
-GNM_ENABLED=no
+GNM_ENABLED=yes
 
 
 # Check whether --with-gnm was given.
@@ -25253,15 +25253,12 @@ if test "${with_gnm+set}" = set; then :
 fi
 
 
-if test "$with_gnm" = "" ; then
+if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo "GNM support disabled."
-elif test "$with_gnm" = "yes"; then
+  echo checking for GNM ... disabled
+else
   echo checking for GNM ... enabled
   GNM_ENABLED=yes
-else
-  echo checking for GNM ... disabled by user
-  GNM_ENABLED=no
 fi
 GNM_ENABLED=$GNM_ENABLED
 
