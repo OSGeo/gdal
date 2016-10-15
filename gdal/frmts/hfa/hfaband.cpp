@@ -640,7 +640,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unsupported nNumBits value : %d", nNumBits);
+                         "Unsupported nNumBits value: %d", nNumBits);
                 return CE_Failure;
             }
 
@@ -748,7 +748,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
-            "Integer overflow : nDataOffset + (nNumBits * nNumRuns + 7)/8");
+            "Integer overflow: nDataOffset + (nNumBits * nNumRuns + 7)/8");
         return CE_Failure;
     }
     CHECK_ENOUGH_BYTES(nDataOffset + (nNumBits * nNumRuns + 7)/8);
@@ -864,7 +864,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         if( nRepeatCount > INT_MAX - nPixelsOutput ||
             nPixelsOutput + nRepeatCount > nMaxPixels )
         {
-            CPLDebug("HFA", "Repeat count too big : %d", nRepeatCount);
+            CPLDebug("HFA", "Repeat count too big: %d", nRepeatCount);
             nRepeatCount = nMaxPixels - nPixelsOutput;
         }
 
@@ -1259,7 +1259,7 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
                             static_cast<int>(nBlockSize) > nDataSize) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid block size : %d", static_cast<int>(nBlockSize));
+                  "Invalid block size: %d", static_cast<int>(nBlockSize));
         return CE_Failure;
     }
 

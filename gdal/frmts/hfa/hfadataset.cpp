@@ -661,12 +661,12 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
     {
         poRAT->CreateColumn(aoFields[iCol].sName, aoFields[iCol].eType,
                             aoFields[iCol].eUsage);
-        poRAT->SetRowCount(this->nRows);
+        poRAT->SetRowCount(nRows);
 
         if( aoFields[iCol].eType == GFT_Integer )
         {
             int *panColData = static_cast<int *>(
-                VSI_MALLOC2_VERBOSE(sizeof(int), this->nRows));
+                VSI_MALLOC2_VERBOSE(sizeof(int), nRows));
             if( panColData == NULL )
             {
                 delete poRAT;
@@ -674,7 +674,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
             }
 
             if( ((GDALDefaultRasterAttributeTable*)this)->
-                      ValuesIO(GF_Read, iCol, 0, this->nRows,
+                      ValuesIO(GF_Read, iCol, 0, nRows,
                                panColData ) != CE_None )
             {
                 CPLFree(panColData);
@@ -682,7 +682,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return NULL;
             }
 
-            for( int iRow = 0; iRow < this->nRows; iRow++ )
+            for( int iRow = 0; iRow < nRows; iRow++ )
             {
                 poRAT->SetValue(iRow, iCol, panColData[iRow]);
             }
@@ -691,7 +691,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
         if( aoFields[iCol].eType == GFT_Real )
         {
             double *padfColData = static_cast<double *>(
-                VSI_MALLOC2_VERBOSE(sizeof(double), this->nRows));
+                VSI_MALLOC2_VERBOSE(sizeof(double), nRows));
             if( padfColData == NULL )
             {
                 delete poRAT;
@@ -699,7 +699,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
             }
 
             if( ((GDALDefaultRasterAttributeTable*)this)->
-                      ValuesIO(GF_Read, iCol, 0, this->nRows,
+                      ValuesIO(GF_Read, iCol, 0, nRows,
                                padfColData ) != CE_None )
             {
                 CPLFree(padfColData);
@@ -707,7 +707,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return NULL;
             }
 
-            for( int iRow = 0; iRow < this->nRows; iRow++ )
+            for( int iRow = 0; iRow < nRows; iRow++ )
             {
                 poRAT->SetValue(iRow, iCol, padfColData[iRow]);
             }
@@ -716,7 +716,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
         if( aoFields[iCol].eType == GFT_String )
         {
             char **papszColData = static_cast<char **>(
-                VSI_MALLOC2_VERBOSE(sizeof(char*), this->nRows));
+                VSI_MALLOC2_VERBOSE(sizeof(char*), nRows));
             if( papszColData == NULL )
             {
                 delete poRAT;
@@ -724,7 +724,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
             }
 
             if( ((GDALDefaultRasterAttributeTable*)this)->
-                      ValuesIO(GF_Read, iCol, 0, this->nRows,
+                      ValuesIO(GF_Read, iCol, 0, nRows,
                                papszColData ) != CE_None )
             {
                 CPLFree(papszColData);
@@ -732,7 +732,7 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
                 return NULL;
             }
 
-            for( int iRow = 0; iRow < this->nRows; iRow++ )
+            for( int iRow = 0; iRow < nRows; iRow++ )
             {
                 poRAT->SetValue(iRow, iCol, papszColData[iRow]);
                 CPLFree(papszColData[iRow]);
@@ -741,8 +741,8 @@ GDALDefaultRasterAttributeTable *HFARasterAttributeTable::Clone() const
         }
     }
 
-    if( this->bLinearBinning )
-        poRAT->SetLinearBinning( this->dfRow0Min, this->dfBinSize );
+    if( bLinearBinning )
+        poRAT->SetLinearBinning( dfRow0Min, dfBinSize );
 
     return poRAT;
 }
@@ -762,10 +762,10 @@ int HFARasterAttributeTable::GetColumnCount() const
 
 const char *HFARasterAttributeTable::GetNameOfCol( int nCol ) const
 {
-    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
+    if( nCol < 0 || nCol >= static_cast<int>(aoFields.size()) )
         return NULL;
 
-    return this->aoFields[nCol].sName;
+    return aoFields[nCol].sName;
 }
 
 /************************************************************************/
@@ -774,10 +774,10 @@ const char *HFARasterAttributeTable::GetNameOfCol( int nCol ) const
 
 GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol( int nCol ) const
 {
-    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
+    if( nCol < 0 || nCol >= static_cast<int>(aoFields.size()) )
         return GFU_Generic;
 
-    return this->aoFields[nCol].eUsage;
+    return aoFields[nCol].eUsage;
 }
 
 /************************************************************************/
@@ -786,10 +786,10 @@ GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol( int nCol ) const
 
 GDALRATFieldType HFARasterAttributeTable::GetTypeOfCol( int nCol ) const
 {
-    if( nCol < 0 || nCol >= static_cast<int>(this->aoFields.size()) )
+    if( nCol < 0 || nCol >= static_cast<int>(aoFields.size()) )
         return GFT_Integer;
 
-    return this->aoFields[nCol].eType;
+    return aoFields[nCol].eType;
 }
 
 /************************************************************************/
@@ -798,9 +798,9 @@ GDALRATFieldType HFARasterAttributeTable::GetTypeOfCol( int nCol ) const
 
 int HFARasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
 {
-    for( unsigned int i = 0; i < this->aoFields.size(); i++ )
+    for( unsigned int i = 0; i < aoFields.size(); i++ )
     {
-        if( this->aoFields[i].eUsage == eUsage )
+        if( aoFields[i].eUsage == eUsage )
             return i;
     }
 
@@ -813,7 +813,7 @@ int HFARasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
 
 int HFARasterAttributeTable::GetRowCount() const
 {
-    return this->nRows;
+    return nRows;
 }
 
 /************************************************************************/
@@ -908,7 +908,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
                                           int iStartRow, int iLength,
                                           double *pdfData )
 {
-    if( ( eRWFlag == GF_Write ) && ( this->eAccess == GA_ReadOnly ) )
+    if( eRWFlag == GF_Write && eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
@@ -925,7 +925,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
 
     if( iStartRow < 0 ||
         iLength >= INT_MAX - iStartRow ||
-        (iStartRow+iLength) > this->nRows )
+        (iStartRow+iLength) > nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.",
@@ -1131,7 +1131,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
                                           int iStartRow, int iLength,
                                           int *pnData )
 {
-    if( ( eRWFlag == GF_Write ) && ( this->eAccess == GA_ReadOnly ) )
+    if( eRWFlag == GF_Write && eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
@@ -1148,7 +1148,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
 
     if( iStartRow < 0 ||
         iLength >= INT_MAX - iStartRow ||
-        (iStartRow+iLength) > this->nRows )
+        (iStartRow+iLength) > nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.",
@@ -1323,7 +1323,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
                                           int iStartRow, int iLength,
                                           char **papszStrList )
 {
-    if( ( eRWFlag == GF_Write ) && ( this->eAccess == GA_ReadOnly ) )
+    if( eRWFlag == GF_Write && eAccess == GA_ReadOnly )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess,
             "Dataset not open in update mode");
@@ -1340,7 +1340,7 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
 
     if( iStartRow < 0 ||
         iLength >= INT_MAX - iStartRow ||
-        (iStartRow+iLength) > this->nRows )
+        (iStartRow+iLength) > nRows )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "iStartRow (%d) + iLength(%d) out of range.",
@@ -1518,13 +1518,13 @@ CPLErr HFARasterAttributeTable::ValuesIO( GDALRWFlag eRWFlag, int iField,
                     // enough we need to re-allocate the space and update the
                     // pointers and copy across the old data.
                     const int nNewOffset =
-                        HFAAllocateSpace( hHFA->papoBand[this->nBand-1]->psInfo,
+                        HFAAllocateSpace( hHFA->papoBand[nBand-1]->psInfo,
                                           nRows * nNewMaxChars);
                     char *pszBuffer = static_cast<char *>(
                         VSIMalloc2(aoFields[iField].nElementSize,
                                    sizeof(char)));
                     char cNullByte = '\0';
-                    for( int i = 0; i < this->nRows; i++ )
+                    for( int i = 0; i < nRows; i++ )
                     {
                         // Seek to the old place.
                         CPL_IGNORE_RET_VAL(
@@ -1658,10 +1658,11 @@ CPLErr HFARasterAttributeTable::ColorsIO( GDALRWFlag eRWFlag, int iField,
 
     if( eRWFlag == GF_Read )
     {
-        if( (int)VSIFReadL(padfData, sizeof(double), iLength, hHFA->fp ) != iLength )
+        if( static_cast<int>(VSIFReadL(padfData, sizeof(double), iLength,
+                                       hHFA->fp)) != iLength )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                "HFARasterAttributeTable::ColorsIO : Cannot read values");
+                "HFARasterAttributeTable::ColorsIO: Cannot read values");
             CPLFree(padfData);
             return CE_Failure;
         }
@@ -1681,7 +1682,7 @@ CPLErr HFARasterAttributeTable::ColorsIO( GDALRWFlag eRWFlag, int iField,
                            hHFA->fp)) != iLength )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                "HFARasterAttributeTable::ColorsIO : Cannot write values");
+                "HFARasterAttributeTable::ColorsIO: Cannot write values");
             CPLFree(padfData);
             return CE_Failure;
         }
@@ -1715,19 +1716,19 @@ int HFARasterAttributeTable::ChangesAreWrittenToFile()
 
 void HFARasterAttributeTable::SetRowCount( int iCount )
 {
-    if( this->eAccess == GA_ReadOnly )
+    if( eAccess == GA_ReadOnly )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess,
-            "Dataset not open in update mode");
+        CPLError(CE_Failure, CPLE_NoWriteAccess,
+                 "Dataset not open in update mode");
         return;
     }
 
-    if( iCount > this->nRows )
+    if( iCount > nRows )
     {
         // Making the RAT larger - a bit hard.
         // We need to re-allocate space on disc.
         for( int iCol = 0;
-             iCol < static_cast<int>(this->aoFields.size());
+             iCol < static_cast<int>(aoFields.size());
              iCol++ )
         {
             // New space.
@@ -1736,7 +1737,7 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                                   iCount * aoFields[iCol].nElementSize);
 
             // Only need to bother if there are actually rows.
-            if( this->nRows > 0 )
+            if( nRows > 0 )
             {
                 // Temp buffer for this column.
                 void *pData =
@@ -1750,7 +1751,7 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                                SEEK_SET ) != 0 ||
                     static_cast<int>(
                         VSIFReadL(pData, aoFields[iCol].nElementSize,
-                                  this->nRows, hHFA->fp)) != this->nRows )
+                                  nRows, hHFA->fp)) != nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "HFARasterAttributeTable::SetRowCount: "
@@ -1763,7 +1764,7 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
                 if( VSIFSeekL( hHFA->fp, nNewOffset, SEEK_SET ) != 0 ||
                     static_cast<int>(
                         VSIFWriteL(pData, aoFields[iCol].nElementSize,
-                                   this->nRows, hHFA->fp)) != this->nRows )
+                                   nRows, hHFA->fp)) != nRows )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "HFARasterAttributeTable::SetRowCount: "
@@ -1781,22 +1782,22 @@ void HFARasterAttributeTable::SetRowCount( int iCount )
             aoFields[iCol].poColumn->SetIntField( "numRows", iCount);
         }
     }
-    else if( iCount < this->nRows )
+    else if( iCount < nRows )
     {
         // Update the numRows.
         for( int iCol = 0;
-             iCol < static_cast<int>(this->aoFields.size());
+             iCol < static_cast<int>(aoFields.size());
              iCol++ )
         {
             aoFields[iCol].poColumn->SetIntField( "numRows", iCount);
         }
     }
 
-    this->nRows = iCount;
+    nRows = iCount;
 
-    if( this->poDT != NULL && EQUAL(this->poDT->GetType(), "Edsc_Table") )
+    if( poDT != NULL && EQUAL(poDT->GetType(), "Edsc_Table") )
     {
-        this->poDT->SetIntField( "numrows", iCount );
+        poDT->SetIntField( "numrows", iCount );
     }
 }
 
@@ -1813,7 +1814,7 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
     {
         const int iBin =
             static_cast<int>(floor((dfValue - dfRow0Min) / dfBinSize));
-        if( iBin < 0 || iBin >= this->nRows )
+        if( iBin < 0 || iBin >= nRows )
             return -1;
 
         return iBin;
@@ -1836,14 +1837,15 @@ int HFARasterAttributeTable::GetRowOfValue( double dfValue ) const
 /* -------------------------------------------------------------------- */
 /*      Search through rows for match.                                  */
 /* -------------------------------------------------------------------- */
-    for( int iRow = 0; iRow < this->nRows; iRow++ )
+    for( int iRow = 0; iRow < nRows; iRow++ )
     {
         if( nMinCol != -1 )
         {
-            while( iRow < this->nRows && dfValue < GetValueAsDouble(iRow, nMinCol) )
-                    iRow++;
+            while( iRow < nRows &&
+                   dfValue < GetValueAsDouble(iRow, nMinCol) )
+                iRow++;
 
-            if( iRow == this->nRows )
+            if( iRow == nRows )
                 break;
         }
 
@@ -1943,7 +1945,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
                                      pszFieldName, "Edsc_Column",
                                      poDT );
 
-    poColumn->SetIntField( "numRows", this->nRows );
+    poColumn->SetIntField( "numRows", nRows );
     int nElementSize = 0;
 
     if( eFieldType == GFT_Integer )
@@ -2006,11 +2008,11 @@ CPLErr HFARasterAttributeTable::SetLinearBinning(
     dfBinSize = dfBinSizeIn;
 
     // Do we have a descriptor table already?
-    if( this->poDT == NULL || !EQUAL(this->poDT->GetType(), "Edsc_Table") )
+    if( poDT == NULL || !EQUAL(poDT->GetType(), "Edsc_Table") )
         CreateDT();
 
     // We should have an Edsc_BinFunction.
-    HFAEntry *poBinFunction = this->poDT->GetNamedChild( "#Bin_Function#" );
+    HFAEntry *poBinFunction = poDT->GetNamedChild( "#Bin_Function#" );
     if( poBinFunction == NULL ||
         !EQUAL(poBinFunction->GetType(), "Edsc_BinFunction") )
     {

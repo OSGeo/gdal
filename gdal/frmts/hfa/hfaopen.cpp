@@ -125,8 +125,8 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     VSILFILE *fp =
         VSIFOpenL( pszFilename,
-                   (EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb")) ?
-                   "rb" : "r+b" );
+                   (EQUAL(pszAccess, "r") || EQUAL(pszAccess, "rb"))
+                   ? "rb" : "r+b" );
 
     // Should this be changed to use some sort of CPLFOpen() which will
     // set the error?
@@ -2081,7 +2081,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     if( nBlockSize <= 0 )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "HFACreateLayer : nBlockXSize < 0");
+                 "HFACreateLayer: nBlockXSize < 0");
         return FALSE;
     }
 
@@ -3074,7 +3074,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     if( nBlockSize <= 0 )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "HFACreateSpillStack : nBlockXSize < 0");
+                 "HFACreateSpillStack: nBlockXSize < 0");
         return FALSE;
     }
 

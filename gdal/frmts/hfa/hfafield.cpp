@@ -106,7 +106,7 @@ const char *HFAField::Initialize( const char * pszInput )
     if( strchr( "124cCesStlLfdmMbox", chItemType) == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unrecognized item type : %c", chItemType);
+                 "Unrecognized item type: %c", chItemType);
         return NULL;
     }
 
@@ -1210,7 +1210,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           else
           {
               CPLError(CE_Failure, CPLE_AppDefined,
-                       "Unknown base item type : %d", nBaseItemType);
+                       "Unknown base item type: %d", nBaseItemType);
               return false;
           }
       }
