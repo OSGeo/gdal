@@ -215,7 +215,7 @@ INCLUDE_OGR_FRMTS = YES
 
 # Enable all GNM formats?  Comment out to disable
 # gnm formats.
-#INCLUDE_GNM_FRMTS = YES
+INCLUDE_GNM_FRMTS = YES
 
 # To be enabled defined to point to setargv.obj from the Visual C++ directory,
 # when you want the utility programs to be able to expand wildcards. 
