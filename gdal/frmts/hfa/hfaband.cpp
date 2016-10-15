@@ -1210,13 +1210,14 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDat
     if( panBlockFlag[iBlock] & BFLG_COMPRESSED )
     {
         GByte *pabyCData = static_cast<GByte *>(
-            VSI_MALLOC_VERBOSE( (size_t) nBlockSize ));
+            VSI_MALLOC_VERBOSE( static_cast<size_t>(nBlockSize) ));
         if( pabyCData == NULL )
         {
             return CE_Failure;
         }
 
-        if( VSIFReadL( pabyCData, (size_t) nBlockSize, 1, fpData ) != 1 )
+        if( VSIFReadL( pabyCData, static_cast<size_t>(nBlockSize),
+                       1, fpData ) != 1 )
         {
             CPLFree( pabyCData );
 
@@ -1478,16 +1479,17 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #endif  // def CPL_MSB
 
             // Write out the Minimum value.
-            bool bRet = VSIFWriteL( &nMin, (size_t) sizeof( nMin ), 1, fpData ) > 0;
+            bool bRet = VSIFWriteL( &nMin, sizeof( nMin ), 1, fpData ) > 0;
 
             // The number of runs.
-            bRet &= VSIFWriteL( &nNumRuns, (size_t) sizeof( nNumRuns ), 1, fpData ) > 0;
+            bRet &= VSIFWriteL( &nNumRuns, sizeof( nNumRuns ), 1, fpData ) > 0;
 
             // The offset to the data.
-            bRet &= VSIFWriteL( &nDataOffset, (size_t) sizeof( nDataOffset ), 1, fpData ) > 0;
+            bRet &= VSIFWriteL( &nDataOffset, sizeof( nDataOffset ),
+                                1, fpData ) > 0;
 
             // The number of bits.
-            bRet &= VSIFWriteL( &nNumBits, (size_t) sizeof( nNumBits ), 1, fpData ) > 0;
+            bRet &= VSIFWriteL( &nNumBits, sizeof( nNumBits ), 1, fpData ) > 0;
 
             // The counters - MSB stuff handled in HFACompress.
             bRet &= VSIFWriteL( pCounts, nSizeCount, 1, fpData ) > 0;
@@ -1599,7 +1601,8 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Write uncompressed data.                                        */
 /* -------------------------------------------------------------------- */
-        if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
+        if( VSIFWriteL( pData, static_cast<size_t>(nBlockSize),
+                        1, fpData ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Write of %d bytes at %x:%08x on %p failed.\n%s",
@@ -1888,7 +1891,7 @@ CPLErr HFABand::GetPCT( int * pnColors,
                     return CE_Failure;
                 }
                 if( VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
-                               psInfo->fp) != (size_t)nPCTColors )
+                               psInfo->fp) != static_cast<size_t>(nPCTColors) )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "VSIFReadL() failed in HFABand::GetPCT()." );

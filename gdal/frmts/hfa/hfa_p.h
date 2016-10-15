@@ -355,16 +355,19 @@ class HFAField
 
     void        Dump( FILE * );
 
-    int         ExtractInstValue( const char * pszField, int nIndexValue,
-                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                     char chReqType, void *pReqReturn, int *pnRemainingDataSize = NULL );
+    bool        ExtractInstValue( const char * pszField, int nIndexValue,
+                                  GByte *pabyData, GUInt32 nDataOffset,
+                                  int nDataSize, char chReqType,
+                                  void *pReqReturn,
+                                  int *pnRemainingDataSize = NULL );
 
     CPLErr      SetInstValue( const char * pszField, int nIndexValue,
-                     GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                     char chReqType, void *pValue );
+                              GByte *pabyData, GUInt32 nDataOffset,
+                              int nDataSize,
+                              char chReqType, void *pValue );
 
-    void        DumpInstValue( FILE *fpOut,
-                               GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+    void        DumpInstValue( FILE *fpOut, GByte *pabyData,
+                               GUInt32 nDataOffset, int nDataSize,
                                const char *pszPrefix = NULL );
 
     int         GetInstBytes( GByte *, int );
@@ -400,14 +403,15 @@ class HFAType
     void        Dump( FILE * );
 
     int         GetInstBytes( GByte *, int );
-    int         GetInstCount( const char *pszField,
-                          GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
+    int         GetInstCount( const char *pszField, GByte *pabyData,
+                              GUInt32 nDataOffset, int nDataSize );
     int         ExtractInstValue( const char * pszField,
-                                  GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                               char chReqType, void *pReqReturn, int *pnRemainingDataSize );
-    CPLErr      SetInstValue( const char * pszField,
-                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           char chReqType, void * pValue );
+                                  GByte *pabyData, GUInt32 nDataOffset,
+                                  int nDataSize, char chReqType,
+                                  void *pReqReturn, int *pnRemainingDataSize );
+    CPLErr      SetInstValue( const char * pszField, GByte *pabyData, 
+                              GUInt32 nDataOffset, int nDataSize,
+                              char chReqType, void * pValue );
     void        DumpInstValue( FILE *fpOut,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            const char *pszPrefix = NULL );
