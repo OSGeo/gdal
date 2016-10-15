@@ -988,6 +988,22 @@ def osr_proj4_27():
 
     return 'success'
 
+###############################################################################
+# Test importing +init=epsg: with an override
+
+def osr_proj4_28():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4( "+init=epsg:32631 +units=cm" )
+    got = srs.ExportToWkt()
+
+    if got.find('32631') >= 0:
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     osr_proj4_1,
     osr_proj4_2,
@@ -1015,7 +1031,9 @@ gdaltest_list = [
     osr_proj4_24,
     osr_proj4_25,
     osr_proj4_26,
-    osr_proj4_27 ]
+    osr_proj4_27,
+    osr_proj4_28
+]
 
 
 if __name__ == '__main__':
