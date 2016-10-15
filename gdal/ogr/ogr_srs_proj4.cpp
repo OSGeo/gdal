@@ -513,6 +513,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      If we have an EPSG based init string, and no existing +proj     */
 /*      portion then try to normalize into into a PROJ.4 string.        */
+/*      This can happen if the proj.4 epsg dictionnary is missing.      */
 /* -------------------------------------------------------------------- */
     const char* pszInitEpsg = strstr(pszNormalized,"init=epsg:");
     if( pszInitEpsg != NULL
@@ -521,10 +522,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         const char *pszNumber = pszInitEpsg + strlen("init=epsg:");
 
         OGRErr eErr = importFromEPSG( atoi(pszNumber) );
-        if( eErr == OGRERR_NONE )
+        if( eErr != OGRERR_NONE || strchr(pszNumber, '+') == NULL )
         {
             CPLFree( pszNormalized );
             return eErr;
+        }
+        int nIdx = GetRoot()->FindChild("AUTHORITY");
+        if( nIdx >= 0 )
+        {
+            GetRoot()->DestroyChild( nIdx );
         }
     }
 
