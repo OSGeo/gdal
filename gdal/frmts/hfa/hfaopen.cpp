@@ -1725,12 +1725,11 @@ CPLErr HFAGetDataRange( HFAHandle hHFA, int nBand,
 /*                            HFADumpNode()                             */
 /************************************************************************/
 
-static void HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
+static void HFADumpNode( HFAEntry *poEntry, int nIndent, bool bVerbose,
                          FILE * fp )
 
 {
     char szSpaces[256];
-
     std::fill_n(szSpaces, nIndent*2, ' ');
     szSpaces[nIndent*2] = '\0';
 
@@ -1762,7 +1761,7 @@ static void HFADumpNode( HFAEntry *poEntry, int nIndent, int bVerbose,
 void HFADumpTree( HFAHandle hHFA, FILE * fpOut )
 
 {
-    HFADumpNode( hHFA->poRoot, 0, TRUE, fpOut );
+    HFADumpNode( hHFA->poRoot, 0, true, fpOut );
 }
 
 /************************************************************************/
@@ -2920,11 +2919,11 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 char * pszWork = pszBinValues;
 
                 // Check whether histogram counts were written as int or double
-                bool bCountIsInt = TRUE;
+                bool bCountIsInt = true;
                 const char *pszDataType = poHisto->GetStringField("dataType");
                 if( STARTS_WITH_CI(pszDataType, "real") )
                 {
-                    bCountIsInt = FALSE;
+                    bCountIsInt = false;
                 }
                 for( int nBin = 0; nBin < nNumBins; ++nBin )
                 {
@@ -3062,10 +3061,10 @@ const char *HFAGetIGEFilename( HFAHandle hHFA )
 /*      file.  Create the spill file if it didn't exist before.         */
 /************************************************************************/
 
-int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
-                         int nLayers, int nBlockSize, EPTType eDataType,
-                         GIntBig *pnValidFlagsOffset,
-                         GIntBig *pnDataOffset )
+bool HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
+                          int nLayers, int nBlockSize, EPTType eDataType,
+                          GIntBig *pnValidFlagsOffset,
+                          GIntBig *pnDataOffset )
 
 {
 /* -------------------------------------------------------------------- */
@@ -3075,7 +3074,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "HFACreateSpillStack: nBlockXSize < 0");
-        return FALSE;
+        return false;
     }
 
     if( psInfo->pszIGEFilename == NULL )
@@ -3111,7 +3110,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to create spill file %s.\n%s",
                       psInfo->pszIGEFilename, VSIStrerror( errno ) );
-            return FALSE;
+            return false;
         }
 
         bRet &= VSIFWriteL( (void *) pszMagick, strlen(pszMagick)+1, 1,
@@ -3169,7 +3168,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     if( pabyBlockMap == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
-        return FALSE;
+        return false;
     }
 
     memset( pabyBlockMap, 0xff, nBlockMapSize );
@@ -3225,13 +3224,13 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
                   VSIStrerror( errno ) );
 
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
-        return FALSE;
+        return false;
     }
 
     if( VSIFCloseL( fpVSIL ) != 0 )
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -3250,23 +3249,19 @@ static bool HFAReadAndValidatePoly( HFAEntry *poTarget,
     psRetPoly->order = poTarget->GetIntField(osFldName);
 
     if( psRetPoly->order < 1 || psRetPoly->order > 3 )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Validate that things are in a "well known" form.                */
 /* -------------------------------------------------------------------- */
-    int numdimtransform;
-    int numdimpolynomial;
-    int termcount;
-
     osFldName.Printf( "%snumdimtransform", pszName );
-    numdimtransform = poTarget->GetIntField(osFldName);
+    const int numdimtransform = poTarget->GetIntField(osFldName);
 
     osFldName.Printf( "%snumdimpolynomial", pszName );
-    numdimpolynomial = poTarget->GetIntField(osFldName);
+    const int numdimpolynomial = poTarget->GetIntField(osFldName);
 
     osFldName.Printf( "%stermcount", pszName );
-    termcount = poTarget->GetIntField(osFldName);
+    const int termcount = poTarget->GetIntField(osFldName);
 
     if( numdimtransform != 2 || numdimpolynomial != 2 )
         return false;

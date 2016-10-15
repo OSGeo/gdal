@@ -2139,7 +2139,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /*      HFA_COMPRESS_OVR is defined).                                   */
 /*      Check RasterDMS like HFAGetBandInfo                             */
 /* -------------------------------------------------------------------- */
-    bool bCompressionType = FALSE;
+    bool bCompressionType = false;
     const char* pszCompressOvr = CPLGetConfigOption("HFA_COMPRESS_OVR", NULL);
     if( pszCompressOvr != NULL )
     {

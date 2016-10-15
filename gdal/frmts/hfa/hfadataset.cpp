@@ -382,12 +382,14 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
     virtual CPLErr SetNoDataValue( double dfValue );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
-    virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
+    virtual CPLErr SetMetadataItem( const char *, const char *,
+                                    const char * = "" );
     virtual CPLErr BuildOverviews( const char *, int, int *,
                                    GDALProgressFunc, void * );
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, GUIntBig ** ppanHistogram,
+                                        int *pnBuckets,
+                                        GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
 
@@ -552,7 +554,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(
                 if( pszValue && EQUAL(pszValue, "BFUnique") )
                 {
                     AddColumn("BinValues", GFT_Real, GFU_MinMax, 0, 0,
-                              poDTChild, TRUE);
+                              poDTChild, true);
                 }
             }
 
@@ -633,7 +635,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(
                     nSize = sizeof(double);
                 AddColumn(poDTChild->GetName(), GFT_Integer,
                           eUsage, nOffset, nSize, poDTChild,
-                          FALSE, bConvertColors);
+                          false, bConvertColors);
             }
         }
     }
@@ -1984,7 +1986,7 @@ CPLErr HFARasterAttributeTable::CreateColumn( const char *pszFieldName,
         eFieldType = GFT_Integer;
 
     AddColumn(pszFieldName, eFieldType, eFieldUsage,
-              nOffset, nElementSize, poColumn, FALSE, bConvertColors);
+              nOffset, nElementSize, poColumn, false, bConvertColors);
 
     return CE_None;
 }
@@ -5264,7 +5266,7 @@ CPLErr HFADataset::ReadProjection()
     {
         OGRSpatialReference oSRS2(pszProjection);
         if( oSRS2.GetAuthorityCode(NULL) != NULL )
-            bTryReadingPEString = FALSE;
+            bTryReadingPEString = false;
     }
 
 /* -------------------------------------------------------------------- */

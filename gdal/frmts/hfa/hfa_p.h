@@ -106,10 +106,10 @@ GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
 HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase );
-int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
-                         int nBlockSize, EPTType eDataType,
-                         GIntBig *pnValidFlagsOffset,
-                         GIntBig *pnDataOffset );
+bool HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers,
+                          int nBlockSize, EPTType eDataType,
+                          GIntBig *pnValidFlagsOffset,
+                          GIntBig *pnDataOffset );
 
 const char * const * GetHFAAuxMetaDataList();
 
@@ -249,7 +249,7 @@ class HFAEntry
 
     void        LoadData();
 
-    int         GetFieldValue( const char *, char, void *,
+    bool        GetFieldValue( const char *, char, void *,
                                int *pnRemainingDataSize );
     CPLErr      SetFieldValue( const char *, char, void * );
 
