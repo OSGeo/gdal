@@ -1257,12 +1257,13 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
             if( pszField != NULL && strlen(pszField) > 0 )
             {
-                return poItemObjectType->
-                    ExtractInstValue( pszField, pabyRawData,
-                                      nDataOffset + nExtraOffset,
-                                      nDataSize - nExtraOffset,
-                                      chReqType, pReqReturn,
-                                      pnRemainingDataSize );
+                return
+                    poItemObjectType->
+                        ExtractInstValue( pszField, pabyRawData,
+                                          nDataOffset + nExtraOffset,
+                                          nDataSize - nExtraOffset,
+                                          chReqType, pReqReturn,
+                                          pnRemainingDataSize );
             }
         }
         break;
@@ -1505,17 +1506,17 @@ void HFAField::DumpInstValue( FILE *fpOut,
     if( chItemType == 'b' )
     {
         int nDataType = 0;
-        const bool bSuccess = CPL_TO_BOOL(
+        const bool bSuccess =
             ExtractInstValue( NULL, -3, pabyData, nDataOffset,
-                              nDataSize, 'i', &nDataType ));
+                              nDataSize, 'i', &nDataType );
         if( bSuccess )
         {
             int nColumns = 0;
             ExtractInstValue( NULL, -2, pabyData, nDataOffset,
-                            nDataSize, 'i', &nColumns );
+                              nDataSize, 'i', &nColumns );
             int nRows = 0;
             ExtractInstValue( NULL, -1, pabyData, nDataOffset,
-                            nDataSize, 'i', &nRows );
+                              nDataSize, 'i', &nRows );
             CPL_IGNORE_RET_VAL(VSIFPrintf(
                 fpOut, "%sBASEDATA(%s): %dx%d of %s\n",
                 pszPrefix, pszFieldName,
