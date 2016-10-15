@@ -1226,7 +1226,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                 if( nIndexValue != 0 &&
                     poItemObjectType->nBytes > INT_MAX / nIndexValue )
                     // TODO(schwehr): Why was this CE_Failure when the others
-                    // are FALSE?
+                    // are false?
                     return false;
                 nExtraOffset = poItemObjectType->nBytes * nIndexValue;
             }

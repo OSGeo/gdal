@@ -708,9 +708,9 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
 /*                           GetFieldValue()                            */
 /************************************************************************/
 
-int HFAEntry::GetFieldValue( const char * pszFieldPath,
-                             char chReqType, void *pReqReturn,
-                             int *pnRemainingDataSize )
+bool HFAEntry::GetFieldValue( const char * pszFieldPath,
+                              char chReqType, void *pReqReturn,
+                              int *pnRemainingDataSize )
 
 {
 /* -------------------------------------------------------------------- */
@@ -720,7 +720,7 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
     {
         HFAEntry* poEntry = GetNamedChild( pszFieldPath );
         if( poEntry == NULL )
-            return FALSE;
+            return false;
 
         pszFieldPath = strchr(pszFieldPath, ':') + 1;
     }
@@ -731,10 +731,10 @@ int HFAEntry::GetFieldValue( const char * pszFieldPath,
     LoadData();
 
     if( pabyData == NULL )
-        return FALSE;
+        return false;
 
     if( poType == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Extract the instance information.                               */
