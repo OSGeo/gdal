@@ -74,15 +74,15 @@ int main( int argc, char ** argv )
 
     for( int i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"-dd") )
+        if( EQUAL(argv[i], "-dd") )
         {
             bDumpDict = true;
         }
-        else if( EQUAL(argv[i],"-dt") )
+        else if( EQUAL(argv[i], "-dt") )
         {
             bDumpTree = true;
         }
-        else if( EQUAL(argv[i],"-dr") )
+        else if( EQUAL(argv[i], "-dr") )
         {
             bRastReport = true;
         }
