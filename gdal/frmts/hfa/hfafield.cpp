@@ -121,7 +121,7 @@ const char *HFAField::Initialize( const char * pszInput )
         if( pszInput[i] == '\0' )
             return NULL;
 
-        pszItemObjectType = (char *) CPLMalloc(i+1);
+        pszItemObjectType = static_cast<char *>(CPLMalloc(i + 1));
         strncpy( pszItemObjectType, pszInput, i );
         pszItemObjectType[i] = '\0';
 
@@ -161,7 +161,7 @@ const char *HFAField::Initialize( const char * pszInput )
         if( pszInput[i] == '\0' )
             return NULL;
 
-        pszItemObjectType = (char *) CPLMalloc(i+1);
+        pszItemObjectType = static_cast<char *>(CPLMalloc(i + 1));
         strncpy( pszItemObjectType, pszInput, i );
         pszItemObjectType[i] = '\0';
 
@@ -185,7 +185,8 @@ const char *HFAField::Initialize( const char * pszInput )
 
         pszInput++;
 
-        papszEnumNames = (char **) VSICalloc(sizeof(char *), nEnumCount+1);
+        papszEnumNames = static_cast<char **>(
+            VSICalloc(sizeof(char *), nEnumCount + 1));
         if( papszEnumNames == NULL )
             return NULL;
 
@@ -196,7 +197,7 @@ const char *HFAField::Initialize( const char * pszInput )
             if( pszInput[i] != ',' )
                 return NULL;
 
-            char *pszToken = (char *) CPLMalloc(i+1);
+            char *pszToken = static_cast<char *>(CPLMalloc(i + 1));
             strncpy( pszToken, pszInput, i );
             pszToken[i] = '\0';
 
@@ -213,7 +214,7 @@ const char *HFAField::Initialize( const char * pszInput )
     if( pszInput[i] == '\0' )
         return NULL;
 
-    pszFieldName = (char *) CPLMalloc(i+1);
+    pszFieldName = static_cast<char *>(CPLMalloc(i + 1));
     strncpy( pszFieldName, pszInput, i );
     pszFieldName[i] = '\0';
 

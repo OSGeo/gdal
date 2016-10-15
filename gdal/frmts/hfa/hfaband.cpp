@@ -1796,7 +1796,8 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
 /* -------------------------------------------------------------------- */
     if( pabyMIFObject[20] != 0x0a || pabyMIFObject[21] != 0x00 )
     {
-        CPLDebug( "HFA", "HFAReadPCTBins(): The basedata does not appear to be EGDA_TYPE_F64." );
+        CPLDebug( "HFA", "HFAReadPCTBins(): "
+                  "The basedata does not appear to be EGDA_TYPE_F64." );
         return NULL;
     }
 
@@ -1853,7 +1854,8 @@ CPLErr HFABand::GetPCT( int * pnColors,
         nPCTColors = poColumnEntry->GetIntField( "numRows" );
         for( int iColumn = 0; iColumn < 4; iColumn++ )
         {
-            apadfPCT[iColumn] = (double *)VSI_MALLOC2_VERBOSE(sizeof(double),nPCTColors);
+            apadfPCT[iColumn] = static_cast<double *>(
+                 VSI_MALLOC2_VERBOSE(sizeof(double), nPCTColors));
             if( apadfPCT[iColumn] == NULL )
             {
                 return CE_Failure;
@@ -2208,8 +2210,8 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /* -------------------------------------------------------------------- */
 /*      Add to the list of overviews for this band.                     */
 /* -------------------------------------------------------------------- */
-    papoOverviews = (HFABand **)
-        CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
+    papoOverviews = static_cast<HFABand **>(
+        CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews ));
     papoOverviews[nOverviews-1] = new HFABand( psRRDInfo, poOverLayer );
 
 /* -------------------------------------------------------------------- */

@@ -257,7 +257,7 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
         return NULL;
     }
 
-    GByte* l_pabyData = (GByte *) VSIMalloc(nMIFObjectSize);
+    GByte* l_pabyData = static_cast<GByte *>(VSIMalloc(nMIFObjectSize));
     if( l_pabyData == NULL )
         return NULL;
 
@@ -298,7 +298,7 @@ HFAEntry::HFAEntry( const char * pszDictionary,
 /* -------------------------------------------------------------------- */
 /*      Create a dummy HFAInfo_t.                                       */
 /* -------------------------------------------------------------------- */
-    psHFA = (HFAInfo_t *) CPLCalloc(sizeof(HFAInfo_t),1);
+    psHFA = static_cast<HFAInfo_t *>(CPLCalloc(sizeof(HFAInfo_t), 1));
 
     psHFA->eAccess = HFA_ReadOnly;
     psHFA->bTreeDirty = false;
@@ -483,7 +483,7 @@ void HFAEntry::LoadData()
 /* -------------------------------------------------------------------- */
 /*      Allocate buffer, and read data.                                 */
 /* -------------------------------------------------------------------- */
-    pabyData = (GByte *) VSI_MALLOC_VERBOSE(nDataSize + 1);
+    pabyData = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nDataSize + 1));
     if( pabyData == NULL )
     {
         return;
@@ -553,7 +553,7 @@ GByte *HFAEntry::MakeData( int nSize )
 
     if( static_cast<int>(nDataSize) < nSize && nSize > 0 )
     {
-        pabyData = (GByte *) CPLRealloc(pabyData, nSize);
+        pabyData = static_cast<GByte *>(CPLRealloc(pabyData, nSize));
         memset( pabyData + nDataSize, 0, nSize - nDataSize );
         nDataSize = nSize;
 
