@@ -215,7 +215,7 @@ CPLErr HFABand::LoadOverviews()
             if( pszPath[strlen(pszPath)-1] == ')' )
                 pszPath[strlen(pszPath)-1] = '\0';
 
-            for( int i=0; pszPath[i] != '\0'; i++ )
+            for( int i = 0; pszPath[i] != '\0'; i++ )
             {
                 if( pszPath[i] == ':' )
                     pszPath[i] = '.';
@@ -505,8 +505,8 @@ CPLErr HFABand::LoadExternalBlockInfo()
 /*      Validity is determined from the validity bitmap.                */
 /* -------------------------------------------------------------------- */
     nBlockStart = poDMS->GetBigIntField( "layerStackDataOffset" );
-    nBlockSize = (nBlockXSize*static_cast<vsi_l_offset>(nBlockYSize)
-                  *HFAGetDataTypeBits(eDataType)+7) / 8;
+    nBlockSize = (nBlockXSize * static_cast<vsi_l_offset>(nBlockYSize)
+                  *HFAGetDataTypeBits(eDataType) + 7) / 8;
 
     for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
     {
@@ -597,7 +597,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 
             if( nNumBits == 0 )
             {
-                nRawValue = 0;
+                // nRawValue = 0;
             }
             else if( nNumBits == 1 )
             {
@@ -746,8 +746,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
          nNumBits * nNumRuns > INT_MAX - 7 ||
          (nNumBits * nNumRuns + 7)/8 > INT_MAX - nDataOffset) )
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Integer overflow : nDataOffset + (nNumBits * nNumRuns + 7)/8");
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Integer overflow : nDataOffset + (nNumBits * nNumRuns + 7)/8");
         return CE_Failure;
     }
     CHECK_ENOUGH_BYTES(nDataOffset + (nNumBits * nNumRuns + 7)/8);
@@ -773,7 +774,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         if( ((*pabyCounter) & 0xc0) == 0x00 )
         {
             nRepeatCount = (*(pabyCounter++)) & 0x3f;
-            nCounterOffset ++;
+            nCounterOffset++;
         }
         else if( ((*pabyCounter) & 0xc0) == 0x40 )
         {
@@ -808,7 +809,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 
         if( nNumBits == 0 )
         {
-            nDataValue = 0;
+            // nDataValue = 0;
         }
         else if( nNumBits == 1 )
         {
@@ -1030,7 +1031,7 @@ void HFABand::NullBlock( void *pData )
         {
           case EPT_u1:
           {
-              nWords = (nWords + 7)/8;
+              nWords = (nWords + 7) / 8;
               if( dfNoData != 0.0 )
                   ((unsigned char *) abyTmp)[0] = 0xff;
               else
@@ -1040,7 +1041,7 @@ void HFABand::NullBlock( void *pData )
 
           case EPT_u2:
           {
-              nWords = (nWords + 3)/4;
+              nWords = (nWords + 3) / 4;
               if( dfNoData == 0.0 )
                   ((unsigned char *) abyTmp)[0] = 0x00;
               else if( dfNoData == 1.0 )
@@ -1054,10 +1055,10 @@ void HFABand::NullBlock( void *pData )
 
           case EPT_u4:
           {
-              unsigned char byVal = static_cast<unsigned char>(
+              const unsigned char byVal = static_cast<unsigned char>(
                   MAX(0, MIN(15, static_cast<int>(dfNoData))));
 
-              nWords = (nWords + 1)/2;
+              nWords = (nWords + 1) / 2;
 
               ((unsigned char *) abyTmp)[0] = byVal + (byVal << 4);
           }
@@ -1143,7 +1144,8 @@ void HFABand::NullBlock( void *pData )
 /*                           GetRasterBlock()                           */
 /************************************************************************/
 
-CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData, int nDataSize )
+CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock,
+                                void * pData, int nDataSize )
 
 {
     if( LoadBlockInfo() != CE_None )
@@ -1871,7 +1873,8 @@ CPLErr HFABand::GetPCT( int * pnColors,
             }
             else if( iColumn == 3 )
             {
-                poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Opacity");
+                poColumnEntry =
+                    poNode->GetNamedChild("Descriptor_Table.Opacity");
             }
 
             if( poColumnEntry == NULL )

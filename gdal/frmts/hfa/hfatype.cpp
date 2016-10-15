@@ -99,8 +99,8 @@ const char *HFAType::Initialize( const char * pszInput )
         pszInput = poNewField->Initialize( pszInput );
         if( pszInput != NULL )
         {
-            papoFields = (HFAField **)
-                CPLRealloc(papoFields, sizeof(void*) * (nFields+1) );
+            papoFields = static_cast<HFAField **>(
+                CPLRealloc(papoFields, sizeof(void*) * (nFields + 1) ));
             papoFields[nFields++] = poNewField;
         }
         else
@@ -369,7 +369,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /*                                                the third abc struct. */
 /************************************************************************/
 
-int
+bool
 HFAType::ExtractInstValue( const char * pszFieldPath,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType, void *pReqReturn,
@@ -434,14 +434,14 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
         if( nInc < 0 || nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
-            return FALSE;
+            return false;
         }
 
         nByteOffset += nInc;
     }
 
     if( iField == nFields || nByteOffset >= nDataSize )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
