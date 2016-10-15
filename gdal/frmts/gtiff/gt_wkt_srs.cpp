@@ -251,6 +251,8 @@ static void GTIFCleanupImagineNames( char *pszCitation )
 
     if( *pszSkip == '$' )
         pszSkip++;
+    if( *pszSkip == '\n' )
+        pszSkip++;
 
     memmove( pszCitation, pszSkip, strlen(pszSkip)+1 );
 
