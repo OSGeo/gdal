@@ -423,6 +423,22 @@ def tiff_srs_PCSCitationGeoKey_LUnits():
 
     return 'success'
 
+###############################################################################
+# Test reading a geotiff key ProjectionGeoKey (Short,1): Unknown-3856
+
+def tiff_srs_projection_3856():
+
+    ds = gdal.Open('data/projection_3856.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -495,6 +511,7 @@ gdaltest_list.append( tiff_srs_angular_units )
 gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
 gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
 gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
+gdaltest_list.append( tiff_srs_projection_3856 )
 
 if __name__ == '__main__':
 
