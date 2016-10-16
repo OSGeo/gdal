@@ -238,6 +238,26 @@ def grib_9():
 
     return 'success' 
 
+###############################################################################
+# Test support for PNG compressed
+
+def grib_10():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName('PNG') is None:
+        return 'skip'
+
+    ds = gdal.Open('data/MRMS_EchoTop_18_00.50_20161015-133230.grib2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 41854:
+        gdaltest.post_reason('Could not open file')
+        print(cs)
+        return 'fail'
+
+    return 'success' 
+
 gdaltest_list = [
     grib_1,
     grib_2,
@@ -247,7 +267,8 @@ gdaltest_list = [
     grib_6,
     grib_7,
     grib_8,
-    grib_9
+    grib_9,
+    grib_10
     ]
 
 if __name__ == '__main__':
