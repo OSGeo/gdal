@@ -50,7 +50,7 @@ class VFKReader : public IVFKReader
 private:
     bool           m_bLatin2;
 
-    FILE          *m_poFD;
+    VSILFILE      *m_poFD;
     char          *ReadLine( bool = false );
 
     void          AddInfo(const char *);
