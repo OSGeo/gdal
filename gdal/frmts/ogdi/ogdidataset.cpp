@@ -703,6 +703,8 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
                   "have any identifiable raster layers.  Perhaps it is a\n"
                   "vector datastore?" );
         cln_DestroyClient( nClientID );
+        CSLDestroy( papszImages );
+        CSLDestroy( papszMatrices );
         return NULL;
     }
 
@@ -722,6 +724,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", psResult->message );
+        CSLDestroy( papszImages );
+        CSLDestroy( papszMatrices );
+        delete poDS;
         return NULL;
     }
 
@@ -732,6 +737,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", psResult->message );
+        CSLDestroy( papszImages );
+        CSLDestroy( papszMatrices );
+        delete poDS;
         return NULL;
     }
 
@@ -758,6 +766,9 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", psResult->message );
+        CSLDestroy( papszImages );
+        CSLDestroy( papszMatrices );
+        delete poDS;
         return NULL;
     }
 
