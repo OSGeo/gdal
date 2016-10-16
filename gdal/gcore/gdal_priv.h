@@ -110,7 +110,7 @@ public:
     void        Clear();
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALMultiDomainMetadata);
+    CPL_DISALLOW_COPY_ASSIGN(GDALMultiDomainMetadata)
 };
 //! @endcond
 
@@ -235,7 +235,7 @@ class CPL_DLL GDALDefaultOverviews
     char**     GetSiblingFiles() { return papszInitSiblingFiles; }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALDefaultOverviews);
+    CPL_DISALLOW_COPY_ASSIGN(GDALDefaultOverviews)
 };
 //! @endcond
 
@@ -284,7 +284,7 @@ class CPL_DLL GDALOpenInfo
     bool        AreSiblingFilesLoaded() const;
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo);
+    CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo)
 };
 
 /* ******************************************************************** */
@@ -620,7 +620,7 @@ private:
 //! @endcond
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALDataset)
 };
 
 /* ******************************************************************** */
@@ -734,7 +734,7 @@ class CPL_DLL GDALRasterBlock
 //! @endcond
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALRasterBlock);
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterBlock)
 };
 
 /* ******************************************************************** */
@@ -1042,7 +1042,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
 private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterBand)
 };
 
 //! @cond Doxygen_Suppress
@@ -1251,7 +1251,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                           const char * pszOldName );
 //! @endcond
 private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALDriver);
+    CPL_DISALLOW_COPY_ASSIGN(GDALDriver)
 };
 
 /* ******************************************************************** */
