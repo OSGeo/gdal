@@ -1940,6 +1940,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     int            i;
     size_t         nFnameLen;
 
+    sTableDef.numFields = 0;
     sTableDef.pasFieldDef = NULL;
 
     /* Alloc a buffer big enough for the longest possible filename...
