@@ -61,7 +61,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
          virtual ~RawDataset() = 0;
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(RawDataset);
+    CPL_DISALLOW_COPY_ASSIGN(RawDataset)
 };
 
 /************************************************************************/
@@ -173,7 +173,7 @@ public:
     int          GetOwnsFP() { return bOwnsFP; }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(RawRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
 };
 
 #endif // GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED

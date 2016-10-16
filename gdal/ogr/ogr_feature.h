@@ -119,7 +119,7 @@ class CPL_DLL OGRFieldDefn
     int                 IsSame( const OGRFieldDefn * ) const;
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
 
 /************************************************************************/
@@ -179,7 +179,7 @@ public:
         int                 IsSame( OGRGeomFieldDefn * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
 
 /************************************************************************/
@@ -267,7 +267,7 @@ class CPL_DLL OGRFeatureDefn
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
 };
 
 /************************************************************************/
@@ -470,7 +470,7 @@ class CPL_DLL OGRFeature
     static void         DestroyFeature( OGRFeature * );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(OGRFeature);
+    CPL_DISALLOW_COPY_ASSIGN(OGRFeature)
 };
 
 /************************************************************************/

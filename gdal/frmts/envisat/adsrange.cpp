@@ -75,7 +75,7 @@ class DataSet
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(DataSet);
+    CPL_DISALLOW_COPY_ASSIGN(DataSet)
 } ;
 
 /* -------------------------------------------------------------------- */

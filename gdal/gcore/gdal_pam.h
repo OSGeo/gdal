@@ -190,7 +190,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 //! @endcond
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamDataset)
 };
 
 //! @cond Doxygen_Suppress
@@ -312,7 +312,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
 //! @endcond
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand)
 };
 
 //! @cond Doxygen_Suppress

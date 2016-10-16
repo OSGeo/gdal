@@ -333,7 +333,7 @@ public:
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(IliClass);
+    CPL_DISALLOW_COPY_ASSIGN(IliClass)
 };
 
 

@@ -188,7 +188,7 @@ class VizGeorefSpline2D
     int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D);
+    CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D)
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
