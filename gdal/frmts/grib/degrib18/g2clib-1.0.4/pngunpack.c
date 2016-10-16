@@ -43,8 +43,8 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
       unsigned char *ctemp;
 
       rdieee(idrstmpl+0,&refV,1);
-      bscale = int_power(2.0,idrstmpl[1]);
-      dscale = int_power(10.0,-idrstmpl[2]);
+      bscale = (g2float)int_power(2.0,idrstmpl[1]);
+      dscale = (g2float)int_power(10.0,-idrstmpl[2]);
       bscale *= dscale;
       refV *= dscale;
       refD = refV;
