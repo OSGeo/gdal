@@ -15,7 +15,10 @@ EXTRAFLAGS	:= 	$(EXTRAFLAGS) -DHAVE_JASPER
 endif
 
 ifeq ($(PNG_SETTING),internal)
-EXTRAFLAGS      :=      $(EXTRAFLAGS) -I ../png/libpng -DUSE_PNG
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I../png/libpng -DUSE_PNG
+ifeq ($(LIBZ_SETTING),internal) 
+EXTRAFLAGS      :=      $(EXTRAFLAGS) -I../zlib
+endif
 OBJ     :=      $(OBJ) pngpack.o pngunpack.o enc_png.o dec_png.o
 endif
 
