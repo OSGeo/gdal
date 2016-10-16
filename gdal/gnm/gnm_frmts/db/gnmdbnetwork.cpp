@@ -250,8 +250,6 @@ int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename, char **papszO
     {
         return TRUE;
     }
-
-    return FALSE;
 }
 
 CPLErr GNMDatabaseNetwork::DeleteMetadataLayer()
