@@ -1397,12 +1397,22 @@ static CPLString GetKey(const char* pszFilename)
 {
     CPLString osKey = GetArgument(pszFilename, "key");
     if( osKey.size() == 0 )
-        osKey = CPLGetConfigOption("VSICRYPT_KEY", "");
+    {
+        const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY", "");
+        // Do some form of validation to please Coverity
+        CPLAssert( strlen(pszKey) < 10U * 1024U );
+        osKey = pszKey;
+    }
     if( osKey.size() == 0 || EQUAL(osKey, "GENERATE_IT") )
     {
         CPLString osKeyB64(GetArgument(pszFilename, "key_b64"));
         if( osKeyB64.size() == 0 )
-            osKeyB64 = CPLGetConfigOption("VSICRYPT_KEY_B64", "");
+        {
+            const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY_B64", "");
+            // Do some form of validation to please Coverity
+            CPLAssert( strlen(pszKey) < 10U * 1024U );
+            osKeyB64 = pszKey;
+        }
         if( osKeyB64.size() )
         {
             GByte* key = (GByte*)CPLStrdup(osKeyB64);
