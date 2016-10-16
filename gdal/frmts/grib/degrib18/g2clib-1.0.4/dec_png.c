@@ -124,8 +124,8 @@ int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned 
         png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
         return( -5 );
     }
-    *width = u_width;
-    *height = u_height;
+    *width = (g2int) u_width;
+    *height = (g2int) u_height;
     if( (*width) * (*height) != ndpts )
     {
         fprintf(stderr, "invalid width/height\n");
