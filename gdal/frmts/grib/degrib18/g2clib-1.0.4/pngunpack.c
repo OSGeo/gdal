@@ -41,21 +41,25 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 
       g2int  *ifld;
       g2int  j,nbits,iret,width,height;
-      g2float  ref,bscale,dscale;
+      g2float  refD, refV,bscale,dscale;
       unsigned char *ctemp;
 
-      rdieee(idrstmpl+0,&ref,1);
+      rdieee(idrstmpl+0,&refV,1);
       bscale = int_power(2.0,idrstmpl[1]);
       dscale = int_power(10.0,-idrstmpl[2]);
+      bscale *= dscale;
+      refV *= dscale;
+      refD = refV;
+
       nbits = idrstmpl[3];
 //
 //  if nbits equals 0, we have a constant field where the reference value
 //  is the data value at each gridpoint
 //
       if (nbits != 0) {
-
+	 int nbytes = nbits/8;
          ifld=(g2int *)calloc(ndpts,sizeof(g2int));
-         ctemp=(unsigned char *)calloc(ndpts*4,1);
+         ctemp=(unsigned char *)calloc(ndpts*nbytes,1);
          if ( ifld == 0 || ctemp == 0) {
             fprintf(stderr, "Could not allocate space in jpcunpack.\n"
                     "Data field NOT unpacked.\n");
@@ -64,13 +68,13 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          iret=(g2int)dec_png(cpack,&width,&height,ctemp);
          gbits(ctemp,ifld,0,nbits,0,ndpts);
          for (j=0;j<ndpts;j++) {
-           fld[j]=(((g2float)ifld[j]*bscale)+ref)*dscale;
+	   fld[j] = refD + bscale*(g2float)(ifld[j]);
          }
          free(ctemp);
          free(ifld);
       }
       else {
-         for (j=0;j<ndpts;j++) fld[j]=ref;
+         for (j=0;j<ndpts;j++) fld[j]=refD;
       }
 
       return(0);
