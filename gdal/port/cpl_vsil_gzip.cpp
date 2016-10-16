@@ -1257,7 +1257,7 @@ int VSIGZipWriteHandle::Close()
         sStream.next_out = pabyOutBuf;
         sStream.avail_out = static_cast<uInt>(Z_BUFSIZE);
 
-        deflate( &sStream, Z_FINISH );
+        CPL_IGNORE_RET_VAL( deflate( &sStream, Z_FINISH ) );
 
         size_t nOutBytes = static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
 
@@ -1336,7 +1336,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
         sStream.next_in = pabyInBuf;
         sStream.avail_in += nNewBytesToWrite;
 
-        deflate( &sStream, Z_NO_FLUSH );
+        CPL_IGNORE_RET_VAL( deflate( &sStream, Z_NO_FLUSH ) );
 
         const size_t nOutBytes =
             static_cast<uInt>(Z_BUFSIZE) - sStream.avail_out;
