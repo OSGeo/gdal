@@ -38,7 +38,7 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 {
 
       g2int  *ifld;
-      g2int  j,nbits,iret,width,height;
+      g2int  j,nbits,iret = 0,width,height;
       g2float  refD, refV,bscale,dscale;
       unsigned char *ctemp;
 
@@ -75,5 +75,5 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          for (j=0;j<ndpts;j++) fld[j]=refD;
       }
 
-      return(0);
+      return(iret);
 }
