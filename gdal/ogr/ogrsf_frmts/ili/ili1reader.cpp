@@ -470,6 +470,7 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
           OGRErr error =  ogrCurve->addCurveDirectly(arc);
           if (error != OGRERR_NONE) {
             CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", arc->exportToJson() );
+            delete arc;
           }
           arc = NULL;
         }
@@ -487,6 +488,7 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
         } else {
           ogrLine->empty();
         }
+        delete arc;
         arc = new OGRCircularString();
         arc->addPoint(&ogrPoint);
         ogrPoint.setX(CPLAtof(tokens[1])); ogrPoint.setY(CPLAtof(tokens[2]));
@@ -545,6 +547,7 @@ void ILI1Reader::ReadGeom( char **stgeom, int geomIdx, OGRwkbGeometryType eType,
 
       CSLDestroy(tokens);
     }
+    delete arc;
 
     delete ogrLine;
 
