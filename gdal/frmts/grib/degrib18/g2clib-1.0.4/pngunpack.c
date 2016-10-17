@@ -61,6 +61,8 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          if ( ifld == NULL || ctemp == NULL) {
             fprintf(stderr, "Could not allocate space in jpcunpack.\n"
                     "Data field NOT unpacked.\n");
+            free(ifld);
+            free(ctemp);
             return(1);
          }
          iret=(g2int)dec_png(cpack,len,&width,&height,ctemp, ndpts, nbits);
