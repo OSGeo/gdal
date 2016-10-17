@@ -2523,7 +2523,11 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     poDS->SoftStartTransaction();
 
     if (!(nFlagsIn & ALTER_TYPE_FLAG))
+    {
+        oField.SetSubType(OFSTNone);
         oField.SetType(poFieldDefn->GetType());
+        oField.SetSubType(poFieldDefn->GetSubType());
+    }
 
     if (!(nFlagsIn & ALTER_WIDTH_PRECISION_FLAG))
     {
@@ -2677,7 +2681,11 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
     if (nFlagsIn & ALTER_NAME_FLAG)
         poFieldDefn->SetName(oField.GetNameRef());
     if (nFlagsIn & ALTER_TYPE_FLAG)
+    {
+        poFieldDefn->SetSubType(OFSTNone);
         poFieldDefn->SetType(oField.GetType());
+        poFieldDefn->SetSubType(oField.GetSubType());
+    }
     if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         poFieldDefn->SetWidth(oField.GetWidth());
