@@ -38,7 +38,7 @@ GDALWMSMiniDriver_VirtualEarth::GDALWMSMiniDriver_VirtualEarth() {}
 
 GDALWMSMiniDriver_VirtualEarth::~GDALWMSMiniDriver_VirtualEarth() {}
 
-CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
+CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     CPLErr ret = CE_None;
 

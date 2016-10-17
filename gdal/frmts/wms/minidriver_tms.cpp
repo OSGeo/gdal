@@ -38,7 +38,7 @@ GDALWMSMiniDriver_TMS::GDALWMSMiniDriver_TMS() {}
 
 GDALWMSMiniDriver_TMS::~GDALWMSMiniDriver_TMS() {}
 
-CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

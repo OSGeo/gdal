@@ -37,7 +37,7 @@ GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {}
 
 GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {}
 
-CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

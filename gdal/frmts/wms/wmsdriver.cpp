@@ -911,7 +911,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     GDALWMSDataset *ds = new GDALWMSDataset();
-    ret = ds->Initialize(config);
+    ret = ds->Initialize(config, poOpenInfo->papszOpenOptions);
     if (ret != CE_None) {
         delete ds;
         ds = NULL;

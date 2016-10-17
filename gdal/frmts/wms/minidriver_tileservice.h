@@ -36,7 +36,7 @@ public:
     virtual ~GDALWMSMiniDriver_TileService();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);

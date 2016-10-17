@@ -321,7 +321,7 @@ CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
  *\Brief Initialize minidriver with info from the server
  */
 
-CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
+CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig=NULL;
