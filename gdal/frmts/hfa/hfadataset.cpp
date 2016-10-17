@@ -860,7 +860,7 @@ int HFARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
     if( ((HFARasterAttributeTable*)this)->
               ValuesIO(GF_Read, iField, iRow, 1, &nValue ) != CE_None )
     {
-        return 0.0;
+        return 0;
     }
 
     return nValue;
