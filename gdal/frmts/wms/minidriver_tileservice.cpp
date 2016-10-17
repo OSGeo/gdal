@@ -38,7 +38,7 @@ GDALWMSMiniDriver_TileService::GDALWMSMiniDriver_TileService() {}
 
 GDALWMSMiniDriver_TileService::~GDALWMSMiniDriver_TileService() {}
 
-CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

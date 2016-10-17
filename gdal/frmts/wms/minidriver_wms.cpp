@@ -39,7 +39,7 @@ GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {}
 
 GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {}
 
-CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

@@ -38,7 +38,7 @@ GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {}
 
 GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {}
 
-CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

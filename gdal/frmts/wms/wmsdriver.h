@@ -158,7 +158,7 @@ public:
 
 public:
 /* Read mini-driver specific configuration. */
-    virtual CPLErr Initialize(CPLXMLNode *config);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
 public:
     virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
@@ -380,7 +380,7 @@ protected:
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg* psExtraArg);
-    CPLErr Initialize(CPLXMLNode *config);
+    CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
     GDALWMSDataWindow m_data_window;
     GDALWMSMiniDriver *m_mini_driver;
