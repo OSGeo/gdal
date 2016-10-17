@@ -2702,6 +2702,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
     GDALOpenInfo oOpenInfo(pszFilename,
                            nOpenFlags,
                            (char**) papszSiblingFiles);
+    oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     // Prevent infinite recursion
     {

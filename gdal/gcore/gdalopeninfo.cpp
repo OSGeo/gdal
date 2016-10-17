@@ -69,7 +69,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     bIsDirectory(FALSE),
     fpL(NULL),
     nHeaderBytes(0),
-    pabyHeader(NULL)
+    pabyHeader(NULL),
+    papszAllowedDrivers(NULL)
 {
 
 /* -------------------------------------------------------------------- */
