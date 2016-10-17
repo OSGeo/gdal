@@ -1401,6 +1401,7 @@ static CPLString GetKey(const char* pszFilename)
         const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY", "");
         // Do some form of validation to please Coverity
         CPLAssert( strlen(pszKey) < 10U * 1024U );
+        // coverity [tainted_data_transitive]
         osKey = pszKey;
     }
     if( osKey.size() == 0 || EQUAL(osKey, "GENERATE_IT") )
@@ -1411,6 +1412,7 @@ static CPLString GetKey(const char* pszFilename)
             const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY_B64", "");
             // Do some form of validation to please Coverity
             CPLAssert( strlen(pszKey) < 10U * 1024U );
+            // coverity [tainted_data_transitive]
             osKeyB64 = pszKey;
         }
         if( osKeyB64.size() )
