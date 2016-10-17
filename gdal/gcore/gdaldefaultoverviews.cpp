@@ -629,6 +629,8 @@ GDALDefaultOverviews::BuildOverviews(
     int nNewOverviews = 0;
     int *panNewOverviewList = static_cast<int *>(
         CPLCalloc(sizeof(int), nOverviews) );
+    double dfAreaNewOverviews = 0;
+    double dfAreaRefreshedOverviews = 0;
     for( int i = 0; i < nOverviews && poBand != NULL; i++ )
     {
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
@@ -647,11 +649,18 @@ GDALDefaultOverviews::BuildOverviews(
                 || nOvFactor == GDALOvLevelAdjust2( panOverviewList[i],
                                                    poBand->GetXSize(),
                                                    poBand->GetYSize() ) )
+            {
                 panOverviewList[i] *= -1;
+            }
         }
 
+        const double dfArea = 1.0 / (panOverviewList[i] * panOverviewList[i]);
+        dfAreaRefreshedOverviews += dfArea;
         if( panOverviewList[i] > 0 )
+        {
+            dfAreaNewOverviews += dfArea;
             panNewOverviewList[nNewOverviews++] = panOverviewList[i];
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -671,6 +680,9 @@ GDALDefaultOverviews::BuildOverviews(
 
     CPLErr eErr = CE_None;
 
+    void* pScaledProgress = GDALCreateScaledProgress(
+            0, dfAreaNewOverviews / dfAreaRefreshedOverviews,
+            pfnProgress, pProgressData );
     if( bOvrIsAux )
     {
         if( nNewOverviews == 0 )
@@ -686,7 +698,7 @@ GDALDefaultOverviews::BuildOverviews(
                                      nBands, panBandList,
                                      nNewOverviews, panNewOverviewList,
                                      pszResampling,
-                                     pfnProgress, pProgressData );
+                                     GDALScaledProgress, pScaledProgress );
         }
         for( int j = 0; j < nOverviews; j++ )
         {
@@ -709,7 +721,8 @@ GDALDefaultOverviews::BuildOverviews(
 
         eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                     nNewOverviews, panNewOverviewList,
-                                    pszResampling, pfnProgress, pProgressData );
+                                    pszResampling,
+                                    GDALScaledProgress, pScaledProgress );
 
         // Probe for proxy overview filename.
         if( eErr == CE_Failure )
@@ -723,7 +736,7 @@ GDALDefaultOverviews::BuildOverviews(
                 eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands,
                                             nNewOverviews, panNewOverviewList,
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            GDALScaledProgress, pScaledProgress );
             }
         }
 
@@ -735,6 +748,8 @@ GDALDefaultOverviews::BuildOverviews(
                 eErr = CE_Failure;
         }
     }
+
+    GDALDestroyScaledProgress( pScaledProgress );
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
@@ -781,11 +796,18 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( nNewOverviews > 0 )
         {
+            const double dfOffset = dfAreaNewOverviews / dfAreaRefreshedOverviews;
+            const double dfScale = 1.0 - dfOffset;
+            pScaledProgress = GDALCreateScaledProgress(
+                    dfOffset + dfScale * iBand / nBands,
+                    dfOffset + dfScale * (iBand+1) / nBands,
+                    pfnProgress, pProgressData );
             eErr = GDALRegenerateOverviews( (GDALRasterBandH) poBand,
                                             nNewOverviews,
                                             (GDALRasterBandH*)papoOverviewBands,
                                             pszResampling,
-                                            pfnProgress, pProgressData );
+                                            GDALScaledProgress, pScaledProgress );
+            GDALDestroyScaledProgress( pScaledProgress );
         }
     }
 
