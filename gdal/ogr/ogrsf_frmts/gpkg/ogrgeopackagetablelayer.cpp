@@ -3337,7 +3337,11 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     if( (nFlagsIn & ALTER_NAME_FLAG) )
         oTmpFieldDefn.SetName(poNewFieldDefn->GetNameRef());
     if( (nFlagsIn & ALTER_TYPE_FLAG) )
+    {
+        oTmpFieldDefn.SetSubType(OFSTNone);
         oTmpFieldDefn.SetType(poNewFieldDefn->GetType());
+        oTmpFieldDefn.SetSubType(poNewFieldDefn->GetSubType());
+    }
     if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
     {
         oTmpFieldDefn.SetWidth(poNewFieldDefn->GetWidth());
@@ -3572,7 +3576,9 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 
             if (nFlagsIn & ALTER_TYPE_FLAG)
             {
+                poFieldDefn->SetSubType(OFSTNone);
                 poFieldDefn->SetType(poNewFieldDefn->GetType());
+                poFieldDefn->SetSubType(poNewFieldDefn->GetSubType());
             }
             if (nFlagsIn & ALTER_NAME_FLAG)
             {
