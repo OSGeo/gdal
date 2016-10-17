@@ -278,6 +278,9 @@ class CPL_DLL GDALOpenInfo
     /** Buffer with first bytes of the file */
     GByte       *pabyHeader;
 
+    /** Allowed drivers (NULL for all) */
+    const char* const* papszAllowedDrivers;
+
     int         TryToIngest(int nBytes);
     char      **GetSiblingFiles();
     char      **StealSiblingFiles();
