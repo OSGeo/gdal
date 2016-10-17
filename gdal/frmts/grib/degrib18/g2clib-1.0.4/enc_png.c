@@ -113,7 +113,7 @@ int enc_png(char *data,g2int width,g2int height,g2int nbits,char *pngbuf)
 
     /*bytes=bit_depth/8;*/
     bytes=nbits/8;
-    row_pointers=malloc(height*sizeof(png_bytep));
+    row_pointers=malloc(height*sizeof(png_bytep*));
     for (j=0;j<height;j++) row_pointers[j]=(png_bytep *)(data+(j*width*bytes));
     png_set_rows(png_ptr, info_ptr, (png_bytepp)row_pointers);
 
