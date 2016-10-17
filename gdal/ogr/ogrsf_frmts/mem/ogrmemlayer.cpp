@@ -681,7 +681,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
 
     if( (nFlagsIn & ALTER_TYPE_FLAG) &&
-        poFieldDefn->GetType() != poNewFieldDefn->GetType() )
+        (poFieldDefn->GetType() != poNewFieldDefn->GetType() ||
+         poFieldDefn->GetSubType() != poNewFieldDefn->GetSubType()))
     {
         if( (poNewFieldDefn->GetType() == OFTDate ||
              poNewFieldDefn->GetType() == OFTTime ||
@@ -786,7 +787,9 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             delete poIter;
         }
 
+        poFieldDefn->SetSubType(OFSTNone);
         poFieldDefn->SetType(poNewFieldDefn->GetType());
+        poFieldDefn->SetSubType(poNewFieldDefn->GetSubType());
     }
 
     if( nFlagsIn & ALTER_NAME_FLAG )
