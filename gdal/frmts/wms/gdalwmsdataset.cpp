@@ -88,7 +88,7 @@ GDALWMSDataset::~GDALWMSDataset() {
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
-CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **papszOpenOptions) {
+CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions) {
     CPLErr ret = CE_None;
 
     char* pszXML = CPLSerializeXMLTree( config );
@@ -111,7 +111,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **papszOpenOptions) {
             {
                 m_mini_driver = mdf->New();
                 m_mini_driver->m_parent_dataset = this;
-                if (m_mini_driver->Initialize(service_node, papszOpenOptions) == CE_None)
+                if (m_mini_driver->Initialize(service_node, l_papszOpenOptions) == CE_None)
                 {
                     m_mini_driver_caps.m_capabilities_version = -1;
                     m_mini_driver->GetCapabilities(&m_mini_driver_caps);
