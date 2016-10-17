@@ -524,7 +524,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         feature->GetGeomFieldRef(nSurfaceFieldIndex) );
             OGRMultiCurve *lines = reinterpret_cast<OGRMultiCurve *>(
                 linefeature->GetGeomFieldRef(0) );
-            for( int i = 0; i < lines->getNumGeometries(); i++ ) {
+            for( int i = 0; lines != NULL && i < lines->getNumGeometries(); i++ ) {
                 OGRCurve *line = reinterpret_cast<OGRCurve*>(lines->getGeometryRef(i));
                 OGRCurve *ring = NULL;
                 if (surface_lines) {
