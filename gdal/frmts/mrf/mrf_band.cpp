@@ -691,12 +691,15 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     // valgrind gdalinfo -checksum out.mrf
     // Invalid read of size 4
     // at BitStuffer::read(unsigned char**, std::vector<unsigned int, std::allocator<unsigned int> >&) const (BitStuffer.cpp:153)
-    if( tinfo.size <= 0 || tinfo.size > INT_MAX - 3 )
+
+    // No stored tile should be larger than twice the raw size.
+    if( tinfo.size <= 0 || tinfo.size > poDS->pbsize * 2 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Too big tile size: " CPL_FRMT_GIB, tinfo.size);
+                 "Stored tile is too large: " CPL_FRMT_GIB, tinfo.size);
         return CE_Failure;
     }
+
     void *data = VSIMalloc(static_cast<size_t>(tinfo.size + 3));
     if( data == NULL )
     {

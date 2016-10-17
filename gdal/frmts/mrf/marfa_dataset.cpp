@@ -338,7 +338,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 continue;
             };
 
-            int srclevel = int(-0.5 + logb(panOverviewListNew[i], scale));
+            int srclevel = int(logbase(panOverviewListNew[i], scale) - 0.5);
             GDALMRFRasterBand *b = static_cast<GDALMRFRasterBand *>(GetRasterBand(1));
 
             // Warn for requests for invalid levels

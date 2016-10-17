@@ -322,18 +322,18 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 /**
  *\brief log in a given base
  */
-double logb(double val, double base) {
-    return log(val)/log(base);
+double logbase(double val, double base) {
+    return log(val) / log(base);
 }
 
 /**
- *\brief Is logb(val) an integer?
+ *\brief Is logbase(val, base) an integer?
  *
  */
 
 int IsPower(double value, double base) {
-    double v=logb(value, base);
-    return CPLIsEqual(v, int(v+0.5));
+    double v = logbase(value, base);
+    return CPLIsEqual(v, int(v + 0.5));
 }
 
 /************************************************************************/
