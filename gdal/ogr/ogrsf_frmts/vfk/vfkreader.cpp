@@ -303,6 +303,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                         CPLFree(pszLine);
                         if( osMultiLine.size() > 100U * 1024U * 1024U )
                         {
+                            CPLFree(pszBlockName);
                             return -1;
                         }
                     }
@@ -313,6 +314,7 @@ int VFKReader::ReadDataRecords(IVFKDataBlock *poDataBlock)
                     nLength = osMultiLine.size();
                     if( nLength > 100U * 1024U * 1024U )
                     {
+                        CPLFree(pszBlockName);
                         return -1;
                     }
                     pszLine = (char *) CPLMalloc(nLength + 1);
