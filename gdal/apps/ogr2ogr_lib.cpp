@@ -401,6 +401,7 @@ public:
                                   TargetLayerInfo* psInfo,
                                   GIntBig nCountLayerFeatures,
                                   GIntBig* pnReadFeatureCount,
+                                  GIntBig& nTotalEventsDone,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressArg,
                                   GDALVectorTranslateOptions *psOptions);
@@ -1696,6 +1697,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             poODS->StartTransaction(psOptions->bForceTransaction);
     }
 
+    GIntBig nTotalEventsDone = 0;
+
 /* -------------------------------------------------------------------- */
 /*      Special case for -sql clause.  No source layers required.       */
 /* -------------------------------------------------------------------- */
@@ -1785,6 +1788,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( psInfo == NULL ||
                 !oTranslator.Translate( NULL, psInfo,
                                         nCountLayerFeatures, NULL,
+                                        nTotalEventsDone,
                                         pfnProgress, pProgressArg, psOptions ))
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -2003,13 +2007,30 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                         }
 
                         pasAssocLayers[iLayer].psInfo = psInfo;
+
+                        if( !psOptions->nLayerTransaction &&
+                            psOptions->nGroupTransactions >= 0 &&
+                            // Commit when overwriting as this consumes a lot of PG ressources
+                            (bOverwrite || ++nTotalEventsDone >= psOptions->nGroupTransactions) )
+                        {
+                            if( poODS->CommitTransaction() != OGRERR_NONE ||
+                                poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+                            {
+                                nRetCode = 1;
+                                break;
+                            }
+                            nTotalEventsDone = 0;
+                        }
                     }
+                    if( nRetCode )
+                        break;
                 }
 
                 int iLayer = oIter->second;
                 TargetLayerInfo *psInfo = pasAssocLayers[iLayer].psInfo;
                 if( !oTranslator.Translate( poFeature, psInfo,
                                             0, NULL,
+                                            nTotalEventsDone,
                                             NULL, NULL, psOptions )
                     && !psOptions->bSkipFailures )
                 {
@@ -2053,6 +2074,20 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
 
                 pasAssocLayers[iLayer].psInfo = psInfo;
+
+                if( !psOptions->nLayerTransaction &&
+                    psOptions->nGroupTransactions >= 0 &&
+                    // Commit when overwriting as this consumes a lot of PG ressources
+                    (bOverwrite || ++nTotalEventsDone >= psOptions->nGroupTransactions) )
+                {
+                    if( poODS->CommitTransaction() != OGRERR_NONE ||
+                        poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+                    {
+                        nRetCode = 1;
+                        break;
+                    }
+                    nTotalEventsDone = 0;
+                }
             }
         }
 
@@ -2264,6 +2299,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if( (psInfo == NULL ||
                 !oTranslator.Translate( NULL, psInfo,
                                         panLayerCountFeatures[iLayer], NULL,
+                                        nTotalEventsDone,
                                         pfnProgress, pProgressArg, psOptions ))
                 && !psOptions->bSkipFailures )
             {
@@ -3423,6 +3459,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                                 TargetLayerInfo* psInfo,
                                 GIntBig nCountLayerFeatures,
                                 GIntBig* pnReadFeatureCount,
+                                GIntBig& nTotalEventsDone,
                                 GDALProgressFunc pfnProgress,
                                 void *pProgressArg,
                                 GDALVectorTranslateOptions *psOptions )
@@ -3522,27 +3559,28 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
 
         for(int iPart = 0; iPart < nIters; iPart++)
         {
-            if( ++nFeaturesInTransaction == psOptions->nGroupTransactions )
+            if( psOptions->nLayerTransaction &&
+                ++nFeaturesInTransaction == psOptions->nGroupTransactions )
             {
-                if( psOptions->nLayerTransaction )
+                if( poDstLayer->CommitTransaction() != OGRERR_NONE ||
+                    poDstLayer->StartTransaction() != OGRERR_NONE )
                 {
-                    if( poDstLayer->CommitTransaction() != OGRERR_NONE ||
-                        poDstLayer->StartTransaction() != OGRERR_NONE )
-                    {
-                        OGRFeature::DestroyFeature( poFeature );
-                        return false;
-                    }
-                }
-                else
-                {
-                    if( m_poODS->CommitTransaction() != OGRERR_NONE ||
-                        m_poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
-                    {
-                        OGRFeature::DestroyFeature( poFeature );
-                        return false;
-                    }
+                    OGRFeature::DestroyFeature( poFeature );
+                    return false;
                 }
                 nFeaturesInTransaction = 0;
+            }
+            else if( !psOptions->nLayerTransaction &&
+                     psOptions->nGroupTransactions >= 0 &&
+                     ++nTotalEventsDone >= psOptions->nGroupTransactions )
+            {
+                if( m_poODS->CommitTransaction() != OGRERR_NONE ||
+                        m_poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+                {
+                    OGRFeature::DestroyFeature( poFeature );
+                    return false;
+                }
+                nTotalEventsDone = 0;
             }
 
             CPLErrorReset();
