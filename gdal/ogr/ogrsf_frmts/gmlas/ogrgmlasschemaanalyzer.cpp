@@ -381,7 +381,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                 {
                     GMLASField& oField = aoFields[oIter->second[i]];
                     oField.SetName( AddSerialNumber( oField.GetName(),
-                                                     i,
+                                                     static_cast<int>(i+1),
                                                      nOccurrences) );
                 }
             }
@@ -463,7 +463,7 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
             {
                 GMLASFeatureClass* poClass = aoClasses[oIter->second[i]];
                 poClass->SetName( AddSerialNumber(poClass->GetName(),
-                                                  i,
+                                                  static_cast<int>(i+1),
                                                   nOccurrences) );
             }
         }
@@ -476,14 +476,14 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
 
 CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
                                                int iOccurrence,
-                                               int nOccurrences)
+                                               size_t nOccurrences)
 {
     CPLString osName(osNameIn);
     const int nDigitsSize = (nOccurrences < 10) ? 1:
                             (nOccurrences < 100) ? 2 : 3;
     char szDigits[4];
     snprintf(szDigits, sizeof(szDigits), "%0*d",
-                nDigitsSize, static_cast<int>(iOccurrence+1));
+                nDigitsSize, iOccurrence);
     if( m_nIdentifierMaxLength >=
         GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
         static_cast<int>(osName.size()) < m_nIdentifierMaxLength )

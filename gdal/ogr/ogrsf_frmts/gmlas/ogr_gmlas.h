@@ -843,7 +843,7 @@ class GMLASSchemaAnalyzer
 
         CPLString AddSerialNumber(const CPLString& osNameIn,
                                   int iOccurrence,
-                                  int nOccurrences);
+                                  size_t nOccurrences);
 
         void CollectClassesReferences(
                                 GMLASFeatureClass& oClass,
