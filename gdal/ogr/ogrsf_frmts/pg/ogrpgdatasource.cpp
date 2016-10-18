@@ -645,7 +645,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Test if time binary format is int8 or float8                    */
 /* -------------------------------------------------------------------- */
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
     if (bUseBinaryCursor)
     {
         SoftStartTransaction();
