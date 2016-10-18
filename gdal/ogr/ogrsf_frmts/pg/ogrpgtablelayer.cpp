@@ -1648,13 +1648,6 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
 
     char* pszDestStr = (char*)CPLMalloc(2 * nSrcLen + 1);
 
-    /* -------------------------------------------------------------------- */
-    /*  PQescapeStringConn was introduced in PostgreSQL security releases   */
-    /*  8.1.4, 8.0.8, 7.4.13, 7.3.15                                        */
-    /*  PG_HAS_PQESCAPESTRINGCONN is added by a test in 'configure'         */
-    /*  so it is not set by default when building OGR for Win32             */
-    /* -------------------------------------------------------------------- */
-#if defined(PG_HAS_PQESCAPESTRINGCONN)
     int nError;
     PQescapeStringConn (hPGConn, pszDestStr, pszStrValue, nSrcLen, &nError);
     if (nError == 0)
@@ -1666,10 +1659,7 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
                  "    got: '%s'\n",
                  PQerrorMessage( hPGConn ),
                  pszStrValue, pszDestStr );
-#else
-    PQescapeString(pszDestStr, pszStrValue, nSrcLen);
-    osCommand += pszDestStr;
-#endif
+
     CPLFree(pszDestStr);
 
     osCommand += "'";
@@ -1986,8 +1976,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     OGRErr result = OGRERR_NONE;
 
-    /* This is for postgresql  7.4 and higher */
-#if !defined(PG_PRE74)
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(),
                                    static_cast<int>(strlen(osCommand.c_str())));
 #ifdef DEBUG_VERBOSE
@@ -2005,15 +1993,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         result = OGRERR_FAILURE;
         break;
     }
-#else /* else defined(PG_PRE74) */
-    int copyResult = PQputline(hPGConn, osCommand.c_str());
-
-    if (copyResult == EOF)
-    {
-      CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
-      result = OGRERR_FAILURE;
-    }
-#endif /* end of defined(PG_PRE74) */
 
     return result;
 }
@@ -2943,8 +2922,7 @@ OGRErr OGRPGTableLayer::EndCopy()
 
     bCopyActive = FALSE;
 
-    /* This is for postgresql 7.4 and higher */
-#if !defined(PG_PRE74)
+
     int copyResult = PQputCopyEnd(hPGConn, NULL);
 
     switch (copyResult)
@@ -2958,17 +2936,6 @@ OGRErr OGRPGTableLayer::EndCopy()
         result = OGRERR_FAILURE;
         break;
     }
-
-#else /* defined(PG_PRE74) */
-    PQputline(hPGConn, "\\.\n");
-    int copyResult = PQendcopy(hPGConn);
-
-    if (copyResult != 0)
-    {
-      CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
-      result = OGRERR_FAILURE;
-    }
-#endif /* defined(PG_PRE74) */
 
     /* Now check the results of the copy */
     PGresult * hResult = PQgetResult( hPGConn );

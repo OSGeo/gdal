@@ -20825,108 +20825,6 @@ fi
   if test "${HAVE_PG}" = "yes" ; then
     LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
-
-    PG_EXTRA_DEC=""
-    saved_LIBS="$LIBS"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQputCopyData in -lpq" >&5
-$as_echo_n "checking for PQputCopyData in -lpq... " >&6; }
-if ${ac_cv_lib_pq_PQputCopyData+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpq  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PQputCopyData ();
-int
-main ()
-{
-return PQputCopyData ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pq_PQputCopyData=yes
-else
-  ac_cv_lib_pq_PQputCopyData=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pq_PQputCopyData" >&5
-$as_echo "$ac_cv_lib_pq_PQputCopyData" >&6; }
-if test "x$ac_cv_lib_pq_PQputCopyData" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPQ 1
-_ACEOF
-
-  LIBS="-lpq $LIBS"
-
-else
-  DEFINE_PG_PRE74=-DPG_PRE74
-fi
-
-    LIBS="$saved_LIBS"
-    if test "$DEFINE_PG_PRE74" != "" ; then
-      echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
-    fi
-
-    saved_LIBS="$LIBS"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PQescapeStringConn in -lpq" >&5
-$as_echo_n "checking for PQescapeStringConn in -lpq... " >&6; }
-if ${ac_cv_lib_pq_PQescapeStringConn+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpq  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char PQescapeStringConn ();
-int
-main ()
-{
-return PQescapeStringConn ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pq_PQescapeStringConn=yes
-else
-  ac_cv_lib_pq_PQescapeStringConn=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pq_PQescapeStringConn" >&5
-$as_echo "$ac_cv_lib_pq_PQescapeStringConn" >&6; }
-if test "x$ac_cv_lib_pq_PQescapeStringConn" = xyes; then :
-  DEFINE_PG_HAS_PQESCAPESTRINGCONN=-DPG_HAS_PQESCAPESTRINGCONN
-fi
-
-    LIBS="$saved_LIBS"
-    if test "$DEFINE_PG_HAS_PQESCAPESTRINGCONN" = "" ; then
-      echo "falling back to using PQescapeString. You should upgrade at least to security releases 8.1.4, 8.0.8, 7.4.13, 7.3.15."
-    fi
-
-    PG_INC="${PG_INC} ${DEFINE_PG_PRE74} ${DEFINE_PG_HAS_PQESCAPESTRINGCONN}"
   fi
 
 fi
@@ -25255,7 +25153,7 @@ fi
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo checking for GNM ... disabled
+  echo echo checking for GNM ... support disabled
 else
   echo checking for GNM ... enabled
   GNM_ENABLED=yes

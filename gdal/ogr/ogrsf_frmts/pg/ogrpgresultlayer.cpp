@@ -113,7 +113,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         OGRPGClearResult( hResult );
     }
 
-#ifndef PG_PRE74
     /* Determine the table from which the geometry column is extracted */
     if (iGeomCol != -1)
     {
@@ -135,7 +134,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
             OGRPGClearResult( hTableNameResult );
         }
     }
-#endif
 }
 
 /************************************************************************/
