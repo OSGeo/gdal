@@ -324,6 +324,7 @@ class GMLASConfiguration
         static const bool EXPOSE_METADATA_LAYERS_DEFAULT = false;
         static const bool WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
         static const int  MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH = 10;
+        static const bool CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
 
         /** Whether remote schemas are allowed to be download. */
         bool            m_bAllowRemoteSchemaDownload;
@@ -355,6 +356,9 @@ class GMLASConfiguration
 
         /** Maximum length of layer and field identifiers*/
         int             m_nIdentifierMaxLength;
+
+        /** Whether case insensitive comparison should be used for identifier equality testing */
+        bool            m_bCaseInsensitiveIdentifier;
 
         /** Whether remote XSD schemas should be locally cached. */
         bool            m_bAllowXSDCache;
@@ -774,6 +778,9 @@ class GMLASSchemaAnalyzer
         /** Maximum length of layer and field identifiers*/
         int             m_nIdentifierMaxLength;
 
+        /** Whether case insensitive comparison should be used for identifier equality testing */
+        bool            m_bCaseInsensitiveIdentifier;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         CPLString GetGroupName( const XSModelGroup* poModelGroup );
@@ -834,6 +841,10 @@ class GMLASSchemaAnalyzer
 
         CPLString TruncateIdentifier(const CPLString& osName);
 
+        CPLString AddSerialNumber(const CPLString& osNameIn,
+                                  int iOccurrence,
+                                  int nOccurrences);
+
         void CollectClassesReferences(
                                 GMLASFeatureClass& oClass,
                                 std::vector<GMLASFeatureClass*>& aoClasses );
@@ -847,6 +858,8 @@ class GMLASSchemaAnalyzer
                                     { m_bInstantiateGMLFeaturesOnly = b; }
         void SetIdentifierMaxLength(int nLength)
                                     { m_nIdentifierMaxLength = nLength; }
+        void SetCaseInsensitiveIdentifier(bool b)
+                                    { m_bCaseInsensitiveIdentifier = b; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,

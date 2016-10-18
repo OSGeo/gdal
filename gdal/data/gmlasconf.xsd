@@ -220,6 +220,17 @@
                 </xs:simpleType>
               </xs:element>
 
+              <xs:element name="CaseInsensitiveIdentifier" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                  <xs:documentation>
+                    Whether layer and field names should be consider equal in a
+                    case insensitive way. This is important for conversion to
+                    Postgres when identifiers are laundered in lower case
+                    Default is true.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>

@@ -2902,6 +2902,64 @@ def ogr_gmlas_identifier_truncation():
     return 'success'
 
 ###############################################################################
+# Test behaviour when identifiers have same case
+
+def ogr_gmlas_identifier_case_ambiguity():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns" 
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="differentcase">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="differentcase" type="xs:string"/>
+            <xs:element name="DifferentCASE" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="DifferentCASE">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:', open_options = [
+            'XSD=/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd'])
+    lyr = ds.GetLayerByName('differentcase1')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(0).GetName())
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(1).GetName()
+    if s != 'differentcase1':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    s = lyr.GetLayerDefn().GetFieldDefn(2).GetName()
+    if s != 'DifferentCASE2':
+        gdaltest.post_reason('fail')
+        print(s)
+        return 'fail'
+    lyr = ds.GetLayerByName('DifferentCASE2')
+    if lyr is None:
+        gdaltest.post_reason('fail')
+        print(ds.GetLayer(0).GetName())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -2958,6 +3016,7 @@ gdaltest_list = [
     ogr_gmlas_schema_without_namespace_prefix,
     ogr_gmlas_truncated_xml,
     ogr_gmlas_identifier_truncation,
+    ogr_gmlas_identifier_case_ambiguity,
     ogr_gmlas_cleanup ]
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_identifier_truncation ]
