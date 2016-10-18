@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-#define MAX_ENTRY_REPORT   16
+static const int MAX_ENTRY_REPORT = 16;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -113,7 +113,7 @@ const char *HFAField::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
 /*      If this is an object, we extract the type of the object.        */
 /* -------------------------------------------------------------------- */
-    int i;   // TODO: Describe why i needs to span chItemType blocks.
+    int i;  // TODO: Describe why i needs to span chItemType blocks.
 
     if( chItemType == 'o' )
     {
@@ -165,7 +165,7 @@ const char *HFAField::Initialize( const char * pszInput )
         strncpy( pszItemObjectType, pszInput, i );
         pszItemObjectType[i] = '\0';
 
-        pszInput += i+1;
+        pszInput += i + 1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -174,7 +174,7 @@ const char *HFAField::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
     if( chItemType == 'e' )
     {
-        int nEnumCount = atoi(pszInput);
+        const int nEnumCount = atoi(pszInput);
 
         if( nEnumCount < 0 || nEnumCount > 100000 )
             return NULL;
@@ -203,7 +203,7 @@ const char *HFAField::Initialize( const char * pszInput )
 
             papszEnumNames[iEnum] = pszToken;
 
-            pszInput += i+1;
+            pszInput += i + 1;
         }
     }
 
@@ -218,7 +218,7 @@ const char *HFAField::Initialize( const char * pszInput )
     strncpy( pszFieldName, pszInput, i );
     pszFieldName[i] = '\0';
 
-    pszInput += i+1;
+    pszInput += i + 1;
 
     return pszInput;
 }
@@ -363,17 +363,19 @@ void HFAField::Dump( FILE * fp )
         pszTypeName = "Unknown";
     }
 
-    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "    %-19s %c %s[%d];\n",
-                pszTypeName,
-                chPointer ? chPointer : ' ',
-                pszFieldName, nItemCount ));
+    CPL_IGNORE_RET_VAL(
+        VSIFPrintf( fp, "    %-19s %c %s[%d];\n",
+                    pszTypeName,
+                    chPointer ? chPointer : ' ',
+                    pszFieldName, nItemCount ));
 
     if( papszEnumNames != NULL )
     {
         for( int i = 0; papszEnumNames[i] != NULL; i++ )
         {
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "        %s=%d\n",
-                        papszEnumNames[i], i ));
+            CPL_IGNORE_RET_VAL(
+                VSIFPrintf( fp, "        %s=%d\n",
+                            papszEnumNames[i], i ));
         }
     }
 }
@@ -709,7 +711,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
         if( nBaseItemType < EPT_MIN || nBaseItemType > EPT_MAX )
             return CE_Failure;
-        EPTType eBaseItemType = static_cast<EPTType>(nBaseItemType);
+        const EPTType eBaseItemType = static_cast<EPTType>(nBaseItemType);
 
         // We ignore the 2 byte objecttype value.
 
@@ -721,8 +723,8 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                 > nDataSize )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "Attempt to extend field %s in node past end of data, "
-                          "not currently supported.",
+                          "Attempt to extend field %s in node past end of "
+                          "data, not currently supported.",
                           pszField );
                 return CE_Failure;
             }
@@ -759,8 +761,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
             if( poItemObjectType->nBytes > 0 )
             {
-                if( nIndexValue != 0 && poItemObjectType->nBytes > INT_MAX / nIndexValue )
+                if( nIndexValue != 0 &&
+                    poItemObjectType->nBytes > INT_MAX / nIndexValue )
+                {
                     return CE_Failure;
+                }
                 nExtraOffset = poItemObjectType->nBytes * nIndexValue;
             }
             else
@@ -775,7 +780,8 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
                                          nDataSize - nExtraOffset);
                     if( nInc < 0 || nExtraOffset > INT_MAX - nInc )
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Invalid return value");
                         return CE_Failure;
                     }
 
@@ -827,7 +833,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                             int *pnRemainingDataSize )
 
 {
-    int nInstItemCount = GetInstCount( pabyData, nDataSize );
+    const int nInstItemCount = GetInstCount( pabyData, nDataSize );
 
     if( pnRemainingDataSize )
         *pnRemainingDataSize = -1;
@@ -1494,8 +1500,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
                             pszPrefix, pszFieldName,
                             static_cast<char *>(pReturn) ));
         else
-            CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = (access failed)\n",
-                        pszPrefix, pszFieldName ));
+            CPL_IGNORE_RET_VAL(
+                VSIFPrintf( fpOut, "%s%s = (access failed)\n",
+                            pszPrefix, pszFieldName ));
 
         return;
     }
@@ -1634,6 +1641,8 @@ void HFAField::DumpInstValue( FILE *fpOut,
         printf( "%s ... remaining instances omitted ...\n", pszPrefix );
 
     if( nEntries == 0 )
-        CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s%s = (no values)\n", pszPrefix, pszFieldName ));
+        CPL_IGNORE_RET_VAL(
+            VSIFPrintf( fpOut, "%s%s = (no values)\n",
+                        pszPrefix, pszFieldName ));
 
 }
