@@ -23,6 +23,10 @@
         <!-- 60 for PostgreSQL compatiblity. The maximum is 64 but reserve
              some space so that the spatial index name can be formed -->
         <IdentifierMaxLength>60</IdentifierMaxLength>
+        <!-- Whether layer and field names should be consider equal in a
+             case insensitive way. This is important for conversion to
+             Postgres when identifiers are laundered in lower case -->
+        <CaseInsensitiveIdentifier>true</CaseInsensitiveIdentifier>
     </LayerBuildingRules>
 
     <XLinkResolution>

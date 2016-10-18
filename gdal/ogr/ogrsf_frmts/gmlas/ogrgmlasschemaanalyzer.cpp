@@ -163,6 +163,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
     , m_bUseArrays(true)
     , m_bInstantiateGMLFeaturesOnly(true)
     , m_nIdentifierMaxLength(0)
+    , m_bCaseInsensitiveIdentifier(GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
 {
     // A few hardcoded namespace uri->prefix mappings
     m_oMapURIToPrefix[ pszXMLNS_URI ] = "xmlns";
@@ -360,7 +361,10 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
         {
             if( aoFields[i].GetCategory() == GMLASField::REGULAR )
             {
-                oSetNames[ aoFields[i].GetName() ].push_back(i ) ;
+                CPLString osName( aoFields[i].GetName());
+                if( m_bCaseInsensitiveIdentifier )
+                    osName.toupper();
+                oSetNames[ osName ].push_back(i ) ;
             }
         }
 
@@ -376,17 +380,9 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                 for(size_t i=0; i<nOccurrences;i++)
                 {
                     GMLASField& oField = aoFields[oIter->second[i]];
-                    CPLString osName(oField.GetName());
-                    CPLAssert( static_cast<int>(osName.size()) ==
-                                                m_nIdentifierMaxLength );
-                    const int nDigitsSize = (nOccurrences < 10) ? 1:
-                                            (nOccurrences < 100) ? 2 : 3;
-                    osName.resize(osName.size() - nDigitsSize);
-                    char szDigits[4];
-                    snprintf(szDigits, sizeof(szDigits), "%0*d",
-                             nDigitsSize, static_cast<int>(i+1));
-                    osName += szDigits;
-                    oField.SetName(osName);
+                    oField.SetName( AddSerialNumber( oField.GetName(),
+                                                     i,
+                                                     nOccurrences) );
                 }
             }
         }
@@ -448,7 +444,10 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
     std::map<CPLString, std::vector<int> > oSetNames;
     for(int i=0; i< static_cast<int>(aoClasses.size());i++)
     {
-        oSetNames[ aoClasses[i]->GetName() ].push_back(i ) ;
+        CPLString osName( aoClasses[i]->GetName() );
+        if( m_bCaseInsensitiveIdentifier )
+            osName.toupper();
+        oSetNames[ osName ].push_back(i ) ;
     }
 
     // Iterate over the unique names
@@ -463,36 +462,49 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
             for(size_t i=0; i<nOccurrences;i++)
             {
                 GMLASFeatureClass* poClass = aoClasses[oIter->second[i]];
-                CPLString osName(poClass->GetName());
-                const int nDigitsSize = (nOccurrences < 10) ? 1:
-                                        (nOccurrences < 100) ? 2 : 3;
-                char szDigits[4];
-                snprintf(szDigits, sizeof(szDigits), "%0*d",
-                         nDigitsSize, static_cast<int>(i+1));
-                if( m_nIdentifierMaxLength >=
-                    GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
-                    static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
-                {
-                    if( static_cast<int>(osName.size()) + nDigitsSize < 
-                                                    m_nIdentifierMaxLength )
-                    {
-                        osName += szDigits;
-                    }
-                    else
-                    {
-                        osName.resize(m_nIdentifierMaxLength - nDigitsSize);
-                        osName += szDigits;
-                    }
-                }
-                else
-                {
-                    osName.resize(osName.size() - nDigitsSize);
-                    osName += szDigits;
-                }
-                poClass->SetName(osName);
+                poClass->SetName( AddSerialNumber(poClass->GetName(),
+                                                  i,
+                                                  nOccurrences) );
             }
         }
     }
+}
+
+/************************************************************************/
+/*                        AddSerialNumber()                             */
+/************************************************************************/
+
+CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
+                                               int iOccurrence,
+                                               int nOccurrences)
+{
+    CPLString osName(osNameIn);
+    const int nDigitsSize = (nOccurrences < 10) ? 1:
+                            (nOccurrences < 100) ? 2 : 3;
+    char szDigits[4];
+    snprintf(szDigits, sizeof(szDigits), "%0*d",
+                nDigitsSize, static_cast<int>(iOccurrence+1));
+    if( m_nIdentifierMaxLength >=
+        GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
+        static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
+    {
+        if( static_cast<int>(osName.size()) + nDigitsSize < 
+                                        m_nIdentifierMaxLength )
+        {
+            osName += szDigits;
+        }
+        else
+        {
+            osName.resize(m_nIdentifierMaxLength - nDigitsSize);
+            osName += szDigits;
+        }
+    }
+    else
+    {
+        osName.resize(osName.size() - nDigitsSize);
+        osName += szDigits;
+    }
+    return osName;
 }
 
 /************************************************************************/
@@ -953,9 +965,13 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                                             getName()).c_str());
 #endif
                             oSetVisitedEltDecl.insert( poEltDecl );
-                            m_oSetEltsForTopClass.insert( poEltDecl );
-                            oVectorEltsForTopClass.push_back( poEltDecl );
-                            aoSetXPathEltsForTopClass.insert( osXPath );
+                            if( aoSetXPathEltsForTopClass.find( osXPath ) ==
+                                aoSetXPathEltsForTopClass.end() )
+                            {
+                                m_oSetEltsForTopClass.insert( poEltDecl );
+                                oVectorEltsForTopClass.push_back( poEltDecl );
+                                aoSetXPathEltsForTopClass.insert( osXPath );
+                            }
                         }
                         else
                         {
