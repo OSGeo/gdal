@@ -83,7 +83,7 @@ OGRPGLayer::OGRPGLayer() :
     iNextShapeId(0),
     poDS(NULL),
     pszQueryStatement(NULL),
-    pszCursorName(CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this))),
+    pszCursorName(NULL),
     hCursorResult(NULL),
     bInvalidated(FALSE),
     nResultOffset(0),
@@ -92,7 +92,9 @@ OGRPGLayer::OGRPGLayer() :
     bCanUseBinaryCursor(TRUE),
     m_panMapFieldNameToIndex(NULL),
     m_panMapFieldNameToGeomIndex(NULL)
-{}
+{
+    pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
+}
 
 /************************************************************************/
 /*                            ~OGRPGLayer()                             */
