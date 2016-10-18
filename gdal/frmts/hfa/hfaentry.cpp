@@ -446,7 +446,8 @@ HFAEntry *HFAEntry::GetNext()
         if( poPast != NULL )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Corrupt (looping) entry in %s, ignoring some entries after %s.",
+                      "Corrupt (looping) entry in %s, "
+                      "ignoring some entries after %s.",
                       psHFA->pszFilename,
                       szName );
             nNextPos = 0;
@@ -475,8 +476,8 @@ void HFAEntry::LoadData()
         return;
     if( nDataSize > INT_MAX - 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid value for nDataSize = %u", nDataSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid value for nDataSize = %u", nDataSize);
         return;
     }
 
@@ -576,7 +577,9 @@ GByte *HFAEntry::MakeData( int nSize )
         }
     }
     else
+    {
         LoadData(); // Make sure the data is loaded before we return pointer.
+    }
 
     return pabyData;
 }
@@ -1065,7 +1068,7 @@ CPLErr HFAEntry::FlushToDisk()
         bOK &= VSIFWriteL( szName, 1, 64, psHFA->fp ) > 0;
         bOK &= VSIFWriteL( szType, 1, 32, psHFA->fp ) > 0;
 
-        nLong = 0; /* Should we keep the time, or set it more reasonably? */
+        nLong = 0;  // Should we keep the time, or set it more reasonably?
         bOK &= VSIFWriteL( &nLong, 4, 1, psHFA->fp ) > 0;
         if( !bOK )
         {
