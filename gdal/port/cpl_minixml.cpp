@@ -587,14 +587,20 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
 CPLXMLNode *CPLParseXMLString( const char *pszString )
 
 {
-    CPLErrorReset();
-
     if( pszString == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CPLParseXMLString() called with NULL pointer." );
         return NULL;
     }
+
+    // Save back error context
+    const CPLErr eErrClass = CPLGetLastErrorType();
+    const CPLErrorNum nErrNum = CPLGetLastErrorNo();
+    const CPLString osErrMsg = CPLGetLastErrorMsg();
+
+    // Reset it now
+    CPLErrorReset();
 
 /* -------------------------------------------------------------------- */
 /*      Check for a UTF-8 BOM and skip if found                         */
@@ -913,6 +919,12 @@ end_processing_close:
         CPLDestroyXMLNode( sContext.psFirstNode );
         sContext.psFirstNode = NULL;
         sContext.psLastNode = NULL;
+    }
+
+    if( CPLGetLastErrorType() == CE_None )
+    {
+        // Restore initial error state
+        CPLErrorSetState(eErrClass, nErrNum, osErrMsg);
     }
 
     return sContext.psFirstNode;
