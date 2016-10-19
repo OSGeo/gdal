@@ -518,18 +518,18 @@ GMLFeature *GMLReader::NextFeatureXerces()
     }
     catch (const XMLException& toCatch)
     {
-        char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
+        CPLString osErrMsg;
+        transcode( toCatch.getMessage(), osErrMsg );
         CPLDebug( "GML",
                   "Error during NextFeature()! Message:\n%s",
-                  pszErrorMessage );
-        CPLFree(pszErrorMessage);
+                  osErrMsg.c_str() );
         m_bStopParsing = true;
     }
     catch (const SAXException& toCatch)
     {
-        char *pszErrorMessage = tr_strdup( toCatch.getMessage() );
-        CPLError(CE_Failure, CPLE_AppDefined, "%s", pszErrorMessage);
-        CPLFree(pszErrorMessage);
+        CPLString osErrMsg;
+        transcode( toCatch.getMessage(), osErrMsg );
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrMsg.c_str());
         m_bStopParsing = true;
     }
 

@@ -52,9 +52,9 @@ GMLXercesHandler::GMLXercesHandler( GMLReader *poReader ) :
 /*                            startElement()                            */
 /************************************************************************/
 
-void GMLXercesHandler::startElement( CPL_UNUSED const XMLCh* const uri,
+void GMLXercesHandler::startElement( const XMLCh* const /*uri*/,
                                      const XMLCh* const localname,
-                                     CPL_UNUSED const XMLCh* const qname,
+                                     const XMLCh* const /*qname*/,
                                      const Attributes& attrs )
 {
     m_nEntityCounter = 0;
@@ -72,9 +72,9 @@ void GMLXercesHandler::startElement( CPL_UNUSED const XMLCh* const uri,
 /************************************************************************/
 /*                             endElement()                             */
 /************************************************************************/
-void GMLXercesHandler::endElement(CPL_UNUSED const XMLCh* const uri,
-                                  CPL_UNUSED const XMLCh* const localname,
-                                  CPL_UNUSED const XMLCh* const qname )
+void GMLXercesHandler::endElement(const XMLCh* const /*uri*/,
+                                  const XMLCh* const /*localname*/,
+                                  const XMLCh* const /*qname */)
 {
     m_nEntityCounter = 0;
 
@@ -138,12 +138,7 @@ void GMLXercesHandler::startEntity( const XMLCh *const /* name */ )
 const char* GMLXercesHandler::GetFID(void* attr)
 {
     const Attributes* attrs = static_cast<const Attributes*>(attr);
-    XMLCh achFID[8];
-
-    achFID[0] = 'f';
-    achFID[1] = 'i';
-    achFID[2] = 'd';
-    achFID[3] = '\0';
+    const XMLCh achFID[] = { 'f', 'i', 'd', '\0' };
     int nFIDIndex = attrs->getIndex( achFID );
     if( nFIDIndex != -1 )
     {
@@ -152,14 +147,8 @@ const char* GMLXercesHandler::GetFID(void* attr)
     }
     else
     {
-        achFID[0] = 'g';
-        achFID[1] = 'm';
-        achFID[2] = 'l';
-        achFID[3] = ':';
-        achFID[4] = 'i';
-        achFID[5] = 'd';
-        achFID[6] = '\0';
-        nFIDIndex = attrs->getIndex( achFID );
+        const XMLCh achGMLID[] = { 'g', 'm', 'l', ':', 'i', 'd', '\0' };
+        nFIDIndex = attrs->getIndex( achGMLID );
         if( nFIDIndex != -1 )
         {
             transcode( attrs->getValue( nFIDIndex ), m_osFID );
@@ -619,7 +608,7 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
 /************************************************************************/
 
 OGRErr GMLHandler::startElementBoundedBy(const char *pszName,
-                                         CPL_UNUSED int nLenName,
+                                         int /*nLenName*/,
                                          void* attr )
 {
     if ( m_nDepth == 2 && strcmp(pszName, "Envelope") == 0 )
@@ -711,8 +700,8 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName, void*
 /************************************************************************/
 
 OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
-                                                  CPL_UNUSED int nLenName,
-                                                  CPL_UNUSED void* attr )
+                                                  int /*nLenName*/,
+                                                  void* /*attr*/ )
 {
     if( strcmp(pszName, "value") == 0 )
     {
@@ -1217,7 +1206,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
 /************************************************************************/
 
 OGRErr GMLHandler::startElementTop(const char *pszName,
-                                   CPL_UNUSED int nLenName,
+                                   int /*nLenName*/,
                                    void* attr )
 {
     if (strcmp(pszName, "CityModel") == 0 )
@@ -1635,8 +1624,8 @@ OGRErr GMLHandler::endElementAttribute()
 /*                    startElementFeatureProperty()                     */
 /************************************************************************/
 
-OGRErr GMLHandler::startElementFeatureProperty(CPL_UNUSED const char *pszName,
-                                               CPL_UNUSED int nLenName,
+OGRErr GMLHandler::startElementFeatureProperty(const char * /*pszName*/,
+                                               int /*nLenName*/,
                                                void* attr )
 {
     if (m_nDepth == m_nAttributeDepth + 1)
