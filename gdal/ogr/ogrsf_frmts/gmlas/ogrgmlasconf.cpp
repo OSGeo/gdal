@@ -28,10 +28,31 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
+
 #include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
+
+const bool GMLASXLinkResolutionConf::DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
+const bool GMLASXLinkResolutionConf::ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
+const bool GMLASXLinkResolutionConf::CACHE_RESULTS_DEFAULT = false;
+
+
+const bool GMLASConfiguration::ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
+const bool GMLASConfiguration::ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
+const bool GMLASConfiguration::REMOVE_UNUSED_LAYERS_DEFAULT = false;
+const bool GMLASConfiguration::REMOVE_UNUSED_FIELDS_DEFAULT = false;
+const bool GMLASConfiguration::USE_ARRAYS_DEFAULT = true;
+const bool GMLASConfiguration::INCLUDE_GEOMETRY_XML_DEFAULT = false;
+const bool GMLASConfiguration::INSTANTIATE_GML_FEATURES_ONLY_DEFAULT = true;
+const bool GMLASConfiguration::ALLOW_XSD_CACHE_DEFAULT = true;
+const bool GMLASConfiguration::VALIDATE_DEFAULT = false;
+const bool GMLASConfiguration::FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
+const bool GMLASConfiguration::EXPOSE_METADATA_LAYERS_DEFAULT = false;
+const bool GMLASConfiguration::WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
+const bool GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
 
 /************************************************************************/
 /*                          GMLASConfiguration()                        */

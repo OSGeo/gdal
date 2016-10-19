@@ -33,7 +33,10 @@
 
 #if defined(HAVE_XERCES)
 
+// Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
+#include "ogr_xerces.h"
+#include "cpl_string.h"
 
 #endif /* HAVE_XERCES */
 
@@ -188,7 +191,7 @@ protected:
     int              nStackDepth;
     HandlerState     stateStack[STACK_SIZE];
 
-    std::string      osFID;
+    CPLString           m_osFID;
     virtual const char* GetFID(void* attr) = 0;
 
     virtual CPLXMLNode* AddAttributes(CPLXMLNode* psNode, void* attr) = 0;
@@ -245,22 +248,16 @@ public:
     virtual BinInputStream* makeStream() const;
 };
 
-
-/************************************************************************/
-/*          XMLCh / char translation functions - trstring.cpp           */
-/************************************************************************/
-int tr_strcmp( const char *, const XMLCh * );
-void tr_strcpy( XMLCh *, const char * );
-void tr_strcpy( char *, const XMLCh * );
-char *tr_strdup( const XMLCh * );
-int tr_strlen( const XMLCh * );
-
 /************************************************************************/
 /*                         GMLXercesHandler                             */
 /************************************************************************/
 class GMLXercesHandler : public DefaultHandler, public GMLHandler
 {
     int        m_nEntityCounter;
+    CPLString  m_osElement;
+    CPLString  m_osCharacters;
+    CPLString  m_osAttrName;
+    CPLString  m_osAttrValue;
 
   public:
     GMLXercesHandler( GMLReader *poReader );
@@ -364,18 +361,9 @@ public:
 /*                              GMLReader                               */
 /************************************************************************/
 
-typedef enum
-{
-    OGRGML_XERCES_UNINITIALIZED,
-    OGRGML_XERCES_INIT_FAILED,
-    OGRGML_XERCES_INIT_SUCCESSFUL
-} OGRGMLXercesState;
-
 class GMLReader : public IGMLReader
 {
   private:
-    static OGRGMLXercesState    m_eXercesInitState;
-    static int    m_nInstanceCount;
     bool          m_bClassListLocked;
 
     int         m_nClassCount;
@@ -394,6 +382,7 @@ class GMLReader : public IGMLReader
     GMLFeature   *m_poCompleteFeature;
     GMLInputSource *m_GMLInputSource;
     bool          m_bEOF;
+    bool          m_bXercesInitialized;
     bool          SetupParserXerces();
     GMLFeature   *NextFeatureXerces();
 #endif

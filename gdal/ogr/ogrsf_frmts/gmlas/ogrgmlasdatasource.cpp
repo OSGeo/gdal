@@ -28,7 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
+
 #include "ogr_mem.h"
 #include "cpl_sha256.h"
 
@@ -42,8 +44,8 @@ CPL_CVSID("$Id$");
 
 OGRGMLASDataSource::OGRGMLASDataSource()
 {
-    // FIXME
-    XMLPlatformUtils::Initialize();
+    OGRInitializeXerces();
+
     m_fpGML = NULL;
     m_fpGMLParser = NULL;
     m_bLayerInitFinished = false;
@@ -172,8 +174,7 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
         VSIFCloseL(m_fpGMLParser);
     delete m_poReader;
 
-    // FIXME
-    XMLPlatformUtils::Terminate();
+    OGRDeinitializeXerces();
 }
 
 /************************************************************************/

@@ -99,8 +99,6 @@ IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
 
 #endif
 
-OGRGMLXercesState GMLReader::m_eXercesInitState = OGRGML_XERCES_UNINITIALIZED;
-int GMLReader::m_nInstanceCount = 0;
 CPLMutex *GMLReader::hMutex = NULL;
 
 /************************************************************************/
@@ -131,7 +129,8 @@ CPL_UNUSED
     m_poSAXReader(NULL),
     m_poCompleteFeature(NULL),
     m_GMLInputSource(NULL),
-  m_bEOF(false),
+    m_bEOF(false),
+    m_bXercesInitialized(false),
 #endif
 #ifdef HAVE_EXPAT
     oParser(NULL),
@@ -198,15 +197,8 @@ GMLReader::~GMLReader()
     delete m_poRecycledState;
 
 #ifdef HAVE_XERCES
-    {
-    CPLMutexHolderD(&hMutex);
-    --m_nInstanceCount;
-    if( m_nInstanceCount == 0 && m_eXercesInitState == OGRGML_XERCES_INIT_SUCCESSFUL )
-    {
-        XMLPlatformUtils::Terminate();
-        m_eXercesInitState = OGRGML_XERCES_UNINITIALIZED;
-    }
-    }
+    if( m_bXercesInitialized )
+        OGRDeinitializeXerces();
 #endif
 #ifdef HAVE_EXPAT
     CPLFree(pabyBuf);
@@ -299,28 +291,11 @@ bool GMLReader::SetupParser()
 
 bool GMLReader::SetupParserXerces()
 {
+    if( !m_bXercesInitialized )
     {
-    CPLMutexHolderD(&hMutex);
-    m_nInstanceCount++;
-    if( m_eXercesInitState == OGRGML_XERCES_UNINITIALIZED )
-    {
-        try
-        {
-            XMLPlatformUtils::Initialize();
-        }
-
-        catch (const XMLException& toCatch)
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Exception initializing Xerces based GML reader.\n%s",
-                      tr_strdup(toCatch.getMessage()) );
-            m_eXercesInitState = OGRGML_XERCES_INIT_FAILED;
+        if( !OGRInitializeXerces() )
             return false;
-        }
-        m_eXercesInitState = OGRGML_XERCES_INIT_SUCCESSFUL;
-    }
-    if( m_eXercesInitState != OGRGML_XERCES_INIT_SUCCESSFUL )
-        return false;
+        m_bXercesInitialized = true;
     }
 
     // Cleanup any old parser.

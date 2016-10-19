@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
 
 CPL_CVSID("$Id$");
@@ -301,7 +302,8 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             poFieldDescFeature->SetField( "field_type",
                                         oField.GetTypeName().c_str() );
         }
-        poFieldDescFeature->SetField( "field_is_list", oField.IsList() );
+        poFieldDescFeature->SetField( "field_is_list",
+                                      static_cast<int>(oField.IsList()) );
         if( oField.GetMinOccurs() != -1 )
         {
             poFieldDescFeature->SetField( "field_min_occurs",
