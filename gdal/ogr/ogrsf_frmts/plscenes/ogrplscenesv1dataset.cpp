@@ -594,13 +594,15 @@ retry:
     osRasterURL = InsertAPIKeyInURL(osRasterURL);
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
-    CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
+    CPLString osOldAllowedFilename(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", ""));
 
     const bool bUseVSICURL =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "RANDOM_ACCESS", true);
     if( bUseVSICURL && !(STARTS_WITH(m_osBaseURL, "/vsimem/")) )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
+        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
+                                      ("/vsicurl/" + osRasterURL).c_str());
 
         VSIStatBufL sStat;
         if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
@@ -612,10 +614,6 @@ retry:
         {
             CPLDebug("PLSCENES", "Cannot use random access for that file");
         }
-
-        // URLs with tokens can have . in them which confuses CPL_VSIL_CURL_ALLOWED_EXTENSIONS={noext} if
-        // it is run before the previous VSIStatL()
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
     }
 
     char** papszAllowedDrivers = NULL;
@@ -687,8 +685,8 @@ retry:
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",
                                     osOldHead.size() ? osOldHead.c_str(): NULL);
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS",
-                                    osOldExt.size() ? osOldExt.c_str(): NULL);
+        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
+                                    osOldAllowedFilename.size() ? osOldAllowedFilename.c_str(): NULL);
     }
 
     return poOutDS;
