@@ -2028,11 +2028,18 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(const char* pszURL)
 }
 
 /************************************************************************/
-/*                        IsAllowedExtension()                          */
+/*                        IsAllowedFilename()                           */
 /************************************************************************/
 
-static bool IsAllowedExtension( const char* pszFilename )
+static bool IsAllowedFilename( const char* pszFilename )
 {
+    const char* pszAllowedFilename = 
+        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", NULL);
+    if( pszAllowedFilename != NULL )
+    {
+        return strcmp( pszFilename, pszAllowedFilename ) == 0;
+    }
+
     /* Consider that only the files whose extension ends up with one that is */
     /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
     /* This can speeds up dramatically open experience, in case the server */
@@ -2089,7 +2096,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                  "Only read-only mode is supported for /vsicurl");
         return NULL;
     }
-    if( !IsAllowedExtension( pszFilename ) )
+    if( !IsAllowedFilename( pszFilename ) )
         return NULL;
 
     const char* pszOptionVal =
@@ -2996,7 +3003,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename, VSIStatBufL *pStatB
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    if( !IsAllowedExtension( pszFilename ) )
+    if( !IsAllowedFilename( pszFilename ) )
         return -1;
 
     const char* pszOptionVal =

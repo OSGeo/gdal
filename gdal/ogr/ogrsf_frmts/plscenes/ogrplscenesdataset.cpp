@@ -320,7 +320,8 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
 
     CPLString osRasterURL;
     osRasterURL = osBaseURL;
-    osRasterURL += "ortho/";
+    osRasterURL += CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CATALOG", "ortho");
+    osRasterURL += "/";
     osRasterURL += osScene;
     json_object* poObj = RunRequest( osRasterURL );
     if( poObj == NULL )
@@ -381,14 +382,15 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     }
 
     CPLString osOldHead(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", ""));
-    CPLString osOldExt(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ""));
+    CPLString osOldAllowedFilename(CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", ""));
 
     const bool bUseVSICURL =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "RANDOM_ACCESS", true);
     if( bUseVSICURL && !(STARTS_WITH(osBaseURL, "/vsimem/")) )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD", "NO");
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", "{noext}");
+        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
+                                      ("/vsicurl/" + osRasterURL).c_str());
 
         VSIStatBufL sStat;
         if( VSIStatL(("/vsicurl/" + osRasterURL).c_str(), &sStat) == 0 &&
@@ -460,8 +462,8 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",
                                     osOldHead.size() ? osOldHead.c_str(): NULL);
-        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS",
-                                    osOldExt.size() ? osOldExt.c_str(): NULL);
+        CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
+                                    osOldAllowedFilename.size() ? osOldAllowedFilename.c_str(): NULL);
     }
 
     return poOutDS;
