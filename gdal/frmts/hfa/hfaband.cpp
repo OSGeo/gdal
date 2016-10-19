@@ -885,6 +885,10 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
+#if DEBUG_VERBOSE
+                CPLAssert(nDataValue >= 0);
+                CPLAssert(nDataValue < 65536);
+#endif
                 ((GUInt16 *) pabyDest)[nPixelsOutput++] =
                     static_cast<GUInt16>(nDataValue);
             }
@@ -896,7 +900,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 #if DEBUG_VERBOSE
                 // TODO(schwehr): Do something smarter with out-of-range data.
                 // Bad data can trigger this assert.  r23498
-                CPLAssert( nDataValue < 256 );
+                CPLAssert( nDataValue >= -127 );
+                CPLAssert( nDataValue < 128 );
 #endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
@@ -906,6 +911,12 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
+#if DEBUG_VERBOSE
+                // TODO(schwehr): Do something smarter with out-of-range data.
+                // Bad data can trigger this assert.  r23498
+                CPLAssert(nDataValue >= -32768);
+                CPLAssert(nDataValue < 32768);
+#endif
                 ((GInt16 *) pabyDest)[nPixelsOutput++] =
                     static_cast<GInt16>(nDataValue);
             }
@@ -914,6 +925,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
+#if DEBUG_VERBOSE
+                // TODO(schwehr): Do something smarter with out-of-range data.
+                // Bad data can trigger this assert.  r23498
+                CPLAssert(nDataValue >= 0);
+#endif
                 ((GUInt32 *) pabyDest)[nPixelsOutput++] =
                     static_cast<GUInt32>(nDataValue);
             }
