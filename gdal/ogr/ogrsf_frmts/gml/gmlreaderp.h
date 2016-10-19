@@ -36,10 +36,10 @@
 // Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
 #include "ogr_xerces.h"
-#include "cpl_string.h"
 
 #endif /* HAVE_XERCES */
 
+#include "cpl_string.h"
 #include "gmlreader.h"
 #include "ogr_api.h"
 #include "cpl_vsi.h"
