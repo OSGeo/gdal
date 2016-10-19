@@ -115,13 +115,7 @@ void GMLXercesHandler::endElement(CPL_UNUSED const XMLCh* const uri,
 /************************************************************************/
 
 void GMLXercesHandler::characters(const XMLCh* const chars_in,
-                                  CPL_UNUSED
-#if XERCES_VERSION_MAJOR >= 3
-                                  const XMLSize_t length
-#else
-                                  const unsigned int length
-#endif
-                                  )
+                                  const XMLSize_t /*length */ )
 
 {
     char* utf8String = tr_strdup(chars_in);
