@@ -1,14 +1,17 @@
 /******************************************************************************
  *
  * Project:  GML Reader
- * Purpose:  Functions for translating back and forth between XMLCh and char.
+ * Purpose:  Convenience functions for parsing with Xerces-C library
+ *           Functions for translating back and forth between XMLCh and char.
  *           We assume that XMLCh is a simple numeric type that we can
  *           correspond 1:1 with char values, but that it likely is larger
  *           than a char.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Even Rouault, <even.rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
+ * Copyright (c) 2016, Even Rouault <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,14 +32,84 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifdef HAVE_XERCES
+// Must be first for DEBUG_BOOL case
+#include "ogr_xerces.h"
 
-#include "gmlreaderp.h"
-#include "cpl_vsi.h"
-#include "cpl_conv.h"
+#include "cpl_port.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
+
+#ifdef HAVE_XERCES
+
+static CPLMutex* hMutex = NULL;
+static int nCounter = 0;
+
+/************************************************************************/
+/*                        OGRInitializeXerces()                         */
+/************************************************************************/
+
+bool OGRInitializeXerces(void)
+{
+    CPLMutexHolderD(&hMutex);
+    if( nCounter > 0 )
+    {
+        nCounter ++;
+        return true;
+    }
+
+    try
+    {
+        CPLDebug("OGR", "XMLPlatformUtils::Initialize()"); 
+        XMLPlatformUtils::Initialize();
+        nCounter ++;
+        return true;
+    }
+    catch (const XMLException& toCatch)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Exception initializing Xerces: %s",
+                  tr_strdup(toCatch.getMessage()) );
+        return false;
+    }
+}
+
+/************************************************************************/
+/*                       OGRDeinitializeXerces()                        */
+/************************************************************************/
+
+void OGRDeinitializeXerces(void)
+{
+    CPLMutexHolderD(&hMutex);
+    if( nCounter == 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unpaired OGRInitializeXerces / OGRDeinitializeXerces calls");
+        return;
+    }
+    nCounter --;
+    if( nCounter == 0 )
+    {
+        if( CPLTestBool(CPLGetConfigOption("OGR_XERCES_TERMINATE", "YES")) )
+        {
+            CPLDebug("OGR", "XMLPlatformUtils::Terminate()");
+            XMLPlatformUtils::Terminate();
+        }
+    }
+}
+
+/************************************************************************/
+/*                       OGRCleanupXercesMutex()                        */
+/************************************************************************/
+
+void OGRCleanupXercesMutex(void)
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex(hMutex);
+    hMutex = NULL;
+}
 
 /************************************************************************/
 /*                             tr_isascii()                             */
@@ -56,57 +129,8 @@ static int tr_isascii( const char * pszCString )
     return TRUE;
 }
 
-/************************************************************************/
-/*                             tr_strcmp()                              */
-/************************************************************************/
-
-int tr_strcmp( const char *pszCString, const XMLCh *panXMLString )
-
+namespace OGR
 {
-    int i = 0;
-
-/* -------------------------------------------------------------------- */
-/*      Fast (ASCII) comparison case.                                   */
-/* -------------------------------------------------------------------- */
-    if( tr_isascii( pszCString ) )
-    {
-        while( pszCString[i] != 0 && panXMLString[i] != 0
-               && pszCString[i] == panXMLString[i] ) {}
-
-        if( pszCString[i] == 0 && panXMLString[i] == 0 )
-            return 0;
-        else if( pszCString[i] < panXMLString[i] )
-            return -1;
-        else
-            return 1;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Translated UTF8 to XMLCh for comparison.                        */
-/* -------------------------------------------------------------------- */
-    XMLCh *panFirst = (XMLCh *) CPLCalloc(strlen(pszCString)+1,sizeof(XMLCh));
-
-    tr_strcpy( panFirst, pszCString );
-
-    while( panFirst[i] != 0 && panXMLString[i] != 0
-           && panFirst[i] == panXMLString[i] ) {}
-
-    if( panFirst[i] == 0 && panXMLString[i] == 0 )
-    {
-        CPLFree( panFirst );
-        return 0;
-    }
-    else if( panFirst[i] < panXMLString[i] )
-    {
-        CPLFree( panFirst );
-        return -1;
-    }
-    else
-    {
-        CPLFree( panFirst );
-        return 1;
-    }
-}
 
 /************************************************************************/
 /*                 tr_strcpy(const char*,const XMLCh*)                  */
@@ -232,6 +256,74 @@ char *tr_strdup( const XMLCh *panXMLString )
     char        *pszResult = (char *) CPLMalloc(nMaxLen);
     tr_strcpy( pszResult, panXMLString );
     return pszResult;
+}
+
+/************************************************************************/
+/*                            transcode()                               */
+/************************************************************************/
+
+CPLString transcode( const XMLCh *panXMLString, int nLimitingChars )
+{
+    CPLString osRet;
+    transcode( panXMLString, osRet, nLimitingChars );
+    return osRet;
+}
+
+CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimitingChars )
+{
+    bool bSimpleASCII = true;
+    int nChars = 0;
+
+    if( panXMLString == NULL )
+    {
+        osRet = "(null)";
+        return osRet;
+    }
+
+    osRet.clear();
+    if( nLimitingChars > 0 )
+        osRet.reserve(nLimitingChars);
+    for(int i = 0; panXMLString[i] != 0 &&
+                        (nLimitingChars < 0 || i < nLimitingChars); i++ )
+    {
+        if( panXMLString[i] > 127 )
+        {
+            bSimpleASCII = false;
+        }
+        osRet += (char) panXMLString[i];
+        nChars ++;
+    }
+
+    if( bSimpleASCII )
+        return osRet;
+
+/* -------------------------------------------------------------------- */
+/*      The simple translation was wrong, because the source is not     */
+/*      all simple ASCII characters.  Redo using the more expensive     */
+/*      recoding API.                                                   */
+/* -------------------------------------------------------------------- */
+    wchar_t *pwszSource = (wchar_t *) CPLMalloc(sizeof(wchar_t) * (nChars+1) );
+    for( int i = 0 ; i < nChars; i++ )
+        pwszSource[i] = panXMLString[i];
+    pwszSource[nChars] = 0;
+
+    char *pszResult = CPLRecodeFromWChar( pwszSource,
+                                          "WCHAR_T", CPL_ENC_UTF8 );
+
+    osRet = pszResult;
+
+    CPLFree( pwszSource );
+    CPLFree( pszResult );
+
+    return osRet;
+}
+
+}
+
+#else // HAVE_XERCES
+
+void OGRCleanupXercesMutex(void)
+{
 }
 
 #endif // HAVE_XERCES

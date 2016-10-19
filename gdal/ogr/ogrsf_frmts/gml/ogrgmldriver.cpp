@@ -34,17 +34,6 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
-/*                        OGRGMLDriverUnload()                          */
-/************************************************************************/
-
-static void OGRGMLDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-    if( GMLReader::hMutex != NULL )
-        CPLDestroyMutex( GMLReader::hMutex );
-    GMLReader::hMutex = NULL;
-}
-
-/************************************************************************/
 /*                         OGRGMLDriverIdentify()                       */
 /************************************************************************/
 
@@ -234,7 +223,6 @@ void RegisterOGRGML()
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;
     poDriver->pfnCreate = OGRGMLDriverCreate;
-    poDriver->pfnUnloadDriver = OGRGMLDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

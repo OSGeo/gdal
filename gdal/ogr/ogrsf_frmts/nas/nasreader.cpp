@@ -47,8 +47,6 @@ CPL_CVSID("$Id$");
 #include "nasreaderp.h"
 #include "cpl_conv.h"
 
-CPLMutex *NASReader::hMutex = NULL;
-
 /************************************************************************/
 /*                          CreateNASReader()                           */
 /************************************************************************/
@@ -71,6 +69,7 @@ NASReader::NASReader() :
     m_poNASHandler(NULL),
     m_poSAXReader(NULL),
     m_bReadStarted(false),
+    m_bXercesInitialized(false),
     m_poState(NULL),
     m_poCompleteFeature(NULL),
     m_pszFilteredClassName(NULL)
@@ -89,8 +88,8 @@ NASReader::~NASReader()
 
     CleanupParser();
 
-    if (CPLTestBool(CPLGetConfigOption("NAS_XERCES_TERMINATE", "FALSE")))
-        XMLPlatformUtils::Terminate();
+    if( m_bXercesInitialized )
+        OGRDeinitializeXerces();
 
     CPLFree( m_pszFilteredClassName );
 }
@@ -123,29 +122,11 @@ const char* NASReader::GetSourceFileName()
 bool NASReader::SetupParser()
 
 {
+    if( !m_bXercesInitialized )
     {
-    CPLMutexHolderD(&hMutex);
-    static int nXercesInitialized = -1;
-
-    if( nXercesInitialized < 0)
-    {
-        try
-        {
-            XMLPlatformUtils::Initialize();
-        }
-
-        catch (const XMLException& toCatch)
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Exception initializing Xerces based GML reader.\n%s",
-                      tr_strdup(toCatch.getMessage()) );
-            nXercesInitialized = FALSE;
+        if( !OGRInitializeXerces() )
             return false;
-        }
-        nXercesInitialized = TRUE;
-    }
-    if( !nXercesInitialized )
-        return false;
+        m_bXercesInitialized = true;
     }
 
     // Cleanup any old parser.

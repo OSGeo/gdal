@@ -17,6 +17,10 @@ ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
 endif
 
+ifeq ($(HAVE_XERCES),yes)
+CPPFLAGS 	:=	-DHAVE_XERCES $(XERCES_INCLUDE) $(CPPFLAGS)
+endif
+
 ifeq ($(LIBZ_SETTING),internal)
 ZLIB_XTRA_OPT =      -I../frmts/zlib
 else

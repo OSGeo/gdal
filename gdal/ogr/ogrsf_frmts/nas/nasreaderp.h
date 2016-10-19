@@ -31,6 +31,10 @@
 #ifndef CPL_NASREADERP_H_INCLUDED
 #define CPL_NASREADERP_H_INCLUDED
 
+// Must be first for DEBUG_BOOL case
+#include "xercesc_headers.h"
+#include "ogr_xerces.h"
+
 #include "gmlreader.h"
 #include "gmlreaderp.h"
 #include "ogr_api.h"
@@ -156,6 +160,7 @@ private:
     NASHandler    *m_poNASHandler;
     SAX2XMLReader *m_poSAXReader;
     bool          m_bReadStarted;
+    bool          m_bXercesInitialized;
     XMLPScanToken m_oToFill;
 
     GMLReadState *m_poState;
@@ -235,8 +240,6 @@ public:
 
     bool        SetFilteredClassName(const char* pszClassName);
     const char* GetFilteredClassName() { return m_pszFilteredClassName; }
-
-    static CPLMutex* hMutex;
 
     static      OGRGeometry* ConvertGeometry(OGRGeometry*);
 };

@@ -31,6 +31,7 @@
 #include "nasreaderp.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_xerces.h"
 
 CPL_CVSID("$Id$");
 

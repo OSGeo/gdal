@@ -31,7 +31,9 @@
 #ifndef OGR_GMLAS_INCLUDED
 #define OGR_GMLAS_INCLUDED
 
+// Must be first for DEBUG_BOOL case
 #include "xercesc_headers.h"
+#include "ogr_xerces.h"
 
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
@@ -66,15 +68,6 @@ static const char* const pszGML_URI = "http://www.opengis.net/gml";
 static const char* const pszWFS_URI = "http://www.opengis.net/wfs";
 
 typedef std::pair<CPLString, CPLString> PairURIFilename;
-
-// General functions
-
-namespace OGRGMLAS
-{
-    CPLString transcode( const XMLCh *panXMLString, int nLimitingChars = -1 );
-    CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimitingChars = -1 );
-}
-using OGRGMLAS::transcode;
 
 typedef enum
 {
@@ -228,9 +221,9 @@ class GMLASXLinkResolutionConf
 
         // Note the default values mentionned here should be kept
         // consistant with what is documented in gmlasconf.xsd
-        static const bool DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
-        static const bool ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
-        static const bool CACHE_RESULTS_DEFAULT = false;
+        static const bool DEFAULT_RESOLUTION_ENABLED_DEFAULT;
+        static const bool ALLOW_REMOTE_DOWNLOAD_DEFAULT;
+        static const bool CACHE_RESULTS_DEFAULT;
         static const int MAX_FILE_SIZE_DEFAULT = 1024 * 1024;
 
         typedef enum
@@ -311,20 +304,20 @@ class GMLASConfiguration
     public:
         // Note the default values mentionned here should be kept
         // consistant with what is documented in gmlasconf.xsd
-        static const bool ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
-        static const bool ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
-        static const bool REMOVE_UNUSED_LAYERS_DEFAULT = false;
-        static const bool REMOVE_UNUSED_FIELDS_DEFAULT = false;
-        static const bool USE_ARRAYS_DEFAULT = true;
-        static const bool INCLUDE_GEOMETRY_XML_DEFAULT = false;
-        static const bool INSTANTIATE_GML_FEATURES_ONLY_DEFAULT = true;
-        static const bool ALLOW_XSD_CACHE_DEFAULT = true;
-        static const bool VALIDATE_DEFAULT = false;
-        static const bool FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
-        static const bool EXPOSE_METADATA_LAYERS_DEFAULT = false;
-        static const bool WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
+        static const bool ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT;
+        static const bool ALWAYS_GENERATE_OGR_ID_DEFAULT;
+        static const bool REMOVE_UNUSED_LAYERS_DEFAULT;
+        static const bool REMOVE_UNUSED_FIELDS_DEFAULT;
+        static const bool USE_ARRAYS_DEFAULT;
+        static const bool INCLUDE_GEOMETRY_XML_DEFAULT;
+        static const bool INSTANTIATE_GML_FEATURES_ONLY_DEFAULT;
+        static const bool ALLOW_XSD_CACHE_DEFAULT;
+        static const bool VALIDATE_DEFAULT;
+        static const bool FAIL_IF_VALIDATION_ERROR_DEFAULT;
+        static const bool EXPOSE_METADATA_LAYERS_DEFAULT;
+        static const bool WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT;
         static const int  MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH = 10;
-        static const bool CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
+        static const bool CASE_INSENSITIVE_IDENTIFIER_DEFAULT;
 
         /** Whether remote schemas are allowed to be download. */
         bool            m_bAllowRemoteSchemaDownload;

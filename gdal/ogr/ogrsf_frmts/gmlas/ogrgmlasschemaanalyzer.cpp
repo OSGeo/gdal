@@ -28,6 +28,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Must be first for DEBUG_BOOL case
+#include "xercesc_headers.h"
+
+// Hack to avoid bool, possibly redefined to pedantic bool class, being later used
+static XSModel* getGrammarPool(XMLGrammarPool* pool)
+{
+    bool changed;
+    return pool->getXSModel(changed);
+}
+
 #include "ogr_gmlas.h"
 
 CPL_CVSID("$Id$");
@@ -814,8 +824,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
 
     m_oIgnoredXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
 
-    bool changed;
-    XSModel* poModel = poGrammarPool->getXSModel(changed);
+    XSModel* poModel = getGrammarPool(poGrammarPool.get());
     CPLAssert(poModel); // should not be null according to doc
 
 #if 0
