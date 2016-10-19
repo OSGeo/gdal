@@ -759,7 +759,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
                 return NULL;
             }
 
-            if( nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM) )
+            if( nNumCoords > 2 && (bHasZ || !bHasM) )
             {
                 poLine->addPoint( dfX, dfY, dfZ);
             }
@@ -849,7 +849,7 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
                 return NULL;
             }
 
-            if( nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM) )
+            if( nNumCoords > 2 && (bHasZ || !bHasM) )
             {
                 poLine->addPoint( dfX, dfY, dfZ);
             }
@@ -921,7 +921,7 @@ OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
             return NULL;
         }
 
-        if( nNumCoords > 2 && (TRUE == bHasZ || FALSE == bHasM) )
+        if( nNumCoords > 2 && (bHasZ || !bHasM) )
         {
             poMulti->addGeometryDirectly( new OGRPoint(dfX, dfY, dfZ) );
         }
