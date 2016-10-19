@@ -211,12 +211,22 @@ static void ParsePolygon(OGRPolygon* poPoly, json_object* poArcsObj,
     for( int i = 0; i < nRings; i++ )
     {
         OGRLinearRing* poLR = new OGRLinearRing();
-        poPoly->addRingDirectly(poLR);
 
         json_object* poRing = json_object_array_get_idx(poArcsObj, i);
         if( poRing != NULL && json_type_array == json_object_get_type(poRing) )
         {
             ParseLineString(poLR, poRing, poArcsDB, psParams);
+        }
+        poLR->closeRings();
+        if( poLR->getNumPoints() < 4 )
+        {
+            CPLDebug("TopoJSON", "Discarding polygon ring made of %d points",
+                     poLR->getNumPoints());
+            delete poLR;
+        }
+        else
+        {
+            poPoly->addRingDirectly(poLR);
         }
     }
 }
@@ -253,12 +263,20 @@ static void ParseMultiPolygon(OGRMultiPolygon* poMultiPoly, json_object* poArcsO
     for( int i = 0; i < nPolys; i++ )
     {
         OGRPolygon* poPoly = new OGRPolygon();
-        poMultiPoly->addGeometryDirectly(poPoly);
 
         json_object* poPolyArcs = json_object_array_get_idx(poArcsObj, i);
         if( poPolyArcs != NULL && json_type_array == json_object_get_type(poPolyArcs) )
         {
             ParsePolygon(poPoly, poPolyArcs, poArcsDB, psParams);
+        }
+
+        if( poPoly->IsEmpty() )
+        {
+            delete poPoly;
+        }
+        else
+        {
+            poMultiPoly->addGeometryDirectly(poPoly);
         }
     }
 }
