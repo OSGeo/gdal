@@ -110,6 +110,7 @@ def ogr_elasticsearch_1():
     if gdal.GetLastErrorType() != gdal.CE_Failure:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.ErrorReset()
 
     # Successful index creation
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo&POSTFIELDS=', '{}')
@@ -143,6 +144,7 @@ def ogr_elasticsearch_1():
     if gdal.GetLastErrorType() != gdal.CE_Failure:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.ErrorReset()
 
     # Successful overwrite
     gdal.FileFromMemBuffer('/vsimem/fakeelasticsearch/foo/_mapping/FeatureCollection&CUSTOMREQUEST=DELETE', '{}')
