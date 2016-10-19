@@ -290,7 +290,7 @@ public:
 
     GUInt32     GetFilePos() const CPL_WARN_UNUSED_RESULT { return nFilePos; }
 
-    const char  *GetName() CPL_WARN_UNUSED_RESULT { return szName; }
+    const char  *GetName() const CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
 
     const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
@@ -337,6 +337,8 @@ class HFAField
     int         nBytes;
 
     int         nItemCount;
+    // TODO(schwehr): Rename chPointer to something more meaningful.
+    // It's not a pointer.
     char        chPointer;      // '\0', '*' or 'p'
     char        chItemType;     // 1|2|4|e|...
 
