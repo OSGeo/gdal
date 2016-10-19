@@ -101,6 +101,7 @@ HFADictionary::HFADictionary( const char * pszString ) :
 /* -------------------------------------------------------------------- */
 /*      Read all the types.                                             */
 /* -------------------------------------------------------------------- */
+    // TODO(schwehr): Refactor this approach to be more obvious.
     while( pszString != NULL && *pszString != '.' )
     {
         HFAType *poNewType = new HFAType();

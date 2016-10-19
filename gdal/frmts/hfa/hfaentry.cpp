@@ -552,6 +552,7 @@ GByte *HFAEntry::MakeData( int nSize )
     if( nSize == 0 && poType->nBytes > 0 )
         nSize = poType->nBytes;
 
+    // nDataSize is a GUInt32.
     if( static_cast<int>(nDataSize) < nSize && nSize > 0 )
     {
         pabyData = static_cast<GByte *>(CPLRealloc(pabyData, nSize));
