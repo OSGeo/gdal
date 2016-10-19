@@ -372,7 +372,8 @@ public:
 
     TargetLayerInfo*            Setup(OGRLayer * poSrcLayer,
                                       const char *pszNewLayerName,
-                                      GDALVectorTranslateOptions *psOptions);
+                                      GDALVectorTranslateOptions *psOptions,
+                                      GIntBig& nTotalEventsDone);
 };
 
 class LayerTranslator
@@ -410,7 +411,8 @@ public:
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  bool bOverwrite,
-                                                 bool* pbErrorOccurred);
+                                                 bool* pbErrorOccurred,
+                                                 bool* pbOverwriteActuallyDone);
 
 static void FreeTargetLayerInfo(TargetLayerInfo* psInfo);
 
@@ -1707,7 +1709,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         /* Special case: if output=input, then we must likely destroy the */
         /* old table before to avoid transaction issues. */
         if( poDS == poODS && psOptions->pszNewLayerName != NULL && bOverwrite )
-            GetLayerAndOverwriteIfNecessary(poODS, psOptions->pszNewLayerName, bOverwrite, NULL);
+            GetLayerAndOverwriteIfNecessary(poODS, psOptions->pszNewLayerName, bOverwrite, NULL, NULL);
 
         if( psOptions->pszWHERE != NULL )
             CPLError( CE_Warning, CPLE_AppDefined, "-where clause ignored in combination with -sql." );
@@ -1781,7 +1783,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
             TargetLayerInfo* psInfo = oSetup.Setup(poPassedLayer,
                                                    psOptions->pszNewLayerName,
-                                                   psOptions);
+                                                   psOptions,
+                                                   nTotalEventsDone);
 
             poPassedLayer->ResetReading();
 
@@ -1994,8 +1997,9 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                             continue;
 
                         TargetLayerInfo* psInfo = oSetup.Setup(poLayer,
-                                                            psOptions->pszNewLayerName,
-                                                            psOptions);
+                                                               psOptions->pszNewLayerName,
+                                                               psOptions,
+                                                               nTotalEventsDone);
 
                         if( psInfo == NULL && !psOptions->bSkipFailures )
                         {
@@ -2007,20 +2011,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                         }
 
                         pasAssocLayers[iLayer].psInfo = psInfo;
-
-                        if( !psOptions->nLayerTransaction &&
-                            psOptions->nGroupTransactions >= 0 &&
-                            // Commit when overwriting as this consumes a lot of PG ressources
-                            (bOverwrite || ++nTotalEventsDone >= psOptions->nGroupTransactions) )
-                        {
-                            if( poODS->CommitTransaction() != OGRERR_NONE ||
-                                poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
-                            {
-                                nRetCode = 1;
-                                break;
-                            }
-                            nTotalEventsDone = 0;
-                        }
                     }
                     if( nRetCode )
                         break;
@@ -2062,8 +2052,9 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     continue;
 
                 TargetLayerInfo* psInfo = oSetup.Setup(poLayer,
-                                                    psOptions->pszNewLayerName,
-                                                    psOptions);
+                                                       psOptions->pszNewLayerName,
+                                                       psOptions,
+                                                       nTotalEventsDone);
 
                 if( psInfo == NULL && !psOptions->bSkipFailures )
                 {
@@ -2074,20 +2065,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
 
                 pasAssocLayers[iLayer].psInfo = psInfo;
-
-                if( !psOptions->nLayerTransaction &&
-                    psOptions->nGroupTransactions >= 0 &&
-                    // Commit when overwriting as this consumes a lot of PG ressources
-                    (bOverwrite || ++nTotalEventsDone >= psOptions->nGroupTransactions) )
-                {
-                    if( poODS->CommitTransaction() != OGRERR_NONE ||
-                        poODS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
-                    {
-                        nRetCode = 1;
-                        break;
-                    }
-                    nTotalEventsDone = 0;
-                }
             }
         }
 
@@ -2292,7 +2269,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
             TargetLayerInfo* psInfo = oSetup.Setup(poPassedLayer,
                                                    psOptions->pszNewLayerName,
-                                                   psOptions);
+                                                   psOptions,
+                                                   nTotalEventsDone);
 
             poPassedLayer->ResetReading();
 
@@ -2428,10 +2406,13 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
 static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                                                  const char* pszNewLayerName,
                                                  bool bOverwrite,
-                                                 bool* pbErrorOccurred)
+                                                 bool* pbErrorOccurred,
+                                                 bool* pbOverwriteActuallyDone)
 {
     if( pbErrorOccurred )
         *pbErrorOccurred = false;
+    if( pbOverwriteActuallyDone )
+        *pbOverwriteActuallyDone = false;
 
     /* GetLayerByName() can instantiate layers that would have been */
     /* 'hidden' otherwise, for example, non-spatial tables in a */
@@ -2471,6 +2452,11 @@ static OGRLayer* GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
                      "DeleteLayer() failed when overwrite requested." );
             if( pbErrorOccurred )
                 *pbErrorOccurred = true;
+        }
+        else
+        {
+            if( pbOverwriteActuallyDone )
+                *pbOverwriteActuallyDone = true;
         }
         poDstLayer = NULL;
     }
@@ -2621,7 +2607,8 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
 
 TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                                          const char* pszNewLayerName,
-                                         GDALVectorTranslateOptions *psOptions)
+                                         GDALVectorTranslateOptions *psOptions,
+                                         GIntBig& nTotalEventsDone)
 {
     OGRLayer    *poDstLayer;
     OGRFeatureDefn *poSrcFDefn;
@@ -2712,10 +2699,12 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
 /* -------------------------------------------------------------------- */
 
     bool bErrorOccurred;
+    bool bOverwriteActuallyDone;
     poDstLayer = GetLayerAndOverwriteIfNecessary(m_poDstDS,
                                                  pszNewLayerName,
                                                  m_bOverwrite,
-                                                 &bErrorOccurred);
+                                                 &bErrorOccurred,
+                                                 &bOverwriteActuallyDone);
     if( bErrorOccurred )
         return NULL;
 
@@ -3242,6 +3231,26 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 CPLDebug("GDALVectorTranslate", "Skipping field '%s' not found in destination layer '%s'.",
                          poSrcFieldDefn->GetNameRef(), poDstLayer->GetName() );
         }
+    }
+
+    if( bOverwriteActuallyDone &&
+        EQUAL(m_poDstDS->GetDriver()->GetDescription(), "PostgreSQL") &&
+        !psOptions->nLayerTransaction &&
+        psOptions->nGroupTransactions >= 0 &&
+        CPLTestBool(CPLGetConfigOption("PG_COMMIT_WHEN_OVERWRITING", "YES")) )
+    {
+        CPLDebug("GDALVectorTranslate",
+                 "Forcing transaction commit as table overwriting occured");
+        // Commit when overwriting as this consumes a lot of PG ressources
+        // and could result in """out of shared memory.
+        // You might need to increase max_locks_per_transaction."""" errors
+        if( m_poDstDS->CommitTransaction() != OGRERR_NONE ||
+            m_poDstDS->StartTransaction(psOptions->bForceTransaction) != OGRERR_NONE )
+        {
+            VSIFree(panMap);
+            return NULL;
+        }
+        nTotalEventsDone = 0;
     }
 
     TargetLayerInfo* psInfo = (TargetLayerInfo*)
