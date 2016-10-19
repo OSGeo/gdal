@@ -250,7 +250,8 @@ HFAType::SetInstValue( const char * pszFieldPath,
             papoFields[iField]->GetInstBytes( pabyData+nByteOffset,
                                               nDataSize - nByteOffset );
 
-        if( nInc < 0 || nByteOffset > INT_MAX - nInc )
+        if( nInc < 0 ||
+            nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return CE_Failure;

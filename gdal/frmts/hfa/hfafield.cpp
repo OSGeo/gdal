@@ -257,6 +257,7 @@ void HFAField::CompleteDefn( HFADictionary * poDict )
         else
             nBytes = poItemObjectType->nBytes * nItemCount;
 
+        // TODO(schwehr): What does the 8 represent?
         if( chPointer == '*' && nBytes != -1 )
         {
             if( nBytes > INT_MAX - 8 )
@@ -417,6 +418,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             nCount = nIndexValue + 1;
         }
 
+        // TODO(schwehr): What does the 8 represent?
         if( static_cast<int>(nCount) + 8 > nDataSize )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -580,9 +582,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               return CE_Failure;
           }
 
+          // TODO(schwehr): Warn on clamping.
           unsigned short nNumber = static_cast<unsigned short>(nIntValue);
+          // TODO(schwehr): What is this 2?
           HFAStandard( 2, &nNumber );
-          memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
+          memcpy( pabyData + nIndexValue * 2, &nNumber, 2 );
       }
       break;
 
@@ -597,9 +601,11 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               return CE_Failure;
           }
 
+          // TODO(schwehr): Warn on clamping.
           short nNumber = static_cast<short>(nIntValue);
+          // TODO(schwehr): What is this 2?
           HFAStandard( 2, &nNumber );
-          memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
+          memcpy( pabyData + nIndexValue * 2, &nNumber, 2 );
       }
       break;
 
@@ -616,6 +622,7 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
           }
 
           GUInt32 nNumber = nIntValue;
+          // TODO(schwehr): What is this 4?
           HFAStandard( 4, &nNumber );
           memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
       }
@@ -649,7 +656,9 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
               return CE_Failure;
           }
 
+          // TODO(schwehr): Warn on clamping.
           float fNumber = static_cast<float>(dfDoubleValue);
+          // TODO(schwehr): 4 == sizeof(float)?
           HFAStandard( 4, &fNumber );
           memcpy( pabyData + nIndexValue*4, &fNumber, 4 );
       }
@@ -738,8 +747,9 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
             }
             else if( eBaseItemType == EPT_u8 )
             {
+                // TODO(schwehr): Warn on clamping.
                 unsigned char nNumber =
-                  static_cast<unsigned char>(dfDoubleValue);
+                    static_cast<unsigned char>(dfDoubleValue);
                 memcpy( pabyData + 12 + nIndexValue, &nNumber, 1);
             }
             else
@@ -962,7 +972,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               return false;
           }
           GUInt32 nNumber = 0;
-          memcpy( &nNumber, pabyData + nIndexValue*4, 4 );
+          memcpy( &nNumber, pabyData + nIndexValue * 4, 4 );
           HFAStandard( 4, &nNumber );
           nIntRet = nNumber;
           dfDoubleRet = nIntRet;
@@ -977,7 +987,8 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               return false;
           }
           GInt32 nNumber = 0;
-          memcpy( &nNumber, pabyData + nIndexValue*4, 4 );
+          // TODO(schwehr): What is 4?
+          memcpy( &nNumber, pabyData + nIndexValue * 4, 4 );
           HFAStandard( 4, &nNumber );
           nIntRet = nNumber;
           dfDoubleRet = nIntRet;
@@ -992,9 +1003,11 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
               return false;
           }
           float fNumber = 0.0f;
-          memcpy( &fNumber, pabyData + nIndexValue*4, 4 );
+          // TODO(schwehr): What is 4?
+          memcpy( &fNumber, pabyData + nIndexValue * 4, 4 );
           HFAStandard( 4, &fNumber );
           dfDoubleRet = fNumber;
+          // TODO(schwehr): Warn on clamp.
           nIntRet = static_cast<int>(fNumber);
       }
       break;
@@ -1016,7 +1029,6 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
       case 'b':
       {
-
           if( nDataSize < 12 )
               return false;
 
@@ -1057,13 +1069,14 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           }
           else if( nBaseItemType == EPT_u1 )
           {
-              if( nIndexValue*8 >= nDataSize )
+              // TODO(schwehr): What are these constants like 8 and 0x7?
+              if( nIndexValue * 8 >= nDataSize )
               {
                   CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                   return false;
               }
 
-              if( pabyData[nIndexValue>>3] & (1 << (nIndexValue & 0x7)) )
+              if( pabyData[nIndexValue >> 3] & (1 << (nIndexValue & 0x7)) )
               {
                   dfDoubleRet = 1;
                   nIntRet = 1;
@@ -1250,6 +1263,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Invalid return value");
+                        // TODO(schwehr): Verify this false is okay.
                         return false;
                     }
 

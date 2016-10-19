@@ -41,6 +41,7 @@
 #include "cpl_conv.h"
 #include <climits>
 #include <algorithm>
+#include <string>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -1156,6 +1157,7 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
+        // TODO(schwehr): Explain 48 and 40 constants.
         const int nSize = static_cast<int>(
             48 + 40
             + strlen(poMapInfo->proName) + 1
@@ -1449,6 +1451,7 @@ CPLErr HFASetProParameters( HFAHandle hHFA, const Eprj_ProParameters *poPro )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
+        // TODO(schwehr): Explain all these constants.
         int nSize =
             static_cast<int>(34 + 15 * 8
             + 8 + strlen(poPro->proName) + 1
@@ -1599,6 +1602,7 @@ CPLErr HFASetDatum( HFAHandle hHFA, const Eprj_Datum *poDatum )
 /* -------------------------------------------------------------------- */
 /*      Ensure we have enough space for all the data.                   */
 /* -------------------------------------------------------------------- */
+        // TODO(schwehr): Explain constants.
         int nSize =
             static_cast<int>(26 + strlen(poDatum->datumname) + 1 + 7 * 8);
 
@@ -1706,19 +1710,17 @@ static void HFADumpNode( HFAEntry *poEntry, int nIndent, bool bVerbose,
                          FILE * fp )
 
 {
-    char szSpaces[256];
-    std::fill_n(szSpaces, nIndent*2, ' ');
-    szSpaces[nIndent*2] = '\0';
+    std::string osSpaces(nIndent * 2, ' ');
 
-    fprintf( fp, "%s%s(%s) @ %d + %d @ %d\n", szSpaces,
+    fprintf( fp, "%s%s(%s) @ %d + %d @ %d\n", osSpaces.c_str(),
              poEntry->GetName(), poEntry->GetType(),
              poEntry->GetFilePos(),
              poEntry->GetDataSize(), poEntry->GetDataPos() );
 
     if( bVerbose )
     {
-        strcat( szSpaces, "+ " );
-        poEntry->DumpFieldValues( fp, szSpaces );
+        osSpaces += "+ ";
+        poEntry->DumpFieldValues( fp, osSpaces.c_str() );
         fprintf( fp, "\n" );
     }
 
@@ -2088,6 +2090,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         HFAEntry *poEdms_State =
             HFAEntry::New( psInfo, "RasterDMS", "Edms_State", poEimg_Layer );
 
+        // TODO(schwehr): Explain constants.
         const int nDmsSize = 14 * nBlocks + 38;
         GByte *pabyData = poEdms_State->MakeData( nDmsSize );
 

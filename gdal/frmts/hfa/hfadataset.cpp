@@ -1709,6 +1709,7 @@ CPLErr HFARasterAttributeTable::ColorsIO( GDALRWFlag eRWFlag, int iField,
     {
         // Copy them back to ints converting 0..1 to 0..255 in
         // the same manner as the color table.
+        // TODO(schwehr): Symbolic constants for 255 and 256.
         for( int i = 0; i < iLength; i++ )
             pnData[i] = MIN(255, static_cast<int>(padfData[i] * 256));
     }
@@ -2232,7 +2233,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             // the [0...1] range to each possible output value and avoid
             // rounding issues for the "normal" values generated using n/255.
             // See bug #1732 for some discussion.
-            static short nMax = 255;
+            const short nMax = 255;
             GDALColorEntry sEntry = {
                 MIN(nMax, static_cast<short>(padfRed[iColor] * 256)),
                 MIN(nMax, static_cast<short>(padfGreen[iColor] * 256)),
@@ -5213,10 +5214,10 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
             oSRS.SetTOWGS84( psDatum->params[0],
                              psDatum->params[1],
                              psDatum->params[2],
-                             -psDatum->params[3]*RAD2ARCSEC,
-                             -psDatum->params[4]*RAD2ARCSEC,
-                             -psDatum->params[5]*RAD2ARCSEC,
-                             psDatum->params[6]*1e+6 );
+                             -psDatum->params[3] * RAD2ARCSEC,
+                             -psDatum->params[4] * RAD2ARCSEC,
+                             -psDatum->params[5] * RAD2ARCSEC,
+                             psDatum->params[6] * 1e+6 );
         }
     }
 
