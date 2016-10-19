@@ -874,21 +874,22 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
         }
 
         GUInt32 nOffset = 0;
-        memcpy( &nOffset, pabyData+4, 4 );
+        memcpy( &nOffset, pabyData + 4, 4 );
         HFAStandard( 4, &nOffset );
 
 #if DEBUG_VERBOSE
         if( nOffset != static_cast<GUInt32>(nDataOffset + 8) )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "%s.%s points at %d, not %d as expected",
-                      pszFieldName, pszField ? pszField : "",
-                      nOffset, nDataOffset+8 );
+            // TODO(schwehr): Debug why this is happening.
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "ExtractInstValue: "
+                     "%s.%s points at %d, not %d as expected",
+                     pszFieldName, pszField ? pszField : "",
+                     nOffset, nDataOffset + 8);
         }
 #endif
 
         pabyData += 8;
-
         nDataOffset += 8;
         nDataSize -= 8;
     }
