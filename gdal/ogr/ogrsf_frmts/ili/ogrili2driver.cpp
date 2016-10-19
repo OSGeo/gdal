@@ -92,15 +92,6 @@ static GDALDataset *OGRILI2DriverCreate( const char * pszName,
     return poDS;
 }
 
-/************************************************************************/
-/*                         OGRILI2DriverUnload()                        */
-/************************************************************************/
-
-static void OGRILI2DriverUnload ( GDALDriver* )
-{
-    if( getenv("ILI2_TERMINATE_XERCES") )
-        XMLPlatformUtils::Terminate();
-}
 
 /************************************************************************/
 /*                           RegisterOGRILI2()                           */
@@ -124,7 +115,6 @@ void RegisterOGRILI2() {
 
     poDriver->pfnOpen = OGRILI2DriverOpen;
     poDriver->pfnCreate = OGRILI2DriverCreate;
-    poDriver->pfnUnloadDriver = OGRILI2DriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

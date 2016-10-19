@@ -144,7 +144,6 @@ void ILI2Handler::endElement(
   }
 }
 
-#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
 /*                     characters() (xerces 3 version)                  */
 /************************************************************************/
@@ -162,27 +161,6 @@ void ILI2Handler::characters( const XMLCh *const chars,
     XMLString::release(&tmpC);
   }
 }
-
-#else
-/************************************************************************/
-/*                     characters() (xerces 2 version)                  */
-/************************************************************************/
-
-void ILI2Handler::characters( const XMLCh *const chars,
-                     CPL_UNUSED const unsigned int length ) {
-
-  // add the text element
-  if (level >= 3) {
-    char *tmpC = XMLString::transcode(chars);
-
-    // only add the text if it is not empty
-    if (trim(tmpC) != "")
-      dom_elem->appendChild(dom_doc->createTextNode(chars));
-
-    XMLString::release(&tmpC);
-  }
-}
-#endif
 
 void ILI2Handler::startEntity (CPL_UNUSED const XMLCh *const name)
 {
