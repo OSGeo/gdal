@@ -2467,9 +2467,10 @@ def ogr_gpkg_36():
     lyr.CreateField( ogr.FieldDefn('baz', ogr.OFTString) )
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(10)
-    f.SetField('foo', 'value')
+    f.SetField('foo', '10.5')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
+    f = None
 
     ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
@@ -2520,31 +2521,36 @@ def ogr_gpkg_36():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if lyr.AlterFieldDefn(0, ogr.FieldDefn('bar'), ogr.ALTER_ALL_FLAG) != 0:
+    new_field_defn = ogr.FieldDefn('bar', ogr.OFTReal)
+    new_field_defn.SetSubType(ogr.OFSTFloat32)
+    if lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
-    if f.GetFID() != 10 or f['bar'] != 'value' or \
+    if f.GetFID() != 10 or f['bar'] != 10.5 or \
     f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    f = None
 
     lyr.StartTransaction()
-    if lyr.AlterFieldDefn(0, ogr.FieldDefn('baw'), ogr.ALTER_ALL_FLAG) != 0:
+    new_field_defn = ogr.FieldDefn('baw', ogr.OFTString)
+    if lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
     lyr.CommitTransaction()
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
-    if f.GetFID() != 10 or f['baw'] != 'value' or \
+    if f.GetFID() != 10 or f['baw'] != '10.5' or \
        f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0 0,0 1,1 1,0 0))':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    f = None
 
     # Check that index has been recreated
     sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'my_idx'")
@@ -2552,6 +2558,7 @@ def ogr_gpkg_36():
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
+    f = None
     ds.ReleaseResultSet(sql_lyr)
 
     ds.ExecuteSQL('VACUUM')
