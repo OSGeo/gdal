@@ -35,7 +35,7 @@
 #include "../mem/ogr_mem.h"
 
 #include <cstdio>
-#include <vector> // used by OGRGeoJSONLayer
+#include <vector>  // Used by OGRGeoJSONLayer.
 #include "ogrgeojsonutils.h"
 
 #define SPACE_FOR_BBOX  130
@@ -88,7 +88,7 @@ private:
 
 class OGRGeoJSONWriteLayer : public OGRLayer
 {
-public:
+  public:
     OGRGeoJSONWriteLayer( const char* pszName,
                           OGRwkbGeometryType eGType,
                           char** papszOptions,
@@ -105,11 +105,10 @@ public:
     void ResetReading() { }
     OGRFeature* GetNextFeature() { return NULL; }
     OGRErr ICreateFeature( OGRFeature* poFeature );
-    OGRErr CreateField(OGRFieldDefn* poField, int bApproxOK);
+    OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK );
     int TestCapability( const char* pszCap );
 
-private:
-
+  private:
     OGRGeoJSONDataSource* poDS_;
     OGRFeatureDefn* poFeatureDefn_;
     int nOutCounter_;
@@ -129,8 +128,7 @@ private:
 
 class OGRGeoJSONDataSource : public OGRDataSource
 {
-public:
-
+  public:
     OGRGeoJSONDataSource();
     virtual ~OGRGeoJSONDataSource();
 
@@ -143,9 +141,9 @@ public:
     int GetLayerCount();
     OGRLayer* GetLayer( int nLayer );
     OGRLayer* ICreateLayer( const char* pszName,
-                           OGRSpatialReference* poSRS = NULL,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char** papszOptions = NULL );
+                            OGRSpatialReference* poSRS = NULL,
+                            OGRwkbGeometryType eGType = wkbUnknown,
+                            char** papszOptions = NULL );
     int TestCapability( const char* pszCap );
 
     void AddLayer( OGRGeoJSONLayer* poLayer );
@@ -179,7 +177,7 @@ public:
 
     virtual void        FlushCache();
 
-private:
+  private:
     //
     // Private data members
     //
@@ -212,5 +210,4 @@ private:
     void LoadLayers(char** papszOpenOptions);
 };
 
-
-#endif /* OGR_GEOJSON_H_INCLUDED */
+#endif  // OGR_GEOJSON_H_INCLUDED
