@@ -8,6 +8,8 @@ The 2.1.2 release is a bug fix release.
   LoadLibraryW() (#6650)
 * /vsicurl/: take CPL_VSIL_CURL_ALLOWED_EXTENSIONS into account even if
   GDAL_DISABLE_READDIR_ON_OPEN is defined (#6681)
+* Fix regression in PLScenes V1 raster random access. Add a CPL_VSIL_CURL_ALLOWED_FILENAME config option to solve that (fixes #6691)
+* /vsimem/: fix potential crash when closing -different- handles pointing to the same file from different threads (fixes #6683)
 
 == GDAL algorithms ==
 
@@ -19,6 +21,7 @@ The 2.1.2 release is a bug fix release.
 * Fix potential deadlock in multithreaded writing scenarios (#6661)
 * Make multi-threaded reading/writing when using GetLockedBlock()/MarkDirty()/
   DropLock() lower level interfaces (#6665)
+* Fix multi-threading issues in read/write scenarios (fixes #6684)
 
 == Utilities ==
 * gdal_translate & gdalwarp: lower the default value of GDAL_MAX_DATASET_POOL_SIZE
@@ -92,6 +95,9 @@ VRT driver:
 
 == OGR drivers == 
 
+Multi driver fix:
+* GPKG/SQLite/PG/FileGDB/MEM: properly set/reset field subtype with AlterFieldDefn() (fixes #6689)
+
 Carto driver:
 * rebranded from CartoDB to Carto. "CartoDB" is still a valid alias to Carto
 
@@ -117,6 +123,9 @@ GML driver:
 * consider srsName with URL like 'http://www.opengis.net/def/crs/EPSG/0/' as
   following EPSG axis order. Add SWAP_COORDINATES=YES/NO/AUTO (and
   GML_SWAP_COORDINATES configuration option) to override all auto guessing (#6678)
+
+ILI1 driver:
+* fix crash in OGRILI1Layer::JoinSurfaceLayer() when the multicurve of the feature of the poSurfaceLineLayer layer is empty (fixes #6688)
 
 MSSQLSpatial driver:
 * Fix select layer to recognize geometry column with sqlncli (#6641)
