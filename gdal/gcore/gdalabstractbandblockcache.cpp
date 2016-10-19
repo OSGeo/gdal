@@ -108,12 +108,12 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList( GDALRasterBlock *poBlock )
     }
 
     // If no more blocks in transient state, then warn WaitKeepAliveCounter()
+    CPLAcquireMutex(hCondMutex, 1000);
     if( CPLAtomicDec(&nKeepAliveCounter) == 0 )
     {
-        CPLAcquireMutex(hCondMutex, 1000);
         CPLCondSignal(hCond);
-        CPLReleaseMutex(hCondMutex);
     }
+    CPLReleaseMutex(hCondMutex);
 }
 
 /************************************************************************/
