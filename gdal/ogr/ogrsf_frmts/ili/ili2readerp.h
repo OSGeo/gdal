@@ -31,6 +31,7 @@
 #define CPL_ILI2READERP_H_INCLUDED
 
 #include "xercesc_headers.h"
+#include "ogr_xerces.h"
 
 #include "ili2reader.h"
 #include "ogr_ili2.h"
@@ -79,13 +80,8 @@ public:
         const   XMLCh* const    localname,
         const   XMLCh* const    qname
     );
-#if XERCES_VERSION_MAJOR >= 3
     void characters( const XMLCh *const chars,
                      const XMLSize_t length ); // xerces 3
-#else
-    void characters( const XMLCh *const chars,
-                     const unsigned int length ); // xerces 2
-#endif
 
     void startEntity (const XMLCh *const name);
 
@@ -112,6 +108,8 @@ private:
     int      m_bReadStarted;
 
     std::list<OGRLayer *> m_listLayer;
+
+    bool     m_bXercesInitialized;
 
 public:
              ILI2Reader();

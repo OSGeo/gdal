@@ -34,10 +34,6 @@
 
 #include "ili2reader.h"
 
-
-//from trstring.cpp/gmlreaderp.h
-char *tr_strdup( const XMLCh * );
-
 using namespace std;
 
 CPL_CVSID("$Id$");
@@ -494,7 +490,8 @@ ILI2Reader::ILI2Reader() :
     m_pszFilename(NULL),
     m_poILI2Handler(NULL),
     m_poSAXReader(NULL),
-    m_bReadStarted(FALSE)
+    m_bReadStarted(FALSE),
+    m_bXercesInitialized(false)
 {
     SetupParser();
 }
@@ -503,6 +500,9 @@ ILI2Reader::~ILI2Reader() {
     CPLFree( m_pszFilename );
 
     CleanupParser();
+
+    if( m_bXercesInitialized )
+        OGRDeinitializeXerces();
 
     list<OGRLayer *>::const_iterator layerIt = m_listLayer.begin();
     while (layerIt != m_listLayer.end()) {
@@ -519,26 +519,11 @@ void ILI2Reader::SetSourceFile( const char *pszFilename ) {
 
 int ILI2Reader::SetupParser() {
 
-    static int bXercesInitialized = FALSE;
-
-    if( !bXercesInitialized )
+    if( !m_bXercesInitialized )
     {
-        try
-        {
-            XMLPlatformUtils::Initialize();
-        }
-
-        catch (const XMLException& toCatch)
-        {
-            char* msg = tr_strdup(toCatch.getMessage());
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to initialize Xerces C++ based ILI2 reader. "
-                      "Error message:\n%s\n", msg );
-            CPLFree(msg);
-
+        if( !OGRInitializeXerces() )
             return FALSE;
-        }
-        bXercesInitialized = TRUE;
+        m_bXercesInitialized = true;
     }
 
     // Cleanup any old parser.
