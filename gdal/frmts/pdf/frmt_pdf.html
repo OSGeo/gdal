@@ -28,7 +28,10 @@ Starting with GDAL 1.10, this driver can read and write geospatial PDF with vect
 Vector read support requires linking to one of the above mentioned dependent libraries, but write support does not.
 
 The driver can read vector features encoded according to PDF's logical structure facilities (as described by "§10.6 - Logical Structure" of PDF spec),
-or retrieve only vector geometries for other vector PDF files.<p>
+or retrieve only vector geometries for other vector PDF files.</p>
+
+<p>If there is no such logical structure, the driver will not try to interpret the vector
+content of the PDF, unless you defined the OGR_PDF_READ_NON_STRUCTURED configuration option to YES.</p>
 
 <h2>Feature style support</h2>
 
