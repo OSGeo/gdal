@@ -71,7 +71,7 @@ bool OGRInitializeXerces(void)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Exception initializing Xerces: %s",
-                  tr_strdup(toCatch.getMessage()) );
+                  transcode(toCatch.getMessage()).c_str() );
         return false;
     }
 }
@@ -111,152 +111,8 @@ void OGRCleanupXercesMutex(void)
     hMutex = NULL;
 }
 
-/************************************************************************/
-/*                             tr_isascii()                             */
-/************************************************************************/
-
-static int tr_isascii( const char * pszCString )
-
-{
-    while( *pszCString != '\0' )
-    {
-        if( *((unsigned char *) pszCString) > 127 )
-            return FALSE;
-
-        pszCString++;
-    }
-
-    return TRUE;
-}
-
 namespace OGR
 {
-
-/************************************************************************/
-/*                 tr_strcpy(const char*,const XMLCh*)                  */
-/************************************************************************/
-
-void tr_strcpy( XMLCh *panXMLString, const char *pszCString )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Simple (ASCII) case.                                            */
-/* -------------------------------------------------------------------- */
-    if( tr_isascii( pszCString ) )
-    {
-        while( *pszCString != 0 )
-            *(panXMLString++) = *(pszCString++);
-        *panXMLString = 0;
-        return;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Otherwise we need to do a full UTC2 to UTF-8 conversion.        */
-/* -------------------------------------------------------------------- */
-    wchar_t *pwszUTF16;
-
-    pwszUTF16 = CPLRecodeToWChar( pszCString, CPL_ENC_UTF8, "WCHAR_T" );
-
-    int i = 0;
-    for( ; pwszUTF16[i] != 0; i++ )
-        panXMLString[i] = pwszUTF16[i];
-
-    panXMLString[i] = 0;
-
-    CPLFree( pwszUTF16 );
-}
-
-/************************************************************************/
-/*                 tr_strcpy(const XMLCh*,const char*)                  */
-/************************************************************************/
-
-void tr_strcpy( char *pszCString, const XMLCh *panXMLString )
-
-{
-    int bSimpleASCII = TRUE;
-    const XMLCh *panXMLStringOriginal = panXMLString;
-    char *pszCStringOriginal = pszCString;
-
-    while( *panXMLString != 0 )
-    {
-        if( *panXMLString > 127 )
-            bSimpleASCII = FALSE;
-
-        *(pszCString++) = (char) *(panXMLString++);
-    }
-    *pszCString = 0;
-
-    if( bSimpleASCII )
-        return;
-
-    panXMLString = panXMLStringOriginal;
-    pszCString = pszCStringOriginal;
-
-/* -------------------------------------------------------------------- */
-/*      The simple translation was wrong, because the source is not     */
-/*      all simple ASCII characters.  Redo using the more expensive     */
-/*      recoding API.                                                   */
-/* -------------------------------------------------------------------- */
-    wchar_t *pwszSource = (wchar_t *) CPLCalloc(sizeof(wchar_t),
-                                                tr_strlen(panXMLStringOriginal)+1 );
-    int i = 0;
-    for( ; panXMLString[i] != 0; i++ )
-        pwszSource[i] = panXMLString[i];
-    pwszSource[i] = 0;
-
-    char *pszResult = CPLRecodeFromWChar( pwszSource,
-                                          "WCHAR_T", CPL_ENC_UTF8 );
-
-    strcpy( pszCString, pszResult );
-
-    CPLFree( pwszSource );
-    CPLFree( pszResult );
-}
-
-/************************************************************************/
-/*                             tr_strlen()                              */
-/************************************************************************/
-
-int tr_strlen( const XMLCh *panXMLString )
-
-{
-    int nLength = 0;
-
-    while( *(panXMLString++) != 0 )
-        nLength++;
-
-    return nLength;
-}
-
-/************************************************************************/
-/*                             tr_strdup()                              */
-/************************************************************************/
-
-char *tr_strdup( const XMLCh *panXMLString )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Compute maximum length.                                         */
-/* -------------------------------------------------------------------- */
-    int i, nMaxLen = 1;
-
-    for( i = 0; panXMLString[i] != 0; i++ )
-    {
-        if( panXMLString[i] < 128 )
-            nMaxLen++;
-        else if( panXMLString[i] < 0x7ff )
-            nMaxLen += 2;
-        else
-            nMaxLen += 4;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do the translation.                                             */
-/* -------------------------------------------------------------------- */
-    char        *pszResult = (char *) CPLMalloc(nMaxLen);
-    tr_strcpy( pszResult, panXMLString );
-    return pszResult;
-}
 
 /************************************************************************/
 /*                            transcode()                               */

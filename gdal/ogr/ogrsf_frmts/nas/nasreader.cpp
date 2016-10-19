@@ -246,7 +246,7 @@ GMLFeature *NASReader::NextFeature()
     {
         CPLDebug( "NAS",
                   "Error during NextFeature()! Message:\n%s",
-                  tr_strdup( toCatch.getMessage() ) );
+                  transcode( toCatch.getMessage() ).c_str() );
     }
 
     return poReturn;
@@ -305,13 +305,11 @@ void NASReader::PushFeature( const char *pszElement,
 /*      Check for gml:id, and if found push it as an attribute named    */
 /*      gml_id.                                                         */
 /* -------------------------------------------------------------------- */
-    XMLCh   anFID[100];
-
-    tr_strcpy( anFID, "gml:id" );
-    int nFIDIndex = attrs.getIndex( anFID );
+    const XMLCh achFID[] = { 'g', 'm', 'l', ':', 'i', 'd', '\0' };
+    int nFIDIndex = attrs.getIndex( achFID );
     if( nFIDIndex != -1 )
     {
-        char *pszFID = tr_strdup( attrs.getValue( nFIDIndex ) );
+        char *pszFID = CPLStrdup( transcode( attrs.getValue( nFIDIndex ) ) );
         SetFeaturePropertyDirectly( "gml_id", pszFID );
     }
 
@@ -945,18 +943,14 @@ void NASReader::CheckForFID( const Attributes &attrs,
                              char **ppszCurField )
 
 {
-    XMLCh  Name[100];
-
-    tr_strcpy( Name, "fid" );
+    const XMLCh  Name[] = { 'f', 'i', 'd', '\0' };
     int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
-        char *pszFID = tr_strdup( attrs.getValue( nIndex ) );
         CPLString osCurField = *ppszCurField;
 
-        osCurField += pszFID;
-        CPLFree( pszFID );
+        osCurField += transcode( attrs.getValue( nIndex ) );
 
         CPLFree( *ppszCurField );
         *ppszCurField = CPLStrdup(osCurField);
@@ -976,23 +970,19 @@ void NASReader::CheckForRelations( const char *pszElement,
 
     CPLAssert( poFeature  != NULL );
 
-    XMLCh  Name[100];
-
-    tr_strcpy( Name, "xlink:href" );
+    const XMLCh  Name[] = { 'x', 'l', 'i', 'n', 'k', ':', 'h', 'r', 'e', 'f', '\0' };
     const int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
-        char *pszHRef = tr_strdup( attrs.getValue( nIndex ) );
+        CPLString osVal( transcode( attrs.getValue( nIndex ) ) );
 
-        if( STARTS_WITH_CI(pszHRef, "urn:adv:oid:") )
+        if( STARTS_WITH_CI(osVal, "urn:adv:oid:") )
         {
-            poFeature->AddOBProperty( pszElement, pszHRef );
+            poFeature->AddOBProperty( pszElement, osVal );
             CPLFree( *ppszCurField );
-            *ppszCurField = CPLStrdup( pszHRef + 12 );
+            *ppszCurField = CPLStrdup( osVal.c_str() + 12 );
         }
-
-        CPLFree( pszHRef );
     }
 }
 

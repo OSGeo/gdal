@@ -84,6 +84,11 @@ class NASHandler : public DefaultHandler
 
     std::list<CPLString> m_LastOccasions;
 
+    CPLString  m_osElementName;
+    CPLString  m_osAttrName;
+    CPLString  m_osAttrValue;
+    CPLString  m_osCharacters;
+
 public:
     NASHandler( NASReader *poReader );
     virtual ~NASHandler();
