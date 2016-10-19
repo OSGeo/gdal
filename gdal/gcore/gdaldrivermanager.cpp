@@ -33,6 +33,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "ogr_xerces.h"
 #include "ogr_srs_api.h"
 
 #ifdef _MSC_VER
@@ -235,6 +236,8 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     OSRCleanup();
 
+    OGRCleanupXercesMutex();
+    
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
 /* -------------------------------------------------------------------- */
