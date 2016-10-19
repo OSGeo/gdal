@@ -712,13 +712,8 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
 /*                             characters()                             */
 /************************************************************************/
 
-#if XERCES_VERSION_MAJOR >= 3
 void NASHandler::characters( const XMLCh *const chars_in,
                              const XMLSize_t /* length */ )
-#else
-void NASHandler::characters( const XMLCh* const chars_in,
-                             const unsigned int /* length */ )
-#endif
 {
     const XMLCh *chars = chars_in;
 

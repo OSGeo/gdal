@@ -358,11 +358,7 @@ bool GMLReader::SetupParserXerces()
 #else
         m_poSAXReader->setFeature( XMLUni::fgSAX2CoreValidation, false);
 
-#if XERCES_VERSION_MAJOR >= 3
         m_poSAXReader->setFeature( XMLUni::fgXercesSchema, false);
-#else
-        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, false);
-#endif
 
 #endif
         XMLString::release( &xmlUriValid );
@@ -467,16 +463,13 @@ void GMLReader::CleanupParser()
 
 GMLBinInputStream::GMLBinInputStream(VSILFILE* fpIn) :
     fp(fpIn)
-#if XERCES_VERSION_MAJOR >= 3
     ,emptyString(0)
-#endif
 {}
 
 GMLBinInputStream::~ GMLBinInputStream()
 {
 }
 
-#if XERCES_VERSION_MAJOR >= 3
 XMLFilePos GMLBinInputStream::curPos() const
 {
     return (XMLFilePos)VSIFTellL(fp);
@@ -491,17 +484,6 @@ const XMLCh* GMLBinInputStream::getContentType() const
 {
     return &emptyString;
 }
-#else
-unsigned int GMLBinInputStream::curPos() const
-{
-    return (unsigned int)VSIFTellL(fp);
-}
-
-unsigned int GMLBinInputStream::readBytes(XMLByte* const toFill, const unsigned int maxToRead)
-{
-    return (unsigned int)VSIFReadL(toFill, 1, maxToRead, fp);
-}
-#endif
 
 GMLInputSource::GMLInputSource(VSILFILE* fp, MemoryManager* const manager) :
     InputSource(manager),

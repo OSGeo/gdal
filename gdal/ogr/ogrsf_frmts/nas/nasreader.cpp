@@ -184,11 +184,7 @@ bool NASReader::SetupParser()
 #else
         m_poSAXReader->setFeature( XMLUni::fgSAX2CoreValidation, false);
 
-#if XERCES_VERSION_MAJOR >= 3
         m_poSAXReader->setFeature( XMLUni::fgXercesSchema, false);
-#else
-        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, false);
-#endif
 
 #endif
         XMLString::release( &xmlUriValid );
