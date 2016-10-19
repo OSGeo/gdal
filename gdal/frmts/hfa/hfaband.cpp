@@ -359,7 +359,7 @@ CPLErr HFABand::LoadBlockInfo()
     {
         CPLErr eErr = CE_None;
 
-        char szVarName[64];
+        char szVarName[64] = {};
         snprintf( szVarName, sizeof(szVarName),
                   "blockinfo[%d].offset", iBlock );
         panBlockStart[iBlock] = static_cast<GUInt32>(
@@ -458,7 +458,7 @@ CPLErr HFABand::LoadExternalBlockInfo()
 /* -------------------------------------------------------------------- */
     char szHeader[49] = {};
 
-    if( VSIFReadL( szHeader, 49, 1, fpExternal ) != 1 ||
+    if( VSIFReadL( szHeader, sizeof(szHeader), 1, fpExternal ) != 1 ||
         !STARTS_WITH( szHeader, "ERDAS_IMG_EXTERNAL_RASTER") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -872,7 +872,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                // CPLAssert( nDataValue < 256 );
+#if DEBUG_VERBOSE
+                // TODO(schwehr): Do something smarter with out-of-range data.
+                // Bad data can trigger this assert.  r23498
+                CPLAssert( nDataValue < 256 );
+#endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
             }
@@ -889,7 +893,11 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
         {
             for( int i = 0; i < nRepeatCount; i++ )
             {
-                // CPLAssert( nDataValue < 256 );
+#if DEBUG_VERBOSE
+                // TODO(schwehr): Do something smarter with out-of-range data.
+                // Bad data can trigger this assert.  r23498
+                CPLAssert( nDataValue < 256 );
+#endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
             }
@@ -1812,7 +1820,9 @@ double *HFAReadBFUniqueBins( HFAEntry *poBinFunc, int nPCTColors )
     for( int i = 0; i < nPCTColors; i++ )
     {
         HFAStandard( 8, padfBins + i );
-//        CPLDebug( "HFA", "Bin[%d] = %g", i, padfBins[i] );
+#if DEBUG_VERBOSE
+        CPLDebug( "HFA", "Bin[%d] = %g", i, padfBins[i] );
+#endif
     }
 
     return padfBins;

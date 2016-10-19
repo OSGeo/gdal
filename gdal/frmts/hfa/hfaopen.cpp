@@ -1104,14 +1104,14 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
     // we don't because we are lazy.
 
     // Fetch geotransform values.
-    double adfXForm[6];
-    // Warning: Not in order.
-    adfXForm[0] = poXForm0->GetDoubleField( "polycoefvector[0]" );
-    adfXForm[1] = poXForm0->GetDoubleField( "polycoefmtx[0]" );
-    adfXForm[4] = poXForm0->GetDoubleField( "polycoefmtx[1]" );
-    adfXForm[3] = poXForm0->GetDoubleField( "polycoefvector[1]" );
-    adfXForm[2] = poXForm0->GetDoubleField( "polycoefmtx[2]" );
-    adfXForm[5] = poXForm0->GetDoubleField( "polycoefmtx[3]" );
+    double adfXForm[6] = {
+        poXForm0->GetDoubleField( "polycoefvector[0]" ),
+        poXForm0->GetDoubleField( "polycoefmtx[0]" ),
+        poXForm0->GetDoubleField( "polycoefmtx[2]" ),
+        poXForm0->GetDoubleField( "polycoefvector[1]" ),
+        poXForm0->GetDoubleField( "polycoefmtx[1]" ),
+        poXForm0->GetDoubleField( "polycoefmtx[3]" )
+    };
 
     // Invert.
 
