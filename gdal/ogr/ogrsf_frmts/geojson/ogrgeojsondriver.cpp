@@ -291,7 +291,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
 {
     poLayer = new OGRESRIFeatureServiceLayer(this);
     osURL = osURLIn;
-    if( CPLURLGetValue(osURL, "resultRecordCount").size() == 0 )
+    if( CPLURLGetValue(osURL, "resultRecordCount").empty() )
     {
         // We assume that if the server sets the exceededTransferLimit, the
         // and resultRecordCount is not set, the number of features returned
@@ -461,7 +461,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
         const bool bHasResultOffset =
-            CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").size() > 0;
+          !CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").empty();
         if( (!bHasResultOffset && (pszFSP == NULL || CPLTestBool(pszFSP))) ||
             (bHasResultOffset && pszFSP != NULL && CPLTestBool(pszFSP)) )
         {
