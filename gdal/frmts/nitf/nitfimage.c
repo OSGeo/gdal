@@ -733,15 +733,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->nLineOffset = psImage->nBandOffset * psImage->nBands;
         psImage->nBlockOffset = psImage->nLineOffset * psImage->nBlockHeight;
     }
-    else if( psImage->chIMODE == 'B' )
-    {
-        psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nLineOffset =
-            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
-        psImage->nBandOffset = psImage->nBlockHeight * psImage->nLineOffset;
-        psImage->nBlockOffset = psImage->nBandOffset * psImage->nBands;
-    }
-    else
+    else /* if( psImage->chIMODE == 'B' ) */
     {
         psImage->nPixelOffset = psImage->nWordSize;
         psImage->nLineOffset =
