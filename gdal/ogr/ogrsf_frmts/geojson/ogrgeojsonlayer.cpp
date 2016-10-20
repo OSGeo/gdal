@@ -76,9 +76,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 /*                          ~OGRGeoJSONLayer                            */
 /************************************************************************/
 
-OGRGeoJSONLayer::~OGRGeoJSONLayer()
-{
-}
+OGRGeoJSONLayer::~OGRGeoJSONLayer() {}
 
 /************************************************************************/
 /*                           GetFIDColumn                               */
