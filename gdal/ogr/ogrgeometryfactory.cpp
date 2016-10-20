@@ -2499,7 +2499,9 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
         case wkbPolygon:
         case wkbLineString:
         {
+#ifdef HAVE_GEOS
             bool bWrapDateline = false;
+#endif
             bool bSplitLineStringAtDateline = false;
             OGREnvelope oEnvelope;
 
@@ -2565,6 +2567,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
             {
                 SplitLineStringAtDateline(poMulti, (OGRLineString*)poGeom, dfDateLineOffset);
             }
+#ifdef HAVE_GEOS
             else if (bWrapDateline)
             {
                 const OGRGeometry* poWorkGeom = (poDupGeom) ? poDupGeom : poGeom;
@@ -2594,6 +2597,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
                 delete poGeom2;
                 delete poDupGeom;
             }
+#endif
             else
             {
                 poMulti->addGeometry(poGeom);
