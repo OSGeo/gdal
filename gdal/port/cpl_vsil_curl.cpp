@@ -3817,7 +3817,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
                                         bool bSetError)
 {
-    if (strchr(pszAccess, 'w') != NULL )
+    if (strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL)
     {
         /*if( strchr(pszAccess, '+') != NULL)
         {
