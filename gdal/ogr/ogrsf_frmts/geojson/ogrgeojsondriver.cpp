@@ -40,26 +40,26 @@ class OGRESRIFeatureServiceDataset;
 
 class OGRESRIFeatureServiceLayer: public OGRLayer
 {
-        OGRESRIFeatureServiceDataset* poDS;
-        OGRFeatureDefn* poFeatureDefn;
-        GIntBig         nFeaturesRead;
-        GIntBig         nLastFID;
-        bool            bOtherPage;
-        bool            bUseSequentialFID;
+    OGRESRIFeatureServiceDataset* poDS;
+    OGRFeatureDefn* poFeatureDefn;
+    GIntBig         nFeaturesRead;
+    GIntBig         nLastFID;
+    bool            bOtherPage;
+    bool            bUseSequentialFID;
 
-    public:
-        OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
-        virtual ~OGRESRIFeatureServiceLayer();
+  public:
+    OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
+    virtual ~OGRESRIFeatureServiceLayer();
 
-        void ResetReading();
-        OGRFeature* GetNextFeature();
-        GIntBig GetFeatureCount( int bForce = TRUE );
-        OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
-                                       int bForce)
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-        int TestCapability( const char* pszCap );
-        OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
+    void ResetReading();
+    OGRFeature* GetNextFeature();
+    GIntBig GetFeatureCount( int bForce = TRUE );
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
+                                   int bForce)
+            { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    int TestCapability( const char* pszCap );
+    OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
 };
 
 /************************************************************************/
@@ -68,29 +68,29 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
 
 class OGRESRIFeatureServiceDataset: public GDALDataset
 {
-        CPLString              osURL;
-        GIntBig                nFirstOffset;
-        GIntBig                nLastOffset;
-        OGRGeoJSONDataSource  *poCurrent;
-        OGRESRIFeatureServiceLayer *poLayer;
+    CPLString              osURL;
+    GIntBig                nFirstOffset;
+    GIntBig                nLastOffset;
+    OGRGeoJSONDataSource  *poCurrent;
+    OGRESRIFeatureServiceLayer *poLayer;
 
-        int                     LoadPage();
+    int                     LoadPage();
 
-    public:
-        OGRESRIFeatureServiceDataset( const CPLString &osURL,
-                                      OGRGeoJSONDataSource* poFirst );
-       ~OGRESRIFeatureServiceDataset();
+  public:
+    OGRESRIFeatureServiceDataset( const CPLString &osURL,
+                                  OGRGeoJSONDataSource* poFirst );
+    ~OGRESRIFeatureServiceDataset();
 
-        int GetLayerCount() { return 1; }
-        OGRLayer* GetLayer( int nLayer )
-            { return (nLayer == 0) ? poLayer : NULL; }
+    int GetLayerCount() { return 1; }
+    OGRLayer* GetLayer( int nLayer )
+        { return (nLayer == 0) ? poLayer : NULL; }
 
-        OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
+    OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
 
-        int MyResetReading();
-        int LoadNextPage();
+    int MyResetReading();
+    int LoadNextPage();
 
-        const CPLString&                GetURL() { return osURL; }
+    const CPLString& GetURL() { return osURL; }
 };
 
 /************************************************************************/
@@ -208,14 +208,18 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
     GIntBig nFeatureCount = -1;
     if( m_poAttrQuery == NULL && m_poFilterGeom == NULL )
     {
-        CPLString osNewURL = CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
+        const CPLString osNewURL =
+            CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
         CPLHTTPResult* pResult = NULL;
         CPLErrorReset();
         pResult = CPLHTTPFetch( osNewURL, NULL );
-        if( pResult != NULL && pResult->nDataLen != 0 && CPLGetLastErrorNo() == 0 &&
+        if( pResult != NULL &&
+            pResult->nDataLen != 0 &&
+            CPLGetLastErrorNo() == 0 &&
             pResult->nStatus == 0 )
         {
-            const char* pszCount = strstr((const char*)pResult->pabyData, "\"count\"");
+            const char* pszCount =
+                strstr((const char*)pResult->pabyData, "\"count\"");
             if( pszCount )
             {
                 pszCount = strchr(pszCount, ':');
@@ -237,23 +241,26 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
 /*                               GetExtent()                            */
 /************************************************************************/
 
-OGRErr OGRESRIFeatureServiceLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+OGRErr OGRESRIFeatureServiceLayer::GetExtent( OGREnvelope *psExtent,
+                                              int bForce )
 {
     OGRErr eErr = OGRERR_FAILURE;
-    CPLString osNewURL = CPLURLAddKVP(poDS->GetURL(), "returnExtentOnly", "true");
+    CPLString osNewURL =
+        CPLURLAddKVP(poDS->GetURL(), "returnExtentOnly", "true");
     osNewURL = CPLURLAddKVP(osNewURL, "f", "geojson");
     CPLErrorReset();
     CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, NULL );
     if( pResult != NULL && pResult->nDataLen != 0 && CPLGetLastErrorNo() == 0 &&
         pResult->nStatus == 0 )
     {
-        const char* pszBBox = strstr((const char*)pResult->pabyData, "\"bbox\"");
+        const char* pszBBox =
+            strstr((const char*)pResult->pabyData, "\"bbox\"");
         if( pszBBox )
         {
             pszBBox = strstr(pszBBox, ":[");
             if( pszBBox )
             {
-                pszBBox+=2;
+                pszBBox += 2;
                 char** papszTokens = CSLTokenizeString2(pszBBox, ",", 0);
                 if( CSLCount(papszTokens) >= 4 )
                 {
@@ -289,18 +296,25 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
         // We assume that if the server sets the exceededTransferLimit, the
         // and resultRecordCount is not set, the number of features returned
         // in our first request is the maximum allowed by the server
-        // So set it for following requests
-        osURL = CPLURLAddKVP(this->osURL, "resultRecordCount",
-                CPLSPrintf("%d", (int)poFirst->GetLayer(0)->GetFeatureCount()));
+        // So set it for following requests.
+        osURL =
+            CPLURLAddKVP(
+                this->osURL, "resultRecordCount",
+                CPLSPrintf(
+                    "%d",
+                    static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount())));
     }
     else
     {
-        int nUserSetRecordCount = atoi(CPLURLGetValue(osURL, "resultRecordCount"));
+        const int nUserSetRecordCount =
+            atoi(CPLURLGetValue(osURL, "resultRecordCount"));
         if( nUserSetRecordCount > poFirst->GetLayer(0)->GetFeatureCount() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Specificied resultRecordCount=%d is greater than the maximum %d supported by the server",
-                     nUserSetRecordCount, (int)poFirst->GetLayer(0)->GetFeatureCount() );
+                     "Specificied resultRecordCount=%d is greater than "
+                     "the maximum %d supported by the server",
+                     nUserSetRecordCount,
+                     static_cast<int>(poFirst->GetLayer(0)->GetFeatureCount()));
         }
     }
     nFirstOffset = CPLAtoGIntBig(CPLURLGetValue(osURL, "resultOffset"));
@@ -352,9 +366,8 @@ int OGRESRIFeatureServiceDataset::LoadNextPage()
 int OGRESRIFeatureServiceDataset::LoadPage()
 {
     CPLString osNewURL = CPLURLAddKVP(osURL, "resultOffset",
-                                        CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
-    OGRGeoJSONDataSource* poDS
-        = new OGRGeoJSONDataSource();
+                                      CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
+    OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
     GDALOpenInfo oOpenInfo(osNewURL, GA_ReadOnly);
     if( !poDS->Open( &oOpenInfo, GeoJSONGetSourceType( &oOpenInfo ) ) ||
         poDS->GetLayerCount() == 0 )
@@ -373,7 +386,7 @@ int OGRESRIFeatureServiceDataset::LoadPage()
 /************************************************************************/
 
 static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
-                                     GeoJSONSourceType& nSrcType )
+                                             GeoJSONSourceType& nSrcType )
 {
 /* -------------------------------------------------------------------- */
 /*      Determine type of data source: text file (.geojson, .json),     */
@@ -408,8 +421,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     if( OGRGeoJSONDriverIdentifyInternal(poOpenInfo, nSrcType) == FALSE )
         return NULL;
 
-    OGRGeoJSONDataSource* poDS
-        = new OGRGeoJSONDataSource();
+    OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
 
 /* -------------------------------------------------------------------- */
 /*      Processing configuration options.                               */
@@ -423,8 +435,8 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     const char* pszOpt = CPLGetConfigOption("GEOMETRY_AS_COLLECTION", NULL);
     if( NULL != pszOpt && STARTS_WITH_CI(pszOpt, "YES") )
     {
-            poDS->SetGeometryTranslation(
-                OGRGeoJSONDataSource::eGeometryAsCollection );
+        poDS->SetGeometryTranslation(
+            OGRGeoJSONDataSource::eGeometryAsCollection );
     }
 
     poDS->SetAttributesTranslation( OGRGeoJSONDataSource::eAttributesPreserve );
@@ -448,8 +460,8 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
-        bool bHasResultOffset = CPLURLGetValue( poOpenInfo->pszFilename,
-                                                "resultOffset").size() > 0;
+        const bool bHasResultOffset =
+            CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").size() > 0;
         if( (!bHasResultOffset && (pszFSP == NULL || CPLTestBool(pszFSP))) ||
             (bHasResultOffset && pszFSP != NULL && CPLTestBool(pszFSP)) )
         {
