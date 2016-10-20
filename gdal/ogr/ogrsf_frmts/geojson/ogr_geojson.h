@@ -27,6 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #ifndef OGR_GEOJSON_H_INCLUDED
 #define OGR_GEOJSON_H_INCLUDED
 
@@ -38,8 +39,6 @@
 #include <vector>  // Used by OGRGeoJSONLayer.
 #include "ogrgeojsonutils.h"
 
-#define SPACE_FOR_BBOX  130
-
 class OGRGeoJSONDataSource;
 
 /************************************************************************/
@@ -49,8 +48,8 @@ class OGRGeoJSONDataSource;
 class OGRGeoJSONLayer : public OGRMemLayer
 {
     friend class OGRGeoJSONDataSource;
-public:
 
+  public:
     static const char* const DefaultName;
     static const OGRwkbGeometryType DefaultGeometryType;
 
@@ -74,8 +73,7 @@ public:
     void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
 
-private:
-
+  private:
     OGRGeoJSONDataSource* poDS_;
     CPLString sFIDColumn_;
     bool bUpdated_;
@@ -176,6 +174,8 @@ class OGRGeoJSONDataSource : public OGRDataSource
     bool IsUpdatable() const { return bUpdatable_; }
 
     virtual void        FlushCache();
+
+    static const int SPACE_FOR_BBOX = 130;
 
   private:
     //

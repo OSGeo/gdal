@@ -26,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogr_geojson.h"
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonreader.h"
@@ -219,7 +220,8 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
 
     const char* pszNativeData = CSLFetchNameValue(papszOptions, "NATIVE_DATA");
-    const char* pszNativeMediaType = CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
+    const char* pszNativeMediaType =
+        CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )

@@ -27,19 +27,22 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #ifndef OGR_GEOJSONWRITER_H_INCLUDED
 #define OGR_GEOJSONWRITER_H_INCLUDED
 
 #include <ogr_core.h>
 
 #ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wunknown-pragmas"
+#  pragma clang diagnostic ignored "-Wdocumentation"
 #endif
+
 #include <json.h>
+
 #ifdef __clang
-#pragma clang diagnostic pop
+#  pragma clang diagnostic pop
 #endif
 
 

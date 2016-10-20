@@ -26,12 +26,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogr_geojson.h"
 #include "ogrgeojsonwriter.h"
 
 CPL_CVSID("$Id$");
 
-/* Remove annoying warnings Microsoft Visual C++ */
+// Remove annoying warnings Microsoft Visual C++.
 #if defined(_MSC_VER)
 #  pragma warning(disable:4512)
 #endif
@@ -85,7 +86,8 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
             osBBOX += CPLSPrintf(", %.15g", sEnvelopeLayer.MaxZ);
         osBBOX += " ]";
 
-        if( poDS_->GetFpOutputIsSeekable() && osBBOX.size() + 9 < SPACE_FOR_BBOX )
+        if( poDS_->GetFpOutputIsSeekable() &&
+            osBBOX.size() + 9 < OGRGeoJSONDataSource::SPACE_FOR_BBOX )
         {
             VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
             VSIFPrintfL( fp, "\"bbox\": %s,", osBBOX.c_str() );
@@ -119,8 +121,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
         return OGRERR_INVALID_HANDLE;
     }
 
-    json_object* poObj = OGRGeoJSONWriteFeature( poFeature, bWriteBBOX,
-                                                 nCoordPrecision_, nSignificantFigures_ );
+    json_object* poObj =
+        OGRGeoJSONWriteFeature( poFeature, bWriteBBOX,
+                                nCoordPrecision_, nSignificantFigures_ );
     CPLAssert( NULL != poObj );
 
     if( nOutCounter_ > 0 )
