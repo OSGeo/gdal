@@ -1087,6 +1087,13 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
     // Use the full size
     CPLXMLNode *raster = CPLCreateXMLNode(config, CXT_Element, "Raster");
+
+    // Preserve the file names if not the default ones
+    if (full.datfname != getFname(GetFname(), ILComp_Ext[full.comp]))
+        CPLCreateXMLElementAndValue(raster, "DataFile", full.datfname.c_str());
+    if (full.idxfname != getFname(GetFname(), ".idx"))
+        CPLCreateXMLElementAndValue(raster, "IndexFile", full.idxfname.c_str());
+
     XMLSetAttributeVal(raster, "Size", full.size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", full.pagesize, "%.0f");
 
@@ -1433,7 +1440,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
     return img.idxoffset + sizeof(ILIdx) * img.pagecount.l / img.size.z * (img.size.z - zslice);
 }
 
-// Try to implement CreateCopy using Create
+// CreateCopy implemented based on Create
 GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     GDALDataset *poSrcDS, int /*bStrict*/, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1603,6 +1610,12 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     val = opt.FetchNameValue("PHOTOMETRIC");
     if (val) photometric = val;
 
+    val = opt.FetchNameValue("DATANAME");
+    if (val) img.datfname = val;
+
+    val = opt.FetchNameValue("INDEXNAME");
+    if (val) img.idxfname = val;
+
     optlist.Assign(CSLTokenizeString2(opt.FetchNameValue("OPTIONS"),
         " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
@@ -1679,8 +1692,10 @@ GDALMRFDataset::Create(const char * pszName,
         poDS->ProcessCreateOptions(papszOptions);
 
         // Set default file names
-        img.datfname = getFname(poDS->GetFname(), ILComp_Ext[img.comp]);
-        img.idxfname = getFname(poDS->GetFname(), ".idx");
+        if (img.datfname.empty())
+            img.datfname = getFname(poDS->GetFname(), ILComp_Ext[img.comp]);
+        if (img.idxfname.empty())
+            img.idxfname = getFname(poDS->GetFname(), ".idx");
 
         poDS->eAccess = GA_Update;
     }
