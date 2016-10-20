@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of simple SQL WHERE style attributes queries
@@ -34,6 +33,8 @@
 #include "ogr_feature.h"
 #include "ogr_p.h"
 #include "ogr_attrind.h"
+
+//! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
 
@@ -89,18 +90,15 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 /* -------------------------------------------------------------------- */
 /*      Build list of fields.                                           */
 /* -------------------------------------------------------------------- */
-    char        **papszFieldNames;
-    swq_field_type *paeFieldTypes;
-    int         iField;
     int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT +
                               poDefn->GetGeomFieldCount();
 
-    papszFieldNames = (char **)
+    char **papszFieldNames = (char **)
         CPLMalloc(sizeof(char *) * nFieldCount );
-    paeFieldTypes = (swq_field_type *)
+    swq_field_type *paeFieldTypes = (swq_field_type *)
         CPLMalloc(sizeof(swq_field_type) * nFieldCount );
 
-    for( iField = 0; iField < poDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn    *poField = poDefn->GetFieldDefn( iField );
 
@@ -146,11 +144,13 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         }
     }
 
-    iField = 0;
-    while (iField < SPECIAL_FIELD_COUNT)
+    int iField = 0;
+    while( iField < SPECIAL_FIELD_COUNT )
     {
-        papszFieldNames[poDefn->GetFieldCount() + iField] = (char *) SpecialFieldNames[iField];
-        paeFieldTypes[poDefn->GetFieldCount() + iField] = (iField == SPF_FID) ? SWQ_INTEGER64 : SpecialFieldTypes[iField];
+        papszFieldNames[poDefn->GetFieldCount() + iField] =
+            (char *) SpecialFieldNames[iField];
+        paeFieldTypes[poDefn->GetFieldCount() + iField] =
+            (iField == SPF_FID) ? SWQ_INTEGER64 : SpecialFieldTypes[iField];
         ++iField;
     }
 
@@ -246,19 +246,18 @@ int OGRFeatureQuery::Evaluate( OGRFeature *poFeature )
     if( pSWQExpr == NULL )
         return FALSE;
 
-    swq_expr_node *poResult;
-
-    poResult = ((swq_expr_node *) pSWQExpr)->Evaluate( OGRFeatureFetcher,
-                                                       (void *) poFeature );
+    swq_expr_node *poResult =
+        ((swq_expr_node *) pSWQExpr)->Evaluate( OGRFeatureFetcher,
+                                                (void *) poFeature );
 
     if( poResult == NULL )
         return FALSE;
 
-    int bLogicalResult = FALSE;
+    bool bLogicalResult = false;
     if( poResult->field_type == SWQ_INTEGER ||
         poResult->field_type == SWQ_INTEGER64 ||
         poResult->field_type == SWQ_BOOLEAN )
-        bLogicalResult = (int)poResult->int_value;
+        bLogicalResult = CPL_TO_BOOL(static_cast<int>(poResult->int_value));
 
     delete poResult;
 
@@ -285,8 +284,6 @@ int OGRFeatureQuery::CanUseIndex( OGRLayer *poLayer )
 int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
                                   OGRLayer *poLayer )
 {
-    OGRAttrIndex *poIndex;
-
 /* -------------------------------------------------------------------- */
 /*      Does the expression meet our requirements?                      */
 /* -------------------------------------------------------------------- */
@@ -312,7 +309,8 @@ int OGRFeatureQuery::CanUseIndex( swq_expr_node *psExpr,
         || poValue->eNodeType != SNT_CONSTANT )
         return FALSE;
 
-    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
+    OGRAttrIndex *poIndex =
+        poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
     if( poIndex == NULL )
         return FALSE;
 
@@ -377,8 +375,7 @@ GIntBig* OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
-    GIntBig i1 = 0, i2 =0;
-    for(;i1<nFIDCount1 || i2<nFIDCount2;)
+    for( GIntBig i1 = 0, i2 = 0; i1<nFIDCount1 || i2<nFIDCount2; )
     {
         if (i1 < nFIDCount1 && i2 < nFIDCount2)
         {
@@ -450,8 +447,8 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 
-    GIntBig i1 = 0, i2 =0;
-    for(;i1<nFIDCount1 && i2<nFIDCount2;)
+
+    for( GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2; )
     {
         GIntBig nVal1 = panFIDList1[i1];
         GIntBig nVal2 = panFIDList2[i2];
@@ -496,8 +493,6 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
                                                   OGRLayer *poLayer,
                                                   GIntBig& nFIDCount )
 {
-    OGRAttrIndex *poIndex;
-
 /* -------------------------------------------------------------------- */
 /*      Does the expression meet our requirements?                      */
 /* -------------------------------------------------------------------- */
@@ -539,7 +534,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         || poValue->eNodeType != SNT_CONSTANT )
         return NULL;
 
-    poIndex = poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
+    OGRAttrIndex *poIndex =
+        poLayer->GetIndex()->GetFieldIndex( poColumn->field_index );
     if( poIndex == NULL )
         return NULL;
 
@@ -547,9 +543,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
 /*      OK, we have an index, now we need to query it.                  */
 /* -------------------------------------------------------------------- */
     OGRField sValue;
-    OGRFieldDefn *poFieldDefn;
-
-    poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(poColumn->field_index);
+    OGRFieldDefn *poFieldDefn =
+        poLayer->GetLayerDefn()->GetFieldDefn(poColumn->field_index);
 
 /* -------------------------------------------------------------------- */
 /*      Handle the case of an IN operation.                             */
@@ -558,9 +553,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     {
         int nLength;
         GIntBig *panFIDs = NULL;
-        int iIN;
 
-        for( iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
+        for( int iIN = 1; iIN < psExpr->nSubExprCount; iIN++ )
         {
             switch( poFieldDefn->GetType() )
             {
@@ -587,7 +581,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return NULL;
             }
 
@@ -632,7 +626,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -676,7 +670,7 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
 /* -------------------------------------------------------------------- */
 /*      Add the field name into our list if it is not already there.    */
 /* -------------------------------------------------------------------- */
-        const char *pszFieldName;
+        const char *pszFieldName = NULL;
 
         if( op->field_index >= poTargetDefn->GetFieldCount()
             && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT)
@@ -738,3 +732,5 @@ char **OGRFeatureQuery::GetUsedFields( )
 
     return FieldCollector( pSWQExpr, NULL );
 }
+
+//! @endcond

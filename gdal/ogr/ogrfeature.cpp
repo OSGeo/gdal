@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFeature class implementation.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "ogr_feature.h"
+#include "ogrgeojsonreader.h"
+#include <json.h>
 
 #include <errno.h>
 
@@ -379,13 +380,13 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  * implemented).
  */
 
-OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
+OGRErr OGRFeature::SetGeometry( const OGRGeometry * poGeomIn )
 
 {
-    if( GetGeomFieldCount() > 0 )
-        return SetGeomField(0, poGeomIn);
-    else
+    if( GetGeomFieldCount() < 1 )
         return OGRERR_FAILURE;
+
+    return SetGeomField(0, poGeomIn);
 }
 
 /************************************************************************/
@@ -446,6 +447,21 @@ OGRGeometry *OGRFeature::StealGeometry()
     else
         return NULL;
 }
+
+/**
+ * \brief Take away ownership of geometry.
+ *
+ * Fetch the geometry from this feature, and clear the reference to the
+ * geometry on the feature.  This is a mechanism for the application to
+ * take over ownership of the geometry from the feature without copying.
+ * Sort of an inverse to SetGeometryDirectly().
+ *
+ * After this call the OGRFeature will have a NULL geometry.
+ *
+ * @param iGeomField index of the geometry field.
+ *
+ * @return the pointer to the geometry.
+ */
 
 OGRGeometry *OGRFeature::StealGeometry(int iGeomField)
 
@@ -769,7 +785,7 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
  * @since GDAL 1.11
  */
 
-OGRErr OGRFeature::SetGeomField( int iField, OGRGeometry * poGeomIn )
+OGRErr OGRFeature::SetGeomField( int iField, const OGRGeometry * poGeomIn )
 
 {
     if( iField < 0 || iField >= GetGeomFieldCount() )
@@ -928,7 +944,7 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::GetFieldCount();
+ * \fn int OGRFeature::GetFieldCount() const;
  *
  * \brief Fetch number of fields on this feature.
  * This will always be the same
@@ -967,7 +983,7 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 /************************************************************************/
 
 /**
- * \fn OGRFieldDefn *OGRFeature::GetFieldDefnRef( int iField );
+ * \fn OGRFieldDefn *OGRFeature::GetFieldDefnRef( int iField ) const;
  *
  * \brief Fetch definition for this field.
  *
@@ -1058,7 +1074,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::GetGeomFieldCount();
+ * \fn int OGRFeature::GetGeomFieldCount() const;
  *
  * \brief Fetch number of geometry fields on this feature.
  * This will always be the same
@@ -1194,8 +1210,6 @@ int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /************************************************************************/
 
 /**
- * \fn int OGRFeature::IsFieldSet( int iField ) const;
- *
  * \brief Test if a field has ever been assigned a value or not.
  *
  * This method is the same as the C function OGR_F_IsFieldSet().
@@ -1387,6 +1401,20 @@ OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::GetFieldAsInteger( const char* pszFName )
+ * \brief Fetch field value as integer.
+ *
+ * OFTString features will be translated using atoi().  OFTReal fields
+ * will be cast to integer. OFTInteger64 are demoted to 32 bit, with
+ * clamping if out-of-range. Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+
+/**
  * \brief Fetch field value as integer.
  *
  * OFTString features will be translated using atoi().  OFTReal fields
@@ -1504,6 +1532,20 @@ int OGR_F_GetFieldAsInteger( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::GetFieldAsInteger64( const char* pszFName )
+ * \brief Fetch field value as integer 64 bit.
+ *
+ * OFTInteger are promoted to 64 bit.
+ * OFTString features will be translated using CPLAtoGIntBig().  OFTReal fields
+ * will be cast to integer.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
+
+/**
  * \brief Fetch field value as integer 64 bit.
  *
  * OFTInteger are promoted to 64 bit.
@@ -1601,6 +1643,19 @@ GIntBig OGR_F_GetFieldAsInteger64( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 /*                          GetFieldAsDouble()                          */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::GetFieldAsDouble( const char* pszFName )
+ * \brief Fetch field value as a double.
+ *
+ * OFTString features will be translated using CPLAtof().  OFTInteger and OFTInteger64 fields
+ * will be cast to double.   Other field types, or errors will result in
+ * a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.
+ */
 
 /**
  * \brief Fetch field value as a double.
@@ -1748,6 +1803,20 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
 /************************************************************************/
 /*                          GetFieldAsString()                          */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::GetFieldAsString( const char* pszFName )
+ * \brief Fetch field value as a string.
+ *
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ */
 
 /**
  * \brief Fetch field value as a string.
@@ -2068,12 +2137,12 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( eType == OFTBinary )
     {
         int     nCount = pauFields[iField].Binary.nCount;
-        char    *pszHex;
 
         if( nCount > (int) sizeof(szTempBuffer) / 2 - 4 )
             nCount = sizeof(szTempBuffer) / 2 - 4;
 
-        pszHex = CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
+        char *pszHex =
+            CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
 
         memcpy( szTempBuffer, pszHex, 2 * nCount );
         szTempBuffer[nCount*2] = '\0';
@@ -2122,6 +2191,23 @@ const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
 /************************************************************************/
 /*                       GetFieldAsIntegerList()                        */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::GetFieldAsIntegerList( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of integers.
+ *
+ * Currently this method only works for OFTIntegerList fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of integers) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ * OFTReal and OFTInteger fields will be translated to string using
+ * sprintf(), but not necessarily using the established formatting rules.
+ * Other field types, or errors will result in a return value of zero.
+ */
 
 /**
  * \brief Fetch field value as a list of integers.
@@ -2193,6 +2279,20 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                      GetFieldAsInteger64List()                       */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsInteger64List( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of 64 bit integers.
+ *
+ * Currently this method only works for OFTInteger64List fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of integers) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ * @since GDAL 2.0
+ */
 
 /**
  * \brief Fetch field value as a list of 64 bit integers.
@@ -2266,6 +2366,19 @@ const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                        GetFieldAsDoubleList()                        */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsDoubleList( const char* pszFName, int *pnCount )
+ * \brief Fetch field value as a list of doubles.
+ *
+ * Currently this method only works for OFTRealList fields.
+
+ * @param pszFName the name of the field to fetch.
+ * @param pnCount an integer to put the list count (number of doubles) into.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.  If *pnCount is zero
+ * on return the returned pointer may be NULL or non-NULL.
+ */
 
 /**
  * \brief Fetch field value as a list of doubles.
@@ -2337,6 +2450,20 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                        GetFieldAsStringList()                        */
 /************************************************************************/
+/**
+ * \fn OGRFeature::GetFieldAsStringList( const char* pszFName )
+ * \brief Fetch field value as a list of strings.
+ *
+ * Currently this method only works for OFTStringList fields.
+ *
+ * The returned list is terminated by a NULL pointer. The number of
+ * elements can also be calculated using CSLCount().
+ *
+ * @param pszFName the name of the field to fetch.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ */
 
 /**
  * \brief Fetch field value as a list of strings.
@@ -2546,15 +2673,35 @@ int OGRFeature::GetFieldAsDateTime( int iField,
     }
 }
 
+/**
+ * \brief Fetch field value as date and time.
+ *
+ * Currently this method only works for OFTDate, OFTTime and OFTDateTime fields.
+ *
+ * This method is the same as the C function OGR_F_GetFieldAsDateTime().
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnYear (including century)
+ * @param pnMonth (1-12)
+ * @param pnDay (1-31)
+ * @param pnHour (0-23)
+ * @param pnMinute (0-59)
+ * @param pnSecond (0-59)
+ * @param pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
 int OGRFeature::GetFieldAsDateTime( int iField,
                                     int *pnYear, int *pnMonth, int *pnDay,
                                     int *pnHour, int *pnMinute, int *pnSecond,
                                     int *pnTZFlag )
 {
-    float fSecond;
-    int bRet = GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
-                                   &fSecond, pnTZFlag);
-    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    float fSecond = 0.0f;
+    const bool bRet = CPL_TO_BOOL(
+        GetFieldAsDateTime( iField, pnYear, pnMonth, pnDay, pnHour, pnMinute,
+                            &fSecond, pnTZFlag));
+    if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
 
@@ -2593,12 +2740,13 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
-    float fSecond;
-    int bRet =((OGRFeature *)hFeat)->GetFieldAsDateTime( iField,
-                                                      pnYear, pnMonth, pnDay,
-                                                      pnHour, pnMinute,&fSecond,
-                                                      pnTZFlag );
-    if( bRet && pnSecond ) *pnSecond = (int)fSecond;
+    float fSecond = 0.0f;
+    const bool bRet = CPL_TO_BOOL(reinterpret_cast<OGRFeature *>(hFeat)->
+        GetFieldAsDateTime( iField,
+                            pnYear, pnMonth, pnDay,
+                            pnHour, pnMinute,&fSecond,
+                            pnTZFlag ));
+    if( bRet && pnSecond ) *pnSecond = static_cast<int>(fSecond);
     return bRet;
 }
 
@@ -2676,8 +2824,109 @@ static int OGRFeatureGetIntegerValue(OGRFieldDefn *poFDefn, int nValue)
 }
 
 /************************************************************************/
+/*                        GetFieldAsSerializedJSon()                   */
+/************************************************************************/
+
+/**
+ * \brief Fetch field value as a serialized JSon object.
+ *
+ * Currently this method only works for OFTStringList, OFTIntegerList,
+ * OFTInteger64List and OFTRealList
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ *
+ * @return a string that must be de-allocate with CPLFree()
+ * @since GDAL 2.2
+ */
+char* OGRFeature::GetFieldAsSerializedJSon( int iField )
+
+{
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+        return NULL;
+    }
+
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    if( poFDefn == NULL )
+        return NULL;
+
+    if( !IsFieldSet(iField) )
+        return NULL;
+
+    char* pszRet = NULL;
+    OGRFieldType eType = poFDefn->GetType();
+    if( eType == OFTStringList )
+    {
+        json_object* poObj = json_object_new_array();
+        char** papszValues = GetFieldAsStringList(iField);
+        for( int i=0; papszValues[i] != NULL; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_string(papszValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTIntegerList )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const int* panValues = GetFieldAsIntegerList(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                                    json_object_new_int(panValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTInteger64List )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const GIntBig* panValues = GetFieldAsInteger64List(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_int64(panValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+    else if( eType == OFTRealList )
+    {
+        json_object* poObj = json_object_new_array();
+        int nCount = 0;
+        const double* padfValues = GetFieldAsDoubleList(iField, &nCount);
+        for( int i=0; i<nCount; i++)
+        {
+            json_object_array_add( poObj,
+                            json_object_new_double(padfValues[i]) );
+        }
+        pszRet = CPLStrdup( json_object_to_json_string(poObj) );
+        json_object_put(poObj);
+    }
+
+    return pszRet;
+}
+
+/************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, int nValue )
+ * \brief Set field to integer value.
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nValue the value to assign.
+ */
 
 /**
  * \brief Set field to integer value.
@@ -2791,6 +3040,18 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, GIntBig nValue )
+ * \brief Set field to 64 bit integer value.
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nValue the value to assign.
+ */
 
 /**
  * \brief Set field to 64 bit integer value.
@@ -2924,6 +3185,19 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, double dfValue )
+ * \brief Set field to double value.
+ *
+ * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
+ * will be assigned a string representation of the value, but not necessarily
+ * taking into account formatting constraints on this field.  Other field
+ * types may be unaffected.
+ *
+ * @param pszFName the name of the field to set.
+ * @param dfValue the value to assign.
+ */
+
+/**
  * \brief Set field to double value.
  *
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString fields
@@ -3041,6 +3315,19 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, const char * pszValue )
+ * \brief Set field to string value.
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
+ * OFTReal fields will be set based on an CPLAtof() conversion of the string.
+ * Other field types may be unaffected.
+ *
+ * @param pszFName the name of the field to set.
+ * @param pszValue the value to assign.
+ */
+
+/**
  * \brief Set field to string value.
  *
  * OFTInteger fields will be set based on an atoi() conversion of the string.
@@ -3058,14 +3345,15 @@ void OGRFeature::SetField( int iField, const char * pszValue )
 
 {
     static int bWarn = -1;
-    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
-    char *pszLast = NULL;
-
     if( bWarn < 0 )
-        bWarn = CSLTestBoolean( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING", "YES" ) );
+        bWarn = CPLTestBool( CPLGetConfigOption( "OGR_SETFIELD_NUMERIC_WARNING",
+                                                 "YES" ) );
 
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
     if( poFDefn == NULL )
         return;
+
+    char *pszLast = NULL;
 
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
@@ -3117,72 +3405,114 @@ void OGRFeature::SetField( int iField, const char * pszValue )
              || eType == OFTInteger64List
              || eType == OFTRealList )
     {
-        char **papszValueList = NULL;
-
-        if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+        json_object* poJSonObj = NULL;
+        if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
+            OGRJSonParse(pszValue, &poJSonObj, false) )
         {
-            papszValueList = CSLTokenizeString2(
-                pszValue, ",:()", 0 );
-        }
-
-        if( papszValueList == NULL || *papszValueList == NULL
-            || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
-        {
-            /* do nothing - the count does not match entries */
-        }
-        else if( eType == OFTIntegerList )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<int> anValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            const int nLength = json_object_array_length(poJSonObj);
+            if( eType == OFTIntegerList && nLength > 0 )
             {
-                for( int i = 0; i < nCount; i++ )
+                std::vector<int> anValues;
+                for( int i = 0; i < nLength; i++ )
                 {
-                    errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
-                    int nVal = atoi(papszValueList[i+1]);
-                    if( errno == ERANGE )
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    anValues.push_back( json_object_get_int( poItem ) );
+                }
+                SetField( iField, nLength, &(anValues[0]) );
+            }
+            else if( eType == OFTInteger64List && nLength > 0 )
+            {
+                std::vector<GIntBig> anValues;
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    anValues.push_back( json_object_get_int64( poItem ) );
+                }
+                SetField( iField, nLength, &(anValues[0]) );
+            }
+            else if( eType == OFTRealList && nLength > 0 )
+            {
+                std::vector<double> adfValues;
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    adfValues.push_back( json_object_get_double( poItem ) );
+                }
+                SetField( iField, nLength, &(adfValues[0]) );
+            }
+
+            json_object_put(poJSonObj);
+        }
+        else
+        {
+            char **papszValueList = NULL;
+
+            if( pszValue[0] == '(' && strchr(pszValue,':') != NULL )
+            {
+                papszValueList = CSLTokenizeString2(
+                    pszValue, ",:()", 0 );
+            }
+
+            if( papszValueList == NULL || *papszValueList == NULL
+                || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
+            {
+                /* do nothing - the count does not match entries */
+            }
+            else if( eType == OFTIntegerList )
+            {
+                int nCount = atoi(papszValueList[0]);
+                std::vector<int> anValues;
+                if( nCount == CSLCount(papszValueList)-1 )
+                {
+                    for( int i = 0; i < nCount; i++ )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "32 bit integer overflow when converting %s",
-                                 pszValue);
+                        errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
+                        int nVal = atoi(papszValueList[i+1]);
+                        if( errno == ERANGE )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "32 bit integer overflow when converting %s",
+                                    pszValue);
+                        }
+                        anValues.push_back( nVal );
                     }
-                    anValues.push_back( nVal );
+                    SetField( iField, nCount, &(anValues[0]) );
                 }
-                SetField( iField, nCount, &(anValues[0]) );
             }
-        }
-        else if( eType == OFTInteger64List )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<GIntBig> anValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            else if( eType == OFTInteger64List )
             {
-                for( int i = 0; i < nCount; i++ )
+                int nCount = atoi(papszValueList[0]);
+                std::vector<GIntBig> anValues;
+                if( nCount == CSLCount(papszValueList)-1 )
                 {
-                    GIntBig nVal = CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
-                    anValues.push_back( nVal );
+                    for( int i = 0; i < nCount; i++ )
+                    {
+                        GIntBig nVal = CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
+                        anValues.push_back( nVal );
+                    }
+                    SetField( iField, nCount, &(anValues[0]) );
                 }
-                SetField( iField, nCount, &(anValues[0]) );
             }
-        }
-        else if( eType == OFTRealList )
-        {
-            int nCount = atoi(papszValueList[0]);
-            std::vector<double> adfValues;
-            if( nCount == CSLCount(papszValueList)-1 )
+            else if( eType == OFTRealList )
             {
-                for( int i = 0; i < nCount; i++ )
-                    adfValues.push_back( CPLAtof(papszValueList[i+1]) );
-                SetField( iField, nCount, &(adfValues[0]) );
+                int nCount = atoi(papszValueList[0]);
+                std::vector<double> adfValues;
+                if( nCount == CSLCount(papszValueList)-1 )
+                {
+                    for( int i = 0; i < nCount; i++ )
+                        adfValues.push_back( CPLAtof(papszValueList[i+1]) );
+                    SetField( iField, nCount, &(adfValues[0]) );
+                }
             }
-        }
 
-        CSLDestroy(papszValueList);
+            CSLDestroy(papszValueList);
+        }
     }
     else if ( eType == OFTStringList )
     {
         if( pszValue && *pszValue )
         {
+            json_object* poJSonObj = NULL;
             if( pszValue[0] == '(' && strchr(pszValue,':') != NULL &&
                 pszValue[strlen(pszValue)-1] == ')' )
             {
@@ -3198,6 +3528,23 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                     SetField( iField, &(aosValues[0]) );
                 }
                 CSLDestroy(papszValueList);
+            }
+            // Is this a JSon array ?
+            else if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
+                     OGRJSonParse(pszValue, &poJSonObj, false) )
+            {
+                CPLStringList aoList;
+                const int nLength = json_object_array_length(poJSonObj);
+                for( int i = 0; i < nLength; i++ )
+                {
+                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    if( !poItem )
+                        aoList.AddString("");
+                    else
+                        aoList.AddString( json_object_get_string(poItem) );
+                }
+                SetField( iField, aoList.List() );
+                json_object_put(poJSonObj);
             }
             else
             {
@@ -3244,6 +3591,18 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, int *panValues )
+ * \brief Set field to list of integers value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List
+ * and OFTRealList fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param panValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -3272,7 +3631,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 
         if( poFDefn->GetSubType() == OFSTBoolean || poFDefn->GetSubType() == OFSTInt16 )
         {
-            for( int i=0;i<nCount;i++)
+            for( int i = 0; i < nCount; i++ )
             {
                 int nVal = OGRFeatureGetIntegerValue(poFDefn, panValues[i]);
                 if( panValues[i] != nVal )
@@ -3301,7 +3660,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     {
         std::vector<GIntBig> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( panValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3310,7 +3669,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     {
         std::vector<double> adfValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             adfValues.push_back( (double) panValues[i] );
 
         SetField( iField, nCount, &adfValues[0] );
@@ -3328,7 +3687,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%d", panValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3368,6 +3727,18 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const GIntBig *panValues )
+ * \brief Set field to list of 64 bit integers value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List
+ * and OFTRealList fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param panValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of 64 bit integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -3394,7 +3765,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     {
         std::vector<int> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
         {
             GIntBig nValue = panValues[i];
             int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
@@ -3424,7 +3795,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     {
         std::vector<double> adfValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             adfValues.push_back( (double) panValues[i] );
 
         SetField( iField, nCount, &adfValues[0] );
@@ -3442,7 +3813,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3483,6 +3854,18 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, double * padfValues )
+ * \brief Set field to list of doubles value.
+ *
+ * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
+ * OFTRealList fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nCount the number of values in the list being assigned.
+ * @param padfValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of doubles value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
@@ -3518,7 +3901,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     {
         std::vector<int> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( (int) padfValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3527,7 +3910,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     {
         std::vector<GIntBig> anValues;
 
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             anValues.push_back( (GIntBig) padfValues[i] );
 
         SetField( iField, nCount, &anValues[0] );
@@ -3545,7 +3928,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
         if( papszValues == NULL )
             return;
-        for( int i=0; i < nCount; i++ )
+        for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
@@ -3585,6 +3968,16 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * \fn OGRFeature::SetField( const char* pszFName,  char ** papszValues )
+ * \brief Set field to list of strings value.
+ *
+ * This method currently on has an effect of OFTStringList fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param papszValues the values to assign.
+ */
+
+/**
  * \brief Set field to list of strings value.
  *
  * This method currently on has an effect of OFTStringList fields.
@@ -3621,7 +4014,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(int)) );
         if( panValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             errno = 0; /* As allowed by C standard, some systems like MSVC doesn't reset errno */
             int nVal = atoi(papszValues[i]);
@@ -3647,7 +4040,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig)) );
         if( panValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, NULL);
         }
@@ -3661,7 +4054,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
             VSI_MALLOC_VERBOSE(nValues * sizeof(double)) );
         if( padfValues == NULL )
             return;
-        for(int i=0;i<nValues;i++)
+        for( int i = 0; i < nValues; i++ )
         {
             padfValues[i] = CPLAtof(papszValues[i]);
         }
@@ -3771,6 +4164,25 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, int nYear, int nMonth, int nDay,
+ *                          int nHour, int nMinute, float fSecond,
+ *                          int nTZFlag )
+ * \brief Set field to date.
+ *
+ * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
+ * fields.
+ *
+ * @param pszFName the name of the field to set.
+ * @param nYear (including century)
+ * @param nMonth (1-12)
+ * @param nDay (1-31)
+ * @param nHour (0-23)
+ * @param nMinute (0-59)
+ * @param fSecond (0-59, with millisecond accuracy)
+ * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
 
 /**
  * \brief Set field to date.
@@ -3910,6 +4322,18 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
+
+/**
+ * \fn OGRFeature::SetField( const char* pszFName, OGRField * puValue )
+ * \brief Set field.
+ *
+ * The passed value OGRField must be of exactly the same type as the
+ * target field, or an application crash may occur.  The passed value
+ * is copied, and will not be affected.  It remains the responsibility of
+ * the caller.
+ * @param pszFName the name of the field to set.
+ * @param puValue the value to assign.
+ */
 
 /**
  * \brief Set field.
@@ -4078,8 +4502,9 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         else
         {
             char** papszNewList = NULL;
-            char** papszIter = puValue->StringList.paList;
-            for(; papszIter != NULL && *papszIter != NULL; ++papszIter )
+            for( char** papszIter = puValue->StringList.paList;
+                 papszIter != NULL && *papszIter != NULL;
+                 ++papszIter )
             {
                 char** papszNewList2 = CSLAddStringMayFail(papszNewList, *papszIter);
                 if( papszNewList2 == NULL )
@@ -4193,7 +4618,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
 
     const char* pszDisplayFields =
             CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");
-    if (pszDisplayFields == NULL || CSLTestBoolean(pszDisplayFields))
+    if( pszDisplayFields == NULL || CPLTestBool(pszDisplayFields) )
     {
         for( int iField = 0; iField < GetFieldCount(); iField++ )
         {
@@ -4222,7 +4647,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
     {
         const char* pszDisplayStyle =
             CSLFetchNameValue(papszOptions, "DISPLAY_STYLE");
-        if (pszDisplayStyle == NULL || CSLTestBoolean(pszDisplayStyle))
+        if( pszDisplayStyle == NULL || CPLTestBool(pszDisplayStyle) )
         {
             fprintf( fpOut, "  Style = %s\n", GetStyleString() );
         }
@@ -4283,7 +4708,7 @@ void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 /************************************************************************/
 
 /**
- * \fn GIntBig OGRFeature::GetFID();
+ * \fn GIntBig OGRFeature::GetFID() const;
  *
  * \brief Get feature identifier.
  *
@@ -4624,10 +5049,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
 /*      Retrieve the field ids by name.                                 */
 /* -------------------------------------------------------------------- */
-    int *panMap;
-    OGRErr      eErr;
-
-    panMap = static_cast<int *>(
+    int *panMap = static_cast<int *>(
         VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() ) );
     if( panMap == NULL )
         return OGRERR_FAILURE;
@@ -4648,7 +5070,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
         }
     }
 
-    eErr = SetFrom( poSrcFeature, panMap, bForgiving );
+    const OGRErr eErr = SetFrom( poSrcFeature, panMap, bForgiving );
 
     VSIFree(panMap);
 
@@ -5146,6 +5568,10 @@ void OGR_F_SetStyleStringDirectly( OGRFeatureH hFeat, char *pszStyle )
 //************************************************************************/
 /*                           SetStyleTable()                            */
 /************************************************************************/
+
+/** Set style table.
+ * @param poStyleTable new style table (will be cloned)
+ */
 void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 {
     if ( m_poStyleTable )
@@ -5157,12 +5583,17 @@ void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 /*                          SetStyleTableDirectly()                      */
 /************************************************************************/
 
+/** Set style table.
+ * @param poStyleTable new style table (ownership transferred to the object)
+ */
 void OGRFeature::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 {
     if ( m_poStyleTable )
         delete m_poStyleTable;
     m_poStyleTable = poStyleTable;
 }
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                            RemapFields()                             */
@@ -5175,12 +5606,10 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
                                 int *panRemapSource )
 
 {
-    OGRField *pauNewFields;
-
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    pauNewFields = static_cast<OGRField *>(
+    OGRField *pauNewFields = static_cast<OGRField *>(
         CPLCalloc( poNewDefn->GetFieldCount(), sizeof(OGRField) ) );
 
     for( int iDstField = 0; iDstField < poDefn->GetFieldCount(); iDstField++ )
@@ -5226,12 +5655,10 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                     int *panRemapSource )
 
 {
-    OGRGeometry** papoNewGeomFields;
-
     if( poNewDefn == NULL )
         poNewDefn = poDefn;
 
-    papoNewGeomFields = static_cast<OGRGeometry **>(
+    OGRGeometry** papoNewGeomFields = static_cast<OGRGeometry **>(
         CPLCalloc( poNewDefn->GetGeomFieldCount(), sizeof(OGRGeometry*) ) );
 
     for( int iDstField = 0;
@@ -5265,6 +5692,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
 
     return OGRERR_NONE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         OGR_F_GetStyleTable()                        */
@@ -5320,8 +5748,8 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
  * @since GDAL 2.0
  */
 
-void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      CPL_UNUSED char** papszOptions)
+void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
+                                       CPL_UNUSED char** papszOptions)
 {
     int nFieldCount = poDefn->GetFieldCount();
     for(int i = 0; i < nFieldCount; i ++ )
@@ -5396,7 +5824,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
 
 void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
                                  int bNotNullableOnly,
-                                 char** papszOptions)
+                                 char** papszOptions )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_FillUnsetWithDefault" );
@@ -5432,7 +5860,7 @@ void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
 int OGRFeature::Validate( int nValidateFlags, int bEmitError )
 
 {
-    int bRet = TRUE;
+    bool bRet = true;
 
     int nGeomFieldCount = poDefn->GetGeomFieldCount();
     for( int i = 0; i < nGeomFieldCount; i++ )
@@ -5441,7 +5869,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             !poDefn->GetGeomFieldDefn(i)->IsNullable() &&
             GetGeomFieldRef(i) == NULL )
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -5466,7 +5894,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
                 else if( (eType == wkbSetZ(wkbUnknown) && !wkbHasZ(eFType)) ||
                          (eType != wkbSetZ(wkbUnknown) && eFType != eType) )
                 {
-                    bRet = FALSE;
+                    bRet = false;
                     if( bEmitError )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5488,7 +5916,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             (!(nValidateFlags & OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT) ||
                poDefn->GetFieldDefn(i)->GetDefault() == NULL))
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -5503,7 +5931,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             CPLIsUTF8(GetFieldAsString(i), -1) &&
             CPLStrlenUTF8(GetFieldAsString(i)) > poDefn->GetFieldDefn(i)->GetWidth())
         {
-            bRet = FALSE;
+            bRet = false;
             if( bEmitError )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

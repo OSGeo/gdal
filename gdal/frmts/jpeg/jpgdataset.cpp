@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement GDAL JPEG Support based on IJG libjpeg.
@@ -41,6 +40,8 @@
 
 #include <setjmp.h>
 
+CPL_CVSID("$Id$");
+
 static const int TIFF_VERSION = 42;
 
 static const int TIFF_BIGENDIAN = 0x4d4d;
@@ -59,8 +60,6 @@ typedef struct {
         GUInt16  tiff_version;   /* TIFF version number */
         GUInt32  tiff_diroff;    /* byte offset to first directory */
 } TIFFHeader;
-
-CPL_CVSID("$Id$");
 
 CPL_C_START
 #ifdef LIBJPEG_12_PATH
@@ -287,6 +286,9 @@ class JPGDataset : public JPGDatasetCommon
 #endif
     void   SetScaleNumAndDenom();
 
+    static GDALDataset*  OpenStage2( JPGDatasetOpenArgs* psArgs,
+                                     JPGDataset*& poDS );
+
   public:
                  JPGDataset();
     virtual ~JPGDataset();
@@ -297,7 +299,16 @@ class JPGDataset : public JPGDatasetCommon
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
+    static GDALDataset* CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
+                              char ** papszOptions,
+                              GDALProgressFunc pfnProgress, void * pProgressData,
+                              VSILFILE* fpImage,
+                              GDALDataType eDT,
+                              int nQuality,
+                              GDALJPEGErrorStruct& sErrorStruct,
+                              struct jpeg_compress_struct& sCInfo,
+                              struct jpeg_error_mgr& sJErr,
+                              GByte*& pabyScanline);
     static void ErrorExit(j_common_ptr cinfo);
 };
 
@@ -2202,8 +2213,8 @@ GDALDataset *JPGDatasetCommon::Open( GDALOpenInfo * poOpenInfo )
     sArgs.nScaleFactor = 1;
     sArgs.bDoPAMInitialize = TRUE;
     sArgs.bUseInternalOverviews =
-        CSLFetchBoolean( poOpenInfo->papszOpenOptions, "USE_INTERNAL_OVERVIEWS",
-                         TRUE);
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "USE_INTERNAL_OVERVIEWS", true);
 
     return JPGDataset::Open(&sArgs);
 }
@@ -2218,6 +2229,12 @@ GDALDataset *JPGDataset::Open( JPGDatasetOpenArgs* psArgs )
 
 {
     JPGDataset  *poDS = new JPGDataset();
+    return OpenStage2( psArgs, poDS );
+}
+
+GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs* psArgs,
+                                     JPGDataset*& poDS )
+{
     /* Will detect mismatch between compile-time and run-time libjpeg versions */
     if (setjmp(poDS->sErrorStruct.setjmp_buffer))
     {
@@ -3357,14 +3374,6 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     VSILFILE *fpImage = NULL;
     GDALJPEGErrorStruct sErrorStruct;
     sErrorStruct.bNonFatalErrorEncountered = FALSE;
-
-    if (setjmp(sErrorStruct.setjmp_buffer))
-    {
-        if( fpImage )
-            VSIFCloseL( fpImage );
-        return NULL;
-    }
-
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
 
 #if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
@@ -3439,12 +3448,42 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    GByte* pabyScanline;
+
+    // Nasty trick to avoid variable clobbering issues with setjmp/longjmp
+    return CreateCopyStage2(pszFilename, poSrcDS, papszOptions,
+                            pfnProgress, pProgressData,
+                            fpImage, eDT, nQuality,
+                            sErrorStruct, sCInfo, sJErr, pabyScanline);
+}
+
+GDALDataset *
+JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
+                              char ** papszOptions,
+                              GDALProgressFunc pfnProgress, void * pProgressData,
+                              VSILFILE* fpImage,
+                              GDALDataType eDT,
+                              int nQuality,
+                              GDALJPEGErrorStruct& sErrorStruct,
+                              struct jpeg_compress_struct& sCInfo,
+                              struct jpeg_error_mgr& sJErr,
+                              GByte*& pabyScanline)
+
+{
+    if (setjmp(sErrorStruct.setjmp_buffer))
+    {
+        if( fpImage )
+            VSIFCloseL( fpImage );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
 
-    struct jpeg_compress_struct sCInfo;
-    struct jpeg_error_mgr sJErr;
+
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;
@@ -3457,6 +3496,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBands = poSrcDS->GetRasterCount();
     sCInfo.image_width = nXSize;
     sCInfo.image_height = nYSize;
     sCInfo.input_components = nBands;
@@ -3532,7 +3572,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_set_quality( &sCInfo, nQuality, TRUE );
 
     const bool bProgressive
-        = CPL_TO_BOOL(CSLFetchBoolean( papszOptions, "PROGRESSIVE", FALSE ));
+        = CPLFetchBool( papszOptions, "PROGRESSIVE", false );
     if( bProgressive )
         jpeg_simple_progression( &sCInfo );
 
@@ -3572,20 +3612,28 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      jpeg file after the imagery.                                    */
 /* -------------------------------------------------------------------- */
     const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
-    const bool bAppendMask = !(nMaskFlags & GMF_ALL_VALID)
-        && (nBands == 1 || (nMaskFlags & GMF_PER_DATASET))
-        && CPL_TO_BOOL(
-            CSLFetchBoolean( papszOptions, "INTERNAL_MASK", TRUE ) );
+    const bool bAppendMask =
+        !(nMaskFlags & GMF_ALL_VALID) &&
+        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
+        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
-    bool bClipWarn = false;
-    GByte *pabyScanline
+    pabyScanline
         = static_cast<GByte *>( CPLMalloc( nBands * nXSize * nWorkDTSize ) );
 
+    if (setjmp(sErrorStruct.setjmp_buffer))
+    {
+        VSIFCloseL( fpImage );
+        CPLFree( pabyScanline );
+        jpeg_destroy_compress( &sCInfo );
+        return NULL;
+    }
+
+    CPLErr eErr = CE_None;
+    bool bClipWarn = false;
     for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         eErr = poSrcDS->RasterIO( GF_Read, 0, iLine, nXSize, 1,
@@ -3636,11 +3684,13 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Cleanup and close.                                              */
 /* -------------------------------------------------------------------- */
-    CPLFree( pabyScanline );
-
     if( eErr == CE_None )
         jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
+
+    // Free scanline and image after jpeg_finish_compress since this could
+    // cause a longjmp to occur
+    CPLFree( pabyScanline );
 
     VSIFCloseL( fpImage );
 
@@ -3676,7 +3726,7 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
         double adfGeoTransform[6] = { 0.0 };
 

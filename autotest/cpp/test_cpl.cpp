@@ -954,4 +954,48 @@ namespace tut
         ensure_equals( osTest, "fooBarBarfoo" );
     }
 
+/************************************************************************/
+/*                        VSIMallocAligned()                            */
+/************************************************************************/
+    template<>
+    template<>
+    void object::test<17>()
+    {
+        GByte* ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), 1));
+        ensure( ptr != NULL );
+        ensure( ((size_t)ptr % sizeof(void*)) == 0 );
+        *ptr = 1;
+        VSIFreeAligned(ptr);
+
+        ptr = static_cast<GByte*>(VSIMallocAligned(16, 1));
+        ensure( ptr != NULL );
+        ensure( ((size_t)ptr % 16) == 0 );
+        *ptr = 1;
+        VSIFreeAligned(ptr);
+
+        VSIFreeAligned(NULL);
+
+#ifndef WIN32
+        // Illegal use of API. Returns non NULL on Windows
+        ptr = static_cast<GByte*>(VSIMallocAligned(2, 1));
+        ensure( ptr == NULL );
+
+        // Illegal use of API. Crashes on Windows
+        ptr = static_cast<GByte*>(VSIMallocAligned(5, 1));
+        ensure( ptr == NULL );
+#endif
+
+        if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
+        {
+            // The following tests will fail because such allocations cannot succeed
+#if SIZEOF_VOIDP == 8
+            ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), ~((size_t)0)));
+            ensure( ptr == NULL );
+
+            ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), (~((size_t)0)) - sizeof(void*)));
+            ensure( ptr == NULL );
+#endif
+        }
+    }
+
 } // namespace tut

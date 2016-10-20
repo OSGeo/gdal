@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -32,15 +31,15 @@
 #include "wmsdriver.h"
 #include "minidriver_wms.h"
 
+CPL_CVSID("$Id$");
+
 CPP_GDALWMSMiniDriverFactory(WMS)
 
-GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {
-}
+GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {}
 
-GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {
-}
+GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {}
 
-CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

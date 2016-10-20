@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_minixml.h"
+#include "gmlutils.h"
 
 #include <vector>
 
@@ -167,7 +168,7 @@ class CPL_DLL GMLFeatureClass
     char       *m_pszSRSName;
     bool        m_bSRSNameConsistent;
 
-public:
+  public:
             GMLFeatureClass( const char *pszName = "" );
            ~GMLFeatureClass();
 
@@ -270,7 +271,7 @@ public:
 /************************************************************************/
 class CPL_DLL IGMLReader
 {
-public:
+  public:
     virtual     ~IGMLReader();
 
     virtual bool IsClassListLocked() const = 0;
@@ -322,6 +323,7 @@ public:
 IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             bool bInvertAxisOrderIfLatLong,
                             bool bConsiderEPSGAsURN,
+                            GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption);
 
 

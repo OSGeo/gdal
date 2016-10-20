@@ -31,6 +31,8 @@
 #ifndef VIRTUALDATASET_H_INCLUDED
 #define VIRTUALDATASET_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_hash_set.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
@@ -41,6 +43,7 @@
 
 int VRTApplyMetadata( CPLXMLNode *, GDALMajorObject * );
 CPLXMLNode *VRTSerializeMetadata( GDALMajorObject * );
+CPLErr GDALRegisterDefaultPixelFunc();
 
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
@@ -463,11 +466,12 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     char         **m_papszSourceList;
 
     bool           CanUseSourcesMinMaxImplementations();
+    void           CheckSource( VRTSimpleSource *poSS );
 
   public:
     int            nSources;
     VRTSource    **papoSources;
-    int            bEqualAreas;
+    int            bSkipBufferInitialization;
 
                    VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
                    VRTSourcedRasterBand( GDALDataType eType,
@@ -481,6 +485,11 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg);
+
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
 
     virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
@@ -617,8 +626,13 @@ class VRTPansharpenedRasterBand : public VRTRasterBand
 /*                         VRTDerivedRasterBand                         */
 /************************************************************************/
 
+class VRTDerivedRasterBandPrivateData;
+
 class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
 {
+    VRTDerivedRasterBandPrivateData* m_poPrivate;
+    bool InitializePython();
+
  public:
     char *pszFuncName;
     GDALDataType eSourceTransferType;
@@ -633,6 +647,11 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GDALRasterIOExtraArg* psExtraArg );
 
+    virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
+                                        int nXSize, int nYSize,
+                                        int nMaskFlagStop,
+                                        double* pdfDataPct);
+
     static CPLErr AddPixelFunction( const char *pszFuncName,
                                     GDALDerivedPixelFunc pfnPixelFunc );
     static GDALDerivedPixelFunc GetPixelFunction( const char *pszFuncName );
@@ -643,6 +662,21 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
+    virtual double GetMinimum( int *pbSuccess = NULL );
+    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax );
+    virtual CPLErr ComputeStatistics( int bApproxOK,
+                                      double *pdfMin, double *pdfMax,
+                                      double *pdfMean, double *pdfStdDev,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData );
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                                  int nBuckets, GUIntBig * panHistogram,
+                                  int bIncludeOutOfRange, int bApproxOK,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressData );
+
+    static void Cleanup();
 };
 
 /************************************************************************/
@@ -716,6 +750,8 @@ class VRTDriver : public GDALDriver
 class CPL_DLL VRTSimpleSource : public VRTSource
 {
 protected:
+    friend class VRTSourcedRasterBand;
+
     GDALRasterBand      *m_poRasterBand;
 
     // When poRasterBand is a mask band, poMaskBandMainBand is the band
@@ -879,12 +915,14 @@ protected:
 
     int            m_nColorTableComponent;
 
+    template <class WorkingDT>
     CPLErr          RasterIOInternal( int nReqXOff, int nReqYOff,
                                       int nReqXSize, int nReqYSize,
                                       void *pData, int nOutXSize, int nOutYSize,
                                       GDALDataType eBufType,
                                       GSpacing nPixelSpace, GSpacing nLineSpace,
-                                      GDALRasterIOExtraArg* psExtraArg );
+                                      GDALRasterIOExtraArg* psExtraArg,
+                                      GDALDataType eWrkDataType );
 
 public:
                    VRTComplexSource();
@@ -1048,5 +1086,7 @@ public:
 
     float               fNoDataValue;
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef VIRTUALDATASET_H_INCLUDED */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements FileGDB OGR driver.
@@ -81,8 +80,24 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 {
     // First check if we have to do any work.
     size_t nLen = strlen(pszFilename);
-    if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
-          (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
+    if( nLen == 1 && pszFilename[0] == '.' )
+    {
+        char* pszCurrentDir = CPLGetCurrentDir();
+        if( pszCurrentDir )
+        {
+            size_t nLen2 = strlen(pszCurrentDir);
+            bool bOK = (nLen2 >= 4 && EQUAL(pszCurrentDir + nLen2 - 4, ".gdb"));
+            CPLFree(pszCurrentDir);
+            if( !bOK )
+                return NULL;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
+               (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
         return NULL;
 
     long hr;
@@ -121,7 +136,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         if (FAILED(hr))
         {
             delete pGeoDatabase;
-            
+
             if( OGRGetDriverByName("OpenFileGDB") != NULL && bUpdate == FALSE )
             {
                 std::wstring fgdb_error_desc_w;
@@ -294,16 +309,16 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     CPLPopErrorHandler();
 
     OGRErr eErr = OGRERR_NONE;
-    
+
     CPLString osDatabaseToReopen;
 #ifndef WIN32
     if( bPerLayerCopyingForTransaction )
     {
         int bError = FALSE;
-        
+
         if( VSIMkdir( osEditedName, 0755 ) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "Cannot create directory '%s'.",
                       osEditedName.c_str() );
             bError = TRUE;
@@ -444,14 +459,14 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 
     CPLString osEditedName(osName);
     osEditedName += ".ogredited";
-    
+
 #ifndef WIN32
     if( bPerLayerCopyingForTransaction )
     {
         int bError = FALSE;
         char** papszFiles;
         std::vector<CPLString> aosTmpFilesToClean;
-        
+
         // Check for files present in original copy that are not in edited copy
         // That is to say deleted layers
         papszFiles = VSIReadDir(osName);
@@ -463,7 +478,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
             if( (*papszIter)[0] == 'a' &&
                 VSIStatL( CPLFormFilename(osEditedName, *papszIter, NULL), &sStat ) != 0 )
             {
-                if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
+                if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
                     VSIRename( CPLFormFilename(osName, *papszIter, NULL),
                                CPLFormFilename(osName, *papszIter, "tmp") ) != 0 )
                 {
@@ -497,7 +512,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                 // as a temporary file
                 if( lstat( CPLFormFilename(osName, *papszIter, NULL), &sStat ) == 0 )
                 {
-                    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || 
+                    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") ||
                         VSIRename( CPLFormFilename(osName, *papszIter, NULL),
                                    CPLFormFilename(osName, *papszIter, "tmp") ) != 0 )
                     {
@@ -511,7 +526,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                 }
                 if( !bError )
                 {
-                    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") || 
+                    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") ||
                         CPLMoveFile( CPLFormFilename(osName, *papszIter, NULL),
                                      CPLFormFilename(osEditedName, *papszIter, NULL) ) != 0 )
                     {
@@ -533,7 +548,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
         {
             for(size_t i=0;i<aosTmpFilesToClean.size();i++)
             {
-                if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE4") || 
+                if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE4") ||
                     VSIUnlink(aosTmpFilesToClean[i]) != 0 )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -553,7 +568,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
             Release(osName);
             return OGRERR_FAILURE;
         }
-        else if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE5") || 
+        else if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE5") ||
                  CPLUnlinkTree(osEditedName) != 0 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -565,13 +580,13 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     {
         CPLString osTmpName(osName);
         osTmpName += ".ogrtmp";
-        
+
         /* Install the backup copy as the main database in 3 steps : */
         /* first rename the main directory  in .tmp */
         /* then rename the edited copy under regular name */
         /* and finally dispose the .tmp directory */
         /* That way there's no risk definitely losing data */
-        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
+        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
             VSIRename(osName, osTmpName) != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -582,8 +597,8 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
             Release(osName);
             return OGRERR_FAILURE;
         }
-        
-        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || 
+
+        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") ||
             VSIRename(osEditedName, osName) != 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -595,7 +610,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
             return OGRERR_FAILURE;
         }
 
-        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") || 
+        if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") ||
             CPLUnlinkTree(osTmpName) != 0 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -666,7 +681,7 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
     osEditedName += ".ogredited";
 
     OGRErr eErr = OGRERR_NONE;
-    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") || 
+    if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
         CPLUnlinkTree(osEditedName) != 0 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -841,4 +856,3 @@ void RegisterOGRFileGDB()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }
-

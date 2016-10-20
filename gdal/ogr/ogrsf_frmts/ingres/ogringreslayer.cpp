@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRIngresLayer class.
@@ -101,9 +100,7 @@ OGRFeature *OGRIngresLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -121,16 +118,16 @@ OGRFeature *OGRIngresLayer::GetNextFeature()
 /*                              ParseXY()                               */
 /************************************************************************/
 
-static int ParseXY( const char **ppszNext, double *padfXY )
+static bool ParseXY( const char **ppszNext, double *padfXY )
 
 {
-    int iStartY;
     const char *pszNext = *ppszNext;
 
-    for( iStartY = 0; ; iStartY++ )
+    int iStartY = 0;  // Used after for.
+    for( ; ; iStartY++ )
     {
         if( pszNext[iStartY] == '\0' )
-            return FALSE;
+            return false;
 
         if( pszNext[iStartY] == ',' )
         {
@@ -142,19 +139,16 @@ static int ParseXY( const char **ppszNext, double *padfXY )
     padfXY[0] = CPLAtof(pszNext);
     padfXY[1] = CPLAtof(pszNext + iStartY);
 
-    int iEnd;
-
-    for( iEnd = iStartY;
-         pszNext[iEnd] != ')';
-         iEnd++ )
+    int iEnd = iStartY;  // Used after for.
+    for( ; pszNext[iEnd] != ')'; iEnd++ )
     {
         if( pszNext[iEnd] == '\0' )
-            return FALSE;
+            return false;
     }
 
     *ppszNext += iEnd;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -374,21 +368,21 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
         if( osGeomColumn.size()
             && EQUAL(psFDesc->ds_columnName,osGeomColumn))
         {
-        	if( poDS->IsNewIngres() )
-        	{
-        		OGRGeometry *poGeometry = NULL;
-        		unsigned char *pszWKB = (unsigned char *) papszRow[iField];
+            if( poDS->IsNewIngres() )
+            {
+                OGRGeometry *poGeometry = NULL;
+                unsigned char *pszWKB = (unsigned char *) papszRow[iField];
 
-//        		OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeometry);
-        		OGRGeometryFactory::createFromWkb(pszWKB, NULL, &poGeometry, -1);
+                // GRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeometry);
+                OGRGeometryFactory::createFromWkb(pszWKB, NULL, &poGeometry, -1);
 
-        		poFeature->SetGeometryDirectly(poGeometry);
-        	}
-        	else
-        	{
-        		poFeature->SetGeometryDirectly(
-        			TranslateGeometry( papszRow[iField] ) );
-        	}
+                poFeature->SetGeometryDirectly(poGeometry);
+            }
+            else
+            {
+                poFeature->SetGeometryDirectly(
+                    TranslateGeometry( papszRow[iField] ) );
+            }
             continue;
         }
 
@@ -549,23 +543,26 @@ OGRFeature *OGRIngresLayer::GetFeature( GIntBig nFeatureId )
 int OGRIngresLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
+    return FALSE;
+
+#if 0
+    if( EQUAL(pszCap, OLCRandomRead) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if( EQUAL(pszCap, OLCFastFeatureCount) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+    else if( EQUAL(pszCap, OLCFastSpatialFilter) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCTransactions) )
+    else if( EQUAL(pszCap, OLCTransactions) )
         return FALSE;
 
-    else if( EQUAL(pszCap,OLCFastGetExtent) )
+    else if( EQUAL(pszCap, OLCFastGetExtent) )
         return FALSE;
 
-    else
-        return FALSE;
+    return FALSE;
+#endif
 }
 
 
@@ -609,10 +606,9 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
 /* -------------------------------------------------------------------- */
     if( nSRSId == -2 )
     {
-        char         szCommand[1024];
-        char           **papszRow;
         OGRIngresStatement oStatement(poDS->GetConn());
 
+        char szCommand[1024] = {};
         sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
                  "WHERE f_table_name = '%s' AND f_geometry_column = '%s'",
@@ -621,7 +617,7 @@ int OGRIngresLayer::FetchSRSId(OGRFeatureDefn *poDefn)
 
         oStatement.ExecuteSQL(szCommand);
 
-        papszRow = oStatement.GetRow();
+        char **papszRow = oStatement.GetRow();
 
         if( papszRow != NULL && papszRow[0] != NULL )
         {

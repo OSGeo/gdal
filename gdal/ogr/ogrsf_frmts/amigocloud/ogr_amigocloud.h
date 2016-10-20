@@ -35,7 +35,17 @@
 
 #include <vector>
 #include <string>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <json.h>
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
 #include <cpl_hash_set.h>
 #include <cstdlib>
 
@@ -118,7 +128,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
     public:
          OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
-        ~OGRAmigoCloudLayer();
+        virtual ~OGRAmigoCloudLayer();
 
         virtual void                ResetReading();
         virtual OGRFeature *        GetNextFeature();
@@ -159,7 +169,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
 
     public:
          OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDS, const char* pszName);
-        ~OGRAmigoCloudTableLayer();
+        virtual ~OGRAmigoCloudTableLayer();
 
         virtual const char        *GetName() { return osTableName.c_str(); }
                 const char        *GetDatasetId() { return osDatasetId.c_str(); }
@@ -233,21 +243,21 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         OGRAmigoCloudTableLayer**  papoLayers;
         int                 nLayers;
-        int                 bReadWrite;
+        bool                bReadWrite;
 
-        int                 bUseHTTPS;
+        bool                bUseHTTPS;
 
         CPLString           osAPIKey;
 
-        int                 bMustCleanPersistent;
+        bool                bMustCleanPersistent;
 
         CPLString           osCurrentSchema;
-
+        // TODO(schwehr): Can bHasOGRMetadataFunction be a bool?
         int                 bHasOGRMetadataFunction;
 
     public:
         OGRAmigoCloudDataSource();
-        ~OGRAmigoCloudDataSource();
+        virtual ~OGRAmigoCloudDataSource();
 
         int                 Open( const char * pszFilename,
                                   char** papszOpenOptions,
@@ -273,7 +283,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
         const char*                 GetAPIURL() const;
-        int                         IsReadWrite() const { return bReadWrite; }
+        bool                        IsReadWrite() const { return bReadWrite; }
         const char*                 GetProjetcId() { return pszProjetctId;}
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
@@ -287,10 +297,11 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
         void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
 
-        OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
-                                                        OGRGeometry *poSpatialFilter = NULL,
-                                                        const char *pszDialect = NULL,
-                                                        int bRunDeferredActions = FALSE );
+        OGRLayer *                  ExecuteSQLInternal(
+            const char *pszSQLCommand,
+            OGRGeometry *poSpatialFilter = NULL,
+            const char *pszDialect = NULL,
+            bool bRunDeferredActions = false );
 };
 
 #endif /* ndef OGR_AMIGOCLOUD_H_INCLUDED */

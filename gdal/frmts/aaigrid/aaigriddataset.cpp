@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements Arc/Info ASCII Grid Format.
@@ -35,6 +34,7 @@
 
 #include <ctype.h>
 #include <climits>
+#include <limits>
 
 #include "cpl_string.h"
 #include "gdal_pam.h"
@@ -81,7 +81,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
   protected:
     GDALDataType eDataType;
     double      adfGeoTransform[6];
-    int         bNoDataSet;
+    bool        bNoDataSet;
     double      dfNoDataValue;
 
 
@@ -300,7 +300,7 @@ CPLErr AAIGRasterBand::SetNoDataValue( double dfNoData )
 {
     AAIGDataset *poODS = reinterpret_cast<AAIGDataset *>( poDS );
 
-    poODS->bNoDataSet = TRUE;
+    poODS->bNoDataSet = true;
     poODS->dfNoDataValue = dfNoData;
 
     return CE_None;
@@ -323,7 +323,7 @@ AAIGDataset::AAIGDataset() :
     nBufferOffset(0),
     nOffsetInBuffer(256),
     eDataType(GDT_Int32),
-    bNoDataSet(FALSE),
+    bNoDataSet(false),
     dfNoDataValue(-9999.0)
 {
     adfGeoTransform[0] = 0.0;
@@ -588,7 +588,7 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
     {
         const char* pszNoData = papszTokens[i + 1];
 
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
             (strchr( pszNoData, '.' ) != NULL ||
@@ -596,6 +596,12 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
              INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
         {
             eDataType = GDT_Float32;
+            if( !CPLIsInf(dfNoDataValue) &&
+                (fabs(dfNoDataValue) < std::numeric_limits<float>::min() ||
+                 fabs(dfNoDataValue) > std::numeric_limits<float>::max()) )
+            {
+                eDataType = GDT_Float64;
+            }
         }
         if( eDataType == GDT_Float32 )
         {
@@ -683,7 +689,7 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
     {
         const char* pszNoData = papszTokens[i + 1];
 
-        bNoDataSet = TRUE;
+        bNoDataSet = true;
         dfNoDataValue = CPLAtofM(pszNoData);
         if( pszDataType == NULL &&
             (strchr( pszNoData, '.' ) != NULL ||
@@ -821,7 +827,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo * poOpenInfo,
 /* -------------------------------------------------------------------- */
     CPLAssert( NULL != poDS->fp );
 
-    if( pszDataType == NULL && poDS->eDataType != GDT_Float32)
+    if( pszDataType == NULL && poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
     {
         /* Allocate 100K chunk + 1 extra byte for NULL character. */
         const size_t nChunkSize = 1024 * 100;

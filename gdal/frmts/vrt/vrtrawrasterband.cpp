@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTRawRasterBand
@@ -34,6 +33,8 @@
 #include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -98,7 +99,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                   "Attempt to write to read only dataset in"
                   "VRTRawRasterBand::IRasterIO()." );
 
-        return( CE_Failure );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -494,3 +495,5 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
     VRTRasterBand::GetFileList( ppapszFileList, pnSize,
                                 pnMaxSize, hSetFiles);
 }
+
+/*! @endcond */

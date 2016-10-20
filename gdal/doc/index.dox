@@ -1,24 +1,34 @@
-#ifndef DOXYGEN_SKIP                                                            
-/* $Id$ */               
-#endif /* DOXYGEN_SKIP */                                                       
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
 
 /*! \mainpage GDAL - Geospatial Data Abstraction Library
 
 <center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a><a href="index_br.html">[Portuguese]</a><a href="http://gdal.gloobe.org/">[French/Francais]</a></center>
 
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td>
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL/OGR \endlatexonly
 is a translator library for raster and vector geospatial data formats
-that is released under an <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> style 
+that is released under an <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatlicensedoesGDALOGRuse">X/MIT</a> style
 <a href="http://www.opensource.org/">
 Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
 Geospatial Foundation</a>.  As a library, it presents a
 \link gdal_datamodel.html single raster abstract data model\endlink and
-\link ogr_arch.html vector abstract data model\endlink  
+\link ogr_arch.html single vector abstract data model\endlink
 to the calling application for all supported formats.  It also comes with a variety
 of useful command line utilities
-for data translation and processing.  The 
-<a href="http://trac.osgeo.org/gdal/wiki/Release/2.1.0-News">NEWS</a>
-page describes the April 2016 GDAL/OGR 2.1.0 release.
+for data translation and processing.  The
+<a href="http://trac.osgeo.org/gdal/wiki/Release/2.1.1-News">NEWS</a>
+page describes the July 2016 GDAL/OGR 2.1.1 release.
+</td>
+
+<td>
+\htmlonly<a href="http://www.osgeo.org"><img src="OSGeo_project.png" alt="OSGeo project" border="0"></a>\endhtmlonly
+</td>
+</tr>
+</table>
 
 Traditionally GDAL used to design the raster part of the library, and OGR the
 vector part for Simple Features. Starting with GDAL 2.0, both sides have been
@@ -26,9 +36,7 @@ more tightly integrated. You can still refer to the <a href="http://gdal.org/1.1
 if needed.
 
 Master: http://www.gdal.org<br>
-Download: 
- <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
- <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
+Download: <a href="http://download.osgeo.org/gdal">http at download.osgeo.org</a>
 
 \section index_userdocs User Oriented Documentation
 
@@ -90,6 +98,7 @@ Download:
 <li> <a href="gdal_8h.html">gdal.h: Raster C API</a>
 <li> <a href="ogr__api_8h.html">ogr_api.h: Vector C API</a>
 <li> <a href="gdal__alg_8h.html">gdal_alg.h: GDAL Algorithms C API</a>
+<li> <a href="ogr__srs__api_8h.html">ogr_srs_api.h: Spatial Reference System C API</a>
 <li> <a href="gdal__utils_8h.html">gdal_utils.h: GDAL Utilities C API</a>
 <li> <a href="classGDALDataset.html">GDALDataset C++ API</a>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand C++ API</a>
@@ -107,22 +116,22 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 </ul>
 -->
 
-\section foss4g Conference 
- 
-\htmlonly 
-<table border="0" cellspacing="4" cellpadding="4"> 
+\section foss4g Conference
 
-<tr><td><a href="http://2016.foss4g.org/"> 
-<img src="http://wiki.osgeo.org/images/f/ff/Foss4g2016_logo_squared.png" alt="FOSS4G 2016" border="0"> 
-</a></td> 
- 
-<td><a href="http://2016.foss4g.org">FOSS4G 2016</a> is the leading annual  
-conference for free and open source geospatial software.  It will include  
-presentations related to GDAL/OGR, and some of the GDAL/OGR  
-development community will be attending.  It is <i>the</i> event for those  
-interested in GDAL/OGR, other FOSS geospatial technologies and the community  
-around them. The conference will be held in Bonn, Germany, <strong>August 24th - 26th, 2016</strong>.</td>
-</table> 
+\htmlonly
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td><a href="http://2017.foss4g.org/">
+<img src="foss4g2017.png" alt="FOSS4G 2017" border="0">
+</a></td>
+
+<td><a href="http://2017.foss4g.org">FOSS4G 2017</a> is the leading annual
+conference for free and open source geospatial software.  It will include
+presentations related to GDAL/OGR, and some of the GDAL/OGR
+development community will be attending.  It is <i>the</i> event for those
+interested in GDAL/OGR, other FOSS geospatial technologies and the community
+around them. The conference will be held in Boston, USA, <strong>August 14th - 18th, 2017</strong>.</td>
+</table>
 \endhtmlonly
 
 \section index_maillist Mailing List
@@ -132,22 +141,21 @@ developments with the GDAL/OGR project.
 
 The <a href="mailto:gdal-dev@lists.osgeo.org">gdal-dev@lists.osgeo.org</a>
 mailing list can be used for discussion of development and user issues related
-to GDAL and related technologies.  Subscriptions can be done, and archives 
-reviewed <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">on 
+to GDAL and related technologies.  Subscriptions can be done, and archives
+reviewed <a href="http://lists.osgeo.org/mailman/listinfo/gdal-dev/">on
 the web</a>.  The mailing list is also available in read-only format by NNTP at
-<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
-and by HTTP at
-<a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.
+<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>.
+
 Archives since 2005 are searchable on <a href="http://osgeo-org.1560.n6.nabble.com/GDAL-Dev-f3742093.html">Nabble</a>.<p>
 
-Some GDAL/OGR users and developers can also often be found in the 
-<a href="irc://irc.freenode.net/#gdal">#gdal</a> IRC channel on irc.freenode.net.<p>
+Some GDAL/OGR users and developers can also often be found in the
+<a href="irc://irc.freenode.net/#gdal">\#gdal</a> IRC channel on irc.freenode.net.<p>
 
 \section index_bugs Bug Reporting
 
-GDAL bugs 
-<a href="http://trac.osgeo.org/gdal">can be reported</a>, and 
-<a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">can be 
+GDAL bugs
+<a href="http://trac.osgeo.org/gdal">can be reported</a>, and
+<a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">can be
 listed</a> using Trac.<p>
 
 \section index_bindings GDAL In Other Languages

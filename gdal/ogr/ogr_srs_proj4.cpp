@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference interface to PROJ.4.
@@ -173,8 +172,9 @@ static const OGRProj4PM* OGRGetProj4PMFromCode(int nPMCode)
 
 static const OGRProj4PM* OGRGetProj4PMFromVal(double dfVal)
 {
-    unsigned int i;
-    for(i=0;i<sizeof(ogr_pj_pms)/sizeof(ogr_pj_pms[0]);i++)
+    for( unsigned int i = 0;
+         i < sizeof(ogr_pj_pms) / sizeof(ogr_pj_pms[0]);
+         i++ )
     {
         if (fabs(dfVal - CPLDMSToDec(ogr_pj_pms[i].pszFromGreenwich)) < 1e-10)
         {
@@ -477,6 +477,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             pszCleanCopy[i] = ' ';
     }
 
+    const char* pszInitEpsgCleanCopy = strstr(pszCleanCopy, "init=epsg:");
+    bool bSetAuthorityCode = true;
+    // If there's an override, then drop the authority code
+    if( pszInitEpsgCleanCopy != NULL && 
+        strchr(pszInitEpsgCleanCopy, '+') != NULL )
+    {
+        bSetAuthorityCode = false;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Try to normalize the definition.  This should expand +init=     */
 /*      clauses and so forth.                                           */
@@ -504,17 +513,24 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      If we have an EPSG based init string, and no existing +proj     */
 /*      portion then try to normalize into into a PROJ.4 string.        */
+/*      This can happen if the proj.4 epsg dictionnary is missing.      */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszNormalized,"init=epsg:") != NULL
+    const char* pszInitEpsg = strstr(pszNormalized,"init=epsg:");
+    if( pszInitEpsg != NULL
         && strstr(pszNormalized,"proj=") == NULL )
     {
-        const char *pszNumber = strstr(pszNormalized,"init=epsg:") + 10;
+        const char *pszNumber = pszInitEpsg + strlen("init=epsg:");
 
         OGRErr eErr = importFromEPSG( atoi(pszNumber) );
-        if( eErr == OGRERR_NONE )
+        if( eErr != OGRERR_NONE || strchr(pszNumber, '+') == NULL )
         {
             CPLFree( pszNormalized );
             return eErr;
+        }
+        int nIdx = GetRoot()->FindChild("AUTHORITY");
+        if( nIdx >= 0 )
+        {
+            GetRoot()->DestroyChild( nIdx );
         }
     }
 
@@ -1321,7 +1337,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             const LinearUnitsStruct* psLinearUnits = GetLinearFromLinearConvOrName( dfValue, pszValue );
             if( psLinearUnits != NULL )
             {
-                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitName = psLinearUnits->pszWKTName;
                 pszUnitConv = psLinearUnits->pszValueInMeter;
             }
             else
@@ -1335,7 +1351,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             const LinearUnitsStruct* psLinearUnits = GetLinearFromProjName( pszValue );
             if( psLinearUnits != NULL )
             {
-                pszUnitName = psLinearUnits->pszWKTName,
+                pszUnitName = psLinearUnits->pszWKTName;
                 pszUnitConv = psLinearUnits->pszValueInMeter;
             }
             else
@@ -1376,12 +1392,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /*      Preserve authority (for example IGNF)                           */
 /* -------------------------------------------------------------------- */
     const char *pszINIT = CSLFetchNameValue(papszNV,"init");
-    const char *pszColumn;
-    if( pszINIT != NULL && (pszColumn = strchr(pszINIT, ':')) != NULL &&
+    const char *pszColumn = NULL;
+    if( bSetAuthorityCode &&
+        pszINIT != NULL && (pszColumn = strchr(pszINIT, ':')) != NULL &&
         GetRoot()->FindChild( "AUTHORITY" ) < 0 )
     {
         CPLString osAuthority;
         osAuthority.assign(pszINIT, pszColumn - pszINIT);
+        osAuthority.toupper();
         OGR_SRSNode* poAuthNode = new OGR_SRSNode( "AUTHORITY" );
         poAuthNode->AddChild( new OGR_SRSNode( osAuthority ) );
         poAuthNode->AddChild( new OGR_SRSNode( pszColumn + 1 ) );
@@ -1651,15 +1669,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
        // rest of the parameters, since we know pretty much everything at this
        // stage.
        CPLsnprintf( szProj4+strlen(szProj4), sizeof(szProj4)-strlen(szProj4),
-		"+proj=merc +a=%.16g +b=%.16g +lat_ts=%.16g"
-		" +lon_0=%.16g +x_0=%.16g +y_0=%.16g +k=%.16g +units=m"
-		" +nadgrids=@null +wktext  +no_defs",
-		GetSemiMajor(), GetSemiMajor(),
-		GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
-		GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
-		GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
-		GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
-		GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0) );
+                    "+proj=merc +a=%.16g +b=%.16g +lat_ts=%.16g"
+                    " +lon_0=%.16g +x_0=%.16g +y_0=%.16g +k=%.16g +units=m"
+                    " +nadgrids=@null +wktext  +no_defs",
+                    GetSemiMajor(), GetSemiMajor(),
+                    GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
+                    GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                    GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                    GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0),
+                    GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0) );
        *ppszProj4 = CPLStrdup( szProj4 );
 
        return OGRERR_NONE;

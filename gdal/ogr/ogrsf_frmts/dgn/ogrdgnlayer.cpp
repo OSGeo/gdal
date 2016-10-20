@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRDGNLayer class.
@@ -45,8 +44,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     iNextShapeId(0),
     hDGN(hDGNIn),
     bUpdate(bUpdateIn)
-    // Unused:
-    // bHaveSimpleQuery(FALSE)
 {
 
 /* -------------------------------------------------------------------- */
@@ -402,11 +399,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Lookup color.                                                   */
 /* -------------------------------------------------------------------- */
-    int gv_red;
-    int gv_green;
-    int gv_blue;
+    int gv_red = 0;
+    int gv_green = 0;
+    int gv_blue = 0;
 
-    char szFSColor[128];
+    char szFSColor[128] = {};
     szFSColor[0] = '\0';
     if( DGNLookupColor( hDGN, psElement->color,
                         &gv_red, &gv_green, &gv_blue ) )
@@ -529,15 +526,16 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
       case DGNST_ARC:
       {
-          OGRLineString *poLine = new OGRLineString();
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
-          DGNPoint      asPoints[90];
           // TODO: std::abs abd std::max
           int nPoints = static_cast<int>(MAX(1,ABS(psArc->sweepang) / 5) + 1);
           if( nPoints > 90 )
               nPoints = 90;
+
+          DGNPoint asPoints[90] = {};
           DGNStrokeArc( hDGN, psArc, nPoints, asPoints );
 
+          OGRLineString *poLine = new OGRLineString();
           poLine->setNumPoints( nPoints );
           for( int i = 0; i < nPoints; i++ )
           {
@@ -655,9 +653,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           for( int iChild = 0; iChild < psHdr->numelems; iChild++ )
           {
               OGRFeature *poChildFeature = NULL;
-              DGNElemCore *psChildElement;
-
-              psChildElement = DGNReadElement( hDGN );
+              DGNElemCore *psChildElement = DGNReadElement( hDGN );
               // should verify complex bit set, not another header.
 
               if( psChildElement != NULL )
@@ -669,9 +665,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               if( poChildFeature != NULL
                   && poChildFeature->GetGeometryRef() != NULL )
               {
-                  OGRGeometry *poGeom;
-
-                  poGeom = poChildFeature->GetGeometryRef();
+                  OGRGeometry *poGeom = poChildFeature->GetGeometryRef();
                   if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
                       oChildren.addGeometry( poGeom );
               }
@@ -797,8 +791,8 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Otherwise scan the index.                                       */
 /* -------------------------------------------------------------------- */
-    int nElementCount;
-    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
+    int nElementCount = 0;
+    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN, &nElementCount);
 
     int nFeatureCount = 0;
     bool bInComplexShape = false;
@@ -816,13 +810,13 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
             if( !(pasIndex[i].flags & DGNEIF_COMPLEX) || !bInComplexShape )
             {
                 nFeatureCount++;
-                bInComplexShape = FALSE;
+                bInComplexShape = false;
             }
             break;
 
           case DGNST_COMPLEX_HEADER:
             nFeatureCount++;
-            bInComplexShape = TRUE;
+            bInComplexShape = true;
             break;
 
           default:
@@ -871,15 +865,14 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
                                                      int nGroupType )
 
 {
-    int nTotalPoints = poLS->getNumPoints();
-    int iNextPoint = 0;
+    const int nTotalPoints = poLS->getNumPoints();
     int iGeom = 0;
     DGNElemCore **papsGroup = static_cast<DGNElemCore **>(
         CPLCalloc( sizeof(void*), (nTotalPoints/(MAX_ELEM_POINTS-1))+3 ) );
 
-    for( iNextPoint = 0; iNextPoint < nTotalPoints;  )
+    for( int iNextPoint = 0; iNextPoint < nTotalPoints;  )
     {
-        DGNPoint asPoints[MAX_ELEM_POINTS];
+        DGNPoint asPoints[MAX_ELEM_POINTS] = {};
         int nThisCount = 0;
 
         // we need to repeat end points of elements.
@@ -1064,7 +1057,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             && (pszStyle == NULL || strstr(pszStyle,"LABEL") == NULL) )
         {
             // Treat a non text point as a degenerate line.
-            DGNPoint asPoints[2];
+            DGNPoint asPoints[2] = {};
             asPoints[0].x = poPoint->getX();
             asPoints[0].y = poPoint->getY();
             asPoints[0].z = poPoint->getZ();
@@ -1128,10 +1121,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             // papsGroup[0] = DGNCreateComplexHeaderFromGroup(
             //     hDGN, DGNT_COMPLEX_SHAPE_HEADER, dgnElements.size(),
             //     papsGroup+1 );
-            DGNPoint asPoints[1];
-            asPoints[0].x = 0;
-            asPoints[0].y = 0;
-            asPoints[0].z = 0;
+            DGNPoint asPoints[1] = {};
             papsGroup[0] = DGNCreateCellHeaderFromGroup(
                 hDGN, "", 1, NULL,
                 static_cast<int>(dgnElements.size()), papsGroup + 1,

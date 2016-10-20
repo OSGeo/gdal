@@ -3,9 +3,9 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page gdalinfo.c Simple C Example: gdalinfo.c
+\page gdalinfo_lib.cpp Simple C Example: gdalinfo_lib.cpp
 
-\include gdalinfo.c
+\include gdalinfo_lib.cpp
 */
 
 /*!
@@ -19,10 +19,3 @@
 
 \include jdemdataset.cpp
 */
-
-/*!
-\page NEWS NEWS
-
-\include NEWS
-*/
-

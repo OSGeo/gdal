@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  CreateCopy() implementation for R stats package object format.
@@ -100,9 +99,8 @@ RCreateCopy( const char * pszFilename,
     const int nBands = poSrcDS->GetRasterCount();
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
-    const int bASCII = CSLFetchBoolean( papszOptions, "ASCII", FALSE );
-    const bool bCompressed =
-        CPL_TO_BOOL( CSLFetchBoolean( papszOptions, "COMPRESS", !bASCII ) );
+    const bool bASCII = CPLFetchBool( papszOptions, "ASCII", false );
+    const bool bCompressed = CPLFetchBool( papszOptions, "COMPRESS", !bASCII );
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of gtmwaypoint class.
@@ -30,6 +29,8 @@
  ****************************************************************************/
 #include "ogr_gtm.h"
 #include "cpl_time.h"
+
+CPL_CVSID("$Id$");
 
 GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                                     OGRSpatialReference* poSRSIn,
@@ -79,7 +80,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
     nNextFID = 0;
     nTotalFCount = poDS->getNWpts();
 
-    this->pszName = CPLStrdup(pszNameIn);
+    pszName = CPLStrdup(pszNameIn);
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     SetDescription( poFeatureDefn->GetName() );
@@ -261,7 +262,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
         writeDouble(fp, lon);
         float altitude = 0.0;
         if (poGeom->getGeometryType() == wkbPoint25D)
-	    altitude = (float) point->getZ();
+            altitude = (float) point->getZ();
 
         WriteFeatureAttributes(poFeature, altitude);
         break;
@@ -285,7 +286,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 
 OGRFeature* GTMWaypointLayer::GetNextFeature()
 {
-    if (bError)
+    if( bError )
         return NULL;
 
     while (poDS->hasNextWaypoint())
@@ -295,7 +296,7 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not read waypoint. File probably corrupted");
-            bError = TRUE;
+            bError = true;
             return NULL;
         }
 

@@ -174,6 +174,45 @@ stored the EXIF metadata domain.</p>
 files created with the default profile GDALGeoTIFF. Note that all bands must use the same nodata value.
 When BASELINE or GeoTIFF profile are used, the nodata value is stored into a PAM .aux.xml file.</p>
 
+<h2>Sparse files</h2>
+
+<p>GDAL makes a special interpretation of a TIFF tile or strip whose offset
+and byte count are set to 0, that is to say a tile or strip that has no corresponding
+allocated physical storage. On reading, such tiles or strips are considered to
+be implictly set to 0 or to the nodata value when it is defined. On writing, it
+is possible to enable generating such files through the Create() interface by setting
+the SPARSE_OK creation option to YES. Then, blocks that are never written
+through the IWriteBlock()/IRasterIO() interfaces will have their offset and
+byte count set to 0. This is particularly useful to save disk space and time when
+the file must be initialized empty before being passed to a further processing
+stage that will fill it.
+To avoid ambiguities with anoter sparse mechanism discussed in the next paragraphs,
+we will call such files with implicit tiles/strips "TIFF sparse files". They will
+be likely <b>not</b> interoperable with TIFF readers that are not GDAL based and
+would consider such files with implicit tiles/strips as defective.
+</p>
+
+<p>Starting with GDAL 2.2, this mechanism is extended to the CreateCopy() and
+Open() interfaces (for update mode) as well. If the SPARSE_OK creation option
+(or the SPARSE_OK open option for Open()) is set to YES, even an attempt to
+write a all 0/nodata block will be detected so that the tile/strip is not
+allocated (if it was already allocated, then its content will be replaced by
+the 0/nodata content).</p>
+
+<p>Starting with GDAL 2.2, in the case where SPARSE_OK is <b>not</b> defined (or set
+to its default value FALSE), for uncompressed files whose nodata value is not
+set, or set to 0, in Create() and CreateCopy() mode, the driver will delay the
+allocation of 0-blocks until file closing, so as to be able to write them at
+the very end of the file, and in a way compatible of the filesystem sparse file
+mechanisms (to be distinguished from the TIFF sparse file extension discussed
+earlier). That is that all the empty blocks will be seen as properly allocated
+from the TIFF point of view (corresponding strips/tiles will have valid offsets
+and byte counts), but will have no corresponding physical storage. Provided that
+the filesystem supports such sparse files, which is the case for most Linux
+popular filesystems (ext2/3/4, xfs, btfs, ...) or NTFS on Windows. If the file
+system does not support sparse files, physical storage will be
+allocated and filled with zeros.</p>
+
 <h2>Open options</h2>
 
 <ul>
@@ -186,18 +225,27 @@ ignored for JPEG.  Default is compression in the main thread.</p></li>
 <li><p><b>GEOREF_SOURCES=string</b>: (GDAL &gt; 2.2) Define which georeferencing sources are
 allowed and their priority order. See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.</li>
 
+<li><p><b>SPARSE_OK=TRUE/FALSE</b> ((GDAL &gt; 2.2): Should empty blocks be omitted on disk?
+When this option is set, any attempt of writing a block whose all pixels are 0
+or the nodata value will cause it not to be written at all (unless there is a
+corresponding block already allocated in the file).
+Sparse files have 0 tile/strip offsets for blocks never written and save space;
+however, most non-GDAL packages cannot read such files.
+The default is FALSE.</p></li>
+
 </ul>
 
 <h2>Creation Issues</h2>
 
 <p>GeoTIFF files can be created with any GDAL defined band type, including
 the complex types.  Created files may have any number of bands.  Files
-with exactly 3 bands will be
-given a photometric interpretation of RGB, files with exactly four bands
+of type Byte with exactly 3 bands will be given a photometric interpretation
+of RGB, files of type Byte with exactly four bands
 will have a photometric interpretation of RGBA, while all other combinations
-will have a photometric interpretation of MIN_IS_WHITE.  Files with
-pseudo-color tables, or GCPs can currently only be created when creating from
-an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).</p>
+will have a photometric interpretation of MIN_IS_BLACK. Starting with GDAL 2.2,
+non-standard (regarding to the intrinsics TIFF capabilities) band color
+interpretation, such as BGR ordering, will be handled in creation and reading,
+by storing them in the GDAL internal metadata TIFF tag.</p>
 
 <p>Note that the GeoTIFF format does not support parametric description of datums,
 so TOWGS84 parameters in coordinate systems are lost in GeoTIFF format.</p>
@@ -232,7 +280,10 @@ option can be used to force creation of tiled TIFF files.</p></li>
 <li><p><b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
 256, strip height defaults to a value such that one strip is 8K or less. </p></li>
 
-<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing a value from 1 to 7.  The apparent pixel type should be Byte. From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted. </p></li>
+<li><p><b>NBITS=n</b>: Create a file with less than 8 bits per sample by passing
+a value from 1 to 7.  The apparent pixel type should be Byte.
+From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
+From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
 <li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
@@ -254,7 +305,15 @@ Default is compression in the main thread.</p></li>
 Set the number of least-significant bits to clear, possibly different per band.
 Lossy compression scheme to be best used with PREDICTOR=2 and LZW/DEFLATE compression.</p></li>
 
-<li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files be allowed to be sparse?  Sparse files have 0 tile/strip offsets for blocks never written and save space; however, most non-GDAL packages cannot read such files.  The default is FALSE.</p></li>
+<li><p><b>SPARSE_OK=TRUE/FALSE</b> (From GDAL 1.6.0): Should newly created files (through Create() interface) be allowed to be sparse?
+Sparse files have 0 tile/strip offsets for blocks never written and save space;
+however, most non-GDAL packages cannot read such files.
+Starting with GDAL 2.2, SPARSE_OK=TRUE is also supported through the CreateCopy()
+interface.
+Starting with GDAL 2.2, even an attempt to write a block whose
+all pixels are 0 or the nodata value will cause it not to be written at all
+(unless there is a corresponding block already allocated in the file).
+The default is FALSE.</p></li>
 
 <li><p><b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.</p></li>
 
@@ -454,6 +513,11 @@ in priority, and if not possible, the later is tried.
 <li>GDAL_GEOREF_SOURCES=comma-separated list with one or several of
 PAM, INTERNAL, TABFILE or WORLDFILE. (GDAL &gt;= 2.2).
 See <a href="#georeferencing"><i>Georeferencing</i></a> paragraph.
+<li>GDAL_NUM_THREADS=number_of_threads/ALL_CPUS: (GDAL &gt;= 2.1)
+Enable multi-threaded compression by specifying the number of worker threads.
+Worth it for slow compression algorithms such as DEFLATE or LZMA. Will be
+ignored for JPEG.  Default is compression in the main thread. Note: this
+configuration option also apply to other parts to GDAL (warping, gridding, ...).</li>
 </ul>
 </p>
 

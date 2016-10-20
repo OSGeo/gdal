@@ -28,6 +28,9 @@
  ****************************************************************************/
 
 #include "ogr_db2.h"
+
+CPL_CVSID("$Id$");
+
 static GPKGTileFormat GetTileFormat(const char* pszTF );
 
 /* layer status */
@@ -271,6 +274,8 @@ int OGRDB2DataSource::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return TRUE;
     else
         return FALSE;
@@ -574,13 +579,11 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRDB2TableLayer   *poLayer;
+    OGRDB2TableLayer *poLayer = new OGRDB2TableLayer( this );
 
-    poLayer = new OGRDB2TableLayer( this );
-
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",
-                               TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag(
+        CPLFetchBool(papszOptions, "PRECISION", true));
 
     char *pszWKT = NULL;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
@@ -3617,6 +3620,3 @@ OGRErr OGRDB2DataSource::CreateGDALAspatialExtension()
 #endif
     return OGRERR_NONE;
 }
-
-
-

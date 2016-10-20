@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Image Translator Program
@@ -506,10 +505,10 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                         GDALTranslateOptionsNew(NULL, NULL);
 
     GDALDatasetH hOutDS;
-    int			i;
-    int			nRasterXSize, nRasterYSize;
-    GDALDriverH		hDriver;
-    int			nOXSize = 0, nOYSize = 0;
+    int i;
+    int nRasterXSize, nRasterYSize;
+    GDALDriverH hDriver;
+    int nOXSize = 0, nOYSize = 0;
     const char          *pszProjection;
     const char *pszSource = NULL;
     int bGotBounds = FALSE;
@@ -579,7 +578,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 
     if( (psOptions->nOXSizePixel != 0 || psOptions->dfOXSizePct != 0.0 || psOptions->nOYSizePixel != 0 ||
-         psOptions->dfOYSizePct) && (psOptions->dfXRes != 0 && psOptions->dfYRes != 0) )
+         psOptions->dfOYSizePct != 0.0) && (psOptions->dfXRes != 0 && psOptions->dfYRes != 0) )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "-outsize and -tr options cannot be used at the same time.");
         if(pbUsageError)
@@ -609,7 +608,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Build band list to translate					*/
+/*      Build band list to translate                                    */
 /* -------------------------------------------------------------------- */
     if( psOptions->panBandList == NULL )
     {
@@ -679,7 +678,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if( psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0
         || psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0 )
     {
-        double	adfGeoTransform[6];
+        double adfGeoTransform[6];
 
         GDALGetGeoTransform( hSrcDataset, adfGeoTransform );
 
@@ -728,6 +727,16 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         psOptions->adfSrcWin[2] = (psOptions->dfLRX - psOptions->dfULX) / adfGeoTransform[1];
         psOptions->adfSrcWin[3] = (psOptions->dfLRY - psOptions->dfULY) / adfGeoTransform[5];
+
+        // In case of nearest resampling, round to integer pixels (#6610)
+        if( psOptions->pszResampling == NULL ||
+            EQUALN(psOptions->pszResampling, "NEAR", 4) )
+        {
+            psOptions->adfSrcWin[0] = floor(psOptions->adfSrcWin[0] + 0.001);
+            psOptions->adfSrcWin[1] = floor(psOptions->adfSrcWin[1] + 0.001);
+            psOptions->adfSrcWin[2] = floor(psOptions->adfSrcWin[2] + 0.5);
+            psOptions->adfSrcWin[3] = floor(psOptions->adfSrcWin[3] + 0.5);
+        }
 
         /*if( !bQuiet )
             fprintf( stdout,
@@ -1229,7 +1238,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                             nDstMax = 0x7FFFFFFF;
                             break;
                         default:
-                            CPLAssert(FALSE);
+                            CPLAssert(false);
                             break;
                     }
 
@@ -1329,7 +1338,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
         if( bScale && !bHaveScaleSrc )
         {
-            double	adfCMinMax[2];
+            double adfCMinMax[2];
             GDALComputeRasterMinMax( poSrcBand, TRUE, adfCMinMax );
             dfScaleSrcMin = adfCMinMax[0];
             dfScaleSrcMax = adfCMinMax[1];

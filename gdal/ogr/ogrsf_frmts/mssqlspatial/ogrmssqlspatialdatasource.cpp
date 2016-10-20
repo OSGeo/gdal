@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Implements OGRMSSQLSpatialDataSource class..
@@ -60,7 +59,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     else
         nBCPSize = 1000;
 #ifdef MSSQL_BCP_SUPPORTED
-    bUseCopy = CSLTestBoolean(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "TRUE"));
+    bUseCopy = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_BCP", "TRUE"));
 #else
     bUseCopy = FALSE;
 #endif
@@ -103,6 +102,8 @@ int OGRMSSQLSpatialDataSource::TestCapability( const char * pszCap )
         return TRUE;
 #endif
     if( EQUAL(pszCap,ODsCCreateLayer) || EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return TRUE;
     else
         return FALSE;
@@ -264,7 +265,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
 
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", true) )
           pszTableName = LaunderName( pszDotPos + 1 ); //skip "."
       else
           pszTableName = CPLStrdup( pszDotPos + 1 ); //skip "."
@@ -272,7 +273,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
     {
       pszSchemaName = NULL;
-      if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+      if( CPLFetchBool(papszOptions, "LAUNDER", TRUE) )
           pszTableName = LaunderName( pszLayerName ); //skip "."
       else
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
@@ -350,7 +351,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if (!pszGeomColumn)
             pszGeomColumn = "ogr_geometry";
     }
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the metadata tables                                  */
@@ -402,13 +404,13 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
      /* determine the FID column name */
     const char* pszFIDColumnNameIn = CSLFetchNameValueDef(papszOptions, "FID", "ogr_fid");
-    if( CSLFetchBoolean(papszOptions,"LAUNDER", TRUE) )
+    if( CPLFetchBool(papszOptions, "LAUNDER", TRUE) )
         pszFIDColumnName = LaunderName( pszFIDColumnNameIn );
     else
         pszFIDColumnName = CPLStrdup( pszFIDColumnNameIn );
 
-    int bFID64 = CSLFetchBoolean(papszOptions, "FID64", FALSE);
- 	const char* pszFIDType = bFID64 ? "bigint": "int";
+    const bool bFID64 = CPLFetchBool(papszOptions, "FID64", FALSE);
+    const char* pszFIDType = bFID64 ? "bigint": "int";
 
     if( eType == wkbNone )
     {
@@ -421,7 +423,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         oStmt.Appendf("CREATE TABLE [%s].[%s] ([%s] [%s] IDENTITY(1,1) NOT NULL, "
             "[%s] [%s] %s, CONSTRAINT [PK_%s] PRIMARY KEY CLUSTERED ([%s] ASC))",
             pszSchemaName, pszTableName, pszFIDColumnName, pszFIDType, pszGeomColumn, pszGeomType,
-            bGeomNullable? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
+            bGeomNullable ? "NULL":"NOT NULL", pszTableName, pszFIDColumnName);
     }
 
     CPLFree( pszFIDColumnName );
@@ -456,8 +458,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     else
         poLayer->SetLayerStatus(MSSQLLAYERSTATUS_CREATED);
 
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", true) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
     if( bUseCopy )
         poLayer->SetUseCopy(nBCPSize);
@@ -770,9 +772,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             while(SQL_SUCCEEDED(SQLDrivers(hEnv, direction,
                 driver, sizeof(driver), &driver_ret, attr, sizeof(attr), &attr_ret)))
             {
-	            direction = SQL_FETCH_NEXT;
+                direction = SQL_FETCH_NEXT;
                 osDriverList += CPLSPrintf("%s\n", driver);
-	        }
+            }
 
             CPLError( CE_Failure, CPLE_AppDefined,
                 "Unable to initialize connection to the server for %s,\n"
@@ -846,25 +848,25 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* if requesting all user database table then this takes priority */
- 	if (papszTableNames == NULL && bListAllTables)
- 	{
- 	    CPLODBCStatement oStmt( &oSession );
+    if (papszTableNames == NULL && bListAllTables)
+    {
+        CPLODBCStatement oStmt( &oSession );
 
- 	    oStmt.Append( "select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, sys.columns.name from sys.columns join sys.types on sys.columns.system_type_id = sys.types.system_type_id and sys.columns.user_type_id = sys.types.user_type_id join sys.objects on sys.objects.object_id = sys.columns.object_id join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and (sys.objects.type = 'U' or sys.objects.type = 'V') union all select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, '' from sys.objects join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where not exists (select * from sys.columns sc1 join sys.types on sc1.system_type_id = sys.types.system_type_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and sys.objects.object_id = sc1.object_id) and (sys.objects.type = 'U' or sys.objects.type = 'V')" );
+        oStmt.Append( "select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, sys.columns.name from sys.columns join sys.types on sys.columns.system_type_id = sys.types.system_type_id and sys.columns.user_type_id = sys.types.user_type_id join sys.objects on sys.objects.object_id = sys.columns.object_id join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and (sys.objects.type = 'U' or sys.objects.type = 'V') union all select sys.schemas.name, sys.schemas.name + '.' + sys.objects.name, '' from sys.objects join sys.schemas on sys.objects.schema_id = sys.schemas.schema_id where not exists (select * from sys.columns sc1 join sys.types on sc1.system_type_id = sys.types.system_type_id where (sys.types.name = 'geometry' or sys.types.name = 'geography') and sys.objects.object_id = sc1.object_id) and (sys.objects.type = 'U' or sys.objects.type = 'V')" );
 
- 	    if( oStmt.ExecuteSQL() )
- 	    {
- 	        while( oStmt.Fetch() )
- 	        {
- 	            papszSchemaNames =
- 	                    CSLAddString( papszSchemaNames, oStmt.GetColData(0) );
- 	            papszTableNames =
- 	                    CSLAddString( papszTableNames, oStmt.GetColData(1) );
- 	            papszGeomColumnNames =
- 	                    CSLAddString( papszGeomColumnNames, oStmt.GetColData(2) );
- 	        }
- 	    }
- 	}
+        if( oStmt.ExecuteSQL() )
+        {
+            while( oStmt.Fetch() )
+            {
+                papszSchemaNames =
+                    CSLAddString( papszSchemaNames, oStmt.GetColData(0) );
+                papszTableNames =
+                    CSLAddString( papszTableNames, oStmt.GetColData(1) );
+                papszGeomColumnNames =
+                    CSLAddString( papszGeomColumnNames, oStmt.GetColData(2) );
+            }
+        }
+    }
 
     /* Determine the available tables if not specified. */
     if (papszTableNames == NULL && bUseGeometryColumns)

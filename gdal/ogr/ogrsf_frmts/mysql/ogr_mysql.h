@@ -95,7 +95,7 @@ class OGRMySQLLayer : public OGRLayer
 
     MYSQL_RES           *hResultSet;
 
-	int                 FetchSRSId();
+    int                 FetchSRSId();
 
   public:
                         OGRMySQLLayer();
@@ -141,9 +141,9 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 
   public:
                         OGRMySQLTableLayer( OGRMySQLDataSource *,
-                                         const char * pszName,
-                                         int bUpdate, int nSRSId = -2 );
-                        ~OGRMySQLTableLayer();
+                                            const char * pszName,
+                                            int bUpdate, int nSRSId = -2 );
+                        virtual ~OGRMySQLTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
 
@@ -185,6 +185,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     char                *pszRawStatement;
 
     // Layer srid.
+    // TODO(schwehr): Does this shadow the nSRSId in OGRMySQLLayer?
     int                 nSRSId;
 
   public:
@@ -229,7 +230,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
   public:
                         OGRMySQLDataSource();
-                        ~OGRMySQLDataSource();
+                        virtual ~OGRMySQLDataSource();
 
     MYSQL              *GetConn() { return hConn; }
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRGeomFieldDefn class implementation.
@@ -102,6 +101,7 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
 /*                             Initialize()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
                                    OGRwkbGeometryType eTypeIn )
 
@@ -112,6 +112,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
     bIgnore = FALSE;
     bNullable = TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~OGRGeomFieldDefn()                          */
@@ -235,7 +236,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType();
+ * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType() const;
  *
  * \brief Fetch geometry type of this field.
  *
@@ -283,15 +284,13 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRGeomFieldDefn::SetType( OGRwkbGeometryType eType );
- *
  * \brief Set the geometry type of this field.
  * This should never be done to an OGRGeomFieldDefn
  * that is already part of an OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_GFld_SetType().
  *
- * @param eType the new field geometry type.
+ * @param eTypeIn the new field geometry type.
  *
  * @since GDAL 1.11
  */
@@ -330,7 +329,7 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 /************************************************************************/
 
 /**
- * \fn int OGRGeomFieldDefn::IsIgnored();
+ * \fn int OGRGeomFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *

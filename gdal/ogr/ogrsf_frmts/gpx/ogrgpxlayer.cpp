@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GPX Translator
  * Purpose:  Implements OGRGPXLayer class.
@@ -717,19 +716,25 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             {
                 for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
                 {
-                    int bMatch;
+                    bool bMatch = false;
                     if (iField >= nGPXFields)
                     {
                         char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
-                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                        pszCompatibleName ) == 0);
+                        bMatch =
+                            strcmp(poFeatureDefn->
+                                   GetFieldDefn(iField)->GetNameRef(),
+                                   pszCompatibleName ) == 0;
                         CPLFree(pszCompatibleName);
                     }
                     else
-                        bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                                        pszName ) == 0);
+                    {
+                        bMatch =
+                            strcmp(poFeatureDefn->
+                                   GetFieldDefn(iField)->GetNameRef(),
+                                   pszName ) == 0;
+                    }
 
-                    if (bMatch)
+                    if( bMatch )
                     {
                         iCurrentField = iField;
                         pszSubElementName = CPLStrdup(pszName);
@@ -1081,7 +1086,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     nFeatureTabIndex = 0;
     nWithoutEventCounter = 0;
 
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1145,7 +1150,7 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
 
 static char* OGRGPX_GetUTF8String(const char* pszString)
 {
-    char *pszEscaped;
+    char *pszEscaped = NULL;
     if (!CPLIsUTF8(pszString, -1) &&
          CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
@@ -1167,7 +1172,9 @@ static char* OGRGPX_GetUTF8String(const char* pszString)
         pszEscaped = CPLForceToASCII(pszString, -1, '?');
     }
     else
+    {
         pszEscaped = CPLStrdup(pszString);
+    }
 
     return pszEscaped;
 }
@@ -1176,20 +1183,19 @@ static char* OGRGPX_GetUTF8String(const char* pszString)
 /*                   OGRGPX_WriteXMLExtension()                          */
 /************************************************************************/
 
-int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
-                                          const char* pszContent)
+bool OGRGPXLayer::OGRGPX_WriteXMLExtension( const char* pszTagName,
+                                            const char* pszContent )
 {
     CPLXMLNode* poXML = CPLParseXMLString(pszContent);
     if (poXML)
     {
-        char* pszTagNameWithNS;
-        const char* pszXMLNS = NULL;
         const char* pszUnderscore = strchr(pszTagName, '_');
-        pszTagNameWithNS = CPLStrdup(pszTagName);
+        char* pszTagNameWithNS = CPLStrdup(pszTagName);
         if (pszUnderscore)
             pszTagNameWithNS[pszUnderscore - pszTagName] = ':';
 
         /* If we detect a Garmin GPX extension, add its xmlns */
+        const char* pszXMLNS = NULL;
         if (strcmp(pszTagName, "gpxx_WaypointExtension") == 0)
             pszXMLNS = " xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"";
 
@@ -1202,10 +1208,10 @@ int OGRGPXLayer::OGRGPX_WriteXMLExtension(const char* pszTagName,
         CPLFree(pszTagNameWithNS);
         CPLDestroyXMLNode(poXML);
 
-        return TRUE;
+        return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1302,7 +1308,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                     /* Try to detect XML content */
                     if (pszRaw[0] == '<' && pszRaw[strlen(pszRaw) - 1] == '>')
                     {
-                        if (OGRGPX_WriteXMLExtension( compatibleName, pszRaw))
+                        if( OGRGPX_WriteXMLExtension( compatibleName, pszRaw) )
                         {
                             CPLFree(compatibleName);
                             continue;
@@ -1315,7 +1321,8 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                     {
                         char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
 
-                        if (OGRGPX_WriteXMLExtension(compatibleName, pszUnescapedContent))
+                        if( OGRGPX_WriteXMLExtension(compatibleName,
+                                                     pszUnescapedContent) )
                         {
                             CPLFree(pszUnescapedContent);
                             CPLFree(compatibleName);
@@ -1835,7 +1842,7 @@ OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField,
             return OGRERR_NONE;
         }
     }
-    if (poDS->GetUseExtensions() == FALSE)
+    if( !poDS->GetUseExtensions() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Field of name '%s' is not supported in GPX schema. "
@@ -1917,7 +1924,7 @@ void OGRGPXLayer::LoadExtensionsSchema()
     bStopParsing = false;
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -2007,18 +2014,26 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
             CPLFree(pszSubElementName);
             pszSubElementName = CPLStrdup(pszName);
 
-            int iField;
-            for(iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+            int iField = 0;  // Used after for.
+            for( ; iField < poFeatureDefn->GetFieldCount(); iField++ )
             {
-                int bMatch;
-                if (iField >= nGPXFields)
+                bool bMatch = false;
+                if( iField >= nGPXFields )
                 {
                     char* pszCompatibleName = OGRGPX_GetOGRCompatibleTagName(pszName);
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszCompatibleName ) == 0);
+                    bMatch =
+                        strcmp(poFeatureDefn->
+                               GetFieldDefn(iField)->GetNameRef(),
+                               pszCompatibleName ) == 0;
                     CPLFree(pszCompatibleName);
                 }
                 else
-                    bMatch = (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), pszName ) == 0);
+                {
+                    bMatch =
+                        strcmp(poFeatureDefn->
+                               GetFieldDefn(iField)->GetNameRef(),
+                               pszName ) == 0;
+                }
 
                 if (bMatch)
                 {
@@ -2054,7 +2069,7 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
 /*                   endElementLoadSchemaCbk()                           */
 /************************************************************************/
 
-static int OGRGPXIsInt(const char* pszStr)
+static bool OGRGPXIsInt( const char* pszStr )
 {
     while(*pszStr == ' ')
         pszStr++;
@@ -2064,12 +2079,12 @@ static int OGRGPXIsInt(const char* pszStr)
         if (pszStr[i] == '+' || pszStr[i] == '-')
         {
             if (i != 0)
-                return FALSE;
+                return false;
         }
         else if (!(pszStr[i] >= '0' && pszStr[i] <= '9'))
-            return FALSE;
+            return false;
     }
-    return TRUE;
+    return true;
 }
 
 
@@ -2130,7 +2145,7 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
                     {
                         if (currentFieldDefn->GetType() == OFTInteger)
                         {
-                            if (OGRGPXIsInt(pszSubElementValue) == FALSE)
+                            if( !OGRGPXIsInt(pszSubElementValue) )
                             {
                                 currentFieldDefn->SetType(OFTReal);
                             }

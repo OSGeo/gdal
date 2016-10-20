@@ -427,6 +427,8 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    uChar cat;           /* General category of Meteo Product. */
    unsigned short int templat; /* The section 4 template number. */
    uChar subcat;        /* Specific subcategory of Product. */
+   uChar genProcess;    /* What type of generate process (Analysis,
+                           Forecast, Probability Forecast, etc). */
    uChar fstSurfType;   /* Type of the first fixed surface. */
    double fstSurfValue; /* Value of first fixed surface. */
    sInt4 value;         /* The scaled value from GRIB2 file. */
@@ -435,6 +437,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    uChar sndSurfType;   /* Type of the second fixed surface. */
    double sndSurfValue; /* Value of second fixed surface. */
    sChar f_sndValue;    /* flag if SndValue is valid. */
+   sChar f_fstValue;    /* flag if FstValue is valid. */
    uChar timeRangeUnit;
    sInt4 lenTime;       /* Used by parseTime to tell difference between 8hr
                          * average and 1hr average ozone. */
@@ -486,14 +489,16 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_PROBABIL_PNT) && (templat != GS4_STATISTIC)
        && (templat != GS4_PROBABIL_TIME) && (templat != GS4_PERCENTILE)
        && (templat != GS4_ENSEMBLE_STAT)
+       && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_DERIVED_INTERVAL)) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 8, 9, "
-                  "10, 11, 12, 20, 30\n");
+                  "10, 11, 12, 15, 20, 30. Template found = %d\n", templat);
       return -8;
    }
    cat = (*buffer)[10 - 5];
    subcat = (*buffer)[11 - 5];
+   genProcess = (*buffer)[12 - 5];
    genID = 0;
    probType = 0;
    lowerProb = 0;
@@ -510,7 +515,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       /* Compute forecast time. */
       foreTimeUnit = (*buffer)[18 - 5];
       MEMCPY_BIG (&foreTime, *buffer + 19 - 5, sizeof (sInt4));
-      if (ParseSect4Time2sec (foreTime, foreTimeUnit, &(inv->foreSec)) != 0) {
+      if (ParseSect4Time2sec (/*inv->refTime, */foreTime, foreTimeUnit, &(inv->foreSec)) != 0) {
          errSprintf ("unable to convert TimeUnit: %d \n", foreTimeUnit);
          return -8;
       }
@@ -639,23 +644,23 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    /* Try to convert lenTime to hourly. */
    if (timeRangeUnit == 0) {
       lenTime = (sInt4) (lenTime / 60.);
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else if (timeRangeUnit == 1) {
    } else if (timeRangeUnit == 2) {
       lenTime = lenTime * 24;
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else if (timeRangeUnit == 10) {
       lenTime = lenTime * 3;
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else if (timeRangeUnit == 11) {
       lenTime = lenTime * 6;
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else if (timeRangeUnit == 12) {
       lenTime = lenTime * 12;
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else if (timeRangeUnit == 13) {
       lenTime = (sInt4) (lenTime / 3600.);
-      /*timeRangeUnit = 1;*/
+      timeRangeUnit = 1;
    } else {
       printf ("Can't handle this timeRangeUnit\n");
       //myAssert (timeRangeUnit == 1);
@@ -664,64 +669,26 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    if (lenTime == GRIB2MISSING_s4) {
       lenTime = 0;
    }
-   /* Find out what the name of this variable is. */
-   ParseElemName (center, subcenter, prodType, templat, cat, subcat,
-                  lenTime, timeIncrType, genID, probType, lowerProb,
-                  upperProb, &(inv->element), &(inv->comment),
-                  &(inv->unitName), &convert, percentile);
-/*
-   if (strcmp (element, "") == 0) {
-      mallocSprintf (&(inv->element), "unknown");
-      mallocSprintf (&(inv->unitName), "[%s]", unitName);
-      if (strcmp (comment, "unknown") == 0) {
-         mallocSprintf (&(inv->comment), "(prodType %d, cat %d, subcat %d)"
-                        " [%s]", prodType, cat, subcat, unitName);
-      } else {
-         mallocSprintf (&(inv->comment), "%s [%s]", comment, unitName);
-      }
-   } else {
-      if (IsData_MOS (center, subcenter)) {
-         * See : http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablea.html *
-         if (genID == 96) {
-            inv->element = (char *) malloc ((1 + 7 + strlen (element))
-                                            * sizeof (char));
-            sprintf (inv->element, "MOSGFS-%s", element);
-         } else {
-            inv->element = (char *) malloc ((1 + 4 + strlen (element))
-                                            * sizeof (char));
-            sprintf (inv->element, "MOS-%s", element);
-         }
-      } else {
-         inv->element = (char *) malloc ((1 + strlen (element))
-                                         * sizeof (char));
-         strcpy (inv->element, element);
-      }
-      mallocSprintf (&(inv->unitName), "[%s]", unitName);
-      mallocSprintf (&(inv->comment), "%s [%s]", comment, unitName);
-*
-      inv->unitName = (char *) malloc ((1 + 2 + strlen (unitName))
-                                       * sizeof (char));
-      sprintf (inv->unitName, "[%s]", unitName);
-      inv->comment = (char *) malloc ((1 + 3 + strlen (unitName) + strlen (comment))
-                                      * sizeof (char));
-      sprintf (inv->comment, "%s [%s]", comment, unitName);
-*
-   }
-*/
 
    if ((templat == GS4_RADAR) || (templat == GS4_SATELLITE)
        || (templat == 254) || (templat == 1000) || (templat == 1001)
        || (templat == 1002)) {
-      reallocSprintf (&(inv->shortFstLevel), "0 undefined");
-      reallocSprintf (&(inv->longFstLevel), "0.000[-] undefined ()");
+      fstSurfValue = 0;
+      f_fstValue = 0;
+      fstSurfType = 0;
+      sndSurfValue = 0;
+      f_sndValue = 0;
    } else {
       fstSurfType = (*buffer)[23 - 5];
       scale = (*buffer)[24 - 5];
       MEMCPY_BIG (&value, *buffer + 25 - 5, sizeof (sInt4));
-      if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1)) {
+      if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
+          (fstSurfType == GRIB2MISSING_u1)) {
          fstSurfValue = 0;
+         f_fstValue = 1;
       } else {
          fstSurfValue = value * pow (10.0, (int) (-1 * scale));
+         f_fstValue = 1;
       }
       sndSurfType = (*buffer)[29 - 5];
       scale = (*buffer)[30 - 5];
@@ -734,7 +701,19 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
          sndSurfValue = value * pow (10.0, -1 * scale);
          f_sndValue = 1;
       }
+   }
 
+   /* Find out what the name of this variable is. */
+   ParseElemName (center, subcenter, prodType, templat, cat, subcat,
+                  lenTime, timeRangeUnit, timeIncrType, genID, probType, lowerProb,
+                  upperProb, &(inv->element), &(inv->comment),
+                  &(inv->unitName), &convert, percentile, genProcess,
+                  f_fstValue, fstSurfValue, f_sndValue, sndSurfValue);
+
+   if (! f_fstValue) {
+      reallocSprintf (&(inv->shortFstLevel), "0 undefined");
+      reallocSprintf (&(inv->longFstLevel), "0.000[-] undefined ()");
+   } else {
       ParseLevelName (center, subcenter, fstSurfType, fstSurfValue,
                       f_sndValue, sndSurfValue, &(inv->shortFstLevel),
                       &(inv->longFstLevel));

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_java_extend.i 10639 2007-01-17 20:57:32Z tamas $
+ * $Id$
  *
  * Name:     ogr_java_extend.i
  * Project:  GDAL SWIG Interface

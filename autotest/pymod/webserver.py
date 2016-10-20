@@ -321,6 +321,24 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.server.stop_requested = True
                 return
 
+            if self.path.startswith('/vsimem/'):
+                from osgeo import gdal
+                f = gdal.VSIFOpenL(self.path, "rb")
+                if f is None:
+                    self.send_response(404)
+                    self.end_headers()
+                else:
+                    gdal.VSIFSeekL(f, 0, 2)
+                    size = gdal.VSIFTellL(f)
+                    gdal.VSIFSeekL(f, 0, 0)
+                    content = gdal.VSIFReadL(1, size, f)
+                    gdal.VSIFCloseL(f)
+                    self.protocol_version = 'HTTP/1.0'
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(content)
+                return
+
             # First signed URL
             if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
                 if 'Range' in self.headers:
@@ -1009,6 +1027,8 @@ class GDAL_ThreadedHttpServer(Thread):
 
     def stop(self):
         self.server.stop_server()
+        # Explictly destroy the object so that the socket is really closed
+        del self.server
 
     def run_server(self, timeout):
         if not self.server.running:
@@ -1021,7 +1041,15 @@ class GDAL_ThreadedHttpServer(Thread):
             count = count + 0.5
         self.stop()
 
-def launch():
+def launch(fork_process = True):
+    if not fork_process:
+        try:
+            server = GDAL_ThreadedHttpServer(GDAL_Handler)
+            server.start_and_wait_ready()
+            return (server, server.getPort())
+        except:
+            return (None, 0)
+
     python_exe = sys.executable
     if sys.platform == 'win32':
         python_exe = python_exe.replace('\\', '/')
@@ -1043,6 +1071,11 @@ def launch():
     return (process, port)
 
 def server_stop(process, port):
+
+    if isinstance(process, GDAL_ThreadedHttpServer):
+        process.stop()
+        return
+
     gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
     gdaltest.wait_process(process)
 

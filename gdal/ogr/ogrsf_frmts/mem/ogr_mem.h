@@ -125,7 +125,7 @@ class OGRMemDataSource : public OGRDataSource
 
   public:
                         OGRMemDataSource( const char *, char ** );
-                        ~OGRMemDataSource();
+                        virtual ~OGRMemDataSource();
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

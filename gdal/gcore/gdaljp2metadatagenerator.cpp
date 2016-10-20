@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALJP2Metadata: metadata generator
@@ -34,10 +33,20 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_LIBXML2
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */
@@ -274,7 +283,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
             return GDALGMLJP2Expr(osXMLRes);
         }
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             return GDALGMLJP2Expr("");
     }
 }
@@ -318,8 +327,8 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 /*                      GDALGMLJP2XPathErrorHandler()                   */
 /************************************************************************/
 
-static void GDALGMLJP2XPathErrorHandler(CPL_UNUSED void * userData,
-                                        xmlErrorPtr error)
+static void GDALGMLJP2XPathErrorHandler( void * /* userData */,
+                                         xmlErrorPtr error)
 {
     if( error->domain == XML_FROM_XPATH &&
         error->str1 != NULL &&

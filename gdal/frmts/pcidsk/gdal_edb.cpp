@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCIDSK Database File
  * Purpose:  External Database access interface implementation (EDBFile).
@@ -82,7 +81,7 @@ public:
 EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess )
 
 {
-    GDALDataset *poDS;
+    GDALDataset *poDS = NULL;
 
     if( osAccess == "r" )
         poDS = reinterpret_cast<GDALDataset *>( GDALOpen( osFilename.c_str(), GA_ReadOnly )) ;

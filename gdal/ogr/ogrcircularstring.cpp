@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCircularString geometry class.
@@ -32,7 +31,7 @@
 #include <assert.h>
 #include <vector>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRCircularString()                          */
@@ -217,15 +216,23 @@ double OGRCircularString::get_Length() const
 
 {
     double dfLength = 0.0;
-    double R, cx, cy, alpha0, alpha1, alpha2;
-    int i;
-    for( i = 0; i < nPointCount-2; i += 2 )
+    for( int i = 0; i < nPointCount-2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
+        const double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2) )
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2) )
         {
             dfLength += fabs(alpha2 - alpha0) * R;
         }
@@ -241,7 +248,8 @@ double OGRCircularString::get_Length() const
 /*                       ExtendEnvelopeWithCircular()                   */
 /************************************************************************/
 
-void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) const
+void OGRCircularString::ExtendEnvelopeWithCircular(
+    OGREnvelope * psEnvelope ) const
 {
     if( !IsValidFast() || nPointCount == 0 )
         return;
@@ -250,18 +258,27 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
     // extremities of the circle.
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
-        double R, cx, cy, alpha0, alpha1, alpha2;
+        double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2))
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2))
         {
-            int quadrantStart = (int)floor(alpha0 / (M_PI / 2));
-            int quadrantEnd  = (int)floor(alpha2 / (M_PI / 2));
+            int quadrantStart = static_cast<int>(floor(alpha0 / (M_PI / 2)));
+            int quadrantEnd  = static_cast<int>(floor(alpha2 / (M_PI / 2)));
             if( quadrantStart > quadrantEnd )
             {
-                int tmp = quadrantStart;
+                const int tmp = quadrantStart;
                 quadrantStart = quadrantEnd;
                 quadrantEnd = tmp;
             }
@@ -283,7 +300,7 @@ void OGRCircularString::ExtendEnvelopeWithCircular( OGREnvelope * psEnvelope ) c
                         psEnvelope->MinY = MIN(psEnvelope->MaxY, cy - R);
                         break;
                     default:
-                        CPLAssert(FALSE);
+                        CPLAssert(false);
                         break;
                 }
             }
@@ -547,13 +564,13 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
 /*                          CurveToLine()                               */
 /************************************************************************/
 
-OGRLineString* OGRCircularString::CurveToLine(double dfMaxAngleStepSizeDegrees,
-                                              const char* const* papszOptions) const
+OGRLineString* OGRCircularString::CurveToLine(
+    double dfMaxAngleStepSizeDegrees, const char* const* papszOptions ) const
 {
     OGRLineString* poLine = new OGRLineString();
     poLine->assignSpatialReference(getSpatialReference());
 
-    int bHasZ = (getCoordinateDimension() == 3);
+    const bool bHasZ = getCoordinateDimension() == 3;
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
         OGRLineString* poArc = OGRGeometryFactory::curveToLineString(
@@ -615,6 +632,7 @@ OGRGeometry* OGRCircularString::getLinearGeometry(double dfMaxAngleStepSizeDegre
     return CurveToLine(dfMaxAngleStepSizeDegrees, papszOptions);
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -630,6 +648,7 @@ OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToError;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            IsFullCircle()                            */
@@ -681,6 +700,7 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 double OGRCircularString::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;
@@ -704,6 +724,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
     }
     return dfArea;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           get_Area()                                 */
@@ -746,6 +767,7 @@ double OGRCircularString::get_Area() const
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
 {
     double cx, cy, square_R;
@@ -757,3 +779,4 @@ int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
     }
     return -1;
 }
+//! @endcond

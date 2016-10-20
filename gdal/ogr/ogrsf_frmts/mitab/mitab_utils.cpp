@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.26 2011-06-16 15:53:12 fwarmerdam Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -119,6 +118,7 @@
 #  include <mbctype.h>  /* Multibyte chars stuff */
 #endif
 
+CPL_CVSID("$Id$");
 
 /**********************************************************************
  *                       TABGenerateArc()
@@ -141,30 +141,27 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dXRadius, double dYRadius,
                    double dStartAngle, double dEndAngle)
 {
-    double dX, dY, dAngleStep, dAngle=0.0;
-    int i;
-
     // Adjust angles to go counterclockwise
     if (dEndAngle < dStartAngle)
         dEndAngle += 2.0*M_PI;
 
-    dAngleStep = (dEndAngle-dStartAngle)/(numPoints-1.0);
+    const double dAngleStep = (dEndAngle - dStartAngle) / (numPoints - 1.0);
 
-    for(i=0; i<numPoints; i++)
+    double dAngle = 0.0;
+    for( int i = 0; i<numPoints; i++ )
     {
-        dAngle = (dStartAngle + (double)i*dAngleStep);
-        dX = dCenterX + dXRadius*cos(dAngle);
-        dY = dCenterY + dYRadius*sin(dAngle);
+        dAngle = dStartAngle + (double)i*dAngleStep;
+        const double dX = dCenterX + dXRadius*cos(dAngle);
+        const double dY = dCenterY + dYRadius*sin(dAngle);
         poLine->addPoint(dX, dY);
     }
 
     // Complete the arc with the last EndAngle, to make sure that
     // the arc is correctly closed.
 
-    dX = dCenterX + dXRadius*cos(dAngle);
-    dY = dCenterY + dYRadius*sin(dAngle);
+    const double dX = dCenterX + dXRadius*cos(dAngle);
+    const double dY = dCenterY + dYRadius*sin(dAngle);
     poLine->addPoint(dX,dY);
-
 
     return 0;
 }
@@ -347,7 +344,6 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 GBool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL  sStatBuf;
-    int         i;
 
     /*-----------------------------------------------------------------
      * First try using filename as provided
@@ -360,7 +356,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using uppercase extension (we assume that fname contains a '.')
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)toupper(pszFname[i]);
     }
@@ -373,7 +371,9 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     /*-----------------------------------------------------------------
      * Try using lowercase extension
      *----------------------------------------------------------------*/
-    for(i = static_cast<int>(strlen(pszFname))-1; i >= 0 && pszFname[i] != '.'; i--)
+    for( int i = static_cast<int>(strlen(pszFname))-1;
+         i >= 0 && pszFname[i] != '.';
+         i-- )
     {
         pszFname[i] = (char)tolower(pszFname[i]);
     }
@@ -420,8 +420,7 @@ char *TABGetBasename(const char *pszFname)
      * Now allocate our own copy and remove extension
      *----------------------------------------------------------------*/
     char *pszBasename = CPLStrdup(pszTmp);
-    int i;
-    for(i=static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
+    for( int i = static_cast<int>(strlen(pszBasename))-1; i >= 0; i-- )
     {
         if (pszBasename[i] == '.')
         {
@@ -447,16 +446,15 @@ char *TABGetBasename(const char *pszFname)
  **********************************************************************/
 char **TAB_CSLLoad(const char *pszFname)
 {
-    VSILFILE    *fp;
-    const char  *pszLine;
-    char        **papszStrList=NULL;
+    char **papszStrList = NULL;
 
-    fp = VSIFOpenL(pszFname, "rt");
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
 
-    if (fp)
+    if( fp )
     {
         while(!VSIFEofL(fp))
         {
+            const char *pszLine = NULL;
             if ( (pszLine = CPLReadLineL(fp)) != NULL )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
@@ -613,10 +611,8 @@ char *TABEscapeString(char *pszString)
  **********************************************************************/
 char *TABCleanFieldName(const char *pszSrcName)
 {
-    char *pszNewName;
-    int numInvalidChars = 0;
 
-    pszNewName = CPLStrdup(pszSrcName);
+    char *pszNewName = CPLStrdup(pszSrcName);
 
     if (strlen(pszNewName) > 31)
     {
@@ -649,10 +645,11 @@ char *TABCleanFieldName(const char *pszSrcName)
      * It was also verified that extended chars with accents are also
      * accepted.
      *----------------------------------------------------------------*/
-    for(int i=0; pszSrcName && pszSrcName[i] != '\0'; i++)
+    int numInvalidChars = 0;
+    for( int i = 0; pszSrcName && pszSrcName[i] != '\0'; i++ )
     {
         if ( pszSrcName[i]=='#' )
-	{
+        {
             if (i == 0)
             {
                 pszNewName[i] = '_';
@@ -721,9 +718,7 @@ static const MapInfoUnitsInfo gasUnitsList[] =
  **********************************************************************/
 const char *TABUnitIdToString(int nId)
 {
-    const MapInfoUnitsInfo *psList;
-
-    psList = gasUnitsList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     while(psList->nUnitId != -1)
     {
@@ -744,9 +739,7 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    const MapInfoUnitsInfo *psList;
-
-    psList = gasUnitsList;
+    const MapInfoUnitsInfo *psList = gasUnitsList;
 
     if( pszName == NULL )
         return 13;

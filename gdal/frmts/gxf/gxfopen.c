@@ -29,6 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include <ctype.h>
 #include "gxfopen.h"
 
@@ -44,7 +46,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
 /*                                                                      */
-/*      Read one entry from the file header, and return it and it's     */
+/*      Read one entry from the file header, and return it and its      */
 /*      value in clean form.                                            */
 /************************************************************************/
 

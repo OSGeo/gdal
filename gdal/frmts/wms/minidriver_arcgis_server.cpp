@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc GIS Server Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,17 +30,15 @@
 #include "wmsdriver.h"
 #include "minidriver_arcgis_server.h"
 
+CPL_CVSID("$Id$");
+
 CPP_GDALWMSMiniDriverFactory(AGS)
 
-GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS()
-{
-}
+GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS() {}
 
-GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS()
-{
-}
+GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS() {}
 
-CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
+CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     CPLErr ret = CE_None;
     int i;
@@ -66,43 +63,43 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
         }
     }
 
-	if (ret == CE_None)
-	{
+    if (ret == CE_None)
+    {
         m_image_format = CPLGetXMLValue(config, "ImageFormat", "png");
         m_transparent = CPLGetXMLValue(config, "Transparent","");
-		// the transparent flag needs to be "true" or "false"
-		// in lower case according to the ArcGIS Server REST API
+        // the transparent flag needs to be "true" or "false"
+        // in lower case according to the ArcGIS Server REST API
         for(i = 0; i < (int)m_transparent.size(); i++)
         {
-			m_transparent[i] = (char) tolower(m_transparent[i]);
+            m_transparent[i] = (char) tolower(m_transparent[i]);
         }
 
-		m_layers = CPLGetXMLValue(config, "Layers", "");
+        m_layers = CPLGetXMLValue(config, "Layers", "");
     }
 
-	if (ret == CE_None)
-	{
-		const char* irs = CPLGetXMLValue(config, "SRS", "102100");
+    if (ret == CE_None)
+    {
+        const char* irs = CPLGetXMLValue(config, "SRS", "102100");
 
-		if (irs != NULL)
-		{
-	        if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
-	        {
-	            m_projection_wkt = ProjToWKT(irs);
-	            m_irs = irs + 5;
-	        }
-	        else //if we have AGS code - try if it's EPSG
-		    {
-		        m_irs = irs;
-		        m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
-		    }
-		    // TODO: if we have AGS JSON
-		}
-		m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
-	}
+        if (irs != NULL)
+        {
+            if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
+            {
+                m_projection_wkt = ProjToWKT(irs);
+                m_irs = irs + 5;
+            }
+            else //if we have AGS code - try if it's EPSG
+            {
+                m_irs = irs;
+                m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
+            }
+            // TODO: if we have AGS JSON
+        }
+        m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
+    }
 
-	if (ret == CE_None)
-	{
+    if (ret == CE_None)
+    {
         const char *bbox_order = CPLGetXMLValue(config, "BBoxOrder", "xyXY");
         if (bbox_order[0] != '\0')
         {
@@ -178,7 +175,7 @@ void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
                                       const GDALWMSImageRequestInfo &iri,
                                       CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
-	ImageRequest(url, iri);
+    ImageRequest(url, iri);
 }
 
 

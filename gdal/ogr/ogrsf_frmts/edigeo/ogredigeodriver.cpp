@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEODriver.
@@ -95,4 +94,3 @@ void RegisterOGREDIGEO()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

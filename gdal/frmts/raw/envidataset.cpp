@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ENVI .hdr Driver
  * Purpose:  Implementation of ENVI .hdr labelled raw raster support.
@@ -232,6 +231,7 @@ class ENVIDataset : public RawDataset
 
     bool        bFoundMapinfo;
     bool        bHeaderDirty;
+    bool        bFillFile;
 
     double      adfGeoTransform[6];
 
@@ -255,6 +255,8 @@ class ENVIDataset : public RawDataset
                                               char *papszVal[], int& idx );
     int         WriteRpcInfo();
     int         WritePseudoGcpInfo();
+
+    void        SetFillFile() { bFillFile = true; }
 
     char        **SplitList( const char * );
 
@@ -319,6 +321,7 @@ ENVIDataset::ENVIDataset() :
     pszHDRFilename(NULL),
     bFoundMapinfo(false),
     bHeaderDirty(false),
+    bFillFile(false),
     pszProjection(CPLStrdup("")),
     papszHeader(NULL),
     interleave(BSQ)
@@ -341,6 +344,28 @@ ENVIDataset::~ENVIDataset()
     FlushCache();
     if( fpImage )
     {
+        // Make sure the binary file has the expected size
+        if( bFillFile && nBands > 0)
+        {
+            const int nDataSize =
+                GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
+            vsi_l_offset nExpectedFileSize =
+                static_cast<vsi_l_offset>(nRasterXSize) *
+                nRasterYSize * nBands * nDataSize;
+            if( VSIFSeekL( fpImage, 0, SEEK_END ) != 0 )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+            }
+            if( VSIFTellL(fpImage) < nExpectedFileSize)
+            {
+                GByte byVal = 0;
+                if( VSIFSeekL( fpImage, nExpectedFileSize - 1, SEEK_SET ) != 0 ||
+                    VSIFWriteL( &byVal, 1, 1, fpImage ) == 0 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "I/O error");
+                }
+            }
+        }
         if( VSIFCloseL( fpImage ) != 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, "I/O error");
@@ -1798,7 +1823,7 @@ void ENVIDataset::ProcessRPCinfo( const char *pszRPCinfo,
     // Handle the chipping case where the image is a subset.
     const double rowOffset = (nCount == 93) ? CPLAtof(papszFields[90]) : 0;
     const double colOffset = (nCount == 93) ? CPLAtof(papszFields[91]) : 0;
-    if (rowOffset || colOffset)
+    if (rowOffset != 0.0 || colOffset != 0.0)
     {
         SetMetadataItem("ICHIP_SCALE_FACTOR", "1");
         SetMetadataItem("ICHIP_ANAMORPH_CORR", "0");
@@ -2795,8 +2820,13 @@ GDALDataset *ENVIDataset::Create( const char * pszFilename,
     if( !bRet )
         return NULL;
 
-    return reinterpret_cast<GDALDataset *>(
-        GDALOpen( pszFilename, GA_Update ) );
+    GDALOpenInfo oOpenInfo( pszFilename, GA_Update );
+    ENVIDataset* poDS = reinterpret_cast<ENVIDataset*>(Open( &oOpenInfo ));
+    if( poDS )
+    {
+        poDS->SetFillFile();
+    }
+    return poDS;
 }
 
 /************************************************************************/

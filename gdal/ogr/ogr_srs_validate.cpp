@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of the OGRSpatialReference::Validate() method and
@@ -640,12 +639,9 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"COMPD_CS") )
     {
-        OGR_SRSNode     *poNode;
-        int             i;
-
-        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        for( int i = 1; i < poRoot->GetChildCount(); i++ )
         {
-            poNode = poRoot->GetChild(i);
+            OGR_SRSNode *poNode = poRoot->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"GEOGCS") ||
                 EQUAL(poNode->GetValue(),"PROJCS") ||
@@ -687,15 +683,13 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"VERT_CS") )
     {
-        OGR_SRSNode     *poNode;
-        int             i;
-        bool            bGotVertDatum = false;
-        bool            bGotUnit = false;
-        int             nCountAxis = 0;
+        bool bGotVertDatum = false;
+        bool bGotUnit = false;
+        int nCountAxis = 0;
 
-        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        for( int i = 1; i < poRoot->GetChildCount(); i++ )
         {
-            poNode = poRoot->GetChild(i);
+            OGR_SRSNode *poNode = poRoot->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"VERT_DATUM") )
             {
@@ -765,16 +759,14 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"GEOCCS") )
     {
-        OGR_SRSNode     *poNode;
-        int             i;
-        bool            bGotDatum = false;
-        bool            bGotPrimeM = false;
-        bool            bGotUnit = false;
-        int             nCountAxis = 0;
+        bool bGotDatum = false;
+        bool bGotPrimeM = false;
+        bool bGotUnit = false;
+        int nCountAxis = 0;
 
-        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        for( int i = 1; i < poRoot->GetChildCount(); i++ )
         {
-            poNode = poRoot->GetChild(i);
+            OGR_SRSNode *poNode = poRoot->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"DATUM") )
             {
@@ -863,12 +855,9 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     if( EQUAL(poRoot->GetValue(),"PROJCS") )
     {
-        OGR_SRSNode     *poNode;
-        int             i;
-
-        for( i = 1; i < poRoot->GetChildCount(); i++ )
+        for( int i = 1; i < poRoot->GetChildCount(); i++ )
         {
-            poNode = poRoot->GetChild(i);
+            OGR_SRSNode *poNode = poRoot->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"GEOGCS") )
             {
@@ -987,12 +976,9 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
     if( poGEOGCS != NULL )
     {
-        OGR_SRSNode     *poNode;
-        int             i;
-
-        for( i = 1; i < poGEOGCS->GetChildCount(); i++ )
+        for( int i = 1; i < poGEOGCS->GetChildCount(); i++ )
         {
-            poNode = poGEOGCS->GetChild(i);
+            OGR_SRSNode *poNode = poGEOGCS->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"DATUM") )
             {
@@ -1060,10 +1046,6 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
     if( poDATUM != NULL )
     {
-        OGR_SRSNode     *poSPHEROID;
-        bool            bGotSpheroid = false;
-        int             i;
-
         if( poDATUM->GetChildCount() == 0 )
         {
             CPLDebug( "OGRSpatialReference::Validate",
@@ -1072,14 +1054,15 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             return OGRERR_CORRUPT_DATA;
         }
 
-        for( i = 1; i < poDATUM->GetChildCount(); i++ )
+        bool bGotSpheroid = false;
+
+        for( int i = 1; i < poDATUM->GetChildCount(); i++ )
         {
-            OGR_SRSNode *poNode;
-            poNode = poDATUM->GetChild(i);
+            OGR_SRSNode *poNode = poDATUM->GetChild(i);
 
             if( EQUAL(poNode->GetValue(),"SPHEROID") )
             {
-                poSPHEROID = poDATUM->GetChild(1);
+                OGR_SRSNode *poSPHEROID = poDATUM->GetChild(1);
                 bGotSpheroid = true;
 
                 if( poSPHEROID->GetChildCount() != 3
@@ -1187,16 +1170,15 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
                                      const char *pszParm2 )
 
 {
-    int         iGroup;
-
 /* -------------------------------------------------------------------- */
 /*      Look for a group containing pszParm1.                           */
 /* -------------------------------------------------------------------- */
-    for( iGroup = 0; papszAliasGroupList[iGroup] != NULL; iGroup++ )
+    int iGroup = 0; // Used after for.
+    for( ; papszAliasGroupList[iGroup] != NULL; iGroup++ )
     {
-        int     i;
+        int i = iGroup;  // Used after for.
 
-        for( i = iGroup; papszAliasGroupList[i] != NULL; i++ )
+        for( ; papszAliasGroupList[i] != NULL; i++ )
         {
             if( EQUAL(pszParm1,papszAliasGroupList[i]) )
                 break;
@@ -1247,12 +1229,11 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
 /*      Find the matching group in the proj and parms table.            */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection;
-    int        iOffset;
+    const char *pszProjection =
+        poPROJCS->GetNode("PROJECTION")->GetChild(0)->GetValue();
 
-    pszProjection = poPROJCS->GetNode("PROJECTION")->GetChild(0)->GetValue();
-
-    for( iOffset = 0;
+    int iOffset = 0;  // Used after for.
+    for( ;
          papszProjWithParms[iOffset] != NULL
              && !EQUAL(papszProjWithParms[iOffset],pszProjection); )
     {
@@ -1270,20 +1251,17 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 /*      Check all parameters, and verify they are in the permitted      */
 /*      list.                                                           */
 /* -------------------------------------------------------------------- */
-    int iNode;
-
-    for( iNode = 0; iNode < poPROJCS->GetChildCount(); iNode++ )
+    for( int iNode = 0; iNode < poPROJCS->GetChildCount(); iNode++ )
     {
         OGR_SRSNode *poParm = poPROJCS->GetChild(iNode);
-        int          i;
-        const char  *pszParmName;
 
         if( !EQUAL(poParm->GetValue(),"PARAMETER") )
             continue;
 
-        pszParmName = poParm->GetChild(0)->GetValue();
+        const char *pszParmName = poParm->GetChild(0)->GetValue();
 
-        for( i = iOffset; papszProjWithParms[i] != NULL; i++ )
+        int i = iOffset;  // Used after for.
+        for( ; papszProjWithParms[i] != NULL; i++ )
         {
             if( EQUAL(papszProjWithParms[i],pszParmName) )
                 break;
@@ -1349,12 +1327,9 @@ OGRErr OGRSpatialReference::ValidateVertDatum(OGR_SRSNode *poRoot)
         return OGRERR_CORRUPT_DATA;
     }
 
-    OGR_SRSNode     *poNode;
-    int             i;
-
-    for( i = 2; i < poRoot->GetChildCount(); i++ )
+    for( int i = 2; i < poRoot->GetChildCount(); i++ )
     {
-        poNode = poRoot->GetChild(i);
+        OGR_SRSNode *poNode = poRoot->GetChild(i);
 
         if( EQUAL(poNode->GetValue(),"AUTHORITY") )
         {

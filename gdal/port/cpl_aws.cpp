@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_aws.cpp
  * Project:  CPL - Common Portability Library
@@ -27,6 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+//! @cond Doxygen_Suppress
 
 #include "cpl_aws.h"
 #include "cpl_vsi_error.h"
@@ -425,11 +426,11 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
     {
         return NULL;
     }
-    bool bUseHTTPS = CPL_TO_BOOL(CSLTestBoolean(CPLGetConfigOption("AWS_HTTPS", "YES")));
+    bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
     bool bIsValidNameForVirtualHosting = (osBucket.find('.') == std::string::npos);
-    bool bUseVirtualHosting = CPL_TO_BOOL(CSLTestBoolean(
-            CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
-                               bIsValidNameForVirtualHosting ? "TRUE" : "FALSE")));
+    bool bUseVirtualHosting = CPLTestBool(
+        CPLGetConfigOption("AWS_VIRTUAL_HOSTING",
+                           bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId, osSessionToken,
                                     osAWSS3Endpoint, osAWSRegion,
                                     osBucket, osObjectKey, bUseHTTPS, bUseVirtualHosting);
@@ -525,7 +526,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
     CPLXMLNode* psTree = CPLParseXMLString(pszErrorMsg);
     if( psTree == NULL )
     {
-        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
         return false;
     }
 
@@ -533,7 +534,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
     if( pszCode == NULL )
     {
         CPLDestroyXMLNode(psTree);
-        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+        if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
         return false;
     }
 
@@ -543,7 +544,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
         if( pszRegion == NULL )
         {
             CPLDestroyXMLNode(psTree);
-            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
             return false;
         }
         SetAWSRegion(pszRegion);
@@ -560,7 +561,7 @@ bool VSIS3HandleHelper::CanRestartOnError(const char* pszErrorMsg, bool bSetErro
                                     pszEndpoint[m_osBucket.size()] != '.')) )
         {
             CPLDestroyXMLNode(psTree);
-            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML repsonse: %s", pszErrorMsg); }
+            if(bSetError) { VSIError(VSIE_AWSError, "Malformed AWS XML response: %s", pszErrorMsg); }
             return false;
         }
         if( !m_bUseVirtualHosting &&
@@ -641,3 +642,5 @@ void VSIS3HandleHelper::SetObjectKey(const CPLString &osStr)
 }
 
 #endif
+
+//! @endcond

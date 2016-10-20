@@ -24,13 +24,13 @@ argout (int *nLen, char **pBuf) -
   type.  Typemap needs to deallocate memory.
   FrankW:  Should this be done with free?
 
-argout (char **argout ) - Required - 
+argout (char **argout ) - Required -
 
-argout (long *OUTPUT) - Required - 
+argout (long *OUTPUT) - Required -
 
 -------------------
 
-in (char **dict) - Required 
+in (char **dict) - Required
   Convert a native dictionary/hash type into name value pairs.
 
 in (char **ignorechange) - Required
@@ -66,10 +66,10 @@ directly calls AsString (i.e. str()) on the object.  This
 functionality could be reduced in other languages as long as it's
 documented.
 
-in (const char *utf8_path) - Optional - 
+in (const char *utf8_path) - Optional -
   Any inputs marked this way should be treated as utf-8, and if the language supports it
   a conversion should be applied.  For many languages the default (the fallback const char *
-  handler) will be sufficient. 
+  handler) will be sufficient.
 
 -------------------
 
@@ -86,7 +86,7 @@ out GDALColorEntry* - Return a GDALColorEntry from a function.
 out (IF_FALSE_RETURN_NONE) - Required - This is a typedef'd int.  Must support use in conjunction with
 argout typemaps.
 
-out OGRErr - 
+out OGRErr -
 
 out (char **CSL) - Required - The return value is a list that is copied
 into a list in the target language and then CSLDestroyed

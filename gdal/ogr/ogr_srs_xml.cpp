@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference interface to OGC XML (014r4).
@@ -32,6 +31,8 @@
 #include "ogr_p.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                              parseURN()                              */
@@ -236,13 +237,12 @@ static void addGMLId( CPLXMLNode *psParent )
     static CPLMutex *hGMLIdMutex = NULL;
     CPLMutexHolderD( &hGMLIdMutex );
 
-    /* CPLXMLNode *psId; */
     static int nNextGMLId = 1;
     char   szIdText[40];
 
     snprintf( szIdText, sizeof(szIdText), "ogrcrs%d", nNextGMLId++ );
 
-    /* psId =  */
+    // CPLXMLNode *psId =
     CPLCreateXMLNode(
         CPLCreateXMLNode( psParent, CXT_Attribute, "gml:id" ),
         CXT_Text, szIdText );
@@ -259,15 +259,13 @@ static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
                                          int bUseSubName = TRUE )
 
 {
-    const OGR_SRSNode *poAuthority;
-
 /* -------------------------------------------------------------------- */
 /*      Get authority node from parent.                                 */
 /* -------------------------------------------------------------------- */
     if( poAuthParent->FindChild( "AUTHORITY" ) == -1 )
         return NULL;
 
-    poAuthority = poAuthParent->GetChild(
+    const OGR_SRSNode *poAuthority = poAuthParent->GetChild(
         poAuthParent->FindChild( "AUTHORITY" ));
 
 /* -------------------------------------------------------------------- */
@@ -302,12 +300,9 @@ static void addProjArg( const OGRSpatialReference *poSRS, CPLXMLNode *psBase,
 /* -------------------------------------------------------------------- */
 /*      Handle the UOM.                                                 */
 /* -------------------------------------------------------------------- */
-    const char *pszUOMValue;
-
-    if( EQUAL(pszMeasureType,"Angular") )
-        pszUOMValue = "urn:ogc:def:uom:EPSG::9102";
-    else
-        pszUOMValue = "urn:ogc:def:uom:EPSG::9001";
+    const char *pszUOMValue = EQUAL(pszMeasureType, "Angular")
+        ? "urn:ogc:def:uom:EPSG::9102"
+        : "urn:ogc:def:uom:EPSG::9001";
 
     CPLXMLNode *psValue
         = CPLCreateXMLNode( psNode, CXT_Element, "gml:value" );
@@ -402,7 +397,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
     return psAxisXML;
@@ -757,7 +752,6 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
 {
     const char *pszUnitName, *pszUnitsPer;
     OGR_SRSNode *poNode = poSRS->GetAttrNode( pszTarget );
-    OGR_SRSNode *poUnits;
 
     CPLAssert( EQUAL(pszClass,"AngularUnit")
                || EQUAL(pszClass,"LinearUnit") );
@@ -787,6 +781,7 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
         goto DefaultTarget;
     }
 
+    OGR_SRSNode *poUnits = NULL;
     if( poNode->FindChild("UNIT") != -1 )
     {
         poUnits = poNode->GetChild( poNode->FindChild( "UNIT" ) );
@@ -962,9 +957,7 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
                                  double dfDefault )
 
 {
-    CPLXMLNode *psUsesParameter;
-
-    for( psUsesParameter = psRootNode->psChild;
+    for( CPLXMLNode *psUsesParameter = psRootNode->psChild;
          psUsesParameter != NULL;
          psUsesParameter = psUsesParameter->psNext )
     {
@@ -1004,18 +997,15 @@ static double getNormalizedValue( CPLXMLNode *psNode, const char *pszPath,
                                   double dfDefault )
 
 {
-    CPLXMLNode *psTargetNode;
-    CPLXMLNode *psValueNode;
-
-    if( pszPath == NULL || strlen(pszPath) == 0 )
-        psTargetNode = psNode;
-    else
-        psTargetNode = CPLGetXMLNode( psNode, pszPath );
+    CPLXMLNode *psTargetNode = pszPath == NULL || strlen(pszPath) == 0
+        ? psNode
+        : CPLGetXMLNode( psNode, pszPath );
 
     if( psTargetNode == NULL )
         return dfDefault;
 
-    for( psValueNode = psTargetNode->psChild;
+    CPLXMLNode *psValueNode = psTargetNode->psChild;  // Used after for.
+    for( ;
          psValueNode != NULL && psValueNode->eType != CXT_Text;
          psValueNode = psValueNode->psNext ) {}
 
@@ -1048,9 +1038,8 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /*      If we don't seem to have a detailed coordinate system           */
 /*      definition, check if we can define based on an EPSG code.       */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode     *psDatum;
-
-    psDatum = CPLGetXMLNode( psCRS, "usesGeodeticDatum.GeodeticDatum" );
+    CPLXMLNode *psDatum =
+        CPLGetXMLNode( psCRS, "usesGeodeticDatum.GeodeticDatum" );
 
     if( psDatum == NULL )
     {
@@ -1077,9 +1066,7 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Get ellipsoid information.                                      */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psE;
-
-    psE = CPLGetXMLNode( psDatum, "usesEllipsoid.Ellipsoid" );
+    CPLXMLNode *psE = CPLGetXMLNode( psDatum, "usesEllipsoid.Ellipsoid" );
     pszEllipsoidName =
         CPLGetXMLValue( psE, "ellipsoidName", "Unnamed Ellipsoid" );
 
@@ -1100,9 +1087,8 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian.                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psPM;
-
-    psPM = CPLGetXMLNode( psDatum, "usesPrimeMeridian.PrimeMeridian" );
+    CPLXMLNode *psPM =
+        CPLGetXMLNode( psDatum, "usesPrimeMeridian.PrimeMeridian" );
     if( psPM == NULL )
     {
         pszPMName = "Greenwich";
@@ -1129,10 +1115,9 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 /*      at this time.                                                   */
 /* -------------------------------------------------------------------- */
 #ifdef notdef
-    CPLXMLNode *psAxis;
-
-    psAxis = CPLGetXMLNode( psGeo2DCRS,
-                            "EllipsoidalCoordinateSystem.CoordinateAxis" );
+    CPLXMLNode *psAxis =
+        CPLGetXMLNode( psGeo2DCRS,
+                       "EllipsoidalCoordinateSystem.CoordinateAxis" );
     importXMLUnits( psAxis, "AngularUnit", poSRS, "GEOGCS" );
 #endif
 
@@ -1160,9 +1145,6 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
                                    CPLXMLNode *psCRS )
 
 {
-    CPLXMLNode *psSubXML;
-    OGRErr eErr;
-
 /* -------------------------------------------------------------------- */
 /*      Setup the PROJCS node with a name.                              */
 /* -------------------------------------------------------------------- */
@@ -1188,7 +1170,8 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*      Try to set the GEOGCS info.                                     */
 /* -------------------------------------------------------------------- */
 
-    psSubXML = CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" );
+    OGRErr eErr = OGRERR_NONE;
+    CPLXMLNode *psSubXML = CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" );
     if( psSubXML != NULL )
     {
         eErr = importGeogCSFromXML( poSRS, psSubXML );
@@ -1266,15 +1249,12 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
 {
-    CPLXMLNode *psTree;
-    OGRErr  eErr = OGRERR_UNSUPPORTED_SRS;
-
     this->Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Parse the XML.                                                  */
 /* -------------------------------------------------------------------- */
-    psTree = CPLParseXMLString( pszXML );
+    CPLXMLNode *psTree = CPLParseXMLString( pszXML );
 
     if( psTree == NULL )
         return OGRERR_CORRUPT_DATA;
@@ -1286,6 +1266,8 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 /*      root elements as there is sometimes prefix stuff like           */
 /*      <?xml>.                                                         */
 /* -------------------------------------------------------------------- */
+    OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
+
     for( CPLXMLNode* psNode = psTree; psNode != NULL; psNode = psNode->psNext )
     {
         if( EQUAL(psNode->pszValue,"GeographicCRS") )

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HF2 driver
  * Purpose:  GDALDataset driver for HF2/HFZ dataset.
@@ -87,7 +86,7 @@ class HF2RasterBand : public GDALPamRasterBand
   public:
 
                 HF2RasterBand( HF2Dataset *, int, GDALDataType );
-               ~HF2RasterBand();
+    virtual ~HF2RasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -101,8 +100,8 @@ HF2RasterBand::HF2RasterBand( HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT 
     pafBlockData(NULL),
     nLastBlockYOff(-1)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 
@@ -642,7 +641,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, osOriginalFilename.c_str() );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -654,7 +653,7 @@ CPLErr HF2Dataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
 
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Native Reader
  * Purpose:  Base class for reading in the headers of MSG native images
@@ -95,7 +94,7 @@ void SecondaryProdHeaderInit(SECONDARY_PROD_HEADER *header)
   PhDataInit(&header->westColumnSelectedRectangle);
 }
 
-Msg_reader_core::Msg_reader_core(const char* fname) :
+Msg_reader_core::Msg_reader_core( const char* fname ) :
     _lines(0),
     _columns(0),
     _line_start(0),
@@ -126,7 +125,8 @@ Msg_reader_core::Msg_reader_core(const char* fname) :
     }
 
     FILE* fin = fopen(fname, "rb");
-    if (!fin) {
+    if( !fin )
+    {
         fprintf(stderr, "Could not open file %s\n", fname);
         return;
     }
@@ -134,7 +134,7 @@ Msg_reader_core::Msg_reader_core(const char* fname) :
     fclose(fin);
 }
 
-Msg_reader_core::Msg_reader_core(FILE* fp) :
+Msg_reader_core::Msg_reader_core( FILE* fp ) :
     _lines(0),
     _columns(0),
     _line_start(0),

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Contour Generation
  * Purpose:  Core algorithm implementation for contour line generation.
@@ -179,6 +178,7 @@ template<> inline bool GDALContourGenerator::IsNoData<false>(double dfVal) const
 /*                           GDAL_CG_Create()                           */
 /************************************************************************/
 
+/** Create contour generator */
 GDALContourGeneratorH
 GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
                 double dfContourInterval, double dfContourBase,
@@ -203,6 +203,7 @@ GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
 /*                          GDAL_CG_FeedLine()                          */
 /************************************************************************/
 
+/** Feed a line to the contour generator */
 CPLErr GDAL_CG_FeedLine( GDALContourGeneratorH hCG, double *padfScanline )
 
 {
@@ -215,6 +216,7 @@ CPLErr GDAL_CG_FeedLine( GDALContourGeneratorH hCG, double *padfScanline )
 /*                          GDAL_CG_Destroy()                           */
 /************************************************************************/
 
+/** Destroy contour generator */
 void GDAL_CG_Destroy( GDALContourGeneratorH hCG )
 
 {

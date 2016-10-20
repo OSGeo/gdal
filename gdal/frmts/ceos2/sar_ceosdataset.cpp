@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ASI CEOS Translator
  * Purpose:  GDALDataset driver for CEOS translator.
@@ -119,7 +118,7 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SAR_CEOSDataset				*/
+/*                              SAR_CEOSDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -135,7 +134,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 
     CeosSARVolume_t sVolume;
 
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
     char        **papszTempMD;
 
@@ -148,7 +147,7 @@ class SAR_CEOSDataset : public GDALPamDataset
 
   public:
                 SAR_CEOSDataset();
-                ~SAR_CEOSDataset();
+    virtual ~SAR_CEOSDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -216,8 +215,8 @@ SAR_CEOSRasterBand::SAR_CEOSRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                                         GDALDataType eType )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = eType;
 
@@ -237,7 +236,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int	offset;
+    int offset;
     CalcCeosSARImageFilePosition( &(poGDS->sVolume), nBand,
                                   nBlockYOff + 1, NULL, &offset );
 
@@ -254,7 +253,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     for( int iRecord = 0; iRecord < ImageDesc->RecordsPerLine; iRecord++ )
     {
-        int	nPixelsToRead;
+        int nPixelsToRead;
 
         if( nPixelsRead + ImageDesc->PixelsPerRecord > nBlockXSize )
             nPixelsToRead = nBlockXSize - nPixelsRead;
@@ -306,7 +305,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				CCPRasterBand				*/
+/*                              CCPRasterBand                           */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -318,8 +317,8 @@ CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn,
                               GDALDataType eType )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = eType;
 
@@ -464,7 +463,7 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
 /************************************************************************/
 /* ==================================================================== */
-/*			      PALSARRasterBand				*/
+/*                            PALSARRasterBand                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -475,8 +474,8 @@ CPLErr CCPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDSIn, int nBandIn )
 
 {
-    this->poDS = poGDSIn;
-    this->nBand = nBandIn;
+    poDS = poGDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_CInt16;
 
@@ -620,7 +619,7 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SAR_CEOSDataset				*/
+/*                              SAR_CEOSDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -823,10 +822,9 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 /* -------------------------------------------------------------------- */
 /*      Try to fetch the record.                                        */
 /* -------------------------------------------------------------------- */
-    CeosRecord_t *record;
-
-    record = FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
-                             -1, nRecordIndex );
+    CeosRecord_t *record =
+        FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
+                        -1, nRecordIndex );
 
     if( record == NULL )
         return NULL;
@@ -1232,7 +1230,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     }
 /* -------------------------------------------------------------------- */
-/*	Detailed Processing Parameters (Radarsat)                       */
+/*      Detailed Processing Parameters (Radarsat)                       */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
                              CEOS_LEADER_FILE, -1, -1 );
@@ -1347,8 +1345,8 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     }
 /* -------------------------------------------------------------------- */
-/*	Get process-to-raw data coordinate translation values.  These	*/
-/*	are likely specific to Atlantis APP products.			*/
+/*      Get process-to-raw data coordinate translation values.  These   */
+/*      are likely specific to Atlantis APP products.                   */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList,
                              IMAGE_HEADER_RECORD_TC,
@@ -1467,7 +1465,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
 /* -------------------------------------------------------------------- */
 /*      For ERS Standard Format Landsat scenes we pick up the           */
-/*      gain setting from the Scene Header Record.			*/
+/*      gain setting from the Scene Header Record.                      */
 /* -------------------------------------------------------------------- */
     record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x12, 0x12, 0x12, 0x09 ),
@@ -2021,7 +2019,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else
             {
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 return NULL;
             }
 
@@ -2059,7 +2057,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -2076,8 +2074,6 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
     int                CurrentBodyLength = 0;
     int                CurrentType = 0;
     int                CurrentSequence = 0;
-    Link_t             *TheLink;
-    CeosRecord_t       *record;
     int                iThisRecord = 0;
 
     while(max_records != 0 && max_bytes != 0)
@@ -2093,7 +2089,8 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             CPLFree(temp_body);
             return CE_Failure;
         }
-        record = (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
+        CeosRecord_t *record =
+            (CeosRecord_t *) CPLMalloc( sizeof( CeosRecord_t ) );
         record->Length = DetermineCeosRecordBodyLength( temp_buffer );
 
         CeosToNative( &(record->Sequence), temp_buffer, 4, 4 );
@@ -2173,7 +2170,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
         record->FileId = fileid;
 
-        TheLink = ceos2CreateLink( record );
+        Link_t *TheLink = ceos2CreateLink( record );
 
         if( sar->RecordList == NULL )
             sar->RecordList = TheLink;

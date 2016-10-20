@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AmigoCloud Translator
  * Purpose:  Implements OGRAmigoCloudDataSource class
@@ -29,6 +28,7 @@
 
 #include "ogr_amigocloud.h"
 #include "ogr_pgdump.h"
+#include "ogrgeojsonreader.h"
 #include <sstream>
 
 CPL_CVSID("$Id$");
@@ -44,9 +44,9 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     pszProjetctId(NULL),
     papoLayers(NULL),
     nLayers(0),
-    bReadWrite(FALSE),
-    bUseHTTPS(FALSE),
-    bMustCleanPersistent(FALSE),
+    bReadWrite(false),
+    bUseHTTPS(false),
+    bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1)
 {}
 
@@ -61,7 +61,7 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (bMustCleanPersistent)
+    if( bMustCleanPersistent )
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("AMIGOCLOUD:%p", this));
@@ -80,10 +80,12 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
 int OGRAmigoCloudDataSource::TestCapability( const char * pszCap )
 
 {
-    if( bReadWrite && EQUAL(pszCap,ODsCCreateLayer) )
+    if( bReadWrite && EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
-    else if( bReadWrite && EQUAL(pszCap,ODsCDeleteLayer) )
+    else if( bReadWrite && EQUAL(pszCap, ODsCDeleteLayer) )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bReadWrite;
     else
         return FALSE;
 }
@@ -136,12 +138,12 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
 /************************************************************************/
 
 int OGRAmigoCloudDataSource::Open( const char * pszFilename,
-                                char** papszOpenOptionsIn,
-                                int bUpdateIn )
+                                   char** papszOpenOptionsIn,
+                                   int bUpdateIn )
 
 {
 
-    bReadWrite = bUpdateIn;
+    bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
     if( CSLFetchNameValue(papszOpenOptionsIn, "PROJECTID") )
@@ -209,7 +211,7 @@ const char* OGRAmigoCloudDataSource::GetAPIURL() const
     if (pszAPIURL)
         return pszAPIURL;
 
-    else if (bUseHTTPS)
+    else if( bUseHTTPS )
         return CPLSPrintf("https://www.amigocloud.com/api/v1");
     else
         return CPLSPrintf("http://www.amigocloud.com/api/v1");
@@ -222,15 +224,13 @@ const char* OGRAmigoCloudDataSource::GetAPIURL() const
 int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    const char*         pszAuthorityName;
-
     if( poSRS == NULL )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
     poSRS = NULL;
 
-    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+    const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);
 
     if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
     {
@@ -258,12 +258,10 @@ int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
     {
-        int             nAuthorityCode;
-
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        const int nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
 
         return nAuthorityCode;
     }
@@ -280,7 +278,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
                                            OGRwkbGeometryType eGType,
                                            char ** papszOptions )
 {
-    if (!bReadWrite)
+    if( !bReadWrite )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
         return NULL;
@@ -293,7 +291,8 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
     CPLString osName(pszNameIn);
 
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
     poLayer->SetDeferredCreation(eGType, poSpatialRef, bGeomNullable);
     papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
                     papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
@@ -308,7 +307,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
 
 OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 {
-    if (!bReadWrite)
+    if( !bReadWrite )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Operation not available in read-only mode");
@@ -362,7 +361,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 
 char** OGRAmigoCloudDataSource::AddHTTPOptions()
 {
-    bMustCleanPersistent = TRUE;
+    bMustCleanPersistent = true;
 
     return CSLAddString(NULL, CPLSPrintf("PERSISTENT=AMIGOCLOUD:%p", this));
 }
@@ -443,7 +442,7 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -540,7 +539,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -633,7 +632,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -748,7 +747,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     {
         if( json_object_get_type(poObj) == json_type_object )
         {
-            json_object* poError = json_object_object_get(poObj, "error");
+            json_object* poError = CPL_json_object_object_get(poObj, "error");
             if( poError != NULL && json_object_get_type(poError) == json_type_array &&
                 json_object_array_length(poError) > 0 )
             {
@@ -783,7 +782,7 @@ json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj)
         return NULL;
     }
 
-    json_object* poRows = json_object_object_get(poObj, "data");
+    json_object* poRows = CPL_json_object_object_get(poObj, "data");
     if( poRows == NULL ||
         json_object_get_type(poRows) != json_type_array ||
         json_object_array_length(poRows) != 1 )
@@ -809,14 +808,14 @@ OGRLayer * OGRAmigoCloudDataSource::ExecuteSQL( const char *pszSQLCommand,
                                         const char *pszDialect )
 
 {
-    return ExecuteSQLInternal(pszSQLCommand, poSpatialFilter, pszDialect,
-                              TRUE);
+    return ExecuteSQLInternal(pszSQLCommand, poSpatialFilter, pszDialect, true);
 }
 
-OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal( const char *pszSQLCommand,
-                                                     OGRGeometry *poSpatialFilter,
-                                                     const char *,
-                                                     int bRunDeferredActions )
+OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal(
+    const char *pszSQLCommand,
+    OGRGeometry *poSpatialFilter,
+    const char *,
+    bool bRunDeferredActions )
 
 {
     if( bRunDeferredActions )

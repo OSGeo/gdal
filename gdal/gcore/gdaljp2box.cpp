@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALJP2Box Implementation - Low level JP2 box reader.
@@ -34,6 +33,8 @@
 #include "gdaljp2metadata.h"
 
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                             GDALJP2Box()                             */
@@ -286,11 +287,13 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     for( int i=0; i < nIndentLevel; ++i)
         fprintf( fpOut, "  " );
 
-    fprintf( fpOut,
+    char szBuffer[128];
+    CPLsnprintf( szBuffer, sizeof(szBuffer),
              "  Type=%s, Offset=" CPL_FRMT_GIB "/" CPL_FRMT_GIB
              ", Data Size=" CPL_FRMT_GIB,
              szBoxType, nBoxOffset, nDataOffset,
              GetDataLength() );
+    fprintf( fpOut, "%s", szBuffer );
 
     if( IsSuperBox() )
     {
@@ -526,3 +529,5 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
 
     return CreateAsocBox( 2, aoList );
 }
+
+/*! @endcond */

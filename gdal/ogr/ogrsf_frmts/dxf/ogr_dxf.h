@@ -207,7 +207,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     std::map<CPLString,CPLString> oLineTypeTable;
 
-    int                 bInlineBlocks;
+    bool                bInlineBlocks;
 
     OGRDXFReader        oReader;
 
@@ -226,7 +226,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     // The following is only used by OGRDXFLayer
 
-    int                 InlineBlocks() { return bInlineBlocks; }
+    bool                InlineBlocks() { return bInlineBlocks; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp
@@ -371,13 +371,13 @@ class OGRDXFWriterDS : public OGRDataSource
     void                ScanForEntities( const char *pszFilename,
                                          const char *pszTarget );
 
-    int                 WriteNewLineTypeRecords( VSILFILE *fp );
-    int                 WriteNewBlockRecords( VSILFILE * );
-    int                 WriteNewBlockDefinitions( VSILFILE * );
-    int                 WriteNewLayerDefinitions( VSILFILE * );
-    int                 TransferUpdateHeader( VSILFILE * );
-    int                 TransferUpdateTrailer( VSILFILE * );
-    int                 FixupHANDSEED( VSILFILE * );
+    bool                WriteNewLineTypeRecords( VSILFILE *fp );
+    bool                WriteNewBlockRecords( VSILFILE * );
+    bool                WriteNewBlockDefinitions( VSILFILE * );
+    bool                WriteNewLayerDefinitions( VSILFILE * );
+    bool                TransferUpdateHeader( VSILFILE * );
+    bool                TransferUpdateTrailer( VSILFILE * );
+    bool                FixupHANDSEED( VSILFILE * );
 
     OGREnvelope         oGlobalEnvelope;
 
@@ -400,7 +400,7 @@ class OGRDXFWriterDS : public OGRDataSource
                                      OGRwkbGeometryType eGType = wkbUnknown,
                                      char ** papszOptions = NULL );
 
-    int                 CheckEntityID( const char *pszEntityID );
+    bool                CheckEntityID( const char *pszEntityID );
     long                WriteEntityID( VSILFILE * fp,
                                        long nPreferredFID = OGRNullFID );
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NOAA Polar Orbiter Level 1b Dataset Reader (AVHRR)
  * Purpose:  Can read NOAA-9(F)-NOAA-17(M) AVHRR datasets
@@ -265,7 +264,9 @@ class L1BDataset : public GDALPamDataset
     int         iGCPCodeOffset;
     int         iCLAVRStart;
     int         nGCPsPerLine;
-    int         eLocationIndicator, iGCPStart, iGCPStep;
+    int         eLocationIndicator;
+    int         iGCPStart;
+    int         iGCPStep;
 
     L1BFileFormat eL1BFormat;
     int         nBufferSize;
@@ -284,7 +285,6 @@ class L1BDataset : public GDALPamDataset
 
     VSILFILE   *fp;
 
-    int         bFetchGeolocation;
     int         bGuessDataFormat;
 
     int         bByteSwap;
@@ -316,7 +316,7 @@ class L1BDataset : public GDALPamDataset
 
   public:
                 L1BDataset( L1BFileFormat );
-                ~L1BDataset();
+    virtual ~L1BDataset();
 
     virtual int GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -373,7 +373,7 @@ L1BMaskBand::L1BMaskBand( L1BDataset *poDSIn )
     CPLAssert(poDSIn->eL1BFormat == L1B_NOAA15 ||
               poDSIn->eL1BFormat == L1B_NOAA15_NOHDR);
 
-    this->poDS = poDSIn;
+    poDS = poDSIn;
     eDataType = GDT_Byte;
 
     nRasterXSize = poDS->GetRasterXSize();
@@ -413,8 +413,8 @@ CPLErr L1BMaskBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 L1BRasterBand::L1BRasterBand( L1BDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_UInt16;
 
     nBlockXSize = poDS->GetRasterXSize();
@@ -550,43 +550,47 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                           L1BDataset()                               */
 /************************************************************************/
 
-L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn )
-
-{
-    eSource = UNKNOWN_STATION;
-    eProcCenter = UNKNOWN_CENTER;
+L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
+    eSource(UNKNOWN_STATION),
+    eProcCenter(UNKNOWN_CENTER),
     // sStartTime
     // sStopTime
-    bHighGCPDensityStrategy = CPLTestBool(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"));
-    pasGCPList = NULL;
-    nGCPCount = 0;
-    iGCPOffset = 0;
-    iGCPCodeOffset = 0;
-    iCLAVRStart = 0;
-    nGCPsPerLine = 0;
-    eLocationIndicator = DESCEND; // XXX: should be initialised
-    iGCPStart = 0;
-    iGCPStep = 0;
-    this->eL1BFormat = eL1BFormatIn;
-    nBufferSize = 0;
-    eSpacecraftID = TIROSN;
-    eProductType = HRPT;
-    iDataFormat = PACKED10BIT;
-    nRecordDataStart = 0;
-    nRecordDataEnd = 0;
-    nDataStartOffset = 0;
-    nRecordSize = 0;
-    nRecordSizeFromHeader = 0;
-    iInstrumentStatus = 0;
-    iChannelsMask = 0;
-    pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AUTHORITY[\"EPSG\",4322]]" );
-    fp = NULL;
-    bFetchGeolocation = FALSE;
-    bGuessDataFormat = FALSE;
-    bByteSwap = CPL_IS_LSB; /* L1B is normally big-endian ordered, so byte-swap on little-endian CPU */
-    bExposeMaskBand = FALSE;
-    poMaskBand = NULL;
-}
+    bHighGCPDensityStrategy(CPLTestBool(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"))),
+    pasGCPList(NULL),
+    nGCPCount(0),
+    iGCPOffset(0),
+    iGCPCodeOffset(0),
+    iCLAVRStart(0),
+    nGCPsPerLine(0),
+    eLocationIndicator(DESCEND), // XXX: should be initialised
+    iGCPStart(0),
+    iGCPStep(0),
+    eL1BFormat(eL1BFormatIn),
+    nBufferSize(0),
+    eSpacecraftID(TIROSN),
+    eProductType(HRPT),
+    iDataFormat(PACKED10BIT),
+    nRecordDataStart(0),
+    nRecordDataEnd(0),
+    nDataStartOffset(0),
+    nRecordSize(0),
+    nRecordSizeFromHeader(0),
+    iInstrumentStatus(0),
+    iChannelsMask(0),
+    pszGCPProjection(CPLStrdup(
+        "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\","
+        "SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],"
+        "TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],"
+        "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
+        "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
+        "AUTHORITY[\"EPSG\",4322]]" )),
+    fp(NULL),
+    bGuessDataFormat(FALSE),
+    // L1B is normally big-endian ordered, so byte-swap on little-endian CPU.
+    bByteSwap(CPL_IS_LSB),
+    bExposeMaskBand(FALSE),
+    poMaskBand(NULL)
+{}
 
 /************************************************************************/
 /*                            ~L1BDataset()                             */
@@ -1690,7 +1694,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
         }
 
         // Determine the spacecraft name
-		// See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
+        // See http://www.ncdc.noaa.gov/oa/pod-guide/ncdc/docs/klm/html/c8/sec83132-2.htm
         int iWord = GetUInt16(abyRecHeader + L1B_NOAA15_HDR_REC_ID_OFF);
         switch ( iWord )
         {
@@ -1787,10 +1791,10 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 /* -------------------------------------------------------------------- */
 /*      Set fetched information as metadata records                     */
 /* -------------------------------------------------------------------- */
-    const char *pszText;
 
-    SetMetadataItem( "DATASET_NAME",  szDatasetName );
+    SetMetadataItem( "DATASET_NAME", szDatasetName );
 
+    const char *pszText = NULL;
     switch( eSpacecraftID )
     {
         case TIROSN:
@@ -2297,11 +2301,11 @@ class L1BGeolocRasterBand: public GDALRasterBand
 /*                        L1BGeolocDataset()                            */
 /************************************************************************/
 
-L1BGeolocDataset::L1BGeolocDataset(L1BDataset* poL1BDSIn,
-                                   int bInterpolGeolocationDSIn)
+L1BGeolocDataset::L1BGeolocDataset( L1BDataset* poL1BDSIn,
+                                    int bInterpolGeolocationDSIn ) :
+    poL1BDS(poL1BDSIn),
+    bInterpolGeolocationDS(bInterpolGeolocationDSIn)
 {
-    this->poL1BDS = poL1BDSIn;
-    this->bInterpolGeolocationDS = bInterpolGeolocationDSIn;
     if( bInterpolGeolocationDS )
         nRasterXSize = poL1BDS->nRasterXSize;
     else
@@ -2324,8 +2328,8 @@ L1BGeolocDataset::~L1BGeolocDataset()
 
 L1BGeolocRasterBand::L1BGeolocRasterBand(L1BGeolocDataset* poDSIn, int nBandIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float64;
@@ -2367,7 +2371,7 @@ static double LagrangeInterpol(const double x[],
         }
         y0 = y0 + L * y[i];
     }
-    return(y0);
+    return y0;
 }
 
 /************************************************************************/
@@ -2585,19 +2589,21 @@ class L1BSolarZenithAnglesDataset : public GDALDataset
 class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
 {
     public:
-            L1BSolarZenithAnglesRasterBand(L1BSolarZenithAnglesDataset* poDS, int nBand);
+        L1BSolarZenithAnglesRasterBand( L1BSolarZenithAnglesDataset* poDS,
+                                        int nBand );
 
-            virtual CPLErr IReadBlock(int, int, void*);
-            virtual double GetNoDataValue( int *pbSuccess = NULL );
+        virtual CPLErr IReadBlock(int, int, void*);
+        virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
 /************************************************************************/
 /*                  L1BSolarZenithAnglesDataset()                       */
 /************************************************************************/
 
-L1BSolarZenithAnglesDataset::L1BSolarZenithAnglesDataset(L1BDataset* poL1BDSIn)
+L1BSolarZenithAnglesDataset::L1BSolarZenithAnglesDataset(
+    L1BDataset* poL1BDSIn )
 {
-    this->poL1BDS = poL1BDSIn;
+    poL1BDS = poL1BDSIn;
     nRasterXSize = 51;
     nRasterYSize = poL1BDSIn->nRasterYSize;
 }
@@ -2615,10 +2621,11 @@ L1BSolarZenithAnglesDataset::~L1BSolarZenithAnglesDataset()
 /*                  L1BSolarZenithAnglesRasterBand()                    */
 /************************************************************************/
 
-L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(L1BSolarZenithAnglesDataset* poDSIn, int nBandIn)
+L1BSolarZenithAnglesRasterBand::L1BSolarZenithAnglesRasterBand(
+    L1BSolarZenithAnglesDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float32;
@@ -2780,9 +2787,9 @@ class L1BNOAA15AnglesRasterBand: public GDALRasterBand
 /*                       L1BNOAA15AnglesDataset()                       */
 /************************************************************************/
 
-L1BNOAA15AnglesDataset::L1BNOAA15AnglesDataset(L1BDataset* poL1BDSIn)
+L1BNOAA15AnglesDataset::L1BNOAA15AnglesDataset( L1BDataset* poL1BDSIn ) :
+    poL1BDS(poL1BDSIn)
 {
-    this->poL1BDS = poL1BDSIn;
     nRasterXSize = 51;
     nRasterYSize = poL1BDS->nRasterYSize;
 }
@@ -2800,10 +2807,11 @@ L1BNOAA15AnglesDataset::~L1BNOAA15AnglesDataset()
 /*                      L1BNOAA15AnglesRasterBand()                     */
 /************************************************************************/
 
-L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDSIn, int nBandIn)
+L1BNOAA15AnglesRasterBand::L1BNOAA15AnglesRasterBand(
+    L1BNOAA15AnglesDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Float32;
@@ -2908,9 +2916,9 @@ class L1BCloudsRasterBand: public GDALRasterBand
 /*                         L1BCloudsDataset()                           */
 /************************************************************************/
 
-L1BCloudsDataset::L1BCloudsDataset(L1BDataset* poL1BDSIn)
+L1BCloudsDataset::L1BCloudsDataset( L1BDataset* poL1BDSIn ) :
+    poL1BDS(poL1BDSIn)
 {
-    this->poL1BDS = poL1BDSIn;
     nRasterXSize = poL1BDSIn->nRasterXSize;
     nRasterYSize = poL1BDSIn->nRasterYSize;
 }
@@ -2928,10 +2936,11 @@ L1BCloudsDataset::~L1BCloudsDataset()
 /*                         L1BCloudsRasterBand()                        */
 /************************************************************************/
 
-L1BCloudsRasterBand::L1BCloudsRasterBand(L1BCloudsDataset* poDSIn, int nBandIn)
+L1BCloudsRasterBand::L1BCloudsRasterBand( L1BCloudsDataset* poDSIn,
+                                          int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     nRasterXSize = poDSIn->nRasterXSize;
     nRasterYSize = poDSIn->nRasterYSize;
     eDataType = GDT_Byte;
@@ -3101,7 +3110,7 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    GDALDataset* poOutDS;
+    GDALDataset* poOutDS = NULL;
     VSILFILE* fp = NULL;
     CPLString osFilename = poOpenInfo->pszFilename;
     int bAskGeolocationDS = FALSE;
@@ -3118,7 +3127,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
          STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_CLOUDS:") )
     {
         GByte abyHeader[1024];
-        const char* pszFilename;
+        const char* pszFilename = NULL;
         if( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") )
         {
             bAskGeolocationDS = TRUE;
@@ -3492,7 +3501,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->FetchMetadata();
     }
 
-    return( poDS );
+    return poDS;
 
 bad:
     delete poDS;

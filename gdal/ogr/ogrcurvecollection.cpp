@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCurveCollection class.
@@ -31,7 +30,9 @@
 #include "ogr_p.h"
 #include <assert.h>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                         OGRCurveCollection()                         */
@@ -284,11 +285,6 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
                                         char ** ppszDstText ) const
 
 {
-    char        **papszGeoms;
-    int         iGeom;
-    size_t      nCumulativeLength = 0;
-    OGRErr      eErr;
-
     if( nCurveCount == 0 )
     {
         CPLString osEmpty;
@@ -307,9 +303,11 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
-    papszGeoms = (char **) CPLCalloc(sizeof(char *),nCurveCount);
+    char **papszGeoms = (char **) CPLCalloc(sizeof(char *),nCurveCount);
+    OGRErr eErr = OGRERR_NONE;
+    size_t nCumulativeLength = 0;
 
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
         eErr = papoCurves[iGeom]->exportToWkt( &(papszGeoms[iGeom]), wkbVariantIso );
         if( eErr != OGRERR_NONE )
@@ -343,7 +341,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
 
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
         if( iGeom > 0 )
             (*ppszDstText)[nCumulativeLength++] = ',';
@@ -376,7 +374,7 @@ OGRErr OGRCurveCollection::exportToWkt( const OGRGeometry* poGeom,
     return OGRERR_NONE;
 
 error:
-    for( iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
         CPLFree( papszGeoms[iGeom] );
     CPLFree( papszGeoms );
     return eErr;
@@ -405,7 +403,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
     GUInt32 nGType = poGeom->getIsoGeometryType();
     if( eWkbVariant == wkbVariantPostGIS1 )
     {
-        int bIs3D = wkbHasZ((OGRwkbGeometryType)nGType);
+        const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));
         nGType = wkbFlatten(nGType);
         if( nGType == wkbCurvePolygon )
             nGType = POSTGIS15_CURVEPOLYGON;
@@ -712,3 +710,5 @@ OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
     }
     return FALSE;
 }
+
+//! @endcond

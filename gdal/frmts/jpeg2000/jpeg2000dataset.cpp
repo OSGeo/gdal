@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG-2000
  * Purpose:  Partial implementation of the ISO/IEC 15444-1 standard
@@ -43,7 +42,7 @@ CPL_CVSID("$Id$");
 #define JP2_FTYP_MAXCOMPATCODES 32
 #define JP2_BOX_IHDR    0x69686472      /* Image Header */
 #define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
-#define	JP2_BOX_PCLR	0x70636c72	/* Palette */
+#define JP2_BOX_PCLR    0x70636c72      /* Palette */
 #define JP2_BOX_UUID    0x75756964      /* UUID */
 extern "C" {
 typedef struct {
@@ -206,7 +205,7 @@ class JPEG2000RasterBand : public GDALPamRasterBand
   public:
 
                 JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
-                ~JPEG2000RasterBand();
+    virtual ~JPEG2000RasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
@@ -218,14 +217,14 @@ class JPEG2000RasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDSIn, int nBandIn,
-                int iDepthIn, int bSignednessIn )
-
+                                        int iDepthIn, int bSignednessIn ) :
+    poGDS(poDSIn),
+    psMatrix(NULL),
+    iDepth(iDepthIn),
+    bSignedness(bSignednessIn)
 {
-    this->poDS = poDSIn;
-    poGDS = poDSIn;
-    this->nBand = nBandIn;
-    this->iDepth = iDepthIn;
-    this->bSignedness = bSignednessIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     // XXX: JasPer can't handle data with depth > 32 bits
     // Maximum possible depth for JPEG2000 is 38!
@@ -413,13 +412,13 @@ GDALColorInterp JPEG2000RasterBand::GetColorInterpretation()
 /************************************************************************/
 
 JPEG2000Dataset::JPEG2000Dataset() :
-    iFormat(0)
+    psStream(NULL),
+    psImage(NULL),
+    iFormat(0),
+    bPromoteTo8Bit(FALSE),
+    bAlreadyDecoded(FALSE)
 {
-    psStream = NULL;
-    psImage = NULL;
     nBands = 0;
-    bAlreadyDecoded = FALSE;
-    bPromoteTo8Bit = FALSE;
 
     poDriver = (GDALDriver *)GDALGetDriverByName("JPEG2000");
 }
@@ -506,8 +505,8 @@ int JPEG2000Dataset::DecodeImage()
     if ( jas_clrspc_fam( jas_image_clrspc( psImage ) ) ==
               JAS_CLRSPC_FAM_YCBCR )
     {
-        jas_image_t *psRGBImage;
-        jas_cmprof_t *psRGBProf;
+        jas_image_t *psRGBImage = NULL;
+        jas_cmprof_t *psRGBProf = NULL;
         CPLDebug( "JPEG2000", "forcing conversion to sRGB");
         if (!(psRGBProf = jas_cmprof_createfromclrspc(JAS_CLRSPC_SRGB))) {
             CPLDebug( "JPEG2000", "cannot create sRGB profile");
@@ -571,13 +570,13 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int         iFormat;
     char        *pszFormatName = NULL;
-    jas_stream_t *sS;
 
     if (!Identify(poOpenInfo))
         return NULL;
 
     JPEG2000Init();
-    if( !(sS = JPEG2000_VSIL_fopen( poOpenInfo->pszFilename, "rb" )) )
+    jas_stream_t *sS= JPEG2000_VSIL_fopen( poOpenInfo->pszFilename, "rb" );
+    if( !sS )
     {
         return NULL;
     }
@@ -753,12 +752,14 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Should we promote alpha channel to 8 bits ?                     */
 /* -------------------------------------------------------------------- */
-    poDS->bPromoteTo8Bit = (poDS->nBands == 4 &&
-                            paiDepth[0] == 8 &&
-                            paiDepth[1] == 8 &&
-                            paiDepth[2] == 8 &&
-                            paiDepth[3] == 1 &&
-                            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "1BIT_ALPHA_PROMOTION", TRUE));
+    poDS->bPromoteTo8Bit =
+        poDS->nBands == 4 &&
+        paiDepth[0] == 8 &&
+        paiDepth[1] == 8 &&
+        paiDepth[2] == 8 &&
+        paiDepth[3] == 1 &&
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "1BIT_ALPHA_PROMOTION", true);
     if( poDS->bPromoteTo8Bit )
         CPLDebug( "JPEG2000",  "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -797,7 +798,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         poDS->LoadVectorLayers(
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+            CPLFetchBool(poOpenInfo->papszOpenOptions,
+                         "OPEN_REMOTE_GML", false));
 
         // If file opened in vector-only mode and there's no vector,
         // return
@@ -809,7 +811,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -825,8 +827,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nBands = poSrcDS->GetRasterCount();
     int  nXSize = poSrcDS->GetRasterXSize();
     int  nYSize = poSrcDS->GetRasterYSize();
-    int                 iBand;
-    GDALRasterBand      *poBand;
 
     if( nBands == 0 )
     {
@@ -845,6 +845,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             return NULL;
     }
 
+    // TODO(schwehr): Localize these vars.
+    int iBand;
+    GDALRasterBand  *poBand = NULL;
     for ( iBand = 0; iBand < nBands; iBand++ )
     {
         poBand = poSrcDS->GetRasterBand( iBand + 1);
@@ -875,19 +878,18 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    jas_stream_t        *psStream;
-    jas_image_t         *psImage;
-
     JPEG2000Init();
     const char* pszAccess = STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
-    if( !(psStream = JPEG2000_VSIL_fopen( pszFilename, pszAccess) ) )
+    jas_stream_t *psStream = JPEG2000_VSIL_fopen( pszFilename, pszAccess);
+    if( !psStream )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to create file %s.\n",
                   pszFilename );
         return NULL;
     }
 
-    if ( !(psImage = jas_image_create0()) )
+    jas_image_t *psImage = jas_image_create0();
+    if ( !psImage )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "Unable to create image %s.\n",
                   pszFilename );
@@ -901,13 +903,13 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GUInt32             *paiScanline;
     int                 iLine, iPixel;
     CPLErr              eErr = CE_None;
-    jas_matrix_t        *psMatrix;
     jas_image_cmptparm_t *sComps; // Array of pointers to image components
 
     sComps = (jas_image_cmptparm_t*)
         CPLMalloc( nBands * sizeof(jas_image_cmptparm_t) );
 
-    if ( !(psMatrix = jas_matrix_create( 1, nXSize )) )
+    jas_matrix_t *psMatrix  = jas_matrix_create( 1, nXSize );
+    if ( !psMatrix )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Unable to create matrix with size %dx%d.\n", 1, nYSize );
@@ -982,11 +984,6 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*       Read compression parameters and encode the image.              */
 /* -------------------------------------------------------------------- */
-    int             i, j;
-    const int       OPTSMAX = 4096;
-    const char      *pszFormatName;
-    char            pszOptionBuf[OPTSMAX + 1];
-
     const char  *apszComprOptions[]=
     {
         "imgareatlx",
@@ -1016,27 +1013,29 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         NULL
     };
 
-    pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
+    const char *pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
     if ( !pszFormatName ||
          (!STARTS_WITH_CI(pszFormatName, "jp2") &&
           !STARTS_WITH_CI(pszFormatName, "jpc") ) )
         pszFormatName = "jp2";
 
-    pszOptionBuf[0] = '\0';
+    // TODO(schwehr): Move pszOptionBuf off the stack.
+    const int OPTSMAX = 4096;
+    char pszOptionBuf[OPTSMAX + 1] = {};
+
     if ( papszOptions )
     {
         CPLDebug( "JPEG2000", "User supplied parameters:" );
-        for ( i = 0; papszOptions[i] != NULL; i++ )
+        for ( int i = 0; papszOptions[i] != NULL; i++ )
         {
             CPLDebug( "JPEG2000", "%s\n", papszOptions[i] );
-            for ( j = 0; apszComprOptions[j] != NULL; j++ )
+            for ( int j = 0; apszComprOptions[j] != NULL; j++ )
                 if( EQUALN( apszComprOptions[j], papszOptions[i],
                             strlen(apszComprOptions[j]) ) )
                 {
-                    int m, n;
-
-                    n = static_cast<int>(strlen( pszOptionBuf ));
-                    m = n + static_cast<int>(strlen( papszOptions[i] )) + 1;
+                    const int n = static_cast<int>(strlen( pszOptionBuf ));
+                    const int m =
+                        n + static_cast<int>(strlen( papszOptions[i] )) + 1;
                     if ( m > OPTSMAX )
                         break;
                     if ( n > 0 )
@@ -1105,7 +1104,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
 #ifdef HAVE_JASPER_UUID
         double  adfGeoTransform[6];
-        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) &&
+        if( CPLFetchBool( papszOptions, "GeoJP2", true ) &&
             ((poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
                  && (adfGeoTransform[0] != 0.0
                      || adfGeoTransform[1] != 1.0
@@ -1211,7 +1210,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if ( STARTS_WITH_CI(pszFormatName, "jp2") )
     {
         double  adfGeoTransform[6];
-        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) &&
+        if( CPLFetchBool( papszOptions, "GMLJP2", true ) &&
             poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             poSrcDS->GetProjectionRef() != NULL &&
             poSrcDS->GetProjectionRef()[0] != '\0' )
@@ -1291,7 +1290,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
     {
         double      adfGeoTransform[6];
 

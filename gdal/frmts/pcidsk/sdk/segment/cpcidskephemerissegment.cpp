@@ -303,7 +303,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
 /************************************************************************/
 /**                                                                      
  *  Read from a byte buffer in order to set a scanline record.     
- * @param pbyBuf the buffer that contains the record to read.
+ * @param nPos position in buffer
  * @param psScanlineRecord the record to read.
  */
 void 
@@ -486,7 +486,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /**                                                                      
  * Write a scanline record to a byte buffer.  
  * @param psScanlineRecord the record to write
- * @param pbyBuf the buffer to write.
+ * @param nPos position in buffer
  */
 void 
 CPCIDSKEphemerisSegment::WriteAvhrrScanlineRecord(

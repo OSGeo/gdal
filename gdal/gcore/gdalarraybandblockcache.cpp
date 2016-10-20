@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Store cached blocks in a array or a two-level array
@@ -32,6 +31,8 @@
 #include "cpl_multiproc.h"
 #include <new>
 
+//! @cond Doxygen_Suppress
+
 static const int SUBBLOCK_SIZE = 64;
 #define TO_SUBBLOCK(x) ((x) >> 6)
 #define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
@@ -54,8 +55,8 @@ class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     } u;
 
     public:
-            explicit GDALArrayBandBlockCache(GDALRasterBand* poBand);
-           ~GDALArrayBandBlockCache();
+           explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
+           virtual ~GDALArrayBandBlockCache();
 
            virtual bool             Init();
            virtual bool             IsInitOK();
@@ -479,3 +480,5 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
 
     return poBlock;
 }
+
+//! @endcond

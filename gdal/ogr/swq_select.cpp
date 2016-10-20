@@ -31,6 +31,9 @@
 #include "swq_parser.hpp"
 #include "ogr_geometry.h"
 
+CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                             swq_select()                             */
 /************************************************************************/
@@ -1216,3 +1219,4 @@ CPLErr swq_select::parse( swq_field_list *field_list,
 
     return CE_None;
 }
+//! @endcond

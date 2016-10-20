@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Compute each pixel's proximity to a set of target pixels.
@@ -173,7 +172,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     double dfSrcNoDataValue = 0.0;
     double *pdfSrcNoData = NULL;
-    if( CSLFetchBoolean( papszOptions, "USE_INPUT_NODATA", FALSE ) )
+    if( CPLFetchBool( papszOptions, "USE_INPUT_NODATA", false ) )
     {
         int bSrcHasNoData = 0;
         dfSrcNoDataValue = GDALGetRasterNoDataValue( hSrcBand, &bSrcHasNoData );
@@ -550,7 +549,7 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
             && fNearDistSq <= dfMaxDist * dfMaxDist
             && (pafProximity[iPixel] < 0
                 || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
-            pafProximity[iPixel] = sqrt(fNearDistSq);
+            pafProximity[iPixel] = static_cast<float>(sqrt(fNearDistSq));
     }
 
     return CE_None;

@@ -34,6 +34,8 @@
 #include "ogr_geometry.h"
 #include "swq.h"
 
+CPL_CVSID("$Id$");
+
 #define YYSTYPE  swq_expr_node*
 
 /* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
@@ -231,8 +233,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_LIKE value_expr
         {
-            swq_expr_node *like;
-            like = new swq_expr_node( SWQ_LIKE );
+            swq_expr_node *like = new swq_expr_node( SWQ_LIKE );
             like->field_type = SWQ_BOOLEAN;
             like->PushSubExpression( $1 );
             like->PushSubExpression( $4 );
@@ -253,8 +254,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_LIKE value_expr SWQT_ESCAPE value_expr
         {
-            swq_expr_node *like;
-            like = new swq_expr_node( SWQ_LIKE );
+            swq_expr_node *like = new swq_expr_node( SWQ_LIKE );
             like->field_type = SWQ_BOOLEAN;
             like->PushSubExpression( $1 );
             like->PushSubExpression( $4 );
@@ -276,9 +276,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_IN '(' value_expr_list ')'
         {
-            swq_expr_node *in;
-
-            in = $5;
+            swq_expr_node *in = $5;
             in->field_type = SWQ_BOOLEAN;
             in->nOperation = SWQ_IN;
             in->PushSubExpression( $1 );
@@ -300,8 +298,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_BETWEEN value_expr_non_logical SWQT_AND value_expr_non_logical
         {
-            swq_expr_node *between;
-            between = new swq_expr_node( SWQ_BETWEEN );
+            swq_expr_node *between = new swq_expr_node( SWQ_BETWEEN );
             between->field_type = SWQ_BOOLEAN;
             between->PushSubExpression( $1 );
             between->PushSubExpression( $4 );
@@ -321,9 +318,7 @@ value_expr:
 
     | value_expr SWQT_IS SWQT_NOT SWQT_NULL
         {
-        swq_expr_node *isnull;
-
-            isnull = new swq_expr_node( SWQ_ISNULL );
+            swq_expr_node *isnull = new swq_expr_node( SWQ_ISNULL );
             isnull->field_type = SWQ_BOOLEAN;
             isnull->PushSubExpression( $1 );
 
@@ -615,9 +610,7 @@ column_spec:
 
     | SWQT_IDENTIFIER '.' '*'
         {
-            CPLString osTableName;
-
-            osTableName = $1->string_value;
+            CPLString osTableName = $1->string_value;
 
             delete $1;
             $1 = NULL;
@@ -704,8 +697,9 @@ column_spec:
                 // special case for COUNT(DISTINCT x), confirm it.
             if( !EQUAL($1->string_value,"COUNT") )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "DISTINCT keyword can only be used in COUNT() operator." );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "DISTINCT keyword can only be used in COUNT() operator." );
                 delete $1;
                 delete $4;
                     YYERROR;
@@ -779,7 +773,7 @@ opt_joins:
             context->poCurSelect->PushJoin( static_cast<int>($3->int_value),
                                             $5 );
             delete $3;
-	    }
+        }
 
 opt_order_by:
     | SWQT_ORDER SWQT_BY sort_spec_list
@@ -811,9 +805,9 @@ sort_spec:
 table_def:
     SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable =context->poCurSelect->PushTableDef( NULL, $1->string_value,
-                                                    NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( NULL, $1->string_value,
+                                                NULL );
         delete $1;
 
         $$ = new swq_expr_node( iTable );
@@ -821,9 +815,9 @@ table_def:
 
     | SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
-                                                     $2->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( NULL, $1->string_value,
+                                                $2->string_value );
         delete $1;
         delete $2;
 
@@ -832,9 +826,9 @@ table_def:
 
     | SWQT_STRING '.' SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value, NULL );
         delete $1;
         delete $3;
 
@@ -843,10 +837,10 @@ table_def:
 
     | SWQT_STRING '.' SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value,
-                                                     $4->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value,
+                                                $4->string_value );
         delete $1;
         delete $3;
         delete $4;
@@ -856,9 +850,9 @@ table_def:
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value, NULL );
         delete $1;
         delete $3;
 
@@ -867,10 +861,10 @@ table_def:
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value,
-                                                     $4->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value,
+                                                $4->string_value );
         delete $1;
         delete $3;
         delete $4;

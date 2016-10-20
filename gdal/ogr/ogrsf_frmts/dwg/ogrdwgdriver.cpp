@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdxfdriver.cpp 18535 2010-01-12 01:40:32Z warmerdam $
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGDriver.
@@ -30,7 +29,7 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdxfdriver.cpp 18535 2010-01-12 01:40:32Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void CPL_DLL RegisterOGRDWG();

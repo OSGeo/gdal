@@ -45,7 +45,7 @@ class OGRXLSLayer : public OGRLayer
 
     char              *pszName;
     int                iSheet;
-    int                bFirstLineIsHeaders;
+    bool               bFirstLineIsHeaders;
     int                nRows;
     unsigned short     nCols;
 
@@ -63,7 +63,7 @@ class OGRXLSLayer : public OGRLayer
                                     int iSheetIn,
                                     int nRowsIn,
                                     unsigned short nColsIn);
-                        ~OGRXLSLayer();
+                        virtual ~OGRXLSLayer();
 
 
     virtual void                ResetReading();
@@ -96,7 +96,7 @@ class OGRXLSDataSource : public OGRDataSource
 
   public:
                         OGRXLSDataSource();
-                        ~OGRXLSDataSource();
+                        virtual ~OGRXLSDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
@@ -118,7 +118,7 @@ class OGRXLSDataSource : public OGRDataSource
 class OGRXLSDriver : public OGRSFDriver
 {
   public:
-                ~OGRXLSDriver();
+                virtual ~OGRXLSDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

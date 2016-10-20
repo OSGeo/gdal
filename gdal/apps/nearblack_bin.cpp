@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Convert nearly black or nearly white border to exact black/white.
@@ -88,7 +87,7 @@ int main(int argc, char** argv)
 /* -------------------------------------------------------------------- */
     GDALAllRegister();
     if( CPLGetConfigOption("GDAL_CACHEMAX", NULL) == NULL )
-	GDALSetCacheMax( 100000000 );
+        GDALSetCacheMax( 100000000 );
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
         exit( -argc );

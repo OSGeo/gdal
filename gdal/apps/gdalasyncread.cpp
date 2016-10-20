@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  GDAL Async Image Reader, primarily for testing async api.
@@ -76,15 +75,15 @@ static void Usage()
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hSrcDS, hDstDS;
+    GDALDatasetH        hSrcDS, hDstDS;
     GDALDataset *       poSrcDS, *poDstDS = NULL;
-    int			i;
-    int			nRasterXSize, nRasterYSize;
-    const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
-    GDALDriverH		hDriver;
-    int			*panBandList = NULL, nBandCount = 0, bDefBands = TRUE;
-    GDALDataType	eOutputType = GDT_Unknown;
-    int			nOXSize = 0, nOYSize = 0;
+    int                 i;
+    int                 nRasterXSize, nRasterYSize;
+    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    GDALDriverH         hDriver;
+    int                 *panBandList = NULL, nBandCount = 0, bDefBands = TRUE;
+    GDALDataType        eOutputType = GDT_Unknown;
+    int                 nOXSize = 0, nOYSize = 0;
     char                **papszCreateOptions = NULL;
     char                **papszAsyncOptions = NULL;
     int                 anSrcWin[4];
@@ -296,7 +295,7 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Build band list to translate					*/
+/*      Build band list to translate                                    */
 /* -------------------------------------------------------------------- */
     if( nBandCount == 0 )
     {

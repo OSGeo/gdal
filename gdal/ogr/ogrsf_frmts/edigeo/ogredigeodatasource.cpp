@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEODataSource class
@@ -37,33 +36,38 @@ CPL_CVSID("$Id$");
 /*                        OGREDIGEODataSource()                         */
 /************************************************************************/
 
-OGREDIGEODataSource::OGREDIGEODataSource()
-
+OGREDIGEODataSource::OGREDIGEODataSource() :
+    pszName(NULL),
+    fpTHF(NULL),
+    papoLayers(NULL),
+    nLayers(0),
+    poSRS(NULL),
+    bExtentValid(FALSE),
+    dfMinX(0),
+    dfMinY(0),
+    dfMaxX(0),
+    dfMaxY(0),
+    bRecodeToUTF8(
+        CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_RECODE_TO_UTF8", "YES"))),
+    bHasUTF8ContentOnly(TRUE),
+    iATR(-1),
+    iDI3(-1),
+    iDI4(-1),
+    iHEI(-1),
+    iFON(-1),
+    iATR_VAL(-1),
+    iANGLE(-1),
+    iSIZE(-1),
+    iOBJ_LNK(-1),
+    iOBJ_LNK_LAYER(-1),
+    dfSizeFactor(CPLAtof(
+        CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"))),
+    bIncludeFontFamily(CPLTestBool(
+        CPLGetConfigOption("OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"))),
+    bHasReadEDIGEO(FALSE)
 {
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-    poSRS = NULL;
-
-    bExtentValid = FALSE;
-    dfMinX = dfMinY = dfMaxX = dfMaxY = 0;
-
-    fpTHF = NULL;
-    bHasReadEDIGEO = FALSE;
-
-    bIncludeFontFamily = CPLTestBool(CPLGetConfigOption(
-                                 "OGR_EDIGEO_INCLUDE_FONT_FAMILY", "YES"));
-
-    iATR = iDI3 = iDI4 = iHEI = iFON = -1;
-    iATR_VAL = iANGLE = iSIZE = iOBJ_LNK = iOBJ_LNK_LAYER = -1;
-    dfSizeFactor = CPLAtof(CPLGetConfigOption("OGR_EDIGEO_FONT_SIZE_FACTOR", "2"));
     if (dfSizeFactor <= 0 || dfSizeFactor >= 100)
         dfSizeFactor = 2;
-
-    bRecodeToUTF8 = CPLTestBool(CPLGetConfigOption(
-                                        "OGR_EDIGEO_RECODE_TO_UTF8", "YES"));
-    bHasUTF8ContentOnly = TRUE;
 }
 
 /************************************************************************/
@@ -125,7 +129,7 @@ int OGREDIGEODataSource::GetLayerCount()
 
 int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
@@ -226,8 +230,8 @@ int OGREDIGEODataSource::ReadGEO()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    const char* pszLine = NULL;
+    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -285,9 +289,10 @@ int OGREDIGEODataSource::ReadGEN()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osCM1, osCM2;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    const char* pszLine = NULL;
+    CPLString osCM1;
+    CPLString osCM2;
+    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -333,8 +338,11 @@ int OGREDIGEODataSource::ReadDIC()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osRTY, osRID, osLAB, osTYP;
+    const char* pszLine = NULL;
+    CPLString osRTY;
+    CPLString osRID;
+    CPLString osLAB;
+    CPLString osTYP;
     while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -392,7 +400,7 @@ int OGREDIGEODataSource::ReadSCD()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     CPLString osRTY, osRID, osNameRID, osKND;
     strListType aosAttrRID;
     int nWidth = 0;
@@ -501,9 +509,11 @@ int OGREDIGEODataSource::ReadQAL()
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
-    CPLString osRTY, osRID;
-    int nODA = 0, nUDA = 0;
+    const char* pszLine = NULL;
+    CPLString osRTY;
+    CPLString osRID;
+    int nODA = 0;
+    int nUDA = 0;
     while( true )
     {
         pszLine = CPLReadLine2L(fp, 81, NULL);
@@ -636,7 +646,7 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     CPLString osRTY, osRID;
     xyPairListType aXY;
     CPLString osLnkStartType, osLnkStartName, osLnkEndType, osLnkEndName;
@@ -1140,8 +1150,6 @@ int OGREDIGEODataSource::BuildLineStrings()
 int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
                                       const CPLString& osPFE)
 {
-    int i;
-
     const std::map< CPLString, strListType >::iterator itPFE_PAR =
                                                     mapPFE_PAR.find(osPFE);
     if (itPFE_PAR == mapPFE_PAR.end())
@@ -1156,11 +1164,11 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 /*      Resolve arc ids to arc coordinate lists.                        */
 /* -------------------------------------------------------------------- */
     std::vector< const xyPairListType *> aoPARPtrList;
-    for(i=0;i<(int)aosPARList.size();i++)
+    for( int i = 0; i < (int)aosPARList.size(); i++ )
     {
         const std::map< CPLString, xyPairListType >::iterator itPAR =
                                             mapPAR.find(aosPARList[i]);
-        if (itPAR != mapPAR.end())
+        if( itPAR != mapPAR.end() )
             aoPARPtrList.push_back(&(itPAR->second));
         else
             CPLDebug("EDIGEO",
@@ -1175,8 +1183,8 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 /* -------------------------------------------------------------------- */
     std::vector<xyPairListType> aoXYList;
 
-    int j;
-    for(j=0;j<(int)aoPARPtrList.size();j++)
+
+    for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
     {
         if (aoPARPtrList[j] == NULL)
             continue;
@@ -1184,36 +1192,37 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         const xyPairType* psNext = &(sFirstRing[sFirstRing.size()-1]);
 
         xyPairListType aoXY;
-        for(i=0;i<(int)sFirstRing.size();i++)
+        for( int i = 0; i < (int)sFirstRing.size(); i++ )
             aoXY.push_back(sFirstRing[i]);
         aoPARPtrList[j] = NULL;
 
         int nIter = 1;
         while(aoXY[aoXY.size()-1] != aoXY[0] && nIter < (int)aoPARPtrList.size())
         {
-            int bFound = FALSE;
-            int bReverseSecond = FALSE;
-            for(i=0;i<(int)aoPARPtrList.size();i++)
+            bool bFound = false;
+            bool bReverseSecond = false;
+            int i = 0;  // Used after for.
+            for( ; i < (int)aoPARPtrList.size(); i++ )
             {
                 if (aoPARPtrList[i] != NULL)
                 {
                     const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
                     if (*psNext == sSecondRing[0])
                     {
-                        bFound = TRUE;
-                        bReverseSecond = FALSE;
+                        bFound = true;
+                        bReverseSecond = false;
                         break;
                     }
                     else if (*psNext == sSecondRing[sSecondRing.size()-1])
                     {
-                        bFound = TRUE;
-                        bReverseSecond = TRUE;
+                        bFound = true;
+                        bReverseSecond = true;
                         break;
                     }
                 }
             }
 
-            if (!bFound)
+            if( !bFound )
             {
                 CPLDebug("EDIGEO", "Cannot find ring for FEA %s / PFE %s",
                         osFEA.c_str(), osPFE.c_str());
@@ -1223,7 +1232,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
             {
                 const xyPairListType& secondRing = *(aoPARPtrList[i]);
                 aoPARPtrList[i] = NULL;
-                if (!bReverseSecond)
+                if( !bReverseSecond )
                 {
                     for(i=1;i<(int)secondRing.size();i++)
                         aoXY.push_back(secondRing[i]);
@@ -1247,15 +1256,15 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 /*      Create feature.                                                 */
 /* -------------------------------------------------------------------- */
     OGRFeature* poFeature = CreateFeature(osFEA);
-    if (poFeature)
+    if( poFeature )
     {
         std::vector<OGRGeometry*> aosPolygons;
-        for(j=0;j<(int)aoXYList.size();j++)
+        for( int j = 0; j < (int)aoXYList.size(); j++ )
         {
             const xyPairListType& aoXY = aoXYList[j];
             OGRLinearRing* poLS = new OGRLinearRing();
             poLS->setNumPoints((int)aoXY.size());
-            for(i=0;i<(int)aoXY.size();i++)
+            for( int i = 0; i < (int)aoXY.size(); i++ )
                 poLS->setPoint(i, aoXY[i].first, aoXY[i].second);
             poLS->closeRings();
             OGRPolygon* poPolygon = new OGRPolygon();
@@ -1263,7 +1272,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
             aosPolygons.push_back(poPolygon);
         }
 
-        int bIsValidGeometry;
+        int bIsValidGeometry = FALSE;
         OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
             &aosPolygons[0], (int)aosPolygons.size(),
             &bIsValidGeometry, NULL);
@@ -1284,8 +1293,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 
 int OGREDIGEODataSource::BuildPolygons()
 {
-    int iter;
-    for(iter=0;iter<(int)listFEA_PFE.size();iter++)
+    for( int iter = 0; iter < (int)listFEA_PFE.size(); iter++ )
     {
         const CPLString& osFEA = listFEA_PFE[iter].first;
         const CPLString& osPFE = listFEA_PFE[iter].second;
@@ -1353,20 +1361,20 @@ int OGREDIGEODataSource::Open( const char * pszFilename )
     if (fpTHF == NULL)
         return FALSE;
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     int i = 0;
-    int bIsEDIGEO = FALSE;
-    while(i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, NULL)) != NULL)
+    bool bIsEDIGEO = false;
+    while( i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, NULL)) != NULL )
     {
         if (strcmp(pszLine, "RTYSA03:GTS") == 0)
         {
-            bIsEDIGEO = TRUE;
+            bIsEDIGEO = true;
             break;
         }
         i++;
     }
 
-    if (!bIsEDIGEO)
+    if( !bIsEDIGEO )
     {
         VSIFCloseL(fpTHF);
         fpTHF = NULL;
@@ -1433,8 +1441,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /* -------------------------------------------------------------------- */
 /*      Create layers from SCD definitions                              */
 /* -------------------------------------------------------------------- */
-    int i;
-    for(i=0;i<(int)aoObjList.size();i++)
+    for( int i = 0; i < (int)aoObjList.size(); i++ )
     {
         CreateLayerFromObjectDesc(aoObjList[i]);
     }
@@ -1442,7 +1449,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /* -------------------------------------------------------------------- */
 /*      Read .VEC files and create features                             */
 /* -------------------------------------------------------------------- */
-    for(i=0;i<(int)aosGDN.size();i++)
+    for( int i = 0; i < (int)aosGDN.size(); i++ )
     {
         ReadVEC(aosGDN[i]);
 
@@ -1468,7 +1475,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /* -------------------------------------------------------------------- */
 /*      Delete empty layers                                             */
 /* -------------------------------------------------------------------- */
-    for(i=0;i<nLayers;/*nothing*/)
+    for( int i = 0; i <nLayers; /*nothing*/ )
     {
         if (papoLayers[i]->GetFeatureCount(TRUE) == 0)
         {
@@ -1510,9 +1517,9 @@ void OGREDIGEODataSource::CreateLabelLayers()
 
     std::map<CPLString, OGREDIGEOLayer*> mapLayerNameToLayer;
 
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
-    while((poFeature = poLayer->GetNextFeature()) != NULL)
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
     {
         const char* pszBelongingLayerName =
             poFeature->GetFieldAsString(iOBJ_LNK_LAYER);
@@ -1521,7 +1528,7 @@ void OGREDIGEODataSource::CreateLabelLayers()
             CPLString osBelongingLayerName = pszBelongingLayerName;
             std::map<CPLString, OGREDIGEOLayer*>::iterator it =
                         mapLayerNameToLayer.find(osBelongingLayerName);
-            OGREDIGEOLayer* poLabelLayer;
+            OGREDIGEOLayer* poLabelLayer = NULL;
 
             if (it == mapLayerNameToLayer.end())
             {
@@ -1529,9 +1536,8 @@ void OGREDIGEODataSource::CreateLabelLayers()
                 CPLString osLayerLabelName = osBelongingLayerName + "_LABEL";
                 poLabelLayer = new OGREDIGEOLayer(this, osLayerLabelName.c_str(),
                                              wkbPoint, poSRS);
-                int i;
                 OGRFeatureDefn* poLabelFeatureDefn = poLabelLayer->GetLayerDefn();
-                for(i=0;i<poFeatureDefn->GetFieldCount();i++)
+                for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
                     poLabelFeatureDefn->AddFieldDefn(poFeatureDefn->GetFieldDefn(i));
                 mapLayerNameToLayer[osBelongingLayerName] = poLabelLayer;
 
@@ -1541,7 +1547,9 @@ void OGREDIGEODataSource::CreateLabelLayers()
                 nLayers ++;
             }
             else
+            {
                 poLabelLayer = mapLayerNameToLayer[osBelongingLayerName];
+            }
 
             OGRFeature* poNewFeature = new OGRFeature(poLabelLayer->GetLayerDefn());
             poNewFeature->SetFrom(poFeature);

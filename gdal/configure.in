@@ -47,45 +47,85 @@ AC_CANONICAL_HOST
 dnl Enable as much warnings as possible
 AX_CFLAGS_WARN_ALL(C_WFLAGS)
 AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
-AX_CHECK_COMPILE_FLAG([-Werror -Wextra],[C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"])
-AX_CHECK_COMPILE_FLAG([-Werror -Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"])
+
+dnl For ICC: it needs -we10006 instead of -Werror to turn unknown options to errors
+dnl Some gcc/clang versions might succeed on this test, so also include -Werror in ERROR_ON_UNKNOWN_OPTIONS
+AX_CHECK_COMPILE_FLAG([-Werror -we10006],[ERROR_ON_UNKNOWN_OPTIONS="-Werror -we10006"],[ERROR_ON_UNKNOWN_OPTIONS="-Werror"])
+
+dnl A few ICC warnings to turn off
+dnl warning #188: enumerated type mixed with another type  (needed on libcsf)
+dnl warning #1684: conversion from pointer to same-sized integral type (potential portability problem)  (needed on frmts/mrf)
+dnl warning #2259: non-pointer conversion from "size_t={unsigned long}" to "int" may lose significant bits
+dnl warning #2304: non-explicit constructor with single argument may cause implicit type conversion
+dnl warning #3280: declaration hides member
+dnl remark #11074: Inlining inhibited by limit max-size
+dnl remark #11076: To get full report use -qopt-report=4 -qopt-report-phase ipo
+AX_CHECK_COMPILE_FLAG([-diag-disable 188,1684,2259,2304,3280,11074,11076],[C_WFLAGS="$C_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076" CXX_WFLAGS="$CXX_WFLAGS -diag-disable 188,1684,2259,2304,3280,11074,11076"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
+AX_CHECK_COMPILE_FLAG([-Wextra],[C_WFLAGS="$C_WFLAGS -Wextra" CXX_WFLAGS="$CXX_WFLAGS -Wextra"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Winit-self],[C_WFLAGS="$C_WFLAGS -Winit-self" CXX_WFLAGS="$CXX_WFLAGS -Winit-self"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wunused-parameter], [C_WFLAGS="$C_WFLAGS -Wunused-parameter" CXX_WFLAGS="$CXX_WFLAGS -Wunused-parameter" NO_UNUSED_PARAMETER_FLAG="-Wno-unused-parameter"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [C_WFLAGS="$C_WFLAGS -Wmissing-prototypes"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [C_WFLAGS="$C_WFLAGS -Wmissing-declarations"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wformat], [C_WFLAGS="$C_WFLAGS -Wformat" CXX_WFLAGS="$CXX_WFLAGS -Wformat"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wformat -Werror=format-security -Wno-format-nonliteral], [C_WFLAGS="$C_WFLAGS -Werror=format-security -Wno-format-nonliteral" CXX_WFLAGS="$CXX_WFLAGS -Werror=format-security -Wno-format-nonliteral"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wshorten-64-to-32], [C_WFLAGS="$C_WFLAGS -Wshorten-64-to-32" CXX_WFLAGS="$CXX_WFLAGS -Wshorten-64-to-32"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wlogical-op], [C_WFLAGS="$C_WFLAGS -Wlogical-op" CXX_WFLAGS="$CXX_WFLAGS -Wlogical-op" NO_LOGICAL_OP_FLAG="-Wno-logical-op"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wshadow], [C_WFLAGS="$C_WFLAGS -Wshadow" CXX_WFLAGS="$CXX_WFLAGS -Wshadow"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Error out on things that will fail with MSVC
-AX_CHECK_COMPILE_FLAG([-Werror -Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"])
-AX_CHECK_COMPILE_FLAG([-Werror -Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"])
+AX_CHECK_COMPILE_FLAG([-Werror=vla], [C_WFLAGS="$C_WFLAGS -Werror=vla" CXX_WFLAGS="$CXX_WFLAGS -Werror=vla"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAGS -Wdeclaration-after-statement"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl -Wclobbered is not reliable on most gcc versions
-dnl AX_CHECK_COMPILE_FLAG([-Werror -Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"])
+dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl GCC 6 warnings
-AX_CHECK_COMPILE_FLAG([-Werror -Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"])
+AX_CHECK_COMPILE_FLAG([-Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
-AX_CHECK_COMPILE_FLAG([-Werror -Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"])
+AX_CHECK_COMPILE_FLAG([-Wno-sign-compare], [NO_SIGN_COMPARE="-Wno-sign-compare"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
+dnl clang >= 3.9
+AX_CHECK_COMPILE_FLAG([-Wcomma], [C_WFLAGS="$C_WFLAGS -Wcomma" CXX_WFLAGS="$CXX_WFLAGS -Wcomma"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
+dnl clang and gcc 5
+AX_CHECK_COMPILE_FLAG([-Wfloat-conversion], [C_WFLAGS="$C_WFLAGS -Wfloat-conversion" CXX_WFLAGS="$CXX_WFLAGS -Wfloat-conversion"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
+dnl clang >= 3.2
+AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_WFLAGS="$C_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync" CXX_WFLAGS="$CXX_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl C++ specific stuff
 
 AC_LANG_PUSH([C++])
-AX_CHECK_COMPILE_FLAG([-Werror -Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"])
-AX_CHECK_COMPILE_FLAG([-Werror -Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"])
+AX_CHECK_COMPILE_FLAG([-Wunused-private-field], [CXX_WFLAGS="$CXX_WFLAGS -Wunused-private-field"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-prototypes], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-prototypes"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wmissing-declarations], [CXX_WFLAGS="$CXX_WFLAGS -Wmissing-declarations"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AX_CHECK_COMPILE_FLAG([-Wnon-virtual-dtor], [CXX_WFLAGS="$CXX_WFLAGS -Wnon-virtual-dtor" NO_NON_VIRTUAL_DTOR_FLAG="-Wno-non-virtual-dtor"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Clang enables -Woverloaded-virtual if -Wall is defined, but not GCC
-AX_CHECK_COMPILE_FLAG([-Werror -Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"])
+AX_CHECK_COMPILE_FLAG([-Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloaded-virtual"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl Forbid use of 'or', 'and', ... alias operators
-AX_CHECK_COMPILE_FLAG([-Werror -fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"])
+AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 AC_LANG_POP([C++])
+
+dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
+AC_LANG_PUSH([C++])
+SAVED_CXXFLAGS=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
+AC_MSG_CHECKING([if -Wimplicit-fallthrough can be enabled])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
+    #error "not C++11 or clang >= 3.7"
+    #endif]])],
+  [CXX_WFLAGS="$CXX_WFLAGS -Wimplicit-fallthrough"]
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])])
+CXXFLAGS=$SAVED_CXXFLAGS
+AC_LANG_POP([C++])
+
 
 AC_SUBST(CXX_WFLAGS,$CXX_WFLAGS)
 AC_SUBST(C_WFLAGS,$C_WFLAGS)
@@ -174,6 +214,7 @@ AC_CHECK_TYPES([int8, int16, int32],,,
 # include <inttypes.h>
 #endif
 ])
+AC_CHECK_TYPES(uintptr_t)
 
 dnl We need the following lines for libtiff too.
 HAVE_IEEEFP=1
@@ -206,6 +247,7 @@ AC_CHECK_DECLS(strtof)
 AC_CHECK_FUNCS(readlink)
 AC_CHECK_FUNCS(lstat)
 AC_CHECK_FUNCS(posix_spawnp)
+AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
 AC_CHECK_FUNCS(statvfs)
@@ -322,6 +364,48 @@ rm -f atomicbuiltins.* atomicbuiltins
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
 
 dnl ---------------------------------------------------------------------------
+dnl Check if GCC bswap builtins are available
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([whether GCC bswap builtins are available])
+
+rm -f bswapbuiltins.c
+echo '#include <x86intrin.h>' > bswapbuiltins.c
+echo 'int main(int argc, char** argv) { (void)__builtin_bswap32(0); (void)__builtin_bswap64(0); return 0; } ' >> bswapbuiltins.c
+if test -z "`${CC} ${CFLAGS} bswapbuiltins.c -o bswapbuiltins 2>&1`" ; then
+    HAVE_GCC_BSWAP=yes
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_GCC_BSWAP,1, [Define to 1 if GCC bswap builtins are available])
+else
+    HAVE_GCC_BSWAP=no
+    AC_MSG_RESULT([no])
+fi
+rm -f bswapbuiltins.* bswapbuiltins
+
+AC_SUBST(HAVE_GCC_BSWAP,$HAVE_GCC_BSWAP)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if __uint128_t is available and usable
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING([for __uint128_t])
+AC_TRY_COMPILE(
+  [
+  ], [
+      unsigned long long v1 = 1024ULL;
+      unsigned long long v2 = 0x8000000000000000ULL;
+      __uint128_t u = ((__uint128_t)v1)*((__uint128_t)v2);
+      return u == 0;
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE_UNQUOTED(HAVE_UINT128_T, 1,
+          [Define to 1 if the system has the type __uint128_t])
+  ], [
+    AC_MSG_RESULT([no])
+])
+
+dnl ---------------------------------------------------------------------------
 dnl Check SSE availability
 dnl ---------------------------------------------------------------------------
 
@@ -380,13 +464,88 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
        esac
     fi
 
+    if test "$HAVE_SSE_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
     rm -f detectsse*
 else
     AC_MSG_RESULT([no])
 fi
 
 AC_SUBST(SSEFLAGS,$SSEFLAGS)
-AC_SUBST(HAVE_SSE_AT_COMPILE_TIME,$HAVE_SSE_AT_COMPILE_TIME)
+
+dnl ---------------------------------------------------------------------------
+dnl Check SSSE3 availability
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ssse3,
+[  --with-ssse3[=ARG]        Detect SSSE3 availability for some optimized routines (ARG=yes(default), no)],,)
+
+AC_MSG_CHECKING([whether SSSE3 is available at compile time])
+
+if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
+
+    rm -f detectssse3.cpp
+    echo '#ifdef __SSSE3__' > detectssse3.cpp
+    echo '#include <tmmintrin.h>' >> detectssse3.cpp
+    echo 'void foo() { __m128i xmm_i = _mm_set1_epi16(0); xmm_i = _mm_shuffle_epi8(xmm_i, xmm_i); }  int main() { return 0; }' >> detectssse3.cpp
+    echo '#else' >> detectssse3.cpp
+    echo 'some_error' >> detectssse3.cpp
+    echo '#endif' >> detectssse3.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -o detectssse3 detectssse3.cpp 2>&1`" ; then
+        AC_MSG_RESULT([yes])
+        SSSE3FLAGS=""
+        HAVE_SSSE3_AT_COMPILE_TIME=yes
+    else
+        if test -z "`${CXX} ${CXXFLAGS} -mssse3 -o detectssse3 detectssse3.cpp 2>&1`" ; then
+            AC_MSG_RESULT([yes])
+            SSSE3FLAGS="-mssse3"
+            HAVE_SSSE3_AT_COMPILE_TIME=yes
+        else
+            AC_MSG_RESULT([no])
+            if test "$with_ssse3" = "yes"; then
+                AC_MSG_ERROR([--with-ssse3 was requested, but SSSE3 is not available])
+            fi
+        fi
+    fi
+
+    dnl On Solaris, the presence of SSSE3 instructions is flagged in the binary
+    dnl and prevent it to run on non SSSE3 hardware even if the instructions are
+    dnl not executed. So if the user did not explicitly requires SSSE3, test that
+    dnl we can run SSSE3 binaries
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+       case $host_os in
+         solaris*)
+           AC_MSG_CHECKING([whether SSSE3 is available and needed at runtime])
+           if ./detectssse3; then
+             AC_MSG_RESULT([yes])
+           else
+             AC_MSG_RESULT([no])
+             if test "$with_ssse3" = "yes"; then
+               echo "Caution: the generated binaries will not run on this system."
+             else
+               echo "Disabling SSSE3 as it is not explicitly required"
+               HAVE_SSSE3_AT_COMPILE_TIME=""
+               SSSE3FLAGS=""
+             fi
+           fi
+           ;;
+       esac
+    fi
+
+    if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
+    rm -f detectssse3*
+else
+    AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(SSSE3FLAGS,$SSSE3FLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Check AVX availability
@@ -452,13 +611,17 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
        esac
     fi
 
+    if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
+        CFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CFLAGS"
+        CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
+    fi
+
     rm -f detectavx*
 else
     AC_MSG_RESULT([no])
 fi
 
 AC_SUBST(AVXFLAGS,$AVXFLAGS)
-AC_SUBST(HAVE_AVX_AT_COMPILE_TIME,$HAVE_AVX_AT_COMPILE_TIME)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for --enable-lto
@@ -470,8 +633,8 @@ AC_ARG_ENABLE(lto,
               AS_HELP_STRING([--enable-lto],
                              [enable LTO(link time optimization) (disabled by default)]))
 
-CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
 CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
 
 if test "x$enable_lto" = "xyes" ; then
 
@@ -490,8 +653,12 @@ if test "x$enable_lto" = "xyes" ; then
   dnl with -flto
   if test "$HAVE_AVX_AT_COMPILE_TIME" = "yes"; then
     if test "$AVXFLAGS" = ""; then
-        CFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CFLAGS"
         CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS"
+    fi
+  fi
+  if test "$HAVE_SSSE3_AT_COMPILE_TIME" = "yes"; then
+    if test "$SSSE3FLAGS" = ""; then
+        CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS"
     fi
   fi
 
@@ -500,11 +667,11 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_SUBST(CFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
 AC_SUBST(CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT)
+AC_SUBST(CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT,$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT)
 
 dnl ---------------------------------------------------------------------------
-dnl Check if we need -lws2_32
+dnl Check if we need -lws2_32 (mingw)
 dnl ---------------------------------------------------------------------------
 
 echo "#include <winsock2.h>" > test_ws2_32.c
@@ -515,6 +682,20 @@ if test -z "`${CC} -c test_ws2_32.c 2>&1`" ; then
   LIBS="$LIBS -lws2_32"
 fi
 rm -f test_ws2_32*
+
+dnl ---------------------------------------------------------------------------
+dnl Check if we need -lpsapi (mingw)
+dnl ---------------------------------------------------------------------------
+
+echo "#include <windows.h>" > test_psapi.c
+echo "#include <psapi.h>" >> test_psapi.c
+echo "void foo() {}" >> test_psapi.c
+
+if test -z "`${CC} -c test_psapi.c 2>&1`" ; then
+  LIBS="$LIBS -lpsapi"
+fi
+rm -f test_psapi*
+
 
 dnl ---------------------------------------------------------------------------
 dnl Check if we have getaddrinfo
@@ -899,23 +1080,6 @@ else
   if test "${HAVE_PG}" = "yes" ; then
     LIBS=-L`$PG_CONFIG --libdir`" -lpq $LIBS"
     PG_INC=-I`$PG_CONFIG --includedir`" -I"`$PG_CONFIG --includedir-server`
-
-    PG_EXTRA_DEC=""
-    saved_LIBS="$LIBS"
-    AC_CHECK_LIB(pq,PQputCopyData,,DEFINE_PG_PRE74=-DPG_PRE74,)
-    LIBS="$saved_LIBS"
-    if test "$DEFINE_PG_PRE74" != "" ; then
-      echo "The PostgreSQL client version is before 7.4. You will not be able to use binary cursors."
-    fi
-
-    saved_LIBS="$LIBS"
-    AC_CHECK_LIB(pq,PQescapeStringConn,DEFINE_PG_HAS_PQESCAPESTRINGCONN=-DPG_HAS_PQESCAPESTRINGCONN,,)
-    LIBS="$saved_LIBS"
-    if test "$DEFINE_PG_HAS_PQESCAPESTRINGCONN" = "" ; then
-      echo "falling back to using PQescapeString. You should upgrade at least to security releases 8.1.4, 8.0.8, 7.4.13, 7.3.15."
-    fi
-
-    PG_INC="${PG_INC} ${DEFINE_PG_PRE74} ${DEFINE_PG_HAS_PQESCAPESTRINGCONN}"
   fi
 
 fi
@@ -2818,24 +2982,16 @@ AC_SUBST([OPT_GDAL_FORMATS], [$OPT_GDAL_FORMATS])
 
 dnl ---------------------------------------------------------------------------
 
-dnl Always build with OGR support.
-OGR_ENABLED=yes
-
-dnl ---------------------------------------------------------------------------
-
-GNM_ENABLED=no
+GNM_ENABLED=yes
 
 AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
-if test "$with_gnm" = "" ; then
+if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo "GNM support disabled."
-elif test "$with_gnm" = "yes"; then
+  echo echo checking for GNM ... support disabled
+else
   echo checking for GNM ... enabled
   GNM_ENABLED=yes
-else
-  echo checking for GNM ... disabled by user
-  GNM_ENABLED=no
 fi
 AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
 
@@ -2927,7 +3083,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for Xerces C++ Parser support.
 dnl ---------------------------------------------------------------------------
 
-XERCES_REQ_VERSION="2.7.0"
+XERCES_REQ_VERSION="3.1.0"
 AX_LIB_XERCES($XERCES_REQ_VERSION)
 
 if test "$HAVE_XERCES" = "yes"; then
@@ -3649,11 +3805,7 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
     AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/qhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/qhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/qhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=0
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -3662,11 +3814,7 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
     AC_CHECK_LIB(qhull,qh_new_qhull,QHULL_SETTING=yes,QHULL_SETTING=no,)
     if test "$QHULL_SETTING" = "yes"; then
         QHULL_SETTING=external
-        if test -f /usr/include/libqhull/libqhull.h; then
-            EXTRA_INCLUDES="-I/usr/include/libqhull $EXTRA_INCLUDES"
-        else
-            EXTRA_INCLUDES="-I/usr/local/include/libqhull $EXTRA_INCLUDES"
-        fi
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
         LIBS="-lqhull $LIBS"
     fi
   fi
@@ -3676,13 +3824,16 @@ elif test "$with_qhull" = "yes" -o "$with_qhull" = "" ; then
         AC_MSG_ERROR([--with-qhull requested, but library not found!])
     else
         QHULL_SETTING=internal
+        QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
     fi
   fi
 else
   QHULL_SETTING=internal
+  QHULL_INCLUDE_SUBDIR_IS_LIBQHULL=1
 fi
 
 AC_SUBST([QHULL_SETTING],$QHULL_SETTING)
+AC_SUBST([QHULL_INCLUDE_SUBDIR_IS_LIBQHULL],$QHULL_INCLUDE_SUBDIR_IS_LIBQHULL)
 
 dnl ---------------------------------------------------------------------------
 dnl Check if opencl library is available.
@@ -4184,7 +4335,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test ! -z "`uname | grep Darwin`" ; then
           TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
         fi
-        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB}  2>&1`" ; then
+        if ${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${PDFIUM_LIB} >/dev/null 2>/dev/null; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             if test "$PDF_PLUGIN" = "no"; then
@@ -4228,7 +4379,7 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         if test ! -z "`uname | grep Darwin`" ; then
           TEST_CXX_FLAGS="$TEST_CXX_FLAGS -stdlib=libstdc++"
         fi
-        if test -z "`${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} 2>&1`" ; then
+        if ${CXX} $TEST_CXX_FLAGS testpdfium.cpp -o testpdfium ${TEST_PDFIUM_INC} ${TEST_PDFIUM_LIB} >/dev/null 2>/dev/null; then
             HAVE_PDFIUM=yes
             CXXFLAGS="$TEST_CXX_FLAGS $CXXFLAGS"
             if test "$PDF_PLUGIN" = "no"; then
@@ -4242,6 +4393,10 @@ if test "$with_pdfium" != "no" -a "$with_pdfium" != ""; then
         fi
         rm -f testpdfium.*
         rm -f testpdfium
+    fi
+
+    if test "$HAVE_PDFIUM" = "no" -a "$with_pdfium" != ""; then
+        AC_MSG_ERROR([pdfium requested but not found])
     fi
 else
     AC_MSG_RESULT([disabled])

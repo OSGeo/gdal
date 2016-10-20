@@ -41,7 +41,10 @@
 class DXFSmoothPolylineVertex
 {
 public:
-    double  x, y, z, bulge;
+    double x;
+    double y;
+    double z;
+    double bulge;
 
 
     DXFSmoothPolylineVertex()
@@ -50,13 +53,14 @@ public:
         }
 
 
-    DXFSmoothPolylineVertex(double dfX, double dfY, double dfZ, double dfBulge)
+    DXFSmoothPolylineVertex( double dfX, double dfY, double dfZ,
+                             double dfBulge )
         {
-            this->set(dfX, dfY, dfZ, dfBulge);
+            set(dfX, dfY, dfZ, dfBulge);
         }
 
 
-    void set(double dfX, double dfY, double dfZ, double dfBulge)
+    void set( double dfX, double dfY, double dfZ, double dfBulge )
         {
             x = dfX;
             y = dfY;
@@ -80,7 +84,7 @@ public:
 
     void normalize()
         {
-            const double len = this->length();
+            const double len = length();
             assert(len != 0.0);
 
             x /= len;
@@ -105,10 +109,10 @@ class DXFSmoothPolyline
 
 private:
 
-    std::vector<DXFSmoothPolylineVertex>    m_vertices;
-    mutable bool                            m_blinestringstarted;
-    bool                                    m_bClosed;
-    int										m_dim;
+    std::vector<DXFSmoothPolylineVertex> m_vertices;
+    mutable bool                         m_blinestringstarted;
+    bool                                 m_bClosed;
+    int                                  m_dim;
 
 public:
     DXFSmoothPolyline() : m_blinestringstarted(false), m_bClosed(false),
@@ -116,9 +120,9 @@ public:
 
     OGRGeometry* Tesselate() const;  // TODO: Spelling.
 
-    size_t size() { return m_vertices.size(); }
+    size_t size() const { return m_vertices.size(); }
 
-    void SetSize(int n) { m_vertices.reserve(n); }
+    void SetSize( int n ) { m_vertices.reserve(n); }
 
     void AddPoint(double dfX, double dfY, double dfZ, double dfBulge)
         {
@@ -131,9 +135,7 @@ public:
 
     bool HasConstantZ(double&) const;
 
-    void setCoordinateDimension(int n) { m_dim = n; }
-
-
+    void setCoordinateDimension( int n ) { m_dim = n; }
 
 private:
     void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,

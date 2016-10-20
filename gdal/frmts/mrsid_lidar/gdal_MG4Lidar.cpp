@@ -48,9 +48,11 @@ LT_USE_LIDAR_NAMESPACE
 #include "gdal_pam.h"
 // #include "gdal_alg.h" // 1.6 and later have gridding algorithms
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /* ==================================================================== */
-/*				MG4LidarDataset				*/
+/*                              MG4LidarDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -83,7 +85,7 @@ public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
-   CPLErr 	GetGeoTransform( double * padfTransform );
+   CPLErr         GetGeoTransform( double * padfTransform );
    const char *GetProjectionRef();
 
 protected:
@@ -588,7 +590,7 @@ const char *MG4LidarDataset::GetProjectionRef()
    const char * wkt = CPLGetXMLValue(poXMLPCView, "GeoReference", NULL);
    if (wkt == NULL)
       wkt = reader->getWKT();
-   return(wkt);
+   return wkt;
 }
 
 /************************************************************************/
@@ -702,7 +704,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 32 )
       return NULL;
 
-   CPLXMLNode *pxmlPCView;
+   CPLXMLNode *pxmlPCView = NULL;
 
    // do something sensible for .sid files without a .view
    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
@@ -769,7 +771,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    /* -------------------------------------------------------------------- */
    /*      Create a corresponding GDALDataset.                             */
    /* -------------------------------------------------------------------- */
-   MG4LidarDataset 	*poDS;
+   MG4LidarDataset *poDS;
 
    poDS = new MG4LidarDataset();
    poDS->poXMLPCView = pxmlPCView;
@@ -906,10 +908,10 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       CPLDebug( "MG4Lidar",
          "Inappropriate number of bands (%d)", poDS->nBands );
       delete poDS;
-      return(NULL);
+      return NULL;
    }
 
-   return( poDS );
+   return poDS;
 }
 
 /************************************************************************/

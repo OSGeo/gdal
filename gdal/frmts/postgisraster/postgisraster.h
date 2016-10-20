@@ -3,11 +3,11 @@
  * Project:  PostGIS Raster driver
  * Purpose:  Main header file for PostGIS Raster Driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
- * 							jorgearevalo@libregis.org
+ *                          jorgearevalo@libregis.org
  *
- * Author:	 David Zwarg, dzwarg@azavea.com
+ * Author:   David Zwarg, dzwarg@azavea.com
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
@@ -56,7 +56,7 @@
  * size from sources and this value. So, please keep it at 2048 or
  * lower
  **/
-#define MAX_BLOCK_SIZE	2048
+#define MAX_BLOCK_SIZE 2048
 
 
 #define NO_VALID_RES "-1234.56"
@@ -85,7 +85,7 @@
 #define ELEMENTS_OF_METADATA_RECORD 10
 
 // Positions of elements of ST_Metadata PostGIS function
-#define POS_UPPERLEFTX	    0
+#define POS_UPPERLEFTX      0
 #define POS_UPPERLEFTY      1
 #define POS_WIDTH           2
 #define POS_HEIGHT          3
@@ -119,26 +119,26 @@ typedef enum
  * The driver can work in these modes:
  * - NO_MODE: Error case
  * - ONE_RASTER_PER_ROW: Each row of the requested table is considered
- * 	 	as a separated raster object. This is the default mode, if
- * 		database and table name are provided, and no mode is specified.
+ *              as a separated raster object. This is the default mode, if
+ *              database and table name are provided, and no mode is specified.
  * - ONE_RASTER_PER_TABLE: All the rows of the requested table are
- * 		considered as tiles of a bigger raster coverage (the whole
- * 		table). If database and table name are specified and mode = 2
- * 		is present in the connection string, this is the selected mode.
+ *              considered as tiles of a bigger raster coverage (the whole
+ *              table). If database and table name are specified and mode = 2
+ *              is present in the connection string, this is the selected mode.
  * - BROWSE_SCHEMA: If no table name is specified, just database and
- * 		schema names, the driver will yell of the schema's raster tables
- * 		as possible datasets.
+ *              schema names, the driver will yell of the schema's raster tables
+ *              as possible datasets.
  * - BROWSE_DATABASE: If no table name is specified, just database name,
- * 		the driver will yell of the database's raster tables as possible
- * 		datasets.
+ *              the driver will yell of the database's raster tables as possible
+ *              datasets.
  **/
 typedef enum
 {
-	NO_MODE,
-	ONE_RASTER_PER_ROW,
-	ONE_RASTER_PER_TABLE,
-	BROWSE_SCHEMA,
-	BROWSE_DATABASE
+    NO_MODE,
+    ONE_RASTER_PER_ROW,
+    ONE_RASTER_PER_TABLE,
+    BROWSE_SCHEMA,
+    BROWSE_DATABASE
 } WorkingMode;
 
 /**
@@ -155,10 +155,10 @@ typedef struct {
 } BandMetadata;
 
 typedef struct {
-	char * pszSchema;
-	char * pszTable;
-	char * pszColumn;
-	int nFactor;
+    char * pszSchema;
+    char * pszTable;
+    char * pszColumn;
+    int nFactor;
 } PROverview;
 
 
@@ -216,7 +216,10 @@ private:
     ResolutionStrategy resolutionStrategy;
     WorkingMode nMode;
     int m_nTiles;
-    double xmin, ymin, xmax, ymax;
+    double xmin;
+    double ymin;
+    double xmax;
+    double ymax;
     PostGISRasterTileDataset ** papoSourcesHolders;
     CPLQuadTree * hQuadTree;
 
@@ -249,7 +252,7 @@ private:
     GBool BrowseDatabase(const char *, const char *);
     GBool AddComplexSource(PostGISRasterTileDataset* poRTDS);
     GBool GetDstWin(PostGISRasterTileDataset *, int *, int *, int *,
-		int *);
+                    int *);
     BandMetadata * GetBandsMetadata(int *);
     PROverview * GetOverviewTables(int *);
 
@@ -324,17 +327,17 @@ protected:
                                          int nLineSpace);
 public:
 
-    PostGISRasterRasterBand(PostGISRasterDataset *, int ,
-		GDALDataType, GBool, double, GBool);
+    PostGISRasterRasterBand( PostGISRasterDataset *, int ,
+                             GDALDataType, GBool, double, GBool );
 
     virtual ~PostGISRasterRasterBand();
 
     virtual double GetNoDataValue(int *pbSuccess = NULL);
     virtual CPLErr SetNoDataValue(double);
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *,
-		int, int, GDALDataType,
-        GSpacing nPixelSpace, GSpacing nLineSpace,
-        GDALRasterIOExtraArg* psExtraArg);
+                             int, int, GDALDataType,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GDALRasterIOExtraArg* psExtraArg);
 #ifdef notdef
     virtual CPLErr IReadBlock(int, int, void *);
 #endif
@@ -355,19 +358,19 @@ public:
 class PostGISRasterTileRasterBand;
 
 class PostGISRasterTileDataset : public GDALDataset {
-	friend class PostGISRasterDataset;
-	friend class PostGISRasterRasterBand;
-	friend class PostGISRasterTileRasterBand;
+    friend class PostGISRasterDataset;
+    friend class PostGISRasterRasterBand;
+    friend class PostGISRasterTileRasterBand;
 private:
     PostGISRasterDataset* poRDS;
     char * pszPKID;
     double adfGeoTransform[6];
 
 public:
-	PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
+    PostGISRasterTileDataset(PostGISRasterDataset* poRDS,
                              int nXSize,
                              int nYSize);
-	~PostGISRasterTileDataset();
+    ~PostGISRasterTileDataset();
     CPLErr GetGeoTransform(double *);
     void   GetExtent(double* pdfMinX, double* pdfMinY, double* pdfMaxX, double* pdfMaxY);
     const char* GetPKID() const { return pszPKID; }
@@ -378,7 +381,7 @@ public:
  * be used as a source for PostGISRasterRasterBand
  **********************************************************************/
 class PostGISRasterTileRasterBand : public GDALRasterBand {
-	friend class PostGISRasterRasterBand;
+    friend class PostGISRasterRasterBand;
     friend class PostGISRasterDataset;
 private:
     GBool bIsOffline;
@@ -388,12 +391,12 @@ private:
     VRTSource* poSource;
 
 public:
-	PostGISRasterTileRasterBand(
+    PostGISRasterTileRasterBand(
         PostGISRasterTileDataset * poRTDS, int nBand,
         GDALDataType eDataType,
         GBool bIsOffline = false);
-	~PostGISRasterTileRasterBand();
-	virtual CPLErr IReadBlock(int, int, void *);
+    virtual ~PostGISRasterTileRasterBand();
+    virtual CPLErr IReadBlock(int, int, void *);
 };
 
 #endif // POSTGISRASTER_H_INCLUDED

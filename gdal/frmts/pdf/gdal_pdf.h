@@ -69,10 +69,10 @@ class OGRPDFLayer : public OGRMemLayer
     int               bGeomTypeMixed;
 
 public:
-        OGRPDFLayer(PDFDataset* poDS,
-                    const char * pszName,
-                    OGRSpatialReference *poSRS,
-                    OGRwkbGeometryType eGeomType);
+        OGRPDFLayer( PDFDataset* poDS,
+                     const char * pszName,
+                     OGRSpatialReference *poSRS,
+                     OGRwkbGeometryType eGeomType );
 
     void                Fill( GDALPDFArray* poArray );
 
@@ -226,7 +226,8 @@ class PDFDataset : public GDALPamDataset
 
     int          bTried;
     GByte       *pabyCachedData;
-    int          nLastBlockXOff, nLastBlockYOff;
+    int          nLastBlockXOff;
+    int          nLastBlockYOff;
 
     OGRPolygon*  poNeatLine;
 
@@ -414,7 +415,7 @@ class PDFRasterBand : public GDALPamRasterBand
   public:
 
                 PDFRasterBand( PDFDataset *, int, int );
-                ~PDFRasterBand();
+    virtual ~PDFRasterBand();
 
 #ifdef HAVE_PDFIUM
     virtual int    GetOverviewCount();
@@ -449,7 +450,7 @@ class PDFWritableVectorDataset : public GDALDataset
 
     public:
                             PDFWritableVectorDataset();
-                           ~PDFWritableVectorDataset();
+        virtual ~PDFWritableVectorDataset();
 
         virtual OGRLayer*           ICreateLayer( const char * pszLayerName,
                                                 OGRSpatialReference *poSRS,

@@ -97,7 +97,7 @@ class OGRILI2DataSource : public OGRDataSource
 
   public:
                 OGRILI2DataSource();
-               ~OGRILI2DataSource();
+               virtual ~OGRILI2DataSource();
 
     int         Open( const char *, char** papszOpenOptions, int bTestOpen );
     int         Create( const char *pszFile, char **papszOptions );

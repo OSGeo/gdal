@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  A dataset and raster band classes that act as proxy for underlying
@@ -32,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 /* ******************************************************************** */
 /*                        GDALProxyDataset                              */
 /* ******************************************************************** */
@@ -184,9 +184,9 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (n
 /*                    UnrefUnderlyingDataset()                        */
 /************************************************************************/
 
-void GDALProxyDataset::UnrefUnderlyingDataset(CPL_UNUSED GDALDataset* poUnderlyingDataset)
-{
-}
+void GDALProxyDataset::UnrefUnderlyingDataset(
+    GDALDataset* /* poUnderlyingDataset */)
+{}
 
 /* ******************************************************************** */
 /*                        GDALProxyRasterBand                           */
@@ -402,6 +402,8 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/
 
-void GDALProxyRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
-{
-}
+void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
+    GDALRasterBand* /* poUnderlyingRasterBand */ )
+{}
+
+/*! @endcond */

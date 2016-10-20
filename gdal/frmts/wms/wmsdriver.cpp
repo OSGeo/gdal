@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -43,6 +42,8 @@
 #include "minidriver_iip.h"
 
 #include <limits>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*              GDALWMSDatasetGetConfigFromURL()                        */
@@ -847,7 +848,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "AGS:"))
     {
-		return NULL;
+        return NULL;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "IIP:"))
@@ -910,7 +911,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     GDALWMSDataset *ds = new GDALWMSDataset();
-    ret = ds->Initialize(config);
+    ret = ds->Initialize(config, poOpenInfo->papszOpenOptions);
     if (ret != CE_None) {
         delete ds;
         ds = NULL;

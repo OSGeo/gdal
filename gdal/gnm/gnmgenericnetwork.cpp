@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM network class.
@@ -34,6 +33,9 @@
 
 #include <set>
 
+CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 GNMGenericNetwork::GNMGenericNetwork() :
     GNMNetwork(),
     m_nVersion(0),
@@ -792,8 +794,8 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     OGRGNMWrappedResultLayer* poResLayer =
                               new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
 
-    bool bReturnEdges = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, GNM_MD_FETCHEDGES, TRUE));
-    bool bReturnVertices = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, GNM_MD_FETCHVERTEX, TRUE));
+    const bool bReturnEdges = CPLFetchBool(papszOptions, GNM_MD_FETCHEDGES, true);
+    const bool bReturnVertices = CPLFetchBool(papszOptions, GNM_MD_FETCHVERTEX, true);
 
     switch (eAlgorithm)
     {
@@ -1524,3 +1526,4 @@ CPLErr CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
 
     return ((GNMGenericNetwork*)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
+//! @endcond

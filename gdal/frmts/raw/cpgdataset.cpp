@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Polarimetric Workstation
  * Purpose:  Convair PolGASP data (.img/.hdr format).
@@ -208,14 +207,12 @@ int CPGDataset::AdjustFilename( char **pszFilename,
                                 const char *pszExtension )
 
 {
-    const char *pszNewName;
-
-    /* eventually we should handle upper/lower case ... */
-
+    // TODO: Eventually we should handle upper/lower case.
     if ( EQUAL(pszPolarization,"stokes") )
     {
-        pszNewName = CPLResetExtension((const char *) *pszFilename,
-                                     (const char *) pszExtension);
+        const char *pszNewName =
+            CPLResetExtension((const char *) *pszFilename,
+                              (const char *) pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
@@ -232,15 +229,17 @@ int CPGDataset::AdjustFilename( char **pszFilename,
           return FALSE;
 
         strncpy( subptr, pszPolarization, 2);
-        pszNewName = CPLResetExtension((const char *) *pszFilename,
-                                                (const char *) pszExtension);
+        const char *pszNewName =
+            CPLResetExtension((const char *) *pszFilename,
+                              (const char *) pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
     else
     {
-        pszNewName = CPLResetExtension((const char *) *pszFilename,
-                                        (const char *) pszExtension);
+        const char *pszNewName =
+            CPLResetExtension((const char *) *pszFilename,
+                              (const char *) pszExtension);
         CPLFree(*pszFilename);
         *pszFilename = CPLStrdup(pszNewName);
     }
@@ -603,9 +602,8 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         }
         for( int iBand = 0; iBand < 4; iBand++ )
         {
-            SIRC_QSLCRasterBand *poBand;
-
-            poBand = new SIRC_QSLCRasterBand( poDS, iBand+1, GDT_CFloat32 );
+            SIRC_QSLCRasterBand *poBand =
+                new SIRC_QSLCRasterBand( poDS, iBand+1, GDT_CFloat32 );
             poDS->SetBand( iBand+1, poBand );
             poBand->SetMetadataItem( "POLARIMETRIC_INTERP",
                                  apszPolarizations[iBand] );
@@ -1096,7 +1094,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /* Read the header info and create the dataset */
-    CPGDataset *poDS;
+    CPGDataset *poDS = NULL;
 
 #ifdef notdef
     if ( CPGType < 3 )
@@ -1107,10 +1105,9 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     else
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType3Dataset( poOpenInfo->pszFilename ) );
-    if (poDS == NULL)
+    if( poDS == NULL )
         return NULL;
 #endif
-
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -1331,22 +1328,23 @@ CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn, int nBandIn,
     nBand(nBandIn),
     bNativeOrder(bNativeOrderIn)
 {
-    static const char * const apszPolarizations[16] = { "Covariance_11",
-                                                 "Covariance_12",
-                                                 "Covariance_13",
-                                                 "Covariance_14",
-                                                 "Covariance_21",
-                                                 "Covariance_22",
-                                                 "Covariance_23",
-                                                 "Covariance_24",
-                                                 "Covariance_31",
-                                                 "Covariance_32",
-                                                 "Covariance_33",
-                                                 "Covariance_34",
-                                                 "Covariance_41",
-                                                 "Covariance_42",
-                                                 "Covariance_43",
-                                                 "Covariance_44" };
+    static const char * const apszPolarizations[16] = {
+        "Covariance_11",
+        "Covariance_12",
+        "Covariance_13",
+        "Covariance_14",
+        "Covariance_21",
+        "Covariance_22",
+        "Covariance_23",
+        "Covariance_24",
+        "Covariance_31",
+        "Covariance_32",
+        "Covariance_33",
+        "Covariance_34",
+        "Covariance_41",
+        "Covariance_42",
+        "Covariance_43",
+        "Covariance_44" };
 
     poDS = poDSIn;
     eDataType = eType;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  BIGGIF Driver
  * Purpose:  Implement GDAL support for reading large GIF files in a
@@ -60,7 +59,7 @@ class BIGGIFDataset : public GIFAbstractDataset
 
   public:
                  BIGGIFDataset();
-                 ~BIGGIFDataset();
+    virtual ~BIGGIFDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -76,7 +75,6 @@ class BIGGifRasterBand : public GIFAbstractRasterBand
     friend class BIGGIFDataset;
 
   public:
-
                    BIGGifRasterBand( BIGGIFDataset *, int );
 
     virtual CPLErr IReadBlock( int, int, void * );
@@ -87,10 +85,10 @@ class BIGGifRasterBand : public GIFAbstractRasterBand
 /************************************************************************/
 
 BIGGifRasterBand::BIGGifRasterBand( BIGGIFDataset *poDSIn, int nBackground ) :
-    GIFAbstractRasterBand(poDSIn, 1, poDSIn->hGifFile->SavedImages, nBackground, TRUE)
+    GIFAbstractRasterBand(poDSIn, 1, poDSIn->hGifFile->SavedImages,
+                          nBackground, TRUE)
 
-{
-}
+{}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -169,8 +167,7 @@ CPLErr BIGGifRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 BIGGIFDataset::BIGGIFDataset() :
     nLastLineRead(-1),
     poWorkDS(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                           ~BIGGIFDataset()                            */

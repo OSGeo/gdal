@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for tar files (.tar).
@@ -26,6 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+//! @cond Doxygen_Suppress
 
 #include "cpl_vsi_virtual.h"
 
@@ -460,6 +461,8 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     return (VSIVirtualHandle* )VSIFOpenL(osSubFileName, "rb");
 }
 
+//! @endcond
+
 /************************************************************************/
 /*                    VSIInstallTarFileHandler()                        */
 /************************************************************************/
@@ -473,9 +476,14 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
  * All portions of the file system underneath the base path "/vsitar/" will be
  * handled by this driver.
  *
- * The syntax to open a file inside a zip file is /vsitar/path/to/the/file.tar/path/inside/the/tar/file
+ * The syntax to open a file inside a tar file is /vsitar/path/to/the/file.tar/path/inside/the/tar/file
  * were path/to/the/file.tar is relative or absolute and path/inside/the/tar/file
  * is the relative path to the file inside the archive.
+ *
+ * Starting with GDAL 2.2, an alternate syntax is available so as to enable
+ * chaining and not being dependent on .tar extension :
+ * /vsitar/{/path/to/the/archive}/path/inside/the/tar/file. Note that /path/to/the/archive
+ * may also itself this alternate syntax.
  *
  * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\ on Windows),
  * so the line looks like /vsitar//home/gdal/...

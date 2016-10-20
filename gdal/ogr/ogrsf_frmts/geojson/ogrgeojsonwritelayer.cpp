@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRGeoJSONWriteLayer class (OGR GeoJSON Driver).
@@ -30,6 +29,8 @@
 #include "ogr_geojson.h"
 #include "ogrgeojsonwriter.h"
 
+CPL_CVSID("$Id$");
+
 /* Remove annoying warnings Microsoft Visual C++ */
 #if defined(_MSC_VER)
 #  pragma warning(disable:4512)
@@ -43,20 +44,22 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
                                             OGRwkbGeometryType eGType,
                                             char** papszOptions,
                                             bool bWriteFC_BBOXIn,
-                                           OGRGeoJSONDataSource* poDS )
-    : poDS_( poDS ), poFeatureDefn_(new OGRFeatureDefn( pszName ) ), nOutCounter_( 0 )
+                                            OGRGeoJSONDataSource* poDS ) :
+    poDS_(poDS),
+    poFeatureDefn_(new OGRFeatureDefn( pszName )),
+    nOutCounter_(0),
+    bWriteBBOX(CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"))),
+    bBBOX3D(false),
+    bWriteFC_BBOX(bWriteFC_BBOXIn),
+    nCoordPrecision_(atoi(
+        CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"))),
+    nSignificantFigures_(atoi(
+        CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1")))
 {
-    bWriteBBOX = CPLTestBool(CSLFetchNameValueDef(
-        papszOptions, "WRITE_BBOX", "FALSE"));
-    bBBOX3D = false;
-    bWriteFC_BBOX = bWriteFC_BBOXIn;
-
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType( eGType );
     SetDescription( poFeatureDefn_->GetName() );
-
-    nCoordPrecision_ = atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
-    nSignificantFigures_ = atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
 }
 
 /************************************************************************/
@@ -132,7 +135,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     ++nOutCounter_;
 
     OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    if ( (bWriteBBOX || bWriteFC_BBOX) && !poGeometry->IsEmpty() )
+    if( (bWriteBBOX || bWriteFC_BBOX) && !poGeometry->IsEmpty() )
     {
         OGREnvelope3D sEnvelope;
         poGeometry->getEnvelope(&sEnvelope);
@@ -150,10 +153,9 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
+OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
+                                          int /* bApproxOK */  )
 {
-    UNREFERENCED_PARAM(bApproxOK);
-
     for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
     {
         OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
@@ -180,9 +182,9 @@ OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
 
 int OGRGeoJSONWriteLayer::TestCapability( const char* pszCap )
 {
-    if (EQUAL(pszCap, OLCCreateField))
+    if( EQUAL(pszCap, OLCCreateField) )
         return TRUE;
-    else if (EQUAL(pszCap, OLCSequentialWrite))
+    else if( EQUAL(pszCap, OLCSequentialWrite) )
         return TRUE;
 
     return FALSE;

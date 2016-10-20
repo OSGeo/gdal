@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRAVCBinLayer class.
@@ -44,7 +43,7 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
     m_psSection(psSectionIn),
     hFile(NULL),
     poArcLayer(NULL),
-    bNeedReset(FALSE),
+    bNeedReset(false),
     hTable(NULL),
     nTableBaseField(-1),
     nTableAttrIndex(-1),
@@ -103,7 +102,7 @@ void OGRAVCBinLayer::ResetReading()
         hFile = NULL;
     }
 
-    bNeedReset = FALSE;
+    bNeedReset = false;
     nNextFID = 1;
 
     if( hTable != NULL )
@@ -154,7 +153,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
     }
     else
     {
-        bNeedReset = TRUE;
+        bNeedReset = true;
         pFeature = AVCBinReadObject( hFile, (int)nFID );
     }
 
@@ -164,9 +163,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Translate the feature.                                          */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = TranslateFeature( pFeature );
+    OGRFeature *poFeature = TranslateFeature( pFeature );
     if( poFeature == NULL )
         return NULL;
 
@@ -253,8 +250,8 @@ int OGRAVCBinLayer::TestCapability( const char * pszCap )
 /*      them into the appropriate OGR geometry on the target feature.   */
 /************************************************************************/
 
-int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
-                                         AVCPal *psPAL )
+bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
+                                          AVCPal *psPAL )
 
 {
 /* -------------------------------------------------------------------- */
@@ -273,7 +270,7 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         }
 
         if( poArcLayer == NULL )
-            return FALSE;
+            return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -299,10 +296,10 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
             = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
 
         if( poArc == NULL )
-            return FALSE;
+            return false;
 
         if( poArc->GetGeometryRef() == NULL )
-            return FALSE;
+            return false;
 
         oArcs.addGeometry( poArc->GetGeometryRef() );
         OGRFeature::DestroyFeature( poArc );
@@ -327,11 +324,11 @@ int OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 /*      definition.                                                     */
 /************************************************************************/
 
-int OGRAVCBinLayer::CheckSetupTable()
+bool OGRAVCBinLayer::CheckSetupTable()
 
 {
     if( szTableName[0] == '\0' )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Scan for the indicated section.                                 */
@@ -354,7 +351,7 @@ int OGRAVCBinLayer::CheckSetupTable()
     if( l_psSection == NULL )
     {
         szTableName[0] = '\0';
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -367,7 +364,7 @@ int OGRAVCBinLayer::CheckSetupTable()
     if( hTable == NULL )
     {
         szTableName[0] = '\0';
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -384,21 +381,21 @@ int OGRAVCBinLayer::CheckSetupTable()
 
     hTable = NULL;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                         AppendTableFields()                          */
 /************************************************************************/
 
-int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
+bool OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 
 {
     AVCE00ReadPtr psInfo
         = static_cast<OGRAVCBinDataSource *>( poDS)->GetInfo();
 
     if( szTableName[0] == '\0' )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Open the table if it is currently closed.                       */
@@ -411,7 +408,7 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
     }
 
     if( hTable == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Read the info record.                                           */
@@ -422,16 +419,13 @@ int OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 /*      nTableAttrIndex will already be setup to refer to the           */
 /*      PolyId field.                                                   */
 /* -------------------------------------------------------------------- */
-    int nRecordId;
-
-    if( nTableAttrIndex == -1 )
-        nRecordId = static_cast<int>( poFeature->GetFID() );
-    else
-        nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
+    const int nRecordId = nTableAttrIndex == -1
+        ? static_cast<int>( poFeature->GetFID() )
+        : poFeature->GetFieldAsInteger( nTableAttrIndex );
 
     void *hRecord = AVCBinReadObject( hTable, nRecordId );
     if( hRecord == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Translate it.                                                   */

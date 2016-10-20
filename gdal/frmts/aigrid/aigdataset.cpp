@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Binary Grid Driver
  * Purpose:  Implements GDAL interface to underlying library.
@@ -62,7 +61,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
     char        *pszProjection;
 
     GDALColorTable *poCT;
-    int         bHasReadRat;
+    bool        bHasReadRat;
 
     void        TranslateColorTable( const char * );
 
@@ -71,7 +70,7 @@ class CPL_DLL AIGDataset : public GDALPamDataset
 
   public:
                 AIGDataset();
-                ~AIGDataset();
+    virtual ~AIGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -112,8 +111,8 @@ class AIGRasterBand : public GDALPamRasterBand
 AIGRasterBand::AIGRasterBand( AIGDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     nBlockXSize = poDSIn->psInfo->nBlockXSize;
     nBlockYSize = poDSIn->psInfo->nBlockYSize;
@@ -212,7 +211,7 @@ GDALRasterAttributeTable *AIGRasterBand::GetDefaultRAT()
     if (!poODS->bHasReadRat)
     {
         poODS->ReadRAT();
-        poODS->bHasReadRat = TRUE;
+        poODS->bHasReadRat = true;
     }
 
     if( poODS->poRAT )
@@ -317,12 +316,11 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 AIGDataset::AIGDataset() :
     psInfo(NULL),
     papszPrj(NULL),
+    pszProjection(CPLStrdup("")),
     poCT(NULL),
-    bHasReadRat(FALSE),
+    bHasReadRat(false),
     poRAT(NULL)
-{
-    pszProjection = CPLStrdup("");
-}
+{}
 
 /************************************************************************/
 /*                           ~AIGDataset()                            */
@@ -487,7 +485,7 @@ void AIGDataset::ReadRAT()
 /* -------------------------------------------------------------------- */
 /*      Process all records into RAT.                                   */
 /* -------------------------------------------------------------------- */
-    AVCField *pasFields;
+    AVCField *pasFields = NULL;
     int iRecord = 0;
 
     while( (pasFields = AVCBinReadNextTableRec(psFile)) != NULL )
@@ -549,8 +547,6 @@ void AIGDataset::ReadRAT()
 GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    AIGInfo_t *psInfo;
-
 /* -------------------------------------------------------------------- */
 /*      If the pass name ends in .adf assume a file within the          */
 /*      coverage has been selected, and strip that off the coverage     */
@@ -650,7 +646,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    psInfo = AIGOpen( osCoverName.c_str(), "r" );
+    AIGInfo_t *psInfo = AIGOpen( osCoverName.c_str(), "r" );
 
     if( psInfo == NULL )
     {
@@ -772,7 +768,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, psInfo->pszCoverName );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -790,7 +786,7 @@ CPLErr AIGDataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0;
     padfTransform[5] = -psInfo->dfCellSizeY;
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -935,7 +931,7 @@ static CPLErr AIGRename( const char *pszNewName, const char *pszOldName )
 
         if( !EQUALN(papszFileList[i],osOldPath,strlen(osOldPath)) )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return CE_Failure;
         }
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGROSMLayer class
@@ -35,15 +34,14 @@
 
 CPL_CVSID("$Id$");
 
-#define SWITCH_THRESHOLD   10000
-#define MAX_THRESHOLD      100000
+static const int SWITCH_THRESHOLD = 10000;
+static const int MAX_THRESHOLD = 100000;
 
-#define ALLTAGS_LENGTH     8192
+static const int ALLTAGS_LENGTH = 8192;
 
 /************************************************************************/
 /*                          OGROSMLayer()                               */
 /************************************************************************/
-
 
 OGROSMLayer::OGROSMLayer( OGROSMDataSource* poDSIn, int nIdxLayerIn,
                           const char* pszName ) :
@@ -127,7 +125,7 @@ void OGROSMLayer::ResetReading()
     if ( !bResetReadingAllowed || poDS->IsInterleavedReading() )
         return;
 
-    poDS->ResetReading();
+    poDS->MyResetReading();
 }
 
 /************************************************************************/
@@ -167,7 +165,7 @@ OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
     {
         if( !poDS->IsInterleavedReading() )
         {
-            poDS->ResetReading();
+            poDS->MyResetReading();
         }
     }
     else
@@ -200,20 +198,28 @@ GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 
 OGRFeature *OGROSMLayer::GetNextFeature()
 {
+    OGROSMLayer* poNewCurLayer = NULL;
+    OGRFeature* poFeature = MyGetNextFeature(&poNewCurLayer, NULL, NULL);
+    poDS->SetCurrentLayer(poNewCurLayer);
+    return poFeature;
+}
+
+OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                           GDALProgressFunc pfnProgress,
+                                           void* pProgressData )
+{
+    *ppoNewCurLayer = poDS->GetCurrentLayer();
     bResetReadingAllowed = true;
 
     if ( nFeatureArraySize == 0)
     {
         if ( poDS->IsInterleavedReading() )
         {
-            int i;
-
-            OGRLayer* poCurrentLayer = poDS->GetCurrentLayer();
-            if ( poCurrentLayer == NULL )
+            if ( *ppoNewCurLayer  == NULL )
             {
-                poDS->SetCurrentLayer(this);
+                 *ppoNewCurLayer = this;
             }
-            else if( poCurrentLayer != this )
+            else if( *ppoNewCurLayer  != this )
             {
                 return NULL;
             }
@@ -221,12 +227,12 @@ OGRFeature *OGROSMLayer::GetNextFeature()
             /* If too many features have been accumulated in */
             /* another layer, we force */
             /* a switch to that layer, so that it gets emptied */
-            for(i=0;i<poDS->GetLayerCount();i++)
+            for( int i = 0; i < poDS->GetLayerCount(); i++ )
             {
                 if (poDS->papoLayers[i] != this &&
                     poDS->papoLayers[i]->nFeatureArraySize > SWITCH_THRESHOLD)
                 {
-                    poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                    *ppoNewCurLayer = poDS->papoLayers[i];
                     CPLDebug("OSM", "Switching to '%s' as they are too many "
                                     "features in '%s'",
                              poDS->papoLayers[i]->GetName(),
@@ -236,19 +242,19 @@ OGRFeature *OGROSMLayer::GetNextFeature()
             }
 
             /* Read some more data and accumulate features */
-            poDS->ParseNextChunk(nIdxLayer);
+            poDS->ParseNextChunk(nIdxLayer, pfnProgress, pProgressData);
 
             if ( nFeatureArraySize == 0 )
             {
                 /* If there are really no more features to read in the */
                 /* current layer, force a switch to another non-empty layer */
 
-                for(i=0;i<poDS->GetLayerCount();i++)
+                for( int i = 0; i < poDS->GetLayerCount(); i++ )
                 {
                     if (poDS->papoLayers[i] != this &&
                         poDS->papoLayers[i]->nFeatureArraySize > 0)
                     {
-                        poDS->SetCurrentLayer(poDS->papoLayers[i]);
+                        *ppoNewCurLayer = poDS->papoLayers[i];
                         CPLDebug("OSM",
                                  "Switching to '%s' as they are no more feature in '%s'",
                                  poDS->papoLayers[i]->GetName(),
@@ -258,7 +264,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
                 }
 
                 /* Game over : no more data to read from the stream */
-                poDS->SetCurrentLayer(NULL);
+                *ppoNewCurLayer = NULL;
                 return NULL;
             }
         }
@@ -266,7 +272,7 @@ OGRFeature *OGROSMLayer::GetNextFeature()
         {
             while( true )
             {
-                int bRet = poDS->ParseNextChunk(nIdxLayer);
+                int bRet = poDS->ParseNextChunk(nIdxLayer, NULL, NULL);
                 if (nFeatureArraySize != 0)
                     break;
                 if (bRet == FALSE)
@@ -306,9 +312,10 @@ int OGROSMLayer::TestCapability( const char * pszCap )
 /*                             AddToArray()                             */
 /************************************************************************/
 
-int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
+bool OGROSMLayer::AddToArray( OGRFeature* poFeature,
+                              int bCheckFeatureThreshold )
 {
-    if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD)
+    if( bCheckFeatureThreshold && nFeatureArraySize > MAX_THRESHOLD )
     {
         if( !bHasWarnedTooManyFeatures )
         {
@@ -318,7 +325,7 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
                     GetName());
         }
         bHasWarnedTooManyFeatures = true;
-        return FALSE;
+        return false;
     }
 
     if (nFeatureArraySize == nFeatureArrayMaxSize)
@@ -332,13 +339,13 @@ int  OGROSMLayer::AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "For layer %s, cannot resize feature array to %d features",
                      GetName(), nFeatureArrayMaxSize);
-            return FALSE;
+            return false;
         }
         papoFeatures = papoNewFeatures;
     }
     papoFeatures[nFeatureArraySize ++] = poFeature;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -377,7 +384,7 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
         && (m_poAttrQuery == NULL || bAttrFilterAlreadyEvaluated
             || m_poAttrQuery->Evaluate( poFeature )) )
     {
-        if (!AddToArray(poFeature, bCheckFeatureThreshold))
+        if( !AddToArray(poFeature, bCheckFeatureThreshold) )
         {
             delete poFeature;
             return FALSE;
@@ -531,7 +538,7 @@ static int OGROSMFormatForHSTORE(const char* pszV, char* pszAllTags)
 
 void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                     GIntBig nID,
-                                    int bIsWayID,
+                                    bool bIsWayID,
                                     unsigned int nTags, OSMTag* pasTags,
                                     OSMInfo* psInfo)
 {
@@ -794,12 +801,16 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
 {
     if( poDS->hDBForComputedAttributes == NULL )
     {
-        int rc;
 #ifdef HAVE_SQLITE_VFS
-        rc = sqlite3_open_v2( ":memory:", &(poDS->hDBForComputedAttributes),
-                              SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, NULL );
+        const int rc =
+            sqlite3_open_v2(
+                ":memory:", &(poDS->hDBForComputedAttributes),
+                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                SQLITE_OPEN_NOMUTEX,
+                NULL );
 #else
-        rc = sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
+        const int rc =
+            sqlite3_open( ":memory:", &(poDS->hDBForComputedAttributes) );
 #endif
         if( rc != SQLITE_OK )
         {
@@ -850,7 +861,7 @@ void OGROSMLayer::AddComputedAttribute(const char* pszName,
 
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
-    sqlite3_stmt  *hStmt;
+    sqlite3_stmt *hStmt = NULL;
     int rc = sqlite3_prepare( poDS->hDBForComputedAttributes, osSQL, -1,
                               &hStmt, NULL );
     if( rc != SQLITE_OK )

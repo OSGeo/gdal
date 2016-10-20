@@ -26,23 +26,13 @@ This function writes a geokey_t value to a GeoTIFF file.
 This must come from the list of legal geokey_t values
 (an enumeration) listed below.
 
-@param val The <b>val</b> argument is a pointer to the
-variable into which the value should be read.  The type of the variable
-varies depending on the geokey_t given.  While there is no ready mapping
-of geokey_t values onto types, in general code values are of type <i>short</i>,
-citations are strings, and everything else is of type <i>double</i>.  Note
-that pointer's to <i>int</i> should never be passed to GTIFKeyGet() for
-integer values as they will be shorts, and the int's may not be properly
-initialized (and will be grossly wrong on MSB systems).
-
-@param index Indicates how far into the list of values
-for this geokey to offset. Should normally be zero.
+@param type Type of the key.
 
 @param count Indicates how many values
 to read.  At this time all keys except for strings have only one value,
 so <b>index</b> should be zero, and <b>count</b> should be one.<p>
 
-The <b>key</b> indicates the key name to be written to the
+The <b>keyID</b> indicates the key name to be written to the
 file and should from the geokey_t enumeration
 (eg. <tt>ProjectedCSTypeGeoKey</tt>).  The full list of possible geokey_t
 values can be found in geokeys.inc, or in the online documentation for

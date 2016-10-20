@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  eCognition
  * Purpose:  Implementation of Erdas .LAN / .GIS format.
@@ -428,26 +427,21 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         float fTmp = 0.0;
         memcpy(&fTmp, poDS->pachHeader + 16, 4);
-        CPL_LSBPTR32(&fTmp);
         poDS->nRasterXSize = (int) fTmp;
         memcpy(&fTmp, poDS->pachHeader + 20, 4);
-        CPL_LSBPTR32(&fTmp);
         poDS->nRasterYSize = (int) fTmp;
     }
     else
     {
         GInt32 nTmp = 0;
         memcpy(&nTmp, poDS->pachHeader + 16, 4);
-        CPL_LSBPTR32(&nTmp);
         poDS->nRasterXSize = nTmp;
         memcpy(&nTmp, poDS->pachHeader + 20, 4);
-        CPL_LSBPTR32(&nTmp);
         poDS->nRasterYSize = nTmp;
     }
 
     GInt16 nTmp16 = 0;
     memcpy(&nTmp16, poDS->pachHeader + 6, 2);
-    CPL_LSBPTR16(&nTmp16);
 
     int nPixelOffset = 0;
     GDALDataType eDataType = GDT_Unknown;
@@ -477,7 +471,6 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     memcpy(&nTmp16, poDS->pachHeader + 8, 2);
-    CPL_LSBPTR16(&nTmp16);
     const int nBandCount = nTmp16;
 
     if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
@@ -539,18 +532,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     float fTmp = 0.0;
 
     memcpy(&fTmp, poDS->pachHeader + 112, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[0] = fTmp;
     memcpy(&fTmp, poDS->pachHeader + 120, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[1] = fTmp;
     poDS->adfGeoTransform[2] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 116, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[3] = fTmp;
     poDS->adfGeoTransform[4] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 124, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[5] = - fTmp;
 
     // adjust for center of pixel vs. top left corner of pixel.
@@ -573,7 +562,6 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to come up with something for the coordinate system.        */
 /* -------------------------------------------------------------------- */
     memcpy(&nTmp16, poDS->pachHeader + 88, 2);
-    CPL_LSBPTR16(&nTmp16);
     int nCoordSys = nTmp16;
 
     if( nCoordSys == 0 )

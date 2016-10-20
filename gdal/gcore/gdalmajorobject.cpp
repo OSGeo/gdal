@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Base class for objects with metadata, etc.
@@ -37,11 +36,9 @@ CPL_CVSID("$Id$");
 /*                          GDALMajorObject()                           */
 /************************************************************************/
 
-GDALMajorObject::GDALMajorObject()
-
-{
-    nFlags = GMO_VALID;
-}
+GDALMajorObject::GDALMajorObject() :
+    nFlags(GMO_VALID)
+{}
 
 /************************************************************************/
 /*                          ~GDALMajorObject()                          */
@@ -182,7 +179,7 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
                                                  int bCheckNonEmpty, ... )
 {
     va_list args;
-    const char* pszDomain;
+    const char* pszDomain = NULL;
     va_start(args, bCheckNonEmpty);
 
     while( (pszDomain = va_arg(args, const char*)) != NULL )
@@ -212,7 +209,7 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
  */
 
 char ** CPL_STDCALL
-GDALGetMetadataDomainList( GDALMajorObjectH hObject)
+GDALGetMetadataDomainList( GDALMajorObjectH hObject )
 
 {
     VALIDATE_POINTER1( hObject, "GetMetadataDomainList", NULL );
@@ -300,7 +297,14 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
 /**
  * \brief Set metadata.
  *
- * @see GDALMajorObject::SetMetadata()
+ * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
+ * depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * @see GDALMajorObject::SetMetadata(), GDALDataset::SetMetadata(),
+ *      GDALRasterBand::SetMetadata()
  */
 
 CPLErr CPL_STDCALL
@@ -391,7 +395,14 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
 /**
  * \brief Set single metadata item.
  *
- * @see GDALMajorObject::SetMetadataItem()
+ * CAUTION: when using this function on a GDALDatasetH or GDALRasterBandH,
+ * depending on the format, older values of the updated information might
+ * still be found in the file in a "ghost" state, even if no longer accessible
+ * through the GDAL API. This is for example the case of the GTiff format (this is
+ * not a exhaustive list)
+ *
+ * @see GDALMajorObject::SetMetadataItem(), GDALDataset::SetMetadataItem(),
+ *      GDALRasterBand::SetMetadataItem()
  */
 
 CPLErr CPL_STDCALL
@@ -410,7 +421,10 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
 /*                             GetMOFlags()                             */
 /************************************************************************/
 
-int GDALMajorObject::GetMOFlags()
+/** Returns the GMO_ flags.
+ * @return flags
+ */
+int GDALMajorObject::GetMOFlags() const
 
 {
     return nFlags;
@@ -420,6 +434,9 @@ int GDALMajorObject::GetMOFlags()
 /*                             SetMOFlags()                             */
 /************************************************************************/
 
+/** Assign GMO_flags.
+ * @param nNewFlags new flags.
+ */
 void GDALMajorObject::SetMOFlags( int nNewFlags )
 
 {

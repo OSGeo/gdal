@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc.h,v 1.25 2008/07/23 20:51:38 dmorissette Exp $
+ * $Id$
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
@@ -293,7 +293,7 @@ typedef struct AVCTxt_t
     GInt32      nTxtId;
     GInt32      nUserId;
     GInt32      nLevel;
-    float       f_1e2;	/* Always (float)-1e+20, even for double precision! */
+    float       f_1e2;  /* Always (float)-1e+20, even for double precision! */
     GInt32      nSymbol;
     GInt32      numVerticesLine;
     GInt32      n28;    /* Unknown value at byte 28 */

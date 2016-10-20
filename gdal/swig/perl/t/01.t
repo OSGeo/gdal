@@ -69,7 +69,9 @@ for my $dt (Geo::GDAL::Driver('GTiff')->Domains()) {
 }
 
 my $ext = Geo::GDAL::Driver('GTiff')->Extension;
-ok($ext eq 'tif', "Extension, got $ext");
+ok($ext eq 'tif', "Extension, got '$ext', not 'tif'");
+my @ext = Geo::GDAL::Driver('GTiff')->Extension;
+ok((($ext[0] eq 'tif') and ($ext[1] eq 'tiff')), "Extension, got '@ext', not 'tif tiff'");
 
 $ext = Geo::GDAL::Driver('GTiff')->MIMEType;
 ok($ext eq 'image/tiff', "MIMEType, got $ext");

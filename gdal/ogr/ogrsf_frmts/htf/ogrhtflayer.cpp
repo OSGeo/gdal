@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HTF Translator
  * Purpose:  Implements OGRHTFLayer class.
@@ -41,6 +40,8 @@ CPL_CVSID("$Id$");
 
 OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     poFeatureDefn(NULL),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    fpHTF(VSIFOpenL(pszFilename, "rb")),
     bEOF(false),
     nNextFID(0),
     bHasExtent(false),
@@ -49,9 +50,6 @@ OGRHTFLayer::OGRHTFLayer( const char* pszFilename, int nZone, int bIsNorth ) :
     dfMaxX(0),
     dfMaxY(0)
 {
-    fpHTF = VSIFOpenL(pszFilename, "rb");
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     poSRS->SetUTM( nZone, bIsNorth );
 }
 
@@ -69,15 +67,15 @@ OGRHTFPolygonLayer::OGRHTFPolygonLayer( const char* pszFilename, int nZone,
     poFeatureDefn->SetGeomType( wkbPolygon  );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "DESCRIPTION", OFTString);
+    OGRFieldDefn oField1( "DESCRIPTION", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "IDENTIFIER", OFTInteger);
+    OGRFieldDefn oField2( "IDENTIFIER", OFTInteger);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "SEAFLOOR_COVERAGE", OFTString);
+    OGRFieldDefn oField3( "SEAFLOOR_COVERAGE", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "POSITION_ACCURACY", OFTReal);
+    OGRFieldDefn oField4( "POSITION_ACCURACY", OFTReal);
     poFeatureDefn->AddFieldDefn( &oField4 );
-    OGRFieldDefn    oField5( "DEPTH_ACCURACY", OFTReal);
+    OGRFieldDefn oField5( "DEPTH_ACCURACY", OFTReal);
     poFeatureDefn->AddFieldDefn( &oField5 );
 
     ResetReading();
@@ -104,7 +102,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone,
     poFeatureDefn->SetGeomType( wkbPoint  );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    const char* pszLine;
+    const char* pszLine = NULL;
     bool bSoundingHeader = false;
     while( fpHTF != NULL &&
            (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
@@ -258,7 +256,7 @@ void OGRHTFPolygonLayer::ResetReading()
     OGRHTFLayer::ResetReading();
     if (fpHTF)
     {
-        const char* pszLine;
+        const char* pszLine = NULL;
         while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
         {
             if (strcmp(pszLine, "POLYGON DATA") == 0)
@@ -282,7 +280,7 @@ void OGRHTFSoundingLayer::ResetReading()
     OGRHTFLayer::ResetReading();
     if (fpHTF)
     {
-        const char* pszLine;
+        const char* pszLine = NULL;
         while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
         {
             if (strcmp(pszLine, "SOUNDING DATA") == 0)
@@ -334,8 +332,6 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    const char* pszLine;
-
     OGRLinearRing oLR;
     bool bHasFirstCoord = false;
     double dfFirstEasting = 0;
@@ -345,6 +341,7 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
     bool bInIsland = false;
     OGRPolygon* poPoly = new OGRPolygon();
 
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')
@@ -456,10 +453,10 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
 
 OGRFeature *OGRHTFSoundingLayer::GetNextRawFeature()
 {
-    const char* pszLine;
 
     OGRLinearRing oLR;
 
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')
@@ -533,7 +530,7 @@ GIntBig OGRHTFSoundingLayer::GetFeatureCount(int bForce)
         return 0;
 
     int nCount = 0;
-    const char* pszLine;
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fpHTF, 1024, NULL)) != NULL)
     {
         if (pszLine[0] == ';')

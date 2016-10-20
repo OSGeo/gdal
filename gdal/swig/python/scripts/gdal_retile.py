@@ -100,33 +100,26 @@ class DataSetCache:
 
 class tile_info:
     """ A class holding info how to tile """
-    def __init__(self,xsize,ysize,tileWidth,tileHeight):
+    def __init__(self,xsize,ysize,tileWidth,tileHeight,overlap):
+        self.width = xsize
+        self.height = ysize
         self.tileWidth=tileWidth
         self.tileHeight=tileHeight
-        self.countTilesX= int(xsize / tileWidth)
-        self.countTilesY= int(ysize / tileHeight)
-        self.lastTileWidth = int(xsize - self.countTilesX *  tileWidth)
-        self.lastTileHeight = int(ysize - self.countTilesY *  tileHeight)
-
-        if (self.lastTileWidth > 0 ):
-            self.countTilesX=self.countTilesX+1
-        else:
-            self.lastTileWidth=tileWidth
-
-        if (self.lastTileHeight > 0 ):
-            self.countTilesY=self.countTilesY+1
-        else:
-            self.lastTileHeight=tileHeight
-
+        self.countTilesX= 1
+        if xsize > tileWidth:
+            self.countTilesX += int((xsize - tileWidth + (tileWidth - overlap) - 1) / (tileWidth - overlap))
+        self.countTilesY= 1
+        if ysize > tileHeight:
+            self.countTilesY += int((ysize - tileHeight + (tileHeight - overlap) - 1) / (tileHeight - overlap))
+        self.overlap = overlap
 
 
     def report( self ):
-        print('tileWidth       %d' % self.tileWidth)
-        print('tileHeight      %d' % self.tileHeight)
-        print('countTilesX:    %d' % self.countTilesX)
-        print('countTilesY:    %d' % self.countTilesY)
-        print('lastTileWidth:  %d' % self.lastTileWidth)
-        print('lastTileHeight: %d' % self.lastTileHeight)
+        print('tileWidth:   %d' % self.tileWidth)
+        print('tileHeight:  %d' % self.tileHeight)
+        print('countTilesX: %d' % self.countTilesX)
+        print('countTilesY: %d' % self.countTilesY)
+        print('overlap:     %d' % self.overlap)
 
 
 
@@ -352,21 +345,20 @@ def tileImage(minfo, ti ):
 
     for yIndex in yRange:
         for xIndex in xRange:
-            offsetY=(yIndex-1)* ti.tileHeight
-            offsetX=(xIndex-1)* ti.tileWidth
-            if yIndex==ti.countTilesY:
-                height=ti.lastTileHeight
-            else:
-                height=ti.tileHeight
-
-            if xIndex==ti.countTilesX:
-                width=ti.lastTileWidth
-            else:
-                width=ti.tileWidth
+            offsetY=(yIndex-1)* (ti.tileHeight - ti.overlap)
+            offsetX=(xIndex-1)* (ti.tileWidth - ti.overlap)
+            height=ti.tileHeight
+            width=ti.tileWidth
             if UseDirForEachRow :
                 tilename=getTileName(minfo,ti, xIndex, yIndex,0)
             else:
                 tilename=getTileName(minfo,ti, xIndex, yIndex)
+
+            if offsetX + width > ti.width:
+                width = ti.width - offsetX
+            if offsetY + height > ti.height:
+                height = ti.height - offsetY
+
             createTile(minfo, offsetX, offsetY, width, height,tilename,OGRDS)
 
             if not Quiet and not Verbose:
@@ -630,14 +622,14 @@ def closeTileIndex(OGRDataSource):
     OGRDataSource.Destroy()
 
 
-def buildPyramid(minfo,createdTileIndexDS,tileWidth, tileHeight):
+def buildPyramid(minfo,createdTileIndexDS,tileWidth, tileHeight, overlap):
 
     global LastRowIndx
     inputDS=createdTileIndexDS
     for level in range(1,Levels+1):
         LastRowIndx = -1
         levelMosaicInfo = mosaic_info(minfo.filename,inputDS)
-        levelOutputTileInfo = tile_info(levelMosaicInfo.xsize/2,levelMosaicInfo.ysize/2,tileWidth,tileHeight)
+        levelOutputTileInfo = tile_info(int(levelMosaicInfo.xsize/2),int(levelMosaicInfo.ysize/2),tileWidth,tileHeight,overlap)
         inputDS=buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo,level)
 
 
@@ -649,17 +641,16 @@ def buildPyramidLevel(levelMosaicInfo,levelOutputTileInfo, level):
 
     for yIndex in yRange:
         for xIndex in xRange:
-            offsetY=(yIndex-1)* levelOutputTileInfo.tileHeight
-            offsetX=(xIndex-1)* levelOutputTileInfo.tileWidth
-            if yIndex==levelOutputTileInfo.countTilesY:
-                height=levelOutputTileInfo.lastTileHeight
-            else:
-                height=levelOutputTileInfo.tileHeight
+            offsetY=(yIndex-1)* (levelOutputTileInfo.tileHeight - levelOutputTileInfo.overlap)
+            offsetX=(xIndex-1)* (levelOutputTileInfo.tileWidth - levelOutputTileInfo.overlap)
+            height=levelOutputTileInfo.tileHeight
+            width=levelOutputTileInfo.tileWidth
 
-            if xIndex==levelOutputTileInfo.countTilesX:
-                width=levelOutputTileInfo.lastTileWidth
-            else:
-                width=levelOutputTileInfo.tileWidth
+            if offsetX + width > levelOutputTileInfo.width:
+                width = levelOutputTileInfo.width - offsetX
+            if offsetY + height > levelOutputTileInfo.height:
+                height = levelOutputTileInfo.height - offsetY
+
             tilename=getTileName(levelMosaicInfo,levelOutputTileInfo, xIndex, yIndex,level)
             createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tilename,OGRDS)
 
@@ -717,6 +708,7 @@ def Usage():
      print('Usage: gdal_retile.py ')
      print('        [-v] [-q] [-co NAME=VALUE]* [-of out_format]')
      print('        [-ps pixelWidth pixelHeight]')
+     print('        [-overlap val_in_pixel]')
      print('        [-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/')
      print('               CInt16/CInt32/CFloat32/CFloat64}]')
      print('        [ -tileIndex tileIndexName [-tileIndexField fieldName]]')
@@ -742,6 +734,7 @@ def main(args = None):
     global Names
     global TileWidth
     global TileHeight
+    global Overlap
     global Format
     global BandType
     global Driver
@@ -807,6 +800,10 @@ def main(args = None):
             TileWidth=int(argv[i])
             i+=1
             TileHeight=int(argv[i])
+
+        elif arg == '-overlap':
+            i+=1
+            Overlap=int(argv[i])
 
         elif arg == '-r':
             i+=1
@@ -877,6 +874,9 @@ def main(args = None):
     if (TileWidth==0 or TileHeight==0):
         print("Invalid tile dimension %d,%d" % (TileWidth,TileHeight))
         return 1
+    if (TileWidth - Overlap <= 0 or TileHeight - Overlap <=0):
+        print("Overlap too big w.r.t tile height/width")
+        return 1
 
     if (TargetDir is None):
         print("Missing Directory for Tiles -targetDir")
@@ -923,7 +923,7 @@ def main(args = None):
         print("Error building tile index")
         return 1;
     minfo = mosaic_info(Names[0],tileIndexDS)
-    ti=tile_info(minfo.xsize,minfo.ysize, TileWidth, TileHeight)
+    ti=tile_info(minfo.xsize,minfo.ysize, TileWidth, TileHeight, Overlap)
 
     if Source_SRS is None and len(minfo.projection) > 0 :
        Source_SRS = osr.SpatialReference()
@@ -943,7 +943,7 @@ def main(args = None):
        dsCreatedTileIndex=tileIndexDS
 
     if Levels>0:
-       buildPyramid(minfo,dsCreatedTileIndex,TileWidth, TileHeight)
+       buildPyramid(minfo,dsCreatedTileIndex,TileWidth, TileHeight, Overlap)
 
     if Verbose:
         print("FINISHED")
@@ -956,6 +956,7 @@ def initGlobals():
     global Names
     global TileWidth
     global TileHeight
+    global Overlap
     global Format
     global BandType
     global Driver
@@ -980,6 +981,7 @@ def initGlobals():
     Names=[]
     TileWidth=256
     TileHeight=256
+    Overlap=0
     Format='GTiff'
     BandType = None
     Driver=None
@@ -1008,6 +1010,7 @@ CreateOptions = []
 Names=[]
 TileWidth=256
 TileHeight=256
+Overlap=0
 Format='GTiff'
 BandType = None
 Driver=None

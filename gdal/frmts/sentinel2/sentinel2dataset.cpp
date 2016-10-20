@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Sentinel2 products
@@ -169,7 +168,7 @@ class SENTINEL2Dataset : public VRTDataset
 
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
-                    ~SENTINEL2Dataset();
+        virtual ~SENTINEL2Dataset();
 
         virtual char** GetFileList();
 
@@ -230,12 +229,11 @@ SENTINEL2AlphaBand::SENTINEL2AlphaBand( GDALDataset *poDSIn, int nBandIn,
                                         GDALDataType eType,
                                         int nXSize, int nYSize,
                                         int nSaturatedVal, int nNodataVal ) :
-                            VRTSourcedRasterBand(poDSIn, nBandIn, eType,
-                                                 nXSize, nYSize),
-                            m_nSaturatedVal(nSaturatedVal),
-                            m_nNodataVal(nNodataVal)
-{
-}
+    VRTSourcedRasterBand(poDSIn, nBandIn, eType,
+                         nXSize, nYSize),
+    m_nSaturatedVal(nSaturatedVal),
+    m_nNodataVal(nNodataVal)
+{}
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -318,7 +316,8 @@ CPLErr SENTINEL2AlphaBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                          SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+SENTINEL2Dataset::SENTINEL2Dataset( int nXSize, int nYSize ) :
+    VRTDataset(nXSize, nYSize)
 {
     poDriver = NULL;
     SetWritable(FALSE);
@@ -328,9 +327,7 @@ SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,n
 /*                         ~SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::~SENTINEL2Dataset()
-{
-}
+SENTINEL2Dataset::~SENTINEL2Dataset() {}
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -1842,7 +1839,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     for(int nBand=1;nBand<=nBands;nBand++)
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -1906,12 +1903,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        GDALProxyPoolDataset* proxyDS;
-        proxyDS = new GDALProxyPoolDataset(         osTile,
-                                                    poDS->nRasterXSize,
-                                                    poDS->nRasterYSize,
-                                                    GA_ReadOnly,
-                                                    TRUE);
+        GDALProxyPoolDataset* proxyDS =
+            new GDALProxyPoolDataset( osTile,
+                                      poDS->nRasterXSize,
+                                      poDS->nRasterYSize,
+                                      GA_ReadOnly,
+                                      TRUE );
         proxyDS->AddSrcBandDescription(eDT, 128, 128);
 
         if( nBand != nAlphaBand )
@@ -2935,9 +2932,9 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
     std::map<CPLString, GDALProxyPoolDataset*> oMapPVITile;
 
-    for(int nBand=1;nBand<=nBands;nBand++)
+    for( int nBand = 1; nBand <= nBands; nBand++ )
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -3007,7 +3004,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
                 continue;
             }
 
-            GDALProxyPoolDataset* proxyDS;
+            GDALProxyPoolDataset* proxyDS = NULL;
             if( bIsPreview )
             {
                 proxyDS = oMapPVITile[osTile];

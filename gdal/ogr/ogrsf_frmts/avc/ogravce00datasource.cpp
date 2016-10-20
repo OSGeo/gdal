@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRAVCE00DataSource class.
@@ -39,10 +38,12 @@ CPL_CVSID("$Id$");
 /*                        OGRAVCE00DataSource()                         */
 /************************************************************************/
 
-OGRAVCE00DataSource::OGRAVCE00DataSource()
-    : nLayers(0), pszName(NULL), psE00(NULL), papoLayers(NULL)
-{
-}
+OGRAVCE00DataSource::OGRAVCE00DataSource() :
+    nLayers(0),
+    pszName(NULL),
+    psE00(NULL),
+    papoLayers(NULL)
+{}
 
 /************************************************************************/
 /*                        ~OGRAVCE00DataSource()                        */
@@ -182,7 +183,7 @@ int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
     int nCount = 0;
     for (int i = 0; i < nLayers; ++i)
     {
-        if (papoLayers[i]->CheckSetupTable(psTblSection))
+        if( papoLayers[i]->CheckSetupTable(psTblSection) )
             ++nCount;
     }
     return nCount;

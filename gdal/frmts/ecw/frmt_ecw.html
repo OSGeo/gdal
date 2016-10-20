@@ -173,6 +173,16 @@ and SetProjection() methods. If the projection is set with SetProjection() and
 the PROJ, DATUM or UNITS with SetMetadataItem(), the later values will override the values
 built from the projection string.<p>
 
+All those can for example be modified with the -a_ullr, -a_srs or -mo switches
+of the <a href="gdal_edit.html">gdal_edit.py</a> utility.<p>
+
+For example:
+<pre>
+gdal_edit.py -mo DATUM=WGS84 -mo PROJ=GEODETIC -a_ullr 7 47 8 46 test.ecw
+
+gdal_edit.py -a_srs EPSG:3068 -a_ullr 20800 22000 24000 19600 test.ecw
+</pre>
+
 <h3>File Metadata Keys: </h3>
 
 <ul>
@@ -190,7 +200,12 @@ built from the projection string.<p>
 <li>COLORSPACE
 <li>COMPRESSION_DATE
 <li>COMPRESSION_RATE_ACTUAL
-<li>COMPRESSION_RATE_TARGET
+<li>COMPRESSION_RATE_TARGET. This is the percentage of the target compressed
+file size divided by the uncompressed file size. This is equal to
+100 / (100 - TARGET) where TARGET is the value of the TARGET
+creation option used at file creation, so a COMPRESSION_RATE_TARGET=1 is
+equivalent to a TARGET=0 (ie no compression), COMPRESSION_RATE_TARGET=5 is
+equivalent to TARGET=80 (ie dividing uncompressed file size by 5), etc...
 <li>VERSION
 </ul>
 

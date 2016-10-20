@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KRO format reader/writer
  * Purpose:  Implementation of KOLOR Raw Format

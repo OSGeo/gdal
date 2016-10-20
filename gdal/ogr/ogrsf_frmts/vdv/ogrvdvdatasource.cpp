@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VDV Translator
  * Purpose:  Implements OGRVDVFDriver.
@@ -126,11 +125,11 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
 /*                           OGRIDFDataSource()                         */
 /************************************************************************/
 
-OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) : m_fpL(fpLIn)
-{
-    m_bHasParsed = false;
-    m_poMemDS = NULL;
-}
+OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) :
+    m_fpL(fpLIn),
+    m_bHasParsed(false),
+    m_poMemDS(NULL)
+{}
 
 /************************************************************************/
 /*                          ~OGRIDFDataSource()                         */
@@ -345,13 +344,13 @@ void OGRIDFDataSource::Parse()
     OGRLayer* poLinkLyr = m_poMemDS->GetLayerByName("Link");
     if( poLinkLyr )
     {
-        OGRFeature* poFeat;
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
         if( iLinkID >= 0 )
         {
             poLinkLyr->ResetReading();
             OGRSpatialReference* poSRS =
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLinkLyr->GetNextFeature()) != NULL )
             {
                 GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
@@ -431,8 +430,7 @@ OGRVDVDataSource::OGRVDVDataSource(const char* pszFilename,
     m_poCurrentWriterLayer(NULL),
     m_bMustWriteEof(false),
     m_bVDV452Loaded(false)
-{
-}
+{}
 
 /************************************************************************/
 /*                          ~OGRVDVDataSource()                         */
@@ -1070,6 +1068,7 @@ OGRVDVWriterLayer::OGRVDVWriterLayer( OGRVDVDataSource *poDS,
                                       const CPLString& osVDV452Lang,
                                       bool bProfileStrict):
     m_poDS(poDS),
+    m_poFeatureDefn(new OGRFeatureDefn(pszName)),
     m_bWritePossible(true),
     m_fpL(fpL),
     m_bOwnFP(bOwnFP),
@@ -1080,7 +1079,6 @@ OGRVDVWriterLayer::OGRVDVWriterLayer( OGRVDVDataSource *poDS,
     m_iLongitudeVDV452(-1),
     m_iLatitudeVDV452(-1)
 {
-    m_poFeatureDefn = new OGRFeatureDefn(pszName);
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
     SetDescription(pszName);
@@ -1398,7 +1396,7 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
 {
     bool bRet = true;
     const bool bStandardHeader =
-            CSLFetchBoolean(papszOptions, "STANDARD_HEADER", TRUE) != FALSE;
+            CPLFetchBool(papszOptions, "STANDARD_HEADER", true);
 
     struct tm tm;
     CPLUnixTimeToYMDHMS(time(NULL), &tm);
@@ -1533,9 +1531,9 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
         OGRVDVLoadVDV452Tables(m_oVDV452Tables);
     }
     const bool bProfileStrict =
-        CSLFetchBoolean(papszOptions, "PROFILE_STRICT", FALSE) != FALSE;
+        CPLFetchBool(papszOptions, "PROFILE_STRICT", false);
     const bool bCreateAllFields =
-        CSLFetchBoolean(papszOptions, "CREATE_ALL_FIELDS", TRUE) != FALSE;
+        CPLFetchBool(papszOptions, "CREATE_ALL_FIELDS", true);
 
     CPLString osUpperLayerName(pszLayerName);
     osUpperLayerName.toupper();
@@ -1597,7 +1595,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             return NULL;
     }
 
-    VSILFILE* fpL;
+    VSILFILE* fpL = NULL;
     if( m_bSingleFile )
     {
         fpL = m_fpL;
@@ -1611,7 +1609,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             while( nOffset > 0 )
             {
                 VSIFSeekL(fpL, nOffset - 1, SEEK_SET);
-                char ch;
+                char ch = '\0';
                 VSIFReadL(&ch, 1, 1, fpL);
                 if( bTerminatingEOL )
                 {
@@ -1639,7 +1637,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
             {
                 // Otherwise make sure the file ends with an eol character
                 VSIFSeekL(fpL, nFileSize - 1, SEEK_SET);
-                char ch;
+                char ch = '\0';
                 VSIFReadL(&ch, 1, 1, fpL);
                 VSIFSeekL(fpL, nFileSize, SEEK_SET);
                 if( !(ch == '\r' || ch == '\n') )
@@ -1776,7 +1774,7 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
         return NULL;
     }
 
-    bool bSingleFile = CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "SINGLE_FILE", TRUE));
+    const bool bSingleFile = CPLFetchBool(papszOptions, "SINGLE_FILE", true);
     if( !bSingleFile )
     {
         if( VSIMkdir( pszName, 0755 ) != 0 )

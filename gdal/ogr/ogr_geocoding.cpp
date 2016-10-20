@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Client of geocoding service.
@@ -977,7 +976,7 @@ static OGRLayerH OGRGeocodeBuildLayerYahoo(CPLXMLNode* psResultSet,
             }
 
             CPLString osDisplayName;
-            for( int i=1; ; ++i)
+            for( int i = 1; ; ++i )
             {
                 const int nIdx =
                     poFDefn->GetFieldIndex(CPLSPrintf("line%d", i));
@@ -1285,8 +1284,6 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
         pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL);
     if( pszCachedResult == NULL )
     {
-        CPLHTTPResult* psResult;
-
         double* pdfLastQueryTime = NULL;
         if( EQUAL(hSession->pszGeocodingService, "OSM_NOMINATIM") )
             pdfLastQueryTime = &dfLastQueryTimeStampOSMNominatim;
@@ -1303,6 +1300,7 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
         char** papszHTTPOptions = CSLAddNameValue(NULL, "HEADERS",
                                                   osHeaders.c_str());
 
+        CPLHTTPResult* psResult = NULL;
         if( pdfLastQueryTime != NULL )
         {
             CPLMutexHolderD(&hMutex);
@@ -1397,7 +1395,7 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
  *     (Known to work with OSM and MapQuest Nominatim)
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the
  *     returned feature with the raw XML content.
- * <li>EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET
+ * <li>EXTRA_QUERY_PARAMETERS=params: additional parameters for the GET
  *     request.
  * </ul>
  *
@@ -1532,7 +1530,7 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
  *     Nominatim service.
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the
  *     returned feature with the raw XML content.
- * <li>EXTRA_QUERY_PARAMETERS=params: additionnal parameters for the GET request
+ * <li>EXTRA_QUERY_PARAMETERS=params: additional parameters for the GET request
  *     for reverse geocoding.
  * </ul>
  *

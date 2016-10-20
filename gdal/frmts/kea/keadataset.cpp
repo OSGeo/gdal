@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keadataset.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -31,6 +30,8 @@
 #include "keadataset.h"
 #include "keaband.h"
 #include "keacopy.h"
+
+CPL_CVSID("$Id$");
 
 // Function for converting a libkea type into a GDAL type
 GDALDataType KEA_to_GDAL_Type( kealib::KEADataType ekeaType )
@@ -661,16 +662,15 @@ CPLErr KEADataset::SetMetadata(char **papszMetadata, const char *pszDomain)
         return CE_Failure;
 
     int nIndex = 0;
-    char *pszName;
-    const char *pszValue;
     try
     {
         // go through each item
         while( papszMetadata[nIndex] != NULL )
         {
             // get the value/name
-            pszName = NULL;
-            pszValue = CPLParseNameValue( papszMetadata[nIndex], &pszName );
+            char *pszName = NULL;
+            const char *pszValue =
+                CPLParseNameValue( papszMetadata[nIndex], &pszName );
             if( pszValue == NULL )
                 pszValue = "";
             if( pszName != NULL )

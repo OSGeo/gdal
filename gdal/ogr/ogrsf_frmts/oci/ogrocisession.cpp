@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Implementation of OGROCISession, which encapsulates much of the
@@ -275,14 +274,14 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /* -------------------------------------------------------------------- */
 /*      Record information about the session.                           */
 /* -------------------------------------------------------------------- */
-    this->pszUserid = CPLStrdup(pszUseridIn);
-    this->pszPassword = CPLStrdup(pszPasswordIn);
-    this->pszDatabase = CPLStrdup(pszDatabaseIn);
+    pszUserid = CPLStrdup(pszUseridIn);
+    pszPassword = CPLStrdup(pszPasswordIn);
+    pszDatabase = CPLStrdup(pszDatabaseIn);
 
 /* -------------------------------------------------------------------- */
 /*      Setting up the OGR compatible time formatting rules.            */
 /* -------------------------------------------------------------------- */
-    OGROCIStatement     oSetNLSTimeFormat( this );
+    OGROCIStatement oSetNLSTimeFormat( this );
     if( oSetNLSTimeFormat.Execute( "ALTER SESSION SET NLS_DATE_FORMAT='YYYY/MM/DD' \
         NLS_TIME_FORMAT='HH24:MI:SS' NLS_TIME_TZ_FORMAT='HH24:MI:SS TZHTZM' \
         NLS_TIMESTAMP_FORMAT='YYYY/MM/DD HH24:MI:SS' \

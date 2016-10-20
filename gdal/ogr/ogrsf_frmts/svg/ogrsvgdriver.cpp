@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SVG Translator
  * Purpose:  Implements OGRSVGDriver.
@@ -88,4 +87,3 @@ void RegisterOGRSVG()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

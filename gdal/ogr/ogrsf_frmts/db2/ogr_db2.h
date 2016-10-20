@@ -128,7 +128,7 @@ typedef enum
 #else
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
-#endif	/* ifdef SQLULEN */
+#endif  /* ifdef SQLULEN */
 
 
 /**
@@ -436,7 +436,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
 
 public:
     OGRDB2TableLayer( OGRDB2DataSource * );
-    ~OGRDB2TableLayer();
+    virtual ~OGRDB2TableLayer();
 
     CPLErr              Initialize( const char *pszSchema,
                                     const char *pszTableName,
@@ -562,7 +562,7 @@ class OGRDB2SelectLayer : public OGRDB2Layer
 public:
     OGRDB2SelectLayer( OGRDB2DataSource *,
                        OGRDB2Statement * );
-    ~OGRDB2SelectLayer();
+    virtual ~OGRDB2SelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -754,7 +754,7 @@ class OGRDB2DataSource : public GDALPamDataset
 
 public:
     OGRDB2DataSource();
-    ~OGRDB2DataSource();
+    virtual ~OGRDB2DataSource();
 //***************** For raster support
 
     virtual char **     GetMetadata( const char *pszDomain = NULL );

@@ -5352,7 +5352,7 @@ def ogr_wfs_vsimem_cleanup():
 
     return 'success'
 
-gdaltest_live_list = [ 
+gdaltest_live_list = [
     #ogr_wfs_mapserver,
     #ogr_wfs_geoserver, #FIXME: re-enable after adapting test
     #ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test

@@ -30,6 +30,8 @@
 #ifndef OGRLAYERDECORATOR_H_INCLUDED
 #define OGRLAYERDECORATOR_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrsf_frmts.h"
 
 class CPL_DLL OGRLayerDecorator : public OGRLayer
@@ -110,5 +112,7 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
 
     OGRLayer* GetBaseLayer()    { return m_poDecoratedLayer; }
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif // OGRLAYERDECORATOR_H_INCLUDED

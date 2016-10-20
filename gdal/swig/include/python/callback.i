@@ -33,6 +33,8 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( pszMessage == NULL )
         pszMessage = "";
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
@@ -45,16 +47,19 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( PyErr_Occurred() != NULL )
     {
         PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;
     }
 
     if( psResult == NULL )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
     if( psResult == Py_None )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
@@ -63,10 +68,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         PyErr_Clear();
         CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
         Py_XDECREF(psResult);
-	return FALSE;
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
     }
 
     Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
 
     return bContinue;
 }

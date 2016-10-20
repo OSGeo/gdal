@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1 Translator
  * Purpose:  Implements OGRILI1Layer class.
@@ -98,13 +97,11 @@ void OGRILI1Layer::ResetReading()
 
 OGRFeature *OGRILI1Layer::GetNextFeature()
 {
-    OGRFeature *poFeature;
-
     if (!bGeomsJoined) JoinGeomLayers();
 
     while(nFeatureIdx < nFeatures)
     {
-        poFeature = GetNextFeatureRef();
+        OGRFeature *poFeature = GetNextFeatureRef();
         if (poFeature)
             return poFeature->Clone();
     }
@@ -133,9 +130,9 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
 OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 
 {
-    OGRFeature *poFeature;
-
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeatureRef()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
@@ -148,9 +145,9 @@ OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
 OGRFeature *OGRILI1Layer::GetFeatureRef( const char *fid )
 
 {
-    OGRFeature *poFeature;
-
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeatureRef()) != NULL )
     {
         if( !strcmp( poFeature->GetFieldAsString(0), fid ) )
@@ -504,7 +501,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
     poSurfaceLineLayer->ResetReading();
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
-        OGRFeature *feature;
+        OGRFeature *feature = NULL;
         if (poFeatureDefn->GetFieldDefn(0)->GetType() == OFTString)
         {
           feature = GetFeatureRef(linefeature->GetFieldAsString(1));
@@ -524,7 +521,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         feature->GetGeomFieldRef(nSurfaceFieldIndex) );
             OGRMultiCurve *lines = reinterpret_cast<OGRMultiCurve *>(
                 linefeature->GetGeomFieldRef(0) );
-            for( int i = 0; i < lines->getNumGeometries(); i++ ) {
+            for( int i = 0; lines != NULL && i < lines->getNumGeometries(); i++ ) {
                 OGRCurve *line = reinterpret_cast<OGRCurve*>(lines->getGeometryRef(i));
                 OGRCurve *ring = NULL;
                 if (surface_lines) {

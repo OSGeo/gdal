@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_dxf.h 22008 2011-03-22 19:45:20Z warmerdam $
+ * $Id$
  *
  * Project:  DWG Translator
  * Purpose:  Definition of classes for OGR .dwg driver.

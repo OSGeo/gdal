@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Function to register all known OGR drivers.
@@ -261,8 +260,8 @@ void OGRRegisterAllInternal()
 #ifdef WALK_ENABLED
     RegisterOGRWalk();
 #endif
-#ifdef CARTODB_ENABLED
-    RegisterOGRCartoDB();
+#ifdef CARTO_ENABLED
+    RegisterOGRCarto();
 #endif
 #ifdef AMIGOCLOUD_ENABLED
     RegisterOGRAmigoCloud();
@@ -287,6 +286,9 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef VDV_ENABLED
     RegisterOGRVDV();
+#endif
+#ifdef GMLAS_ENABLED
+    RegisterOGRGMLAS();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */

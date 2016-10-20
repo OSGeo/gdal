@@ -5,7 +5,7 @@
 #include "ogr_ao.h"
 #include <iostream>
 
-// ArcObjects to OGR Geometry Mapping 
+// ArcObjects to OGR Geometry Mapping
 bool AOToOGRGeometry(IGeometryDef* pGeoDef, OGRwkbGeometryType* outOGRType);
 bool AOGeometryToOGRGeometry(bool forceMulti, esriGeometry::IGeometry* pInAOGeo, OGRSpatialReference* pOGRSR, unsigned char* & pInWorkingBuffer, long & inOutBufferSize, OGRGeometry** ppOutGeometry); //working buffer is an optimization to avoid reallocating mem
 bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialReference** ppSR);
@@ -21,11 +21,11 @@ bool AOToOGRFieldType(esriFieldType aoType, OGRFieldType* ogrType);
 bool AOErr(HRESULT hr, std::string desc);
 
 // Init driver and check out license
-bool InitializeDriver(esriLicenseExtensionCode license = 
+bool InitializeDriver(esriLicenseExtensionCode license =
                    (esriLicenseExtensionCode)0);
 
 // Exit app and check in license
-HRESULT ShutdownDriver(esriLicenseExtensionCode license = 
+HRESULT ShutdownDriver(esriLicenseExtensionCode license =
                     (esriLicenseExtensionCode)0);
 
 

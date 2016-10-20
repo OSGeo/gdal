@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRODBCDataSource class.
@@ -38,16 +37,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRODBCDataSource::OGRODBCDataSource() :
-    bDSUpdate(FALSE)
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    nLayers = 0;
-
-    nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
-}
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    bDSUpdate(FALSE),
+    nKnownSRID(0),
+    panSRID(NULL),
+    papoSRS(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRODBCDataSource()                         */
@@ -56,16 +53,14 @@ OGRODBCDataSource::OGRODBCDataSource() :
 OGRODBCDataSource::~OGRODBCDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();
@@ -226,17 +221,21 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         while( oTableList.Fetch() )
         {
             const char *pszSchema = oTableList.GetColData(1);
-            CPLString osLayerName;
-
-            if( pszSchema != NULL && strlen(pszSchema) > 0 )
+            const char* pszTableName = oTableList.GetColData(2);
+            if( pszTableName != NULL )
             {
-                osLayerName = pszSchema;
-                osLayerName += ".";
+                CPLString osLayerName;
+
+                if( pszSchema != NULL && strlen(pszSchema) > 0 )
+                {
+                    osLayerName = pszSchema;
+                    osLayerName += ".";
+                }
+
+                osLayerName += pszTableName;
+
+                OpenTable( osLayerName, NULL, bUpdate );
             }
-
-            osLayerName += oTableList.GetColData(2);
-
-            OpenTable( osLayerName, NULL, bUpdate );
         }
 
         return TRUE;
@@ -266,8 +265,9 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     char **papszTables = NULL;
     char **papszGeomCol = NULL;
     char *pszSRSTableName = NULL;
-    char *pszSRIDCol = NULL, *pszSRTextCol = NULL;
-    char *pszDelimiter;
+    char *pszSRIDCol = NULL;
+    char *pszSRTextCol = NULL;
+    char *pszDelimiter = NULL;
 
     if ( (pszDelimiter = strrchr( pszWrkName, ':' )) != NULL )
     {
@@ -349,19 +349,18 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     }
     else
     {
-        char *pszTarget;
 
         pszDSN = CPLStrdup(strstr(pszWrkName, "@") + 1);
         if( *pszWrkName == '/' )
         {
             pszPassword = CPLStrdup(pszWrkName + 1);
-            pszTarget = strstr(pszPassword,"@");
+            char *pszTarget = strstr(pszPassword,"@");
             *pszTarget = '\0';
         }
         else
         {
             pszUserid = CPLStrdup(pszWrkName);
-            pszTarget = strstr(pszUserid,"@");
+            char *pszTarget = strstr(pszUserid,"@");
             *pszTarget = '\0';
 
             pszTarget = strstr(pszUserid,"/");
@@ -560,9 +559,7 @@ int OGRODBCDataSource::OpenTable( const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRODBCTableLayer  *poLayer;
-
-    poLayer = new OGRODBCTableLayer( this );
+    OGRODBCTableLayer *poLayer = new OGRODBCTableLayer( this );
 
     if( poLayer->Initialize( pszNewName, pszGeomCol ) )
     {

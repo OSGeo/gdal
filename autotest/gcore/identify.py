@@ -40,12 +40,6 @@ from osgeo import gdal
 
 def identify_1():
 
-    try:
-        gdaltest.IdentifyDriver = gdal.IdentifyDriver
-    except:
-        gdaltest.IdentifyDriver = None
-        return 'skip'
-
     file_list = gdal.ReadDir( 'data' )
 
     dr = gdal.IdentifyDriver( 'data/byte.tif', file_list )
@@ -59,9 +53,6 @@ def identify_1():
 # Test a file that won't be recognised.
 
 def identify_2():
-
-    if gdaltest.IdentifyDriver is None:
-        return 'skip'
 
     file_list = gdal.ReadDir( 'data' )
 
@@ -77,9 +68,6 @@ def identify_2():
 
 def identify_3():
 
-    if gdaltest.IdentifyDriver is None:
-        return 'skip'
-
     dr = gdal.IdentifyDriver( 'data' )
     if dr is not None:
         gdaltest.post_reason( 'Got a driver for data directory!' )
@@ -87,10 +75,48 @@ def identify_3():
 
     return 'success'
 
+###############################################################################
+# Try IdentifyDriverEx
+
+def identify_4():
+
+    dr = gdal.IdentifyDriverEx( 'data/byte.tif' )
+    if dr is None or dr.GetDescription() != 'GTiff':
+        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        return 'fail'
+
+    dr = gdal.IdentifyDriverEx( 'data/byte.tif', gdal.OF_RASTER )
+    if dr is None or dr.GetDescription() != 'GTiff':
+        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        return 'fail'
+
+    dr = gdal.IdentifyDriverEx( 'data/byte.tif', gdal.OF_VECTOR )
+    if dr is not None:
+        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        return 'fail'
+
+    dr = gdal.IdentifyDriverEx( 'data/byte.tif', allowed_drivers = [ 'HFA' ] )
+    if dr is not None:
+        gdaltest.post_reason( 'Got wrong driver for byte.tif' )
+        return 'fail'
+
+    dr = gdal.IdentifyDriverEx( '../gdrivers/data/aea.dat', sibling_files = [ 'aea.dat'] )
+    if dr is not None:
+        gdaltest.post_reason( 'Got a driver, which was not expected!' )
+        return 'fail'
+
+    dr = gdal.IdentifyDriverEx( '../gdrivers/data/aea.dat', sibling_files = [ 'aea.dat', 'aea.hdr' ] )
+    if dr is None:
+        gdaltest.post_reason( 'Did not get a driver!' )
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     identify_1,
     identify_2,
-    identify_3 ]
+    identify_3,
+    identify_4 ]
 
 if __name__ == '__main__':
 

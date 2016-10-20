@@ -75,7 +75,7 @@ class MSGDataset : public GDALDataset
 
   public:
     MSGDataset();
-    ~MSGDataset();
+    virtual ~MSGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     virtual const char *GetProjectionRef(void);
@@ -98,5 +98,5 @@ class MSGDataset : public GDALDataset
     static const double rB[12];
     static const int iCentralPixelVIS_IR;
     static const int iCentralPixelHRV;
+    static const char *metadataDomain;
 };
-

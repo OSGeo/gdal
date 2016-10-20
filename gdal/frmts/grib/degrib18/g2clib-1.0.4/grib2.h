@@ -273,5 +273,12 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
                  g2int ltype, g2int ratio, g2int retry, char *outjpc, 
                  g2int jpclen);
 
+int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned char *cout, g2int ndpts, g2int nbits);
+int enc_png(char *data,g2int width,g2int height,g2int nbits,char *pngbuf);
+g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
+                g2float *fld);
+void pngpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
+             unsigned char *cpack,g2int *lcpack);
+
 #endif  /*  grib2_H  */
 

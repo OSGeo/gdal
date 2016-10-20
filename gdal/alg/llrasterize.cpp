@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Vector polygon rasterization code.
@@ -30,6 +29,8 @@
 
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+
+CPL_CVSID("$Id$");
 
 static int llCompareInt(const void *a, const void *b)
 {

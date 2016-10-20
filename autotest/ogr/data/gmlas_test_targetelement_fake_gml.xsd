@@ -1,0 +1,25 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:gml="http://fake_gml"
+           xmlns:xlink="http://fake_xlink"
+           targetNamespace="http://fake_gml"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_xlink" schemaLocation="gmlas_test_targetelement_fake_xlink.xsd"/>
+
+<xs:complexType name="ReferenceType">
+    <xs:sequence/>
+    <xs:attribute ref="xlink:href"/>
+</xs:complexType>
+
+<xs:element name="_Feature" abstract="true"/>
+
+<xs:element name="FeatureCollection">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="gml:_Feature" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+
+</xs:schema>

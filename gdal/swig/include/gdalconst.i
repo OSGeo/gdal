@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 #ifdef PERL_CPAN_NAMESPACE
 %module "Geo::GDAL::Const"
 #elif defined(SWIGCSHARP)
@@ -237,6 +241,10 @@
 %constant GMF_ALPHA               = 0x04;
 %constant GMF_NODATA              = 0x08;
 
+%constant GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED  = 0x01;
+%constant GDAL_DATA_COVERAGE_STATUS_DATA           = 0x02;
+%constant GDAL_DATA_COVERAGE_STATUS_EMPTY          = 0x04;
+
 // GDALAsyncStatusType
 %constant GARIO_PENDING = GARIO_PENDING;
 %constant GARIO_UPDATE = GARIO_UPDATE;
@@ -248,3 +256,7 @@
 %constant GTO_BIT = GTO_BIT;
 %constant GTO_BSQ = GTO_BSQ;
 
+
+#ifdef SWIGPYTHON
+%thread;
+#endif

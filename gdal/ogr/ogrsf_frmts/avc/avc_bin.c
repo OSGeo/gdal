@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.30 2008/07/23 20:51:38 dmorissette Exp $
+ * $Id$
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -1940,6 +1940,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     int            i;
     size_t         nFnameLen;
 
+    sTableDef.numFields = 0;
     sTableDef.pasFieldDef = NULL;
 
     /* Alloc a buffer big enough for the longest possible filename...
@@ -1983,6 +1984,14 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open table %s", pszTableName);
+        CPLFree(pszFname);
+        return NULL;
+    }
+    /* To please Coverity */
+    if( sTableDef.numFields < 0 || sTableDef.numFields >= 32767 )
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Invalid numFields in %s", pszTableName);
         CPLFree(pszFname);
         return NULL;
     }

@@ -29,9 +29,10 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-
 #include "cpl_string.h"
 #include "vicarkeywordhandler.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -47,7 +48,7 @@ VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL),
     LabelSize(0)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                        */
@@ -67,7 +68,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return FALSE;
@@ -114,9 +115,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
 
     if( pszResult == NULL )
     {

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.33 2008-02-01 19:36:31 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -139,6 +138,8 @@
 
 #include "mitab.h"
 
+CPL_CVSID("$Id$");
+
 #ifdef WIN32
 inline double round(double r) {
     return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
@@ -148,17 +149,17 @@ inline double round(double r) {
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
-#define HDR_MAGIC_COOKIE        42424242
-#define HDR_VERSION_NUMBER      500
+static const GInt32 HDR_MAGIC_COOKIE = 42424242;
+static const GInt16 HDR_VERSION_NUMBER = 500;
 
-#define HDR_DEF_ORG_QUADRANT    1       // N-E Quadrant
-#define HDR_DEF_REFLECTXAXIS    0
+static const GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
+static const GByte HDR_DEF_REFLECTXAXIS = 0;
 
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
-#define HDR_OBJ_LEN_ARRAY_SIZE   73
-static const GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
+static const GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
+static const GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
             0xa7,0xb5,0xd9,0x0f,0x17,0x23,0x13,0x1f,
@@ -182,12 +183,13 @@ static const GByte  gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
  *
  * Constructor.
  **********************************************************************/
-TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
+TABMAPHeaderBlock::TABMAPHeaderBlock( TABAccess eAccessMode /*= TABRead*/ ):
     TABRawBinBlock(eAccessMode, TRUE)
 {
+    // TODO(schwehr): Consider using initializer list for most values.
     InitMembersWithDefaultValues();
 
-    /* We don't want to reset it once it is set */
+    // We don't want to reset it once it is set.
     m_bIntBoundsOverflow = FALSE;
 }
 
@@ -196,18 +198,13 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
  *
  * Destructor.
  **********************************************************************/
-TABMAPHeaderBlock::~TABMAPHeaderBlock()
-{
-
-}
+TABMAPHeaderBlock::~TABMAPHeaderBlock() {}
 
 /**********************************************************************
  *            TABMAPHeaderBlock::InitMembersWithDefaultValues()
  **********************************************************************/
 void TABMAPHeaderBlock::InitMembersWithDefaultValues()
 {
-    int i;
-
     /*-----------------------------------------------------------------
      * Set acceptable default values for member vars.
      *----------------------------------------------------------------*/
@@ -254,13 +251,13 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_XPrecision = 0.0;  // not specified
     m_YPrecision = 0.0;  // not specified
 
-    for(i=0; i<6; i++)
+    for( int i = 0; i<6; i++ )
         m_sProj.adProjParams[i] = 0.0;
 
     m_sProj.dDatumShiftX = 0.0;
     m_sProj.dDatumShiftY = 0.0;
     m_sProj.dDatumShiftZ = 0.0;
-    for(i=0; i<5; i++)
+    for( int i = 0; i < 5; i++ )
         m_sProj.adDatumParams[i] = 0.0;
 
     m_sProj.nAffineFlag = 0;    // Only in version 500 and up
@@ -289,16 +286,14 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
                                              VSILFILE *fpSrc /* = NULL */,
                                              int nOffset /* = 0 */)
 {
-    int i, nStatus;
-    GInt32 nMagicCookie;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                                nBlockSize, nSizeUsed,
-                                                bMakeCopy,
-                                                fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf,
+                                          nBlockSize, nSizeUsed,
+                                          bMakeCopy,
+                                          fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -307,7 +302,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
      * Header blocks have a magic cookie at byte 0x100
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x100);
-    nMagicCookie = ReadInt32();
+    const GInt32 nMagicCookie = ReadInt32();
     if (nMagicCookie != HDR_MAGIC_COOKIE)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -401,13 +396,13 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         m_XDispl = m_YDispl = 0.0;
     }
 
-    for(i=0; i<6; i++)
+    for( int i = 0; i < 6; i++ )
         m_sProj.adProjParams[i] = ReadDouble();
 
     m_sProj.dDatumShiftX = ReadDouble();
     m_sProj.dDatumShiftY = ReadDouble();
     m_sProj.dDatumShiftZ = ReadDouble();
-    for(i=0; i<5; i++)
+    for( int i = 0; i < 5; i++ )
     {
         /* In V.200 files, the next 5 datum params are unused and they
          * sometimes contain junk bytes... in this case we set adDatumParams[]
@@ -455,8 +450,8 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
-                                    double &dX, double &dY)
+int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
+                                     double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -501,9 +496,9 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
-                                    GInt32 &nX, GInt32 &nY,
-                                    GBool bIgnoreOverflow /*=FALSE*/)
+int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
+                                     GInt32 &nX, GInt32 &nY,
+                                     GBool bIgnoreOverflow /*=FALSE*/ )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -518,7 +513,8 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
      * NOTE: double values must be used here, the limit of integer value
      * have been reached some times due to the very big numbers used here.
      *----------------------------------------------------------------*/
-    double dTempX, dTempY;
+    double dTempX = 0.0;
+    double dTempY = 0.0;
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
@@ -589,9 +585,9 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
-                                         int nDeltaX, int nDeltaY,
-                                         double &dX, double &dY)
+int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
+                                          int nDeltaX, int nDeltaY,
+                                          double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -615,8 +611,8 @@ int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
-                                    double &dX, double &dY)
+int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
+                                         double &dX, double &dY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -642,8 +638,8 @@ int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
-                                        GInt32 &nX, GInt32 &nY)
+int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
+                                         GInt32 &nX, GInt32 &nY )
 {
     if (m_pabyBuf == NULL)
         return -1;
@@ -666,8 +662,8 @@ int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::SetCoordsysBounds(double dXMin, double dYMin,
-                                         double dXMax, double dYMax)
+int TABMAPHeaderBlock::SetCoordsysBounds( double dXMin, double dYMin,
+                                          double dXMax, double dYMax )
 {
 //printf("SetCoordsysBounds(%10g, %10g, %10g, %10g)\n", dXMin, dYMin, dXMax, dYMax);
     /*-----------------------------------------------------------------
@@ -733,7 +729,7 @@ int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
     }
 
     // Byte 0x80 is set for objects that have coordinates inside type 3 blocks
-    return (m_pabyBuf[nObjType] & 0x7f);
+    return m_pabyBuf[nObjType] & 0x7f;
 }
 
 /**********************************************************************
@@ -1017,8 +1013,6 @@ void TABMAPHeaderBlock::UpdatePrecision()
 
 void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    int i;
-
     if (fpOut == NULL)
         fpOut = stdout;
 
@@ -1072,7 +1066,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
                                                     (int)m_sProj.nEllipsoidId);
         fprintf(fpOut,"  m_sProj.nUnitsId      = %d\n", (int)m_sProj.nUnitsId);
         fprintf(fpOut,"  m_sProj.adProjParams  =");
-        for(i=0; i<6; i++)
+        for( int i = 0; i < 6; i++)
             fprintf(fpOut, " %g",  m_sProj.adProjParams[i]);
         fprintf(fpOut,"\n");
 
@@ -1080,7 +1074,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut,"  m_sProj.dDatumShiftY  = %.15g\n", m_sProj.dDatumShiftY);
         fprintf(fpOut,"  m_sProj.dDatumShiftZ  = %.15g\n", m_sProj.dDatumShiftZ);
         fprintf(fpOut,"  m_sProj.adDatumParams =");
-        for(i=0; i<5; i++)
+        for( int i = 0; i < 5; i++ )
             fprintf(fpOut, " %.15g",  m_sProj.adDatumParams[i]);
         fprintf(fpOut,"\n");
 
@@ -1088,7 +1082,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         if (FALSE)
         {
             fprintf(fpOut, "-- Header bytes 00-FF: Array of map object lengths --\n");
-            for(i=0; i<256; i++)
+            for( int i = 0; i < 256; i++ )
             {
                 fprintf(fpOut, "0x%2.2x", (int)m_pabyBuf[i]);
                 if (i != 255)

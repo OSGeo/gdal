@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from USGS georeferencing
@@ -513,7 +512,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case EQUIDC:
-            if ( padfPrjParams[8] )
+            if ( padfPrjParams[8] != 0.0 )
             {
                 SetEC( pfnUnpackAnglesFn(padfPrjParams[2]),
                        pfnUnpackAnglesFn(padfPrjParams[3]),
@@ -595,7 +594,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             break;
 
         case HOM:
-            if ( padfPrjParams[12] )
+            if ( padfPrjParams[12] != 0.0 )
             {
                 SetHOM( pfnUnpackAnglesFn(padfPrjParams[5]),
                         pfnUnpackAnglesFn(padfPrjParams[4]),
@@ -828,10 +827,8 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     *ppadfPrjParams = (double *)CPLMalloc( 15 * sizeof(double) );
-    for ( i = 0; i < 15; i++ )
+    for ( int i = 0; i < 15; i++ )
         (*ppadfPrjParams)[i] = 0.0;
 
     *piZone = 0L;
@@ -1144,11 +1141,11 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
         else if( EQUAL( pszDatum, SRS_DN_WGS84 ) )
             *piDatum = WGS84;
 
-        // If not found well known datum, translate ellipsoid
+        // If not found well known datum, translate ellipsoid.
         else
         {
-            double      dfSemiMajor = GetSemiMajor();
-            double      dfInvFlattening = GetInvFlattening();
+            const double dfSemiMajor = GetSemiMajor();
+            const double dfInvFlattening = GetInvFlattening();
 
 #ifdef DEBUG
             CPLDebug( "OSR_USGS",
@@ -1156,10 +1153,11 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                       "Try to translate ellipsoid definition.", pszDatum );
 #endif
 
-            for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
+            int i = 0;  // Used after for.
+            for ( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
             {
-                double  dfSM;
-                double  dfIF;
+                double dfSM = 0.0;
+                double dfIF = 0.0;
 
                 if ( OSRGetEllipsoidInfo( aoEllips[i], NULL,
                                           &dfSM, &dfIF ) == OGRERR_NONE

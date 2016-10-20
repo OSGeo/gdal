@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NAS Reader
  * Purpose:  Implementation of NASReader class.
@@ -35,11 +34,9 @@
 #include "gmlutils.h"
 #include "cpl_multiproc.h"
 
-#define SUPPORT_GEOMETRY
+#include "ogr_geometry.h"
 
-#ifdef SUPPORT_GEOMETRY
-#  include "ogr_geometry.h"
-#endif
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -49,8 +46,6 @@
 
 #include "nasreaderp.h"
 #include "cpl_conv.h"
-
-CPLMutex *NASReader::hMutex = NULL;
 
 /************************************************************************/
 /*                          CreateNASReader()                           */
@@ -74,6 +69,7 @@ NASReader::NASReader() :
     m_poNASHandler(NULL),
     m_poSAXReader(NULL),
     m_bReadStarted(false),
+    m_bXercesInitialized(false),
     m_poState(NULL),
     m_poCompleteFeature(NULL),
     m_pszFilteredClassName(NULL)
@@ -92,8 +88,8 @@ NASReader::~NASReader()
 
     CleanupParser();
 
-    if (CPLTestBool(CPLGetConfigOption("NAS_XERCES_TERMINATE", "FALSE")))
-        XMLPlatformUtils::Terminate();
+    if( m_bXercesInitialized )
+        OGRDeinitializeXerces();
 
     CPLFree( m_pszFilteredClassName );
 }
@@ -126,29 +122,11 @@ const char* NASReader::GetSourceFileName()
 bool NASReader::SetupParser()
 
 {
+    if( !m_bXercesInitialized )
     {
-    CPLMutexHolderD(&hMutex);
-    static int nXercesInitialized = -1;
-
-    if( nXercesInitialized < 0)
-    {
-        try
-        {
-            XMLPlatformUtils::Initialize();
-        }
-
-        catch (const XMLException& toCatch)
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Exception initializing Xerces based GML reader.\n%s",
-                      tr_strdup(toCatch.getMessage()) );
-            nXercesInitialized = FALSE;
+        if( !OGRInitializeXerces() )
             return false;
-        }
-        nXercesInitialized = TRUE;
-    }
-    if( !nXercesInitialized )
-        return false;
+        m_bXercesInitialized = true;
     }
 
     // Cleanup any old parser.
@@ -187,11 +165,7 @@ bool NASReader::SetupParser()
 #else
         m_poSAXReader->setFeature( XMLUni::fgSAX2CoreValidation, false);
 
-#if XERCES_VERSION_MAJOR >= 3
         m_poSAXReader->setFeature( XMLUni::fgXercesSchema, false);
-#else
-        m_poSAXReader->setFeature( XMLUni::fgSAX2CoreNameSpaces, false);
-#endif
 
 #endif
         XMLString::release( &xmlUriValid );
@@ -272,7 +246,7 @@ GMLFeature *NASReader::NextFeature()
     {
         CPLDebug( "NAS",
                   "Error during NextFeature()! Message:\n%s",
-                  tr_strdup( toCatch.getMessage() ) );
+                  transcode( toCatch.getMessage() ).c_str() );
     }
 
     return poReturn;
@@ -331,13 +305,11 @@ void NASReader::PushFeature( const char *pszElement,
 /*      Check for gml:id, and if found push it as an attribute named    */
 /*      gml_id.                                                         */
 /* -------------------------------------------------------------------- */
-    XMLCh   anFID[100];
-
-    tr_strcpy( anFID, "gml:id" );
-    int nFIDIndex = attrs.getIndex( anFID );
+    const XMLCh achFID[] = { 'g', 'm', 'l', ':', 'i', 'd', '\0' };
+    int nFIDIndex = attrs.getIndex( achFID );
     if( nFIDIndex != -1 )
     {
-        char *pszFID = tr_strdup( attrs.getValue( nFIDIndex ) );
+        char *pszFID = CPLStrdup( transcode( attrs.getValue( nFIDIndex ) ) );
         SetFeaturePropertyDirectly( "gml_id", pszFID );
     }
 
@@ -860,7 +832,7 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
         return false;
 
     std::string osWork;
-    GMLFeature  *poFeature;
+    GMLFeature  *poFeature = NULL;
 
     while( (poFeature = NextFeature()) != NULL )
     {
@@ -871,7 +843,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
         else
             poClass->SetFeatureCount( poClass->GetFeatureCount() + 1 );
 
-#ifdef SUPPORT_GEOMETRY
         if( bGetExtents )
         {
             OGRGeometry *poGeometry = NULL;
@@ -885,7 +856,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
 
             if( poGeometry != NULL )
             {
-                double  dfXMin, dfXMax, dfYMin, dfYMax;
                 OGREnvelope sEnvelope;
 
                 if( poClass->GetGeometryPropertyCount() == 0 )
@@ -912,6 +882,10 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
                 // merge extents.
                 poGeometry->getEnvelope( &sEnvelope );
                 delete poGeometry;
+                double dfXMin = 0.0;
+                double dfXMax = 0.0;
+                double dfYMin = 0.0;
+                double dfYMax = 0.0;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                 {
                     dfXMin = MIN(dfXMin,sEnvelope.MinX);
@@ -938,7 +912,6 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
                     poClass->ClearGeometryProperties();
                 }
             }
-#endif /* def SUPPORT_GEOMETRY */
         }
 
         delete poFeature;
@@ -970,18 +943,14 @@ void NASReader::CheckForFID( const Attributes &attrs,
                              char **ppszCurField )
 
 {
-    XMLCh  Name[100];
-
-    tr_strcpy( Name, "fid" );
+    const XMLCh  Name[] = { 'f', 'i', 'd', '\0' };
     int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
-        char *pszFID = tr_strdup( attrs.getValue( nIndex ) );
         CPLString osCurField = *ppszCurField;
 
-        osCurField += pszFID;
-        CPLFree( pszFID );
+        osCurField += transcode( attrs.getValue( nIndex ) );
 
         CPLFree( *ppszCurField );
         *ppszCurField = CPLStrdup(osCurField);
@@ -1001,23 +970,19 @@ void NASReader::CheckForRelations( const char *pszElement,
 
     CPLAssert( poFeature  != NULL );
 
-    XMLCh  Name[100];
-
-    tr_strcpy( Name, "xlink:href" );
+    const XMLCh  Name[] = { 'x', 'l', 'i', 'n', 'k', ':', 'h', 'r', 'e', 'f', '\0' };
     const int nIndex = attrs.getIndex( Name );
 
     if( nIndex != -1 )
     {
-        char *pszHRef = tr_strdup( attrs.getValue( nIndex ) );
+        CPLString osVal( transcode( attrs.getValue( nIndex ) ) );
 
-        if( STARTS_WITH_CI(pszHRef, "urn:adv:oid:") )
+        if( STARTS_WITH_CI(osVal, "urn:adv:oid:") )
         {
-            poFeature->AddOBProperty( pszElement, pszHRef );
+            poFeature->AddOBProperty( pszElement, osVal );
             CPLFree( *ppszCurField );
-            *ppszCurField = CPLStrdup( pszHRef + 12 );
+            *ppszCurField = CPLStrdup( osVal.c_str() + 12 );
         }
-
-        CPLFree( pszHRef );
     }
 }
 

@@ -1,5 +1,4 @@
 /*
- * $Id$
  *  keaoverview.cpp
  *
  *  Created by Pete Bunting on 01/08/2012.
@@ -29,6 +28,8 @@
  */
 
 #include "keaoverview.h"
+
+CPL_CVSID("$Id$");
 
 // constructor
 KEAOverview::KEAOverview(KEADataset *pDataset, int nSrcBand, GDALAccess eAccessIn,

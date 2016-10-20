@@ -35,7 +35,7 @@
  *                                    inclusive.
  *          MGRS_A_ERROR           : Semi-major axis less than or equal to zero
  *          MGRS_INV_F_ERROR       : Inverse flattening outside of valid range
- *									                  (250 to 350)
+ *                                    (250 to 350)
  *          MGRS_EASTING_ERROR     : Easting outside of valid range
  *                                    (100,000 to 900,000 meters for UTM)
  *                                    (0 to 4,000,000 meters for UPS)
@@ -122,7 +122,7 @@ extern "C" {
  * are returned by the function, otherwise MGRS_NO_ERROR is returned.
  *
  *   a                : Semi-major axis of ellipsoid in meters (input)
- *   f                : Flattening of ellipsoid					       (input)
+ *   f                : Flattening of ellipsoid                (input)
  *   Ellipsoid_Code   : 2-letter code for ellipsoid            (input)
  */
 
@@ -135,7 +135,7 @@ extern "C" {
  * parameters.
  *
  *  a                : Semi-major axis of ellipsoid, in meters (output)
- *  f                : Flattening of ellipsoid					       (output)
+ *  f                : Flattening of ellipsoid                 (output)
  *  Ellipsoid_Code   : 2-letter code for ellipsoid             (output)
  */
 

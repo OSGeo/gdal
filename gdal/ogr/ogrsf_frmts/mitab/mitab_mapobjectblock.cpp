@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.23 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -114,34 +113,35 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABMAPObjectBlock
  *====================================================================*/
 
-#define MAP_OBJECT_HEADER_SIZE   20
+static const int MAP_OBJECT_HEADER_SIZE = 20;
 
 /**********************************************************************
  *                   TABMAPObjectBlock::TABMAPObjectBlock()
  *
  * Constructor.
  **********************************************************************/
-TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
-{
-    m_bLockCenter = FALSE;
-    m_numDataBytes = 0;
-    m_nFirstCoordBlock = 0;
-    m_nLastCoordBlock = 0;
-    m_nCenterX = 0;
-    m_nCenterY = 0;
-    m_nMinX = 0;
-    m_nMinY = 0;
-    m_nMaxX = 0;
-    m_nMaxY = 0;
-    m_nCurObjectOffset = 0;
-    m_nCurObjectId = 0;
-    m_nCurObjectType = TAB_GEOM_UNSET;
-}
+TABMAPObjectBlock::TABMAPObjectBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numDataBytes(0),
+    m_nFirstCoordBlock(0),
+    m_nLastCoordBlock(0),
+    m_nCenterX(0),
+    m_nCenterY(0),
+    m_nMinX(0),
+    m_nMinY(0),
+    m_nMaxX(0),
+    m_nMaxY(0),
+    m_nCurObjectOffset(0),
+    m_nCurObjectId(0),
+    m_nCurObjectType(TAB_GEOM_UNSET),
+    m_bLockCenter(FALSE)
+{}
 
 /**********************************************************************
  *                   TABMAPObjectBlock::~TABMAPObjectBlock()
@@ -150,7 +150,7 @@ TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/):
  **********************************************************************/
 TABMAPObjectBlock::~TABMAPObjectBlock()
 {
-
+    // TODO(schwehr): Why set these?  Should remove.
     m_nMinX = 1000000000;
     m_nMinY = 1000000000;
     m_nMaxX = -1000000000;
@@ -173,15 +173,14 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
                                              VSILFILE *fpSrc /* = NULL */,
                                              int nOffset /* = 0 */)
 {
-    int nStatus;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                                nBlockSize, nSizeUsed,
-                                                bMakeCopy,
-                                                fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf,
+                                          nBlockSize, nSizeUsed,
+                                          bMakeCopy,
+                                          fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -761,20 +760,18 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
     if (bDetails)
     {
         /* We need the mapfile's header block */
-        TABRawBinBlock *poBlock;
-        TABMAPHeaderBlock *poHeader;
-        TABMAPObjHdr *poObjHdr;
-
-        poBlock = TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
+        TABRawBinBlock *poBlock =
+            TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
         if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Failed reading header block.");
             return;
         }
-        poHeader = (TABMAPHeaderBlock *)poBlock;
+        TABMAPHeaderBlock *poHeader = (TABMAPHeaderBlock *)poBlock;
 
         Rewind();
+        TABMAPObjHdr *poObjHdr = NULL;
         while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
         {
             fprintf(fpOut,
@@ -940,7 +937,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
 GBool TABMAPObjHdr::IsCompressedType()
 {
     // Compressed types are 1, 4, 7, etc.
-    return ((m_nType % 3) == 1 ? TRUE : FALSE);
+    return (m_nType % 3) == 1 ? TRUE : FALSE;
 }
 
 /**********************************************************************

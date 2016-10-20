@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: geoconcept.c
+ * $Id$
  *
  * Name:     geoconcept.c
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -29,13 +29,14 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include <math.h>
 #include "geoconcept.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id: geoconcept.c,v 1.0.0 2007-11-03 20:58:19 drichard Exp $")
+CPL_CVSID("$Id$")
 
 #define kItemSize_GCIO      256
 #define kExtraSize_GCIO    4096
@@ -1437,7 +1438,8 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     int v, z;
     GCSysCoord* syscoord;
     /* //$SYSCOORD {Type: int} [ ; { TimeZone: TimeZoneValue } ] */
-    v= -1, z= -1;
+    v= -1;
+    z= -1;
     if( (p= strchr(p,':')) )
     {
       p++;
@@ -1719,7 +1721,8 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       if( EQUALN(p,kPrivate_GCIO,strlen(kPrivate_GCIO)) )
       {
         p+= strlen(kPrivate_GCIO);
-        e= p-1, *e= '@';
+        e= p-1;
+        *e= '@';
       }
       nm= CPLStrdup(e);
       CPLDebug("GEOCONCEPT", "%d e=[%s]\n", __LINE__, e);
@@ -1833,11 +1836,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
      * displayed to represent the ponctual entity or angle of the text entity
      * NOT IMPLEMENTED
      */
-    x= CPLAtof(pszFields[i]), i++;
-    y= CPLAtof(pszFields[i]), i++;
+    x= CPLAtof(pszFields[i]);
+    i++;
+    y= CPLAtof(pszFields[i]);
+    i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]), i++;
+      z= CPLAtof(pszFields[i]);
+      i++;
     }
     if( buildGeom )
     {
@@ -1859,11 +1865,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
      * More Graphics :
      * XP<>YP[<>ZP]Nr points=k[<>X<>Y[<>Z]]k...
      */
-    x= CPLAtof(pszFields[i]), i++;
-    y= CPLAtof(pszFields[i]), i++;
+    x= CPLAtof(pszFields[i]);
+    i++;
+    y= CPLAtof(pszFields[i]);
+    i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]), i++;
+      z= CPLAtof(pszFields[i]);
+      i++;
     }
     if( buildGeom )
     {
@@ -1883,14 +1892,18 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       i++;
     }
-    np= atoi(pszFields[i]), i++;
+    np= atoi(pszFields[i]);
+    i++;
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]), i++;
-      y= CPLAtof(pszFields[i]), i++;
+      x= CPLAtof(pszFields[i]);
+      i++;
+      y= CPLAtof(pszFields[i]);
+      i++;
       if( d==v3D_GCIO || d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]), i++;
+        z= CPLAtof(pszFields[i]);
+        i++;
       }
       if( buildGeom )
       {
@@ -1944,11 +1957,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
       }
     }
-    x= CPLAtof(pszFields[i]), i++;
-    y= CPLAtof(pszFields[i]), i++;
+    x= CPLAtof(pszFields[i]);
+    i++;
+    y= CPLAtof(pszFields[i]);
+    i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]), i++;
+      z= CPLAtof(pszFields[i]);
+      i++;
     }
     if( buildGeom )
     {
@@ -1961,14 +1977,18 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       MergeOGREnvelope_GCIO(bbox,x,y);
     }
-    np= atoi(pszFields[i]), i++;
+    np= atoi(pszFields[i]);
+    i++;
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]), i++;
-      y= CPLAtof(pszFields[i]), i++;
+      x= CPLAtof(pszFields[i]);
+      i++;
+      y= CPLAtof(pszFields[i]);
+      i++;
       if( d==v3D_GCIO||d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]), i++;
+        z= CPLAtof(pszFields[i]);
+        i++;
       }
       if( buildGeom )
       {
@@ -1995,10 +2015,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         goto onError;
       }
     }
-    /* additionnal ring : either holes, or islands */
+    /* additional ring : either holes, or islands */
     if( i < nbtp-1 )
     {
-      npo= atoi(pszFields[i]), i++;
+      npo= atoi(pszFields[i]);
+      i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
         if( buildGeom )
@@ -2013,11 +2034,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
             OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
           }
         }
-        x= CPLAtof(pszFields[i]), i++;
-        y= CPLAtof(pszFields[i]), i++;
+        x= CPLAtof(pszFields[i]);
+        i++;
+        y= CPLAtof(pszFields[i]);
+        i++;
         if( d==v3D_GCIO||d==v3DM_GCIO )
         {
-          z= CPLAtof(pszFields[i]), i++;
+          z= CPLAtof(pszFields[i]);
+          i++;
         }
         if( buildGeom )
         {
@@ -2030,14 +2054,18 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         {
           MergeOGREnvelope_GCIO(bbox,x,y);
         }
-        np= atoi(pszFields[i]), i++;
+        np= atoi(pszFields[i]);
+        i++;
         for( ip= 1; ip<=np; ip++ )
         {
-          x= CPLAtof(pszFields[i]), i++;
-          y= CPLAtof(pszFields[i]), i++;
+          x= CPLAtof(pszFields[i]);
+          i++;
+          y= CPLAtof(pszFields[i]);
+          i++;
           if( d==v3D_GCIO||d==v3DM_GCIO )
           {
-            z= CPLAtof(pszFields[i]), i++;
+            z= CPLAtof(pszFields[i]);
+            i++;
           }
           if( buildGeom )
           {
@@ -2161,7 +2189,8 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   fd= NULL;
   f= NULL;
   Meta= GetGCMeta_GCIO(H);
-  delim[0]= GetMetaDelimiter_GCIO(Meta), delim[1]= '\0';
+  delim[0]= GetMetaDelimiter_GCIO(Meta);
+  delim[1]= '\0';
   if( d==vUnknown3D_GCIO) d= v2D_GCIO;
   if( bbox==NULL )
   {
@@ -2291,7 +2320,8 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   if( nbstf==-1 )
   {
     /* figure out how many user's attributes we've got : */
-    i= 1 + nbf, nbstf= 0;
+    i= 1 + nbf;
+    nbstf= 0;
     while( (theField= GetSubTypeField_GCIO(*theSubType,i)) )
     {
       if( IsPrivateField_GCIO(theField) ) { break; };//FIXME: could count geometry private fields ...
@@ -3092,7 +3122,8 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                     GetGCCache_GCIO(hGCT));
           goto onError;
         }
-        strncpy(n,k,kItemSize_GCIO-1), n[kItemSize_GCIO-1]= '\0';
+        strncpy(n,k,kItemSize_GCIO-1);
+        n[kItemSize_GCIO-1]= '\0';
       }
       else
         if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigID_GCIO))!=NULL )
@@ -3162,7 +3193,8 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                           GetGCCache_GCIO(hGCT));
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1);
+              x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
@@ -3181,7 +3213,8 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                             GetGCCache_GCIO(hGCT));
                   goto onError;
                 }
-                strncpy(e,k,kExtraSize_GCIO-1), e[kExtraSize_GCIO-1]= '\0';
+                strncpy(e,k,kExtraSize_GCIO-1);
+                e[kExtraSize_GCIO-1]= '\0';
               }
               else
               { /* Skipping ... */
@@ -3264,7 +3297,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                     GetGCCache_GCIO(hGCT));
           goto onError;
         }
-        strncpy(n,k,kItemSize_GCIO-1), n[kItemSize_GCIO-1]= '\0';
+        strncpy(n,k,kItemSize_GCIO-1);
+        n[kItemSize_GCIO-1]= '\0';
       }
       else
         if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigID_GCIO))!=NULL )
@@ -3334,7 +3368,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                           GetGCCache_GCIO(hGCT));
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1);
+              x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
@@ -3353,7 +3388,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                             GetGCCache_GCIO(hGCT));
                   goto onError;
                 }
-                strncpy(e,k,kExtraSize_GCIO-1), e[kExtraSize_GCIO-1]= '\0';
+                strncpy(e,k,kExtraSize_GCIO-1);
+                e[kExtraSize_GCIO-1]= '\0';
               }
               else
               { /* Skipping ... */
@@ -3436,7 +3472,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                     GetGCCache_GCIO(hGCT));
           goto onError;
         }
-        strncpy(n,k,kItemSize_GCIO-1), n[kItemSize_GCIO-1]= '\0';
+        strncpy(n,k,kItemSize_GCIO-1);
+        n[kItemSize_GCIO-1]= '\0';
       }
       else
         if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigID_GCIO))!=NULL )
@@ -3506,7 +3543,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                           GetGCCache_GCIO(hGCT));
                 goto onError;
               }
-              strncpy(x,k,kExtraSize_GCIO-1), x[kExtraSize_GCIO-1]= '\0';
+              strncpy(x,k,kExtraSize_GCIO-1);
+              x[kExtraSize_GCIO-1]= '\0';
             }
             else
               if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigList_GCIO))!=NULL )
@@ -3525,7 +3563,8 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                             GetGCCache_GCIO(hGCT));
                   goto onError;
                 }
-                strncpy(e,k,kExtraSize_GCIO-1), e[kExtraSize_GCIO-1]= '\0';
+                strncpy(e,k,kExtraSize_GCIO-1);
+                e[kExtraSize_GCIO-1]= '\0';
               }
               else
               { /* Skipping ... */
@@ -3596,7 +3635,8 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO (
                     GetGCCache_GCIO(hGCT));
           goto onError;
         }
-        strncpy(n,k,kItemSize_GCIO-1), n[kItemSize_GCIO-1]= '\0';
+        strncpy(n,k,kItemSize_GCIO-1);
+        n[kItemSize_GCIO-1]= '\0';
       }
       else
         if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigID_GCIO))!=NULL )
@@ -3768,7 +3808,8 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO (
                     GetGCCache_GCIO(hGCT));
           goto onError;
         }
-        strncpy(n,k,kItemSize_GCIO-1), n[kItemSize_GCIO-1]= '\0';
+        strncpy(n,k,kItemSize_GCIO-1);
+        n[kItemSize_GCIO-1]= '\0';
       }
       else
         if( (k= strstr(GetGCCache_GCIO(hGCT),kConfigID_GCIO))!=NULL )
@@ -4041,7 +4082,8 @@ onError:
               for (il= 0; il<nl; il++)
               {
                 v= CSLGetField(GetFieldList_GCIO(theField),il);
-                snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v), l[kExtraSize_GCIO-1]= '\0';
+                snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v);
+                l[kExtraSize_GCIO-1]= '\0';
                 ll+= (int)strlen(v);
               }
             }
@@ -4135,7 +4177,8 @@ onError:
                         for (il= 0; il<nl; il++)
                         {
                           v= CSLGetField(GetFieldList_GCIO(theField),il);
-                          snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v), l[kExtraSize_GCIO-1]= '\0';
+                          snprintf(l+ll,kExtraSize_GCIO-ll-1,"%s;", v);
+                          l[kExtraSize_GCIO-1]= '\0';
                           ll+= (int)strlen(v);
                         }
                       }

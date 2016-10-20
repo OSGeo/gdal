@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  GDALDataset driver for SDTS Raster translator.
@@ -246,7 +245,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         DDFModule   oIDENFile;
         if( oIDENFile.Open( pszIDENFilePath ) )
         {
-            DDFRecord* poRecord;
+            DDFRecord* poRecord = NULL;
 
             while( (poRecord = oIDENFile.ReadRecord()) != NULL )
             {

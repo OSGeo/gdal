@@ -50,7 +50,7 @@ protected:
     int             nFullBlocksX;
     int             nFullBlocksY;
 
-    GByte	   *pabyBlockBuf;
+    GByte          *pabyBlockBuf;
     uint32          nTiles;
 
     INGR_TileItem  *pahTiles;
@@ -66,7 +66,7 @@ public:
         int nBand,
         int nBandOffset,
         GDALDataType eType = GDT_Unknown);
-    ~IntergraphRasterBand();
+    virtual ~IntergraphRasterBand();
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum( int *pbSuccess = NULL );
@@ -93,9 +93,9 @@ class IntergraphRGBBand : public IntergraphRasterBand
 {
 public:
     IntergraphRGBBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB );
+                       int nBand,
+                       int nBandOffset,
+                       int nRGorB );
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };
@@ -109,17 +109,17 @@ class IntergraphBitmapBand : public IntergraphRasterBand
     friend class IntergraphDataset;
 
 private:
-    GByte	       *pabyBMPBlock;
+    GByte          *pabyBMPBlock;
     uint32          nBMPSize;
     int             nQuality;
     int             nRGBBand;
 
 public:
     IntergraphBitmapBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB = 1 );
-    ~IntergraphBitmapBand();
+                          int nBand,
+                          int nBandOffset,
+                          int nRGorB = 1 );
+    virtual ~IntergraphBitmapBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
     virtual GDALColorInterp GetColorInterpretation();
@@ -134,17 +134,17 @@ class IntergraphRLEBand : public IntergraphRasterBand
     friend class IntergraphDataset;
 
 private:
-    GByte	       *pabyRLEBlock;
+    GByte          *pabyRLEBlock;
     uint32          nRLESize;
     int             bRLEBlockLoaded;
     uint32         *panRLELineOffset;
 
 public:
     IntergraphRLEBand( IntergraphDataset *poDS,
-        int nBand,
-        int nBandOffset,
-        int nRGorB = 0);
-    ~IntergraphRLEBand();
+                       int nBand,
+                       int nBandOffset,
+                       int nRGorB = 0 );
+    virtual ~IntergraphRLEBand();
 
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
 };

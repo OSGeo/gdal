@@ -5,9 +5,9 @@
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
  *
- * Author:	 David Zwarg, dzwarg@azavea.com
+ * Author:       David Zwarg, dzwarg@azavea.com
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
@@ -35,6 +35,8 @@
  **********************************************************************/
 #include "postgisraster.h"
 
+CPL_CVSID("$Id$");
+
 /**
  * \brief Constructor.
  *
@@ -44,20 +46,19 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     PostGISRasterDataset * poDSIn, int nBandIn,
     GDALDataType eDataTypeIn, GBool bNoDataValueSetIn, double dfNodata,
     GBool bIsOfflineIn = false) :
-    VRTSourcedRasterBand(poDSIn, nBandIn)
+    VRTSourcedRasterBand(poDSIn, nBandIn),
+    bIsOffline(bIsOfflineIn),
+    pszSchema(poDSIn->pszSchema),
+    pszTable(poDSIn->pszTable),
+    pszColumn(poDSIn->pszColumn)
 {
     /* Basic properties */
-    this->poDS = poDSIn;
-    this->bIsOffline = bIsOfflineIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
-    this->eDataType = eDataTypeIn;
-    this->m_bNoDataValueSet = bNoDataValueSetIn;
-    this->m_dfNoDataValue = dfNodata;
-
-    this->pszSchema = poDSIn->pszSchema;
-    this->pszTable = poDSIn->pszTable;
-    this->pszColumn = poDSIn->pszColumn;
+    eDataType = eDataTypeIn;
+    m_bNoDataValueSet = bNoDataValueSetIn;
+    m_dfNoDataValue = dfNodata;
 
     nRasterXSize = poDS->GetRasterXSize();
     nRasterYSize = poDS->GetRasterYSize();
@@ -73,8 +74,8 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
      * table. Otherwise, the reading operations are performed by the
      * sources, not the PostGISRasterBand object itself.
      ******************************************************************/
-    this->nBlockXSize = MIN(MAX_BLOCK_SIZE, this->nRasterXSize);
-    this->nBlockYSize = MIN(MAX_BLOCK_SIZE, this->nRasterYSize);
+    nBlockXSize = MIN(MAX_BLOCK_SIZE, this->nRasterXSize);
+    nBlockYSize = MIN(MAX_BLOCK_SIZE, this->nRasterYSize);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
@@ -93,9 +94,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
 /***********************************************
  * \brief: Band destructor
  ***********************************************/
-PostGISRasterRasterBand::~PostGISRasterRasterBand()
-{
-}
+PostGISRasterRasterBand::~PostGISRasterRasterBand() {}
 
 #ifdef notdef
 /***********************************************************************
@@ -108,7 +107,7 @@ PostGISRasterRasterBand::~PostGISRasterRasterBand()
 void PostGISRasterRasterBand::NullBlock(void *pData)
 {
     int nWords = nBlockXSize * nBlockYSize;
-    int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
+    int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
 
     int bNoDataSet;
     double dfNoData = GetNoDataValue(&bNoDataSet);
@@ -611,7 +610,6 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
          * index exist.
          **/
         CPLString osCommand;
-        PGresult * poResult;
 
         CPLString osRasterToFetch;
         if (bAllBandCaching)
@@ -673,7 +671,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             osCommand += ")";
         }
 
-        poResult = PQexec(poRDS->poConn, osCommand.c_str());
+        PGresult * poResult = PQexec(poRDS->poConn, osCommand.c_str());
 
 #ifdef DEBUG_QUERY
         CPLDebug("PostGIS_Raster",

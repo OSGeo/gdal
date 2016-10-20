@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Driver
  * Purpose:  GDALDataset driver for MSG translator for read support.
@@ -27,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
+#include "cpl_port.h"  // Must be first.
 
 #include "gdal_frmts.h"
 #include "msgdataset.h"
@@ -34,8 +34,7 @@
 #include "xritheaderparser.h"
 #include "reflectancecalculator.h"
 
-#include "PublicDecompWT/COMP/WT/Inc/CWTDecoder.h"
-#include "PublicDecompWT/DISE/CDataField.h" // Util namespace
+#include "PublicDecompWT_headers.h"
 
 #include <vector>
 
@@ -45,6 +44,8 @@
 #include <stdio.h>
 #endif
 
+CPL_CVSID("$Id$");
+
 const double MSGDataset::rCentralWvl[12] = {0.635, 0.810, 1.640, 3.900, 6.250, 7.350, 8.701, 9.660, 10.800, 12.000, 13.400, 0.750};
 const double MSGDataset::rVc[12] = {-1, -1, -1, 2569.094, 1598.566, 1362.142, 1149.083, 1034.345, 930.659, 839.661, 752.381, -1};
 const double MSGDataset::rA[12] = {-1, -1, -1, 0.9959, 0.9963, 0.9991, 0.9996, 0.9999, 0.9983, 0.9988, 0.9981, -1};
@@ -52,6 +53,7 @@ const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060
 const int MSGDataset::iCentralPixelVIS_IR = 1856; // center pixel VIS and IR
 const int MSGDataset::iCentralPixelHRV = 5566; // center pixel HRV
 int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 
 #define MAX_SATELLITES 4
 
@@ -92,7 +94,7 @@ MSGDataset::~MSGDataset()
 const char *MSGDataset::GetProjectionRef()
 
 {
-  return ( pszProjection );
+  return pszProjection;
 }
 
 /************************************************************************/
@@ -116,7 +118,7 @@ CPLErr MSGDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -183,9 +185,9 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        std::string sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
+        std::string l_sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
         CPLError( CE_Failure, CPLE_AppDefined, "%s",
-                  sErr.c_str() );
+                  l_sErr.c_str() );
         return FALSE;
     }
 
@@ -196,8 +198,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    MSGDataset   *poDS;
-    poDS = new MSGDataset();
+    MSGDataset *poDS = new MSGDataset();
     poDS->command = command; // copy it
 
 /* -------------------------------------------------------------------- */
@@ -281,11 +282,10 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*   Create a transformer to LatLon (only for Reflectance calculation)  */
 /* -------------------------------------------------------------------- */
 
-    char *pszLLTemp;
-    char *pszLLTemp_bak;
+    char *pszLLTemp = NULL;
 
     (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
-    pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
+    char *pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
     poDS->oLL.importFromWkt(&pszLLTemp);
     CPLFree( pszLLTemp_bak );
 
@@ -319,7 +319,14 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+/* -------------------------------------------------------------------- */
+/*                 Set DataSet metadata information                    */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%d", poDS->iCurrentSatellite);
+    poDS->SetMetadataItem("satellite_number", metadataValue.c_str(), metadataDomain);
+
+    return poDS;
 }
 
 /************************************************************************/
@@ -328,58 +335,58 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 const double MSGRasterBand::rRTOA[12] = {20.76, 23.24, 19.85, -1, -1, -1, -1, -1, -1, -1, -1, 25.11};
 
-MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
+MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
 : fScanNorth(false)
 , iLowerShift(0)
 , iSplitLine(0)
 , iLowerWestColumnPlanned(0)
 
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
 
     // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
     // Doing this per band is the only way to guarantee time-series when the satellite is changed
 
-    std::string sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+    std::string sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
     bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
 
     // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
     if (!fPrologueExists)
     {
-      poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-      sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+      poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+      sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
       fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
       int iTries = 2;
       while (!fPrologueExists && (iTries < MAX_SATELLITES))
       {
-        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
         fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
         ++iTries;
       }
       if (!fPrologueExists) // assume missing prologue file, keep original satellite number
       {
-        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
-        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+        poDSIn->iCurrentSatellite = 1 + poDSIn->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDSIn->command.sPrologueFileName(poDSIn->iCurrentSatellite, nBand);
       }
     }
 
-    iSatellite = poDS->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
+    iSatellite = poDSIn->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
 
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = poDS->GetRasterYSize();
+    nBlockXSize = poDSIn->GetRasterXSize();
+    nBlockYSize = poDSIn->GetRasterYSize();
 
 /* -------------------------------------------------------------------- */
 /*      Open an input file and capture the header for the nr. of bits.  */
 /* -------------------------------------------------------------------- */
     int iStrip = 1;
-    int iChannel = poDS->command.iChannel(1 + ((nBand - 1) % poDS->command.iNrChannels()));
-    std::string input_file = poDS->command.sFileName(iSatellite, nBand, iStrip);
-    while ((access(input_file.c_str(), 0) != 0) && (iStrip <= poDS->command.iNrStrips(iChannel))) // compensate for missing strips
-      input_file = poDS->command.sFileName(iSatellite, nBand, ++iStrip);
+    int iChannel = poDSIn->command.iChannel(1 + ((nBand - 1) % poDSIn->command.iNrChannels()));
+    std::string input_file = poDSIn->command.sFileName(iSatellite, nBand, iStrip);
+    while ((access(input_file.c_str(), 0) != 0) && (iStrip <= poDSIn->command.iNrStrips(iChannel))) // compensate for missing strips
+      input_file = poDSIn->command.sFileName(iSatellite, nBand, ++iStrip);
 
-    if (iStrip <= poDS->command.iNrStrips(iChannel))
+    if (iStrip <= poDSIn->command.iNrStrips(iChannel))
     {
       std::ifstream i_file (input_file.c_str(), std::ios::in|std::ios::binary);
 
@@ -393,9 +400,9 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
           eDataType = GDT_Byte; // default .. always works
           if (xhp.nrBitsPerPixel() > 8)
           {
-            if (poDS->command.cDataConversion == 'N')
+            if (poDSIn->command.cDataConversion == 'N')
               eDataType = GDT_UInt16; // normal case: MSG 10 bits data
-            else if (poDS->command.cDataConversion == 'B')
+            else if (poDSIn->command.cDataConversion == 'B')
               eDataType = GDT_Byte; // output data type Byte
             else
               eDataType = GDT_Float32; // Radiometric calibration
@@ -415,7 +422,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     else if (nBand > 1)
     {
       // missing entire band .. take data from first band
-      MSGRasterBand* pFirstRasterBand = (MSGRasterBand*)poDS->GetRasterBand(1);
+      MSGRasterBand* pFirstRasterBand = (MSGRasterBand*)poDSIn->GetRasterBand(1);
       eDataType = pFirstRasterBand->eDataType;
       nBlockYSize = pFirstRasterBand->nBlockYSize;
       fScanNorth = pFirstRasterBand->fScanNorth;
@@ -423,9 +430,9 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     else // also first band is missing .. do something for fail-safety
     {
       eDataType = GDT_Byte; // default .. always works
-      if (poDS->command.cDataConversion == 'N')
+      if (poDSIn->command.cDataConversion == 'N')
         eDataType = GDT_UInt16; // normal case: MSG 10 bits data
-      else if (poDS->command.cDataConversion == 'B')
+      else if (poDSIn->command.cDataConversion == 'B')
         eDataType = GDT_Byte; // output data type Byte
       else
         eDataType = GDT_Float32; // Radiometric calibration
@@ -459,10 +466,21 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 /*  Initialize the ReflectanceCalculator with the band-dependent info.  */
 /* -------------------------------------------------------------------- */
 
-    int iCycle = 1 + (nBand - 1) / poDS->command.iNrChannels();
-    std::string sTimeStamp = poDS->command.sCycle(iCycle);
+    int iCycle = 1 + (nBand - 1) / poDSIn->command.iNrChannels();
+    std::string sTimeStamp = poDSIn->command.sCycle(iCycle);
 
     m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[iChannel-1]);
+
+/* -------------------------------------------------------------------- */
+/*  Set DataSet metadata information                                   */
+/* -------------------------------------------------------------------- */
+    CPLString metadataValue;
+    metadataValue.Printf("%.10f", poDSIn->rCalibrationOffset[iChannel - 1]);
+    SetMetadataItem("calibration_offset", metadataValue.c_str(), poDSIn->metadataDomain);
+    metadataValue.Printf("%.10f", poDSIn->rCalibrationSlope[iChannel - 1]);
+    SetMetadataItem("calibration_slope", metadataValue.c_str(), poDSIn->metadataDomain);
+    metadataValue.Printf("%d", iChannel);
+    SetMetadataItem("channel_number", metadataValue.c_str(), poDSIn->metadataDomain);
 }
 
 /************************************************************************/
@@ -476,7 +494,7 @@ MSGRasterBand::~MSGRasterBand()
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
-CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
                                   void * pImage )
 
 {
@@ -520,7 +538,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           unsigned short chunk_bpp = xhp.nrBitsPerPixel();
           unsigned short chunk_width = xhp.nrColumns();
           unsigned __int8 NR = (unsigned __int8)chunk_bpp;
-          unsigned int nb_ibytes = xhp.dataSize();
+          unsigned int nb_ibytes = static_cast<unsigned int>(xhp.dataSize());
           int iShift = 0;
           bool fSplitStrip = false; // in the split strip the "shift" only happens before the split "row"
           int iSplitRow = 0;
@@ -709,25 +727,25 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
   {
     double rRadiance = rOffset + (iDN * rSlope);
 
-		if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
-		{
-			const double rC1 = 1.19104e-5;
-			const double rC2 = 1.43877e+0;
+                if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
+                {
+                        const double rC1 = 1.19104e-5;
+                        const double rC2 = 1.43877e+0;
 
-			double cc2 = rC2 * poGDS->rVc[iIndex];
-			double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
-			double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
-			return rTemperature;
-		}
-		else // Channels 1,2,3 and 12 (visual): Reflectance
-		{
+                        double cc2 = rC2 * poGDS->rVc[iIndex];
+                        double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+                        double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
+                        return rTemperature;
+                }
+                else // Channels 1,2,3 and 12 (visual): Reflectance
+                {
       double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // X, in "geos" meters
       double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // Y, in "geos" meters
       if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
-	      return m_rc->rGetReflectance(rRadiance, rLat, rLon);
-			else
-				return 0;
-		}
+              return m_rc->rGetReflectance(rRadiance, rLat, rLon);
+                        else
+                                return 0;
+                }
   }
   else // radiometric
   {

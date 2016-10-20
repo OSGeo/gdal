@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_imapinfofile.cpp,v 1.31 2010-01-07 20:39:12 aboudreault Exp $
  *
  * Name:     mitab_imapinfo
  * Project:  MapInfo mid/mif Tab Read/Write library
@@ -141,18 +140,19 @@
 #  include <wctype.h>      /* iswspace() */
 #endif
 
+CPL_CVSID("$Id$");
+
 /**********************************************************************
  *                   IMapInfoFile::IMapInfoFile()
  *
  * Constructor.
  **********************************************************************/
-IMapInfoFile::IMapInfoFile()
-{
-    m_nCurFeatureId = 0;
-    m_poCurFeature = NULL;
-    m_bBoundsSet = FALSE;
-    m_pszCharset = NULL;
-}
+IMapInfoFile::IMapInfoFile() :
+    m_nCurFeatureId(0),
+    m_poCurFeature(NULL),
+    m_bBoundsSet(FALSE),
+    m_pszCharset(NULL)
+{}
 
 
 /**********************************************************************
@@ -162,7 +162,7 @@ IMapInfoFile::IMapInfoFile()
  **********************************************************************/
 IMapInfoFile::~IMapInfoFile()
 {
-    if (m_poCurFeature)
+    if( m_poCurFeature )
     {
         delete m_poCurFeature;
         m_poCurFeature = NULL;
@@ -230,13 +230,12 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * .TAB file ... is it a TABFileView or a TABFile?
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
-        VSILFILE *fp;
-        const char *pszLine;
         char *pszAdjFname = CPLStrdup(pszFname);
         GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
-        fp = VSIFOpenL(pszAdjFname, "r");
+        VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
+        const char *pszLine = NULL;
         while(fp && (pszLine = CPLReadLineL(fp)) != NULL)
         {
             while (isspace((unsigned char)*pszLine))  pszLine++;
@@ -289,13 +288,12 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    OGRFeature *poFeatureRef;
-    OGRGeometry *poGeom;
-    GIntBig nFeatureId;
+    GIntBig nFeatureId = 0;
 
     while( (nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1 )
     {
-        poFeatureRef = GetFeatureRef(nFeatureId);
+        OGRGeometry *poGeom = NULL;
+        OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
         if (poFeatureRef == NULL)
             return NULL;
         else if( (m_poFilterGeom == NULL ||
@@ -323,8 +321,8 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 
 TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRGeometry   *poGeom;
+    TABFeature *poTABFeature = NULL;
+    OGRGeometry   *poGeom = NULL;
     OGRwkbGeometryType eGType;
     TABPoint *poTABPointFeature = NULL;
     TABRegion *poTABRegionFeature = NULL;
@@ -392,11 +390,12 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
       case wkbMultiPoint:
       {
           OGRErr eStatus = OGRERR_NONE;
-          int i;
           OGRGeometryCollection *poColl = (OGRGeometryCollection*)poGeom;
           OGRFeature *poTmpFeature = poFeature->Clone();
 
-          for (i=0; eStatus==OGRERR_NONE && i<poColl->getNumGeometries(); i++)
+          for( int i = 0;
+               eStatus==OGRERR_NONE && i<poColl->getNumGeometries();
+               i++)
           {
               poTmpFeature->SetFID(OGRNullFID);
               poTmpFeature->SetGeometry(poColl->getGeometryRef(i));
@@ -404,7 +403,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
           }
           delete poTmpFeature;
           return NULL;
-        }
+      }
         break;
       /*-------------------------------------------------------------
        * Unsupported type.... convert to MapInfo geometry NONE
@@ -436,14 +435,11 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
  **********************************************************************/
 OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
 {
-    TABFeature *poTABFeature;
-    OGRErr  eErr;
-
-    poTABFeature = CreateTABFeature(poFeature);
+    TABFeature *poTABFeature = CreateTABFeature(poFeature);
     if( poTABFeature == NULL ) /* MultiGeometry */
         return OGRERR_NONE;
 
-    eErr = CreateFeature(poTABFeature);
+    OGRErr eErr = CreateFeature(poTABFeature);
     if( eErr == OGRERR_NONE )
         poFeature->SetFID(poTABFeature->GetFID());
 
@@ -461,11 +457,9 @@ OGRErr     IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 {
-    OGRFeature *poFeatureRef;
-
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 
-    poFeatureRef = GetFeatureRef(nFeatureId);
+    OGRFeature *poFeatureRef = GetFeatureRef(nFeatureId);
     if (poFeatureRef)
     {
         // Avoid cloning feature... return the copy owned by the class
@@ -579,9 +573,9 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
 OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
-    TABFieldType        eTABType;
-    int                 nWidth;
-    int                 nPrecision;
+    TABFieldType eTABType;
+    int nWidth = 0;
+    int nPrecision = 0;
 
     if( GetTABType( poField, &eTABType, &nWidth, &nPrecision ) < 0 )
         return OGRERR_FAILURE;
@@ -589,8 +583,8 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
     if( AddFieldNative( poField->GetNameRef(), eTABType,
                         nWidth, nPrecision, FALSE, FALSE, bApproxOK ) > -1 )
         return OGRERR_NONE;
-    else
-        return OGRERR_FAILURE;
+
+    return OGRERR_FAILURE;
 }
 
 

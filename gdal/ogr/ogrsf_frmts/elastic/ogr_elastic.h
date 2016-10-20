@@ -34,7 +34,16 @@
 #include "ogr_p.h"
 #include "cpl_hash_set.h"
 #include <vector>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include <json.h>
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
 
 typedef enum
 {
@@ -56,10 +65,10 @@ class OGRElasticLayer : public OGRLayer {
     CPLString                            m_osMappingName;
 
     OGRFeatureDefn                      *m_poFeatureDefn;
-    int                                  m_bFeatureDefnFinalized;
+    bool                                 m_bFeatureDefnFinalized;
 
-    int                                  m_bManualMapping;
-    int                                  m_bSerializeMapping;
+    bool                                 m_bManualMapping;
+    bool                                 m_bSerializeMapping;
     CPLString                            m_osWriteMapFilename;
     bool                                 m_bStoreFields;
     char                               **m_papszStoredFields;
@@ -88,17 +97,17 @@ class OGRElasticLayer : public OGRLayer {
     GIntBig                               m_nNextFID;
     int                                   m_iCurFeatureInPage;
     std::vector<OGRFeature*>              m_apoCachedFeatures;
-    int                                   m_bEOF;
+    bool                                  m_bEOF;
 
     json_object*                          m_poSpatialFilter;
     CPLString                             m_osJSONFilter;
 
-    int                                   m_bIgnoreSourceID;
-    int                                   m_bDotAsNestedField;
+    bool                                  m_bIgnoreSourceID;
+    bool                                  m_bDotAsNestedField;
 
-    int                                   m_bAddPretty;
+    bool                                  m_bAddPretty;
 
-    int                                   PushIndex();
+    bool                                  PushIndex();
     CPLString                             BuildMap();
 
     OGRErr                                WriteMapIfNecessary();
@@ -136,7 +145,7 @@ public:
                                          OGRElasticDataSource* poDS,
                                          char** papszOptions,
                                          const char* pszESSearch = NULL);
-                        ~OGRElasticLayer();
+                        virtual ~OGRElasticLayer();
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
@@ -163,7 +172,7 @@ public:
 
     virtual OGRErr      SyncToDisk();
 
-    void                FinalizeFeatureDefn(int bReadFeatures = TRUE);
+    void                FinalizeFeatureDefn(bool bReadFeatures = true);
     void                InitFeatureDefnFromMapping(json_object* poSchema,
                                     const char* pszPrefix,
                                     const std::vector<CPLString>& aosPath);
@@ -171,9 +180,9 @@ public:
     const CPLString&    GetIndexName() const { return m_osIndexName; }
     const CPLString&    GetMappingName() const { return m_osMappingName; }
 
-    void                SetIgnoreSourceID(int bFlag) { m_bIgnoreSourceID = bFlag; }
-    void                SetManualMapping() { m_bManualMapping = TRUE; }
-    void                SetDotAsNestedField(int bFlag) { m_bDotAsNestedField = bFlag; }
+    void                SetIgnoreSourceID( bool bFlag ) { m_bIgnoreSourceID = bFlag; }
+    void                SetManualMapping() { m_bManualMapping = true; }
+    void                SetDotAsNestedField( bool bFlag ) { m_bDotAsNestedField = bFlag; }
     void                SetFID(const CPLString& m_osFIDIn) { m_osFID = m_osFIDIn; }
     void                SetNextFID(GIntBig nNextFID) { m_nNextFID = nNextFID; }
 };
@@ -192,16 +201,16 @@ class OGRElasticDataSource : public GDALDataset {
 
 public:
                             OGRElasticDataSource();
-                            ~OGRElasticDataSource();
+                            virtual ~OGRElasticDataSource();
 
-    int                 m_bOverwrite;
+    bool                m_bOverwrite;
     int                 m_nBulkUpload;
     char               *m_pszWriteMap;
     char               *m_pszMapping;
     int                 m_nBatchSize;
     int                 m_nFeatureCountToEstablishFeatureDefn;
-    int                 m_bJSonField;
-    int                 m_bFlattenNestedAttributes;
+    bool                m_bJSonField;
+    bool                m_bFlattenNestedAttributes;
 
     int Open(GDALOpenInfo* poOpenInfo);
 
@@ -228,7 +237,7 @@ public:
 
     virtual int         TestCapability(const char *);
 
-    int                 UploadFile(const CPLString &url, const CPLString &data);
+    bool                 UploadFile(const CPLString &url, const CPLString &data);
     void                Delete(const CPLString &url);
 
     json_object*        RunRequest(const char* pszURL, const char* pszPostContent = NULL);

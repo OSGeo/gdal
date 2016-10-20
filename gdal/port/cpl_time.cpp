@@ -1,6 +1,4 @@
-
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_time.cpp
  * Project:  CPL - Common Portability Library
@@ -24,6 +22,8 @@
 
 #include "cpl_time.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id:");
 
 static const int SECSPERMIN = 60;
 static const int MINSPERHOUR = 60;

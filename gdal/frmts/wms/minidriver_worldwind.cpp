@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,15 +30,15 @@
 #include "wmsdriver.h"
 #include "minidriver_worldwind.h"
 
+CPL_CVSID("$Id$");
+
 CPP_GDALWMSMiniDriverFactory(WorldWind)
 
-GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {
-}
+GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {}
 
-GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {
-}
+GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {}
 
-CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implement OGRDataSourceWithTransaction class
@@ -48,7 +47,7 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
 
         OGRLayerWithTransaction(OGRDataSourceWithTransaction* poDS,
                                 OGRLayer* poBaseLayer);
-       ~OGRLayerWithTransaction();
+    virtual ~OGRLayerWithTransaction();
 
     virtual const char *GetName() { return GetDescription(); }
     virtual OGRFeatureDefn *GetLayerDefn();
@@ -170,17 +169,16 @@ OGRDataSource* OGRCreateEmulatedTransactionDataSourceWrapper(
 /************************************************************************/
 
 OGRDataSourceWithTransaction::OGRDataSourceWithTransaction(
-                                OGRDataSource* poBaseDataSource,
-                                IOGRTransactionBehaviour* poTransactionBehaviour,
-                                int bTakeOwnershipDataSource,
-                                int bTakeOwnershipTransactionBehaviour) :
-            m_poBaseDataSource(poBaseDataSource),
-            m_poTransactionBehaviour(poTransactionBehaviour),
-            m_bHasOwnershipDataSource(bTakeOwnershipDataSource),
-            m_bHasOwnershipTransactionBehaviour(bTakeOwnershipTransactionBehaviour),
-            m_bInTransaction(FALSE)
-{
-}
+    OGRDataSource* poBaseDataSource,
+    IOGRTransactionBehaviour* poTransactionBehaviour,
+    int bTakeOwnershipDataSource,
+    int bTakeOwnershipTransactionBehaviour) :
+    m_poBaseDataSource(poBaseDataSource),
+    m_poTransactionBehaviour(poTransactionBehaviour),
+    m_bHasOwnershipDataSource(bTakeOwnershipDataSource),
+    m_bHasOwnershipTransactionBehaviour(bTakeOwnershipTransactionBehaviour),
+    m_bInTransaction(FALSE)
+{}
 
 OGRDataSourceWithTransaction::~OGRDataSourceWithTransaction()
 {
@@ -462,12 +460,11 @@ CPLErr      OGRDataSourceWithTransaction::SetMetadataItem( const char * pszName,
 /************************************************************************/
 
 OGRLayerWithTransaction::OGRLayerWithTransaction(
-                    OGRDataSourceWithTransaction* poDS, OGRLayer* poBaseLayer):
+    OGRDataSourceWithTransaction* poDS, OGRLayer* poBaseLayer) :
     OGRLayerDecorator(poBaseLayer, FALSE),
     m_poDS(poDS),
     m_poFeatureDefn(NULL)
-{
-}
+{}
 
 OGRLayerWithTransaction::~OGRLayerWithTransaction()
 {

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Contour Generator
  * Purpose:  Contour Generator mainline.
@@ -79,7 +78,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hSrcDS;
+    GDALDatasetH hSrcDS;
     int i, b3D = FALSE, bNoDataSet = FALSE, bIgnoreNoData = FALSE;
     int nBandIn = 1;
     double dfInterval = 0.0, dfNoData = 0.0, dfOffset = 0.0;

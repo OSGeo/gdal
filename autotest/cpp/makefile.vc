@@ -70,9 +70,9 @@ CPPFLAGS = $(CFLAGS)
 
 GDAL_TEST_EXE = gdal_unit_test.exe
 
-default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe
+default: $(GDAL_TEST_EXE) testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testdestroy.exe testmultithreadedwriting.exe 
 
-check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe
+check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcachelimits.exe testmultithreadedwriting.exe
 	 $(GDAL_TEST_EXE)
 	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
 	testblockcache.exe -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
@@ -81,6 +81,7 @@ check:	 $(GDAL_TEST_EXE) testblockcache.exe testblockcachewrite.exe testblockcac
 	testblockcachewrite.exe --debug ON
 	testblockcachelimits.exe --debug ON
 	testdestroy.exe
+	testmultithreadedwriting.exe
 
 check-all:	 check testcopywords.exe testperfcopywords.exe testclosedondestroydm.exe testthreadcond.exe
 	testcopywords.exe
@@ -115,6 +116,10 @@ testblockcache.exe: testblockcache.cpp
 testblockcachewrite.exe: testblockcachewrite.cpp
 	$(CC) testblockcachewrite.cpp $(CFLAGS) $(GDAL_LIB)
     if exist testblockcachewrite.exe.manifest mt -manifest testblockcachewrite.exe.manifest -outputresource:testblockcachewrite.exe;1
+
+testmultithreadedwriting.exe: testmultithreadedwriting.cpp
+	$(CC) testmultithreadedwriting.cpp $(CFLAGS) $(GDAL_LIB)
+    if exist testmultithreadedwriting.exe.manifest mt -manifest testmultithreadedwriting.exe.manifest -outputresource:testmultithreadedwriting.exe;1
 
 testblockcachelimits.exe: testblockcachelimits.cpp
 	$(CC) testblockcachelimits.cpp $(CFLAGS) $(GDAL_LIB)

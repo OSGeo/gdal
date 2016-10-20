@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Horizontal Datum Formats
  * Purpose:  Implementation of NTv2 datum shift format used in Canada, France,
@@ -752,7 +751,7 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Are we extending an existing file?                              */
 /* -------------------------------------------------------------------- */
-    int bAppend = CSLFetchBoolean(papszOptions,"APPEND_SUBDATASET",FALSE);
+    const bool bAppend = CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false);
 
 /* -------------------------------------------------------------------- */
 /*      Try to open or create file.                                     */

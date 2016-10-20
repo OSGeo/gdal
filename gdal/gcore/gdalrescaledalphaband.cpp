@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALRescaledAlphaBand, a class implementing
@@ -32,6 +31,7 @@
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALRescaledAlphaBand()                       */
 /************************************************************************/
@@ -143,3 +143,4 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                                       eBufType,
                                       nPixelSpace, nLineSpace, psExtraArg );
 }
+//! @endcond

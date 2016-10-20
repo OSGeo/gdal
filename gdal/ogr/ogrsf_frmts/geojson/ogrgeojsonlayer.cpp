@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRGeoJSONLayer class (OGR GeoJSON Driver).
@@ -28,8 +27,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include <algorithm> // for_each, find_if
-#include <json.h> // JSON-C
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+#include <json.h>
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
+
 #include "ogr_geojson.h"
+
+CPL_CVSID("$Id$");
 
 /* Remove annoying warnings Microsoft Visual C++ */
 #if defined(_MSC_VER)
@@ -50,8 +62,10 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  OGRGeoJSONDataSource* poDS )
-  : OGRMemLayer( pszName, poSRSIn, eGType), poDS_(poDS), bUpdated_(false),
+                                  OGRGeoJSONDataSource* poDS ) :
+    OGRMemLayer( pszName, poSRSIn, eGType),
+    poDS_(poDS),
+    bUpdated_(false),
     bOriginalIdModified_(false)
 {
     SetAdvertizeUTF8(true);
@@ -62,9 +76,7 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 /*                          ~OGRGeoJSONLayer                            */
 /************************************************************************/
 
-OGRGeoJSONLayer::~OGRGeoJSONLayer()
-{
-}
+OGRGeoJSONLayer::~OGRGeoJSONLayer() {}
 
 /************************************************************************/
 /*                           GetFIDColumn                               */
@@ -167,13 +179,13 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
 
 void OGRGeoJSONLayer::DetectGeometryType()
 {
-    if (GetLayerDefn()->GetGeomType() != wkbUnknown)
+    if( GetLayerDefn()->GetGeomType() != wkbUnknown )
         return;
 
     ResetReading();
     bool bFirstGeometry = true;
     OGRwkbGeometryType eLayerGeomType = wkbUnknown;
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_tooldef.cpp,v 1.7 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_tooldef.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -57,6 +56,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABToolDefTable
  *====================================================================*/
@@ -66,22 +67,20 @@
  *
  * Constructor.
  **********************************************************************/
-TABToolDefTable::TABToolDefTable()
-{
-    m_papsPen = NULL;
-    m_papsBrush = NULL;
-    m_papsFont = NULL;
-    m_papsSymbol = NULL;
-    m_numPen = 0;
-    m_numBrushes = 0;
-    m_numFonts = 0;
-    m_numSymbols = 0;
-    m_numAllocatedPen = 0;
-    m_numAllocatedBrushes = 0;
-    m_numAllocatedFonts = 0;
-    m_numAllocatedSymbols = 0;
-
-}
+TABToolDefTable::TABToolDefTable() :
+    m_papsPen(NULL),
+    m_numPen(0),
+    m_numAllocatedPen(0),
+    m_papsBrush(NULL),
+    m_numBrushes(0),
+    m_numAllocatedBrushes(0),
+    m_papsFont(NULL),
+    m_numFonts(0),
+    m_numAllocatedFonts(0),
+    m_papsSymbol(NULL),
+    m_numSymbols(0),
+    m_numAllocatedSymbols(0)
+{}
 
 /**********************************************************************
  *                   TABToolDefTable::~TABToolDefTable()
@@ -90,24 +89,21 @@ TABToolDefTable::TABToolDefTable()
  **********************************************************************/
 TABToolDefTable::~TABToolDefTable()
 {
-    int i;
-
-    for(i=0; m_papsPen && i < m_numPen; i++)
+    for( int i = 0; m_papsPen && i < m_numPen; i++ )
         CPLFree(m_papsPen[i]);
     CPLFree(m_papsPen);
 
-    for(i=0; m_papsBrush && i < m_numBrushes; i++)
+    for( int i = 0; m_papsBrush && i < m_numBrushes; i++ )
         CPLFree(m_papsBrush[i]);
     CPLFree(m_papsBrush);
 
-    for(i=0; m_papsFont && i < m_numFonts; i++)
+    for( int i = 0; m_papsFont && i < m_numFonts; i++ )
         CPLFree(m_papsFont[i]);
     CPLFree(m_papsFont);
 
-    for(i=0; m_papsSymbol && i < m_numSymbols; i++)
+    for( int i = 0; m_papsSymbol && i < m_numSymbols; i++ )
         CPLFree(m_papsSymbol[i]);
     CPLFree(m_papsSymbol);
-
 }
 
 
@@ -120,10 +116,9 @@ TABToolDefTable::~TABToolDefTable()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
+int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
 {
     int nStatus = 0;
-    int nDefType;
 
     /*-----------------------------------------------------------------
      * Loop until we reach the end of the chain of blocks... we assume
@@ -131,7 +126,7 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
      *----------------------------------------------------------------*/
     while( ! poBlock->EndOfChain() )
     {
-        nDefType = poBlock->ReadByte();
+        const int nDefType = poBlock->ReadByte();
         switch(nDefType)
         {
           case TABMAP_TOOL_PEN:       // PEN
@@ -258,17 +253,18 @@ int     TABToolDefTable::ReadAllToolDefs(TABMAPToolBlock *poBlock)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
+int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 {
-    int i, nStatus = 0;
+    int nStatus = 0;
 
     /*-----------------------------------------------------------------
      * Write Pen Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numPen; i++)
+    for( int i = 0; nStatus == 0 && i< m_numPen; i++ )
     {
         // The pen width is encoded over 2 bytes
-        GByte byPixelWidth=1, byPointWidth=0;
+        GByte byPixelWidth=1;
+        GByte byPointWidth = 0;
         if (m_papsPen[i]->nPointWidth > 0)
         {
             byPointWidth = (GByte)(m_papsPen[i]->nPointWidth & 0xff);
@@ -299,7 +295,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Brush Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numBrushes; i++)
+    for( int i = 0; nStatus == 0 && i< m_numBrushes; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_BRUSH);
 
@@ -325,7 +321,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Font Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numFonts; i++)
+    for( int i = 0; nStatus == 0 && i< m_numFonts; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_FONT);
 
@@ -344,7 +340,7 @@ int     TABToolDefTable::WriteAllToolDefs(TABMAPToolBlock *poBlock)
     /*-----------------------------------------------------------------
      * Write Symbol Defs
      *----------------------------------------------------------------*/
-    for(i=0; nStatus == 0 && i< m_numSymbols; i++)
+    for( int i = 0; nStatus == 0 && i< m_numSymbols; i++ )
     {
         poBlock->CheckAvailableSpace(TABMAP_TOOL_SYMBOL);
 
@@ -413,9 +409,6 @@ TABPenDef *TABToolDefTable::GetPenDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
 {
-    int i, nNewPenIndex = 0;
-    TABPenDef *poDef;
-
     if (poNewPenDef == NULL)
         return -1;
 
@@ -428,9 +421,10 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
     /*-----------------------------------------------------------------
      * Start by searching the list of existing pens
      *----------------------------------------------------------------*/
-    for (i=0; nNewPenIndex == 0 && i<m_numPen; i++)
+    int nNewPenIndex = 0;
+    for( int i = 0; nNewPenIndex == 0 && i<m_numPen; i++ )
     {
-        poDef = m_papsPen[i];
+        TABPenDef *poDef = m_papsPen[i];
         if (poDef->nPixelWidth == poNewPenDef->nPixelWidth &&
             poDef->nLinePattern == poNewPenDef->nLinePattern &&
             poDef->nPointWidth == poNewPenDef->nPointWidth &&
@@ -503,9 +497,6 @@ TABBrushDef *TABToolDefTable::GetBrushDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
 {
-    int i, nNewBrushIndex = 0;
-    TABBrushDef *poDef;
-
     if (poNewBrushDef == NULL)
         return -1;
 
@@ -518,9 +509,10 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Brushs
      *----------------------------------------------------------------*/
-    for (i=0; nNewBrushIndex == 0 && i<m_numBrushes; i++)
+    int nNewBrushIndex = 0;
+    for( int i = 0; nNewBrushIndex == 0 && i<m_numBrushes; i++ )
     {
-        poDef = m_papsBrush[i];
+        TABBrushDef *poDef = m_papsBrush[i];
         if (poDef->nFillPattern == poNewBrushDef->nFillPattern &&
             poDef->bTransparentFill == poNewBrushDef->bTransparentFill &&
             poDef->rgbFGColor == poNewBrushDef->rgbFGColor &&
@@ -594,18 +586,16 @@ TABFontDef *TABToolDefTable::GetFontDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
 {
-    int i, nNewFontIndex = 0;
-    TABFontDef *poDef;
-
     if (poNewFontDef == NULL)
         return -1;
 
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Fonts
      *----------------------------------------------------------------*/
-    for (i=0; nNewFontIndex == 0 && i<m_numFonts; i++)
+    int nNewFontIndex = 0;
+    for( int i = 0; nNewFontIndex == 0 && i<m_numFonts; i++ )
     {
-        poDef = m_papsFont[i];
+        TABFontDef *poDef = m_papsFont[i];
         if (EQUAL(poDef->szFontName, poNewFontDef->szFontName))
         {
             nNewFontIndex = i+1; // Fount it!
@@ -677,18 +667,16 @@ TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
 {
-    int i, nNewSymbolIndex = 0;
-    TABSymbolDef *poDef;
-
     if (poNewSymbolDef == NULL)
         return -1;
 
     /*-----------------------------------------------------------------
      * Start by searching the list of existing Symbols
      *----------------------------------------------------------------*/
-    for (i=0; nNewSymbolIndex == 0 && i<m_numSymbols; i++)
+    int nNewSymbolIndex = 0;
+    for( int i = 0; nNewSymbolIndex == 0 && i<m_numSymbols; i++ )
     {
-        poDef = m_papsSymbol[i];
+        TABSymbolDef *poDef = m_papsSymbol[i];
         if (poDef->nSymbolNo == poNewSymbolDef->nSymbolNo &&
             poDef->nPointSize == poNewSymbolDef->nPointSize &&
             poDef->_nUnknownValue_ == poNewSymbolDef->_nUnknownValue_ &&

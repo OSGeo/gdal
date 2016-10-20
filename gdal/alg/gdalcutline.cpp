@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implement cutline/blend mask generator.
@@ -293,13 +292,13 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL || psWO->hCutline == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -319,7 +318,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     if( wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbPolygon
         && wkbFlatten(OGR_G_GetGeometryType(hPolygon)) != wkbMultiPolygon )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
@@ -367,7 +366,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     int    anXYOff[2];
     char   **papszRasterizeOptions = NULL;
 
-    if( CSLFetchBoolean( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", FALSE ))
+    if( CPLFetchBool( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false ))
         papszRasterizeOptions =
             CSLSetNameValue( papszRasterizeOptions, "ALL_TOUCHED", "TRUE" );
 

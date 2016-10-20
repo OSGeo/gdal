@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for stdin
@@ -26,6 +25,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+//! @cond Doxygen_Suppress
 
 #include "cpl_port.h"
 #include "cpl_error.h"
@@ -270,9 +271,9 @@ size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Write( CPL_UNUSED const void * pBuffer,
-                              CPL_UNUSED size_t nSize,
-                              CPL_UNUSED size_t nCount )
+size_t VSIStdinHandle::Write( const void * /* pBuffer */,
+                              size_t /* nSize */,
+                              size_t /* nCount */ )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Write() unsupported on /vsistdin");
@@ -378,6 +379,8 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     pStatBuf->st_mode = S_IFREG;
     return 0;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                       VSIInstallStdinHandler()                       */

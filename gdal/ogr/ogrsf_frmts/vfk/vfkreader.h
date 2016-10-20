@@ -86,7 +86,7 @@ public:
     bool                    IsNull()    const { return m_bIsNull; }
     int                     GetValueI() const { return m_nValue; }
     double                  GetValueD() const { return m_dValue; }
-    const char             *GetValueS(bool = FALSE) const;
+    const char             *GetValueS( bool = false ) const;
 };
 
 /************************************************************************/
@@ -243,7 +243,9 @@ protected:
 
     GIntBig            m_nRecordCount[3];
 
-    bool               AppendLineToRing(PointListArray *, const OGRLineString *, bool, bool = FALSE);
+    bool               AppendLineToRing( PointListArray *,
+                                         const OGRLineString *,
+                                         bool, bool = false );
     int                LoadData();
 
     virtual int        LoadGeometryPoint() = 0;
@@ -262,8 +264,8 @@ public:
     void               SetProperties(const char *);
     int                GetPropertyIndex(const char *) const;
 
-    GIntBig            GetFeatureCount(bool = TRUE);
-    void               SetFeatureCount(int, bool = FALSE);
+    GIntBig            GetFeatureCount( bool = true);
+    void               SetFeatureCount( int, bool = false );
     IVFKFeature       *GetFeatureByIndex(int) const;
     IVFKFeature       *GetFeature(GIntBig);
     void               AddFeature(IVFKFeature *);
@@ -333,8 +335,9 @@ public:
 
     const char          *GetKey() const;
     IVFKFeature         *GetFeature(GIntBig);
-    VFKFeatureSQLite    *GetFeature(const char *, GUIntBig, bool = FALSE);
-    VFKFeatureSQLite    *GetFeature(const char **, GUIntBig *, int, bool = FALSE);
+    VFKFeatureSQLite    *GetFeature( const char *, GUIntBig, bool = false );
+    VFKFeatureSQLite    *GetFeature( const char **, GUIntBig *, int,
+                                     bool = false);
     VFKFeatureSQLiteList GetFeatures(const char **, GUIntBig *, int);
 };
 

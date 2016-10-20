@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Implements translation between GeoTIFF normalized projection
@@ -227,11 +226,11 @@ static void WKTMassageDatum( char ** ppszDatum )
 /************************************************************************/
 
 /* For example:
-   GTCitationGeoKey (Ascii,215): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nProjection Name = UTM\nUnits = meters\nGeoTIFF Units = meters"
+   GTCitationGeoKey (Ascii,215): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision: 34309 $ $Date: 2016-05-29 11:29:40 -0700 (Sun, 29 May 2016) $\nProjection Name = UTM\nUnits = meters\nGeoTIFF Units = meters"
 
-   GeogCitationGeoKey (Ascii,267): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nUnable to match Ellipsoid (Datum) to a GeographicTypeGeoKey value\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
+   GeogCitationGeoKey (Ascii,267): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision: 34309 $ $Date: 2016-05-29 11:29:40 -0700 (Sun, 29 May 2016) $\nUnable to match Ellipsoid (Datum) to a GeographicTypeGeoKey value\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
 
-   PCSCitationGeoKey (Ascii,214): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nUTM Zone 10N\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
+   PCSCitationGeoKey (Ascii,214): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision: 34309 $ $Date: 2016-05-29 11:29:40 -0700 (Sun, 29 May 2016) $\nUTM Zone 10N\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
 */
 
 static void GTIFCleanupImagineNames( char *pszCitation )
@@ -251,6 +250,8 @@ static void GTIFCleanupImagineNames( char *pszCitation )
          pszSkip-- ) {}
 
     if( *pszSkip == '$' )
+        pszSkip++;
+    if( *pszSkip == '\n' )
         pszSkip++;
 
     memmove( pszCitation, pszSkip, strlen(pszSkip)+1 );
@@ -391,8 +392,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             int nKeyCount = 0;
             int anVersion[3] = { 0 };
 
-            if( hGTIF != NULL )
-                GTIFDirectoryInfo( hGTIF, anVersion, &nKeyCount );
+            GTIFDirectoryInfo( hGTIF, anVersion, &nKeyCount );
 
             if( nKeyCount > 0 ) // Use LOCAL_CS if we have any geokeys at all.
             {
@@ -551,7 +551,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     if( psDefn->Model == ModelTypeProjected )
     {
         char szCTString[512] = { '\0' };
-        strcpy( szCTString, "unnamed" );
         if( psDefn->PCS != KvUserDefined )
         {
             char *pszPCSName = NULL;
@@ -564,27 +563,41 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
         }
-        else if(hGTIF && GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey,
+        else 
+        {
+            bool bTryGTCitationGeoKey = true;
+            if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey,
                                               szCTString, 0,
                                               sizeof(szCTString)) )
-        {
-            if (!SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
-                                   PCSCitationGeoKey, &oSRS, &linearUnitIsSet) )
-                oSRS.SetNode( "PROJCS",szCTString );
-        }
-        else
-        {
-            if( hGTIF )
             {
+                bTryGTCitationGeoKey = false;
+                if (!SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
+                                    PCSCitationGeoKey, &oSRS, &linearUnitIsSet) )
+                {
+                    if( !STARTS_WITH_CI(szCTString, "LUnits = ") )
+                    {
+                        oSRS.SetNode( "PROJCS",szCTString );
+                    }
+                    else
+                    {
+                        bTryGTCitationGeoKey = true;
+                    }
+                }
+            }
+
+            if( bTryGTCitationGeoKey &&
                 GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
-                                     0, sizeof(szCTString) );
+                                     0, sizeof(szCTString) ) )
+            {
                 if( !SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
                                        GTCitationGeoKey, &oSRS,
                                        &linearUnitIsSet ) )
                     oSRS.SetNode( "PROJCS", szCTString );
             }
             else
-                oSRS.SetNode( "PROJCS", szCTString );
+            {
+                oSRS.SetNode( "PROJCS", "unnamed" );
+            }
         }
 
         /* Handle ESRI/Erdas style state plane and UTM in citation key */
@@ -600,7 +613,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         /* Handle ESRI PE string in citation */
         szCTString[0] = '\0';
-        if( hGTIF && GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
+        if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
                                           0, sizeof(szCTString) ) )
             SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
                               GTCitationGeoKey, &oSRS, &linearUnitIsSet );
@@ -617,7 +630,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     char szGCSName[512] = { '\0' };
 
     if( !GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL )
-        && hGTIF != NULL
         && GDALGTIFKeyGetASCII( hGTIF, GeogCitationGeoKey, szGCSName, 0,
                        sizeof(szGCSName)) )
     {
@@ -1379,7 +1391,6 @@ int GTIFSetFromOGISDefn( GTIF * psGTIF, const char *pszOGCWKT )
 int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
                            GTIFFKeysFlavorEnum eFlavor )
 {
-    OGRSpatialReference *poSRS;
     int nPCS = KvUserDefined;
     OGRErr eErr = OGRERR_NONE;
     OGRBoolean peStrStored = FALSE;
@@ -1391,7 +1402,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /*      Create an OGRSpatialReference object corresponding to the       */
 /*      string.                                                         */
 /* -------------------------------------------------------------------- */
-    poSRS = new OGRSpatialReference();
+    OGRSpatialReference *poSRS = new OGRSpatialReference();
     if( poSRS->importFromWkt((char **) &pszOGCWKT) != OGRERR_NONE )
     {
         delete poSRS;

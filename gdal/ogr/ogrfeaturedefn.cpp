@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFeatureDefn class implementation.
@@ -193,19 +192,16 @@ void OGR_FD_Release( OGRFeatureDefnH hDefn )
 OGRFeatureDefn *OGRFeatureDefn::Clone()
 
 {
-    int i;
-    OGRFeatureDefn *poCopy;
-
-    poCopy = new OGRFeatureDefn( GetName() );
+    OGRFeatureDefn *poCopy = new OGRFeatureDefn( GetName() );
 
     GetFieldCount();
-    for( i = 0; i < nFieldCount; i++ )
+    for( int i = 0; i < nFieldCount; i++ )
         poCopy->AddFieldDefn( GetFieldDefn( i ) );
 
     // There is a default geometry field created at OGRFeatureDefn instantiation
     poCopy->DeleteGeomFieldDefn(0);
     GetGeomFieldCount();
-    for( i = 0; i < nGeomFieldCount; i++ )
+    for( int i = 0; i < nGeomFieldCount; i++ )
         poCopy->AddGeomFieldDefn( GetGeomFieldDefn( i ) );
 
     return poCopy;
@@ -515,7 +511,7 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
     OGRFieldDefn** papoFieldDefnNew = (OGRFieldDefn**)
         CPLMalloc(sizeof(OGRFieldDefn*) * nFieldCount);
 
-    for(int i=0;i<nFieldCount;i++)
+    for( int i = 0; i < nFieldCount; i++ )
     {
         papoFieldDefnNew[i] = papoFieldDefn[panMap[i]];
     }
@@ -900,7 +896,8 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
     if( poGFldDefn == NULL )
         return wkbNone;
     OGRwkbGeometryType eType = poGFldDefn->GetType();
-    if( eType == (wkbUnknown | wkb25DBitInternalUse) && CSLTestBoolean(CPLGetConfigOption("QGIS_HACK", "NO")) )
+    if( eType == (wkbUnknown | wkb25DBitInternalUse) &&
+        CPLTestBool(CPLGetConfigOption("QGIS_HACK", "NO")) )
         eType = wkbUnknown;
     return eType;
 }
@@ -1267,7 +1264,7 @@ void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /************************************************************************/
 
 /**
- * \fn int OGRFeatureDefn::IsStyleIgnored();
+ * \fn int OGRFeatureDefn::IsStyleIgnored() const;
  *
  * \brief Determine whether the style can be omitted when fetching features
  *
@@ -1334,6 +1331,10 @@ void OGR_FD_SetStyleIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 /*                         CreateFeatureDefn()                          */
 /************************************************************************/
 
+/** Create a new feature definition object.
+ * @param pszName name
+ * @return new feature definition object.
+ */
 OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 
 {
@@ -1344,6 +1345,9 @@ OGRFeatureDefn *OGRFeatureDefn::CreateFeatureDefn( const char *pszName )
 /*                         DestroyFeatureDefn()                         */
 /************************************************************************/
 
+/** Destroy a feature definition.
+ * @param poDefn feature definition.
+ */
 void OGRFeatureDefn::DestroyFeatureDefn( OGRFeatureDefn *poDefn )
 
 {
@@ -1367,17 +1371,17 @@ int OGRFeatureDefn::IsSame( OGRFeatureDefn * poOtherFeatureDefn )
         GetFieldCount() == poOtherFeatureDefn->GetFieldCount() &&
         GetGeomFieldCount() == poOtherFeatureDefn->GetGeomFieldCount())
     {
-        int i;
-        for(i=0;i<nFieldCount;i++)
+        for( int i = 0; i < nFieldCount; i++ )
         {
             const OGRFieldDefn* poFldDefn = GetFieldDefn(i);
-            const OGRFieldDefn* poOtherFldDefn = poOtherFeatureDefn->GetFieldDefn(i);
+            const OGRFieldDefn* poOtherFldDefn =
+                poOtherFeatureDefn->GetFieldDefn(i);
             if (!poFldDefn->IsSame(poOtherFldDefn))
             {
                 return FALSE;
             }
         }
-        for(i=0;i<nGeomFieldCount;i++)
+        for( int i = 0; i < nGeomFieldCount; i++ )
         {
             OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(i);
             OGRGeomFieldDefn* poOtherGFldDefn =

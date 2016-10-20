@@ -16,7 +16,7 @@ fft.py			Script to perform forward and inverse two-dimensional
 gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
 			Software Surfer) from any source supported by GDAL.
 
-gdal_vrtmerge.py	Similar to gdal_merge.py, but produces a VRT file. 
+gdal_vrtmerge.py	Similar to gdal_merge.py, but produces a VRT file.
 
 gdalcopyproj.py		Duplicate the geotransform, projection and/or GCPs from
 			one raster dataset to another, which can be useful after
@@ -37,7 +37,7 @@ get_soundg.py		Script to copy the SOUNDG layer from an S-57 file to
 
 histrep.py		Module to extract data from many rasters into one output.
 
-load2odbc.py		Load ODBC table to an ODBC datastore.  Uses direct SQL 
+load2odbc.py		Load ODBC table to an ODBC datastore.  Uses direct SQL
 			since the ODBC driver is read-only for OGR.
 
 rel.py			Script to produce a shaded relief image from the
@@ -45,7 +45,7 @@ rel.py			Script to produce a shaded relief image from the
 
 tigerpoly.py		Script demonstrating how to assemble polygons from
 			arcs in TIGER/Line datasource, writing results to
-			a newly created shapefile. 
+			a newly created shapefile.
 
 tolatlong.py		Script to read coordinate system and geotransformation
 			matrix from input file and report latitude/longitude
@@ -57,16 +57,16 @@ val_repl.py		Script to replace specified values from the input
 			and want replace it with other value. Input file
 			remains unchanged, results stored in other file.
 
-vec_tr.py		Example of applying some algorithm to all the 
+vec_tr.py		Example of applying some algorithm to all the
 			geometries in the file, such as a fixed offset.
 
-vec_tr_spat.py		Example of using Intersect() to filter based on 
+vec_tr_spat.py		Example of using Intersect() to filter based on
 			only those features that truly intersect a given
 			rectangle.  Easily extended to general polygon!
 
 classify.py             Demonstrates using numpy for simple range based
                         classification of an image.  This is only an example
-                        that has stuff hardcoded.  
+                        that has stuff hardcoded.
 
 gdal_lut.py             Read a LUT from a text file, and apply it to an image.
                         Sort of a '1 band' version of pct2rgb.py.

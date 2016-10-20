@@ -30,12 +30,14 @@
 #include "cpl_string.h"
 #include "io_selafin.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                     OGRSelafinDriverIdentify()                       */
 /************************************************************************/
 
-static int OGRSelafinDriverIdentify( GDALOpenInfo* poOpenInfo ) {
-
+static int OGRSelafinDriverIdentify( GDALOpenInfo* poOpenInfo )
+{
     if( poOpenInfo->fpL != NULL )
     {
         if( poOpenInfo->nHeaderBytes < 84 + 8 )
@@ -65,7 +67,9 @@ static GDALDataset *OGRSelafinDriverOpen( GDALOpenInfo* poOpenInfo ) {
         return NULL;
 
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
-    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update, FALSE) ) {
+    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
+                    FALSE) )
+    {
         delete poDS;
         poDS = NULL;
     }
@@ -147,7 +151,8 @@ static GDALDataset *OGRSelafinDriverCreate( const char * pszName,
     }
     // Force it to open as a datasource
     OGRSelafinDataSource *poDS = new OGRSelafinDataSource();
-    if( !poDS->Open( pszName, TRUE, TRUE ) ) {
+    if( !poDS->Open( pszName, TRUE, TRUE ) )
+    {
         delete poDS;
         return NULL;
     }

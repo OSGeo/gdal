@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
 #ifndef FROM_GDAL_I
 %include "exception.i"
 #endif
@@ -403,6 +407,8 @@ typedef void retGetPoints;
 %constant char *ODsCTransactions       = "Transactions";
 %constant char *ODsCEmulatedTransactions = "EmulatedTransactions";
 %constant char *ODsCMeasuredGeometries = "MeasuredGeometries";
+%constant char *ODsCRandomLayerRead    = "RandomLayerRead";
+%constant char *ODsCRandomLayerWrite   = "RandomLayerWrite";
 
 %constant char *ODrCCreateDataSource   = "CreateDataSource";
 %constant char *ODrCDeleteDataSource   = "DeleteDataSource";
@@ -443,6 +449,8 @@ typedef int OGRErr;
 #define ODsCTransactions       "Transactions"
 #define ODsCEmulatedTransactions "EmulatedTransactions"
 #define ODsCMeasuredGeometries  "MeasuredGeometries";
+#define ODsCRandomLayerRead    "RandomLayerRead";
+#define ODsCRandomLayerWrite   "RandomLayerWrite";
 
 #define ODrCCreateDataSource   "CreateDataSource"
 #define ODrCDeleteDataSource   "DeleteDataSource"
@@ -617,6 +625,9 @@ public:
 %mutable;
 
 %newobject CreateDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateDataSource;
 #endif
@@ -625,8 +636,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject CopyDataSource;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CopyDataSource;
 #endif
@@ -636,8 +653,14 @@ public:
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CopyDataSource(self, copy_ds, utf8_path, options);
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %newobject Open;
+#ifdef SWIGPYTHON
+%thread;
+#endif
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
 #endif
@@ -657,6 +680,9 @@ public:
     }
     return ds;
   }
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #ifdef SWIGJAVA
   OGRErr DeleteDataSource( const char *utf8_path ) {
@@ -1851,6 +1877,8 @@ public:
             case wkbCurvePolygon:
             case wkbMultiCurve:
             case wkbMultiSurface:
+            case wkbCurve:
+            case wkbSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
             case wkbCircularStringZ:
@@ -1858,6 +1886,8 @@ public:
             case wkbCurvePolygonZ:
             case wkbMultiCurveZ:
             case wkbMultiSurfaceZ:
+            case wkbCurveZ:
+            case wkbSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -1877,6 +1907,8 @@ public:
             case wkbCurvePolygonM:
             case wkbMultiCurveM:
             case wkbMultiSurfaceM:
+            case wkbCurveM:
+            case wkbSurfaceM:
             case wkbPointZM:
             case wkbLineStringZM:
             case wkbPolygonZM:
@@ -1889,6 +1921,8 @@ public:
             case wkbCurvePolygonZM:
             case wkbMultiCurveZM:
             case wkbMultiSurfaceZM:
+            case wkbCurveZM:
+            case wkbSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
@@ -3196,6 +3230,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 #if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject Open;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Open;
@@ -3216,7 +3253,13 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
+#ifdef SWIGPYTHON
+%thread;
+#endif
 %newobject OpenShared;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) OpenShared;
@@ -3234,6 +3277,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     return ds;
   }
 %}
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 #endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
 
@@ -3363,4 +3409,9 @@ int GDALTermProgress( double, const char *, void * );
 
 #ifdef SWIGJAVA
 %include "ogr_java_extend.i"
+#endif
+
+
+#ifdef SWIGPYTHON
+%thread;
 #endif

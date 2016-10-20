@@ -49,24 +49,24 @@ class OGRXLSXDataSource;
 
 class OGRXLSXLayer : public OGRMemLayer
 {
-    int                bInit;
+    bool               bInit;
     OGRXLSXDataSource* poDS;
-    int                nSheetId;
+    CPLString          osFilename;
     void               Init();
-    int                bUpdated;
-    int                bHasHeaderLine;
+    bool               bUpdated;
+    bool               bHasHeaderLine;
 
-    public:
+  public:
         OGRXLSXLayer( OGRXLSXDataSource* poDSIn,
-                      int nSheetIdIn,
+                      const char * pszFilename,
                       const char * pszName,
                       int bUpdateIn = FALSE);
 
-    int                 HasBeenUpdated() { return bUpdated; }
-    void                SetUpdated(int bUpdatedIn = TRUE);
+    bool                HasBeenUpdated() const { return bUpdated; }
+    void                SetUpdated( bool bUpdatedIn = true );
 
-    int                 GetHasHeaderLine() { return bHasHeaderLine; }
-    void                SetHasHeaderLine(int bIn) { bHasHeaderLine = bIn; }
+    bool                GetHasHeaderLine() const { return bHasHeaderLine; }
+    void                SetHasHeaderLine( bool bIn ) { bHasHeaderLine = bIn; }
 
     const char         *GetName() { return OGRMemLayer::GetLayerDefn()->GetName(); };
     OGRwkbGeometryType  GetGeomType() { return wkbNone; }
@@ -74,6 +74,8 @@ class OGRXLSXLayer : public OGRMemLayer
 
     void                ResetReading()
     { Init(); OGRMemLayer::ResetReading(); }
+
+    const CPLString&    GetFilename() const { return osFilename; }
 
     /* For external usage. Mess with FID */
     virtual OGRFeature *        GetNextFeature();
@@ -141,35 +143,39 @@ class XLSXFieldTypeExtended
 {
 public:
     OGRFieldType      eType;
-    int               bHasMS;
+    bool              bHasMS;
 
-                    XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(FALSE) {}
+                    XLSXFieldTypeExtended() :
+                        eType(OFTMaxType),
+                        bHasMS(false) {}
                     XLSXFieldTypeExtended(OGRFieldType eTypeIn,
-                                          int bHasMSIn = FALSE) :
+                                          bool bHasMSIn = false) :
                                     eType(eTypeIn), bHasMS(bHasMSIn) {}
 };
 
 class OGRXLSXDataSource : public OGRDataSource
 {
     char*               pszName;
-    int                 bUpdatable;
-    int                 bUpdated;
+    bool                bUpdatable;
+    bool                bUpdated;
 
     int                 nLayers;
     OGRLayer          **papoLayers;
+    std::map<CPLString, CPLString> oMapRelsIdToTarget;
 
     void                AnalyseSharedStrings(VSILFILE* fpSharedStrings);
     void                AnalyseWorkbook(VSILFILE* fpWorkbook);
+    void                AnalyseWorkbookRels(VSILFILE* fpWorkbookRels);
     void                AnalyseStyles(VSILFILE* fpStyles);
 
     std::vector<std::string>  apoSharedStrings;
     std::string         osCurrentString;
 
-    int                 bFirstLineIsHeaders;
+    bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
 
     XML_Parser          oParser;
-    int                 bStopParsing;
+    bool                bStopParsing;
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
@@ -189,7 +195,7 @@ class OGRXLSXDataSource : public OGRDataSource
     std::vector<std::string>  apoCurLineValues;
     std::vector<std::string>  apoCurLineTypes;
 
-    int                        bInCellXFS;
+    bool                bInCellXFS;
     std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;
     std::vector<XLSXFieldTypeExtended>  apoStyles;
 
@@ -212,10 +218,11 @@ class OGRXLSXDataSource : public OGRDataSource
 
   public:
                         OGRXLSXDataSource();
-                        ~OGRXLSXDataSource();
+                        virtual ~OGRXLSXDataSource();
 
     int                 Open( const char * pszFilename,
                               VSILFILE* fpWorkbook,
+                              VSILFILE* fpWorkbookRels,
                               VSILFILE* fpSharedStrings,
                               VSILFILE* fpStyles,
                               int bUpdate );
@@ -244,15 +251,17 @@ class OGRXLSXDataSource : public OGRDataSource
     void                endElementSSCbk(const char *pszName);
     void                dataHandlerSSCbk(const char *data, int nLen);
 
+    void                startElementWBRelsCbk(const char *pszName, const char **ppszAttr);
+
     void                startElementWBCbk(const char *pszName, const char **ppszAttr);
 
     void                startElementStylesCbk(const char *pszName, const char **ppszAttr);
     void                endElementStylesCbk(const char *pszName);
 
-    void                BuildLayer(OGRXLSXLayer* poLayer, int nSheetId);
+    void                BuildLayer(OGRXLSXLayer* poLayer);
 
-    int                 GetUpdatable() { return bUpdatable; }
-    void                SetUpdated() { bUpdated = TRUE; }
+    bool                GetUpdatable() { return bUpdatable; }
+    void                SetUpdated() { bUpdated = true; }
 };
 
 } /* end of OGRXLSX namespace */
@@ -264,7 +273,7 @@ class OGRXLSXDataSource : public OGRDataSource
 class OGRXLSXDriver : public OGRSFDriver
 {
   public:
-                ~OGRXLSXDriver();
+                virtual ~OGRXLSXDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

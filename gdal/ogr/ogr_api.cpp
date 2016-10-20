@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API Functions that don't correspond one-to-one with C++
@@ -32,6 +31,8 @@
 #include "ogr_geometry.h"
 #include "ogr_api.h"
 #include "cpl_error.h"
+
+CPL_CVSID("$Id$");
 
 static bool bNonLinearGeometriesEnabled = true;
 
@@ -606,7 +607,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
         {
           poSC->setNumPoints( nPointsIn );
 
-          for (int i = 0; i < nPointsIn; ++i)
+          for( int i = 0; i < nPointsIn; ++i )
           {
             double x = *(double*)((char*)pabyX + i * nXStride);
             double y = *(double*)((char*)pabyY + i * nYStride);
@@ -704,7 +705,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
 
           if (!pabyZ && !pabyM)
           {
-              for (int i = 0; i < nPointsIn; ++i)
+              for( int i = 0; i < nPointsIn; ++i )
               {
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);
@@ -713,7 +714,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           }
           else if (pabyZ && !pabyM)
           {
-              for (int i = 0; i < nPointsIn; ++i)
+              for( int i = 0; i < nPointsIn; ++i )
               {
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);
@@ -723,7 +724,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           }
           else if (!pabyZ && pabyM)
           {
-              for (int i = 0; i < nPointsIn; ++i)
+              for( int i = 0; i < nPointsIn; ++i )
               {
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);
@@ -733,7 +734,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           }
           else
           {
-              for (int i = 0; i < nPointsIn; ++i)
+              for( int i = 0; i < nPointsIn; ++i )
               {
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);

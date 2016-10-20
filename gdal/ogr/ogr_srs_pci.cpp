@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from PCI georeferencing
@@ -207,12 +206,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     if( padfPrjParams == NULL )
     {
-        int     i;
-
         padfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 17; i++ )
+        for( int i = 0; i < 17; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = true;
     }
@@ -222,11 +219,10 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      D-02 or D109.                                                   */
 /* -------------------------------------------------------------------- */
     char szEarthModel[5];
-    const char *pszEM;
     int bIsNAD27 = FALSE;
 
     strcpy( szEarthModel, "" );
-    pszEM = pszProj + strlen(pszProj) - 1;
+    const char *pszEM = pszProj + strlen(pszProj) - 1;
     while( pszEM != pszProj )
     {
         if( *pszEM == 'e' || *pszEM == 'E' || *pszEM == 'd' || *pszEM == 'D' )
@@ -796,10 +792,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
-    int         i;
-
     *ppadfPrjParams = (double *)CPLMalloc( 17 * sizeof(double) );
-    for ( i = 0; i < 17; i++ )
+    for ( int i = 0; i < 17; i++ )
         (*ppadfPrjParams)[i] = 0.0;
 
 /* -------------------------------------------------------------------- */
@@ -1134,7 +1128,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         {
             int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
 
-            for( i = 0; asDatums[i].nEPSGCode != 0; i++ )
+            for( int i = 0; asDatums[i].nEPSGCode != 0; i++ )
             {
                 if( asDatums[i].nEPSGCode == nGCS_EPSG )
                 {
@@ -1309,12 +1303,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
 /*      Translate the linear units.                                     */
 /* -------------------------------------------------------------------- */
-    const char  *pszUnits;
-
-    if( STARTS_WITH_CI(szProj, "LONG/LAT") )
-        pszUnits = "DEGREE";
-    else
-        pszUnits = "METRE";
+    const char *pszUnits =
+        STARTS_WITH_CI(szProj, "LONG/LAT") ? "DEGREE" : "METRE";
 
 /* -------------------------------------------------------------------- */
 /*      Report results.                                                 */

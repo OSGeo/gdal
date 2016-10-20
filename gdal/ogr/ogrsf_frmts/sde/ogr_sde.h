@@ -223,7 +223,7 @@ class OGRSDEDataSource : public OGRDataSource
 class OGRSDEDriver : public OGRSFDriver
 {
   public:
-                ~OGRSDEDriver();
+    virtual ~OGRSDEDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

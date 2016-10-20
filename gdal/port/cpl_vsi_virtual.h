@@ -47,18 +47,26 @@
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
 
+/** Virtual file handle */
 class CPL_DLL VSIVirtualHandle {
   public:
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) = 0;
     virtual vsi_l_offset Tell() = 0;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) = 0;
-    virtual int       ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes );
-    virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nMemb)=0;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nCount ) = 0;
+    virtual int       ReadMultiRange( int nRanges, void ** ppData,
+                                      const vsi_l_offset* panOffsets,
+                                      const size_t* panSizes );
+    virtual size_t    Write( const void *pBuffer, size_t nSize,size_t nCount)=0;
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
-    virtual int       Truncate( CPL_UNUSED vsi_l_offset nNewSize ) { return -1; }
+    // Base implementation that only supports file extension.
+    virtual int       Truncate( vsi_l_offset nNewSize );
     virtual void     *GetNativeFileDescriptor() { return NULL; }
+    virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
+                                           CPL_UNUSED vsi_l_offset nLength )
+                                          { return VSI_RANGE_STATUS_UNKNOWN; }
+
     virtual           ~VSIVirtualHandle() { }
 };
 
@@ -66,6 +74,7 @@ class CPL_DLL VSIVirtualHandle {
 /*                         VSIFilesystemHandler                         */
 /************************************************************************/
 
+#ifndef DOXYGEN_SKIP
 class CPL_DLL VSIFilesystemHandler {
 
 public:
@@ -94,12 +103,15 @@ public:
     virtual int IsCaseSensitive( const char* pszFilename )
                       { (void) pszFilename; return TRUE; }
     virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
+    virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
 };
+#endif /* #ifndef DOXYGEN_SKIP */
 
 /************************************************************************/
 /*                            VSIFileManager                            */
 /************************************************************************/
 
+#ifndef DOXYGEN_SKIP
 class CPL_DLL VSIFileManager
 {
 private:
@@ -119,13 +131,15 @@ public:
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
 };
-
+#endif /* #ifndef DOXYGEN_SKIP */
 
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIArchiveFilesystemHandler                   */
 /* ==================================================================== */
 /************************************************************************/
+
+#ifndef DOXYGEN_SKIP
 
 class VSIArchiveEntryFileOffset
 {
@@ -197,6 +211,8 @@ public:
     virtual VSIArchiveReader* OpenArchiveFile(const char* archiveFilename, const char* fileInArchiveName);
     virtual int FindFileInArchive(const char* archiveFilename, const char* fileInArchiveName, const VSIArchiveEntry** archiveEntry);
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 VSIVirtualHandle CPL_DLL *VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
 VSIVirtualHandle* VSICreateBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,

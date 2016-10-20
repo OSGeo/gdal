@@ -1,5 +1,5 @@
 /*****************************************************************************
- * $Id:  $
+ * $Id$
  *
  * Project:  Project:  Creates a jpeg header
  * Purpose:  Abbreviated JPEG support

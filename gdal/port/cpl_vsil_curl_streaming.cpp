@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for HTTP/FTP files in streaming mode
@@ -49,6 +48,8 @@ void VSIInstallS3StreamingFileHandler(void)
 }
 
 #else
+
+//! @cond Doxygen_Suppress
 
 #include <curl/curl.h>
 
@@ -166,8 +167,6 @@ typedef struct
     int             bDownloadHeaderOnly;
 } WriteFuncStruct;
 
-} /* end of anoymous namespace */
-
 /************************************************************************/
 /*                       VSICurlStreamingFSHandler                      */
 /************************************************************************/
@@ -186,7 +185,7 @@ protected:
 
 public:
     VSICurlStreamingFSHandler();
-    ~VSICurlStreamingFSHandler();
+    virtual ~VSICurlStreamingFSHandler();
 
     using VSIFilesystemHandler::Open;
 
@@ -262,15 +261,14 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   protected:
     virtual struct curl_slist* GetCurlHeaders(const CPLString& ) { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
-    bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
-    virtual bool CanRestartOnError(const char*, bool) { return false; }
+    virtual bool CanRestartOnError(const char* /*pszErrorMsg*/, bool /*bSetError*/ ) { return false; }
     virtual bool InterpretRedirect() { return true; }
     void SetURL(const char* pszURL);
 
   public:
 
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
-    ~VSICurlStreamingHandle();
+    virtual ~VSICurlStreamingHandle();
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
@@ -943,7 +941,8 @@ void VSICurlStreamingHandle::DownloadInThread()
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = true;
     }
-    if (bSupportGZip && CSLTestBoolean(CPLGetConfigOption("CPL_CURL_GZIP", "YES")))
+    if( bSupportGZip &&
+        CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
     {
         curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
@@ -1345,9 +1344,9 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
 /*                          AddRegion()                                 */
 /************************************************************************/
 
-void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
-                                         size_t          nSize,
-                                         GByte          *pData )
+void VSICurlStreamingHandle::AddRegion( vsi_l_offset nFileOffsetStart,
+                                        size_t nSize,
+                                        GByte *pData )
 {
     if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
         return;
@@ -1370,9 +1369,9 @@ void  VSICurlStreamingHandle::AddRegion( vsi_l_offset    nFileOffsetStart,
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Write( CPL_UNUSED const void *pBuffer,
-                                      CPL_UNUSED size_t nSize,
-                                      CPL_UNUSED size_t nMemb )
+size_t VSICurlStreamingHandle::Write( const void * /* pBuffer */,
+                                      size_t /* nSize */,
+                                      size_t /* nMemb */ )
 {
     return 0;
 }
@@ -1382,7 +1381,7 @@ size_t VSICurlStreamingHandle::Write( CPL_UNUSED const void *pBuffer,
 /************************************************************************/
 
 
-int       VSICurlStreamingHandle::Eof()
+int VSICurlStreamingHandle::Eof()
 {
     return bEOF;
 }
@@ -1391,7 +1390,7 @@ int       VSICurlStreamingHandle::Eof()
 /*                                 Flush()                              */
 /************************************************************************/
 
-int       VSICurlStreamingHandle::Flush()
+int VSICurlStreamingHandle::Flush()
 {
     return 0;
 }
@@ -1511,7 +1510,7 @@ VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    if( CSLTestBoolean( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "VSI_CACHE", "FALSE" ) ) )
         return VSICreateCachedFile( poHandle );
     else
         return poHandle;
@@ -1534,10 +1533,13 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     {
         return -1;
     }
-    if ( poHandle->IsKnownFileSize() ||
-         ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
-           CSLTestBoolean(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE", "YES"))) )
+    if( poHandle->IsKnownFileSize() ||
+        ((nFlags & VSI_STAT_SIZE_FLAG) && !poHandle->IsDirectory() &&
+         CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_SLOW_GET_SIZE",
+                                        "YES"))) )
+    {
         pStatBuf->st_size = poHandle->GetFileSize();
+    }
 
     int nRet = (poHandle->Exists()) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
@@ -1545,45 +1547,6 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
     delete poHandle;
     return nRet;
 }
-
-/************************************************************************/
-/*                   VSIInstallCurlFileHandler()                        */
-/************************************************************************/
-
-/**
- * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires libcurl)
- *
- * A special file handler is installed that allows on-the-fly sequential reading of files
- * streamed through HTTP/FTP web protocols (typically dynamically generated files),
- * without prior download of the entire file.
- *
- * Although this file handler is able seek to random offsets in the file, this will not
- * be efficient. If you need efficient random access and that the server supports range
- * dowloading, you should use the /vsicurl/ file system handler instead.
- *
- * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/resource or
- * /vsicurl_streaming/ftp://path/to/remote/resource where path/to/remote/resource is the
- * URL of a remote resource.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
- * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
- * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
- * the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member and file
- * nature- file or directory - in st_mode member (the later only reliable with FTP
- * resources for now).
- *
- * @since GDAL 1.10
- */
-void VSIInstallCurlStreamingFileHandler(void)
-{
-    VSIFileManager::InstallHandler( "/vsicurl_streaming/", new VSICurlStreamingFSHandler );
-}
-
 
 /************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */
@@ -1647,13 +1610,13 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
   protected:
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
         virtual bool StopReceivingBytesOnError() { return false; }
-        virtual bool CanRestartOnError(const char*, bool);
+        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError);
         virtual bool InterpretRedirect() { return false; }
 
     public:
         VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,
                              VSIS3HandleHelper* poS3HandleHelper);
-        ~VSIS3StreamingHandle();
+        virtual ~VSIS3StreamingHandle();
 };
 
 /************************************************************************/
@@ -1715,6 +1678,48 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetE
         return true;
     }
     return false;
+}
+
+//! @endcond
+
+} /* end of anoymous namespace */
+
+/************************************************************************/
+/*                   VSIInstallCurlFileHandler()                        */
+/************************************************************************/
+
+/**
+ * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires libcurl)
+ *
+ * A special file handler is installed that allows on-the-fly sequential reading of files
+ * streamed through HTTP/FTP web protocols (typically dynamically generated files),
+ * without prior download of the entire file.
+ *
+ * Although this file handler is able seek to random offsets in the file, this will not
+ * be efficient. If you need efficient random access and that the server supports range
+ * dowloading, you should use the /vsicurl/ file system handler instead.
+ *
+ * Recognized filenames are of the form /vsicurl_streaming/http://path/to/remote/resource or
+ * /vsicurl_streaming/ftp://path/to/remote/resource where path/to/remote/resource is the
+ * URL of a remote resource.
+ *
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
+ * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
+ * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * The file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
+ * the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * VSIStatL() will return the size in st_size member and file
+ * nature- file or directory - in st_mode member (the later only reliable with FTP
+ * resources for now).
+ *
+ * @since GDAL 1.10
+ */
+void VSIInstallCurlStreamingFileHandler(void)
+{
+    VSIFileManager::InstallHandler( "/vsicurl_streaming/", new VSICurlStreamingFSHandler );
 }
 
 /************************************************************************/

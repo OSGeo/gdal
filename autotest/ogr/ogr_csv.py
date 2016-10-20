@@ -2448,6 +2448,44 @@ def ogr_csv_47():
     return 'success'
 
 ###############################################################################
+# Test reading/writing StringList, etc..
+
+def ogr_csv_48():
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList\n')
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_48.csv',
+"""stringlist,intlist,int64list,reallist
+"[""a"",null]","[1]","[1234567890123]","[0.125]"
+""")
+
+    gdal.VectorTranslate('/vsimem/ogr_csv_48_out.csv', '/vsimem/ogr_csv_48.csv', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_48_out.csv', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('stringlist,intlist,int64list,reallist\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125000 ]') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_csv_48_out.csvt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_csv_48.csv')
+    gdal.Unlink('/vsimem/ogr_csv_48.csvt')
+    gdal.Unlink('/vsimem/ogr_csv_48_out.csv')
+    gdal.Unlink('/vsimem/ogr_csv_48_out.csvt')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -2529,6 +2567,7 @@ gdaltest_list = [
     ogr_csv_45,
     ogr_csv_46,
     ogr_csv_47,
+    ogr_csv_48,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

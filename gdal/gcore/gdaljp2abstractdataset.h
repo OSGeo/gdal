@@ -31,6 +31,7 @@
 #ifndef GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
 #define GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
 
+//! @cond Doxygen_Suppress
 #include "gdalgeorefpamdataset.h"
 
 class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
@@ -57,5 +58,6 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
         virtual int         GetLayerCount();
         virtual OGRLayer   *GetLayer( int i );
 };
+//! @endcond
 
 #endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: rpftocdataset.cpp
  *
  * Project:  RPF TOC read Translator
  * Purpose:  Implementation of RPFTOCDataset and RPFTOCSubDataset.
@@ -62,7 +61,7 @@ static const int GEOTRSFRM_NS_RES = 5;
 
 class RPFTOCDataset : public GDALPamDataset
 {
-  char	    **papszSubDatasets;
+  char      **papszSubDatasets;
   char       *pszProjection;
   int         bGotGeoTransform;
   double      adfGeoTransform[6];
@@ -222,7 +221,8 @@ class RPFTOCProxyRasterDataSet : public GDALProxyPoolDataset
     /* The following parameters are only for sanity checking */
     int checkDone;
     int checkOK;
-    double nwLong, nwLat;
+    double nwLong;
+    double nwLat;
     GDALColorTable* colorTableRef;
     int bHasNoDataValue;
     double noDataValue;
@@ -553,34 +553,43 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*                    RPFTOCProxyRasterDataSet()                         */
 /************************************************************************/
 
-RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet
-        (RPFTOCSubDataset* subdatasetIn,
-         const char* fileNameIn,
-         int nRasterXSizeIn, int nRasterYSizeIn,
-         int nBlockXSizeIn, int nBlockYSizeIn,
-         const char* projectionRefIn, double nwLongIn, double nwLatIn,
-         int nBandsIn) :
-    /* Mark as shared since the VRT will take several references if we are in RGBA mode (4 bands for this dataset) */
-            GDALProxyPoolDataset(fileNameIn, nRasterXSizeIn, nRasterYSizeIn, GA_ReadOnly, TRUE, projectionRefIn),
+RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet(
+    RPFTOCSubDataset* subdatasetIn,
+    const char* fileNameIn,
+    int nRasterXSizeIn, int nRasterYSizeIn,
+    int nBlockXSizeIn, int nBlockYSizeIn,
+    const char* projectionRefIn, double nwLongIn, double nwLatIn,
+    int nBandsIn ) :
+    // Mark as shared since the VRT will take several references if we are in
+    // RGBA mode (4 bands for this dataset).
+    GDALProxyPoolDataset(fileNameIn, nRasterXSizeIn, nRasterYSizeIn,
+                         GA_ReadOnly, TRUE, projectionRefIn),
     checkDone(FALSE),
     checkOK(FALSE),
+    nwLong(nwLongIn),
+    nwLat(nwLatIn),
     colorTableRef(NULL),
     bHasNoDataValue(FALSE),
-    noDataValue(0)
+    noDataValue(0),
+    subdataset(subdatasetIn)
 {
-    this->subdataset = subdatasetIn;
-    this->nwLong = nwLongIn;
-    this->nwLat = nwLatIn;
-
     if (nBandsIn == 4)
     {
         for( int i = 0; i < 4; i++ )
         {
-            SetBand(i + 1, new RPFTOCProxyRasterBandRGBA(this, i+1, nBlockXSizeIn, nBlockYSizeIn));
+            SetBand(
+                i + 1,
+                new RPFTOCProxyRasterBandRGBA(this, i+1,
+                                              nBlockXSizeIn, nBlockYSizeIn));
         }
     }
     else
-        SetBand(1, new RPFTOCProxyRasterBandPalette(this, 1, nBlockXSizeIn, nBlockYSizeIn));
+    {
+        SetBand(
+            1,
+            new RPFTOCProxyRasterBandPalette(this, 1,
+                                             nBlockXSizeIn, nBlockYSizeIn));
+    }
 }
 
 /************************************************************************/
@@ -626,7 +635,7 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* sourceDS)
 
 static const char* MakeTOCEntryName(RPFTocEntry* tocEntry )
 {
-    char* str;
+    char* str = NULL;
     if (tocEntry->seriesAbbreviation)
         str = const_cast<char *>(
             CPLSPrintf( "%s_%s_%s_%s_%d", tocEntry->type,
@@ -653,7 +662,7 @@ static const char* MakeTOCEntryName(RPFTocEntry* tocEntry )
 void RPFTOCDataset::AddSubDataset( const char* pszFilename,  RPFTocEntry* tocEntry )
 
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
@@ -1159,8 +1168,8 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 48 )
         return FALSE;

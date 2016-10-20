@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCI .aux Driver
  * Purpose:  Implementation of PAuxDataset

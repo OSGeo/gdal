@@ -188,7 +188,7 @@ int main( int argc, char ** argv )
         DumpMagic( psInfo, bMagic );
 
 /* -------------------------------------------------------------------- */
-/*      Read a block, and report it's contents.                         */
+/*      Read a block, and report its contents.                          */
 /* -------------------------------------------------------------------- */
     panRaster = (GInt32 *)
         CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);

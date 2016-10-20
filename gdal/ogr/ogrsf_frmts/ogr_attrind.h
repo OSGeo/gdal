@@ -32,6 +32,8 @@
 
 #include "ogrsf_frmts.h"
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                             OGRAttrIndex                             */
 /*                                                                      */
@@ -88,6 +90,7 @@ public:
 
 OGRLayerAttrIndex CPL_DLL *OGRCreateDefaultLayerIndex();
 
+//! @endcond
 
 #endif /* ndef OGR_ATTRIND_H_INCLUDED */
 

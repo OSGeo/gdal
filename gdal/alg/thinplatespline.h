@@ -30,6 +30,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef THINPLATESPLINE_H_INCLUDED
+#define THINPLATESPLINE_H_INCLUDED
+
+#ifndef DOXYGEN_SKIP
+
 #include "gdal_alg.h"
 #include "cpl_conv.h"
 
@@ -183,5 +188,9 @@ class VizGeorefSpline2D
     int *index; // [VIZ_GEOREF_SPLINE_MAX_POINTS];
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D);
+    CPL_DISALLOW_COPY_ASSIGN(VizGeorefSpline2D)
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
+
+#endif /* THINPLATESPLINE_H_INCLUDED */

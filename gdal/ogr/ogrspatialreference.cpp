@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSpatialReference class.
@@ -134,10 +133,11 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference( const char *pszWKT )
 
 /************************************************************************/
 /*                        OGRSpatialReference()                         */
-/*                                                                      */
-/*      Simple copy constructor.  See also Clone().                     */
 /************************************************************************/
 
+/** Simple copy constructor. See also Clone().
+ * @param oOther other spatial reference
+ */
 OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
     dfFromGreenwich(0.0),
     dfToMeter(0.0),
@@ -241,14 +241,21 @@ void OGRSpatialReference::Clear()
 /*                             operator=()                              */
 /************************************************************************/
 
+/** Assignment operator.
+ * @param oSource SRS to assing to *this
+ * @return *this
+ */
 OGRSpatialReference &
 OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
 
 {
-    Clear();
+    if( &oSource != this )
+    {
+        Clear();
 
-    if( oSource.poRoot != NULL )
-        poRoot = oSource.poRoot->Clone();
+        if( oSource.poRoot != NULL )
+            poRoot = oSource.poRoot->Clone();
+    }
 
     return *this;
 }
@@ -447,6 +454,24 @@ OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
     return poNode;
 }
 
+/**
+ * \brief Find named node in tree.
+ *
+ * This method does a pre-order traversal of the node tree searching for
+ * a node with this exact value (case insensitive), and returns it.  Leaf
+ * nodes are not considered, under the assumption that they are just
+ * attribute value nodes.
+ *
+ * If a node appears more than once in the tree (such as UNIT for instance),
+ * the first encountered will be returned.  Use GetNode() on a subtree to be
+ * more specific.
+ *
+ * @param pszNodePath the name of the node to search for.  May contain multiple
+ * components such as "GEOGCS|UNIT".
+ *
+ * @return a pointer to the node found, or NULL if none.
+ */
+
 const OGR_SRSNode *
 OGRSpatialReference::GetAttrNode( const char * pszNodePath ) const
 
@@ -553,10 +578,10 @@ OGRSpatialReferenceH CPL_STDCALL OSRClone( OGRSpatialReferenceH hSRS )
 
 /************************************************************************/
 /*                            dumpReadable()                            */
-/*                                                                      */
-/*      Dump pretty wkt to stdout, mostly for debugging.                */
 /************************************************************************/
 
+/** Dump pretty wkt to stdout, mostly for debugging.
+ */
 void OGRSpatialReference::dumpReadable()
 
 {
@@ -805,9 +830,9 @@ OGRErr OGRSpatialReference::SetNode( const char * pszNodePath,
     OGR_SRSNode *poNode = GetRoot();
     for( int i = 1; papszPathTokens[i] != NULL; i++ )
     {
-        int j;
+        int j = 0;  // Used after for.
 
-        for( j = 0; j < poNode->GetChildCount(); j++ )
+        for( ; j < poNode->GetChildCount(); j++ )
         {
             if( EQUAL(poNode->GetChild( j )->GetValue(),papszPathTokens[i]) )
             {
@@ -860,6 +885,23 @@ OGRErr CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
 /************************************************************************/
 /*                              SetNode()                               */
 /************************************************************************/
+
+/**
+ * \brief Set attribute value in spatial reference.
+ *
+ * Missing intermediate nodes in the path will be created if not already
+ * in existence.  If the attribute has no children one will be created and
+ * assigned the value otherwise the zeroth child will be assigned the value.
+ *
+ * This method does the same as the C function OSRSetAttrValue().
+ *
+ * @param pszNodePath full path to attribute to be set.  For instance
+ * "PROJCS|GEOGCS|UNIT".
+ *
+ * @param dfValue value to be assigned to node.
+ *
+ * @return OGRERR_NONE on success.
+ */
 
 OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
                                      double dfValue )
@@ -1266,7 +1308,7 @@ OGRErr OSRSetTargetLinearUnits( OGRSpatialReferenceH hSRS,
  * This method only checks directly under the PROJCS, GEOCCS or LOCAL_CS node
  * for units.
  *
- * This method does the same thing as the C function OSRGetLinearUnits()/
+ * This method does the same thing as the C function OSRGetLinearUnits()
  *
  * @param ppszName a pointer to be updated with the pointer to the units name.
  * The returned value remains internal to the OGRSpatialReference and should
@@ -1309,13 +1351,15 @@ double OSRGetLinearUnits( OGRSpatialReferenceH hSRS, char ** ppszName )
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
  *
- * This method does the same thing as the C function OSRGetTargetLinearUnits()/
+ * This method does the same thing as the C function OSRGetTargetLinearUnits()
  *
- * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS".  @param
- * ppszName a pointer to be updated with the pointer to the units name.  The
- * returned value remains internal to the OGRSpatialReference and should not
+ * @param pszTargetKey the key to look on. i.e. "PROJCS" or "VERT_CS". Might be
+ * NULL, in which case PROJCS will be implied (and if not found, LOCAL_CS,
+ * GEOCCS and VERT_CS are looked up)
+ * @param ppszName a pointer to be updated with the pointer to the units name.
+ * The returned value remains internal to the OGRSpatialReference and should not
  * be freed, or modified.  It may be invalidated on the next
- * OGRSpatialReference call.
+ * OGRSpatialReference call. ppszName can be set to NULL.
  *
  * @return the value to multiply by linear distances to transform them to
  * meters.
@@ -2281,13 +2325,12 @@ OGRErr OGRSpatialReference::importFromURNPart(const char* pszAuthority,
 /* -------------------------------------------------------------------- */
     else if( STARTS_WITH_CI(pszCode, "AUTO") )
     {
-      char szWMSAuto[100] = { '\0' };
+        char szWMSAuto[100] = { '\0' };
 
         if( strlen(pszCode) > sizeof(szWMSAuto)-2 )
             return OGRERR_FAILURE;
 
-        strcpy( szWMSAuto, "AUTO:" );
-        strcpy( szWMSAuto + 5, pszCode + 4 );
+        snprintf( szWMSAuto, sizeof(szWMSAuto), "AUTO:%s", pszCode + 4 );
         for( int i = 5; szWMSAuto[i] != '\0'; i++ )
         {
             if( szWMSAuto[i] == ':' )
@@ -2529,7 +2572,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
             const char* pszUrlEnd = strstr(pszCur, searchStr);
 
             // figure out the next component URL
-            char* pszComponentUrl;
+            char* pszComponentUrl = NULL;
 
             if( pszUrlEnd )
             {
@@ -5772,12 +5815,11 @@ OGRErr OGRSpatialReference::SetAuthority( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
 /*      Create a new authority node.                                    */
 /* -------------------------------------------------------------------- */
-    char   szCode[32];
-    OGR_SRSNode *poAuthNode;
+    char szCode[32];
 
     snprintf( szCode, sizeof(szCode), "%d", nCode );
 
-    poAuthNode = new OGR_SRSNode( "AUTHORITY" );
+    OGR_SRSNode *poAuthNode = new OGR_SRSNode( "AUTHORITY" );
     poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
     poAuthNode->AddChild( new OGR_SRSNode( szCode ) );
 
@@ -5838,12 +5880,9 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode  *poNode;
-
-    if( pszTargetKey == NULL )
-        poNode = poRoot;
-    else
-        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode  *poNode = pszTargetKey == NULL
+        ? poRoot
+        : ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
@@ -6808,9 +6847,12 @@ OGRErr OSRGetTOWGS84( OGRSpatialReferenceH hSRS,
 
 /************************************************************************/
 /*                         IsAngularParameter()                         */
-/*                                                                      */
-/*      Is the passed projection parameter an angular one?              */
 /************************************************************************/
+
+/** Is the passed projection parameter an angular one?
+ *
+ * @return TRUE or FALSE
+ */
 
 int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
 
@@ -6828,10 +6870,13 @@ int OGRSpatialReference::IsAngularParameter( const char *pszParameterName )
 
 /************************************************************************/
 /*                        IsLongitudeParameter()                        */
-/*                                                                      */
-/*      Is the passed projection parameter an angular longitude         */
-/*      (relative to a prime meridian)?                                 */
 /************************************************************************/
+
+/** Is the passed projection parameter an angular longitude
+ * (relative to a prime meridian)?
+ *
+ * @return TRUE or FALSE
+ */
 
 int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 
@@ -6845,11 +6890,13 @@ int OGRSpatialReference::IsLongitudeParameter( const char *pszParameterName )
 
 /************************************************************************/
 /*                         IsLinearParameter()                          */
-/*                                                                      */
-/*      Is the passed projection parameter an linear one measured in    */
-/*      meters or some similar linear measure.                          */
 /************************************************************************/
 
+/** Is the passed projection parameter an linear one measured in meters or
+ * some similar linear measure.
+ *
+ * @return TRUE or FALSE
+ */
 int OGRSpatialReference::IsLinearParameter( const char *pszParameterName )
 
 {
@@ -7029,12 +7076,9 @@ const char *OGRSpatialReference::GetExtension( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
 /*      Find the target node.                                           */
 /* -------------------------------------------------------------------- */
-    const OGR_SRSNode  *poNode;
-
-    if( pszTargetKey == NULL )
-        poNode = poRoot;
-    else
-        poNode = const_cast<OGRSpatialReference *>(this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode *poNode = pszTargetKey == NULL
+        ? poRoot
+        : const_cast<OGRSpatialReference *>(this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;

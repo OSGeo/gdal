@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  GDALWMSMiniDriver base class implementation.
@@ -29,17 +28,18 @@
 
 #include "wmsdriver.h"
 
+CPL_CVSID("$Id$");
+
 static volatile GDALWMSMiniDriverManager *g_mini_driver_manager = NULL;
 static CPLMutex *g_mini_driver_manager_mutex = NULL;
 
-GDALWMSMiniDriver::GDALWMSMiniDriver() {
-    m_parent_dataset = NULL;
-}
+GDALWMSMiniDriver::GDALWMSMiniDriver() :
+    m_parent_dataset(NULL)
+{}
 
-GDALWMSMiniDriver::~GDALWMSMiniDriver() {
-}
+GDALWMSMiniDriver::~GDALWMSMiniDriver() {}
 
-CPLErr GDALWMSMiniDriver::Initialize(CPL_UNUSED CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver::Initialize(CPL_UNUSED CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     return CE_None;
 }
 
@@ -66,11 +66,9 @@ const char *GDALWMSMiniDriver::GetProjectionInWKT() {
     return NULL;
 }
 
-GDALWMSMiniDriverFactory::GDALWMSMiniDriverFactory() {
-}
+GDALWMSMiniDriverFactory::GDALWMSMiniDriverFactory() {}
 
-GDALWMSMiniDriverFactory::~GDALWMSMiniDriverFactory() {
-}
+GDALWMSMiniDriverFactory::~GDALWMSMiniDriverFactory() {}
 
 GDALWMSMiniDriverManager *GetGDALWMSMiniDriverManager() {
     if (g_mini_driver_manager == NULL) {
@@ -103,8 +101,7 @@ void DestroyWMSMiniDriverManager()
     }
 }
 
-GDALWMSMiniDriverManager::GDALWMSMiniDriverManager() {
-}
+GDALWMSMiniDriverManager::GDALWMSMiniDriverManager() {}
 
 GDALWMSMiniDriverManager::~GDALWMSMiniDriverManager() {
     for (std::list<GDALWMSMiniDriverFactory *>::iterator it = m_mdfs.begin();

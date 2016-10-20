@@ -43,12 +43,13 @@ from osgeo import osr
 def osr_usgs_1():
 
     srs = osr.SpatialReference()
-    srs.ImportFromUSGS(8, 0, \
-		       (0.0, 0.0, \
-		        gdal.DecToPackedDMS(47.0), gdal.DecToPackedDMS(62.0), \
-			gdal.DecToPackedDMS(45.0), gdal.DecToPackedDMS(54.5), \
-			0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0), \
-		       15)
+    srs.ImportFromUSGS(
+        8, 0,
+        (0.0, 0.0,
+         gdal.DecToPackedDMS(47.0), gdal.DecToPackedDMS(62.0),
+         gdal.DecToPackedDMS(45.0), gdal.DecToPackedDMS(54.5),
+         0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        15)
 
     if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1)-47.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2)-62.0)>0.0000005 \

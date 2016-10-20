@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement XML validation against XSD schema
@@ -54,9 +53,20 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_RECENT_LIBXML2
 #include <string.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <libxml/xmlschemas.h>
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
@@ -1046,7 +1056,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
  *
  * @param pszXMLFilename the filename of the XML file to validate.
  * @param pszXSDFilename the filename of the XSD schema.
- * @param papszOptions unused for now.
+ * @param papszOptions unused for now. Set to NULL.
  * @return TRUE if the XML file validates against the XML schema.
  *
  * @since GDAL 1.10.0
@@ -1054,7 +1064,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 
 int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
-                    char** /* papszOptions */ )
+                    CPL_UNUSED char** papszOptions )
 {
     char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;

@@ -2444,6 +2444,9 @@ def ogr_fgdb_21():
 
 def ogr_fgdb_22():
 
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
     ds = ogr.Open('data/curves.gdb')
     lyr = ds.GetLayerByName('line')
     ds_ref = ogr.Open('data/curves_line.csv')
@@ -2478,6 +2481,22 @@ def ogr_fgdb_22():
             print(f.GetGeometryRef().ExportToWkt())
             print(f_ref.GetGeometryRef().ExportToWkt())
             return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test opening '.'
+
+def ogr_fgdb_23():
+
+    if ogrtest.fgdb_drv is None:
+        return 'skip'
+
+    os.chdir('data/curves.gdb')
+    ds = ogr.Open('.')
+    os.chdir('../..')
+    if ds is None:
+        return 'fail'
 
     return 'success'
 
@@ -2541,6 +2560,7 @@ gdaltest_list = [
     ogr_fgdb_20,
     ogr_fgdb_21,
     ogr_fgdb_22,
+    ogr_fgdb_23,
     ogr_fgdb_cleanup,
     ]
 

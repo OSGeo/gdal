@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRVFKDatasource class.
@@ -38,15 +37,12 @@ CPL_CVSID("$Id$");
 /*!
   \brief OGRVFKDataSource constructor
 */
-OGRVFKDataSource::OGRVFKDataSource()
-{
-    pszName    = NULL;
-
-    poReader   = NULL;
-
-    papoLayers = NULL;
-    nLayers    = 0;
-}
+OGRVFKDataSource::OGRVFKDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    pszName(NULL),
+    poReader(NULL)
+{}
 
 /*!
   \brief OGRVFKDataSource destructor
@@ -55,10 +51,10 @@ OGRVFKDataSource::~OGRVFKDataSource()
 {
     CPLFree(pszName);
 
-    if (poReader)
+    if( poReader )
         delete poReader;
 
-    for(int i = 0; i < nLayers; i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree(papoLayers);
@@ -74,9 +70,7 @@ OGRVFKDataSource::~OGRVFKDataSource()
 */
 int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
 {
-    GDALOpenInfo *poOpenInfo;
-
-    poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
+    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
 
     if (poOpenInfo->fpL == NULL) {
         if (!bTestOpen)
@@ -179,13 +173,10 @@ int OGRVFKDataSource::TestCapability(const char * pszCap)
 */
 OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataBlock)
 {
-    OGRVFKLayer *poLayer;
-
-    poLayer = NULL;
-
     /* create an empty layer */
-    poLayer = new OGRVFKLayer(poDataBlock->GetName(), NULL,
-                              poDataBlock->GetGeometryType(), this);
+    OGRVFKLayer *poLayer =
+        new OGRVFKLayer(poDataBlock->GetName(), NULL,
+                        poDataBlock->GetGeometryType(), this);
 
     /* define attributes (properties) */
     for (int iField = 0; iField < poDataBlock->GetPropertyCount(); iField++) {

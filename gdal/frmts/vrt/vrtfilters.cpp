@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of some filter types.
@@ -34,6 +33,8 @@
 #include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -82,7 +83,7 @@ void VRTFilteredSource::SetFilteringDataTypesSupported( int nTypeCount,
     if( nTypeCount >
         static_cast<int>( sizeof(m_aeSupportedTypes) / sizeof(GDALDataType) ) )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         nTypeCount = static_cast<int>(
             sizeof(m_aeSupportedTypes) / sizeof(GDALDataType) );
     }
@@ -290,12 +291,14 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Load the data.                                                  */
 /* -------------------------------------------------------------------- */
     {
+        const bool bIsComplex = CPL_TO_BOOL( GDALDataTypeIsComplex(eOperDataType) );
         const CPLErr eErr
-            = VRTComplexSource::RasterIOInternal(
+            = VRTComplexSource::RasterIOInternal<float>(
                 nFileXOff, nFileYOff, nFileXSize, nFileYSize,
                 pabyWorkData + nLineOffset * nTopFill + nPixelOffset * nLeftFill,
                 nFileXSize, nFileYSize, eOperDataType,
-                nPixelOffset, nLineOffset, psExtraArg );
+                nPixelOffset, nLineOffset, psExtraArg,
+                bIsComplex ? GDT_CFloat32 : GDT_Float32 );
 
         if( eErr != CE_None )
         {
@@ -665,3 +668,5 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath )
 
     return NULL;
 }
+
+/*! @endcond */

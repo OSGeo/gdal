@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  APP ENVISAT Support
  * Purpose:  GCPs Unwrapping for products crossing the WGS84 date-line
@@ -30,6 +29,8 @@
 #include "gdal.h"
 #include <cmath>
 #include <cstdio>
+
+CPL_CVSID("$Id$");
 
 // number of histogram bins (36 a 10dg)
 static const int NBIN = 36;
@@ -110,7 +111,7 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
 
     double tmp = ((i1-i0)*0.5+i0)/((float)NBIN) ;
 
-    return (tmp-floor(tmp))*XDIF + XMIN ;
+    return (tmp-floor(tmp))*XDIF + XMIN;
 }
 
 

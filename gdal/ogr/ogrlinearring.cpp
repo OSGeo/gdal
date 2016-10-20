@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRLinearRing geometry class.
@@ -37,6 +36,7 @@ CPL_CVSID("$Id$");
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor */
 OGRLinearRing::OGRLinearRing()
 
 {
@@ -73,6 +73,9 @@ OGRLinearRing::~OGRLinearRing()
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
+/** Constructor
+ * @param poSrcRing source ring.
+ */
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
@@ -173,6 +176,7 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 /*      method!                                                         */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                       unsigned char * pabyData,
                                       int nBytesAvailable )
@@ -297,7 +301,6 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
                                      unsigned char * pabyData ) const
 
 {
-    int   i, nWords;
 
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
@@ -307,10 +310,11 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
+    int nWords;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
     {
         nWords = 4 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*32, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*32+8, &(paoPoints[i].y), 8 );
@@ -327,7 +331,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     else if( _flags & OGR_G_MEASURED )
     {
         nWords = 3 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
@@ -340,7 +344,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     else if( _flags & OGR_G_3D )
     {
         nWords = 3 * nPointCount;
-        for( i = 0; i < nPointCount; i++ )
+        for( int i = 0; i < nPointCount; i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
@@ -361,12 +365,10 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int     nCount;
-
-        nCount = CPL_SWAP32( nPointCount );
+        int nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData, &nCount, 4 );
 
-        for( i = 0; i < nWords; i++ )
+        for( int i = 0; i < nWords; i++ )
         {
             CPL_SWAPDOUBLE( pabyData + 4 + 8 * i );
         }
@@ -391,6 +393,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
     else
         return 4 + 16 * nPointCount;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               clone()                                */
@@ -402,9 +405,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
 OGRGeometry *OGRLinearRing::clone() const
 
 {
-    OGRLinearRing       *poNewLinearRing;
-
-    poNewLinearRing = new OGRLinearRing();
+    OGRLinearRing *poNewLinearRing = new OGRLinearRing();
     poNewLinearRing->assignSpatialReference( getSpatialReference() );
 
     poNewLinearRing->setPoints( nPointCount, paoPoints, padfZ, padfM );
@@ -438,16 +439,14 @@ static inline bool epsilonEqual(double a, double b, double eps)
 int OGRLinearRing::isClockwise() const
 
 {
-    int    i, v, next;
-    double  dx0, dy0, dx1, dy1, crossproduct;
-    bool bUseFallback = false;
-
     if( nPointCount < 2 )
         return TRUE;
 
-    /* Find the lowest rightmost vertex */
-    v = 0;
-    for ( i = 1; i < nPointCount - 1; i++ )
+    bool bUseFallback = false;
+
+    // Find the lowest rightmost vertex.
+    int v = 0;  // Used after for.
+    for ( int i = 1; i < nPointCount - 1; i++ )
     {
         /* => v < end */
         if ( paoPoints[i].y< paoPoints[v].y ||
@@ -466,8 +465,8 @@ int OGRLinearRing::isClockwise() const
         }
     }
 
-    /* previous */
-    next = v - 1;
+    // Previous.
+    int next = v - 1;
     if ( next < 0 )
     {
         next = nPointCount - 1 - 1;
@@ -481,10 +480,10 @@ int OGRLinearRing::isClockwise() const
         bUseFallback = true;
     }
 
-    dx0 = paoPoints[next].x - paoPoints[v].x;
-    dy0 = paoPoints[next].y - paoPoints[v].y;
+    const double dx0 = paoPoints[next].x - paoPoints[v].x;
+    const double dy0 = paoPoints[next].y - paoPoints[v].y;
 
-    /* following */
+    // Following.
     next = v + 1;
     if ( next >= nPointCount - 1 )
     {
@@ -499,10 +498,10 @@ int OGRLinearRing::isClockwise() const
         bUseFallback = true;
     }
 
-    dx1 = paoPoints[next].x - paoPoints[v].x;
-    dy1 = paoPoints[next].y - paoPoints[v].y;
+    const double dx1 = paoPoints[next].x - paoPoints[v].x;
+    const double dy1 = paoPoints[next].y - paoPoints[v].y;
 
-    crossproduct = dx1 * dy0 - dx0 * dy1;
+    const double crossproduct = dx1 * dy0 - dx0 * dy1;
 
     if (!bUseFallback)
     {
@@ -512,18 +511,22 @@ int OGRLinearRing::isClockwise() const
             return TRUE;
     }
 
-    /* ok, this is a degenerate case : the extent of the polygon is less than EPSILON */
-    /* or 2 nearly identical points were found */
-    /* Try with Green Formula as a fallback, but this is not a guarantee */
-    /* as we'll probably be affected by numerical instabilities */
+    // This is a degenerate case: the extent of the polygon is less than EPSILON
+    // or 2 nearly identical points were found.
+    // Try with Green Formula as a fallback, but this is not a guarantee
+    // as we'll probably be affected by numerical instabilities.
 
-    double dfSum = paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
+    double dfSum =
+        paoPoints[0].x * (paoPoints[1].y - paoPoints[nPointCount-1].y);
 
-    for (i=1; i<nPointCount-1; i++) {
+    for( int i = 1; i < nPointCount-1; i++ )
+    {
         dfSum += paoPoints[i].x * (paoPoints[i+1].y - paoPoints[i-1].y);
     }
 
-    dfSum += paoPoints[nPointCount-1].x * (paoPoints[0].y - paoPoints[nPointCount-2].y);
+    dfSum +=
+        paoPoints[nPointCount-1].x *
+        (paoPoints[0].y - paoPoints[nPointCount-2].y);
 
     return dfSum < 0;
 }
@@ -532,6 +535,8 @@ int OGRLinearRing::isClockwise() const
 /*                             reverseWindingOrder()                    */
 /************************************************************************/
 
+/** Reverse order of points.
+ */
 void OGRLinearRing::reverseWindingOrder()
 
 {
@@ -572,6 +577,12 @@ void OGRLinearRing::closeRings()
 /*                              isPointInRing()                         */
 /************************************************************************/
 
+/** Returns whether the point is inside the ring.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
@@ -601,7 +612,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
         }
     }
 
-	// For every point p in ring,
+    // For every point p in ring,
     // test if ray starting from given point crosses segment (p - 1, p)
     int iNumCrossings = 0;
 
@@ -640,6 +651,12 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
 /*                       isPointOnRingBoundary()                        */
 /************************************************************************/
 
+/** Returns whether the point is on the ring boundary.
+ * @param poPoint point
+ * @param bTestEnvelope set to TRUE if the presence of the point inside the
+ *                      ring envelope must be checked first.
+ * @return TRUE or FALSE.
+ */
 OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTestEnvelope) const
 {
     if ( NULL == poPoint )
@@ -720,6 +737,7 @@ OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
     return TransferMembersAndDestroy(poLR, new OGRLineString());
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
@@ -735,3 +753,4 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
 }
+//! @endcond

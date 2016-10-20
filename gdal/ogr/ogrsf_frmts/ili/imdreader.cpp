@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 1/2 Translator
  * Purpose:  IlisMeta model reader.
@@ -194,7 +193,7 @@ public:
         // Delete default geometry field
         poTableDefn->DeleteGeomFieldDefn(0);
 
-        const char* psKind = CPLGetXMLValue( node, "Kind", NULL );
+        const char* psKind = CPLGetXMLValue( node, "Kind", "" );
 #ifdef DEBUG_VERBOSE
         CPLDebug( "OGR_ILI", "InitFieldDefinitions of '%s' kind: %s",
                   GetName(), psKind );
@@ -276,7 +275,7 @@ public:
                 }
                 else if (EQUAL(typeName, "IlisMeta07.ModelData.LineType"))
                 {
-                    const char* psKind = CPLGetXMLValue( psElementNode, "Kind", NULL );
+                    const char* psKind = CPLGetXMLValue( psElementNode, "Kind", "" );
                     poGeomFieldInfos[psName].iliGeomType = psKind;
                     bool isLinearType = (std::find(oArcLineTypes.begin(), oArcLineTypes.end(), psElementNode) == oArcLineTypes.end());
                     bool linearGeom = isLinearType || CPLTestBool(CPLGetConfigOption("OGR_STROKE_CURVE", "FALSE"));
@@ -334,20 +333,19 @@ public:
     }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(IliClass);
+    CPL_DISALLOW_COPY_ASSIGN(IliClass)
 };
 
 
 ImdReader::ImdReader(int iliVersionIn) :
     iliVersion(iliVersionIn),
-    modelInfos()
-{
-    mainModelName = "OGR";
-    mainTopicName = "OGR";
-    codeBlank = '_';
-    codeUndefined = '@';
-    codeContinue = '\\';
-}
+    modelInfos(),  // TODO(schwehr): Remove.  No need for default ctor, correct?
+    mainModelName("OGR"),
+    mainTopicName("OGR"),
+    codeBlank('_'),
+    codeUndefined('@'),
+    codeContinue('\\')
+{}
 
 ImdReader::~ImdReader() {}
 
@@ -366,13 +364,12 @@ void ImdReader::ReadModel(const char *pszFilename) {
     ClassesMap oClasses;
     NodeCountMap oAxisCount;
     NodeVector oArcLineTypes;
-    const char *modelName;
 
     /* Fill TID lookup map and IliClasses lookup map */
     CPLXMLNode* psModel = psSectionNode->psChild;
     while( psModel != NULL )
     {
-        modelName = CPLGetXMLValue( psModel, "BID", NULL );
+        const char *modelName = CPLGetXMLValue( psModel, "BID", NULL );
 #ifdef DEBUG_VERBOSE
         CPLDebug( "OGR_ILI", "Model: '%s'", modelName);
 #endif

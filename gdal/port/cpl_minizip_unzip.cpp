@@ -67,6 +67,8 @@ woven in by Terry Thorsen 1/2003.
 #   include <errno.h>
 #endif
 
+CPL_CVSID("$Id:");
+
 #ifndef CASESENSITIVITYDEFAULT_NO
 #  if !defined(unix) && !defined(CASESENSITIVITYDEFAULT_YES)
 #    define CASESENSITIVITYDEFAULT_NO
@@ -752,16 +754,17 @@ static void unzlocal_DosDateToTmuDate (uLong64 ulDosDate, tm_unz* ptm)
 /*
   Get Info about the current file in the zipfile, with internal only info
 */
-static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
-                                               unz_file_info *pfile_info,
-                                               unz_file_info_internal
-                                               *pfile_info_internal,
-                                               char *szFileName,
-                                               uLong fileNameBufferSize,
-                                               CPL_UNUSED void *extraField,
-                                               CPL_UNUSED uLong extraFieldBufferSize,
-                                               CPL_UNUSED char *szComment,
-                                               CPL_UNUSED uLong commentBufferSize)
+static int unzlocal_GetCurrentFileInfoInternal (
+    unzFile file,
+    unz_file_info *pfile_info,
+    unz_file_info_internal
+    *pfile_info_internal,
+    char *szFileName,
+    uLong fileNameBufferSize,
+    void * /* extraField */,
+    uLong /* extraFieldBufferSize */,
+    char * /* szComment */,
+    uLong /* commentBufferSize */ )
 {
     unz_s* s;
     unz_file_info file_info;

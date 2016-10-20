@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of OGRGTMDataSource class.
@@ -28,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include "ogr_gtm.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRGTMDataSource()                           */
@@ -320,7 +321,7 @@ int OGRGTMDataSource::Create( const char* pszFilename,
 
     if( fpOutput != NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return FALSE;
     }
 
@@ -548,7 +549,7 @@ int OGRGTMDataSource::getNWpts()
 bool OGRGTMDataSource::hasNextWaypoint()
 {
     if (poGTMFile == NULL)
-        return FALSE;
+        return false;
 
     return poGTMFile->hasNextWaypoint();
 }
@@ -603,7 +604,7 @@ int OGRGTMDataSource::getNTracks()
 bool OGRGTMDataSource::hasNextTrack()
 {
     if (poGTMFile == NULL)
-        return FALSE;
+        return false;
 
     return poGTMFile->hasNextTrack();
 }

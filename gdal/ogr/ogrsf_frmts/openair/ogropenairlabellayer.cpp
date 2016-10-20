@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenAir Translator
  * Purpose:  Implements OGROpenAirLabelLayer class.
@@ -50,13 +49,13 @@ OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp ) :
     poFeatureDefn->SetGeomType( wkbPoint );
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    OGRFieldDefn    oField1( "CLASS", OFTString);
+    OGRFieldDefn oField1( "CLASS", OFTString);
     poFeatureDefn->AddFieldDefn( &oField1 );
-    OGRFieldDefn    oField2( "NAME", OFTString);
+    OGRFieldDefn oField2( "NAME", OFTString);
     poFeatureDefn->AddFieldDefn( &oField2 );
-    OGRFieldDefn    oField3( "FLOOR", OFTString);
+    OGRFieldDefn oField3( "FLOOR", OFTString);
     poFeatureDefn->AddFieldDefn( &oField3 );
-    OGRFieldDefn    oField4( "CEILING", OFTString);
+    OGRFieldDefn oField4( "CEILING", OFTString);
     poFeatureDefn->AddFieldDefn( &oField4 );
 }
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -45,34 +44,36 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                           GDALWMSDataset()                           */
 /************************************************************************/
 GDALWMSDataset::GDALWMSDataset() :
+    m_mini_driver(NULL),
+    m_cache(NULL),
+    m_poColorTable(NULL),
+    m_data_type(GDT_Byte),
     m_block_size_x(0),
     m_block_size_y(0),
     m_use_advise_read(0),
     m_verify_advise_read(0),
     m_offline_mode(0),
     m_http_max_conn(0),
-    m_http_timeout(0)
+    m_http_timeout(0),
+    m_clamp_requests(true),
+    m_unsafeSsl(false),
+    m_zeroblock_on_serverexceptions(0),
+    m_default_block_size_x(1024),
+    m_default_block_size_y(1024),
+    m_default_tile_count_x(1),
+    m_default_tile_count_y(1),
+    m_default_overview_count(-1),
+    m_bNeedsDataWindow(TRUE)
 {
-    m_mini_driver = NULL;
-    m_cache = NULL;
     m_hint.m_valid = false;
-    m_data_type = GDT_Byte;
-    m_clamp_requests = true;
-    m_unsafeSsl = false;
     m_data_window.m_sx = -1;
     nBands = 0;
-    m_default_block_size_x = 1024;
-    m_default_block_size_y = 1024;
-    m_bNeedsDataWindow = TRUE;
-    m_default_tile_count_x = 1;
-    m_default_tile_count_y = 1;
-    m_default_overview_count = -1;
-    m_zeroblock_on_serverexceptions = 0;
-    m_poColorTable = NULL;
 }
 
 /************************************************************************/
@@ -87,7 +88,7 @@ GDALWMSDataset::~GDALWMSDataset() {
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
-CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions) {
     CPLErr ret = CE_None;
 
     char* pszXML = CPLSerializeXMLTree( config );
@@ -110,7 +111,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
             {
                 m_mini_driver = mdf->New();
                 m_mini_driver->m_parent_dataset = this;
-                if (m_mini_driver->Initialize(service_node) == CE_None)
+                if (m_mini_driver->Initialize(service_node, l_papszOpenOptions) == CE_None)
                 {
                     m_mini_driver_caps.m_capabilities_version = -1;
                     m_mini_driver->GetCapabilities(&m_mini_driver_caps);
@@ -524,12 +525,12 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config) {
     }
 
     if (ret == CE_None) {
-    	const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
-    	if (v == -1) {
-	    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
-	    ret = CE_Failure;
+        const int v = StrToBool(CPLGetXMLValue(config, "UnsafeSSL", "false"));
+        if (v == -1) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Invalid value of UnsafeSSL: true or false expected.");
+            ret = CE_Failure;
         } else {
-	    m_unsafeSsl = v;
+            m_unsafeSsl = v;
         }
     }
 
@@ -567,7 +568,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
     m_hint.m_sy = sy;
     m_hint.m_overview = -1;
     m_hint.m_valid = true;
-    //	printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
+    // printf("[%p] GDALWMSDataset::IRasterIO(x0: %d, y0: %d, sx: %d, sy: %d, bsx: %d, bsy: %d, band_count: %d, band_map: %p)\n", this, x0, y0, sx, sy, bsx, bsy, band_count, band_map);
     ret = GDALDataset::IRasterIO(rw, x0, y0, sx, sy, buffer, bsx, bsy, bdt, band_count, band_map,
                                  nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
     m_hint.m_valid = false;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTSourcedRasterBand
@@ -30,9 +29,12 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "ogr_geometry.h"
 
 #include "vrtdataset.h"
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -49,7 +51,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn ) :
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( poDSIn->GetRasterXSize(),
                                poDSIn->GetRasterYSize() );
@@ -68,7 +70,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataType eType,
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -86,7 +88,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
     m_papszSourceList(NULL),
     nSources(0),
     papoSources(NULL),
-    bEqualAreas(FALSE)
+    bSkipBufferInitialization(FALSE)
 {
     VRTRasterBand::Initialize( nXSize, nYSize );
 
@@ -122,43 +124,6 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                         GDALRasterIOExtraArg *psExtraArg )
 
 {
-    // If resampling with non-nearest neighbour, we need to be careful
-    // if the VRT band exposes a nodata value, but the sources do not have it
-    if( eRWFlag == GF_Read &&
-        (nXSize != nBufXSize || nYSize != nBufYSize) &&
-        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
-        m_bNoDataValueSet )
-    {
-        for( int i = 0; i < nSources; i++ )
-        {
-            bool bFallbackToBase = false;
-            if( !papoSources[i]->IsSimpleSource() )
-            {
-                bFallbackToBase = true;
-            }
-            else
-            {
-                VRTSimpleSource* const poSource
-                    = reinterpret_cast<VRTSimpleSource *>( papoSources[i] );
-                int bSrcHasNoData = FALSE;
-                const double dfSrcNoData =
-                    poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
-                if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
-                    bFallbackToBase = true;
-            }
-            if( bFallbackToBase )
-            {
-                return GDALRasterBand::IRasterIO( eRWFlag,
-                                                  nXOff, nYOff, nXSize, nYSize,
-                                                  pData, nBufXSize, nBufYSize,
-                                                  eBufType,
-                                                  nPixelSpace,
-                                                  nLineSpace,
-                                                  psExtraArg );
-            }
-        }
-    }
-
     if( eRWFlag == GF_Write )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -194,11 +159,76 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return CE_None;
     }
 
+    // If resampling with non-nearest neighbour, we need to be careful
+    // if the VRT band exposes a nodata value, but the sources do not have it
+    if( eRWFlag == GF_Read &&
+        (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+        m_bNoDataValueSet )
+    {
+        for( int i = 0; i < nSources; i++ )
+        {
+            bool bFallbackToBase = false;
+            if( !papoSources[i]->IsSimpleSource() )
+            {
+                bFallbackToBase = true;
+            }
+            else
+            {
+                VRTSimpleSource* const poSource
+                    = reinterpret_cast<VRTSimpleSource *>( papoSources[i] );
+                // The window we will actually request from the source raster band.
+                double dfReqXOff = 0.0;
+                double dfReqYOff = 0.0;
+                double dfReqXSize = 0.0;
+                double dfReqYSize = 0.0;
+                int nReqXOff = 0;
+                int nReqYOff = 0;
+                int nReqXSize = 0;
+                int nReqYSize = 0;
+
+                // The window we will actual set _within_ the pData buffer.
+                int nOutXOff = 0;
+                int nOutYOff = 0;
+                int nOutXSize = 0;
+                int nOutYSize = 0;
+
+                if( !poSource->GetSrcDstWindow( nXOff, nYOff, nXSize, nYSize,
+                                      nBufXSize, nBufYSize,
+                                      &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
+                                      &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                                      &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize ) )
+                {
+                    continue;
+                }
+                int bSrcHasNoData = FALSE;
+                const double dfSrcNoData =
+                    poSource->GetBand()->GetNoDataValue(&bSrcHasNoData);
+                if( !bSrcHasNoData || dfSrcNoData != m_dfNoDataValue )
+                    bFallbackToBase = true;
+            }
+            if( bFallbackToBase )
+            {
+                return GDALRasterBand::IRasterIO( eRWFlag,
+                                                  nXOff, nYOff, nXSize, nYSize,
+                                                  pData, nBufXSize, nBufYSize,
+                                                  eBufType,
+                                                  nPixelSpace,
+                                                  nLineSpace,
+                                                  psExtraArg );
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the buffer to some background value. Use the         */
 /*      nodata value if available.                                      */
 /* -------------------------------------------------------------------- */
-    if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+    if( bSkipBufferInitialization )
+    {
+        // Do nothing
+    }
+    else if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
          (!m_bNoDataValueSet || (!CPLIsNan(m_dfNoDataValue) &&
                                  m_dfNoDataValue == 0)) )
     {
@@ -217,7 +247,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
         }
     }
-    else if( !bEqualAreas || m_bNoDataValueSet )
+    else if( m_bNoDataValueSet )
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )
@@ -268,6 +298,125 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     return eErr;
 }
+
+/************************************************************************/
+/*                         IGetDataCoverageStatus()                     */
+/************************************************************************/
+
+#ifndef HAVE_GEOS
+int  VRTSourcedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
+                                                   int /* nYOff */,
+                                                   int /* nXSize */,
+                                                   int /* nYSize */,
+                                                   int /* nMaskFlagStop */,
+                                                   double* pdfDataPct)
+{
+    // TODO(rouault): Should this set pdfDataPct?
+    if( pdfDataPct != NULL )
+        *pdfDataPct = -1.0;
+    return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED | GDAL_DATA_COVERAGE_STATUS_DATA;
+}
+#else
+int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
+                                                   int nYOff,
+                                                   int nXSize,
+                                                   int nYSize,
+                                                   int nMaskFlagStop,
+                                                   double* pdfDataPct)
+{
+    if( pdfDataPct != NULL )
+        *pdfDataPct = -1.0;
+    int nStatus = 0;
+
+    OGRPolygon* poPolyNonCoveredBySources = new OGRPolygon();
+    OGRLinearRing* poLR = new OGRLinearRing();
+    poLR->addPoint( nXOff, nYOff );
+    poLR->addPoint( nXOff, nYOff + nYSize );
+    poLR->addPoint( nXOff + nXSize, nYOff + nYSize );
+    poLR->addPoint( nXOff + nXSize, nYOff );
+    poLR->addPoint( nXOff, nYOff );
+    poPolyNonCoveredBySources->addRingDirectly(poLR);
+
+    for( int iSource = 0; iSource < nSources; iSource++ )
+    {
+        if( !papoSources[iSource]->IsSimpleSource() )
+        {
+            delete poPolyNonCoveredBySources;
+            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+        }
+        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>(papoSources[iSource]);
+        // Check if the AOI is fully inside the source
+        if( nXOff >= poSS->m_dfDstXOff &&
+            nYOff >= poSS->m_dfDstYOff &&
+            nXOff + nXSize <= poSS->m_dfDstXOff + poSS->m_dfDstXSize &&
+            nYOff + nYSize <= poSS->m_dfDstYOff + poSS->m_dfDstYSize )
+        {
+            if( pdfDataPct )
+                *pdfDataPct = 100.0;
+            delete poPolyNonCoveredBySources;
+            return GDAL_DATA_COVERAGE_STATUS_DATA;
+        }
+        // Check intersection of bounding boxes.
+        if( poSS->m_dfDstXOff + poSS->m_dfDstXSize > nXOff &&
+            poSS->m_dfDstYOff + poSS->m_dfDstYSize > nYOff &&
+            poSS->m_dfDstXOff < nXOff + nXSize &&
+            poSS->m_dfDstYOff < nYOff + nYSize )
+        {
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
+            if( poPolyNonCoveredBySources != NULL )
+            {
+                OGRPolygon oPolySource;
+                poLR = new OGRLinearRing();
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff );
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
+                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
+                                poSS->m_dfDstYOff + poSS->m_dfDstYSize );
+                poLR->addPoint( poSS->m_dfDstXOff + poSS->m_dfDstXSize,
+                                poSS->m_dfDstYOff );
+                poLR->addPoint( poSS->m_dfDstXOff,
+                                poSS->m_dfDstYOff );
+                oPolySource.addRingDirectly(poLR);
+                OGRGeometry* poRes = poPolyNonCoveredBySources->Difference(&oPolySource);
+                if( poRes != NULL && poRes->IsEmpty() )
+                {
+                    delete poRes;
+                    if( pdfDataPct )
+                        *pdfDataPct = 100.0;
+                    delete poPolyNonCoveredBySources;
+                    return GDAL_DATA_COVERAGE_STATUS_DATA;
+                }
+                else if( poRes != NULL && poRes->getGeometryType() == wkbPolygon )
+                {
+                    delete poPolyNonCoveredBySources;
+                    poPolyNonCoveredBySources = reinterpret_cast<OGRPolygon*>(poRes);
+                }
+                else
+                {
+                    delete poRes;
+                    delete poPolyNonCoveredBySources;
+                    poPolyNonCoveredBySources = NULL;
+                }
+            }
+        }
+        if( nMaskFlagStop != 0 && (nStatus & nMaskFlagStop) != 0 )
+        {
+            delete poPolyNonCoveredBySources;
+            return nStatus;
+        }
+    }
+    if( poPolyNonCoveredBySources != NULL )
+    {
+        if( !poPolyNonCoveredBySources->IsEmpty() )
+            nStatus |= GDAL_DATA_COVERAGE_STATUS_EMPTY;
+        if( pdfDataPct != NULL )
+            *pdfDataPct = 100.0 * (1.0 - poPolyNonCoveredBySources->get_Area() / nXSize / nYSize);
+    }
+    delete poPolyNonCoveredBySources;
+    return nStatus;
+}
+#endif  // HAVE_GEOS
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -735,15 +884,22 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
 
     reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
-    if( poNewSource->IsSimpleSource() &&
-        GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
+    if( poNewSource->IsSimpleSource() )
     {
-        reinterpret_cast<VRTSimpleSource*>( poNewSource )->SetMaxValue(
-                (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+        VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>( poNewSource );
+        if( GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
+        {
+            poSS->SetMaxValue(
+                    (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+        }
+
+        CheckSource( poSS );
     }
 
     return CE_None;
 }
+
+/*! @endcond */
 
 /************************************************************************/
 /*                              VRTAddSource()                          */
@@ -762,6 +918,8 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
         AddSource( reinterpret_cast<VRTSource *>( hNewSource ) );
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
@@ -774,19 +932,6 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
         const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
         if( eErr != CE_None )
             return eErr;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Validate a bit.                                                 */
-/* -------------------------------------------------------------------- */
-    if( psTree == NULL || psTree->eType != CXT_Element
-        || (!EQUAL(psTree->pszValue,"VRTSourcedRasterBand")
-            && !EQUAL(psTree->pszValue,"VRTRasterBand")
-            && !EQUAL(psTree->pszValue,"VRTDerivedRasterBand")) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid node passed to VRTSourcedRasterBand::XMLInit()." );
-        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -814,9 +959,11 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Done.                                                           */
 /* -------------------------------------------------------------------- */
-    if( nSources == 0 )
-        CPLDebug( "VRT", "No valid sources found for band in VRT file:\n%s",
-                  pszVRTPath ? pszVRTPath : "(null)" );
+    const char* pszSubclass = CPLGetXMLValue( psTree, "subclass",
+                                              "VRTSourcedRasterBand" );
+    if( nSources == 0 && !EQUAL(pszSubclass,"VRTDerivedRasterBand") )
+        CPLDebug( "VRT", "No valid sources found for band in VRT file %s",
+                  GetDataset() ? GetDataset()->GetDescription() : "" );
 
     return CE_None;
 }
@@ -852,6 +999,31 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML( const char *pszVRTPath )
     }
 
     return psTree;
+}
+
+/************************************************************************/
+/*                            CheckSource()                             */
+/************************************************************************/
+
+void VRTSourcedRasterBand::CheckSource( VRTSimpleSource *poSS )
+{
+/* -------------------------------------------------------------------- */
+/*      Check if we can avoid buffer initialization.                    */
+/* -------------------------------------------------------------------- */
+
+    // Note: if one day we do alpha compositing, we will need to check that.
+    if( strcmp(poSS->GetType(), "SimpleSource") == 0 &&
+        poSS->m_dfSrcXOff >= 0.0 &&
+        poSS->m_dfSrcYOff >= 0.0 &&
+        poSS->m_dfSrcXOff + poSS->m_dfSrcXSize <= poSS->m_poRasterBand->GetXSize() &&
+        poSS->m_dfSrcYOff + poSS->m_dfSrcYSize <= poSS->m_poRasterBand->GetYSize() &&
+        poSS->m_dfDstXOff <= 0.0 &&
+        poSS->m_dfDstYOff <= 0.0 &&
+        poSS->m_dfDstXOff + poSS->m_dfDstXSize >= nRasterXSize &&
+        poSS->m_dfDstYOff + poSS->m_dfDstYSize >= nRasterYSize )
+    {
+        bSkipBufferInitialization = TRUE;
+    }
 }
 
 /************************************************************************/
@@ -896,12 +1068,7 @@ void VRTSourcedRasterBand::ConfigureSource( VRTSimpleSource *poSimpleSource,
     poSimpleSource->SetDstWindow( dfDstXOff, dfDstYOff,
                                   dfDstXSize, dfDstYSize );
 
-/* -------------------------------------------------------------------- */
-/*      Default source and dest rectangles.                             */
-/* -------------------------------------------------------------------- */
-    if( dfSrcXOff == dfDstXOff && dfSrcYOff == dfDstYOff &&
-        dfSrcXSize == dfDstXSize && dfSrcYSize == nRasterYSize )
-        bEqualAreas = TRUE;
+    CheckSource( poSimpleSource );
 
 /* -------------------------------------------------------------------- */
 /*      If we can get the associated GDALDataset, add a reference to it.*/
@@ -990,6 +1157,8 @@ CPLErr VRTSourcedRasterBand::AddMaskBandSource(
     return AddSource( poSimpleSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddSimpleSource()                         */
 /************************************************************************/
@@ -1018,6 +1187,8 @@ CPLErr CPL_STDCALL VRTAddSimpleSource( VRTSourcedRasterBandH hVRTBand,
             nDstXSize, nDstYSize,
             pszResampling, dfNoDataValue );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                          AddComplexSource()                          */
@@ -1065,6 +1236,8 @@ CPLErr VRTSourcedRasterBand::AddComplexSource(
     return AddSource( poSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                         VRTAddComplexSource()                        */
 /************************************************************************/
@@ -1096,6 +1269,8 @@ CPLErr CPL_STDCALL VRTAddComplexSource( VRTSourcedRasterBandH hVRTBand,
             dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                           AddFuncSource()                            */
 /************************************************************************/
@@ -1120,6 +1295,8 @@ CPLErr VRTSourcedRasterBand::AddFuncSource(
     return AddSource( poFuncSource );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                          VRTAddFuncSource()                          */
 /************************************************************************/
@@ -1138,6 +1315,7 @@ CPLErr CPL_STDCALL VRTAddFuncSource( VRTSourcedRasterBandH hVRTBand,
         AddFuncSource( pfnReadFunc, pCBData, dfNoDataValue );
 }
 
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
@@ -1488,3 +1666,5 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
 
     return TRUE;
 }
+
+/*! @endcond */

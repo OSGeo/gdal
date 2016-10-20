@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NGSGEOID driver
  * Purpose:  GDALDataset driver for NGSGEOID dataset.
@@ -81,11 +80,9 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
     friend class NGSGEOIDDataset;
 
   public:
-
                 explicit NGSGEOIDRasterBand( NGSGEOIDDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
-
     virtual const char* GetUnitType() { return "m"; }
 };
 
@@ -97,8 +94,8 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
 NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDSIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = 1;
+    poDS = poDSIn;
+    nBand = 1;
 
     eDataType = GDT_Float32;
 
@@ -375,7 +372,7 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -387,7 +384,7 @@ CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/

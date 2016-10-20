@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCompoundCurve geometry class.
@@ -31,7 +30,7 @@
 #include "ogr_p.h"
 #include <assert.h>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRCompoundCurve()                           */
@@ -216,9 +215,7 @@ OGRErr OGRCompoundCurve::exportToWkt( char ** ppszDstText,
 
 OGRGeometry *OGRCompoundCurve::clone() const
 {
-    OGRCompoundCurve       *poNewCC;
-
-    poNewCC = new OGRCompoundCurve;
+    OGRCompoundCurve *poNewCC = new OGRCompoundCurve;
     poNewCC->assignSpatialReference( getSpatialReference() );
     poNewCC->flags = flags;
 
@@ -342,11 +339,9 @@ OGRLineString* OGRCompoundCurve::CurveToLineInternal(double dfMaxAngleStepSizeDe
                                                      const char* const* papszOptions,
                                                      int bIsLinearRing) const
 {
-    OGRLineString* poLine;
-    if( bIsLinearRing )
-        poLine = new OGRLinearRing();
-    else
-        poLine = new OGRLineString();
+    OGRLineString* const poLine = bIsLinearRing
+        ? new OGRLinearRing()
+        : new OGRLineString();
     poLine->assignSpatialReference(getSpatialReference());
     for( int iGeom = 0; iGeom < oCC.nCurveCount; iGeom++ )
     {
@@ -462,23 +457,31 @@ OGRCurve    *OGRCompoundCurve::getCurve( int iRing )
  *
  * Relates to the ISO SQL/MM ST_CurveN() function.
  *
- * @param iRing curve index from 0 to getNumCurves() - 1.
+ * @param iCurve curve index from 0 to getNumCurves() - 1.
  *
  * @return pointer to curve.  May be NULL.
  */
 
-const OGRCurve *OGRCompoundCurve::getCurve( int iRing ) const
+const OGRCurve *OGRCompoundCurve::getCurve( int iCurve ) const
 {
-    return oCC.getCurve(iRing);
+    return oCC.getCurve(iCurve);
 }
 
 /************************************************************************/
 /*                           stealCurve()                               */
 /************************************************************************/
 
-OGRCurve* OGRCompoundCurve::stealCurve( int i )
+/**
+ * \brief "Steal" reference to curve.
+ *
+ * @param iCurve curve index from 0 to getNumCurves() - 1.
+ *
+ * @return pointer to curve.  May be NULL.
+ */
+
+OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 {
-    return oCC.stealCurve(i);
+    return oCC.stealCurve(iCurve);
 }
 
 /************************************************************************/
@@ -675,8 +678,8 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
 
     public:
         OGRCompoundCurvePointIterator(const OGRCompoundCurve* poCCIn) :
-                            poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
-       ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
+            poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
+        virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
         virtual OGRBoolean getNextPoint(OGRPoint* p);
 };
@@ -718,6 +721,7 @@ OGRPointIterator* OGRCompoundCurve::getPointIterator() const
 /*                         CastToLineString()                        */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
 {
     for(int i=0;i<poCC->oCC.nCurveCount;i++)
@@ -760,7 +764,7 @@ OGRLineString* OGRCompoundCurve::CastToLineString(OGRCompoundCurve* poCC)
 
 OGRLinearRing* OGRCompoundCurve::CastToLinearRing(OGRCompoundCurve* poCC)
 {
-    for(int i=0;i<poCC->oCC.nCurveCount;i++)
+    for( int i = 0; i < poCC->oCC.nCurveCount; i++ )
     {
         poCC->oCC.papoCurves[i] = OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
         if( poCC->oCC.papoCurves[i] == NULL )
@@ -802,6 +806,7 @@ OGRCurveCasterToLineString OGRCompoundCurve::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRCompoundCurve::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRCompoundCurve::CastToLinearRing;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           get_Area()                                 */
@@ -820,7 +825,7 @@ double OGRCompoundCurve::get_Area() const
         OGRLineString oLS;
         oLS.setNumPoints( getNumPoints() );
         OGRPoint p;
-        for(int i = 0; poIter->getNextPoint(&p); i++ )
+        for( int i = 0; poIter->getNextPoint(&p); i++ )
         {
             oLS.setPoint( i, p.getX(), p.getY() );
         }
@@ -846,6 +851,9 @@ double OGRCompoundCurve::get_Area() const
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 
+/** Return area of curve segments
+ * @return area.
+ */
 double OGRCompoundCurve::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;

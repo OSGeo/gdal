@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  KML Driver
  * Purpose:  Class for reading, parsing and handling a kmlfile.
@@ -29,13 +28,16 @@
  ****************************************************************************/
 #include "kmlnode.h"
 #include "kml.h"
-#include "cpl_error.h"
+
 #include "cpl_conv.h"
-// std
+#include "cpl_error.h"
+
 #include <cerrno>
 #include <cstdio>
 #include <iostream>
 #include <string>
+
+CPL_CVSID("$Id$");
 
 KML::KML() :
     poTrunk_(NULL),
@@ -48,7 +50,7 @@ KML::KML() :
     oCurrentParser(NULL),
     nDataHandlerCounter(0),
     nWithoutEventCounter(0)
-{ }
+{}
 
 KML::~KML()
 {
@@ -70,10 +72,6 @@ bool KML::open(const char * pszFilename)
 
 void KML::parse()
 {
-    int nDone = 0;
-    int nLen = 0;
-    char aBuf[BUFSIZ] = { 0 };
-
     if( NULL == pKMLFile_ )
     {
         sError_ = "No file given";
@@ -97,6 +95,10 @@ void KML::parse()
     XML_SetCharacterDataHandler(oParser, dataHandler);
     oCurrentParser = oParser;
     nWithoutEventCounter = 0;
+
+    int nDone = 0;
+    int nLen = 0;
+    char aBuf[BUFSIZ] = { 0 };
 
     do
     {
@@ -131,10 +133,6 @@ void KML::parse()
 
 void KML::checkValidity()
 {
-    int nDone = 0;
-    int nLen = 0;
-    char aBuf[BUFSIZ] = { 0 };
-
     if(poTrunk_ != NULL)
     {
         delete poTrunk_;
@@ -161,7 +159,11 @@ void KML::checkValidity()
 
     oCurrentParser = oParser;
 
-    /* Parses the file until we find the first element */
+    int nDone = 0;
+    int nLen = 0;
+    char aBuf[BUFSIZ] = { 0 };
+
+    // Parses the file until we find the first element.
     do
     {
         nDataHandlerCounter = 0;
@@ -299,7 +301,9 @@ void XMLCALL KML::startElementValidate( void* pUserData, const char* pszName,
                 }
                 else
                 {
-                    CPLDebug("KML", "Unhandled xmlns value : %s. Going on though...", ppszAttr[i]);
+                    CPLDebug("KML",
+                             "Unhandled xmlns value : %s. Going on though...",
+                             ppszAttr[i]);
                     poKML->validity = KML_VALIDITY_VALID;
                     poKML->sVersion_ = "?";
                 }
@@ -354,10 +358,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
             while( true )
             {
                 // Cut off whitespaces
-                while(nPos < nLength &&
-                      (pszData[nPos] == ' ' || pszData[nPos] == '\n'
-                       || pszData[nPos] == '\r' || pszData[nPos] == '\t' ))
-                    nPos ++;
+                while( nPos < nLength &&
+                       (pszData[nPos] == ' ' || pszData[nPos] == '\n'
+                        || pszData[nPos] == '\r' || pszData[nPos] == '\t' ) )
+                    nPos++;
 
                 if (nPos == nLength)
                     break;
@@ -395,20 +399,20 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
             // content as such?
             while(nPos < nLength)
             {
-                char ch = pszData[nPos];
-                if (bLineStart && (ch == ' ' || ch == '\t' || ch == '\n' ||
-                                   ch == '\r'))
+                const char ch = pszData[nPos];
+                if( bLineStart && (ch == ' ' || ch == '\t' || ch == '\n' ||
+                                   ch == '\r') )
                     nLineStartPos ++;
-                else if (ch == '\n' || ch == '\r')
+                else if( ch == '\n' || ch == '\r' )
                 {
-                    if (!bLineStart)
+                    if( !bLineStart )
                     {
                         std::string sTmp( pszData + nLineStartPos,
                                           nPos - nLineStartPos);
-                        if (sDataWithoutNL.size() > 0)
+                        if( !sDataWithoutNL.empty() )
                             sDataWithoutNL += " ";
                         sDataWithoutNL += sTmp;
-                        bLineStart = TRUE;
+                        bLineStart = true;
                     }
                     nLineStartPos = nPos + 1;
                 }
@@ -416,16 +420,16 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
                 {
                     bLineStart = false;
                 }
-                nPos ++;
+                nPos++;
             }
 
-            if (nLineStartPos > 0)
+            if( nLineStartPos > 0 )
             {
                 if (nLineStartPos < nPos)
                 {
                     std::string sTmp( pszData + nLineStartPos,
                                       nPos - nLineStartPos);
-                    if (sDataWithoutNL.size() > 0)
+                    if( !sDataWithoutNL.empty() )
                         sDataWithoutNL += " ";
                     sDataWithoutNL += sTmp;
                 }
@@ -575,7 +579,7 @@ int KML::getNumLayers() const
 }
 
 bool KML::selectLayer(int nNum) {
-    if(this->nNumLayers_ < 1 || nNum >= this->nNumLayers_)
+    if( nNumLayers_ < 1 || nNum >= nNumLayers_ )
         return false;
     poCurrent_ = papoLayers_[nNum];
     return true;

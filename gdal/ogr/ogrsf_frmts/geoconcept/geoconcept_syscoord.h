@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: geoconcept_syscoord.h
+ * $Id: geoconcept_syscoord.h$
  *
  * Name:     geoconcept_syscoord.h
  * Project:  OpenGIS Simple Features Reference Implementation

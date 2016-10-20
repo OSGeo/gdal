@@ -28,11 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 #include "swq.h"
 #include "ogr_geometry.h"
 #include <vector>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                           swq_expr_node()                            */
@@ -189,9 +193,7 @@ void swq_expr_node::ReverseSubExpressions()
 {
     for( int i = 0; i < nSubExprCount / 2; i++ )
     {
-        swq_expr_node *temp;
-
-        temp = papoSubExpr[i];
+        swq_expr_node *temp = papoSubExpr[i];
         papoSubExpr[i] = papoSubExpr[nSubExprCount - i - 1];
         papoSubExpr[nSubExprCount - i - 1] = temp;
     }
@@ -298,10 +300,10 @@ swq_field_type swq_expr_node::Check( swq_field_list *poFieldList,
 void swq_expr_node::Dump( FILE * fp, int depth )
 
 {
-    char        spaces[60];
-    int         i;
+    char spaces[60] = {};
 
-    for( i = 0; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
+    int i = 0;  // Used after for.
+    for( ; i < depth*2 && i < (int) sizeof(spaces) - 1; i++ )
         spaces[i] = ' ';
     spaces[i] = '\0';
 
@@ -533,7 +535,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
 
     if( poOp == NULL && nOperation != SWQ_CUSTOM_FUNC )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return osExpr;
     }
 
@@ -825,3 +827,5 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
     papoSubExpr[1]->PushSubExpression(poExpr0->Clone());
     papoSubExpr[1]->PushSubExpression(poExpr2);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

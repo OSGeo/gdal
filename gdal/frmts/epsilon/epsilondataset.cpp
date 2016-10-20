@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Epsilon driver
  * Purpose:  Implement GDAL Epsilon support using Epsilon library
@@ -30,7 +29,16 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 #include "epsilon.h"
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -122,30 +130,24 @@ class EpsilonRasterBand : public GDALPamRasterBand
 /*                         EpsilonDataset()                             */
 /************************************************************************/
 
-EpsilonDataset::EpsilonDataset()
-{
-    fp = NULL;
-    nFileOff = 0;
-
-    pabyFileBuf = NULL;
-    nFileBufMaxSize = 0;
-    nFileBufCurSize = 0;
-    nFileBufOffset = 0;
-    bEOF = FALSE;
-    bError = FALSE;
-
-    pabyBlockData = NULL;
-    nBlockDataSize = 0;
-    nStartBlockFileOff = 0;
-
-    bRegularTiling = FALSE;
-
-    nBlocks = 0;
-    pasBlocks = NULL;
-
-    nBufferedBlock = -1;
-    pabyRGBData = NULL;
-}
+EpsilonDataset::EpsilonDataset() :
+    fp(NULL),
+    nFileOff(0),
+    pabyFileBuf(NULL),
+    nFileBufMaxSize(0),
+    nFileBufCurSize(0),
+    nFileBufOffset(0),
+    bEOF(FALSE),
+    bError(FALSE),
+    pabyBlockData(NULL),
+    nBlockDataSize(0),
+    nStartBlockFileOff(0),
+    bRegularTiling(FALSE),
+    nBlocks(0),
+    pasBlocks(NULL),
+    nBufferedBlock(-1),
+    pabyRGBData(NULL)
+{}
 
 /************************************************************************/
 /*                         ~EpsilonDataset()                            */
@@ -153,7 +155,7 @@ EpsilonDataset::EpsilonDataset()
 
 EpsilonDataset::~EpsilonDataset()
 {
-    if (fp)
+    if( fp )
         VSIFCloseL(fp);
     VSIFree(pabyFileBuf);
     VSIFree(pasBlocks);
@@ -164,13 +166,13 @@ EpsilonDataset::~EpsilonDataset()
 /*                       EpsilonRasterBand()                            */
 /************************************************************************/
 
-EpsilonRasterBand::EpsilonRasterBand(EpsilonDataset* poDSIn, int nBandIn)
+EpsilonRasterBand::EpsilonRasterBand( EpsilonDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = GDT_Byte;
-    this->nBlockXSize = poDSIn->pasBlocks[0].w;
-    this->nBlockYSize = poDSIn->pasBlocks[0].h;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = GDT_Byte;
+    nBlockXSize = poDSIn->pasBlocks[0].w;
+    nBlockYSize = poDSIn->pasBlocks[0].h;
 }
 
 /************************************************************************/
@@ -326,9 +328,7 @@ CPLErr EpsilonRasterBand::IReadBlock( int nBlockXOff,
             int iOtherBand;
             for(iOtherBand=2;iOtherBand<=3;iOtherBand++)
             {
-                GDALRasterBlock *poBlock;
-
-                poBlock = poGDS->GetRasterBand(iOtherBand)->
+                GDALRasterBlock *poBlock = poGDS->GetRasterBand(iOtherBand)->
                     GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
                 if (poBlock == NULL)
                     break;

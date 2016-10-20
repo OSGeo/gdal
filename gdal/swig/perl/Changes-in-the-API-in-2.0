@@ -28,7 +28,7 @@ many classes:
 
 Geo::OSR::SpatialReference:
 
-    Overloading to "", and = have been removed. Use explicit 
+    Overloading to "", and = have been removed. Use explicit
     method call As('PrettyWKT') instead.
 
 Geo::OGR::Layer

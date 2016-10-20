@@ -364,7 +364,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
                                            const char *pszGeomCol,
                                            int nSRID,
                                            const char *pszLoaderFile );
-                        ~OGROCILoaderLayer();
+                        virtual ~OGROCILoaderLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -414,6 +414,10 @@ class OGROCITableLayer : public OGROCIWritableLayer
     CPLString           osTableName;
     CPLString           osOwner;
 
+    int                 nFirstId;
+    int                 nMultiLoadCount;
+    int                 bMultiLoad;
+
     OCIArray           *hOrdVARRAY;
     OCIArray           *hElemInfoVARRAY;
 
@@ -446,7 +450,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
                         OGROCITableLayer( OGROCIDataSource *,
                                           const char * pszName, OGRwkbGeometryType eGType,
                                           int nSRID, int bUpdate, int bNew );
-                        ~OGROCITableLayer();
+                        virtual ~OGROCITableLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -506,6 +510,7 @@ class OGROCIDataSource : public OGRDataSource
     char               *pszDBName;
 
     int                 bDSUpdate;
+    int                 bNoLogging;
 
     OGROCISession      *poSession;
 
@@ -517,14 +522,15 @@ class OGROCIDataSource : public OGRDataSource
 
   public:
                         OGROCIDataSource();
-                        ~OGROCIDataSource();
+                        virtual ~OGROCIDataSource();
 
     OGROCISession      *GetSession() { return poSession; }
 
     int                 Open( const char *, char** papszOpenOptions,
                               int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
-                                   int nSRID, int bUpdate, int bTestOpen );
+                                   int nSRID, int bUpdate, int bTestOpen,
+                                   char** papszOpenOptions );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }

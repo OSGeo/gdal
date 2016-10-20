@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Native Reader
  * Purpose:  All code for EUMETSAT Archive format reader
@@ -33,6 +32,9 @@
 #include "ogr_spatialref.h"
 
 #include "msg_reader_core.h"
+
+#include <algorithm>
+
 using namespace msg_native_format;
 
 CPL_CVSID("$Id$");
@@ -115,21 +117,29 @@ class MSGNRasterBand : public GDALRasterBand
 /*                           MSGNRasterBand()                            */
 /************************************************************************/
 
-MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_type mode, int orig_band_noIn, int band_in_fileIn)
-
+MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn,
+                                open_mode_type mode, int orig_band_noIn,
+                                int band_in_fileIn ) :
+    packet_size(0),
+    bytes_per_line(0),
+    interline_spacing(poDSIn->msg_reader_core->get_interline_spacing()),
+    orig_band_no(orig_band_noIn),
+    band_in_file(band_in_fileIn),
+    open_mode(mode)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;                // GDAL's band number, i.e. always starts at 1
-    this->open_mode = mode;
-    this->orig_band_no = orig_band_noIn;
-    this->band_in_file = band_in_fileIn;
+    poDS = poDSIn;
+    nBand = nBandIn;  // GDAL's band number, i.e. always starts at 1.
 
-    snprintf(band_description, sizeof(band_description), "band %02d", orig_band_no);
+    snprintf(band_description, sizeof(band_description),
+             "band %02d", orig_band_no);
 
-    if (mode != MODE_RAD) {
+    if( mode != MODE_RAD )
+    {
         eDataType = GDT_UInt16;
         MSGN_NODATA_VALUE = 0;
-    } else {
+    }
+    else
+    {
         eDataType = GDT_Float64;
         MSGN_NODATA_VALUE = -1000;
     }
@@ -137,15 +147,16 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_typ
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    if (mode != MODE_HRV) {
+    if( mode != MODE_HRV )
+    {
         packet_size = poDSIn->msg_reader_core->get_visir_packet_size();
         bytes_per_line = poDSIn->msg_reader_core->get_visir_bytes_per_line();
-    } else {
+    }
+    else
+    {
         packet_size = poDSIn->msg_reader_core->get_hrv_packet_size();
         bytes_per_line = poDSIn->msg_reader_core->get_hrv_bytes_per_line();
     }
-
-    interline_spacing = poDSIn->msg_reader_core->get_interline_spacing();
 }
 
 /************************************************************************/
@@ -161,8 +172,6 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     // invert y position
     int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
-
-    char       *pszRecord;
 
     unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
     unsigned int data_offset = 0;
@@ -180,7 +189,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( VSIFSeek( poGDS->fp, data_offset, SEEK_SET ) != 0 )
         return CE_Failure;
 
-    pszRecord = (char *) CPLMalloc(data_length);
+    char *pszRecord = (char *) CPLMalloc(data_length);
     size_t nread = VSIFRead( pszRecord, 1, data_length, poGDS->fp );
 
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
@@ -283,10 +292,11 @@ double MSGNRasterBand::GetMaximum(int *pbSuccess ) {
 /************************************************************************/
 
 MSGNDataset::MSGNDataset() :
-    fp(NULL)
+    fp(NULL),
+    msg_reader_core(NULL),
+    pszProjection(CPLStrdup(""))
 {
-    pszProjection = CPLStrdup("");
-    msg_reader_core = NULL;
+    std::fill_n(adfGeoTransform, CPL_ARRAYSIZE(adfGeoTransform), 0);
 }
 
 /************************************************************************/
@@ -328,7 +338,7 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::GetProjectionRef()
 
 {
-    return ( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -390,7 +400,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MSGNDataset        *poDS;
     FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
     if( fp == NULL ) {
         if (open_info != poOpenInfo) {
@@ -399,7 +408,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS = new MSGNDataset();
+    MSGNDataset *poDS = new MSGNDataset();
 
     poDS->fp = fp;
 
@@ -529,7 +538,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         delete open_info;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

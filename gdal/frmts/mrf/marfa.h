@@ -58,15 +58,9 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef GDAL_COMPILATION
 #define NAMESPACE_MRF_START namespace GDAL_MRF {
 #define NAMESPACE_MRF_END   }
 #define USING_NAMESPACE_MRF using namespace GDAL_MRF;
-#else
-#define NAMESPACE_MRF_START
-#define NAMESPACE_MRF_END
-#define USING_NAMESPACE_MRF
-#endif
 
 NAMESPACE_MRF_START
 
@@ -235,7 +229,7 @@ CPLString getFname(CPLXMLNode *, const char *, const CPLString &, const char *);
 CPLString getFname(const CPLString &, const char *);
 double getXMLNum(CPLXMLNode *, const char *, double);
 GIntBig IdxOffset(const ILSize &, const ILImage &);
-double logb(double val, double base);
+double logbase(double val, double base);
 int IsPower(double value, double base);
 CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement);
 CPLString PrintDouble(double d, const char *frmt = "%12.8f");
@@ -292,8 +286,6 @@ enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
 
 class GDALMRFDataset : public GDALPamDataset {
-
-
     friend class GDALMRFRasterBand;
     friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
 
@@ -407,7 +399,6 @@ protected:
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*);
 
-
     // Write a tile, the infooffset is the relative position in the index file
     virtual CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
 
@@ -515,10 +506,9 @@ public:
     virtual double  GetNoDataValue(int *);
     virtual CPLErr  SetNoDataValue(double);
 
-    // These get set with SetStatistics.  Let PAM handle it
+    // These get set with SetStatistics
     virtual double  GetMinimum(int *);
     virtual double  GetMaximum(int *);
-
 
     // MRF specific, fetch is from a remote source
     CPLErr FetchBlock(int xblk, int yblk, void *buffer = NULL);
@@ -538,8 +528,7 @@ public:
 protected:
     // Pointer to the GDALMRFDataset
     GDALMRFDataset *poDS;
-    // 0 based
-    GInt32 m_band;
+    // Deflate page requested, named to avoid conflict with libz deflate()
     int deflatep;
     int deflate_flags;
     // Level count of this band
@@ -570,7 +559,7 @@ protected:
     //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
 
     GIntBig bandbit(int b) { return ((GIntBig)1) << b; }
-    GIntBig bandbit() { return bandbit(m_band); }
+    GIntBig bandbit() { return bandbit(nBand - 1); }
     GIntBig AllBandMask() { return bandbit(poDS->nBands) - 1; }
 
     // Overview Support

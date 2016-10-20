@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
  * Purpose:  Read/write LizardTech's MrSID file format - Version 4+ SDK.
@@ -55,6 +54,13 @@ CPL_C_END
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support.
 
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include "lt_types.h"
 #include "lt_base.h"
 #include "lt_fileSpec.h"
@@ -105,6 +111,11 @@ CPL_C_END
 #   endif
 # endif
 #endif /* MRSID_ESDK */
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
+
 
 #ifdef MRSID_POST5
 #  define MRSID_HAVE_GETWKT
@@ -421,7 +432,7 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDSIn, int nBandIn )
                  break;
 
              case LTI_DATATYPE_INVALID:
-                 CPLAssert( FALSE );
+                 CPLAssert( false );
                  break;
          }
          bNoDataSet = TRUE;
@@ -987,15 +998,15 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                 oLTIBuffer.myGetTotalBandData( static_cast<lt_uint16>(panBandMap[iBand] - 1) );
 
             for( int iLine = 0; iLine < nBufYSize; iLine++ )
-	    {
+            {
                 GDALCopyWords( pabySrcBand + iLine*nTmpPixelSize*sceneWidth,
                                eDataType, nTmpPixelSize,
                                ((GByte *)pData) + iLine*nLineSpace
                                + iBand * nBandSpace,
                                eBufType, static_cast<int>(nPixelSpace),
                                nBufXSize );
-	    }
-	}
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1004,16 +1015,16 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     else
     {
         for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
-	{
+        {
             int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize)*sceneHeight);
 
             for( iBufPixel = 0; iBufPixel < nBufXSize; iBufPixel++ )
-	    {
+            {
                 int iTmpPixel = (int)
                     floor(((iBufPixel+0.5) / nBufXSize) * sceneWidth);
 
                 for( int iBand = 0; iBand < nBandCount; iBand++ )
-		{
+                {
                     GByte *pabySrc, *pabyDst;
 
                     pabyDst = ((GByte *) pData)
@@ -1030,9 +1041,9 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                     else
                         GDALCopyWords( pabySrc, eDataType, 0,
                                        pabyDst, eBufType, 0, 1 );
-		}
-	    }
-	}
+                }
+            }
+        }
     }
 
     return CE_None;
@@ -1046,11 +1057,11 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
                                       int, int *, GDALProgressFunc,
                                       void * )
 {
-	CPLError( CE_Warning, CPLE_AppDefined,
-			  "MrSID overviews are built-in, so building external "
-			  "overviews is unnecessary. Ignoring.\n" );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                          "MrSID overviews are built-in, so building external "
+                          "overviews is unnecessary. Ignoring.\n" );
 
-	return CE_None;
+        return CE_None;
 }
 
 /************************************************************************/
@@ -1321,7 +1332,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         VSILFILE* fp = VSIFOpenL(pszMETFilename, "rb");
         if (fp)
         {
-            const char* pszLine;
+            const char* pszLine = NULL;
             int nCountLine = 0;
             int nUTMZone = 0;
             int bWGS84 = FALSE;
@@ -1431,9 +1442,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
 
     if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
     {
-        const char *pszExtension;
-
-        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        const char *pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
 
         if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k")
             && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx")
@@ -1482,10 +1491,9 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MrSIDDataset    *poDS;
     LT_STATUS       eStat;
 
-    poDS = new MrSIDDataset(bIsJP2);
+    MrSIDDataset *poDS = new MrSIDDataset(bIsJP2);
 
     // try the LTIOFileStream first, since it uses filesystem caching
     eStat = poDS->oLTIStream.initialize( poOpenInfo->pszFilename, "rb" );
@@ -1685,7 +1693,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1704,55 +1712,55 @@ static int EPSGProjMethodToCTProjMethod( int nEPSG )
     switch( nEPSG )
     {
       case 9801:
-        return( CT_LambertConfConic_1SP );
+        return CT_LambertConfConic_1SP;
 
       case 9802:
-        return( CT_LambertConfConic_2SP );
+        return CT_LambertConfConic_2SP;
 
       case 9803:
-        return( CT_LambertConfConic_2SP ); /* Belgian variant not supported */
+        return CT_LambertConfConic_2SP;  // Belgian variant not supported.
 
       case 9804:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  // 1SP and 2SP not differentiated.
 
       case 9805:
-        return( CT_Mercator );  /* 1SP and 2SP not differentiated */
+        return CT_Mercator;  // 1SP and 2SP not differentiated.
 
       case 9806:
-        return( CT_CassiniSoldner );
+        return CT_CassiniSoldner;
 
       case 9807:
-        return( CT_TransverseMercator );
+        return CT_TransverseMercator;
 
       case 9808:
-        return( CT_TransvMercator_SouthOriented );
+        return CT_TransvMercator_SouthOriented;
 
       case 9809:
-        return( CT_ObliqueStereographic );
+        return CT_ObliqueStereographic;
 
       case 9810:
-        return( CT_PolarStereographic );
+        return CT_PolarStereographic;
 
       case 9811:
-        return( CT_NewZealandMapGrid );
+        return CT_NewZealandMapGrid;
 
       case 9812:
-        return( CT_ObliqueMercator ); /* is hotine actually different? */
+        return CT_ObliqueMercator;  // Is hotine actually different?
 
       case 9813:
-        return( CT_ObliqueMercator_Laborde );
+        return CT_ObliqueMercator_Laborde;
 
       case 9814:
-        return( CT_ObliqueMercator_Rosenmund ); /* swiss  */
+        return CT_ObliqueMercator_Rosenmund;  // Swiss.
 
       case 9815:
-        return( CT_ObliqueMercator );
+        return CT_ObliqueMercator;
 
       case 9816: /* tunesia mining grid has no counterpart */
-        return( KvUserDefined );
+        return KvUserDefined;
     }
 
-    return( KvUserDefined );
+    return KvUserDefined;
 }
 
 /* EPSG Codes for projection parameters.  Unfortunately, these bear no
@@ -1903,7 +1911,7 @@ static int SetGTParmIds( int nCTProjection,
         return TRUE;
 
       default:
-        return( FALSE );
+        return FALSE;
     }
 }
 
@@ -2698,11 +2706,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
     if( psDefnIn->Model == ModelTypeProjected )
     {
-        char    *pszPCSName;
         int     bPCSNameSet = FALSE;
 
         if( psDefnIn->PCS != KvUserDefined )
         {
+            char *pszPCSName = NULL;
 
             if( GTIFGetPCSInfo( psDefnIn->PCS, &pszPCSName, NULL, NULL, NULL ) )
                 bPCSNameSet = TRUE;
@@ -2969,10 +2977,9 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
 /*      Return the WKT serialization of the object.                     */
 /* -------------------------------------------------------------------- */
-    char        *pszWKT;
-
     oSRS.FixupOrdering();
 
+    char *pszWKT = NULL;
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
         return pszWKT;
     else

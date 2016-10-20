@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements a EXIF directory reader
@@ -68,7 +67,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%#02x", sep, *data++), sep = " ";
+      snprintf(szTemp, sizeof(szTemp), "%s%#02x", sep, *data++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);
@@ -78,7 +78,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
 
   case TIFF_SBYTE:
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *(const char *)data++), sep = " ";
+      snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *(const char *)data++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);
@@ -94,7 +95,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SHORT: {
     const GUInt16 *wp = (const GUInt16*)data;
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp++), sep = " ";
+      snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);
@@ -129,7 +131,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_SLONG: {
     const GInt32 *lp = (const GInt32*)data;
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%ld", sep, (long) *lp++), sep = " ";
+      snprintf(szTemp, sizeof(szTemp), "%s%ld", sep, (long) *lp++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);
@@ -175,7 +178,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_FLOAT: {
     const float *fp = (const float *)data;
     for(;count>0;count--) {
-      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp++), sep = " ";
+      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *fp++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);
@@ -186,7 +190,8 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_DOUBLE: {
     const double *dp = (const double *)data;
     for(;count>0;count--) {
-      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *dp++), sep = " ";
+      CPLsnprintf(szTemp, sizeof(szTemp), "%s%g", sep, *dp++);
+      sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
       strcat(pszDataEnd,szTemp);

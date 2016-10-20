@@ -1833,10 +1833,18 @@ def find_lib(mylib):
 ###############################################################################
 # get_opened_files()
 
+get_opened_files_has_warned = False
+
 def get_opened_files():
     if not sys.platform.startswith('linux'):
         return []
     fdpath = '/proc/%d/fd' % os.getpid()
+    if not os.path.exists(fdpath):
+        global get_opened_files_has_warned
+        if not get_opened_files_has_warned:
+            get_opened_files_has_warned = True
+            print('get_opened_files() not supported due to /proc not being readable')
+        return []
     file_numbers = os.listdir(fdpath)
     filenames = []
     for fd in file_numbers:

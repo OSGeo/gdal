@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -34,7 +33,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id: gdal_misc.cpp 25494 2013-01-13 12:55:17Z etourigny $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
@@ -185,6 +184,7 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
 /************************************************************************/
 
 /**
+ * \fn GDALTermProgress(double, const char*, void*)
  * \brief Simple progress report to terminal.
  *
  * This progress reporter prints simple progress report to the
@@ -212,8 +212,11 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-int CPL_STDCALL GDALTermProgress( CPL_UNUSED double dfComplete,
-                                  CPL_UNUSED const char *pszMessage,
+/**/
+/**/
+
+int CPL_STDCALL GDALTermProgress( double dfComplete,
+                                  const char * /* pszMessage */,
                                   void * /* pProgressArg */ )
 {
     int nThisTick = std::min(40, std::max(0,

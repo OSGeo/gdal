@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
  *
  * Project:  jpip read driver
  * Purpose:  GDAL bindings for JPIP.
@@ -35,6 +34,8 @@
 
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
+
+CPL_CVSID("$Id$");
 
 /*
 ** The following are for testing premature stream termination support.
@@ -1091,7 +1092,7 @@ const char *JPIPKAKDataset::GetProjectionRef()
 
 {
     if( pszProjection && *pszProjection )
-        return( pszProjection );
+        return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
 }
@@ -1434,8 +1435,7 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
         // using cpl_http for the connection
         if  (CPLHTTPEnabled() == TRUE)
         {
-            JPIPKAKDataset *poDS;
-            poDS = new JPIPKAKDataset();
+            JPIPKAKDataset *poDS = new JPIPKAKDataset();
             if (poDS->Initialize(poOpenInfo->pszFilename,FALSE))
             {
                 poDS->SetDescription( poOpenInfo->pszFilename );

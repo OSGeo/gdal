@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSFieldDefn class.  This is a small class used
@@ -38,14 +37,14 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRDODSFieldDefn::OGRDODSFieldDefn() :
-    bValid(FALSE),
+    bValid(false),
     pszFieldName(NULL),
     pszFieldScope(NULL),
     iFieldIndex(-1),
     pszFieldValue(NULL),
     pszPathToSequence(NULL),
-    bRelativeToSuperSequence(FALSE),
-    bRelativeToSequence(FALSE)
+    bRelativeToSuperSequence(false),
+    bRelativeToSequence(false)
 {}
 
 /************************************************************************/
@@ -70,9 +69,9 @@ OGRDODSFieldDefn::~OGRDODSFieldDefn()
 /*      entry.                                                          */
 /************************************************************************/
 
-int OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
-                                  BaseType *poTarget,
-                                  BaseType *poSuperSeq )
+bool OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
+                                   BaseType *poTarget,
+                                   BaseType *poSuperSeq )
 
 {
     const char *pszFieldScope = poEntry->get_attr("scope").c_str();
@@ -87,10 +86,10 @@ int OGRDODSFieldDefn::Initialize( AttrTable *poEntry,
 /*                             Initialize()                             */
 /************************************************************************/
 
-int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
-                                  const char *pszFieldScopeIn,
-                                  BaseType *poTarget,
-                                  BaseType *poSuperSeq )
+bool OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
+                                   const char *pszFieldScopeIn,
+                                   BaseType *poTarget,
+                                   BaseType *poSuperSeq )
 
 {
     pszFieldScope = CPLStrdup( pszFieldScopeIn );
@@ -107,7 +106,7 @@ int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
             CPLFree( pszFieldName );
             pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
 
-            bRelativeToSequence = TRUE;
+            bRelativeToSequence = true;
             iFieldIndex = OGRDODSGetVarIndex(
                 dynamic_cast<Sequence *>( poTarget ), pszFieldName );
         }
@@ -122,16 +121,16 @@ int OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
                 CPLFree( pszFieldName );
                 pszFieldName = CPLStrdup( pszFieldNameIn + nTargPathLen + 1 );
 
-                bRelativeToSuperSequence = TRUE;
+                bRelativeToSuperSequence = true;
                 iFieldIndex = OGRDODSGetVarIndex(
                     dynamic_cast<Sequence *>( poSuperSeq ), pszFieldName );
             }
         }
     }
 
-    bValid = TRUE;
+    bValid = true;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

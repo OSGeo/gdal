@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Utility methods
@@ -39,21 +38,13 @@ CPL_CVSID("$Id$");
 PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllowed,
                        int bErrorAsDebug)
 {
-    PGresult* hResult;
-#if defined(PG_PRE74)
-    /* PQexecParams introduced in PG >= 7.4 */
-    hResult = PQexec(conn, query);
-#else
-    if (bMultipleCommandAllowed)
-        hResult = PQexec(conn, query);
-    else
-        hResult = PQexecParams(conn, query, 0, NULL, NULL, NULL, NULL, 0);
-#endif
+    PGresult* hResult = bMultipleCommandAllowed
+        ? PQexec(conn, query)
+        : PQexecParams(conn, query, 0, NULL, NULL, NULL, NULL, 0);
 
 #ifdef DEBUG
     const char* pszRetCode = "UNKNOWN";
-    char szNTuples[32];
-    szNTuples[0] = '\0';
+    char szNTuples[32] = {};
     if (hResult)
     {
         switch(PQresultStatus(hResult))
@@ -93,4 +84,22 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
     }
 
     return hResult;
+}
+
+
+/************************************************************************/
+/*                       OGRPG_Check_Table_Exists()                     */
+/************************************************************************/
+
+bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char * pszTableName)
+{
+    CPLString osSQL;
+    osSQL.Printf("SELECT 1 FROM information_schema.tables WHERE table_name = %s LIMIT 1",
+                 OGRPGEscapeString(hPGConn, pszTableName).c_str());
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osSQL);
+    bool bRet = ( hResult && PQntuples(hResult) == 1 );
+    if( !bRet )
+        CPLDebug("PG", "Does not have %s table", pszTableName);
+    OGRPGClearResult( hResult );
+    return bRet;
 }

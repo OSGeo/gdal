@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEOLayer class.
@@ -41,17 +40,15 @@ CPL_CVSID("$Id$");
 
 OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
                                 const char* pszName, OGRwkbGeometryType eType,
-                                OGRSpatialReference* poSRSIn )
-
+                                OGRSpatialReference* poSRSIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(new OGRFeatureDefn( pszName )),
+    poSRS(poSRSIn),
+    nNextFID(0)
 {
-    this->poDS = poDSIn;
-    nNextFID = 0;
-
-    this->poSRS = poSRSIn;
-    if (poSRS)
+    if( poSRS )
         poSRS->Reference();
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eType );
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
@@ -93,11 +90,10 @@ void OGREDIGEOLayer::ResetReading()
 
 OGRFeature *OGREDIGEOLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
 
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -108,8 +104,8 @@ OGRFeature *OGREDIGEOLayer::GetNextFeature()
         {
             return poFeature;
         }
-        else
-            delete poFeature;
+
+        delete poFeature;
     }
 }
 

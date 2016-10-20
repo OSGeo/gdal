@@ -127,7 +127,7 @@ CPLErr ReadRaster_internal( GDALRasterBandShadow *obj,
   }
   else
   {
-    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate "CPL_FRMT_GIB" bytes", *buf_size);
+    CPLError(CE_Failure, CPLE_OutOfMemory, "Not enough memory to allocate " CPL_FRMT_GIB " bytes", *buf_size);
     result = CE_Failure;
     *buf = 0;
     *buf_size = 0;
@@ -198,6 +198,13 @@ public:
   void GetBlockSize(int *pnBlockXSize, int *pnBlockYSize) {
       GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
   }
+
+#if defined(SWIGPYTHON)
+  void GetActualBlockSize(int nXBlockOff, int nYBlockOff, int* pnxvalid, int* pnyvalid, int* pisvalid)
+  {
+    *pisvalid = (GDALGetActualBlockSize(self, nXBlockOff, nYBlockOff, pnxvalid, pnyvalid) == CE_None);
+  }
+#endif
 
   // Preferred name to match C++ API
   /* Interface method added for GDAL 1.7.0 */
@@ -675,6 +682,24 @@ CPLErr SetDefaultHistogram( double min, double max,
     }
 
 #endif /* #if defined(SWIGPYTHON) */
+
+#if defined(SWIGPYTHON)
+    // Check with other bindings how to return both the integer status and
+    // *pdfDataPct
+
+    %apply (double *OUTPUT) {(double *)};
+    int GetDataCoverageStatus( int nXOff, int nYOff,
+                               int nXSize, int nYSize,
+                               int nMaskFlagStop = 0,
+                               double* pdfDataPct = NULL)
+    {
+        return GDALGetDataCoverageStatus(self, nXOff, nYOff,
+                                         nXSize, nYSize,
+                                         nMaskFlagStop,
+                                         pdfDataPct);
+    }
+    %clear (double *);
+#endif
 
 } /* %extend */
 

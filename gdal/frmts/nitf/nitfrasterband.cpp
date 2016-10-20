@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NITF Read/Write Translator
  * Purpose:  NITFRasterBand (and related proxy band) implementations.
@@ -353,16 +352,17 @@ void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand
 /*                           NITFRasterBand()                           */
 /************************************************************************/
 
-NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
-
+NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn ) :
+    psImage(poDSIn->psImage),
+    poColorTable(NULL),
+    pUnpackData(NULL),
+    bScanlineAccess(FALSE)
 {
     NITFBandInfo *psBandInfo = poDSIn->psImage->pasBandInfo + nBandIn - 1;
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-
+    poDS = poDSIn;
+    nBand = nBandIn;
     eAccess = poDSIn->eAccess;
-    psImage = poDSIn->psImage;
 
 /* -------------------------------------------------------------------- */
 /*      Translate data type(s).                                         */
@@ -445,7 +445,6 @@ NITFRasterBand::NITFRasterBand( NITFDataset *poDSIn, int nBandIn )
     ||  psImage->nBitsPerSample == 12 )
         SetMetadataItem( "NBITS", CPLString().Printf("%d", psImage->nBitsPerSample), "IMAGE_STRUCTURE" );
 
-    pUnpackData = NULL;
     if (psImage->nBitsPerSample == 3
     ||  psImage->nBitsPerSample == 5
     ||  psImage->nBitsPerSample == 6
@@ -897,17 +896,18 @@ void NITFRasterBand::Unpack( GByte* pData )
 NITFWrapperRasterBand::NITFWrapperRasterBand( NITFDataset * poDSIn,
                                               GDALRasterBand* poBaseBandIn,
                                               int nBandIn) :
-    poColorTable(NULL)
+    poBaseBand(poBaseBandIn),
+    poColorTable(NULL),
+    eInterp(poBaseBandIn->GetColorInterpretation()),
+    bIsJPEG(poBaseBandIn->GetDataset() != NULL &&
+            poBaseBandIn->GetDataset()->GetDriver() != NULL &&
+            EQUAL(poBaseBandIn->GetDataset()->GetDriver()->GetDescription(),
+                  "JPEG"))
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->poBaseBand = poBaseBandIn;
-    eDataType = poBaseBand->GetRasterDataType();
+    poDS = poDSIn;
+    nBand = nBandIn;
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    eInterp = poBaseBand->GetColorInterpretation();
-    bIsJPEG = poBaseBand->GetDataset() != NULL &&
-              poBaseBand->GetDataset()->GetDriver() != NULL &&
-              EQUAL(poBaseBand->GetDataset()->GetDriver()->GetDescription(), "JPEG");
+    eDataType = poBaseBandIn->GetRasterDataType();
 }
 
 /************************************************************************/

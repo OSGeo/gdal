@@ -54,6 +54,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_sha256.obj \
 		cpl_aws.obj \
 		cpl_vsi_error.obj \
+		cpl_cpu_features.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
@@ -94,7 +95,7 @@ $(LIB):	$(OBJ)
 	lib /out:cpl.lib *.obj
 
 clean:
-	-del *.obj *.lib
+	-del *.obj *.lib cpl_config.h
 
 cpl_config.h:	cpl_config.h.vc
 	copy cpl_config.h.vc cpl_config.h

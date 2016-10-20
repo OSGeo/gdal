@@ -679,7 +679,8 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
 def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
-              zFactor = None, scale = None, azimuth = None, altitude = None, combined = False,
+              zFactor = None, scale = None, azimuth = None, altitude = None,
+              combined = False, multiDirectional = False,
               slopeFormat = None, trigonometric = False, zeroForFlat = False,
               callback = None, callback_data = None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
@@ -696,6 +697,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
           azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
           altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
           combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
+          multiDirectional --- (hillshade only) whether to compute multi-directional shading
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
@@ -727,6 +729,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
             new_options += ['-alt', str(altitude) ]
         if combined:
             new_options += ['-combined' ]
+        if multiDirectional:
+            new_options += ['-multidirectional' ]
         if slopeFormat == 'percent':
             new_options += ['-p' ]
         if trigonometric:
@@ -1354,6 +1358,17 @@ def VSIFTruncateL(*args):
   """VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"""
   return _gdal.VSIFTruncateL(*args)
 
+def VSISupportsSparseFiles(*args):
+  """VSISupportsSparseFiles(char const * utf8_path) -> int"""
+  return _gdal.VSISupportsSparseFiles(*args)
+VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
+VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
+VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
+
+def VSIFGetRangeStatusL(*args):
+  """VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"""
+  return _gdal.VSIFGetRangeStatusL(*args)
+
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
   return _gdal.VSIFWriteL(*args)
@@ -1811,6 +1826,14 @@ class Dataset(MajorObject):
         """GetLayerByName(Dataset self, char const * layer_name) -> Layer"""
         return _gdal.Dataset_GetLayerByName(self, *args)
 
+    def ResetReading(self, *args):
+        """ResetReading(Dataset self)"""
+        return _gdal.Dataset_ResetReading(self, *args)
+
+    def GetNextFeature(self, *args, **kwargs):
+        """GetNextFeature(Dataset self, bool include_layer=True, bool include_pct=False, GDALProgressFunc callback=0, void * callback_data=None) -> Feature"""
+        return _gdal.Dataset_GetNextFeature(self, *args, **kwargs)
+
     def TestCapability(self, *args):
         """TestCapability(Dataset self, char const * cap) -> bool"""
         return _gdal.Dataset_TestCapability(self, *args)
@@ -2072,6 +2095,10 @@ class Band(MajorObject):
         """GetBlockSize(Band self)"""
         return _gdal.Band_GetBlockSize(self, *args)
 
+    def GetActualBlockSize(self, *args):
+        """GetActualBlockSize(Band self, int nXBlockOff, int nYBlockOff)"""
+        return _gdal.Band_GetActualBlockSize(self, *args)
+
     def GetColorInterpretation(self, *args):
         """GetColorInterpretation(Band self) -> GDALColorInterp"""
         return _gdal.Band_GetColorInterpretation(self, *args)
@@ -2272,6 +2299,10 @@ class Band(MajorObject):
             int nTileYSize, GDALDataType eBufType, size_t nCacheSize, char ** options=None) -> VirtualMem
         """
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
+
+    def GetDataCoverageStatus(self, *args):
+        """GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
+        return _gdal.Band_GetDataCoverageStatus(self, *args)
 
     def ReadRaster1(self, *args, **kwargs):
         """
@@ -2849,6 +2880,14 @@ def IdentifyDriver(*args):
   """IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"""
   return _gdal.IdentifyDriver(*args)
 IdentifyDriver = _gdal.IdentifyDriver
+
+def IdentifyDriverEx(*args, **kwargs):
+  """
+    IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, 
+        char ** sibling_files=None) -> Driver
+    """
+  return _gdal.IdentifyDriverEx(*args, **kwargs)
+IdentifyDriverEx = _gdal.IdentifyDriverEx
 
 def GeneralCmdLineProcessor(*args):
   """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""

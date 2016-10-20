@@ -117,7 +117,8 @@ class OGROSMLayer : public OGRLayer
 
     bool                  bUserInterested;
 
-    int                  AddToArray(OGRFeature* poFeature, int bCheckFeatureThreshold);
+    bool                  AddToArray( OGRFeature* poFeature,
+                                      int bCheckFeatureThreshold );
 
     int                   AddInOtherOrAllTags(const char* pszK);
 
@@ -144,6 +145,11 @@ class OGROSMLayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     virtual OGRFeature *GetNextFeature();
+
+    OGRFeature*         MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
+                                          GDALProgressFunc pfnProgress,
+                                          void* pProgressData );
+
     virtual GIntBig     GetFeatureCount( int bForce );
 
     virtual OGRErr      SetAttributeFilter( const char* pszAttrQuery );
@@ -189,7 +195,7 @@ class OGROSMLayer : public OGRLayer
 
     void                SetFieldsFromTags(OGRFeature* poFeature,
                                           GIntBig nID,
-                                          int bIsWayID,
+                                          bool bIsWayID,
                                           unsigned int nTags, OSMTag* pasTags,
                                           OSMInfo* psInfo);
 
@@ -395,6 +401,10 @@ class OGROSMDataSource : public OGRDataSource
 
     bool                bNeedsToSaveWayInfo;
 
+    static const GIntBig FILESIZE_NOT_INIT = -2;
+    static const GIntBig FILESIZE_INVALID = -1;
+    GIntBig             m_nFileSize;
+
     int                 CompressWay (bool bIsArea, unsigned int nTags, IndexedKVP* pasTags,
                                      int nPoints, LonLat* pasLonLatPairs,
                                      OSMInfo* psInfo,
@@ -405,18 +415,18 @@ class OGROSMDataSource : public OGRDataSource
                                        OSMInfo* psInfo );
 
     bool                ParseConf(char** papszOpenOptions);
-    int                 CreateTempDB();
+    bool                CreateTempDB();
     bool                SetDBOptions();
     bool                SetCacheSize();
     bool                CreatePreparedStatements();
     void                CloseDB();
 
-    int                 IndexPoint(OSMNode* psNode);
-    int                 IndexPointSQLite(OSMNode* psNode);
+    bool                IndexPoint( OSMNode* psNode );
+    bool                IndexPointSQLite( OSMNode* psNode );
     bool                FlushCurrentSector();
     bool                FlushCurrentSectorCompressedCase();
     bool                FlushCurrentSectorNonCompressedCase();
-    bool                IndexPointCustom(OSMNode* psNode);
+    bool                IndexPointCustom( OSMNode* psNode );
 
     void                IndexWay(GIntBig nWayID, bool bIsArea,
                                  unsigned int nTags, IndexedKVP* pasTags,
@@ -457,7 +467,7 @@ class OGROSMDataSource : public OGRDataSource
 
   public:
                         OGROSMDataSource();
-                        ~OGROSMDataSource();
+                        virtual ~OGROSMDataSource();
 
     virtual const char *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
@@ -470,11 +480,18 @@ class OGROSMDataSource : public OGRDataSource
                                     const char *pszDialect );
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
+    virtual void        ResetReading();
+    virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
+                                        double* pdfProgressPct,
+                                       GDALProgressFunc pfnProgress,
+                                        void* pProgressData );
 
     int                 Open ( const char* pszFilename, char** papszOpenOptions );
 
-    int                 ResetReading();
-    bool                ParseNextChunk(int nIdxLayer);
+    int                 MyResetReading();
+    bool                ParseNextChunk(int nIdxLayer,
+                                       GDALProgressFunc pfnProgress,
+                                       void* pProgressData);
     OGRErr              GetExtent( OGREnvelope *psExtent );
     int                 IsInterleavedReading();
 

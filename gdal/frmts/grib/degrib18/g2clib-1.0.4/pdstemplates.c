@@ -49,6 +49,11 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
              // 4.14: Derived Fcst based on Ensemble cluster over circular
              //       area at Horiz Level/Layer in a time interval
          {14,44,1, {1,1,1,1,1,2,1,1,4,1,-1,-4,1,-1,-4,1,1,1,1,1,1,1,-4,4,4,1,-1,4,-1,4,2,1,1,1,1,1,1,4,1,1,1,4,1,4} },
+
+             // 4.15: Average, Accumulation, Extreme values or Other statistically-processed values over
+            // values over a spatial area at horizontal level or in a horizontal layer at a point in time
+         {15,18,0, {1,1,1,1,1,2,1,1,4,1,-1,-4,1,-1,-4,1,1,1} },
+
              // 4.20: Radar Product
          {20,19,0, {1,1,1,1,1,-4,4,2,4,2,1,1,1,1,1,2,1,3,2} },
              // 4.30: Satellite Product

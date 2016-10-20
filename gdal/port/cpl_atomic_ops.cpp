@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_atomic_ops.cpp
  * Project:  CPL - Common Portability Library
@@ -31,6 +30,8 @@
 #include "cpl_atomic_ops.h"
 
 // TODO: If C++11, use #include <atomic>.
+
+CPL_CVSID("$Id:");
 
 #if defined(__MACH__) && defined(__APPLE__)
 

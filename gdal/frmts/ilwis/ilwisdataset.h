@@ -49,10 +49,10 @@ CPL_C_START
 void GDALRegister_ILWIS();
 CPL_C_END
 
-#define shUNDEF	-32767
+#define shUNDEF -32767
 #define iUNDEF  -2147483647
 #define flUNDEF ((float)-1e38)
-#define	rUNDEF  ((double)-1e308)
+#define rUNDEF  ((double)-1e308)
 
 enum ilwisStoreType
 {
@@ -66,7 +66,7 @@ enum ilwisStoreType
 class ValueRange
 {
 public:
-    ValueRange(double min, double max);	// step = 1
+    ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
     ValueRange(std::string str);
     std::string ToString();
@@ -119,7 +119,7 @@ public:
     int nSizePerPixel;
 
     ILWISRasterBand( ILWISDataset *, int );
-    ~ILWISRasterBand();
+    virtual ~ILWISRasterBand();
     CPLErr GetILWISInfo(std::string pszFileName);
     void ILWISOpen( std::string pszFilename);
 
@@ -135,17 +135,17 @@ private:
 };
 
 /************************************************************************/
-/*	                   ILWISDataset					*/
+/*                         ILWISDataset                                 */
 /************************************************************************/
 class ILWISDataset : public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;
     std::string pszIlwFileName;
-    char	 *pszProjection;
+    char         *pszProjection;
     double adfGeoTransform[6];
     int    bGeoDirty;
-    int		 bNewDataset;            /* product of Create() */
+    int    bNewDataset;            /* product of Create() */
     std::string pszFileType; //indicating the input dataset: Map/MapList
     CPLErr ReadProjection( std::string csyFileName);
     CPLErr WriteProjection();
@@ -154,7 +154,7 @@ class ILWISDataset : public GDALPamDataset
 
 public:
     ILWISDataset();
-    ~ILWISDataset();
+    virtual ~ILWISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -169,7 +169,7 @@ public:
                                int nBands, GDALDataType eType,
                                char** papszParmList);
 
-    virtual CPLErr 	GetGeoTransform( double * padfTransform );
+    virtual CPLErr  GetGeoTransform( double * padfTransform );
     virtual CPLErr  SetGeoTransform( double * );
 
     virtual const char *GetProjectionRef(void);

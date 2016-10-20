@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDAL Wrapper for image matching via correlation algorithm.
@@ -31,7 +30,9 @@
 #include "gdal_alg.h"
 #include "gdal_simplesurf.h"
 
-CPL_CVSID("$Id");
+//! @cond Doxygen_Suppress
+CPL_CVSID("$Id$");
+//! @endcond
 
 /**
  * @file
@@ -174,6 +175,7 @@ GatherFeaturePoints(GDALDataset* poDataset, int* panBands,
 /*                     GDALComputeMatchingPoints()                      */
 /************************************************************************/
 
+/** GDALComputeMatchingPoints. TODO document */
 GDAL_GCP CPL_DLL *
 GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
                            GDALDatasetH hSecondImage,

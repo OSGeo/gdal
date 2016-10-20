@@ -41,6 +41,7 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.ogr.Geometry;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
+import org.gdal.ogr.Feature;
 %}
 
 %pragma(java) moduleimports=%{
@@ -48,6 +49,7 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.ogr.Geometry;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
+import org.gdal.ogr.Feature;
 %}
 
 %typemap(javaimports) GDALDatasetShadow %{
@@ -55,6 +57,7 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.ogr.Geometry;
 import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
+import org.gdal.ogr.Feature;
 %}
 
 

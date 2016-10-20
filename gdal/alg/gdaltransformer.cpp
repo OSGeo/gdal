@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Implementation of one or more GDALTrasformerFunc types, including
@@ -1464,7 +1463,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         CPLString osSrcWKT = pszSrcWKT;
         if (hSrcDS
-            && CSLFetchBoolean( papszOptions, "INSERT_CENTER_LONG", TRUE ) )
+            && CPLFetchBool( papszOptions, "INSERT_CENTER_LONG", true ) )
             osSrcWKT = InsertCenterLong( hSrcDS, osSrcWKT );
 
         psInfo->pReprojectArg =
@@ -2633,6 +2632,7 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 /*              GDALApproxTransformerOwnsSubtransformer()               */
 /************************************************************************/
 
+/** Set bOwnSubtransformer flag */
 void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 
 {
@@ -3449,6 +3449,26 @@ void* GDALCreateSimilarTransformer( void* pTransformArg, double dfRatioX, double
 /************************************************************************/
 /*                 GDALSetTransformerDstGeoTransform()                  */
 /************************************************************************/
+
+/**
+ * Set ApproxTransformer or GenImgProj output geotransform.
+ *
+ * This is a layer above GDALSetGenImgProjTransformerDstGeoTransform() that
+ * checks that the passed hTransformArg is compatible.
+ *
+ * Normally the "destination geotransform", or transformation between
+ * georeferenced output coordinates and pixel/line coordinates on the
+ * destination file is extracted from the destination file by
+ * GDALCreateGenImgProjTransformer() and stored in the GenImgProj private
+ * info.  However, sometimes it is inconvenient to have an output file
+ * handle with appropriate geotransform information when creating the
+ * transformation.  For these cases, this function can be used to apply
+ * the destination geotransform.
+ *
+ * @param pTransformArg the handle to update.
+ * @param padfGeoTransform the destination geotransform to apply (six doubles).
+ */
+
 
 void GDALSetTransformerDstGeoTransform(void *pTransformArg,
                                        const double *padfGeoTransform )

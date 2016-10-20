@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMemDataSource class.
@@ -74,8 +73,8 @@ OGRMemDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     OGRMemLayer *poLayer = new OGRMemLayer( pszLayerName, poSRS, eType );
 
-    if( CSLFetchBoolean(papszOptions, "ADVERTIZE_UTF8", FALSE) )
-        poLayer->SetAdvertizeUTF8(TRUE);
+    if( CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false) )
+        poLayer->SetAdvertizeUTF8(true);
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -126,6 +125,8 @@ int OGRMemDataSource::TestCapability( const char * pszCap )
     else if( EQUAL(pszCap,ODsCCurveGeometries) )
         return TRUE;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
+        return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return TRUE;
 
     return FALSE;

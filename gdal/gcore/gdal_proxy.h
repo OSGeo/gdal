@@ -30,6 +30,8 @@
 #ifndef GDAL_PROXY_H_INCLUDED
 #define GDAL_PROXY_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "gdal.h"
 
 #ifdef __cplusplus
@@ -94,7 +96,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
         virtual CPLErr          CreateMaskBand( int nFlags );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALProxyDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALProxyDataset)
 };
 
 /* ******************************************************************** */
@@ -193,7 +195,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                                 GIntBig *pnLineSpace,
                                                 char **papszOptions );
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)
 };
 
 
@@ -234,7 +236,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                             int bShared = FALSE,
                             const char * pszProjectionRef = NULL,
                             double * padfGeoTransform = NULL);
-        ~GDALProxyPoolDataset();
+        virtual ~GDALProxyPoolDataset();
 
         void         SetOpenOptions(char** papszOpenOptions);
         void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
@@ -257,7 +259,7 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
         virtual const char *GetGCPProjection();
         virtual const GDAL_GCP *GetGCPs();
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolDataset)
 };
 
 /* ******************************************************************** */
@@ -295,7 +297,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
                                 int nBlockXSize, int nBlockYSize);
         GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS,
                                 GDALRasterBand* poUnderlyingRasterBand);
-        ~GDALProxyPoolRasterBand();
+        virtual ~GDALProxyPoolRasterBand();
 
         void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
 
@@ -312,7 +314,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
         virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig nDesiredSamples); // TODO
         virtual GDALRasterBand *GetMaskBand();
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolRasterBand)
 };
 
 /* ******************************************************************** */
@@ -337,7 +339,7 @@ class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
                                         GDALRasterBand* poUnderlyingOverviewBand,
                                         GDALProxyPoolRasterBand* poMainBand,
                                         int nOverviewBand);
-        ~GDALProxyPoolOverviewRasterBand();
+        virtual ~GDALProxyPoolOverviewRasterBand();
 };
 
 /* ******************************************************************** */
@@ -364,11 +366,10 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
                               GDALProxyPoolRasterBand* poMainBand,
                               GDALDataType eDataType,
                               int nBlockXSize, int nBlockYSize);
-        ~GDALProxyPoolMaskBand();
+        virtual ~GDALProxyPoolMaskBand();
 };
 
 #endif
-
 
 /* ******************************************************************** */
 /*            C types and methods declarations                          */
@@ -392,5 +393,7 @@ void CPL_DLL GDALProxyPoolDatasetAddSrcBandDescription( GDALProxyPoolDatasetH hP
                                                         int nBlockXSize, int nBlockYSize);
 
 CPL_C_END
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_PROXY_H_INCLUDED */

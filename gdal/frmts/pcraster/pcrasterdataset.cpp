@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster CSF 2.0 raster file driver
@@ -293,7 +292,7 @@ GDALDataset* PCRasterDataset::createCopy(
 
 //! Constructor.
 /*!
-  \param     map PCRaster map handle. It is ours to close.
+  \param     mapIn PCRaster map handle. It is ours to close.
 */
 PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     GDALPamDataset(),

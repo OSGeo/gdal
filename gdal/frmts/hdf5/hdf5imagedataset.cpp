@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
  * Purpose:  Read subdatasets of HDF5 file.
@@ -246,7 +245,7 @@ class HDF5ImageRasterBand : public GDALPamRasterBand
 public:
 
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
-    ~HDF5ImageRasterBand();
+    virtual ~HDF5ImageRasterBand();
 
     virtual CPLErr      IReadBlock( int, int, void * );
     virtual double      GetNoDataValue( int * );
@@ -825,7 +824,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
     /* -------------------------------------------------------------------- */
     /*  Fill the GCPs list.                                                 */
     /* -------------------------------------------------------------------- */
-        nGCPCount = nRasterYSize/nDeltaLat * nRasterXSize/nDeltaLon;
+        nGCPCount = (nRasterYSize/nDeltaLat) * (nRasterXSize/nDeltaLon);
 
         pasGCPList = static_cast<GDAL_GCP *>(
             CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) ) );
@@ -835,12 +834,41 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
         const int nYLimit = (static_cast<int>(nRasterYSize)/nDeltaLat) * nDeltaLat;
         const int nXLimit = (static_cast<int>(nRasterXSize)/nDeltaLon) * nDeltaLon;
+
+        // The original code in https://trac.osgeo.org/gdal/changeset/8066
+        // always add +180 to the longitudes, but without justification
+        // I suspect this might be due to handling products crossing the
+        // antimeridian. Trying to do it just when needed through a heuristics.
+        bool bHasLonNearMinus180 = false;
+        bool bHasLonNearPlus180 = false;
+        bool bHasLonNearZero = false;
         for( int j = 0; j < nYLimit; j+=nDeltaLat )
         {
             for( int i = 0; i < nXLimit; i+=nDeltaLon )
             {
                 const int iGCP =  j * nRasterXSize + i;
-                pasGCPList[k].dfGCPX = static_cast<double>(Longitude[iGCP])+180.0;
+                if( Longitude[iGCP] > 170 && Longitude[iGCP] <= 180 )
+                    bHasLonNearPlus180 = true;
+                if( Longitude[iGCP] < -170 && Longitude[iGCP] >= -180 )
+                    bHasLonNearMinus180 = true;
+                if( fabs(Longitude[iGCP]) < 90 )
+                    bHasLonNearZero = true;
+            }
+        }
+        const char* pszShiftGCP =
+                CPLGetConfigOption("HDF5_SHIFT_GCPX_BY_180", NULL);
+        const bool bAdd180 = (bHasLonNearPlus180 && bHasLonNearMinus180 &&
+                              !bHasLonNearZero && pszShiftGCP == NULL) ||
+                             (pszShiftGCP != NULL && CPLTestBool(pszShiftGCP));
+
+        for( int j = 0; j < nYLimit; j+=nDeltaLat )
+        {
+            for( int i = 0; i < nXLimit; i+=nDeltaLon )
+            {
+                const int iGCP =  j * nRasterXSize + i;
+                pasGCPList[k].dfGCPX = static_cast<double>(Longitude[iGCP]);
+                if( bAdd180 )
+                    pasGCPList[k].dfGCPX += 180.0;
                 pasGCPList[k].dfGCPY = static_cast<double>(Latitude[iGCP]);
 
                 pasGCPList[k].dfGCPPixel = i + 0.5;
@@ -1116,10 +1144,10 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
             }
             else
             {
-//            	geotransform[1] : width of pixel
-//            	geotransform[4] : rotational coefficient, zero for north up images.
-//            	geotransform[2] : rotational coefficient, zero for north up images.
-//            	geotransform[5] : height of pixel (but negative)
+                // geotransform[1] : width of pixel
+                // geotransform[4] : rotational coefficient, zero for north up images.
+                // geotransform[2] : rotational coefficient, zero for north up images.
+                // geotransform[5] : height of pixel (but negative)
 
                 adfGeoTransform[0] = pdOutUL[0];
                 adfGeoTransform[1] = pdLineSpacing[0];
@@ -1209,7 +1237,7 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
                         CPLFree( pasGCPList[i].pszId );
                     if( pasGCPList[i].pszInfo )
                         CPLFree( pasGCPList[i].pszInfo );
-	            }
+                }
                 CPLFree( pasGCPList );
                 pasGCPList = NULL;
                 nGCPCount = 0;

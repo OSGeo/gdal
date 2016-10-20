@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdwglayer.cpp 19643 2010-05-08 21:56:18Z rouault $
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGBlocksLayer class.
@@ -30,7 +29,7 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdwglayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRDWGBlocksLayer()                          */
@@ -38,7 +37,7 @@ CPL_CVSID("$Id: ogrdwglayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
 
 OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
     poDS(poDSIn),
-    poFeatureDefn(new OGRFeatureDefn( "blocks" )),
+    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
     ResetReading();
 

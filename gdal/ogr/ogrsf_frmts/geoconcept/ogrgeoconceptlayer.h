@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: ogrgeoconceptlayer.h
+ * $Id: ogrgeoconceptlayer.h$
  *
  * Name:     ogrgeoconceptlayer.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -46,7 +46,7 @@ class OGRGeoconceptLayer : public OGRLayer
 
   public:
                          OGRGeoconceptLayer();
-                        ~OGRGeoconceptLayer();
+                        virtual ~OGRGeoconceptLayer();
 
     OGRErr               Open( GCSubType* Subclass );
 

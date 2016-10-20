@@ -167,6 +167,14 @@
                 <!-- for a VRTDerivedRasterBand -->
                 <xs:element name="PixelFunctionType" type="xs:string"/>
                 <xs:element name="SourceTransferType" type="DataTypeType"/>
+                <xs:element name="PixelFunctionLanguage" type="xs:string"/>
+                <xs:element name="PixelFunctionCode" type="xs:string"/>
+                <xs:element name="PixelFunctionArguments">
+                    <xs:complexType>
+                        <xs:anyAttribute processContents="lax"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="BufferRadius" type="xs:nonNegativeInteger"/>
 
                 <!-- for a VRTRawRasterBand -->
                 <xs:element name="SourceFilename" type="SourceFilenameType"/>

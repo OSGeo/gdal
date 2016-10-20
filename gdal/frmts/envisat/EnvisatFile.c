@@ -1234,7 +1234,7 @@ int EnvisatFile_GetDatasetIndex( EnvisatFile *self, const char *ds_name )
 
     /*
      * Padd the name.  While the normal product spec says the DS_NAME will
-     * be 28 characters, I try to pad more than this incase the specification
+     * be 28 characters, I try to pad more than this in case the specification
      * is changed.
      */
     strncpy( padded_ds_name, ds_name, sizeof(padded_ds_name) );

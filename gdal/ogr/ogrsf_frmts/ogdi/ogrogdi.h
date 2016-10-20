@@ -64,7 +64,7 @@ class OGROGDILayer : public OGRLayer
   public:
                         OGROGDILayer(OGROGDIDataSource *, const char *,
                                      ecs_Family);
-                        ~OGROGDILayer();
+                        virtual ~OGROGDILayer();
 
     virtual void        SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
@@ -113,7 +113,7 @@ class OGROGDIDataSource : public OGRDataSource
                         OGROGDIDataSource();
                         ~OGROGDIDataSource();
 
-    int                 Open( const char *, int bTestOpen );
+    int                 Open( const char * );
 
     const char          *GetName() { return m_pszFullName; }
     int                 GetLayerCount() { return m_nLayers; }

@@ -10,6 +10,7 @@
 
 #define SWIGPYTHON
 #define SED_HACKS
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 
@@ -3329,6 +3330,8 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( pszMessage == NULL )
         pszMessage = "";
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
@@ -3341,16 +3344,19 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( PyErr_Occurred() != NULL )
     {
         PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;
     }
 
     if( psResult == NULL )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
     if( psResult == Py_None )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
@@ -3359,10 +3365,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         PyErr_Clear();
         CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
         Py_XDECREF(psResult);
-	return FALSE;
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
     }
 
     Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
 
     return bContinue;
 }
@@ -4379,6 +4387,8 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbCurvePolygon:
             case wkbMultiCurve:
             case wkbMultiSurface:
+            case wkbCurve:
+            case wkbSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
             case wkbCircularStringZ:
@@ -4386,6 +4396,8 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbCurvePolygonZ:
             case wkbMultiCurveZ:
             case wkbMultiSurfaceZ:
+            case wkbCurveZ:
+            case wkbSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -4405,6 +4417,8 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbCurvePolygonM:
             case wkbMultiCurveM:
             case wkbMultiSurfaceM:
+            case wkbCurveM:
+            case wkbSurfaceM:
             case wkbPointZM:
             case wkbLineStringZM:
             case wkbPolygonZM:
@@ -4417,6 +4431,8 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbCurvePolygonZM:
             case wkbMultiCurveZM:
             case wkbMultiSurfaceZM:
+            case wkbCurveZM:
+            case wkbSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
@@ -5256,7 +5272,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetDescription(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5306,7 +5326,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetDescription(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5344,7 +5368,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataDomainList(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)GDALMajorObjectShadow_GetMetadataDomainList(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALMajorObjectShadow_GetMetadataDomainList(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5408,7 +5436,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5481,7 +5513,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5611,7 +5647,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5679,7 +5719,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_1(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5811,7 +5855,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_GetMetadataItem(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)GDALMajorObjectShadow_GetMetadataItem(arg1,(char const *)arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)GDALMajorObjectShadow_GetMetadataItem(arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5888,7 +5936,11 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadataItem(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (CPLErr)GDALMajorObjectShadow_SetMetadataItem(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5928,7 +5980,11 @@ SWIGINTERN PyObject *_wrap_new_StyleTable(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRStyleTableShadow *)new_OGRStyleTableShadow();
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRStyleTableShadow *)new_OGRStyleTableShadow();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -5963,7 +6019,11 @@ SWIGINTERN PyObject *_wrap_delete_StyleTable(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRStyleTableShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRStyleTableShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6019,7 +6079,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_AddStyle(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRStyleTableShadow_AddStyle(arg1,(char const *)arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRStyleTableShadow_AddStyle(arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6071,7 +6135,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_LoadStyleTable(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRStyleTableShadow_LoadStyleTable(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRStyleTableShadow_LoadStyleTable(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6127,7 +6195,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_SaveStyleTable(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRStyleTableShadow_SaveStyleTable(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRStyleTableShadow_SaveStyleTable(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6181,7 +6253,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_Find(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRStyleTableShadow_Find(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRStyleTableShadow_Find(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6218,7 +6294,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_ResetStyleStringReading(PyObject *SWIGUNUS
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRStyleTableShadow_ResetStyleStringReading(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRStyleTableShadow_ResetStyleStringReading(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6254,7 +6334,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_GetNextStyle(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRStyleTableShadow_GetNextStyle(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRStyleTableShadow_GetNextStyle(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6290,7 +6374,11 @@ SWIGINTERN PyObject *_wrap_StyleTable_GetLastStyleName(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRStyleTableShadow_GetLastStyleName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRStyleTableShadow_GetLastStyleName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6333,7 +6421,11 @@ SWIGINTERN PyObject *_wrap_Driver_name_get(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRDriverShadow_name_get(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRDriverShadow_name_get(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6436,7 +6528,11 @@ SWIGINTERN PyObject *_wrap_Driver_CreateDataSource(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6564,7 +6660,11 @@ SWIGINTERN PyObject *_wrap_Driver_CopyDataSource(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6642,7 +6742,11 @@ SWIGINTERN PyObject *_wrap_Driver_Open(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6908,7 +7012,11 @@ SWIGINTERN PyObject *_wrap_DataSource_name_get(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRDataSourceShadow_name_get(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRDataSourceShadow_name_get(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6943,7 +7051,11 @@ SWIGINTERN PyObject *_wrap_delete_DataSource(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRDataSourceShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRDataSourceShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -6979,7 +7091,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetRefCount(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRDataSourceShadow_GetRefCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRDataSourceShadow_GetRefCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7015,7 +7131,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetSummaryRefCount(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7051,7 +7171,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerCount(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7087,7 +7211,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetDriver(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7123,7 +7251,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetName(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRDataSourceShadow_GetName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRDataSourceShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7168,7 +7300,11 @@ SWIGINTERN PyObject *_wrap_DataSource_DeleteLayer(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7216,7 +7352,11 @@ SWIGINTERN PyObject *_wrap_DataSource_SyncToDisk(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRDataSourceShadow_SyncToDisk(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_SyncToDisk(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7263,7 +7403,11 @@ SWIGINTERN PyObject *_wrap_DataSource_FlushCache(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRDataSourceShadow_FlushCache(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRDataSourceShadow_FlushCache(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7391,7 +7535,11 @@ SWIGINTERN PyObject *_wrap_DataSource_CreateLayer(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7516,7 +7664,11 @@ SWIGINTERN PyObject *_wrap_DataSource_CopyLayer(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7573,7 +7725,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerByIndex(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7619,7 +7775,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetLayerByName(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByName(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByName(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7672,7 +7832,11 @@ SWIGINTERN PyObject *_wrap_DataSource_TestCapability(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7751,7 +7915,11 @@ SWIGINTERN PyObject *_wrap_DataSource_ExecuteSQL(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7797,7 +7965,11 @@ SWIGINTERN PyObject *_wrap_DataSource_ReleaseResultSet(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7833,7 +8005,11 @@ SWIGINTERN PyObject *_wrap_DataSource_GetStyleTable(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRStyleTableShadow *)OGRDataSourceShadow_GetStyleTable(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRStyleTableShadow *)OGRDataSourceShadow_GetStyleTable(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7877,7 +8053,11 @@ SWIGINTERN PyObject *_wrap_DataSource_SetStyleTable(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRDataSourceShadow_SetStyleTable(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRDataSourceShadow_SetStyleTable(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7927,7 +8107,11 @@ SWIGINTERN PyObject *_wrap_DataSource_StartTransaction(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRDataSourceShadow_StartTransaction(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_StartTransaction(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -7975,7 +8159,11 @@ SWIGINTERN PyObject *_wrap_DataSource_CommitTransaction(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRDataSourceShadow_CommitTransaction(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_CommitTransaction(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8023,7 +8211,11 @@ SWIGINTERN PyObject *_wrap_DataSource_RollbackTransaction(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRDataSourceShadow_RollbackTransaction(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRDataSourceShadow_RollbackTransaction(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8078,7 +8270,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetRefCount(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRLayerShadow_GetRefCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRLayerShadow_GetRefCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8122,7 +8318,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilter__SWIG_0(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_SetSpatialFilter__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_SetSpatialFilter__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8193,7 +8393,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilterRect__SWIG_0(PyObject *SWIGUNUS
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_SetSpatialFilterRect__SWIG_0(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_SetSpatialFilterRect__SWIG_0(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8246,7 +8450,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilter__SWIG_1(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_SetSpatialFilter__SWIG_1(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_SetSpatialFilter__SWIG_1(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8380,7 +8588,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetSpatialFilterRect__SWIG_1(PyObject *SWIGUNUS
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_SetSpatialFilterRect__SWIG_1(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_SetSpatialFilterRect__SWIG_1(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8508,7 +8720,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetSpatialFilter(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8554,7 +8770,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetAttributeFilter(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8603,7 +8823,11 @@ SWIGINTERN PyObject *_wrap_Layer_ResetReading(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_ResetReading(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_ResetReading(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8639,7 +8863,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetName(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRLayerShadow_GetName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRLayerShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8675,7 +8903,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetGeomType(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGRLayerShadow_GetGeomType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGRLayerShadow_GetGeomType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8711,7 +8943,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetGeometryColumn(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRLayerShadow_GetGeometryColumn(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRLayerShadow_GetGeometryColumn(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8747,7 +8983,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetFIDColumn(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRLayerShadow_GetFIDColumn(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRLayerShadow_GetFIDColumn(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8793,7 +9033,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8829,7 +9073,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetNextFeature(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8875,7 +9123,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetNextByIndex(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8937,7 +9189,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -8999,7 +9255,11 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9057,7 +9317,11 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9105,7 +9369,11 @@ SWIGINTERN PyObject *_wrap_Layer_SyncToDisk(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9153,7 +9421,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetLayerDefn(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9203,7 +9475,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeatureCount(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = OGRLayerShadow_GetFeatureCount(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = OGRLayerShadow_GetFeatureCount(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9291,7 +9567,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_GetExtent(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_GetExtent(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9354,7 +9634,11 @@ SWIGINTERN PyObject *_wrap_Layer_TestCapability(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9420,7 +9704,11 @@ SWIGINTERN PyObject *_wrap_Layer_CreateField(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9477,7 +9765,11 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteField(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_DeleteField(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_DeleteField(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9543,7 +9835,11 @@ SWIGINTERN PyObject *_wrap_Layer_ReorderField(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_ReorderField(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_ReorderField(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9618,7 +9914,11 @@ SWIGINTERN PyObject *_wrap_Layer_ReorderFields(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_ReorderFields(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_ReorderFields(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9710,7 +10010,11 @@ SWIGINTERN PyObject *_wrap_Layer_AlterFieldDefn(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_AlterFieldDefn(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_AlterFieldDefn(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9786,7 +10090,11 @@ SWIGINTERN PyObject *_wrap_Layer_CreateGeomField(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_CreateGeomField(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_CreateGeomField(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9834,7 +10142,11 @@ SWIGINTERN PyObject *_wrap_Layer_StartTransaction(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9882,7 +10194,11 @@ SWIGINTERN PyObject *_wrap_Layer_CommitTransaction(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9930,7 +10246,11 @@ SWIGINTERN PyObject *_wrap_Layer_RollbackTransaction(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -9997,7 +10317,11 @@ SWIGINTERN PyObject *_wrap_Layer_FindFieldIndex(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRLayerShadow_FindFieldIndex(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRLayerShadow_FindFieldIndex(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10035,7 +10359,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetSpatialRef(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10071,7 +10399,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetFeaturesRead(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = OGRLayerShadow_GetFeaturesRead(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = OGRLayerShadow_GetFeaturesRead(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10165,7 +10497,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetIgnoredFields(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SetIgnoredFields(arg1,(char const **)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SetIgnoredFields(arg1,(char const **)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10338,7 +10674,11 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Intersection(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Intersection(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10523,7 +10863,11 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Union(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Union(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10708,7 +11052,11 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_SymDifference(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_SymDifference(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -10893,7 +11241,11 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Identity(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Identity(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11078,7 +11430,11 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Update(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Update(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11263,7 +11619,11 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Clip(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Clip(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11448,7 +11808,11 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRLayerShadow_Erase(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_Erase(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11516,7 +11880,11 @@ SWIGINTERN PyObject *_wrap_Layer_GetStyleTable(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRStyleTableShadow *)OGRLayerShadow_GetStyleTable(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRStyleTableShadow *)OGRLayerShadow_GetStyleTable(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11560,7 +11928,11 @@ SWIGINTERN PyObject *_wrap_Layer_SetStyleTable(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRLayerShadow_SetStyleTable(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_SetStyleTable(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11602,7 +11974,11 @@ SWIGINTERN PyObject *_wrap_delete_Feature(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRFeatureShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRFeatureShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11646,7 +12022,11 @@ SWIGINTERN PyObject *_wrap_new_Feature(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11682,7 +12062,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetDefnRef(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11727,7 +12111,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometry(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11782,7 +12170,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometryDirectly(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11830,7 +12222,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeometryRef(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11884,7 +12280,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomField__SWIG_0(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeomField__SWIG_0(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeomField__SWIG_0(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -11956,7 +12356,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomField__SWIG_1(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeomField__SWIG_1(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeomField__SWIG_1(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12080,7 +12484,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomFieldDirectly__SWIG_0(PyObject *SWIGUN
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeomFieldDirectly__SWIG_0(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeomFieldDirectly__SWIG_0(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12150,7 +12558,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomFieldDirectly__SWIG_1(PyObject *SWIGUN
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetGeomFieldDirectly__SWIG_1(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetGeomFieldDirectly__SWIG_1(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12267,7 +12679,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldRef__SWIG_0(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeomFieldRef__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeomFieldRef__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12318,7 +12734,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldRef__SWIG_1(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeomFieldRef__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeomFieldRef__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12404,7 +12824,11 @@ SWIGINTERN PyObject *_wrap_Feature_Clone(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12454,7 +12878,11 @@ SWIGINTERN PyObject *_wrap_Feature_Equal(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12490,7 +12918,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldCount(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetFieldCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetFieldCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12535,7 +12967,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldDefnRef__SWIG_0(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12586,7 +13022,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldDefnRef__SWIG_1(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12672,7 +13112,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldCount(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetGeomFieldCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetGeomFieldCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12717,7 +13161,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldDefnRef__SWIG_0(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeomFieldDefnShadow *)OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeomFieldDefnShadow *)OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12768,7 +13216,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldDefnRef__SWIG_1(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeomFieldDefnShadow *)OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeomFieldDefnShadow *)OGRFeatureShadow_GetGeomFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12863,7 +13315,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsString__SWIG_0(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -12914,7 +13370,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsString__SWIG_1(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13009,7 +13469,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger__SWIG_0(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13060,7 +13524,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger__SWIG_1(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13155,7 +13623,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_0(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = OGRFeatureShadow_GetFieldAsInteger64__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = OGRFeatureShadow_GetFieldAsInteger64__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13214,7 +13686,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64__SWIG_1(PyObject *SWIGUNU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = OGRFeatureShadow_GetFieldAsInteger64__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = OGRFeatureShadow_GetFieldAsInteger64__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13317,7 +13793,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDouble__SWIG_0(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13368,7 +13848,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDouble__SWIG_1(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13490,7 +13974,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDateTime__SWIG_0(PyObject *SWIGUNUS
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsDateTime__SWIG_0(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsDateTime__SWIG_0(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13610,7 +14098,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDateTime__SWIG_1(PyObject *SWIGUNUS
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsDateTime__SWIG_1(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsDateTime__SWIG_1(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13755,7 +14247,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsIntegerList__SWIG_0(PyObject *SWIGU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsIntegerList__SWIG_0(arg1,arg2,arg3,(int const **)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsIntegerList__SWIG_0(arg1,arg2,arg3,(int const **)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13824,7 +14320,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsIntegerList__SWIG_1(PyObject *SWIGU
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsIntegerList__SWIG_1(arg1,(char const *)arg2,arg3,(int const **)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsIntegerList__SWIG_1(arg1,(char const *)arg2,arg3,(int const **)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -13937,7 +14437,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsInteger64List(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsInteger64List(arg1,arg2,arg3,(GIntBig const **)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsInteger64List(arg1,arg2,arg3,(GIntBig const **)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14007,7 +14511,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDoubleList__SWIG_0(PyObject *SWIGUN
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsDoubleList__SWIG_0(arg1,arg2,arg3,(double const **)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsDoubleList__SWIG_0(arg1,arg2,arg3,(double const **)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14076,7 +14584,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsDoubleList__SWIG_1(PyObject *SWIGUN
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_GetFieldAsDoubleList__SWIG_1(arg1,(char const *)arg2,arg3,(double const **)arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_GetFieldAsDoubleList__SWIG_1(arg1,(char const *)arg2,arg3,(double const **)arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14181,7 +14693,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsStringList(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char **)OGRFeatureShadow_GetFieldAsStringList(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char **)OGRFeatureShadow_GetFieldAsStringList(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14250,7 +14766,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_GetFieldAsBinary__SWIG_0(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_GetFieldAsBinary__SWIG_0(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14343,7 +14863,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_GetFieldAsBinary__SWIG_1(arg1,(char const *)arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_GetFieldAsBinary__SWIG_1(arg1,(char const *)arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14471,7 +14995,11 @@ SWIGINTERN PyObject *_wrap_Feature_IsFieldSet__SWIG_0(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14522,7 +15050,11 @@ SWIGINTERN PyObject *_wrap_Feature_IsFieldSet__SWIG_1(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14623,7 +15155,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldIndex(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14676,7 +15212,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetGeomFieldIndex(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_GetGeomFieldIndex(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_GetGeomFieldIndex(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14714,7 +15254,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = OGRFeatureShadow_GetFID(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = OGRFeatureShadow_GetFID(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14768,7 +15312,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14815,7 +15363,11 @@ SWIGINTERN PyObject *_wrap_Feature_DumpReadable(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_DumpReadable(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_DumpReadable(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14859,7 +15411,11 @@ SWIGINTERN PyObject *_wrap_Feature_UnsetField__SWIG_0(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -14909,7 +15465,11 @@ SWIGINTERN PyObject *_wrap_Feature_UnsetField__SWIG_1(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15017,7 +15577,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_0(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15097,7 +15661,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_1(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15169,7 +15737,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldInteger64(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldInteger64(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldInteger64(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15222,7 +15794,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_2(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_2(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_2(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15281,7 +15857,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_3(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_3(arg1,(char const *)arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_3(arg1,(char const *)arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15390,7 +15970,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_4(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_4(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_4(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15503,7 +16087,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetField__SWIG_5(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetField__SWIG_5(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetField__SWIG_5(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15788,7 +16376,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldIntegerList(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldIntegerList(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldIntegerList(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15873,7 +16465,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldInteger64List(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldInteger64List(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldInteger64List(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -15956,7 +16552,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldDoubleList(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldDoubleList(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldDoubleList(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16062,7 +16662,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldStringList(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldStringList(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldStringList(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16124,7 +16728,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldBinaryFromHexString__SWIG_0(PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_0(arg1,arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_0(arg1,arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16186,7 +16794,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFieldBinaryFromHexString__SWIG_1(PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetFieldBinaryFromHexString__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16310,7 +16922,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFrom(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16408,7 +17024,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetFromWithMap(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureShadow_SetFromWithMap(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureShadow_SetFromWithMap(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16468,7 +17088,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetStyleString(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureShadow_GetStyleString(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureShadow_GetStyleString(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16513,7 +17137,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetStyleString(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16560,7 +17188,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldType__SWIG_0(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16611,7 +17243,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldType__SWIG_1(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16719,7 +17355,11 @@ SWIGINTERN PyObject *_wrap_Feature_Validate(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureShadow_Validate(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureShadow_Validate(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16817,7 +17457,11 @@ SWIGINTERN PyObject *_wrap_Feature_FillUnsetWithDefault(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_FillUnsetWithDefault(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_FillUnsetWithDefault(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16861,7 +17505,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetNativeData(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureShadow_GetNativeData(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureShadow_GetNativeData(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16897,7 +17545,11 @@ SWIGINTERN PyObject *_wrap_Feature_GetNativeMediaType(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureShadow_GetNativeMediaType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureShadow_GetNativeMediaType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16942,7 +17594,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetNativeData(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetNativeData(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetNativeData(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -16989,7 +17645,11 @@ SWIGINTERN PyObject *_wrap_Feature_SetNativeMediaType(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureShadow_SetNativeMediaType(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureShadow_SetNativeMediaType(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17097,7 +17757,11 @@ SWIGINTERN PyObject *_wrap_delete_FeatureDefn(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRFeatureDefnShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRFeatureDefnShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17139,7 +17803,11 @@ SWIGINTERN PyObject *_wrap_new_FeatureDefn(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17177,7 +17845,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetName(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFeatureDefnShadow_GetName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFeatureDefnShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17213,7 +17885,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldCount(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17258,7 +17934,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldDefn(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17309,7 +17989,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetFieldIndex(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17360,7 +18044,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_AddFieldDefn(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17396,7 +18084,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetGeomFieldCount(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_GetGeomFieldCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_GetGeomFieldCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17441,7 +18133,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetGeomFieldDefn(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeomFieldDefnShadow *)OGRFeatureDefnShadow_GetGeomFieldDefn(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeomFieldDefnShadow *)OGRFeatureDefnShadow_GetGeomFieldDefn(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17492,7 +18188,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetGeomFieldIndex(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_GetGeomFieldIndex(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_GetGeomFieldIndex(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17543,7 +18243,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_AddGeomFieldDefn(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureDefnShadow_AddGeomFieldDefn(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureDefnShadow_AddGeomFieldDefn(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17588,7 +18292,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_DeleteGeomFieldDefn(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRFeatureDefnShadow_DeleteGeomFieldDefn(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRFeatureDefnShadow_DeleteGeomFieldDefn(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17636,7 +18344,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetGeomType(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17680,7 +18392,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_SetGeomType(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17716,7 +18432,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_GetReferenceCount(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17752,7 +18472,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_IsGeometryIgnored(PyObject *SWIGUNUSEDPAR
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_IsGeometryIgnored(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_IsGeometryIgnored(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17796,7 +18520,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_SetGeometryIgnored(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureDefnShadow_SetGeometryIgnored(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureDefnShadow_SetGeometryIgnored(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17832,7 +18560,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_IsStyleIgnored(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_IsStyleIgnored(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_IsStyleIgnored(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17876,7 +18608,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_SetStyleIgnored(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFeatureDefnShadow_SetStyleIgnored(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFeatureDefnShadow_SetStyleIgnored(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17926,7 +18662,11 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_IsSame(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFeatureDefnShadow_IsSame(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFeatureDefnShadow_IsSame(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -17968,7 +18708,11 @@ SWIGINTERN PyObject *_wrap_delete_FieldDefn(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRFieldDefnShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRFieldDefnShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18021,7 +18765,11 @@ SWIGINTERN PyObject *_wrap_new_FieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18059,7 +18807,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetName(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFieldDefnShadow_GetName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18095,7 +18847,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetNameRef(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18145,7 +18901,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetName(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18183,7 +18943,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetType(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18227,7 +18991,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetType(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetType(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18263,7 +19031,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetSubType(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRFieldSubType)OGRFieldDefnShadow_GetSubType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRFieldSubType)OGRFieldDefnShadow_GetSubType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18307,7 +19079,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetSubType(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetSubType(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetSubType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18343,7 +19119,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetJustify(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18387,7 +19167,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetJustify(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetJustify(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetJustify(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18423,7 +19207,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetWidth(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFieldDefnShadow_GetWidth(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFieldDefnShadow_GetWidth(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18467,7 +19255,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetWidth(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetWidth(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetWidth(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18503,7 +19295,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetPrecision(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18547,7 +19343,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetPrecision(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetPrecision(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetPrecision(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18583,7 +19383,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetTypeName(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFieldDefnShadow_GetTypeName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetTypeName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18628,7 +19432,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetFieldTypeName(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18664,7 +19472,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_IsIgnored(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFieldDefnShadow_IsIgnored(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFieldDefnShadow_IsIgnored(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18708,7 +19520,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetIgnored(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetIgnored(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetIgnored(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18744,7 +19560,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_IsNullable(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFieldDefnShadow_IsNullable(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFieldDefnShadow_IsNullable(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18788,7 +19608,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetNullable(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetNullable(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetNullable(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18824,7 +19648,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_GetDefault(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRFieldDefnShadow_GetDefault(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRFieldDefnShadow_GetDefault(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18869,7 +19697,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_SetDefault(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRFieldDefnShadow_SetDefault(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRFieldDefnShadow_SetDefault(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18907,7 +19739,11 @@ SWIGINTERN PyObject *_wrap_FieldDefn_IsDefaultDriverSpecific(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRFieldDefnShadow_IsDefaultDriverSpecific(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRFieldDefnShadow_IsDefaultDriverSpecific(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -18949,7 +19785,11 @@ SWIGINTERN PyObject *_wrap_delete_GeomFieldDefn(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRGeomFieldDefnShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRGeomFieldDefnShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19002,7 +19842,11 @@ SWIGINTERN PyObject *_wrap_new_GeomFieldDefn(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeomFieldDefnShadow *)new_OGRGeomFieldDefnShadow((char const *)arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeomFieldDefnShadow *)new_OGRGeomFieldDefnShadow((char const *)arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19040,7 +19884,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_GetName(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRGeomFieldDefnShadow_GetName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRGeomFieldDefnShadow_GetName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19076,7 +19924,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_GetNameRef(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRGeomFieldDefnShadow_GetNameRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRGeomFieldDefnShadow_GetNameRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19126,7 +19978,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_SetName(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeomFieldDefnShadow_SetName(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeomFieldDefnShadow_SetName(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19164,7 +20020,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_GetType(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGRGeomFieldDefnShadow_GetType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGRGeomFieldDefnShadow_GetType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19208,7 +20068,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_SetType(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeomFieldDefnShadow_SetType(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeomFieldDefnShadow_SetType(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19244,7 +20108,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_GetSpatialRef(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OSRSpatialReferenceShadow *)OGRGeomFieldDefnShadow_GetSpatialRef(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OSRSpatialReferenceShadow *)OGRGeomFieldDefnShadow_GetSpatialRef(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19288,7 +20156,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_SetSpatialRef(PyObject *SWIGUNUSEDPARM(
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeomFieldDefnShadow_SetSpatialRef(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeomFieldDefnShadow_SetSpatialRef(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19324,7 +20196,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_IsIgnored(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeomFieldDefnShadow_IsIgnored(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeomFieldDefnShadow_IsIgnored(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19368,7 +20244,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_SetIgnored(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeomFieldDefnShadow_SetIgnored(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeomFieldDefnShadow_SetIgnored(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19404,7 +20284,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_IsNullable(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeomFieldDefnShadow_IsNullable(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeomFieldDefnShadow_IsNullable(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19448,7 +20332,11 @@ SWIGINTERN PyObject *_wrap_GeomFieldDefn_SetNullable(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeomFieldDefnShadow_SetNullable(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeomFieldDefnShadow_SetNullable(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19539,7 +20427,11 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkb(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19603,7 +20495,11 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromWkt(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19640,7 +20536,11 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromGML(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19679,7 +20579,11 @@ SWIGINTERN PyObject *_wrap_CreateGeometryFromJson(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromJson((char const *)arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)CreateGeometryFromJson((char const *)arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19753,7 +20657,11 @@ SWIGINTERN PyObject *_wrap_BuildPolygonFromEdges(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)BuildPolygonFromEdges(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)BuildPolygonFromEdges(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19864,7 +20772,11 @@ SWIGINTERN PyObject *_wrap_ApproximateArcAngles(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ApproximateArcAngles(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ApproximateArcAngles(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19900,7 +20812,11 @@ SWIGINTERN PyObject *_wrap_ForceToPolygon(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceToPolygon(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceToPolygon(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19936,7 +20852,11 @@ SWIGINTERN PyObject *_wrap_ForceToLineString(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceToLineString(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceToLineString(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -19972,7 +20892,11 @@ SWIGINTERN PyObject *_wrap_ForceToMultiPolygon(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceToMultiPolygon(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceToMultiPolygon(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20008,7 +20932,11 @@ SWIGINTERN PyObject *_wrap_ForceToMultiPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceToMultiPoint(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceToMultiPoint(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20044,7 +20972,11 @@ SWIGINTERN PyObject *_wrap_ForceToMultiLineString(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceToMultiLineString(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceToMultiLineString(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20141,7 +21073,11 @@ SWIGINTERN PyObject *_wrap_ForceTo(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)ForceTo(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)ForceTo(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20184,7 +21120,11 @@ SWIGINTERN PyObject *_wrap_delete_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    delete_OGRGeometryShadow(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_OGRGeometryShadow(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20294,7 +21234,11 @@ SWIGINTERN PyObject *_wrap_new_Geometry(PyObject *SWIGUNUSEDPARM(self), PyObject
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20352,7 +21296,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_ExportToWkt(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_ExportToWkt(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20428,7 +21376,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkt(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_ExportToIsoWkt(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_ExportToIsoWkt(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20521,7 +21473,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20613,7 +21569,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_ExportToIsoWkb(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_ExportToIsoWkb(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20737,7 +21697,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToGML(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToGML(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToGML(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20800,7 +21764,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToKML(arg1,(char const *)arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToKML(arg1,(char const *)arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20900,7 +21868,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToJson(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToJson(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (retStringAndCPLFree *)OGRGeometryShadow_ExportToJson(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -20982,7 +21954,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21047,7 +22023,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddPointM(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_AddPointM(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_AddPointM(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21121,7 +22101,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddPointZM(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_AddPointZM(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_AddPointZM(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21174,7 +22158,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddPoint_2D(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_AddPoint_2D(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_AddPoint_2D(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21222,7 +22210,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21284,7 +22276,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometry(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21332,7 +22328,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Clone(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21368,7 +22368,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryType(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21404,7 +22408,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryName(PyObject *SWIGUNUSEDPARM(sel
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21440,7 +22448,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Length(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_Length(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_Length(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21476,7 +22488,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Area(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_Area(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_Area(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21512,7 +22528,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetArea(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_GetArea(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_GetArea(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21548,7 +22568,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPointCount(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_GetPointCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_GetPointCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21609,7 +22633,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPoints(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetPoints(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetPoints(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21692,7 +22720,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetX(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_GetX(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_GetX(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21742,7 +22774,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetY(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_GetY(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_GetY(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21792,7 +22828,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetZ(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21842,7 +22882,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetM(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_GetM(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_GetM(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21895,7 +22939,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetPoint(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetPoint(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -21953,7 +23001,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPointZM(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetPointZM(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetPointZM(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22011,7 +23063,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetPoint_2D(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetPoint_2D(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetPoint_2D(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22052,7 +23108,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryCount(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22128,7 +23188,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPoint(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22202,7 +23266,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPointM(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetPointM(arg1,arg2,arg3,arg4,arg5);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetPointM(arg1,arg2,arg3,arg4,arg5);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22285,7 +23353,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPointZM(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetPointZM(arg1,arg2,arg3,arg4,arg5,arg6);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetPointZM(arg1,arg2,arg3,arg4,arg5,arg6);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22350,7 +23422,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetPoint_2D(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetPoint_2D(arg1,arg2,arg3,arg4);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetPoint_2D(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22395,7 +23471,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetGeometryRef(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22440,7 +23520,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Simplify(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Simplify(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Simplify(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22485,7 +23569,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SimplifyPreserveTopology(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_SimplifyPreserveTopology(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_SimplifyPreserveTopology(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22546,7 +23634,11 @@ SWIGINTERN PyObject *_wrap_Geometry_DelaunayTriangulation(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_DelaunayTriangulation(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_DelaunayTriangulation(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22582,7 +23674,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Boundary(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Boundary(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Boundary(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22618,7 +23714,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetBoundary(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22654,7 +23754,11 @@ SWIGINTERN PyObject *_wrap_Geometry_ConvexHull(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22713,7 +23817,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Buffer(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22763,7 +23871,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersection(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22813,7 +23925,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Union(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22849,7 +23965,11 @@ SWIGINTERN PyObject *_wrap_Geometry_UnionCascaded(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_UnionCascaded(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_UnionCascaded(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22899,7 +24019,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Difference(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22949,7 +24073,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SymDifference(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_SymDifference(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_SymDifference(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -22999,7 +24127,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SymmetricDifference(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23049,7 +24181,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Distance(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (double)OGRGeometryShadow_Distance(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_Distance(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23084,7 +24220,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Empty(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_Empty(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_Empty(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23120,7 +24260,11 @@ SWIGINTERN PyObject *_wrap_Geometry_IsEmpty(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_IsEmpty(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_IsEmpty(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23156,7 +24300,11 @@ SWIGINTERN PyObject *_wrap_Geometry_IsValid(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_IsValid(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_IsValid(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23192,7 +24340,11 @@ SWIGINTERN PyObject *_wrap_Geometry_IsSimple(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_IsSimple(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_IsSimple(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23228,7 +24380,11 @@ SWIGINTERN PyObject *_wrap_Geometry_IsRing(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_IsRing(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_IsRing(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23278,7 +24434,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersects(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Intersects(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Intersects(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23328,7 +24488,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Intersect(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23378,7 +24542,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Equals(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Equals(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Equals(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23428,7 +24596,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Equal(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23478,7 +24650,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Disjoint(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23528,7 +24704,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Touches(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23578,7 +24758,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Crosses(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23628,7 +24812,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Within(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Within(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Within(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23678,7 +24866,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Contains(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23728,7 +24920,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Overlaps(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23778,7 +24974,11 @@ SWIGINTERN PyObject *_wrap_Geometry_TransformTo(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23840,7 +25040,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23888,7 +25092,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetSpatialReference(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23932,7 +25140,11 @@ SWIGINTERN PyObject *_wrap_Geometry_AssignSpatialReference(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -23967,7 +25179,11 @@ SWIGINTERN PyObject *_wrap_Geometry_CloseRings(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_CloseRings(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_CloseRings(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24002,7 +25218,11 @@ SWIGINTERN PyObject *_wrap_Geometry_FlattenTo2D(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_FlattenTo2D(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_FlattenTo2D(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24046,7 +25266,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Segmentize(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_Segmentize(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_Segmentize(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24088,7 +25312,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetEnvelope(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetEnvelope(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetEnvelope(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24135,7 +25363,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetEnvelope3D(PyObject *SWIGUNUSEDPARM(self)
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_GetEnvelope3D(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_GetEnvelope3D(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24176,7 +25408,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Centroid(PyObject *SWIGUNUSEDPARM(self), PyO
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24212,7 +25448,11 @@ SWIGINTERN PyObject *_wrap_Geometry_PointOnSurface(PyObject *SWIGUNUSEDPARM(self
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_PointOnSurface(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_PointOnSurface(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24248,7 +25488,11 @@ SWIGINTERN PyObject *_wrap_Geometry_WkbSize(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_WkbSize(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_WkbSize(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24284,7 +25528,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetCoordinateDimension(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24320,7 +25568,11 @@ SWIGINTERN PyObject *_wrap_Geometry_CoordinateDimension(PyObject *SWIGUNUSEDPARM
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_CoordinateDimension(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_CoordinateDimension(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24356,7 +25608,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Is3D(PyObject *SWIGUNUSEDPARM(self), PyObjec
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_Is3D(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_Is3D(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24392,7 +25648,11 @@ SWIGINTERN PyObject *_wrap_Geometry_IsMeasured(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_IsMeasured(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_IsMeasured(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24436,7 +25696,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetCoordinateDimension(PyObject *SWIGUNUSEDP
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24480,7 +25744,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Set3D(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_Set3D(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_Set3D(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24524,7 +25792,11 @@ SWIGINTERN PyObject *_wrap_Geometry_SetMeasured(PyObject *SWIGUNUSEDPARM(self), 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRGeometryShadow_SetMeasured(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SetMeasured(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24560,7 +25832,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetDimension(PyObject *SWIGUNUSEDPARM(self),
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_GetDimension(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_GetDimension(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24607,7 +25883,11 @@ SWIGINTERN PyObject *_wrap_Geometry_HasCurveGeometry(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGeometryShadow_HasCurveGeometry(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGeometryShadow_HasCurveGeometry(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24709,7 +25989,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetLinearGeometry(PyObject *SWIGUNUSEDPARM(s
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetLinearGeometry(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_GetLinearGeometry(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24808,7 +26092,11 @@ SWIGINTERN PyObject *_wrap_Geometry_GetCurveGeometry(PyObject *SWIGUNUSEDPARM(se
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetCurveGeometry(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_GetCurveGeometry(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24861,7 +26149,11 @@ SWIGINTERN PyObject *_wrap_Geometry_Value(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Value(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Value(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24895,7 +26187,11 @@ SWIGINTERN PyObject *_wrap_GetDriverCount(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGetDriverCount();
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGetDriverCount();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24922,7 +26218,11 @@ SWIGINTERN PyObject *_wrap_GetOpenDSCount(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGetOpenDSCount();
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGetOpenDSCount();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24958,7 +26258,11 @@ SWIGINTERN PyObject *_wrap_SetGenerate_DB2_V72_BYTE_ORDER(PyObject *SWIGUNUSEDPA
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -24996,7 +26300,11 @@ SWIGINTERN PyObject *_wrap_RegisterAll(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRRegisterAll();
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRRegisterAll();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25032,7 +26340,11 @@ SWIGINTERN PyObject *_wrap_GeometryTypeToName(PyObject *SWIGUNUSEDPARM(self), Py
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGRGeometryTypeToName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGRGeometryTypeToName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25068,7 +26380,11 @@ SWIGINTERN PyObject *_wrap_GetFieldTypeName(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGR_GetFieldTypeName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGR_GetFieldTypeName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25104,7 +26420,11 @@ SWIGINTERN PyObject *_wrap_GetFieldSubTypeName(PyObject *SWIGUNUSEDPARM(self), P
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (char *)OGR_GetFieldSubTypeName(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (char *)OGR_GetFieldSubTypeName(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25140,7 +26460,11 @@ SWIGINTERN PyObject *_wrap_GT_Flatten(PyObject *SWIGUNUSEDPARM(self), PyObject *
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_Flatten(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_Flatten(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25176,7 +26500,11 @@ SWIGINTERN PyObject *_wrap_GT_SetZ(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_SetZ(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_SetZ(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25212,7 +26540,11 @@ SWIGINTERN PyObject *_wrap_GT_SetM(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_SetM(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_SetM(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25268,7 +26600,11 @@ SWIGINTERN PyObject *_wrap_GT_SetModifier(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)GT_SetModifier(arg1,arg2,arg3);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)GT_SetModifier(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25304,7 +26640,11 @@ SWIGINTERN PyObject *_wrap_GT_HasZ(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_HasZ(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_HasZ(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25340,7 +26680,11 @@ SWIGINTERN PyObject *_wrap_GT_HasM(PyObject *SWIGUNUSEDPARM(self), PyObject *arg
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_HasM(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_HasM(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25385,7 +26729,11 @@ SWIGINTERN PyObject *_wrap_GT_IsSubClassOf(PyObject *SWIGUNUSEDPARM(self), PyObj
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_IsSubClassOf(arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_IsSubClassOf(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25421,7 +26769,11 @@ SWIGINTERN PyObject *_wrap_GT_IsCurve(PyObject *SWIGUNUSEDPARM(self), PyObject *
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_IsCurve(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_IsCurve(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25457,7 +26809,11 @@ SWIGINTERN PyObject *_wrap_GT_IsSurface(PyObject *SWIGUNUSEDPARM(self), PyObject
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_IsSurface(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_IsSurface(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25493,7 +26849,11 @@ SWIGINTERN PyObject *_wrap_GT_IsNonLinear(PyObject *SWIGUNUSEDPARM(self), PyObje
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGR_GT_IsNonLinear(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGR_GT_IsNonLinear(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25529,7 +26889,11 @@ SWIGINTERN PyObject *_wrap_GT_GetCollection(PyObject *SWIGUNUSEDPARM(self), PyOb
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_GetCollection(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_GetCollection(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25565,7 +26929,11 @@ SWIGINTERN PyObject *_wrap_GT_GetCurve(PyObject *SWIGUNUSEDPARM(self), PyObject 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_GetCurve(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_GetCurve(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25601,7 +26969,11 @@ SWIGINTERN PyObject *_wrap_GT_GetLinear(PyObject *SWIGUNUSEDPARM(self), PyObject
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRwkbGeometryType)OGR_GT_GetLinear(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRwkbGeometryType)OGR_GT_GetLinear(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25636,7 +27008,11 @@ SWIGINTERN PyObject *_wrap_SetNonLinearGeometriesEnabledFlag(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    OGRSetNonLinearGeometriesEnabledFlag(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRSetNonLinearGeometriesEnabledFlag(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25663,7 +27039,11 @@ SWIGINTERN PyObject *_wrap_GetNonLinearGeometriesEnabledFlag(PyObject *SWIGUNUSE
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (int)OGRGetNonLinearGeometriesEnabledFlag();
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (int)OGRGetNonLinearGeometriesEnabledFlag();
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25699,7 +27079,11 @@ SWIGINTERN PyObject *_wrap_GetOpenDS(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)GetOpenDS(arg1);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)GetOpenDS(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25752,7 +27136,11 @@ SWIGINTERN PyObject *_wrap_Open(PyObject *SWIGUNUSEDPARM(self), PyObject *args, 
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -25813,7 +27201,11 @@ SWIGINTERN PyObject *_wrap_OpenShared(PyObject *SWIGUNUSEDPARM(self), PyObject *
     if ( bUseExceptions ) {
       CPLErrorReset();
     }
-    result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
 #ifndef SED_HACKS
     if ( bUseExceptions ) {
       CPLErr eclass = CPLGetLastErrorType();
@@ -32565,6 +33957,8 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ODsCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "ODsCEmulatedTransactions",SWIG_FromCharPtr("EmulatedTransactions"));
   SWIG_Python_SetConstant(d, "ODsCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "ODsCRandomLayerRead",SWIG_FromCharPtr("RandomLayerRead"));
+  SWIG_Python_SetConstant(d, "ODsCRandomLayerWrite",SWIG_FromCharPtr("RandomLayerWrite"));
   SWIG_Python_SetConstant(d, "ODrCCreateDataSource",SWIG_FromCharPtr("CreateDataSource"));
   SWIG_Python_SetConstant(d, "ODrCDeleteDataSource",SWIG_FromCharPtr("DeleteDataSource"));
   SWIG_Python_SetConstant(d, "OLMD_FID64",SWIG_FromCharPtr("OLMD_FID64"));
@@ -32586,6 +33980,9 @@ SWIG_init(void) {
   
   
   
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

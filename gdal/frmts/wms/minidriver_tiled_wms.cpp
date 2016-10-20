@@ -32,6 +32,8 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
+CPL_CVSID("$Id$");
+
 CPP_GDALWMSMiniDriverFactory(TiledWMS)
 
 static const char SIG[]="GDAL_WMS TiledWMS: ";
@@ -163,12 +165,12 @@ static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
 static GDALColorInterp BandInterp(int nbands, int band) {
     switch (nbands) {
       case 1: return GCI_GrayIndex;
-      case 2: return ((band==1)?GCI_GrayIndex:GCI_AlphaBand);
+      case 2: return band == 1 ? GCI_GrayIndex : GCI_AlphaBand;
       case 3: // RGB
       case 4: // RBGA
         if (band<3)
-            return ((band==1)?GCI_RedBand:GCI_GreenBand);
-        return ((band==3)?GCI_BlueBand:GCI_AlphaBand);
+            return band == 1 ? GCI_RedBand : GCI_GreenBand;
+        return band == 3 ? GCI_BlueBand : GCI_AlphaBand;
       default:
         return GCI_Undefined;
     }
@@ -274,7 +276,7 @@ GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() :
     m_requests(NULL),
     m_bsx(0),
     m_bsy(0)
-{ }
+{}
 
 GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
@@ -319,7 +321,7 @@ CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
  *\Brief Initialize minidriver with info from the server
  */
 
-CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
+CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig=NULL;

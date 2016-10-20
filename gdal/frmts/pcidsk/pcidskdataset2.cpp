@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCIDSK Database File
  * Purpose:  Read/write PCIDSK Database File used by the PCI software, using
@@ -1770,7 +1769,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /*      Create band objects for bitmap segments.                        */
 /* -------------------------------------------------------------------- */
         int nLastBitmapSegment = 0;
-        PCIDSKSegment *poBitSeg;
+        PCIDSKSegment *poBitSeg = NULL;
 
         while( (poBitSeg = poFile->GetSegment( SEG_BIT, "",
                                                nLastBitmapSegment)) != NULL )
@@ -1822,7 +1821,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
         poDS->oOvManager.Initialize( poDS, pszFilename, papszSiblingFiles );
 
-        return( poDS );
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1956,6 +1955,8 @@ int PCIDSK2Dataset::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
+        return eAccess == GA_Update;
+    if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return eAccess == GA_Update;
 
     return FALSE;

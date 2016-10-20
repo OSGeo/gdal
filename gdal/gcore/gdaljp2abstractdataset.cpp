@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
@@ -33,6 +32,8 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
@@ -652,3 +653,5 @@ OGRLayer* GDALJP2AbstractDataset::GetLayer( int i )
 {
     return poMemDS != NULL ? poMemDS->GetLayer(i) : NULL;
 }
+
+/*! @endcond */

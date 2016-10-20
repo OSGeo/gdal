@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  NULL output driver.
@@ -81,7 +80,7 @@ class OGRNULLDataSource : public OGRDataSource
 
   public:
                         OGRNULLDataSource(const char* pszNameIn);
-                        ~OGRNULLDataSource();
+               virtual ~OGRNULLDataSource();
 
     virtual const char *GetName() { return pszName; }
     virtual int         GetLayerCount() { return nLayers; }
@@ -103,7 +102,7 @@ class OGRNULLDataSource : public OGRDataSource
 class OGRNULLDriver : public OGRSFDriver
 {
   public:
-                ~OGRNULLDriver() {};
+    virtual ~OGRNULLDriver() {};
 
     virtual const char    *GetName() { return "NULL"; }
     virtual OGRDataSource *Open( const char *, int ) { return NULL; }
@@ -119,15 +118,15 @@ class OGRNULLDriver : public OGRSFDriver
 
 OGRNULLLayer::OGRNULLLayer( const char *pszLayerName,
                             OGRSpatialReference *poSRSIn,
-                            OGRwkbGeometryType eType )
+                            OGRwkbGeometryType eType ) :
+    poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
+    poSRS(poSRSIn)
 {
-    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->SetGeomType(eType);
     poFeatureDefn->Reference();
 
-    poSRS = poSRSIn ? poSRSIn : NULL;
-    if (poSRS)
+    if( poSRS )
         poSRS->Reference();
 }
 
@@ -172,12 +171,11 @@ OGRErr OGRNULLLayer::CreateField( OGRFieldDefn *poField,
 /*                          OGRNULLDataSource()                         */
 /************************************************************************/
 
-OGRNULLDataSource::OGRNULLDataSource(const char* pszNameIn)
-{
-    pszName = CPLStrdup(pszNameIn);
-    nLayers = 0;
-    papoLayers = NULL;
-}
+OGRNULLDataSource::OGRNULLDataSource(const char* pszNameIn) :
+    nLayers(0),
+    papoLayers(NULL),
+    pszName(CPLStrdup(pszNameIn))
+{}
 
 /************************************************************************/
 /*                         ~OGRNULLDataSource()                         */

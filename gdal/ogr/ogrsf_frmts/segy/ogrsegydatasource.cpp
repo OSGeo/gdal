@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SEG-Y Translator
  * Purpose:  Implements OGRSEGYDataSource class.
@@ -37,14 +36,11 @@ CPL_CVSID("$Id$");
 /*                        OGRSEGYDataSource()                       */
 /************************************************************************/
 
-OGRSEGYDataSource::OGRSEGYDataSource()
-
-{
-    papoLayers = NULL;
-    nLayers = 0;
-
-    pszName = NULL;
-}
+OGRSEGYDataSource::OGRSEGYDataSource() :
+    pszName(NULL),
+    papoLayers(NULL),
+    nLayers(0)
+{}
 
 /************************************************************************/
 /*                       ~OGRSEGYDataSource()                       */
@@ -88,7 +84,7 @@ OGRLayer *OGRSEGYDataSource::GetLayer( int iLayer )
 
 GInt16 SEGYReadMSBInt16(const GByte* pabyVal)
 {
-    GInt16 nVal;
+    GInt16 nVal = 0;
     memcpy(&nVal, pabyVal, 2);
     CPL_MSBPTR16(&nVal);
     return nVal;
@@ -100,7 +96,7 @@ GInt16 SEGYReadMSBInt16(const GByte* pabyVal)
 
 GInt32 SEGYReadMSBInt32(const GByte* pabyVal)
 {
-    GInt32 nVal;
+    GInt32 nVal = 0;
     memcpy(&nVal, pabyVal, 4);
     CPL_MSBPTR32(&nVal);
     return nVal;
@@ -110,13 +106,14 @@ GInt32 SEGYReadMSBInt32(const GByte* pabyVal)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextHeader)
+int OGRSEGYDataSource::Open( const char *pszFilename,
+                             const char *pszASCIITextHeader )
 
 {
     pszName = CPLStrdup( pszFilename );
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if( fp == NULL )
         return FALSE;
 
     VSIFSeekL(fp, 3200, SEEK_SET);
@@ -127,7 +124,7 @@ int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextH
 // --------------------------------------------------------------------
 
     GByte abyFileHeader[400];
-    if ((int)VSIFReadL(abyFileHeader, 1, 400, fp) != 400)
+    if( static_cast<int>(VSIFReadL(abyFileHeader, 1, 400, fp)) != 400 )
     {
         VSIFCloseL(fp);
         return FALSE;
@@ -167,48 +164,52 @@ int OGRSEGYDataSource::Open( const char * pszFilename, const char* pszASCIITextH
     sBFH.nFixedLengthTraceFlag = SEGYReadMSBInt16(abyFileHeader + 302);
     sBFH.nNumberOfExtendedTextualFileHeader = SEGYReadMSBInt16(abyFileHeader + 304);
 
-#if 0
-    CPLDebug("SIGY", "nJobIdNumber = %d", sBFH.nJobIdNumber);
-    CPLDebug("SIGY", "nLineNumber = %d", sBFH.nLineNumber);
-    CPLDebug("SIGY", "nReelNumber = %d", sBFH.nReelNumber);
-    CPLDebug("SIGY", "nDataTracesPerEnsemble = %d", sBFH.nDataTracesPerEnsemble);
-    CPLDebug("SIGY", "nAuxTracesPerEnsemble = %d", sBFH.nAuxTracesPerEnsemble);
-    CPLDebug("SIGY", "nSampleInterval = %d", sBFH.nSampleInterval);
-    CPLDebug("SIGY", "nSampleIntervalOriginal = %d", sBFH.nSampleIntervalOriginal);
-    CPLDebug("SIGY", "nSamplesPerDataTrace = %d", sBFH.nSamplesPerDataTrace);
-    CPLDebug("SIGY", "nSamplesPerDataTraceOriginal = %d", sBFH.nSamplesPerDataTraceOriginal);
-    CPLDebug("SIGY", "nDataSampleType = %d", sBFH.nDataSampleType);
-    CPLDebug("SIGY", "nEnsembleFold = %d", sBFH.nEnsembleFold);
-    CPLDebug("SIGY", "nTraceSortingCode = %d", sBFH.nTraceSortingCode);
-    CPLDebug("SIGY", "nVerticalSumCode = %d", sBFH.nVerticalSumCode);
-    CPLDebug("SIGY", "nSweepFrequencyAtStart = %d", sBFH.nSweepFrequencyAtStart);
-    CPLDebug("SIGY", "nSweepFrequencyAtEnd = %d", sBFH.nSweepFrequencyAtEnd);
-    CPLDebug("SIGY", "nSweepLength = %d", sBFH.nSweepLength);
-    CPLDebug("SIGY", "nSweepType = %d", sBFH.nSweepType);
-    CPLDebug("SIGY", "nTraceNumberOfSweepChannel = %d", sBFH.nTraceNumberOfSweepChannel);
-    CPLDebug("SIGY", "nSweepTraceTaperLengthAtStart = %d", sBFH.nSweepTraceTaperLengthAtStart);
-    CPLDebug("SIGY", "nSweepTraceTaperLengthAtEnd = %d", sBFH.nSweepTraceTaperLengthAtEnd);
-    CPLDebug("SIGY", "nTaperType = %d", sBFH.nTaperType);
-    CPLDebug("SIGY", "nCorrelated = %d", sBFH.nCorrelated);
-    CPLDebug("SIGY", "nBinaryGainRecovered = %d", sBFH.nBinaryGainRecovered);
-    CPLDebug("SIGY", "nAmplitudeRecoveryMethod = %d", sBFH.nAmplitudeRecoveryMethod);
-    CPLDebug("SIGY", "nMeasurementSystem = %d", sBFH.nMeasurementSystem);
-    CPLDebug("SIGY", "nImpulseSignalPolarity = %d", sBFH.nImpulseSignalPolarity);
-    CPLDebug("SIGY", "nVibratoryPolaryCode = %d", sBFH.nVibratoryPolaryCode);
-    CPLDebug("SIGY", "nSEGYRevisionNumber = %d", sBFH.nSEGYRevisionNumber);
-    CPLDebug("SIGY", "dfSEGYRevisionNumber = %f", sBFH.dfSEGYRevisionNumber);
-    CPLDebug("SIGY", "nFixedLengthTraceFlag = %d", sBFH.nFixedLengthTraceFlag);
-    CPLDebug("SIGY", "nNumberOfExtendedTextualFileHeader = %d", sBFH.nNumberOfExtendedTextualFileHeader);
-#endif
+#if DEBUG_VERBOSE
+    CPLDebug("SEGY", "nJobIdNumber = %d", sBFH.nJobIdNumber);
+    CPLDebug("SEGY", "nLineNumber = %d", sBFH.nLineNumber);
+    CPLDebug("SEGY", "nReelNumber = %d", sBFH.nReelNumber);
+    CPLDebug("SEGY", "nDataTracesPerEnsemble = %d", sBFH.nDataTracesPerEnsemble);
+    CPLDebug("SEGY", "nAuxTracesPerEnsemble = %d", sBFH.nAuxTracesPerEnsemble);
+    CPLDebug("SEGY", "nSampleInterval = %d", sBFH.nSampleInterval);
+    CPLDebug("SEGY", "nSampleIntervalOriginal = %d", sBFH.nSampleIntervalOriginal);
+    CPLDebug("SEGY", "nSamplesPerDataTrace = %d", sBFH.nSamplesPerDataTrace);
+    CPLDebug("SEGY", "nSamplesPerDataTraceOriginal = %d", sBFH.nSamplesPerDataTraceOriginal);
+    CPLDebug("SEGY", "nDataSampleType = %d", sBFH.nDataSampleType);
+    CPLDebug("SEGY", "nEnsembleFold = %d", sBFH.nEnsembleFold);
+    CPLDebug("SEGY", "nTraceSortingCode = %d", sBFH.nTraceSortingCode);
+    CPLDebug("SEGY", "nVerticalSumCode = %d", sBFH.nVerticalSumCode);
+    CPLDebug("SEGY", "nSweepFrequencyAtStart = %d", sBFH.nSweepFrequencyAtStart);
+    CPLDebug("SEGY", "nSweepFrequencyAtEnd = %d", sBFH.nSweepFrequencyAtEnd);
+    CPLDebug("SEGY", "nSweepLength = %d", sBFH.nSweepLength);
+    CPLDebug("SEGY", "nSweepType = %d", sBFH.nSweepType);
+    CPLDebug("SEGY", "nTraceNumberOfSweepChannel = %d", sBFH.nTraceNumberOfSweepChannel);
+    CPLDebug("SEGY", "nSweepTraceTaperLengthAtStart = %d", sBFH.nSweepTraceTaperLengthAtStart);
+    CPLDebug("SEGY", "nSweepTraceTaperLengthAtEnd = %d", sBFH.nSweepTraceTaperLengthAtEnd);
+    CPLDebug("SEGY", "nTaperType = %d", sBFH.nTaperType);
+    CPLDebug("SEGY", "nCorrelated = %d", sBFH.nCorrelated);
+    CPLDebug("SEGY", "nBinaryGainRecovered = %d", sBFH.nBinaryGainRecovered);
+    CPLDebug("SEGY", "nAmplitudeRecoveryMethod = %d", sBFH.nAmplitudeRecoveryMethod);
+    CPLDebug("SEGY", "nMeasurementSystem = %d", sBFH.nMeasurementSystem);
+    CPLDebug("SEGY", "nImpulseSignalPolarity = %d", sBFH.nImpulseSignalPolarity);
+    CPLDebug("SEGY", "nVibratoryPolaryCode = %d", sBFH.nVibratoryPolaryCode);
+    CPLDebug("SEGY", "nSEGYRevisionNumber = %d", sBFH.nSEGYRevisionNumber);
+    CPLDebug("SEGY", "dfSEGYRevisionNumber = %f", sBFH.dfSEGYRevisionNumber);
+    CPLDebug("SEGY", "nFixedLengthTraceFlag = %d", sBFH.nFixedLengthTraceFlag);
+    CPLDebug("SEGY", "nNumberOfExtendedTextualFileHeader = %d", sBFH.nNumberOfExtendedTextualFileHeader);
+#endif  // DEBUG_VERBOSE
 
 // --------------------------------------------------------------------
 //      Create layer
 // --------------------------------------------------------------------
 
     nLayers = 2;
-    papoLayers = (OGRLayer**) CPLMalloc(nLayers * sizeof(OGRLayer*));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLMalloc(nLayers * sizeof(OGRLayer*)));
     papoLayers[0] = new OGRSEGYLayer(pszName, fp, &sBFH);
-    papoLayers[1] = new OGRSEGYHeaderLayer(CPLSPrintf("%s_header", CPLGetBasename(pszName)), &sBFH, pszASCIITextHeader);
+    papoLayers[1] =
+        new OGRSEGYHeaderLayer(
+            CPLSPrintf("%s_header", CPLGetBasename(pszName)),
+                       &sBFH, pszASCIITextHeader);
 
     return TRUE;
 }

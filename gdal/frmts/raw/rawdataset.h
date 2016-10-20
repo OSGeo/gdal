@@ -36,7 +36,7 @@
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RawDataset				*/
+/*                              RawDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -58,10 +58,10 @@ class CPL_DLL RawDataset : public GDALPamDataset
                                    GDALRasterIOExtraArg* psExtraArg );
   public:
                  RawDataset();
-                 ~RawDataset() = 0;
+         virtual ~RawDataset() = 0;
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(RawDataset);
+    CPL_DISALLOW_COPY_ASSIGN(RawDataset)
 };
 
 /************************************************************************/
@@ -85,13 +85,13 @@ protected:
     int         bIsVSIL;
 
     vsi_l_offset nImgOffset;
-    int		nPixelOffset;
-    int		nLineOffset;
+    int         nPixelOffset;
+    int         nLineOffset;
     int         nLineSize;
-    int		bNativeOrder;
+    int         bNativeOrder;
 
-    int		nLoadedScanline;
-    void	*pLineBuffer;
+    int         nLoadedScanline;
+    void        *pLineBuffer;
     void        *pLineStart;
     int         bDirty;
 
@@ -133,7 +133,7 @@ public:
                                 GDALDataType eDataType, int bNativeOrder,
                                 int nXSize, int nYSize, int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-                 ~RawRasterBand() /* = 0 */ ;
+    virtual ~RawRasterBand() /* = 0 */ ;
 
     // should override RasterIO eventually.
 
@@ -160,7 +160,7 @@ public:
     void            SetAccess( GDALAccess eAccess );
 
     // this is deprecated.
-    void	 StoreNoDataValue( double );
+    void         StoreNoDataValue( double );
 
     // Query methods for internal data.
     vsi_l_offset GetImgOffset() { return nImgOffset; }
@@ -173,7 +173,7 @@ public:
     int          GetOwnsFP() { return bOwnsFP; }
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(RawRasterBand);
+    CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
 };
 
 #endif // GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED

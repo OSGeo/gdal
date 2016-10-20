@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            AODriver()                            */
@@ -120,17 +121,15 @@ OGRDataSource *AODriver::Open( const char* pszFilename,
   if (ipWorkspace == NULL)
     return NULL;
 
-  AODataSource* pDS;
-
-  pDS = new AODataSource();
+  AODataSource* pDS = new AODataSource();
 
   if(!pDS->Open( ipWorkspace, pszFilename, bUpdate ) )
   {
     delete pDS;
     return NULL;
   }
-  else
-    return pDS;
+
+  return pDS;
 }
 
 /************************************************************************
@@ -223,4 +222,3 @@ void RegisterOGRao()
     return;
   OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new AODriver );
 }
-

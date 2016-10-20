@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Pansharpening module
  * Purpose:  Implementation of pansharpening.
@@ -419,7 +418,7 @@ template<class WorkDataType, class OutDataType>
             }
             dfPseudoPanchro += psOptions->padfWeights[i] * nSpectralVal;
         }
-        if( dfPseudoPanchro && pPanBuffer[j] != noData )
+        if( dfPseudoPanchro != 0.0 && pPanBuffer[j] != noData )
         {
             dfFactor = pPanBuffer[j] / dfPseudoPanchro;
             for(int i=0;i<psOptions->nOutPansharpenedBands;i++)
@@ -428,7 +427,7 @@ template<class WorkDataType, class OutDataType>
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nBandValues + j];
                 WorkDataType nPansharpenedValue;
                 GDALCopyWord(nRawValue * dfFactor, nPansharpenedValue);
-                if( nMaxValue && nPansharpenedValue > nMaxValue )
+                if( nMaxValue != 0 && nPansharpenedValue > nMaxValue )
                     nPansharpenedValue = nMaxValue;
                 // We don't want a valid value to be mapped to NoData
                 if( nPansharpenedValue == noData )
@@ -478,7 +477,7 @@ template<class WorkDataType, class OutDataType, int bHasBitDepth>
             for(int i=0;i<psOptions->nInputSpectralBands;i++)
                 dfPseudoPanchro += psOptions->padfWeights[i] *
                                 pUpsampledSpectralBuffer[i * nBandValues + j];
-            if( dfPseudoPanchro )
+            if( dfPseudoPanchro != 0.0 )
                 dfFactor = pPanBuffer[j] / dfPseudoPanchro;
             else
                 dfFactor = 0.0;
@@ -595,11 +594,11 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                             pUpsampledSpectralBuffer[3 * nBandValues + j + 1];
         }
 
-        if( dfPseudoPanchro )
+        if( dfPseudoPanchro != 0.0 )
             dfFactor = pPanBuffer[j] / dfPseudoPanchro;
         else
             dfFactor = 0.0;
-        if( dfPseudoPanchro2 )
+        if( dfPseudoPanchro2 != 0.0 )
             dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
         else
             dfFactor2 = 0.0;
@@ -688,11 +687,11 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
                 dfPseudoPanchro2 += psOptions->padfWeights[i] *
                                 pUpsampledSpectralBuffer[i * nBandValues + j + 1];
             }
-            if( dfPseudoPanchro )
+            if( dfPseudoPanchro != 0.0 )
                 dfFactor = pPanBuffer[j] / dfPseudoPanchro;
             else
                 dfFactor = 0.0;
-            if( dfPseudoPanchro2 )
+            if( dfPseudoPanchro2 != 0.0 )
                 dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
             else
                 dfFactor2 = 0.0;
@@ -724,7 +723,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         for(int i=0;i<psOptions->nInputSpectralBands;i++)
             dfPseudoPanchro += psOptions->padfWeights[i] *
                             pUpsampledSpectralBuffer[i * nBandValues + j];
-        if( dfPseudoPanchro )
+        if( dfPseudoPanchro != 0.0 )
             dfFactor = pPanBuffer[j] / dfPseudoPanchro;
         else
             dfFactor = 0.0;
@@ -1543,6 +1542,9 @@ CPLErr GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
 /*                             GetOptions()                             */
 /************************************************************************/
 
+/** Return options.
+ * @return options.
+ */
 GDALPansharpenOptions* GDALPansharpenOperation::GetOptions()
 {
     return psOptions;

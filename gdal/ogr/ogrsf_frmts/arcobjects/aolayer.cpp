@@ -32,6 +32,8 @@
 #include "aoutils.h"
 #include <strstream>
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                              AOLayer()                               */
 /************************************************************************/
@@ -105,7 +107,7 @@ bool AOLayer::Initialize(ITable* pTable)
   IFieldPtr ipShapeField;
   if (FAILED(hr = ipFields->get_Field(shapeIndex, &ipShapeField)))
     return false;
-    
+
   // Use GeometryDef to set OGR shapetype and Spatial Reference information
   //
 
@@ -122,7 +124,7 @@ bool AOLayer::Initialize(ITable* pTable)
   if (wkbFlatten(ogrGeoType) == wkbMultiLineString || wkbFlatten(ogrGeoType) == wkbMultiPoint)
     m_forceMulti = true;
 
-  
+
   // Mapping of Spatial Reference will be passive about errors
   // (it is possible we won't be able to map some ESRI-specific projections)
 
@@ -210,7 +212,7 @@ void AOLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
   ISpatialFilterPtr ipSF = m_ipQF; //QI should never fail because we called SwitchToSpatialFilter
 
   ipSF->putref_Geometry(ipGeometry);
-  
+
   ResetReading();
 }
 
@@ -229,7 +231,7 @@ void AOLayer::SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX,
   ipGD->get_SpatialReference(&ipSR);
   ipEnvelope->putref_SpatialReference(ipSR);
   ipEnvelope->PutCoords(dfMinX, dfMinY, dfMaxX, dfMaxY);
-  
+
   ISpatialFilterPtr ipSF(m_ipQF);
   ipSF->putref_Geometry(ipEnvelope);
   ipSF->put_SpatialRel(esriSpatialRelIntersects);
@@ -291,10 +293,10 @@ OGRErr AOLayer::SetAttributeFilter( const char* pszQuery )
 
   if( pszQuery == NULL )
   {
-    
+
     CComBSTR whereClause(_T(""));
     m_ipQF->put_WhereClause(whereClause);
-    
+
   }
   else
   {
@@ -378,7 +380,7 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
       continue; //leave as unset
     }
 
-    // 
+    //
     // NOTE: This switch statement needs to be kept in sync with AOToOGRGeometry
     //       since we are only checking for types we mapped in that utility function
 
@@ -427,10 +429,10 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
       }
     }
   }
-  
+
   if (foundBadColumn)
     m_suppressColumnMappingError = true;
-  
+
 
   *ppFeature = pOutFeature;
 
@@ -476,7 +478,7 @@ OGRFeature* AOLayer::GetNextFeature()
       msg << "Failed translating ArcObjects row [" << oid << "] to OGR Feature";
 
       AOErr(hr, msg.str());
-      
+
       //return NULL;
       continue; //skip feature
     }
@@ -541,7 +543,7 @@ GIntBig AOLayer::GetFeatureCount( int bForce )
 OGRErr AOLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 {
 
-  if (bForce) 
+  if (bForce)
   {
     return OGRLayer::GetExtent( psExtent, bForce );
   }
@@ -549,12 +551,12 @@ OGRErr AOLayer::GetExtent (OGREnvelope* psExtent, int bForce)
   HRESULT hr;
 
   IGeoDatasetPtr ipGeoDataset = m_ipTable;
-  
+
   esriGeometry::IEnvelopePtr ipEnv = NULL;
   if (FAILED(hr = ipGeoDataset->get_Extent(&ipEnv)) || ipEnv == NULL)
   {
     AOErr(hr, "Failed retrieving extent");
-    
+
     return OGRERR_FAILURE;
   }
 
@@ -585,7 +587,7 @@ int AOLayer::TestCapability( const char* pszCap )
     if (EQUAL(pszCap,OLCRandomRead))
         return TRUE;
 
-    else if (EQUAL(pszCap,OLCFastFeatureCount)) 
+    else if (EQUAL(pszCap,OLCFastFeatureCount))
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
@@ -593,7 +595,7 @@ int AOLayer::TestCapability( const char* pszCap )
 
     else if (EQUAL(pszCap,OLCFastGetExtent))
         return TRUE;
-    
+
     // Have not implemented this yet
     else if (EQUAL(pszCap,OLCCreateField))
         return FALSE;
@@ -603,6 +605,6 @@ int AOLayer::TestCapability( const char* pszCap )
           || EQUAL(pszCap,OLCRandomWrite))
         return FALSE;
 
-    else 
+    else
         return FALSE;
 }

@@ -85,7 +85,7 @@ class OGRPDSLayer : public OGRLayer
                                          int nRecords,
                                          int nStartBytes, int nRecordSize,
                                          GByte* pabyRecord, bool bIsASCII);
-                        ~OGRPDSLayer();
+                        virtual ~OGRPDSLayer();
 
 
     virtual void                ResetReading();
@@ -122,13 +122,13 @@ class OGRPDSDataSource : public OGRDataSource
                                        int iSubscript,
                                        const char *pszDefault );
 
-    int                 LoadTable(const char* pszFilename,
-                                  int nRecordSize,
-                                  CPLString osTableID);
+    bool                LoadTable( const char* pszFilename,
+                                   int nRecordSize,
+                                   CPLString osTableID );
 
   public:
                         OGRPDSDataSource();
-                        ~OGRPDSDataSource();
+                        virtual ~OGRPDSDataSource();
 
     int                 Open( const char * pszFilename );
 

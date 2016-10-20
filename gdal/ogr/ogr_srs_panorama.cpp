@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OGRSpatialReference translation to/from "Panorama" GIS
@@ -147,6 +146,11 @@ static const int aoEllips[] =
 /*                        OSRImportFromPanorama()                       */
 /************************************************************************/
 
+/** Import coordinate system from "Panorama" GIS projection definition.
+ *
+ * See OGRSpatialReference::importFromPanorama()
+ */
+
 OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
                               long iProjSys, long iDatum, long iEllips,
                               double *padfPrjParams )
@@ -252,12 +256,10 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     if( padfPrjParams == NULL )
     {
-        int     i;
-
         padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
         if ( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( i = 0; i < 7; i++ )
+        for ( int i = 0; i < 7; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = true;
     }
@@ -491,6 +493,12 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /*                      OSRExportToPanorama()                           */
 /************************************************************************/
 
+
+/** Export coordinate system in "Panorama" GIS projection definition.
+ *
+ * See OGRSpatialReference::exportToPanorama()
+ */
+
 OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
                             long *piProjSys, long *piDatum, long *piEllips,
                             long *piZone, double *padfPrjParams )
@@ -548,12 +556,10 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
 /* -------------------------------------------------------------------- */
-    int     i;
-
     *piDatum = 0L;
     *piEllips = 0L;
     *piZone = 0L;
-    for ( i = 0; i < 7; i++ )
+    for ( int i = 0; i < 7; i++ )
         padfPrjParams[i] = 0.0;
 
 /* ==================================================================== */
@@ -802,12 +808,13 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Trying to translate an ellipsoid definition.", pszDatum );
 #endif
 
-        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
+        int i = 0;  // Used after for.
+        for ( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
             if ( aoEllips[i] )
             {
-                double  dfSM = 0.0;
-                double  dfIF = 1.0;
+                double dfSM = 0.0;
+                double dfIF = 1.0;
 
                 if ( OSRGetEllipsoidInfo( aoEllips[i], NULL,
                                           &dfSM, &dfIF ) == OGRERR_NONE

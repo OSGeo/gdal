@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id: test_ogr_geos.cpp,v 1.3 2007/01/04 18:58:36 mloskot Exp $
+// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test GEOS integration in OGR - geometric operations.

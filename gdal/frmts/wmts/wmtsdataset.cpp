@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL WMTS driver
  * Purpose:  Implement GDAL WMTS support
@@ -45,7 +44,7 @@ extern "C" void GDALRegister_WMTS();
 /* Set in stone by WMTS spec. In pixel/meter */
 #define WMTS_PITCH                      0.00028
 
-#define WMTS_METERS_FOR_ONE_DEG         (6378137 * 2 * M_PI / 360)
+#define WMTS_WGS84_DEG_PER_METER    (180 / M_PI / SRS_WGS84_SEMIMAJOR)
 
 CPL_CVSID("$Id$");
 
@@ -200,12 +199,13 @@ class WMTSBand : public GDALPamRasterBand
 /*                            WMTSBand()                                */
 /************************************************************************/
 
-WMTSBand::WMTSBand(WMTSDataset* poDSIn, int nBandIn)
+WMTSBand::WMTSBand( WMTSDataset* poDSIn, int nBandIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    poDSIn->apoDatasets[0]->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    poDSIn->apoDatasets[0]->GetRasterBand(1)->
+        GetBlockSize(&nBlockXSize, &nBlockYSize);
 }
 
 /************************************************************************/
@@ -408,7 +408,8 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 /*                          WMTSDataset()                               */
 /************************************************************************/
 
-WMTSDataset::WMTSDataset()
+WMTSDataset::WMTSDataset() :
+    papszHTTPOptions(NULL)
 {
     adfGT[0] = 0;
     adfGT[1] = 1;
@@ -416,7 +417,6 @@ WMTSDataset::WMTSDataset()
     adfGT[3] = 0;
     adfGT[4] = 0;
     adfGT[5] = 1;
-    papszHTTPOptions = NULL;
 }
 
 /************************************************************************/
@@ -700,7 +700,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
             oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
             if( oTMS.oSRS.IsGeographic() )
-                oTM.dfPixelSize /= WMTS_METERS_FOR_ONE_DEG;
+                oTM.dfPixelSize *= WMTS_WGS84_DEG_PER_METER;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
             double dfVal2 = CPLAtof(strchr(pszTopLeftCorner, ' ')+1);
             if( !bSwap ||
@@ -935,8 +935,9 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                     "TILEMATRIXSET", "");
     CPLString osStyle = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                     "STYLE", "");
-    int bExtendBeyondDateLine = CSLFetchBoolean(poOpenInfo->papszOpenOptions,
-                                    "EXTENDBEYONDDATELINE", FALSE);
+    int bExtendBeyondDateLine =
+        CPLFetchBool(poOpenInfo->papszOpenOptions,
+                     "EXTENDBEYONDDATELINE", false);
 
     CPLString osOtherXML = "<Cache />"
                      "<UnsafeSSL>true</UnsafeSSL>"

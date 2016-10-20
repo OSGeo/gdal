@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Rasterlite driver
  * Purpose:  Implement GDAL Rasterlite support using OGR SQLite driver
@@ -497,7 +496,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             }
 
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
-                                              nReqXSize, nReqYSize, 0, 
+                                              nReqXSize, nReqYSize, 0,
                                               eDataType, NULL);
             if (hMemDS == NULL)
             {
@@ -719,7 +718,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
-CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling, 
+CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
                                            int nOverviews, int * panOverviewList,
                                            int nBandsIn, int * panBandList,
                                            GDALProgressFunc pfnProgress,
@@ -754,8 +753,8 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         }
 
         bCheckForExistingOverview = FALSE;
-        CPLErr eErr = GDALDataset::IBuildOverviews( 
-                            pszResampling, nOverviews, panOverviewList, 
+        CPLErr eErr = GDALDataset::IBuildOverviews(
+                            pszResampling, nOverviews, panOverviewList,
                             nBandsIn, panBandList, pfnProgress, pProgressData );
         bCheckForExistingOverview = TRUE;
         return eErr;
@@ -774,7 +773,7 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in RASTERLITE only"
-                  " supported when operating on all bands.\n" 
+                  " supported when operating on all bands.\n"
                   "Operation failed.\n" );
         return CE_Failure;
     }

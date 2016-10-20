@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     georaster_priv.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -331,6 +331,8 @@ private:
     struct jpeg_compress_struct sCInfo;
     struct jpeg_error_mgr sJErr;
 
+    void                GetSpatialReference();
+
 public:
 
     static char**       ParseIdentificator( const char* pszStringID );
@@ -434,7 +436,7 @@ public:
     CPLString           sCompressionType;
     int                 nCompressQuality;
     CPLString           sWKText;
-    CPLString           sAuthority;
+
     CPLList*            psNoDataList;
 
     int                 nRasterColumns;

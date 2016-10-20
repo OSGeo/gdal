@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster driver support functions.
@@ -30,6 +29,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "pcrasterdataset.h"
+
+CPL_CVSID("$Id$");
 
 void GDALRegister_PCRaster()
 {

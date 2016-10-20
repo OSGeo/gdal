@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.47 2016-01-03 10:01:25 erouault Exp $ */
+/* $Id: tif_read.c,v 1.49 2016-07-10 18:00:21 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,6 +31,9 @@
 #include "tiffiop.h"
 #include <stdio.h>
 
+#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
+#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
+
 int TIFFFillStrip(TIFF* tif, uint32 strip);
 int TIFFFillTile(TIFF* tif, uint32 tile);
 static int TIFFStartStrip(TIFF* tif, uint32 strip);
@@ -38,6 +41,8 @@ static int TIFFStartTile(TIFF* tif, uint32 tile);
 static int TIFFCheckRead(TIFF*, int);
 static tmsize_t
 TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,const char* module);
+static tmsize_t
+TIFFReadRawTile1(TIFF* tif, uint32 tile, void* buf, tmsize_t size, const char* module);
 
 #define NOSTRIP ((uint32)(-1))       /* undefined state */
 #define NOTILE ((uint32)(-1))         /* undefined state */
@@ -350,6 +355,24 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 	stripsize=TIFFVStripSize(tif,rows);
 	if (stripsize==0)
 		return((tmsize_t)(-1));
+
+    /* shortcut to avoid an extra memcpy() */
+    if( td->td_compression == COMPRESSION_NONE &&
+        size!=(tmsize_t)(-1) && size >= stripsize &&
+        !isMapped(tif) &&
+        ((tif->tif_flags&TIFF_NOREADRAW)==0) )
+    {
+        if (TIFFReadRawStrip1(tif, strip, buf, stripsize, module) != stripsize)
+            return ((tmsize_t)(-1));
+
+        if (!isFillOrder(tif, td->td_fillorder) &&
+            (tif->tif_flags & TIFF_NOBITREV) == 0)
+            TIFFReverseBits(buf,stripsize);
+
+        (*tif->tif_postdecode)(tif,buf,stripsize);
+        return (stripsize);
+    }
+
 	if ((size!=(tmsize_t)(-1))&&(size<stripsize))
 		stripsize=size;
 	if (!TIFFFillStrip(tif,strip))
@@ -401,7 +424,7 @@ TIFFReadRawStrip1(TIFF* tif, uint32 strip, void* buf, tmsize_t size,
 		tmsize_t n;
 		ma=(tmsize_t)td->td_stripoffset[strip];
 		mb=ma+size;
-		if (((uint64)ma!=td->td_stripoffset[strip])||(ma>tif->tif_size))
+		if ((td->td_stripoffset[strip] > (uint64)TIFF_TMSIZE_T_MAX)||(ma>tif->tif_size))
 			n=0;
 		else if ((mb<ma)||(mb<size)||(mb>tif->tif_size))
 			n=tif->tif_size-ma;
@@ -661,6 +684,24 @@ TIFFReadEncodedTile(TIFF* tif, uint32 tile, void* buf, tmsize_t size)
 		    (unsigned long) tile, (unsigned long) td->td_nstrips);
 		return ((tmsize_t)(-1));
 	}
+
+    /* shortcut to avoid an extra memcpy() */
+    if( td->td_compression == COMPRESSION_NONE &&
+        size!=(tmsize_t)(-1) && size >= tilesize &&
+        !isMapped(tif) &&
+        ((tif->tif_flags&TIFF_NOREADRAW)==0) )
+    {
+        if (TIFFReadRawTile1(tif, tile, buf, tilesize, module) != tilesize)
+            return ((tmsize_t)(-1));
+
+        if (!isFillOrder(tif, td->td_fillorder) &&
+            (tif->tif_flags & TIFF_NOBITREV) == 0)
+            TIFFReverseBits(buf,tilesize);
+
+        (*tif->tif_postdecode)(tif,buf,tilesize);
+        return (tilesize);
+    }
+
 	if (size == (tmsize_t)(-1))
 		size = tilesize;
 	else if (size > tilesize)
@@ -717,7 +758,7 @@ TIFFReadRawTile1(TIFF* tif, uint32 tile, void* buf, tmsize_t size, const char* m
 		tmsize_t n;
 		ma=(tmsize_t)td->td_stripoffset[tile];
 		mb=ma+size;
-		if (((uint64)ma!=td->td_stripoffset[tile])||(ma>tif->tif_size))
+		if ((td->td_stripoffset[tile] > (uint64)TIFF_TMSIZE_T_MAX)||(ma>tif->tif_size))
 			n=0;
 		else if ((mb<ma)||(mb<size)||(mb>tif->tif_size))
 			n=tif->tif_size-ma;

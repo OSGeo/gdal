@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NTF Translator
  * Purpose:  NTF Arc to polyline stroking code.  This code is really generic,
@@ -69,54 +68,46 @@ int NTFArcCenterFromEdgePoints( double x_c0, double y_c0,
 /*      second points.  Also compute the center point of the two        */
 /*      lines ... the point our crossing line will go through.          */
 /* -------------------------------------------------------------------- */
-    double m1, x1, y1;
+    const double m1 =
+        (y_c1 - y_c0) != 0.0
+        ? (x_c0 - x_c1) / (y_c1 - y_c0)
+        : 1e+10;
 
-    if( (y_c1 - y_c0) != 0.0 )
-        m1 = (x_c0 - x_c1) / (y_c1 - y_c0);
-    else
-        m1 = 1e+10;
-
-    x1 = (x_c0 + x_c1) * 0.5;
-    y1 = (y_c0 + y_c1) * 0.5;
+    const double x1 = (x_c0 + x_c1) * 0.5;
+    const double y1 = (y_c0 + y_c1) * 0.5;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the same for the second point compared to the third     */
 /*      point.                                                          */
 /* -------------------------------------------------------------------- */
-    double m2, x2, y2;
+    const double m2 =
+        (y_c2 - y_c1) != 0.0
+        ? (x_c1 - x_c2) / (y_c2 - y_c1)
+        : 1e+10;
 
-    if( (y_c2 - y_c1) != 0.0 )
-        m2 = (x_c1 - x_c2) / (y_c2 - y_c1);
-    else
-        m2 = 1e+10;
-
-    x2 = (x_c1 + x_c2) * 0.5;
-    y2 = (y_c1 + y_c2) * 0.5;
+    const double x2 = (x_c1 + x_c2) * 0.5;
+    const double y2 = (y_c1 + y_c2) * 0.5;
 
 /* -------------------------------------------------------------------- */
 /*      Turn these into the Ax+By+C = 0 form of the lines.              */
 /* -------------------------------------------------------------------- */
-    double      a1, a2, b1, b2, c1, c2;
+    const double a1 = m1;
+    const double a2 = m2;
 
-    a1 = m1;
-    a2 = m2;
+    const double b1 = -1.0;
+    const double b2 = -1.0;
 
-    b1 = -1.0;
-    b2 = -1.0;
-
-    c1 = (y1 - m1*x1);
-    c2 = (y2 - m2*x2);
+    const double c1 = (y1 - m1*x1);
+    const double c2 = (y2 - m2*x2);
 
 /* -------------------------------------------------------------------- */
 /*      Compute the intersection of the two lines through the center    */
 /*      of the circle, using Kramers rule.                              */
 /* -------------------------------------------------------------------- */
-    double      det_inv;
-
     if( a1*b2 - a2*b1 == 0.0 )
         return FALSE;
 
-    det_inv = 1 / (a1*b2 - a2*b1);
+    const double det_inv = 1 / (a1*b2 - a2*b1);
 
     *x_center = (b1*c2 - b2*c1) * det_inv;
     *y_center = (a2*c1 - a1*c2) * det_inv;
@@ -135,8 +126,12 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                   int nVertexCount )
 
 {
-    double      dfStartAngle, dfEndAngle, dfAlongAngle;
-    double      dfCenterX, dfCenterY, dfRadius;
+    double dfStartAngle = 0.0;
+    double dfEndAngle = 0.0;
+    double dfAlongAngle = 0.0;
+    double dfCenterX = 0.0;
+    double dfCenterY = 0.0;
+    double dfRadius = 0.0;
 
     if( !NTFArcCenterFromEdgePoints( dfStartX, dfStartY, dfAlongX, dfAlongY,
                                      dfEndX, dfEndY, &dfCenterX, &dfCenterY ) )
@@ -149,15 +144,13 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
     }
     else
     {
-        double  dfDeltaX, dfDeltaY;
-
-        dfDeltaX = dfStartX - dfCenterX;
-        dfDeltaY = dfStartY - dfCenterY;
-        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
+        double dfDeltaX = dfStartX - dfCenterX;
+        double dfDeltaY = dfStartY - dfCenterY;
+        dfStartAngle = atan2(dfDeltaY, dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfAlongX - dfCenterX;
         dfDeltaY = dfAlongY - dfCenterY;
-        dfAlongAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
+        dfAlongAngle = atan2(dfDeltaY, dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
@@ -166,9 +159,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 #ifdef notdef
         if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
         {
-            double dfTempAngle;
-
-            dfTempAngle = dfStartAngle;
+            const double dfTempAngle = dfStartAngle;
             dfStartAngle = dfEndAngle;
             dfEndAngle = dfTempAngle;
         }
@@ -182,9 +173,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         if( dfEndAngle - dfStartAngle > 360.0 )
         {
-            double dfTempAngle;
-
-            dfTempAngle = dfStartAngle;
+            const double dfTempAngle = dfStartAngle;
             dfStartAngle = dfEndAngle;
             dfEndAngle = dfTempAngle;
 
@@ -213,21 +202,19 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
                                   int nVertexCount )
 
 {
-    OGRLineString      *poLine = new OGRLineString;
-    double             dfArcX, dfArcY, dfSlice;
-    int                iPoint;
+    OGRLineString *poLine = new OGRLineString;
 
-    nVertexCount = MAX(2,nVertexCount);
-    dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+    nVertexCount = MAX(2, nVertexCount);
+    const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
 
-    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
+    for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
     {
         double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
 
-        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
-        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+        const double dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+        const double dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
 
         poLine->setPoint( iPoint, dfArcX, dfArcY );
     }

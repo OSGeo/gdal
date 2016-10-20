@@ -17,13 +17,17 @@ ifeq ($(HAVE_EXPAT),yes)
 CPPFLAGS 	:=	-DHAVE_EXPAT $(EXPAT_INCLUDE) $(CPPFLAGS)
 endif
 
+ifeq ($(HAVE_XERCES),yes)
+CPPFLAGS 	:=	-DHAVE_XERCES $(XERCES_INCLUDE) $(CPPFLAGS)
+endif
+
 ifeq ($(LIBZ_SETTING),internal)
 ZLIB_XTRA_OPT =      -I../frmts/zlib
 else
 ZLIB_XTRA_OPT =
 endif
 
-CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
+CPPFLAGS	:=	-Iogrsf_frmts -Iogrsf_frmts/mem -Iogrsf_frmts/geojson $(JSON_INCLUDE) -I.  $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS) $(ZLIB_XTRA_OPT)
 
 default:	lib
 
@@ -73,7 +77,7 @@ install:
 # that it helps gcc 4.1 generating correct code here...
 parser:
 	bison -p swq -d -oswq_parser.cpp swq_parser.y
-	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" > swq_parser.cpp.tmp
+	sed "s/yytype_int16 yyssa\[YYINITDEPTH\];/yytype_int16 yyssa[YYINITDEPTH]; \/\* workaround bug with gcc 4.1 -O2 \*\/ memset(yyssa, 0, sizeof(yyssa));/" < swq_parser.cpp | sed "s/\*yyssp = yystate/\*yyssp = (yytype_int16)yystate/" | sed "s/            \/\* Fall through\.  \*\//            CPL_FALLTHROUGH/" > swq_parser.cpp.tmp
 	mv swq_parser.cpp.tmp swq_parser.cpp
 
 # The sed hack is to please MSVC

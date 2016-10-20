@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_sxf.h  $
+ * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Include file defining classes for OGR SXF driver, datasource and layers.
@@ -51,7 +51,7 @@ class OGRSXFLayer : public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
-	VSILFILE*          fpSXF;
+    VSILFILE*          fpSXF;
     GByte              nLayerID;
     std::map<unsigned, CPLString> mnClassificators;
     std::map<long, vsi_l_offset> mnRecordDesc;
@@ -76,9 +76,9 @@ protected:
     OGRFeature *TranslateVetorAngle(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
 public:
     OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
-    ~OGRSXFLayer();
+    virtual ~OGRSXFLayer();
 
-	virtual void                ResetReading();
+    virtual void                ResetReading();
     virtual OGRFeature         *GetNextFeature();
     virtual OGRErr              SetNextByIndex(GIntBig nIndex);
     virtual OGRFeature         *GetFeature(GIntBig nFID);
@@ -95,7 +95,9 @@ public:
 
     virtual GByte GetId() const { return nLayerID; };
     virtual void AddClassifyCode(unsigned nClassCode, const char *szName = NULL);
-    virtual int AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset, bool bHasSemantic, size_t nSemanticsSize);
+    virtual bool AddRecord( long nFID, unsigned nClassCode,
+                            vsi_l_offset nOffset, bool bHasSemantic,
+                            size_t nSemanticsSize );
 };
 
 
@@ -124,7 +126,7 @@ class OGRSXFDataSource : public OGRDataSource
     OGRSXFLayer*       GetLayerById(GByte);
 public:
                         OGRSXFDataSource();
-                        ~OGRSXFDataSource();
+                        virtual ~OGRSXFDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate );

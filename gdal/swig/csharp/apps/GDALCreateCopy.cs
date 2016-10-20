@@ -44,42 +44,42 @@ using OSGeo.GDAL;
 
 /// <summary>
 /// A C# based sample to write a GDAL raster using CreateCopy.
-/// </summary> 
+/// </summary>
 
 class GDALWrite {
-	
-	public static void usage() 
 
-	{ 
+	public static void usage()
+
+	{
 		Console.WriteLine("usage: gdalcreatecopy {dataset name} {out file name}");
 		System.Environment.Exit(-1);
 	}
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
 
         if (args.Length != 2) usage();
 
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
             /* -------------------------------------------------------------------- */
             Gdal.AllRegister();
-            
+
             /* -------------------------------------------------------------------- */
             /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */	
+            /* -------------------------------------------------------------------- */
             Driver drv = Gdal.GetDriverByName("GTiff");
 
-            if (drv == null) 
+            if (drv == null)
             {
                 Console.WriteLine("Can't get driver.");
                 System.Environment.Exit(-1);
             }
-            
+
             Console.WriteLine("Using driver " + drv.LongName);
 
             /* -------------------------------------------------------------------- */
@@ -87,7 +87,7 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
 
-            if (ds == null) 
+            if (ds == null)
             {
                 Console.WriteLine("Can't open source dataset " + args[1]);
                 System.Environment.Exit(-1);
@@ -95,14 +95,14 @@ class GDALWrite {
 
             string[] options = new string [] {"TILED=YES"};
             Dataset dso = drv.CreateCopy(args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data");
-		
-            if (dso == null) 
+
+            if (dso == null)
             {
                 Console.WriteLine("Can't create dest dataset " + args[1]);
                 System.Environment.Exit(-1);
             }
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }
@@ -115,7 +115,7 @@ class GDALWrite {
             Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
         if (Data != IntPtr.Zero)
             Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
-	
+
         Console.WriteLine("");
         return 1;
     }

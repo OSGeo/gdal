@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ECRG TOC read Translator
  * Purpose:  Implementation of ECRGTOCDataset and ECRGTOCSubDataset.
@@ -63,7 +62,7 @@ typedef struct
 
 class ECRGTOCDataset : public GDALPamDataset
 {
-  char	    **papszSubDatasets;
+  char      **papszSubDatasets;
   double      adfGeoTransform[6];
 
   char      **papszFileList;
@@ -182,7 +181,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
                                     const char* pszScale)
 
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
@@ -407,14 +406,13 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
     double dfMaxY;
     double dfPixelXSize;
     double dfPixelYSize;
-    ECRGTOCSubDataset* poSubDataset;
 
     public:
-        ECRGTOCProxyRasterDataSet(ECRGTOCSubDataset* poSubDataset,
-                                  const char* fileName,
-                                  int nXSize, int nYSize,
-                                  double dfMinX, double dfMaxY,
-                                  double dfPixelXSize, double dfPixelYSize);
+        ECRGTOCProxyRasterDataSet( ECRGTOCSubDataset* /* poSubDataset */,
+                                   const char* fileName,
+                                   int nXSize, int nYSize,
+                                   double dfMinX, double dfMaxY,
+                                   double dfPixelXSize, double dfPixelYSize );
 
         GDALDataset* RefUnderlyingDataset()
         {
@@ -444,26 +442,28 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 /*                    ECRGTOCProxyRasterDataSet()                       */
 /************************************************************************/
 
-ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet
-        (ECRGTOCSubDataset* poSubDatasetIn,
-         const char* fileNameIn,
-         int nXSizeIn, int nYSizeIn,
-         double dfMinXIn, double dfMaxYIn,
-         double dfPixelXSizeIn, double dfPixelYSizeIn) :
-    /* Mark as shared since the VRT will take several references if we are in RGBA mode (4 bands for this dataset) */
-    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly, TRUE, SRS_WKT_WGS84),
+ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
+    ECRGTOCSubDataset* /* poSubDatasetIn */,
+    const char* fileNameIn,
+    int nXSizeIn, int nYSizeIn,
+    double dfMinXIn, double dfMaxYIn,
+    double dfPixelXSizeIn, double dfPixelYSizeIn ) :
+    // Mark as shared since the VRT will take several references if we are in
+    // RGBA mode (4 bands for this dataset).
+    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
+                         TRUE, SRS_WKT_WGS84),
     checkDone(FALSE),
-    checkOK(FALSE)
+    checkOK(FALSE),
+    dfMinX(dfMinXIn),
+    dfMaxY(dfMaxYIn),
+    dfPixelXSize(dfPixelXSizeIn),
+    dfPixelYSize(dfPixelYSizeIn)
 {
-    this->poSubDataset = poSubDatasetIn;
-    this->dfMinX = dfMinXIn;
-    this->dfMaxY = dfMaxYIn;
-    this->dfPixelXSize = dfPixelXSizeIn;
-    this->dfPixelYSize = dfPixelYSizeIn;
 
-    for(int i=0;i<3;i++)
+    for( int i = 0; i < 3; i++ )
     {
-        SetBand(i + 1, new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
+        SetBand(i + 1,
+                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
     }
 }
 
@@ -513,7 +513,7 @@ static const char* BuildFullName(const char* pszTOCFilename,
                                  const char* pszFramePath,
                                  const char* pszFrameName)
 {
-    char* pszPath;
+    char* pszPath = NULL;
     if (pszFramePath[0] == '.' &&
         (pszFramePath[1] == '/' ||pszFramePath[1] == '\\'))
         pszPath = CPLStrdup(pszFramePath + 2);

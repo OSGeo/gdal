@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSPolygonReader and SDTSRawPolygon classes.
@@ -193,7 +192,7 @@ void SDTSRawPolygon::AddEdgeToRing( int nVertToAdd,
  * This method then forms the lines into rings.  Rings are formed by:
  * <ol>
  * <li> Take a previously unconsumed line, and start a ring with it.  Mark
- *      it as consumed, and keep track of it's start and end node ids as
+ *      it as consumed, and keep track of its start and end node ids as
  *      being the start and end node ids of the ring.
  * <li> If the rings start id is the same as the end node id then this ring
  *      is completely formed, return to step 1.
@@ -515,7 +514,7 @@ void SDTSPolygonReader::Close()
 int SDTSPolygonReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -545,7 +544,7 @@ SDTSRawPolygon * SDTSPolygonReader::GetNextPolygon()
 
     if( poRawPolygon->Read( poRecord ) )
     {
-        return( poRawPolygon );
+        return poRawPolygon;
     }
 
     delete poRawPolygon;
@@ -617,7 +616,7 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
 /* -------------------------------------------------------------------- */
     Rewind();
 
-    SDTSFeature *poFeature;
+    SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         SDTSRawPolygon  *poPoly

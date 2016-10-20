@@ -135,7 +135,7 @@ Behaviour changes:
     it would have been interpreted as WHERE "a_column_name" = 'a_value" if
     a_column_name was indeed a column name.
 
-F) RFC 53: OGR not-null constraints and default values 
+F) RFC 53: OGR not-null constraints and default values
 
 Link: http://trac.osgeo.org/gdal/wiki/rfc53_ogr_notnull_default
 
@@ -168,7 +168,7 @@ Behaviour changes:
     * Drivers will now return OGRERR_NON_EXISTING_FEATURE when calling SetFeature()
       or DeleteFeature() with a feature id that does not exist.
 
-I) RFC 56: 
+I) RFC 56:
 
 Link: https://trac.osgeo.org/gdal/wiki/rfc56_millisecond_precision
 
@@ -179,16 +179,16 @@ API/ABI changes:
     The "GByte Second" field is now a "float Second".
 
   * OGRFeature::SetField( int i, int nYear, int nMonth, int nDay,
-                          int nHour=0, int nMinute=0, float fSecond=0.f, 
+                          int nHour=0, int nMinute=0, float fSecond=0.f,
                           int nTZFlag = 0 )
     and the variant that take a const char* as first argument now accept a
     floating-point number for seconds.
 
 API additions :
 
-    * OGRFeature::GetFieldAsDateTime( int i, 
+    * OGRFeature::GetFieldAsDateTime( int i,
                                      int *pnYear, int *pnMonth, int *pnDay,
-                                     int *pnHour, int *pnMinute, float *pfSecond, 
+                                     int *pnHour, int *pnMinute, float *pfSecond,
                                      int *pnTZFlag );
 
     * OGR_F_GetFieldAsDateTimeEx() and OGR_F_SetFieldDateTimeEx() are added.

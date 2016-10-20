@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogr_xplane_fix_reader.cpp
  *
  * Project:  X-Plane fix.dat file reader
  * Purpose:  Implements OGRXPlaneFixReader class
@@ -45,19 +44,17 @@ OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource
 /************************************************************************/
 /*                         OGRXPlaneFixReader()                         */
 /************************************************************************/
-OGRXPlaneFixReader::OGRXPlaneFixReader()
-{
-    poFIXLayer = NULL;
-}
+OGRXPlaneFixReader::OGRXPlaneFixReader() :
+    poFIXLayer(NULL)
+{}
 
 /************************************************************************/
 /*                          OGRXPlaneFixReader()                        */
 /************************************************************************/
 
-OGRXPlaneFixReader::OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource )
+OGRXPlaneFixReader::OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource ) :
+    poFIXLayer(new OGRXPlaneFIXLayer())
 {
-    poFIXLayer = new OGRXPlaneFIXLayer();
-
     poDataSource->RegisterLayer(poFIXLayer);
 }
 
@@ -97,7 +94,7 @@ int OGRXPlaneFixReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneFixReader::Read()
 {
-    const char* pszLine;
+    const char* pszLine = NULL;
     while((pszLine = CPLReadLineL(fp)) != NULL)
     {
         papszTokens = CSLTokenizeString(pszLine);
@@ -109,10 +106,10 @@ void OGRXPlaneFixReader::Read()
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
-            bEOF = TRUE;
+            bEOF = true;
             return;
         }
-        else if (nTokens == 0 || assertMinCol(3) == FALSE)
+        else if( nTokens == 0 || !assertMinCol(3) )
         {
             CSLDestroy(papszTokens);
             papszTokens = NULL;
@@ -124,12 +121,12 @@ void OGRXPlaneFixReader::Read()
         CSLDestroy(papszTokens);
         papszTokens = NULL;
 
-        if (poInterestLayer && poInterestLayer->IsEmpty() == FALSE)
+        if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
     papszTokens = NULL;
-    bEOF = TRUE;
+    bEOF = true;
 }
 
 /************************************************************************/
@@ -138,7 +135,8 @@ void OGRXPlaneFixReader::Read()
 
 void    OGRXPlaneFixReader::ParseRecord()
 {
-    double dfLat, dfLon;
+    double dfLat = 0.0;
+    double dfLon = 0.0;
     CPLString osName;
 
     RET_IF_FAIL(readLatLon(&dfLat, &dfLon, 0));
@@ -153,7 +151,8 @@ void    OGRXPlaneFixReader::ParseRecord()
 /*                           OGRXPlaneFIXLayer()                        */
 /************************************************************************/
 
-OGRXPlaneFIXLayer::OGRXPlaneFIXLayer() : OGRXPlaneLayer("FIX")
+OGRXPlaneFIXLayer::OGRXPlaneFIXLayer() :
+    OGRXPlaneLayer("FIX")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  R Format Driver
  * Purpose:  Read/write R stats package object format.
@@ -142,7 +141,7 @@ RDataset::RDataset() :
     bASCII(FALSE),
     nStartOfData(0),
     padfMatrixValues(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                             ~RDataset()                              */
@@ -543,7 +542,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( poDS->bASCII )
             poBand = new RRasterBand( poDS, iBand+1,
@@ -570,7 +569,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

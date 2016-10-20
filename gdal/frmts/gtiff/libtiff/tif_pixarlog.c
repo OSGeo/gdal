@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.45 2016-06-28 15:37:33 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.48 2016-09-23 22:12:18 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -983,17 +983,14 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 		a1 = (int32) CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp--; ip--)
+        REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp++; ip++)
+        n -= stride;
+        while (n > 0) {
+            REPEAT(stride,
+                wp[0] = (uint16)(((int32)CLAMP(ip[0])-(int32)CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
 	}
     }
 }
@@ -1036,17 +1033,14 @@ horizontalDifference16(unsigned short *ip, int n, int stride,
 		a1 = CLAMP(ip[3]); wp[3] = (uint16)((a1-a2) & mask); a2 = a1;
 	    }
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
+        REPEAT(stride, wp[0] = CLAMP(ip[0]); wp++; ip++)
 	    n -= stride;
 	    while (n > 0) {
-		REPEAT(stride, wp[0] = CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
+            REPEAT(stride,
+                wp[0] = (uint16)((CLAMP(ip[0])-CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
 	}
     }
 }
@@ -1089,18 +1083,15 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
 		ip += 4;
 	    }
 	} else {
-	    wp += n + stride - 1;	/* point to last one */
-	    ip += n + stride - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride, wp[0] = CLAMP(ip[0]);
-				wp[stride] -= wp[0];
-				wp[stride] &= mask;
-				wp--; ip--)
-		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
-	}
+        REPEAT(stride, wp[0] = CLAMP(ip[0]); wp++; ip++)
+        n -= stride;
+        while (n > 0) {
+            REPEAT(stride,
+                wp[0] = (uint16)((CLAMP(ip[0])-CLAMP(ip[-stride])) & mask);
+                wp++; ip++)
+            n -= stride;
+        }
+    }
     }
 }
 
@@ -1141,6 +1132,13 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	}
 
 	llen = sp->stride * td->td_imagewidth;
+    /* Check against the number of elements (of size uint16) of sp->tbuf */
+    if( n > (tmsize_t)(td->td_rowsperstrip * llen) )
+    {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                     "Too many input bytes provided");
+        return 0;
+    }
 
 	for (i = 0, up = sp->tbuf; i < n; i += llen, up += llen) {
 		switch (sp->user_datafmt)  {

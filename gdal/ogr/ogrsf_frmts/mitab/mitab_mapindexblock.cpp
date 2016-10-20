@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapindexblock.cpp,v 1.14 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapindexblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -85,6 +84,8 @@
 
 #include "mitab.h"
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABMAPIndexBlock
  *====================================================================*/
@@ -95,20 +96,18 @@
  *
  * Constructor.
  **********************************************************************/
-TABMAPIndexBlock::TABMAPIndexBlock(TABAccess eAccessMode /*= TABRead*/):
-    TABRawBinBlock(eAccessMode, TRUE)
+TABMAPIndexBlock::TABMAPIndexBlock( TABAccess eAccessMode /*= TABRead*/ ) :
+    TABRawBinBlock(eAccessMode, TRUE),
+    m_numEntries(0),
+    m_nMinX(1000000000),
+    m_nMinY(1000000000),
+    m_nMaxX(-1000000000),
+    m_nMaxY(-1000000000),
+    m_poBlockManagerRef(NULL),
+    m_poCurChild(NULL),
+    m_nCurChildIndex(-1),
+    m_poParentRef(NULL)
 {
-    m_numEntries = 0;
-
-    m_nMinX = 1000000000;
-    m_nMinY = 1000000000;
-    m_nMaxX = -1000000000;
-    m_nMaxY = -1000000000;
-
-    m_poCurChild = NULL;
-    m_nCurChildIndex = -1;
-    m_poParentRef = NULL;
-    m_poBlockManagerRef = NULL;
     memset(m_asEntries, 0, sizeof(m_asEntries));
 }
 
@@ -153,15 +152,14 @@ int     TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf,
                                             VSILFILE *fpSrc /* = NULL */,
                                             int nOffset /* = 0 */)
 {
-    int nStatus;
-
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    nStatus = TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                                nBlockSize, nSizeUsed,
-                                                bMakeCopy,
-                                                fpSrc, nOffset);
+    const int nStatus =
+        TABRawBinBlock::InitBlockFromData(pabyBuf,
+                                          nBlockSize, nSizeUsed,
+                                          bMakeCopy,
+                                          fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -406,7 +404,7 @@ int     TABMAPIndexBlock::WriteNextEntry(TABMAPIndexEntry *psEntry)
  **********************************************************************/
 int     TABMAPIndexBlock::GetNumFreeEntries()
 {
-    return ((m_nBlockSize-4)/20 - m_numEntries);
+    return (m_nBlockSize-4)/20 - m_numEntries;
 }
 
 /**********************************************************************
@@ -525,28 +523,30 @@ int     TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin,
 int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
                                                   GInt32 nXMax, GInt32 nYMax)
 {
-    GInt32 i, nBestCandidate=-1;
+    GInt32 nBestCandidate = -1;
 
-    double dOptimalAreaDiff=0;
+    double dOptimalAreaDiff = 0.0;
 
-    double dNewEntryArea = MITAB_AREA(nXMin, nYMin, nXMax, nYMax);
+    const double dNewEntryArea = MITAB_AREA(nXMin, nYMin, nXMax, nYMax);
 
-    for(i=0; i<m_numEntries; i++)
+    for( GInt32 i = 0; i<m_numEntries; i++ )
     {
-        double dAreaDiff = 0;
-        double dAreaBefore = MITAB_AREA(m_asEntries[i].XMin,
-                                        m_asEntries[i].YMin,
-                                        m_asEntries[i].XMax,
-                                        m_asEntries[i].YMax);
+        double dAreaDiff = 0.0;
+        const double dAreaBefore =
+            MITAB_AREA(m_asEntries[i].XMin,
+                       m_asEntries[i].YMin,
+                       m_asEntries[i].XMax,
+                       m_asEntries[i].YMax);
 
         /* Does this entry fully contain the new entry's MBR ?
          */
-        GBool bIsContained = (nXMin >= m_asEntries[i].XMin &&
-                              nYMin >= m_asEntries[i].YMin &&
-                              nXMax <= m_asEntries[i].XMax &&
-                              nYMax <= m_asEntries[i].YMax );
+        const GBool bIsContained =
+            nXMin >= m_asEntries[i].XMin &&
+            nYMin >= m_asEntries[i].YMin &&
+            nXMax <= m_asEntries[i].XMax &&
+            nYMax <= m_asEntries[i].YMax;
 
-        if (bIsContained)
+        if( bIsContained )
         {
             /* If new entry is fully contained in this entry then
              * the area difference will be the difference between the area
@@ -941,27 +941,28 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
  * The returned AreaDiff value is positive if NodeMBR has to be enlarged
  * and negative if new Entry is fully contained in the NodeMBR.
  **********************************************************************/
-double  TABMAPIndexBlock::ComputeAreaDiff(GInt32 nNodeXMin, GInt32 nNodeYMin,
-                                          GInt32 nNodeXMax, GInt32 nNodeYMax,
-                                          GInt32 nEntryXMin, GInt32 nEntryYMin,
-                                          GInt32 nEntryXMax, GInt32 nEntryYMax)
+double  TABMAPIndexBlock::ComputeAreaDiff( GInt32 nNodeXMin, GInt32 nNodeYMin,
+                                           GInt32 nNodeXMax, GInt32 nNodeYMax,
+                                           GInt32 nEntryXMin, GInt32 nEntryYMin,
+                                           GInt32 nEntryXMax,
+                                           GInt32 nEntryYMax )
 {
+    double dAreaDiff = 0.0;
 
-    double dAreaDiff=0;
+    const double dNodeAreaBefore =
+        MITAB_AREA(nNodeXMin,
+                   nNodeYMin,
+                   nNodeXMax,
+                   nNodeYMax);
 
-    double dNodeAreaBefore = MITAB_AREA(nNodeXMin,
-                                        nNodeYMin,
-                                        nNodeXMax,
-                                        nNodeYMax);
+    // Does the node fully contain the new entry's MBR?
+    const GBool bIsContained =
+        nEntryXMin >= nNodeXMin &&
+        nEntryYMin >= nNodeYMin &&
+        nEntryXMax <= nNodeXMax &&
+        nEntryYMax <= nNodeYMax;
 
-    /* Does the node fully contain the new entry's MBR ?
-     */
-    GBool bIsContained = (nEntryXMin >= nNodeXMin &&
-                          nEntryYMin >= nNodeYMin &&
-                          nEntryXMax <= nNodeXMax &&
-                          nEntryYMax <= nNodeYMax );
-
-    if (bIsContained)
+    if( bIsContained )
     {
         /* If new entry is fully contained in this entry then
          * the area difference will be the difference between the area
@@ -1005,21 +1006,30 @@ double  TABMAPIndexBlock::ComputeAreaDiff(GInt32 nNodeXMin, GInt32 nNodeYMin,
  * - Choose the pair with the greatest normalized separation along
  *   any dimension
  **********************************************************************/
-int  TABMAPIndexBlock::PickSeedsForSplit(TABMAPIndexEntry *pasEntries,
+int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
                                          int numEntries,
                                          int nSrcCurChildIndex,
                                          GInt32 nNewEntryXMin,
                                          GInt32 nNewEntryYMin,
                                          GInt32 nNewEntryXMax,
                                          GInt32 nNewEntryYMax,
-                                         int &nSeed1, int &nSeed2)
+                                         int &nSeed1, int &nSeed2 )
 {
-    GInt32 nSrcMinX=0, nSrcMinY=0, nSrcMaxX=0, nSrcMaxY=0;
-    int nLowestMaxX=-1, nHighestMinX=-1, nLowestMaxY=-1, nHighestMinY=-1;
-    GInt32 nLowestMaxXId=-1, nHighestMinXId=-1, nLowestMaxYId=-1, nHighestMinYId=-1;
+    GInt32 nSrcMinX = 0;
+    GInt32 nSrcMinY = 0;
+    GInt32 nSrcMaxX = 0;
+    GInt32 nSrcMaxY = 0;
+    int nLowestMaxX = -1;
+    int nHighestMinX = -1;
+    int nLowestMaxY = -1;
+    int nHighestMinY = -1;
+    GInt32 nLowestMaxXId=-1;
+    GInt32 nHighestMinXId=-1;
+    GInt32 nLowestMaxYId=-1;
+    GInt32 nHighestMinYId = -1;
 
-    nSeed1=-1;
-    nSeed2=-1;
+    nSeed1 = -1;
+    nSeed2 = -1;
 
     // Along each dimension find the entry whose rectangle has the
     // highest low side, and the one with the lowest high side
@@ -1070,18 +1080,17 @@ int  TABMAPIndexBlock::PickSeedsForSplit(TABMAPIndexEntry *pasEntries,
         }
     }
 
-    int nSrcWidth, nSrcHeight;
-    nSrcWidth = ABS(nSrcMaxX - nSrcMinX);
-    nSrcHeight = ABS(nSrcMaxY - nSrcMinY);
+    const int nSrcWidth = ABS(nSrcMaxX - nSrcMinX);
+    const int nSrcHeight = ABS(nSrcMaxY - nSrcMinY);
 
     // Calculate the separation for each pair (note that it may be negative
     // in case of overlap)
     // Normalize the separation by dividing by the extents of the
     // corresponding dimension
-    double dX, dY;
-
-    dX = (nSrcWidth == 0) ? 0 : (double)(nHighestMinX - nLowestMaxX) / nSrcWidth;
-    dY = (nSrcHeight == 0) ? 0 : (double)(nHighestMinY - nLowestMaxY) / nSrcHeight;
+    const double dX =
+        nSrcWidth == 0 ? 0 : (double)(nHighestMinX - nLowestMaxX) / nSrcWidth;
+    const double dY =
+        nSrcHeight == 0 ? 0 : (double)(nHighestMinY - nLowestMaxY) / nSrcHeight;
 
     // Choose the pair with the greatest normalized separation along
     // any dimension
@@ -1110,20 +1119,21 @@ int  TABMAPIndexBlock::PickSeedsForSplit(TABMAPIndexEntry *pasEntries,
     // Decide which of the two seeds best matches the new entry. That seed and
     // the new entry will stay in current node (new entry will be added by the
     // caller later). The other seed will go in the 2nd node
-    double dAreaDiff1, dAreaDiff2;
-    dAreaDiff1 = ComputeAreaDiff(pasEntries[nSeed1].XMin,
-                                 pasEntries[nSeed1].YMin,
-                                 pasEntries[nSeed1].XMax,
-                                 pasEntries[nSeed1].YMax,
-                                 nNewEntryXMin, nNewEntryYMin,
-                                 nNewEntryXMax, nNewEntryYMax);
+    const double dAreaDiff1 =
+        ComputeAreaDiff(pasEntries[nSeed1].XMin,
+                        pasEntries[nSeed1].YMin,
+                        pasEntries[nSeed1].XMax,
+                        pasEntries[nSeed1].YMax,
+                        nNewEntryXMin, nNewEntryYMin,
+                        nNewEntryXMax, nNewEntryYMax);
 
-    dAreaDiff2 = ComputeAreaDiff(pasEntries[nSeed2].XMin,
-                                 pasEntries[nSeed2].YMin,
-                                 pasEntries[nSeed2].XMax,
-                                 pasEntries[nSeed2].YMax,
-                                 nNewEntryXMin, nNewEntryYMin,
-                                 nNewEntryXMax, nNewEntryYMax);
+    const double dAreaDiff2 =
+        ComputeAreaDiff(pasEntries[nSeed2].XMin,
+                        pasEntries[nSeed2].YMin,
+                        pasEntries[nSeed2].XMax,
+                        pasEntries[nSeed2].YMax,
+                        nNewEntryXMin, nNewEntryYMin,
+                        nNewEntryXMax, nNewEntryYMax);
 
     /* Note that we want to keep this node's current child in here.
      * Since splitting happens only during an addentry() operation and
@@ -1266,25 +1276,29 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
 
 
         // Decide which of the two nodes to put this entry in
-        double dAreaDiff1, dAreaDiff2;
         RecomputeMBR();
-        dAreaDiff1 = ComputeAreaDiff(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
-                                     pasSrcEntries[iEntry].XMin,
-                                     pasSrcEntries[iEntry].YMin,
-                                     pasSrcEntries[iEntry].XMax,
-                                     pasSrcEntries[iEntry].YMax);
+        const double dAreaDiff1 =
+            ComputeAreaDiff(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
+                            pasSrcEntries[iEntry].XMin,
+                            pasSrcEntries[iEntry].YMin,
+                            pasSrcEntries[iEntry].XMax,
+                            pasSrcEntries[iEntry].YMax);
 
-        GInt32 nXMin2, nYMin2, nXMax2, nYMax2;
+        GInt32 nXMin2 = 0;
+        GInt32 nYMin2 = 0;
+        GInt32 nXMax2 = 0;
+        GInt32 nYMax2 = 0;
         poNewNode->RecomputeMBR();
         poNewNode->GetMBR(nXMin2, nYMin2, nXMax2, nYMax2);
-        dAreaDiff2 = ComputeAreaDiff(nXMin2, nYMin2, nXMax2, nYMax2,
-                                     pasSrcEntries[iEntry].XMin,
-                                     pasSrcEntries[iEntry].YMin,
-                                     pasSrcEntries[iEntry].XMax,
-                                     pasSrcEntries[iEntry].YMax);
-        if (dAreaDiff1 < dAreaDiff2)
+        const double dAreaDiff2 =
+            ComputeAreaDiff(nXMin2, nYMin2, nXMax2, nYMax2,
+                            pasSrcEntries[iEntry].XMin,
+                            pasSrcEntries[iEntry].YMin,
+                            pasSrcEntries[iEntry].XMax,
+                            pasSrcEntries[iEntry].YMax);
+        if( dAreaDiff1 < dAreaDiff2 )
         {
-            // This entry stays in this node
+            // This entry stays in this node.
             InsertEntry(pasSrcEntries[iEntry].XMin,
                         pasSrcEntries[iEntry].YMin,
                         pasSrcEntries[iEntry].XMax,

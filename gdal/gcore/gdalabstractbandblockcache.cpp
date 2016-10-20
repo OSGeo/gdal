@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Store cached blocks
@@ -30,6 +29,8 @@
 #include "gdal_priv.h"
 #include "cpl_multiproc.h"
 #include <new>
+
+//! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
 
@@ -108,12 +109,12 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList( GDALRasterBlock *poBlock )
     }
 
     // If no more blocks in transient state, then warn WaitKeepAliveCounter()
+    CPLAcquireMutex(hCondMutex, 1000);
     if( CPLAtomicDec(&nKeepAliveCounter) == 0 )
     {
-        CPLAcquireMutex(hCondMutex, 1000);
         CPLCondSignal(hCond);
-        CPLReleaseMutex(hCondMutex);
     }
+    CPLReleaseMutex(hCondMutex);
 }
 
 /************************************************************************/
@@ -188,3 +189,4 @@ GDALRasterBlock* GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
             poBand, nXBlockOff, nYBlockOff );
     return poBlock;
 }
+//! @endcond

@@ -312,7 +312,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
 
     int                 bIdentityInsert;
 
-    void		ClearStatement();
+    void                ClearStatement();
     CPLODBCStatement* BuildStatement(const char* pszColumns);
 
     CPLString BuildFields();
@@ -328,7 +328,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
 
   public:
                         OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
-                        ~OGRMSSQLSpatialTableLayer();
+                        virtual ~OGRMSSQLSpatialTableLayer();
 
     CPLErr              Initialize( const char *pszSchema,
                                     const char *pszTableName,
@@ -396,7 +396,7 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
@@ -404,7 +404,7 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
   public:
                         OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRMSSQLSpatialSelectLayer();
+                        virtual ~OGRMSSQLSpatialSelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -453,7 +453,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
   public:
                         OGRMSSQLSpatialDataSource();
-                        ~OGRMSSQLSpatialDataSource();
+                        virtual ~OGRMSSQLSpatialDataSource();
 
     const char          *GetCatalog() { return pszCatalog; }
 
@@ -509,7 +509,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 class OGRMSSQLSpatialDriver : public OGRSFDriver
 {
   public:
-    ~OGRMSSQLSpatialDriver();
+    virtual ~OGRMSSQLSpatialDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

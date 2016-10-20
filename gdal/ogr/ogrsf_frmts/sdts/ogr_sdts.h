@@ -52,9 +52,6 @@ class OGRSDTSLayer : public OGRLayer
 
     OGRFeature         *GetNextUnfilteredFeature();
 
-    void                BuildPolygons();
-    int                 bPolygonsBuilt;
-
   public:
                         OGRSDTSLayer( SDTSTransfer *, int, OGRSDTSDataSource*);
                         ~OGRSDTSLayer();
@@ -62,11 +59,7 @@ class OGRSDTSLayer : public OGRLayer
     void                ResetReading();
     OGRFeature *        GetNextFeature();
 
-//    OGRFeature         *GetFeature( GIntBig nFeatureId );
-
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-
-//    GIntBig             GetFeatureCount( int );
 
     int                 TestCapability( const char * );
 };

@@ -50,8 +50,8 @@ extern "C" {
 class OGRGRASSLayer : public OGRLayer
 {
   public:
-                        OGRGRASSLayer(	int layer, struct Map_info * map );
-                        ~OGRGRASSLayer();
+                        OGRGRASSLayer( int layer, struct Map_info * map );
+                        virtual ~OGRGRASSLayer();
 
     // Layer info
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
@@ -69,8 +69,8 @@ class OGRGRASSLayer : public OGRLayer
     OGRFeature         *GetFeature( GIntBig nFeatureId );
 
     // Filters
-    virtual OGRErr 	SetAttributeFilter( const char *query );
-    virtual void 	SetSpatialFilter( OGRGeometry * poGeomIn );
+    virtual OGRErr      SetAttributeFilter( const char *query );
+    virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
@@ -80,51 +80,51 @@ class OGRGRASSLayer : public OGRLayer
     OGRErr              ICreateFeature( OGRFeature *poFeature );
 
   private:
-    char		*pszName;
+    char                *pszName;
     OGRSpatialReference *poSRS;
-    OGRFeatureDefn	*poFeatureDefn;
-    char		*pszQuery;	// Attribute filter string
+    OGRFeatureDefn      *poFeatureDefn;
+    char                *pszQuery;      // Attribute filter string
 
-    int			iNextId;
-    int			nTotalCount;
-    int			iLayer;		// Layer number
-    int			iLayerIndex;	// Layer index (in GRASS category index)
-    int			iCatField;	// Field where category (key) is stored
-    int			nFields;
-    int 		*paFeatureIndex; // Array of indexes to category index array
+    int                 iNextId;
+    int                 nTotalCount;
+    int                 iLayer;         // Layer number
+    int                 iLayerIndex;    // Layer index (in GRASS category index)
+    int                 iCatField;      // Field where category (key) is stored
+    int                 nFields;
+    int                 *paFeatureIndex; // Array of indexes to category index array
 
     // Vector map
-    struct Map_info 	*poMap;
+    struct Map_info     *poMap;
     struct field_info   *poLink;
 
     // Database connection
-    bool 		bHaveAttributes;
+    bool                bHaveAttributes;
 
-    dbString		*poDbString;
-    dbDriver		*poDriver;
-    dbCursor		*poCursor;
+    dbString            *poDbString;
+    dbDriver            *poDriver;
+    dbCursor            *poCursor;
 
-    bool		bCursorOpened;	// Sequential database cursor opened
-    int 		iCurrentCat;	// Current category in select cursor
+    bool                bCursorOpened;  // Sequential database cursor opened
+    int                 iCurrentCat;    // Current category in select cursor
 
-    struct line_pnts	*poPoints;
-    struct line_cats	*poCats;
+    struct line_pnts    *poPoints;
+    struct line_cats    *poCats;
 
-    bool		StartDbDriver ();
-    bool		StopDbDriver ();
+    bool                StartDbDriver ();
+    bool                StopDbDriver ();
 
-    OGRGeometry		*GetFeatureGeometry ( long nFeatureId, int *cat );
-    bool		SetAttributes ( OGRFeature *feature, dbTable *table );
+    OGRGeometry         *GetFeatureGeometry ( long nFeatureId, int *cat );
+    bool                SetAttributes ( OGRFeature *feature, dbTable *table );
 
     // Features matching spatial filter for ALL features/elements in GRASS
-    char 		*paSpatialMatch;
-    bool 		SetSpatialMatch();
+    char                *paSpatialMatch;
+    bool                SetSpatialMatch();
 
     // Features matching attribute filter for ALL features/elements in GRASS
-    char 		*paQueryMatch;
-    bool 		OpenSequentialCursor();
-    bool 		ResetSequentialCursor();
-    bool 		SetQueryMatch();
+    char                *paQueryMatch;
+    bool                OpenSequentialCursor();
+    bool                ResetSequentialCursor();
+    bool                SetQueryMatch();
 };
 
 /************************************************************************/
@@ -134,7 +134,7 @@ class OGRGRASSDataSource : public OGRDataSource
 {
   public:
                         OGRGRASSDataSource();
-                        ~OGRGRASSDataSource();
+                        virtual ~OGRGRASSDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen,
                               int bSingleNewFile = FALSE );
@@ -154,13 +154,13 @@ class OGRGRASSDataSource : public OGRDataSource
 
   private:
     OGRGRASSLayer     **papoLayers;
-    char                *pszName;	// Date source name
-    char		*pszGisdbase;	// GISBASE
-    char		*pszLocation;	// location name
-    char		*pszMapset;	// mapset name
-    char		*pszMap;	// name of vector map
+    char                *pszName;       // Date source name
+    char                *pszGisdbase;   // GISBASE
+    char                *pszLocation;   // location name
+    char                *pszMapset;     // mapset name
+    char                *pszMap;        // name of vector map
 
-    struct Map_info 	map;
+    struct Map_info     map;
     int                 nLayers;
 
     int                 bOpened;
@@ -174,16 +174,16 @@ class OGRGRASSDataSource : public OGRDataSource
 class OGRGRASSDriver : public OGRSFDriver
 {
   public:
-			~OGRGRASSDriver();
+                        virtual ~OGRGRASSDriver();
 
-    const char 		*GetName();
-    OGRDataSource 	*Open( const char *, int );
+    const char          *GetName();
+    OGRDataSource       *Open( const char *, int );
 
     int                 TestCapability( const char * );
 
     // Not implemented (return error/NULL):
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-	    				     char ** = NULL );
+                                             char ** = NULL );
     OGRErr              DeleteDataSource( const char *pszDataSource );
 };
 

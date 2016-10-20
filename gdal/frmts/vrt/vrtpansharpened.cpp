@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTPansharpenedRasterBand and VRTPansharpenedDataset.
@@ -99,6 +98,8 @@ GDALDatasetH GDALCreatePansharpenedVRT( const char* pszXML,
     }
     return reinterpret_cast<GDALDatasetH>( poDS );
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1120,7 +1121,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
     }
     else
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
     if( psOptions->nWeightCount )
     {
@@ -1180,12 +1181,12 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
         CPLCreateXMLElementAndValue( psOptionsNode, "NoData", "None" );
     }
 
-    if( psOptions->dfMSShiftX )
+    if( psOptions->dfMSShiftX != 0.0 )
     {
         CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftX",
                                      CPLSPrintf("%.16g", psOptions->dfMSShiftX) );
     }
-    if( psOptions->dfMSShiftY )
+    if( psOptions->dfMSShiftY != 0.0 )
     {
         CPLCreateXMLElementAndValue( psOptionsNode, "MSShiftY",
                                      CPLSPrintf("%.16g", psOptions->dfMSShiftY) );
@@ -1382,10 +1383,10 @@ VRTPansharpenedRasterBand::VRTPansharpenedRasterBand( GDALDataset *poDSIn, int n
 {
     Initialize( poDSIn->GetRasterXSize(), poDSIn->GetRasterYSize() );
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eAccess = GA_Update;
-    this->eDataType = eDataTypeIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eAccess = GA_Update;
+    eDataType = eDataTypeIn;
 
     reinterpret_cast<VRTPansharpenedDataset *>(
         poDS )->GetBlockSize( &nBlockXSize, &nBlockYSize );
@@ -1462,9 +1463,7 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             if( iOtherBand == nBand )
                 continue;
 
-            GDALRasterBlock *poBlock;
-
-            poBlock = poGDS->GetRasterBand(iOtherBand)->
+            GDALRasterBlock *poBlock = poGDS->GetRasterBand(iOtherBand)->
                 GetLockedBlockRef(nBlockXOff,nBlockYOff);
             if (poBlock == NULL)
             {
@@ -1753,3 +1752,5 @@ GDALRasterBand* VRTPansharpenedRasterBand::GetOverview(int iOvr)
 
     return poGDS->m_apoOverviewDatasets[iOvr]->GetRasterBand(nBand);
 }
+
+/*! @endcond */

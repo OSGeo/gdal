@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLSX Translator
  * Purpose:  Implements OGRXLSXDriver.
@@ -61,7 +60,8 @@ const char *OGRXLSXDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-#define XLSX_MIMETYPE "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"
+static const char XLSX_MIMETYPE[] =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml";
 
 OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
 
@@ -73,17 +73,17 @@ OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
     if (fp == NULL)
         return NULL;
 
-    int bOK = FALSE;
+    bool bOK = false;
     char szBuffer[2048];
     if (VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
         memcmp(szBuffer, "PK", 2) == 0)
     {
-        bOK = TRUE;
+        bOK = true;
     }
 
     VSIFCloseL(fp);
 
-    if (!bOK)
+    if( !bOK )
         return NULL;
 
     VSILFILE* fpContent = VSIFOpenL(CPLSPrintf("/vsizip/%s/[Content_Types].xml", pszFilename), "rb");
@@ -102,12 +102,19 @@ OGRDataSource *OGRXLSXDriver::Open( const char * pszFilename, int bUpdate )
     if (fpWorkbook == NULL)
         return NULL;
 
+    VSILFILE* fpWorkbookRels = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/_rels/workbook.xml.rels", pszFilename), "rb");
+    if (fpWorkbookRels == NULL)
+    {
+        VSIFCloseL(fpWorkbook);
+        return NULL;
+    }
+
     VSILFILE* fpSharedStrings = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszFilename), "rb");
     VSILFILE* fpStyles = VSIFOpenL(CPLSPrintf("/vsizip/%s/xl/styles.xml", pszFilename), "rb");
 
     OGRXLSXDataSource   *poDS = new OGRXLSXDataSource();
 
-    if( !poDS->Open( pszFilename, fpWorkbook, fpSharedStrings, fpStyles, bUpdate ) )
+    if( !poDS->Open( pszFilename, fpWorkbook, fpWorkbookRels, fpSharedStrings, fpStyles, bUpdate ) )
     {
         delete poDS;
         poDS = NULL;
@@ -147,9 +154,7 @@ OGRDataSource *OGRXLSXDriver::CreateDataSource( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Try to create datasource.                                       */
 /* -------------------------------------------------------------------- */
-    OGRXLSXDataSource     *poDS;
-
-    poDS = new OGRXLSXDataSource();
+    OGRXLSXDataSource *poDS = new OGRXLSXDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -207,4 +212,3 @@ void RegisterOGRXLSX()
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }
-

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSDriver class.
@@ -59,12 +58,10 @@ OGRDataSource *OGRDODSDriver::Open( const char * pszFilename,
                                      int bUpdate )
 
 {
-    OGRDODSDataSource     *poDS;
-
     if( !STARTS_WITH_CI(pszFilename, "DODS:http:") )
         return NULL;
 
-    poDS = new OGRDODSDataSource();
+    OGRDODSDataSource *poDS = new OGRDODSDataSource();
 
     if( !poDS->Open( pszFilename ) )
     {
@@ -96,4 +93,3 @@ void RegisterOGRDODS()
         return;
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRDODSDriver );
 }
-

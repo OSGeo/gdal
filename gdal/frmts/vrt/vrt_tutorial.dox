@@ -14,6 +14,8 @@
 <li> \ref gdal_vrttut_overviews
 <li> \ref gdal_vrttut_raw
 <li> \ref gdal_vrttut_creation
+<li> \ref gdal_vrttut_derived_c
+<li> \ref gdal_vrttut_derived_python
 <li> \ref gdal_vrttut_warped
 <li> \ref gdal_vrttut_pansharpen
 <li> \ref gdal_vrttut_mt
@@ -49,7 +51,7 @@ loaded from utm.tif might look like this:
 </VRTDataset>
 \endcode
 
-Many aspects of the VRT file are a direct XML encoding of the 
+Many aspects of the VRT file are a direct XML encoding of the
 <a href="gdal_datamodel.html">GDAL Data Model</a> which should be reviewed
 for understanding of the semantics of various elements.<p>
 
@@ -57,7 +59,7 @@ VRT files can be produced by translating to VRT format.  The resulting file can
 then be edited to modify mappings, add metadata or other purposes.  VRT files
 can also be produced programmatically by various means.<p>
 
-This tutorial will cover the .vrt file format (suitable for users editing 
+This tutorial will cover the .vrt file format (suitable for users editing
 .vrt files), and how .vrt files may be created and manipulated programmatically
 for developers.<p>
 
@@ -69,13 +71,13 @@ is available.<p>
 Virtual files stored on disk are kept in an XML format with the following
 elements.<p>
 
-<b>VRTDataset</b>: This is the root element for the whole GDAL dataset. 
-It must have the attributes rasterXSize and rasterYSize describing the width 
+<b>VRTDataset</b>: This is the root element for the whole GDAL dataset.
+It must have the attributes rasterXSize and rasterYSize describing the width
 and height of the dataset in pixels.
-It may have a subClass attributes with values VRTWarpedDataset (\ref gdal_vrttut_warped) or 
+It may have a subClass attributes with values VRTWarpedDataset (\ref gdal_vrttut_warped) or
 VRTPansharpenedDataset (\ref gdal_vrttut_pansharpen).
-It may have SRS, GeoTransform, 
-GCPList, Metadata, MaskBand and VRTRasterBand subelements. 
+It may have SRS, GeoTransform,
+GCPList, Metadata, MaskBand and VRTRasterBand subelements.
 
 \code
 <VRTDataset rasterXSize="512" rasterYSize="512">
@@ -85,7 +87,7 @@ The allowed subelements for VRTDataset are :
 
 <ul>
 
-<li> <b>SRS</b>: This element contains the spatial reference system (coordinate 
+<li> <b>SRS</b>: This element contains the spatial reference system (coordinate
 system) in OGC WKT format.  Note that this must be appropriately escaped for
 XML, so items like quotes will have the ampersand escape sequences substituted.
 As as well WKT, and valid input to the SetFromUserInput() method (such as well
@@ -96,8 +98,8 @@ known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
 \endcode
 </li>
 
-<li> <b>GeoTransform</b>: This element contains a six value affine 
-geotransformation for the dataset, mapping between pixel/line coordinates 
+<li> <b>GeoTransform</b>: This element contains a six value affine
+geotransformation for the dataset, mapping between pixel/line coordinates
 and georeferenced coordinates.<P>
 
 \code
@@ -118,7 +120,7 @@ georeferenced coordinates in the same format as the SRS element.<P>
 \endcode
 </li>
 
-<li> <b>Metadata</b>: This element contains a list of metadata name/value 
+<li> <b>Metadata</b>: This element contains a list of metadata name/value
 pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
 &lt;MDI&gt; (metadata item) subelements which have a "key" attribute and the value
 as the data of the element. The Metadata element can be repeated multiple times,
@@ -154,10 +156,10 @@ the mask band itself.
 
 <li> <b>VRTRasterBand</b>: This represents one band of a dataset.  It will
 have a dataType attribute with the type of the pixel data associated with
-this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64,
 CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
 (1 based).  This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue,
-ColorTable, Description and MaskBand subelements as well as the various kinds of 
+ColorTable, Description and MaskBand subelements as well as the various kinds of
 source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources"
 indicating where the actual raster data should be fetched from, and how it
 should be mapped into the raster bands pixel space.<p>
@@ -171,11 +173,11 @@ a color interpretation type.  One of Gray, Palette, Red, Green, Blue, Alpha,
 Hue, Saturation, Lightness, Cyan, Magenta, Yellow, Black, or Unknown.<p>
 
 \code
-  <ColorInterp>Gray</ColorInterp>: 
+  <ColorInterp>Gray</ColorInterp>:
 \endcode
 </li>
 
-<li> <b>NoDataValue</b>: If this element exists a raster band has a 
+<li> <b>NoDataValue</b>: If this element exists a raster band has a
 nodata value associated with, of the value given as data in the element.
 
 \code
@@ -197,11 +199,11 @@ Default value is 0 when this element is absent.
 \endcode
 </li>
 
-<li> <b>ColorTable</b>: This element is parent to a set of Entry 
+<li> <b>ColorTable</b>: This element is parent to a set of Entry
 elements defining the entries in a color table.  Currently only RGBA
 color tables are supported with c1 being red, c2 being green, c3 being
 blue and c4 being alpha.  The entries are ordered and will be assumed
-to start from color table entry 0. 
+to start from color table entry 0.
 
 \code
     <ColorTable>
@@ -220,7 +222,7 @@ of a raster band as it's text value.
 </li>
 
 <li> <b>UnitType</b>: This optional element contains the vertical units for
-elevation band data.  One of "m" for meters or "ft" for feet. Default 
+elevation band data.  One of "m" for meters or "ft" for feet. Default
 assumption is meters.<p>
 
 \code
@@ -229,7 +231,7 @@ assumption is meters.<p>
 </li>
 
 <li> <b>Offset</b>: This optional element contains the offset that should be
-applied when computing "real" pixel values from scaled pixel values on 
+applied when computing "real" pixel values from scaled pixel values on
 a raster band.   The default is 0.0.<p>
 
 \code
@@ -275,11 +277,11 @@ subelements with the names of the categories for classified raster band. <p>
 
 <li> <b>SimpleSource</b>: The SimpleSource indicates that raster data
 should be read from a separate dataset, indicating the dataset, and band to be
-read from, and how the data should map into this bands raster space.  
+read from, and how the data should map into this bands raster space.
 The SimpleSource may have the SourceFilename, SourceBand, SrcRect, and DstRect
 subelements.  The SrcRect element will indicate what rectangle on the indicated
-source file should be read, and the DstRect element indicates how that 
-rectangle of source data should be mapped into the VRTRasterBands space.  
+source file should be read, and the DstRect element indicates how that
+rectangle of source data should be mapped into the VRTRasterBands space.
 
 The relativeToVRT attribute on the SourceFilename indicates whether the
 filename should be interpreted as relative to the .vrt file (value is 1)
@@ -354,7 +356,7 @@ rectangle. Note: starting with GDAL 2.0, a more general mechanism to specify
 resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
 
 <li> <b>ComplexSource</b>: The ComplexSource is derived from the
-SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and 
+SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and
 DestRect elements), but it provides support to rescale and offset
 the range of the source values. Certain regions of the source
 can be masked by specifying the NODATA value.
@@ -367,7 +369,7 @@ value (which might require analyzing the whole source dataset). Exponent
 must be positive. (Those 5 values can be set with the -exponent and -scale
 options of gdal_translate.)
 
-The ComplexSource supports adding a custom lookup table to transform 
+The ComplexSource supports adding a custom lookup table to transform
 the source values to the destination. The LUT can be specified using
 the following form:
 
@@ -427,8 +429,8 @@ Non-linear scaling:
 </li>
 
 <li> <b>KernelFilteredSource</b>: This is a pixel source derived from the
-Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
-DestRect elements, but it also passes the data through a simple filtering 
+Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and
+DestRect elements, but it also passes the data through a simple filtering
 kernel specified with the Kernel element.  The Kernel element should have
 two child elements, Size and Coefs and optionally the boolean attribute
 normalized (defaults to false=0).  The size must always be an odd number,
@@ -474,17 +476,17 @@ by external .vrt.ovr overviews that might be built later.</li>
 \section gdal_vrttut_raw .vrt Descriptions for Raw Files
 
 So far we have described how to derive new virtual datasets from existing
-files supports by GDAL.  However, it is also common to need to utilize 
+files supports by GDAL.  However, it is also common to need to utilize
 raw binary raster files for which the regular layout of the data is known
 but for which no format specific driver exists.  This can be accomplished
-by writing a .vrt file describing the raw file.  
+by writing a .vrt file describing the raw file.
 
 For example, the following .vrt describes a raw raster file containing
 floating point complex pixels in a file called <i>l2p3hhsso.img</i>.  The
 image data starts from the first byte (ImageOffset=0).  The byte offset
 between pixels is 8 (PixelOffset=8), the size of a CFloat32.  The byte offset
 from the start of one line to the start of the next is 9376 bytes
-(LineOffset=9376) which is the width (1172) times the size of a pixel (8). 
+(LineOffset=9376) which is the width (1172) times the size of a pixel (8).
 
 \code
 <VRTDataset rasterXSize="1172" rasterYSize="1864">
@@ -499,11 +501,11 @@ from the start of one line to the start of the next is 9376 bytes
 \endcode
 
 Some things to note are that the VRTRasterBand has a subClass specifier
-of "VRTRawRasterBand".  Also, the VRTRawRasterBand contains a number of 
+of "VRTRawRasterBand".  Also, the VRTRawRasterBand contains a number of
 previously unseen elements but no "source" information.  VRTRawRasterBands
 may never have sources (i.e. SimpleSource), but should contain the following
-elements in addition to all the normal "metadata" elements previously 
-described which are still supported. 
+elements in addition to all the normal "metadata" elements previously
+described which are still supported.
 
 <ul>
 
@@ -512,7 +514,7 @@ data for this band.  The relativeToVRT attribute can be used to indicate
 if the SourceFilename is relative to the .vrt file (1) or not (0).
 
 <li> <b>ImageOffset</b>: The offset in bytes to the beginning of the first
-pixel of data of this image band.   Defaults to zero. 
+pixel of data of this image band.   Defaults to zero.
 
 <li> <b>PixelOffset</b>: The offset in bytes from the beginning of one
 pixel and the next on the same line.  In packed single band data this will
@@ -520,13 +522,13 @@ be the size of the <b>dataType</b> in bytes.
 
 <li> <b>LineOffset</b>: The offset in bytes from the beginning of one
 scanline of data and the next scanline of data.  In packed single band
-data this will be PixelOffset * rasterXSize. 
+data this will be PixelOffset * rasterXSize.
 
-<li> <b>ByteOrder</b>: Defines the byte order of the data on disk.  
+<li> <b>ByteOrder</b>: Defines the byte order of the data on disk.
 Either LSB (Least Significant Byte first) such as the natural byte order
 on Intel x86 systems or MSB (Most Significant Byte first) such as the natural
 byte order on Motorola or Sparc systems.  Defaults to being the local machine
-order. 
+order.
 
 </ul>
 
@@ -535,9 +537,9 @@ A few other notes:
 <ul>
 
 <li> The image data on disk is assumed to be of the same data type as
-the band <b>dataType</b> of the VRTRawRasterBand. 
+the band <b>dataType</b> of the VRTRawRasterBand.
 
-<li> All the non-source attributes of the VRTRasterBand are supported, 
+<li> All the non-source attributes of the VRTRasterBand are supported,
 including color tables, metadata, nodata values, and color interpretation.
 
 <li> The VRTRawRasterBand supports in place update of the raster, whereas
@@ -545,15 +547,15 @@ the source based VRTRasterBand is always read-only.
 
 <li> The OpenEV tool includes a File menu option to input parameters
 describing a raw raster file in a GUI and create the corresponding .vrt
-file. 
+file.
 
-<li> Multiple bands in the one .vrt file can come from the same raw file. 
+<li> Multiple bands in the one .vrt file can come from the same raw file.
 Just ensure that the ImageOffset, PixelOffset, and LineOffset definition
-for each band is appropriate for the pixels of that particular band.  
+for each band is appropriate for the pixels of that particular band.
 
 </ul>
 
-Another example, in this case a 400x300 RGB pixel interleaved image. 
+Another example, in this case a 400x300 RGB pixel interleaved image.
 
 \code
 <VRTDataset rasterXSize="400" rasterYSize="300">
@@ -581,11 +583,11 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
 </VRTDataset>
 \endcode
 
-\section gdal_vrttut_creation Programatic Creation of VRT Datasets
+\section gdal_vrttut_creation Programmatic Creation of VRT Datasets
 
 The VRT driver supports several methods of creating VRT datasets.  As of
 GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
-GDAL include files, allowing direct access to the VRT classes.  However, 
+GDAL include files, allowing direct access to the VRT classes.  However,
 even without that most capabilities remain available through standard GDAL
 interfaces.<p>
 
@@ -617,7 +619,7 @@ such as metadata or coordinate system that are often hard to change on other
 formats, you might do the following.  In this case, the virtual dataset is
 created "in memory" only by virtual of creating it with an empty filename, and
 then used as a modified source to pass to a CreateCopy() written out in TIFF
-format. 
+format.
 
 \code
   poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
@@ -643,14 +645,14 @@ that band.
   poVRTDS->GetRasterBand( 1 )->SetMetadataItem( "HideNoDataValue" , "1" );
 \endcode
 
-In this example a virtual dataset is created with the Create() method, and 
-adding bands and sources programmatically, but still via the "generic" API. 
+In this example a virtual dataset is created with the Create() method, and
+adding bands and sources programmatically, but still via the "generic" API.
 A special attribute of VRT datasets is that sources can be added to the VRTRasterBand
 (but not to VRTRawRasterBand) by passing the XML describing the source into SetMetadata() on the special
 domain target "new_vrt_sources".  The domain target "vrt_sources" may also be
 used, in which case any existing sources will be discarded before adding the
 new ones.  In this example we construct a simple averaging filter source
-instead of using the simple source. 
+instead of using the simple source.
 
 \code
   // construct XML for simple 3x3 average filter kernel source.
@@ -663,7 +665,7 @@ instead of using the simple source.
 "  </Kernel>"
 "</KernelFilteredSource>";
 
-  // Create the virtual dataset. 
+  // Create the virtual dataset.
   poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_Byte, NULL );
   poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML,
                                              "new_vrt_sources");
@@ -671,7 +673,7 @@ instead of using the simple source.
 
 A more general form of this that will produce a 3x3 average filtered clone
 of any input datasource might look like the following.  In this case we
-deliberately set the filtered datasource as in the "vrt_sources" domain 
+deliberately set the filtered datasource as in the "vrt_sources" domain
 to override the SimpleSource created by the CreateCopy() method.  The fact
 that we used CreateCopy() ensures that all the other metadata, georeferencing
 and so forth is preserved from the source dataset ... the only thing we are
@@ -692,16 +694,16 @@ changing is the data source for each band.
 
       GDALRasterBand *poBand = poVRTDS->GetRasterBand( nBand );
 
-      sprintf( szFilterSourceXML, 
+      sprintf( szFilterSourceXML,
 	"<KernelFilteredSource>"
 	"  <SourceFilename>%s</SourceFilename><SourceBand>%d</SourceBand>"
 	"  <Kernel>"
 	"    <Size>3</Size>"
 	"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
 	"  </Kernel>"
-	"</KernelFilteredSource>", 
+	"</KernelFilteredSource>",
 	pszSourceFilename, nBand );
-	
+
       poBand->SetMetadataItem( "source_0", szFilterSourceXML, "vrt_sources" );
   }
 \endcode
@@ -720,9 +722,9 @@ should be specified with the above SetMetadata() / SetMetadataItem() examples.
   char** papszOptions = NULL;
   papszOptions = CSLAddNameValue(papszOptions, "subclass", "VRTRawRasterBand"); // if not specified, default to VRTRasterBand
   papszOptions = CSLAddNameValue(papszOptions, "SourceFilename", "src.tif"); // mandatory
-  papszOptions = CSLAddNameValue(papszOptions, "ImageOffset", "156"); // optional. default = 0 
-  papszOptions = CSLAddNameValue(papszOptions, "PixelOffset", "2"); // optional. default = size of band type 
-  papszOptions = CSLAddNameValue(papszOptions, "LineOffset", "1024"); // optional. default = size of band type * width 
+  papszOptions = CSLAddNameValue(papszOptions, "ImageOffset", "156"); // optional. default = 0
+  papszOptions = CSLAddNameValue(papszOptions, "PixelOffset", "2"); // optional. default = size of band type
+  papszOptions = CSLAddNameValue(papszOptions, "LineOffset", "1024"); // optional. default = size of band type * width
   papszOptions = CSLAddNameValue(papszOptions, "ByteOrder", "LSB"); // optional. default = machine order
   papszOptions = CSLAddNameValue(papszOptions, "relativeToVRT", "true"); // optional. default = false
   poVRTDS->AddBand(GDT_Byte, papszOptions);
@@ -731,7 +733,7 @@ should be specified with the above SetMetadata() / SetMetadataItem() examples.
   delete poVRTDS;
 \endcode
 
-<h2>Using Derived Bands</h2>
+\section gdal_vrttut_derived_c Using Derived Bands (with pixel functions in C/C++)
 
 A specialized type of band is a 'derived' band which derives its pixel
 information from its source bands.  With this type of band you must also
@@ -806,12 +808,37 @@ calling the pixel function, and the imaginary portion would be lost.
     ...
 \endcode
 
-<h3>Writing Pixel Functions</h3>
+\subsection gdal_vrttut_derived_default_c_pixel_functions Default Pixel Functions
+
+Starting with GDAL 2.2, GDAL provides a set of default pixel functions that can be used without writing new code:
+
+<ul>
+<li><b>"real": </b> extract real part from a single raster band (just a copy if the input is non-complex)
+<li><b>"imag": </b>
+    extract imaginary part from a single raster band (0 for non-complex)
+<li><b> "complex":   </b> make a complex band merging two bands used as real and imag values
+<li><b> "mod":       </b> extract module from a single raster band (real or complex)
+<li><b> "phase":     </b> extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
+<li><b> "conj":      </b> computes the complex conjugate of a single raster band (just a copy if the input is non-complex)
+<li><b> "sum":       </b> sum 2 or more raster bands
+<li><b> "diff":      </b> computes the difference between 2 raster bands (b1 - b2)
+<li><b> "mul":       </b> multiply 2 or more raster bands
+<li><b> "cmul":      </b> multiply the first band for the complex conjugate of the second
+<li><b> "inv":       </b>  inverse (1./x). Note: no check is performed on zero division
+<li><b> "intensity": </b> computes the intensity Re(x*conj(x)) of a single raster band (real or complex)
+<li><b> "sqrt":      </b> perform the square root of a single raster band (real only)
+<li><b> "log10":     </b> compute the logarithm (base 10) of the abs of a single raster band (real or complex): log10( abs( x ) )
+<li><b> "dB":        </b> perform conversion to dB of the abs of a single raster band (real or complex): 20. * log10( abs( x ) )
+<li><b> "dB2amp":    </b> perform scale conversion from logarithmic to linear (amplitude) (i.e. 10 ^ ( x / 20 ) ) of a single raster band (real only)
+<li><b> "dB2pow":    </b> perform scale conversion from logarithmic to linear (power) (i.e. 10 ^ ( x / 10 ) ) of a single raster band (real only)
+</ul>
+
+\subsection gdal_vrttut_derived_c_pixel_functions Writing Pixel Functions
 
 To register this function with GDAL (prior to accessing any VRT datasets
 with derived bands that use this function), an application calls
 GDALAddDerivedBandPixelFunc with a key and a GDALDerivedPixelFunc:
- 
+
 \code
     GDALAddDerivedBandPixelFunc("MyFirstFunction", TestFunction);
 \endcode
@@ -891,7 +918,7 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
             x8 = SRCVAL(papoSources[3], eSrcType, ii);
 
             pix_val = sqrt((x3*x3+x4*x4)/(x0*x8));
-            
+
             GDALCopyWords(&pix_val, GDT_Float64, 0,
                           ((GByte *)pData) + nLineSpace * iLine + iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
@@ -901,6 +928,356 @@ CPLErr TestFunction(void **papoSources, int nSources, void *pData,
     // ---- Return success ----
     return CE_None;
 }
+\endcode
+
+\section gdal_vrttut_derived_python Using Derived Bands (with pixel functions in Python)
+
+Starting with GDAL 2.2, in addition to pixel functions written in C/C++ as
+documented in the \ref gdal_vrttut_derived_c section, it is possible to use
+pixel functions written in Python. Both
+<a href="https://www.python.org/">CPython</a>
+and <a href="http://www.numpy.org/">NumPy</a> are requirements at run-time.
+
+The subelements for VRTRasterBand (whose subclass specification must be
+set to VRTDerivedRasterBand) are :
+<ul>
+
+<li> <i>PixelFunctionType</i> (required): Must be set to a function
+name that will be defined as a inline Python module in PixelFunctionCode
+element or as the form "module_name.function_name" to refer to a function in an
+external Python module</li>
+
+<li> <i>PixelFunctionLanguage</i> (required): Must be set to Python.</li>
+
+<li> <i>PixelFunctionArguments</i> (optional): It is possible to pass
+arguments to the Python pixel function by defining attributes in the
+PixelFunctionArguments element.</li>
+
+<li> <i>PixelFunctionCode</i> (required if PixelFunctionType is of the form
+"function_name", ignored otherwise). The in-lined code of a Python module, that
+must be at least have a function whose name is given by PixelFunctionType.</li>
+
+<li> <i>BufferRadius</i> (optional, defaults to 0): Amount of extra pixels, with
+respect to the original RasterIO() request to satisfy, that are fetched at the
+left, right, bottom and top of the input and output buffers passed to the pixel
+function. Note that the values of the output buffer in this buffer zone will
+be ignored.</li>
+
+</ul>
+
+The signature of the Python pixel function must have the following arguments:
+<ol>
+<li> <i>in_ar</i>: list of input NumPy arrays (one NumPy array for each
+source)</li>
+<li> <i>out_ar</i>: output NumPy array to fill. The array is initialized at the
+right dimensions and with the VRTRasterBand.dataType.</li>
+<li> <i>xoff</i>: pixel offset to the top left corner of the accessed region
+of the band. Generally not needed except if the processing depends on the
+pixel position in the raster.</li>
+<li> <i>yoff</i> line offset to the top left corner of the accessed region of
+the band. Generally not needed.</li>
+<li> <i>xsize</i>: width of the region of the accessed region of the band.
+Can be used together with out_ar.shape[1] to determine the horizontal
+resampling ratio of the request.</li>
+<li> <i>ysize</i>: height of the region of the accessed region of the band.
+Can be used together with out_ar.shape[0] to determine the vertical
+resampling ratio of the request.</li>
+<li> <i>raster_xsize</i>: total with of the raster band. Generally not
+needed.</li>
+<li> <i>raster_ysize</i>: total with of the raster band. Generally not
+needed.</li>
+<li> <i>buf_radius</i>: radius of the buffer (in pixels) added to the left,
+right, top and bottom of in_ar / out_ar. This is the value of the optional
+BufferRadius element that can be set so that the original pixel request is
+extended by a given amount of pixels.</li>
+<li> <i>gt</i>: geotransform. Array of 6 double values.</li>
+<li> <i>kwargs</i>: dictionnary with user arguments defined in
+PixelFunctionArguments</li>
+</ol>
+
+\subsection gdal_vrttut_derived_python_examples Examples
+
+<ul>
+
+<li>VRT that multiplies the values of the source file by a factor of 1.5
+
+\code
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>EPSG:26711</SRS>
+  <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>multiply</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionArguments factor="1.5"/>
+    <PixelFunctionCode><![CDATA[
+import numpy as np
+def multiply(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                   raster_ysize, buf_radius, gt, **kwargs):
+    factor = float(kwargs['factor'])
+    out_ar[:] = np.round_(np.clip(in_ar[0] * factor,0,255))
+]]>
+    </PixelFunctionCode>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+</li>
+
+<li>VRT that adds 2 (or more) rasters
+
+\code
+<VRTDataset rasterXSize="20" rasterYSize="20">
+  <SRS>EPSG:26711</SRS>
+  <GeoTransform>440720,60,0,3751320,0,-60</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>add</PixelFunctionType>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionCode><![CDATA[
+import numpy as np
+def add(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                   raster_ysize, buf_radius, gt, **kwargs):
+    np.round_(np.clip(np.sum(in_ar, axis = 0, dtype = 'uint16'),0,255),
+              out = out_ar)
+]]>
+    </PixelFunctionCode>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte.tif</SourceFilename>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">byte2.tif</SourceFilename>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+</li>
+
+<li>VRT that computes hillshading using an external library
+
+\code
+<VRTDataset rasterXSize="121" rasterYSize="121">
+  <SRS>EPSG:4326</SRS>
+  <GeoTransform>-80.004166666666663,0.008333333333333,0,
+44.004166666666663,0,-0.008333333333333</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">n43.dt0</SourceFilename>
+    </SimpleSource>
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionType>hillshading.hillshade</PixelFunctionType>
+    <PixelFunctionArguments scale="111120" z_factor="30" />
+    <BufferRadius>1</BufferRadius>
+    <SourceTransferType>Int16</SourceTransferType>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+with hillshading.py:
+
+\code
+# Licence: X/MIT
+# Copyright 2016, Even Rouault
+import math
+
+def hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                         raster_ysize, radius, gt, z, scale):
+    ovr_scale_x = float(out_ar.shape[1] - 2 * radius) / xsize
+    ovr_scale_y = float(out_ar.shape[0] - 2 * radius) / ysize
+    ewres = gt[1] / ovr_scale_x
+    nsres = gt[5] / ovr_scale_y
+    inv_nsres = 1.0 / nsres
+    inv_ewres = 1.0 / ewres
+
+    az = 315
+    alt = 45
+    degreesToRadians = math.pi / 180
+
+    sin_alt = math.sin(alt * degreesToRadians)
+    azRadians = az * degreesToRadians
+    z_scale_factor = z / (8 * scale)
+    cos_alt_mul_z_scale_factor = \
+              math.cos(alt * degreesToRadians) * z_scale_factor
+    cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.cos(azRadians) * cos_alt_mul_z_scale_factor
+    sin_az_mul_cos_alt_mul_z_scale_factor_mul_254 = \
+                254 * math.sin(azRadians) * cos_alt_mul_z_scale_factor
+    square_z_scale_factor = z_scale_factor * z_scale_factor
+    sin_alt_mul_254 = 254.0 * sin_alt
+
+    for j in range(radius, out_ar.shape[0]-radius):
+        win_line = in_ar[0][j-radius:j+radius+1,:]
+        for i in range(radius, out_ar.shape[1]-radius):
+            win = win_line[:,i-radius:i+radius+1].tolist()
+            x = inv_ewres * ((win[0][0] + win[1][0] + win[1][0] + win[2][0])-\
+                             (win[0][2] + win[1][2] + win[1][2] + win[2][2])) 
+            y = inv_nsres * ((win[2][0] + win[2][1] + win[2][1] + win[2][2])-\
+                             (win[0][0] + win[0][1] + win[0][1] + win[0][2]))
+            xx_plus_yy = x * x + y * y
+            cang_mul_254 = (sin_alt_mul_254 - \
+                (y * cos_az_mul_cos_alt_mul_z_scale_factor_mul_254 - \
+                    x * sin_az_mul_cos_alt_mul_z_scale_factor_mul_254)) / \
+                math.sqrt(1 + square_z_scale_factor * xx_plus_yy)
+            if cang_mul_254 < 0:
+                out_ar[j,i] = 1
+            else:
+                out_ar[j,i] = 1 + round(cang_mul_254)
+
+def hillshade(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, 
+              raster_ysize, radius, gt, **kwargs):
+    z = float(kwargs['z_factor'])
+    scale= float(kwargs['scale'])
+    hillshade_int(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                  raster_ysize, radius, gt, z, scale)
+\endcode
+
+</li>
+
+
+\subsection gdal_vrttut_derived_python_security Security implications
+
+The ability to run Python code potentially opens the door to many potential
+vulnerabilities if the user of GDAL may process untrusted datasets. To avoid
+such issues, by default, execution of Python pixel function will be disabled.
+The execution policy can be controlled with the GDAL_VRT_ENABLE_PYTHON
+configuration option, which can accept 3 values:
+<ul>
+<li>YES: all VRT scripts are considered as trusted and their Python pixel
+functions will be run when pixel operations are involved.</li>
+<li>NO: all VRT scripts are considered untrusted, and none Python pixel
+function will be run.</li>
+<li>TRUSTED_MODULES (default setting): all VRT scripts with inline Python
+code in their PixelFunctionCode elements will be considered untrusted and will
+not be run. VRT scripts that use a PixelFunctionType of the form
+"module_name.function_name" will be considered as trusted, only if "module_name"
+is allowed in the GDAL_VRT_TRUSTED_MODULES configuration option. The value of
+this configuration option is a comma separated listed of trusted module names.
+The '*' wildcard can be used at the name of a string to match all strings beginning
+with the substring before the '*' character. For example 'every*' will make
+'every.thing' or 'everything' module trusted. '*' can also be used to make all
+modules to be trusted.
+The ".*" wildcard can also be used to match exact modules or submodules names.
+For example 'every.*' will make 'every' and 'every.thing' modules trusted, but
+not 'everything'.</li>
+</ul>
+
+\subsection gdal_vrttut_derived_python_interpreter Linking mechanism to a Python interpreter.
+
+Currently only CPython - 2.6, 2.7 and 3.x - is supported. The GDAL shared object
+is not explicitly linked at build time to any of the CPython library. When GDAL
+will need to run Python code, it will first determine if the Python interpreter
+is loaded in the current process (which is the case if the program is a Python
+interpreter itself, or if another program, e.g. QGIS, has already loaded the
+CPython library). Otherwise it will look if the PYTHONSO configuration option is
+defined. This option can be set to point to the name of the Python library to
+use, either as a shortname like "libpython2.7.so" if it is accessible through
+the Linux dynamic loader (so typically in one of the paths in /etc/ld.so.conf or
+LD_LIBRARY_PATH) or as a full path name like "/usr/lib/x86_64-linux-gnu/libpython2.7.so".
+The same holds on Windows will shortnames like "python27.dll" if accessible through
+the PATH or full path names like "c:\python27\python27.dll". If the PYTHONSO
+configuration option is not defined, it will look for a "python" binary in the
+directories of the PATH and will try to determine the related shared object
+(it will retry with "python3" if no "python" has been found). If the above
+was not successful, then a predefined list of shared objects names
+will be tried. At the time of writing, the order of versions searched is 2.7,
+2.6, 3.4, 3.5, 3.6, 3.3, 3.2. Enabling debug information (CPL_DEBUG=VRT) will
+show which Python version is used.
+
+\subsection gdal_vrttut_derived_python_jit Just-in-time compilation
+
+The use of a just-in-time compiler may significantly speed up execution times.
+<a href="http://numba.pydata.org/">Numba</a> has been successfully tested. For
+better performance, it is recommended to use a offline pixel function so that
+the just-in-time compiler may cache its compilation.
+
+Given the following mandelbrot.py file :
+
+\code
+# Trick for compatiblity with and without numba
+try:
+    from numba import jit
+    #print('Using numba')
+    g_max_iterations = 100
+except:
+    class jit(object):
+        def __init__(self, nopython = True, nogil = True):
+            pass
+
+        def __call__(self, f):
+            return f
+
+    #print('Using non-JIT version')
+    g_max_iterations = 25
+
+# Use a wrapper for the entry point regarding GDAL, since GDAL cannot access
+# the jit decorated function with the expected signature.
+def mandelbrot(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                        raster_ysize, r, gt, **kwargs):
+    mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, 
+g_max_iterations)
+
+# Will make sure that the code is compiled to pure native code without Python
+# fallback.
+@jit(nopython=True, nogil=True, cache=True)
+def mandelbrot_jit(out_ar, xoff, yoff, xsize, ysize, raster_xsize,
+                        raster_ysize, max_iterations):
+    ovr_factor_y = float(out_ar.shape[0]) / ysize
+    ovr_factor_x = float(out_ar.shape[1]) / xsize
+    for j in range( out_ar.shape[0]):
+        y0 = 2.0 * (yoff + j / ovr_factor_y) / raster_ysize - 1
+        for i in range(out_ar.shape[1]):
+            x0 = 3.5 * (xoff + i / ovr_factor_x) / raster_xsize - 2.5
+            x = 0.0
+            y = 0.0
+            x2 = 0.0
+            y2 = 0.0
+            iteration = 0
+            while x2 + y2 < 4 and iteration < max_iterations:
+                y = 2*x*y + y0
+                x = x2 - y2 + x0
+                x2 = x * x
+                y2 = y * y
+                iteration += 1
+
+            out_ar[j][i] = iteration * 255 / max_iterations
+\endcode
+
+the following VRT file can be used (to be opened with QGIS for example)
+
+\code
+
+<VRTDataset rasterXSize="100000000" rasterYSize="100000000">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+    <PixelFunctionType>mandelbrot.mandelbrot</PixelFunctionType>
+    <Metadata>
+      <MDI key="STATISTICS_MAXIMUM">255</MDI>
+      <MDI key="STATISTICS_MEAN">127</MDI>
+      <MDI key="STATISTICS_MINIMUM">0</MDI>
+      <MDI key="STATISTICS_STDDEV">127</MDI>
+    </Metadata>
+    <ColorInterp>Gray</ColorInterp>
+    <Histograms>
+      <HistItem>
+        <HistMin>-0.5</HistMin>
+        <HistMax>255.5</HistMax>
+        <BucketCount>256</BucketCount>
+        <IncludeOutOfRange>0</IncludeOutOfRange>
+        <Approximate>1</Approximate>
+        <HistCounts>0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0</HistCounts>
+      </HistItem>
+    </Histograms>
+  </VRTRasterBand>
+</VRTDataset>
 \endcode
 
 \section gdal_vrttut_warped Warped VRT
@@ -970,7 +1347,7 @@ over the pseudo panchromatic intensity.
 
 Corresponding pseudo code:
 \code
-pseudo_panchro[pixel] = sum(weight[i] * spectral[pixel][i] for i=0 to nb_spectral_bands-1) 
+pseudo_panchro[pixel] = sum(weight[i] * spectral[pixel][i] for i=0 to nb_spectral_bands-1)
 ratio = panchro[pixel] / pseudo_panchro[pixel]
 for i=0 to nb_spectral_bands-1:
     output_value[pixel][i] = input_value[pixel][i] * ratio
@@ -983,7 +1360,7 @@ a <b>PanchroBand</b> child element and one of several <b>SpectralBand</b> elemen
 PanchroBand and SpectralBand elements must have at least a <b>SourceFilename</b> child
 element to specify the name of the dataset. They may also have a <b>SourceBand</b> child
 element to specify the number of the band in the dataset (starting with 1). If not
-specify, the first band will be assumed. 
+specify, the first band will be assumed.
 
 The SpectralBand element must generally have a <b>dstBand</b> attribute to specify the
 number of the output band (starting with 1) to which the input spectral band must be mapped.

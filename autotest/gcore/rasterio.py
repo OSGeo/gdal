@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -529,6 +530,7 @@ def rasterio_9():
     if data is None:
         gdaltest.post_reason('failure')
         return 'fail'
+    data_ar = struct.unpack('h' * 10 * 10, data)
     cs = rasterio_9_checksum(data, 10, 10, data_type = gdal.GDT_Int16)
     if cs != 1211: # checksum of gdal_translate data/byte.tif out.tif -outsize 10 10 -r BILINEAR
         gdaltest.post_reason('failure')
@@ -537,6 +539,19 @@ def rasterio_9():
 
     if abs(tab[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Same but query with GDT_Float32. Check that we do not get floating-point
+    # values, since the band type is Byte
+    data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Float32,
+                                          buf_xsize = 10,
+                                          buf_ysize = 10,
+                                          resample_alg = gdal.GRIORA_Bilinear)
+
+    data_float32_ar = struct.unpack('f' * 10 * 10, data)
+    if data_ar != data_float32_ar:
+        gdaltest.post_reason('failure')
+        print(data_float32_ar)
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Lanczos
@@ -660,6 +675,32 @@ def rasterio_9():
 
     if abs(tab[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
+        return 'fail'
+
+    # Test RasterBand.ReadRaster, with Cubic, and downsampling with >=8x8 source samples used for a dest sample
+    data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 5,
+                                          buf_ysize = 5,
+                                          resample_alg = gdal.GRIORA_Cubic)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = rasterio_9_checksum(data, 5, 5)
+    if cs != 214: # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
+        gdaltest.post_reason('failure')
+        print(cs)
+        return 'fail'
+
+    # Same with UInt16
+    data = src_ds_uint16.GetRasterBand(1).ReadRaster(buf_xsize = 5,
+                                          buf_ysize = 5,
+                                          resample_alg = gdal.GRIORA_Cubic)
+    if data is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    cs = rasterio_9_checksum(data, 5, 5, data_type = gdal.GDT_UInt16)
+    if cs != 214: # checksum of gdal_translate data/byte.tif out.tif -outsize 5 5 -r CUBIC
+        gdaltest.post_reason('failure')
+        print(cs)
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Cubic and supersampling
@@ -885,6 +926,36 @@ def rasterio_12():
 
     return 'success'
 
+###############################################################################
+# Test cubic resampling with masking
+
+def rasterio_13():
+
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+
+        mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 1, dt)
+        mem_ds.GetRasterBand(1).SetNoDataValue(0)
+        mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
+
+        ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic)
+
+        expected_ar = numpy.array([[0,0,0,0,0,0,0,0],[0,255,255,255,255,0,0,0],[0,0,0,0,0,0,0,0]])
+        if not numpy.array_equal(ar_ds, expected_ar):
+            gdaltest.post_reason('failure')
+            print(dt)
+            print(ar_ds)
+            print(expected_ar)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     rasterio_1,
     rasterio_2,
@@ -897,7 +968,8 @@ gdaltest_list = [
     rasterio_9,
     rasterio_10,
     rasterio_11,
-    rasterio_12
+    rasterio_12,
+    rasterio_13
     ]
 
 if __name__ == '__main__':

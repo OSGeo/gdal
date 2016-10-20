@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRGeometryCollection class.
@@ -139,9 +138,7 @@ void OGRGeometryCollection::empty()
 OGRGeometry *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection       *poNewGC;
-
-    poNewGC = (OGRGeometryCollection*)
+    OGRGeometryCollection *poNewGC = (OGRGeometryCollection*)
             OGRGeometryFactory::createGeometry(getGeometryType());
     if( poNewGC == NULL )
         return NULL;
@@ -270,6 +267,21 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
     else
         return papoGeoms[i];
 }
+
+/**
+ * \brief Fetch geometry from container.
+ *
+ * This method returns a pointer to an geometry within the container.  The
+ * returned geometry remains owned by the container, and should not be
+ * modified.  The pointer is only valid until the next change to the
+ * geometry container.  Use IGeometry::clone() to make a copy.
+ *
+ * This method relates to the SFCOM IGeometryCollection::get_Geometry() method.
+ *
+ * @param i the index of the geometry to fetch, between 0 and
+ *          getNumGeometries() - 1.
+ * @return pointer to requested geometry.
+ */
 
 const OGRGeometry * OGRGeometryCollection::getGeometryRef( int i ) const
 
@@ -603,7 +615,7 @@ OGRErr  OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = getIsoGeometryType();
     else if( eWkbVariant == wkbVariantPostGIS1 )
     {
-        int bIs3D = wkbHasZ((OGRwkbGeometryType)nGType);
+        const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));
         nGType = wkbFlatten(nGType);
         if( nGType == wkbMultiCurve )
             nGType = POSTGIS15_MULTICURVE;
@@ -674,9 +686,10 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput, int nRec
         return OGRERR_CORRUPT_DATA;
     }
 
-    int bHasZ = FALSE, bHasM = FALSE;
+    int bHasZ = FALSE;
+    int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     if( eErr != OGRERR_NONE )
         return eErr;
     if( bHasZ ) flags |= OGR_G_3D;
@@ -771,13 +784,12 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText,
     return exportToWktInternal(ppszDstText, eWkbVariant, NULL);
 }
 
+//! @cond Doxygen_Suppress
 OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
                                            OGRwkbVariant eWkbVariant,
                                            const char* pszSkipPrefix ) const
 
 {
-    char        **papszGeoms;
-    int         iGeom;
     size_t      nCumulativeLength = 0;
     OGRErr      eErr;
     bool bMustWriteComma = false;
@@ -785,9 +797,10 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
-    papszGeoms = (nGeomCount) ? (char **) CPLCalloc(sizeof(char *),nGeomCount) : NULL;
+    char **papszGeoms =
+        nGeomCount ? (char **) CPLCalloc(sizeof(char *),nGeomCount) : NULL;
 
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         eErr = papoGeoms[iGeom]->exportToWkt( &(papszGeoms[iGeom]), eWkbVariant );
         if( eErr != OGRERR_NONE )
@@ -818,7 +831,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         }
         else if( eWkbVariant != wkbVariantIso )
         {
-            char *substr;
+            char *substr = NULL;
             if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
                 memmove(substr, substr+strlen(" Z"), 1+strlen(substr+strlen(" Z")));
         }
@@ -877,7 +890,7 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     strcat( *ppszDstText, " (" );
     nCumulativeLength = strlen(*ppszDstText);
 
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
         if( papszGeoms[iGeom] == NULL )
             continue;
@@ -914,11 +927,12 @@ OGRErr OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
     return OGRERR_NONE;
 
 error:
-    for( iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
         CPLFree( papszGeoms[iGeom] );
     CPLFree( papszGeoms );
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            getEnvelope()                             */
@@ -1201,7 +1215,15 @@ void OGRGeometryCollection::swapXY()
 /*                          isCompatibleSubType()                       */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::isCompatibleSubType( OGRwkbGeometryType ) const
+/** Returns whether a geometry of the specified geometry type can be a
+ * member of this collection.
+ *
+ * @param eSubType type of the potential member
+ * @return TRUE or FALSE
+ */
+
+OGRBoolean OGRGeometryCollection::isCompatibleSubType(
+                            CPL_UNUSED OGRwkbGeometryType eSubType ) const
 {
     /* We accept all geometries as sub-geometries */
     return TRUE;
@@ -1211,7 +1233,8 @@ OGRBoolean OGRGeometryCollection::isCompatibleSubType( OGRwkbGeometryType ) cons
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRGeometryCollection::hasCurveGeometry(
+    int bLookForNonLinear ) const
 {
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
@@ -1273,6 +1296,7 @@ OGRGeometry* OGRGeometryCollection::getCurveGeometry(const char* const* papszOpt
 /*                      TransferMembersAndDestroy()                     */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRGeometryCollection* OGRGeometryCollection::TransferMembersAndDestroy(
                                             OGRGeometryCollection* poSrc,
                                             OGRGeometryCollection* poDst)
@@ -1287,3 +1311,4 @@ OGRGeometryCollection* OGRGeometryCollection::TransferMembersAndDestroy(
     delete poSrc;
     return poDst;
 }
+//! @endcond

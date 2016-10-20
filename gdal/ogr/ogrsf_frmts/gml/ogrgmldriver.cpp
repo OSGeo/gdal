@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  OGRGMLDriver implementation
@@ -33,17 +32,6 @@
 #include "gmlreaderp.h"
 
 CPL_CVSID("$Id$");
-
-/************************************************************************/
-/*                        OGRGMLDriverUnload()                          */
-/************************************************************************/
-
-static void OGRGMLDriverUnload(CPL_UNUSED GDALDriver* poDriver)
-{
-    if( GMLReader::hMutex != NULL )
-        CPLDestroyMutex( GMLReader::hMutex );
-    GMLReader::hMutex = NULL;
-}
 
 /************************************************************************/
 /*                         OGRGMLDriverIdentify()                       */
@@ -97,15 +85,13 @@ static int OGRGMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRGMLDataSource    *poDS;
-
     if( poOpenInfo->eAccess == GA_Update )
         return NULL;
 
     if( OGRGMLDriverIdentify( poOpenInfo ) == FALSE )
         return NULL;
 
-    poDS = new OGRGMLDataSource();
+    OGRGMLDataSource *poDS = new OGRGMLDataSource();
 
     if( !poDS->Open(  poOpenInfo ) )
     {
@@ -171,6 +157,13 @@ void RegisterOGRGML()
 "    <Value>YES</Value>"
 "    <Value>NO</Value>"
 "  </Option>"
+"  <Option name='SWAP_COORDINATES' type='string-select' "
+    "description='Whether the order of geometry coordinates should be inverted.' "
+    "default='AUTO'>"
+"    <Value>AUTO</Value>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
 "  <Option name='READ_MODE' type='string-select' description='Read mode' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>STANDARD</Value>"
@@ -230,7 +223,6 @@ void RegisterOGRGML()
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;
     poDriver->pfnCreate = OGRGMLDriverCreate;
-    poDriver->pfnUnloadDriver = OGRGMLDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

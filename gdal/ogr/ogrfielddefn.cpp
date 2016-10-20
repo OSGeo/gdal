@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFieldDefn class implementation.
@@ -228,7 +227,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRFieldType OGRFieldDefn::GetType();
+ * \fn OGRFieldType OGRFieldDefn::GetType() const;
  *
  * \brief Fetch type of this field.
  *
@@ -312,7 +311,7 @@ void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 /************************************************************************/
 
 /**
- * \fn OGRFieldSubType OGRFieldDefn::GetSubType();
+ * \fn OGRFieldSubType OGRFieldDefn::GetSubType() const;
  *
  * \brief Fetch subtype of this field.
  *
@@ -441,8 +440,8 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
             CPLError(CE_Failure, CPLE_AppDefined, "Incorrectly quoted string literal");
             return;
         }
-        const char* pszPtr = pszDefaultIn + 1;
-        for(; *pszPtr != '\0'; pszPtr ++ )
+        const char* pszPtr = pszDefaultIn + 1;  // Used after for.
+        for( ; *pszPtr != '\0'; pszPtr++ )
         {
             if( *pszPtr == '\'' )
             {
@@ -777,7 +776,7 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
 /************************************************************************/
 
 /**
- * \fn OGRJustification OGRFieldDefn::GetJustify();
+ * \fn OGRJustification OGRFieldDefn::GetJustify() const;
  *
  * \brief Get the justification for this field.
  *
@@ -849,7 +848,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::GetWidth();
+ * \fn int OGRFieldDefn::GetWidth() const;
  *
  * \brief Get the formatting width for this field.
  *
@@ -913,7 +912,7 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::GetPrecision();
+ * \fn int OGRFieldDefn::GetPrecision() const;
  *
  * \brief Get the formatting precision for this field.
  * This should normally be
@@ -1045,7 +1044,7 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
 /************************************************************************/
 
 /**
- * \fn int OGRFieldDefn::IsIgnored();
+ * \fn int OGRFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *

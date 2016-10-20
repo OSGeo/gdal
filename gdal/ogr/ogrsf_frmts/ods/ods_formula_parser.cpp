@@ -71,7 +71,6 @@
 #line 1 "ods_formula_parser.y" /* yacc.c:339  */
 
 /******************************************************************************
- * $Id$
  *
  * Component: OGR ODS Formula Engine
  * Purpose: expression and select parser grammar.

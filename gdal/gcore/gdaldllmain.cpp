@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  The library set-up/clean-up routines.
@@ -34,10 +33,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-static int bInGDALGlobalDestructor = FALSE;
-extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
+static bool bInGDALGlobalDestructor = false;
+extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
-int GDALIsInGlobalDestructor(void)
+int GDALIsInGlobalDestructor()
 {
     return bInGDALGlobalDestructor;
 }
@@ -70,11 +69,11 @@ void GDALDestroy(void)
     bGDALDestroyAlreadyCalled = true;
 
     CPLDebug("GDAL", "In GDALDestroy - unloading GDAL shared library.");
-    bInGDALGlobalDestructor = TRUE;
+    bInGDALGlobalDestructor = true;
     GDALDestroyDriverManager();
 
     OGRCleanupAll();
-    bInGDALGlobalDestructor = FALSE;
+    bInGDALGlobalDestructor = false;
 
     /* See https://trac.osgeo.org/gdal/ticket/6139 */
     /* Needed in case no driver manager has been instantiated. */
@@ -134,11 +133,10 @@ static void GDALDestructor(void)
 
 #include <windows.h>
 
-extern "C" int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+extern "C" int WINAPI DllMain( HINSTANCE /* hInstance */,
+                               DWORD dwReason,
+                               LPVOID /* lpReserved */ )
 {
-    UNREFERENCED_PARAMETER(hInstance);
-    UNREFERENCED_PARAMETER(lpReserved);
-
     if (dwReason == DLL_PROCESS_ATTACH)
     {
         // nothing to do

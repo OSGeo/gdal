@@ -1677,7 +1677,7 @@ def warp_52():
               xRes = 4.77731426716,
               yRes = 4.77731426716,
               dstSRS = 'EPSG:3857',
-              warpOptions = ['SKIP_NOSOURCE=YES'],
+              warpOptions = ['SKIP_NOSOURCE=YES', 'DST_ALPHA_MAX=255'],
               transformerOptions = ['RPC_DEM=data/warp_52_dem.tif'],
               dstAlpha = True,
               errorThreshold = 0,
@@ -1695,6 +1695,101 @@ def warp_52():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test Grey+Alpha
+
+def warp_53():
+
+    for typestr in ('Byte', 'UInt16', 'Int16'):
+        src_ds = gdal.Translate('', '../gcore/data/byte.tif',
+                                options = '-of MEM -b 1 -b 1 -ot ' + typestr)
+        src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+        src_ds.GetRasterBand(2).Fill(255)
+        import struct
+        zero = struct.pack('B' * 1, 0)
+        src_ds.GetRasterBand(2).WriteRaster(10,10,1,1,zero,
+                                            buf_type = gdal.GDT_Byte)
+        dst_ds = gdal.Translate('', src_ds,
+                                options = '-of MEM -a_srs EPSG:32611')
+
+        for option in ( '-wo USE_GENERAL_CASE=TRUE', '' ):
+            # First checksum is proj 4.8, second proj 4.9.2
+            for alg_name, expected_cs in ( ('near', [3781,3843]),
+                                           ('cubic',[3942,4133]),
+                                           ('cubicspline',[3874,4076]),
+                                           ('bilinear',[4019,3991]) ):
+                dst_ds.GetRasterBand(1).Fill(0)
+                dst_ds.GetRasterBand(2).Fill(0)
+                gdal.Warp(dst_ds, src_ds,
+                          options = '-r ' + alg_name + ' ' + option)
+                cs1 = dst_ds.GetRasterBand(1).Checksum()
+                cs2 = dst_ds.GetRasterBand(2).Checksum()
+                if (not cs1 in expected_cs) or (not cs2 in [3903, 4138]):
+                    gdaltest.post_reason('fail')
+                    print(typestr)
+                    print(option)
+                    print(alg_name)
+                    print(cs1)
+                    print(cs2)
+                    return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Alpha on UInt16/Int16
+
+def warp_54():
+
+    # UInt16
+    src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
+                                options = '-of MEM -scale 0 255 0 65535 -ot UInt16 -a_ullr -162 150 0 0')
+    dst_ds = gdal.Warp('', src_ds, format = 'MEM')
+    for i in range(4):
+        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        if expected_cs != got_cs:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(got_cs)
+            print(expected_cs)
+            return 'fail'
+
+    # Int16
+    src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
+                                options = '-of MEM -scale 0 255 0 32767 -ot Int16 -a_ullr -162 150 0 0')
+    dst_ds = gdal.Warp('', src_ds, format = 'MEM')
+    for i in range(4):
+        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        if expected_cs != got_cs:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(got_cs)
+            print(expected_cs)
+            return 'fail'
+
+    # Test NBITS
+    src_ds = gdal.Translate('', '../gcore/data/stefan_full_rgba.tif',
+                                options = '-of MEM -scale 0 255 0 32767 -ot UInt16 -a_ullr -162 150 0 0')
+    for i in range(4):
+        src_ds.GetRasterBand(i+1).SetMetadataItem('NBITS', '15', 'IMAGE_STRUCTURE')
+    dst_ds = gdal.Warp('/vsimem/warp_54.tif', src_ds, options = '-co NBITS=15')
+    for i in range(4):
+        expected_cs = src_ds.GetRasterBand(i+1).Checksum()
+        got_cs = dst_ds.GetRasterBand(i+1).Checksum()
+        if expected_cs != got_cs:
+            gdaltest.post_reason('fail')
+            print(i)
+            print(got_cs)
+            print(expected_cs)
+            return 'fail'
+    dst_ds = None
+
+    gdal.Unlink('/vsimem/warp_54.tif')
+
+    return 'success'
+
 
 gdaltest_list = [
     warp_1,
@@ -1765,9 +1860,11 @@ gdaltest_list = [
     warp_49,
     warp_50,
     warp_51,
-    warp_52
+    warp_52,
+    warp_53,
+    warp_54
     ]
-
+#gdaltest_list = [ warp_54 ]
 
 if __name__ == '__main__':
 

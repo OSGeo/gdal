@@ -38,8 +38,8 @@ import gdaltest
 from osgeo import osr
 
 ###############################################################################
-#	Verify that EPSG:26591 picks up the entry from the pcs.override.csv
-# 	file with the adjusted central_meridian.
+# Verify that EPSG:26591 picks up the entry from the pcs.override.csv
+# file with the adjusted central_meridian.
 
 def osr_epsg_1():
 
@@ -54,8 +54,8 @@ def osr_epsg_1():
     return 'success'
 
 ###############################################################################
-#	Check that EPSG:4312 lookup has the towgs84 values set properly
-#	from gcs.override.csv.
+# Check that EPSG:4312 lookup has the towgs84 values set properly
+# from gcs.override.csv.
 
 def osr_epsg_2():
 
@@ -71,8 +71,8 @@ def osr_epsg_2():
     return 'success'
 
 ###############################################################################
-#	Check that various EPSG lookups based on Pulvoko 1942 have the
-#       towgs84 values set properly (#3579)
+# Check that various EPSG lookups based on Pulvoko 1942 have the
+# towgs84 values set properly (#3579)
 
 def osr_epsg_3():
 

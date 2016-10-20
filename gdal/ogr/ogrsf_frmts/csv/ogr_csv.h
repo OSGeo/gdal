@@ -46,9 +46,9 @@ typedef enum
 class OGRCSVDataSource;
 
 char **OGRCSVReadParseLineL( VSILFILE * fp, char chDelimiter,
-                             int bDontHonourStrings = FALSE,
-                             int bKeepLeadingAndClosingQuotes = FALSE,
-                             int bMergeDelimiter = FALSE);
+                             bool bDontHonourStrings = false,
+                             bool bKeepLeadingAndClosingQuotes = false,
+                             bool bMergeDelimiter = false );
 
 typedef enum
 {
@@ -71,30 +71,30 @@ class OGRCSVLayer : public OGRLayer
 
     int                 nNextFID;
 
-    int                 bHasFieldNames;
+    bool                bHasFieldNames;
 
     OGRFeature *        GetNextUnfilteredFeature();
 
-    int                 bNew;
-    int                 bInWriteMode;
-    int                 bUseCRLF;
-    int                 bNeedRewindBeforeRead;
+    bool                bNew;
+    bool                bInWriteMode;
+    bool                bUseCRLF;
+    bool                bNeedRewindBeforeRead;
     OGRCSVGeometryFormat eGeometryFormat;
 
     char*               pszFilename;
-    int                 bCreateCSVT;
-    int                 bWriteBOM;
+    bool                bCreateCSVT;
+    bool                bWriteBOM;
     char                chDelimiter;
 
     int                 nCSVFieldCount;
     int*                panGeomFieldIndex;
-    int                 bFirstFeatureAppendedDuringSession;
-    int                 bHiddenWKTColumn;
+    bool                bFirstFeatureAppendedDuringSession;
+    bool                bHiddenWKTColumn;
 
     /*http://www.faa.gov/airports/airport_safety/airportdata_5010/menu/index.cfm specific */
     int                 iNfdcLongitudeS;
     int                 iNfdcLatitudeS;
-    int                 bDontHonourStrings;
+    bool                bDontHonourStrings;
 
     int                 iLongitudeField;
     int                 iLatitudeField;
@@ -103,37 +103,38 @@ class OGRCSVLayer : public OGRLayer
     CPLString           osYField;
     CPLString           osZField;
 
-    int                 bIsEurostatTSV;
+    bool                bIsEurostatTSV;
     int                 nEurostatDims;
 
     GIntBig             nTotalFeatures;
 
     char              **AutodetectFieldTypes(char** papszOpenOptions, int nFieldCount);
 
-    int                 bWarningBadTypeOrWidth;
-    int                 bKeepSourceColumns;
-    int                 bKeepGeomColumns;
+    bool                bWarningBadTypeOrWidth;
+    bool                bKeepSourceColumns;
+    bool                bKeepGeomColumns;
 
-    int                 bMergeDelimiter;
+    bool                bMergeDelimiter;
 
-    int                 bEmptyStringNull;
+    bool                bEmptyStringNull;
 
     char              **GetNextLineTokens();
 
-    static int          Matches(const char* pszFieldName, char** papszPossibleNames);
+    static bool         Matches( const char* pszFieldName,
+                                 char** papszPossibleNames );
 
   public:
     OGRCSVLayer( const char *pszName, VSILFILE *fp, const char *pszFilename,
                  int bNew, int bInWriteMode, char chDelimiter );
-   ~OGRCSVLayer();
+    virtual ~OGRCSVLayer();
 
     const char*         GetFilename() const { return pszFilename; }
     char                GetDelimiter() const { return chDelimiter; }
-    int                 GetCRLF() const { return bUseCRLF; }
-    int                 GetCreateCSVT() const { return bCreateCSVT; }
-    int                 GetWriteBOM() const { return bWriteBOM; }
+    bool                GetCRLF() const { return bUseCRLF; }
+    bool                GetCreateCSVT() const { return bCreateCSVT; }
+    bool                GetWriteBOM() const { return bWriteBOM; }
     OGRCSVGeometryFormat GetGeometryFormat() const { return eGeometryFormat; }
-    int                 HasHiddenWKTColumn() const { return bHiddenWKTColumn; }
+    bool                HasHiddenWKTColumn() const { return bHiddenWKTColumn; }
     GIntBig             GetTotalFeatureCount() const { return nTotalFeatures; }
     const CPLString&    GetXField() const { return osXField; }
     const CPLString&    GetYField() const { return osYField; }
@@ -155,18 +156,19 @@ class OGRCSVLayer : public OGRLayer
                                      int bApproxOK = TRUE );
 
     static OGRCSVCreateFieldAction PreCreateField( OGRFeatureDefn* poFeatureDefn,
-                                    OGRFieldDefn *poNewField, int bApproxOK );
+                                                   OGRFieldDefn *poNewField,
+                                                   int bApproxOK );
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
                                          int bApproxOK = TRUE );
 
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
 
-    void                SetCRLF(int);
+    void                SetCRLF( bool bNewValue );
     void                SetWriteGeometry(OGRwkbGeometryType eGType,
                                          OGRCSVGeometryFormat eGeometryFormat,
                                          const char* pszGeomCol = NULL);
-    void                SetCreateCSVT(int bCreateCSVT);
-    void                SetWriteBOM(int bWriteBOM);
+    void                SetCreateCSVT( bool bCreateCSVT );
+    void                SetWriteBOM( bool bWriteBOM );
 
     virtual GIntBig     GetFeatureCount( int bForce = TRUE );
     virtual OGRErr      SyncToDisk();
@@ -185,23 +187,23 @@ class OGRCSVDataSource : public OGRDataSource
     OGRLayer          **papoLayers;
     int                 nLayers;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
     CPLString           osDefaultCSVName;
 
-    int                 bEnableGeometryFields;
+    bool                bEnableGeometryFields;
 
   public:
                         OGRCSVDataSource();
-                        ~OGRCSVDataSource();
+                        virtual ~OGRCSVDataSource();
 
     int                 Open( const char * pszFilename,
                               int bUpdate, int bForceAccept,
                               char** papszOpenOptions = NULL );
-    int                 OpenTable( const char * pszFilename,
+    bool                OpenTable( const char * pszFilename,
                                    char** papszOpenOptions,
                                    const char* pszNfdcRunwaysGeomField = NULL,
-                                   const char* pszGeonamesGeomFieldPrefix = NULL);
+                                   const char* pszGeonamesGeomFieldPrefix = NULL );
 
     const char          *GetName() { return pszName; }
 
@@ -220,7 +222,7 @@ class OGRCSVDataSource : public OGRDataSource
     void                CreateForSingleFile( const char* pszDirname,
                                              const char *pszFilename );
 
-    void                EnableGeometryFields() { bEnableGeometryFields = TRUE; }
+    void                EnableGeometryFields() { bEnableGeometryFields = true; }
 
     static CPLString    GetRealExtension(CPLString osFilename);
 };

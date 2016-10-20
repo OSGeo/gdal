@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerFeatureIds, providing access to .RT5 files.
@@ -32,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "5"
+static const char FILE_CODE[] = "5";
 
 static const TigerFieldInfo rt5_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite

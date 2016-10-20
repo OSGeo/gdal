@@ -35,7 +35,7 @@
 #include "cpl_string.h"
 
 //COM ATL Includes
-#include <atlbase.h> 
+#include <atlbase.h>
 #include <atlcom.h>
 #include <atlctl.h>
 #include <atlstr.h> //CString
@@ -80,7 +80,7 @@ public:
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
   virtual GIntBig     GetFeatureCount( int bForce );
   virtual OGRErr      SetAttributeFilter( const char *pszQuery );
-  virtual void 	      SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
+  virtual void        SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
   virtual void        SetSpatialFilter( OGRGeometry * );
   virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
@@ -135,13 +135,13 @@ public:
 
 
   int         Open(IWorkspace* pWorkspace, const char *, int );
-  
+
   const char* GetName() { return m_pszName; }
   int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
-  
+
   OGRLayer*   GetLayer( int );
 
-  
+
   /*
   virtual OGRLayer* ICreateLayer( const char *,
                                  OGRSpatialReference* = NULL,
@@ -199,5 +199,3 @@ void CPL_DLL RegisterOGRao();
 CPL_C_END
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
-

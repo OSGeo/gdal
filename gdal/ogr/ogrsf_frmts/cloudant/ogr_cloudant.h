@@ -46,7 +46,7 @@ class OGRCloudantDataSource;
 
 class OGRCloudantTableLayer : public OGRCouchDBTableLayer
 {
-    int                       bHasStandardSpatial;
+    int                       bHasStandardSpatial;  // -1, TRUE, FALSE
     const char*               pszSpatialView;
     char*                     pszSpatialDDoc;
 
@@ -55,15 +55,15 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
                return atoi(CPLGetConfigOption("CLOUDANT_PAGE_SIZE", "200"));
             }
 
-            virtual int               RunSpatialFilterQueryIfNecessary();
+            virtual bool              RunSpatialFilterQueryIfNecessary();
             virtual void              GetSpatialView();
             virtual void              WriteMetadata();
             virtual void              LoadMetadata();
 
     public:
-            OGRCloudantTableLayer(OGRCloudantDataSource* poDS,
-                                 const char* pszName);
-            ~OGRCloudantTableLayer();
+            OGRCloudantTableLayer( OGRCloudantDataSource* poDS,
+                                   const char* pszName );
+            virtual ~OGRCloudantTableLayer();
 };
 
 /************************************************************************/
@@ -76,7 +76,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
             OGRLayer*    OpenDatabase(const char* pszLayerName = NULL);
   public:
                         OGRCloudantDataSource();
-                        ~OGRCloudantDataSource();
+    virtual ~OGRCloudantDataSource();
     virtual int Open( const char * pszFilename, int bUpdateIn);
     virtual OGRLayer   *ICreateLayer( const char *pszName,
              OGRSpatialReference *poSpatialRef = NULL,
@@ -91,7 +91,7 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
 class OGRCloudantDriver : public OGRCouchDBDriver
 {
   public:
-                ~OGRCloudantDriver();
+    virtual ~OGRCloudantDriver();
 
     virtual const char*         GetName();
     virtual OGRDataSource*      Open( const char *, int );

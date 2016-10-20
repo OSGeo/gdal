@@ -120,8 +120,8 @@ class CPL_DLL S57ClassRegistrar
     std::vector<S57AttrInfo*> aoAttrInfos;
     std::vector<int> anAttrIndex; // sorted by acronym.
 
-    int         FindFile( const char *pszTarget, const char *pszDirectory,
-                          int bReportErr, VSILFILE **fp );
+    bool        FindFile( const char *pszTarget, const char *pszDirectory,
+                          bool bReportErr, VSILFILE **fp );
 
     const char *ReadLine( VSILFILE * fp );
     char      **papszNextLine;
@@ -130,11 +130,11 @@ public:
                 S57ClassRegistrar();
                ~S57ClassRegistrar();
 
-    int         LoadInfo( const char *, const char *, int );
+    bool        LoadInfo( const char *, const char *, bool );
 
     // attribute table methods.
     //int         GetMaxAttrIndex() { return nAttrMax; }
-    const S57AttrInfo *GetAttrInfo(int i);
+    const S57AttrInfo *GetAttrInfo( int i );
     const char *GetAttrName( int i )
     { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName.c_str(); }
     const char *GetAttrAcronym( int i )
@@ -174,12 +174,12 @@ class S57ClassContentExplorer
         S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
        ~S57ClassContentExplorer();
 
-    int         SelectClassByIndex( int );
-    int         SelectClass( int );
-    int         SelectClass( const char * );
+    bool        SelectClassByIndex( int );
+    bool        SelectClass( int );
+    bool        SelectClass( const char * );
 
-    int         Rewind() { return SelectClassByIndex(0); }
-    int         NextClass() { return SelectClassByIndex(iCurrentClass+1); }
+    bool        Rewind() { return SelectClassByIndex(0); }
+    bool        NextClass() { return SelectClassByIndex(iCurrentClass+1); }
 
     int         GetOBJL();
     const char *GetDescription() const;
@@ -223,7 +223,7 @@ public:
                ~DDFRecordIndex();
 
     void        AddRecord( int nKey, DDFRecord * );
-    int         RemoveRecord( int nKey );
+    bool        RemoveRecord( int nKey );
 
     DDFRecord  *FindRecord( int nKey );
 
@@ -304,14 +304,14 @@ class CPL_DLL S57Reader
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
 
-    int                 FetchPoint( int, int,
+    bool                FetchPoint( int, int,
                                     double *, double *, double * = NULL );
-    int                 FetchLine( DDFRecord *, int, int, OGRLineString * );
+    bool                FetchLine( DDFRecord *, int, int, OGRLineString * );
 
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
 
-    int                 ApplyRecordUpdate( DDFRecord *, DDFRecord * );
+    bool                ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
     bool                bMissingWarningIssued;
     bool                bAttrWarningIssued;
@@ -321,7 +321,7 @@ class CPL_DLL S57Reader
                        ~S57Reader();
 
     void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );
-    int                 SetOptions( char ** );
+    bool                SetOptions( char ** );
     int                 GetOptionFlags() { return nOptionFlags; }
 
     int                 Open( int bTestOpen );
@@ -329,9 +329,9 @@ class CPL_DLL S57Reader
     DDFModule           *GetModule() { return poModule; }
     const char          *GetDSNM() { return pszDSNM; }
 
-    int                 Ingest();
-    int                 ApplyUpdates( DDFModule * );
-    int                 FindAndApplyUpdates( const char *pszPath=NULL );
+    bool                Ingest();
+    bool                ApplyUpdates( DDFModule * );
+    bool                FindAndApplyUpdates( const char *pszPath=NULL );
 
     void                Rewind();
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
@@ -344,7 +344,7 @@ class CPL_DLL S57Reader
 
     void                AddFeatureDefn( OGRFeatureDefn * );
 
-    int                 CollectClassList(std::vector<int> &anClassCount);
+    bool                CollectClassList(std::vector<int> &anClassCount);
 
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 
@@ -363,15 +363,15 @@ public:
                         ~S57Writer();
 
     void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );
-    int                 CreateS57File( const char *pszFilename );
-    int                 Close();
+    bool                CreateS57File( const char *pszFilename );
+    bool                Close();
 
-    int                 WriteGeometry( DDFRecord *, int, double *, double *,
+    bool                WriteGeometry( DDFRecord *, int, double *, double *,
                                        double * );
-    int                 WriteATTF( DDFRecord *, OGRFeature * );
-    int                 WritePrimitive( OGRFeature *poFeature );
-    int                 WriteCompleteFeature( OGRFeature *poFeature );
-    int                 WriteDSID( int nEXPP = 1,
+    bool                WriteATTF( DDFRecord *, OGRFeature * );
+    bool                WritePrimitive( OGRFeature *poFeature );
+    bool                WriteCompleteFeature( OGRFeature *poFeature );
+    bool                WriteDSID( int nEXPP = 1,
                                    int nINTU = 4,
                                    const char *pszDSNM = NULL,
                                    const char *pszEDTN = NULL,
@@ -383,9 +383,8 @@ public:
                                    const char *pszCOMT = NULL,
                                    int nNOMR = 0, int nNOGR = 0,
                                    int nNOLR = 0, int nNOIN = 0,
-                                   int nNOCN = 0, int nNOED = 0
-                                 );
-    int                 WriteDSPM( int nHDAT = 0,
+                                   int nNOCN = 0, int nNOED = 0 );
+    bool                WriteDSPM( int nHDAT = 0,
                                    int nVDAT = 0,
                                    int nSDAT = 0,
                                    int nCSCL = 0 );

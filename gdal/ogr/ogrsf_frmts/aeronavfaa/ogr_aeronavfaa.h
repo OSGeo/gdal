@@ -62,7 +62,7 @@ protected:
     OGRSpatialReference *poSRS;
 
     VSILFILE*          fpAeronavFAA;
-    int                bEOF;
+    bool               bEOF;
 
     int                nNextFID;
 
@@ -72,7 +72,7 @@ protected:
 
   public:
                         OGRAeronavFAALayer(VSILFILE* fp, const char* pszLayerName);
-                        ~OGRAeronavFAALayer();
+                        virtual ~OGRAeronavFAALayer();
 
 
     virtual void                ResetReading();
@@ -172,7 +172,7 @@ class OGRAeronavFAADataSource : public OGRDataSource
 
   public:
                         OGRAeronavFAADataSource();
-                        ~OGRAeronavFAADataSource();
+                        virtual ~OGRAeronavFAADataSource();
 
     int                 Open( const char * pszFilename );
 

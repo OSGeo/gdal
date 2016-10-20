@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.43 2015-12-12 18:04:26 erouault Exp $ */
+/* $Id: tif_write.c,v 1.45 2016-09-23 22:12:18 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -258,6 +258,23 @@ TIFFWriteEncodedStrip(TIFF* tif, uint32 strip, void* data, tmsize_t cc)
     tif->tif_rawcp = tif->tif_rawdata;
 
 	tif->tif_flags &= ~TIFF_POSTENCODE;
+
+    /* shortcut to avoid an extra memcpy() */
+    if( td->td_compression == COMPRESSION_NONE )
+    {
+        /* swab if needed - note that source buffer will be altered */
+        tif->tif_postdecode( tif, (uint8*) data, cc );
+
+        if (!isFillOrder(tif, td->td_fillorder) &&
+            (tif->tif_flags & TIFF_NOBITREV) == 0)
+            TIFFReverseBits((uint8*) data, cc);
+
+        if (cc > 0 &&
+            !TIFFAppendToStrip(tif, strip, (uint8*) data, cc))
+            return ((tmsize_t) -1);
+        return (cc);
+    }
+
 	sample = (uint16)(strip / td->td_stripsperimage);
 	if (!(*tif->tif_preencode)(tif, sample))
 		return ((tmsize_t) -1);
@@ -431,9 +448,7 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 		tif->tif_flags |= TIFF_CODERSETUP;
 	}
 	tif->tif_flags &= ~TIFF_POSTENCODE;
-	sample = (uint16)(tile/td->td_stripsperimage);
-	if (!(*tif->tif_preencode)(tif, sample))
-		return ((tmsize_t)(-1));
+
 	/*
 	 * Clamp write amount to the tile size.  This is mostly
 	 * done so that callers can pass in some large number
@@ -442,6 +457,25 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
 	if ( cc < 1 || cc > tif->tif_tilesize)
 		cc = tif->tif_tilesize;
 
+    /* shortcut to avoid an extra memcpy() */
+    if( td->td_compression == COMPRESSION_NONE )
+    {
+        /* swab if needed - note that source buffer will be altered */
+        tif->tif_postdecode( tif, (uint8*) data, cc );
+
+        if (!isFillOrder(tif, td->td_fillorder) &&
+            (tif->tif_flags & TIFF_NOBITREV) == 0)
+            TIFFReverseBits((uint8*) data, cc);
+
+        if (cc > 0 &&
+            !TIFFAppendToStrip(tif, tile, (uint8*) data, cc))
+            return ((tmsize_t) -1);
+        return (cc);
+    }
+
+    sample = (uint16)(tile/td->td_stripsperimage);
+    if (!(*tif->tif_preencode)(tif, sample))
+        return ((tmsize_t)(-1));
         /* swab if needed - note that source buffer will be altered */
 	tif->tif_postdecode( tif, (uint8*) data, cc );
 
@@ -764,7 +798,14 @@ TIFFFlushData1(TIFF* tif)
 		if (!TIFFAppendToStrip(tif,
 		    isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip,
 		    tif->tif_rawdata, tif->tif_rawcc))
+        {
+            /* We update those variables even in case of error since there's */
+            /* code that doesn't really check the return code of this */
+            /* function */
+            tif->tif_rawcc = 0;
+            tif->tif_rawcp = tif->tif_rawdata;
 			return (0);
+        }
 		tif->tif_rawcc = 0;
 		tif->tif_rawcp = tif->tif_rawdata;
 	}

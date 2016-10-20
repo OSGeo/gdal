@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrcsvlayer.cpp 17496 2009-08-02 11:54:23Z rouault $
  *
  * Project:  PCIDSK Translator
  * Purpose:  Implements OGRPCIDSKLayer class.
@@ -100,7 +99,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
 
@@ -681,7 +680,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
               break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
         }

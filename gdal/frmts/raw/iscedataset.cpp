@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISCE Raster Reader
  * Purpose:  Implementation of the ISCE raster reader
@@ -28,6 +27,7 @@
  ****************************************************************************/
 
 #include "gdal_frmts.h"
+#include "ogr_spatialref.h"
 #include "rawdataset.h"
 
 CPL_CVSID("$Id$");
@@ -164,7 +164,7 @@ ISCEDataset::ISCEDataset() :
     fpImage(NULL),
     pszXMLFilename(NULL),
     eScheme(BIL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~ISCEDataset()                          */
@@ -205,17 +205,17 @@ void ISCEDataset::FlushCache( void )
     CPLXMLNode *psTmpNode
         = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "WIDTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "LENGTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "NUMBER_BANDS" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nBands);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBands);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     const char *sType = GDALGetDataTypeName( band->GetRasterDataType() );
@@ -240,6 +240,15 @@ void ISCEDataset::FlushCache( void )
     CPLCreateXMLElementAndValue( psTmpNode, "value", "b" );
 #endif
 
+    psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "ACCESS_MODE" );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", "read" );
+
+    const char *pszFilename = CPLGetBasename( pszXMLFilename );
+    psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "FILE_NAME" );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", pszFilename );
+
 /* -------------------------------------------------------------------- */
 /*      Then, add the ISCE domain metadata.                             */
 /* -------------------------------------------------------------------- */
@@ -263,12 +272,12 @@ void ISCEDataset::FlushCache( void )
 
         /* Don't write it out if it is one of the bits of metadata that is
          * written out elsewhere in this routine */
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0
-              || strcmp( papszTokens[0], "BYTE_ORDER" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" ) )
         {
             CSLDestroy( papszTokens );
             continue;
@@ -279,6 +288,137 @@ void ISCEDataset::FlushCache( void )
         CPLCreateXMLElementAndValue( psTmpNode, "value", papszTokens[1] );
 
         CSLDestroy( papszTokens );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the "Coordinate" component elements, possibly with       */
+/*      georeferencing.                                                 */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psCoordinate1Node, *psCoordinate2Node;
+    double adfGeoTransform[6];
+
+    /* Coordinate 1 */
+    psCoordinate1Node = CPLCreateXMLNode( psDocNode,
+                                          CXT_Element,
+                                          "component" );
+    CPLAddXMLAttributeAndValue( psCoordinate1Node, "name", "Coordinate1" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "factorymodule",
+                                 "isceobj.Image" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "factoryname",
+                                 "createCoordinate" );
+    CPLCreateXMLElementAndValue( psCoordinate1Node,
+                                 "doc",
+                                 "First coordinate of a 2D image (witdh)." );
+    /* Property name */
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "name" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate_name" );
+    /* Property family */
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "family" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate" );
+    /* Property size */
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterXSize);
+    psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "size" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 sBuf );
+
+    /* Coordinate 2 */
+    psCoordinate2Node = CPLCreateXMLNode( psDocNode,
+                                          CXT_Element,
+                                          "component" );
+    CPLAddXMLAttributeAndValue( psCoordinate2Node, "name", "Coordinate2" );
+    CPLCreateXMLElementAndValue( psCoordinate2Node,
+                                 "factorymodule",
+                                 "isceobj.Image" );
+    CPLCreateXMLElementAndValue( psCoordinate2Node,
+                                 "factoryname",
+                                 "createCoordinate" );
+    /* Property name */
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "name" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate_name" );
+    /* Property family */
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "family" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 "ImageCoordinate" );
+    /* Property size */
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nRasterYSize);
+    psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                  CXT_Element,
+                                  "property" );
+    CPLAddXMLAttributeAndValue( psTmpNode, "name", "size" );
+    CPLCreateXMLElementAndValue( psTmpNode,
+                                 "value",
+                                 sBuf );
+
+    if ( GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        if ( adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "ISCE format do not support geotransform with "
+                          "rotation, discarding info.");
+        }
+        else {
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[0] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "startingValue" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[1] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate1Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "delta" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[3] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "startingValue" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+
+            CPLsnprintf( sBuf, sizeof(sBuf), "%g", adfGeoTransform[5] );
+            psTmpNode = CPLCreateXMLNode( psCoordinate2Node,
+                                          CXT_Element,
+                                          "property" );
+            CPLAddXMLAttributeAndValue( psTmpNode, "name", "delta" );
+            CPLCreateXMLElementAndValue( psTmpNode,
+                                         "value",
+                                         sBuf );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -316,7 +456,6 @@ int ISCEDataset::Identify( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      TODO: This function is unusable now:                            */
 /*          * we can't just check for the presence of a XML file        */
-/*            the presence of a XML file                                */
 /*          * we cannot parse it to check basic tree (Identify() is     */
 /*            supposed to be faster than this                           */
 /*          * we could read only a few bytes and strstr() for           */
@@ -362,18 +501,73 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     CPLXMLNode *psCur  = CPLGetXMLNode( psNode, "=imageFile" )->psChild;
     char **papszXmlProps = NULL;
-    while ( psCur != NULL ) {
-        if ( strcmp(psCur->pszValue, "property") != 0) {
-            psCur = psCur->psNext;
-            continue;
+    while ( psCur != NULL )
+    {
+        if ( EQUAL( psCur->pszValue, "property" ) )
+        {
+            /* Top-level property */
+            const char *pszName = CPLGetXMLValue( psCur, "name", NULL );
+            const char *pszValue = CPLGetXMLValue( psCur, "value", NULL );
+            if ( pszName != NULL && pszValue != NULL)
+            {
+                papszXmlProps = CSLSetNameValue( papszXmlProps,
+                                                 pszName, pszValue );
+            }
         }
-        const char *name = CPLGetXMLValue( psCur, "name", NULL );
-        const char *value = CPLGetXMLValue( psCur, "value.", NULL );
-        papszXmlProps = CSLSetNameValue( papszXmlProps,
-                                         name, value );
+        else if ( EQUAL( psCur->pszValue, "component" ) )
+        {
+            /* "components" elements in ISCE store set of properties.   */
+            /* For now, they are avoided as I am not sure the full      */
+            /* scope of these. An exception is made for the ones named  */
+            /* Coordinate1 and Coordinate2, because they may have the   */
+            /* georeferencing information.                              */
+            const char *pszCurName = CPLGetXMLValue( psCur, "name", NULL );
+            if ( pszCurName != NULL
+                && ( EQUAL( pszCurName, "Coordinate1" )
+                    || EQUAL( pszCurName, "Coordinate2" ) ) )
+            {
+                /* We need two subproperties: startingValue and delta.  */
+                /* To simplify parsing code, we will store them in      */
+                /* papszXmlProps with the coordinate name prefixed to   */
+                /* the property name.                                   */
+                CPLXMLNode *psCur2 = psCur->psChild;
+                while ( psCur2 != NULL )
+                {
+                    if ( ! EQUAL( psCur2->pszValue, "property" ) )
+                    {
+                        psCur2 = psCur2->psNext;
+                        continue; /* Skip non property elements */
+                    }
+
+                    const char
+                       *pszCur2Name = CPLGetXMLValue( psCur2, "name", NULL ),
+                       *pszCur2Value = CPLGetXMLValue( psCur2, "value", NULL );
+
+                    if ( pszCur2Name == NULL || pszCur2Value == NULL )
+                    {
+                        psCur2 = psCur2->psNext;
+                        continue; /* Skip malformatted elements */
+                    }
+
+                    if ( EQUAL( pszCur2Name, "startingValue" )
+                        || EQUAL( pszCur2Name, "delta" ) )
+                    {
+                        char szPropName[32];
+                        snprintf(szPropName, sizeof(szPropName), "%s%s",
+                                 pszCurName, pszCur2Name);
+
+                        papszXmlProps =
+                            CSLSetNameValue( papszXmlProps,
+                                             szPropName,
+                                             pszCur2Value );
+                    }
+                    psCur2 = psCur2->psNext;
+                }
+            }
+        }
         psCur = psCur->psNext;
     }
-    /* TODO: extract <component name=Coordinate[12]> for georeferencing */
+
     CPLDestroyXMLNode( psNode );
 
 /* -------------------------------------------------------------------- */
@@ -503,14 +697,35 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                        new ISCERasterBand( poDS, b + 1, poDS->fpImage,
                                            nBandOffset * b,
                                            nPixelOffset, nLineOffset,
-                                           eDataType, TRUE,
-                                           bNativeOrder, FALSE ) );
+                                           eDataType, bNativeOrder,
+                                           TRUE, FALSE ) );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Interpret georeferencing, if present.                           */
 /* -------------------------------------------------------------------- */
-   /* TODO */
+    if ( CSLFetchNameValue( papszXmlProps, "Coordinate1startingValue" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate1delta" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate2startingValue" ) != NULL
+         && CSLFetchNameValue( papszXmlProps, "Coordinate2delta" ) != NULL )
+    {
+        double adfGeoTransform[6];
+        adfGeoTransform[0] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate1startingValue" ) );
+        adfGeoTransform[1] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate1delta" ) );
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                         "Coordinate2startingValue" ) );
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = CPLAtof( CSLFetchNameValue( papszXmlProps,
+                                                               "Coordinate2delta" ) );
+        poDS->SetGeoTransform( adfGeoTransform );
+
+        /* ISCE format seems not to have a projection field, but uses   */
+        /* WGS84.                                                       */
+        poDS->SetProjection( SRS_WKT_WGS84 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ISCE domain          */
@@ -522,11 +737,16 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                                 "=",
                                 CSLT_STRIPLEADSPACES
                                 | CSLT_STRIPENDSPACES);
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
-              || strcmp( papszTokens[0], "LENGTH" ) == 0
-              || strcmp( papszTokens[0], "NUMBER_BANDS" ) == 0
-              || strcmp( papszTokens[0], "DATA_TYPE" ) == 0
-              || strcmp( papszTokens[0], "SCHEME" ) == 0 )
+        if ( EQUAL( papszTokens[0], "WIDTH" )
+              || EQUAL( papszTokens[0], "LENGTH" )
+              || EQUAL( papszTokens[0], "NUMBER_BANDS" )
+              || EQUAL( papszTokens[0], "DATA_TYPE" )
+              || EQUAL( papszTokens[0], "SCHEME" )
+              || EQUAL( papszTokens[0], "BYTE_ORDER" )
+              || EQUAL( papszTokens[0], "Coordinate1startingValue" )
+              || EQUAL( papszTokens[0], "Coordinate1delta" )
+              || EQUAL( papszTokens[0], "Coordinate2startingValue" )
+              || EQUAL( papszTokens[0], "Coordinate2delta" ) )
         {
             CSLDestroy( papszTokens );
             continue;
@@ -596,17 +816,17 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
         = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "WIDTH" );
     char sBuf[64] = { '\0' };
-    snprintf(sBuf, sizeof(sBuf), "%d", nXSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nXSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "LENGTH" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nYSize);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nYSize);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "NUMBER_BANDS" );
-    snprintf(sBuf, sizeof(sBuf), "%d", nBands);
+    CPLsnprintf(sBuf, sizeof(sBuf), "%d", nBands);
     CPLCreateXMLElementAndValue( psTmpNode, "value", sBuf );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );

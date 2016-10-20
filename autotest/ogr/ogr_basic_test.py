@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import os
 import sys
 
 sys.path.append( '../pymod' )
@@ -675,6 +676,22 @@ def ogr_basic_13():
 
     return 'success'
 
+###############################################################################
+# Test ogr.Open(.) in an empty directory
+
+def ogr_basic_14():
+    
+    os.mkdir('tmp/ogr_basic_14')
+    os.chdir('tmp/ogr_basic_14')
+    ds = ogr.Open('.')
+    os.chdir('../..')
+
+    if ds is not None:
+        return 'fail'
+
+    os.rmdir('tmp/ogr_basic_14')
+
+    return 'success'
 
 ###############################################################################
 # cleanup
@@ -699,6 +716,7 @@ gdaltest_list = [
     ogr_basic_11,
     ogr_basic_12,
     ogr_basic_13,
+    ogr_basic_14,
     ogr_basic_cleanup ]
 
 #gdaltest_list = [ ogr_basic_13 ]

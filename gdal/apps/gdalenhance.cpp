@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Command line application to do image enhancement.
@@ -85,12 +84,12 @@ static void Usage()
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hDataset, hOutDS;
-    int			i;
-    const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    GDALDatasetH        hDataset, hOutDS;
+    int                 i;
+    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     int bFormatExplicitlySet = FALSE;
-    GDALDriverH		hDriver;
-    GDALDataType	eOutputType = GDT_Unknown;
+    GDALDriverH         hDriver;
+    GDALDataType        eOutputType = GDT_Unknown;
     char                **papszCreateOptions = NULL;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nLUTBins = 256;

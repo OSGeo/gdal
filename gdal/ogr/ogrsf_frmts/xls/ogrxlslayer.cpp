@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  XLS Translator
  * Purpose:  Implements OGRXLSLayer class.
@@ -43,17 +42,16 @@ OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
                           const char* pszSheetname,
                           int iSheetIn,
                           int nRowsIn,
-                          unsigned short nColsIn )
-
+                          unsigned short nColsIn ) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    pszName(CPLStrdup(pszSheetname)),
+    iSheet(iSheetIn),
+    bFirstLineIsHeaders(false),
+    nRows(nRowsIn),
+    nCols(nColsIn),
+    nNextFID(0)
 {
-    poDS = poDSIn;
-    iSheet = iSheetIn;
-    nNextFID = 0;
-    bFirstLineIsHeaders = FALSE;
-    poFeatureDefn = NULL;
-    pszName = CPLStrdup(pszSheetname);
-    nRows = nRowsIn;
-    nCols = nColsIn;
     SetDescription( pszName );
 }
 
@@ -65,7 +63,7 @@ OGRXLSLayer::~OGRXLSLayer()
 
 {
     CPLFree(pszName);
-    if (poFeatureDefn)
+    if( poFeatureDefn )
         poFeatureDefn->Release();
 }
 
@@ -89,10 +87,10 @@ void OGRXLSLayer::ResetReading()
 void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
 
 {
-    unsigned short i;
     FreeXL_CellValue sCellValue;
     int nCountTextOnSecondLine = 0;
-    for(i = 0; i < nCols && nRows >= 2; i ++)
+    unsigned short i = 0;  // Used after for.
+    for( ; i < nCols && nRows >= 2; i++ )
     {
         if (freexl_get_cell_value(xlshandle, 0, i, &sCellValue) == FREEXL_OK)
         {
@@ -117,12 +115,12 @@ void OGRXLSLayer::DetectHeaderLine(const void* xlshandle)
     }
 
     const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
-    if (EQUAL(pszXLSHeaders, "FORCE"))
-        bFirstLineIsHeaders = TRUE;
-    else if (EQUAL(pszXLSHeaders, "DISABLE"))
-        bFirstLineIsHeaders = FALSE;
-    else if (i == nCols && nCountTextOnSecondLine != nCols)
-        bFirstLineIsHeaders = TRUE;
+    if( EQUAL(pszXLSHeaders, "FORCE") )
+        bFirstLineIsHeaders = true;
+    else if( EQUAL(pszXLSHeaders, "DISABLE") )
+        bFirstLineIsHeaders = false;
+    else if( i == nCols && nCountTextOnSecondLine != nCols )
+        bFirstLineIsHeaders = true;
 }
 
 /************************************************************************/
@@ -133,12 +131,10 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
                                     int* paeFieldTypes)
 
 {
-    int j;
-    unsigned short i;
     FreeXL_CellValue sCellValue;
-    for(j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j ++)
+    for( int j = bFirstLineIsHeaders ? 1 : 0; j < nRows; j++ )
     {
-        for(i = 0; i < nCols; i ++)
+        for( unsigned short i = 0; i < nCols; i ++)
         {
             if (freexl_get_cell_value(xlshandle, j, i, &sCellValue) == FREEXL_OK)
             {
@@ -214,14 +210,14 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
     if (nRows > 0)
     {
-        unsigned short i;
+
         FreeXL_CellValue sCellValue;
 
         DetectHeaderLine(xlshandle);
 
         int* paeFieldTypes = (int* )
                             CPLMalloc(nCols * sizeof(int));
-        for(i = 0; i < nCols; i ++)
+        for( unsigned short i = 0; i < nCols; i++ )
         {
             paeFieldTypes[i] = -1;
         }
@@ -231,15 +227,16 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
         if (!EQUAL(pszXLSFieldTypes, "STRING"))
             DetectColumnTypes(xlshandle, paeFieldTypes);
 
-        for(i = 0; i < nCols; i ++)
+        for( unsigned short i = 0; i < nCols; i++ )
         {
             OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
             if (paeFieldTypes[i] < 0)
                 eType = OFTString;
-            if (bFirstLineIsHeaders &&
-                freexl_get_cell_value(xlshandle, 0, i, &sCellValue) == FREEXL_OK &&
+            if( bFirstLineIsHeaders &&
+                freexl_get_cell_value(xlshandle,
+                                      0, i, &sCellValue) == FREEXL_OK &&
                 (sCellValue.type == FREEXL_CELL_TEXT ||
-                 sCellValue.type == FREEXL_CELL_SST_TEXT))
+                 sCellValue.type == FREEXL_CELL_SST_TEXT) )
             {
                 OGRFieldDefn oField(sCellValue.value.text_value, eType);
                 poFeatureDefn->AddFieldDefn(&oField);
@@ -252,7 +249,6 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
         }
 
         CPLFree(paeFieldTypes);
-
     }
 
     ResetReading();
@@ -266,7 +262,7 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
 GIntBig OGRXLSLayer::GetFeatureCount( int bForce )
 {
-    if  ( m_poAttrQuery == NULL /* && m_poFilterGeom == NULL */ )
+    if( m_poAttrQuery == NULL /* && m_poFilterGeom == NULL */ )
     {
         const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
         if(EQUAL(pszXLSHeaders, "DISABLE"))
@@ -287,11 +283,9 @@ OGRFeature *OGRXLSLayer::GetNextFeature()
 {
     GetLayerDefn();
 
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -373,4 +367,3 @@ int OGRXLSLayer::TestCapability( const char * pszCap )
 
     return FALSE;
 }
-

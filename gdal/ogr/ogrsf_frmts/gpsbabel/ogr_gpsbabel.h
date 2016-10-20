@@ -49,7 +49,7 @@ class OGRGPSBabelDataSource : public OGRDataSource
 
   public:
                         OGRGPSBabelDataSource();
-                        ~OGRGPSBabelDataSource();
+                        virtual ~OGRGPSBabelDataSource();
 
     virtual int         CloseDependentDatasets();
 
@@ -63,8 +63,8 @@ class OGRGPSBabelDataSource : public OGRDataSource
                                const char* pszGPSBabelDriverNameIn,
                                char** papszOpenOptions );
 
-    static int          IsSpecialFile(const char* pszFilename);
-    static int          IsValidDriverName(const char* pszGPSBabelDriverName);
+    static bool         IsSpecialFile( const char* pszFilename );
+    static bool         IsValidDriverName( const char* pszGPSBabelDriverName );
 };
 
 
@@ -80,11 +80,11 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
     CPLString           osTmpFileName;
     GDALDataset        *poGPXDS;
 
-    int                 Convert();
+    bool                Convert();
 
   public:
                         OGRGPSBabelWriteDataSource();
-                        ~OGRGPSBabelWriteDataSource();
+                        virtual ~OGRGPSBabelWriteDataSource();
 
     virtual const char  *GetName() { return pszName; }
     virtual int         GetLayerCount();

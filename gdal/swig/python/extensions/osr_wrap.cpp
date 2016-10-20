@@ -10,6 +10,7 @@
 
 #define SWIGPYTHON
 #define SED_HACKS
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 
@@ -3676,6 +3677,10 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLinearUnits(OSRSpatialReferenceSh
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLinearUnitsAndUpdateParameters(OSRSpatialReferenceShadow *self,char const *name,double to_meters){
     return OSRSetLinearUnitsAndUpdateParameters( self, name, to_meters );
   }
+SWIGINTERN double OSRSpatialReferenceShadow_GetTargetLinearUnits(OSRSpatialReferenceShadow *self,char const *target_key){
+    // Return code ignored.
+    return OSRGetTargetLinearUnits( self, target_key, 0 );
+  }
 SWIGINTERN double OSRSpatialReferenceShadow_GetLinearUnits(OSRSpatialReferenceShadow *self){
     // Return code ignored.
     return OSRGetLinearUnits( self, 0 );
@@ -5510,6 +5515,54 @@ SWIGINTERN PyObject *_wrap_SpatialReference_SetLinearUnitsAndUpdateParameters(Py
       resultobj = PyInt_FromLong( result );
     }
   }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_GetTargetLinearUnits(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:SpatialReference_GetTargetLinearUnits",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_GetTargetLinearUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SpatialReference_GetTargetLinearUnits" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    result = (double)OSRSpatialReferenceShadow_GetTargetLinearUnits(arg1,(char const *)arg2);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
@@ -13414,6 +13467,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetTargetLinearUnits", _wrap_SpatialReference_SetTargetLinearUnits, METH_VARARGS, (char *)"SpatialReference_SetTargetLinearUnits(SpatialReference self, char const * target, char const * name, double to_meters) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLinearUnits", _wrap_SpatialReference_SetLinearUnits, METH_VARARGS, (char *)"SpatialReference_SetLinearUnits(SpatialReference self, char const * name, double to_meters) -> OGRErr"},
 	 { (char *)"SpatialReference_SetLinearUnitsAndUpdateParameters", _wrap_SpatialReference_SetLinearUnitsAndUpdateParameters, METH_VARARGS, (char *)"SpatialReference_SetLinearUnitsAndUpdateParameters(SpatialReference self, char const * name, double to_meters) -> OGRErr"},
+	 { (char *)"SpatialReference_GetTargetLinearUnits", _wrap_SpatialReference_GetTargetLinearUnits, METH_VARARGS, (char *)"SpatialReference_GetTargetLinearUnits(SpatialReference self, char const * target_key) -> double"},
 	 { (char *)"SpatialReference_GetLinearUnits", _wrap_SpatialReference_GetLinearUnits, METH_VARARGS, (char *)"SpatialReference_GetLinearUnits(SpatialReference self) -> double"},
 	 { (char *)"SpatialReference_GetLinearUnitsName", _wrap_SpatialReference_GetLinearUnitsName, METH_VARARGS, (char *)"SpatialReference_GetLinearUnitsName(SpatialReference self) -> char const *"},
 	 { (char *)"SpatialReference_GetAuthorityCode", _wrap_SpatialReference_GetAuthorityCode, METH_VARARGS, (char *)"SpatialReference_GetAuthorityCode(SpatialReference self, char const * target_key) -> char const *"},
@@ -14462,6 +14516,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OAO_West",SWIG_From_int(static_cast< int >(4)));
   SWIG_Python_SetConstant(d, "OAO_Up",SWIG_From_int(static_cast< int >(5)));
   SWIG_Python_SetConstant(d, "OAO_Down",SWIG_From_int(static_cast< int >(6)));
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DTED Translator
  * Purpose:  GDALDataset driver for DTED translator.
@@ -78,8 +77,8 @@ class DTEDRasterBand : public GDALPamRasterBand
 {
     friend class DTEDDataset;
 
-    int 	bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
 
@@ -99,14 +98,13 @@ class DTEDRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 DTEDRasterBand::DTEDRasterBand( DTEDDataset *poDSIn, int nBandIn ) :
-    bNoDataSet(TRUE)
+    bNoDataSet(TRUE),
+    dfNoDataValue(static_cast<double>(DTED_NODATA_VALUE))
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Int16;
-
-    dfNoDataValue = (double) DTED_NODATA_VALUE;
 
     /* For some applications, it may be valuable to consider the whole DTED */
     /* file as single block, as the column orientation doesn't fit very well */
@@ -201,11 +199,9 @@ CPLErr DTEDRasterBand::IWriteBlock( int nBlockXOff,
     {
         panData = (GInt16 *) pImage;
         GInt16* panBuffer = (GInt16*) CPLMalloc(sizeof(GInt16) * nBlockYSize);
-        int i;
-        for(i=0;i<nBlockXSize;i++)
+        for( int i = 0; i < nBlockXSize; i++ )
         {
-            int j;
-            for(j=0;j<nBlockYSize;j++)
+            for( int j = 0; j < nBlockYSize; j++ )
             {
                 panBuffer[j] = panData[j * nBlockXSize + i];
             }
@@ -244,12 +240,13 @@ double DTEDRasterBand::GetNoDataValue( int * pbSuccess )
 /*                            ~DTEDDataset()                            */
 /************************************************************************/
 
-DTEDDataset::DTEDDataset() : psDTED(NULL)
-{
-    pszFilename = CPLStrdup("unknown");
-    pszProjection = CPLStrdup("");
-    bVerifyChecksum = CPLTestBool(CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"));
-}
+DTEDDataset::DTEDDataset() :
+    pszFilename(CPLStrdup("unknown")),
+    psDTED(NULL),
+    bVerifyChecksum(CPLTestBool(
+        CPLGetConfigOption("DTED_VERIFY_CHECKSUM", "NO"))),
+    pszProjection(CPLStrdup(""))
+{}
 
 /************************************************************************/
 /*                            ~DTEDDataset()                            */
@@ -331,7 +328,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
                          (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", TRUE );
 
     if( psDTED == NULL )
-        return( NULL );
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -365,9 +362,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Collect any metadata available.                                 */
 /* -------------------------------------------------------------------- */
-    char *pszValue;
-
-    pszValue = DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
+    char *pszValue =
+        DTEDGetMetadata( psDTED, DTEDMD_VERTACCURACY_UHL );
     poDS->SetMetadataItem( "DTED_VerticalAccuracy_UHL", pszValue );
     CPLFree( pszValue );
 
@@ -498,7 +494,7 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename,
                                  poOpenInfo->GetSiblingFiles() );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -515,7 +511,7 @@ CPLErr DTEDDataset::GetGeoTransform( double * padfTransform )
     padfTransform[4] = 0.0;
     padfTransform[5] = psDTED->dfPixelSizeY * -1;
 
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -536,7 +532,11 @@ const char *DTEDDataset::GetProjectionRef()
     pszPrj = GetMetadataItem( "DTED_HorizontalDatum");
     if (EQUAL(pszPrj, "WGS84"))
     {
-        return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
+        return
+            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
+            "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
+            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
+            "AUTHORITY[\"EPSG\",\"4326\"]]";
     }
     else if (EQUAL(pszPrj, "WGS72"))
     {
@@ -565,7 +565,11 @@ const char *DTEDDataset::GetProjectionRef()
                       "The DTED driver is going to consider it as WGS84.\n"
                       "No more warnings will be issued in this session about this operation.", GetFileName(), pszPrj );
         }
-        return( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]" );
+        return
+            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
+            "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
+            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
+            "AUTHORITY[\"EPSG\",\"4326\"]]";
     }
 }
 

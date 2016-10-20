@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalkselectlayer.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkSelectLayer class, layer access to the results
@@ -31,13 +30,15 @@
 #include "cpl_conv.h"
 #include "ogrwalk.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                          OGRWalkSelectLayer()                        */
 /************************************************************************/
 
 OGRWalkSelectLayer::OGRWalkSelectLayer( OGRWalkDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn )
-
+                                        CPLODBCStatement * poStmtIn ) :
+    pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
 {
     poDS = poDSIn;
 
@@ -45,8 +46,6 @@ OGRWalkSelectLayer::OGRWalkSelectLayer( OGRWalkDataSource *poDSIn,
     poFeatureDefn = NULL;
 
     poStmt = poStmtIn;
-    pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
-
     BuildFeatureDefn( "SELECT", poStmt );
 }
 

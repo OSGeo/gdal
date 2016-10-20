@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Property definition
  * Purpose:  Implements VFKProperty class.
@@ -35,66 +34,74 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 /*!
   \brief Set VFK property (null)
 */
-VFKProperty::VFKProperty()
-    : m_bIsNull(TRUE), m_nValue(0), m_dValue(0.0)
-{
-}
+VFKProperty::VFKProperty() :
+    m_bIsNull(true),
+    m_nValue(0),
+    m_dValue(0.0)
+{}
 
 /*!
   \brief Set VFK property (integer)
 */
-VFKProperty::VFKProperty(int iValue)
-    : m_bIsNull(FALSE), m_nValue(iValue), m_dValue(0.0)
-{
-}
+VFKProperty::VFKProperty( int iValue ) :
+    m_bIsNull(false),
+    m_nValue(iValue),
+    m_dValue(0.0)
+{}
 
 /*!
   \brief Set VFK property (double)
 */
-VFKProperty::VFKProperty(double dValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(dValue)
-{
-}
+VFKProperty::VFKProperty( double dValue ) :
+    m_bIsNull(false),
+    m_nValue(0),
+    m_dValue(dValue)
+{}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty(const char *pszValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(NULL != pszValue ? pszValue : "")
-{
-}
+VFKProperty::VFKProperty( const char *pszValue ) :
+    m_bIsNull(false),
+    m_nValue(0),
+    m_dValue(0.0),
+    m_strValue(NULL != pszValue ? pszValue : "")
+{}
 
 /*!
   \brief Set VFK property (string)
 */
-VFKProperty::VFKProperty(CPLString const& strValue)
-    : m_bIsNull(FALSE), m_nValue(0), m_dValue(0.0), m_strValue(strValue)
-{
-}
+VFKProperty::VFKProperty( CPLString const& strValue ) :
+    m_bIsNull(false),
+    m_nValue(0),
+    m_dValue(0.0),
+    m_strValue(strValue)
+{}
 
 /*!
   \brief VFK property destructor
 */
-VFKProperty::~VFKProperty()
-{
-}
+VFKProperty::~VFKProperty() {}
 
 /*!
   \brief Copy constructor.
 */
-VFKProperty::VFKProperty(VFKProperty const& other)
-    : m_bIsNull(other.m_bIsNull),
-      m_nValue(other.m_nValue), m_dValue(other.m_dValue), m_strValue(other.m_strValue)
-{
-}
+VFKProperty::VFKProperty( VFKProperty const& other ) :
+    m_bIsNull(other.m_bIsNull),
+    m_nValue(other.m_nValue),
+    m_dValue(other.m_dValue),
+    m_strValue(other.m_strValue)
+{}
 
 /*!
   \brief Assignment operator.
 */
-VFKProperty& VFKProperty::operator=(VFKProperty const& other)
+VFKProperty& VFKProperty::operator=( VFKProperty const& other )
 {
     if (&other != this) {
         m_bIsNull = other.m_bIsNull;
@@ -108,19 +115,17 @@ VFKProperty& VFKProperty::operator=(VFKProperty const& other)
 /*!
   \brief Get string property
 
-  \param escape TRUE to escape characters for SQL
+  \param escape true to escape characters for SQL
 
   \return string buffer
 */
-const char *VFKProperty::GetValueS(bool escape) const
+const char *VFKProperty::GetValueS( bool escape ) const
 {
-    size_t ipos;
-
-    if (!escape)
+    if( !escape )
         return m_strValue.c_str();
 
     CPLString strValue(m_strValue);
-    ipos = 0;
+    size_t ipos = 0;
     while (std::string::npos != (ipos = strValue.find("'", ipos))) {
         strValue.replace(ipos, 1, "\'\'", 2);
         ipos += 2;

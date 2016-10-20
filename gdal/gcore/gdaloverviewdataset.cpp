@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of a dataset overview warping class
@@ -95,7 +94,7 @@ class GDALOverviewDataset : public GDALDataset
         virtual int        CloseDependentDatasets();
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewDataset);
+    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewDataset)
 };
 
 /* ******************************************************************** */
@@ -120,7 +119,7 @@ class GDALOverviewBand : public GDALProxyRasterBand
         virtual GDALRasterBand *GetOverview( int );
 
   private:
-    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewBand);
+    CPL_DISALLOW_COPY_ASSIGN(GDALOverviewBand)
 };
 
 /************************************************************************/

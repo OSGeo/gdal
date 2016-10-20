@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Sentinel SAFE products
  * Purpose:  Sentinel Products (manifest.safe) driver
@@ -69,7 +68,7 @@ class SAFEDataset : public GDALPamDataset
 
   public:
             SAFEDataset();
-           ~SAFEDataset();
+    virtual ~SAFEDataset();
 
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -118,14 +117,13 @@ class SAFERasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 SAFERasterBand::SAFERasterBand( SAFEDataset *poDSIn,
-                              GDALDataType eDataTypeIn,
-                              const char *pszSwath,
-                              const char *pszPolarisation,
-                              GDALDataset *poBandFileIn )
-
+                                GDALDataType eDataTypeIn,
+                                const char *pszSwath,
+                                const char *pszPolarisation,
+                                GDALDataset *poBandFileIn ) :
+    poBandFile(poBandFileIn)
 {
     poDS = poDSIn;
-    poBandFile = poBandFileIn;
 
     GDALRasterBand *poSrcBand = poBandFile->GetRasterBand( 1 );
 
@@ -250,7 +248,7 @@ CPLErr SAFERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   GDT_Byte,
                                   1, NULL, 1, nBlockXSize, 0, NULL );
 
-    CPLAssert( FALSE );
+    CPLAssert( false );
     return CE_Failure;
 }
 
@@ -1099,7 +1097,7 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, ":::VIRTUAL:::" );
 
-    return( poDS );
+    return poDS;
 }
 
 
@@ -1155,7 +1153,7 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 
 const char *SAFEDataset::GetProjectionRef()
 {
-    return( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/

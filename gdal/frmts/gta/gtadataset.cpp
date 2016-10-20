@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTA read/write Driver
  * Purpose:  GDAL bindings over GTA library.
@@ -149,7 +148,7 @@ class GTAIO : public gta::custom_io
     int open( const char *pszFilename, const char *pszMode )
     {
         fp = VSIFOpenL( pszFilename, pszMode );
-        return ( fp == NULL ? -1 : 0 );
+        return fp == NULL ? -1 : 0;
     }
 
     void close( )
@@ -931,7 +930,7 @@ const char *GTADataset::GetProjectionRef()
 
 {
     const char *p = oHeader.global_taglist().get("GDAL/PROJECTION");
-    return ( p ? p : "" );
+    return p ? p : "";
 }
 
 /************************************************************************/
@@ -1004,9 +1003,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    GTADataset  *poDS;
-
-    poDS = new GTADataset();
+    GTADataset *poDS = new GTADataset();
 
     if( poDS->oGTAIO.open( poOpenInfo->pszFilename,
             poOpenInfo->eAccess == GA_Update ? "r+" : "r" ) != 0 )
@@ -1250,7 +1247,7 @@ GDALDataset *GTADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

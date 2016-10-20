@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSW Translator
  * Purpose:  Implements OGRCSWDriver.
@@ -56,19 +55,20 @@ class OGRCSWLayer : public OGRLayer
     int                 nFeatureRead;
     int                 nFeaturesInCurrentPage;
 
-    CPLString           osQuery, osCSWWhere;
+    CPLString           osQuery;
+    CPLString           osCSWWhere;
 
     GDALDataset*        FetchGetRecords();
     GIntBig             GetFeatureCountWithHits();
     void                BuildQuery();
 
   public:
-                        OGRCSWLayer(OGRCSWDataSource* poDS);
-                        ~OGRCSWLayer();
+                        OGRCSWLayer( OGRCSWDataSource* poDS );
+               virtual ~OGRCSWLayer();
 
     virtual void                ResetReading();
     virtual OGRFeature*         GetNextFeature();
-    virtual GIntBig             GetFeatureCount(int bForce = FALSE);
+    virtual GIntBig             GetFeatureCount( int bForce = FALSE );
 
     virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -94,13 +94,13 @@ class OGRCSWDataSource : public OGRDataSource
     int                 nMaxRecords;
 
     OGRCSWLayer*        poLayer;
-    int                 bFullExtentRecordsAsNonSpatial;
+    bool                bFullExtentRecordsAsNonSpatial;
 
     CPLHTTPResult*      SendGetCapabilities();
 
   public:
                         OGRCSWDataSource();
-                        ~OGRCSWDataSource();
+               virtual ~OGRCSWDataSource();
 
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions );
@@ -118,7 +118,7 @@ class OGRCSWDataSource : public OGRDataSource
     const CPLString&            GetVersion() { return osVersion; }
     const CPLString&            GetElementSetName() { return osElementSetName; }
     const CPLString&            GetOutputSchema() { return osOutputSchema; }
-    int                         FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
+    bool                        FullExtentRecordsAsNonSpatial() { return bFullExtentRecordsAsNonSpatial; }
     int                         GetMaxRecords() { return nMaxRecords; }
 };
 
@@ -126,7 +126,7 @@ class OGRCSWDataSource : public OGRDataSource
 /*                           OGRCSWLayer()                              */
 /************************************************************************/
 
-OGRCSWLayer::OGRCSWLayer(OGRCSWDataSource* poDSIn) :
+OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
     poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn("records")),
     poBaseDS(NULL),
@@ -590,10 +590,11 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                     CPLFree(psBBox->pszValue);
                     psBBox->pszValue = CPLStrdup("gml:Envelope");
                     CPLString osSRS = CPLGetXMLValue(psBBox, "crs", "");
-                    OGRGeometry* poGeom = GML2OGRGeometry_XMLNode( psBBox,
-                                                          FALSE,
-                                                          0, 0, false, true,
-                                                          false );
+                    OGRGeometry* poGeom =
+                        GML2OGRGeometry_XMLNode( psBBox,
+                                                 FALSE,
+                                                 0, 0, false, true,
+                                                 false );
                     bool bLatLongOrder = true;
                     if( osSRS.size() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
@@ -839,7 +840,7 @@ OGRCSWDataSource::OGRCSWDataSource() :
     pszName(NULL),
     nMaxRecords(500),
     poLayer(NULL),
-    bFullExtentRecordsAsNonSpatial(FALSE)
+    bFullExtentRecordsAsNonSpatial(false)
 {}
 
 /************************************************************************/
@@ -863,11 +864,9 @@ CPLHTTPResult* OGRCSWDataSource::SendGetCapabilities()
     osURL = CPLURLAddKVP(osURL, "SERVICE", "CSW");
     osURL = CPLURLAddKVP(osURL, "REQUEST", "GetCapabilities");
 
-    CPLHTTPResult* psResult;
-
     CPLDebug("CSW", "%s", osURL.c_str());
 
-    psResult = HTTPFetch( osURL, NULL);
+    CPLHTTPResult* psResult = HTTPFetch( osURL, NULL);
     if (psResult == NULL)
     {
         return NULL;
@@ -911,9 +910,9 @@ int OGRCSWDataSource::Open( const char * pszFilename,
     osBaseURL = pszBaseURL;
     osElementSetName = CSLFetchNameValueDef(papszOpenOptionsIn, "ELEMENTSETNAME",
                                             "full");
-    bFullExtentRecordsAsNonSpatial = CSLFetchBoolean(papszOpenOptionsIn,
-                                                     "FULL_EXTENT_RECORDS_AS_NON_SPATIAL",
-                                                     FALSE);
+    bFullExtentRecordsAsNonSpatial =
+        CPLFetchBool(papszOpenOptionsIn,
+                     "FULL_EXTENT_RECORDS_AS_NON_SPATIAL", false);
     osOutputSchema = CSLFetchNameValueDef(papszOpenOptionsIn, "OUTPUT_SCHEMA", "");
     if( EQUAL(osOutputSchema, "gmd") )
         osOutputSchema = "http://www.isotc211.org/2005/gmd";
@@ -1078,4 +1077,3 @@ void RegisterOGRCSW()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

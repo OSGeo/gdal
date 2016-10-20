@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSRasterReader class.
@@ -101,7 +100,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Read each record, till we find what we want.                    */
 /* -------------------------------------------------------------------- */
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     while( (poRecord = oLDEF.ReadRecord() ) != NULL )
     {
         const char* pszCandidateModule = poRecord->GetStringSubfield("LDEF",0,"CMNM",0);
@@ -329,7 +328,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
 /* -------------------------------------------------------------------- */
-    return( oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) ) );
+    return oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) );
 }
 
 /************************************************************************/
@@ -340,7 +339,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Currently we will always use sequential access.  In the         */
 /*      future we should modify the iso8211 library to support          */
 /*      seeking, and modify this to seek directly to the right          */
-/*      record once it's location is known.                             */
+/*      record once its location is known.                              */
 /************************************************************************/
 
 /**

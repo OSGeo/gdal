@@ -30,6 +30,8 @@
 #ifndef OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
 #define OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrsf_frmts.h"
 #include "cpl_multiproc.h"
 #include "ogrmutexedlayer.h"
@@ -109,5 +111,7 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
                                          const char * pszValue,
                                          const char * pszDomain = "" );
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif // OGRMUTEXEDDATASOURCELAYER_H_INCLUDED

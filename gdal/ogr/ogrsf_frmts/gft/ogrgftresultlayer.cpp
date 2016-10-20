@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTResultLayer class.
@@ -35,13 +34,12 @@ CPL_CVSID("$Id$");
 /*                        OGRGFTResultLayer()                           */
 /************************************************************************/
 
-OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDSIn,
-                                     const char* pszSQL) : OGRGFTLayer(poDSIn)
-
+OGRGFTResultLayer::OGRGFTResultLayer( OGRGFTDataSource* poDSIn,
+                                      const char* pszSQL ) :
+    OGRGFTLayer(poDSIn),
+    bGotAllRows(FALSE)
 {
     osSQL = PatchSQL(pszSQL);
-
-    bGotAllRows = FALSE;
 
     poFeatureDefn = new OGRFeatureDefn( "result" );
     poFeatureDefn->Reference();

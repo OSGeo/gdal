@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Component: ODS formula Engine
  * Purpose:
@@ -33,6 +32,8 @@
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
+
+CPL_CVSID("$Id$");
 
 namespace {
 #include "ods_formula_parser.hpp"

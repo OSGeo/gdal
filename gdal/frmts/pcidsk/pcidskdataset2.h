@@ -67,7 +67,7 @@ class PCIDSK2Dataset : public GDALPamDataset
 
   public:
                 PCIDSK2Dataset();
-                ~PCIDSK2Dataset();
+    virtual ~PCIDSK2Dataset();
 
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -134,7 +134,7 @@ class PCIDSK2Band : public GDALPamRasterBand
   public:
                 PCIDSK2Band( PCIDSK2Dataset *, PCIDSK::PCIDSKFile *, int );
                 PCIDSK2Band( PCIDSK::PCIDSKChannel * );
-                ~PCIDSK2Band();
+    virtual ~PCIDSK2Band();
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -179,7 +179,7 @@ class OGRPCIDSKLayer : public OGRLayer
 
   public:
     OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );
-    ~OGRPCIDSKLayer();
+    virtual ~OGRPCIDSKLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

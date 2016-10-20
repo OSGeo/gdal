@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFSubfieldDefn class.
@@ -38,22 +37,17 @@ CPL_CVSID("$Id$");
 /*                          DDFSubfieldDefn()                           */
 /************************************************************************/
 
-DDFSubfieldDefn::DDFSubfieldDefn()
-
-{
-    pszName = NULL;
-
-    bIsVariable = TRUE;
-    nFormatWidth = 0;
-    chFormatDelimiter = DDF_UNIT_TERMINATOR;
-    eBinaryFormat = NotBinary;
-    eType = DDFString;
-
-    pszFormatString = CPLStrdup("");
-
-    nMaxBufChars = 0;
-    pachBuffer = NULL;
-}
+DDFSubfieldDefn::DDFSubfieldDefn() :
+    pszName(NULL),
+    pszFormatString(CPLStrdup("")),
+    eType(DDFString),
+    eBinaryFormat(NotBinary),
+    bIsVariable(TRUE),
+    chFormatDelimiter(DDF_UNIT_TERMINATOR),
+    nFormatWidth(0),
+    nMaxBufChars(0),
+    pachBuffer(NULL)
+{}
 
 /************************************************************************/
 /*                          ~DDFSubfieldDefn()                          */
@@ -501,45 +495,45 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
           {
             case UInt:
               if( nFormatWidth == 1 )
-                  return( abyData[0] );
+                  return abyData[0];
               else if( nFormatWidth == 2 )
-                  return( *((GUInt16 *) pabyData) );
+                  return *((GUInt16 *) pabyData);
               else if( nFormatWidth == 4 )
-                  return( *((GUInt32 *) pabyData) );
+                  return *((GUInt32 *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
             case SInt:
               if( nFormatWidth == 1 )
-                  return( *((signed char *) abyData) );
+                  return *((signed char *) abyData);
               else if( nFormatWidth == 2 )
-                  return( *((GInt16 *) pabyData) );
+                  return *((GInt16 *) pabyData);
               else if( nFormatWidth == 4 )
-                  return( *((GInt32 *) pabyData) );
+                  return *((GInt32 *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
             case FloatReal:
               if( nFormatWidth == 4 )
-                  return( *((float *) pabyData) );
+                  return *((float *) pabyData);
               else if( nFormatWidth == 8 )
-                  return( *((double *) pabyData) );
+                  return *((double *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0.0;
               }
 
             case NotBinary:
             case FPReal:
             case FloatComplex:
-              //CPLAssert( FALSE );
+              // CPLAssert( false );
               return 0.0;
           }
           break;
@@ -547,11 +541,11 @@ DDFSubfieldDefn::ExtractFloatData( const char * pachSourceData,
       }
 
       default:
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return 0.0;
     }
 
-    //CPLAssert( FALSE );
+    // CPLAssert( false );
     return 0.0;
 }
 
@@ -637,45 +631,45 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
           {
             case UInt:
               if( nFormatWidth == 4 )
-                  return( (int) *((GUInt32 *) pabyData) );
+                  return (int) *((GUInt32 *) pabyData);
               else if( nFormatWidth == 1 )
-                  return( abyData[0] );
+                  return abyData[0];
               else if( nFormatWidth == 2 )
-                  return( *((GUInt16 *) pabyData) );
+                  return *((GUInt16 *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
             case SInt:
               if( nFormatWidth == 4 )
-                  return( *((GInt32 *) pabyData) );
+                  return *((GInt32 *) pabyData);
               else if( nFormatWidth == 1 )
-                  return( *((signed char *) abyData) );
+                  return *((signed char *) abyData);
               else if( nFormatWidth == 2 )
-                  return( *((GInt16 *) pabyData) );
+                  return *((GInt16 *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
             case FloatReal:
               if( nFormatWidth == 4 )
-                  return( (int) *((float *) pabyData) );
+                  return (int) *((float *) pabyData);
               else if( nFormatWidth == 8 )
-                  return( (int) *((double *) pabyData) );
+                  return (int) *((double *) pabyData);
               else
               {
-                  //CPLAssert( FALSE );
+                  // CPLAssert( false );
                   return 0;
               }
 
             case NotBinary:
             case FPReal:
             case FloatComplex:
-              //CPLAssert( FALSE );
+              // CPLAssert( false );
               return 0;
           }
           break;
@@ -683,11 +677,11 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
       }
 
       default:
-        //CPLAssert( FALSE );
+        // CPLAssert( false );
         return 0;
     }
 
-    //CPLAssert( FALSE );
+    // CPLAssert( false );
     return 0;
 }
 
@@ -950,11 +944,11 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
             break;
 
           case FloatReal:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             break;
         }
     }
@@ -1020,7 +1014,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
         }
         else
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             /* implement me */
         }
     }

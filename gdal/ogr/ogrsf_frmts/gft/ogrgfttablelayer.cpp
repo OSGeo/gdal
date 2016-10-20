@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTTableLayer class.
@@ -35,31 +34,30 @@ CPL_CVSID("$Id$");
 /*                         OGRGFTTableLayer()                           */
 /************************************************************************/
 
-OGRGFTTableLayer::OGRGFTTableLayer(OGRGFTDataSource* poDSIn,
-                         const char* pszTableName,
-                         const char* pszTableId,
-                         const char* pszGeomColumnName) : OGRGFTLayer(poDSIn)
-
+OGRGFTTableLayer::OGRGFTTableLayer( OGRGFTDataSource* poDSIn,
+                                    const char* pszTableName,
+                                    const char* pszTableId,
+                                    const char* pszGeomColumnName ) :
+    OGRGFTLayer(poDSIn),
+    osTableName(pszTableName),
+    osTableId(pszTableId),
+    osGeomColumnName(pszGeomColumnName ? pszGeomColumnName : ""),
+    bHasTriedCreateTable(FALSE),
+    bInTransaction(FALSE),
+    nFeaturesInTransaction(0),
+    eGTypeForCreation(wkbUnknown)
 {
-    osTableName = pszTableName;
-    osTableId = pszTableId;
-    osGeomColumnName = pszGeomColumnName ? pszGeomColumnName : "";
-
-    bHasTriedCreateTable = FALSE;
-    bInTransaction = FALSE;
-    nFeaturesInTransaction = 0;
-
     bFirstTokenIsFID = TRUE;
-    eGTypeForCreation = wkbUnknown;
 
     SetDescription( osTableName );
 
-    if (osTableId.size() == 0)
+    if( osTableId.size() == 0 )
     {
         poFeatureDefn = new OGRFeatureDefn( osTableName );
         poFeatureDefn->Reference();
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poFeatureDefn->GetGeomFieldDefn(0)->SetName(GetDefaultGeometryColumnName());
+        poFeatureDefn->GetGeomFieldDefn(0)->
+            SetName(GetDefaultGeometryColumnName());
     }
 }
 
@@ -314,7 +312,7 @@ int OGRGFTTableLayer::FetchDescribe()
 
 static CPLString EscapeAndQuote(const char* pszStr)
 {
-    char ch;
+    char ch = '\0';
     CPLString osRes("'");
     while((ch = *pszStr) != 0)
     {
@@ -719,15 +717,13 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLString      osCommand;
-
-    osCommand += "INSERT INTO ";
+    CPLString osCommand = "INSERT INTO ";
     osCommand += osTableId;
     osCommand += " (";
 
-    int iField;
-    int nFieldCount = poFeatureDefn->GetFieldCount();
-    for(iField = 0; iField < nFieldCount; iField++)
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    int iField = 0;  // Used after for
+    for( ; iField < nFieldCount; iField++ )
     {
         if (iField > 0)
             osCommand += ", ";
@@ -758,7 +754,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
                 osCommand += "''";
             else
             {
-                char* pszKML;
+                char* pszKML = NULL;
                 if (poGeom->getSpatialReference() != NULL &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {
@@ -908,15 +904,12 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    CPLString      osCommand;
-
-    osCommand += "UPDATE ";
+    CPLString osCommand = "UPDATE ";
     osCommand += osTableId;
     osCommand += " SET ";
 
-    int iField;
-    int nFieldCount = poFeatureDefn->GetFieldCount();
-    for(iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    for( int iField = 0; iField < nFieldCount + bHiddenGeometryField; iField++)
     {
         if (iField > 0)
             osCommand += ", ";
@@ -942,7 +935,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
                 osCommand += "''";
             else
             {
-                char* pszKML;
+                char* pszKML = NULL;
                 if (poGeom->getSpatialReference() != NULL &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {

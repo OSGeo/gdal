@@ -14,7 +14,7 @@ include ../SWIGmake.base
 PACKAGE_DIR=osgeo
 SWIGOUTPUTDIR=extensions/
 
-SCRIPTS			= `ls ./scripts`
+SCRIPTS			= `ls ./scripts/*.py`
 PY_COMMANDS     =       epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
                         gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
                         gcps2vec.py
@@ -28,6 +28,7 @@ clean:
 	-rm -f *.so ./osgeo/*.so
 	-rm -rf dist
 
+SWIGARGS += -threads
 SWIGARGS += -outdir "${PACKAGE_DIR}" 
 
 
@@ -123,7 +124,7 @@ install:
 	fi
 	env PYTHONPATH=$(site_package_dir)$${PYTHONPATH:+:$$PYTHONPATH} \
 		$(PYTHON) setup.py install ${setup_opts}
-	for f in $(SCRIPTS) ; do $(INSTALL) ./scripts/$$f $(DESTDIR)$(INST_BIN) ; done
+	for f in $(SCRIPTS) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
 
 # see swig/include/python/docs/README to refresh the  ../include/python/docs/ files
 docs:

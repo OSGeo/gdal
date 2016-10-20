@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Mini driver for Internet Imaging Protocol (IIP)
@@ -30,16 +29,15 @@
 #include "wmsdriver.h"
 #include "minidriver_iip.h"
 
+CPL_CVSID("$Id$");
 
 CPP_GDALWMSMiniDriverFactory(IIP)
 
-GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {
-}
+GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {}
 
-GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {
-}
+GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {}
 
-CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config) {
+CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {

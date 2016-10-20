@@ -14,15 +14,19 @@ with fairly complete SQL semantics and respectable performance.</p>
 <p>The driver can handle "regular" SQLite databases, as well as Spatialite
 databases (spatial enabled SQLite databases). The type of an existing database
 can be checked from the SQLITE debug info value "OGR style SQLite DB found/
-SpatiaLite DB found/SpatiaLite v4 DB found" obtained by running 
+SpatiaLite DB found/SpatiaLite v4 DB found" obtained by running
 <strong>"ogrinfo db.sqlite --debug on"</strong>
 </p>
 
 <p>The SQLite database is essentially typeless, but the SQLite driver will
 attempt to classify attributes field as text, integer or floating point
-based on the contents of the first record in a table.  None of the list
-attribute field types existing in SQLite. Starting with OGR 1.10, datetime
+based on the contents of the first record in a table.  Starting with OGR 1.10, datetime
 field types are also handled.</p>
+
+<p>Starting with GDAL 2.2, the "JSonStringList", "JSonIntegerList", "JSonInteger64List"
+and "JSonRealList" SQLite declaration types are used to map the corresponding OGR StringList,
+IntegerList, Integer64List and RealList types. The field values are then encoded as
+JSon arrays, with proper CSV escaping.</p>
 
 <p>SQLite databases often due not work well over NFS, or some other networked
 file system protocols due to the poor support for locking.  It is safest

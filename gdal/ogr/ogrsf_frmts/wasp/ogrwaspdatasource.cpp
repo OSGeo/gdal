@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwaspdatasource.cpp 25307 2012-12-15 09:04:40Z rouault $
  *
  * Project:  WAsP Translator
  * Purpose:  Implements OGRWAsPDataSource class
@@ -34,17 +33,17 @@
 #include <cassert>
 #include <sstream>
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                          OGRWAsPDataSource()                          */
 /************************************************************************/
 
 OGRWAsPDataSource::OGRWAsPDataSource( const char * pszName,
-                                      VSILFILE * hFileHandle )
-    : sFilename( pszName )
-    , hFile( hFileHandle )
-
-{
-}
+                                      VSILFILE * hFileHandle ) :
+    sFilename(pszName),
+    hFile(hFileHandle)
+{}
 
 /************************************************************************/
 /*                         ~OGRWAsPDataSource()                          */

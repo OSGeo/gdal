@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSGridLayer class, which implements the
@@ -51,7 +50,6 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     nMaxRawIndex(0),
     pRawData(NULL)
 {
-
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */
 /* -------------------------------------------------------------------- */
@@ -85,7 +83,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     }
     else
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return;
     }
 
@@ -369,9 +367,9 @@ OGRDODSGridLayer::~OGRDODSGridLayer()
 /*                         ArrayEntryToField()                          */
 /************************************************************************/
 
-int OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
-                                         int iArrayIndex,
-                                         OGRFeature *poFeature, int iField)
+bool OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
+                                          int iArrayIndex,
+                                          OGRFeature *poFeature, int iField )
 
 {
     switch( poArray->var()->type() )
@@ -426,10 +424,10 @@ int OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
       break;
 
       default:
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -451,9 +449,7 @@ OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Create the feature being read.                                  */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature;
-
-    poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     poFeature->SetFID( nFeatureId );
     m_nFeaturesRead++;
 
@@ -526,19 +522,18 @@ OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
 /*                           ProvideDataDDS()                           */
 /************************************************************************/
 
-int OGRDODSGridLayer::ProvideDataDDS()
+bool OGRDODSGridLayer::ProvideDataDDS()
 
 {
     if( bDataLoaded )
         return poTargetVar != NULL;
 
-    int bResult = OGRDODSLayer::ProvideDataDDS();
+    const bool  bResult = OGRDODSLayer::ProvideDataDDS();
 
     if( !bResult )
         return bResult;
 
-    int iArray;
-    for( iArray=0; iArray < nArrayRefCount; iArray++ )
+    for( int iArray=0; iArray < nArrayRefCount; iArray++ )
     {
         OGRDODSArrayRef *poRef = paoArrayRefs + iArray;
         BaseType *poTarget = poDataDDS->var( poRef->pszName );
@@ -558,8 +553,8 @@ int OGRDODSGridLayer::ProvideDataDDS()
         }
         else
         {
-            CPLAssert( FALSE );
-            return FALSE;
+            CPLAssert( false );
+            return false;
         }
 
         if( iArray == 0 )
@@ -573,10 +568,10 @@ int OGRDODSGridLayer::ProvideDataDDS()
     // Setup pointers to each of the map objects.
     if( poTargetGrid != NULL )
     {
-        int iMap;
+        int iMap = 0;
         Grid::Map_iter iterMap;
 
-        for( iterMap = poTargetGrid->map_begin(), iMap = 0;
+        for( iterMap = poTargetGrid->map_begin();
              iterMap != poTargetGrid->map_end();
              iterMap++, iMap++ )
         {

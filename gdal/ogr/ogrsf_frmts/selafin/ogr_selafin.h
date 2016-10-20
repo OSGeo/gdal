@@ -68,14 +68,17 @@ class Range {
 class OGRSelafinLayer : public OGRLayer {
     private:
         SelafinTypeDef eType;
-        int bUpdate;
+        bool bUpdate;
         int nStepNumber;
         Selafin::Header *poHeader;
         OGRFeatureDefn *poFeatureDefn;
         OGRSpatialReference *poSpatialRef;
         GIntBig nCurrentId;
     public:
-        OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,OGRSpatialReference *poSpatialRefP,Selafin::Header *poHeaderP,int nStepNumberP,SelafinTypeDef eTypeP);
+        OGRSelafinLayer( const char *pszLayerNameP, int bUpdateP,
+                         OGRSpatialReference *poSpatialRefP,
+                         Selafin::Header *poHeaderP, int nStepNumberP,
+                         SelafinTypeDef eTypeP );
         ~OGRSelafinLayer();
         OGRSpatialReference *GetSpatialRef() {return poSpatialRef;}
         int GetStepNumber() {return nStepNumber;}
@@ -85,13 +88,13 @@ class OGRSelafinLayer : public OGRLayer {
         OGRErr SetNextByIndex(GIntBig nIndex);
         OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
         int TestCapability(const char *pszCap);
-        GIntBig GetFeatureCount(int bForce=TRUE);
-        OGRErr GetExtent(OGREnvelope *psExtent,int bForce=TRUE);
+        GIntBig GetFeatureCount( int bForce = TRUE );
+        OGRErr GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
         virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
         OGRErr ISetFeature(OGRFeature *poFeature);
         OGRErr ICreateFeature(OGRFeature *poFeature);
-        OGRErr CreateField(OGRFieldDefn *poField,int bApproxOK=TRUE);
+        OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
         OGRErr DeleteField(int iField);
         OGRErr ReorderFields(int *panMap);
         OGRErr AlterFieldDefn(int iField,OGRFieldDefn *poNewFieldDefn,int nFlags);
@@ -109,7 +112,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         OGRSelafinLayer **papoLayers;
         Range poRange;
         int nLayers;
-        int bUpdate;
+        bool bUpdate;
         Selafin::Header *poHeader;
         CPLString osDefaultSelafinName;
         OGRSpatialReference *poSpatialRef;
@@ -117,7 +120,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         void ReleaseLock();
     public:
         OGRSelafinDataSource();
-        ~OGRSelafinDataSource();
+        virtual ~OGRSelafinDataSource();
         int Open(const char * pszFilename, int bUpdate, int bCreate);
         int OpenTable(const char * pszFilename);
         const char *GetName() { return pszName; }

@@ -54,4 +54,5 @@ OBJ =	ogrgeometryfactory.o \
     osr_cs_wkt.o \
 	osr_cs_wkt_parser.o \
     ogrgeomfielddefn.o \
-    ograpispy.o
+    ograpispy.o \
+    ogr_xerces.o

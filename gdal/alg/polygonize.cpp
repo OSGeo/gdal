@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  * Project:  GDAL
  * Purpose:  Raster to Polygon Converter
  * Author:   Frank Warmerdam, warmerdam@pobox.com

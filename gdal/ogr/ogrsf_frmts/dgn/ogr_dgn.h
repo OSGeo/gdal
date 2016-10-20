@@ -65,7 +65,7 @@ class OGRDGNLayer : public OGRLayer
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN,
                                      int bUpdate );
-                        ~OGRDGNLayer();
+                        virtual ~OGRDGNLayer();
 
     void                SetSpatialFilter( OGRGeometry * );
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
@@ -107,7 +107,7 @@ class OGRDGNDataSource : public OGRDataSource
                         ~OGRDGNDataSource();
 
     int                 Open( const char *, int bTestOpen, int bUpdate );
-    int                 PreCreate( const char *, char ** );
+    bool                PreCreate( const char *, char ** );
 
     OGRLayer           *ICreateLayer( const char *,
                                      OGRSpatialReference * = NULL,

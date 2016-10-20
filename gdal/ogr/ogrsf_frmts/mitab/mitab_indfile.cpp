@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.14 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -83,25 +82,27 @@
 
 #include <ctype.h>      /* toupper() */
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABINDFile
  *====================================================================*/
 
-#define IND_MAGIC_COOKIE  24242424
+static const GUInt32 IND_MAGIC_COOKIE = 24242424;
 
 /**********************************************************************
  *                   TABINDFile::TABINDFile()
  *
  * Constructor.
  **********************************************************************/
-TABINDFile::TABINDFile()
+TABINDFile::TABINDFile() :
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_numIndexes(0),
+    m_papoIndexRootNodes(NULL),
+    m_papbyKeyBuffers(NULL)
 {
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_numIndexes = 0;
-    m_papoIndexRootNodes = NULL;
-    m_papbyKeyBuffers = NULL;
     m_oBlockManager.SetName("IND");
     m_oBlockManager.SetBlockSize(512);
 }
@@ -136,8 +137,6 @@ TABINDFile::~TABINDFile()
 int TABINDFile::Open(const char *pszFname, const char *pszAccess,
                      GBool bTestOpenNoError /*=FALSE*/)
 {
-    int         nLen;
-
     if (m_fp)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -177,7 +176,7 @@ int TABINDFile::Open(const char *pszFname, const char *pszAccess,
      *----------------------------------------------------------------*/
     m_pszFname = CPLStrdup(pszFname);
 
-    nLen = static_cast<int>(strlen(m_pszFname));
+    const int nLen = static_cast<int>(strlen(m_pszFname));
     if (nLen > 4 && !EQUAL(m_pszFname+nLen-4, ".IND") )
         strcpy(m_pszFname+nLen-4, ".ind");
 
@@ -321,8 +320,7 @@ int TABINDFile::ReadHeader()
     /*-----------------------------------------------------------------
      * Read the header block
      *----------------------------------------------------------------*/
-    TABRawBinBlock *poHeaderBlock;
-    poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
+    TABRawBinBlock *poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
     if (poHeaderBlock->ReadFromFile(m_fp, 0, 512) != 0)
     {
         // CPLError() has already been called.
@@ -432,8 +430,7 @@ int TABINDFile::WriteHeader()
     /*-----------------------------------------------------------------
      * Write the 48 bytes of file header
      *----------------------------------------------------------------*/
-    TABRawBinBlock *poHeaderBlock;
-    poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
+    TABRawBinBlock *poHeaderBlock = new TABRawBinBlock(m_eAccessMode, TRUE);
     poHeaderBlock->InitNewBlock(m_fp, 512, 0);
 
     poHeaderBlock->WriteInt32( IND_MAGIC_COOKIE );
@@ -657,12 +654,12 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, const char *pszStr)
  *
  * BuildKey() for float and decimal fields
  **********************************************************************/
-GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
+GByte *TABINDFile::BuildKey( int nIndexNumber, double dValue )
 {
     if (ValidateIndexNo(nIndexNumber) != 0)
         return NULL;
 
-    int nKeyLength = m_papoIndexRootNodes[nIndexNumber-1]->GetKeyLength();
+    const int nKeyLength = m_papoIndexRootNodes[nIndexNumber-1]->GetKeyLength();
     CPLAssert(nKeyLength == 8 && sizeof(double) == 8);
 
     /*-----------------------------------------------------------------
@@ -901,25 +898,23 @@ void TABINDFile::Dump(FILE *fpOut /*=NULL*/)
  *
  * Constructor.
  **********************************************************************/
-TABINDNode::TABINDNode(TABAccess eAccessMode /*=TABRead*/)
-{
-    m_fp = NULL;
-    m_poCurChildNode = NULL;
-    m_nSubTreeDepth = 0;
-    m_nKeyLength = 0;
-    m_eFieldType = TABFUnknown;
-    m_poDataBlock = NULL;
-    m_numEntriesInNode = 0;
-    m_nCurIndexEntry = 0;
-    m_nPrevNodePtr = 0;
-    m_nNextNodePtr = 0;
-    m_poBlockManagerRef = NULL;
-    m_poParentNodeRef = NULL;
-    m_bUnique = FALSE;
-
-    m_eAccessMode = eAccessMode;
-    m_nCurDataBlockPtr = 0;
-}
+TABINDNode::TABINDNode( TABAccess eAccessMode /*=TABRead*/ ) :
+    m_fp(NULL),
+    m_eAccessMode(eAccessMode),
+    m_poCurChildNode(NULL),
+    m_poParentNodeRef(NULL),
+    m_poBlockManagerRef(NULL),
+    m_nSubTreeDepth(0),
+    m_nKeyLength(0),
+    m_eFieldType(TABFUnknown),
+    m_bUnique(FALSE),
+    m_nCurDataBlockPtr(0),
+    m_nCurIndexEntry(0),
+    m_poDataBlock(NULL),
+    m_numEntriesInNode(0),
+    m_nPrevNodePtr(0),
+    m_nNextNodePtr(0)
+{}
 
 /**********************************************************************
  *                   TABINDNode::~TABINDNode()
@@ -1343,7 +1338,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0
-        CPLAssert(FALSE);
+        CPLAssert(false);
         return 0;
     }
 
@@ -2147,12 +2142,12 @@ void TABINDNode::Dump(FILE *fpOut /*=NULL*/)
               }
               else if (m_nKeyLength != 4)
               {
-                GInt32 nInt32;
-                GInt16 nInt16;
-                GUInt32 nUInt32;
                 nRecordPtr = ReadIndexEntry(i, aKeyValBuf);
+                GInt32 nInt32 = 0;
                 memcpy(&nInt32, aKeyValBuf, 4);
+                GInt16 nInt16 = 0;
                 memcpy(&nInt16, aKeyValBuf + 2, 2);
+                GUInt32 nUInt32 = 0;
                 memcpy(&nUInt32, aKeyValBuf, 4);
                 fprintf(fpOut, "   nRecordPtr = %d\n", nRecordPtr);
                 fprintf(fpOut, "   Int Value = %d\n", nInt32);

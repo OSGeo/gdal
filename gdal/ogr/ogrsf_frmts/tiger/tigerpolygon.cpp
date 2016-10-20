@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerPolygon, providing access to .RTA files.
@@ -382,9 +381,11 @@ static const TigerRecordInfo rtS_info =
 /************************************************************************/
 
 TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
-                            CPL_UNUSED const char * pszPrototypeModule ) :
+                            const char * /* pszPrototypeModule */ ) :
+    psRTAInfo(NULL),
+    psRTSInfo(NULL),
     fpRTS(NULL),
-    bUsingRTS(TRUE),
+    bUsingRTS(true),
     nRTSRecLen(0)
 {
     poDS = poDSIn;
@@ -414,13 +415,11 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
     /*      Fields from type A record.                                      */
     /* -------------------------------------------------------------------- */
-
     AddFieldDefns(psRTAInfo, poFeatureDefn);
 
     /* -------------------------------------------------------------------- */
     /*      Add the RTS records if it is available.                         */
     /* -------------------------------------------------------------------- */
-
     if( bUsingRTS ) {
       AddFieldDefns(psRTSInfo, poFeatureDefn);
     }
@@ -441,11 +440,11 @@ TigerPolygon::~TigerPolygon()
 /*                             SetModule()                              */
 /************************************************************************/
 
-int TigerPolygon::SetModule( const char * pszModuleIn )
+bool TigerPolygon::SetModule( const char * pszModuleIn )
 
 {
     if( !OpenFile( pszModuleIn, "A" ) )
-        return FALSE;
+        return false;
 
     EstablishFeatureCount();
 
@@ -462,9 +461,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
 
         if( pszModuleIn )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
+            char *pszFilename = poDS->BuildFilename( pszModuleIn, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "rb" );
 
@@ -474,7 +471,7 @@ int TigerPolygon::SetModule( const char * pszModuleIn )
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -559,13 +556,12 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /*                           SetWriteModule()                           */
 /************************************************************************/
 
-int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
-                                  OGRFeature *poFeature )
+bool TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
+                                   OGRFeature *poFeature )
 
 {
-    int bSuccess;
-
-    bSuccess = TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
+    const bool bSuccess =
+        TigerFileBase::SetWriteModule( pszFileCode, nRecLen, poFeature);
     if( !bSuccess )
         return bSuccess;
 
@@ -582,9 +578,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
 
         if( pszModule )
         {
-            char        *pszFilename;
-
-            pszFilename = poDS->BuildFilename( pszModule, "S" );
+            char *pszFilename = poDS->BuildFilename( pszModule, "S" );
 
             fpRTS = VSIFOpenL( pszFilename, "ab" );
 
@@ -592,7 +586,7 @@ int TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
         }
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

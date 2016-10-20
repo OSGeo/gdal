@@ -419,19 +419,19 @@ typedef struct {
 typedef struct {
   DGNElemCore core;   /* must be at first position ! */
 
-  int       totlength; 	 	/*!<  Total length of the node
-				      (bytes = totlength * 2 + 38) */
-  int       numelems;    	/*!<  Number of text strings */
-  int       node_number; 	/*!<  text node number */
-  short     max_length;  	/*!<  maximum length allowed, characters */
-  short     max_used;    	/*!<  maximum length used */
-  short	    font_id;     	/*!<  text font used */
-  short     justification; 	/*!<  justification type, see DGNJ_ */
-  long      line_spacing; 	/*!<  spacing between text strings */
-  double    length_mult; 	/*!<  length multiplier */
-  double    height_mult; 	/*!<  height multiplier */
-  double    rotation;    	/*!<  rotation angle (2d)*/
-  DGNPoint  origin;       	/*!<  Snap origin (as defined by user) */
+  int       totlength;          /*!<  Total length of the node
+                                      (bytes = totlength * 2 + 38) */
+  int       numelems;           /*!<  Number of text strings */
+  int       node_number;        /*!<  text node number */
+  short     max_length;         /*!<  maximum length allowed, characters */
+  short     max_used;           /*!<  maximum length used */
+  short     font_id;            /*!<  text font used */
+  short     justification;      /*!<  justification type, see DGNJ_ */
+  long      line_spacing;       /*!<  spacing between text strings */
+  double    length_mult;        /*!<  length multiplier */
+  double    height_mult;        /*!<  height multiplier */
+  double    rotation;           /*!<  rotation angle (2d)*/
+  DGNPoint  origin;             /*!<  Snap origin (as defined by user) */
 
 } DGNElemTextNode;
 

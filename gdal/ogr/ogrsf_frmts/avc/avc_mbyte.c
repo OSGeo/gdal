@@ -1,4 +1,4 @@
-/* $Id: avc_mbyte.c,v 1.4 2008/07/23 20:51:38 dmorissette Exp $
+/* $Id$
  *
  * Name:     avc_mbyte.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library

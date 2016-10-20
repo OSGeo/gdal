@@ -2094,7 +2094,7 @@ def jp2openjpeg_42():
     if ds.GetGCPCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
-    if len(ds.GetMetadataDomainList()) != 1 :
+    if len(ds.GetMetadataDomainList()) != 2 :
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2115,7 +2115,7 @@ def jp2openjpeg_42():
     if ds.GetGCPCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadataDomainList() is not None :
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2138,7 +2138,7 @@ def jp2openjpeg_42():
         print(ds.GetGeoTransform())
         return 'fail'
     # Check that we have a GMLJP2 box
-    if ds.GetMetadataDomainList() != ['xml:gml.root-instance'] :
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS'] :
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2160,7 +2160,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2187,7 +2187,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2218,7 +2218,7 @@ def jp2openjpeg_42():
         gdaltest.post_reason('fail')
         print(ds.GetGeoTransform())
         return 'fail'
-    if ds.GetMetadataDomainList() is None:
+    if ds.GetMetadataDomainList() != ['xml:gml.root-instance', 'DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -2235,7 +2235,7 @@ def jp2openjpeg_42():
     if len(ds.GetGCPs()) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadataDomainList() is not None:
+    if ds.GetMetadataDomainList() != ['DERIVED_SUBDATASETS']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'

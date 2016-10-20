@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $
  *
  * Project:  DXF Translator
  * Purpose:  Implements OGRDXFBlocksLayer class.
@@ -30,7 +29,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: ogrdxflayer.cpp 19643 2010-05-08 21:56:18Z rouault $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         OGRDXFBlocksLayer()                          */
@@ -179,8 +178,5 @@ OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
 int OGRDXFBlocksLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCStringsAsUTF8) )
-        return TRUE;
-    else
-        return FALSE;
+    return EQUAL(pszCap, OLCStringsAsUTF8);
 }

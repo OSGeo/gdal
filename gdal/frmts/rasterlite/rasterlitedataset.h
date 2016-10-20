@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #ifndef RASTERLITE_DATASET_INCLUDED
 #define RASTERLITE_DATASET_INCLUDED
 
@@ -63,14 +63,14 @@ class RasterliteDataset : public GDALPamDataset
 
     virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char *pszDomain );
-    virtual const char *GetMetadataItem( const char *pszName, 
+    virtual const char *GetMetadataItem( const char *pszName,
                                          const char *pszDomain );
     virtual CPLErr GetGeoTransform( double* padfGeoTransform );
     virtual const char* GetProjectionRef();
 
     virtual char** GetFileList();
 
-    virtual CPLErr IBuildOverviews( const char * pszResampling, 
+    virtual CPLErr IBuildOverviews( const char * pszResampling,
                                     int nOverviews, int * panOverviewList,
                                     int nBands, int * panBandList,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
@@ -137,7 +137,7 @@ class RasterliteBand: public GDALPamRasterBand
   public:
                             RasterliteBand( RasterliteDataset* poDS, int nBand,
                                             GDALDataType eDataType,
-                                            int nBlockXSize, int nBlockYSize);
+                                            int nBlockXSize, int nBlockYSize );
 
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable* GetColorTable();
@@ -149,8 +149,8 @@ class RasterliteBand: public GDALPamRasterBand
 };
 
 GDALDataset *
-RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
-                       int bStrict, char ** papszOptions, 
+RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                       int bStrict, char ** papszOptions,
                        GDALProgressFunc pfnProgress, void * pProgressData );
 
 CPLErr RasterliteDelete(const char* pszFilename);

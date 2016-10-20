@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CSV Translator
  * Purpose:  Implements OGRCSVDriver.
@@ -134,7 +133,7 @@ void OGRCSVDriverRemoveFromMap(const char* pszName, GDALDataset* poDS)
 static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( OGRCSVDriverIdentify(poOpenInfo) == FALSE )
+    if( !OGRCSVDriverIdentify(poOpenInfo) )
         return NULL;
 
     if( poMap != NULL )
@@ -371,7 +370,7 @@ void RegisterOGRCSV()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
-                               "Time" );
+                               "Time IntegerList Integer64List RealList StringList" );
 
     poDriver->pfnOpen = OGRCSVDriverOpen;
     poDriver->pfnIdentify = OGRCSVDriverIdentify;

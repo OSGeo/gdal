@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSFDriverRegistrar class implementation.
@@ -52,11 +51,9 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 /*                       ~OGRSFDriverRegistrar()                        */
 /************************************************************************/
 
-OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
+OGRSFDriverRegistrar::~OGRSFDriverRegistrar() {}
 
-{
-}
-
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetRegistrar()                             */
 /************************************************************************/
@@ -411,3 +408,4 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
     return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
+//! @endcond

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalk.h
+ * $Id: ogrwalk.h$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definition of classes for OGR Walk driver.
@@ -64,7 +64,7 @@ protected:
 
     OGRWalkDataSource    *poDS;
 
-    int                bGeomColumnWKB;
+    bool               bGeomColumnWKB;
     char               *pszGeomColumn;
     char               *pszFIDColumn;
 
@@ -78,7 +78,7 @@ protected:
 
 public:
                         OGRWalkLayer();
-                        ~OGRWalkLayer();
+                        virtual ~OGRWalkLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -109,7 +109,7 @@ class OGRWalkTableLayer : public OGRWalkLayer
 
 public:
                         OGRWalkTableLayer( OGRWalkDataSource * );
-                        ~OGRWalkTableLayer();
+                        virtual ~OGRWalkTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -148,7 +148,7 @@ class OGRWalkSelectLayer : public OGRWalkLayer
   public:
                         OGRWalkSelectLayer( OGRWalkDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRWalkSelectLayer();
+                        virtual ~OGRWalkSelectLayer();
 
     virtual void        ResetReading();
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
@@ -166,12 +166,11 @@ class OGRWalkDataSource : public OGRDataSource
     OGRWalkLayer        **papoLayers;
     int                 nLayers;
 
-    int                 bDSUpdate;
     CPLODBCSession      oSession;
 
 public:
                         OGRWalkDataSource();
-                        ~OGRWalkDataSource();
+                        virtual ~OGRWalkDataSource();
 
     int                 Open( const char * , int );
 

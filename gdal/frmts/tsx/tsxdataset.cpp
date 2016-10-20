@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:     TerraSAR-X XML Product Support
  * Purpose:     Support for TerraSAR-X XML Metadata files
@@ -92,7 +91,7 @@ class TSXDataset : public GDALPamDataset {
     eProductType nProduct;
 public:
     TSXDataset();
-    ~TSXDataset();
+    virtual ~TSXDataset();
 
     virtual int GetGCPCount();
     virtual const char *GetGCPProjection();
@@ -333,12 +332,12 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     nGCPCount
         = atoi(CPLGetXMLValue( psGeolocationGrid, "numberOfGridPoints.total", "0" ));
     //count the gcps if the given count value is invalid
-    CPLXMLNode *psNode;
-    if (nGCPCount<=0)
+    CPLXMLNode *psNode = NULL;
+    if( nGCPCount<=0 )
     {
         for( psNode = psGeolocationGrid->psChild; psNode != NULL; psNode = psNode->psNext )
             if( EQUAL(psNode->pszValue,"gridPoint") )
-                nGCPCount++ ;
+                nGCPCount++;
     }
     //if there are no gcps, fail
     if(nGCPCount<=0)
@@ -776,9 +775,9 @@ CPLErr TSXDataset::GetGeoTransform(double* padfTransform)
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     if (bHaveGeoTransform)
-        return( CE_None );
+        return CE_None;
 
-    return( CE_Failure );
+    return CE_Failure;
 }
 
 /************************************************************************/

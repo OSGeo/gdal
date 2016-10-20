@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSSQL Spatial driver
  * Purpose:  Definition of classes for OGR MSSQL Spatial driver.
@@ -124,7 +123,11 @@ void RegisterOGRMSSQLSpatial()
     OGRSFDriver* poDriver = new OGRMSSQLSpatialDriver;
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Microsoft SQL Server Spatial Database" );
+                               "Microsoft SQL Server Spatial Database"
+#ifdef MSSQL_BCP_SUPPORTED
+                               " (BCP)"
+#endif
+                               );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mssqlspatial.html" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
                                "<CreationOptionList/>");

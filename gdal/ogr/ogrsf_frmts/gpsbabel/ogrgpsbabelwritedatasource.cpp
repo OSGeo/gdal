@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGPSBabelWriteDataSource class.
@@ -69,7 +68,7 @@ OGRGPSBabelWriteDataSource::~OGRGPSBabelWriteDataSource()
 /*                                Convert()                             */
 /************************************************************************/
 
-int OGRGPSBabelWriteDataSource::Convert()
+bool OGRGPSBabelWriteDataSource::Convert()
 {
     int nRet = -1;
     if( osTmpFileName.size() > 0 && pszFilename != NULL &&
@@ -190,7 +189,7 @@ int OGRGPSBabelWriteDataSource::Create( const char * pszNameIn,
     if (poGPXDS == NULL)
         return FALSE;
 
-    this->pszName = CPLStrdup(pszNameIn);
+    pszName = CPLStrdup(pszNameIn);
 
     return TRUE;
 }

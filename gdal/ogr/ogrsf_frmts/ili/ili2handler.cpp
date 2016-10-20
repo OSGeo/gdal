@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Implementation of ILI2Handler class.
@@ -47,11 +46,12 @@ static const char* const ILI2_DATASECTION = "DATASECTION";
 // ILI2Handler
 //
 ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
+    m_poReader(poReader),
     level(0),
+    dom_doc(NULL),
+    dom_elem(NULL),
     m_nEntityCounter(0)
 {
-  m_poReader = poReader;
-
   XMLCh *tmpCh = XMLString::transcode("CORE");
   DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(tmpCh);
   XMLString::release(&tmpCh);
@@ -144,7 +144,6 @@ void ILI2Handler::endElement(
   }
 }
 
-#if XERCES_VERSION_MAJOR >= 3
 /************************************************************************/
 /*                     characters() (xerces 3 version)                  */
 /************************************************************************/
@@ -162,27 +161,6 @@ void ILI2Handler::characters( const XMLCh *const chars,
     XMLString::release(&tmpC);
   }
 }
-
-#else
-/************************************************************************/
-/*                     characters() (xerces 2 version)                  */
-/************************************************************************/
-
-void ILI2Handler::characters( const XMLCh *const chars,
-                     CPL_UNUSED const unsigned int length ) {
-
-  // add the text element
-  if (level >= 3) {
-    char *tmpC = XMLString::transcode(chars);
-
-    // only add the text if it is not empty
-    if (trim(tmpC) != "")
-      dom_elem->appendChild(dom_doc->createTextNode(chars));
-
-    XMLString::release(&tmpC);
-  }
-}
-#endif
 
 void ILI2Handler::startEntity (CPL_UNUSED const XMLCh *const name)
 {

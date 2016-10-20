@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.10 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -74,6 +73,8 @@
 
 #include <ctype.h>      /* isspace() */
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABSeamless
  *
@@ -95,20 +96,19 @@
  *
  * Constructor.
  **********************************************************************/
-TABSeamless::TABSeamless()
+TABSeamless::TABSeamless() :
+    m_pszFname(NULL),
+    m_pszPath(NULL),
+    m_eAccessMode(TABRead),
+    m_poFeatureDefnRef(NULL),
+    m_poIndexTable(NULL),
+    m_nTableNameField(-1),
+    m_nCurBaseTableId(-1),
+    m_poCurBaseTable(NULL),
+    m_bEOF(FALSE)
 {
-    m_pszFname = NULL;
-    m_pszPath = NULL;
-    m_eAccessMode = TABRead;
-    m_poFeatureDefnRef = NULL;
     m_poCurFeature = NULL;
     m_nCurFeatureId = -1;
-
-    m_poIndexTable = NULL;
-    m_nTableNameField = -1;
-    m_nCurBaseTableId = -1;
-    m_poCurBaseTable = NULL;
-    m_bEOF = FALSE;
 }
 
 /**********************************************************************
@@ -536,7 +536,7 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return (((GIntBig)nTableId<<32) + nBaseFeatureId);
+    return ((GIntBig)nTableId<<32) + nBaseFeatureId;
 }
 
 int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
@@ -544,7 +544,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId>>32));
+    return (int)(nEncodedFeatureId>>32);
 }
 
 int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
@@ -552,7 +552,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId & 0xffffffff));
+    return (int)(nEncodedFeatureId & 0xffffffff);
 }
 
 /**********************************************************************
@@ -711,9 +711,9 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::GetBounds(double &dXMin, double &dYMin,
-                       double &dXMax, double &dYMax,
-                       GBool bForce /*= TRUE*/)
+int TABSeamless::GetBounds( double &dXMin, double &dYMin,
+                            double &dXMax, double &dYMax,
+                            GBool bForce /*= TRUE*/ )
 {
     if (m_poIndexTable == NULL)
     {

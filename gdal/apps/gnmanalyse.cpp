@@ -31,6 +31,8 @@
 #include "commonutils.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
+
 enum operation
 {
     op_unknown = 0, /** no operation */

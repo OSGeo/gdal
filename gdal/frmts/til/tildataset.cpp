@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EarthWatch .TIL Driver
  * Purpose:  Implementation of the TILDataset class.
@@ -42,7 +41,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				TILDataset				*/
+/*                              TILDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -58,7 +57,7 @@ class CPL_DLL TILDataset : public GDALPamDataset
 
   public:
     TILDataset();
-    ~TILDataset();
+    virtual ~TILDataset();
 
     virtual char **GetFileList(void);
 

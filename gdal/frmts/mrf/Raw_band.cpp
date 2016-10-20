@@ -34,7 +34,6 @@
 */
 
 /*
- * $Id$
  * raw band
  * raw page compression and decompression functions
  * Simple copy of data
@@ -42,6 +41,8 @@
  */
 
 #include "marfa.h"
+
+CPL_CVSID("$Id$");
 
 NAMESPACE_MRF_START
 

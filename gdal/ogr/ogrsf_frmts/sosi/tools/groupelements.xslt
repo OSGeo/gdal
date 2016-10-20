@@ -31,7 +31,7 @@ OGRSOSIDataType <xsl:value-of select="$dtnsafe" />Type = OGRSOSIDataType(<xsl:va
    <xsl:variable name="oft">
     <xsl:for-each select="//Elementdefinisjoner[elementnavn=$elemtyp]">
       <xsl:choose>
-        <xsl:when test="verditype='T'">OFTString</xsl:when> 
+        <xsl:when test="verditype='T'">OFTString</xsl:when>
         <xsl:when test="verditype='H'">OFTInteger</xsl:when>
         <xsl:when test="verditype='D'">OFTReal</xsl:when>
         <xsl:when test="verditype='DATO'">OFTDate</xsl:when>
@@ -43,7 +43,7 @@ OGRSOSIDataType <xsl:value-of select="$dtnsafe" />Type = OGRSOSIDataType(<xsl:va
    </xsl:variable>
 
    <xsl:if test="./datatypenavn">
-<xsl:value-of select="$dtnsafe" />Type.setElement(<xsl:value-of select="rekkefølge -1" />, "<xsl:value-of select="egenskapsnavn" />", <xsl:value-of select="$oft" />); 
+<xsl:value-of select="$dtnsafe" />Type.setElement(<xsl:value-of select="rekkefølge -1" />, "<xsl:value-of select="egenskapsnavn" />", <xsl:value-of select="$oft" />);
    </xsl:if>
   </xsl:for-each>
 

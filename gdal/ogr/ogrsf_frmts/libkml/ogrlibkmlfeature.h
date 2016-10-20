@@ -31,37 +31,33 @@
 
 #include "ogr_libkml.h"
 
-using kmldom::KmlFactory;
-using kmldom::FeaturePtr;
-using kmldom::PlacemarkPtr;
-
 /******************************************************************************
- function to output a ogr feature to a kml placemark
+ Function to output a ogr feature to a kml placemark.
 ******************************************************************************/
 
-FeaturePtr feat2kml (
+kmldom::FeaturePtr feat2kml(
     OGRLIBKMLDataSource *poOgrDS,
     OGRLayer * poKOgrLayer,
     OGRFeature * poOgrFeat,
-    KmlFactory * poKmlFactory,
+    kmldom::KmlFactory * poKmlFactory,
     int bUseSimpleField );
 
 /******************************************************************************
- function to read a kml placemark into a ogr feature
+ Function to read a kml placemark into a ogr feature.
 ******************************************************************************/
 
-OGRFeature *kml2feat (
-    PlacemarkPtr poKmlPlacemark,
+OGRFeature *kml2feat(
+    kmldom::PlacemarkPtr poKmlPlacemark,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
-OGRFeature *kmlgroundoverlay2feat (
-    GroundOverlayPtr poKmlOverlay,
+OGRFeature *kmlgroundoverlay2feat(
+    kmldom::GroundOverlayPtr poKmlOverlay,
     OGRLIBKMLDataSource * poOgrDS,
     OGRLayer * poOgrLayer,
     OGRFeatureDefn * poOgrFeatDefn,
-    OGRSpatialReference *poOgrSRS);
+    OGRSpatialReference *poOgrSRS );
 
 #endif /*  OGR_LIBKML_FEATURE_H */

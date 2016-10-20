@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  RIK Reader
  * Purpose:  All code for RIK Reader
@@ -109,7 +108,7 @@ typedef struct
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RIKDataset				*/
+/*                              RIKDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -139,7 +138,7 @@ class RIKDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 
@@ -469,7 +468,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     *stack = lastOutput;
                     stackPtr = 1;
                     decodeCode = lastCode;
-       	        }
+                }
                 else if( code > lastAdded + 1 )
                 {
                     throw "Too high code";
@@ -479,8 +478,8 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 int i = 0;
                 while( ++i < LZW_CODES &&
-       	               decodeCode >= LZW_CLEAR &&
-       	               decodeCode < LZW_NO_SUCH_CODE )
+                       decodeCode >= LZW_CLEAR &&
+                       decodeCode < LZW_NO_SUCH_CODE )
                 {
                     stack[stackPtr++] = character[decodeCode];
                     decodeCode = prefix[decodeCode];
@@ -596,7 +595,7 @@ GDALColorTable *RIKRasterBand::GetColorTable()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RIKDataset				*/
+/*                              RIKDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -1169,7 +1168,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    RIKDataset 	*poDS = new RIKDataset();
+    RIKDataset *poDS = new RIKDataset();
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
@@ -1236,7 +1235,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

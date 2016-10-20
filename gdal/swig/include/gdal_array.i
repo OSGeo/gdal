@@ -32,6 +32,12 @@
 
 %module gdal_array
 
+%{
+// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// since we do not pass -DDEBUG_BOOL when building the bindings
+#define DO_NOT_USE_DEBUG_BOOL
+%}
+
 %include constraints.i
 
 %import typemaps_python.i
@@ -179,7 +185,13 @@ NUMPYDataset::~NUMPYDataset()
     }
 
     FlushCache();
+
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 
 /************************************************************************/
@@ -312,7 +324,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
     {
         if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
         {
@@ -476,6 +489,12 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 
 %}
 
+
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
+
 // So that SWIGTYPE_p_f_double_p_q_const__char_p_void__int is declared...
 /************************************************************************/
 /*                            TermProgress()                            */
@@ -531,6 +550,10 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     return CPLStrdup(szString);
 }
 %}
+
+#ifdef SWIGPYTHON
+%thread;
+#endif
 
 %feature( "kwargs" ) BandRasterIONumPy;
 %inline %{
@@ -634,6 +657,10 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                                    pixel_space, line_space, band_space, &sExtraArg );
   }
 %}
+
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %typemap(in,numinputs=0) (CPLVirtualMemShadow** pvirtualmem, int numpytypemap) (CPLVirtualMemShadow* virtualmem)
 {
@@ -1330,3 +1357,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
 
     return
 %}
+
+#ifdef SWIGPYTHON
+%thread;
+#endif

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Open FileGDB OGR driver.
@@ -31,7 +30,7 @@
 #include "cpl_minixml.h"
 #include <algorithm>
 
-CPL_CVSID("$Id");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                      OGROpenFileGDBGeomFieldDefn                     */
@@ -131,34 +130,36 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
 /*                      OGROpenFileGDBLayer()                           */
 /************************************************************************/
 
-OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
-                                         const char* pszName,
-                                         const std::string& osDefinition,
-                                         const std::string& osDocumentation,
-                                         const char* /* pszGeomName */,
-                                         OGRwkbGeometryType eGeomType) :
-            m_osGDBFilename(pszGDBFilename),
-            m_osName(pszName),
-            m_poLyrTable(NULL),
-            m_poFeatureDefn(NULL),
-            m_iGeomFieldIdx(-1),
-            m_iCurFeat(0),
-            m_osDefinition(osDefinition),
-            m_osDocumentation(osDocumentation),
-            m_eGeomType(wkbNone),
-            m_bValidLayerDefn(-1),
-            m_bEOF(FALSE),
-            m_poGeomConverter(NULL),
-            m_iFieldToReadAsBinary(-1),
-            m_poIterator(NULL),
-            m_bIteratorSufficientToEvaluateFilter(FALSE),
-            m_poIterMinMax(NULL),
-            m_eSpatialIndexState(SPI_IN_BUILDING),
-            m_pQuadTree(NULL),
-            m_pahFilteredFeatures(NULL),
-            m_nFilteredFeatureCount(-1)
+OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
+                                          const char* pszName,
+                                          const std::string& osDefinition,
+                                          const std::string& osDocumentation,
+                                          const char* /* pszGeomName */,
+                                          OGRwkbGeometryType eGeomType ) :
+    m_osGDBFilename(pszGDBFilename),
+    m_osName(pszName),
+    m_poLyrTable(NULL),
+    m_poFeatureDefn(NULL),
+    m_iGeomFieldIdx(-1),
+    m_iCurFeat(0),
+    m_osDefinition(osDefinition),
+    m_osDocumentation(osDocumentation),
+    m_eGeomType(wkbNone),
+    m_bValidLayerDefn(-1),
+    m_bEOF(FALSE),
+    m_poGeomConverter(NULL),
+    m_iFieldToReadAsBinary(-1),
+    m_poIterator(NULL),
+    m_bIteratorSufficientToEvaluateFilter(FALSE),
+    m_poIterMinMax(NULL),
+    m_eSpatialIndexState(SPI_IN_BUILDING),
+    m_pQuadTree(NULL),
+    m_pahFilteredFeatures(NULL),
+    m_nFilteredFeatureCount(-1)
 {
-    // We cannot initialize m_poFeatureDefn in above list since MSVC doesn't like
+    // TODO(rouault): What error on compiler versions?  r33032 does not say.
+
+    // We cannot initialize m_poFeatureDefn in above list. MSVC doesn't like
     // this to be used in initialization list.
     m_poFeatureDefn = new OGROpenFileGDBFeatureDefn(this, pszName);
     SetDescription( m_poFeatureDefn->GetName() );
@@ -169,7 +170,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(const char* pszGDBFilename,
 
     if( m_osDefinition.size() )
     {
-        (void) BuildGeometryColumnGDBv10();
+        BuildGeometryColumnGDBv10();
     }
 }
 
@@ -427,9 +428,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             }
         }
 
-        OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn;
-
-        poGeomFieldDefn =
+        OGROpenFileGDBGeomFieldDefn* poGeomFieldDefn =
                 new OGROpenFileGDBGeomFieldDefn(NULL, pszName, m_eGeomType);
         poGeomFieldDefn->SetNullable(poGDBGeomField->IsNullable());
 
@@ -500,7 +499,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             case FGFT_UNDEFINED:
             case FGFT_OBJECTID:
             case FGFT_GEOMETRY:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
             case FGFT_BINARY:
             case FGFT_RASTER:
@@ -1091,8 +1090,8 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
         if( poColumn != NULL && poValue != NULL &&
             poColumn->field_index < GetLayerDefn()->GetFieldCount())
         {
-            OGRFieldDefn *poFieldDefn;
-            poFieldDefn = GetLayerDefn()->GetFieldDefn(poColumn->field_index);
+            OGRFieldDefn *poFieldDefn =
+                GetLayerDefn()->GetFieldDefn(poColumn->field_index);
 
             int nTableColIdx = m_poLyrTable->GetFieldIdx(poFieldDefn->GetNameRef());
             if( nTableColIdx >= 0 && m_poLyrTable->GetField(nTableColIdx)->HasIndex() )
@@ -1113,7 +1112,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_GE; break;
                             case SWQ_GT: eOp = FGSO_GT; break;
-                            default: CPLAssert(FALSE); break;
+                            default: CPLAssert(false); break;
                         }
                     }
                     else
@@ -1128,7 +1127,7 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
                             case SWQ_EQ: eOp = FGSO_EQ; break;
                             case SWQ_GE: eOp = FGSO_LE; break;
                             case SWQ_GT: eOp = FGSO_LT; break;
-                            default: CPLAssert(FALSE); break;
+                            default: CPLAssert(false); break;
                         }
                     }
 
@@ -1436,7 +1435,7 @@ OGRFeature* OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return NULL;
                 }
-                int iRow = (int)(size_t)m_pahFilteredFeatures[m_iCurFeat++];
+                int iRow = (int)(GUIntptr_t)m_pahFilteredFeatures[m_iCurFeat++];
                 if( m_poLyrTable->SelectRow(iRow) )
                 {
                     poFeature = GetCurrentFeature();

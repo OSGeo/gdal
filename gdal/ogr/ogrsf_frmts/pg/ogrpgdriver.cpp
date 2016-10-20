@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRPGDriver class.
@@ -52,12 +51,10 @@ static int OGRPGDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRPGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRPGDataSource     *poDS;
-
     if( !OGRPGDriverIdentify(poOpenInfo) )
         return NULL;
 
-    poDS = new OGRPGDataSource();
+    OGRPGDataSource *poDS = new OGRPGDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename,
                      poOpenInfo->eAccess == GA_Update, TRUE,
@@ -82,9 +79,7 @@ static GDALDataset *OGRPGDriverCreate( const char * pszName,
                                           char **papszOptions )
 
 {
-    OGRPGDataSource     *poDS;
-
-    poDS = new OGRPGDataSource();
+    OGRPGDataSource *poDS = new OGRPGDataSource();
 
     if( !poDS->Open( pszName, TRUE, TRUE, papszOptions ) )
     {

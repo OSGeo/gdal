@@ -55,7 +55,7 @@ void NITFUpdateGCPsWithRPC( NITFRPC00BInfo *psRPCInfo,
 
 /************************************************************************/
 /* ==================================================================== */
-/*				NITFDataset				*/
+/*                              NITFDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -116,6 +116,8 @@ class NITFDataset : public GDALPamDataset
     char       **papszCgmMDToWrite;
 
     int          bInLoadXML;
+
+    CPLString    m_osRPCTXTFilename;
 
     int          bExposeUnderlyingJPEGDatasetOverviews;
     int          ExposeUnderlyingJPEGDatasetOverviews() const { return bExposeUnderlyingJPEGDatasetOverviews; }

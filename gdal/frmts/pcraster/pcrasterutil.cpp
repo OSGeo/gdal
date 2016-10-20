@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PCRaster Integration
  * Purpose:  PCRaster driver support functions.
@@ -34,6 +33,7 @@
 #include "pcrasterutil.h"
 #include "pcrtypes.h"
 
+CPL_CVSID("$Id$");
 
 //! Converts PCRaster data type to GDAL data type.
 /*!

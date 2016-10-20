@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSQLiteSelectLayer class, layer access to the results
@@ -40,16 +39,19 @@ CPL_CVSID("$Id$");
 /*                   OGRSQLiteSelectLayerCommonBehaviour()              */
 /************************************************************************/
 
-OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(OGRSQLiteBaseDataSource* poDSIn,
-                                            IOGRSQLiteSelectLayer* poLayerIn,
-                                            CPLString osSQLIn,
-                                            int bEmptyLayerIn) :
-            poDS(poDSIn), poLayer(poLayerIn), osSQLBase(osSQLIn),
-            bEmptyLayer(bEmptyLayerIn), osSQLCurrent(osSQLIn)
-{
-    bAllowResetReadingEvenIfIndexAtZero = FALSE;
-    bSpatialFilterInSQL = TRUE;
-}
+OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(
+    OGRSQLiteBaseDataSource* poDSIn,
+    IOGRSQLiteSelectLayer* poLayerIn,
+    CPLString osSQLIn,
+    int bEmptyLayerIn) :
+    poDS(poDSIn),
+    poLayer(poLayerIn),
+    osSQLBase(osSQLIn),
+    bEmptyLayer(bEmptyLayerIn),
+    bAllowResetReadingEvenIfIndexAtZero(FALSE),
+    bSpatialFilterInSQL(TRUE),
+    osSQLCurrent(osSQLIn)
+{}
 
 /************************************************************************/
 /*                        OGRSQLiteSelectLayer()                        */
@@ -61,12 +63,13 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                                             int bUseStatementForGetNextFeature,
                                             int bEmptyLayer,
                                             int bAllowMultipleGeomFieldsIn )
-
 {
-    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn, bEmptyLayer);
     poDS = poDSIn;
+    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
+    poBehaviour = new OGRSQLiteSelectLayerCommonBehaviour(poDSIn, this, osSQLIn,
+                                                          bEmptyLayer);
 
-    this->bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
+    bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
     std::set<CPLString> aosEmpty;
     BuildFeatureDefn( "SELECT", hStmtIn, aosEmpty, aosEmpty );
@@ -87,7 +90,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
             if( wkbFlatten(poGeomFieldDefn->GetType()) != wkbUnknown )
                 continue;
 
-            int nBytes;
+            int nBytes = 0;
             if( sqlite3_column_type( hStmt, poGeomFieldDefn->iCol ) == SQLITE_BLOB &&
                 (nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol )) > 39 )
             {
@@ -97,7 +100,7 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer( OGRSQLiteDataSource *poDSIn,
                     (eByteOrder == wkbNDR || eByteOrder == wkbXDR) &&
                     pabyBlob[38] == 0x7C )
                 {
-                    int nSRSId;
+                    int nSRSId = 0;
                     memcpy(&nSRSId, pabyBlob + 2, 4);
 #ifdef CPL_LSB
                     if( eByteOrder != wkbNDR)
@@ -286,8 +289,9 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
 /*      Execute.                                                        */
 /* -------------------------------------------------------------------- */
     char *pszErrMsg = NULL;
-    char **papszResult;
-    int nRowCount, nColCount;
+    char **papszResult = NULL;
+    int nRowCount = 0;
+    int nColCount = 0;
     int nResult = -1;
 
     if( sqlite3_get_table( poDS->GetDB(), osFeatureCountSQL, &papszResult,
@@ -315,8 +319,6 @@ GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount( int bForce )
 OGRErr OGRSQLiteSelectLayer::ResetStatement()
 
 {
-    int rc;
-
     ClearStatement();
 
     iNextShapeId = 0;
@@ -326,22 +328,19 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
     CPLDebug( "OGR_SQLITE", "prepare(%s)", poBehaviour->osSQLCurrent.c_str() );
 #endif
 
-    rc = sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
-                          static_cast<int>(poBehaviour->osSQLCurrent.size()),
-                          &hStmt, NULL );
+    const int rc =
+        sqlite3_prepare( poDS->GetDB(), poBehaviour->osSQLCurrent,
+                         static_cast<int>(poBehaviour->osSQLCurrent.size()),
+                         &hStmt, NULL );
 
     if( rc == SQLITE_OK )
-    {
         return OGRERR_NONE;
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
-                  poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
-        hStmt = NULL;
-        return OGRERR_FAILURE;
-    }
+
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "In ResetStatement(): sqlite3_prepare(%s):\n  %s",
+              poBehaviour->osSQLCurrent.c_str(), sqlite3_errmsg(poDS->GetDB()) );
+    hStmt = NULL;
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/

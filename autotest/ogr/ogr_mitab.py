@@ -871,6 +871,8 @@ def ogr_mitab_22():
                     return 'fail'
             ds = None
 
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
     return 'success'
 
 ###############################################################################
@@ -1854,7 +1856,7 @@ def ogr_mitab_35():
                       'CoordSys Earth Projection 28, 104, "m", 1, 2, 90',
                       #'CoordSys Earth Projection 29, 104, "m", 1, 90, 90', # alias of 4
                       'CoordSys Earth Projection 30, 104, "m", 1, 2, 3, 4',
-                      #'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5', # alias of 20
+                      'CoordSys Earth Projection 31, 104, "m", 1, 2, 3, 4, 5',
                       'CoordSys Earth Projection 32, 104, "m", 1, 2, 3, 4, 5, 6',
                       'CoordSys Earth Projection 33, 104, "m", 1, 2, 3, 4',
                       ]:
@@ -2194,6 +2196,7 @@ def ogr_mitab_43():
     if out_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.Unlink('/vsimem/all_geoms_block_invalid.dat')
     src_ds = None
 
     size = gdal.VSIStatL('/vsimem/all_geoms_block_512.map').size
@@ -2268,6 +2271,10 @@ def ogr_mitab_cleanup():
 
     if gdaltest.mapinfo_ds is None:
         return 'skip'
+
+    fl = gdal.ReadDir('/vsimem/')
+    if fl is not None:
+        print(fl)
 
     gdaltest.mapinfo_ds = None
     gdaltest.mapinfo_drv.DeleteDataSource( 'tmp' )

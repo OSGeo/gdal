@@ -33,6 +33,8 @@
 #include "swq.h"
 #include "ogr_geometry.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                           swq_test_like()                            */
 /*                                                                      */
@@ -330,9 +332,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_IN:
           {
-              int i;
               poRet->int_value = 0;
-              for( i = 1; i < node->nSubExprCount; i++ )
+              for( int i = 1; i < node->nSubExprCount; i++ )
               {
                   if( sub_node_values[0]->float_value
                       == sub_node_values[i]->float_value )
@@ -391,7 +392,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -531,7 +532,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -642,9 +643,8 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_IN:
           {
-              int i;
               poRet->int_value = 0;
-              for( i = 1; i < node->nSubExprCount; i++ )
+              for( int i = 1; i < node->nSubExprCount; i++ )
               {
                   if( strcasecmp(sub_node_values[0]->string_value,
                                  sub_node_values[i]->string_value) == 0 )
@@ -758,7 +758,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
           }
 
           default:
-            CPLAssert( FALSE );
+            CPLAssert( false );
             delete poRet;
             poRet = NULL;
             break;
@@ -1310,7 +1310,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
                 {
                     if( poSrcNode->geometry_value != NULL )
                     {
-                        char* pszWKT;
+                        char* pszWKT = NULL;
                         poSrcNode->geometry_value->exportToWkt(&pszWKT);
                         osRet = pszWKT;
                         CPLFree(pszWKT);

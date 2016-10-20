@@ -1,0 +1,549 @@
+Author: Even Rouault, 2016
+
+Speeding up raster statistics in GDAL using SSE2/AVX2
+-----------------------------------------------------
+
+GDAL offers a method ComputeStatistics() that given a raster band returns
+the minimum and maximum values of pixels, the mean value and the standard
+deviation.
+
+For those not remembering how to compute mean and standard deviations, the basic
+formulas for values indexed from 0 to N-1 are :
+mean = sum(value(i) for i = 0 to N-1) / N
+
+std_dev = square root of mean of the square of the differences of values to the mean
+std_dev = sqrt(sum(i = 0 to N-1, (value(i) - mean)^2)) / N)
+
+A very naive version would first compute the mean, and in a second pass compute
+the standard deviation.
+
+But it can be easily proven (by expanding the (value(i) - mean)^2 term),that it
+is also equivalent to :
+std_dev = sqrt(sum(i = 0 to N-1, value(i)^2)/N - mean^2)
+ie
+std_dev = sqrt(mean_of_square_values - square_of_mean)
+
+std_dev = sqrt(sum(i = 0 to N-1, value(i)^2)/N - (sum_of_values/N)^2)
+std_dev = sqrt(N^2 *(sum(i = 0 to N-1, value(i)^2)/N - (sum_of_values/N)^2)) / N
+std_dev = sqrt(N * sum_of_square_values - sum_of_values^2) / N
+
+A less naive implementation would compute the sum of values and the sum of
+square values in a single pass. However the standard deviation computed like that
+might be subject to numeric
+instability given that even if the result is small, sum_of_square_values and
+sum_of_values can be very big for a big number of pixels, and thus if
+represented with floating point numbers, the difference between both
+terms can be wrong.
+
+Welford algorithm
+-----------------
+
+So in recent GDAL versions, the computation of the mean and standard deviation
+is done in a progressive and numerically stable way, thanks to the Welford algorithm :
+https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+
+The generic code is:
+
+    pixel_counter = 0
+    mean = 0
+    M2 = 0
+    foreach(value in all pixels):
+        if value < minimum or pixel_counter == 0: minimum = value
+        if value > maximum or pixel_counter == 0: maximum = value
+        pixel_counter = pixel_counter + 1
+        delta = value - mean
+        mean = mean + delta / pixel_counter
+        M2 = M2 + delta * (value - mean);
+
+    std_dev = sqrt( M2 / pixel_counter )
+
+Proof of Welford algorithm
+--------------------------
+
+(You can skip this paragraph and still follow the rest of this article)
+
+The magic of Welford algorithm lies in the following recurrence relations.
+
+For the mean, it is relatively obvious :
+N*mean(N) = sum(i = 0 to N-1, value(i))
+N*mean(N) = sum(i = 0 to N-2, value(i)) + value(N-1)
+N*mean(N) = (N-1) * mean(N-1) + value(N-1)
+mean(N) = (N-1)/N * mean(N-1) + value(N-1)/N
+mean(N) = mean(N-1) + (value(N-1) - mean(N-1)) / N
+Hence mean = mean + delta / pixel_counter
+
+For the standard deviation, the proof is a little bit more lengthy :
+
+N*stddev(N)^2 = sum(i=0 to N-1, (value(i) - mean(N))^2 )
+
+N*stddev(N)^2 = sum(i=0 to N-1, (value(i) - (mean(N-1) + (value(N-1) - mean(N-1)) / N))^2 )
+
+N*stddev(N)^2 = sum(i=0 to N-1, ((value(i) - mean(N-1)) - ((value(N-1) - mean(N-1)) / N))^2 )
+
+N*stddev(N)^2 = sum(i=0 to N-1, (value(i) - mean(N-1))^2 + ((value(N-1) - mean(N-1)) / N)^2
+                    - 2 * (value(i) - mean(N-1))*((value(N-1) - mean(N-1)) / N)  )
+
+N*stddev(N)^2 = sum(i=0 to N-1, (value(i) - mean(N-1))^2) + N * ((value(N-1) - mean(N-1)) / N)^2
+                    - 2 * sum(i=0 to N-1, (value(i) - mean(N-1)))*((value(N-1) - mean(N-1)) / N))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 +  (value(N-1) - mean(N-1)) ^2
+                    +  N * ((value(N-1) - mean(N-1)) / N)^2
+                    - 2 * sum(i=0 to N-1, (value(i) - mean(N-1)))*((value(N-1) - mean(N-1)) / N))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 + (value(N-1) - mean(N-1))^2 * (1 + 1 / N)
+                    - 2 * N( mean(N) - mean(N-1)) *((value(N-1) - mean(N-1)) / N))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 + (value(N-1) - mean(N-1)) *
+            ((1 + 1 / N) *  (value(N-1) - mean(N-1)) - 2 * N( mean(N) - mean(N-1)) / N))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 + (value(N-1) - mean(N-1)) *
+            ((value(N-1) - mean(N-1) + (value(N-1) - mean(N-1) / N - 2 * N( mean(N) - mean(N-1)) / N))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 + (value(N-1) - mean(N-1)) *
+            ((value(N-1) - mean(N-1) - (mean(N) - mean(N-1))))
+
+N*stddev(N)^2 = (N-1)*stddev(N-1)^2 + (value(N-1) - mean(N-1)) * (value(N-1) - mean(N))
+Hence M2 = M2 + delta * (value - mean)
+
+Integer based computation of standard deviation
+-----------------------------------------------
+
+The Welford algorithm is good but it involves floating point operations for
+each pixel to compute the progressive mean and variance. Whereas fundamentally
+we would need those floating point operations only at the end if using the
+original formulas, and we could use integer arithmetics for the rest.
+Another drawback of Welford approach is that it prevents any
+parallelization whereas if you have a set of values, you can conceptually divide
+it in as many subsets you want, and for each subset compute its local minimum,
+maximum, sum of values and sum of square values. Merging subsets is then trivial:
+take the minimum of minimums, maximum of maximums, sums of sum of values and
+sums of sum of square values.
+
+Let us consider the case of pixels whose type is unsigned byte, ie with values in the
+range [0,255]. We want to compute
+std_dev = sqrt(N * sum_of_square_values - sum_of_values^2) / N
+
+For practical reasons, we want N, sum_of_square_values and sum_of_values to fit
+on a 64bit unsigned integer (uint64), which is the largest natural integral type that
+can be easily and efficiently used on today's CPUs.
+The most limiting factor will be sum_of_square_values. Given that in the worse
+case, a square value is equal to 255*255, the maximum number of pixels N we
+can address is (2^64-1) / (255*255) = 283 686 952 306 183, which is large
+enough to represent a raster of 16 million pixels x 16 million pixels. Good enough.
+
+We know need to be able to multiply two uint64 values and get the
+result as a uint128, and compute the difference of two uint128 values. The
+multiplication on Intel/AMD CPUs in 64bit mode natively yields to a 128 bit wide
+result.
+It is just that there is no standardized way in C/C++ how to get that result.
+For GCC compiler in 64 bit mode, the __uint128_t type can be used in a transparent way
+to do that :
+__uint128_t result = (__uint128_t)operand_64bit * other_operand_64bit
+
+For Visual Studio compilers in 64 bit mode, a special instruction _umul128() is available.
+
+What about non-Intel or non-64bit CPUs ? In that case, we have to do the
+multiplication at hand by decomposing each uint64 values into its lower uint32
+and uint32 parts, doing 4 uint32*uint32->uint64 multiplications, summing the
+intermediary results, handling the carries and building the resulting number.
+Not very efficient, but we do not really care about that, since it is just a
+final operation.
+
+To make it is easier, that partial 128 bit arithmetics is abstracted in a
+GDALUInt128 C++ class that has different implementations regarding the CPU and
+compiler support.
+
+https://github.com/OSGeo/gdal/blob/c905203b4b4a745d4f63a6738c17713bf8c81f95/gdal/gcore/gdalrasterband.cpp#L3589
+
+Now that we have solved the final part of the computation, we can then write
+the computation loop as following :
+
+    minimum = maximum = value[0]
+    foreach value:
+        if value < minimum: minimum = value
+        else if value > maximum: maximum = value
+        sum = sum + value
+        sum_square = sum_square + value * value
+
+Can we do better ? A bit of loop unrolling can help :
+
+    minimum = maximum = value[0]
+    foreach value pair (value1, value2):
+        if value1 < minimum: minimum = value1
+        else if value1 > maximum: maximum = value1
+        sum = sum + value1
+        sum_square = sum_square + value1 * value1
+        if value < minimum: minimum = value2
+        else if value > maximum: maximum = value2
+        sum = sum + value2
+        sum_square = sum_square + value2 * value2
+    (deal with potential remaining pixel if odd number of pixels)
+
+If we start with comparing value1 and value2, we can actually save a
+comparison (resulting in 3 comparisons instead of 4) :
+
+    minimum = maximum = value[0]
+    foreach value pair (value1, value2):
+        if value1 < value2:
+            if value1 < minimum: minimum = value1
+            if value2 > maximum: maximum = value2
+        else:
+            if value2 < minimum: minimum = value2
+            if value1 > maximum: maximum = value1
+        sum = sum + value1
+        sum_square = sum_square + value1 * value1
+        sum = sum + value2
+        sum_square = sum_square + value2 * value2
+    (deal with potential remaining pixel if odd number of pixels)
+
+This improvement can already dramatically reduce the computation time from
+1m10 to 7s, to compute 50 times the statistics on a 10000 x 10000 pixel raster.
+
+Parallelization with SSE2
+-------------------------
+
+We have not yet explored the parallelization of the algorithm. One way to do
+it would be to do multi-threading, but for Intel-compatible CPU, we can
+also explore the capabilities of the SIMD (Single Instruction/Multiple Data)
+instruction set. On 64bit Intel, the SSE2 instruction set, which offers
+vectorized operations on integers, is guaranteed to be always present.
+16 registers (XMM0 to XMM15) are available, each 128 bit wide.
+
+https://en.wikipedia.org/wiki/SSE2
+
+So each register is wide enough to hold 16 packed int8/uint8, 8 packed int16/uint16,
+4 packed int32/uint32 or 2 packed int64/uint64, depending on the wished representation.
+A diverse set of operations are offered and generally operate on the sub-parts
+of each register independently. For example c=_mm_add_epi8(a,b) will add
+independently c[i]=a[i]+b[i] for i=0 to 15, and that in just one CPU cycle.
+_mm_add_epi16() will work on packed uint16, etc. To add some salt, not all
+operators are available for all elementary subtypes however.
+
+Compilers are supposed to be able to automatically vectorize some C code, but
+in practice they rarely manage to do so for real world code, hence requiring
+the programmer to use the SIMD instruction set at hand.
+All major compilers (gcc, clang, Visual Studio C/C++) offer access to the SSE2
+instruction set through "intrinsics", which are C inline functions that wrap
+the corresponding assembly instructions, but while still being C/C++.
+This allows the compiler to do the register allocation and various other
+optimizations (such as re-ordering), which is a huge win over coding directly
+in assembly. The Intel intrinsics guide is a useful resource to find the
+appropriate intrinsics :
+https://software.intel.com/sites/landingpage/IntrinsicsGuide/#
+
+So a temptative vectorized version of our algorithm would be :
+
+    v_minimum = vector_of_16_bytes[0]
+    v_maximum = vector_of_16_bytes[0]
+    v_sum = vector_of_16_zeros
+    v_sum_square = vector_of_16_zeros
+
+    foreach vector_of_16_bytes v:
+        v_minimum = vector_minimum(v_minimum, v)
+        v_maximum = vector_maximum(v_maximum, v)
+        v_sum = vector_add(v_sum, v)
+        v_sum_square = vector_sum(v_sum_square, vector_mul(v, v))
+
+    minimum = minimum_of_16_values(v_minimum)
+    maximum = maximum_of_16_values(v_minimum)
+    sum = sum_of_X??_values(v_sum)
+    sum_square = sum_of_X??_values(v_sum_square)
+    (deal with potential remaining pixels if number of pixels is not multiple of 16)
+
+vector_minimum and vector_maximum do exist as _mm_min_epu8 and _mm_max_epu8.
+But for vector_add, which variant to use _mm_add_epi8, _mm_add_epi16, _mm_add_epi32
+or _mm_add_epi64 ? Well, none directly. We want to add uint8 values, but the
+result cannot fit on a uint8 (255+255=510). The same holds for sum_square. The result of
+each square multiplication requires at least a uint16, and we want to loop
+several times, so we need at least a width of uint32 to hold the accumulation.
+We designed the overall algorithm to be able to handle an accumulator of
+uint64, but this would decrease the performance of the vectorization if using
+that in the tigher loop. So we will decompose our loop into one upper loop and
+and one inner loop. The inner loop will do as many iterations as possible, while
+still not overflowing a uint32 accumulator. So (2^32-1)/(255*255) = 66051.xxxx
+iterations. Which we round down to the closest multiple of 16.
+
+So what about v_sum = vector_add(v_sum, v) ?
+The first idea would be to extract the 4 lowest order bytes of v, unpack them
+so that they fit each on a uint32 and then use _mm_add_epi32 to add them in
+the v_sum accumulator.
+
+    v_sum = _mm_add_epi32(v_sum, _mm_unpacklo_epi16(_mm_unpacklo_epi8(v, zero), zero)
+
+_mm_unpacklo_epi8(v, zero) expands the 8 lowest order bytes of v as 8 uint16.
+And similarly _mm_unpacklo_epi16(v, zero)  expands the 4 lowest order uint16 of v as 4 uint32.
+
+And then repeat that with the 3 other groups of 4 bytes :
+
+    v_sum = _mm_add_epi32(v_sum, _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_shuffle_epi32(v, 1), zero), zero)
+    v_sum = _mm_add_epi32(v_sum, _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_shuffle_epi32(v, 2), zero), zero)
+    v_sum = _mm_add_epi32(v_sum, _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_shuffle_epi32(v, 3), zero), zero)
+
+But we can do better thans to the _mm_sad_epu8 intrinsics :
+https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=sad&techs=SSE2
+
+It is designed to "compute the absolute differences of packed unsigned 8-bit
+integers in a and b, then horizontally sum each consecutive 8 differences to
+produce two unsigned 16-bit integers, and pack these unsigned 16-bit integers
+in the low 16 bits of 64-bit elements in dst." If we notice that ABS(x-0) = x
+when x >= 0, then it does what we want.
+
+    v_sum = _mm_add_epi64(v_sum, _mm_sad_epu8(v, zero))
+
+Pedantic note: we can actually use _mm_add_epi32, since there is no risk of overflow :
+8 * 66051 * 255 fits on a uint32. The advantage of using _mm_add_epi32 is that as
+we will use it elsewhere, the compiler can re-order additions to group them in pairs
+and benefit from their 0.5 throughput.
+
+_mm_sad_epu8() has a relatively high latency (5 cycles), but it is still a big win
+since it replaces 14 intrinsics of our initial version.
+
+What about the computation of the square value ? There is no mnemonics to directly
+multiply packed bytes and get the resulting packed uint16 (or even better uint32,
+since that is the type we want to operate on eventually to be able to do several
+iterations of our loop!).
+One approach would be to take the 8 lowest order bytes, un-pack them to uint16,
+use the  _mm_mullo_epi16() intrinsics that does uint16 x uint16->uint16.
+Then you would take the 4 lowest order uint16
+of this intermediate result, un-pack them to uint32 and finally use _mm_add_epi32
+to accumulate them in v_sum_square.
+
+    v_low = _mm_unpacklo_epi8(v, zero)
+    v_low_square = _mm_mullo_epi16(v_low, v_low)
+    v_sum_square = _mm_add_epi32(v_sum_square, _mm_unpacklo_epi16(v_low_square, zero)
+
+Then repeat the operation with the 4 upper
+order uint16 of the intermediate result.
+
+    v_sum_square = _mm_add_epi32(v_sum_square,
+        _mm_unpacklo_epi16(_mm_shuffle_epi32(v_low_square, 2 | (3 <<2)), zero) )
+
+_mm_shuffle_epi32(v, 2 | (3 <<2) is a trick to replicate the high 64 bits of
+a XMM register into its low 64 bits. We don't care about the values of the
+resulting high 64 bits since they will be lost with the later unpack operations.
+
+And then repeat the whole process with the 8 highest order bytes.
+
+    v_high = _mm_unpacklo_epi8(_mm_shuffle_epi32(v, 2 | (3 <<2)), zero)
+    v_high_square = _mm_mullo_epi16(v_high, v_high)
+    v_sum_square = _mm_add_epi32(v_sum_square, _mm_unpacklo_epi16(v_high_square, zero)
+    v_sum_square = _mm_add_epi32(v_sum_square,
+        _mm_unpacklo_epi16(_mm_shuffle_epi32(v_high_square, 2 | (3 <<2)), zero) )
+
+We can actually do much better with the _mm_madd_epi16() mnemonics
+https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=madd&techs=SSE2
+that "Multiply packed signed 16-bit integers in a and b, producing intermediate
+signed 32-bit integers. Horizontally add adjacent pairs of intermediate 32-bit
+integers, and pack the results"
+This is really close to what we need. We just need to prepare uint16/int16 integers
+(the sign convention here does not matter since a uint8 zero-extended to 16 bit
+is both a uint16/int16)
+
+    v_low_16bit = _mm_unpacklo_epi8(v, zero)
+    v_sum_square = _mm_add_epi32(v_sum_square, _mm_madd_epi16(v_low_16bit, v_low_16bit))
+    v_high_16bit = _mm_unpacklo_epi8(_mm_shuffle_epi32(v, 2 | (3 <<2)), zero)
+    v_sum_square = _mm_add_epi32(v_sum_square, _mm_madd_epi16(v_high_16bit, v_high_16bit))
+
+The latencies and throughput of _mm_mullo_epi16 and _mm_madd_epi16 are the same,
+so the second version is clearly a big win.
+
+Use of AVX2
+-----------
+
+We can tweak performance a bit by doing a 2x loop unrolling, which will enable
+the compiler to re-order some operations so that those who have a throughput of
+0.5 cycle to be consecutive (such as _mm_add_epi32, _mm_unpacklo_epi8) and thus
+be able to executive 2 of them in a single cycle. When doing so, we can notice
+that we are operating on a virtual 256 bit register. But 256 bit registers do
+exist in the AVX2 instruction set, that was introduced in relatively recent
+hardware (2013 for Intel Haswell). AVX/AVX2 offer the YMM registers, equivalent of
+XMM registers but on a doubled bit width (the 128 bit low part of a YMM register
+is its corresponding XMM register). One particularity of the YMM register is
+that it operates on quite distinct "128 bit lanes", but you can still extract
+each lane.
+
+The port to AVX2 is quite straightforward :
+
+    v = _mm256_load_si256(data + i)
+    v_sum = _mm256_add_epi32(v_sum, _mm256_sad_epu8(v, zero))
+    v_low_16bit = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(v, 0));
+    v_sum_square = _mm256_add_epi32(v_sum_square, _mm256_madd_epi16(v_low_16bit, v_low_16bit))
+    v_high_16bit = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(v, 1));
+    v_sum_square = _mm_add_epi32(v_sum_square, _mm_madd_epi16(v_high_16bit, v_high_16bit))
+
+_mm256_extracti128_si256(v,0) extracts the 128 bit lower part of the register,
+and _mm256_extracti128_si256(v,1) the 128 bit upper part.
+
+The good news is that we can have a single code base for the SSE2 and AVX2 variants,
+by using the AVX2 code. In the case of SSE2, we in fact define the _mm256 functions
+with their corresponding _mm 128bit functions operating on the low and high 128 bit
+parts. For example:
+
+static inline GDALm256i GDALmm256_add_epi32(GDALm256i r1, GDALm256i r2)
+{
+    GDALm256i reg;
+    reg.low = _mm_add_epi32(r1.low, r2.low);
+    reg.high = _mm_add_epi32(r1.high, r2.high);
+    return reg;
+}
+
+The AVX2-with-SSE2 emulation can be found in :
+https://github.com/OSGeo/gdal/blob/trunk/gdal/gcore/gdal_avx2_emulation.hpp
+
+Thanks to inlining and usual compiler optimizations, this will be equivalent to
+our hand 2x unrolled version !
+
+The final result is in :
+https://github.com/OSGeo/gdal/blob/c905203b4b4a745d4f63a6738c17713bf8c81f95/gdal/gcore/gdalrasterband.cpp#L4030
+
+Regarding timings, our SSE2-emulated AVX2 version runs in 1.6s, so roughly a 4x
+time improvement with respect to the portable optimized C version. On a hardware capable of AVX2,
+the pure AVX2 version is 15% faster than the SSE2-emulated version. So definitely
+not enough to justify a dedicated code path, but here as we have a unified one,
+it comes almost for free. Provided that the code is explicitly compiled to enable
+AVX2.
+
+Nodata values
+-------------
+
+Up to now, we have ignored the potential existence of nodata values. When computing
+statistics, we do not want pixels that match the nodata value to be taken into
+account in the minimum, maximum, mean or standard deviation.
+
+In the pure C approach, this is easy. Just ignore pixels that match the nodata value:
+
+    minimum = maximum = value[0]
+    foreach value:
+        if value != nodata:
+            valid_pixels = valid_pixels + 1
+            minimum = min(minimum, value)
+            maximum = max(minimum, value)
+            sum = sum + value
+            sum_square = sum_square + value * value
+
+We cannot directly translate that with SSE2/AVX2 mnemonics since the result
+of the value != nodata test can be different for each of the 32 packed bytes of
+the (virtual) AVX2 register, and making tests for each components of the vector
+register would kill performance to a point where it would be worse than the pure
+C approach !
+
+We can however rewrite the above in a vector friendly way with :
+
+    minimum = maximum = first value that is not nodata
+    neutral_value = minimum (or any value in final [min,max] range that is not nodata)
+    foreach value:
+        validity_flag = if (value != nodata) 0xFF else 0
+        value_potentially_set_to_zero = value & validity_flag
+        value_potentially_set_to_neutral = (value & validity_flag) | (neutral_value & ~validity_flag)
+        valid_pixels = valid_pixels + validity_flag / 255
+        minimum = min(minimum, value_potentially_set_to_neutral)
+        maximum = max(minimum, value_potentially_set_to_neutral)
+        sum = sum + value_potentially_set_to_zero
+        sum_square = sum_square + value_potentially_set_to_zero * value_potentially_set_to_zero
+
+(value & validity_flag) | (neutral_value & ~validity_flag) is a quite common pattern
+in SIMD code to implement a if/then/else pattern without branches.
+
+The only complication is that there is no SSE2 intrinsics for non-equality testing, so we have
+to transform that a bit to use equality testing only. And we will also remove
+the need for division in the loop :
+
+    foreach value:
+        invalidity_flag = if (value == nodata) 0xFF else 0
+        value_potentially_set_to_zero = value & ~invalidity_flag
+        value_potentially_set_to_neutral = (value & ~invalidity_flag) | (neutral_value & invalidity_flag)
+        invalid_pixels_mul_255 = invalid_pixels_mul_255 + invalidity_flag
+        minimum = min(minimum, value_potentially_set_to_neutral)
+        maximum = max(minimum, value_potentially_set_to_neutral)
+        sum = sum + value_potentially_set_to_zero
+        sum_square = sum_square + value_potentially_set_to_zero * value_potentially_set_to_zero
+
+    valid_pixels = total_pixels - invalid_pixels_mul_255 / 255
+
+The computation of invalid_pixels_mul_255 in a vectorized way is the same as
+v_sum, using the _mm_sad_epu8() trick. The resulting SSE2 code is :
+
+    foreach vector_of_16_bytes v:
+        v_invalidity_flag = _mm_cmpeq_epi8(v, v_nodata)
+        v_value_potentially_set_to_zero = _mm_andnot_si128(v_invalidity_flag, v)
+        v_value_potentially_set_to_neutral = _mm_or_si128(
+            v_value_potentially_set_to_zero, _mm_and_si128(v_invalidity_flag, v_neutral))
+        v_invalid_pixels_mul_255 = _mm_add_epi32(invalid_pixels_mul_255,
+                                        _mm_sad_epu8(v_invalidity_flag, zero))
+        [ code for min, max operating on v_value_potentially_set_to_neutral ]
+        [ code for sum and sum_square operating on v_value_potentially_set_to_zero ]
+
+The transposition to AVX2 is straightforward.
+
+The final result is in :
+https://github.com/OSGeo/gdal/blob/c905203b4b4a745d4f63a6738c17713bf8c81f95/gdal/gcore/gdalrasterband.cpp#L3901
+
+We can notice that this version that takes into account nodata value can only
+be used once we have hit a pixel that is not the nodata value, to be able to
+initialize the neutral value.
+
+What about uint16 rasters ?
+---------------------------
+
+The same general principles apply. If we still want to limit ourselves to
+operate with at most uint64 accumulators, given that the maximum square value
+of a uint16 is 65535*65535, this limits to rasters of 2^64/(65535*65535) ~=
+2 billion pixels, which remains acceptable for common use cases.
+
+One oddity of the SSE2 instruction set is that it includes only a _mm_min_epi16()/_mm_max_epi16()
+mnemonics, that is to say that operates on signed int16. The _mm_min_epu16() that
+operates on uint16 has been introduced in the later SSE4.1 instruction set (that is
+quite commonly found in not so recent CPUs).
+
+There are tricks to emulate _mm_min_epu16() in pure SSE2 using saturated
+subtraction and masking :
+
+    // if x <= y, then mask bits will be set to 1.
+    mask = _mm_cmpeq_epi16( _mm_subs_epu16(x, y), zero )
+
+    // select bits from x when mask is 1, y otherwise
+    min(x,y) = _mm_or_si128(_mm_and_si128(mask, x), _mm_andnot_si128(mask, y));
+
+Another way is to shift the unsigned values by -32768, so as to operate on
+signed 16bit values.
+
+This -32768 shift trick is also necessary since, like for the byte case, we want
+to still be able to use the _madd_epi16 intrinsics, which operates on signed int16,
+to compute the sum of square values. One subtelty to observe is that when you
+operate on 2 consecutive pixels at 0, _mm_madd_epi16 does :
+
+ (0 - 32768) * (0 - 32768) + (0 - 32768) * (0 - 32768)
+= 1073741824 + 1073741824
+= 2147483648 = 2^31
+
+Which actually overflows the range of signed int32 ( [-2^31, 2^31-1] ) ! The good
+news is that _mm_madd_epi16 does not saturate the result, so it will actually
+return 0x80000000 as a result. This should normally be interpreted as -2^31 in
+signed int32 convention, but as we know that the result of _madd_epi16(x,x) is
+necessary positive values, we can still correctly interpret the result as a uint32
+value. This is where you feel lucky that Intel chose two's complement convention
+for signed integers.
+
+To compute the sum of values, no nice trick equivalent to _mm_sad_epu8. So we just
+do it the boring way: unpack separately the 64bit low and high part of the value
+register from uint16 to uint32 and accumulate them with _mm_add_epi32.
+
+Exactly as for the byte case, the uint16 case can be easily transposed to AVX2 or
+emulated-AVX2.
+
+The final result is in :
+https://github.com/OSGeo/gdal/blob/c905203b4b4a745d4f63a6738c17713bf8c81f95/gdal/gcore/gdalrasterband.cpp#L4149
+
+
+Conclusion
+----------
+
+Conversion between integer and floating-point operations can be costly, so
+avoiding them as much as possible is a big win (provided that you make sure
+not to overflow your integer accumulators)
+
+In theory, the gains offered by a SSE2/AVX2 optimized version are at most
+limited to a factor of with_of_vector_register / with_of_elementary_type, so,
+for bytes and SSE2, to 16. But often the gain is lesser, so do that only when
+you have come to an already optimized portable C version (or if the SIMD instruction
+set includes a dedicated intrinsics that just do what you want)

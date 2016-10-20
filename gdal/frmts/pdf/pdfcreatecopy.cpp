@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF driver
  * Purpose:  GDALDataset driver for PDF dataset.
@@ -53,38 +52,33 @@ class GDALFakePDFDataset : public GDALDataset
         GDALFakePDFDataset() {}
 };
 
-/************************************************************************/
-/*                             Init()                                   */
-/************************************************************************/
-
-void GDALPDFWriter::Init()
-{
-    nPageResourceId = 0;
-    nStructTreeRootId = 0;
-    nCatalogId = nCatalogGen = 0;
-    bInWriteObj = FALSE;
-    nInfoId = nInfoGen = 0;
-    nXMPId = nXMPGen = 0;
-    nNamesId = 0;
-
-    nLastStartXRef = 0;
-    nLastXRefSize = 0;
-    bCanUpdate = FALSE;
-}
 
 /************************************************************************/
 /*                         GDALPDFWriter()                              */
 /************************************************************************/
 
-GDALPDFWriter::GDALPDFWriter(VSILFILE* fpIn, int bAppend) : fp(fpIn)
+GDALPDFWriter::GDALPDFWriter( VSILFILE* fpIn, int bAppend ) :
+    fp(fpIn),
+    nInfoId(0),
+    nInfoGen(0),
+    nPageResourceId(0),
+    nStructTreeRootId(0),
+    nCatalogId(0),
+    nCatalogGen(0),
+    nXMPId(0),
+    nXMPGen(0),
+    nNamesId(0),
+    bInWriteObj(FALSE),
+    nLastStartXRef(0),
+    nLastXRefSize(0),
+    bCanUpdate(FALSE)
 {
-    Init();
-
-    if (!bAppend)
+    if( !bAppend )
     {
         VSIFPrintfL(fp, "%%PDF-1.6\n");
 
-        /* See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate that the content will be binary */
+        // See PDF 1.7 reference, page 92. Write 4 non-ASCII bytes to indicate
+        // that the content will be binary.
         VSIFPrintfL(fp, "%%%c%c%c%c\n", 0xFF, 0xFF, 0xFF, 0xFF);
 
         nPageResourceId = AllocNewObject();
@@ -183,7 +177,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     VSIFSeekL(fp, nLastStartXRef, SEEK_SET);
 
     /* And skip to trailer */
-    const char* pszLine;
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLineL(fp)) != NULL)
     {
         if (STARTS_WITH(pszLine, "trailer"))
@@ -1502,6 +1496,7 @@ int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
 
 int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
                              double dfDPI,
+                             bool bWriteUserUnit,
                              const char* pszGEO_ENCODING,
                              const char* pszNEATLINE,
                              PDFMargins* psMargins,
@@ -1542,9 +1537,10 @@ int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
     oDictPage.Add("Type", GDALPDFObjectRW::CreateName("Page"))
              .Add("Parent", nPageResourceId, 0)
              .Add("MediaBox", &((new GDALPDFArrayRW())
-                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)))
-             .Add("UserUnit", dfUserUnit)
-             .Add("Contents", nContentId, 0)
+                               ->Add(0).Add(0).Add(dfWidthInUserUnit).Add(dfHeightInUserUnit)));
+    if( bWriteUserUnit )
+      oDictPage.Add("UserUnit", dfUserUnit);
+    oDictPage.Add("Contents", nContentId, 0)
              .Add("Resources", nResourcesId, 0)
              .Add("Annots", nAnnotsId, 0);
 
@@ -4328,13 +4324,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     int nBlockXSize = nWidth;
     int nBlockYSize = nHeight;
-    const char* pszValue;
 
-    int bTiled = CSLFetchBoolean( papszOptions, "TILED", FALSE );
+    const bool bTiled = CPLFetchBool( papszOptions, "TILED", false );
     if( bTiled )
         nBlockXSize = nBlockYSize = 256;
 
-    pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
+    const char* pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
     if( pszValue != NULL )
     {
         nBlockXSize = atoi( pszValue );
@@ -4409,6 +4404,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     double dfDPI = DEFAULT_DPI;
     if( pszDPI != NULL )
         dfDPI = CPLAtof(pszDPI);
+
+    const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
+    bool bWriteUserUnit;
+    if( pszWriteUserUnit != NULL )
+        bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
+    else
+        bWriteUserUnit = ( pszDPI == NULL );
 
     double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
     double dfWidthInUserUnit = nWidth / dfUserUnit + sMargins.nLeft + sMargins.nRight;
@@ -4510,7 +4512,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
     const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const bool bWriteOGRAttributes =
+        CPLFetchBool(papszOptions, "OGR_WRITE_ATTRIBUTES", true);
 
     const char* pszExtraRasters = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS");
     const char* pszExtraRastersLayerName = CSLFetchNameValue(papszOptions, "EXTRA_RASTERS_LAYER_NAME");
@@ -4540,12 +4543,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( bUseClippingExtent )
         poClippingDS = new GDALPDFClippingDataset(poSrcDS, adfClippingExtent);
 
-    if( CSLFetchBoolean(papszOptions, "WRITE_INFO", TRUE) )
+    if( CPLFetchBool(papszOptions, "WRITE_INFO", true) )
         oWriter.SetInfo(poSrcDS, papszOptions);
     oWriter.SetXMP(poClippingDS, pszXMP);
 
     oWriter.StartPage(poClippingDS,
                       dfDPI,
+                      bWriteUserUnit,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,
@@ -4720,7 +4724,30 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     else
     {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-        return GDALPDFOpen(pszFilename, GA_ReadOnly);
+        GDALDataset* poDS = GDALPDFOpen(pszFilename, GA_ReadOnly);
+        if( poDS == NULL )
+            return NULL;
+        char** papszMD = CSLDuplicate( poSrcDS->GetMetadata() );
+        papszMD = CSLMerge( papszMD, poDS->GetMetadata() );
+        const char* pszAOP = CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
+        if( pszAOP != NULL && EQUAL(pszAOP, GDALMD_AOP_AREA) )
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        poDS->SetMetadata( papszMD );
+        if( EQUAL(pszGEO_ENCODING, "NONE") )
+        {
+            double adfGeoTransform[6];
+            if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
+            {
+                poDS->SetGeoTransform( adfGeoTransform );
+            }
+            const char* pszProjectionRef = poSrcDS->GetProjectionRef();
+            if( pszProjectionRef != NULL && pszProjectionRef[0] != '\0' )
+            {
+                poDS->SetProjection( pszProjectionRef );
+            }
+        }
+        CSLDestroy(papszMD);
+        return poDS;
 #else
         return new GDALFakePDFDataset();
 #endif

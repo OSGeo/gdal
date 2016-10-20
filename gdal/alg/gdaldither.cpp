@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CIETMap Phase 2
  * Purpose:  Convert RGB (24bit) to a pseudo-colored approximation using
@@ -60,7 +59,7 @@
 
 #include <emmintrin.h>
 #define CAST_PCT(x) ((GByte*)x)
-#define ALIGN_INT_ARRAY_ON_16_BYTE(x) ( (((GPtrDiff_t)(x) % 16) != 0 ) ? (int*)((GByte*)(x) + 16 - ((GPtrDiff_t)(x) % 16)) : (x) )
+#define ALIGN_INT_ARRAY_ON_16_BYTE(x) ( (((GUIntptr_t)(x) % 16) != 0 ) ? (int*)((GByte*)(x) + 16 - ((GUIntptr_t)(x) % 16)) : (x) )
 
 #else
 
@@ -235,7 +234,10 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
     int nColorsMod8 = nColors % 8;
     if( nColorsMod8 )
     {
-        for( iColor = 0; iColor < 8 - nColorsMod8; iColor ++)
+        // Make it obvious to Coverity that we won't overflow the array
+        // with the nColors + iColor < 256 condition.
+        for( iColor = 0; iColor < 8 - nColorsMod8 &&
+                         nColors + iColor < 256; iColor ++)
         {
             anPCT[nColors+iColor] = anPCT[nColors-1];
         }

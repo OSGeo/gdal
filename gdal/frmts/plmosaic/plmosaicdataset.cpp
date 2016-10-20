@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PLMosaic driver
  * Purpose:  PLMosaic driver
@@ -35,7 +34,7 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-#include <json.h>
+#include "ogrgeojsonreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -114,7 +113,7 @@ class PLMosaicDataset : public GDALPamDataset
 
   public:
                 PLMosaicDataset();
-                ~PLMosaicDataset();
+    virtual  ~PLMosaicDataset();
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -177,12 +176,12 @@ PLMosaicRasterBand::PLMosaicRasterBand( PLMosaicDataset *poDSIn, int nBandIn,
                                         GDALDataType eDataTypeIn )
 
 {
-    this->eDataType = eDataTypeIn;
+    eDataType = eDataTypeIn;
     nBlockXSize = 256;
     nBlockYSize = 256;
 
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     if( eDataType == GDT_UInt16 )
     {
@@ -321,7 +320,7 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
         case 4:
             return GCI_AlphaBand;
         default:
-            CPLAssert(FALSE);
+            CPLAssert(false);
             return GCI_GrayIndex;
     }
 }
@@ -452,7 +451,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
                                          int bQuiet404Error)
 {
     char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
-    CPLHTTPResult * psResult;
+    CPLHTTPResult *psResult = NULL;
     if( STARTS_WITH(osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
     {
@@ -585,7 +584,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->pszFilename+strlen("PLMosaic:"), ",", TRUE, FALSE );
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
     {
-        char* pszKey;
+        char* pszKey = NULL;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
         if( pszValue != NULL )
         {
@@ -667,7 +666,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDS )
         poDS->SetPamFlags(0);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -746,18 +745,18 @@ int PLMosaicDataset::OpenMosaic()
         return FALSE;
     }
 
-    json_object* poCoordinateSystem = json_object_object_get(poObj, "coordinate_system");
-    json_object* poDataType = json_object_object_get(poObj, "datatype");
-    json_object* poQuadPattern = json_object_object_get(poObj, "quad_pattern");
-    json_object* poQuadSize = json_object_object_get(poObj, "quad_size");
-    json_object* poResolution = json_object_object_get(poObj, "resolution");
-    json_object* poLinks = json_object_object_get(poObj, "links");
+    json_object* poCoordinateSystem = CPL_json_object_object_get(poObj, "coordinate_system");
+    json_object* poDataType = CPL_json_object_object_get(poObj, "datatype");
+    json_object* poQuadPattern = CPL_json_object_object_get(poObj, "quad_pattern");
+    json_object* poQuadSize = CPL_json_object_object_get(poObj, "quad_size");
+    json_object* poResolution = CPL_json_object_object_get(poObj, "resolution");
+    json_object* poLinks = CPL_json_object_object_get(poObj, "links");
     json_object* poLinksQuads = NULL;
     json_object* poLinksTiles = NULL;
     if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
     {
-        poLinksQuads = json_object_object_get(poLinks, "quads");
-        poLinksTiles = json_object_object_get(poLinks, "tiles");
+        poLinksQuads = CPL_json_object_object_get(poLinks, "quads");
+        poLinksTiles = CPL_json_object_object_get(poLinks, "tiles");
     }
     if( poCoordinateSystem == NULL || json_object_get_type(poCoordinateSystem) != json_type_string ||
         poDataType == NULL || json_object_get_type(poDataType) != json_type_string ||
@@ -934,19 +933,19 @@ int PLMosaicDataset::OpenMosaic()
     for(int i=0;i<4;i++)
         SetBand(i + 1, new PLMosaicRasterBand(this, i + 1, eDT));
 
-    json_object* poFirstAcquired = json_object_object_get(poObj, "first_acquired");
+    json_object* poFirstAcquired = CPL_json_object_object_get(poObj, "first_acquired");
     if( poFirstAcquired != NULL && json_object_get_type(poFirstAcquired) == json_type_string )
     {
         SetMetadataItem("FIRST_ACQUIRED",
                                  json_object_get_string(poFirstAcquired));
     }
-    json_object* poLastAcquired = json_object_object_get(poObj, "last_acquired");
+    json_object* poLastAcquired = CPL_json_object_object_get(poObj, "last_acquired");
     if( poLastAcquired != NULL && json_object_get_type(poLastAcquired) == json_type_string )
     {
         SetMetadataItem("LAST_ACQUIRED",
                                  json_object_get_string(poLastAcquired));
     }
-    json_object* poTitle = json_object_object_get(poObj, "title");
+    json_object* poTitle = CPL_json_object_object_get(poObj, "title");
     if( poTitle != NULL && json_object_get_type(poTitle) == json_type_string )
     {
         SetMetadataItem("TITLE", json_object_get_string(poTitle));
@@ -974,17 +973,17 @@ int PLMosaicDataset::ListSubdatasets()
         }
 
         osURL = "";
-        json_object* poLinks = json_object_object_get(poObj, "links");
+        json_object* poLinks = CPL_json_object_object_get(poObj, "links");
         if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
         {
-            json_object* poNext = json_object_object_get(poLinks, "next");
+            json_object* poNext = CPL_json_object_object_get(poLinks, "next");
             if( poNext != NULL && json_object_get_type(poNext) == json_type_string )
             {
                 osURL = json_object_get_string(poNext);
             }
         }
 
-        json_object* poMosaics = json_object_object_get(poObj, "mosaics");
+        json_object* poMosaics = CPL_json_object_object_get(poObj, "mosaics");
         if( poMosaics == NULL || json_object_get_type(poMosaics) != json_type_array )
         {
             json_object_put(poObj);
@@ -1001,26 +1000,26 @@ int PLMosaicDataset::ListSubdatasets()
             json_object* poMosaic = json_object_array_get_idx(poMosaics, i);
             if( poMosaic && json_object_get_type(poMosaic) == json_type_object )
             {
-                json_object* poName = json_object_object_get(poMosaic, "name");
+                json_object* poName = CPL_json_object_object_get(poMosaic, "name");
                 if( poName != NULL && json_object_get_type(poName) == json_type_string )
                 {
                     pszName = json_object_get_string(poName);
                 }
-                json_object* poTitle = json_object_object_get(poMosaic, "title");
+                json_object* poTitle = CPL_json_object_object_get(poMosaic, "title");
                 if( poTitle != NULL && json_object_get_type(poTitle) == json_type_string )
                 {
                     pszTitle = json_object_get_string(poTitle);
                 }
-                poLinks = json_object_object_get(poMosaic, "links");
+                poLinks = CPL_json_object_object_get(poMosaic, "links");
                 if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
                 {
-                    json_object* poSelf = json_object_object_get(poLinks, "self");
+                    json_object* poSelf = CPL_json_object_object_get(poLinks, "self");
                     if( poSelf != NULL && json_object_get_type(poSelf) == json_type_string )
                     {
                         pszSelf = json_object_get_string(poSelf);
                     }
                 }
-                json_object* poCoordinateSystem = json_object_object_get(poMosaic, "coordinate_system");
+                json_object* poCoordinateSystem = CPL_json_object_object_get(poMosaic, "coordinate_system");
                 if( poCoordinateSystem && json_object_get_type(poCoordinateSystem) == json_type_string )
                 {
                     pszCoordinateSystem = json_object_get_string(poCoordinateSystem);
@@ -1211,10 +1210,10 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
             // to cause a change in filesize. Use of a signature would be better
             // though if available in the metadata
             int nFileSize = 0;
-            json_object* poProperties = json_object_object_get(poObj, "properties");
+            json_object* poProperties = CPL_json_object_object_get(poObj, "properties");
             if( poProperties && json_object_get_type(poProperties) == json_type_object )
             {
-                json_object* poFileSize = json_object_object_get(poProperties, "file_size");
+                json_object* poFileSize = CPL_json_object_object_get(poProperties, "file_size");
                 nFileSize = json_object_get_int(poFileSize);
             }
             json_object_put(poObj);
@@ -1369,7 +1368,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         {
             CPLXMLNode* psQuad = CPLCreateXMLNode(psRoot, CXT_Element, "Quad");
             OGRLayer* poLayer = poDS->GetLayer(0);
-            OGRFeature* poFeat;
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
@@ -1427,7 +1426,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
             CPLXMLNode* psScenes = NULL;
             OGRLayer* poLayer = poDS->GetLayer(0);
             poLayer->SetSpatialFilterRect(x,y,x,y);
-            OGRFeature* poFeat;
+            OGRFeature* poFeat = NULL;
             while( (poFeat = poLayer->GetNextFeature()) != NULL )
             {
                 OGRGeometry* poGeom = poFeat->GetGeometryRef();

@@ -5,7 +5,7 @@
  * driver
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo
@@ -33,17 +33,20 @@
  **********************************************************************/
 #include "postgisraster.h"
 
+CPL_CVSID("$Id$");
+
 /************************
  * \brief Constructor
  ************************/
 PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
     PostGISRasterTileDataset * poRTDSIn, int nBandIn,
-    GDALDataType eDataTypeIn, GBool bIsOfflineIn)
+    GDALDataType eDataTypeIn, GBool bIsOfflineIn) :
+    bIsOffline(bIsOfflineIn),
+    poSource(NULL)
 {
-    /* Basic properties */
-    this->poDS = poRTDSIn;
-    this->bIsOffline = bIsOfflineIn;
-    this->nBand = nBandIn;
+    // Basic properties.
+    poDS = poRTDSIn;
+    nBand = nBandIn;
 
 #if 0
     CPLDebug("PostGIS_Raster",
@@ -52,14 +55,13 @@ PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
         poRTDS->GetRasterYSize());
 #endif
 
-    this->eDataType = eDataTypeIn;
+    eDataType = eDataTypeIn;
 
     nRasterXSize = poRTDSIn->GetRasterXSize();
     nRasterYSize = poRTDSIn->GetRasterYSize();
 
     nBlockXSize = nRasterXSize;
     nBlockYSize = nRasterYSize;
-    poSource = NULL;
 }
 
 

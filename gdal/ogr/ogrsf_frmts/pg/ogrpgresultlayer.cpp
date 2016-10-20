@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRPGResultLayer class, access the resultset from
@@ -42,22 +41,19 @@ CPL_CVSID("$Id$");
 
 OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
                                     const char * pszRawQueryIn,
-                                    PGresult *hInitialResultIn )
+                                    PGresult *hInitialResultIn ) :
+    pszRawStatement(CPLStrdup(pszRawQueryIn)),
+    pszGeomTableName(NULL),
+    pszGeomTableSchemaName(NULL),
+    osWHERE("")
 {
     poDS = poDSIn;
 
     iNextShapeId = 0;
 
-    pszRawStatement = CPLStrdup(pszRawQueryIn);
-
-    osWHERE = "";
-
     BuildFullQueryStatement();
 
     ReadResultDefinition(hInitialResultIn);
-
-    pszGeomTableName = NULL;
-    pszGeomTableSchemaName = NULL;
 
     /* Find at which index the geometry column is */
     /* and prepare a request to identify not-nullable fields */
@@ -65,7 +61,9 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
     CPLString osRequest;
     std::map< std::pair<int,int>, int> oMapAttributeToFieldIndex;
 
-    for( int iRawField = 0; iRawField < PQnfields(hInitialResultIn); iRawField++ )
+    for( int iRawField = 0;
+         iRawField < PQnfields(hInitialResultIn);
+         iRawField++ )
     {
         if( poFeatureDefn->GetGeomFieldCount() == 1 &&
             strcmp(PQfname(hInitialResultIn,iRawField),
@@ -115,7 +113,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         OGRPGClearResult( hResult );
     }
 
-#ifndef PG_PRE74
     /* Determine the table from which the geometry column is extracted */
     if (iGeomCol != -1)
     {
@@ -137,7 +134,6 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
             OGRPGClearResult( hTableNameResult );
         }
     }
-#endif
 }
 
 /************************************************************************/
@@ -278,9 +274,7 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
 
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -397,11 +391,8 @@ void OGRPGResultLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
         {
             CPLString osGetSRID;
 
-            const char* psGetSRIDFct;
-            if (poDS->sPostGISVersion.nMajor >= 2)
-                psGetSRIDFct = "ST_SRID";
-            else
-                psGetSRIDFct = "getsrid";
+            const char* psGetSRIDFct =
+                poDS->sPostGISVersion.nMajor >= 2 ? "ST_SRID" : "getsrid";
 
             osGetSRID += "SELECT ";
             osGetSRID += psGetSRIDFct;

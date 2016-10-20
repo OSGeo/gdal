@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "aoutils.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                          AODataSource()                           */
@@ -48,7 +49,7 @@ m_pszName(0)
 /************************************************************************/
 
 AODataSource::~AODataSource()
-{   
+{
     CPLFree( m_pszName );
 
     size_t count = m_layers.size();
@@ -71,7 +72,7 @@ int AODataSource::Open(IWorkspace* pWorkspace, const char * pszNewName, int bUpd
     }
 
     m_pszName = CPLStrdup( pszNewName );
-    
+
     m_ipWorkspace = pWorkspace;
 
     HRESULT hr;
@@ -128,7 +129,7 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
       continue; //skip
 
     AOLayer* pLayer = new AOLayer;
-    
+
     ITablePtr ipTable = ipFC;
 
     if (!pLayer->Initialize(ipTable))
@@ -172,12 +173,12 @@ OGRErr AODataSource::DeleteLayer( int iLayer )
   IDatasetPtr ipDataset = ipTable;
 
   HRESULT hr;
-  
+
   if (FAILED(hr = ipDataset->Delete()))
   {
     CPLError( CE_Warning, CPLE_AppDefined, "%s was not deleted however it has been closed", name.c_str());
     AOErr(hr, "Failed deleting dataset");
-   
+
     return OGRERR_FAILURE;
   }
   else
@@ -210,7 +211,7 @@ int AODataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRLayer *AODataSource::GetLayer( int iLayer )
-{ 
+{
   int count = static_cast<int>(m_layers.size());
 
   if( iLayer < 0 || iLayer >= count )

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Generate an OGRSpatialReference object based on an EPSG
@@ -453,7 +452,7 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
         return FALSE;
 
     asTransform.resize(0);
-    for(int  iField = 0; iField < 7; iField++ )
+    for( int iField = 0; iField < 7; iField++ )
     {
         const char* pszValue = papszLine[iDXField+iField];
         if( pszValue[0] )
@@ -2435,13 +2434,15 @@ OGRErr OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
 
 /************************************************************************/
 /*                           GetEPSGGeogCS()                            */
-/*                                                                      */
-/*      Try to establish what the EPSG code for this coordinate         */
-/*      systems GEOGCS might be.  Returns -1 if no reasonable guess     */
-/*      can be made.                                                    */
-/*                                                                      */
-/*      TODO: We really need to do some name lookups.                   */
 /************************************************************************/
+
+/** Try to establish what the EPSG code for this coordinate systems
+ * GEOGCS might be.  Returns -1 if no reasonable guess can be made.
+ *
+ * @return EPSG code
+ */
+
+// TODO: We really need to do some name lookups.
 
 int OGRSpatialReference::GetEPSGGeogCS()
 
@@ -2467,14 +2468,14 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
 /*      Is this a "well known" geographic coordinate system?            */
 /* -------------------------------------------------------------------- */
-    const int bWGS = strstr(pszGEOGCS,"WGS") != NULL
+    const bool bWGS = strstr(pszGEOGCS,"WGS") != NULL
         || strstr(pszDatum, "WGS")
         || strstr(pszGEOGCS,"World Geodetic System")
         || strstr(pszGEOGCS,"World_Geodetic_System")
         || strstr(pszDatum, "World Geodetic System")
         || strstr(pszDatum, "World_Geodetic_System");
 
-    const int bNAD = strstr(pszGEOGCS,"NAD") != NULL
+    const bool bNAD = strstr(pszGEOGCS,"NAD") != NULL
         || strstr(pszDatum, "NAD")
         || strstr(pszGEOGCS,"North American")
         || strstr(pszGEOGCS,"North_American")

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $
+ * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -170,7 +170,7 @@
 #define CPLsprintf sprintf
 #endif
 
-SHP_CVSID("$Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $")
+SHP_CVSID("$Id$")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -1635,8 +1635,11 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    newDBF->nRecordLength = psDBF->nRecordLength;
    newDBF->nHeaderLength = psDBF->nHeaderLength;
 
-   newDBF->pszHeader = (char *) malloc ( newDBF->nHeaderLength );
-   memcpy ( newDBF->pszHeader, psDBF->pszHeader, newDBF->nHeaderLength );
+   if( psDBF->pszHeader )
+   {
+        newDBF->pszHeader = (char *) malloc ( XBASE_FLDHDR_SZ * psDBF->nFields );
+        memcpy ( newDBF->pszHeader, psDBF->pszHeader, XBASE_FLDHDR_SZ * psDBF->nFields );
+   }
 
    newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );

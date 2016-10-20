@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLReadState class.
@@ -32,26 +31,23 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                            GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::GMLReadState()
-
-{
-    m_poFeature = NULL;
-    m_poParentState = NULL;
-    m_nPathLength = 0;
-}
+GMLReadState::GMLReadState() :
+    m_poFeature(NULL),
+    m_poParentState(NULL),
+    m_nPathLength(0)
+{}
 
 /************************************************************************/
 /*                           ~GMLReadState()                            */
 /************************************************************************/
 
-GMLReadState::~GMLReadState()
-
-{
-}
+GMLReadState::~GMLReadState() {}
 
 /************************************************************************/
 /*                              Reset()                                 */

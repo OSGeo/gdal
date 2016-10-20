@@ -4,7 +4,7 @@ This document is intended to describe using the GNM C++ classes to work with net
 
 \section gnm_tut_manage Managing networks
 
-In the first example we will create a small water network on the base of the set of spatial data (two shapefiles: pipes and wells which are situated at the GDAL source tree: autotest\gnm\data). The use of the common network format - GNMGdalNetwork class - will allow us to select one of the GDAL-supported vector formats for our network - ESRI Shapefile. After the creation we will build a topology and add some additional data: pumps layer, in order to manually edit network topology.
+In the first example we will create a small water network on the base of the set of spatial data (two shapefiles: pipes and wells which are situated at the GDAL source tree: autotest\\gnm\\data). The use of the common network format - GNMGdalNetwork class - will allow us to select one of the GDAL-supported vector formats for our network - ESRI Shapefile. After the creation we will build a topology and add some additional data: pumps layer, in order to manually edit network topology.
 
 Initially we register GDAL drivers and create some options (string pairs), which will be passed as parameters during network creation. Here we create a network's name.
 
@@ -23,22 +23,22 @@ int main ()
     papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_FORMAT, "ESRI Shapefile");
 
 \endcode
-    
+
 Some options are obligatory. The following parameters must be specified during the network creation: the path/name; format of network storage; spatial reference system (EPSG, WKT, etc.). The according dataset with the "network part" will be created and the resulting network will be returned.
 
 \code
     GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName("GNMFile");
     GNMGenericNetwork* poDS = (GNMGenericNetwork*) poDriver->Create( "..\\network_data", 0, 0, 0, GDT_Unknown,
-                                                       papszDSCO );    
+                                                       papszDSCO );
     CSLDestroy(papszDSCO);
 \endcode
 
-For now we have a void network consisted of only "system layers". We need to populate it with "class layers" full of features, so we open a certain foreign dataset and copy layers from it to our network. Note, that we use GDALDataset:: methods for working with "class layers", because GNMNetwork inherited from GDALDataset. 
+For now we have a void network consisted of only "system layers". We need to populate it with "class layers" full of features, so we open a certain foreign dataset and copy layers from it to our network. Note, that we use GDALDataset:: methods for working with "class layers", because GNMNetwork inherited from GDALDataset.
 
 \code
     GDALDataset *poSrcDS = (GDALDataset*) GDALOpenEx("..\\in_data",
                                     GDAL_OF_VECTOR | GDAL_OF_READONLY, NULL, NULL, NULL );
-                                    
+
     OGRLayer *poSrcLayer1 = poSrcDS->GetLayerByName("pipes");
     OGRLayer *poSrcLayer2 = poSrcDS->GetLayerByName("wells");
 
@@ -58,7 +58,7 @@ After the successful copying we have the network full of features, but with no t
         OGRLayer* poLayer = poDS->GetLayer(i);
         papszLayers = CSLAddString(papszLayers, poLayer->GetName() );
     }
-    
+
     if(poGenericNetwork->ConnectPointsByLines(papszLayers, dfTolerance,
                                         dfDirCost, dfInvCost, eDir) != CE_None )
     {
@@ -74,21 +74,21 @@ After the successful copying we have the network full of features, but with no t
 At this point we have a ready network with topological and spatial data, which can be used now for different purposes (analysis, converting into different formats, etc). But sometimes it is necessary to modify some network's data. For example we need to add additional features and attach them to our built topology (modify topology). We create a new "class layer" in the network and add one feature to it.
 
 \code
-     
+
     OGRLayer *poNewLayer = poDS->CreateLayer("pumps", , NULL, wkbPoint, NULL );
     if( poNewLayer == NULL )
     {
         printf( "Layer creation failed.\n" );
         exit( 1 );
     }
-    
+
     OGRFieldDefn fieldDefn ("pressure",OFTReal);
     if( poNewLayer->CreateField( &fieldDefn ) != OGRERR_NONE )
     {
         printf( "Creating Name field failed.\n" );
         exit( 1 );
     }
-        
+
     OGRFeature *poFeature = OGRFeature::CreateFeature(poNewLayer->GetLayerDefn());
     OGRPoint pt;
     pt.setX(37.291466);
@@ -99,10 +99,10 @@ At this point we have a ready network with topological and spatial data, which c
         printf( "Failed to create feature.\n" );
         exit( 1 );
     }
-    
+
     GNMGFID gfid = poFeature->GetFID();
 
-    OGRFeature::DestroyFeature( poFeature );   
+    OGRFeature::DestroyFeature( poFeature );
 \endcode
 
 After the successful creation the feature will be registered in the network and we can connect it with others. There can be two possible ways to do this. In the first case we need a real feature which will be an edge in the connection, while in the second case we do not need such feature, and passing -1 into the ConnectFeatures() method means that the special system edge will be created for this connection and added to the graph automatically. In our case we had added only one point feature and we have not got the line one to be an edge, so we will use the "virtual" connection. We pass the GFID of our point as the source, the GFID of one of the existed features as the target and -1 as the connector. Note that we also set the costs (direct and inverse) and the direction of our edge manually and these values will be written to the graph. When we used the automatic connection (which also uses ConnectFeatures() internally) such vales were set automatically according to the rule which we also set before.
@@ -135,11 +135,11 @@ int main ()
     papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_SRS, "EPSG:4326");
     papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_DESCR, "My pipes network");
     papszDSCO = CSLAddNameValue(papszDSCO, GNM_MD_FORMAT, "ESRI Shapefile");
-    
-    
+
+
     GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName("GNMFile");
     GNMGenericNetwork* poDS = (GNMGenericNetwork*) poDriver->Create( "..\\network_data", 0, 0, 0, GDT_Unknown,
-                                                       papszDSCO );    
+                                                       papszDSCO );
     CSLDestroy(papszDSCO);
     if (poDS == NULL)
     {
@@ -174,7 +174,7 @@ int main ()
         OGRLayer* poLayer = poDS->GetLayer(i);
         papszLayers = CSLAddString(papszLayers, poLayer->GetName() );
     }
-    
+
     if(poGenericNetwork->ConnectPointsByLines(papszLayers, dfTolerance,
                                         dfDirCost, dfInvCost, eDir) != CE_None )
     {
@@ -192,14 +192,14 @@ int main ()
         printf( "Layer creation failed.\n" );
         exit( 1 );
     }
-    
+
     OGRFieldDefn fieldDefn ("pressure",OFTReal);
     if( poNewLayer->CreateField( &fieldDefn ) != OGRERR_NONE )
     {
         printf( "Creating Name field failed.\n" );
         exit( 1 );
     }
-        
+
     OGRFeature *poFeature = OGRFeature::CreateFeature(poNewLayer->GetLayerDefn());
     OGRPoint pt;
     pt.setX(37.291466);
@@ -210,10 +210,10 @@ int main ()
         printf( "Failed to create feature.\n" );
         exit( 1 );
     }
-    
+
     GNMGFID gfid = poFeature->GetFID();
 
-    OGRFeature::DestroyFeature( poFeature );    
+    OGRFeature::DestroyFeature( poFeature );
 
     if (poDS->ConnectFeatures(gfid ,63, -1, 5.0, 5.0, GNMDirection_SrcToTgt) != GNMError_None)
     {
@@ -246,7 +246,7 @@ int main ()
     }
 \endcode
 
-Before any calculations we open the dataset which will hold the layer with the resulting path. 
+Before any calculations we open the dataset which will hold the layer with the resulting path.
 
 \code
     GDALDataset *poResDS;
@@ -294,14 +294,14 @@ int main ()
     GDALAllRegister();
 
     GNMGenericNetwork *poNet = (GNMGenericNetwork*) GDALOpenEx("..\\network_data",
-                                                     GDAL_OF_GNM | GDAL_OF_UPDATE, 
+                                                     GDAL_OF_GNM | GDAL_OF_UPDATE,
                                                      NULL, NULL, NULL );
     if(poSrcDS == NULL)
     {
         printf("Can not open source dataset at\n");
         exit(1);
     }
-    
+
     GDALDataset *poResDS;
     poResDS = (GDALDataset*) GDALOpenEx("..\\out_data",
                                         GDAL_OF_VECTOR | GDAL_OF_UPDATE,

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSPointReader and SDTSRawPoint classes.
@@ -161,7 +160,7 @@ void SDTSPointReader::Close()
 int SDTSPointReader::Open( const char * pszFilename )
 
 {
-    return( oDDFModule.Open( pszFilename ) );
+    return oDDFModule.Open( pszFilename );
 }
 
 /************************************************************************/
@@ -191,7 +190,7 @@ SDTSRawPoint * SDTSPointReader::GetNextPoint()
 
     if( poRawPoint->Read( poIREF, poRecord ) )
     {
-        return( poRawPoint );
+        return poRawPoint;
     }
 
     delete poRawPoint;

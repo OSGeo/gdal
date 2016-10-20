@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Public (C callable) interface for the Erdas Imagine reading
- *           code.  This include files, and it's implementing code depends
+ *           code.  This include files, and its implementing code depends
  *           on CPL, but not GDAL.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -45,79 +45,79 @@ typedef struct hfainfo *HFAHandle;
 /*      simplifications.                                                */
 /* -------------------------------------------------------------------- */
 typedef struct {
-	double x;			/* coordinate x-value */
-	double y;			/* coordinate y-value */
+        double x;                       /* coordinate x-value */
+        double y;                       /* coordinate y-value */
 } Eprj_Coordinate;
 
 
 typedef struct {
-	double width;			/* pixelsize width */
-	double height;			/* pixelsize height */
+        double width;                   /* pixelsize width */
+        double height;                  /* pixelsize height */
 } Eprj_Size;
 
 
 typedef struct {
-	char * proName;		    /* projection name */
-	Eprj_Coordinate upperLeftCenter;    /* map coordinates of center of
-						   upper left pixel */
-	Eprj_Coordinate lowerRightCenter;   /* map coordinates of center of
-						   lower right pixel */
-	Eprj_Size pixelSize;		    /* pixel size in map units */
-	char * units;		    /* units of the map */
+        char * proName;             /* projection name */
+        Eprj_Coordinate upperLeftCenter;    /* map coordinates of center of
+                                               upper left pixel */
+        Eprj_Coordinate lowerRightCenter;   /* map coordinates of center of
+                                               lower right pixel */
+        Eprj_Size pixelSize;        /* pixel size in map units */
+        char * units;               /* units of the map */
 } Eprj_MapInfo;
 
 typedef enum {
-	EPRJ_INTERNAL,		/* Indicates that the projection is built into
-				   the eprj package as function calls */
-	EPRJ_EXTERNAL		/* Indicates that the projection is accessible
-				   as an EXTERNal executable */
+        EPRJ_INTERNAL,          /* Indicates that the projection is built into
+                                   the eprj package as function calls */
+        EPRJ_EXTERNAL           /* Indicates that the projection is accessible
+                                   as an EXTERNal executable */
 } Eprj_ProType;
 
 typedef enum {
-	EPRJ_NAD27=1,		/* Use the North America Datum 1927 */
-	EPRJ_NAD83=2,		/* Use the North America Datum 1983 */
-	EPRJ_HARN		/* Use the North America Datum High Accuracy
-				   Reference Network */
+        EPRJ_NAD27=1,           /* Use the North America Datum 1927 */
+        EPRJ_NAD83=2,           /* Use the North America Datum 1983 */
+        EPRJ_HARN               /* Use the North America Datum High Accuracy
+                                   Reference Network */
 } Eprj_NAD;
 
 typedef enum {
-	EPRJ_DATUM_PARAMETRIC,		/* The datum info is 7 doubles */
-	EPRJ_DATUM_GRID,		/* The datum info is a name */
-	EPRJ_DATUM_REGRESSION,
-	EPRJ_DATUM_NONE
+        EPRJ_DATUM_PARAMETRIC,          /* The datum info is 7 doubles */
+        EPRJ_DATUM_GRID,                /* The datum info is a name */
+        EPRJ_DATUM_REGRESSION,
+        EPRJ_DATUM_NONE
 } Eprj_DatumType;
 
 typedef struct {
-	char *datumname;		/* name of the datum */
-	Eprj_DatumType type;		/* The datum type */
-	double  params[7];		/* The parameters for type
-						   EPRJ_DATUM_PARAMETRIC */
-	char *gridname;		/* name of the grid file */
+        char *datumname;                /* name of the datum */
+        Eprj_DatumType type;            /* The datum type */
+        double  params[7];              /* The parameters for type
+                                           EPRJ_DATUM_PARAMETRIC */
+        char *gridname;                 /* name of the grid file */
 } Eprj_Datum;
 
 typedef struct {
-	char * sphereName;	/* name of the ellipsoid */
-	double a;			/* semi-major axis of ellipsoid */
-	double b;			/* semi-minor axis of ellipsoid */
-	double eSquared;		/* eccentricity-squared */
-	double radius;			/* radius of the sphere */
+        char * sphereName;              /* name of the ellipsoid */
+        double a;                       /* semi-major axis of ellipsoid */
+        double b;                       /* semi-minor axis of ellipsoid */
+        double eSquared;                /* eccentricity-squared */
+        double radius;                  /* radius of the sphere */
 } Eprj_Spheroid;
 
 typedef struct {
-	Eprj_ProType proType;		/* projection type */
-	int proNumber;			/* projection number for internal
-					   projections */
-	char * proExeName;	/* projection executable name for
-					   EXTERNal projections */
-	char * proName;	/* projection name */
-	int proZone;			/* projection zone (UTM, SP only) */
-	double proParams[15];	/* projection parameters array in the
-					   GCTP form */
-	Eprj_Spheroid proSpheroid;	/* projection spheroid */
+        Eprj_ProType proType;           /* projection type */
+        int proNumber;                  /* projection number for internal
+                                           projections */
+        char * proExeName;              /* projection executable name for
+                                           EXTERNal projections */
+        char * proName;                 /* projection name */
+        int proZone;                    /* projection zone (UTM, SP only) */
+        double proParams[15];           /* projection parameters array in the
+                                           GCTP form */
+        Eprj_Spheroid proSpheroid;      /* projection spheroid */
 } Eprj_ProParameters;
 
 typedef struct {
-    int		order;
+    int         order;
     double      polycoefmtx[18];
     double      polycoefvector[2];
 } Efga_Polynomial;
@@ -151,7 +151,7 @@ typedef enum
 CPL_C_START
 
 HFAHandle CPL_DLL HFAOpen( const char * pszFilename, const char * pszMode );
-int	CPL_DLL HFAClose( HFAHandle ); /* 0 = success */
+int CPL_DLL HFAClose( HFAHandle ); /* 0 = success */
 CPLErr HFADelete( const char *pszFilename );
 CPLErr HFARenameReferences( HFAHandle, const char *, const char * );
 
@@ -159,13 +159,14 @@ HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
 HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize,
                              int nBands, EPTType eDataType, char ** papszOptions );
 const char CPL_DLL *HFAGetIGEFilename( HFAHandle );
-CPLErr  CPL_DLL HFAFlush( HFAHandle );
+CPLErr CPL_DLL HFAFlush( HFAHandle );
 int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel,
                                const char *pszResampling );
 
 const Eprj_MapInfo CPL_DLL *HFAGetMapInfo( HFAHandle );
 int CPL_DLL HFAGetGeoTransform( HFAHandle, double* );
-CPLErr CPL_DLL HFASetGeoTransform( HFAHandle, const char*, const char*,double*);
+CPLErr CPL_DLL HFASetGeoTransform( HFAHandle, const char*,
+                                   const char*, double *);
 CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
 const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
 CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
@@ -193,20 +194,20 @@ CPLErr CPL_DLL HFAGetRasterBlockEx( HFAHandle hHFA, int nBand, int nXBlock,
 CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand,
                                           int iOverview,
                                    int nXBlock, int nYBlock, void * pData );
-CPLErr CPL_DLL HFAGetOverviewRasterBlockEx( HFAHandle hHFA, int nBand,
-                                          int iOverview,
-                                   int nXBlock, int nYBlock, void * pData, int nDataSize );
+CPLErr CPL_DLL HFAGetOverviewRasterBlockEx(
+                   HFAHandle hHFA, int nBand, int iOverview,
+                   int nXBlock, int nYBlock, void * pData, int nDataSize );
 CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand,
                                   int nXBlock, int nYBlock,
                                   void * pData );
 CPLErr CPL_DLL HFASetOverviewRasterBlock(
-    HFAHandle hHFA, int nBand, int iOverview,int nXBlock, int nYBlock,
+    HFAHandle hHFA, int nBand, int iOverview, int nXBlock, int nYBlock,
     void * pData );
 const char * HFAGetBandName( HFAHandle hHFA, int nBand );
 void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
 int     CPL_DLL HFAGetDataTypeBits( EPTType eDataType );
 const char CPL_DLL *HFAGetDataTypeName( EPTType eDataType );
-CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *,
+CPLErr  CPL_DLL HFAGetPCT( HFAHandle, int, int *,
                            double **, double **, double ** , double **,
                            double **);
 CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double *, double * );
@@ -236,11 +237,11 @@ char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 /* -------------------------------------------------------------------- */
 /*      Projection codes.                                               */
 /* -------------------------------------------------------------------- */
-#define EPRJ_LATLONG				0
-#define EPRJ_UTM				1
-#define EPRJ_STATE_PLANE 			2
-#define EPRJ_ALBERS_CONIC_EQUAL_AREA		3
-#define EPRJ_LAMBERT_CONFORMAL_CONIC	        4
+#define EPRJ_LATLONG                            0
+#define EPRJ_UTM                                1
+#define EPRJ_STATE_PLANE                        2
+#define EPRJ_ALBERS_CONIC_EQUAL_AREA            3
+#define EPRJ_LAMBERT_CONFORMAL_CONIC            4
 #define EPRJ_MERCATOR                           5
 #define EPRJ_POLAR_STEREOGRAPHIC                6
 #define EPRJ_POLYCONIC                          7
@@ -306,8 +307,10 @@ char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
 #define EPRJ_LAMBERT_CONFORMAL_CONIC_1SP        67
 #define EPRJ_PSEUDO_MERCATOR                    68
 #define EPRJ_MERCATOR_VARIANT_A                 69
+#define EPRJ_HOTINE_OBLIQUE_MERCATOR_VARIANT_A                70
+#define EPRJ_TRANSVERSE_MERCATOR_SOUTH_ORIENTATED             71
 
-#define EPRJ_EXTERNAL_RSO			"eprj_rso"
+#define EPRJ_EXTERNAL_RSO                       "eprj_rso"
 #define EPRJ_EXTERNAL_NZMG                      "nzmg"
 #define EPRJ_EXTERNAL_INTEGERIZED_SINUSOIDAL    "isin"
 

@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.46 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -191,6 +190,11 @@
 
 #include "mitab.h"
 
+#include <algorithm>
+#include <utility>
+
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABMAPFile
  *====================================================================*/
@@ -201,42 +205,37 @@
  *
  * Constructor.
  **********************************************************************/
-TABMAPFile::TABMAPFile()
+TABMAPFile::TABMAPFile() :
+    m_nMinTABVersion(300),
+    m_pszFname(NULL),
+    m_fp(NULL),
+    m_eAccessMode(TABRead),
+    m_poHeader(NULL),
+    m_poSpIndex(NULL),
+    // See bug 1732: Optimized spatial index produces broken files because of
+    // the way CoordBlocks are split. For now we have to force using the quick
+    // (old) spatial index mode by default until bug 1732 is fixed.
+    m_bQuickSpatialIndexMode(TRUE),
+    m_poIdIndex(NULL),
+    m_poCurObjBlock(NULL),
+    m_nCurObjPtr(-1),
+    m_nCurObjType(TAB_GEOM_UNSET),
+    m_nCurObjId(-1),
+    m_poCurCoordBlock(NULL),
+    m_poToolDefTable(NULL),
+    m_XMinFilter(0),
+    m_YMinFilter(0),
+    m_XMaxFilter(0),
+    m_YMaxFilter(0),
+    m_bUpdated(FALSE),
+    m_bLastOpWasRead(FALSE),
+    m_bLastOpWasWrite(FALSE),
+    m_poSpIndexLeaf(NULL)
 {
-    m_nMinTABVersion = 300;
-    m_fp = NULL;
-    m_pszFname = NULL;
-    m_poHeader = NULL;
-    m_poSpIndex = NULL;
-    m_poSpIndexLeaf = NULL;
-/* See bug 1732: Optimized spatial index produces broken files because
- * of the way CoordBlocks are split. For now we have to force using the
- * Quick (old) spatial index mode by default until bug 1732 is fixed.
- */
-    m_bQuickSpatialIndexMode = TRUE;
-//  m_bQuickSpatialIndexMode = FALSE;
-
-    m_poCurObjBlock = NULL;
-    m_nCurObjPtr = -1;
-    m_nCurObjType = TAB_GEOM_UNSET;
-    m_nCurObjId = -1;
-    m_poCurCoordBlock = NULL;
-    m_poToolDefTable = NULL;
-
-    m_bUpdated = FALSE;
-    m_bLastOpWasRead = FALSE;
-    m_bLastOpWasWrite = FALSE;
-
-    m_eAccessMode = TABRead;
-    m_poIdIndex = NULL;
     m_sMinFilter.x = 0;
     m_sMinFilter.y = 0;
     m_sMaxFilter.x = 0;
     m_sMaxFilter.y = 0;
-    m_XMinFilter = 0;
-    m_YMinFilter = 0;
-    m_XMaxFilter = 0;
-    m_YMaxFilter = 0;
 
     m_oBlockManager.SetName("MAP");
 }
@@ -525,8 +524,8 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
             m_oBlockManager.PushGarbageBlockAsLast(nCurGarbBlock);
             while( true )
             {
-                GUInt16 nBlockType;
-                int     nNextGarbBlockPtr;
+                GUInt16 nBlockType = 0;
+                int nNextGarbBlockPtr = 0;
                 if( VSIFSeekL(fp, nCurGarbBlock, SEEK_SET) != 0 ||
                     VSIFReadL(&nBlockType, sizeof(nBlockType), 1, fp) != 1 ||
                     VSIFReadL(&nNextGarbBlockPtr, sizeof(nNextGarbBlockPtr), 1, fp) != 1 )
@@ -692,7 +691,10 @@ int TABMAPFile::SyncToDisk()
     // if that happened...
     if (m_poHeader && m_poHeader->m_bIntBoundsOverflow)
     {
-        double dBoundsMinX, dBoundsMinY, dBoundsMaxX, dBoundsMaxY;
+        double dBoundsMinX = 0.0;
+        double dBoundsMinY = 0.0;
+        double dBoundsMaxX = 0.0;
+        double dBoundsMaxY = 0.0;
         Int2Coordsys(-1000000000, -1000000000, dBoundsMinX, dBoundsMinY);
         Int2Coordsys(1000000000, 1000000000, dBoundsMaxX, dBoundsMaxY);
 
@@ -779,9 +781,7 @@ int TABMAPFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
 TABRawBinBlock *TABMAPFile::PushBlock( int nFileOffset )
 
 {
-    TABRawBinBlock *poBlock;
-
-    poBlock = GetIndexObjectBlock( nFileOffset );
+    TABRawBinBlock *poBlock = GetIndexObjectBlock( nFileOffset );
     if( poBlock == NULL )
         return NULL;
 
@@ -884,7 +884,6 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
         m_poSpIndexLeaf->SetCurChildRef( NULL, ++iEntry );
 
         TABMAPIndexEntry *psEntry = m_poSpIndexLeaf->GetEntry( iEntry );
-        TABRawBinBlock *poBlock;
 
         if( psEntry->XMax < m_XMinFilter
             || psEntry->YMax < m_YMinFilter
@@ -892,7 +891,7 @@ int TABMAPFile::LoadNextMatchingObjectBlock( int bFirstObject )
             || psEntry->YMin > m_YMaxFilter )
             continue;
 
-        poBlock = PushBlock( psEntry->nBlockPtr );
+        TABRawBinBlock *poBlock = PushBlock( psEntry->nBlockPtr );
         if( poBlock == NULL )
             return FALSE;
         else if( poBlock->GetBlockType() == TABMAP_OBJECT_BLOCK )
@@ -1026,9 +1025,9 @@ int TABMAPFile::GetNextFeatureId( int nPrevId )
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY)
+int TABMAPFile::Int2Coordsys( GInt32 nX, GInt32 nY, double &dX, double &dY )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Int2Coordsys(nX, nY, dX, dY);
@@ -1045,10 +1044,10 @@ int TABMAPFile::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
-                             GBool bIgnoreOverflow/*=FALSE*/)
+int TABMAPFile::Coordsys2Int( double dX, double dY, GInt32 &nX, GInt32 &nY,
+                              GBool bIgnoreOverflow/*=FALSE*/ )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Coordsys2Int(dX, dY, nX, nY, bIgnoreOverflow);
@@ -1069,9 +1068,9 @@ int TABMAPFile::Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY)
+int TABMAPFile::Int2CoordsysDist( GInt32 nX, GInt32 nY, double &dX, double &dY )
 {
-    if (m_poHeader == NULL)
+    if( m_poHeader == NULL )
         return -1;
 
     return m_poHeader->Int2CoordsysDist(nX, nY, dX, dY);
@@ -1092,7 +1091,7 @@ int TABMAPFile::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY)
+int TABMAPFile::Coordsys2IntDist( double dX, double dY, GInt32 &nX, GInt32 &nY )
 {
     if (m_poHeader == NULL)
         return -1;
@@ -1110,15 +1109,14 @@ int TABMAPFile::Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::SetCoordsysBounds(double dXMin, double dYMin,
-                                  double dXMax, double dYMax)
+int TABMAPFile::SetCoordsysBounds( double dXMin, double dYMin,
+                                   double dXMax, double dYMax )
 {
-    int nStatus = 0;
-
     if (m_poHeader == NULL)
         return -1;
 
-    nStatus = m_poHeader->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
+    const int nStatus =
+        m_poHeader->SetCoordsysBounds(dXMin, dYMin, dXMax, dYMax);
 
     if (nStatus == 0)
         ResetCoordFilter();
@@ -1157,10 +1155,8 @@ GInt32 TABMAPFile::GetMaxObjId()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int   TABMAPFile::MoveToObjId(int nObjId)
+int TABMAPFile::MoveToObjId(int nObjId)
 {
-    int nFileOffset;
-
     if( m_bLastOpWasWrite )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1202,10 +1198,9 @@ int   TABMAPFile::MoveToObjId(int nObjId)
      * Move map object pointer to the right location.  Fetch location
      * from the index file, unless we are already pointing at it.
      *----------------------------------------------------------------*/
-    if( m_nCurObjId == nObjId )
-        nFileOffset = m_nCurObjPtr;
-    else
-        nFileOffset = m_poIdIndex->GetObjPtr(nObjId);
+    int nFileOffset = m_nCurObjId == nObjId
+        ? m_nCurObjPtr
+        : m_poIdIndex->GetObjPtr(nObjId);
 
     if (nFileOffset != 0 && m_poCurObjBlock == NULL)
     {
@@ -1523,7 +1518,6 @@ int   TABMAPFile::PrepareNewObj(TABMAPObjHdr *poObjHdr)
  **********************************************************************/
 int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
 {
-    int nObjSize;
     GInt32 nObjBlockForInsert = -1;
 
     /*-----------------------------------------------------------------
@@ -1564,7 +1558,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         m_poHeader->m_nFirstIndexBlock = m_poSpIndex->GetNodeBlockPtr();
 
         /* We'll also need to create an object data block (later) */
-        nObjBlockForInsert = -1;
+        // nObjBlockForInsert = -1;
 
         CPLAssert(m_poCurObjBlock == NULL);
     }
@@ -1578,7 +1572,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
                                                             poObjHdr->m_nMinY,
                                                             poObjHdr->m_nMaxX,
                                                             poObjHdr->m_nMaxY);
-        if (nObjBlockForInsert == -1)
+        if( nObjBlockForInsert == -1 )
         {
             /* ChooseLeafForInsert() should not fail unless file is corrupt*/
             CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1588,7 +1582,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
     }
 
 
-    if (nObjBlockForInsert == -1)
+    if( nObjBlockForInsert == -1 )
     {
         /*-------------------------------------------------------------
          * Create a new object data block from scratch
@@ -1655,7 +1649,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
      * Fetch new object size, make sure there is enough room in obj.
      * block for new object, update spatial index and split if necessary.
      *----------------------------------------------------------------*/
-    nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
+    int nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
 
 
     /*-----------------------------------------------------------------
@@ -2692,7 +2686,7 @@ TABRawBinBlock *TABMAPFile::GetIndexObjectBlock( int nFileOffset )
 /*      Create and initialize depending on the block type.              */
 /* -------------------------------------------------------------------- */
     int nBlockType = pabyData[0];
-    TABRawBinBlock *poBlock;
+    TABRawBinBlock *poBlock = NULL;
 
     if( nBlockType == TABMAP_INDEX_BLOCK )
     {
@@ -2744,9 +2738,7 @@ int TABMAPFile::InitDrawingTools()
     if ((m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite) &&
         m_poHeader->m_nFirstToolBlock != 0)
     {
-        TABMAPToolBlock *poBlock;
-
-        poBlock = new TABMAPToolBlock(TABRead);
+        TABMAPToolBlock *poBlock = new TABMAPToolBlock(TABRead);
         poBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize);
 
         /*-------------------------------------------------------------
@@ -2804,9 +2796,7 @@ int TABMAPFile::CommitDrawingTools()
     /*-------------------------------------------------------------
      * Create a new TABMAPToolBlock and update header fields
      *------------------------------------------------------------*/
-    TABMAPToolBlock *poBlock;
-
-    poBlock = new TABMAPToolBlock(m_eAccessMode);
+    TABMAPToolBlock *poBlock = new TABMAPToolBlock(m_eAccessMode);
     if( m_poHeader->m_nFirstToolBlock != 0 )
         poBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize, m_poHeader->m_nFirstToolBlock);
     else
@@ -2847,11 +2837,10 @@ int TABMAPFile::CommitDrawingTools()
  **********************************************************************/
 int   TABMAPFile::ReadPenDef(int nPenIndex, TABPenDef *psDef)
 {
-    TABPenDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABPenDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetPenDefRef(nPenIndex)) != NULL)
     {
@@ -2904,11 +2893,10 @@ int   TABMAPFile::WritePenDef(TABPenDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadBrushDef(int nBrushIndex, TABBrushDef *psDef)
 {
-    TABBrushDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABBrushDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetBrushDefRef(nBrushIndex)) != NULL)
     {
@@ -2961,11 +2949,10 @@ int   TABMAPFile::WriteBrushDef(TABBrushDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadFontDef(int nFontIndex, TABFontDef *psDef)
 {
-    TABFontDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABFontDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetFontDefRef(nFontIndex)) != NULL)
     {
@@ -3017,11 +3004,10 @@ int   TABMAPFile::WriteFontDef(TABFontDef *psDef)
  **********************************************************************/
 int   TABMAPFile::ReadSymbolDef(int nSymbolIndex, TABSymbolDef *psDef)
 {
-    TABSymbolDef *psTmp;
-
     if (m_poToolDefTable == NULL && InitDrawingTools() != 0)
         return -1;
 
+    TABSymbolDef *psTmp = NULL;
     if (psDef && m_poToolDefTable &&
         (psTmp = m_poToolDefTable->GetSymbolDefRef(nSymbolIndex)) != NULL)
     {
@@ -3061,9 +3047,17 @@ int   TABMAPFile::WriteSymbolDef(TABSymbolDef *psDef)
     return m_poToolDefTable->AddSymbolDefRef(psDef);
 }
 
-#define ORDER_MIN_MAX(type,min,max)                                    \
-    {   if( (max) < (min) )                                            \
-          { type temp = (max); (max) = (min); (min) = temp; } }
+static void ORDER_MIN_MAX( double &min, double &max )
+{
+    if( max < min )
+      std::swap(min, max);
+}
+
+static void ORDER_MIN_MAX( int &min, int &max )
+{
+    if( max < min )
+      std::swap(min, max);
+}
 
 /**********************************************************************
  *                   TABMAPFile::SetCoordFilter()
@@ -3082,10 +3076,10 @@ void TABMAPFile::SetCoordFilter(TABVertex sMin, TABVertex sMax)
     Coordsys2Int(sMin.x, sMin.y, m_XMinFilter, m_YMinFilter, TRUE);
     Coordsys2Int(sMax.x, sMax.y, m_XMaxFilter, m_YMaxFilter, TRUE);
 
-    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
-    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
-    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
-    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
+    ORDER_MIN_MAX(m_XMinFilter, m_XMaxFilter);
+    ORDER_MIN_MAX(m_YMinFilter, m_YMaxFilter);
+    ORDER_MIN_MAX(m_sMinFilter.x, m_sMaxFilter.x);
+    ORDER_MIN_MAX(m_sMinFilter.y, m_sMaxFilter.y);
 }
 
 /**********************************************************************
@@ -3107,10 +3101,10 @@ void TABMAPFile::ResetCoordFilter()
     Int2Coordsys(m_XMaxFilter, m_YMaxFilter,
                  m_sMaxFilter.x, m_sMaxFilter.y);
 
-    ORDER_MIN_MAX(int,m_XMinFilter,m_XMaxFilter);
-    ORDER_MIN_MAX(int,m_YMinFilter,m_YMaxFilter);
-    ORDER_MIN_MAX(double,m_sMinFilter.x,m_sMaxFilter.x);
-    ORDER_MIN_MAX(double,m_sMinFilter.y,m_sMaxFilter.y);
+    ORDER_MIN_MAX(m_XMinFilter, m_XMaxFilter);
+    ORDER_MIN_MAX(m_YMinFilter, m_YMaxFilter);
+    ORDER_MIN_MAX(m_sMinFilter. x,m_sMaxFilter.x);
+    ORDER_MIN_MAX(m_sMinFilter. y,m_sMaxFilter.y);
 }
 
 /**********************************************************************
@@ -3242,9 +3236,8 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
     {
         if (m_poHeader && m_poHeader->m_nFirstIndexBlock != 0)
         {
-            TABRawBinBlock *poBlock;
-
-            poBlock = GetIndexObjectBlock(m_poHeader->m_nFirstIndexBlock);
+            TABRawBinBlock *poBlock =
+                GetIndexObjectBlock(m_poHeader->m_nFirstIndexBlock);
             if (poBlock && poBlock->GetBlockType() == TABMAP_INDEX_BLOCK)
                 poNode = (TABMAPIndexBlock *)poBlock;
         }
@@ -3257,13 +3250,19 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
     /*-------------------------------------------------------------
      * Report info on current tree node
      *------------------------------------------------------------*/
-    int numEntries = poNode->GetNumEntries();
-    GInt32 nXMin, nYMin, nXMax, nYMax;
-    double dXMin, dYMin, dXMax, dYMax;
+    const int numEntries = poNode->GetNumEntries();
+    GInt32 nXMin = 0;
+    GInt32 nYMin = 0;
+    GInt32 nXMax = 0;
+    GInt32 nYMax = 0;
 
     poNode->RecomputeMBR();
     poNode->GetMBR(nXMin, nYMin, nXMax, nYMax);
 
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
     Int2Coordsys(nXMin, nYMin, dXMin, dYMin);
     Int2Coordsys(nXMax, nYMax, dXMax, dYMax);
 
@@ -3287,8 +3286,7 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
         {
             TABMAPIndexEntry *psEntry = poNode->GetEntry(i);
 
-            TABRawBinBlock *poBlock;
-            poBlock = GetIndexObjectBlock( psEntry->nBlockPtr );
+            TABRawBinBlock *poBlock = GetIndexObjectBlock( psEntry->nBlockPtr );
             if( poBlock == NULL )
                 continue;
 

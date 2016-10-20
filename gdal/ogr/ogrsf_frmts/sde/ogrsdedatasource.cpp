@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSDEDataSource class.
@@ -209,7 +208,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
-		          "The layer name value is optional.\n"
+                  "The layer name value is optional.\n"
                   "Got '%s'",
                   pszNewName );
         return FALSE;
@@ -218,7 +217,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    int 	nSDEErr;
+    int nSDEErr;
     SE_ERROR    sSDEErrorInfo;
 
     nSDEErr = SE_connection_create( papszTokens[0],
@@ -842,7 +841,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
             || EQUAL(pszLayerName,
                      papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
-            if( CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
+            if( CPLFetchBool( papszOptions, "OVERWRITE", false ) )
             {
                 DeleteLayer( iLayer );
             }
@@ -883,7 +882,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         if( EQUAL(szTableName,pszLayerName)
             || EQUAL(szTableName,osFullName) )
         {
-            if( !CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
+            if( !CPLFetchBool( papszOptions, "OVERWRITE", false ) )
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
@@ -1194,7 +1193,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
      * If the layer creation option 'MULTIVERSION' is set, enable
      * multi-versioning for this layer
      */
-    if( CSLFetchBoolean( papszOptions, "SDE_MULTIVERSION", TRUE ) )
+    if( CPLFetchBool( papszOptions, "SDE_MULTIVERSION", true ) )
     {
         CPLDebug("OGR_SDE","Setting multiversion to true");
         nSDEErr = SE_reginfo_set_multiversion( hRegInfo, TRUE );
@@ -1252,7 +1251,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetFIDColType( SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE );
 
     poLayer->SetUseNSTRING(
-        CSLFetchBoolean( papszOptions, "USE_NSTRING", FALSE ) );
+        CPLFetchBool( papszOptions, "USE_NSTRING", false ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

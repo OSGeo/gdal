@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microsoft Windows Bitmap
  * Purpose:  Read/write MS Windows Device Independent Bitmap (DIB) files
@@ -179,23 +178,23 @@ typedef struct
 
 /*****************************************************************/
 
-static int countonbits(GUInt32 dw)
+static int countonbits( GUInt32 dw )
 {
     int r = 0;
-    for(int x = 0; x < 32; x++)
+    for( int x = 0; x < 32; x++ )
     {
-        if((dw & (1 << x)) != 0)
+        if( (dw & (1 << x)) != 0 )
             r++;
     }
     return r;
 }
 
 
-static int findfirstonbit(GUInt32 n)
+static int findfirstonbit( GUInt32 n )
 {
-    for(int x = 0; x < 32; x++)
+    for( int x = 0; x < 32; x++ )
     {
-        if((n & (1 << x)) != 0)
+        if( (n & (1 << x)) != 0 )
             return x;
     }
     return -1;
@@ -234,7 +233,7 @@ class BMPDataset : public GDALPamDataset
 
   public:
                 BMPDataset();
-                ~BMPDataset();
+    virtual ~BMPDataset();
 
     static int           Identify( GDALOpenInfo * );
     static GDALDataset  *Open( GDALOpenInfo * );
@@ -265,7 +264,7 @@ class BMPRasterBand : public GDALPamRasterBand
   public:
 
                 BMPRasterBand( BMPDataset *, int );
-                ~BMPRasterBand();
+    virtual    ~BMPRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual CPLErr          IWriteBlock( int, int, void * );
@@ -279,12 +278,13 @@ class BMPRasterBand : public GDALPamRasterBand
 /************************************************************************/
 
 BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
-    nScanSize(0)
+    nScanSize(0),
+    iBytesPerPixel(poDSIn->sInfoHeader.iBitCount / 8),
+    pabyScan(NULL)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = GDT_Byte;
-    iBytesPerPixel = poDSIn->sInfoHeader.iBitCount / 8;
 
     // We will read one scanline per time. Scanlines in BMP aligned at 4-byte
     // boundary
@@ -292,11 +292,14 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     nBlockYSize = 1;
 
     if (nBlockXSize < (INT_MAX - 31) / poDSIn->sInfoHeader.iBitCount)
+    {
         nScanSize =
-            ((poDS->GetRasterXSize() * poDSIn->sInfoHeader.iBitCount + 31) & ~31) / 8;
+            ((poDS->GetRasterXSize() *
+              poDSIn->sInfoHeader.iBitCount + 31) & ~31) / 8;
+    }
     else
     {
-        pabyScan = NULL;
+        // pabyScan = NULL;
         return;
     }
 
@@ -306,7 +309,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
               nBand, nBlockXSize, nBlockYSize, nScanSize );
 #endif
 
-    pabyScan = (GByte *) VSIMalloc( nScanSize );
+    pabyScan = static_cast<GByte *>(VSIMalloc( nScanSize ));
 }
 
 /************************************************************************/
@@ -322,12 +325,12 @@ BMPRasterBand::~BMPRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+CPLErr BMPRasterBand::IReadBlock( int /* nBlockXOff */,
                                   int nBlockYOff,
                                   void * pImage )
 {
     BMPDataset  *poGDS = (BMPDataset *) poDS;
-    GUInt32     iScanOffset;
+    GUInt32 iScanOffset = 0;
 
     if ( poGDS->sInfoHeader.iHeight > 0 )
         iScanOffset = poGDS->sFileHeader.iOffBits +
@@ -338,7 +341,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
-    // in update state and data for this block will be available later
+        // in update state and data for this block will be available later.
         if( poGDS->eAccess == GA_Update )
         {
             memset( pImage, 0, nBlockXSize );
@@ -348,7 +351,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't seek to offset %ld in input file to read data.",
-                      (long) iScanOffset );
+                      static_cast<long>(iScanOffset) );
             return CE_Failure;
         }
     }
@@ -364,7 +367,7 @@ CPLErr BMPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't read from offset %ld in input file.",
-                      (long) iScanOffset );
+                      static_cast<long>(iScanOffset) );
             return CE_Failure;
         }
     }
@@ -674,9 +677,8 @@ class BMPComprRasterBand : public BMPRasterBand
     GByte           *pabyUncomprBuf;
 
   public:
-
                 BMPComprRasterBand( BMPDataset *, int );
-                ~BMPComprRasterBand();
+    virtual    ~BMPComprRasterBand();
 
     virtual CPLErr          IReadBlock( int, int, void * );
 //    virtual CPLErr        IWriteBlock( int, int, void * );
@@ -686,8 +688,10 @@ class BMPComprRasterBand : public BMPRasterBand
 /*                           BMPComprRasterBand()                       */
 /************************************************************************/
 
-BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
-    : BMPRasterBand( poDSIn, nBandIn )
+BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
+    BMPRasterBand( poDSIn, nBandIn ),
+    pabyComprBuf(NULL),
+    pabyUncomprBuf(NULL)
 {
     /* TODO: it might be interesting to avoid uncompressing the whole data */
     /* in a single pass, especially if nXSize * nYSize is big */
@@ -696,8 +700,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big dimensions : %d x %d",
                  poDS->GetRasterXSize(), poDS->GetRasterYSize());
-        pabyComprBuf = NULL;
-        pabyUncomprBuf = NULL;
         return;
     }
 
@@ -705,8 +707,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
-        pabyComprBuf = NULL;
-        pabyUncomprBuf = NULL;
         return;
     }
 
@@ -744,7 +744,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn )
         pabyUncomprBuf = NULL;
         return;
     }
-    unsigned int k, iLength = 0;
+    unsigned int k = 0;
+    unsigned int iLength = 0;
     unsigned int i = 0;
     unsigned int j = 0;
     if ( poDSIn->sInfoHeader.iBitCount == 8 )         // RLE8
@@ -918,8 +919,12 @@ CPLErr BMPComprRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 BMPDataset::BMPDataset() :
-    nColorElems(0), pabyColorTable(NULL),
-    poColorTable(NULL), bGeoTransformValid(FALSE), pszFilename(NULL), fp(NULL)
+    nColorElems(0),
+    pabyColorTable(NULL),
+    poColorTable(NULL),
+    bGeoTransformValid(FALSE),
+    pszFilename(NULL),
+    fp(NULL)
 {
     nBands = 0;
 
@@ -1353,7 +1358,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -1556,7 +1561,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "WORLDFILE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "WORLDFILE", false ) )
         poDS->bGeoTransformValid = TRUE;
 
     return (GDALDataset *) poDS;

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALDriverManager class.
@@ -34,6 +33,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "ogr_xerces.h"
 #include "ogr_srs_api.h"
 
 #ifdef _MSC_VER
@@ -115,11 +115,11 @@ GDALDriverManager::GDALDriverManager() :
 /*      and we hope other mechanisms such as environment variables will */
 /*      have been employed.                                             */
 /* -------------------------------------------------------------------- */
+#ifdef INST_DATA
     if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
     {
         // This one is picked up automatically by finder initialization.
     }
-#ifdef INST_DATA
     else
     {
         CPLPushFinderLocation( INST_DATA );
@@ -236,6 +236,8 @@ GDALDriverManager::~GDALDriverManager()
 /* -------------------------------------------------------------------- */
     OSRCleanup();
 
+    OGRCleanupXercesMutex();
+    
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
 /* -------------------------------------------------------------------- */
@@ -417,7 +419,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
             }
         }
 
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
 /* -------------------------------------------------------------------- */
@@ -570,6 +572,10 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 {
     CPLMutexHolderD( &hDMMutex );
 
+    // Alias old name to new name
+    if( EQUAL(pszName, "CartoDB") )
+        pszName = "Carto";
+
     return oMapNameToDrivers[CPLString(pszName).toupper()];
 }
 
@@ -675,7 +681,7 @@ void GDALDriverManager::AutoSkipDrivers()
  * search separated by colons on UNIX, or semi-colons on Windows.  Otherwise
  * the /usr/local/lib/gdalplugins directory, and (if known) the
  * lib/gdalplugins subdirectory of the gdal home directory are searched on
- * UNIX and $(BINDIR)\gdalplugins on Windows.
+ * UNIX and $(BINDIR)\\gdalplugins on Windows.
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".

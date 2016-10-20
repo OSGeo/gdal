@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCurvePolygon geometry class.
@@ -106,9 +105,7 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 OGRGeometry *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon  *poNewPolygon;
-
-    poNewPolygon = (OGRCurvePolygon*)
+    OGRCurvePolygon  *poNewPolygon = (OGRCurvePolygon*)
             OGRGeometryFactory::createGeometry(getGeometryType());
     if( poNewPolygon == NULL )
         return NULL;
@@ -208,6 +205,19 @@ OGRCurve *OGRCurvePolygon::getExteriorRingCurve()
     return oCC.getCurve(0);
 }
 
+/**
+ * \brief Fetch reference to external polygon ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRCurvePolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ *
+ * @return pointer to external ring.  May be NULL if the OGRCurvePolygon is empty.
+ */
 const OGRCurve *OGRCurvePolygon::getExteriorRingCurve() const
 
 {
@@ -261,6 +271,22 @@ OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing )
 {
     return oCC.getCurve(iRing + 1);
 }
+
+/**
+ * \brief Fetch reference to indicated internal ring.
+ *
+ * Note that the returned ring pointer is to an internal data object of
+ * the OGRCurvePolygon.  It should not be modified or deleted by the application,
+ * and the pointer is only valid till the polygon is next modified.  Use
+ * the OGRGeometry::clone() method to make a separate copy within the
+ * application.
+ *
+ * Relates to the SFCOM IPolygon::get_InternalRing() method.
+ *
+ * @param iRing internal ring index from 0 to getNumInteriorRings() - 1.
+ *
+ * @return pointer to interior ring.  May be NULL.
+ */
 
 const OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing ) const
 
@@ -522,14 +548,14 @@ OGRPolygon* OGRCurvePolygon::CurvePolyToPoly(double dfMaxAngleStepSizeDegrees,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
+OGRBoolean OGRCurvePolygon::hasCurveGeometry( int bLookForNonLinear ) const
 {
     if( bLookForNonLinear )
     {
         return oCC.hasCurveGeometry(bLookForNonLinear);
     }
-    else
-        return TRUE;
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -613,11 +639,9 @@ double OGRCurvePolygon::get_Area() const
 
     if( getExteriorRingCurve() != NULL )
     {
-        int iRing;
-
         dfArea = getExteriorRingCurve()->get_Area();
 
-        for( iRing = 0; iRing < getNumInteriorRings(); iRing++ )
+        for( int iRing = 0; iRing < getNumInteriorRings(); iRing++ )
         {
             dfArea -= getInteriorRingCurve(iRing)->get_Area();
         }
@@ -742,7 +766,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
 
 OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
 {
-    for(int i=0;i<poCP->oCC.nCurveCount;i++)
+    for( int i = 0; i < poCP->oCC.nCurveCount; i++ )
     {
         poCP->oCC.papoCurves[i] = OGRCurve::CastToLinearRing(poCP->oCC.papoCurves[i]);
         if( poCP->oCC.papoCurves[i] == NULL )
@@ -762,6 +786,7 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
     return poPoly;
 }
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
@@ -777,3 +802,4 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const {
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const {
     return (OGRSurfaceCasterToCurvePolygon) OGRGeometry::CastToIdentity;
 }
+//! @endcond

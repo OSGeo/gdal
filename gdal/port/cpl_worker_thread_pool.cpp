@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  CPL worker thread pool
@@ -29,6 +28,8 @@
 
 #include "cpl_worker_thread_pool.h"
 #include "cpl_conv.h"
+
+CPL_CVSID("$Id:");
 
 /************************************************************************/
 /*                         CPLWorkerThreadPool()                        */
@@ -65,7 +66,9 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
     {
         WaitCompletion();
 
+        CPLAcquireMutex(hMutex, 1000.0);
         eState = CPLWTS_STOP;
+        CPLReleaseMutex(hMutex);
 
         for(size_t i=0;i<aWT.size();i++)
         {

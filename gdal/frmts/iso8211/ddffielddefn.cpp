@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFFieldDefn class.
@@ -39,12 +38,19 @@ CPL_CVSID("$Id$");
 /*                            DDFFieldDefn()                            */
 /************************************************************************/
 
-DDFFieldDefn::DDFFieldDefn()
-    : poModule(NULL), pszTag(NULL), _fieldName(NULL), _arrayDescr(NULL),
-      _formatControls(NULL), bRepeatingSubfields(FALSE), nFixedWidth(0),
-      _data_struct_code(dsc_elementary), _data_type_code(dtc_char_string),
-      nSubfieldCount(0), papoSubfields(NULL)
-{ }
+DDFFieldDefn::DDFFieldDefn() :
+    poModule(NULL),
+    pszTag(NULL),
+    _fieldName(NULL),
+    _arrayDescr(NULL),
+    _formatControls(NULL),
+    bRepeatingSubfields(FALSE),
+    nFixedWidth(0),
+    _data_struct_code(dsc_elementary),
+    _data_type_code(dtc_char_string),
+    nSubfieldCount(0),
+    papoSubfields(NULL)
+{}
 
 /************************************************************************/
 /*                           ~DDFFieldDefn()                            */
@@ -390,7 +396,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
 /**
  * Write out field definition info to debugging file.
  *
- * A variety of information about this field definition, and all it's
+ * A variety of information about this field definition, and all its
  * subfields is written to the give debugging file handle.
  *
  * @param fp The standard IO file handle to write to.  i.e. stderr
@@ -426,7 +432,7 @@ void DDFFieldDefn::Dump( FILE * fp )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         pszValue = "(unknown)";
     }
 
@@ -463,7 +469,7 @@ void DDFFieldDefn::Dump( FILE * fp )
         break;
 
       default:
-        CPLAssert( FALSE );
+        CPLAssert( false );
         pszValue = "(unknown)";
         break;
     }
@@ -483,7 +489,6 @@ void DDFFieldDefn::Dump( FILE * fp )
 int DDFFieldDefn::BuildSubfields()
 
 {
-    char        **papszSubfieldNames;
     const char  *pszSublist = _arrayDescr;
 
 /* -------------------------------------------------------------------- */
@@ -515,8 +520,8 @@ int DDFFieldDefn::BuildSubfields()
 /* -------------------------------------------------------------------- */
 /*      split list of fields .                                          */
 /* -------------------------------------------------------------------- */
-    papszSubfieldNames = CSLTokenizeStringComplex( pszSublist, "!",
-                                                   FALSE, FALSE );
+    char **papszSubfieldNames =
+        CSLTokenizeStringComplex( pszSublist, "!", FALSE, FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      minimally initialize the subfields.  More will be done later.   */
@@ -551,10 +556,9 @@ int DDFFieldDefn::BuildSubfields()
 char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
 
 {
-    int         nBracket=0, i;
-    char        *pszReturn;
-
-    for( i = 0;
+    int nBracket = 0;
+    int i = 0;
+    for( ;
          pszSrc[i] != '\0' && (nBracket > 0 || pszSrc[i] != ',');
          i++ )
     {
@@ -564,6 +568,7 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
             nBracket--;
     }
 
+    char *pszReturn = NULL;
     if( pszSrc[0] == '(' )
     {
         pszReturn = CPLStrdup( pszSrc + 1 );
@@ -624,11 +629,11 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         else if( (iSrc == 0 || pszSrc[iSrc-1] == ',')
                  && isdigit(pszSrc[iSrc]) )
         {
-            const char *pszNext;
             nRepeat = atoi(pszSrc+iSrc);
 
             // skip over repeat count.
-            for( pszNext = pszSrc+iSrc; isdigit(*pszNext); pszNext++ )
+            const char *pszNext = pszSrc + iSrc;  // Used after for.
+            for( ; isdigit(*pszNext); pszNext++ )
                 iSrc++;
 
             char       *pszContents = ExtractSubstring( pszNext );
@@ -685,9 +690,6 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
 int DDFFieldDefn::ApplyFormats()
 
 {
-    char        *pszFormatList;
-    char        **papszFormatItems;
-
 /* -------------------------------------------------------------------- */
 /*      Verify that the format string is contained within brackets.     */
 /* -------------------------------------------------------------------- */
@@ -706,12 +708,12 @@ int DDFFieldDefn::ApplyFormats()
 /*      Duplicate the string, and strip off the brackets.               */
 /* -------------------------------------------------------------------- */
 
-    pszFormatList = ExpandFormat( _formatControls );
+    char *pszFormatList = ExpandFormat( _formatControls );
 
 /* -------------------------------------------------------------------- */
 /*      Tokenize based on commas.                                       */
 /* -------------------------------------------------------------------- */
-    papszFormatItems =
+    char **papszFormatItems =
         CSLTokenizeStringComplex(pszFormatList, ",", FALSE, FALSE );
 
     CPLFree( pszFormatList );
@@ -725,9 +727,7 @@ int DDFFieldDefn::ApplyFormats()
          papszFormatItems[iFormatItem] != NULL;
          iFormatItem++ )
     {
-        const char      *pszPastPrefix;
-
-        pszPastPrefix = papszFormatItems[iFormatItem];
+        const char *pszPastPrefix = papszFormatItems[iFormatItem];
         while( *pszPastPrefix >= '0' && *pszPastPrefix <= '9' )
             pszPastPrefix++;
 
@@ -789,7 +789,7 @@ int DDFFieldDefn::ApplyFormats()
 /************************************************************************/
 
 /**
- * Find a subfield definition by it's mnemonic tag.
+ * Find a subfield definition by its mnemonic tag.
  *
  * @param pszMnemonic The name of the field.
  *
@@ -812,7 +812,7 @@ DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 /************************************************************************/
 /*                            GetSubfield()                             */
 /*                                                                      */
-/*      Fetch a subfield by it's index.                                 */
+/*      Fetch a subfield by its index.                                 */
 /************************************************************************/
 
 /**
@@ -828,7 +828,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
 {
     if( i < 0 || i >= nSubfieldCount )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return NULL;
     }
 
@@ -881,7 +881,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
         if( !papoSubfields[iSubfield]->GetDefaultValue(
                 pachData + nOffset, nTotalSize - nOffset, &nSubfieldSize ) )
         {
-            CPLAssert( FALSE );
+            CPLAssert( false );
             return NULL;
         }
 

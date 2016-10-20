@@ -30,6 +30,7 @@
 #ifndef OGREDITABLELAYER_H_INCLUDED
 #define OGREDITABLELAYER_H_INCLUDED
 
+//! @cond Doxygen_Suppress
 #include "ogrlayerdecorator.h"
 #include <set>
 
@@ -125,5 +126,6 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
 
     virtual const char *GetGeometryColumn();
 };
+//! @endcond
 
 #endif // OGREDITABLELAYER_H_INCLUDED

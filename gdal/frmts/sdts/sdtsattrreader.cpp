@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSAttrReader class.
@@ -84,7 +83,7 @@ void SDTSAttrRecord::Dump( FILE * fp )
 
 SDTSAttrReader::SDTSAttrReader() :
     bIsSecondary(FALSE)
-{ }
+{}
 
 /************************************************************************/
 /*                          ~SDTSAttrReader()                           */
@@ -197,7 +196,7 @@ SDTSAttrRecord *SDTSAttrReader::GetNextAttrRecord()
 
 {
     SDTSModId   oModId;
-    DDFRecord   *poRawRecord;
+    DDFRecord   *poRawRecord = NULL;
 
     DDFField *poATTRField = GetNextRecord( &oModId, &poRawRecord, TRUE );
 

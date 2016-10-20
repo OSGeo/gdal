@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALPamDataset, a dataset base class that
@@ -124,6 +123,7 @@ CPL_CVSID("$Id$");
  *      poDS->TryLoadXML();
  * \endcode
  */
+class GDALPamDataset;
 
 GDALPamDataset::GDALPamDataset() :
     nPamFlags(0),
@@ -164,6 +164,7 @@ void GDALPamDataset::FlushCache()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 
 {
@@ -656,8 +657,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
         CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
 
 /* -------------------------------------------------------------------- */
-/*      If we are looking for a subdataset, search for it's subtree     */
-/*      now.                                                            */
+/*      If we are looking for a subdataset, search for its subtree not. */
 /* -------------------------------------------------------------------- */
     if( psTree && psPam->osSubdatasetName.size() )
     {
@@ -974,6 +974,7 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 
     return CE_None;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -1028,6 +1029,7 @@ char **GDALPamDataset::GetFileList()
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                         int nOverviews, int *panOverviewList,
                                         int nListBands, int *panBandList,
@@ -1064,7 +1066,7 @@ CPLErr GDALPamDataset::IBuildOverviews( const char *pszResampling,
                                          nListBands, panBandList,
                                          pfnProgress, pProgressData );
 }
-
+//! @endcond
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -1322,6 +1324,7 @@ char **GDALPamDataset::GetMetadata( const char *pszDomain )
 /*                             TryLoadAux()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
 {
@@ -1480,3 +1483,4 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
     return CE_Failure;
 }
+//! @endcond

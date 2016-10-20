@@ -34,7 +34,6 @@
 #include "ogrsf_frmts.h"
 #include "ogr_srs_api.h"
 #include "cpl_http.h"
-#include <json.h>
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 #include "swq.h"
@@ -43,9 +42,10 @@
 #include <vector>
 
 class OGRPLScenesLayer;
+
 class OGRPLScenesDataset: public GDALDataset
 {
-        int             bMustCleanPersistent;
+        bool            bMustCleanPersistent;
         CPLString       osBaseURL;
         CPLString       osAPIKey;
 
@@ -60,7 +60,7 @@ class OGRPLScenesDataset: public GDALDataset
 
     public:
                             OGRPLScenesDataset();
-                           ~OGRPLScenesDataset();
+                           virtual ~OGRPLScenesDataset();
 
         virtual int         GetLayerCount() { return nLayers; }
         virtual OGRLayer   *GetLayer(int idx);
@@ -84,7 +84,7 @@ class OGRPLScenesLayer: public OGRLayer
             CPLString       osBaseURL;
             OGRFeatureDefn* poFeatureDefn;
             OGRSpatialReference* poSRS;
-            int             bEOF;
+            bool            bEOF;
             GIntBig         nNextFID;
             GIntBig         nFeatureCount;
             CPLString       osNextURL;
@@ -97,10 +97,10 @@ class OGRPLScenesLayer: public OGRLayer
             OGRGeometry    *poMainFilter;
 
             int             nPageSize;
-            int             bStillInFirstPage;
+            bool            bStillInFirstPage;
             int             bAcquiredAscending;
 
-            int             bFilterMustBeClientSideEvaluated;
+            bool            bFilterMustBeClientSideEvaluated;
             CPLString       osFilterURLPart;
 
             OGRFeature     *GetNextRawFeature();
@@ -113,7 +113,7 @@ class OGRPLScenesLayer: public OGRLayer
                                              const char* pszName,
                                              const char* pszBaseURL,
                                              json_object* poObjCount10 = NULL);
-                           ~OGRPLScenesLayer();
+                           virtual ~OGRPLScenesLayer();
 
         virtual void            ResetReading();
         virtual GIntBig         GetFeatureCount(int bForce = FALSE);
@@ -164,7 +164,7 @@ class OGRPLScenesV1Dataset: public GDALDataset
 
     public:
                             OGRPLScenesV1Dataset();
-                           ~OGRPLScenesV1Dataset();
+                           virtual ~OGRPLScenesV1Dataset();
 
         virtual int         GetLayerCount();
         virtual OGRLayer   *GetLayer(int idx);
@@ -266,7 +266,7 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                const char* pszSpecURL,
                                                const char* pszItemsURL,
                                                GIntBig nCount);
-                           ~OGRPLScenesV1Layer();
+                           virtual ~OGRPLScenesV1Layer();
 
         virtual void            ResetReading();
         virtual OGRFeature     *GetNextFeature();

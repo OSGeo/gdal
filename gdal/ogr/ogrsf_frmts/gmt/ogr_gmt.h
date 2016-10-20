@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_mem.h 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions within the OGR GMT driver.
@@ -54,23 +54,23 @@ class OGRGmtLayer : public OGRLayer
 
     VSILFILE           *fp;
 
-    int                 ReadLine();
+    bool                ReadLine();
     CPLString           osLine;
     char              **papszKeyedValues;
 
-    int                 ScanAheadForHole();
-    int                 NextIsFeature();
+    bool                ScanAheadForHole();
+    bool                NextIsFeature();
 
     OGRFeature         *GetNextRawFeature();
 
-    OGRErr              WriteGeometry( OGRGeometryH hGeom, int bHaveAngle );
+    OGRErr              WriteGeometry( OGRGeometryH hGeom, bool bHaveAngle );
     OGRErr              CompleteHeader( OGRGeometry * );
 
   public:
-    int                 bValidFile;
+    bool                bValidFile;
 
                         OGRGmtLayer( const char *pszFilename, int bUpdate );
-                        ~OGRGmtLayer();
+                        virtual ~OGRGmtLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
@@ -104,7 +104,7 @@ class OGRGmtDataSource : public OGRDataSource
 
   public:
                         OGRGmtDataSource();
-                        ~OGRGmtDataSource();
+                        virtual ~OGRGmtDataSource();
 
     int                 Open( const char *pszFilename, int bUpdate );
     int                 Create( const char *pszFilename, char **papszOptions );
@@ -127,7 +127,7 @@ class OGRGmtDataSource : public OGRDataSource
 class OGRGmtDriver : public OGRSFDriver
 {
   public:
-                ~OGRGmtDriver();
+                virtual ~OGRGmtDriver();
 
     const char *GetName();
     OGRDataSource *Open( const char *, int );

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: org_sxf_defs.h  $
+ * $Id$
  *
  * Project:  SXF Translator
  * Purpose:  Include file defining Records Structures for file reading and

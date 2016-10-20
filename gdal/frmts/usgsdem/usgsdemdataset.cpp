@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  USGS DEM Driver
  * Purpose:  All reader for USGS DEM Reader
@@ -40,8 +39,8 @@
 CPL_CVSID("$Id$");
 
 typedef struct {
-    double	x;
-    double	y;
+    double      x;
+    double      y;
 } DPoint2;
 
 static const int USGSDEM_NODATA = -32767;
@@ -236,7 +235,7 @@ static double USGSDEMReadDoubleFromBuffer( Buffer* psBuffer, int nCharCount, int
 static double DConvert( VSILFILE *fp, int nCharCount )
 
 {
-    char	szBuffer[100];
+    char szBuffer[100];
 
     CPL_IGNORE_RET_VAL(VSIFReadL( szBuffer, nCharCount, 1, fp ));
     szBuffer[nCharCount] = '\0';
@@ -252,7 +251,7 @@ static double DConvert( VSILFILE *fp, int nCharCount )
 
 /************************************************************************/
 /* ==================================================================== */
-/*				USGSDEMDataset				*/
+/*                              USGSDEMDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -274,15 +273,15 @@ class USGSDEMDataset : public GDALPamDataset
 
     int         LoadFromFile( VSILFILE * );
 
-    VSILFILE	*fp;
+    VSILFILE    *fp;
 
   public:
                 USGSDEMDataset();
-		~USGSDEMDataset();
+                ~USGSDEMDataset();
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    CPLErr 	GetGeoTransform( double * padfTransform );
+    CPLErr GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
 };
 
@@ -331,7 +330,7 @@ CPLErr USGSDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
                                       void * pImage )
 
 {
-    /* int		bad = FALSE; */
+    /* int bad = FALSE; */
     USGSDEMDataset *poGDS = reinterpret_cast<USGSDEMDataset *>( poDS );
 
 /* -------------------------------------------------------------------- */
@@ -469,7 +468,7 @@ const char *USGSDEMRasterBand::GetUnitType()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				USGSDEMDataset				*/
+/*                              USGSDEMDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -521,12 +520,12 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     const bool bNewFormat = nRow != 1 || nColumn != 1;
     if (bNewFormat)
     {
-        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 1024, 0)); 	// New Format
+        CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 1024, 0));  // New Format
         int i = ReadInt(InDem);
         int j = ReadInt(InDem);
-        if ( i != 1 || ( j != 1 && j != 0 ) )	// File OK?
+        if ( i != 1 || ( j != 1 && j != 0 ) )  // File OK?
         {
-            CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 893, 0)); 	// Undocumented Format (39109h1.dem)
+            CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 893, 0));  // Undocumented Format (39109h1.dem)
             i = ReadInt(InDem);
             j = ReadInt(InDem);
             if ( i != 1 || j != 1 )  // File OK?
@@ -656,7 +655,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         bNAD83 = false;
     }
 
-    if (nCoordSystem == 1)	// UTM
+    if (nCoordSystem == 1)  // UTM
     {
         sr.SetUTM( iUTMZone, TRUE );
         if( nGUnit == 1 )
@@ -668,7 +667,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         }
     }
 
-    else if (nCoordSystem == 2)	// state plane
+    else if (nCoordSystem == 2)  // state plane
     {
         if( nGUnit == 1 )
             sr.SetStatePlane( iUTMZone, bNAD83,
@@ -806,7 +805,7 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = fp;
 
 /* -------------------------------------------------------------------- */
-/*	Read the file.							*/
+/*      Read the file.                                                  */
 /* -------------------------------------------------------------------- */
     if( !poDS->LoadFromFile( poDS->fp ) )
     {
@@ -844,7 +843,7 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

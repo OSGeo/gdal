@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF Translator
  * Purpose:  Implements OGRPDFDataSource class
@@ -41,12 +40,11 @@ OGRPDFLayer::OGRPDFLayer( PDFDataset* poDSIn,
                           const char * pszName,
                           OGRSpatialReference *poSRS,
                           OGRwkbGeometryType eGeomType ) :
-                                OGRMemLayer(pszName, poSRS, eGeomType )
-{
-    this->poDS = poDSIn;
-    bGeomTypeSet = FALSE;
-    bGeomTypeMixed = FALSE;
-}
+    OGRMemLayer(pszName, poSRS, eGeomType ),
+    poDS(poDSIn),
+    bGeomTypeSet(FALSE),
+    bGeomTypeMixed(FALSE)
+{}
 
 /************************************************************************/
 /*                              Fill()                                  */
@@ -177,13 +175,12 @@ int OGRPDFLayer::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRPDFWritableLayer::OGRPDFWritableLayer( PDFWritableVectorDataset* poDSIn,
-                          const char * pszName,
-                          OGRSpatialReference *poSRS,
-                          OGRwkbGeometryType eGeomType ) :
-                                OGRMemLayer(pszName, poSRS, eGeomType )
-{
-    this->poDS = poDSIn;
-}
+                                          const char * pszName,
+                                          OGRSpatialReference *poSRS,
+                                          OGRwkbGeometryType eGeomType ) :
+    OGRMemLayer(pszName, poSRS, eGeomType ),
+    poDS(poDSIn)
+{}
 
 /************************************************************************/
 /*                           ICreateFeature()                           */

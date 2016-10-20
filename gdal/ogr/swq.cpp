@@ -27,6 +27,8 @@
 #include "swq_parser.hpp"
 #include "cpl_time.h"
 
+CPL_CVSID("$Id$");
+
 #define YYSTYPE  swq_expr_node*
 
 /************************************************************************/
@@ -94,8 +96,6 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 /* -------------------------------------------------------------------- */
     if( *pszInput == '"' || *pszInput == '\'' )
     {
-        char *token;
-        int i_token;
         char chQuote = *pszInput;
         bool bFoundEndQuote = false;
 
@@ -103,8 +103,8 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         pszInput++;
 
-        token = (char *) CPLMalloc(strlen(pszInput)+1);
-        i_token = 0;
+        char *token = (char *) CPLMalloc(strlen(pszInput)+1);
+        int i_token = 0;
 
         while( *pszInput != '\0' )
         {
@@ -297,7 +297,6 @@ swq_select_summarize( swq_select *select_info,
 
 {
     swq_col_def *def = select_info->column_defs + dest_column;
-    swq_summary *summary;
 
 /* -------------------------------------------------------------------- */
 /*      Do various checking.                                            */
@@ -334,15 +333,14 @@ swq_select_summarize( swq_select *select_info,
 /* -------------------------------------------------------------------- */
 /*      If distinct processing is on, process that now.                 */
 /* -------------------------------------------------------------------- */
-    summary = select_info->column_summary + dest_column;
+    swq_summary *summary = select_info->column_summary + dest_column;
 
     if( def->distinct_flag )
     {
-        GIntBig  i;
-
-        /* This should be implemented with a much more complicated
-           data structure to achieve any sort of efficiency. */
-        for( i = 0; i < summary->count; i++ )
+        // This should be implemented with a much more complicated
+        // data structure to achieve any sort of efficiency.
+        GIntBig i = 0;  // Used after for.
+        for( ; i < summary->count; i++ )
         {
             if( value == NULL )
             {
@@ -665,7 +663,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 /* -------------------------------------------------------------------- */
 /*      When there is no ambiguity, try to accept quoting errors...     */
 /* -------------------------------------------------------------------- */
-    if( bOneMoreTimeOK && !CSLTestBoolean(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
+    if( bOneMoreTimeOK &&
+        !CPLTestBool(CPLGetConfigOption("OGR_SQL_STRICT", "FALSE")) )
     {
         if( table_name[0] )
         {
@@ -673,8 +672,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 
             // Check there's no table called table_name, or a field called with
             // the aggregated name
-            int i;
-            for( i = 0; i < field_list->count; i++ )
+            int i = 0;  // Used after for.
+            for( ; i < field_list->count; i++ )
             {
                 if( tables_enabled )
                 {

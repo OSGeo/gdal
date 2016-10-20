@@ -16,11 +16,11 @@ file title: A descriptive name of the file. It is this text that appears with th
 
 data type: The type of numbers stored in the file. Allowable entries are byte, integer, real, RGB8 and RGB24. (See the description for Image files.)
 
-file type: The format in which the Image file is stored. Allowable entries are ASCII, Binary and Packed Binary (See Image files.) 
+file type: The format in which the Image file is stored. Allowable entries are ASCII, Binary and Packed Binary (See Image files.)
 
 columns: The number of columns in the image. This is extremely important as it tells IDRISI modules how to construct the rectangular image from the stored values. (See Image files.)
 
-rows: The number of rows in the image. 
+rows: The number of rows in the image.
 
 
 Information about the georeferencing system of the file:
@@ -72,7 +72,7 @@ lineage: Description of the history by which the values were recorded/derived.
 completeness: The degree to which the values describe the subject matter indicated.
 consistency: The logical consistency of the file.
 
-Note that the lineage, consistency and completeness fields are intended to meet the recommendations of the U.S. National Committee for Digital Cartographic Data Standards (NCDCDS). Along with the pos'n error and value error fields, they provide a means of adhering to the proposed standards for reporting digital cartographic data quality. For further information about the NCDCDS standard, refer to the January 1988 issue of The American Cartographer, 15(1). 
+Note that the lineage, consistency and completeness fields are intended to meet the recommendations of the U.S. National Committee for Digital Cartographic Data Standards (NCDCDS). Along with the pos'n error and value error fields, they provide a means of adhering to the proposed standards for reporting digital cartographic data quality. For further information about the NCDCDS standard, refer to the January 1988 issue of The American Cartographer, 15(1).
 
 Creation
 
@@ -80,7 +80,7 @@ Documentation files may be created using the module METADATA. They are created a
 
 Structure
 
-Image Documentation files are stored in ASCII format. The first 14 characters of each line describe the contents of the line, while the remaining characters contain the actual information. 
+Image Documentation files are stored in ASCII format. The first 14 characters of each line describe the contents of the line, while the remaining characters contain the actual information.
 
 Example
 
@@ -118,7 +118,7 @@ code 3		: Gray-Brown Podzolic Soils
 lineage		: Soil polygons derived from 1:5000 scale color air photography
 lineage		: and ground truth, with the final compilation being adjusted to
 lineage		: the map base by hand.
-comment	: Value error determined by statistical accuracy assessment 
+comment	: Value error determined by statistical accuracy assessment
 comment	: based on a stratified random sample of 37 points.
 
 Note

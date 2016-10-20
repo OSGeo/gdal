@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Functions for translating DGN floats into IEEE floats.
@@ -47,15 +46,13 @@ void    DGN2IEEEDouble(void * dbl)
     GUInt32     sign;
     GUInt32     exponent;
     GUInt32     rndbits;
-    unsigned char       *src;
-    unsigned char       *dest;
 
 /* -------------------------------------------------------------------- */
 /*      Arrange the VAX double so that it may be accessed by a          */
 /*      double64_t structure, (two GUInt32s).                           */
 /* -------------------------------------------------------------------- */
-    src =  (unsigned char *) dbl;
-    dest = (unsigned char *) &dt;
+    unsigned char *src =  (unsigned char *) dbl;
+    unsigned char *dest = (unsigned char *) &dt;
 #ifdef CPL_LSB
     dest[2] = src[0];
     dest[3] = src[1];
@@ -131,10 +128,9 @@ void    DGN2IEEEDouble(void * dbl)
 void    IEEE2DGNDouble(void * dbl)
 
 {
-    double64_t  dt;
-    GInt32      exponent;
-    GInt32      sign;
-    GByte       *src,*dest;
+    double64_t dt;
+    GByte  *src = NULL;
+    GByte *dest = NULL;
 
 #ifdef CPL_LSB
     src  = (GByte *) dbl;
@@ -152,8 +148,8 @@ void    IEEE2DGNDouble(void * dbl)
     memcpy( &dt, dbl, 8 );
 #endif
 
-    sign         = dt.hi & 0x80000000;
-    exponent = dt.hi >> 20;
+    GInt32 sign = dt.hi & 0x80000000;
+    GInt32 exponent = dt.hi >> 20;
     exponent = exponent & 0x000007ff;
 
 /* -------------------------------------------------------------------- */

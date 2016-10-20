@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SGI Image Driver
  * Purpose:  Implement SGI Image Support based on Paul Bourke's SGI Image code.
@@ -199,7 +198,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
         else
         {
             pixel = *iPtr++;
-    	memset(oPtr, pixel, count);
+            memset(oPtr, pixel, count);
         }
         oPtr += count;
         xsizeCount += count;
@@ -210,7 +209,7 @@ static CPLErr ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SGIDataset				*/
+/*                              SGIDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -222,14 +221,14 @@ class SGIDataset : public GDALPamDataset
 
     VSILFILE*  fpImage;
 
-    int	   bGeoTransformValid;
+    int    bGeoTransformValid;
     double adfGeoTransform[6];
 
     ImageRec image;
 
 public:
     SGIDataset();
-    ~SGIDataset();
+    virtual ~SGIDataset();
 
     virtual CPLErr GetGeoTransform(double*);
     static GDALDataset* Open(GDALOpenInfo*);
@@ -261,7 +260,7 @@ public:
 /*                           SGIRasterBand()                            */
 /************************************************************************/
 
-SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
+SGIRasterBand::SGIRasterBand( SGIDataset* poDSIn, int nBandIn )
 
 {
   poDS = poDSIn;
@@ -280,9 +279,9 @@ SGIRasterBand::SGIRasterBand(SGIDataset* poDSIn, int nBandIn)
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SGIRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
-                                 int nBlockYOff,
-				 void*  pImage)
+CPLErr SGIRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
+                                  int nBlockYOff,
+                                  void* pImage )
 {
     SGIDataset* poGDS = reinterpret_cast<SGIDataset *>( poDS );
 
@@ -465,8 +464,8 @@ GDALColorInterp SGIRasterBand::GetColorInterpretation()
 /*                            SGIDataset()                              */
 /************************************************************************/
 
-SGIDataset::SGIDataset()
-  : fpImage(NULL),
+SGIDataset::SGIDataset() :
+    fpImage(NULL),
     bGeoTransformValid(FALSE)
 {
     adfGeoTransform[0] = 0.0;
@@ -533,8 +532,8 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 
 {
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if(poOpenInfo->nHeaderBytes < 12)
         return NULL;
@@ -586,7 +585,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     }
 
 /* -------------------------------------------------------------------- */
-/*	Read pre-image data after ensuring the file is rewound.         */
+/*      Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
     VSIFSeekL(poDS->fpImage, 0, SEEK_SET);
     if(VSIFReadL(reinterpret_cast<void*>( &(poDS->image) ),
@@ -772,8 +771,8 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
     GInt32 nIntValue = CPL_MSBWORD32(0);
     memcpy( abyHeader + 12, &nIntValue, 4 );
 
-    nIntValue = CPL_MSBWORD32(255);
-    memcpy( abyHeader + 16, &nIntValue, 4 );
+    GUInt32 nUIntValue = CPL_MSBWORD32(255);
+    memcpy( abyHeader + 16, &nUIntValue, 4 );
 
     VSIFWriteL( abyHeader, 1, 512, fp );
 

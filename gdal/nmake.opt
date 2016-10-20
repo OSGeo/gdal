@@ -151,9 +151,10 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # 4100: 'identifier' : unreferenced formal parameter
 # 4245: 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
 # 4206: nonstandard extension used : translation unit is empty (only applies to C source code)
+# 4351: new behavior: elements of array 'array' will be default initialized (needed for https://trac.osgeo.org/gdal/changeset/35593)
 # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
 # 
-WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4611
+WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
 !ENDIF
 
 # 
@@ -161,6 +162,7 @@ WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4611
 # 
 !IFNDEF SSEFLAGS
 SSEFLAGS = /DHAVE_SSE_AT_COMPILE_TIME
+SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
 #SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
@@ -213,7 +215,7 @@ INCLUDE_OGR_FRMTS = YES
 
 # Enable all GNM formats?  Comment out to disable
 # gnm formats.
-#INCLUDE_GNM_FRMTS = YES
+INCLUDE_GNM_FRMTS = YES
 
 # To be enabled defined to point to setargv.obj from the Visual C++ directory,
 # when you want the utility programs to be able to expand wildcards. 
@@ -237,7 +239,7 @@ BSB_SUPPORTED = 1
 # Comment out the following to disable ODBC support.
 ODBC_SUPPORTED = 1
 
-# Uncomment out the following to enable SQL Native Client support for MSSQL Bulk Copy.
+# Uncomment out the following to enable plugin with SQL Native Client support for MSSQL Bulk Copy.
 #SQLNCLI_VERSION = 11
 #SQLNCLI_DIR = C:\Program Files (x86)\Microsoft SQL Server\$(SQLNCLI_VERSION)0\SDK
 #SQLNCLI_LIB = "$(SQLNCLI_DIR)\Lib\x86\sqlncli$(SQLNCLI_VERSION).lib"
@@ -349,11 +351,11 @@ JPEG12_SUPPORTED = 1
 #EXPAT_LIB = $(EXPAT_DIR)/bin/libexpat.lib
 
 # Uncomment for Xerces based GML and ILI support.
-#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_2_6_0
+#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_3_1_3
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
-#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_3.lib
 
-# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# Uncomment the following for Interlis support.  Note that a Xercex 3.x
 # is also required (see above).  Also, Interlis support only works with
 # Visual Studio.NET or newer, not VC6.
 #ILI_ENABLED = YES
@@ -716,10 +718,6 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib/Win32
 !ENDIF
 !ENDIF
 
-!IFDEF INCLUDE_OGR_FRMTS
-OGR_FLAG = -DOGR_ENABLED
-!ENDIF
-
 !IFDEF INCLUDE_GNM_FRMTS
 GNM_FLAG = -DGNM_ENABLED
 !ENDIF
@@ -728,7 +726,7 @@ GNM_FLAG = -DGNM_ENABLED
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
-CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
+CFLAGS	=	$(OPTFLAGS) $(WARNFLAGS) $(USER_DEFS) $(SSEFLAGS) $(SSSE3FLAGS) $(INC) $(AVXFLAGS) $(EXTRAFLAGS) $(OGR_FLAG) $(GNM_FLAG) $(MSVC_VLD_FLAGS) -DGDAL_COMPILATION
 CPPFLAGS = $(CFLAGS) 
 MAKE	=	nmake /nologo
 
@@ -872,5 +870,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) $(SQLNCLI_LIB) ws2_32.lib
-		
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib \
+    kernel32.lib psapi.lib

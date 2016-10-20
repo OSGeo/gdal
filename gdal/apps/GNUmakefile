@@ -192,7 +192,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts -I$(GDAL_ROOT)/frmts/vrt -I$(GDAL_ROOT)/apps"' >> gdal-config
 	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
-	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
 	cat gdal-config.in >> gdal-config
@@ -207,7 +207,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_DATA="$(INST_DATA)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
-	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config-inst
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config-inst  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config-inst
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst

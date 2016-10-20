@@ -54,13 +54,13 @@ class OGRBNALayer : public OGRLayer
     int                bWriter;
 
     int                nIDs;
-    int                eof;
-    int                failed;
+    bool               eof;
+    bool               failed;
     int                curLine;
     int                nNextFID;
     VSILFILE*          fpBNA;
     int                nFeatures;
-    int                partialIndexTable;
+    bool               partialIndexTable;
     OffsetAndLine*     offsetAndLineFeaturesTable;
 
     BNAFeatureType     bnaFeatureType;
@@ -113,10 +113,10 @@ class OGRBNADataSource : public OGRDataSource
 
     /*  Export related */
     VSILFILE                *fpOutput; /* Virtual file API */
-    int                 bUseCRLF;
+    bool                bUseCRLF;
     int                 bMultiLine;
     int                 nbOutID;
-    int                 bEllipsesAsEllipses;
+    bool                bEllipsesAsEllipses;
     int                 nbPairPerLine;
     int                 coordinatePrecision;
     char*               pszCoordinateSeparator;
@@ -126,10 +126,10 @@ class OGRBNADataSource : public OGRDataSource
                         ~OGRBNADataSource();
 
     VSILFILE                *GetOutputFP() { return fpOutput; }
-    int                 GetUseCRLF() { return bUseCRLF; }
+    bool                GetUseCRLF() { return bUseCRLF; }
     int                 GetMultiLine() { return bMultiLine; }
     int                 GetNbOutId() { return nbOutID; }
-    int                 GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }
+    bool                GetEllipsesAsEllipses() { return bEllipsesAsEllipses; }
     int                 GetNbPairPerLine() { return nbPairPerLine; }
     int                 GetCoordinatePrecision() { return coordinatePrecision; }
     const char*         GetCoordinateSeparator() { return pszCoordinateSeparator; }

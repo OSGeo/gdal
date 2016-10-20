@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: pdsdataset.cpp 12658 2007-11-07 23:14:33Z warmerdam $
  *
  * Project:  PDS Driver; Planetary Data System Format
  * Purpose:  Implementation of NASAKeywordHandler - a class to read
@@ -53,6 +52,8 @@
 #include "cpl_string.h"
 #include "nasakeywordhandler.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /* ==================================================================== */
 /*                          NASAKeywordHandler                          */
@@ -66,8 +67,7 @@
 NASAKeywordHandler::NASAKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL)
-{
-}
+{}
 
 /************************************************************************/
 /*                        ~NASAKeywordHandler()                         */
@@ -88,7 +88,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, nOffset, SEEK_SET ) != 0 )
         return FALSE;
@@ -105,7 +105,7 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
         if( nBytesRead < 512 )
             break;
 
-        const char *pszCheck;
+        const char *pszCheck = NULL;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
@@ -373,17 +373,17 @@ void NASAKeywordHandler::SkipWhite()
             // consume till end of line.
             // reduce sensibility to a label error
             while( *pszHeaderNext != '\0'
-            		&& *pszHeaderNext != 10
-            		&& *pszHeaderNext != 13 )
+                   && *pszHeaderNext != 10
+                   && *pszHeaderNext != 13 )
             {
-            	pszHeaderNext++;
+                pszHeaderNext++;
             }
             continue;
         }
 
         // Skip # style comments
         if( (*pszHeaderNext == 10 || *pszHeaderNext == 13 ||
- 	     *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
+             *pszHeaderNext == ' ' || *pszHeaderNext == '\t' )
               && pszHeaderNext[1] == '#' )
         {
             pszHeaderNext += 2;

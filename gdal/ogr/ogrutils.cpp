@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Utility functions for OGR classes, including some related to
@@ -206,7 +205,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     // Assumed max length of the target buffer.
     const size_t maxTargetSize = 75;
     const char chDecimalSep = '.';
-    const int nPrecision = 15;
+    static int nPrecision = -1;
+    if( nPrecision < 0 )
+        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
 
     char szX[bufSize] = {};
     char szY[bufSize] = {};
@@ -306,7 +307,9 @@ void OGRMakeWktCoordinateM( char *pszTarget,
     // Assumed max length of the target buffer.
     const size_t maxTargetSize = 75;
     const char chDecimalSep = '.';
-    const int nPrecision = 15;
+    static int nPrecision = -1;
+    if( nPrecision < 0 )
+        nPrecision = atoi(CPLGetConfigOption("OGR_WKT_PRECISION", "15"));
 
     char szX[bufSize] = {};
     char szY[bufSize] = {};
@@ -875,6 +878,7 @@ void OGRFree( void * pMemory )
 }
 
 /**
+ * \fn OGRGeneralCmdLineProcessor(int, char***,int)
  * General utility option processing.
  *
  * This function is intended to provide a variety of generic commandline
@@ -913,6 +917,9 @@ void OGRFree( void * pMemory )
  * @return updated nArgc argument count.  Return of 0 requests terminate
  * without error, return of -1 requests exit with error code.
  */
+
+/**/
+/**/
 
 int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
                                 int /* nOptions */ )
@@ -958,7 +965,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
 
 int OGRParseDate( const char *pszInput,
                   OGRField *psField,
-                  int /* nOptions */ )
+                  CPL_UNUSED int nOptions )
 {
     psField->Date.Year = 0;
     psField->Date.Month = 0;
@@ -1325,21 +1332,23 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
   * @return day of the week : 0 for Monday, ... 6 for Sunday
   */
 
-int OGRGetDayOfWeek(int day, int month, int year)
+int OGRGetDayOfWeek( int day, int month, int year )
 {
     // Reference: Zeller's congruence.
-    int q = day;
-    int m;
+    const int q = day;
+    int m = month;
     if( month >=3 )
-        m = month;
+    {
+        // m = month;
+    }
     else
     {
         m = month + 12;
         year --;
     }
-    int K = year % 100;
-    int J = year / 100;
-    int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
+    const int K = year % 100;
+    const int J = year / 100;
+    const int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
     return ( h + 5 ) % 7;
 }
 
@@ -1348,10 +1357,11 @@ int OGRGetDayOfWeek(int day, int month, int year)
 /*                         OGRGetRFC822DateTime()                       */
 /************************************************************************/
 
-char* OGRGetRFC822DateTime(const OGRField* psField)
+char* OGRGetRFC822DateTime( const OGRField* psField )
 {
     char* pszTZ = NULL;
-    const char* aszDayOfWeek[] = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    const char* aszDayOfWeek[] =
+        { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
     int dayofweek = OGRGetDayOfWeek(psField->Date.Day, psField->Date.Month,
                                     psField->Date.Year);
@@ -1433,9 +1443,9 @@ char* OGRGetXMLDateTime(const OGRField* psField)
 
 char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 {
-    char *pszEscaped;
+    char *pszEscaped = NULL;
     if( !CPLIsUTF8(pszString, -1) &&
-         CSLTestBoolean(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
+         CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
     {
         static bool bFirstTime = true;
         if( bFirstTime )

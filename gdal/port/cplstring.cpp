@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  CPLString implementation.
@@ -43,6 +42,7 @@ CPL_CVSID("$Id$");
 /*                               Printf()                               */
 /************************************************************************/
 
+/** Assign the content of the string using sprintf() */
 CPLString &CPLString::Printf( const char *pszFormat, ... )
 
 {
@@ -59,6 +59,7 @@ CPLString &CPLString::Printf( const char *pszFormat, ... )
 /*                              vPrintf()                               */
 /************************************************************************/
 
+/** Assign the content of the string using vsprintf() */
 CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 {
@@ -179,7 +180,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
  * Trim white space.
  *
  * Trims white space off the let and right of the string.  White space
- * is any of a space, a tab, a newline ('\n') or a carriage control ('\r').
+ * is any of a space, a tab, a newline ('\\n') or a carriage control ('\\r').
  *
  * @return a reference to the CPLString.
  */
@@ -207,6 +208,7 @@ CPLString &CPLString::Trim()
 /*                               Recode()                               */
 /************************************************************************/
 
+/** Recode the string */
 CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
@@ -345,18 +347,27 @@ CPLString &CPLString::replaceAll( const std::string &osBefore,
     return *this;
 }
 
+/**
+ * Replace all occurrences of chBefore with osAfter.
+ */
 CPLString &CPLString::replaceAll( char chBefore,
                                   const std::string &osAfter )
 {
     return replaceAll(std::string(&chBefore,1), osAfter);
 }
 
+/**
+ * Replace all occurrences of osBefore with chAfter.
+ */
 CPLString &CPLString::replaceAll( const std::string &osBefore,
                                   char chAfter )
 {
     return replaceAll(osBefore, std::string(&chAfter, 1));
 }
 
+/**
+ * Replace all occurrences of chBefore with chAfter.
+ */
 CPLString &CPLString::replaceAll( char chBefore,
                                   char chAfter )
 {
@@ -457,6 +468,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
 /*                            CPLOPrintf()                              */
 /************************************************************************/
 
+/** Return a CPLString with the content of sprintf() */
 CPLString CPLOPrintf( const char *pszFormat, ... )
 
 {
@@ -475,6 +487,7 @@ CPLString CPLOPrintf( const char *pszFormat, ... )
 /*                            CPLOvPrintf()                             */
 /************************************************************************/
 
+/** Return a CPLString with the content of vsprintf() */
 CPLString CPLOvPrintf( const char *pszFormat, va_list args )
 
 {

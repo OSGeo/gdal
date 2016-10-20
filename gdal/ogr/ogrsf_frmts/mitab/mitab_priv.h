@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.55 2010-01-07 20:39:12 aboudreault Exp $
+ * $Id$
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -1044,7 +1044,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
 
   public:
     TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
-    ~TABMAPHeaderBlock();
+    virtual ~TABMAPHeaderBlock();
 
     virtual int CommitToFile();
 
@@ -1156,7 +1156,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
 
   public:
     TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
-    ~TABMAPIndexBlock();
+    virtual ~TABMAPIndexBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
@@ -1263,7 +1263,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
 
   public:
     TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
-    ~TABMAPObjectBlock();
+    virtual ~TABMAPObjectBlock();
 
     virtual int CommitToFile();
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1343,7 +1343,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
 
   public:
     TABMAPCoordBlock(TABAccess eAccessMode = TABRead);
-    ~TABMAPCoordBlock();
+    virtual ~TABMAPCoordBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
@@ -1410,7 +1410,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
 
   public:
     TABMAPToolBlock(TABAccess eAccessMode = TABRead);
-    ~TABMAPToolBlock();
+    virtual ~TABMAPToolBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
@@ -1810,9 +1810,9 @@ class TABDATFile
     int         InitWriteHeader();
     int         WriteHeader();
 
-	// We know that character strings are limited to 254 chars in MapInfo
-	// Using a buffer pr. class instance to avoid threading issues with the library
-	char		m_szBuffer[256];
+    // We know that character strings are limited to 254 chars in MapInfo
+    // Using a buffer pr. class instance to avoid threading issues with the library
+    char        m_szBuffer[256];
 
    public:
     TABDATFile();

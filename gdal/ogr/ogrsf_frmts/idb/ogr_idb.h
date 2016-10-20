@@ -104,7 +104,7 @@ class OGRIDBTableLayer : public OGRIDBLayer
 
   public:
                         OGRIDBTableLayer( OGRIDBDataSource * );
-                        ~OGRIDBTableLayer();
+                        virtual ~OGRIDBTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -145,7 +145,7 @@ class OGRIDBSelectLayer : public OGRIDBLayer
   public:
                         OGRIDBSelectLayer( OGRIDBDataSource *,
                                            ITCursor * );
-                        ~OGRIDBSelectLayer();
+                        virtual ~OGRIDBSelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -175,7 +175,7 @@ class OGRIDBDataSource : public OGRDataSource
 
   public:
                         OGRIDBDataSource();
-                        ~OGRIDBDataSource();
+                        virtual ~OGRIDBDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,

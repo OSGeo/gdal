@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Implements Geolocation array based transformer.
@@ -745,6 +744,7 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg, double dfRatioX, 
 /*                    GDALCreateGeoLocTransformer()                     */
 /************************************************************************/
 
+/** Create GeoLocation transformer */
 void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                                    char **papszGeolocationInfo,
                                    int bReversed )
@@ -909,6 +909,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 /*                    GDALDestroyGeoLocTransformer()                    */
 /************************************************************************/
 
+/** Destroy GeoLocation transformer */
 void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
 {
@@ -939,6 +940,7 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 /*                        GDALGeoLocTransform()                         */
 /************************************************************************/
 
+/** Use GeoLocation transformer */
 int GDALGeoLocTransform( void *pTransformArg,
                          int bDstToSrc,
                          int nPointCount,

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDS Translator
  * Purpose:  Implements OGRPDSDataSource class
@@ -151,12 +150,12 @@ static CPLString MakeAttr(CPLString os1, CPLString os2)
     return os1 + "." + os2;
 }
 
-int OGRPDSDataSource::LoadTable( const char* pszFilename,
-                                 int nRecordSize,
-                                 CPLString osTableID )
+bool OGRPDSDataSource::LoadTable( const char* pszFilename,
+                                  int nRecordSize,
+                                  CPLString osTableID )
 {
     CPLString osTableFilename;
-    int nStartBytes;
+    int nStartBytes = 0;
 
     CPLString osTableLink = "^";
     osTableLink += osTableID;
@@ -172,7 +171,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "Cannot parse %s line", osTableLink.c_str());
-            return FALSE;
+            return false;
         }
         CPLString osTPath = CPLGetPath(pszFilename);
         CleanString( osTableFilename );
@@ -220,7 +219,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "One of TABLE.INTERCHANGE_FORMAT or TABLE.ROWS is missing");
-        return FALSE;
+        return false;
     }
 
     CleanString(osTableInterchangeFormat);
@@ -229,7 +228,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only INTERCHANGE_FORMAT=ASCII or BINARY is supported");
-        return FALSE;
+        return false;
     }
 
     VSILFILE* fp = VSIFOpenL(osTableFilename, "rb");
@@ -237,7 +236,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
                  osTableFilename.c_str());
-        return FALSE;
+        return false;
     }
 
     CPLString osTableStructure =
@@ -253,7 +252,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
     if (pabyRecord == NULL)
     {
         VSIFCloseL(fp);
-        return FALSE;
+        return false;
     }
     pabyRecord[nRecordSize] = 0;
 
@@ -268,7 +267,7 @@ int OGRPDSDataSource::LoadTable( const char* pszFilename,
         osTableInterchangeFormat.compare("ASCII") == 0);
     nLayers++;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -330,7 +329,9 @@ int OGRPDSDataSource::Open( const char * pszFilename )
 
     CPLString osTable = oKeywords.GetKeyword( "^TABLE", "" );
     if (osTable.size() != 0)
+    {
         LoadTable(pszFilename, nRecordSize, "TABLE");
+    }
     else
     {
         fp = VSIFOpenL(pszFilename, "rb");

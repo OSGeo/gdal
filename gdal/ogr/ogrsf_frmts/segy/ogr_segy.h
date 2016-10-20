@@ -77,7 +77,7 @@ typedef struct
 class OGRSEGYLayer: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
-    int                bEOF;
+    bool               bEOF;
     int                nNextFID;
     VSILFILE*          fp;
 
@@ -87,10 +87,10 @@ class OGRSEGYLayer: public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRSEGYLayer(const char* pszFilename,
-                                     VSILFILE* fp,
-                                     SEGYBinaryFileHeader* psBFH);
-                        ~OGRSEGYLayer();
+                        OGRSEGYLayer( const char* pszFilename,
+                                      VSILFILE* fp,
+                                      SEGYBinaryFileHeader* psBFH );
+                        virtual ~OGRSEGYLayer();
 
     virtual OGRFeature *        GetNextFeature();
 
@@ -108,7 +108,7 @@ class OGRSEGYLayer: public OGRLayer
 class OGRSEGYHeaderLayer: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
-    int                bEOF;
+    bool               bEOF;
 
     SEGYBinaryFileHeader sBFH;
     char*                pszHeaderText;
@@ -116,10 +116,10 @@ class OGRSEGYHeaderLayer: public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRSEGYHeaderLayer(const char* pszLayerName,
-                                           SEGYBinaryFileHeader* psBFH,
-                                           const char* pszHeaderText);
-                        ~OGRSEGYHeaderLayer();
+                        OGRSEGYHeaderLayer( const char* pszLayerName,
+                                            SEGYBinaryFileHeader* psBFH,
+                                            const char* pszHeaderText );
+                        virtual ~OGRSEGYHeaderLayer();
 
     virtual OGRFeature *        GetNextFeature();
 
@@ -143,7 +143,7 @@ class OGRSEGYDataSource : public OGRDataSource
 
   public:
                         OGRSEGYDataSource();
-                        ~OGRSEGYDataSource();
+                        virtual ~OGRSEGYDataSource();
 
     int                 Open( const char * pszFilename, const char* pszHeaderText );
 

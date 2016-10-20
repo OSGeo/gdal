@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Translator
  * Purpose:  Code to translate OGRGeometry to GML string representation.
@@ -46,6 +45,8 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+
+CPL_CVSID("$Id$");
 
 #define SRSDIM_LOC_GEOMETRY (1 << 0)
 #define SRSDIM_LOC_POSLIST  (1 << 1)
@@ -383,7 +384,6 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
              || eFType == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
@@ -430,7 +430,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
@@ -466,17 +466,13 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
 /************************************************************************/
 /*                   OGR_G_ExportEnvelopeToGMLTree()                    */
-/*                                                                      */
-/*      Export the envelope of a geometry as a gml:Box.                 */
 /************************************************************************/
 
+/** Export the envelope of a geometry as a gml:Box. */
 CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 
 {
-    CPLXMLNode *psBox, *psCoord;
     OGREnvelope sEnvelope;
-    char        szCoordinate[256];
-    char       *pszY;
 
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
     ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
@@ -490,16 +486,17 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
         return NULL;
     }
 
-    psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
+    CPLXMLNode *psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
 
 /* -------------------------------------------------------------------- */
 /*      Add minxy coordinate.                                           */
 /* -------------------------------------------------------------------- */
-    psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
+    CPLXMLNode *psCoord = CPLCreateXMLNode( psBox, CXT_Element, "gml:coord" );
 
+    char szCoordinate[256] = {};
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
                        false );
-    pszY = strstr(szCoordinate,",") + 1;
+    char *pszY = strstr(szCoordinate,",") + 1;
     pszY[-1] = '\0';
 
     CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
@@ -866,7 +863,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength,">");
 
         OGRCompoundCurve* poCC = (OGRCompoundCurve*)poGeometry;
-        for(int i=0;i<poCC->getNumCurves();i++)
+        for( int i = 0; i < poCC->getNumCurves(); i++ )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:curveMember>" );
@@ -955,7 +952,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
              || eFType == wkbGeometryCollection )
     {
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int             iMember;
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
@@ -1002,7 +998,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
-        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
@@ -1048,17 +1044,15 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /*                       OGR_G_ExportToGMLTree()                        */
 /************************************************************************/
 
+/**  Convert a geometry into GML format. */
 CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 
 {
-    char        *pszText;
-    CPLXMLNode  *psTree;
-
-    pszText = OGR_G_ExportToGML( hGeometry );
+    char *pszText = OGR_G_ExportToGML( hGeometry );
     if( pszText == NULL )
         return NULL;
 
-    psTree = CPLParseXMLString( pszText );
+    CPLXMLNode  *psTree = CPLParseXMLString( pszText );
 
     CPLFree( pszText );
 
@@ -1134,13 +1128,13 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
 
 {
-    char        *pszText;
-    size_t       nLength = 0, nMaxLength = 1;
-
     if( hGeometry == NULL )
         return CPLStrdup( "" );
 
-    pszText = (char *) CPLMalloc(nMaxLength);
+    size_t nLength = 0;
+    size_t nMaxLength = 1;
+
+    char *pszText = (char *) CPLMalloc(nMaxLength);
     pszText[0] = '\0';
 
     const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
@@ -1156,7 +1150,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         const char* pszSRSDimensionLoc = CSLFetchNameValueDef(papszOptions,"SRSDIMENSION_LOC","POSLIST");
         char** papszSRSDimensionLoc = CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
         int nSRSDimensionLocFlags = 0;
-        for(int i=0; papszSRSDimensionLoc[i] != NULL; i++)
+        for( int i = 0; papszSRSDimensionLoc[i] != NULL; i++ )
         {
             if( EQUAL(papszSRSDimensionLoc[i], "POSLIST") )
                 nSRSDimensionLocFlags |= SRSDIM_LOC_POSLIST;

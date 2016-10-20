@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  GDAL Client/server dataset mechanism.
@@ -470,7 +469,7 @@ class GDALClientDataset: public GDALPamDataset
                                GDALRasterIOExtraArg* psExtraArg);
     public:
                             GDALClientDataset(GDALPipe* p);
-                            ~GDALClientDataset();
+                   virtual ~GDALClientDataset();
 
         int                 Init(const char* pszFilename, GDALAccess eAccess,
                                  char** papszOpenOptions);
@@ -590,7 +589,7 @@ class GDALClientRasterBand : public GDALPamRasterBand
                              int nRasterXSize, int nRasterYSize,
                              GDALDataType eDataType, int nBlockXSize, int nBlockYSize,
                              GByte abyCaps[16]);
-        ~GDALClientRasterBand();
+        virtual ~GDALClientRasterBand();
 
         int GetSrvBand() const { return iSrvBand; }
         int SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
@@ -6132,7 +6131,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6231,7 +6230,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6329,7 +6328,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 static GDALDriver* poAPIPROXYDriver = NULL;
 
-static void GDALUnloadAPIPROXYDriver(CPL_UNUSED GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 {
     if( bRecycleChild )
     {

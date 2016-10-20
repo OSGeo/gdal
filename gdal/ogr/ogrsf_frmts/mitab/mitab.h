@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.121 2010-10-08 18:38:13 aboudreault Exp $
+ * $Id$
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -160,8 +160,6 @@ typedef enum
 
 class IMapInfoFile : public OGRLayer
 {
-  private:
-
   protected:
     GIntBig             m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
@@ -1031,7 +1029,7 @@ class ITABFeatureSymbol
  * The logic to read/write the object from/to the .DAT and .MAP files is also
  * implemented as part of this class and derived classes.
  *--------------------------------------------------------------------*/
-class TABFeature: public OGRFeature
+class TABFeature : public OGRFeature
 {
   protected:
     TABGeomType m_nMapInfoType;
@@ -1295,7 +1293,8 @@ class TABPolyline CPL_FINAL : public TABFeature,
 {
   private:
     GBool       m_bCenterIsSet;
-    double      m_dCenterX, m_dCenterY;
+    double      m_dCenterX;
+    double      m_dCenterY;
     GBool       m_bWriteTwoPointLineAsPolyline;
 
   public:
@@ -1361,10 +1360,11 @@ class TABRegion CPL_FINAL : public TABFeature,
                  public ITABFeaturePen,
                  public ITABFeatureBrush
 {
-    GBool       m_bSmooth;
   private:
+    GBool       m_bSmooth;
     GBool       m_bCenterIsSet;
-    double      m_dCenterX, m_dCenterY;
+    double      m_dCenterX;
+    double      m_dCenterY;
 
     int     ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
                             TABMAPFile *poMAPFile);
@@ -1720,7 +1720,8 @@ class TABMultiPoint CPL_FINAL : public TABFeature,
     // We call it center, but it's more like a label point
     // Its value default to be the location of the first point
     GBool       m_bCenterIsSet;
-    double      m_dCenterX, m_dCenterY;
+    double      m_dCenterX;
+    double      m_dCenterY;
 
   public:
              TABMultiPoint(OGRFeatureDefn *poDefnIn);
@@ -1879,9 +1880,9 @@ class TABDebugFeature CPL_FINAL : public TABFeature
 char CPL_DLL *MITABSpatialRef2CoordSys( OGRSpatialReference * );
 OGRSpatialReference CPL_DLL * MITABCoordSys2SpatialRef( const char * );
 
-GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
-                                  double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax );
+bool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                 double &dXMin, double &dYMin,
+                                 double &dXMax, double &dYMax );
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj);
 
 typedef struct {
@@ -1912,12 +1913,12 @@ typedef struct
  * The following are used for coordsys bounds lookup
  *--------------------------------------------------------------------*/
 
-GBool   MITABLookupCoordSysBounds(TABProjInfo *psCS,
+bool    MITABLookupCoordSysBounds(TABProjInfo *psCS,
                                   double &dXMin, double &dYMin,
                                   double &dXMax, double &dYMax,
-                                  int bOnlyUserTable = FALSE);
+                                  bool bOnlyUserTable = false);
 int     MITABLoadCoordSysTable(const char *pszFname);
 void    MITABFreeCoordSysTable();
-GBool   MITABCoordSysTableLoaded();
+bool    MITABCoordSysTableLoaded();  // TODO(schwehr): Unused?
 
 #endif /* MITAB_H_INCLUDED_ */

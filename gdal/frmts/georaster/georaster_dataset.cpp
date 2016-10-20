@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Name:     georaster_dataset.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -37,6 +36,8 @@
 #include "ogr_spatialref.h"
 
 #include "georaster_priv.h"
+
+CPL_CVSID("$Id$");
 
 //  ---------------------------------------------------------------------------
 //                                                           GeoRasterDataset()
@@ -148,10 +149,7 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     //  Create a corresponding GDALDataset
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset *poGRD;
-
-    poGRD = new GeoRasterDataset();
-
+    GeoRasterDataset *poGRD = new GeoRasterDataset();
     if( ! poGRD )
     {
         return NULL;
@@ -688,19 +686,19 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         }
     }
 
-    poGRD->poGeoRaster->bCreateObjectTable = CPL_TO_BOOL(
-        CSLFetchBoolean( papszOptions, "OBJECTTABLE", FALSE ));
+    poGRD->poGeoRaster->bCreateObjectTable =
+        CPLFetchBool( papszOptions, "OBJECTTABLE", false );
 
     //  -------------------------------------------------------------------
     //  Create a SDO_GEORASTER object on the server
     //  -------------------------------------------------------------------
 
-    bool bSucced = poGRW->Create( pszDescription, pszInsert, poGRW->bUniqueFound );
+    const bool bSuccess = poGRW->Create( pszDescription, pszInsert, poGRW->bUniqueFound );
 
     CPLFree( pszInsert );
     CPLFree( pszDescription );
 
-    if( ! bSucced )
+    if( ! bSuccess )
     {
         delete poGRD;
         return NULL;
@@ -747,8 +745,8 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    poGRD->poGeoRaster->bGenSpatialIndex = CPL_TO_BOOL(
-        CSLFetchBoolean( papszOptions, "SPATIALEXTENT", TRUE ));
+    poGRD->poGeoRaster->bGenSpatialIndex =
+        CPLFetchBool( papszOptions, "SPATIALEXTENT", TRUE );
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
 
@@ -842,13 +840,13 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
     //  Create a GeoRaster on the server or select one to overwrite
     //  -----------------------------------------------------------
 
-    GeoRasterDataset *poDstDS;
-
-    poDstDS = (GeoRasterDataset *) GeoRasterDataset::Create( pszFilename,
-        poSrcDS->GetRasterXSize(),
-        poSrcDS->GetRasterYSize(),
-        poSrcDS->GetRasterCount(),
-        eType, papszOptions );
+    GeoRasterDataset *poDstDS =
+        (GeoRasterDataset *) GeoRasterDataset::Create(
+            pszFilename,
+            poSrcDS->GetRasterXSize(),
+            poSrcDS->GetRasterYSize(),
+            poSrcDS->GetRasterCount(),
+            eType, papszOptions );
 
     if( poDstDS == NULL )
     {

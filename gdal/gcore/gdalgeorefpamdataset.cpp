@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALPamDataset with internal storage for georeferencing, with
@@ -30,6 +29,7 @@
 
 #include "gdalgeorefpamdataset.h"
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                       GDALGeorefPamDataset()                         */
 /************************************************************************/
@@ -73,6 +73,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
         CPLFree( pasGCPList );
     }
     CSLDestroy(m_papszMainMD);
+    CSLDestroy(m_papszRPC);
 }
 
 /************************************************************************/
@@ -332,3 +333,4 @@ int GDALGeorefPamDataset::GetPAMGeorefSrcIndex()
     }
     return m_nPAMGeorefSrcIndex;
 }
+//! @endcond

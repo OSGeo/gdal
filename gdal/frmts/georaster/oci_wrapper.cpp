@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: $
  *
  * Name:     oci_wrapper.cpp
  * Project:  Oracle Spatial GeoRaster Driver
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "oci_wrapper.h"
+
+CPL_CVSID("$Id$");
 
 static const OW_CellDepth ahOW_CellDepth[] = {
     {"8BIT_U",          GDT_Byte},
@@ -91,12 +92,12 @@ OWConnection::OWConnection( const char* pszUserIn,
     //  Initialize Environment handler
     // ------------------------------------------------------
 
-    if( OCIEnvCreate( &hEnv,
+    if( CheckError( OCIEnvCreate( &hEnv,
         (ub4) ( OCI_DEFAULT | OCI_OBJECT | OCI_THREADED ),
         (dvoid *) 0, (dvoid * (*)(dvoid *, size_t)) 0,
         (dvoid * (*)(dvoid *, dvoid *, size_t)) 0,
         (void (*)(dvoid *, dvoid *)) 0, (size_t) 0,
-        (dvoid **) 0), NULL )
+        (dvoid **) 0), NULL ) )
     {
         return;
     }
@@ -522,7 +523,7 @@ OWStatement::OWStatement( OWConnection* pConnect, const char* pszStatement )
     //  Create Statement handler
     //  -----------------------------------------------------------
 
-    OCIStmt* hStatement;
+    OCIStmt* hStatement = NULL;
 
     CheckError( OCIHandleAlloc( (dvoid*) poConnection->hEnv,
         (dvoid**) (dvoid*) &hStatement,
@@ -1168,7 +1169,7 @@ void OWStatement::Free( OCILobLocator** pphLocator, int nCount )
 int OWStatement::GetElement( OCIArray** ppoData, int nIndex, int* pnResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     ub4            element_type;
 
     *pnResult = 0;
@@ -1204,7 +1205,7 @@ double OWStatement::GetElement( OCIArray** ppoData,
                                int nIndex, double* pdfResult )
 {
     boolean        exists;
-    OCINumber      *oci_number;
+    OCINumber      *oci_number = NULL;
     double         element_type;
 
     *pdfResult = 0.0;
@@ -1318,7 +1319,7 @@ bool OWStatement::WriteBlob( OCILobLocator* phLocator,
         return false;
     }
 
-    return ( nAmont == (ub4) nSize );
+    return nAmont == (ub4) nSize;
 }
 
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )

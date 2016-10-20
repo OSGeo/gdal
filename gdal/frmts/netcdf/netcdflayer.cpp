@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  netCDF read/write Driver
  * Purpose:  GDAL bindings over netCDF library.
@@ -1064,7 +1063,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
 
         if( !bXIsNoData && !bYIsNoData )
         {
-            OGRPoint* poPoint;
+            OGRPoint* poPoint = NULL;
             if( m_nZVarID >= 0 && m_osProfileDimName.size() == 0 )
             {
                 bool bZIsNoData = false;
@@ -1166,9 +1165,7 @@ OGRFeature* netCDFLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -2354,6 +2351,6 @@ int netCDFLayer::TestCapability(const char* pszCap)
     if( EQUAL(pszCap, OLCCreateField) )
         return m_poDS->GetAccess() == GA_Update;
     if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return( m_poFilterGeom == NULL && m_poAttrQuery == NULL );
+        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
     return FALSE;
 }

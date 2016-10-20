@@ -93,18 +93,16 @@ class OGRGeomediaLayer : public OGRLayer
 
 class OGRGeomediaTableLayer : public OGRGeomediaLayer
 {
-    int                 bUpdateAccess;
-
     char                *pszQuery;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
     virtual CPLODBCStatement *  GetStatement();
 
   public:
                         OGRGeomediaTableLayer( OGRGeomediaDataSource * );
-                        ~OGRGeomediaTableLayer();
+                        virtual ~OGRGeomediaTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -127,15 +125,15 @@ class OGRGeomediaSelectLayer : public OGRGeomediaLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *GetStatement();
 
   public:
                         OGRGeomediaSelectLayer( OGRGeomediaDataSource *,
-                                           CPLODBCStatement * );
-                        ~OGRGeomediaSelectLayer();
+                                                CPLODBCStatement * );
+                        virtual ~OGRGeomediaSelectLayer();
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -168,7 +166,7 @@ class OGRGeomediaDataSource : public OGRDataSource
 
   public:
                         OGRGeomediaDataSource();
-                        ~OGRGeomediaDataSource();
+                        virtual ~OGRGeomediaDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,

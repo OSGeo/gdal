@@ -103,7 +103,7 @@ class GDALWMSMetaDataset : public GDALPamDataset
 
   public:
         GDALWMSMetaDataset();
-       ~GDALWMSMetaDataset();
+    virtual ~GDALWMSMetaDataset();
 
     virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );
