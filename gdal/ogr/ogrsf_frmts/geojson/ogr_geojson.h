@@ -175,7 +175,7 @@ class OGRGeoJSONDataSource : public OGRDataSource
 
     virtual void        FlushCache();
 
-    static const int SPACE_FOR_BBOX = 130;
+    static const size_t SPACE_FOR_BBOX = 130;
 
   private:
     //
