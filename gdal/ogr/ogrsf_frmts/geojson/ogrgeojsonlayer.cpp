@@ -26,27 +26,36 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#include <algorithm> // for_each, find_if
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
+#include <algorithm>
+
+#if !DEBUG_JSON
+#  ifdef __clang__
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunknown-pragmas"
+#    pragma clang diagnostic ignored "-Wdocumentation"
+#  endif
+#endif  // !DEBUG_VERBOSE
+
 #include <json.h>
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
 
+#if !DEBUG_JSON
+#  ifdef __clang
+#    pragma clang diagnostic pop
+#  endif
+#endif  // !DEBUG_VERBOSE
 
 #include "ogr_geojson.h"
 
-CPL_CVSID("$Id$");
-
-/* Remove annoying warnings Microsoft Visual C++ */
+// Remove annoying warnings Microsoft Visual C++:
+//   'class': assignment operator could not be generated.
+//     The compiler cannot generate an assignment operator for the given
+//     class. No assignment operator was created.
 #if defined(_MSC_VER)
 #  pragma warning(disable:4512)
 #endif
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                       STATIC MEMBERS DEFINITION                      */
