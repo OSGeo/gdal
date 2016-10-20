@@ -1230,7 +1230,7 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer,
             {
                 continue;
             }
-            if( osNativeData.size() == 0 )
+            if( osNativeData.empty() )
                 osNativeData = "{ ";
             else
                 osNativeData += ", ";
@@ -1240,7 +1240,7 @@ OGRGeoJSONReader::ReadFeatureCollection( OGRGeoJSONLayer* poLayer,
             osNativeData += ": ";
             osNativeData += json_object_to_json_string(it.val);
         }
-        if( osNativeData.size() == 0 )
+        if( osNativeData.empty() )
         {
             osNativeData = "{ ";
         }
