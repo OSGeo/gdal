@@ -2499,16 +2499,16 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection* poMulti,
         case wkbPolygon:
         case wkbLineString:
         {
-#ifdef HAVE_GEOS
-            bool bWrapDateline = false;
-#endif
             bool bSplitLineStringAtDateline = false;
             OGREnvelope oEnvelope;
 
             poGeom->getEnvelope(&oEnvelope);
 
             /* Naive heuristics... Place to improvement... */
+#ifdef HAVE_GEOS
             OGRGeometry* poDupGeom = NULL;
+            bool bWrapDateline = false;
+#endif
 
             double dfLeftBorderX = 180 - dfDateLineOffset;
             double dfRightBorderX = -180 + dfDateLineOffset;
