@@ -1417,7 +1417,7 @@ class CPL_DLL OGRGeometryFactory
                                            int nPolygonCount,
                                            int *pbResultValidGeometry,
                                            const char **papszOptions = NULL);
-    static int haveGEOS();
+    static bool haveGEOS();
 
     static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
                                               OGRCoordinateTransformation *poCT,
