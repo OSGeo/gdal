@@ -143,9 +143,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -195,7 +195,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
 class OGRIngresResultLayer : public OGRIngresLayer
 {
-    void                BuildFullQueryStatement(void);
+    void                BuildFullQueryStatement();
 
     char                *pszRawStatement;
 

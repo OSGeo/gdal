@@ -402,9 +402,9 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     char               *pszQuery;
     char               *pszWHERE;

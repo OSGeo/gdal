@@ -347,7 +347,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     void                ClearInsertStmt();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
 
     virtual OGRErr      ResetStatement();
 
@@ -490,7 +490,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     OGRSQLiteLayer     *poUnderlyingLayer;
     OGRSQLiteLayer     *GetUnderlyingLayer();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
 
     virtual OGRErr      ResetStatement();
 

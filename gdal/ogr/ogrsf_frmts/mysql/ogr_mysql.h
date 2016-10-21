@@ -129,9 +129,9 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     char                *pszQuery;
     char                *pszWHERE;
@@ -180,7 +180,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 
 class OGRMySQLResultLayer : public OGRMySQLLayer
 {
-    void                BuildFullQueryStatement(void);
+    void                BuildFullQueryStatement();
 
     char                *pszRawStatement;
 
