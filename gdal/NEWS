@@ -11,8 +11,6 @@ The 2.1.2 release is a bug fix release.
 * Fix regression in PLScenes V1 raster random access. Add a CPL_VSIL_CURL_ALLOWED_FILENAME config option to solve that (fixes #6691)
 * /vsimem/: fix potential crash when closing -different- handles pointing to the same file from different threads (fixes #6683)
 
-== GDAL algorithms ==
-
 == GDAL Core ==
 * Nodata comparison: fix test when nodata is FLT_MIN or DBL_MIN (#6578)
 * External overview: fix incorrect overview building when generating from greater
@@ -87,8 +85,6 @@ VRT driver:
 * VRTComplexSource: do temp computations on double to avoid precision issues
   when band data type is Int32/UInt32/CInt32/Float64/CFloat64 (#6642)
 
-== OGR core ==
-
 == OGR utilities ==
 * GDALVectorTranslate(): imply update mode if access mode not explicitly
   specified and hDstDS != NULL (#6612)
@@ -136,6 +132,9 @@ NAS driver:
 OCI driver:
 * 3 new options: MULTI_LOAD, MULTI_LOAD_COUNT, FIRST_ID (#6606)
 
+OSM driver:
+* fix issue garbage content when laundering tag name with column (https://github.com/OSGeo/gdal/pull/161)
+
 PG driver:
 * fix errors caused by missing geometry_columns/spatial_ref_sys tables in non
   PostGIS databases, that prevent reading more than 500 features (http://hub.qgis.org/issues/10904)
@@ -150,7 +149,7 @@ S57 driver:
 
 Shapefile driver:
 * change REPACK implementation on Windows to be robust to remaining file
-  descriptors openend on the .shp/.shx/.dbf (#6672)
+  descriptors opened on the .shp/.shx/.dbf (#6672)
 
 SQLite driver:
 * do not emit error when running ExecuteSQL() with a spatial filter on an
