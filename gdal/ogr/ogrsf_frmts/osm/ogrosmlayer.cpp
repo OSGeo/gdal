@@ -426,7 +426,8 @@ const char* OGROSMLayer::GetLaunderedFieldName(const char* pszName)
     if( poDS->DoesAttributeNameLaundering()  &&
         strchr(pszName, ':') != NULL )
     {
-        for( size_t i = 0;
+        size_t i = 0;
+        for( ;
              i < sizeof(szLaunderedFieldName) - 1 && pszName[i] != '\0';
              i++ )
         {
@@ -435,7 +436,7 @@ const char* OGROSMLayer::GetLaunderedFieldName(const char* pszName)
             else
                 szLaunderedFieldName[i] = pszName[i];
         }
-        szLaunderedFieldName[sizeof(szLaunderedFieldName) - 1] = '\0';
+        szLaunderedFieldName[i] = '\0';
         return szLaunderedFieldName;
     }
 
