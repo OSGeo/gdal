@@ -168,7 +168,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr          CreateMaskBand( int nFlags );
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );

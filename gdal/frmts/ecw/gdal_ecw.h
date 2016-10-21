@@ -100,7 +100,7 @@ public:
     virtual CNCSError UnParse(class CNCSJP2File &JP2File,
                               CNCSJPCIOStream &Stream);
 #endif
-    virtual void UpdateXLBox(void);
+    virtual void UpdateXLBox();
 
     void    SetData( int nDataLength, const unsigned char *pabyDataIn );
 

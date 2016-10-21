@@ -166,7 +166,7 @@ class RMFDataset : public GDALDataset
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
-    virtual void        FlushCache( void );
+    virtual void        FlushCache();
 
     virtual CPLErr      GetGeoTransform( double * padfTransform );
     virtual CPLErr      SetGeoTransform( double * );
