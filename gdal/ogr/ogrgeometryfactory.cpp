@@ -84,9 +84,6 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
                                          OGRwkbVariant eWkbVariant )
 
 {
-    OGRwkbGeometryType eGeometryType;
-    OGRErr      eErr;
-
     *ppoReturn = NULL;
 
     if( nBytes < 9 && nBytes != -1 )
@@ -120,7 +117,9 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
 
-    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
+    OGRwkbGeometryType eGeometryType = wkbUnknown;
+    const OGRErr err =
+        OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
 
     if( err != OGRERR_NONE )
         return err;
@@ -138,7 +137,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Import from binary.                                             */
 /* -------------------------------------------------------------------- */
-    eErr = poGeom->importFromWkb( pabyData, nBytes, eWkbVariant );
+    const OGRErr eErr = poGeom->importFromWkb( pabyData, nBytes, eWkbVariant );
 
 /* -------------------------------------------------------------------- */
 /*      Assign spatial reference system.                                */
@@ -249,15 +248,13 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
                                          OGRGeometry **ppoReturn )
 
 {
-    OGRErr      eErr;
-    char        szToken[OGR_WKT_TOKEN_MAX];
-    char        *pszInput = *ppszData;
-
+    char *pszInput = *ppszData;
     *ppoReturn = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the first token, which should be the geometry type.         */
 /* -------------------------------------------------------------------- */
+    char szToken[OGR_WKT_TOKEN_MAX] = {};
     if( OGRWktReadToken( pszInput, szToken ) == NULL )
         return OGRERR_CORRUPT_DATA;
 
@@ -332,7 +329,7 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
 /* -------------------------------------------------------------------- */
 /*      Do the import.                                                  */
 /* -------------------------------------------------------------------- */
-    eErr = poGeom->importFromWkt( &pszInput );
+    const OGRErr eErr = poGeom->importFromWkt( &pszInput );
 
 /* -------------------------------------------------------------------- */
 /*      Assign spatial reference system.                                */
@@ -573,7 +570,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 
         if( !poGeom->hasCurveGeometry(TRUE) )
         {
-            poPolygon->addRingDirectly( OGRCurve::CastToLinearRing((OGRCurve*)poGeom) );
+            poPolygon->addRingDirectly(
+                OGRCurve::CastToLinearRing((OGRCurve*)poGeom) );
         }
         else
         {
@@ -589,12 +587,13 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         && eGeomType != wkbMultiSurface )
         return poGeom;
 
-    // build an aggregated polygon from all the polygon rings in the container.
+    // Build an aggregated polygon from all the polygon rings in the container.
     OGRPolygon *poPolygon = new OGRPolygon();
     OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
     if( poGeom->hasCurveGeometry() )
     {
-        OGRGeometryCollection *poNewGC = (OGRGeometryCollection *) poGC->getLinearGeometry();
+        OGRGeometryCollection *poNewGC =
+            (OGRGeometryCollection *) poGC->getLinearGeometry();
         delete poGC;
         poGeom = poGC = poNewGC;
     }
@@ -697,14 +696,16 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
         {
-            OGRGeometryCollection *poNewGC = (OGRGeometryCollection *) poGC->getLinearGeometry();
+            OGRGeometryCollection *poNewGC =
+                (OGRGeometryCollection *) poGC->getLinearGeometry();
             delete poGC;
             poGeom = poGC = poNewGC;
         }
 
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
-            OGRwkbGeometryType eSubGeomType = wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
+            OGRwkbGeometryType eSubGeomType =
+                wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType != wkbPolygon )
                 bAllPoly = false;
         }
@@ -919,7 +920,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         if( poGeom->hasCurveGeometry() )
         {
-            OGRGeometryCollection *poNewGC = (OGRGeometryCollection *) poGC->getLinearGeometry();
+            OGRGeometryCollection *poNewGC =
+                (OGRGeometryCollection *) poGC->getLinearGeometry();
             delete poGC;
             poGeom = poGC = poNewGC;
         }
@@ -1081,7 +1083,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     if( eGeomType == wkbMultiCurve )
     {
         OGRGeometry* poNewGeom = poGeom->getLinearGeometry();
-        CPLAssert( wkbFlatten(poNewGeom->getGeometryType()) == wkbMultiLineString );
+        CPLAssert( wkbFlatten(poNewGeom->getGeometryType()) ==
+                   wkbMultiLineString );
         delete poGeom;
         return (OGRMultiLineString*) poNewGeom;
     }
@@ -1271,8 +1274,10 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     bool bNonPolygon = false;
     bool bFoundCCW = false;
 
-    const char* pszMethodValue = CSLFetchNameValue( (char**)papszOptions, "METHOD" );
-    const char* pszMethodValueOption = CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
+    const char* pszMethodValue =
+        CSLFetchNameValue( (char**)papszOptions, "METHOD" );
+    const char* pszMethodValueOption =
+        CPLGetConfigOption("OGR_ORGANIZE_POLYGONS", NULL);
     if (pszMethodValueOption != NULL && pszMethodValueOption[0] != '\0')
         pszMethodValue = pszMethodValueOption;
 
@@ -1294,7 +1299,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         else if (!EQUAL(pszMethodValue, "DEFAULT"))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unrecognized value for METHOD option : %s", pszMethodValue);
+                     "Unrecognized value for METHOD option : %s",
+                     pszMethodValue);
         }
     }
 
@@ -1308,21 +1314,25 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         asPolyEx[i].poPolygon = dynamic_cast<OGRCurvePolygon*>(papoPolygons[i]);
         papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
 
-        OGRwkbGeometryType eType = wkbFlatten(papoPolygons[i]->getGeometryType());
+        OGRwkbGeometryType eType =
+            wkbFlatten(papoPolygons[i]->getGeometryType());
         if( eType == wkbCurvePolygon )
             bHasCurves = true;
         if( asPolyEx[i].poPolygon != NULL
             && asPolyEx[i].poPolygon->getNumInteriorRings() == 0
-            && asPolyEx[i].poPolygon->getExteriorRingCurve()->getNumPoints() >= 4)
+            && asPolyEx[i].poPolygon->
+                getExteriorRingCurve()->getNumPoints() >= 4)
         {
             if( method != METHOD_CCW_INNER_JUST_AFTER_CW_OUTER )
                 asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
-            asPolyEx[i].poExteriorRing = asPolyEx[i].poPolygon->getExteriorRingCurve();
+            asPolyEx[i].poExteriorRing =
+                asPolyEx[i].poPolygon->getExteriorRingCurve();
             asPolyEx[i].poExteriorRing->StartPoint(&asPolyEx[i].poAPoint);
             if( eType == wkbPolygon )
             {
-                asPolyEx[i].bIsCW = CPL_TO_BOOL(reinterpret_cast<OGRLinearRing*>(
-                          asPolyEx[i].poExteriorRing)->isClockwise());
+                asPolyEx[i].bIsCW =
+                    CPL_TO_BOOL(reinterpret_cast<OGRLinearRing*>(
+                        asPolyEx[i].poExteriorRing)->isClockwise());
                 asPolyEx[i].bIsPolygon = true;
             }
             else
@@ -1348,9 +1358,10 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
-                    "organizePolygons() received an unexpected geometry.\n"
-                    "Either a polygon with interior rings, or a polygon with less than 4 points,\n"
-                    "or a non-Polygon geometry.  Return arguments as a collection." );
+                    "organizePolygons() received an unexpected geometry.  "
+                    "Either a polygon with interior rings, or a polygon "
+                    "with less than 4 points, or a non-Polygon geometry.  "
+                    "Return arguments as a collection." );
                 bMixedUpGeometries = true;
             }
             if( eType != wkbPolygon && eType != wkbCurvePolygon )
@@ -1358,9 +1369,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         }
     }
 
-    /* If we are in ONLY_CCW mode and that we have found that there is only one outer ring, */
-    /* then it is pretty easy : we can assume that all other rings are inside */
-    if ((method == METHOD_ONLY_CCW || method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER) &&
+    // If we are in ONLY_CCW mode and that we have found that there is only one
+    // outer ring, then it is pretty easy : we can assume that all other rings
+    // are inside.
+    if( (method == METHOD_ONLY_CCW ||
+         method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER) &&
         nCountCWPolygon == 1 && bUseFastVersion && !bNonPolygon )
     {
         OGRCurvePolygon* poCP = asPolyEx[indexOfCWPolygon].poPolygon;
@@ -1369,7 +1382,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             if( i != indexOfCWPolygon )
             {
                 poCP->addRingDirectly(
-                              asPolyEx[i].poPolygon->stealExteriorRingCurve());
+                    asPolyEx[i].poPolygon->stealExteriorRingCurve());
                 delete asPolyEx[i].poPolygon;
             }
         }
@@ -1379,14 +1392,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return poCP;
     }
 
-    if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER && !bNonPolygon && asPolyEx[0].bIsCW )
+    if( method == METHOD_CCW_INNER_JUST_AFTER_CW_OUTER &&
+        !bNonPolygon && asPolyEx[0].bIsCW )
     {
-        /* Inner rings are CCW oriented and follow immediately the outer */
-        /* ring (that is CW oriented) in which they are included */
+        // Inner rings are CCW oriented and follow immediately the outer
+        // ring (that is CW oriented) in which they are included.
         OGRMultiSurface* poMulti = NULL;
         OGRCurvePolygon* poCur = asPolyEx[0].poPolygon;
         OGRGeometry* poRet = poCur;
-        /* We have already checked that the first ring is CW */
+        // We have already checked that the first ring is CW.
         OGREnvelope* psEnvelope = &(asPolyEx[0].sEnvelope);
         for( int i = 1; i < nPolygonCount; i++ )
         {
@@ -1407,14 +1421,17 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             }
             else
             {
-                poCur->addRingDirectly(asPolyEx[i].poPolygon->stealExteriorRingCurve());
+                poCur->addRingDirectly(
+                    asPolyEx[i].poPolygon->stealExteriorRingCurve());
                 if(!(asPolyEx[i].poAPoint.getX() >= psEnvelope->MinX &&
                      asPolyEx[i].poAPoint.getX() <= psEnvelope->MaxX &&
                      asPolyEx[i].poAPoint.getY() >= psEnvelope->MinY &&
                      asPolyEx[i].poAPoint.getY() <= psEnvelope->MaxY))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Part %d does not respect CCW_INNER_JUST_AFTER_CW_OUTER rule", i);
+                             "Part %d does not respect "
+                             "CCW_INNER_JUST_AFTER_CW_OUTER rule",
+                             i);
                 }
                 delete asPolyEx[i].poPolygon;
             }
@@ -1431,30 +1448,35 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             asPolyEx[i].dfArea = asPolyEx[i].poPolygon->get_Area();
     }
 
-    /* Emits a warning if the number of parts is sufficiently big to anticipate for */
-    /* very long computation time, and the user didn't specify an explicit method */
-    if (nPolygonCount > N_CRITICAL_PART_NUMBER && method == METHOD_NORMAL && pszMethodValue == NULL)
+    // Emits a warning if the number of parts is sufficiently big to anticipate
+    // for very long computation time, and the user didn't specify an explicit
+    // method.
+    if (nPolygonCount > N_CRITICAL_PART_NUMBER &&
+        method == METHOD_NORMAL && pszMethodValue == NULL)
     {
         static int firstTime = 1;
         if (firstTime)
         {
             if (bFoundCCW)
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                     "organizePolygons() received a polygon with more than %d parts. "
-                     "The processing may be really slow.\n"
-                     "You can skip the processing by setting METHOD=SKIP, "
-                     "or only make it analyze counter-clock wise parts by setting "
-                     "METHOD=ONLY_CCW if you can assume that the "
-                     "outline of holes is counter-clock wise defined", N_CRITICAL_PART_NUMBER);
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "organizePolygons() received a polygon with more than %d "
+                    "parts. The processing may be really slow.\n"
+                    "You can skip the processing by setting METHOD=SKIP, "
+                    "or only make it analyze counter-clock wise parts by "
+                    "setting METHOD=ONLY_CCW if you can assume that the "
+                    "outline of holes is counter-clock wise defined",
+                    N_CRITICAL_PART_NUMBER);
             }
             else
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                        "organizePolygons() received a polygon with more than %d parts. "
-                        "The processing may be really slow.\n"
-                        "You can skip the processing by setting METHOD=SKIP.",
-                        N_CRITICAL_PART_NUMBER);
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "organizePolygons() received a polygon with more than %d "
+                    "parts.  The processing may be really slow.  "
+                    "You can skip the processing by setting METHOD=SKIP.",
+                    N_CRITICAL_PART_NUMBER);
             }
             firstTime = 0;
         }
@@ -1492,10 +1514,11 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
        no full geometry intersection or inclusion test is done
     */
 
-    if (!bMixedUpGeometries)
+    if( !bMixedUpGeometries )
     {
-        /* STEP 1 : Sort polygons by descending area */
-        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended), OGRGeometryFactoryCompareArea);
+        // STEP 1: Sort polygons by descending area.
+        qsort(asPolyEx, nPolygonCount, sizeof(sPolyExtended),
+              OGRGeometryFactoryCompareArea);
     }
     papoPolygons = NULL; /* just to use to avoid it afterwards */
 
@@ -1503,13 +1526,13 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
 /*      Compute relationships, if things seem well structured.          */
 /* -------------------------------------------------------------------- */
 
-    /* The first (largest) polygon is necessarily top-level */
+    // The first (largest) polygon is necessarily top-level.
     asPolyEx[0].bIsTopLevel = true;
     asPolyEx[0].poEnclosingPolygon = NULL;
 
     int nCountTopLevel = 1;
 
-    /* STEP 2 */
+    // STEP 2.
     for( int i = 1;
          !bMixedUpGeometries && bValidTopology && i<nPolygonCount;
          i++ )
