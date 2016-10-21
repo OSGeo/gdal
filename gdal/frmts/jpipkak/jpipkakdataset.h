@@ -177,7 +177,7 @@ public:
 
     //gdaldataset methods
     virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();

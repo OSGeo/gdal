@@ -167,11 +167,11 @@ public:
                             void* pProgressData );
     virtual CPLErr      GetGeoTransform( double* padfTransform );
     virtual CPLErr      SetGeoTransform( double* padfTransform );
-    virtual const char* GetProjectionRef( void );
+    virtual const char* GetProjectionRef();
     virtual CPLErr      SetProjection( const char* pszProjString );
     virtual char      **GetMetadataDomainList();
     virtual char**      GetMetadata( const char* pszDomain );
-    virtual void        FlushCache( void );
+    virtual void        FlushCache();
     virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag,
                             int nXOff, int nYOff, int nXSize, int nYSize,
                             void *pData, int nBufXSize, int nBufYSize,
@@ -313,17 +313,17 @@ private:
     bool                bInitializeIO;
     bool                bFlushMetadata;
 
-    void                InitializeLayersNode( void );
-    bool                InitializeIO( void );
+    void                InitializeLayersNode();
+    bool                InitializeIO();
     void                InitializeLevel( int nLevel );
-    bool                FlushMetadata( void );
+    bool                FlushMetadata();
 
-    void                LoadNoDataValues( void );
+    void                LoadNoDataValues();
 
     void                UnpackNBits( GByte* pabyData );
     void                PackNBits( GByte* pabyData );
-    unsigned long       CompressJpeg( void );
-    unsigned long       CompressDeflate( void );
+    unsigned long       CompressJpeg();
+    unsigned long       CompressDeflate();
     void                UncompressJpeg( unsigned long nBufferSize );
     bool                UncompressDeflate( unsigned long nBufferSize );
 
@@ -344,8 +344,8 @@ public:
                             char* pszDescription,
                             char* pszInsert,
                             bool bUpdate );
-    bool                Delete( void );
-    void                GetRasterInfo( void );
+    bool                Delete();
+    void                GetRasterInfo();
     bool                GetStatistics( int nBand,
                                        char* pszMin,
                                        char* pszMax,
@@ -398,7 +398,7 @@ public:
                             const char* pszResampling,
                             bool bInternal = false );
     bool                DeletePyramid();
-    void                PrepareToOverwrite( void );
+    void                PrepareToOverwrite();
     bool                InitializeMask( int nLevel,
                                                 int nBlockColumns,
                                                 int nBlockRows,

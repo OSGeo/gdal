@@ -101,7 +101,7 @@ class NITFDataset : public GDALPamDataset
     int          nQLevel;
 
     int          ScanJPEGQLevel( GUIntBig *pnDataStart );
-    CPLErr       ScanJPEGBlocks( void );
+    CPLErr       ScanJPEGBlocks();
     CPLErr       ReadJPEGBlock( int, int );
     void         CheckGeoSDEInfo();
     char**       AddFile(char **papszFileList, const char* EXTENSION, const char* extension);
@@ -142,7 +142,7 @@ class NITFDataset : public GDALPamDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg );
 
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
@@ -152,7 +152,7 @@ class NITFDataset : public GDALPamDataset
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
-    virtual char **GetFileList(void);
+    virtual char **GetFileList();
 
     virtual char      **GetMetadataDomainList();
     virtual char      **GetMetadata( const char * pszDomain = "" );

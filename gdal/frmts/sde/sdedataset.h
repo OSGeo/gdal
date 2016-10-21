@@ -19,7 +19,7 @@ class SDEDataset : public GDALDataset
         SE_RASCOLINFO       hRasterColumn;
 
 
-        CPLErr              ComputeRasterInfo(void);
+        CPLErr              ComputeRasterInfo();
         SE_RASBANDINFO*     paohSDERasterBands;
 
     public:
@@ -38,9 +38,9 @@ class SDEDataset : public GDALDataset
         char                *pszColumnName;
 
         virtual CPLErr  GetGeoTransform( double * padfTransform );
-        virtual int     GetRasterCount(void);
-        virtual int     GetRasterXSize(void);
-        virtual int     GetRasterYSize(void);
+        virtual int     GetRasterCount();
+        virtual int     GetRasterXSize();
+        virtual int     GetRasterYSize();
 
         const char *GetProjectionRef();
 };
