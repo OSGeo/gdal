@@ -1041,8 +1041,8 @@ char* OGR_G_ExportToJsonEx( OGRGeometryH hGeometry, char** papszOptions )
 
 static int OGR_json_double_with_precision_to_string( struct json_object *jso,
                                                      struct printbuf *pb,
-                                                     CPL_UNUSED int level,
-                                                     CPL_UNUSED int flags )
+                                                     int /* level */,
+                                                     int /* flags */)
 {
     // TODO(schwehr): Explain this casting.
     const int nPrecision =
@@ -1077,8 +1077,8 @@ json_object* json_object_new_double_with_precision(double dfVal,
 static int
 OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                                                     struct printbuf *pb,
-                                                    CPL_UNUSED int level,
-                                                    CPL_UNUSED int flags )
+                                                    int /* level */,
+                                                    int /* flags */)
 {
     char szBuffer[75] = {};
     int nSize = 0;
