@@ -863,6 +863,44 @@ def ogr_osm_15():
 
     return 'success'
 
+###############################################################################
+# Test laundering of tags (https://github.com/OSGeo/gdal/pull/161)
+
+def ogr_osm_16():
+
+    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_16.osm',
+"""<osm>
+  <node id="1" lat="2" lon="49">
+    <tag k="foo:baar" v="val"/>
+    <tag k="foo:bar" v="val2"/>
+  </node>
+</osm>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_16_conf.ini',
+"""#
+attribute_name_laundering=yes
+
+[points]
+attributes=foo:baar,foo:bar
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options = [ 'CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'] )
+    lyr = ds.GetLayerByName('points')
+    f = lyr.GetNextFeature()
+    if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_osm_16.osm')
+    gdal.Unlink('/vsimem/ogr_osm_16_conf.ini')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -883,6 +921,7 @@ gdaltest_list = [
     ogr_osm_13,
     ogr_osm_14,
     ogr_osm_15,
+    ogr_osm_16,
     ]
 
 if __name__ == '__main__':
