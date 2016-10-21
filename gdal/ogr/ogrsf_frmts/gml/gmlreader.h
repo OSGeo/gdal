@@ -306,7 +306,7 @@ class CPL_DLL IGMLReader
     virtual bool PrescanForSchema( bool bGetExtents = true,
                                   bool bAnalyzeSRSPerFeature = true,
                                   bool bOnlyDetectSRS = false ) = 0;
-    virtual bool PrescanForTemplate( void ) = 0;
+    virtual bool PrescanForTemplate() = 0;
 
     virtual bool HasStoppedParsing() = 0;
 

@@ -70,7 +70,7 @@ class GFSTemplateList
     GFSTemplateItem *Insert( const char *pszName );
 
   public:
-                    GFSTemplateList( void );
+                    GFSTemplateList();
                     ~GFSTemplateList();
     void            Update( const char *pszName, int bHasGeom );
     GFSTemplateItem *GetFirst() { return pFirst; }
@@ -483,7 +483,7 @@ public:
     bool             PrescanForSchema(bool bGetExtents = true,
                                       bool bAnalyzeSRSPerFeature = true,
                                       bool bOnlyDetectSRS = false );
-    bool             PrescanForTemplate( void );
+    bool             PrescanForTemplate();
     bool             ReArrangeTemplateClasses( GFSTemplateList *pCC );
     void             ResetReading();
 

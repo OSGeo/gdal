@@ -337,7 +337,7 @@ class CPL_DLL S57Reader
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
     OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = NULL );
     OGRFeature          *ReadVector( int nFID, int nRCNM );
-    OGRFeature          *ReadDSID( void );
+    OGRFeature          *ReadDSID();
 
     int                 GetNextFEIndex( int nRCNM = 100 );
     void                SetNextFEIndex( int nNewIndex, int nRCNM = 100 );

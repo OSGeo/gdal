@@ -116,7 +116,7 @@ class OGRSXFDataSource : public OGRDataSource
 
     VSILFILE* fpSXF;
     CPLMutex  *hIOMutex;
-    void FillLayers(void);
+    void FillLayers();
     void CreateLayers();
     void CreateLayers(VSILFILE* fpRSC);
     OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);

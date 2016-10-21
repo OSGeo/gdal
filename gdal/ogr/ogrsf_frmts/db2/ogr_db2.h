@@ -427,7 +427,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
     CPLString                   m_osDescriptionLCO;
     int                         m_bHasReadMetadataFromStorage;
     OGRErr              RegisterGeometryColumn();
-    void                BuildWhere(void);
+    void                BuildWhere();
 //    OGRErr              SyncToDisk();
 
     OGRErr              BindFieldValue(OGRDB2Statement *poStatement,

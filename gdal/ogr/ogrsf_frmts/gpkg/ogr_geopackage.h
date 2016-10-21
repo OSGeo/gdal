@@ -328,7 +328,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 
     virtual OGRErr      ResetStatement();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
     OGRErr              RegisterGeometryColumn();
 
     CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields);
