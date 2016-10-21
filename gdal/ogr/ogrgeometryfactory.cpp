@@ -2839,7 +2839,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     dfEndAngle *= -1;
 
     // Figure out the number of slices to make this into.
-    const int nVertexCount = MAX(2.0, static_cast<int>(
+    const int nVertexCount = MAX(2, static_cast<int>(
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1));
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
