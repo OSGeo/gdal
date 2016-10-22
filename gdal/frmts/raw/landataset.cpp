@@ -180,7 +180,7 @@ LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDSIn, int nBandIn ) :
     nBand = nBandIn;
     eDataType = GDT_Byte;
 
-    nBlockXSize = poDSIn->GetRasterXSize();;
+    nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
 }
 

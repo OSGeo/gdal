@@ -48,7 +48,7 @@ using kmldom::HotSpotPtr;
 using kmldom::ItemIconPtr;
 using kmldom::IconStyleIconPtr;
 using kmldom::IconStylePtr;
-using kmldom::KmlFactory;;
+using kmldom::KmlFactory;
 using kmldom::KmlPtr;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;

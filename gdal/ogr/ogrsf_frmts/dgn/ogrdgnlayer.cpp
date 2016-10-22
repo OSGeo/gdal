@@ -675,7 +675,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           }
 
           // Try to assemble into polygon geometry.
-          OGRGeometry *poGeom = NULL;;
+          OGRGeometry *poGeom = NULL;
 
           if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
               poGeom = reinterpret_cast<OGRPolygon *>(

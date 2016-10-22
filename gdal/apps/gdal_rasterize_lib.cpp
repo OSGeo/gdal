@@ -1094,7 +1094,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-tap option cannot be used without using -tr.");
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;;
+            return NULL;
         }
 
         if( psOptions->anBandList.size() != 0 )

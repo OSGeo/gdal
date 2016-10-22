@@ -1377,7 +1377,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                             && oStatement2.Fetch() )
                     {
                         if ( oStatement2.GetColData( 0 ) )
-                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));;
+                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));
                     }
                 }
                 if (nSRId < 0) { // something went wrong - didn't find srid - use default

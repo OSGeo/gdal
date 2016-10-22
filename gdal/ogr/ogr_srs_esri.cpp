@@ -1362,7 +1362,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 
         const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
 
-        const double dfInvFlattening = GetInvFlattening();;
+        const double dfInvFlattening = GetInvFlattening();
         double e2 = 0.0;
         if( dfInvFlattening != 0.0 )
         {

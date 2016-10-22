@@ -99,7 +99,7 @@ FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn )
   poDS = poDSIn;
   nBand = nBandIn;
   eDataType = poDSIn->gdalDataType;
-  nBlockXSize = poDSIn->nRasterXSize;;
+  nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
 

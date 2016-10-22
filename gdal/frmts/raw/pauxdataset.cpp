@@ -921,7 +921,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     char *pszAuxFilename = static_cast<char *>(
         CPLMalloc( strlen( pszFilename ) + 5 ) );
-    strcpy( pszAuxFilename, pszFilename );;
+    strcpy( pszAuxFilename, pszFilename );
 
     for( int i = static_cast<int>(strlen(pszAuxFilename))-1; i > 0; i-- )
     {

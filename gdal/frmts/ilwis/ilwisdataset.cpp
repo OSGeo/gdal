@@ -279,7 +279,7 @@ string ReadElement(string section, string entry, string filename)
 
     IniFile MyIniFile (filename);
 
-    return MyIniFile.GetKeyValue(section, entry);;
+    return MyIniFile.GetKeyValue(section, entry);
 }
 
 bool WriteElement(string sSection, string sEntry,

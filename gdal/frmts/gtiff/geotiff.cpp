@@ -5144,7 +5144,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
     poGDS->bNoDataChanged = true;
 
     bNoDataSet = false;
-    dfNoDataValue = -9999.0;;
+    dfNoDataValue = -9999.0;
     return CE_None;
 }
 

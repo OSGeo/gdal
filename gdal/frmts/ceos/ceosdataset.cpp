@@ -198,7 +198,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = psCEOS->nBands;;
+    poDS->nBands = psCEOS->nBands;
 
     for( int i = 0; i < poDS->nBands; i++ )
         poDS->SetBand( i+1, new CEOSRasterBand( poDS, i+1 ) );

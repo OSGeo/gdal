@@ -187,7 +187,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         dfNoData = -12345.0;
     }
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
     hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset);

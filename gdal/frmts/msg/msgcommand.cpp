@@ -446,7 +446,7 @@ std::string MSGCommand::sCycle(int iCycle)
 std::string MSGCommand::sFileName(int iSatellite, int iSequence, int iStrip)
 {
   int iNr = iNrChannels();
-  int iChannelNumber = 1 + (iSequence - 1) % iNr;;
+  int iChannelNumber = 1 + (iSequence - 1) % iNr;
   int iCycle = 1 + (iSequence - 1) / iNr;
   char sRet [4096];
   std::string siThCycle (sCycle(iCycle));

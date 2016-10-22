@@ -423,7 +423,7 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
     pszBase[nNull - 1] = '\0';
     free(pszBaseName);
 
-    char *psChan = strstr(pszBase,"hh");;
+    char *psChan = strstr(pszBase,"hh");
     if( psChan == NULL )
     {
         psChan = strstr(pszBase, "hv");
