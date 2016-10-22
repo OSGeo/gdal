@@ -530,7 +530,8 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
             CSLDestroy( papszTokens );
             return FALSE;
         }
-        dfCellDX = dfCellDY = CPLAtofM( papszTokens[i + 1] );
+        dfCellDY = CPLAtofM( papszTokens[i + 1] );
+        dfCellDX = dfCellDY;
     }
 
     int j = 0;
@@ -548,7 +549,8 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
             dfCellDX == dfCellDY &&
             fabs(dfCellDX - (360.0 / nRasterXSize)) < 1e-9)
         {
-            dfCellDX = dfCellDY = 360.0 / nRasterXSize;
+            dfCellDY = 360.0 / nRasterXSize;
+            dfCellDX = dfCellDY;
         }
 
         adfGeoTransform[1] = dfCellDX;

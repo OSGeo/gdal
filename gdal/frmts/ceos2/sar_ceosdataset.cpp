@@ -2165,7 +2165,8 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
             record->Subsequence = ++CurrentSequence;
         else {
             CurrentType = record->TypeCode.Int32Code;
-            record->Subsequence = CurrentSequence = 0;
+            record->Subsequence = 0;
+            CurrentSequence = 0;
         }
 
         record->FileId = fileid;

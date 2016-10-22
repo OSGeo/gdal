@@ -275,7 +275,8 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 /* -------------------------------------------------------------------- */
 /*      Otherwise create it now.                                        */
 /* -------------------------------------------------------------------- */
-    HFAInfo_t *psDep = psBase->psDependent = HFACreateLL( oRRDFilename );
+    HFAInfo_t *psDep = HFACreateLL( oRRDFilename );
+    psBase->psDependent = psDep;
     if( psDep == NULL )
         return NULL;
 
@@ -2010,12 +2011,14 @@ CPLErr HFAFlush( HFAHandle hHFA )
         bRet &= VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp ) > 0;
         HFAStandard( 4, &nHeaderPos );
 
-        GUInt32 nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
+        GUInt32 nOffset = hHFA->poRoot->GetFilePos();
+        hHFA->nRootPos = nOffset;
         HFAStandard( 4, &nOffset );
         bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET ) >= 0;
         bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
 
-        nOffset = hHFA->nDictionaryPos = nNewDictionaryPos;
+        nOffset = nNewDictionaryPos;
+        hHFA->nDictionaryPos = nNewDictionaryPos;
         HFAStandard( 4, &nOffset );
         bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+14, SEEK_SET ) >= 0;
         bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
@@ -2317,7 +2320,8 @@ HFAHandle HFACreate( const char * pszFilename,
         || CPLFetchBool(papszOptions, "COMPRESSED", false);
     const bool bCreateAux = CPLFetchBool(papszOptions, "AUX", false);
 
-    char *pszFullFilename = NULL, *pszRawFilename = NULL;
+    char *pszFullFilename = NULL;
+    char *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the low level structure.                                 */

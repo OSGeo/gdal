@@ -500,7 +500,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             else if( nCharsRead > static_cast<size_t>(szEnd - szStart) )
             {
                 /* Read new data, this was not really the end */
-                szEnd = szStart = szLineBuf;
+                szStart = szLineBuf;
+                szEnd = szLineBuf;
                 continue;
             }
 

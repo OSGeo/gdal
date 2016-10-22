@@ -865,16 +865,19 @@ EpsilonDatasetCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Iterate over blocks                                             */
 /* -------------------------------------------------------------------- */
 
-    int nBlockXOff, nBlockYOff;
+    int nBlockXOff;
+    int nBlockYOff;
     CPLErr eErr = CE_None;
-    for(nBlockYOff = 0;
-        eErr == CE_None && nBlockYOff < nYBlocks; nBlockYOff ++)
+    for( nBlockYOff = 0;
+         eErr == CE_None && nBlockYOff < nYBlocks;
+         nBlockYOff++ )
     {
         for(nBlockXOff = 0;
             eErr == CE_None && nBlockXOff < nXBlocks; nBlockXOff ++)
         {
             int bMustMemset = FALSE;
-            int nReqXSize = nBlockXSize, nReqYSize = nBlockYSize;
+            int nReqXSize = nBlockXSize;
+            int nReqYSize = nBlockYSize;
             if ((nBlockXOff+1) * nBlockXSize > nXSize)
             {
                 bMustMemset = TRUE;

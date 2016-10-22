@@ -299,9 +299,10 @@ void EnvisatDataset::ScanForGCPs_ASAR()
 /* -------------------------------------------------------------------- */
 /*      Collect the first GCP set from each record.                     */
 /* -------------------------------------------------------------------- */
-    GByte       abyRecord[521];
-    int         nRange=0, nRangeOffset=0;
-    GUInt32     unValue;
+    GByte abyRecord[521];
+    int nRange = 0;
+    int nRangeOffset = 0;
+    GUInt32 unValue;
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),(nNumDSR+1) * 11);

@@ -787,10 +787,16 @@ CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform )
 bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
                               char **mapset, char **element, char **name )
 {
-    char *p, *ptr[5], *tmp;
-    int  i = 0;
+    char *p;
+    char *ptr[5];
+    char *tmp;
+    int i = 0;
 
-    *gisdbase = *location = *mapset = *element = *name = NULL;
+    *gisdbase = NULL;
+    *location = NULL;
+    *mapset = NULL;
+    *element = NULL;
+    *name = NULL;
 
     if ( !path || strlen(path) == 0 )
         return false;
