@@ -5242,10 +5242,10 @@ int OGRPreparedGeometryContains( UNUSED_IF_NO_GEOS const OGRPreparedGeometry* po
 /************************************************************************/
 
 /* Flags for creating WKB format for PostGIS */
-#define WKBZOFFSET 0x80000000
-#define WKBMOFFSET 0x40000000
+// #define WKBZOFFSET 0x80000000
+// #define WKBMOFFSET 0x40000000
 #define WKBSRIDFLAG 0x20000000
-#define WKBBBOXFLAG 0x10000000
+// #define WKBBBOXFLAG 0x10000000
 
 OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
                                   int bIsPostGIS1_EWKB )

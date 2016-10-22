@@ -49,7 +49,7 @@ struct timezone
 };
 #endif
 
-#define MICROSEC_IN_SEC   1000000
+static const int MICROSEC_IN_SEC = 1000000;
 
 static
 int OGR_gettimeofday( struct timeval *tv, struct timezone * /* tzIgnored */ )

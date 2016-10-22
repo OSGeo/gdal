@@ -285,19 +285,20 @@ static const int anUsgsEsriZones[] =
 /*      Datum Mapping functions and definitions                         */
 /* -------------------------------------------------------------------- */
 /* TODO adapt existing code and test */
-#define DM_IDX_EPSG_CODE            0
-#define DM_IDX_ESRI_NAME            1
-#define DM_IDX_EPSG_NAME            2
-#define DM_ELT_SIZE                 3
+#define DM_IDX_EPSG_CODE 0
+#define DM_IDX_ESRI_NAME 1
+#define DM_IDX_EPSG_NAME 2
+#define DM_ELT_SIZE      3
 
-#define DM_GET_EPSG_CODE(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_CODE]
-#define DM_GET_ESRI_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
-#define DM_GET_EPSG_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_NAME]
+#define DM_GET_EPSG_CODE(map, i) map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_CODE]
+#define DM_GET_ESRI_NAME(map, i) map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
 
-static char *DMGetEPSGCode(int i) { return DM_GET_EPSG_CODE(papszDatumMapping, i); }
-static char *DMGetESRIName(int i) { return DM_GET_ESRI_NAME(papszDatumMapping, i); }
-/* static char *DMGetEPSGName(int i) { return DM_GET_EPSG_NAME(papszDatumMapping, i); } */
-
+static char *DMGetEPSGCode( int i ) {
+    return DM_GET_EPSG_CODE(papszDatumMapping, i);
+}
+static char *DMGetESRIName( int i ) {
+    return DM_GET_ESRI_NAME(papszDatumMapping, i);
+}
 
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */

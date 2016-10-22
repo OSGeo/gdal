@@ -1750,10 +1750,11 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 /*                      OGRFeatureFormatDateTimeBuffer()                */
 /************************************************************************/
 
-#define TEMP_BUFFER_SIZE 80
+static const int TEMP_BUFFER_SIZE = 80;
 static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
                                            int nYear, int nMonth, int nDay,
-                                           int nHour, int nMinute, float fSecond,
+                                           int nHour, int nMinute,
+                                           float fSecond,
                                            int nTZFlag )
 {
     int ms = OGR_GET_MS(fSecond);
@@ -1793,10 +1794,11 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
 
         if( nMinutes == 0 )
             snprintf( szTempBuffer+strlen(szTempBuffer),
-                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
+                      TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d", nHours );
         else
             snprintf( szTempBuffer+strlen(szTempBuffer),
-                    TEMP_BUFFER_SIZE-strlen(szTempBuffer), "%02d%02d", nHours, nMinutes );
+                      TEMP_BUFFER_SIZE-strlen(szTempBuffer),
+                      "%02d%02d", nHours, nMinutes );
     }
 }
 
@@ -1836,7 +1838,7 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-    char         szTempBuffer[TEMP_BUFFER_SIZE];
+    char szTempBuffer[TEMP_BUFFER_SIZE] = {};
 
     CPLFree(m_pszTmpFieldValue);
     m_pszTmpFieldValue = NULL;
@@ -4234,7 +4236,7 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
     }
     else if( eType == OFTString || eType == OFTStringList )
     {
-        char szTempBuffer[TEMP_BUFFER_SIZE];
+        char szTempBuffer[TEMP_BUFFER_SIZE] = {};
         OGRFeatureFormatDateTimeBuffer(szTempBuffer,
                                        nYear,
                                        nMonth,
