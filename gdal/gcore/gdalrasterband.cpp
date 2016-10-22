@@ -61,10 +61,12 @@ void GDALRasterBand::Init(int bForceCachedIOIn)
 {
     poDS = NULL;
     nBand = 0;
-    nRasterXSize = nRasterYSize = 0;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
 
     eAccess = GA_ReadOnly;
-    nBlockXSize = nBlockYSize = -1;
+    nBlockXSize = -1;
+    nBlockYSize = -1;
     eDataType = GDT_Byte;
 
     nBlocksPerRow = 0;

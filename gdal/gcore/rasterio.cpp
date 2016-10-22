@@ -3300,12 +3300,17 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 {
     CPLAssert( NULL != pData );
 
-    GByte      **papabySrcBlock = NULL;
+    GByte **papabySrcBlock = NULL;
     GDALRasterBlock *poBlock = NULL;
     GDALRasterBlock **papoBlocks = NULL;
-    int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
-    int         nBlockXSize=1, nBlockYSize=1;
-    CPLErr      eErr = CE_None;
+    int nLBlockX = -1;
+    int nLBlockY = -1;
+    int iBufYOff;
+    int iBufXOff;
+    int iSrcY;
+    int nBlockXSize = 1;
+    int nBlockYSize = 1;
+    CPLErr eErr = CE_None;
     GDALDataType eDataType = GDT_Byte;
 
 /* -------------------------------------------------------------------- */

@@ -5058,7 +5058,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
 /*      Add column.                                                     */
 /* -------------------------------------------------------------------- */
 
-    int nWidth = 0, nPrecision = 0;
+    int nWidth = 0;
+    int nPrecision = 0;
     OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
     OGRFieldDefn oFieldDefn(pszColumnName, eType);
     oFieldDefn.SetWidth(nWidth);
@@ -5352,7 +5353,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
     OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
     OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
 
-    int nWidth = 0, nPrecision = 0;
+    int nWidth = 0;
+    int nPrecision = 0;
     OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
     oNewFieldDefn.SetType(eType);
     oNewFieldDefn.SetWidth(nWidth);

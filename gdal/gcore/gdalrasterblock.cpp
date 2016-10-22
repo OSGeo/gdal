@@ -584,7 +584,8 @@ void GDALRasterBlock::RecycleFor( int nXOffIn, int nYOffIn )
     bDirty = false;
     nLockCount = 0;
 
-    poNext = poPrevious = NULL;
+    poNext = NULL;
+    poPrevious = NULL;
 
     nXOff = nXOffIn;
     nYOff = nYOffIn;
