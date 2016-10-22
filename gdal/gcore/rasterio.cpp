@@ -1300,7 +1300,7 @@ CPLErr GDALDataset::RasterIOResampled(
             CPLMalloc( nBandCount * sizeof(GDALRasterBand*)) );
     for(int i=0;i<nBandCount;i++)
     {
-        char szBuffer[64] = { '\0' };;
+        char szBuffer[64] = { '\0' };
         int nRet = CPLPrintPointer(
             szBuffer,
             static_cast<GByte*>(pData) - nPixelSpace * nDestXOffVirtual

@@ -425,7 +425,7 @@ template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( 
     }
     else
     {
-        dfBottom = dfLoLeft;;
+        dfBottom = dfLoLeft;
         dfRight = dfUpRight;
     }
 

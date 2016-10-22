@@ -199,7 +199,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         if ( iLine == nLines )    /* Try to guess the UTM zone */
         {
             float fMinLongitude = 1000.0f;
-            float fMaxLongitude = -1000.0f;;
+            float fMaxLongitude = -1000.0f;
             float fMinLatitude = 1000.0f;
             float fMaxLatitude = -1000.0f;
             bool bFoundMMPLL = false;

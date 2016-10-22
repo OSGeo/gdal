@@ -721,7 +721,7 @@ static const char* FileGDBSQLOpToStr(FileGDBSQLOp op)
     switch( op )
     {
         case FGSO_ISNOTNULL : return "IS NOT NULL";
-        case FGSO_LT: return "<";;
+        case FGSO_LT: return "<";
         case FGSO_LE: return "<=";
         case FGSO_EQ: return "=";
         case FGSO_GE: return ">=";

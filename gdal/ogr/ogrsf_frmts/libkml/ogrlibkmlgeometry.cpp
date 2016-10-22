@@ -275,7 +275,7 @@ ElementPtr geom2kml(
         /***** Check if its a wkbLinearRing *****/
         if( extra < 0 )
         {
-            LineStringPtr poKmlLineString = poKmlFactory->CreateLineString();;
+            LineStringPtr poKmlLineString = poKmlFactory->CreateLineString();
             poKmlGeometry = poKmlLineString;
             poKmlLineString->set_coordinates( coordinates );
 

@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 
 using kmldom::FeaturePtr;
 using kmldom::IconStylePtr;
-using kmldom::KmlFactory;;
+using kmldom::KmlFactory;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;
 using kmldom::PolyStylePtr;

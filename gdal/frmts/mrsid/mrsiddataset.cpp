@@ -2293,7 +2293,7 @@ void MrSIDDataset::FetchProjParms()
         /* notdef: should transform to decimal degrees at this point */
 
         psDefn->ProjParm[0] = dfNatOriginLat;
-        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;;
+        psDefn->ProjParmId[0] = ProjNatOriginLatGeoKey;
         psDefn->ProjParm[1] = dfNatOriginLong;
         psDefn->ProjParmId[1] = ProjStraightVertPoleLongGeoKey;
         psDefn->ProjParm[4] = dfNatOriginScale;

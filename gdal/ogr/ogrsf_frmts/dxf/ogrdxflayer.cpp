@@ -1483,7 +1483,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
-    double dfZ1 = 0.0;;
+    double dfZ1 = 0.0;
     double dfRadius = 0.0;
     double dfStartAngle = 0.0;
     double dfEndAngle = 360.0;

@@ -294,7 +294,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         nativeNulls = true;
     }
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
     G_set_window( &(((GRASSDataset *)poDS)->sCellInfo) );

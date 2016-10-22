@@ -648,7 +648,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = nBands;;
+    poDS->nBands = nBands;
     for( int i = 0; i < poDS->nBands; i++ )
     {
         RawRasterBand *poBand =

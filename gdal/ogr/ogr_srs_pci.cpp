@@ -457,9 +457,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( STARTS_WITH_CI(pszProj, "UTM") )
     {
-        int     iZone, bNorth = TRUE;
+        int bNorth = TRUE;
 
-        iZone = (int)CPLScanLong( (char *)pszProj + 4, 5 );;
+        int iZone = (int)CPLScanLong( (char *)pszProj + 4, 5 );
         if ( iZone < 0 )
         {
             iZone = -iZone;

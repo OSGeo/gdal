@@ -53,7 +53,7 @@ static bool IsValidXMLFile( const char *pszPath, const char *pszLut)
 
     CPLFree(pszLutFile);
 
-    return psLut.get() != NULL;;
+    return psLut.get() != NULL;
 }
 
 /************************************************************************/

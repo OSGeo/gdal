@@ -212,7 +212,7 @@ int FGdbLayer::EditIndexesForFIDHack(const char* pszRadixTablename)
         return FALSE;
     }
 
-    CPLString osDirectory(CPLGetPath(pszRadixTablename));;
+    CPLString osDirectory(CPLGetPath(pszRadixTablename));
     char** papszFiles = VSIReadDir(osDirectory);
     CPLString osBasename(CPLGetBasename(pszRadixTablename));
     int bRet = TRUE;

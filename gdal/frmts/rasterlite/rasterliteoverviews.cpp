@@ -174,7 +174,7 @@ CPLErr RasterliteDataset::CleanOverviews()
     if (nLevel != 0)
         return CE_Failure;
 
-    CPLString osSQL("BEGIN");;
+    CPLString osSQL("BEGIN");
     OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
 
     const CPLString osResolutionCond =
