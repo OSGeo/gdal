@@ -436,7 +436,8 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
 /*      Process bands.                                                  */
 /* -------------------------------------------------------------------- */
     for( CPLXMLNode *psBandTree = psTree->psChild;
-         psBandTree != NULL; psBandTree = psBandTree->psNext )
+         psBandTree != NULL;
+         psBandTree = psBandTree->psNext )
     {
         if( psBandTree->eType != CXT_Element
             || !EQUAL(psBandTree->pszValue,"PAMRasterBand") )

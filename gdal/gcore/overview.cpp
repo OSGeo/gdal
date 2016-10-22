@@ -960,7 +960,8 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                 // of compatibility. It won't look right on RGB images by the
                 // nature of the filter.
                 int nNumPx = (nSrcYOff2-nSrcYOff)*(nSrcXOff2-nSrcXOff);
-                int iMaxInd = 0, iMaxVal = -1;
+                int iMaxInd = 0;
+                int iMaxVal = -1;
 
                 if( pafVals == NULL || nNumPx > nMaxNumPx )
                 {
@@ -1764,7 +1765,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         double dfY = dfYScaleWeight * (nSrcLine - dfSrcLine + 0.5);
         for( ;
              nSrcLine + 3 < nSrcLineStop;
-             nSrcLine+=4, dfY += 4 * dfYScaleWeight)
+             nSrcLine += 4, dfY += 4 * dfYScaleWeight)
         {
             padfWeights[nSrcLine - nSrcLineStart] = dfY;
             padfWeights[nSrcLine+1 - nSrcLineStart] = dfY + dfYScaleWeight;
@@ -2110,7 +2111,8 @@ GDALResampleChunkC32R( int nSrcWidth, int nSrcHeight,
             }
             else if( STARTS_WITH_CI(pszResampling, "AVER") )
             {
-                double dfTotalR = 0.0, dfTotalI = 0.0;
+                double dfTotalR = 0.0;
+                double dfTotalI = 0.0;
                 int nCount = 0;
 
                 for( int iY = nSrcYOff; iY < nSrcYOff2; ++iY )

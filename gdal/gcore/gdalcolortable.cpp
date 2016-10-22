@@ -214,8 +214,7 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
     {
         if( i >= static_cast<int>(aoEntries.size()) )
         {
-            GDALColorEntry oBlack;
-            oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
+            GDALColorEntry oBlack = { 0, 0, 0, 0 };
             aoEntries.resize(i+1, oBlack);
         }
 
