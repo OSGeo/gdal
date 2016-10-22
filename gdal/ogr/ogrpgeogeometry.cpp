@@ -38,14 +38,13 @@
 
 CPL_CVSID("$Id$");
 
-#define SHPP_TRISTRIP   0
-#define SHPP_TRIFAN     1
-#define SHPP_OUTERRING  2
-#define SHPP_INNERRING  3
-#define SHPP_FIRSTRING  4
-#define SHPP_RING       5
-#define SHPP_TRIANGLES  6 /* Multipatch 9.0 specific */
-
+static const int SHPP_TRISTRIP  = 0;
+static const int SHPP_TRIFAN    = 1;
+static const int SHPP_OUTERRING = 2;
+static const int SHPP_INNERRING = 3;
+static const int SHPP_FIRSTRING = 4;
+static const int SHPP_RING      = 5;
+static const int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
 
 typedef enum
 {

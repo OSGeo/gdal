@@ -2306,8 +2306,6 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
 /*                SplitLineStringAtDateline()                           */
 /************************************************************************/
 
-#define SWAP_DBL(a,b) do { double tmp = a; a = b; b = tmp; } while(0)
-
 static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                                       const OGRLineString* poLS,
                                       double dfDateLineOffset)

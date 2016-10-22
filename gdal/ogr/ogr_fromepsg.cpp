@@ -1380,8 +1380,7 @@ static double OGR_FetchParm( double *padfProjParms,
     return dfResult;
 }
 
-#define OGR_FP(x) OGR_FetchParm( adfProjParms, anParmIds, (x), \
-                                 dfFromGreenwich )
+#define OGR_FP(x) OGR_FetchParm(adfProjParms, anParmIds, (x), dfFromGreenwich)
 
 /************************************************************************/
 /*                           SetEPSGProjCS()                            */
