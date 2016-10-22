@@ -463,7 +463,10 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL(fp, 28, SEEK_SET);
 
     int bHasExtent = FALSE;
-    double dfMinX = 0, dfMaxX = 0, dfMinY = 0, dfMaxY = 0;
+    double dfMinX = 0.0;
+    double dfMaxX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxY = 0.0;
     int bHasUTMZone = FALSE;
     GInt16 nUTMZone = 0;
     int bHasEPSGDatumCode = FALSE;
@@ -471,7 +474,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int bHasEPSGCode = FALSE;
     GInt16 nEPSGCode = 0;
     int bHasRelativePrecision = FALSE;
-    float fRelativePrecision = 0;
+    float fRelativePrecision = 0.0f;
     char szApplicationName[256];
     szApplicationName[0] = 0;
 

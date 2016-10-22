@@ -356,8 +356,10 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               aiEdges[3] = 1;
               aiStart[2] = 0;  // range: 0--aiDimSizes[2]-1
               aiEdges[2] = 1;
-              aiStart[1] = nYOff; aiEdges[1] = nYSize;
-              aiStart[0] = nBlockXOff; aiEdges[0] = nBlockXSize;
+              aiStart[1] = nYOff;
+              aiEdges[1] = nYSize;
+              aiStart[0] = nBlockXOff;
+              aiEdges[0] = nBlockXSize;
               break;
             case 3: // 3Dim: volume
               aiStart[poGDS->iBandDim] = nBand - 1;
@@ -2013,8 +2015,10 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
     if( iXIndex == -1 || iYIndex == -1 )
         return;
 
-    int nPixelOffset = 0, nLineOffset = 0;
-    int nPixelStep = 1, nLineStep = 1;
+    int nPixelOffset = 0;
+    int nLineOffset = 0;
+    int nPixelStep = 1;
+    int nLineStep = 1;
     if( nLongitudeWidth != nLatitudeWidth ||
         nLongitudeHeight != nLatitudeHeight )
     {

@@ -268,7 +268,10 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 /*      (0 to 360).                                                     */
 /* -------------------------------------------------------------------- */
     /* Following inits are useless but keep GCC happy */
-    double dfX_PM_Min = 0, dfX_PM_Max = 0, dfX_Dateline_Min = 0, dfX_Dateline_Max = 0;
+    double dfX_PM_Min = 0.0;
+    double dfX_PM_Max = 0.0;
+    double dfX_Dateline_Min = 0.0;
+    double dfX_Dateline_Max = 0.0;
 
     for( int i = 0; i < nPointCount; i++ )
     {
@@ -282,8 +285,10 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
 
         if( i == 0 )
         {
-            dfX_PM_Min = dfX_PM_Max = dfX_PM;
-            dfX_Dateline_Min = dfX_Dateline_Max = dfX_Dateline;
+            dfX_PM_Min = dfX_PM;
+            dfX_PM_Max = dfX_PM;
+            dfX_Dateline_Min = dfX_Dateline;
+            dfX_Dateline_Max = dfX_Dateline;
         }
         else
         {
@@ -388,7 +393,8 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect coordinate system related parameters from header.       */
 /* -------------------------------------------------------------------- */
-    const char *pszKNP=NULL, *pszKNQ=NULL;
+    const char *pszKNP=NULL;
+    const char *pszKNQ=NULL;
 
     for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
     {
@@ -1005,7 +1011,8 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     while( nPCTSize > 128 )
     {
         int nBestRange = 768;
-        int iBestMatch1=-1, iBestMatch2=-1;
+        int iBestMatch1 = -1;
+        int iBestMatch2 = -1;
 
         // Find the closest pair of color table entries.
 

@@ -716,7 +716,8 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /*      The ECW SDK doesn't supersample, so adjust for this case.       */
 /* -------------------------------------------------------------------- */
 
-    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
+    int nNewXSize = nBufXSize;
+    int nNewYSize = nBufYSize;
 
     if ( nXSize < nBufXSize )
         nNewXSize = nXSize;

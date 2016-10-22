@@ -895,8 +895,12 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     int    bHasNoDataValue = FALSE;
     double dfNoDataValue = 0.0;
-    double dfMin = 0.0, dfMax = 0.0, dfStdDev = 0.0, dfMean = 0.0;
-    double dfMedian = 0.0, dfMode = 0.0;
+    double dfMin = 0.0;
+    double dfMax = 0.0;
+    double dfStdDev = 0.0;
+    double dfMean = 0.0;
+    double dfMedian = 0.0;
+    double dfMode = 0.0;
     int    iBand = 0;
 
     for( iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++ )
@@ -1451,7 +1455,8 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
     // Try to extract EPGS authority code
     // --------------------------------------------------------------------
 
-    const char *pszAuthName = NULL, *pszAuthCode = NULL;
+    const char *pszAuthName = NULL;
+    const char *pszAuthCode = NULL;
 
     if( oSRS.IsGeographic() )
     {

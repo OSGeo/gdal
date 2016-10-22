@@ -288,7 +288,8 @@ CPLErr HFABand::LoadOverviews()
                 papoOverviews[nOverviews-1] = new HFABand( psOvHFA, poChild );
                 if( papoOverviews[nOverviews-1]->nWidth == 0 )
                 {
-                    nWidth = nHeight = 0;
+                    nWidth = 0;
+                    nWidth = 0;
                     delete papoOverviews[nOverviews-1];
                     papoOverviews[nOverviews-1] = NULL;
                     return CE_None;
@@ -2143,7 +2144,8 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /* -------------------------------------------------------------------- */
     bool bCreateLargeRaster = CPLTestBool(
         CPLGetConfigOption("USE_SPILL", "NO") );
-    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+    GIntBig nValidFlagsOffset = 0;
+    GIntBig nDataOffset = 0;
 
     if( (psRRDInfo->nEndOfFile
          + (nOXSize * static_cast<double>(nOYSize))

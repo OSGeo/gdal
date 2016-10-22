@@ -2121,7 +2121,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
                &nRasterXSize, &nRasterYSize,
                &nBlockXSize, &nBlockYSize, &eHFADataTypeO ) != CE_None )
         {
-            nRasterXSize = nRasterYSize = 0;
+            nRasterXSize = 0;
+            nRasterYSize = 0;
             return;
         }
 

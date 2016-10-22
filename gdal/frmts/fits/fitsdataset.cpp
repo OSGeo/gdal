@@ -410,7 +410,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   char key[100];
   char value[100];
 
-  int nKeys = 0, nMoreKeys = 0;
+  int nKeys = 0;
+  int nMoreKeys = 0;
   fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {

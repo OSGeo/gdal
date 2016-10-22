@@ -1058,15 +1058,18 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
           if( nIndexValue == -3 )
           {
-              dfDoubleRet = nIntRet = nBaseItemType;
+              dfDoubleRet = nBaseItemType;
+              nIntRet = nBaseItemType;
           }
           else if( nIndexValue == -2 )
           {
-              dfDoubleRet = nIntRet = nColumns;
+              dfDoubleRet = nColumns;
+              nIntRet = nColumns;
           }
           else if( nIndexValue == -1 )
           {
-              dfDoubleRet = nIntRet = nRows;
+              dfDoubleRet = nRows;
+              nIntRet = nRows;
           }
           else if( nBaseItemType == EPT_u1 )
           {
