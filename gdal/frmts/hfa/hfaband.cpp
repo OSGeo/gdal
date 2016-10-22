@@ -289,7 +289,7 @@ CPLErr HFABand::LoadOverviews()
                 if( papoOverviews[nOverviews-1]->nWidth == 0 )
                 {
                     nWidth = 0;
-                    nWidth = 0;
+                    nHeight = 0;
                     delete papoOverviews[nOverviews-1];
                     papoOverviews[nOverviews-1] = NULL;
                     return CE_None;
@@ -876,7 +876,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 #if DEBUG_VERBOSE
                 // TODO(schwehr): Do something smarter with out-of-range data.
                 // Bad data can trigger this assert.  r23498
-                CPLAssert( nDataValue < 256 );
+                CPLAssert(nDataValue < 256);
 #endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
@@ -901,8 +901,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 #if DEBUG_VERBOSE
                 // TODO(schwehr): Do something smarter with out-of-range data.
                 // Bad data can trigger this assert.  r23498
-                CPLAssert( nDataValue >= -127 );
-                CPLAssert( nDataValue < 128 );
+                CPLAssert(nDataValue >= -127);
+                CPLAssert(nDataValue < 128);
 #endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
