@@ -632,25 +632,20 @@ OGRCurve* OGRCurveCollection::stealCurve( int i )
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr  OGRCurveCollection::transform( OGRGeometry* poGeom,
-                                       OGRCoordinateTransformation *poCT )
+OGRErr OGRCurveCollection::transform( OGRGeometry* poGeom,
+                                      OGRCoordinateTransformation *poCT )
 {
-#ifdef DISABLE_OGRGEOM_TRANSFORM
-    return OGRERR_FAILURE;
-#else
     for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
-        OGRErr  eErr;
-
-        eErr = papoCurves[iGeom]->transform( poCT );
+        const OGRErr eErr = papoCurves[iGeom]->transform( poCT );
         if( eErr != OGRERR_NONE )
         {
             if( iGeom != 0 )
             {
                 CPLDebug("OGR",
-                         "OGRCurveCollection::transform() failed for a geometry other\n"
-                         "than the first, meaning some geometries are transformed\n"
-                         "and some are not!\n" );
+                         "OGRCurveCollection::transform() failed for a "
+                         "geometry other than the first, meaning some "
+                         "geometries are transformed and some are not!" );
 
                 return OGRERR_FAILURE;
             }
@@ -662,7 +657,6 @@ OGRErr  OGRCurveCollection::transform( OGRGeometry* poGeom,
     poGeom->assignSpatialReference( poCT->GetTargetCS() );
 
     return OGRERR_NONE;
-#endif
 }
 
 /************************************************************************/

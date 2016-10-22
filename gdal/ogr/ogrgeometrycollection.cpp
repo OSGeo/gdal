@@ -1039,15 +1039,9 @@ OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
 OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
 
 {
-    // TODO(schwehr): Explain DISABLE_OGRGEOM_TRANSFORM from r2608 or remove it.
-#ifdef DISABLE_OGRGEOM_TRANSFORM
-    return OGRERR_FAILURE;
-#else
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        OGRErr  eErr;
-
-        eErr = papoGeoms[iGeom]->transform( poCT );
+        OGRErr eErr = papoGeoms[iGeom]->transform( poCT );
         if( eErr != OGRERR_NONE )
         {
             if( iGeom != 0 )
@@ -1067,7 +1061,6 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
     assignSpatialReference( poCT->GetTargetCS() );
 
     return OGRERR_NONE;
-#endif
 }
 
 /************************************************************************/
