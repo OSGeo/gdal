@@ -163,10 +163,11 @@ OGRBoolean OGRGeometry::IsEmpty() const
  * @param papszOptions NULL terminated list of options (may be NULL)
  */
 
-void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszOptions ) const
+void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
+                                char** papszOptions ) const
 
 {
-    char        *pszWkt = NULL;
+    char *pszWkt = NULL;
 
     if( pszPrefix == NULL )
         pszPrefix = "";
@@ -175,8 +176,8 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
         fp = stdout;
 
     const char* pszDisplayGeometry =
-                CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
-    if (pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "SUMMARY"))
+        CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
+    if( pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "SUMMARY") )
     {
         fprintf( fp, "%s%s : ", pszPrefix, getGeometryName() );
         switch( getGeometryType() )
@@ -225,28 +226,32 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             {
                 OGRCurvePolygon *poPoly = (OGRCurvePolygon*)this;
                 OGRCurve *poRing = poPoly->getExteriorRingCurve();
-                int nRings = poPoly->getNumInteriorRings();
-                if (poRing == NULL)
+                const int nRings = poPoly->getNumInteriorRings();
+                if( poRing == NULL )
+                {
                     fprintf( fp, "empty");
+                }
                 else
                 {
                     fprintf( fp, "%d points", poRing->getNumPoints() );
-                    if( wkbFlatten(poRing->getGeometryType()) == wkbCompoundCurve )
+                    if( wkbFlatten(poRing->getGeometryType()) ==
+                        wkbCompoundCurve )
                     {
                         fprintf( fp, " (");
                         poRing->dumpReadable(fp, NULL, papszOptions);
                         fprintf( fp, ")");
                     }
-                    if (nRings)
+                    if( nRings )
                     {
                         fprintf( fp, ", %d inner rings (", nRings);
                         for( int ir = 0; ir < nRings; ir++ )
                         {
                             poRing = poPoly->getInteriorRingCurve(ir);
-                            if (ir)
+                            if( ir )
                                 fprintf( fp, ", ");
                             fprintf( fp, "%d points", poRing->getNumPoints() );
-                            if( wkbFlatten(poRing->getGeometryType()) == wkbCompoundCurve )
+                            if( wkbFlatten(poRing->getGeometryType()) ==
+                                wkbCompoundCurve )
                             {
                                 fprintf( fp, " (");
                                 poRing->dumpReadable(fp, NULL, papszOptions);
@@ -266,7 +271,9 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             {
                 OGRCompoundCurve* poCC = (OGRCompoundCurve* )this;
                 if( poCC->getNumCurves() == 0 )
+                {
                     fprintf( fp, "empty");
+                }
                 else
                 {
                     for( int i = 0; i < poCC->getNumCurves(); i++ )
@@ -308,9 +315,10 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
             {
                 OGRGeometryCollection *poColl = (OGRGeometryCollection*)this;
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
-                for ( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
+                for( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
-                    OGRGeometry * poChild = (OGRGeometry*)poColl->getGeometryRef(ig);
+                    OGRGeometry * poChild =
+                        (OGRGeometry*)poColl->getGeometryRef(ig);
                     fprintf( fp, "%s", pszPrefix);
                     poChild->dumpReadable( fp, pszPrefix, papszOptions );
                 }
@@ -328,7 +336,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix, char** papszO
                 break;
         }
     }
-    else if (pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "WKT"))
+    else if( pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "WKT") )
     {
         if( exportToWkt( &pszWkt ) == OGRERR_NONE )
         {
@@ -726,9 +734,9 @@ OGRwkbGeometryType OGRGeometry::getIsoGeometryType() const
 {
     OGRwkbGeometryType nGType = wkbFlatten(getGeometryType());
 
-    if ( flags & OGR_G_3D )
+    if( flags & OGR_G_3D )
         nGType = (OGRwkbGeometryType)(nGType + 1000);
-    if ( flags & OGR_G_MEASURED )
+    if( flags & OGR_G_MEASURED )
         nGType = (OGRwkbGeometryType)(nGType + 2000);
 
     return nGType;
@@ -775,7 +783,7 @@ void   CPL_DLL OGR_G_Segmentize(OGRGeometryH hGeom, double dfMaxLength )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_Segmentize" );
 
-    if (dfMaxLength <= 0)
+    if( dfMaxLength <= 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "dfMaxLength must be strictly positive");
@@ -991,7 +999,7 @@ void OGRGeometry::setCoordinateDimension( int nNewDimension )
 void OGRGeometry::set3D( OGRBoolean bIs3D )
 
 {
-    if (bIs3D)
+    if( bIs3D )
         flags |= OGR_G_3D;
     else
         flags &= ~OGR_G_3D;
@@ -1013,7 +1021,7 @@ void OGRGeometry::set3D( OGRBoolean bIs3D )
 void OGRGeometry::setMeasured( OGRBoolean bIsMeasured )
 
 {
-    if (bIsMeasured)
+    if( bIsMeasured )
         flags |= OGR_G_MEASURED;
     else
         flags &= ~OGR_G_MEASURED;
@@ -1158,8 +1166,10 @@ int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Equals", FALSE );
 
-    if (hOther == NULL) {
-        CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equals");
+    if( hOther == NULL )
+    {
+        CPLError ( CE_Failure, CPLE_ObjectNull,
+                   "hOther was NULL in OGR_G_Equals");
         return 0;
     }
 
@@ -1170,13 +1180,17 @@ int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
 int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
 
 {
-    if (hGeom == NULL) {
-        CPLError ( CE_Failure, CPLE_ObjectNull, "hGeom was NULL in OGR_G_Equal");
+    if( hGeom == NULL )
+    {
+        CPLError(CE_Failure, CPLE_ObjectNull,
+                  "hGeom was NULL in OGR_G_Equal");
         return 0;
     }
 
-    if (hOther == NULL) {
-        CPLError ( CE_Failure, CPLE_ObjectNull, "hOther was NULL in OGR_G_Equal");
+    if( hOther == NULL )
+    {
+        CPLError(CE_Failure, CPLE_ObjectNull,
+                 "hOther was NULL in OGR_G_Equal");
         return 0;
     }
 
@@ -1592,7 +1606,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
     if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
-    if ( !bHasZ && !bHasM )
+    if( !bHasZ && !bHasM )
     {
         /* Test for old-style XXXXXXXXX(EMPTY) */
         pszPreScan = OGRWktReadToken( pszPreScan, szToken );
@@ -2167,33 +2181,33 @@ OGRwkbGeometryType OGRFromOGCGeomType( const char *pszGeomType )
             bConvertTo3D = true;
         }
     }
-    if ( STARTS_WITH_CI(pszGeomType, "POINT") )
+    if( STARTS_WITH_CI(pszGeomType, "POINT") )
         eType = wkbPoint;
-    else if ( STARTS_WITH_CI(pszGeomType, "LINESTRING") )
+    else if( STARTS_WITH_CI(pszGeomType, "LINESTRING") )
         eType = wkbLineString;
-    else if ( STARTS_WITH_CI(pszGeomType, "POLYGON") )
+    else if( STARTS_WITH_CI(pszGeomType, "POLYGON") )
         eType = wkbPolygon;
-    else if ( STARTS_WITH_CI(pszGeomType, "MULTIPOINT") )
+    else if( STARTS_WITH_CI(pszGeomType, "MULTIPOINT") )
         eType = wkbMultiPoint;
-    else if ( STARTS_WITH_CI(pszGeomType, "MULTILINESTRING") )
+    else if( STARTS_WITH_CI(pszGeomType, "MULTILINESTRING") )
         eType = wkbMultiLineString;
-    else if ( STARTS_WITH_CI(pszGeomType, "MULTIPOLYGON") )
+    else if( STARTS_WITH_CI(pszGeomType, "MULTIPOLYGON") )
         eType = wkbMultiPolygon;
-    else if ( STARTS_WITH_CI(pszGeomType, "GEOMETRYCOLLECTION") )
+    else if( STARTS_WITH_CI(pszGeomType, "GEOMETRYCOLLECTION") )
         eType = wkbGeometryCollection;
-    else if ( STARTS_WITH_CI(pszGeomType, "CIRCULARSTRING") )
+    else if( STARTS_WITH_CI(pszGeomType, "CIRCULARSTRING") )
         eType = wkbCircularString;
-    else if ( STARTS_WITH_CI(pszGeomType, "COMPOUNDCURVE") )
+    else if( STARTS_WITH_CI(pszGeomType, "COMPOUNDCURVE") )
         eType = wkbCompoundCurve;
-    else if ( STARTS_WITH_CI(pszGeomType, "CURVEPOLYGON") )
+    else if( STARTS_WITH_CI(pszGeomType, "CURVEPOLYGON") )
         eType = wkbCurvePolygon;
-    else if ( STARTS_WITH_CI(pszGeomType, "MULTICURVE") )
+    else if( STARTS_WITH_CI(pszGeomType, "MULTICURVE") )
         eType = wkbMultiCurve;
-    else if ( STARTS_WITH_CI(pszGeomType, "MULTISURFACE") )
+    else if( STARTS_WITH_CI(pszGeomType, "MULTISURFACE") )
         eType = wkbMultiSurface;
-    else if ( STARTS_WITH_CI(pszGeomType, "CURVE") )
+    else if( STARTS_WITH_CI(pszGeomType, "CURVE") )
         eType = wkbCurve;
-    else if ( STARTS_WITH_CI(pszGeomType, "SURFACE") )
+    else if( STARTS_WITH_CI(pszGeomType, "SURFACE") )
         eType = wkbSurface;
     else
         eType = wkbUnknown;
@@ -2277,151 +2291,151 @@ const char *OGRGeometryTypeToName( OGRwkbGeometryType eType )
     switch( wkbFlatten(eType) )
     {
         case wkbUnknown:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Unknown (any)";
-            else if (b3D)
+            else if( b3D )
                 return "3D Unknown (any)";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Unknown (any)";
             else
                 return "Unknown (any)";
 
         case wkbPoint:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Point";
-            else if (b3D)
+            else if( b3D )
                 return "3D Point";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Point";
             else
                 return "Point";
 
         case wkbLineString:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Line String";
-            else if (b3D)
+            else if( b3D )
                 return "3D Line String";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Line String";
             else
                 return "Line String";
 
         case wkbPolygon:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Polygon";
-            else if (b3D)
+            else if( b3D )
                 return "3D Polygon";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Polygon";
             else
                 return "Polygon";
 
         case wkbMultiPoint:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Multi Point";
-            else if (b3D)
+            else if( b3D )
                 return "3D Multi Point";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Multi Point";
             else
                 return "Multi Point";
 
         case wkbMultiLineString:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Multi Line String";
-            else if (b3D)
+            else if( b3D )
                 return "3D Multi Line String";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Multi Line String";
             else
                 return "Multi Line String";
 
         case wkbMultiPolygon:
-          if (b3D && bMeasured)
+          if( b3D && bMeasured )
                 return "3D Measured Multi Polygon";
-            else if (b3D)
+            else if( b3D )
                 return "3D Multi Polygon";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Multi Polygon";
             else
                 return "Multi Polygon";
 
         case wkbGeometryCollection:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Geometry Collection";
-            else if (b3D)
+            else if( b3D )
                 return "3D Geometry Collection";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Geometry Collection";
             else
                 return "Geometry Collection";
 
         case wkbCircularString:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Circular String";
-            else if (b3D)
+            else if( b3D )
                 return "3D Circular String";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Circular String";
             else
                 return "Circular String";
 
         case wkbCompoundCurve:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Compound Curve";
-            else if (b3D)
+            else if( b3D )
                 return "3D Compound Curve";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Compound Curve";
             else
                 return "Compound Curve";
 
         case wkbCurvePolygon:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Curve Polygon";
-            else if (b3D)
+            else if( b3D )
                 return "3D Curve Polygon";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Curve Polygon";
             else
                 return "Curve Polygon";
 
         case wkbMultiCurve:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Multi Curve";
-            else if (b3D)
+            else if( b3D )
                 return "3D Multi Curve";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Multi Curve";
             else
                 return "Multi Curve";
 
         case wkbMultiSurface:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Multi Surface";
-            else if (b3D)
+            else if( b3D )
                 return "3D Multi Surface";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Multi Surface";
             else
                 return "Multi Surface";
 
         case wkbCurve:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Curve";
-            else if (b3D)
+            else if( b3D )
                 return "3D Curve";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Curve";
             else
                 return "Curve";
 
         case wkbSurface:
-            if (b3D && bMeasured)
+            if( b3D && bMeasured )
                 return "3D Measured Surface";
-            else if (b3D)
+            else if( b3D )
                 return "3D Surface";
-            else if (bMeasured)
+            else if( bMeasured )
                 return "Measured Surface";
             else
                 return "Surface";
@@ -2742,7 +2756,8 @@ void OGRGeometry::freeGEOSContext(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtx
  * @param hGEOSCtxt GEOS context
  * @return a GEOSGeom object corresponding to the geometry.
  */
-GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
+GEOSGeom OGRGeometry::exportToGEOS(
+    UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
 
 {
 #ifndef HAVE_GEOS
@@ -2758,8 +2773,8 @@ GEOSGeom OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCt
 
     /* POINT EMPTY is exported to WKB as if it were POINT(0 0) */
     /* so that particular case is necessary */
-    if (wkbFlatten(getGeometryType()) == wkbPoint &&
-        IsEmpty())
+    if( wkbFlatten(getGeometryType()) == wkbPoint &&
+        IsEmpty() )
     {
         return GEOSGeomFromWKT_r(hGEOSCtxt, "POINT EMPTY");
     }
@@ -4470,12 +4485,12 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 
         GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
 
-        if (poCentroidGeom == NULL)
+        if( poCentroidGeom == NULL )
         {
             freeGEOSContext( hGEOSCtxt );
             return OGRERR_FAILURE;
         }
-        if (wkbFlatten(poCentroidGeom->getGeometryType()) != wkbPoint)
+        if( wkbFlatten(poCentroidGeom->getGeometryType()) != wkbPoint )
         {
             delete poCentroidGeom;
             freeGEOSContext( hGEOSCtxt );
@@ -4615,12 +4630,12 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
 
         GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
 
-        if (poInsidePointGeom == NULL)
+        if( poInsidePointGeom == NULL )
         {
             OGRGeometry::freeGEOSContext( hGEOSCtxt );
             return NULL;
         }
-        if (wkbFlatten(poInsidePointGeom->getGeometryType()) != wkbPoint)
+        if( wkbFlatten(poInsidePointGeom->getGeometryType()) != wkbPoint )
         {
             delete poInsidePointGeom;
             OGRGeometry::freeGEOSContext( hGEOSCtxt );
@@ -5253,7 +5268,7 @@ OGRGeometry *OGRGeometryFromEWKB( GByte *pabyWKB, int nLength, int* pnSRID,
 {
     OGRGeometry *poGeometry = NULL;
 
-    if (nLength < 5)
+    if( nLength < 5 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid EWKB content : %d bytes", nLength );
@@ -5365,7 +5380,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     memcpy( &geomType, pabyWKB+1, 4 );
 
     /* Now add the SRID flag if an SRID is provided */
-    if (nSRSId > 0)
+    if( nSRSId > 0 )
     {
         /* Change the flag to wkbNDR (little) endianness */
         GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
@@ -5380,7 +5395,7 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
     pszTextBufCurrent += 8;
 
     /* Now include SRID if provided */
-    if (nSRSId > 0)
+    if( nSRSId > 0 )
     {
         /* Force the srsid to wkbNDR (little) endianness */
         GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
@@ -5431,7 +5446,7 @@ OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
 /*      Get the byte order byte.                                        */
 /* -------------------------------------------------------------------- */
     int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
-    if (!( nByteOrder == wkbXDR || nByteOrder == wkbNDR ))
+    if( !( nByteOrder == wkbXDR || nByteOrder == wkbNDR ) )
         return OGRERR_CORRUPT_DATA;
     eByteOrder = (OGRwkbByteOrder) nByteOrder;
 
@@ -5439,7 +5454,8 @@ OGRErr OGRGeometry::importPreambuleFromWkb( unsigned char * pabyData,
 /*      Get the geometry feature type.                                  */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
-    OGRErr err = OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
+    const OGRErr err =
+        OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
     if( wkbHasZ(eGeometryType) )
         flags |= OGR_G_3D;
     if( wkbHasM(eGeometryType) )
@@ -5492,14 +5508,14 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( unsigned char * pabyData
     if( OGR_SWAP( eByteOrder ) )
         nGeomCount = CPL_SWAP32(nGeomCount);
 
-    if (nGeomCount < 0 || nGeomCount > INT_MAX / 4)
+    if( nGeomCount < 0 || nGeomCount > INT_MAX / 4 )
     {
         nGeomCount = 0;
         return OGRERR_CORRUPT_DATA;
     }
 
     /* Each ring has a minimum of nMinSubGeomSize bytes */
-    if (nSize != -1 && nSize - 9 < nGeomCount * nMinSubGeomSize)
+    if( nSize != -1 && nSize - 9 < nGeomCount * nMinSubGeomSize )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -5570,24 +5586,27 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
     /*      Do the import.                                                  */
     /* -------------------------------------------------------------------- */
         OGRCurve* poCurve = NULL;
-        if (EQUAL(szToken,"("))
+        if( EQUAL(szToken,"(") )
         {
             OGRLineString* poLine = new OGRLineString();
             poCurve = poLine;
             pszInput = pszInputBefore;
-            eErr = poLine->importFromWKTListOnly( (char**)&pszInput, bHasZ, bHasM,
-                                                   paoPoints, nMaxPoints, padfZ );
+            eErr = poLine->importFromWKTListOnly( (char**)&pszInput,
+                                                  bHasZ, bHasM,
+                                                  paoPoints, nMaxPoints,
+                                                  padfZ );
         }
-        else if (bAllowEmptyComponent && EQUAL(szToken, "EMPTY") )
+        else if( bAllowEmptyComponent && EQUAL(szToken, "EMPTY") )
         {
             poCurve = new OGRLineString();
         }
         /* We accept LINESTRING() but this is an extension to the BNF, also */
         /* accepted by PostGIS */
-        else if ( (bAllowLineString && EQUAL(szToken,"LINESTRING")) ||
-                  (bAllowCurve && !EQUAL(szToken,"LINESTRING") &&
-                   !EQUAL(szToken,"COMPOUNDCURVE") && OGR_GT_IsCurve(OGRFromOGCGeomType(szToken))) ||
-                  (bAllowCompoundCurve && EQUAL(szToken,"COMPOUNDCURVE")) )
+        else if( (bAllowLineString && EQUAL(szToken,"LINESTRING")) ||
+                 (bAllowCurve && !EQUAL(szToken,"LINESTRING") &&
+                  !EQUAL(szToken,"COMPOUNDCURVE") &&
+                  OGR_GT_IsCurve(OGRFromOGCGeomType(szToken))) ||
+                 (bAllowCompoundCurve && EQUAL(szToken,"COMPOUNDCURVE")) )
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;
