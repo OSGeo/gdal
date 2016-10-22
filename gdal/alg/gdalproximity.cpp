@@ -305,7 +305,10 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 
     for( int i = 0; i < nXSize; i++ )
-        panNearX[i] = panNearY[i] = -1;
+    {
+        panNearX[i] = -1;
+        panNearY[i] = -1;
+    }
 
     for( int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {

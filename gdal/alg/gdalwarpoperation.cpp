@@ -926,12 +926,13 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     asThreadData[1].hIOMutex = hIOMutex;
 
     int iChunk;
-    double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+    double dfPixelsProcessed = 0.0;
+    double dfTotalPixels = nDstXSize*(double)nDstYSize;
 
     CPLErr eErr = CE_None;
     for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
     {
-        int    iThread = iChunk % 2;
+        int iThread = iChunk % 2;
 
 /* -------------------------------------------------------------------- */
 /*      Launch thread for this chunk.                                   */
@@ -1147,7 +1148,8 @@ CPLErr GDALWarpOperation::CollectChunkList(
         (((double) nSrcPixelCostInBits) * nSrcXSize * nSrcYSize
          + ((double) nDstPixelCostInBits) * nDstXSize * nDstYSize) / 8.0;
 
-    int nBlockXSize = 1, nBlockYSize = 1;
+    int nBlockXSize = 1;
+    int nBlockYSize = 1;
     if (psOptions->hDstDS)
     {
         GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1),
@@ -2388,9 +2390,13 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Collect the bounds, ignoring any failed points.                 */
 /* -------------------------------------------------------------------- */
-    double dfMinXOut=0.0, dfMinYOut=0.0, dfMaxXOut=0.0, dfMaxYOut=0.0;
-    int    bGotInitialPoint = FALSE;
-    int    nFailedCount = 0, i;
+    double dfMinXOut = 0.0;
+    double dfMinYOut = 0.0;
+    double dfMaxXOut = 0.0;
+    double dfMaxYOut = 0.0;
+    int bGotInitialPoint = FALSE;
+    int nFailedCount = 0;
+    int i;
 
     for( i = 0; i < nSamplePoints; i++ )
     {

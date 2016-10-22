@@ -63,17 +63,21 @@ GDALChecksumImage( GDALRasterBandH hBand,
     const static int anPrimes[11] =
         { 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 };
 
-    int  iLine, i, nChecksum = 0, iPrime = 0, nCount;
+    int iLine;
+    int i;
+    int nChecksum = 0;
+    int iPrime = 0;
+    int nCount;
     GDALDataType eDataType = GDALGetRasterDataType( hBand );
     int  bComplex = GDALDataTypeIsComplex( eDataType );
 
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
         eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64)
     {
-        double* padfLineData;
         GDALDataType eDstDataType = (bComplex) ? GDT_CFloat64 : GDT_Float64;
 
-        padfLineData = (double *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2);
+        double* padfLineData = static_cast<double *>(
+            VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2));
         if (padfLineData == NULL)
         {
             return 0;

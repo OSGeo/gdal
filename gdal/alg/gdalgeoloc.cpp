@@ -214,9 +214,13 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /* -------------------------------------------------------------------- */
 /*      Scan forward map for lat/long extents.                          */
 /* -------------------------------------------------------------------- */
-    double dfMinX=0, dfMaxX=0, dfMinY=0, dfMaxY=0;
-    int i, bInit = FALSE;
+    double dfMinX = 0.0;
+    double dfMaxX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxY = 0.0;
+    int bInit = FALSE;
 
+    int i;
     for( i = nXSize * nYSize - 1; i >= 0; i-- )
     {
         if( !psTransform->bHasNoData ||
@@ -356,7 +360,8 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 }
 
                 int nCount = 0;
-                double dfXSum = 0.0, dfYSum = 0.0;
+                double dfXSum = 0.0;
+                double dfYSum = 0.0;
                 int nMarkedAsGood = nMaxIter - iIter;
 
                 // left?
@@ -499,14 +504,21 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
     nStartX = MIN(nStartX,nXSize-2);
     nStartY = MIN(nStartY,nYSize-2);
 
-    int iX = nStartX, iY = nStartY;
-    int iLastX = -1, iLastY = -1;
-    int iSecondLastX = -1, iSecondLastY = -1;
+    int iX = nStartX;
+    int iY = nStartY;
+    int iLastX = -1;
+    int iLastY = -1;
+    int iSecondLastX = -1;
+    int iSecondLastY = -1;
 
     while( nStepCount < MAX(nXSize,nYSize) )
     {
-        int iXNext = -1, iYNext = -1;
-        double dfDeltaXRight, dfDeltaYRight, dfDeltaXDown, dfDeltaYDown;
+        int iXNext = -1;
+        int iYNext = -1;
+        double dfDeltaXRight = 0.0;
+        double dfDeltaYRight = 0.0;
+        double dfDeltaXDown = 0.0;
+        double dfDeltaYDown = 0.0;
 
         double *padfThisX = psTransform->padfGeoLocX + iX + iY * nXSize;
         double *padfThisY = psTransform->padfGeoLocY + iX + iY * nXSize;
@@ -1122,7 +1134,8 @@ int GDALGeoLocTransform( void *pTransformArg,
     else
     {
         int i;
-        int nStartX = -1, nStartY = -1;
+        int nStartX = -1;
+        int nStartY = -1;
 
 #ifdef SHAPE_DEBUG
         hSHP = SHPCreate( "tracks.shp", SHPT_ARC );

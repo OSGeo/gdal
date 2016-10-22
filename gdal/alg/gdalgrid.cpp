@@ -1040,7 +1040,8 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
             }
             else
             {
-                dfMinimumValue = dfMaximumValue = padfZ[i];
+                dfMinimumValue = padfZ[i];
+                dfMaximumValue = padfZ[i];
             }
             n++;
         }
