@@ -291,10 +291,10 @@ static void RPCEvaluate4( const double *padfTerms,
 static double RPCEvaluate( const double *padfTerms, const double *padfCoefs )
 
 {
-    double dfSum1 = 0.0, dfSum2 = 0.0;
-    int i;
+    double dfSum1 = 0.0;
+    double dfSum2 = 0.0;
 
-    for( i = 0; i < 20; i+=2 )
+    for( int i = 0; i < 20; i += 2 )
     {
         dfSum1 += padfTerms[i] * padfCoefs[i];
         dfSum2 += padfTerms[i+1] * padfCoefs[i+1];
@@ -314,8 +314,7 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
                                double *pdfPixel, double *pdfLine )
 
 {
-    double dfResultX, dfResultY;
-    double adfTermsWithMargin[20+1];
+    double adfTermsWithMargin[20+1] = {};
     // Make padfTerms aligned on 16-byte boundary for SSE2 aligned loads.
     double* padfTerms =
         adfTermsWithMargin + (((GUIntptr_t)adfTermsWithMargin) % 16) / 8;
@@ -390,17 +389,22 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
                      dfNormalizedHeight, padfTerms );
 
 #ifdef USE_SSE2_OPTIM
-    double dfSampNum, dfSampDen, dfLineNum, dfLineDen;
+    double dfSampNum = 0.0;
+    double dfSampDen = 0.0;
+    double dfLineNum = 0.0;
+    double dfLineDen = 0.0;
     RPCEvaluate4( padfTerms,
                   psRPCTransformInfo->padfCoeffs,
                   dfLineNum, dfLineDen, dfSampNum, dfSampDen );
-    dfResultX = dfSampNum / dfSampDen;
-    dfResultY = dfLineNum / dfLineDen;
+    const double dfResultX = dfSampNum / dfSampDen;
+    const double dfResultY = dfLineNum / dfLineDen;
 #else
-    dfResultX = RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfSAMP_NUM_COEFF )
+    const double dfResultX =
+        RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfSAMP_NUM_COEFF )
         / RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfSAMP_DEN_COEFF );
 
-    dfResultY = RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfLINE_NUM_COEFF )
+    const double dfResultY =
+        RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfLINE_NUM_COEFF )
         / RPCEvaluate( padfTerms, psRPCTransformInfo->sRPC.adfLINE_DEN_COEFF );
 #endif
 
@@ -491,12 +495,14 @@ void* GDALCreateSimilarRPCTransformer( void *hTransformArg,
 
 static
 int GDALRPCGetDEMHeight( GDALRPCTransformInfo *psTransform,
-                         const double dfXIn, const double dfYIn, double* pdfDEMH );
+                         const double dfXIn, const double dfYIn,
+                         double* pdfDEMH );
 
 static bool GDALRPCGetHeightAtLongLat( GDALRPCTransformInfo *psTransform,
                                        const double dfXIn, const double dfYIn,
                                        double* pdfHeight,
-                                       double* pdfDEMPixel = NULL, double* pdfDEMLine = NULL)
+                                       double* pdfDEMPixel = NULL,
+                                       double* pdfDEMLine = NULL )
 {
     double dfVDatumShift = 0.0;
     double dfDEMH = 0;
@@ -817,8 +823,11 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 /*      Establish a reference point for calcualating an affine          */
 /*      geotransform approximate transformation.                        */
 /* -------------------------------------------------------------------- */
-    double adfGTFromLL[6], dfRefPixel = -1.0, dfRefLine = -1.0;
-    double dfRefLong = 0.0, dfRefLat = 0.0;
+    double adfGTFromLL[6] = {};
+    double dfRefPixel = -1.0;
+    double dfRefLine = -1.0;
+    double dfRefLong = 0.0;
+    double dfRefLat = 0.0;
 
     if( psRPCInfo->dfMIN_LONG != -180 || psRPCInfo->dfMAX_LONG != 180 )
     {
@@ -983,9 +992,12 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
 /*      Now iterate, trying to find a closer LL location that will      */
 /*      back transform to the indicated pixel and line.                 */
 /* -------------------------------------------------------------------- */
-    double dfPixelDeltaX=0.0, dfPixelDeltaY=0.0;
-    double dfLastResultX = 0.0, dfLastResultY = 0.0;
-    double dfLastPixelDeltaX = 0.0, dfLastPixelDeltaY = 0.0;
+    double dfPixelDeltaX = 0.0;
+    double dfPixelDeltaY = 0.0;
+    double dfLastResultX = 0.0;
+    double dfLastResultY = 0.0;
+    double dfLastPixelDeltaX = 0.0;
+    double dfLastPixelDeltaY = 0.0;
     double dfDEMH = 0.0;
     bool bLastPixelDeltaValid = false;
     const int nMaxIterations =
@@ -995,11 +1007,13 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
 
     for( iIter = 0; iIter < nMaxIterations; iIter++ )
     {
-        double dfBackPixel, dfBackLine;
+        double dfBackPixel;
+        double dfBackLine;
 
         // Update DEMH
         dfDEMH = 0;
-        double dfDEMPixel = 0.0, dfDEMLine = 0.0;
+        double dfDEMPixel = 0.0;
+        double dfDEMLine = 0.0;
         if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,
                                         &dfDEMH, &dfDEMPixel, &dfDEMLine) )
         {
@@ -1796,7 +1810,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             CPLTestBool(CPLGetConfigOption("GDAL_RPC_DEM_OPTIM", "YES")) )
         {
             int bUseOptimized = TRUE;
-            double dfMinX = padfX[0], dfMaxX = padfX[0];
+            double dfMinX = padfX[0];
+            double dfMaxX = padfX[0];
             for(i = 1; i < nPointCount; i++)
             {
                 if( padfY[i] != padfY[0] )
@@ -1809,7 +1824,10 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
             }
             if( bUseOptimized )
             {
-                double dfX1, dfY1, dfX2, dfY2;
+                double dfX1 = 0.0;
+                double dfY1 = 0.0;
+                double dfX2 = 0.0;
+                double dfY2 = 0.0;
                 GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,
                                     dfMinX, padfY[0], &dfX1, &dfY1 );
                 GDALApplyGeoTransform( psTransform->adfDEMReverseGeoTransform,

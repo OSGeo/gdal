@@ -454,12 +454,18 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
                 GInt16* psIndex = &pasDynamicColorMap[nColorCode];
                 if( *psIndex < 0 )
-                    iIndex = *psIndex = static_cast<GInt16>(FindNearestColor( nColors, anPCT,
-                                                          nRedValue,
-                                                          nGreenValue,
-                                                          nBlueValue ));
-                else
+                {
+                    *psIndex = static_cast<GInt16>(
+                        FindNearestColor( nColors, anPCT,
+                                          nRedValue,
+                                          nGreenValue,
+                                          nBlueValue ));
                     iIndex = *psIndex;
+                }
+                else
+                {
+                    iIndex = *psIndex;
+                }
             }
 
             pabyIndex[i] = (GByte) iIndex;
@@ -533,11 +539,10 @@ static int FindNearestColor( int nColors, int *panPCT,
 
 {
 #ifdef USE_SSE2
-    int     iColor;
+    int nBestDist = 768;
+    int nBestIndex = 0;
 
-    int nBestDist = 768, nBestIndex = 0;
-
-    int     anDistanceUnaligned[16+4]; /* 4 for alignment on 16-byte boundary */
+    int anDistanceUnaligned[16+4] = {}; /* 4 for alignment on 16-byte boundary */
     int* anDistance = ALIGN_INT_ARRAY_ON_16_BYTE(anDistanceUnaligned);
 
     const __m128i ff = _mm_set1_epi32(0xFFFFFFFF);
@@ -549,6 +554,7 @@ static int FindNearestColor( int nColors, int *panPCT,
     const __m128i thisColor_low = _mm_srli_epi64(thisColor, 32);
     const __m128i thisColor_high = _mm_slli_epi64(thisColor, 32);
 
+    int iColor;
     for( iColor = 0; iColor < nColors; iColor+=8 )
     {
         __m128i pctColor = _mm_load_si128((__m128i*)&panPCT[iColor]);
@@ -606,17 +612,15 @@ static int FindNearestColor( int nColors, int *panPCT,
     }
     return nBestIndex;
 #else
-    int     iColor;
+    int nBestDist = 768;
+    int nBestIndex = 0;
 
-    int nBestDist = 768, nBestIndex = 0;
-
-    for( iColor = 0; iColor < nColors; iColor++ )
+    for( int iColor = 0; iColor < nColors; iColor++ )
     {
-        int     nThisDist;
-
-        nThisDist = ABS(nRedValue   - panPCT[4*iColor+0])
-                  + ABS(nGreenValue - panPCT[4*iColor+1])
-                  + ABS(nBlueValue  - panPCT[4*iColor+2]);
+        int nThisDist =
+            ABS(nRedValue   - panPCT[4*iColor+0])
+            + ABS(nGreenValue - panPCT[4*iColor+1])
+            + ABS(nBlueValue  - panPCT[4*iColor+2]);
 
         if( nThisDist < nBestDist )
         {

@@ -204,8 +204,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /*      limited to using RGB input so if we have one band only treat    */
 /*      it as red=green=blue=band 1.  Disallow non eightbit imagery.    */
 /* -------------------------------------------------------------------- */
-    int anBandMap1[3], anBandMap2[3];
-
+    int anBandMap1[3];
     if( GDALGetRasterCount(hFirstImage) >= 3 )
     {
         anBandMap1[0] = 1;
@@ -214,9 +213,12 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
     }
     else
     {
-        anBandMap1[0] = anBandMap1[1] = anBandMap1[2] = 1;
+        anBandMap1[0] = 1;
+        anBandMap1[1] = 1;
+        anBandMap1[2] = 1;
     }
 
+    int anBandMap2[3];
     if( GDALGetRasterCount(hSecondImage) >= 3 )
     {
         anBandMap2[0] = 1;
@@ -225,7 +227,9 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
     }
     else
     {
-        anBandMap2[0] = anBandMap2[1] = anBandMap2[2] = 1;
+        anBandMap2[0] = 1;
+        anBandMap2[1] = 1;
+        anBandMap2[2] = 1;
     }
 
 /* -------------------------------------------------------------------- */

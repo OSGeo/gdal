@@ -362,7 +362,10 @@ template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( 
 /* -------------------------------------------------------------------- */
     int nGoodCount = 0;
     double dfASum = 0.0;
-    double dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
+    double dfTop = 0.0;
+    double dfRight = 0.0;
+    double dfLeft = 0.0;
+    double dfBottom = 0.0;
 
     if( !IsNoData<bNoDataIsNan>(dfUpLeft) )
     {
@@ -500,12 +503,13 @@ CPLErr GDALContourGenerator::ProcessRect(
     */
     if( bFixedLevels )
     {
-        int nStart=0, nEnd=nLevelCount-1, nMiddle;
+        int nStart = 0;
+        int nEnd = nLevelCount-1;
 
         iStartLevel = -1;
         while( nStart <= nEnd )
         {
-            nMiddle = (nEnd + nStart) / 2;
+            const int nMiddle = (nEnd + nStart) / 2;
 
             double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
 
@@ -570,21 +574,18 @@ CPLErr GDALContourGenerator::ProcessRect(
         /* Logs how many points we have af left + bottom,
         ** and left + bottom + right.
         */
-        int nPoints1 = 0, nPoints2 = 0, nPoints3 = 0;
-
-
         Intersect( dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLoLeftX, dfLoLeftY,
                    dfLoRight, dfLevel, &nPoints, adfX, adfY );
-        nPoints1 = nPoints;
+        const int nPoints1 = nPoints;
         Intersect( dfLoLeft, dfLoLeftX, dfLoLeftY,
                    dfLoRight, dfLoRightX, dfLoRightY,
                    dfUpRight, dfLevel, &nPoints, adfX, adfY );
-        nPoints2 = nPoints;
+        const int nPoints2 = nPoints;
         Intersect( dfLoRight, dfLoRightX, dfLoRightY,
                    dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfLevel, &nPoints, adfX, adfY );
-        nPoints3 = nPoints;
+        const int nPoints3 = nPoints;
         Intersect( dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLevel, &nPoints, adfX, adfY );
@@ -916,14 +917,15 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
 GDALContourLevel *GDALContourGenerator::FindLevel( double dfLevel )
 
 {
-    int nStart=0, nEnd=nLevelCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nLevelCount - 1;
 
 /* -------------------------------------------------------------------- */
 /*      Binary search to find the requested level.                      */
 /* -------------------------------------------------------------------- */
     while( nStart <= nEnd )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        const int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
 
@@ -1042,11 +1044,12 @@ void GDALContourLevel::RemoveContour( int iTarget )
 int GDALContourLevel::FindContour( double dfX, double dfY )
 
 {
-    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nEntryCount - 1;
 
     while( nEnd >= nStart )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleX = papoEntries[nMiddle]->dfTailX;
 
@@ -1088,11 +1091,12 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
 /* -------------------------------------------------------------------- */
 /*      Find where to insert by binary search.                          */
 /* -------------------------------------------------------------------- */
-    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nEntryCount - 1;
 
     while( nEnd >= nStart )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        const int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleX = papoEntries[nMiddle]->dfTailX;
 

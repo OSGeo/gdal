@@ -292,7 +292,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             const int iX1 = (int)floor( padfX[n + j] );
             const int iY1 = (int)floor( padfY[n + j] );
 
-            double dfVariant = 0, dfVariant1 = 0;
+            double dfVariant = 0.0;
+            double dfVariant1 = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
@@ -404,7 +405,8 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             double dfXEnd = padfX[n + j];
             double dfYEnd = padfY[n + j];
 
-            double dfVariant = 0, dfVariantEnd = 0;
+            double dfVariant = 0.0;
+            double dfVariantEnd = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
