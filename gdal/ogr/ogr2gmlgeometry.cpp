@@ -48,8 +48,8 @@
 
 CPL_CVSID("$Id$");
 
-#define SRSDIM_LOC_GEOMETRY (1 << 0)
-#define SRSDIM_LOC_POSLIST  (1 << 1)
+static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
+static const int SRSDIM_LOC_POSLIST = 1 << 1;
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */
