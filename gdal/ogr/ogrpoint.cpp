@@ -709,17 +709,13 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
 OGRErr OGRPoint::transform( OGRCoordinateTransformation *poCT )
 
 {
-#ifdef DISABLE_OGRGEOM_TRANSFORM
-    return OGRERR_FAILURE;
-#else
     if( poCT->Transform( 1, &x, &y, &z ) )
     {
         assignSpatialReference( poCT->GetTargetCS() );
         return OGRERR_NONE;
     }
-    else
-        return OGRERR_FAILURE;
-#endif
+
+    return OGRERR_FAILURE;
 }
 
 /************************************************************************/

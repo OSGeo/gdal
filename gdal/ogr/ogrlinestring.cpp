@@ -2326,10 +2326,6 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
 
 {
-#ifdef DISABLE_OGRGEOM_TRANSFORM
-    return OGRERR_FAILURE;
-#else
-
 /* -------------------------------------------------------------------- */
 /*   Make a copy of the points to operate on, so as to be able to       */
 /*   keep only valid reprojected points if partial reprojection enabled */
@@ -2432,7 +2428,6 @@ OGRErr OGRSimpleCurve::transform( OGRCoordinateTransformation *poCT )
     assignSpatialReference( poCT->GetTargetCS() );
 
     return OGRERR_NONE;
-#endif
 }
 
 /************************************************************************/

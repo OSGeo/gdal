@@ -592,9 +592,6 @@ int OGR_G_Intersect( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
 OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
 
 {
-#ifdef DISABLE_OGRGEOM_TRANSFORM
-    return OGRERR_FAILURE;
-#else
     if( getSpatialReference() == NULL || poSR == NULL )
         return OGRERR_FAILURE;
 
@@ -603,12 +600,12 @@ OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
     if( poCT == NULL )
         return OGRERR_FAILURE;
 
-    OGRErr eErr = transform( poCT );
+    const OGRErr eErr = transform( poCT );
 
     delete poCT;
 
     return eErr;
-#endif
+
 }
 
 /************************************************************************/
