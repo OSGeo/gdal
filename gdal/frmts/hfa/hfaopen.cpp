@@ -3802,6 +3802,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     // Assign to polynomial object.
 
     Efga_Polynomial sForward;
+    memset(&sForward, 0, sizeof(sForward));
     Efga_Polynomial *psForward = &sForward;
     sForward.order = 1;
     sForward.polycoefvector[0] = adfRevTransform[0];
