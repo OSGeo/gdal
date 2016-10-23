@@ -118,12 +118,9 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
     // load the color table and might as well to the ClassNames
     poGDS->poColorTable = new GDALColorTable();
 
-    GDALColorEntry oEntry;
+    GDALColorEntry oEntry = { 255, 255, 255, 255 };
     // null value = 0 is transparent
-    oEntry.c1 = 255;
-    oEntry.c2 = 255;
-    oEntry.c3 = 255;
-    oEntry.c4 = 255;                // alpha 255 = transparent
+    // alpha 255 = transparent
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 

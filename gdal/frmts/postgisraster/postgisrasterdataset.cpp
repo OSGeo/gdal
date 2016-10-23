@@ -190,7 +190,8 @@ PostGISRasterDataset::PostGISRasterDataset() :
 
     poDriver = NULL;
 
-    nRasterXSize = nRasterYSize = 0;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
 
     SetWritable(false);
 

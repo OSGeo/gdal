@@ -527,8 +527,11 @@ void GetGeogCSFromCitation( char* szGCSName, int nGCSName,
                             char **ppszSpheroidName,
                             char **ppszAngularUnits)
 {
-    *ppszGeogName = *ppszDatumName = *ppszPMName =
-        *ppszSpheroidName = *ppszAngularUnits = NULL;
+    *ppszGeogName = NULL;
+    *ppszDatumName = NULL;
+    *ppszPMName = NULL;
+    *ppszSpheroidName = NULL;
+    *ppszAngularUnits = NULL;
 
     char* imgCTName = ImagineCitationTranslation(szGCSName, geoKey);
     if( imgCTName )

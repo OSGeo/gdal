@@ -1183,7 +1183,8 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
     Object* po = new Object;
     if (m_poDict->lookupNF((char*)pszKey, po) && !po->isNull())
     {
-        int nRefNum = 0, nRefGen = 0;
+        int nRefNum = 0;
+        int nRefGen = 0;
         if( po->isRef())
         {
             nRefNum = po->getRefNum();
@@ -1286,7 +1287,8 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     Object* po = new Object;
     if (m_poArray->getNF(nIndex, po))
     {
-        int nRefNum = 0, nRefGen = 0;
+        int nRefNum = 0;
+        int nRefGen = 0;
         if( po->isRef())
         {
             nRefNum = po->getRefNum();

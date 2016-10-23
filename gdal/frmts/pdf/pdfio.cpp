@@ -293,7 +293,8 @@ void VSIPDFFileStream::reset()
     nSavedPos = VSIFTellL(f);
     bHasSavedPos = TRUE;
     VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
-    nPosInBuffer = nBufferLength = -1;
+    nPosInBuffer = -1;
+    nBufferLength = -1;
 }
 
 /************************************************************************/
@@ -343,7 +344,8 @@ void VSIPDFFileStream::setPos(setPos_offset_type pos, int dir)
             newpos = size;
         VSIFSeekL(f, nCurrentPos = size - newpos, SEEK_SET);
     }
-    nPosInBuffer = nBufferLength = -1;
+    nPosInBuffer = -1;
+    nBufferLength = -1;
 }
 
 /************************************************************************/
@@ -354,7 +356,8 @@ void VSIPDFFileStream::moveStart(moveStart_delta_type delta)
 {
     nStart += delta;
     VSIFSeekL(f, nCurrentPos = nStart, SEEK_SET);
-    nPosInBuffer = nBufferLength = -1;
+    nPosInBuffer = -1;
+    nBufferLength = -1;
 }
 
 /************************************************************************/
@@ -381,7 +384,8 @@ int VSIPDFFileStream::getChars(int nChars, Guchar *buffer)
             if (!bLimited && nToRead > BUFFER_SIZE)
             {
                 int nJustRead = (int) VSIFReadL(buffer + nRead, 1, nToRead, f);
-                nPosInBuffer = nBufferLength = -1;
+                nPosInBuffer = = -1;
+                nBufferLength = -1;
                 nCurrentPos += nJustRead;
                 nRead += nJustRead;
                 break;

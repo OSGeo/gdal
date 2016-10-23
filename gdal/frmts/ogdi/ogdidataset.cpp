@@ -576,7 +576,8 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int nClientID;
-    char        **papszImages=NULL, **papszMatrices=NULL;
+    char **papszImages = NULL;
+    char **papszMatrices = NULL;
 
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "gltp:") )
         return NULL ;
@@ -597,8 +598,10 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Honour quoted strings for the layer name, since some layers     */
 /*      (i.e. RPF/CADRG) have embedded colons.                           */
 /* -------------------------------------------------------------------- */
-    int       nC1=-1, nC2=-1, bInQuotes = FALSE;
-    char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
+    int nC1 = -1;
+    int nC2 = -1;
+    int bInQuotes = FALSE;
+    char *pszURL = CPLStrdup(poOpenInfo->pszFilename);
 
     for( int i = static_cast<int>(strlen(pszURL))-1; i > 0; i-- )
     {

@@ -607,7 +607,8 @@ void PDFDataset::InitOverviews()
     if(bUseLib.test(PDFLIB_PDFIUM) &&
        ((GDALPamRasterBand*)GetRasterBand(1))->GDALPamRasterBand::GetOverviewCount() == 0)
     {
-        int nXSize = nRasterXSize, nYSize = nRasterYSize;
+        int nXSize = nRasterXSize;
+        int nYSize = nRasterYSize;
         int blockXSize = 256;
         int blockYSize = 256;
         int nDiscard = 1;
@@ -2290,7 +2291,8 @@ GDALPDFObject* PDFDataset::GetCatalog()
 #ifdef HAVE_PODOFO
     if (bUseLib.test(PDFLIB_PODOFO))
     {
-        int nCatalogNum = 0, nCatalogGen = 0;
+        int nCatalogNum = 0;
+        int nCatalogGen = 0;
         VSILFILE* fp = VSIFOpenL(osFilename.c_str(), "rb");
         if (fp != NULL)
         {
@@ -2845,7 +2847,8 @@ int GDALPDFParseStreamContent(const char* pszContent,
 int PDFDataset::CheckTiledRaster()
 {
     size_t i;
-    int l_nBlockXSize = 0, l_nBlockYSize = 0;
+    int l_nBlockXSize = 0;
+    int l_nBlockYSize = 0;
     const double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
 
     /* First pass : check that all tiles have same DPI, */
@@ -3057,7 +3060,8 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                                         CPLString oscm(pszIter);
                                         oscm.resize(pszcm - pszIter);
                                         char** papszTokens = CSLTokenizeString(oscm);
-                                        double dfScaleX = -1, dfScaleY = -2;
+                                        double dfScaleX = -1.0;
+                                        double dfScaleY = -2.0;
                                         if( CSLCount(papszTokens) == 6 )
                                         {
                                             dfScaleX = CPLAtof(papszTokens[0]);
@@ -4401,7 +4405,10 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    double dfX1 = 0.0, dfY1 = 0.0, dfX2 = 0.0, dfY2 = 0.0;
+    double dfX1 = 0.0;
+    double dfY1 = 0.0;
+    double dfX2 = 0.0;
+    double dfY2 = 0.0;
 
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
@@ -4998,7 +5005,8 @@ static double Get(GDALPDFObject* poObj, int nIndice)
         if (chLast == 'W' || chLast == 'E' || chLast == 'N' || chLast == 'S')
         {
             double dfDeg = CPLAtof(pszStr);
-            double dfMin = 0, dfSec = 0;
+            double dfMin = 0.0;
+            double dfSec = 0.0;
             const char* pszNext = strchr(pszStr, ' ');
             if (pszNext)
                 pszNext ++;
@@ -5139,7 +5147,10 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict,
 
         if( !bIsAskedNeatline )
         {
-            double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
+            double dfMinX = 0.0;
+            double dfMinY = 0.0;
+            double dfMaxX = 0.0;
+            double dfMaxY = 0.0;
             for( int i = 0; i < nLength; i += 2 )
             {
                 double dfX = Get(poNeatline, i);
@@ -6351,8 +6362,10 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
         asGCPS[i].dfGCPPixel = (dfULX * (1 - adfLPTS[2*i+0]) + dfLRX * adfLPTS[2*i+0]) / dfMediaBoxWidth * nRasterXSize;
         asGCPS[i].dfGCPLine  = (dfULY * (1 - adfLPTS[2*i+1]) + dfLRY * adfLPTS[2*i+1]) / dfMediaBoxHeight * nRasterYSize;
 
-        double lat = adfGPTS[2*i], lon = adfGPTS[2*i+1];
-        double x = lon, y = lat;
+        double lat = adfGPTS[2*i];
+        double lon = adfGPTS[2*i+1];
+        double x = lon;
+        double y = lat;
         if (bReproject)
         {
             if (!poCT->Transform(1, &x, &y, NULL))

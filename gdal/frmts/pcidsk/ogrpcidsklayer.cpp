@@ -520,8 +520,10 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
             {
                 if( !bHaveExtent )
                 {
-                    psExtent->MinX = psExtent->MaxX = asVertices[i].x;
-                    psExtent->MinY = psExtent->MaxY = asVertices[i].y;
+                    psExtent->MinX = asVertices[i].x;
+                    psExtent->MaxX = asVertices[i].x;
+                    psExtent->MinY = asVertices[i].y;
+                    psExtent->MaxY = asVertices[i].y;
                     bHaveExtent = true;
                 }
                 else

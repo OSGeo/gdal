@@ -461,7 +461,8 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read pairs till we run out, trying to find a few items that     */
 /*      have special meaning to us.                                     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = poDS->nRasterYSize = 0;
+    poDS->nRasterXSize = 0;
+    poDS->nRasterYSize = 0;
     int nBandCount = 0;
 
     while( poDS->ReadPair( osObjName, nObjCode ) && nObjCode != 254 )

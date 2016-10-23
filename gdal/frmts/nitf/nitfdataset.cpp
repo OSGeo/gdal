@@ -5576,7 +5576,10 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
 
     if( nNPPBH <= 0 || nNPPBV <= 0 ||
         nNPPBH > 9999 || nNPPBV > 9999  )
-        nNPPBH = nNPPBV = 256;
+    {
+        nNPPBH = 256;
+        nNPPBV = 256;
+    }
 
     const int nNBPR = (nXSize + nNPPBH - 1) / nNPPBH;
     const int nNBPC = (nYSize + nNPPBV - 1) / nNPPBV;

@@ -1068,10 +1068,15 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
         if( bRewrite )
         {
             GDALJP2Box oBox( fp );
-            vsi_l_offset nOffsetJP2C = 0, nLengthJP2C = 0,
-                         nOffsetXML = 0, nOffsetASOC = 0, nOffsetUUID = 0,
-                         nOffsetIHDR = 0, nLengthIHDR = 0;
-            int bMSIBox = FALSE, bGMLData = FALSE;
+            vsi_l_offset nOffsetJP2C = 0;
+            vsi_l_offset nLengthJP2C = 0;
+            vsi_l_offset nOffsetXML = 0;
+            vsi_l_offset nOffsetASOC = 0;
+            vsi_l_offset nOffsetUUID = 0;
+            vsi_l_offset nOffsetIHDR = 0;
+            vsi_l_offset nLengthIHDR = 0;
+            int bMSIBox = FALSE;
+            int bGMLData = FALSE;
             int bUnsupportedConfiguration = FALSE;
             if( oBox.ReadFirst() )
             {
@@ -2334,7 +2339,9 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
     int bSOP = CPLTestBool(CSLFetchNameValueDef(papszOptions, "SOP", "FALSE"));
     int bEPH = CPLTestBool(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
 
-    int nRedBandIndex = -1, nGreenBandIndex = -1, nBlueBandIndex = -1;
+    int nRedBandIndex = -1;
+    int nGreenBandIndex = -1;
+    int nBlueBandIndex = -1;
     int nAlphaBandIndex = -1;
     for(int i=0;i<nBands;i++)
     {
@@ -3084,7 +3091,8 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
 
         // Add res box if needed
-        double dfXRes = 0, dfYRes = 0;
+        double dfXRes = 0.0;
+        double dfYRes = 0.0;
         int nResUnit = 0;
         GDALJP2Box* poRes = NULL;
         if( poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL

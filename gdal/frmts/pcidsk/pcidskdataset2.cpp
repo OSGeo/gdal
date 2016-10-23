@@ -1905,7 +1905,10 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
 
     try {
         if( nBands == 0 )
-            nXSize = nYSize = 512;
+        {
+            nXSize = 512;
+            nYSize = 512;
+        }
         PCIDSKFile *poFile = PCIDSK::Create( pszFilename, nXSize, nYSize, nBands,
                                              &(aeChanTypes[0]), osOptions,
                                              PCIDSK2GetInterfaces() );

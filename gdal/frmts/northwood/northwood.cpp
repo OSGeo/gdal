@@ -675,7 +675,9 @@ NWT_RGB HLStoRGB( HLS hls )
 
     if( hls.s == 0 )
     {                            /* achromatic case */
-        rgb.r = rgb.g = rgb.b = static_cast<unsigned char>( (hls.l * RGBMAX) / HLSMAX );
+        rgb.r = static_cast<unsigned char>( (hls.l * RGBMAX) / HLSMAX );
+        rgb.g = rgb.r;
+        rgb.b = rgb.r;
         if( hls.h != UNDEFINED )
         {
             /* ERROR */

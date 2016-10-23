@@ -9189,8 +9189,12 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
-    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+    std::vector<unsigned short> anTRed;
+    std::vector<unsigned short> anTGreen;
+    std::vector<unsigned short> anTBlue;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
@@ -9246,7 +9250,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
     {
         GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
 
-        int nOXSize = poOvrBand->GetXSize(), nOYSize = poOvrBand->GetYSize();
+        int nOXSize = poOvrBand->GetXSize();
+        int nOYSize = poOvrBand->GetYSize();
 
         toff_t nOverviewOffset =
                 GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
@@ -9526,8 +9531,12 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
-    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+    std::vector<unsigned short> anTRed;
+    std::vector<unsigned short> anTGreen;
+    std::vector<unsigned short> anTBlue;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
@@ -10377,7 +10386,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 /*      Convert all the remaining metadata into a simple XML            */
 /*      format.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot = NULL, *psTail = NULL;
+    CPLXMLNode *psRoot = NULL;
+    CPLXMLNode *psTail = NULL;
 
     if( bSrcIsGeoTIFF )
     {
@@ -17306,7 +17316,8 @@ void GDALRegister_GTiff()
             "       <Value>JPEG</Value>"
             "       <Value>LZW</Value>"
             "       <Value>DEFLATE</Value>" );
-    bHasLZW = bHasDEFLATE = true;
+    bHasLZW = true;
+    bHasDEFLATE = true;
 #else
     TIFFCodec *codecs = TIFFGetConfiguredCODECs();
 
