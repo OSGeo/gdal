@@ -616,8 +616,12 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
                                             aosFrameDesc[i].pszPath,
                                             aosFrameDesc[i].pszName);
 
-        double dfMinX = 0, dfMaxX = 0, dfMinY = 0, dfMaxY = 0,
-               dfPixelXSize = 0, dfPixelYSize = 0;
+        double dfMinX = 0.0;
+        double dfMaxX = 0.0;
+        double dfMinY = 0.0;
+        double dfMaxY = 0.0;
+        double dfPixelXSize = 0.0;
+        double dfPixelYSize = 0.0;
         GetExtent(aosFrameDesc[i].pszName,
                   aosFrameDesc[i].nScale, aosFrameDesc[i].nZone,
                   dfMinX, dfMaxX, dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
@@ -684,8 +688,12 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
         return NULL;
     }
 
-    double dfGlobalMinX = 0, dfGlobalMinY = 0, dfGlobalMaxX = 0, dfGlobalMaxY= 0;
-    double dfGlobalPixelXSize = 0, dfGlobalPixelYSize = 0;
+    double dfGlobalMinX = 0.0;
+    double dfGlobalMinY = 0.0;
+    double dfGlobalMaxX = 0.0;
+    double dfGlobalMaxY = 0.0;
+    double dfGlobalPixelXSize = 0.0;
+    double dfGlobalPixelYSize = 0.0;
     bool bGlobalExtentValid = false;
 
     ECRGTOCDataset* poDS = new ECRGTOCDataset();
@@ -883,9 +891,12 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                         continue;
                     }
 
-                    double dfMinX = 0, dfMaxX = 0,
-                           dfMinY = 0, dfMaxY = 0,
-                           dfPixelXSize = 0, dfPixelYSize = 0;
+                    double dfMinX = 0.0;
+                    double dfMaxX = 0.0;
+                    double dfMinY = 0.0;
+                    double dfMaxY = 0.0;
+                    double dfPixelXSize = 0.0;
+                    double dfPixelYSize = 0.0;
                     if (!GetExtent(pszFrameName, nScale, nZone,
                                    dfMinX, dfMaxX, dfMinY, dfMaxY,
                                    dfPixelXSize, dfPixelYSize))

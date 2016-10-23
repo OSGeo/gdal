@@ -1580,7 +1580,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1600,7 +1601,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1620,7 +1622,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1640,7 +1643,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else

@@ -760,7 +760,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
-    int Row = 0, Col = 0;
+    int Row = 0;
+    int Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
     {
         delete poDS;

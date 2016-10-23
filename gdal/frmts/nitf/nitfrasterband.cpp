@@ -61,8 +61,7 @@ static GDALColorTable* NITFMakeColorTable(NITFImage* psImage, NITFBandInfo *psBa
 
         if (psImage->bNoDataSet)
         {
-            GDALColorEntry sEntry;
-            sEntry.c1 = sEntry.c2 = sEntry.c3 = sEntry.c4 = 0;
+            GDALColorEntry sEntry = { 0, 0, 0, 0 };
             poColorTable->SetColorEntry( psImage->nNoDataValue, &sEntry );
         }
     }

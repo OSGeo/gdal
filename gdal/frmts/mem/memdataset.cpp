@@ -651,7 +651,8 @@ MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
     if( psSavedHistograms != NULL )
     {
         for( CPLXMLNode *psXMLHist = psSavedHistograms->psChild;
-             psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+             psXMLHist != NULL;
+             psXMLHist = psXMLHist->psNext )
         {
             if( psXMLHist->eType != CXT_Element
                 || !EQUAL(psXMLHist->pszValue,"HistItem") )

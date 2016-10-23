@@ -612,11 +612,11 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPEG2000Dataset     *poDS;
-    int                 *paiDepth = NULL, *pabSignedness = NULL;
-    int                 iBand;
+    int *paiDepth = NULL;
+    int *pabSignedness = NULL;
+    int iBand;
 
-    poDS = new JPEG2000Dataset();
+    JPEG2000Dataset *poDS = new JPEG2000Dataset();
 
     poDS->psStream = sS;
     poDS->iFormat = iFormat;
@@ -925,8 +925,10 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         poBand = poSrcDS->GetRasterBand( iBand + 1);
 
-        sComps[iBand].tlx = sComps[iBand].tly = 0;
-        sComps[iBand].hstep = sComps[iBand].vstep = 1;
+        sComps[iBand].tlx = 0;
+        sComps[iBand].tly = 0;
+        sComps[iBand].hstep = 1;
+        sComps[iBand].vstep = 1;
         sComps[iBand].width = nXSize;
         sComps[iBand].height = nYSize;
         sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );

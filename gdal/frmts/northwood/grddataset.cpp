@@ -999,10 +999,13 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     /*
     * Compute the statistics if ZMAX and ZMIN are not provided
     */
-    double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
+    double dfMin = 0.0;
+    double dfMax = 0.0;
+    double dfMean = 0.0;
+    double dfStdDev = 0.0;
     GDALRasterBand *pBand = poSrcDS->GetRasterBand(1);
-    char sMax[10];
-    char sMin[10];
+    char sMax[10] = {};
+    char sMin[10] = {};
 
     if ((CSLFetchNameValue(papszOptions, "ZMAX") == NULL)
             || (CSLFetchNameValue(papszOptions, "ZMIN") == NULL)) {
