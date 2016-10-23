@@ -261,7 +261,9 @@ CPLErr XYZRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             char ch;
             nCol = 0;
             bLastWasSep = true;
-            double dfX = 0.0, dfY = 0.0, dfZ = 0.0;
+            double dfX = 0.0;
+            double dfY = 0.0;
+            double dfZ = 0.0;
             int nUsefulColsFound = 0;
             while((ch = *pszPtr) != '\0')
             {
@@ -656,7 +658,9 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             VSICreateBufferedReaderHandle(
                 reinterpret_cast<VSIVirtualHandle *>( fp ) ) );
 
-    int nXIndex = -1, nYIndex = -1, nZIndex = -1;
+    int nXIndex = -1;
+    int nYIndex = -1;
+    int nZIndex = -1;
     int nMinTokens = 0;
 
     for( int i = 0; i < nCommentLineCount; i++ )
@@ -726,11 +730,19 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GIntBig nLineNum = 0;
     GIntBig nDataLineNum = 0;
-    double dfX = 0, dfY = 0, dfZ = 0;
-    double dfMinX = 0, dfMinY = 0, dfMaxX = 0, dfMaxY = 0;
-    double dfMinZ = 0, dfMaxZ = 0;
-    double dfLastX = 0, dfLastY = 0;
-    std::vector<double> adfStepX, adfStepY;
+    double dfX = 0.0;
+    double dfY = 0.0;
+    double dfZ = 0.0;
+    double dfMinX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxX = 0.0;
+    double dfMaxY = 0.0;
+    double dfMinZ = 0.0;
+    double dfMaxZ = 0.0;
+    double dfLastX = 0.0;
+    double dfLastY = 0.0;
+    std::vector<double> adfStepX;
+    std::vector<double> adfStepY;
     GDALDataType eDT = GDT_Byte;
     bool bSameNumberOfValuesPerLine = true;
     char chDecimalSep = '\0';
@@ -817,11 +829,19 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                     {
                         dfZ = CPLAtofDelim(pszPtr, chLocalDecimalSep);
                         if( nDataLineNum == 0 )
-                            dfMinZ = dfMaxZ = dfZ;
-                        else if( dfZ < dfMinZ )
+                        {
                             dfMinZ = dfZ;
-                        else if( dfZ > dfMaxZ )
                             dfMaxZ = dfZ;
+                        }
+                        else if( dfZ < dfMinZ )
+                        {
+                            dfMinZ = dfZ;
+                        }
+                        else if( dfZ > dfMaxZ )
+                        {
+                            dfMaxZ = dfZ;
+                        }
+
                         if( dfZ < INT_MIN || dfZ > INT_MAX )
                         {
                             eDT = GDT_Float32;
@@ -866,15 +886,17 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if (nDataLineNum == 1)
         {
-            dfMinX = dfMaxX = dfX;
-            dfMinY = dfMaxY = dfY;
+            dfMinX = dfX;
+            dfMaxX = dfX;
+            dfMinY = dfY;
+            dfMaxY = dfY;
         }
         else
         {
             double dfStepY = dfY - dfLastY;
             if( dfStepY == 0.0 )
             {
-                double dfStepX = dfX - dfLastX;
+                const double dfStepX = dfX - dfLastX;
                 if( dfStepX <= 0 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,

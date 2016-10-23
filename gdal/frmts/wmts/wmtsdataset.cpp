@@ -1097,7 +1097,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLString osSelectLayer(osLayer), osSelectTMS(osTMS), osSelectStyle(osStyle);
     CPLString osSelectLayerTitle, osSelectLayerAbstract;
     CPLString osSelectTileFormat(osTileFormat), osSelectInfoFormat(osInfoFormat);
-    int nCountTileFormat = 0, nCountInfoFormat = 0;
+    int nCountTileFormat = 0;
+    int nCountInfoFormat = 0;
     CPLString osURLTileTemplate;
     CPLString osURLFeatureInfoTemplate;
     std::set<CPLString> aoSetLayers;

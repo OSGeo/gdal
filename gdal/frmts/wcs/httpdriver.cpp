@@ -133,7 +133,8 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
     psResult->pabyData = NULL;
-    psResult->nDataLen = psResult->nDataAlloc = 0;
+    psResult->nDataLen = 0;
+    psResult->nDataAlloc = 0;
 
     CPLHTTPDestroyResult( psResult );
 

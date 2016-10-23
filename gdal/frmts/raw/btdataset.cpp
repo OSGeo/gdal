@@ -884,7 +884,10 @@ GDALDataset *BTDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Set dummy extents.                                              */
 /* -------------------------------------------------------------------- */
-    double dfLeft=0, dfRight=nXSize, dfTop=nYSize, dfBottom=0;
+    double dfLeft = 0.0;
+    double dfRight = nXSize;
+    double dfTop = nYSize;
+    double dfBottom = 0.0;
 
     memcpy( abyHeader + 28, &dfLeft, 8 );
     memcpy( abyHeader + 36, &dfRight, 8 );

@@ -410,7 +410,11 @@ class SENTINEL2_CPLXMLNodeHolder
         SENTINEL2_CPLXMLNodeHolder(CPLXMLNode* psNode) : m_psNode(psNode) {}
        ~SENTINEL2_CPLXMLNodeHolder() { if(m_psNode) CPLDestroyXMLNode(m_psNode); }
 
-       CPLXMLNode* Release() { CPLXMLNode* psRet = m_psNode; m_psNode = NULL; return psRet; }
+       CPLXMLNode* Release() {
+           CPLXMLNode* psRet = m_psNode;
+           m_psNode = NULL;
+           return psRet;
+       }
 };
 
 /************************************************************************/
@@ -1753,7 +1757,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     int nBits = 0; /* 0 = unknown yet*/
     int nValMax = 0; /* 0 = unknown yet*/
-    int nRows = 0, nCols = 0;
+    int nRows = 0;
+    int nCols = 0;
     CPLXMLNode* psGranuleDimensions =
         CPLGetXMLNode(psRoot, "=Level-1B_Granule_ID.Geometric_Info.Granule_Dimensions");
     if( psGranuleDimensions == NULL )
@@ -2843,15 +2848,20 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
     /* Iterate over granule metadata to know the layer extent */
     /* and the location of each granule */
-    double dfMinX = 1e20, dfMinY = 1e20, dfMaxX = -1e20, dfMaxY = -1e20;
+    double dfMinX = 1.0e20;
+    double dfMinY = 1.0e20;
+    double dfMaxX = -1.0e20;
+    double dfMaxY = -1.0e20;
     std::vector<SENTINEL2GranuleInfo> aosGranuleInfoList;
     const int nDesiredResolution = (bIsPreview) ? 0 : nSubDSPrecision;
     for(size_t i=0;i<aosGranuleList.size();i++)
     {
         int nEPSGCode = 0;
-        double dfULX = 0.0, dfULY = 0.0;
+        double dfULX = 0.0;
+        double dfULY = 0.0;
         int nResolution = 0;
-        int nWidth = 0, nHeight = 0;
+        int nWidth = 0;
+        int nHeight = 0;
         if( SENTINEL2GetGranuleInfo(eLevel,
                                     aosGranuleList[i],
                                     nDesiredResolution,

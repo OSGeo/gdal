@@ -526,7 +526,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[i];
+                nMin = psWInfo->panData[i];
+                nMax = nMin;
             }
             else
             {
@@ -785,7 +786,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[iData];
+                nMin = psWInfo->panData[iData];
+                nMax = nMin;
             }
             else
             {

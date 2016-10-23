@@ -1191,7 +1191,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"cellsize") )
         {
-            dfXDim = dfYDim = CPLAtofM(papszTokens[1]);
+            dfXDim = CPLAtofM(papszTokens[1]);
+            dfYDim = dfXDim;
         }
         else if( EQUAL(papszTokens[0],"nbands") )
         {
