@@ -33,13 +33,11 @@
 
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(WMS)
+WMSMiniDriver_WMS::WMSMiniDriver_WMS() : m_iversion(0) {}
 
-GDALWMSMiniDriver_WMS::GDALWMSMiniDriver_WMS() : m_iversion(0) {}
+WMSMiniDriver_WMS::~WMSMiniDriver_WMS() {}
 
-GDALWMSMiniDriver_WMS::~GDALWMSMiniDriver_WMS() {}
-
-CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
@@ -141,7 +139,7 @@ CPLErr GDALWMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **p
     return ret;
 }
 
-void GDALWMSMiniDriver_WMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_WMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 1;
     caps->m_has_image_request = 1;
@@ -149,7 +147,7 @@ void GDALWMSMiniDriver_WMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest) {
+void WMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest) {
     // http://onearth.jpl.nasa.gov/wms.cgi?request=GetMap&width=1000&height=500&layers=modis,global_mosaic&styles=&srs=EPSG:4326&format=image/jpeg&bbox=-180.000000,-90.000000,180.000000,090.000000
     *url = m_base_url;
     if (m_base_url.ifind( "service=") == std::string::npos)
@@ -169,19 +167,19 @@ void GDALWMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestIn
         GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
 }
 
-void GDALWMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
+void WMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
     BuildURL(url, iri, "GetMap");
     CPLDebug("WMS", "URL = %s", url->c_str());
 }
 
-void GDALWMSMiniDriver_WMS::TiledImageRequest(CPLString *url,
+void WMSMiniDriver_WMS::TiledImageRequest(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) {
     ImageRequest(url, iri);
 }
 
 
-void GDALWMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
+void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
@@ -198,11 +196,11 @@ void GDALWMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
 }
 
 
-const char *GDALWMSMiniDriver_WMS::GetProjectionInWKT() {
+const char *WMSMiniDriver_WMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }
 
-double GDALWMSMiniDriver_WMS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what) {
+double WMSMiniDriver_WMS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what) {
     switch (what) {
         case 'x': return MIN(iri.m_x0, iri.m_x1);
         case 'y': return MIN(iri.m_y0, iri.m_y1);
