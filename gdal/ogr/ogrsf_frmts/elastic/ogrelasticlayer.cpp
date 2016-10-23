@@ -978,15 +978,24 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 
 static const char BASE32[] = "0123456789bcdefghjkmnpqrstuvwxyz";
 
-static void decode_geohash_bbox(const char *geohash, double lat[2], double lon[2])
+static void decode_geohash_bbox( const char *geohash, double lat[2],
+                                 double lon[2] )
 {
-    int i, j, hashlen;
-    char c, cd, mask, is_even=1;
+    int i;
+    int j;
+    int hashlen;
+    char c;
+    char cd;
+    char mask;
+    char is_even = 1;
     static const char bits[] = {16,8,4,2,1};
-    lat[0] = -90.0; lat[1] = 90.0;
-    lon[0] = -180.0; lon[1] = 180.0;
+    lat[0] = -90.0;
+    lat[1] = 90.0;
+    lon[0] = -180.0;
+    lon[1] = 180.0;
     hashlen = static_cast<int>(strlen(geohash));
-    for (i=0; i<hashlen; i++) {
+    for( i = 0; i<hashlen; i++ )
+    {
         c = static_cast<char>(tolower(geohash[i]));
         cd = static_cast<char>(strchr(BASE32, c)-BASE32);
         for (j=0; j<5; j++) {

@@ -231,7 +231,9 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
         char *pszAdjFname = CPLStrdup(pszFname);
-        GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
+        GBool bFoundFields = FALSE;
+        GBool bFoundView = FALSE;
+        GBool bFoundSeamless = FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
         VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");

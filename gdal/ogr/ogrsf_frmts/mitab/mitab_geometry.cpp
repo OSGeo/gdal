@@ -277,7 +277,8 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         } while( wrong_order );
 
         // Great, now find longest span.
-        // point1.y = point2.y = y;
+        // point1.y = y;
+        // point2.y = y;
         for( int i = 0; i < nfound; i += 2 )
         {
             point1.x = xintersect[i];

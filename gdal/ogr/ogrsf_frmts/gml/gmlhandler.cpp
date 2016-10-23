@@ -709,7 +709,8 @@ OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
         {
             CPLFree(m_pszCurField);
             m_pszCurField = NULL;
-            m_nCurFieldLen = m_nCurFieldAlloc = 0;
+            m_nCurFieldLen = 0;
+            m_nCurFieldAlloc = 0;
         }
         m_bInCurField = true;
     }
@@ -1172,7 +1173,8 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 {
                     CPLFree(m_pszCurField);
                     m_pszCurField = NULL;
-                    m_nCurFieldLen = m_nCurFieldAlloc = 0;
+                    m_nCurFieldLen = 0;
+                    m_nCurFieldAlloc = 0;
                 }
                 m_bInCurField = true;
 
@@ -1540,7 +1542,8 @@ OGRErr GMLHandler::endElementCityGMLGenericAttr()
                                             m_pszCurField, -1 );
         }
         m_pszCurField = NULL;
-        m_nCurFieldLen = m_nCurFieldAlloc = 0;
+        m_nCurFieldLen = 0;
+        m_nCurFieldAlloc = 0;
         m_bInCurField = false;
         CPLFree(m_pszCityGMLGenericAttrName);
         m_pszCityGMLGenericAttrName = NULL;
@@ -1602,7 +1605,8 @@ OGRErr GMLHandler::endElementAttribute()
             m_pszKieli = NULL;
         }
 
-        m_nCurFieldLen = m_nCurFieldAlloc = 0;
+        m_nCurFieldLen = 0;
+        m_nCurFieldAlloc = 0;
         m_bInCurField = false;
         m_nAttributeIndex = -1;
 

@@ -187,7 +187,9 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
 
 {
     char **papszResult = NULL;
-    int iChar, iTokenChar = 0, bInQuotes = FALSE;
+    int iChar;
+    int iTokenChar = 0;
+    int bInQuotes = FALSE;
     char *pszToken = (char *) CPLMalloc(strlen(pszLine)+1);
     int nDelimLen = static_cast<int>(strlen(pszDelim));
 
@@ -235,14 +237,18 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
  **********************************************************************/
 int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
 {
-    int               nFields,i;
-    OGRFieldDefn        *poFDefn = NULL;
 #ifdef MITAB_USE_OFTDATETIME
-    int nYear, nMonth, nDay, nHour, nMin, nSec, nMS, nTZFlag;
-    nYear = nMonth = nDay = nHour = nMin = nSec = nMS = nTZFlag = 0;
+    int nYear = 0;
+    int nMonth = 0;
+    int nDay = 0;
+    int nHour = 0;
+    int nMin = 0;
+    int nSec = 0;
+    int nMS = 0;
+    // int nTZFlag = 0;
 #endif
 
-    nFields = GetFieldCount();
+    const int nFields = GetFieldCount();
 
     const char *pszLine = fp->GetLastLine();
 
@@ -270,7 +276,8 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
         return -1;
     }
 
-    for (i=0;i<nFields;i++)
+    OGRFieldDefn *poFDefn = NULL;
+    for( int i = 0; i < nFields; i++ )
     {
         poFDefn = GetFieldDefnRef(i);
         switch(poFDefn->GetType())
@@ -330,22 +337,26 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
  **********************************************************************/
 int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
 {
-    int                  iField, numFields;
-    OGRFieldDefn        *poFDefn = NULL;
+    CPLAssert(fp);
+
 #ifdef MITAB_USE_OFTDATETIME
     char szBuffer[20];
-    int nYear, nMonth, nDay, nHour, nMin, nMS, nTZFlag;
-    nYear = nMonth = nDay = nHour = nMin = nMS = nTZFlag = 0;
+    int nYear = 0;
+    int nMonth = 0;
+    int nDay = 0;
+    int nHour = 0;
+    int nMin = 0;
+    // int nMS = 0;
+    int nTZFlag = 0;
     float fSec = 0.0f;
 #endif
 
-    CPLAssert(fp);
-
     const char *delimiter = fp->GetDelimiter();
 
-    numFields = GetFieldCount();
+    OGRFieldDefn *poFDefn = NULL;
+    const int numFields = GetFieldCount();
 
-    for(iField=0; iField<numFields; iField++)
+    for( int iField = 0; iField < numFields; iField++ )
     {
         if (iField != 0)
           fp->WriteLine("%s", delimiter);
@@ -1380,14 +1391,17 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     GetMBR(dXMin, dYMin, dXMax, dYMax);
 
     m_bRoundCorners = FALSE;
-    m_dRoundXRadius  = 0.0;
-    m_dRoundYRadius  = 0.0;
+    m_dRoundXRadius = 0.0;
+    m_dRoundYRadius = 0.0;
 
     if (STARTS_WITH_CI(papszToken[0], "ROUNDRECT"))
     {
         m_bRoundCorners = TRUE;
         if (CSLCount(papszToken) == 6)
-          m_dRoundXRadius = m_dRoundYRadius = CPLAtof(papszToken[5])/2.0;
+        {
+          m_dRoundXRadius = CPLAtof(papszToken[5]) / 2.0;
+          m_dRoundYRadius = m_dRoundXRadius;
+        }
         else
         {
             CSLDestroy(papszToken);

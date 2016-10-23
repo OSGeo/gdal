@@ -419,22 +419,26 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
             else if (nCoords == 1)
             {
-              currentFeatureType = record->featureType = BNA_POINT;
+              currentFeatureType = BNA_POINT;
+              record->featureType = BNA_POINT;
               record->nCoords = 1;
             }
             else if (nCoords == 2)
             {
-              currentFeatureType = record->featureType = BNA_ELLIPSE;
+              currentFeatureType = BNA_ELLIPSE;
+              record->featureType = BNA_ELLIPSE;
               record->nCoords = 2;
             }
             else if (nCoords > 0)
             {
-              currentFeatureType = record->featureType = BNA_POLYGON;
+              currentFeatureType = BNA_POLYGON;
+              record->featureType = BNA_POLYGON;
               record->nCoords = nCoords;
             }
             else
             {
-              currentFeatureType = record->featureType = BNA_POLYLINE;
+              currentFeatureType = BNA_POLYLINE;
+              record->featureType = BNA_POLYLINE;
               record->nCoords = -nCoords;
             }
 

@@ -416,8 +416,8 @@ int     TABMAPObjectBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
-                                        int nFileOffset /* = 0*/)
+int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
+                                     int nFileOffset /* = 0*/ )
 {
     /*-----------------------------------------------------------------
      * Start with the default initialization
@@ -441,7 +441,8 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     m_nCurObjectType = TAB_GEOM_UNSET;
 
     m_numDataBytes = 0;       /* Data size excluding header */
-    m_nCenterX = m_nCenterY = 0;
+    m_nCenterX = 0;
+    m_nCenterY = 0;
     m_nFirstCoordBlock = 0;
     m_nLastCoordBlock = 0;
 

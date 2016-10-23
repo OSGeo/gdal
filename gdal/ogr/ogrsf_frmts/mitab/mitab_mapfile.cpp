@@ -792,7 +792,8 @@ TABRawBinBlock *TABMAPFile::PushBlock( int nFileOffset )
         if( m_poSpIndexLeaf == NULL )
         {
             delete m_poSpIndex;
-            m_poSpIndexLeaf = m_poSpIndex = poIndex;
+            m_poSpIndexLeaf = poIndex;
+            m_poSpIndex = poIndex;
         }
         else
         {
@@ -1189,7 +1190,8 @@ int TABMAPFile::MoveToObjId(int nObjId)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "MoveToObjId(): file not opened!");
-        m_nCurObjPtr = m_nCurObjId = -1;
+        m_nCurObjPtr = -1;
+        m_nCurObjId = -1;
         m_nCurObjType = TAB_GEOM_UNSET;
         return -1;
     }
@@ -1206,7 +1208,8 @@ int TABMAPFile::MoveToObjId(int nObjId)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "MoveToObjId(): no current object block!");
-        m_nCurObjPtr = m_nCurObjId = -1;
+        m_nCurObjPtr = -1;
+        m_nCurObjId = -1;
         m_nCurObjType = TAB_GEOM_UNSET;
         return -1;
     }
@@ -1246,7 +1249,8 @@ int TABMAPFile::MoveToObjId(int nObjId)
                     "in the .MAP file (%d).  File may be corrupt.",
                     nObjId, m_nCurObjId);
             }
-            m_nCurObjPtr = m_nCurObjId = -1;
+            m_nCurObjPtr = -1;
+            m_nCurObjId = -1;
             m_nCurObjType = TAB_GEOM_UNSET;
             return -1;
         }
@@ -1256,7 +1260,8 @@ int TABMAPFile::MoveToObjId(int nObjId)
         /*---------------------------------------------------------
          * Failed positioning input file... CPLError has been called.
          *--------------------------------------------------------*/
-        m_nCurObjPtr = m_nCurObjId = -1;
+        m_nCurObjPtr = -1;
+        m_nCurObjId = -1;
         m_nCurObjType = TAB_GEOM_UNSET;
         return -1;
     }
@@ -1293,7 +1298,8 @@ int TABMAPFile::MarkAsDeleted()
     if( m_poIdIndex->SetObjPtr(m_nCurObjId, 0) != 0 )
         ret = -1;
 
-    m_nCurObjPtr = m_nCurObjId = -1;
+    m_nCurObjPtr = -1;
+    m_nCurObjId = -1;
     m_nCurObjType = TAB_GEOM_UNSET;
     m_bUpdated = TRUE;
 
@@ -1407,9 +1413,10 @@ void  TABMAPFile::UpdateMapHeaderInfo(TABGeomType nObjType)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int   TABMAPFile::PrepareNewObj(TABMAPObjHdr *poObjHdr)
+int TABMAPFile::PrepareNewObj( TABMAPObjHdr *poObjHdr )
 {
-    m_nCurObjPtr = m_nCurObjId = -1;
+    m_nCurObjPtr = -1;
+    m_nCurObjId = -1;
     m_nCurObjType = TAB_GEOM_UNSET;
 
     if (m_eAccessMode == TABRead ||
@@ -2118,8 +2125,10 @@ int TABMAPFile::LoadObjAndCoordBlocks(GInt32 nBlockPtr)
 TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
                                              int nSizeOfObjToAdd)
 {
-    TABMAPObjHdr **papoSrcObjHdrs = NULL, *poObjHdr=NULL;
-    int i, numSrcObj = 0;
+    TABMAPObjHdr **papoSrcObjHdrs = NULL;
+    TABMAPObjHdr *poObjHdr=NULL;
+    int i;
+    int numSrcObj = 0;
 
     /*-----------------------------------------------------------------
      * Read all object headers

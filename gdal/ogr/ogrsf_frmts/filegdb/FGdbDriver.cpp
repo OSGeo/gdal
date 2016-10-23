@@ -791,9 +791,9 @@ OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
 
     std::wstring wstr = StringToWString(pszDataSource);
 
-    long hr;
+    long hr = 0;
 
-    if (S_OK != (hr = ::DeleteGeodatabase(wstr)))
+    if( S_OK != (hr = ::DeleteGeodatabase(wstr)) )
     {
         GDBErr(hr, "Failed to delete Geodatabase");
         return OGRERR_FAILURE;

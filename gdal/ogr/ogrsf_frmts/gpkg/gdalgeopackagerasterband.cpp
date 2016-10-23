@@ -2363,9 +2363,12 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 if( m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0 )
                     m_poTPD->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = true;
 
-                int nDstXOffset = 0, nDstXSize = nBlockXSize,
-                    nDstYOffset = 0, nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0, nSrcYOffset = 0;
+                int nDstXOffset = 0;
+                int nDstXSize = nBlockXSize;
+                int nDstYOffset = 0;
+                int nDstYSize = nBlockYSize;
+                int nSrcXOffset = 0;
+                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( m_poTPD->m_nShiftXPixelsMod == 0 && m_poTPD->m_nShiftYPixelsMod == 0 )
                 {
