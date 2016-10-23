@@ -162,18 +162,19 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) = 0;
 
 public:
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) {};
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {};
+    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
+    virtual void ImageRequest(CPL_UNUSED CPLString *url, 
+        CPL_UNUSED const GDALWMSImageRequestInfo &iri) {};
 
-    virtual void TiledImageRequest(CPLString *url,
-        const GDALWMSImageRequestInfo &iri,
-        const GDALWMSTiledImageRequestInfo &tiri) {};
+    virtual void TiledImageRequest(CPL_UNUSED CPLString *url,
+        CPL_UNUSED const GDALWMSImageRequestInfo &iri,
+        CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) {};
 
-    virtual void GetTiledImageInfo(CPLString *url,
-        const GDALWMSImageRequestInfo &iri,
-        const GDALWMSTiledImageRequestInfo &tiri,
-        int nXInBlock,
-        int nYInBlock) {};
+    virtual void GetTiledImageInfo(CPL_UNUSED CPLString *url,
+        CPL_UNUSED const GDALWMSImageRequestInfo &iri,
+        CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
+        CPL_UNUSED int nXInBlock,
+        CPL_UNUSED int nYInBlock) {};
 
     // Return data projection in WKT format, NULL if unknown
     virtual const char *GetProjectionInWKT() { 
@@ -186,12 +187,12 @@ protected:
 
 class WMSMiniDriverFactory {
 public:
-    WMSMiniDriverFactory(const char *name) : m_name(name) {};
+    WMSMiniDriverFactory() {};
     virtual ~WMSMiniDriverFactory() {};
 
 public:
     virtual WMSMiniDriver* New() const = 0;
-    const CPLString m_name;
+    CPLString m_name;
 };
 
 // Interface with the global mini driver manager

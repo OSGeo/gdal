@@ -972,9 +972,9 @@ GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
 #define RegisterMinidriver(name) \
     class WMSMiniDriverFactory_##name : public WMSMiniDriverFactory { \
     public: \
-        WMSMiniDriverFactory_##name() : WMSMiniDriverFactory(#name) {};\
+        WMSMiniDriverFactory_##name() { m_name = CPLString(#name); };\
         virtual ~WMSMiniDriverFactory_##name() {};\
-        virtual WMSMiniDriver* New() { return new WMSMiniDriver_##name;}; \
+        virtual WMSMiniDriver* New() const { return new WMSMiniDriver_##name;}; \
     }; \
     WMSRegisterMiniDriverFactory(new WMSMiniDriverFactory_##name());
 
