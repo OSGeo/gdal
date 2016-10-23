@@ -384,7 +384,7 @@ int VSIPDFFileStream::getChars(int nChars, Guchar *buffer)
             if (!bLimited && nToRead > BUFFER_SIZE)
             {
                 int nJustRead = (int) VSIFReadL(buffer + nRead, 1, nToRead, f);
-                nPosInBuffer = = -1;
+                nPosInBuffer = -1;
                 nBufferLength = -1;
                 nCurrentPos += nJustRead;
                 nRead += nJustRead;
