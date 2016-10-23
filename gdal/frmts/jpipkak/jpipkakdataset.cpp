@@ -168,19 +168,20 @@ JPIPKAKRasterBand::JPIPKAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 
     if( nDiscardLevels == 0 )
     {
-        int  nXSize = nRasterXSize, nYSize = nRasterYSize;
+        int nXSize = nRasterXSize;
+        int nYSize = nRasterYSize;
 
         for( int nDiscard = 1; nDiscard < nResCount; nDiscard++ )
         {
-            kdu_dims  dims;
 
-            nXSize = (nXSize+1) / 2;
-            nYSize = (nYSize+1) / 2;
+            nXSize = (nXSize + 1) / 2;
+            nYSize = (nYSize + 1) / 2;
 
             if( (nXSize+nYSize) < 128 || nXSize < 4 || nYSize < 4 )
                 continue; /* skip super reduced resolution layers */
 
             oCodeStream->apply_input_restrictions( 0, 0, nDiscard, 0, NULL );
+            kdu_dims dims;
             oCodeStream->get_dims( 0, dims );
 
             if( (dims.size.x == nXSize || dims.size.x == nXSize-1)
@@ -1357,7 +1358,8 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->pBuf = pBuf;
         ario->pAppBuf = pBuf;
 
-        ario->nAppPixelSpace = ario->nPixelSpace = nPixelSpace;
+        ario->nAppPixelSpace = nPixelSpace;
+        ario->nPixelSpace = nPixelSpace;
         ario->nAppLineSpace = ario->nLineSpace = nLineSpace;
         ario->nAppBandSpace = ario->nBandSpace = nBandSpace;
     }
@@ -1394,7 +1396,8 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->nLevel = atoi(pszLevel);
     else
     {
-        int nRXSize = xSize, nRYSize = ySize;
+        int nRXSize = xSize;
+        int nRYSize = ySize;
         ario->nLevel = 0;
 
         while( ario->nLevel < nResLevels
@@ -1489,7 +1492,8 @@ void GDALRegister_JPIPKAK()
 JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 {
     panBandMap = NULL;
-    pAppBuf = pBuf = NULL;
+    pAppBuf = NULL;
+    pBuf = NULL;
     nDataRead = 0;
 }
 

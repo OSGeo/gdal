@@ -77,7 +77,7 @@ static bool NCDFIsVarTimeCoord(int nCdfId, int nVarId=-1, const char * nVarName=
 
 static char **NCDFTokenizeArray( const char *pszValue ); //replace this where used
 static void CopyMetadata( void  *poDS, int fpImage, int CDFVarID,
-                   const char *pszMatchPrefix=NULL, bool bIsBand=true );
+                          const char *pszMatchPrefix=NULL, bool bIsBand=true );
 
 // uncomment this for more debug output
 // #define NCDF_DEBUG 1
@@ -614,7 +614,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                           "Unsupported GDAL datatype (%d), treat as NC_FLOAT.",
                           static_cast<int>(eDataType) );
             nc_datatype = NC_FLOAT;
-            eDataType = eType = GDT_Float32;
+            eDataType = GDT_Float32;
+            eType = GDT_Float32;
             break;
     }
 
@@ -3910,8 +3911,10 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     bool bWriteGeoTransform = false;
 
     nc_type eLonLatType = NC_NAT;
-    int nVarLonID=-1, nVarLatID=-1;
-    int nVarXID=-1, nVarYID=-1;
+    int nVarLonID = -1;
+    int nVarLatID = -1;
+    int nVarXID = -1;
+    int nVarYID = -1;
 
     /* For GEOLOCATION information */
     GDALDatasetH hDS_X = NULL;
@@ -6204,7 +6207,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             // as attribute variables
             if( nVarXId >= 0 && nVarYId >= 0 )
             {
-                int nVarDimCount = -1, nVarDimId = -1;
+                int nVarDimCount = -1;
+                int nVarDimId = -1;
                 if( nc_inq_varndims( poDS->cdfid, nVarXId, &nVarDimCount ) != NC_NOERR ||
                     nVarDimCount != 1 ||
                     nc_inq_vardimid( poDS->cdfid, nVarXId, &nVarDimId ) != NC_NOERR ||

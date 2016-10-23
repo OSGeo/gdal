@@ -722,8 +722,9 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInforma
         (entry->nwLat - entry->seLat)
         / (entry->nVertFrames * entry->vertInterval) + 0.5);
 
-    int nBlockXSize = 0, nBlockYSize = 0;
-    double geoTransf[6];
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    double geoTransf[6] = {};
     char* projectionRef = NULL;
     int index = 0;
 
@@ -1073,8 +1074,11 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
 
         bool ok = false;
         char* projectionRef = NULL;
-        double nwLong = 0, nwLat = 0, seLong = 0, seLat = 0;
-        double adfGeoTransform[6];
+        double nwLong = 0.0;
+        double nwLat = 0.0;
+        double seLong = 0.0;
+        double seLat = 0.0;
+        double adfGeoTransform[6] = {};
 
         ds->papszFileList = CSLAddString(ds->papszFileList, pszFilename);
 

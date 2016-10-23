@@ -232,15 +232,16 @@ int DDFField::GetRepeatCount()
 /*      variable length field, but the count is one, so it isn't        */
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
-    int         iOffset = 0, iRepeatCount = 1;
+    int iOffset = 0;
+    int iRepeatCount = 1;
 
     while( true )
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
-            int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
+            int nBytesConsumed = 0;
             if( poThisSFDefn->GetWidth() > nDataSize - iOffset )
                 nBytesConsumed = poThisSFDefn->GetWidth();
             else

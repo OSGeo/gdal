@@ -9155,7 +9155,9 @@ static void CreateTIFFColorTable(GDALColorTable* poColorTable,
         }
         else
         {
-            anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            anTRed[iColor] = 0;
+            anTGreen[iColor] = 0;
+            anTBlue[iColor] = 0;
         }
     }
 

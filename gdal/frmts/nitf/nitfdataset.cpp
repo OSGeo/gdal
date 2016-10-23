@@ -2092,7 +2092,10 @@ CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     CPLFree(pszGCPProjection);
     pszGCPProjection = CPLStrdup(pszGCPProjectionIn);
 
-    int iUL = -1, iUR = -1, iLR = -1, iLL = -1;
+    int iUL = -1;
+    int iUR = -1;
+    int iLR = -1;
+    int iLL = -1;
 
 #define EPS_GCP 1e-5
     for(int i = 0; i < 4; i++ )
