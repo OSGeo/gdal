@@ -1119,7 +1119,8 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 if( bEmitFeature && poCurLayer != NULL)
                 {
                     OGRGeometry* poGeom = BuildGeometry(oCoords, bHasFoundFill, bHasMultiPart);
-                    bHasFoundFill = bHasMultiPart = FALSE;
+                    bHasFoundFill = FALSE;
+                    bHasMultiPart = FALSE;
                     if (poGeom)
                     {
                         OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());

@@ -134,7 +134,7 @@ static short ReadShort(GByte**pptr)
     return nVal;
 }
 
-static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static int ReadInt( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
@@ -144,7 +144,7 @@ static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
     return nVal;
 }
 
-static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static short ReadShort( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);

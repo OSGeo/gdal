@@ -2322,7 +2322,8 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /*      special geokey tag to indicate that GDAL has written these      */
 /*      with the proper interpretation of the linear units.             */
 /* -------------------------------------------------------------------- */
-    double dfFE = 0.0, dfFN = 0.0;
+    double dfFE = 0.0;
+    double dfFN = 0.0;
 
     if( (GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseEastingGeoKey, &dfFE, 0, 1)
          || GDALGTIFKeyGetDOUBLE(psGTIF, ProjFalseNorthingGeoKey, &dfFN, 0, 1)

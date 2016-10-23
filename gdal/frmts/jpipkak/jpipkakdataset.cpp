@@ -1360,8 +1360,12 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
 
         ario->nAppPixelSpace = nPixelSpace;
         ario->nPixelSpace = nPixelSpace;
-        ario->nAppLineSpace = ario->nLineSpace = nLineSpace;
-        ario->nAppBandSpace = ario->nBandSpace = nBandSpace;
+
+        ario->nAppLineSpace = nLineSpace;
+        ario->nLineSpace = nLineSpace;
+
+        ario->nAppBandSpace = nBandSpace;
+        ario->nBandSpace = nBandSpace;
     }
 
     // parse options

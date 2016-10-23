@@ -639,7 +639,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
         if( sCInfo.num_components == 1 )
         {
             // Force samp factors to 1x1 in this case.
-            h_samp_factor = v_samp_factor = 1;
+            h_samp_factor = 1;
+            v_samp_factor = 1;
         }
         else
         {

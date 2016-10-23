@@ -218,8 +218,8 @@ r_Ref<r_GMarray>& RasdamanDataset::request_array(int x_lo, int x_hi, int y_lo, i
 
 r_Ref<r_GMarray>& RasdamanDataset::request_array(const Subset& subset, int& offsetX, int& offsetY)
 {
-  // set the offsets to 0
-  offsetX = 0; offsetY = 0;
+  offsetX = 0;
+  offsetY = 0;
 
   // check whether or not the subset was already requested
   ArrayCache::iterator it = m_array_cache.find(subset);
@@ -367,11 +367,12 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
   memset(pImage, 0, nRecordSize);
 
   try {
-    int x_lo = nBlockXOff * nBlockXSize,
-        x_hi = MIN(poGDS->nRasterXSize, (nBlockXOff + 1) * nBlockXSize),
-        y_lo = nBlockYOff * nBlockYSize,
-        y_hi = MIN(poGDS->nRasterYSize, (nBlockYOff + 1) * nBlockYSize),
-        offsetX = 0, offsetY = 0;
+    int x_lo = nBlockXOff * nBlockXSize;
+    int x_hi = MIN(poGDS->nRasterXSize, (nBlockXOff + 1) * nBlockXSize);
+    int y_lo = nBlockYOff * nBlockYSize;
+    int y_hi = MIN(poGDS->nRasterYSize, (nBlockYOff + 1) * nBlockYSize);
+    int offsetX = 0;
+    int offsetY = 0;
 
     r_Ref<r_GMarray>& gmdd = poGDS->request_array(x_lo, x_hi, y_lo, y_hi, offsetX, offsetY);
 

@@ -693,7 +693,8 @@ int RasterliteDataset::CloseDependentDatasets()
 
         CPLFree(padfXResolutions);
         CPLFree(padfYResolutions);
-        padfXResolutions = padfYResolutions = NULL;
+        padfXResolutions = NULL;
+        padfYResolutions = NULL;
 
         delete poCT;
         poCT = NULL;

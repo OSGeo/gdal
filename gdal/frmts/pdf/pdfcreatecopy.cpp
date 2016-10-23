@@ -234,7 +234,8 @@ int GDALPDFWriter::ParseTrailerAndXRef()
         if (!ParseIndirectRef(pszInfo, nInfoId, nInfoGen))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse trailer /Info");
-            nInfoId = nInfoGen = 0;
+            nInfoId = 0;
+            nInfoGen = 0;
         }
     }
 
@@ -512,7 +513,8 @@ static
 void GDALPDFFind4Corners(const GDAL_GCP* pasGCPList,
                          int& iUL, int& iUR, int& iLR, int& iLL)
 {
-    double dfMeanX = 0, dfMeanY = 0;
+    double dfMeanX = 0.0;
+    double dfMeanY = 0.0;
     int i;
 
     iUL = 0;
@@ -597,15 +599,26 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
             {
                 for(int i=0;i<4;i++)
                 {
-                    double X = asNeatLineGCPs[i].dfGCPX = poLS->getX(i);
-                    double Y = asNeatLineGCPs[i].dfGCPY = poLS->getY(i);
-                    double x = adfGeoTransformInv[0] + X * adfGeoTransformInv[1] + Y * adfGeoTransformInv[2];
-                    double y = adfGeoTransformInv[3] + X * adfGeoTransformInv[4] + Y * adfGeoTransformInv[5];
+                    const double X = poLS->getX(i);
+                    const double Y = poLS->getY(i);
+                    asNeatLineGCPs[i].dfGCPX = X;
+                    asNeatLineGCPs[i].dfGCPY = Y;
+                    const double x =
+                        adfGeoTransformInv[0] +
+                        X * adfGeoTransformInv[1] +
+                        Y * adfGeoTransformInv[2];
+                    const double y =
+                        adfGeoTransformInv[3] +
+                        X * adfGeoTransformInv[4] +
+                        Y * adfGeoTransformInv[5];
                     asNeatLineGCPs[i].dfGCPPixel = x;
                     asNeatLineGCPs[i].dfGCPLine = y;
                 }
 
-                int iUL = 0, iUR = 0, iLR = 0, iLL = 0;
+                int iUL = 0;
+                int iUR = 0;
+                int iLR = 0;
+                int iLL = 0;
                 GDALPDFFind4Corners(asNeatLineGCPs,
                                     iUL,iUR, iLR, iLL);
 
@@ -634,7 +647,10 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
 
     if( pasGCPList )
     {
-        int iUL = 0, iUR = 0, iLR = 0, iLL = 0;
+        int iUL = 0;
+        int iUR = 0;
+        int iLR = 0;
+        int iLL = 0;
         GDALPDFFind4Corners(pasGCPList,
                             iUL,iUR, iLR, iLL);
 
@@ -1249,7 +1265,10 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     {
         if (nGCPCount == 4)
         {
-            int iUL = 0, iUR = 0, iLR = 0, iLL = 0;
+            int iUL = 0;
+            int iUR = 0;
+            int iLR = 0;
+            int iLL = 0;
             GDALPDFFind4Corners(pasGCPList,
                                 iUL,iUR, iLR, iLL);
 
@@ -2201,18 +2220,35 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     /* -------------------------------------------------------------- */
     /*  Get style                                                     */
     /* -------------------------------------------------------------- */
-    int nPenR = 0, nPenG = 0, nPenB = 0, nPenA = 255;
-    int nBrushR = 127, nBrushG = 127, nBrushB = 127, nBrushA = 127;
-    int nTextR = 0, nTextG = 0, nTextB = 0, nTextA = 255;
+    int nPenR = 0;
+    int nPenG = 0;
+    int nPenB = 0;
+    int nPenA = 255;
+    int nBrushR = 127;
+    int nBrushG = 127;
+    int nBrushB = 127;
+    int nBrushA = 127;
+    int nTextR = 0;
+    int nTextG = 0;
+    int nTextB = 0;
+    int nTextA = 255;
     int bSymbolColorDefined = FALSE;
-    int nSymbolR = 0, nSymbolG = 0, nSymbolB = 0, nSymbolA = 255;
-    double dfTextSize = 12, dfTextAngle = 0, dfTextDx = 0, dfTextDy = 0;
-    double dfPenWidth = 1;
-    double dfSymbolSize = 5;
+    int nSymbolR = 0;
+    int nSymbolG = 0;
+    int nSymbolB = 0;
+    int nSymbolA = 255;
+    double dfTextSize = 12.0;
+    double dfTextAngle = 0.0;
+    double dfTextDx = 0.0;
+    double dfTextDy = 0.0;
+    double dfPenWidth = 1.0;
+    double dfSymbolSize = 5.0;
     CPLString osDashArray;
     CPLString osLabelText;
     CPLString osSymbolId;
-    int nImageSymbolId = 0, nImageWidth = 0, nImageHeight = 0;
+    int nImageSymbolId = 0;
+    int nImageWidth = 0;
+    int nImageHeight = 0;
 
     OGRStyleMgrH hSM = OGR_SM_Create(NULL);
     OGR_SM_InitFromFeature(hSM, hFeat);
@@ -2228,7 +2264,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTPenColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0, nGreen = 0, nBlue = 0, nAlpha = 255;
+                    int nRed = 0;
+                    int nGreen = 0;
+                    int nBlue = 0;
+                    int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2266,7 +2305,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTBrushFColor, &bIsNull);
                 if (pszColor)
                 {
-                    int nRed = 0, nGreen = 0, nBlue = 0, nAlpha = 255;
+                    int nRed = 0;
+                    int nGreen = 0;
+                    int nBlue = 0;
+                    int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2305,7 +2347,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTLabelFColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0, nGreen = 0, nBlue = 0, nAlpha = 255;
+                    int nRed = 0;
+                    int nGreen = 0;
+                    int nBlue = 0;
+                    int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2403,7 +2448,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTSymbolColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0, nGreen = 0, nBlue = 0, nAlpha = 255;
+                    int nRed = 0;
+                    int nGreen = 0;
+                    int nBlue = 0;
+                    int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -4327,7 +4375,10 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const bool bTiled = CPLFetchBool( papszOptions, "TILED", false );
     if( bTiled )
-        nBlockXSize = nBlockYSize = 256;
+    {
+        nBlockXSize = 256;
+        nBlockYSize = 256;
+    }
 
     const char* pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
     if( pszValue != NULL )
