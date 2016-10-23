@@ -34,8 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(TiledWMS)
-
 static const char SIG[]="GDAL_WMS TiledWMS: ";
 
 /*
@@ -272,19 +270,19 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
     CSLDestroy(papszTokens);
 }
 
-GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() :
+WMSMiniDriver_TiledWMS::WMSMiniDriver_TiledWMS() :
     m_requests(NULL),
     m_bsx(0),
     m_bsy(0)
 {}
 
-GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
+WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
 }
 
 
 // Returns the scale of a WMS request as compared to the base resolution
-double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
+double WMSMiniDriver_TiledWMS::Scale(const char *request) {
     int bbox=FindBbox(request);
     if (bbox<0) return 0;
     double x,y,X,Y;
@@ -294,7 +292,7 @@ double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
 
 
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
-CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
+CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
 {
     CPLString req;
     double scale=-1;
@@ -321,7 +319,7 @@ CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
  *\Brief Initialize minidriver with info from the server
  */
 
-CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
+CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig=NULL;
@@ -676,7 +674,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED cha
     return ret;
 }
 
-void GDALWMSMiniDriver_TiledWMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_TiledWMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 1;
@@ -686,11 +684,11 @@ void GDALWMSMiniDriver_TiledWMS::GetCapabilities(GDALWMSMiniDriverCapabilities *
 
 
 // not called
-void GDALWMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,
                                               CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void WMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     *url = m_base_url;
     URLAppend(url,CSLGetField(m_requests,-tiri.m_level));
     URLSearchAndReplace(url,"${GDAL_BBOX}","%013.8f,%013.8f,%013.8f,%013.8f",
@@ -698,6 +696,6 @@ void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMS
     URLAppend(url,m_end_url);
 }
 
-const char *GDALWMSMiniDriver_TiledWMS::GetProjectionInWKT() {
+const char *WMSMiniDriver_TiledWMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }

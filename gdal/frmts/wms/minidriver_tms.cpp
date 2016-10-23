@@ -32,13 +32,11 @@
 
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(TMS)
+WMSMiniDriver_TMS::WMSMiniDriver_TMS() {}
 
-GDALWMSMiniDriver_TMS::GDALWMSMiniDriver_TMS() {}
+WMSMiniDriver_TMS::~WMSMiniDriver_TMS() {}
 
-GDALWMSMiniDriver_TMS::~GDALWMSMiniDriver_TMS() {}
-
-CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
@@ -64,7 +62,7 @@ CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **p
     return ret;
 }
 
-void GDALWMSMiniDriver_TMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_TMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
@@ -72,11 +70,11 @@ void GDALWMSMiniDriver_TMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_TMS::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_TMS::ImageRequest(CPL_UNUSED CPLString *url,
                                          CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void WMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
     int tms_y;
 

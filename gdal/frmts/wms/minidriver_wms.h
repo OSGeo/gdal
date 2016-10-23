@@ -28,19 +28,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(WMS)
+/*
+ * Base class for a WMS minidriver.  
+ * At least Initialize() and one of the ImageRequest() or TiledImageRequest() has to be provided
+ * All minidrivers are instantiated in wmsdriver.cpp, in GDALRegister_WMS()
+ */
 
-class GDALWMSMiniDriver_WMS : public GDALWMSMiniDriver {
+class WMSMiniDriver_WMS : public WMSMiniDriver {
 
     void    BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
 
 public:
-    GDALWMSMiniDriver_WMS();
-    virtual ~GDALWMSMiniDriver_WMS();
+    WMSMiniDriver_WMS();
+    virtual ~WMSMiniDriver_WMS();
 
 public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
     virtual void GetTiledImageInfo(CPLString *url,

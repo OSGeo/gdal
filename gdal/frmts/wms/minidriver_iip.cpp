@@ -31,13 +31,11 @@
 
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(IIP)
+WMSMiniDriver_IIP::WMSMiniDriver_IIP() {}
 
-GDALWMSMiniDriver_IIP::GDALWMSMiniDriver_IIP() {}
+WMSMiniDriver_IIP::~WMSMiniDriver_IIP() {}
 
-GDALWMSMiniDriver_IIP::~GDALWMSMiniDriver_IIP() {}
-
-CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
@@ -53,7 +51,7 @@ CPLErr GDALWMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **p
     return ret;
 }
 
-void GDALWMSMiniDriver_IIP::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_IIP::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
@@ -63,7 +61,7 @@ void GDALWMSMiniDriver_IIP::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_has_geotransform = false;
 }
 
-void GDALWMSMiniDriver_IIP::TiledImageRequest(
+void WMSMiniDriver_IIP::TiledImageRequest(
     CPLString *url,
     const GDALWMSImageRequestInfo & /* iri */,
     const GDALWMSTiledImageRequestInfo &tiri)

@@ -28,16 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(TiledWMS)
-
-class GDALWMSMiniDriver_TiledWMS : public GDALWMSMiniDriver {
+class WMSMiniDriver_TiledWMS : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_TiledWMS();
-    virtual ~GDALWMSMiniDriver_TiledWMS();
+    WMSMiniDriver_TiledWMS();
+    virtual ~WMSMiniDriver_TiledWMS();
 
 public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
     virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
     virtual const char *GetProjectionInWKT();
