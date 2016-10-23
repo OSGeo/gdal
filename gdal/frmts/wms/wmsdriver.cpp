@@ -489,12 +489,15 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                                          strlen(pszContent),
                                          FALSE);
     const char* pszLine;
-    int nTileWidth = -1, nTileHeight = -1;
+    int nTileWidth = -1;
+    int nTileHeight = -1;
     int nWKID = -1;
-    double dfMinX = 0, dfMaxY = 0;
-    int bHasMinX = FALSE, bHasMaxY = FALSE;
+    double dfMinX = 0.0;
+    double dfMaxY = 0.0;
+    int bHasMinX = FALSE;
+    int bHasMaxY = FALSE;
     int nExpectedLevel = 0;
-    double dfBaseResolution = 0;
+    double dfBaseResolution = 0.0;
     while((pszLine = CPLReadLine2L(fp, 4096, NULL)) != NULL)
     {
         const char* pszVal;

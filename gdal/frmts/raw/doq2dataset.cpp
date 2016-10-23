@@ -168,7 +168,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszQuadname = NULL;
     char *pszQuadquad = NULL;
     char *pszState = NULL;
-    int nZone=0, nProjType=0;
+    int nZone = 0;
+    int nProjType = 0;
     int nSkipBytes = 0;
     int nBandCount = 0;
     double dfULXMap=0.0;

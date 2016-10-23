@@ -417,7 +417,10 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         bPanGeoTransformValid = ( poPanDataset->GetGeoTransform(adfPanGT) == CE_None );
     int nPanXSize = poPanBand->GetXSize();
     int nPanYSize = poPanBand->GetYSize();
-    double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+    double dfMinX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxX = 0.0;
+    double dfMaxY = 0.0;
     int bFoundRotatingTerms = FALSE;
     int bHasNoData = FALSE;
     double dfNoData = poPanBand->GetNoDataValue(&bHasNoData);

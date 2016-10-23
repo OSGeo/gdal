@@ -432,8 +432,13 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Is this file a SAGA header file?  Read a few lines of text      */
     /*      searching for something starting with nrows or ncols.           */
     /* -------------------------------------------------------------------- */
-    int nRows = -1, nCols = -1;
-    double dXmin = 0.0, dYmin = 0.0, dCellsize = 0.0, dNoData = 0.0, dZFactor = 0.0;
+    int nRows = -1;
+    int nCols = -1;
+    double dXmin = 0.0;
+    double dYmin = 0.0;
+    double dCellsize = 0.0;
+    double dNoData = 0.0;
+    double dZFactor = 0.0;
     int nLineCount = 0;
     char szDataFormat[20] = "DOUBLE";
     char szByteOrderBig[10] = "FALSE";

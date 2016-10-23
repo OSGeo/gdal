@@ -496,8 +496,10 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             }
 
             if ((entries>0)&&(entries<257)) {
-                int start_idx, end_idx;
-                GDALColorEntry ce_start={0,0,0,255},ce_end={0,0,0,255};
+                int start_idx;
+                int end_idx;
+                GDALColorEntry ce_start = { 0, 0, 0, 255 };
+                GDALColorEntry ce_end = { 0, 0, 0, 255 };
 
                 // Create it and initialize it to nothing
                 poColorTable = new GDALColorTable(eInterp);
@@ -541,8 +543,10 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         int overview_count=0;
         CPLXMLNode *Pattern=TG->psChild;
 
-        m_bsx=m_bsy=-1;
-        m_data_window.m_sx=m_data_window.m_sy=0;
+        m_bsx = -1;
+        m_bsy = -1;
+        m_data_window.m_sx = 0;
+        m_data_window.m_sy = 0;
 
         for (int once2=1;once2;once2--) { // Something to break out of
             while ((NULL!=Pattern)&&(NULL!=(Pattern=SearchXMLSiblings(Pattern,"=TilePattern")))) {

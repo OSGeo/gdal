@@ -579,7 +579,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     // TODO(schwehr): What is the difference between 0 (GDT_Unknown) and -1?
     // Does there need to be a GDT_Uninitialized?
     GDALDataType eDataType = static_cast<GDALDataType>(-1);
-    int nBlockXSize = 0, nBlockYSize = 0;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     if( psSrcProperties )
     {
         nRasterXSize =

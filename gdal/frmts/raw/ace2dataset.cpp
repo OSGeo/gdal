@@ -238,7 +238,6 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     const char* pszBasename = CPLGetBasename(poOpenInfo->pszFilename);
-    int nXSize = 0, nYSize = 0;
 
     if (strlen(pszBasename) < 7)
         return NULL;
@@ -292,30 +291,37 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+    int nXSize = 0;
+    int nYSize = 0;
+
     double dfPixelSize = 0;
     if (sStat.st_size == 180 * 180 * nWordSize)
     {
         /* 5 minute */
-        nXSize = nYSize = 180;
-        dfPixelSize = 5. / 60;
+        nXSize = 180;
+        nYSize = 180;
+        dfPixelSize = 5.0 / 60;
     }
     else if (sStat.st_size == 1800 * 1800 * nWordSize)
     {
         /* 30 s */
-        nXSize = nYSize = 1800;
-        dfPixelSize = 30. / 3600;
+        nXSize = 1800;
+        nYSize = 1800;
+        dfPixelSize = 30.0 / 3600;
     }
     else if (sStat.st_size == 6000 * 6000 * nWordSize)
     {
         /* 9 s */
-        nXSize = nYSize = 6000;
-        dfPixelSize = 9. / 3600;
+        nXSize = 6000;
+        nYSize = 6000;
+        dfPixelSize = 9.0 / 3600;
     }
     else if (sStat.st_size == 18000 * 18000 * nWordSize)
     {
         /* 3 s */
-        nXSize = nYSize = 18000;
-        dfPixelSize = 3. / 3600;
+        nXSize = 18000;
+        nYSize = 18000;
+        dfPixelSize = 3.0 / 3600;
     }
     else
         return NULL;
