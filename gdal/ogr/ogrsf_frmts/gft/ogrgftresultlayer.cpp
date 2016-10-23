@@ -219,7 +219,8 @@ int OGRGFTResultLayer::RunSQL()
     }
     else
     {
-        bGotAllRows = bEOF = TRUE;
+        bGotAllRows = TRUE;
+        bEOF = TRUE;
         poFeatureDefn->SetGeomType( wkbNone );
     }
 
@@ -280,9 +281,15 @@ int OGRGFTResultLayer::RunSQL()
         }
 
         if (bHasSetLimit)
-            bGotAllRows = bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+        {
+            bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+            bGotAllRows = bEOF;
+        }
         else
-            bGotAllRows = bEOF = TRUE;
+        {
+            bGotAllRows = TRUE;
+            bEOF = TRUE;
+        }
     }
 
     SetGeomFieldName();

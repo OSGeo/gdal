@@ -238,7 +238,8 @@ int OGRGFTTableLayer::FetchDescribe()
     }
     else if (iGeometryField < 0 && osGeomColumnName.size() == 0)
     {
-        iLatitudeField = iLongitudeField = -1;
+        iLatitudeField = -1;
+        iLongitudeField = -1;
 
         /* In the unauthenticated case, we try to parse the first record to */
         /* auto-detect the geometry field. */

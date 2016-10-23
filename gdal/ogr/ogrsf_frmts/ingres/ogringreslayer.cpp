@@ -169,8 +169,9 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
 /*      spaces may occur between tokens.                                */
 /* -------------------------------------------------------------------- */
     double *padfXY = NULL;
-    int    nVertMax = 0, nVertCount = 0;
-    int    nDepth = 0;
+    int nVertMax = 0;
+    int nVertCount = 0;
+    int nDepth = 0;
     const char *pszNext = pszGeom;
 
     while( *pszNext != '\0' )

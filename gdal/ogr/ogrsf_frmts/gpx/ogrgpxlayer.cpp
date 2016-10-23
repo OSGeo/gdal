@@ -447,8 +447,11 @@ void OGRGPXLayer::ResetReading()
     depthLevel = 0;
     interestingDepthLevel = 0;
 
-    trkFID = trkSegId = trkSegPtId = 0;
-    rteFID = rtePtId = 0;
+    trkFID = 0;
+    trkSegId = 0;
+    trkSegPtId = 0;
+    rteFID = 0;
+    rtePtId = 0;
 }
 
 #ifdef HAVE_EXPAT

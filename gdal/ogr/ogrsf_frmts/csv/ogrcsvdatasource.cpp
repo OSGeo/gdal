@@ -219,7 +219,8 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
             (bHasCSVT && VSIRename( osTmpCSVTFilename, osCSVTFilename ) != 0) )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename files");
-            *ppoDecoratedLayer = m_poCSVLayer = NULL;
+            *ppoDecoratedLayer = NULL;
+            m_poCSVLayer = NULL;
             return OGRERR_FAILURE;
         }
         VSIUnlink( osTmpOriFilename );
@@ -232,7 +233,8 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot reopen updated %s",
                  osFilename.c_str());
-        *ppoDecoratedLayer = m_poCSVLayer = NULL;
+        *ppoDecoratedLayer = NULL;
+        m_poCSVLayer = NULL;
         return OGRERR_FAILURE;
     }
 

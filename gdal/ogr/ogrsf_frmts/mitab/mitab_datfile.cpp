@@ -1773,8 +1773,10 @@ const char *TABDATFile::ReadLogicalField( int nWidth )
  **********************************************************************/
 const char *TABDATFile::ReadDateField(int nWidth)
 {
-    int nDay, nMonth, nYear, status;
-    nDay = nMonth = nYear = 0;
+    int nDay = 0;
+    int nMonth = 0;
+    int nYear = 0;
+    int status = 0;
 
     if ((status = ReadDateField(nWidth, &nYear, &nMonth, &nDay)) == -1)
        return "";
@@ -1837,8 +1839,11 @@ int TABDATFile::ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay)
  **********************************************************************/
 const char *TABDATFile::ReadTimeField(int nWidth)
 {
-    int nHour, nMinute, nSecond, nMS, status;
-    nHour = nMinute = nSecond = nMS = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    int nSecond = 0;
+    int nMS = 0;
+    int status = 0;
 
     if ((status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS)) == -1)
        return "";
@@ -1909,8 +1914,14 @@ int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
  **********************************************************************/
 const char *TABDATFile::ReadDateTimeField(int nWidth)
 {
-    int nDay, nMonth, nYear, nHour, nMinute, nSecond, nMS, status;
-    nDay = nMonth = nYear = nHour = nMinute = nSecond = nMS = 0;
+    int nDay = 0;
+    int nMonth = 0;
+    int nYear = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    int nSecond = 0;
+    int nMS = 0;
+    int status = 0;
 
     if ((status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
                                     &nMinute, &nSecond, &nMS)) == -1)
@@ -2242,7 +2253,9 @@ int TABDATFile::WriteDateField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-        nYear = nMonth = nDay = 0;
+        nYear = 0;
+        nMonth = 0;
+        nDay = 0;
     }
     else
     {
@@ -2357,7 +2370,11 @@ int TABDATFile::WriteTimeField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-       nHour = nMin = nSec = nMS = -1;  // Write -1 to .DAT file if value is not set
+        // Write -1 to .DAT file if value is not set
+        nHour = -1;
+        nMin = -1;
+        nSec = -1;
+        nMS = -1;
     }
     else
     {
@@ -2488,8 +2505,13 @@ int TABDATFile::WriteDateTimeField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-        nYear = nMonth = nDay = 0;
-        nHour = nMin = nSec = nMS = 0;
+        nYear = 0;
+        nMonth = 0;
+        nDay = 0;
+        nHour = 0;
+        nMin = 0;
+        nSec = 0;
+        nMS = 0;
     }
     else
     {

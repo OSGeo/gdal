@@ -2037,9 +2037,12 @@ CPLErr GDALDB2RasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                     poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = TRUE;
 
-                int nDstXOffset = 0, nDstXSize = nBlockXSize,
-                    nDstYOffset = 0, nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0, nSrcYOffset = 0;
+                int nDstXOffset = 0;
+                int nDstXSize = nBlockXSize;
+                int nDstYOffset = 0;
+                int nDstYSize = nBlockYSize;
+                int nSrcXOffset = 0;
+                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                 {

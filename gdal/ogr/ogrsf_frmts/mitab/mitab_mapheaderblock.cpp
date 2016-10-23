@@ -392,8 +392,10 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
      */
     if (m_nMAPVersionNumber <= 100)
     {
-        m_XScale = m_YScale = pow(10.0, m_nCoordPrecision);
-        m_XDispl = m_YDispl = 0.0;
+        m_XScale = pow(10.0, m_nCoordPrecision);
+        m_YScale = m_XScale;
+        m_XDispl = 0.0;
+        m_YDispl = 0.0;
     }
 
     for( int i = 0; i < 6; i++ )
