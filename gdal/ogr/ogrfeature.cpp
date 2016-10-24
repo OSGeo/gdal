@@ -1645,9 +1645,9 @@ GIntBig OGR_F_GetFieldAsInteger64( OGRFeatureH hFeat, int iField )
  * \fn OGRFeature::GetFieldAsDouble( const char* pszFName )
  * \brief Fetch field value as a double.
  *
- * OFTString features will be translated using CPLAtof().  OFTInteger and OFTInteger64 fields
- * will be cast to double.   Other field types, or errors will result in
- * a return value of zero.
+ * OFTString features will be translated using CPLAtof().  OFTInteger and
+ * OFTInteger64 fields will be cast to double.  Other field types, or errors
+ * will result in a return value of zero.
  *
  * @param pszFName the name of the field to fetch.
  *
@@ -1657,9 +1657,9 @@ GIntBig OGR_F_GetFieldAsInteger64( OGRFeatureH hFeat, int iField )
 /**
  * \brief Fetch field value as a double.
  *
- * OFTString features will be translated using CPLAtof().  OFTInteger and OFTInteger64 fields
- * will be cast to double.   Other field types, or errors will result in
- * a return value of zero.
+ * OFTString features will be translated using CPLAtof().  OFTInteger and
+ * OFTInteger64 fields will be cast to double.  Other field types, or errors
+ * will result in a return value of zero.
  *
  * This method is the same as the C function OGR_F_GetFieldAsDouble().
  *
@@ -2845,7 +2845,7 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField )
         return NULL;
     }
 
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
     if( poFDefn == NULL )
         return NULL;
@@ -3317,9 +3317,9 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
  * \brief Set field to string value.
  *
  * OFTInteger fields will be set based on an atoi() conversion of the string.
- * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
- * OFTReal fields will be set based on an CPLAtof() conversion of the string.
- * Other field types may be unaffected.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the
+ * string.  OFTReal fields will be set based on an CPLAtof() conversion of the
+ * string.  Other field types may be unaffected.
  *
  * @param pszFName the name of the field to set.
  * @param pszValue the value to assign.
@@ -3329,9 +3329,9 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
  * \brief Set field to string value.
  *
  * OFTInteger fields will be set based on an atoi() conversion of the string.
- * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the string.
- * OFTReal fields will be set based on an CPLAtof() conversion of the string.
- * Other field types may be unaffected.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the
+ * string.  OFTReal fields will be set based on an CPLAtof() conversion of the
+ * string.  Other field types may be unaffected.
  *
  * This method is the same as the C function OGR_F_SetFieldString().
  *
@@ -3413,7 +3413,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 std::vector<int> anValues;
                 for( int i = 0; i < nLength; i++ )
                 {
-                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    json_object* poItem =
+                        json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int( poItem ) );
                 }
                 SetField( iField, nLength, &(anValues[0]) );
@@ -3423,7 +3424,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 std::vector<GIntBig> anValues;
                 for( int i = 0; i < nLength; i++ )
                 {
-                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    json_object* poItem =
+                        json_object_array_get_idx(poJSonObj, i);
                     anValues.push_back( json_object_get_int64( poItem ) );
                 }
                 SetField( iField, nLength, &(anValues[0]) );
@@ -3433,7 +3435,8 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 std::vector<double> adfValues;
                 for( int i = 0; i < nLength; i++ )
                 {
-                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    json_object* poItem =
+                        json_object_array_get_idx(poJSonObj, i);
                     adfValues.push_back( json_object_get_double( poItem ) );
                 }
                 SetField( iField, nLength, &(adfValues[0]) );
@@ -3527,15 +3530,17 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                 }
                 CSLDestroy(papszValueList);
             }
-            // Is this a JSon array ?
-            else if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
+            // Is this a JSon array?
+            else if( pszValue[0] == '[' &&
+                     pszValue[strlen(pszValue)-1] == ']' &&
                      OGRJSonParse(pszValue, &poJSonObj, false) )
             {
                 CPLStringList aoList;
                 const int nLength = json_object_array_length(poJSonObj);
                 for( int i = 0; i < nLength; i++ )
                 {
-                    json_object* poItem = json_object_array_get_idx(poJSonObj, i);
+                    json_object* poItem =
+                        json_object_array_get_idx(poJSonObj, i);
                     if( !poItem )
                         aoList.AddString("");
                     else
@@ -3725,7 +3730,8 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nCount, const GIntBig *panValues )
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const GIntBig
+ * *panValues )
  * \brief Set field to list of 64 bit integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -3927,7 +3933,8 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         if( papszValues == NULL )
             return;
         for( int i = 0; i < nCount; i++ )
-            papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
+            papszValues[i] =
+                VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
         papszValues[nCount] = NULL;
         SetField( iField, papszValues);
         CSLDestroy(papszValues);
@@ -4164,9 +4171,9 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nYear, int nMonth, int nDay,
- *                          int nHour, int nMinute, float fSecond,
- *                          int nTZFlag )
+ * \fn OGRFeature::SetField( const char* pszFName, int nYear, int nMonth,
+ *                           int nDay, int nHour, int nMinute, float fSecond,
+ *                           int nTZFlag )
  * \brief Set field to date.
  *
  * This method currently only has an effect for OFTDate, OFTTime and OFTDateTime
