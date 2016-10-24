@@ -110,7 +110,6 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
             }
         }
 
-
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {
             json_object* poVal = CPL_json_object_object_get(poRowObj,

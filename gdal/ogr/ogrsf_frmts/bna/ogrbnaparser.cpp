@@ -225,7 +225,6 @@ static int BNA_GetLine(char szLineBuffer[LINE_BUFFER_SIZE+1], VSILFILE* f)
     return BNA_LINE_OK;
 }
 
-
 BNARecord* BNA_GetNextRecord(VSILFILE* f,
                              int* ok,
                              int* curLine,

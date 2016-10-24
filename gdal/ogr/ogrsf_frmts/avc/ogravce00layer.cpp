@@ -510,7 +510,6 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
                                  static_cast<AVCField *>( hRecord ) );
 }
 
-
 GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != NULL || m_poFilterGeom != NULL)

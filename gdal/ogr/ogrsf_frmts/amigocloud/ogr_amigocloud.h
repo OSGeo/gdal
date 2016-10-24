@@ -144,7 +144,6 @@ class OGRAmigoCloudLayer : public OGRLayer
         int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
 };
 
-
 /************************************************************************/
 /*                        OGRAmigoCloudTableLayer                          */
 /************************************************************************/

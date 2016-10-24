@@ -133,7 +133,6 @@ CPL_C_START
  *--------------------------------------------------------------------*/
 #define AVC_VERSION "2.0.0 (2006-08-17)"
 
-
 /* Coverage precision
  */
 #define AVC_DEFAULT_PREC   0
@@ -163,7 +162,6 @@ typedef enum
     AVCFileTABLE
 }AVCFileType;
 
-
 /* Read or Write access flag
  */
 typedef enum
@@ -192,7 +190,6 @@ typedef enum
     AVCBigEndian,    /* CPL_MSB, Motorola ordering */
     AVCLittleEndian  /* CPL_LSB, Intel ordering */
 } AVCByteOrder;
-
 
 /* Macros to establish byte ordering for each coverage type
  * The rule until now: all coverage types use big endian (Motorola ordering)
@@ -262,7 +259,6 @@ typedef struct AVCCnt_t
     GInt32      *panLabelIds;
 }AVCCnt;
 
-
 /*---------------------------------------------------------------------
  * AVCLab: Information about a LAB (polygon Label)
  *--------------------------------------------------------------------*/
@@ -321,7 +317,6 @@ typedef struct AVCRxp_t
     GInt32      n2;
 }AVCRxp;
 
-
 /*---------------------------------------------------------------------
  * AVCTableDef: Definition of an INFO table's structure.
  *               This info is read from several files:
@@ -359,7 +354,6 @@ typedef struct AVCFieldInfo_t
 #define AVC_FT_FIXNUM   40
 #define AVC_FT_BININT   50
 #define AVC_FT_BINFLOAT 60
-
 
 typedef struct AVCTableDef_t
 {
@@ -418,7 +412,6 @@ typedef struct AVCRawBinFile_t
     AVCDBCSInfo *psDBCSInfo;
 
 }AVCRawBinFile;
-
 
 /*---------------------------------------------------------------------
  * Stuff related to reading and writing binary coverage files
@@ -542,7 +535,6 @@ typedef struct AVCE00ParseInfo_t
     int         nBufSize;
 }AVCE00ParseInfo;
 
-
 /*---------------------------------------------------------------------
  * Stuff related to the transparent binary -> E00 conversion
  *--------------------------------------------------------------------*/
@@ -615,7 +607,6 @@ typedef struct AVCE00ReadInfoE00_t
     FILE          *hFile;
 
 } *AVCE00ReadE00Ptr;
-
 
 /* E00 generation steps... tells the AVCE00Read*() functions which
  * parts of the given E00 file are currently being processed.
@@ -809,7 +800,6 @@ AVCTableDef *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
                                          const char *pszLine);
 AVCField    *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
                                          const char *pszLine);
-
 
 /*---------------------------------------------------------------------
  * Misc. functions shared by several parts of the lib.
