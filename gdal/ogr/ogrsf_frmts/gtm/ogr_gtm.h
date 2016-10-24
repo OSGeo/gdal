@@ -75,9 +75,7 @@ typedef enum
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
-
 #include "gtm.h"
-
 
 /************************************************************************/
 /*                           OGRGTMLayer                                */
@@ -113,9 +111,7 @@ protected:
     bool bError;
 
     static OGRErr CheckAndFixCoordinatesValidity( double& pdfLatitude, double& pdfLongitude );
-
 };
-
 
 /************************************************************************/
 /*                           GTMWaypointLayer                           */
@@ -161,7 +157,6 @@ class GTMTrackLayer : public OGRGTMLayer
     void WriteTrackpoint( double lat, double lon, float altitude, bool start );
 };
 
-
 /************************************************************************/
 /*                           OGRGTMDataSource                           */
 /************************************************************************/
@@ -205,7 +200,6 @@ public:
     bool hasNextTrack();
     Track* fetchNextTrack();
     void rewindTrack();
-
 
     /* Functions for writing ne files */
     float getMinLat() { return minlat; }

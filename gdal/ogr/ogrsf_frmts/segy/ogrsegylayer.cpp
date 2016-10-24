@@ -225,7 +225,6 @@ static float SEGYReadMSBFloat32(const GByte* pabyVal)
 /*                           OGRSEGYLayer()                            */
 /************************************************************************/
 
-
 OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
                             VSILFILE* fpIn,
                             SEGYBinaryFileHeader* psBFH ) :
@@ -740,8 +739,6 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     CPLFree(padfValues);
     return poFeature;
 }
-
-
 
 static const FieldDesc SEGYHeaderFields[] =
 {

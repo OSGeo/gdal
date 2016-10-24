@@ -224,7 +224,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         }
     }
 
-
     poDefn->SetGeomType( wkbNone );
 
     if (pszGeomColumn)
@@ -250,7 +249,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         papszRow = NULL;
         if( hResultSet != NULL )
             papszRow = mysql_fetch_row( hResultSet );
-
 
         if( papszRow != NULL && papszRow[0] != NULL )
         {

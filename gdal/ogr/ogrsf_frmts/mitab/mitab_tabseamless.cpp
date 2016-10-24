@@ -90,7 +90,6 @@ CPL_CVSID("$Id$");
  *
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABSeamless::TABSeamless()
  *
@@ -121,7 +120,6 @@ TABSeamless::~TABSeamless()
     Close();
 }
 
-
 void TABSeamless::ResetReading()
 {
     if (m_poIndexTable)
@@ -131,7 +129,6 @@ void TABSeamless::ResetReading()
     // will start from the beginning
     m_nCurFeatureId = -1;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::Open()
@@ -178,7 +175,6 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::OpenForRead()
@@ -320,7 +316,6 @@ int TABSeamless::OpenForRead(const char *pszFname,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::Close()
@@ -521,7 +516,6 @@ int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABSeamless::EncodeFeatureId()
  *
@@ -637,7 +631,6 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
     return NULL;
 }
 
-
 /**********************************************************************
  *                   TABSeamless::GetLayerDefn()
  *
@@ -672,8 +665,6 @@ TABFieldType TABSeamless::GetNativeFieldType(int nFieldId)
     return TABFUnknown;
 }
 
-
-
 /**********************************************************************
  *                   TABSeamless::IsFieldIndexed()
  *
@@ -699,7 +690,6 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
 
     return FALSE;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::GetBounds()
@@ -784,7 +774,6 @@ GIntBig TABSeamless::GetFeatureCount(int bForce)
     return OGRLayer::GetFeatureCount(bForce);
 }
 
-
 /**********************************************************************
  *                   TABSeamless::GetSpatialRef()
  *
@@ -809,8 +798,6 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
     return m_poIndexTable->GetSpatialRef();
 }
 
-
-
 /**********************************************************************
  *                   IMapInfoFile::SetSpatialFilter()
  *
@@ -828,8 +815,6 @@ void TABSeamless::SetSpatialFilter (OGRGeometry * poGeomIn )
     if( m_poCurBaseTable )
         m_poCurBaseTable->SetSpatialFilter( poGeomIn );
 }
-
-
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -857,8 +842,6 @@ int TABSeamless::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-
-
 
 /**********************************************************************
  *                   TABSeamless::Dump()

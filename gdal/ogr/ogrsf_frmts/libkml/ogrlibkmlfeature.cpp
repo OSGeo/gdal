@@ -60,7 +60,6 @@ using kmldom::ResourceMapPtr;
 using kmldom::ScalePtr;
 using kmldom::ViewVolumePtr;
 
-
 static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
                                  int iHeading,
                                  int iTilt,
@@ -132,7 +131,6 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
     return camera;
 }
 
-
 /************************************************************************/
 /*                 OGRLIBKMLReplaceXYLevelInURL()                       */
 /************************************************************************/
@@ -158,7 +156,6 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL( const char* pszURL,
 
     return osRet;
 }
-
 
 /************************************************************************/
 /*                        IsPowerOf2                                    */

@@ -86,7 +86,6 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query, int bMultipleCommandAllo
     return hResult;
 }
 
-
 /************************************************************************/
 /*                       OGRPG_Check_Table_Exists()                     */
 /************************************************************************/

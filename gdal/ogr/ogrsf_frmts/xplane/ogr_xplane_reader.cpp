@@ -150,7 +150,6 @@ bool OGRXPlaneReader::ReadWholeFile()
     return true;
 }
 
-
 /***********************************************************************/
 /*                          assertMinCol()                             */
 /***********************************************************************/
@@ -167,7 +166,6 @@ bool OGRXPlaneReader::assertMinCol( int nMinColNum ) const
     }
     return true;
 }
-
 
 /***********************************************************************/
 /*                           readDouble()                              */
@@ -256,7 +254,6 @@ CPLString OGRXPlaneReader::readStringUntilEnd(int iFirstTokenIndice)
     return osResult;
 }
 
-
 /***********************************************************************/
 /*                             readLatLon()                            */
 /***********************************************************************/
@@ -286,12 +283,9 @@ bool OGRXPlaneReader::readTrueHeading( double* pdfTrueHeading, int iToken,
     return bRet;
 }
 
-
-
 /***********************************************************************/
 /*                       OGRXPlaneEnumeration()                        */
 /***********************************************************************/
-
 
 OGRXPlaneEnumeration::OGRXPlaneEnumeration(
     const char *pszEnumerationName,

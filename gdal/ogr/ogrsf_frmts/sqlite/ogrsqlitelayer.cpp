@@ -851,7 +851,6 @@ OGRFeature *OGRSQLiteLayer::GetFeature( GIntBig nFeatureId )
     return OGRLayer::GetFeature( nFeatureId );
 }
 
-
 /************************************************************************/
 /*                     createFromSpatialiteInternal()                   */
 /************************************************************************/
@@ -866,7 +865,6 @@ OGRFeature *OGRSQLiteLayer::GetFeature( GIntBig nFeatureId )
 #else
 #define NEED_SWAP_SPATIALITE()  (eByteOrder == wkbNDR)
 #endif
-
 
 OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
                                                     OGRGeometry **ppoReturn,
@@ -2038,7 +2036,6 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(const GByte *pabyData,
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR( &nPointCount );
 
-
             if( nPointCount < 0 || nPointCount - 2 > (INT_MAX - 24 * 2) / 16)
             {
                 delete poPoly;
@@ -2700,7 +2697,6 @@ int OGRSQLiteLayer::GetSpatialiteGeometryCode(const OGRGeometry *poGeometry,
             }
             break;
 
-
         case wkbGeometryCollection:
             if ( bSpatialite2D == TRUE )
                 return OGRSpliteGeometryCollectionXY;
@@ -2967,7 +2963,6 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
             return 0;
     }
 }
-
 
 OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry( const OGRGeometry *poGeometry,
                                                  GInt32 nSRID,

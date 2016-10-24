@@ -49,7 +49,6 @@ kmldom::ElementPtr geom2kml (
     int extra,
     kmldom::KmlFactory * poKmlFactory );
 
-
 /******************************************************************************
  Function to read a kml geometry and translate to ogr.
 

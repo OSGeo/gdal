@@ -183,7 +183,6 @@ void OGRXPlaneAptReader::Rewind()
     OGRXPlaneReader::Rewind();
 }
 
-
 /************************************************************************/
 /*                      IsRecognizedVersion()                           */
 /************************************************************************/
@@ -390,7 +389,6 @@ void OGRXPlaneAptReader::Read()
 
     bEOF = true;
 }
-
 
 /************************************************************************/
 /*                         ParseAptHeaderRecord()                       */
@@ -888,8 +886,6 @@ void OGRXPlaneAptReader::ParseHelipadRecord()
     }
 }
 
-
-
 /************************************************************************/
 /*                          AddBezierCurve()                           */
 /************************************************************************/
@@ -918,7 +914,6 @@ void OGRXPlaneAptReader::AddBezierCurve(OGRLineString& lineString,
             CUBIC_INTERPOL(a, b, dfLatA, dfCtrPtLatA, dfCtrlPtLatB, dfLatB));
     }
 }
-
 
 static double QUADRATIC_INTERPOL( double a, double b,
                                   double A, double B, double C )
@@ -1305,7 +1300,6 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
     return false;
 }
 
-
 /************************************************************************/
 /*                            ParsePavement()                           */
 /************************************************************************/
@@ -1404,7 +1398,6 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
     if (poGeom != NULL)
         delete poGeom;
 }
-
 
 /************************************************************************/
 /*                             ParseLinearGeometry()                    */
@@ -1720,7 +1713,6 @@ void OGRXPlaneAptReader::ParseTowerRecord()
     bTowerFound = true;
 }
 
-
 /************************************************************************/
 /*                            ParseATCRecord()                          */
 /************************************************************************/
@@ -1748,7 +1740,6 @@ void OGRXPlaneAptReader::ParseATCRecord(int nType)
                                     osFreqName, dfFrequency);
     }
 }
-
 
 /************************************************************************/
 /*                      ParseStartupLocationRecord()                    */
@@ -1888,7 +1879,6 @@ void OGRXPlaneAptReader::ParseTaxiLocation()
 /*                         OGRXPlaneAPTLayer()                          */
 /************************************************************************/
 
-
 OGRXPlaneAPTLayer::OGRXPlaneAPTLayer() : OGRXPlaneLayer("APT")
 {
     poFeatureDefn->SetGeomType( wkbPoint );
@@ -1969,7 +1959,6 @@ OGRXPlaneAPTLayer::AddFeature( const char* pszAptICAO,
 /************************************************************************/
 /*               OGRXPlaneRunwayThresholdLayer()                        */
 /************************************************************************/
-
 
 OGRXPlaneRunwayThresholdLayer::OGRXPlaneRunwayThresholdLayer() : OGRXPlaneLayer("RunwayThreshold")
 {
@@ -2135,8 +2124,6 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
 /*                       OGRXPlaneRunwayLayer()                         */
 /************************************************************************/
 
-
-
 OGRXPlaneRunwayLayer::OGRXPlaneRunwayLayer() :
     OGRXPlaneLayer("RunwayPolygon")
 {
@@ -2193,7 +2180,6 @@ OGRXPlaneRunwayLayer::OGRXPlaneRunwayLayer() :
 /************************************************************************/
 /*                           AddFeature()                               */
 /************************************************************************/
-
 
 OGRFeature*
      OGRXPlaneRunwayLayer::AddFeature  (const char* pszAptICAO,
@@ -2252,12 +2238,9 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                      OGRXPlaneStopwayLayer()                         */
 /************************************************************************/
-
-
 
 OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() :
     OGRXPlaneLayer("Stopway")
@@ -2284,7 +2267,6 @@ OGRXPlaneStopwayLayer::OGRXPlaneStopwayLayer() :
 /************************************************************************/
 /*                           AddFeature()                               */
 /************************************************************************/
-
 
 OGRFeature*
      OGRXPlaneStopwayLayer::AddFeature(const char* pszAptICAO,
@@ -2337,7 +2319,6 @@ OGRFeature*
 /************************************************************************/
 /*               OGRXPlaneWaterRunwayThresholdLayer()                   */
 /************************************************************************/
-
 
 OGRXPlaneWaterRunwayThresholdLayer::OGRXPlaneWaterRunwayThresholdLayer() :
     OGRXPlaneLayer("WaterRunwayThreshold")
@@ -2405,12 +2386,9 @@ void OGRXPlaneWaterRunwayThresholdLayer::SetRunwayLengthAndHeading(
     poFeature->SetField( nCount++, dfHeading );
 }
 
-
 /************************************************************************/
 /*                      OGRXPlaneWaterRunwayLayer()                     */
 /************************************************************************/
-
-
 
 OGRXPlaneWaterRunwayLayer::OGRXPlaneWaterRunwayLayer() :
     OGRXPlaneLayer("WaterRunwayPolygon")
@@ -2502,11 +2480,9 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                     OGRXPlaneHelipadLayer()                          */
 /************************************************************************/
-
 
 OGRXPlaneHelipadLayer::OGRXPlaneHelipadLayer() :
     OGRXPlaneLayer("Helipad")
@@ -2593,7 +2569,6 @@ OGRFeature*
 /************************************************************************/
 /*                 OGRXPlaneHelipadPolygonLayer()                       */
 /************************************************************************/
-
 
 OGRXPlaneHelipadPolygonLayer::OGRXPlaneHelipadPolygonLayer() :
     OGRXPlaneLayer("HelipadPolygon")
@@ -2707,11 +2682,9 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                 OGRXPlaneTaxiwayRectangleLayer()                     */
 /************************************************************************/
-
 
 OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() :
     OGRXPlaneLayer("TaxiwayRectangle")
@@ -2810,11 +2783,9 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                      OGRXPlanePavementLayer()                        */
 /************************************************************************/
-
 
 OGRXPlanePavementLayer::OGRXPlanePavementLayer() :
     OGRXPlaneLayer("Pavement")
@@ -2871,12 +2842,9 @@ OGRFeature*
     return poFeature;
 }
 
-
-
 /************************************************************************/
 /*                   OGRXPlaneAPTBoundaryLayer()                        */
 /************************************************************************/
-
 
 OGRXPlaneAPTBoundaryLayer::OGRXPlaneAPTBoundaryLayer() :
     OGRXPlaneLayer("APTBoundary")
@@ -2918,7 +2886,6 @@ OGRFeature*
 /*               OGRXPlaneAPTLinearFeatureLayer()                       */
 /************************************************************************/
 
-
 OGRXPlaneAPTLinearFeatureLayer::OGRXPlaneAPTLinearFeatureLayer() :
     OGRXPlaneLayer("APTLinearFeature")
 {
@@ -2959,7 +2926,6 @@ OGRFeature*
 /************************************************************************/
 /*                        OGRXPlaneATCFreqLayer()                       */
 /************************************************************************/
-
 
 OGRXPlaneATCFreqLayer::OGRXPlaneATCFreqLayer() :
     OGRXPlaneLayer("ATCFreq")
@@ -3005,7 +2971,6 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                     OGRXPlaneStartupLocationLayer()                  */
 /************************************************************************/
@@ -3050,7 +3015,6 @@ OGRFeature*
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                      OGRXPlaneAPTLightBeaconLayer()                  */
@@ -3139,7 +3103,6 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                        OGRXPlaneTaxiwaySignLayer()                   */
 /************************************************************************/
@@ -3190,7 +3153,6 @@ OGRFeature*
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                   OGRXPlane_VASI_PAPI_WIGWAG_Layer()                 */

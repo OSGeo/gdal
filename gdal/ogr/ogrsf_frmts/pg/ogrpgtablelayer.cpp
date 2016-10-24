@@ -38,7 +38,6 @@
 
 CPL_CVSID("$Id$");
 
-
 #define USE_COPY_UNSET  -10
 
 #define UNSUPPORTED_OP_READ_ONLY "%s : unsupported operation on a read-only datasource."
@@ -372,7 +371,6 @@ void  OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc* pasDesc,
         poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
     }
 }
-
 
 /************************************************************************/
 /*                        ReadTableDefinition()                         */
@@ -1621,7 +1619,6 @@ CPLString OGRPGEscapeString(PGconn *hPGConn,
     /* We need to quote and escape string fields. */
     osCommand += "'";
 
-
     int nSrcLen = static_cast<int>(strlen(pszStrValue));
     int nSrcLenUTF = CPLStrlenUTF8(pszStrValue);
 
@@ -1834,7 +1831,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-
     for( i = 0; i < nFieldCount; i++ )
     {
         if( iFIDAsRegularColumnIndex == i )
@@ -1969,7 +1965,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /* Add end of line marker */
     osCommand += "\n";
 
-
     /* ------------------------------------------------------------ */
     /*      Execute the copy.                                       */
     /* ------------------------------------------------------------ */
@@ -1996,7 +1991,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 
     return result;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -2131,7 +2125,6 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         }
     }
 
-
     const char* pszOverrideType = CSLFetchNameValue(papszOverrideColumnTypes, oField.GetNameRef());
     if( pszOverrideType != NULL )
         osFieldType = pszOverrideType;
@@ -2203,7 +2196,6 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                        RunAddGeometryColumn()                        */
 /************************************************************************/
@@ -2262,7 +2254,6 @@ OGRErr OGRPGTableLayer::RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                        RunCreateSpatialIndex()                       */
@@ -2921,7 +2912,6 @@ OGRErr OGRPGTableLayer::EndCopy()
     CPLDebug( "PG", "PQputCopyEnd()" );
 
     bCopyActive = FALSE;
-
 
     int copyResult = PQputCopyEnd(hPGConn, NULL);
 

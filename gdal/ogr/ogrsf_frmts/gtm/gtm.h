@@ -40,7 +40,6 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-
 #ifndef FILE_OFFSETS
 #define FILE_OFFSETS
 #define NWPTSTYLES_OFFSET 27
@@ -78,7 +77,6 @@ void writeFloat(VSILFILE* fp, float val);
 void writeInt(VSILFILE* fp, int val);
 void writeUChar(VSILFILE* fp, unsigned char val);
 void writeUShort(VSILFILE* fp, unsigned short);
-
 
 class Waypoint
 {
@@ -141,14 +139,12 @@ private:
 
 };
 
-
 class GTM
 {
 public:
     GTM();
     ~GTM();
     bool Open(const char* pszFilename);
-
 
     // Check whether it is a valid GTM file or not.
     bool isValid();

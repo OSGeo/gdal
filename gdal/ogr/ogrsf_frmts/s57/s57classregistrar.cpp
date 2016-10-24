@@ -34,7 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-
 #ifdef S57_BUILTIN_CLASSES
 #include "s57tables.h"
 #endif

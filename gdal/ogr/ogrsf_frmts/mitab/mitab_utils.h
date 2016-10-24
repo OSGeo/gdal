@@ -81,7 +81,6 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
                    double dStartAngle, double dEndAngle);
 int TABCloseRing(OGRLineString *poRing);
 
-
 GBool TABAdjustFilenameExtension(char *pszFname);
 char *TABGetBasename(const char *pszFname);
 char **TAB_CSLLoad(const char *pszFname);

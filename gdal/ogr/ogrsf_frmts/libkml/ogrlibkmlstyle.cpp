@@ -179,8 +179,6 @@ StylePtr addstylestring2kml(
                                  static_cast<GByte>(nG),
                                  static_cast<GByte>(nR) ) );
                 }
-
-
                 break;
             }
             case OGRSTCSymbol:
@@ -830,8 +828,6 @@ static ContainerPtr MyGetContainerFromRoot(
     return poKmlContainer;
 }
 
-
-
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
     const string styleurl,
@@ -1205,7 +1201,6 @@ void styletable2kml(
         }
     }
 }
-
 
 /******************************************************************************
  Function to add a ListStyle and select it to a container.

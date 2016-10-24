@@ -40,7 +40,6 @@ OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource
     return poReader;
 }
 
-
 /************************************************************************/
 /*                         OGRXPlaneFixReader()                         */
 /************************************************************************/
@@ -145,7 +144,6 @@ void    OGRXPlaneFixReader::ParseRecord()
     if (poFIXLayer)
         poFIXLayer->AddFeature(osName, dfLat, dfLon);
 }
-
 
 /************************************************************************/
 /*                           OGRXPlaneFIXLayer()                        */

@@ -467,8 +467,6 @@ int OGROGDILayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
-
 /************************************************************************/
 /*                          BuildFeatureDefn()                          */
 /*                                                                      */

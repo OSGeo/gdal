@@ -1631,7 +1631,6 @@ retry:
     return poDstFeat;
 }
 
-
 /************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
@@ -2176,7 +2175,6 @@ GIntBig OGRVRTLayer::GetFeatureCount( int bForce )
 
     return OGRLayer::GetFeatureCount( bForce );
 }
-
 
 /************************************************************************/
 /*                          SetSpatialFilter()                          */

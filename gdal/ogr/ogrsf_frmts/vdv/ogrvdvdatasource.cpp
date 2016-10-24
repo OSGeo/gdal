@@ -1431,7 +1431,6 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
         bRet &= VSIFPrintfL(fpL, "fft; \"%s\"\n", OGRVDVEscapeString(pszFft).c_str()) > 0;
     }
 
-
     for(char** papszIter = papszOptions;
                papszIter != NULL && *papszIter != NULL;
                papszIter++)

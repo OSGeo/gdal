@@ -59,7 +59,6 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     pszGeomName = CPLStrdup( pszGeomColIn );
     pszFIDName = (char*)CPLGetConfigOption( "OCI_FID", "OGR_FID" );
 
-
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
 

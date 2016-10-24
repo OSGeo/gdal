@@ -2616,7 +2616,6 @@ static void OGROSMNotifyRelation ( OSMRelation *psRelation,
     static_cast<OGROSMDataSource *>(user_data)->NotifyRelation(psRelation);
 }
 
-
 /************************************************************************/
 /*                      ProcessPolygonsStandalone()                     */
 /************************************************************************/
@@ -2664,7 +2663,6 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
                 NULL, pasCoords, &nTags, pasTags, &sInfo );
             CPLAssert(
                 nTags <= static_cast<unsigned int>(MAX_COUNT_FOR_TAGS_IN_WAY));
-
 
             OGRMultiPolygon* poMulti = new OGRMultiPolygon();
             OGRPolygon* poPoly = new OGRPolygon();
@@ -4203,7 +4201,6 @@ OGRErr OGROSMDataSource::GetExtent( OGREnvelope *psExtent )
     return OGRERR_FAILURE;
 }
 
-
 /************************************************************************/
 /*                   OGROSMSingleFeatureLayer                           */
 /************************************************************************/
@@ -4228,7 +4225,6 @@ class OGROSMSingleFeatureLayer : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
     virtual int         TestCapability( const char * ) { return FALSE; }
 };
-
 
 /************************************************************************/
 /*                    OGROSMSingleFeatureLayer()                        */

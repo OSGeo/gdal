@@ -295,7 +295,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     return CPLStrdup( osCoordSys.c_str() );
 }
 
-
 /************************************************************************/
 /*                      MITABExtractCoordSysBounds                      */
 /*                                                                      */
@@ -329,7 +328,6 @@ bool MITABExtractCoordSysBounds( const char * pszCoordSys,
     CSLDestroy( papszFields );
     return false;
 }
-
 
 /**********************************************************************
  *                     MITABCoordSys2TABProjInfo()

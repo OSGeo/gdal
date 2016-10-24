@@ -175,7 +175,6 @@ int OGRNTFDataSource::GetLayerCount()
         return nLayers + 1;
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -390,7 +389,6 @@ void OGRNTFDataSource::ResetReading()
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
-
 
 OGRFeature *OGRNTFDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                                               double* pdfProgressPct,

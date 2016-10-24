@@ -106,7 +106,6 @@ TABToolDefTable::~TABToolDefTable()
     CPLFree(m_papsSymbol);
 }
 
-
 /**********************************************************************
  *                   TABToolDefTable::ReadAllToolDefs()
  *
@@ -242,7 +241,6 @@ int TABToolDefTable::ReadAllToolDefs( TABMAPToolBlock *poBlock )
     return nStatus;
 }
 
-
 /**********************************************************************
  *                   TABToolDefTable::WriteAllToolDefs()
  *
@@ -366,8 +364,6 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
 
     return nStatus;
 }
-
-
 
 /**********************************************************************
  *                   TABToolDefTable::GetNumPen()
@@ -653,7 +649,6 @@ TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
     return NULL;
 }
 
-
 /**********************************************************************
  *                   TABToolDefTable::AddSymbolDefRef()
  *
@@ -709,7 +704,6 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
 
     return nNewSymbolIndex;
 }
-
 
 /**********************************************************************
  *                   TABToolDefTable::GetMinVersionNumber()

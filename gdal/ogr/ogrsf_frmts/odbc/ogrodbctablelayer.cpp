@@ -180,7 +180,6 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszLayerName,
         }
     }
 
-
     return CE_None;
 }
 
@@ -317,7 +316,6 @@ OGRErr OGRODBCTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */

@@ -74,7 +74,6 @@ static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
         return poDS;
 }
 
-
 /*!
   \brief Register VFK driver
 */

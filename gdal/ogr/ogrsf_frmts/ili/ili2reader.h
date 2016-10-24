@@ -39,7 +39,6 @@
 #include "imdreader.h"
 #include <list>
 
-
 class CPL_DLL IILI2Reader
 {
 public:

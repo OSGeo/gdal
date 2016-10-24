@@ -47,7 +47,6 @@ CPL_CVSID("$Id$");
 /*       or for 4 ReadVarUInt64NoCheck */
 #define ZEROES_AFTER_END_OF_BUFFER      4
 
-
 static const GUInt32 EXT_SHAPE_Z_FLAG     = 0x80000000U;
 static const GUInt32 EXT_SHAPE_M_FLAG     = 0x40000000U;
 static const GUInt32 EXT_SHAPE_CURVE_FLAG = 0x20000000U;
@@ -2017,7 +2016,6 @@ FileGDBField::~FileGDBField()
         CPLFree(sDefault.String);
 }
 
-
 /************************************************************************/
 /*                            HasIndex()                                */
 /************************************************************************/
@@ -3156,7 +3154,6 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
     }
     return NULL;
 }
-
 
 /************************************************************************/
 /*                           BuildConverter()                           */

@@ -560,7 +560,6 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     SetMBR(dfX, dfY, dfX, dfY);
 
-
     return 0;
 }
 
@@ -740,7 +739,6 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
                  "TABCustomPoint: Missing or Invalid Geometry!");
         return -1;
     }
-
 
     fp->WriteLine("Point %.15g %.15g\n",poPoint->getX(),poPoint->getY());
     fp->WriteLine("    Symbol (\"%s\",%d,%d,%d)\n",GetFontNameRef(),
@@ -1280,7 +1278,6 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         papszToken = NULL;
     }
 
-
     return 0;
 }
 
@@ -1336,7 +1333,6 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
                           GetPenWidthMIF(),GetPenPattern(),
                           GetPenColor());
 
-
         if (GetBrushPattern())
         {
             if (GetBrushTransparent() == 0)
@@ -1351,8 +1347,6 @@ int TABRegion::WriteGeometryToMIFFile(MIDDATAFile *fp)
         {
             fp->WriteLine("    Center %.15g %.15g\n", m_dCenterX, m_dCenterY);
         }
-
-
     }
     else
     {
@@ -1501,7 +1495,6 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
    return 0;
 }
-
 
 /**********************************************************************
  *
@@ -1816,7 +1809,6 @@ int TABArc::WriteGeometryToMIFFile(MIDDATAFile *fp)
      * Since we ALWAYS produce files in quadrant 1 then we can
      * ignore the special angle conversion required by flipped axis.
      *------------------------------------------------------------*/
-
 
     // Write the Arc's actual MBR
      fp->WriteLine("Arc %.15g %.15g %.15g %.15g\n", m_dCenterX-m_dXRadius,
@@ -2299,7 +2291,6 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     return 0;
 }
 
-
 /**********************************************************************
  *
  **********************************************************************/
@@ -2472,7 +2463,6 @@ int TABDebugFeature::ReadGeometryFromMIFFile( MIDDATAFile *fp )
 
     return 0;
 }
-
 
 /**********************************************************************
  *

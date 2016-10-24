@@ -278,7 +278,6 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     CPLString           FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
                                                    const char* pszEscapedGeomColName);
 
-
   public:
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();

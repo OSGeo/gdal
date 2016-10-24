@@ -33,7 +33,6 @@
 #include "ili1reader.h"
 #include "ogr_ili1.h"
 
-
 class ILI1Reader;
 class OGRILI1Layer;
 
@@ -70,6 +69,5 @@ public:
 
     const char*  GetLayerNameString(const char* topicname, const char* tablename);
 };
-
 
 #endif

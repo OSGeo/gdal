@@ -240,7 +240,6 @@ void OGRGPXDataSource::startElementValidateCbk(
     }
 }
 
-
 /************************************************************************/
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
@@ -256,7 +255,6 @@ void OGRGPXDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
         XML_StopParser(oCurrentParser, XML_FALSE);
     }
 }
-
 
 static void XMLCALL startElementValidateCbk(
     void *pUserData, const char *pszName, const char **ppszAttr)
@@ -421,7 +419,6 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
     return FALSE;
 #endif
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

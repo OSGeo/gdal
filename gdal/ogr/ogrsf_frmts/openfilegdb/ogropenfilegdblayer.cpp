@@ -926,7 +926,6 @@ static int AreExprExclusive(OGRFeatureDefn* poFeatureDefn,
     return FALSE;
 }
 
-
 /***********************************************************************/
 /*                     FillTargetValueFromSrcExpr()                    */
 /***********************************************************************/
@@ -1263,7 +1262,6 @@ FileGDBIterator* OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node* p
             return FileGDBIterator::BuildNot(poIter);
         }
     }
-
 
     if( m_bIteratorSufficientToEvaluateFilter == TRUE )
         CPLDebug("OpenFileGDB", "Disabling use of indexes");

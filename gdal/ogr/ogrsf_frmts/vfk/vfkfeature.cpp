@@ -308,7 +308,6 @@ OGRGeometry *IVFKFeature::GetGeometry()
     return m_paGeom;
 }
 
-
 /*!
   \brief Load geometry
 

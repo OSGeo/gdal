@@ -38,7 +38,6 @@ extern "C" {
 }
 #include "ogrsf_frmts.h"
 
-
 /************************************************************************/
 /*                             OGROGDILayer                             */
 /************************************************************************/
@@ -145,6 +144,5 @@ class OGROGDIDriver : public OGRSFDriver
 
     int         TestCapability( const char * );
 };
-
 
 #endif /* OGDOGDI_H_INCLUDED */

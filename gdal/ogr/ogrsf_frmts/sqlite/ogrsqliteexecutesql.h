@@ -39,7 +39,6 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 OGRGeometry *poSpatialFilter,
                                 const char *pszDialect );
 
-
 /************************************************************************/
 /*                               LayerDesc                              */
 /************************************************************************/
@@ -63,5 +62,4 @@ class LayerDesc
 std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement);
 
 #endif /* ndef OGR_SQLITE_EXECUTE_SQL_H_INCLUDED */
-
 

@@ -26,7 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "ogr_ingres.h"
 
 #include "cpl_conv.h"
@@ -127,7 +126,6 @@ OGRIngresDataSource::~OGRIngresDataSource()
 
 int OGRIngresDataSource::Open( const char *pszFullName,
                                char **papszOptions, int bUpdate )
-
 
 {
     CPLAssert( nLayers == 0 );
@@ -398,7 +396,6 @@ OGRLayer *OGRIngresDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
@@ -545,8 +542,6 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
     return poSRS;
 }
 
-
-
 /************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
@@ -577,7 +572,6 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
          sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE auth_name = 'EPSG' and auth_srid= %s",
              pszAuthID );
-
 
         OGRIngresStatement  oStateSRID(GetConn());
         oStateSRID.ExecuteSQL(szCommand);
@@ -833,8 +827,6 @@ int OGRIngresDataSource::DeleteLayer( int iLayer)
     else
         return OGRERR_FAILURE;
 }
-
-
 
 /************************************************************************/
 /*                           ICreateLayer()                             */

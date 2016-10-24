@@ -101,8 +101,6 @@ const XMLCh* GMLASBinInputStream::getContentType() const
     return NULL;
 }
 
-
-
 /************************************************************************/
 /*                          GMLASInputSource()                          */
 /************************************************************************/
@@ -853,8 +851,6 @@ void GMLASReader::BuildXMLBlobStartElement(const CPLString& osXPath,
     }
 }
 
-
-
 /************************************************************************/
 /*                          GetLayerByXPath()                           */
 /************************************************************************/
@@ -894,14 +890,13 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
             </xs:choice>
         </xs:group>
 
-
    There are different cases :
     *
               <first_elt_of_group>...</first_elt_of_group>
               <second_elt_of_group>...</first_elt_of_group>
               <first_elt_of_group>  <!-- we are here at startElement() -->
                 ...
-              </first_elt_of_group> 
+              </first_elt_of_group>
 
     *
               <first_elt_of_group>...</first_elt_of_group>
@@ -926,8 +921,6 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
     *
                 <first_elt_of_group>...</first_elt_of_group>
             </end_of_enclosing_element>   <!-- we are here at endElement() -->
-
-
 */
 void GMLASReader::startElement(
             const   XMLCh* const    uri,

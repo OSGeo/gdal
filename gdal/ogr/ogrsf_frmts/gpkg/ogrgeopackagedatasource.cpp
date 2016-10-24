@@ -147,7 +147,6 @@ OGRErr GDALGeoPackageDataset::SetApplicationId()
     return OGRERR_NONE;
 }
 
-
 bool GDALGeoPackageDataset::ReOpenDB()
 {
     CPLAssert( hDB != NULL );
@@ -161,7 +160,6 @@ bool GDALGeoPackageDataset::ReOpenDB()
     /* And re-open the file */
     return OpenOrCreateDB(SQLITE_OPEN_READWRITE);
 }
-
 
 /* Returns the first row of first column of SQL as integer */
 OGRErr GDALGeoPackageDataset::PragmaCheck(
@@ -218,7 +216,6 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     CPLErrorReset();
     return eErr;
 }
-
 
 OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
 {
@@ -426,7 +423,6 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
 
     return nSRSId;
 }
-
 
 /************************************************************************/
 /*                        GDALGeoPackageDataset()                       */

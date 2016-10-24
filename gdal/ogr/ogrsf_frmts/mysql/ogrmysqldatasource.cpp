@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include <string>
 #include "ogr_mysql.h"
 
@@ -379,7 +378,6 @@ OGRLayer *OGRMySQLDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
@@ -528,8 +526,6 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
 
     return poSRS;
 }
-
-
 
 /************************************************************************/
 /*                             FetchSRSId()                             */
@@ -775,7 +771,6 @@ void OGRMySQLDataSource::InterruptLongResult()
     }
 }
 
-
 /************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
@@ -840,12 +835,10 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     char       *pszLayerName;
     // int        nDimension = 3; // MySQL only supports 2d currently
 
-
 /* -------------------------------------------------------------------- */
 /*      Make sure there isn't an active transaction already.            */
 /* -------------------------------------------------------------------- */
     InterruptLongResult();
-
 
     if( CPLFetchBool(papszOptions, "LAUNDER", true) )
         pszLayerName = LaunderName( pszLayerNameIn );

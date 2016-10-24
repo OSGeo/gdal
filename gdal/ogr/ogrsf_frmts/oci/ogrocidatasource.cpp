@@ -687,8 +687,6 @@ OGRLayer *OGROCIDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
-
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
@@ -1019,7 +1017,6 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     else
         return nSRSId;
 }
-
 
 /************************************************************************/
 /*                           GetLayerByName()                           */

@@ -212,7 +212,6 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadResultDefinition();
 
-
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
 };
@@ -250,7 +249,6 @@ class OGRIngresDataSource : public OGRDataSource
 
     II_PTR              GetConn() { return hConn; }
 
-
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
     OGRSpatialReference *FetchSRS( int nSRSId );
@@ -269,7 +267,6 @@ class OGRIngresDataSource : public OGRDataSource
                                        OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-
 
     int                 TestCapability( const char * );
 
@@ -303,6 +300,5 @@ class OGRIngresDriver : public OGRSFDriver
                                              char ** = NULL );
     int                 TestCapability( const char * );
 };
-
 
 #endif /* ndef OGR_PG_H_INCLUDED */

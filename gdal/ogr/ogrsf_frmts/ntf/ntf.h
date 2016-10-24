@@ -189,7 +189,6 @@ typedef struct
 
 } NTFAttDesc;
 
-
 class OGRNTFLayer;
 class OGRNTFRasterLayer;
 class OGRNTFDataSource;
@@ -292,7 +291,6 @@ class NTFFileReader
     int               SetFPPos( long nPos, long nFeatureId );
     void              Reset();
     void              SetBaseFID( long nFeatureId );
-
 
     OGRGeometry      *ProcessGeometry( NTFRecord *, int * = NULL );
     OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = NULL );

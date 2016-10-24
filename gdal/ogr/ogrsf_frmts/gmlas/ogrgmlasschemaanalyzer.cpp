@@ -59,7 +59,6 @@ static bool IsCompatibleOfArray( GMLASFieldType eType )
            eType == GMLAS_FT_ANYURI;
 }
 
-
 /************************************************************************/
 /*                       GMLASPrefixMappingHander                       */
 /************************************************************************/
@@ -809,7 +808,6 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         {
             return false;
         }
-
 
         // Some .xsd like
         // http://www.opengis.net/gwml-main/2.1 -> https://wfspoc.brgm-rec.fr/constellation/WS/wfs/BRGM:GWML2?request=DescribeFeatureType&version=2.0.0&service=WFS&namespace=xmlns(ns1=http://www.opengis.net/gwml-main/2.1)&typenames=ns1:GW_Aquifer

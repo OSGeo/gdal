@@ -160,7 +160,6 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/

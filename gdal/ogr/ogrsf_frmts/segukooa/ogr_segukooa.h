@@ -98,7 +98,6 @@ class OGRSEGUKOOALineLayer : public OGRSEGUKOOABaseLayer
     virtual void                ResetReading();
 };
 
-
 /************************************************************************/
 /*                         OGRSEGP1Layer                                */
 /************************************************************************/

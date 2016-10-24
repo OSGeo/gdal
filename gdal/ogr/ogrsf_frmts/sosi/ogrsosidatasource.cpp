@@ -39,7 +39,6 @@ CPL_CVSID("$Id$");
 #  define CPL_ENC_ISO8859_10 "ISO8859-10"
 #endif
 
-
 #ifdef WRITE_SUPPORT
 /************************************************************************/
 /*                              utility methods                         */

@@ -57,11 +57,7 @@ OGRIngresTableLayer::OGRIngresTableLayer( OGRIngresDataSource *poDSIn,
 /*                        ~OGRIngresTableLayer()                         */
 /************************************************************************/
 
-OGRIngresTableLayer::~OGRIngresTableLayer()
-
-{
-}
-
+OGRIngresTableLayer::~OGRIngresTableLayer() {}
 
 /************************************************************************/
 /*                        Initialize()                                  */
@@ -820,7 +816,6 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
-
 
 /* -------------------------------------------------------------------- */
 /*      Accumulate fields to be inserted.                               */

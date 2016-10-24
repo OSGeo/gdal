@@ -408,7 +408,6 @@ OGRTABDataSource::ICreateLayer( const char * pszLayerName,
             poFile = poTABFile;
         }
 
-
         m_nLayerCount++;
         m_papoLayers = (IMapInfoFile **)
             CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);

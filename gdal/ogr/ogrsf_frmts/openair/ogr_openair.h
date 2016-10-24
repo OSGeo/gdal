@@ -67,7 +67,6 @@ class OGROpenAirLayer : public OGRLayer
                         OGROpenAirLayer(VSILFILE* fp);
                         virtual ~OGROpenAirLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 

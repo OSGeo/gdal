@@ -229,5 +229,4 @@ class OGRODBCDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
-
 #endif /* ndef OGR_ODBC_H_INCLUDED */

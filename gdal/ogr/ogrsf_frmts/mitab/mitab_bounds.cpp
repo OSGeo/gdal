@@ -1053,7 +1053,6 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 {{0xff, 0, 0, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}, 0,0,0,0,0,0,0,0},  0, 0, 0, 0}
 };
 
-
 static bool TAB_EQUAL( double a, double b, double eps )
 {
     return fabs(a - b) < eps;
@@ -1204,7 +1203,6 @@ bool MITABLookupCoordSysBounds( TABProjInfo *psCS,
     return bFound;
 }
 
-
 /**********************************************************************
  *                     MITABLoadCoordSysTable()
  *
@@ -1333,7 +1331,6 @@ int MITABLoadCoordSysTable(const char *pszFname)
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                     MITABFreeCoordSysTable()

@@ -805,7 +805,6 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                          CreateGeomField()                           */
 /************************************************************************/

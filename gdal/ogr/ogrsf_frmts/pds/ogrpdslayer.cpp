@@ -132,7 +132,6 @@ OGRPDSLayer::~OGRPDSLayer()
     VSIFCloseL( fpPDS );
 }
 
-
 /************************************************************************/
 /*                           ReadStructure()                            */
 /************************************************************************/
@@ -424,7 +423,6 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
     VSIFCloseL(fpStructure);
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -435,7 +433,6 @@ void OGRPDSLayer::ResetReading()
     nNextFID = 0;
     VSIFSeekL( fpPDS, nStartBytes, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -460,7 +457,6 @@ OGRFeature *OGRPDSLayer::GetNextFeature()
         delete poFeature;
     }
 }
-
 
 /************************************************************************/
 /*                         GetNextRawFeature()                          */

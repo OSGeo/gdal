@@ -68,7 +68,6 @@ protected:
                     OGRwkbGeometryType eGeomType, const char* pszWTKString );
     virtual ~OGRIdrisiLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 

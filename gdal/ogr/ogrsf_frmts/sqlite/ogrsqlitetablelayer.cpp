@@ -822,7 +822,6 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter( const char *pszQuery )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
@@ -1331,7 +1330,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLFree( pszSafeName );
     }
 
-
     if( (oField.GetType() == OFTTime || oField.GetType() == OFTDate ||
          oField.GetType() == OFTDateTime) &&
         !(CPLTestBool(
@@ -1811,7 +1809,6 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
-
 /* -------------------------------------------------------------------- */
 /*      Drop the original table, and recreate with new field.           */
 /* -------------------------------------------------------------------- */
@@ -1947,7 +1944,6 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
                                        pszFieldListForSelect,
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
-
 
 /* -------------------------------------------------------------------- */
 /*      Drop the original table                                         */
@@ -3263,7 +3259,6 @@ int OGRSQLiteTableLayer::CreateSpatialIndex(int iGeomCol)
     poFeatureDefn->myGetGeomFieldDefn(iGeomCol)->bHasSpatialIndex = TRUE;
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                      RunDeferredCreationIfNecessary()                */

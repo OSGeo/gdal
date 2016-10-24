@@ -133,7 +133,6 @@ class GMLASXSDCache: public GMLASResourceCache
                                     CPLString& osOutFilename );
 };
 
-
 /************************************************************************/
 /*                     GMLASBaseEntityResolver                          */
 /************************************************************************/
@@ -185,7 +184,6 @@ public:
     void    SetClosingCallback( IGMLASInputSourceClosing* cbk );
 };
 
-
 /************************************************************************/
 /*                            GMLASErrorHandler                         */
 /************************************************************************/
@@ -208,7 +206,6 @@ class GMLASErrorHandler: public ErrorHandler
 
         void handle (const SAXParseException& e, CPLErr eErr);
 };
-
 
 /************************************************************************/
 /*                        GMLASXLinkResolutionConf                      */
@@ -620,7 +617,6 @@ class GMLASField
         static CPLString MakeXLinkDerivedFieldXPathFromXLinkHrefXPath(
             const CPLString& osBaseXPath, const CPLString& osName)
                             { return "{" + osBaseXPath + "}_derived_" + osName; }
-
 
         const CPLString& GetName() const { return m_osName; }
         const CPLString& GetXPath() const { return m_osXPath; }

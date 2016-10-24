@@ -92,7 +92,6 @@ static OGRLinearRing * CreateLinearRing(
     return poRing;
 }
 
-
 /************************************************************************/
 /*                          SHPReadOGRObject()                          */
 /*                                                                      */

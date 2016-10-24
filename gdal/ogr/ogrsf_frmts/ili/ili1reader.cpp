@@ -678,8 +678,6 @@ char ** ILI1Reader::ReadParseLine()
     return tokens;
 }
 
-
-
 IILI1Reader *CreateILI1Reader() {
     return new ILI1Reader();
 }

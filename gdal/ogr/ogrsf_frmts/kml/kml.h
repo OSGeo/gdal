@@ -51,7 +51,6 @@ namespace std
 
 class KMLNode;
 
-
 typedef enum
 {
     KML_VALIDITY_UNKNOWN,

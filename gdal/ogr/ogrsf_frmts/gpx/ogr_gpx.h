@@ -38,7 +38,6 @@
 
 class OGRGPXDataSource;
 
-
 typedef enum
 {
     GPX_NONE,

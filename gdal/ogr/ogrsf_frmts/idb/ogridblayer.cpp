@@ -216,7 +216,6 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -328,7 +327,6 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
             }
 
             v->Release();
-
 
             if ( eErr != OGRERR_NONE )
             {

@@ -89,7 +89,6 @@ typedef struct
 #define ORA_GTYPE_SOLID           8
 #define ORA_GTYPE_MULTISOLID      9
 
-
 /************************************************************************/
 /*                            OGROCISession                             */
 /************************************************************************/
@@ -569,6 +568,5 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      double dfMaxAngleStepSizeDegrees,
                                      int bForceWholeCircle,
                                      OGRLineString *poLine );
-
 
 #endif /* ndef OGR_OCI_H_INCLUDED */

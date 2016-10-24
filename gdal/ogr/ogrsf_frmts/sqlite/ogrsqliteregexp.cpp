@@ -45,7 +45,6 @@
  * commercial or non-commercial, and by any means.
  */
 
-
 #include "ogrsqliteregexp.h"
 
 #ifdef HAVE_PCRE

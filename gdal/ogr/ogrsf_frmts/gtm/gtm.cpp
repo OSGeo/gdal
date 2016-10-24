@@ -226,7 +226,6 @@ unsigned char Track::getType() const
     return type;
 }
 
-
 int Track::getColor() const
 {
     return color;
@@ -255,7 +254,6 @@ const TrackPoint* Track::getPoint(int pointNum) const
 
     return NULL;
 }
-
 
 /************************************************************************/
 /*                Implementation of GTM Function Members                */
@@ -306,7 +304,6 @@ bool GTM::Open(const char* pszFilenameIn)
     }
     return true;
 }
-
 
 bool GTM::isValid()
 {
@@ -429,7 +426,6 @@ bool GTM::readHeaderNumbers()
         return false;
     stringSize = readUShort(pGTMFile);
     headerSize += stringSize + 2; // String + size field
-
 
     /* Read userfont string size */
     if ( VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
@@ -561,7 +557,6 @@ Waypoint* GTM::fetchNextWaypoint()
     Waypoint* poWaypoint = new Waypoint(latitude, longitude, altitude,
                                         name, comment, (int) icon, wptdate);
 
-
     /* Set actual waypoint offset to the next it there is one */
     ++waypointFetched;
     if (waypointFetched < nwpts)
@@ -573,7 +568,6 @@ Waypoint* GTM::fetchNextWaypoint()
     CPLFree(comment);
     return poWaypoint;
 }
-
 
 /************************************************************************/
 /*                        Track control functions                    */
@@ -671,8 +665,6 @@ Track* GTM::fetchNextTrack()
     return poTrack;
 }
 
-
-
 /************************************************************************/
 /*                        Private Methods Implementation                */
 /************************************************************************/
@@ -705,7 +697,6 @@ vsi_l_offset GTM::findFirstWaypointOffset()
     }
     return VSIFTellL(pGTMFile);
 }
-
 
 vsi_l_offset GTM::findFirstTrackpointOffset()
 {

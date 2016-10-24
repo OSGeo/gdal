@@ -40,7 +40,6 @@ OGRXPlaneReader* OGRXPlaneCreateAwyFileReader( OGRXPlaneDataSource* poDataSource
     return poReader;
 }
 
-
 /************************************************************************/
 /*                         OGRXPlaneAwyReader()                         */
 /************************************************************************/
@@ -83,7 +82,6 @@ OGRXPlaneReader* OGRXPlaneAwyReader::CloneForLayer(OGRXPlaneLayer* poLayer)
     return poReader;
 }
 
-
 /************************************************************************/
 /*                       IsRecognizedVersion()                          */
 /************************************************************************/
@@ -92,7 +90,6 @@ int OGRXPlaneAwyReader::IsRecognizedVersion( const char* pszVersionString)
 {
     return STARTS_WITH_CI(pszVersionString, "640 Version");
 }
-
 
 /************************************************************************/
 /*                                Read()                                */
@@ -199,7 +196,6 @@ void OGRXPlaneAwyReader::ParseRecord()
         }
     }
 }
-
 
 /************************************************************************/
 /*                       OGRXPlaneAirwaySegmentLayer()                  */
@@ -318,7 +314,6 @@ static int EqualAirwayIntersectionFeatureFunc(
     }
     return false;
 }
-
 
 /************************************************************************/
 /*                      OGRXPlaneAirwayHashDouble()                     */

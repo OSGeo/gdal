@@ -28,14 +28,12 @@
 
 // IlisMeta model: http://www.interlis.ch/models/core/IlisMeta07-20111222.ili
 
-
 #include "cpl_minixml.h"
 #include "imdreader.h"
 
 #include <set>
 #include <vector>
 #include <algorithm>
-
 
 CPL_CVSID("$Id$");
 
@@ -336,7 +334,6 @@ public:
     CPL_DISALLOW_COPY_ASSIGN(IliClass)
 };
 
-
 ImdReader::ImdReader(int iliVersionIn) :
     iliVersion(iliVersionIn),
     modelInfos(),  // TODO(schwehr): Remove.  No need for default ctor, correct?
@@ -385,7 +382,6 @@ void ImdReader::ReadModel(const char *pszFilename) {
                 const char* psTID = CPLGetXMLValue( psEntry, "TID", NULL );
                 if( psTID != NULL )
                     oTidLookup[psTID] = psEntry;
-
 
                 if( EQUAL(psEntry->pszValue, "IlisMeta07.ModelData.Model") &&
                     !EQUAL(modelName, "MODEL.INTERLIS"))

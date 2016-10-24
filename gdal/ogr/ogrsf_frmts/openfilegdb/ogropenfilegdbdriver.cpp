@@ -36,7 +36,6 @@ CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGROpenFileGDB();
 
-
 #define ENDS_WITH(str, strLen, end) \
     (strLen >= strlen(end) && EQUAL(str + strLen - strlen(end), end))
 

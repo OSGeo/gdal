@@ -108,7 +108,6 @@ GTMWaypointLayer::~GTMWaypointLayer()
 
 }
 
-
 /************************************************************************/
 /*                      WriteFeatureAttributes()                        */
 /************************************************************************/
@@ -246,7 +245,6 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
         poGeom = poGeom->clone();
         poGeom->transform( poCT );
     }
-
 
     switch( poGeom->getGeometryType() )
     {

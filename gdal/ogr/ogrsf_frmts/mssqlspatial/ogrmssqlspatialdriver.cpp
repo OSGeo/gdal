@@ -109,7 +109,6 @@ int OGRMSSQLSpatialDriver::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
 /************************************************************************/
 /*                           RegisterOGRMSSQLSpatial()                  */
 /************************************************************************/

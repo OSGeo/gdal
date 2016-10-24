@@ -151,7 +151,6 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
     return poPLLayer;
 }
 
-
 /************************************************************************/
 /*                          ParseCatalogsPage()                         */
 /************************************************************************/

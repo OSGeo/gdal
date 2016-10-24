@@ -150,8 +150,6 @@ class OGRGRASSDataSource : public OGRDataSource
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-
-
   private:
     OGRGRASSLayer     **papoLayers;
     char                *pszName;       // Date source name

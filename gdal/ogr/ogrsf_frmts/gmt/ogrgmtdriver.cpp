@@ -82,7 +82,6 @@ OGRDataSource *OGRGmtDriver::CreateDataSource( const char * pszName,
     if( poDS->Create( pszName, papszOptions ) )
         return poDS;
 
-
     delete poDS;
     return NULL;
 }

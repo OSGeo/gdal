@@ -481,7 +481,6 @@ int FileGDBNotIterator::GetRowCount()
     return poTable->GetValidRecordCount() - poIterBase->GetRowCount();
 }
 
-
 /************************************************************************/
 /*                          FileGDBAndIterator()                        */
 /************************************************************************/
@@ -556,7 +555,6 @@ int FileGDBAndIterator::GetNextRowSortedByFID()
 /************************************************************************/
 /*                          FileGDBOrIterator()                         */
 /************************************************************************/
-
 
 FileGDBOrIterator::FileGDBOrIterator( FileGDBIterator* poIter1In,
                                       FileGDBIterator* poIter2In,

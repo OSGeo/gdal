@@ -36,7 +36,6 @@
 #include <list>
 #include <map>
 
-
 class GeomFieldInfo
 {
     OGRFeatureDefn* geomTable; /* separate geometry table for Ili 1 */

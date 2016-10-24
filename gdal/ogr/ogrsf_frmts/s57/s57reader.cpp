@@ -775,7 +775,6 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                          AssembleFeature()                           */
 /*                                                                      */
@@ -1283,7 +1282,6 @@ OGRFeature *S57Reader::ReadDSID()
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                             ReadVector()                             */
 /*                                                                      */
@@ -1593,7 +1591,6 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
     return poLine;
 }
-
 
 /************************************************************************/
 /*                  S57StrokeArcToOGRGeometry_Points()                  */
@@ -3097,7 +3094,6 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
     return true;
 }
-
 
 /************************************************************************/
 /*                            ApplyUpdates()                            */

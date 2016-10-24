@@ -171,12 +171,9 @@ static const GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0xc7,0xcb,0xd0,0xd3,0xd7,0xfd,0xc2,0xc2,
             0xf9};
 
-
-
 /*=====================================================================
  *                      class TABMAPHeaderBlock
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABMAPHeaderBlock::TABMAPHeaderBlock()
@@ -269,7 +266,6 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
     m_sProj.dAffineParamE = 0.0;
     m_sProj.dAffineParamF = 0.0;
 }
-
 
 /**********************************************************************
  *                   TABMAPHeaderBlock::InitBlockFromData()
@@ -440,7 +436,6 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMAPHeaderBlock::Int2Coordsys()
  *
@@ -597,7 +592,6 @@ int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
     return Int2Coordsys(nCenterX+nDeltaX, nCenterY+nDeltaY, dX, dY);
 }
 
-
 /**********************************************************************
  *                   TABMAPHeaderBlock::Int2CoordsysDist()
  *
@@ -651,7 +645,6 @@ int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPHeaderBlock::SetCoordsysBounds()
@@ -762,7 +755,6 @@ GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
     return ((m_pabyBuf[nObjType] & 0x80) != 0) ? TRUE: FALSE;
 }
 
-
 /**********************************************************************
  *                   TABMAPHeaderBlock::GetProjInfo()
  *
@@ -807,7 +799,6 @@ int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPHeaderBlock::CommitToFile()

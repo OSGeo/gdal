@@ -107,7 +107,6 @@ typedef struct
     CPLXMLNode* psLastChild;
 } NodeLastChild;
 
-
 typedef enum
 {
     APPSCHEMA_GENERIC,
@@ -124,7 +123,6 @@ class GMLHandler
     bool       m_bInCurField;
     int        m_nAttributeIndex;
     int        m_nAttributeDepth;
-
 
     char      *m_pszGeometry;
     unsigned int m_nGeomAlloc;
@@ -210,7 +208,6 @@ public:
     virtual char*       GetAttributeByIdx(void* attr, unsigned int idx, char** ppszKey) = 0;
 };
 
-
 #if defined(HAVE_XERCES)
 
 /************************************************************************/
@@ -288,7 +285,6 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
 
 #endif
 
-
 #if defined(HAVE_EXPAT)
 
 #include "ogr_expat.h"
@@ -342,7 +338,6 @@ public:
     const char  *GetLastComponent() const {
         return ( m_nPathLength == 0 ) ? "" : aosPathComponents[m_nPathLength-1].c_str();
     }
-
 
     size_t GetLastComponentLen() const {
         return ( m_nPathLength == 0 ) ? 0: aosPathComponents[m_nPathLength-1].size();

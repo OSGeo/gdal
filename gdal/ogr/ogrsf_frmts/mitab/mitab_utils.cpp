@@ -166,7 +166,6 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints,
     return 0;
 }
 
-
 /**********************************************************************
  *                       TABCloseRing()
  *
@@ -324,9 +323,6 @@ static GBool TABAdjustCaseSensitiveFilename(char *
 #endif
 }
 
-
-
-
 /**********************************************************************
  *                       TABAdjustFilenameExtension()
  *
@@ -390,8 +386,6 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     return TABAdjustCaseSensitiveFilename(pszFname);
 }
 
-
-
 /**********************************************************************
  *                       TABGetBasename()
  *
@@ -432,8 +426,6 @@ char *TABGetBasename(const char *pszFname)
     return pszBasename;
 }
 
-
-
 /**********************************************************************
  *                       TAB_CSLLoad()
  *
@@ -466,8 +458,6 @@ char **TAB_CSLLoad(const char *pszFname)
 
     return papszStrList;
 }
-
-
 
 /**********************************************************************
  *                       TABUnEscapeString()
@@ -517,7 +507,6 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
         // We'll work on the original.
         pszWorkString = pszString;
     }
-
 
     while (pszString[i])
     {
@@ -677,7 +666,6 @@ char *TABCleanFieldName(const char *pszSrcName)
     return pszNewName;
 }
 
-
 /**********************************************************************
  * MapInfo Units string to numeric ID conversion
  **********************************************************************/
@@ -706,7 +694,6 @@ static const MapInfoUnitsInfo gasUnitsList[] =
     {32, "rd"},
     {-1, NULL}
 };
-
 
 /**********************************************************************
  *                       TABUnitIdToString()
@@ -754,7 +741,6 @@ int TABUnitIdFromString(const char *pszName)
 
     return -1;
 }
-
 
 /**********************************************************************
  *                       TABSaturatedAdd()

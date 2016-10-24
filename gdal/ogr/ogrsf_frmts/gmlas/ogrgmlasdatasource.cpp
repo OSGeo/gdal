@@ -607,7 +607,6 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     }
     m_bLayerInitFinished = true;
 
-
     // Do optional validation
     m_bValidate = CPLFetchBool(poOpenInfo->papszOpenOptions,
                               "VALIDATE",

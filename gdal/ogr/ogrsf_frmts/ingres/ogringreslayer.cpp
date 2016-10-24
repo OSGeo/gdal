@@ -387,7 +387,6 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
             continue;
         }
 
-
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
@@ -566,7 +565,6 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
 #endif
 }
 
-
 /************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
@@ -586,7 +584,6 @@ const char *OGRIngresLayer::GetGeometryColumn()
 {
     return osGeomColumn;
 }
-
 
 /************************************************************************/
 /*                         FetchSRSId()                                 */

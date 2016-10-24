@@ -326,5 +326,4 @@ IGMLReader *CreateGMLReader(bool bUseExpatParserPreferably,
                             GMLSwapCoordinatesEnum eSwapCoordinates,
                             bool bGetSecondaryGeometryOption);
 
-
 #endif /* GMLREADER_H_INCLUDED */
