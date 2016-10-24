@@ -73,6 +73,12 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
         poLayerDescFeature->SetField( "layer_category",
                                 m_oFC.IsTopLevelElt() ? "TOP_LEVEL_ELEMENT" :
                                                         "NESTED_ELEMENT" );
+
+        if( !m_oFC.GetDocumentation().empty() )
+        {
+            poLayerDescFeature->SetField( "layer_documentation",
+                                          m_oFC.GetDocumentation() );
+        }
     }
     CPL_IGNORE_RET_VAL(
             poLayersMetadataLayer->CreateFeature(poLayerDescFeature));
@@ -378,7 +384,12 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             }
         }
 
-        // TODO: set field_documentation
+        if( !oField.GetDocumentation().empty() )
+        {
+            poFieldDescFeature->SetField( "field_documentation",
+                                          oField.GetDocumentation() );
+        }
+
         CPL_IGNORE_RET_VAL(poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
         delete poFieldDescFeature;
 

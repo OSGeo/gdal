@@ -32,6 +32,12 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified" version="1.0">
   <xs:element name="Configuration">
+    <xs:annotation>
+        <xs:documentation>
+            Configuration of GMLAS driver.
+        </xs:documentation>
+    </xs:annotation>
+
     <xs:complexType>
       <xs:sequence>
         <xs:element name="AllowRemoteSchemaDownload" minOccurs="0"
