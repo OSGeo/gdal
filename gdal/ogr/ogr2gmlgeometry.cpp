@@ -470,8 +470,13 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     char szCoordinate[256] = {};
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
                        false );
-    char *pszY = strstr(szCoordinate,",") + 1;
-    pszY[-1] = '\0';
+    char *pszY = strstr(szCoordinate, ",");
+    // There must be more after the comma or we have an internal consistency
+    // bug in MakeGMLCoordinate.
+    if( pszY == NULL || strlen(pszY) < 2)
+        CPLError(CE_Fatal, CPLE_AssertionFailed, "MakeGMLCoordinate failed." );
+    *pszY = '\0';
+    pszY++;
 
     CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
     CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
