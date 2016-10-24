@@ -1454,7 +1454,6 @@ CPLErr CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
 
 }
 
-
 CPLErr CPL_STDCALL GNMReconnectFeatures (GNMGenericNetworkH hNet,
                                          GNMGFID nSrcFID, GNMGFID nTgtFID,
                                          GNMGFID nConFID, double dfCost,

@@ -84,7 +84,6 @@
 #define GNM_BLOCK_CONN 0x0004  // the connection edge is blocked
 #define GNM_BLOCK_ALL GNM_BLOCK_SRC | GNM_BLOCK_TGT | GNM_BLOCK_CONN
 
-
 // Other string constants.
 #define GNM_SRSFILENAME "_gnm_srs.prj"
 

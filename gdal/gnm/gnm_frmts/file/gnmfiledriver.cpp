@@ -88,7 +88,6 @@ static GDALDataset *GNMFileDriverOpen( GDALOpenInfo* poOpenInfo )
     return poFN;
 }
 
-
 static GDALDataset *GNMFileDriverCreate( const char * pszName,
                                         CPL_UNUSED int nBands,
                                         CPL_UNUSED int nXSize,
