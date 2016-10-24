@@ -711,7 +711,6 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/

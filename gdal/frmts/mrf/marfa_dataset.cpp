@@ -192,7 +192,6 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
         );
 }
 
-
 /**
 *\brief Build some overviews
 *
@@ -595,7 +594,6 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 /*      Open external overviews.                                        */
 /* -------------------------------------------------------------------- */
     ds->oOvManager.Initialize( ds, pszFileName );
-
 
     return ds;
 }
@@ -1184,7 +1182,6 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
     return config;
 }
-
 
 /**
 * \brief Populates the dataset variables from the XML definition
@@ -1959,7 +1956,6 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     assert(offset < bias);
     assert(clonedSource);
 
-
     // Read this block from the remote index, prepare it and store it in the right place
     // The block size in bytes, should be a multiple of 16, to have full index entries
     const int CPYSZ = 32768;
@@ -1969,7 +1965,6 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     size /= sizeof(ILIdx); // In records
     vector<ILIdx> buf(static_cast<size_t>(size));
     ILIdx *buffer = &buf[0]; // Buffer to copy the source to the clone index
-
 
     // Fetch the data from the cloned index
     GDALMRFDataset *pSrc = static_cast<GDALMRFDataset *>(GetSrcDS());

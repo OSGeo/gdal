@@ -116,7 +116,6 @@ static void GenerateTiles(std::string filename,
                 hasNoData = 1;
             }
 
-
             //fill the true or false for hadnoData array if the source data has nodata value
             if (!isJpegDriver)
             {
@@ -845,7 +844,6 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     return poDS;
 }
 
-
 /************************************************************************/
 /*                            KMLRemoveSlash()                          */
 /************************************************************************/
@@ -1520,7 +1518,6 @@ int KmlSuperOverlayFindRegionStartInternal(CPLXMLNode* psNode,
     return FALSE;
 }
 
-
 static
 int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
                                    CPLXMLNode** ppsRegion,
@@ -1648,7 +1645,6 @@ GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* ps
 
     return poDSIcon;
 }
-
 
 /************************************************************************/
 /*                    KmlSuperOverlayComputeDepth()                     */

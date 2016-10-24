@@ -35,7 +35,6 @@ CPL_C_START
 #include "jerror.h"
 CPL_C_END
 
-
 /* Expanded data source object for stdio input */
 
 typedef struct {
@@ -66,7 +65,6 @@ init_source (j_decompress_ptr cinfo)
    */
   src->start_of_file = TRUE;
 }
-
 
 /*
  * Fill the input buffer --- called whenever buffer is emptied.
@@ -283,7 +281,6 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
   src->pub.next_input_byte = NULL; /* until buffer loaded */
 }
 
-
 /* ==================================================================== */
 /*      The rest was derived from jdatadst.c                            */
 /* ==================================================================== */
@@ -320,7 +317,6 @@ init_destination (j_compress_ptr cinfo)
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
-
 
 /*
  * Empty the output buffer --- called whenever buffer fills up.
@@ -403,7 +399,6 @@ term_destination (j_compress_ptr cinfo)
       cinfo->err->error_exit((j_common_ptr) (cinfo));
   }
 }
-
 
 /*
  * Prepare for output to a stdio stream.

@@ -61,12 +61,10 @@ void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
 CPLErr MakeDirs(const char *path);
 
-
 int StrToBool(const char *p);
 int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (3, 4);
 /* Convert a.b.c.d to a * 0x1000000 + b * 0x10000 + c * 0x100 + d */
 int VersionStringToInt(const char *version);
-
 
 class GDALWMSImageRequestInfo {
 public:

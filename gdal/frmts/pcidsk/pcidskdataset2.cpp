@@ -1135,7 +1135,6 @@ const char *PCIDSK2Dataset::GetMetadataItem( const char *pszName,
         return NULL;
     }
 
-
     if( osLastMDValue == "" )
         return NULL;
 

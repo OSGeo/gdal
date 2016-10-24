@@ -43,7 +43,6 @@ NAMESPACE_LERC_START
  *	z can be elevation or intensity;
  */
 
-
 class CntZImage : public TImage< CntZ >
 {
 public:
@@ -113,7 +112,6 @@ protected:
 
   unsigned int computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
     InfoFromComputeNumBytes& info) const;
-
 
   bool findTiling(bool zPart, double maxZError, bool cntsNoInt,
     int& numTilesVert, int& numTilesHori, int& numBytesOpt, float& maxValInImg) const;

@@ -117,7 +117,6 @@ class MFFTiledBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                            MFFTiledBand()                            */
 /************************************************************************/
@@ -149,7 +148,6 @@ MFFTiledBand::~MFFTiledBand()
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -681,7 +679,6 @@ void MFFDataset::ScanForProjectionInfo()
 
     delete mffEllipsoids;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1629,7 +1626,6 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_MFF()                           */

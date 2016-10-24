@@ -504,7 +504,6 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                 break;
             }
 
-
             for(int iBand = 0; iBand < nBands; iBand ++)
             {
                 char szTmp[64];

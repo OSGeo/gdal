@@ -301,7 +301,6 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
     virtual int HasArbitraryOverviews() { return poCT == NULL; }
 };
 
-
 /************************************************************************/
 /*                        JP2OpenJPEGRasterBand()                       */
 /************************************************************************/
@@ -968,7 +967,6 @@ end:
     return eErr;
 }
 
-
 /************************************************************************/
 /*                         GetOverviewCount()                           */
 /************************************************************************/
@@ -1510,7 +1508,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     OPJ_CODEC_FORMAT eCodecFormat = (nCodeStreamStart == 0) ? OPJ_CODEC_J2K : OPJ_CODEC_JP2;
 
-
     opj_codec_t* pCodec = opj_create_decompress(OPJ_CODEC_J2K);
     if( pCodec == NULL )
         return NULL;
@@ -1672,7 +1669,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */

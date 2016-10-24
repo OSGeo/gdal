@@ -113,5 +113,4 @@ protected:
     kealib::KEADataType  m_eKEADataType; // data type as KEA enum
 };
 
-
 #endif //KEABAND_H

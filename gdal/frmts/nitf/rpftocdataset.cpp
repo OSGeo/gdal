@@ -530,7 +530,6 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
             initDone = TRUE;
         }
 
-
         if (samePalette == FALSE)
         {
             unsigned char* data = (unsigned char*)pImage;
@@ -697,7 +696,6 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 /*                  NITFCreateVRTDataSetFromTocEntry()                  */
 /************************************************************************/
-
 
 #define ASSERT_CREATE_VRT(x) do { if (!(x)) { CPLError(CE_Failure, CPLE_AppDefined, "For %s, assert '" #x "' failed", entry->frameEntries[i].fullFilePath); if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); return NULL;} } while(0)
 

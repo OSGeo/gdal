@@ -64,7 +64,6 @@ int SDEDataset::GetRasterYSize( void )
     return nRasterYSize;
 }
 
-
 /************************************************************************/
 /*                          ComputeRasterInfo()                         */
 /************************************************************************/
@@ -192,7 +191,6 @@ CPLErr SDEDataset::ComputeRasterInfo() {
         return CE_Fatal;
     }
 
-
     for (int i=0; i < nBands; i++) {
         SetBand( i+1, new SDERasterBand( this, i+1, -1, &(paohSDERasterBands[i]) ));
     }
@@ -205,7 +203,6 @@ CPLErr SDEDataset::ComputeRasterInfo() {
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
@@ -313,8 +310,6 @@ SDEDataset::SDEDataset(  )
 
 }
 
-
-
 /************************************************************************/
 /*                            ~SDEDataset()                             */
 /************************************************************************/
@@ -348,7 +343,6 @@ SDEDataset::~SDEDataset()
         CPLFree(pszColumnName);
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -374,7 +368,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug(   "SDERASTER", "Open(\"%s\") revealed %d tokens.",
                 poOpenInfo->pszFilename,
                 CSLCount( papszTokens ) );
-
 
     if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 7 )
     {
@@ -410,7 +403,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         IssueSDEError( nSDEErr, "SE_connection_create" );
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Set unprotected concurrency policy, suitable for single         */
@@ -463,9 +455,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
         poDS->ComputeRasterInfo();
-
-
-
     } else {
 
         nSDEErr = SE_rastercolumn_get_info_list(poDS->hConnection,

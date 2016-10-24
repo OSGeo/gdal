@@ -64,7 +64,6 @@ PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
     nBlockYSize = nRasterYSize;
 }
 
-
 /************************
  * \brief Destructor
  ************************/
@@ -142,7 +141,6 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
         return CE_Failure;
     }
-
 
     // TODO: Check this
     if (bIsOffline) {

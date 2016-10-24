@@ -82,7 +82,6 @@
  *
  */
 
-
 /***************************************************************************/
 /*
  *                              DEFINES
@@ -99,7 +98,6 @@
   #define MGRS_NORTHING_ERROR          0x0080
   #define MGRS_ZONE_ERROR              0x0100
   #define MGRS_HEMISPHERE_ERROR        0x0200
-
 
 /***************************************************************************/
 /*
@@ -126,7 +124,6 @@ extern "C" {
  *   Ellipsoid_Code   : 2-letter code for ellipsoid            (input)
  */
 
-
   void Get_MGRS_Parameters(double *a,
                            double *f,
                            char   *Ellipsoid_Code);
@@ -138,7 +135,6 @@ extern "C" {
  *  f                : Flattening of ellipsoid                 (output)
  *  Ellipsoid_Code   : 2-letter code for ellipsoid             (output)
  */
-
 
   long Convert_Geodetic_To_MGRS (double Latitude,
                                  double Longitude,
@@ -157,7 +153,6 @@ extern "C" {
  *
  */
 
-
   long Convert_MGRS_To_Geodetic (char *MGRS,
                                  double *Latitude,
                                  double *Longitude);
@@ -171,7 +166,6 @@ extern "C" {
  *    Longitude  : Longitude in radians             (output)
  *
  */
-
 
   long Convert_UTM_To_MGRS (long Zone,
                             char Hemisphere,
@@ -193,7 +187,6 @@ extern "C" {
  *    MGRS       : MGRS coordinate string           (output)
  */
 
-
   long Convert_MGRS_To_UTM (char   *MGRS,
                             long   *Zone,
                             char   *Hemisphere,
@@ -212,8 +205,6 @@ extern "C" {
  *    Easting    : Easting (X) in meters            (output)
  *    Northing   : Northing (Y) in meters           (output)
  */
-
-
 
   long Convert_UPS_To_MGRS ( char   Hemisphere,
                              double Easting,
@@ -235,7 +226,6 @@ extern "C" {
  *    MGRS          : MGRS coordinate string           (output)
  */
 
-
   long Convert_MGRS_To_UPS ( char   *MGRS,
                              char   *Hemisphere,
                              double *Easting,
@@ -251,8 +241,6 @@ extern "C" {
  *    Easting       : Easting/X in meters              (output)
  *    Northing      : Northing/Y in meters             (output)
  */
-
-
 
   #ifdef __cplusplus
 }

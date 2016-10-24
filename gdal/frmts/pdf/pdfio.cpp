@@ -36,7 +36,6 @@
 
 CPL_CVSID("$Id$");
 
-
 #ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
 /* Poppler 0.31.0 is the first one that needs to know the file size */
 static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
@@ -148,7 +147,6 @@ getPos_ret_type VSIPDFFileStream::getPos()
 /************************************************************************/
 /*                                getStart()                            */
 /************************************************************************/
-
 
 getStart_ret_type VSIPDFFileStream::getStart()
 {

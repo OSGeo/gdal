@@ -207,7 +207,6 @@ int VRTPansharpenedDataset::CloseDependentDatasets()
     return bHasDroppedRef;
 }
 
-
 /************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
@@ -1303,7 +1302,6 @@ CPLErr VRTPansharpenedDataset::AddBand( CPL_UNUSED GDALDataType eType,
 
     return CE_Failure;
 }
-
 
 /************************************************************************/
 /*                              IRasterIO()                             */

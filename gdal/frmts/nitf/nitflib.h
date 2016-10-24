@@ -126,7 +126,6 @@ typedef struct
   unsigned int     histogramTableOffset;
 } NITFColormapRecord;
 
-
 typedef struct {
     NITFFile  *psFile;
     int        iSegment;

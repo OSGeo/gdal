@@ -168,7 +168,6 @@ Msg_reader_core::Msg_reader_core( FILE* fp ) :
     read_metadata_block(fp);
 }
 
-
 void Msg_reader_core::read_metadata_block(FILE* fin) {
     _open_success = true;
 
@@ -282,7 +281,6 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     to_native(idr);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
-
 
     // Rather convoluted, but this code is required to compute the real data block sizes
     // It does this by reading in the first line of every band, to get to the packet size field

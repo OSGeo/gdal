@@ -450,7 +450,6 @@ CPLErr VRTSourcedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                       nPixelSize, nPixelSize * nBlockXSize, &sExtraArg );
 }
 
-
 /************************************************************************/
 /*                    CanUseSourcesMinMaxImplementations()              */
 /************************************************************************/
@@ -1327,7 +1326,6 @@ char **VRTSourcedRasterBand::GetMetadataDomainList()
         CSLAddString( GDALRasterBand::GetMetadataDomainList(),
                       "LocationInfo" );
 }
-
 
 /************************************************************************/
 /*                          GetMetadataItem()                           */

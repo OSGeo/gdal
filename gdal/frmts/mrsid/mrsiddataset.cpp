@@ -54,7 +54,6 @@ CPL_C_END
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support.
 
-
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -115,7 +114,6 @@ CPL_C_END
 #ifdef __clang
 #pragma clang diagnostic pop
 #endif
-
 
 #ifdef MRSID_POST5
 #  define MRSID_HAVE_GETWKT
@@ -386,7 +384,6 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDSIn, int nBandIn )
     poPixel = new LTIDLLPixel<LTIPixel>( poDSIn->eColorSpace,
                                          static_cast<lt_uint16>(poDSIn->nBands),
                                          poDSIn->eSampleType );
-
 
 /* -------------------------------------------------------------------- */
 /*      Set NoData values.                                              */
@@ -1423,7 +1420,6 @@ static GDALDataset* MrSIDOpen( GDALOpenInfo *poOpenInfo )
     return MrSIDDataset::Open( poOpenInfo, FALSE );
 }
 
-
 #ifdef MRSID_J2K
 
 static const unsigned char jpc_header[] =
@@ -2177,7 +2173,6 @@ void MrSIDDataset::FetchProjParms()
                                    &dfNatOriginLat ) == 0 )
             dfNatOriginLat = 0.0;
 
-
         if( GetMetadataElement( "GEOTIFF_NUM::3092::ProjScaleAtNatOriginGeoKey",
                                 &dfNatOriginScale ) == 0
             && GetMetadataElement( "GEOTIFF_NUM::3093::ProjScaleAtCenterGeoKey",
@@ -2667,7 +2662,6 @@ void MrSIDDataset::GetGTIFDefn()
         CPLFree( pszProjection );
     pszProjection = GetOGISDefn( psDefn );
 }
-
 
 /************************************************************************/
 /*                       GTIFToCPLRecyleString()                        */

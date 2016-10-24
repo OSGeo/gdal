@@ -91,7 +91,6 @@ static void errorExit(j_common_ptr cinfo)
     longjmp(psErrorStruct->setjmpBuffer, 1);
 }
 
-
 /**
 *\brief Do nothing stub function for JPEG library, called
 */
@@ -225,7 +224,6 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
 
     return CE_None;
 }
-
 
 /**
 *\brief In memory decompression of JPEG file

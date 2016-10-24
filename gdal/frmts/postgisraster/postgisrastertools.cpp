@@ -85,7 +85,6 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     return pszOutput;
 }
 
-
 /***********************************************************************
  * \brief Split connection string into user, password, host, database...
  *

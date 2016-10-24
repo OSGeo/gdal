@@ -96,7 +96,6 @@ class SAGADataset : public GDALPamDataset
     CPLErr SetGeoTransform( double *padfGeoTransform );
 };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            SAGARasterBand                            */
@@ -305,7 +304,6 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 /* ==================================================================== */
 /************************************************************************/
 
-
 SAGADataset::SAGADataset() :
     fp(NULL),
     pszProjection(CPLStrdup(""))
@@ -320,7 +318,6 @@ SAGADataset::~SAGADataset()
         VSIFCloseL( fp );
 }
 
-
 /************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
@@ -329,7 +326,6 @@ char** SAGADataset::GetFileList()
 {
     const CPLString osPath = CPLGetPath( GetDescription() );
     const CPLString osName = CPLGetBasename( GetDescription() );
-
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
@@ -489,7 +485,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     VSIFCloseL( fp );
 
-
     /* -------------------------------------------------------------------- */
     /*      Did we get the required keywords?  If not we return with        */
     /*      this never having been considered to be a match. This isn't     */
@@ -551,7 +546,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         poBand->m_ByteOrder = 1;
     else if( STARTS_WITH_CI(szByteOrderBig, "FALSE") )
         poBand->m_ByteOrder = 0;
-
 
     /* -------------------------------------------------------------------- */
     /*      Figure out the data type.                                       */
@@ -812,12 +806,10 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
     else
         VSIFPrintfL( fp, "TOPTOBOTTOM\t= FALSE\n" );
 
-
     VSIFCloseL( fp );
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

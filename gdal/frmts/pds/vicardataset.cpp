@@ -637,7 +637,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                 poBand->SetStatistics(CPLAtofM(pszMin),CPLAtofM(pszMax),CPLAtofM(pszMean),CPLAtofM(pszStdDev));
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Instrument-specific keywords as metadata.                       */
 /* -------------------------------------------------------------------- */
@@ -700,7 +699,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-
 /******************   DAWN   ******************************/
     else if (EQUAL( poDS->GetKeyword( "INSTRUMENT_ID"), "FC2" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
@@ -743,7 +741,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      END Instrument-specific keywords as metadata.                   */

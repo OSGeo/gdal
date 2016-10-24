@@ -303,7 +303,6 @@ class USGSDEMRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           USGSDEMRasterBand()                            */
 /************************************************************************/
@@ -757,7 +756,6 @@ const char *USGSDEMDataset::GetProjectionRef()
 {
     return pszProjection;
 }
-
 
 /************************************************************************/
 /*                              Identify()                              */

@@ -38,7 +38,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /**
 
 Erdas Header format: "HEAD74"

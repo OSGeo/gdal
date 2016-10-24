@@ -410,7 +410,6 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
     tiri.m_level = m_parent_dataset->m_data_window.m_tlevel - level;
 }
 
-
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
@@ -506,7 +505,6 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
                                                            iri, tiri,
                                                            iPixel % nBlockXSize,
                                                            iLine % nBlockXSize);
-
 
         char* pszRes = NULL;
 
@@ -825,7 +823,6 @@ CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name) {
 
     return ret;
 }
-
 
 CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0,
                                      int sx, int sy,

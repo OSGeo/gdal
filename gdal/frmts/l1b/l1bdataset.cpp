@@ -2467,7 +2467,6 @@ CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                         sizeof(GDAL_GCP) );
     GDALInitGCPs( poL1BDS->nGCPsPerLine, pasGCPList );
 
-
     GByte* pabyRecordHeader = (GByte*)CPLMalloc(poL1BDS->nRecordSize);
 
 /* -------------------------------------------------------------------- */
@@ -2753,7 +2752,6 @@ GDALDataset* L1BSolarZenithAnglesDataset::CreateSolarZenithAnglesDS(L1BDataset* 
     return poGeolocDS;
 }
 
-
 /************************************************************************/
 /*                     L1BNOAA15AnglesDataset                           */
 /************************************************************************/
@@ -3004,7 +3002,6 @@ GDALDataset* L1BCloudsDataset::CreateCloudsDS(L1BDataset* poL1BDS)
     }
     return poGeolocDS;
 }
-
 
 /************************************************************************/
 /*                           DetectFormat()                             */

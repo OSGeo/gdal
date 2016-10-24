@@ -86,7 +86,6 @@ class NGSGEOIDRasterBand : public GDALPamRasterBand
     virtual const char* GetUnitType() { return "m"; }
 };
 
-
 /************************************************************************/
 /*                        NGSGEOIDRasterBand()                          */
 /************************************************************************/
@@ -317,7 +316,6 @@ int NGSGEOIDDataset::Identify( GDALOpenInfo * poOpenInfo )
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */

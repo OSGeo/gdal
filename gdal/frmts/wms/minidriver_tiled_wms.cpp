@@ -60,7 +60,6 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
     return ce;
 }
 
-
 /************************************************************************/
 /*                           SearchXMLSiblings()                        */
 /************************************************************************/
@@ -280,7 +279,6 @@ WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
 }
 
-
 // Returns the scale of a WMS request as compared to the base resolution
 double WMSMiniDriver_TiledWMS::Scale(const char *request) {
     int bbox=FindBbox(request);
@@ -289,7 +287,6 @@ double WMSMiniDriver_TiledWMS::Scale(const char *request) {
     CPLsscanf(request+bbox,"%lf,%lf,%lf,%lf",&x,&y,&X,&Y);
     return (m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx/m_data_window.m_sx;
 }
-
 
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
 CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
@@ -685,7 +682,6 @@ void WMSMiniDriver_TiledWMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_has_tiled_image_requeset = 1;
     caps->m_max_overview_count = 32;
 }
-
 
 // not called
 void WMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,

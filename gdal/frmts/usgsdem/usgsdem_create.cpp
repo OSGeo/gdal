@@ -766,7 +766,6 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY );
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Local vertical datum offset.                                    */
 /* -------------------------------------------------------------------- */
@@ -1393,7 +1392,6 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     return eErr == CE_None;
 }
 
-
 /************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
@@ -1515,7 +1513,6 @@ USGSDEMCreateCopy( const char *pszFilename,
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole area of interest into memory.                    */

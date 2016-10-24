@@ -452,7 +452,6 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
     return pszResult;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            EHdrDataset                               */
@@ -934,7 +933,6 @@ CPLErr EHdrDataset::ReadSTX()
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                      GetImageRepFilename()                           */
@@ -1748,7 +1746,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             char **papszValues = CSLTokenizeString2(pszLine, "\t ",
                                                     CSLT_HONOURSTRINGS);
-
 
             if ( CSLCount(papszValues) >= 4 )
             {

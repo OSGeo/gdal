@@ -200,7 +200,6 @@ public:
                                 GDALDataType eType, char ** papszParmList );
 };
 
-
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
 /************************************************************************/
@@ -864,7 +863,6 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
     CSLDestroy( papszTokens );
     return pszDefault;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_ISIS3()                         */
