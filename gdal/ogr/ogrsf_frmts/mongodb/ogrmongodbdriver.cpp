@@ -165,7 +165,6 @@ public:
             void                SetCreateSpatialIndex(int bFlag) { m_bCreateSpatialIndex = bFlag; }
 };
 
-
 class OGRMongoDBDataSource: public GDALDataset
 {
             DBClientBase *m_poConn;

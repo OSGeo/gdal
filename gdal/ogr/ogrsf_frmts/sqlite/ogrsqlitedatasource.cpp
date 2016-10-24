@@ -558,7 +558,6 @@ void OGRSQLiteBaseDataSourceNotifyFileOpened (void* pfnUserData,
     ((OGRSQLiteBaseDataSource*)pfnUserData)->NotifyFileOpened(pszFilename, fp);
 }
 
-
 /************************************************************************/
 /*                          NotifyFileOpened()                          */
 /************************************************************************/
@@ -1502,7 +1501,6 @@ int OGRSQLiteDataSource::Open( const char * pszNewName, int bUpdateIn,
             }
             sqlite3_free_table(papszResult);
         }
-
 
         if (bListAllTables)
             goto all_tables;
@@ -2490,7 +2488,6 @@ OGRErr OGRSQLiteDataSource::DeleteLayer(int iLayer)
     }
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                         StartTransaction()                           */

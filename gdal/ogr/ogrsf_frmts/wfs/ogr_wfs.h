@@ -162,7 +162,6 @@ class OGRWFSLayer : public OGRLayer
 
     OGRWFSLayer*                Clone();
 
-
     const char                 *GetName() { return pszName; }
 
     virtual void                ResetReading();

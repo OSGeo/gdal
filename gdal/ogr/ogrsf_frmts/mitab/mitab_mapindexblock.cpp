@@ -90,7 +90,6 @@ CPL_CVSID("$Id$");
  *                      class TABMAPIndexBlock
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABMAPIndexBlock::TABMAPIndexBlock()
  *
@@ -248,7 +247,6 @@ int     TABMAPIndexBlock::CommitToFile()
             nStatus = WriteNextEntry(&(m_asEntries[i]));
     }
 
-
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
      *----------------------------------------------------------------*/
@@ -262,7 +260,6 @@ int     TABMAPIndexBlock::CommitToFile()
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::InitNewBlock()
@@ -311,8 +308,6 @@ int     TABMAPIndexBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
     return 0;
 }
-
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::ReadNextEntry()
@@ -664,7 +659,6 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     CPLPopErrorHandler();
     CPLErrorReset();
 
-
     if (bFound)
     {
         /*-------------------------------------------------------------
@@ -680,7 +674,6 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
      *------------------------------------------------------------*/
     return m_asEntries[nBestCandidate].nBlockPtr;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::GetCurLeafEntryMBR()
@@ -726,7 +719,6 @@ int     TABMAPIndexBlock::GetCurLeafEntryMBR(GInt32 nBlockPtr,
     return -1;
 
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::UpdateLeafEntry()
@@ -785,7 +777,6 @@ int     TABMAPIndexBlock::UpdateLeafEntry(GInt32 nBlockPtr,
              "Entry to update not found in UpdateLeafEntry()!");
     return -1;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::AddEntry()
@@ -988,8 +979,6 @@ double  TABMAPIndexBlock::ComputeAreaDiff( GInt32 nNodeXMin, GInt32 nNodeYMin,
     return dAreaDiff;
 }
 
-
-
 /**********************************************************************
  *                   TABMAPIndexBlock::PickSeedsForSplit()
  *
@@ -1153,7 +1142,6 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMAPIndexBlock::SplitNode()
  *
@@ -1273,7 +1261,6 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                         pasSrcEntries[iEntry].nBlockPtr);
             continue;
         }
-
 
         // Decide which of the two nodes to put this entry in
         RecomputeMBR();
@@ -1415,7 +1402,6 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                                    nNewEntryXMax, nNewEntryYMax);
 }
 
-
 /**********************************************************************
  *                   TABMAPIndexBlock::RecomputeMBR()
  *
@@ -1515,7 +1501,6 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
                                          GetNodeBlockPtr());
 
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::SetMAPBlockManagerRef()

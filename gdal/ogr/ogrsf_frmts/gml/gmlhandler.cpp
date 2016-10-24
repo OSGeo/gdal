@@ -413,7 +413,6 @@ char* GMLExpatHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** pp
 
 #endif
 
-
 static const char* const apszGMLGeometryElements[] =
 {
     "BoundingBox", /* ows:BoundingBox */
@@ -531,7 +530,6 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszKieli );
     CPLFree( pasGeometryNames );
 }
-
 
 /************************************************************************/
 /*                             startElement()                           */
@@ -1102,8 +1100,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
             return startElementGeometry(pszName, nLenName, attr);
         }
     }
-
-
     else if( nLenName == 9 && strcmp(pszName, "boundedBy") == 0 )
     {
         m_inBoundedByDepth = m_nDepth;
@@ -1809,7 +1805,6 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                         IsGeometryElement()                          */

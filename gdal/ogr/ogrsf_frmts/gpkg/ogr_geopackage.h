@@ -482,5 +482,4 @@ class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOG
     virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
-
 #endif /* OGR_GEOPACKAGE_H_INCLUDED */

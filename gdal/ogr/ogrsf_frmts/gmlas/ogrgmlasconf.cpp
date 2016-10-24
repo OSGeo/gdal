@@ -39,7 +39,6 @@ const bool GMLASXLinkResolutionConf::DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
 const bool GMLASXLinkResolutionConf::ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
 const bool GMLASXLinkResolutionConf::CACHE_RESULTS_DEFAULT = false;
 
-
 const bool GMLASConfiguration::ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
 const bool GMLASConfiguration::ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
 const bool GMLASConfiguration::REMOVE_UNUSED_LAYERS_DEFAULT = false;
@@ -212,7 +211,6 @@ static bool IsValidXPath(const CPLString& osXPath )
     }
     return bOK;
 }
-
 
 /************************************************************************/
 /*                    GMLASConfigurationErrorHandler()                  */

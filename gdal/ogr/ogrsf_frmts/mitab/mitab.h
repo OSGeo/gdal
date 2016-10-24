@@ -131,7 +131,6 @@
 #  define ROUND_INT(dX) ((int)((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 ))
 #endif
 
-
 #define MITAB_AREA(x1, y1, x2, y2)  ((double)((x2)-(x1))*(double)((y2)-(y1)))
 
 class TABFeature;
@@ -147,7 +146,6 @@ typedef enum
     TABFC_TABSeamless,
     TABFC_MIFFile
 } TABFileClass;
-
 
 /*---------------------------------------------------------------------
  *                      class IMapInfoFile
@@ -416,7 +414,6 @@ class TABFile CPL_FINAL : public IMapInfoFile
 #endif
 };
 
-
 /*---------------------------------------------------------------------
  *                      class TABView
  *
@@ -461,7 +458,6 @@ class TABView CPL_FINAL : public IMapInfoFile
     //
     int         OpenForWrite(const char *pszFname );
     int         WriteTABFile();
-
 
   public:
     TABView();
@@ -542,7 +538,6 @@ class TABView CPL_FINAL : public IMapInfoFile
     virtual void Dump(FILE *fpOut = NULL);
 #endif
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABSeamless
@@ -663,7 +658,6 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
     virtual void Dump(FILE *fpOut = NULL);
 #endif
 };
-
 
 /*---------------------------------------------------------------------
  *                      class MIFFile
@@ -1010,7 +1004,6 @@ class ITABFeatureSymbol
     void        DumpSymbolDef(FILE *fpOut = NULL);
 };
 
-
 /*=====================================================================
                         Feature Classes
  =====================================================================*/
@@ -1119,7 +1112,6 @@ class TABFeature : public OGRFeature
 
 };
 
-
 /*---------------------------------------------------------------------
  *                      class TABPoint
  *
@@ -1165,7 +1157,6 @@ class TABPoint: public TABFeature,
 
     virtual void DumpMIF(FILE *fpOut = NULL);
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABFontPoint
@@ -1220,7 +1211,6 @@ class TABFontPoint CPL_FINAL : public TABPoint,
     void        SetSymbolAngle(double dAngle);
 };
 
-
 /*---------------------------------------------------------------------
  *                      class TABCustomPoint
  *
@@ -1270,7 +1260,6 @@ class TABCustomPoint CPL_FINAL : public TABPoint,
     GByte       GetCustomSymbolStyle()              {return m_nCustomStyle;}
     void        SetCustomSymbolStyle(GByte nStyle)  {m_nCustomStyle = nStyle;}
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABPolyline
@@ -1407,7 +1396,6 @@ class TABRegion CPL_FINAL : public TABFeature,
     void        SetCenter(double dX, double dY);
 };
 
-
 /*---------------------------------------------------------------------
  *                      class TABRectangle
  *
@@ -1461,7 +1449,6 @@ class TABRectangle CPL_FINAL : public TABFeature,
     double      m_dRoundYRadius;
 
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABEllipse
@@ -1521,9 +1508,7 @@ class TABEllipse CPL_FINAL : public TABFeature,
     double      m_dCenterY;
     double      m_dXRadius;
     double      m_dYRadius;
-
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABArc
@@ -1589,7 +1574,6 @@ class TABArc CPL_FINAL : public TABFeature,
     double      m_dXRadius;
     double      m_dYRadius;
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABText
@@ -1696,9 +1680,7 @@ class TABText CPL_FINAL : public TABFeature,
     GBool       IsFontUnderline();
     int         GetFontStyleTABValue()           {return m_nFontStyle;};
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;};
-
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABMultiPoint
@@ -1834,7 +1816,6 @@ class TABCollection CPL_FINAL : public TABFeature,
     int                 SetMultiPointDirectly(TABMultiPoint *poMpoint);
 };
 
-
 /*---------------------------------------------------------------------
  *                      class TABDebugFeature
  *
@@ -1907,7 +1888,6 @@ typedef struct
     double      dfA; /* semi major axis in meters */
     double      dfInvFlattening; /* Inverse flattening */
 } MapInfoSpheroidInfo;
-
 
 /*---------------------------------------------------------------------
  * The following are used for coordsys bounds lookup

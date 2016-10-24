@@ -54,7 +54,6 @@ OGRXPlaneLayer::OGRXPlaneLayer( const char* pszLayerName ) :
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 }
 
-
 /************************************************************************/
 /*                            ~OGRXPlaneLayer()                            */
 /************************************************************************/
@@ -82,7 +81,6 @@ OGRXPlaneLayer::~OGRXPlaneLayer()
         poReader = NULL;
     }
 }
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -253,7 +251,6 @@ GIntBig OGRXPlaneLayer::GetFeatureCount( int bForce )
         return OGRLayer::GetFeatureCount( bForce ) ;
 }
 
-
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /************************************************************************/
@@ -291,7 +288,6 @@ int OGRXPlaneLayer::TestCapability( const char * pszCap )
 
     return FALSE;
 }
-
 
 /************************************************************************/
 /*                       RegisterFeature()                              */

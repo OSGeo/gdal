@@ -322,7 +322,6 @@ typedef struct
     int            nGeomBLOBLen;
 } OGR2SQLITE_vtab_cursor;
 
-
 /************************************************************************/
 /*                  OGR2SQLITE_GetNameForGeometryColumn()               */
 /************************************************************************/

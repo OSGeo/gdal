@@ -118,7 +118,6 @@ class OGRXPlaneEnumeration
 static OGRXPlaneEnumeration enumerationName( #enumerationName, enumerationValues, \
                     sizeof( enumerationValues ) / sizeof( enumerationValues[0] ) );
 
-
 /***********************************************************************/
 /*                 OGRXPlaneCreateAptFileReader                        */
 /***********************************************************************/

@@ -121,7 +121,6 @@ CPL_CVSID("$Id$");
  * in binary form inside a 4 bytes string field.
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABDATFile::TABDATFile()
  *
@@ -524,8 +523,6 @@ int  TABDATFile::WriteHeader()
     return m_poHeaderBlock->CommitToFile();
 }
 
-
-
 /**********************************************************************
  *                   TABDATFile::GetNumFields()
  *
@@ -722,7 +719,6 @@ int TABDATFile::MarkRecordAsExisting()
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABDATFile::ValidateFieldInfoFromTAB()
@@ -999,7 +995,6 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                            DeleteField()                             */
@@ -1520,7 +1515,6 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABDATFile::GetFieldType()
  *
@@ -2003,7 +1997,6 @@ double TABDATFile::ReadDecimalField(int nWidth)
 
     return CPLAtof(pszVal);
 }
-
 
 /**********************************************************************
  *                   TABDATFile::WriteCharField()
@@ -2599,8 +2592,6 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
 
     return m_poRecordBlock->WriteBytes(nWidth, (GByte*)pszVal);
 }
-
-
 
 /**********************************************************************
  *                   TABDATFile::Dump()

@@ -49,7 +49,6 @@ class OGRMDBJavaEnv
 
         int Init();
 
-
     JavaVM *jvm;
     JNIEnv *env;
     int bCalledFromJava;

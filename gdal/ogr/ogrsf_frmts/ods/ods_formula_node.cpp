@@ -326,7 +326,6 @@ bool ods_formula_node::Evaluate(IODSCellEvaluator* poEvaluator)
         case ODS_LOG:
             return EvaluateSingleArgOp(poEvaluator);
 
-
         case ODS_EQ: return EvaluateEQ(poEvaluator);
         case ODS_NE: return EvaluateNE(poEvaluator);
         case ODS_LE: return EvaluateLE(poEvaluator);
@@ -1155,7 +1154,6 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
         return false;
     }
 }
-
 
 /************************************************************************/
 /*                         TransformToString()                          */

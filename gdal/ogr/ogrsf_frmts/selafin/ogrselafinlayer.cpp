@@ -83,7 +83,6 @@ OGRSelafinLayer::OGRSelafinLayer(
     }
 }
 
-
 /************************************************************************/
 /*                           ~OGRSelafinLayer()                         */
 /************************************************************************/
@@ -197,7 +196,6 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
         return poFeature;
     }
 }
-
 
 /************************************************************************/
 /*                           GetFeatureCount()                          */

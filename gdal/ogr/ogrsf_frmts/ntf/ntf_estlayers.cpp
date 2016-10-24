@@ -672,7 +672,6 @@ static OGRFeature *TranslateBoundarylinePoly( NTFFileReader *poReader,
     // RingStart
     poFeature->SetField( 7, nRings, anRingStart );
 
-
 /* -------------------------------------------------------------------- */
 /*      collect information for whole complex polygon.                  */
 /* -------------------------------------------------------------------- */
@@ -868,7 +867,6 @@ static OGRFeature *TranslateBL2000Poly( NTFFileReader *poReader,
 
     // RingStart
     poFeature->SetField( 6, nRings, anRingStart );
-
 
 /* -------------------------------------------------------------------- */
 /*      collect information for whole complex polygon.                  */
@@ -1136,7 +1134,6 @@ static OGRFeature *TranslateMeridian2Line( NTFFileReader *poReader,
                                     "TR", 6, "PN", 7, "RI", 8, "LC", 9,
                                     "RC", 10, "LD", 11, "RD", 12, "WI", 14,
                                     NULL );
-
 
     return poFeature;
 }

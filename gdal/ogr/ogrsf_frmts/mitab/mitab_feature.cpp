@@ -180,7 +180,6 @@ CPL_CVSID("$Id$");
  *                      class TABFeature
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABFeature::TABFeature()
  *
@@ -207,10 +206,7 @@ TABFeature::TABFeature(OGRFeatureDefn *poDefnIn) :
  *
  * Destructor.
  **********************************************************************/
-TABFeature::~TABFeature()
-{
-}
-
+TABFeature::~TABFeature() {}
 
 /**********************************************************************
  *                     TABFeature::CreateFromMapInfoType()
@@ -314,7 +310,6 @@ TABFeature *TABFeature::CreateFromMapInfoType(int nMapInfoType,
     return poFeature;
 }
 
-
 /**********************************************************************
  *                     TABFeature::CopyTABFeatureBase()
  *
@@ -365,7 +360,6 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
     // m_nMapInfoType is not carried but it is not required anyways.
     // it will default to TAB_GEOM_NONE
 }
-
 
 /**********************************************************************
  *                     TABFeature::CloneTABFeature()
@@ -793,7 +787,6 @@ int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABFeature::UpdateMBR()
  *
@@ -986,11 +979,9 @@ void TABFeature::DumpMIF(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-
 /*=====================================================================
  *                      class TABPoint
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABPoint::TABPoint()
@@ -1035,7 +1026,6 @@ TABFeature *TABPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
 
     return poNew;
 }
-
 
 /**********************************************************************
  *                   TABPoint::ValidateMapInfoType()
@@ -1210,7 +1200,6 @@ int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABPoint::GetX()
  *
@@ -1260,7 +1249,6 @@ double TABPoint::GetY()
     return poPoint->getY();
 }
 
-
 /**********************************************************************
  *                   TABPoint::GetStyleString()
  *
@@ -1277,7 +1265,6 @@ const char *TABPoint::GetStyleString()
 
     return m_pszStyleString;
 }
-
 
 /**********************************************************************
  *                   TABPoint::DumpMIF()
@@ -1341,7 +1328,6 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
 /*=====================================================================
  *                      class TABFontPoint
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABFontPoint::TABFontPoint()
@@ -1625,7 +1611,6 @@ void TABFontPoint::SetSymbolAngle(double dAngle)
     m_dAngle = dAngle;
 }
 
-
 /**********************************************************************
  *                   TABFontPoint::GetStyleString()
  *
@@ -1660,11 +1645,9 @@ const char *TABFontPoint::GetStyleString()
     return m_pszStyleString;
 }
 
-
 /*=====================================================================
  *                      class TABCustomPoint
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABCustomPoint::TABCustomPoint()
@@ -1851,7 +1834,6 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABCustomPoint::GetStyleString()
  *
@@ -1872,7 +1854,6 @@ const char *TABCustomPoint::GetStyleString()
 /*=====================================================================
  *                      class TABPolyline
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABPolyline::TABPolyline()
@@ -2106,7 +2087,6 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 
     return m_nMapInfoType;
 }
-
 
 /**********************************************************************
  *                   TABPolyline::ReadGeometryFromMAPFile()
@@ -2760,7 +2740,6 @@ const char *TABPolyline::GetStyleString()
     return m_pszStyleString;
 }
 
-
 /**********************************************************************
  *                   TABPolyline::DumpMIF()
  *
@@ -2925,7 +2904,6 @@ void TABPolyline::TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline)
 {
     m_bWriteTwoPointLineAsPolyline = bTwoPointLineAsPolyline;
 }
-
 
 /*=====================================================================
  *                      class TABRegion
@@ -3445,7 +3423,6 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABRegion::GetNumRings()
  *
@@ -3548,7 +3525,6 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
 
     return numRingsTotal;
 }
-
 
 /**********************************************************************
  *                   TABRegion::AppendSecHdrs()
@@ -3765,8 +3741,6 @@ const char *TABRegion::GetStyleString()
     return m_pszStyleString;
 }
 
-
-
 /**********************************************************************
  *                   TABRegion::DumpMIF()
  *
@@ -3899,7 +3873,6 @@ void TABRegion::SetCenter(double dX, double dY)
     m_dCenterY = dY;
     m_bCenterIsSet = TRUE;
 }
-
 
 /*=====================================================================
  *                      class TABRectangle
@@ -4356,7 +4329,6 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-
 /*=====================================================================
  *                      class TABEllipse
  *====================================================================*/
@@ -4692,7 +4664,6 @@ const char *TABEllipse::GetStyleString()
     return m_pszStyleString;
 }
 
-
 /**********************************************************************
  *                   TABEllipse::DumpMIF()
  *
@@ -4763,7 +4734,6 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
 
     fflush(fpOut);
 }
-
 
 /*=====================================================================
  *                      class TABArc
@@ -4972,7 +4942,6 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         return -1;
     }
 
-
     /*-----------------------------------------------------------------
      * Read object information
      *----------------------------------------------------------------*/
@@ -5086,7 +5055,6 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     m_nPenDefIndex = poArcHdr->m_nPenId;        // Pen index
     poMapFile->ReadPenDef(m_nPenDefIndex, &m_sPenDef);
-
 
     /*-----------------------------------------------------------------
      * Create and fill geometry object
@@ -5206,7 +5174,6 @@ void TABArc::SetEndAngle(double dAngle)
     m_dEndAngle = dAngle;
 }
 
-
 /**********************************************************************
  *                   TABArc::GetStyleString()
  *
@@ -5271,8 +5238,6 @@ void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
     fflush(fpOut);
 }
 
-
-
 /*=====================================================================
  *                      class TABText
  *====================================================================*/
@@ -5334,7 +5299,6 @@ TABFeature *TABText::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
 
     // ITABFeatureFont
     *(poNew->GetFontDefRef()) = *GetFontDefRef();
-
 
     poNew->SetTextString( GetTextString() );
     poNew->SetTextAngle( GetTextAngle() );
@@ -5524,7 +5488,6 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     CPLFree(m_pszString);
     m_pszString = pszTmpString; // This string was Escaped before 20050714
-
 
     /* Set/retrieve the MBR to make sure Mins are smaller than Maxs
      */
@@ -5757,7 +5720,6 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABText::GetTextString()
@@ -6112,7 +6074,6 @@ void TABText::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
         m_nFontStyle &=  ~ (int)eStyleToToggle;
 }
 
-
 /**********************************************************************
  *                   TABText::GetFontStyleMIFValue()
  *
@@ -6316,8 +6277,6 @@ const char *TABText::GetStyleString()
     return m_pszStyleString;
 }
 
-
-
 /**********************************************************************
  *                   TABText::DumpMIF()
  *
@@ -6419,7 +6378,6 @@ TABFeature *TABMultiPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
     return poNew;
 }
 
-
 /**********************************************************************
  *                   TABMultiPoint::ValidateMapInfoType()
  *
@@ -6459,8 +6417,6 @@ TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
 
     return m_nMapInfoType;
 }
-
-
 
 /**********************************************************************
  *                   TABMultiPoint::ReadGeometryFromMAPFile()
@@ -6650,7 +6606,6 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     poMPointHdr->m_nCoordBlockPtr = poCoordBlock->GetCurAddress();
     poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
-
     for( int iPoint=0, nStatus=0;
          nStatus == 0 && iPoint < poMPointHdr->m_nNumPoints;
          iPoint++)
@@ -6723,7 +6678,6 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMultiPoint::GetXY()
  *
@@ -6786,7 +6740,6 @@ int TABMultiPoint::GetNumPoints()
     }
 }
 
-
 /**********************************************************************
  *                   TABMultiPoint::GetStyleString()
  *
@@ -6844,7 +6797,6 @@ void TABMultiPoint::SetCenter(double dX, double dY)
     m_dCenterY = dY;
     m_bCenterIsSet = TRUE;
 }
-
 
 /**********************************************************************
  *                   TABMultiPoint::DumpMIF()
@@ -6990,7 +6942,6 @@ TABFeature *TABCollection::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
     return poNew;
 }
 
-
 /**********************************************************************
  *                   TABCollection::ValidateMapInfoType()
  *
@@ -7084,7 +7035,6 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
                                             nXMin, nYMin, nXMax, nYMax);
     }
 
-
     if (m_poPline && nPLineType != TAB_GEOM_NONE)
     {
         GInt32 nXMin, nYMin, nXMax, nYMax;
@@ -7109,10 +7059,8 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
                                             nXMin, nYMin, nXMax, nYMax);
     }
 
-
     return m_nMapInfoType;
 }
-
 
 /**********************************************************************
  *                   TABCollection::ReadLabelAndMBR()
@@ -7202,7 +7150,6 @@ int  TABCollection::WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABCollection::ReadGeometryFromMAPFile()
@@ -7335,7 +7282,6 @@ int TABCollection::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*if (poCoordBlock)
             nCurCoordBlockPtr = poCoordBlock->GetCurAddress();*/
     }
-
 
     /*-----------------------------------------------------------------
      * PLine Component
@@ -7495,7 +7441,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      * custom TABCollection::SetGeometry*()... but then this last option
      * won't work unless OGRFeature::SetGeometry*() are made virtual in OGR.
      *----------------------------------------------------------------*/
-
 
     /*-----------------------------------------------------------------
      * We assume that ValidateMapInfoType() was called already and that
@@ -7726,7 +7671,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         poCollHdr->m_nPolylinePenId = 0;
     }
 
-
     /*-----------------------------------------------------------------
      * MultiPoint component
      *----------------------------------------------------------------*/
@@ -7813,7 +7757,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         poCollHdr->m_nMultiPointSymbolId = 0;
     }
 
-
     /*-----------------------------------------------------------------
      * Copy object information
      *----------------------------------------------------------------*/
@@ -7826,7 +7769,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     poCollHdr->SetMBR(m_nXMin, m_nYMin, m_nXMax, m_nYMax);
 
-
     if (CPLGetLastErrorNo() != 0)
         return -1;
 
@@ -7838,7 +7780,6 @@ int TABCollection::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABCollection::SyncOGRGeometryCollection()
@@ -7922,7 +7863,6 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABCollection::SetRegionDirectly()
  *
@@ -7986,7 +7926,6 @@ int    TABCollection::SetMultiPointDirectly(TABMultiPoint *poMpoint)
     return SyncOGRGeometryCollection(FALSE, FALSE, TRUE);
 }
 
-
 /**********************************************************************
  *                   TABCollection::GetStyleString()
  *
@@ -8003,7 +7942,6 @@ const char *TABCollection::GetStyleString()
 
     return m_pszStyleString;
 }
-
 
 /**********************************************************************
  *                   TABCollection::DumpMIF()
@@ -8033,7 +7971,6 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
 
     if (m_poMpoint)
         m_poMpoint->DumpMIF(fpOut);
-
 
     DumpSymbolDef(fpOut);
 
@@ -8160,10 +8097,8 @@ void TABDebugFeature::DumpMIF(FILE *fpOut /*=NULL*/)
 
     fprintf(fpOut, "  \n");
 
-
     fflush(fpOut);
 }
-
 
 /*=====================================================================
  *                      class ITABFeaturePen
@@ -8180,7 +8115,6 @@ ITABFeaturePen::ITABFeaturePen() :
     m_nPenDefIndex(-1),
     m_sPenDef(csDefaultPen)
 {}
-
 
 /**********************************************************************
  *                   ITABFeaturePen::GetPenWidthPixel()
@@ -8615,7 +8549,6 @@ ITABFeatureBrush::ITABFeatureBrush() :
     m_sBrushDef(csDefaultBrush)
 {}
 
-
 /**********************************************************************
  *                   ITABFeatureBrush::GetBrushStyleString()
  *
@@ -8660,7 +8593,6 @@ const char *ITABFeatureBrush::GetBrushStyleString()
 
      return pszStyle;
 }
-
 
 /**********************************************************************
  *                   ITABFeatureBrush::SetBrushFromStyleString()
@@ -8830,7 +8762,6 @@ void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
 
     fflush(fpOut);
 }
-
 
 /*=====================================================================
  *                      class ITABFeatureSymbol

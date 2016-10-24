@@ -568,7 +568,6 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
     return NULL;
 }
 
-
 /************************************************************************/
 /*                   OGROpenFileGDBSingleFeatureLayer                   */
 /************************************************************************/
@@ -618,7 +617,6 @@ OGROpenFileGDBSingleFeatureLayer::~OGROpenFileGDBSingleFeatureLayer()
         poFeatureDefn->Release();
     CPLFree(pszVal);
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

@@ -1196,8 +1196,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         nLayers++;
     }
 
-
-
     return true;
 }
 
@@ -1685,7 +1683,6 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
 
     return true;
 }
-
 
 /************************************************************************/
 /*                         WriteTopElements()                           */
@@ -2451,9 +2448,10 @@ void OGRGMLDataSource::InsertHeader()
 /*      Close external schema files.                                    */
 /* -------------------------------------------------------------------- */
     else
+    {
         VSIFCloseL( fpSchema );
+    }
 }
-
 
 /************************************************************************/
 /*                            PrintLine()                               */
@@ -2476,7 +2474,6 @@ void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 
     VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
 }
-
 
 /************************************************************************/
 /*                     OGRGMLSingleFeatureLayer                         */

@@ -87,7 +87,6 @@ class OGRPDSLayer : public OGRLayer
                                          GByte* pabyRecord, bool bIsASCII);
                         virtual ~OGRPDSLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 

@@ -609,7 +609,6 @@ int OGRSVGLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
 /************************************************************************/
 /*                       LoadSchema()                         */
 /************************************************************************/
@@ -633,7 +632,6 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData,
 {
     ((OGRSVGLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
-
 
 /** This function parses the whole file to build the schema */
 void OGRSVGLayer::LoadSchema()
@@ -698,7 +696,6 @@ void OGRSVGLayer::LoadSchema()
 
     VSIFSeekL( fpSVG, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                  startElementLoadSchemaCbk()                         */

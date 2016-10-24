@@ -39,7 +39,6 @@
 /*                   OGRXPlaneAirwaySegmentLayer                        */
 /************************************************************************/
 
-
 class OGRXPlaneAirwaySegmentLayer : public OGRXPlaneLayer
 {
   public:

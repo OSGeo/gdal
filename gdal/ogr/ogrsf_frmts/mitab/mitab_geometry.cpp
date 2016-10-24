@@ -58,7 +58,6 @@ CPL_CVSID("$Id$");
 #define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
 #define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))
 
-
 /**********************************************************************
  *                   OGRPointInRing()
  *
@@ -114,7 +113,6 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 
     return status;
 }
-
 
 /**********************************************************************
  *                   OGRPolygonLabelPoint()
@@ -371,7 +369,6 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 }
 #endif
 
-
 /**********************************************************************
  *                   OGRPolylineCenterPoint()
  *
@@ -406,7 +403,6 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
     return OGRERR_NONE;
 }
-
 
 /**********************************************************************
  *                   OGRPolylineLabelPoint()

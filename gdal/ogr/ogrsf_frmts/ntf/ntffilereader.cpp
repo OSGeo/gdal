@@ -1084,7 +1084,6 @@ void NTFFileReader::ApplyAttributeValues( OGRFeature * poFeature,
     CSLDestroy( papszValues );
 }
 
-
 /************************************************************************/
 /*                        ApplyAttributeValue()                         */
 /*                                                                      */
@@ -1675,7 +1674,6 @@ static void AddToIndexGroup( NTFRecord **papoGroup, NTFRecord * poRecord )
     papoGroup[i] = poRecord;
     papoGroup[i+1] = NULL;
 }
-
 
 /************************************************************************/
 /*                     GetNextIndexedRecordGroup()                      */

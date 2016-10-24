@@ -166,13 +166,11 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
 /*                              GetLayer()                              */
 /************************************************************************/
 
-
 OGRLayer *OGRWAsPDataSource::GetLayer( int iLayer )
 
 {
     return ( iLayer == 0 ) ? oLayer.get() : NULL;
 }
-
 
 /************************************************************************/
 /*                             ICreateLayer()                           */

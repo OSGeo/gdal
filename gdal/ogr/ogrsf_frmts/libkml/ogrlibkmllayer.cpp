@@ -366,7 +366,6 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer()
     m_poOgrFeatureDefn->Release();
 }
 
-
 /******************************************************************************
  Method to get the next feature on the layer.
 
@@ -551,7 +550,6 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     return OGRERR_NONE;
 }
 
-
 /******************************************************************************
  Method to update a feature to a layer.
 
@@ -705,9 +703,6 @@ OGRErr OGRLIBKMLLayer::GetExtent( OGREnvelope * psExtent, int bForce )
     return OGRLayer::GetExtent(psExtent, bForce);
 }
 
-
-
-
 /******************************************************************************
  Method to create a field on a layer.
 
@@ -759,7 +754,6 @@ OGRErr OGRLIBKMLLayer::CreateField(
 
     return OGRERR_NONE;
 }
-
 
 /******************************************************************************
  Method to write the datasource to disk.

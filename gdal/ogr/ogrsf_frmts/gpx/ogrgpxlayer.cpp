@@ -1827,12 +1827,9 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
     return OGRERR_NONE;
 }
 
-
-
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
-
 
 OGRErr OGRGPXLayer::CreateField( OGRFieldDefn *poField,
                                  CPL_UNUSED int bApproxOK )
@@ -1878,7 +1875,6 @@ int OGRGPXLayer::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
 /************************************************************************/
 /*                       LoadExtensionsSchema()                         */
 /************************************************************************/
@@ -1904,7 +1900,6 @@ static void XMLCALL dataHandlerLoadSchemaCbk(
 {
     static_cast<OGRGPXLayer *>(pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
-
 
 /** This function parses the whole file to detect the extensions fields */
 void OGRGPXLayer::LoadExtensionsSchema()
@@ -1961,11 +1956,9 @@ void OGRGPXLayer::LoadExtensionsSchema()
     VSIFSeekL( fpGPX, 0, SEEK_SET );
 }
 
-
 /************************************************************************/
 /*                  startElementLoadSchemaCbk()                         */
 /************************************************************************/
-
 
 void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
                                             CPL_UNUSED const char **ppszAttr)
@@ -2067,7 +2060,6 @@ void OGRGPXLayer::startElementLoadSchemaCbk(const char *pszName,
     depthLevel++;
 }
 
-
 /************************************************************************/
 /*                   endElementLoadSchemaCbk()                           */
 /************************************************************************/
@@ -2089,7 +2081,6 @@ static bool OGRGPXIsInt( const char* pszStr )
     }
     return true;
 }
-
 
 void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
 {

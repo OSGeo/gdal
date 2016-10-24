@@ -91,7 +91,6 @@ class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
 /*                          OGRPGDumpLayer                              */
 /************************************************************************/
 
-
 class OGRPGDumpDataSource;
 
 class OGRPGDumpLayer : public OGRLayer

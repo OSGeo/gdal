@@ -116,7 +116,6 @@ CPL_CVSID("$Id$");
  *                      class TABView
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABView::TABView()
  *
@@ -147,7 +146,6 @@ TABView::~TABView()
     Close();
 }
 
-
 GIntBig TABView::GetFeatureCount (int bForce)
 {
 
@@ -162,7 +160,6 @@ void TABView::ResetReading()
     if (m_nMainTableIndex != -1)
         m_papoTABFiles[m_nMainTableIndex]->ResetReading();
 }
-
 
 /**********************************************************************
  *                   TABView::Open()
@@ -215,7 +212,6 @@ int TABView::Open(const char *pszFname, TABAccess eAccess,
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                   TABView::OpenForRead()
@@ -389,7 +385,6 @@ int TABView::OpenForRead(const char *pszFname,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABView::OpenForWrite()
  *
@@ -490,8 +485,6 @@ int TABView::OpenForWrite(const char *pszFname)
 
     return 0;
 }
-
-
 
 /**********************************************************************
  *                   TABView::ParseTABFile()
@@ -650,7 +643,6 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABView::WriteTABFile()
  *
@@ -699,7 +691,6 @@ int TABView::WriteTABFile()
                                            pszTable1,
                                            m_poRelation->GetMainFieldName());
 
-
         VSIFCloseL(fp);
     }
     else
@@ -719,7 +710,6 @@ int TABView::WriteTABFile()
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABView::Close()
@@ -743,7 +733,6 @@ int TABView::Close()
     m_papoTABFiles = NULL;
     m_numTABFiles = 0;
 
-
     /*-----------------------------------------------------------------
      * __TODO__ OK, MapInfo does not like to see a .map and .id file
      * attached to the second table, even if they're empty.
@@ -764,7 +753,6 @@ int TABView::Close()
         CPLFree(pszFile);
     }
     // End of hack!
-
 
     CPLFree(m_pszFname);
     m_pszFname = NULL;
@@ -834,7 +822,6 @@ int TABView::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABView::GetNextFeatureId()
  *
@@ -891,7 +878,6 @@ TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
     return m_poCurFeature;
 }
 
-
 /**********************************************************************
  *                   TABView::CreateFeature()
  *
@@ -938,8 +924,6 @@ OGRErr TABView::CreateFeature(TABFeature *poFeature)
     return OGRERR_NONE;
 }
 
-
-
 /**********************************************************************
  *                   TABView::GetLayerDefn()
  *
@@ -976,7 +960,6 @@ int TABView::SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
     return -1;
 }
 
-
 /**********************************************************************
  *                   TABView::GetNativeFieldType()
  *
@@ -994,7 +977,6 @@ TABFieldType TABView::GetNativeFieldType(int nFieldId)
 
     return TABFUnknown;
 }
-
 
 /**********************************************************************
  *                   TABView::AddFieldNative()
@@ -1066,7 +1048,6 @@ GBool TABView::IsFieldUnique(int nFieldId)
 
     return FALSE;
 }
-
 
 /**********************************************************************
  *                   TABView::GetBounds()
@@ -1146,7 +1127,6 @@ int TABView::GetFeatureCountByType(int &numPoints, int &numLines,
                                                                     bForce);
 }
 
-
 /**********************************************************************
  *                   TABView::GetSpatialRef()
  *
@@ -1185,8 +1165,6 @@ int TABView::SetSpatialRef(OGRSpatialReference *poSpatialRef)
 
     return m_papoTABFiles[m_nMainTableIndex]->SetSpatialRef(poSpatialRef);
 }
-
-
 
 /**********************************************************************
  *                   TABView::SetBounds()
@@ -1234,11 +1212,6 @@ int TABView::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
-
-
-
-
 /**********************************************************************
  *                   TABView::Dump()
  *
@@ -1269,12 +1242,9 @@ void TABView::Dump(FILE *fpOut /*=NULL*/)
 
 #endif // DEBUG
 
-
-
 /*=====================================================================
  *                      class TABRelation
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABRelation::TABRelation()
@@ -1494,7 +1464,6 @@ int  TABRelation::Init(const char *pszViewName,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABRelation::CreateRelFields()
  *
@@ -1667,8 +1636,6 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
     return poCurFeature;
 }
 
-
-
 /**********************************************************************
  *                   TABRelation::BuildFieldKey()
  *
@@ -1717,7 +1684,6 @@ GByte *TABRelation::BuildFieldKey(TABFeature *poFeature, int nFieldNo,
     return pKey;
 }
 
-
 /**********************************************************************
  *                   TABRelation::GetNativeFieldType()
  *
@@ -1760,7 +1726,6 @@ TABFieldType TABRelation::GetNativeFieldType(int nFieldId)
 
     return TABFUnknown;
 }
-
 
 /**********************************************************************
  *                   TABRelation::AddFieldNative()
@@ -1834,7 +1799,6 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABRelation::IsFieldIndexed()
@@ -2049,7 +2013,6 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         }
     }
 
-
     /*-----------------------------------------------------------------
      * Write poMainFeature to the main table
      *----------------------------------------------------------------*/
@@ -2064,7 +2027,6 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
 
     return nFeatureId;
 }
-
 
 /**********************************************************************
  *                   TABFile::SetFeatureDefn()

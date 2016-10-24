@@ -74,7 +74,6 @@ OGROpenAirLabelLayer::~OGROpenAirLabelLayer()
     VSIFCloseL( fpOpenAir );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -85,7 +84,6 @@ void OGROpenAirLabelLayer::ResetReading()
     nNextFID = 0;
     VSIFSeekL( fpOpenAir, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

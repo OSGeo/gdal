@@ -92,7 +92,6 @@ int OGRGTMLayer::TestCapability( const char * pszCap )
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                CheckAndFixCoordinatesValidity()                      */
 /************************************************************************/

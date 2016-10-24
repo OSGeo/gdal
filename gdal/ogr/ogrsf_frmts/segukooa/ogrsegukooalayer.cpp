@@ -268,7 +268,6 @@ static bool isleap( int y)
       || y % 400 == 0;
 }
 
-
 OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 {
     if( bEOF )
@@ -503,7 +502,6 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
-
     ResetReading();
 }
 
@@ -721,7 +719,6 @@ int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                        OGRSEGUKOOALineLayer()                        */

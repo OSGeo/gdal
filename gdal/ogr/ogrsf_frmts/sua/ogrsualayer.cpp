@@ -79,7 +79,6 @@ OGRSUALayer::~OGRSUALayer()
     VSIFCloseL( fpSUA );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -92,7 +91,6 @@ void OGRSUALayer::ResetReading()
     bHasLastLine = false;
     VSIFSeekL( fpSUA, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -117,8 +115,6 @@ OGRFeature *OGRSUALayer::GetNextFeature()
             delete poFeature;
     }
 }
-
-
 
 /************************************************************************/
 /*                              GetLatLon()                             */
@@ -184,7 +180,6 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
     double dfLastLat = 0.0;
     double dfLastLon = 0.0;
     bool bFirst = true;
-
 
     while( true )
     {

@@ -60,7 +60,6 @@ static const char * const ILI2_BOUNDARY = "BOUNDARY";
 static const char * const ILI2_AREA = "AREA";
 static const char * const ILI2_SURFACE = "SURFACE";
 
-
 //
 // helper functions
 //
@@ -475,7 +474,6 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
     }
   }
 }
-
 
 //
 // ILI2Reader

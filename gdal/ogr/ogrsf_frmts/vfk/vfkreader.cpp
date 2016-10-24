@@ -219,7 +219,6 @@ int VFKReader::ReadDataBlocks()
     return m_nDataBlockCount;
 }
 
-
 /*!
   \brief Load data records (&D)
 

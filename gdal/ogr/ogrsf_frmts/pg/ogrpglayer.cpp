@@ -351,7 +351,6 @@ void OGRPGj2date(int jd, int *year, int *month, int *day)
     return;
 }  /* j2date() */
 
-
 /************************************************************************/
 /*                              OGRPGdt2time()                          */
 /************************************************************************/
@@ -1429,7 +1428,6 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex(PGresult* hResult,
     }
 }
 
-
 /************************************************************************/
 /*                     SetInitialQueryCursor()                          */
 /************************************************************************/
@@ -1541,7 +1539,6 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
@@ -1674,7 +1671,6 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
     return pabyData;
 }
 
-
 /************************************************************************/
 /*                          BYTEAToGeometry()                           */
 /************************************************************************/
@@ -1695,7 +1691,6 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea, int bIsPostGIS1 
     CPLFree( pabyWKB );
     return poGeometry;
 }
-
 
 /************************************************************************/
 /*                        GByteArrayToBYTEA()                           */

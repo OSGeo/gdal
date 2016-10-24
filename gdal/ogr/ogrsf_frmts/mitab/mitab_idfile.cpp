@@ -67,7 +67,6 @@ CPL_CVSID("$Id$");
  *                      class TABIDFile
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABIDFile::TABIDFile()
  *
@@ -389,7 +388,6 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
     return m_poIDBlock->WriteInt32(nObjPtr);
 }
 
-
 /**********************************************************************
  *                   TABIDFile::GetMaxObjId()
  *
@@ -403,7 +401,6 @@ GInt32 TABIDFile::GetMaxObjId()
 {
     return m_nMaxId;
 }
-
 
 /**********************************************************************
  *                   TABIDFile::Dump()

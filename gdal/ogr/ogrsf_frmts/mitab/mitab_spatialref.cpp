@@ -822,7 +822,6 @@ OGRSpatialReference *TABFile::GetSpatialRef()
     if (m_poSpatialRef != NULL)
         return m_poSpatialRef;
 
-
     /*-----------------------------------------------------------------
      * Fetch the parameters from the header.
      *----------------------------------------------------------------*/

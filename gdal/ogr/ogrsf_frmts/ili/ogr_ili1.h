@@ -33,8 +33,6 @@
 #include "ogrsf_frmts.h"
 #include "ili1reader.h"
 
-
-
 class OGRILI1DataSource;
 
 /************************************************************************/

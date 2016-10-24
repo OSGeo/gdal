@@ -135,7 +135,6 @@ TABMAPCoordBlock::TABMAPCoordBlock( TABAccess eAccessMode /*= TABRead*/ ) :
  **********************************************************************/
 TABMAPCoordBlock::~TABMAPCoordBlock() {}
 
-
 /**********************************************************************
  *                   TABMAPCoordBlock::InitBlockFromData()
  *
@@ -336,7 +335,6 @@ void     TABMAPCoordBlock::SetNextCoordBlock(GInt32 nNextCoordBlockAddress)
     m_nNextCoordBlock = nNextCoordBlockAddress;
     m_bModified = TRUE;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjectBlock::SetComprCoordOrigin()
@@ -541,7 +539,6 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         }
         numVerticesTotal += pasHdrs[i].numVertices;
 
-
         pasHdrs[i].nVertexOffset = (pasHdrs[i].nDataOffset -
                                     nTotalHdrSizeUncompressed ) / 8;
 #ifdef TABDUMP
@@ -645,7 +642,6 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMAPCoordBlock::WriteIntCoord()
  *
@@ -709,7 +705,6 @@ void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
     m_poBlockManagerRef = poBlockMgr;
 };
 
-
 /**********************************************************************
  *                   TABMAPCoordBlock::ReadBytes()
  *
@@ -768,10 +763,8 @@ int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
         return nStatus;
     }
 
-
     return TABRawBinBlock::ReadBytes(numBytes, pabyDstBuf);
 }
-
 
 /**********************************************************************
  *                   TABMAPCoordBlock::WriteBytes()
@@ -925,7 +918,6 @@ void TABMAPCoordBlock::GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin,
     nXMax = m_nFeatureXMax;
     nYMax = m_nFeatureYMax;
 }
-
 
 /**********************************************************************
  *                   TABMAPCoordBlock::Dump()

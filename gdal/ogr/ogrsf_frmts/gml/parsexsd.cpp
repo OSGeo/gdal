@@ -318,7 +318,6 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     return GMLParseFeatureType(psSchemaNode, pszName, psThis);
 }
 
-
 static
 GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                      const char* pszName,

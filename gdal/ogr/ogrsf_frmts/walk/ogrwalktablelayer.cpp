@@ -301,7 +301,6 @@ OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/

@@ -268,7 +268,6 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     }
 }
 
-
 void MIDDATAFile::SetTranslation( double dfXMul,double dfYMul,
                                   double dfXTran, double dfYTran )
 {
@@ -287,7 +286,6 @@ double MIDDATAFile::GetYTrans(double dfY)
 {
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
 }
-
 
 GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
@@ -315,12 +313,10 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
 }
 
-
 GBool MIDDATAFile::GetEof()
 {
     return m_bEof;
 }
-
 
 void MIDDATAFile::SetEof(GBool bEof)
 {

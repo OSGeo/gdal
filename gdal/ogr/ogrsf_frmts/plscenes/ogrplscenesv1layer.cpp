@@ -319,7 +319,6 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         return;
     }
 
-
     // Look for parameters (fields that can be queried)
     json_object* poParameters = json_ex_get_object_by_path(poItemsDef, "get.parameters");
     if( poParameters == NULL || json_object_get_type(poParameters) != json_type_array )
@@ -357,7 +356,6 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             }
         }
     }
-
 
 /* Parse:
     "Item": {

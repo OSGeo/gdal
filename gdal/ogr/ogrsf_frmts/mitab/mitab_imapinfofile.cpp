@@ -154,7 +154,6 @@ IMapInfoFile::IMapInfoFile() :
     m_pszCharset(NULL)
 {}
 
-
 /**********************************************************************
  *                   IMapInfoFile::~IMapInfoFile()
  *
@@ -279,8 +278,6 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
 
     return poFile;
 }
-
-
 
 /**********************************************************************
  *                   IMapInfoFile::GetNextFeature()
@@ -588,7 +585,6 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     return OGRERR_FAILURE;
 }
-
 
 /**********************************************************************
  *                   IMapInfoFile::SetCharset()

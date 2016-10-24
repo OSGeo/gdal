@@ -60,7 +60,6 @@ namespace Selafin {
         return TRUE;
     }
 
-
     /****************************************************************/
     /*                         Header                               */
     /****************************************************************/
@@ -658,7 +657,6 @@ namespace Selafin {
         }
         return 1;
     }
-
 
     int write_step(VSILFILE *fp,const Header *poHeader,const TimeStep *poStep) {
         if (write_integer(fp,1)==0) return 0;

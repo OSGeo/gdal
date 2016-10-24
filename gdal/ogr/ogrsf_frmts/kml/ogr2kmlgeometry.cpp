@@ -171,7 +171,6 @@ static void AppendString( char **ppszText, size_t *pnLength,
     *pnLength += strlen( *ppszText + *pnLength );
 }
 
-
 /************************************************************************/
 /*                        AppendCoordinateList()                        */
 /************************************************************************/

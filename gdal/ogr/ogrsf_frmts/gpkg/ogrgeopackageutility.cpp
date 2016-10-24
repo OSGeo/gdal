@@ -53,7 +53,6 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     return OGRERR_NONE;
 }
 
-
 OGRErr SQLResultInit(SQLResult * poResult)
 {
     poResult->papszResult = NULL;
@@ -63,7 +62,6 @@ OGRErr SQLResultInit(SQLResult * poResult)
     poResult->rc = 0;
     return OGRERR_NONE;
 }
-
 
 OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 {
@@ -89,7 +87,6 @@ OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 
     return OGRERR_NONE;
 }
-
 
 OGRErr SQLResultFree(SQLResult * poResult)
 {
@@ -330,7 +327,6 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
     }
 }
 
-
 int SQLiteFieldFromOGR(OGRFieldType nType)
 {
     switch(nType)
@@ -351,9 +347,6 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
             return 0;
     }
 }
-
-
-
 
 /* Requirement 19: A GeoPackage SHALL store feature table geometries
 *  with or without optional elevation (Z) and/or measure (M) values in SQL
@@ -493,7 +486,6 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 
     return pabyWkb;
 }
-
 
 OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader)
 {
@@ -637,7 +629,6 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
 
     return poGeom;
 }
-
 
 OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
                          size_t szGpkg,

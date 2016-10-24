@@ -67,7 +67,6 @@ class OGRGPSBabelDataSource : public OGRDataSource
     static bool         IsValidDriverName( const char* pszGPSBabelDriverName );
 };
 
-
 /************************************************************************/
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/

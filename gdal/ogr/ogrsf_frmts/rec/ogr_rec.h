@@ -42,7 +42,6 @@ int CPL_DLL RECReadRecord( FILE *fp, char *pszRecBuf, int nRecordLength  );
 const char CPL_DLL *RECGetField( const char *pszSrc, int nStart, int nWidth );
 CPL_C_END
 
-
 /************************************************************************/
 /*                             OGRRECLayer                              */
 /************************************************************************/

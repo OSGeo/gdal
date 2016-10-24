@@ -60,7 +60,6 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                           RegisterOGRPDS()                           */
 /************************************************************************/

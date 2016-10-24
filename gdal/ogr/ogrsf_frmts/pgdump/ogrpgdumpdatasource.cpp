@@ -326,7 +326,6 @@ OGRPGDumpDataSource::ICreateLayer( const char * pszLayerName,
         }
     }
 
-
     if( bCreateTable && (EQUAL(pszDropTable, "YES") ||
                          EQUAL(pszDropTable, "ON") ||
                          EQUAL(pszDropTable, "TRUE") ||

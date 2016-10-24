@@ -343,7 +343,6 @@ int OGRGPSBabelDataSource::Open( const char * pszDatasourceName,
         }
     }
 
-
     if (bRet)
     {
         poGPXDS = static_cast<GDALDataset *>(

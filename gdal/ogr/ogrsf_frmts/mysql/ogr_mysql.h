@@ -32,7 +32,6 @@
 #ifndef OGR_MYSQL_H_INCLUDED
 #define OGR_MYSQL_H_INCLUDED
 
-
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) /* 'my_alignment_imp<0x02>' : structure was padded due to __declspec(align()) */
@@ -196,7 +195,6 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
     OGRFeatureDefn     *ReadResultDefinition();
 
-
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
 
@@ -234,7 +232,6 @@ class OGRMySQLDataSource : public OGRDataSource
 
     MYSQL              *GetConn() { return hConn; }
 
-
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
     OGRSpatialReference *FetchSRS( int nSRSId );
@@ -252,7 +249,6 @@ class OGRMySQLDataSource : public OGRDataSource
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-
 
     int                 TestCapability( const char * );
 

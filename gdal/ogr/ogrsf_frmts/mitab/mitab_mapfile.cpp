@@ -199,7 +199,6 @@ CPL_CVSID("$Id$");
  *                      class TABMAPFile
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABMAPFile::TABMAPFile()
  *
@@ -1269,7 +1268,6 @@ int TABMAPFile::MoveToObjId(int nObjId)
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::MarkAsDeleted()
  *
@@ -1305,7 +1303,6 @@ int TABMAPFile::MarkAsDeleted()
 
     return ret;
 }
-
 
 /**********************************************************************
  *                   TABMAPFile::UpdateMapHeaderInfo()
@@ -1455,7 +1452,6 @@ int TABMAPFile::PrepareNewObj( TABMAPObjHdr *poObjHdr )
      *----------------------------------------------------------------*/
     UpdateMapHeaderInfo(poObjHdr->m_nType);
 
-
     /*-----------------------------------------------------------------
      * Depending on the selected spatial index mode, we will either insert
      * new objects via the spatial index (slower write but results in optimal
@@ -1588,7 +1584,6 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         }
     }
 
-
     if( nObjBlockForInsert == -1 )
     {
         /*-------------------------------------------------------------
@@ -1657,7 +1652,6 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
      * block for new object, update spatial index and split if necessary.
      *----------------------------------------------------------------*/
     int nObjSize = m_poHeader->GetMapObjectSize(poObjHdr->m_nType);
-
 
     /*-----------------------------------------------------------------
      * But first check if we can recover space from this block in case
@@ -1916,7 +1910,6 @@ int   TABMAPFile::CommitNewObj(TABMAPObjHdr *poObjHdr)
     return m_poCurObjBlock->CommitNewObject(poObjHdr);
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::CommitObjAndCoordBlocks()
  *
@@ -1989,7 +1982,6 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
     {
         nStatus = m_poCurObjBlock->CommitToFile();
     }
-
 
     /*-----------------------------------------------------------------
      * Update the spatial index ** only in "quick spatial index" mode **
@@ -2399,7 +2391,6 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
         TABFeature *poFeature =
             TABFeature::CreateFromMapInfoType(poObjHdr->m_nType, poDummyDefn);
 
-
         if (PrepareCoordBlock(poObjHdrCoord->m_nType,
                               poDstObjBlock, ppoDstCoordBlock) != 0)
             return -1;
@@ -2423,7 +2414,6 @@ int TABMAPFile::MoveObjToBlock(TABMAPObjHdr       *poObjHdr,
             delete poDummyDefn;
             return -1;
         }
-
 
         // Update the references to dest coord block in the MAPObjBlock
         // in case new block has been alloc'd since PrepareCoordBlock()
@@ -2772,7 +2762,6 @@ int TABMAPFile::InitDrawingTools()
     return nStatus;
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::CommitDrawingTools()
  *
@@ -2833,7 +2822,6 @@ int TABMAPFile::CommitDrawingTools()
     return nStatus;
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::ReadPenDef()
  *
@@ -2889,7 +2877,6 @@ int   TABMAPFile::WritePenDef(TABPenDef *psDef)
     return m_poToolDefTable->AddPenDefRef(psDef);
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::ReadBrushDef()
  *
@@ -2944,7 +2931,6 @@ int   TABMAPFile::WriteBrushDef(TABBrushDef *psDef)
 
     return m_poToolDefTable->AddBrushDefRef(psDef);
 }
-
 
 /**********************************************************************
  *                   TABMAPFile::ReadFontDef()
@@ -3168,7 +3154,6 @@ int TABMAPFile::CommitSpatialIndex()
     return m_poSpIndex->CommitToFile();
 }
 
-
 /**********************************************************************
  *                   TABMAPFile::GetMinTABFileVersion()
  *
@@ -3184,7 +3169,6 @@ int   TABMAPFile::GetMinTABFileVersion()
 
     return MAX(nToolVersion, m_nMinTABVersion);
 }
-
 
 /**********************************************************************
  *                   TABMAPFile::Dump()
@@ -3226,7 +3210,6 @@ void TABMAPFile::Dump(FILE *fpOut /*=NULL*/)
 
 #endif // DEBUG
 
-
 /**********************************************************************
  *                   TABMAPFile::DumpSpatialIndexToMIF()
  *
@@ -3254,7 +3237,6 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
         if (poNode == NULL)
             return;
     }
-
 
     /*-------------------------------------------------------------
      * Report info on current tree node

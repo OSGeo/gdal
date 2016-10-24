@@ -133,7 +133,6 @@ OGROCITableLayer::~OGROCITableLayer()
     CPLFree( papsWriteGeomMap );
     CPLFree( pasWriteGeoms );
 
-
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
 
@@ -974,7 +973,6 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         bNeedComma = TRUE;
     }
 
-
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( !poFeature->IsFieldSet( i ) )
@@ -1311,7 +1309,6 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
     else
         return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           GetExtent()                                */
@@ -2177,7 +2174,6 @@ void OGROCITableLayer::CreateSpatialIndex()
 /* -------------------------------------------------------------------- */
         OGROCIStringBuf  sIndexCmd;
         OGROCIStatement oExecStatement( poDS->GetSession() );
-
 
         sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
                            "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",

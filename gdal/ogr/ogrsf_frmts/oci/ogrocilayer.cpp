@@ -513,7 +513,6 @@ OGROCILayer::LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                      TranslateGeometryElement()                      */
 /************************************************************************/
@@ -876,7 +875,6 @@ int OGROCILayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-
 
 /************************************************************************/
 /*                          LookupTableSRID()                           */

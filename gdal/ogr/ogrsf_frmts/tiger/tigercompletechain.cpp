@@ -139,7 +139,6 @@ static const TigerRecordInfo rt2_info =
     208         // <--- nRecordLength
   };
 
-
 static const TigerFieldInfo rt3_2000_Redistricting_fields[] = {
   // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
   { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },

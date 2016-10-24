@@ -71,7 +71,6 @@ OGRMySQLTableLayer::~OGRMySQLTableLayer()
     CPLFree( pszWHERE );
 }
 
-
 /************************************************************************/
 /*                        Initialize()                                  */
 /*                                                                      */
@@ -235,8 +234,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 oField.SetPrecision(atoi(papszTokens[2]));
             }
             CSLDestroy( papszTokens );
-
-
         }
         else if( STARTS_WITH_CI(pszType, "float") )
         {
@@ -440,8 +437,6 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     ResetReading();
 }
-
-
 
 /************************************************************************/
 /*                             BuildWhere()                             */
@@ -684,7 +679,6 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
     MYSQL_RES           *hResult=NULL;
     CPLString           osCommand;
 
-
 /* -------------------------------------------------------------------- */
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
@@ -722,7 +716,6 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
 
     return mysql_affected_rows( poDS->GetConn() ) > 0 ? OGRERR_NONE : OGRERR_NON_EXISTING_FEATURE;
 }
-
 
 /************************************************************************/
 /*                       ICreateFeature()                                */
@@ -1076,7 +1069,6 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                             GetFeature()                             */

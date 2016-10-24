@@ -277,7 +277,6 @@ OGRShapeLayer::~OGRShapeLayer()
         SBNCloseDiskTree( hSBN );
 }
 
-
 /************************************************************************/
 /*                       SetModificationDate()                          */
 /************************************************************************/
@@ -1818,7 +1817,6 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
         return OGRERR_NONE;
     }
 
-
     CPLError( CE_Failure, CPLE_AppDefined,
               "Can't create field %s in Shape DBF file, reason unknown.",
               szNewFieldName );
@@ -3233,7 +3231,6 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                              TouchLayer()                            */

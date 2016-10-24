@@ -78,7 +78,6 @@ CPL_CVSID("$Id$");
  *                      class TABRawBinBlock
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABRawBinBlock::TABRawBinBlock()
  *
@@ -110,7 +109,6 @@ TABRawBinBlock::~TABRawBinBlock()
     if (m_pabyBuf)
         CPLFree(m_pabyBuf);
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::ReadFromFile()
@@ -164,7 +162,6 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     return InitBlockFromData(pabyBuf, nSize, m_nSizeUsed,
                              FALSE, fpSrc, nOffset);
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::CommitToFile()
@@ -420,7 +417,6 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABRawBinBlock::GetBlockType()
  *
@@ -637,7 +633,6 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABRawBinBlock::SetFirstBlockPtr()
  *
@@ -653,7 +648,6 @@ void  TABRawBinBlock::SetFirstBlockPtr(int nOffset)
 {
     m_nFirstBlockPtr = nOffset;
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::GetNumUnusedBytes()
@@ -800,8 +794,6 @@ double  TABRawBinBlock::ReadDouble()
     return dValue;
 }
 
-
-
 /**********************************************************************
  *                   TABRawBinBlock::WriteBytes()
  *
@@ -861,7 +853,6 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
     return 0;
 }
 
-
 /**********************************************************************
  *                    TABRawBinBlock::Write<datatype>()
  *
@@ -913,7 +904,6 @@ int  TABRawBinBlock::WriteDouble(double dValue)
 
     return WriteBytes(8, (GByte*)&dValue);
 }
-
 
 /**********************************************************************
  *                    TABRawBinBlock::WriteZeros()
@@ -1013,7 +1003,6 @@ void TABRawBinBlock::Dump(FILE *fpOut /*=NULL*/)
 
 #endif // DEBUG
 
-
 /**********************************************************************
  *                          DumpBytes()
  *
@@ -1057,8 +1046,6 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
                              isprint(pcValue[2])?pcValue[2]:'.',
                              isprint(pcValue[3])?pcValue[3]:'.');
 }
-
-
 
 /**********************************************************************
  *                   TABCreateMAPBlockFromFile()
@@ -1150,7 +1137,6 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
 /*=====================================================================
  *                      class TABBinBlockManager
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABBinBlockManager::TABBinBlockManager()

@@ -126,7 +126,6 @@ class OGRWFSWrappedResultLayer : public OGRLayer
         virtual int         TestCapability( const char * pszCap )  { return poLayer->TestCapability(pszCap); }
 };
 
-
 /************************************************************************/
 /*                          OGRWFSDataSource()                          */
 /************************************************************************/
@@ -554,7 +553,6 @@ bool OGRWFSDataSource::DetectTransactionSupport( CPLXMLNode* psRoot )
 
     bTransactionSupport = true;
     CPLDebug("WFS", "Transaction support !");
-
 
     CPLXMLNode* psPostURL = CPLGetXMLNode(psChild, "DCP.HTTP.Post");
     if (psPostURL)

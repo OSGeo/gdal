@@ -138,5 +138,4 @@ class OGRGmtDriver : public OGRSFDriver
     int                 TestCapability( const char * );
 };
 
-
 #endif /* ndef OGRGMT_H_INCLUDED */

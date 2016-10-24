@@ -158,5 +158,4 @@ class OGRMemDriver : public OGRSFDriver
     int TestCapability( const char * );
 };
 
-
 #endif  // ndef OGRMEM_H_INCLUDED

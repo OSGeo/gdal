@@ -203,7 +203,6 @@ CPL_CVSID("$Id$");
  *                      class MIFFile
  *====================================================================*/
 
-
 /**********************************************************************
  *                   MIFFile::MIFFile()
  *
@@ -511,14 +510,12 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
 
-
     if (m_eAccessMode != TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ParseMIDFile() can be used only with Read access.");
         return -1;
     }
-
 
     /*-----------------------------------------------------------------
      * Parse header until we find the "Data" line
@@ -1367,7 +1364,6 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
         return NULL;
     }
 
-
     /*-----------------------------------------------------------------
      * Create new feature object of the right type
      *----------------------------------------------------------------*/
@@ -1597,7 +1593,6 @@ OGRErr MIFFile::CreateFeature(TABFeature *poFeature)
         nFeatureId = ++ m_nWriteFeatureId;
     }
 
-
     /*-----------------------------------------------------------------
      * Write geometry to the .Mif file
      *----------------------------------------------------------------*/
@@ -1623,8 +1618,6 @@ OGRErr MIFFile::CreateFeature(TABFeature *poFeature)
 
     return OGRERR_NONE;
 }
-
-
 
 /**********************************************************************
  *                   MIFFile::GetLayerDefn()
@@ -1834,7 +1827,6 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                 szNewFieldName );
     }
 
-
     /*-----------------------------------------------------------------
      * Map MapInfo native types to OGR types
      *----------------------------------------------------------------*/
@@ -1960,7 +1952,6 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     return nStatus;
 }
 
-
 /**********************************************************************
  *                   MIFFile::GetNativeFieldType()
  *
@@ -2022,7 +2013,6 @@ GBool MIFFile::IsFieldUnique( int nFieldId )
     return m_pabFieldUnique[nFieldId];
 }
 
-
 /************************************************************************/
 /*                       MIFFile::SetSpatialRef()                       */
 /************************************************************************/
@@ -2041,7 +2031,6 @@ int MIFFile::SetSpatialRef( OGRSpatialReference * poSpatialRef )
 
     return m_pszCoordSys != NULL;
 }
-
 
 /************************************************************************/
 /*                      MIFFile::SetMIFCoordSys()                       */
@@ -2157,7 +2146,6 @@ int MIFFile::SetBounds( double dXMin, double dYMin,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   MIFFile::GetFeatureCountByType()

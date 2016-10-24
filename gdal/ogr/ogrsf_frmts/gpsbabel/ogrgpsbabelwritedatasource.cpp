@@ -208,7 +208,6 @@ OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer( const char * pszLayerName,
     return NULL;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/

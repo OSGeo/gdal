@@ -198,7 +198,6 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
             continue;
         }
 
-
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
@@ -315,7 +314,6 @@ const char *OGRMySQLLayer::GetGeometryColumn()
         return "";
 }
 
-
 /************************************************************************/
 /*                         FetchSRSId()                                 */
 /************************************************************************/
@@ -361,8 +359,6 @@ int OGRMySQLLayer::FetchSRSId()
 OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
 
 {
-
-
     if( poSRS == NULL && nSRSId > -1 )
     {
         poSRS = poDS->FetchSRS( nSRSId );

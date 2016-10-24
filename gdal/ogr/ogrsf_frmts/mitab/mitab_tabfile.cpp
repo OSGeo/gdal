@@ -117,7 +117,6 @@ static const char UNSUPPORTED_OP_READ_ONLY[] =
  *                      class TABFile
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABFile::TABFile()
  *
@@ -156,7 +155,6 @@ TABFile::~TABFile()
 {
     Close();
 }
-
 
 /************************************************************************/
 /*                         GetFeatureCount()                          */
@@ -297,7 +295,6 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
     pszTmpFname = CPLStrdup(m_pszFname);
 
-
 #ifndef _WIN32
     /*-----------------------------------------------------------------
      * On Unix, make sure extension uses the right cases
@@ -373,7 +370,6 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
         m_bNeedTABRewrite = TRUE;
     }
 
-
     /*-----------------------------------------------------------------
      * Open .DAT file (or .DBF)
      *----------------------------------------------------------------*/
@@ -411,7 +407,6 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
     m_nLastFeatureId = m_poDATFile->GetNumRecords();
 
-
     /*-----------------------------------------------------------------
      * Parse .TAB file field defs and build FeatureDefn (only in read access)
      *----------------------------------------------------------------*/
@@ -425,7 +420,6 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
         return -1;
     }
-
 
     /*-----------------------------------------------------------------
      * Open .MAP (and .ID) file
@@ -537,7 +531,6 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABFile::ParseTABFileFirstPass()
@@ -1180,11 +1173,8 @@ int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode/*=TRUE*/)
         return -1;
     }
 
-
     return m_poMAPFile->SetQuickSpatialIndexMode(bQuickSpatialIndexMode);
 }
-
-
 
 /**********************************************************************
  *                   TABFile::GetNextFeatureId()
@@ -1531,7 +1521,6 @@ int TABFile::WriteFeature(TABFeature *poFeature)
 
     poFeature->SetFID(nFeatureId);
 
-
     /*-----------------------------------------------------------------
      * Write fields to the .DAT file and update .IND if necessary
      *----------------------------------------------------------------*/
@@ -1614,7 +1603,6 @@ int TABFile::WriteFeature(TABFeature *poFeature)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABFile::CreateFeature()
@@ -1796,7 +1784,6 @@ OGRErr TABFile::ISetFeature( OGRFeature *poFeature )
 
     return OGRERR_NONE;
 }
-
 
 /**********************************************************************
  *                   TABFile::GetLayerDefn()
@@ -2144,7 +2131,6 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     return nStatus;
 }
 
-
 /**********************************************************************
  *                   TABFile::GetNativeFieldType()
  *
@@ -2163,8 +2149,6 @@ TABFieldType TABFile::GetNativeFieldType(int nFieldId)
     }
     return TABFUnknown;
 }
-
-
 
 /**********************************************************************
  *                   TABFile::GetFieldIndexNumber()
@@ -2221,7 +2205,6 @@ int TABFile::SetFieldIndexed( int nFieldId )
     if (m_panIndexNo[nFieldId] != 0)
         return 0;  // Nothing to do
 
-
     /*-----------------------------------------------------------------
      * Create .IND file if it's not done yet.
      *
@@ -2271,8 +2254,6 @@ GBool TABFile::IsFieldIndexed( int nFieldId )
 {
     return GetFieldIndexNumber(nFieldId) > 0 ? TRUE : FALSE;
 }
-
-
 
 /**********************************************************************
  *                   TABFile::GetINDFileRef()
@@ -2328,7 +2309,6 @@ TABINDFile  *TABFile::GetINDFileRef()
     return m_poINDFile;
 }
 
-
 /**********************************************************************
  *                   TABFile::SetBounds()
  *
@@ -2368,7 +2348,6 @@ int TABFile::SetBounds(double dXMin, double dYMin,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABFile::GetBounds()
@@ -2416,7 +2395,6 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABFile::GetExtent()
@@ -2498,7 +2476,6 @@ int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABFile::SetMIFCoordSys()
@@ -2625,7 +2602,6 @@ int TABFile::SetProjInfo(TABProjInfo *poPI)
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                            DeleteField()                             */

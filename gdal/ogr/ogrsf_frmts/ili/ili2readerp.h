@@ -45,7 +45,6 @@ std::string ltrim(std::string tmpstr);
 std::string rtrim(std::string tmpstr);
 std::string trim(std::string tmpstr);
 
-
 class ILI2Reader;
 
 /************************************************************************/
@@ -87,7 +86,6 @@ public:
 
     void fatalError(const SAXParseException&);
 };
-
 
 /************************************************************************/
 /*                              ILI2Reader                               */

@@ -231,7 +231,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
     OGRLayer                 *GetLayerByName( const char * );
     OGRErr                    DeleteLayer( int );
 
-
     OGRLayer                 *ICreateLayer( const char *pszName,
                                             OGRSpatialReference * poSpatialRef = NULL,
                                             OGRwkbGeometryType eGType = wkbUnknown,

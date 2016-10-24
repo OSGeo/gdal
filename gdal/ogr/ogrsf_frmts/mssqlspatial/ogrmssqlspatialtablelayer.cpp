@@ -311,7 +311,6 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     if (eType != wkbNone)
         eGeomType = eType;
 
-
 /* -------------------------------------------------------------------- */
 /*             Try to find out the spatial reference                    */
 /* -------------------------------------------------------------------- */
@@ -564,7 +563,6 @@ CPLODBCStatement *OGRMSSQLSpatialTableLayer::GetStatement()
     return poStmt;
 }
 
-
 /************************************************************************/
 /*                           BuildStatement()                           */
 /************************************************************************/
@@ -698,7 +696,6 @@ OGRErr OGRMSSQLSpatialTableLayer::SetAttributeFilter( const char *pszQueryIn )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -761,7 +758,6 @@ GIntBig OGRMSSQLSpatialTableLayer::GetFeatureCount( int bForce )
     delete poStatement;
     return nRet;
 }
-
 
 /************************************************************************/
 /*                            CreateField()                             */
@@ -955,7 +951,6 @@ OGRErr OGRMSSQLSpatialTableLayer::ISetFeature( OGRFeature *poFeature )
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int bind_num = 0;
     void** bind_buffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
-
 
     int bNeedComma = FALSE;
     SQLLEN nWKBLenBindParameter;
@@ -1329,12 +1324,9 @@ void OGRMSSQLSpatialTableLayer::CloseBCP()
     }
 }
 
-
-
 /************************************************************************/
 /*                            CreateFeatureBCP()                        */
 /************************************************************************/
-
 
 OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP( OGRFeature *poFeature )
 
