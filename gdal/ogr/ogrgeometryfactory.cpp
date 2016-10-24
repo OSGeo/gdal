@@ -597,7 +597,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         OGRGeometryCollection *poNewGC =
             (OGRGeometryCollection *) poGC->getLinearGeometry();
         delete poGC;
-        poGeom = poGC = poNewGC;
+        poGeom = poNewGC;
+        poGC = poNewGC;
     }
 
     poPolygon->assignSpatialReference(poGeom->getSpatialReference());
@@ -701,7 +702,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
             OGRGeometryCollection *poNewGC =
                 (OGRGeometryCollection *) poGC->getLinearGeometry();
             delete poGC;
-            poGeom = poGC = poNewGC;
+            poGeom = poNewGC;
+            poGC = poNewGC;
         }
 
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
@@ -925,7 +927,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
             OGRGeometryCollection *poNewGC =
                 (OGRGeometryCollection *) poGC->getLinearGeometry();
             delete poGC;
-            poGeom = poGC = poNewGC;
+            poGeom = poNewGC;
+            poGC = poNewGC;
         }
 
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
@@ -3489,10 +3492,12 @@ static void OGRGeometryFactoryStrokeArc( OGRLineString* poLine,
 
     for( ; (alpha - alpha1) * nSign < -1e-8; alpha += dfStep )
     {
-        const double dfX = cx + R * cos(alpha), dfY = cy + R * sin(alpha);
+        const double dfX = cx + R * cos(alpha);
+        const double dfY = cy + R * sin(alpha);
         if( bHasZ )
         {
-            double z = z0 + (z1 - z0) * (alpha - alpha0) / (alpha1 - alpha0);
+            const double z =
+                z0 + (z1 - z0) * (alpha - alpha0) / (alpha1 - alpha0);
             poLine->addPoint(dfX, dfY, z);
         }
         else

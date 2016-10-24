@@ -1025,10 +1025,13 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 if( x[i] > M_PI )
                 {
                     if( x[i] < M_PI+1e-14 )
+                    {
                         x[i] = M_PI;
+                    }
                     else if( bCheckWithInvertProj )
                     {
-                        x[i] = y[i] = HUGE_VAL;
+                        x[i] = HUGE_VAL;
+                        y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
                         continue;
                     }
@@ -1042,10 +1045,13 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 else if( x[i] < -M_PI )
                 {
                     if( x[i] > -M_PI-1e-14 )
+                    {
                         x[i] = -M_PI;
+                    }
                     else if( bCheckWithInvertProj )
                     {
-                        x[i] = y[i] = HUGE_VAL;
+                        x[i] = HUGE_VAL;
+                        y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
                         continue;
                     }

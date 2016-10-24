@@ -1660,7 +1660,8 @@ OGRErr  OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
 
 {
-    int bHasZ = FALSE, bHasM = FALSE;
+    int bHasZ = FALSE;
+    int bHasM = FALSE;
     bool bIsEmpty = false;
     OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;

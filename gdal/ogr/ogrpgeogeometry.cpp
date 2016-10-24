@@ -2569,29 +2569,32 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
              || nSHPType == SHPT_POINTZ
              || nSHPType == SHPT_POINTZM )
     {
-        /* int nOffset; */
-        double  dfX, dfY, dfZ = 0, dfM = 0;
-
         if (nBytes < 4 + 8 + 8 + ((bHasZ) ? 8 : 0) + ((bHasM) ? 8 : 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Corrupted Shape : nBytes=%d, nSHPType=%d", nBytes, nSHPType);
+                     "Corrupted Shape : nBytes=%d, nSHPType=%d",
+                     nBytes, nSHPType);
             return OGRERR_FAILURE;
         }
+
+        double dfX = 0.0;
+        double dfY = 0.0;
 
         memcpy( &dfX, pabyShape + 4, 8 );
         memcpy( &dfY, pabyShape + 4 + 8, 8 );
 
         CPL_LSBPTR64( &dfX );
         CPL_LSBPTR64( &dfY );
-        /* nOffset = 20 + 8; */
+        // int nOffset = 20 + 8;
 
+        double dfZ = 0.0;
         if( bHasZ )
         {
             memcpy( &dfZ, pabyShape + 4 + 16, 8 );
             CPL_LSBPTR64( &dfZ );
         }
 
+        double dfM = 0.0;
         if( bHasM )
         {
             memcpy( &dfM, pabyShape + 4 + 16 + ((bHasZ) ? 8 : 0), 8 );

@@ -503,7 +503,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
          psExpr->nSubExprCount == 2)
     {
-        GIntBig nFIDCount1 = 0, nFIDCount2 = 0;
+        GIntBig nFIDCount1 = 0;
+        GIntBig nFIDCount2 = 0;
         GIntBig* panFIDList1 = EvaluateAgainstIndices( psExpr->papoSubExpr[0], poLayer, nFIDCount1 );
         GIntBig* panFIDList2 = panFIDList1 == NULL ? NULL :
                             EvaluateAgainstIndices( psExpr->papoSubExpr[1], poLayer, nFIDCount2 );

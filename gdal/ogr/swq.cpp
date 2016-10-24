@@ -428,8 +428,12 @@ swq_select_summarize( swq_select *select_info,
                def->field_type == SWQ_TIME ||
                def->field_type == SWQ_TIMESTAMP)
             {
-                int nYear, nMonth, nDay, nHour = 0, nMin = 0;
-                float fSec = 0 ;
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                int nHour = 0;
+                int nMin = 0;
+                float fSec = 0.0f;
                 if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%f",
                            &nYear, &nMonth, &nDay, &nHour, &nMin, &fSec) == 6 ||
                     sscanf(value, "%04d/%02d/%02d",
