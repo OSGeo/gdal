@@ -447,7 +447,6 @@ OGRLayer *GNMDatabaseNetwork::ICreateLayer(const char *pszName,
         return NULL;
     }
 
-
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
     if( poLayer->CreateField( &oFieldBlock ) != OGRERR_NONE )
     {
