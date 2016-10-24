@@ -543,7 +543,6 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 /*                             Serialize()                              */
 /************************************************************************/
 
-
 /** Serialize as a XML tree.
  * @return XML tree.
  */
@@ -658,7 +657,6 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 
     if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
         return poRAT;
-
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -817,7 +815,6 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                      InitializeFromColorTable()                      */
@@ -1007,7 +1004,6 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
         TranslateToColorTable( nEntryCount );
 }
 
-
 /************************************************************************/
 /*                            DumpReadable()                            */
 /************************************************************************/
@@ -1057,7 +1053,6 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 
     static_cast<GDALRasterAttributeTable *>(hRAT)->DumpReadable( fp );
 }
-
 
 /* \class GDALDefaultRasterAttributeTable
  *

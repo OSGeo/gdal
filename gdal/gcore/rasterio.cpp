@@ -252,7 +252,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_None;
     }
 
-
 /* ==================================================================== */
 /*      The second case when we don't need subsample data but likely    */
 /*      need data type conversion.                                      */
@@ -2905,7 +2904,6 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
             else
                 pabyDstData[nDstOffset>>3] &= ~(0x80 >> (nDstOffset & 7));
 
-
             nSrcOffset++;
             nDstOffset++;
         }
@@ -3044,7 +3042,6 @@ int GDALBandGetBestOverviewLevel2( GDALRasterBand* poBand,
     return nBestOverviewLevel;
 }
 
-
 /************************************************************************/
 /*                          OverviewRasterIO()                          */
 /*                                                                      */
@@ -3061,7 +3058,6 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                 GDALDataType eBufType,
                                 GSpacing nPixelSpace, GSpacing nLineSpace,
                                 GDALRasterIOExtraArg* psExtraArg )
-
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -4191,7 +4187,6 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     return eErr;
 }
 
-
 /************************************************************************/
 /*                     GDALRasterBandCopyWholeRaster()                  */
 /************************************************************************/
@@ -4361,7 +4356,6 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                      GDALCopyRasterIOExtraArg ()                     */

@@ -442,7 +442,6 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
     return CreateSuperBox("asoc", nCount, papoBoxes);
 }
 
-
 /************************************************************************/
 /*                           CreateAsocBox()                            */
 /************************************************************************/

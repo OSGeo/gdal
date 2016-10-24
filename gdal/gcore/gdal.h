@@ -367,7 +367,6 @@ GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_WARN_UNUSED_RESULT;
 
-
 /* Note: we define GDAL_OF_READONLY and GDAL_OF_UPDATE to be on purpose */
 /* equals to GA_ReadOnly and GA_Update */
 
@@ -400,7 +399,6 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess ) CPL_
  * @since GDAL 2.0
  */
 #define     GDAL_OF_VECTOR          0x04
-
 
 /** Allow gnm drivers to be used.
  * Used by GDALOpenEx().
@@ -683,7 +681,6 @@ void   CPL_DLL GDALDatasetSetStyleTable( GDALDatasetH, OGRStyleTableH );
 OGRErr CPL_DLL GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce);
 OGRErr CPL_DLL GDALDatasetCommitTransaction(GDALDatasetH hDS);
 OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
-
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
@@ -1123,7 +1120,6 @@ void CPL_DLL* CPL_STDCALL
     GDALRATSerializeJSON( GDALRasterAttributeTableH ) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH, double );
-
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */

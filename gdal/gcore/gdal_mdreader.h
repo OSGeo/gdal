@@ -31,7 +31,6 @@
 #ifndef GDAL_MDREADER_H_INCLUDED
 #define GDAL_MDREADER_H_INCLUDED
 
-
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
@@ -87,7 +86,6 @@ typedef enum {
     MDR_ANY  = MDR_DG | MDR_GE | MDR_OV | MDR_PLEIADES | MDR_SPOT | MDR_RDK1 |
                MDR_LS | MDR_RE | MDR_KOMPSAT | MDR_EROS | MDR_ALOS /**< any reader */
 } MDReaders;
-
 
 /**
  * The base class for all metadata readers

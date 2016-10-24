@@ -63,7 +63,6 @@ GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
     return reinterpret_cast<GDALColorTableH>( new GDALColorTable( eInterp ) );
 }
 
-
 /************************************************************************/
 /*                          ~GDALColorTable()                           */
 /************************************************************************/
@@ -118,7 +117,6 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 /*                         GDALGetColorEntry()                          */
 /************************************************************************/
 
-
 /**
  * \brief Fetch a color entry from table.
  *
@@ -132,7 +130,6 @@ GDALGetColorEntry( GDALColorTableH hTable, int i )
 
     return reinterpret_cast<GDALColorTable *>( hTable )->GetColorEntry( i );
 }
-
 
 /************************************************************************/
 /*                         GetColorEntryAsRGB()                         */
@@ -244,7 +241,6 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
 
     reinterpret_cast<GDALColorTable *>( hTable )->SetColorEntry( i, poEntry );
 }
-
 
 /************************************************************************/
 /*                               Clone()                                */

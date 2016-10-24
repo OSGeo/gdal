@@ -410,7 +410,6 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 // Miscellaneous functions
 //------------------------------------------------------------------------------
 
-
 /**
  * GDALCheckFileHeader()
  */
@@ -470,9 +469,6 @@ CPLString CPLStripQuotes(const CPLString& sString)
 {
     return CPLStrip( CPLStrip(sString, '"'), '\'');
 }
-
-
-
 
 /************************************************************************/
 /*                          GDALLoadRPBFile()                           */
@@ -690,7 +686,6 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
         bOK &= VSIFPrintfL( fp, "%s: %s\n", apszRPCTXTSingleValItems[i], pszRPCVal ) > 0;
     }
 
-
     for( int i = 0; apszRPCTXT20ValItems[i] != NULL; i ++ )
     {
         const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXT20ValItems[i] );
@@ -726,7 +721,6 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
         }
         CSLDestroy( papszItems );
     }
-
 
     if( VSIFCloseL( fp ) != 0 )
         bOK = false;

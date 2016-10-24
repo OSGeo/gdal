@@ -113,7 +113,6 @@ class GDALDatasetPool
         static void ForceDestroy();
 };
 
-
 /************************************************************************/
 /*                         GDALDatasetPool()                            */
 /************************************************************************/
@@ -389,7 +388,6 @@ void GDALDatasetPoolPreventDestroy()
     GDALDatasetPool::PreventDestroy();
 }
 
-
 /************************************************************************/
 /*                               Unref()                                */
 /************************************************************************/
@@ -498,7 +496,6 @@ void free_func_get_metadata(void* _elt)
     CSLDestroy(elt->papszMetadata);
     CPLFree(elt);
 }
-
 
 typedef struct
 {
@@ -980,7 +977,6 @@ GDALProxyPoolRasterBand::~GDALProxyPoolRasterBand()
         delete poProxyMaskBand;
 }
 
-
 /************************************************************************/
 /*                 AddSrcMaskBandDescription()                          */
 /************************************************************************/
@@ -1278,7 +1274,6 @@ void GDALProxyPoolOverviewRasterBand::UnrefUnderlyingRasterBand(
     poMainBand->UnrefUnderlyingRasterBand(poUnderlyingMainRasterBand);
     nRefCountUnderlyingMainRasterBand --;
 }
-
 
 /* ******************************************************************** */
 /*                     GDALProxyPoolMaskBand()                          */

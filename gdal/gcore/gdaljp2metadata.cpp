@@ -835,7 +835,6 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     return psHit;
 }
 
-
 /************************************************************************/
 /*                            GMLSRSLookup()                            */
 /*                                                                      */
@@ -926,7 +925,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( psRG != NULL )
     {
         psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
-
 
         CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
         if( psOffset1 != NULL )
@@ -1926,7 +1924,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( poCRSURL && json_object_get_type(poCRSURL) == json_type_boolean )
                 bCRSURL = CPL_TO_BOOL(json_object_get_boolean(poCRSURL));
 
-
             json_object* poMetadatas = CPL_json_object_object_get(poRootInstance, "metadata");
             if( poMetadatas && json_object_get_type(poMetadatas) == json_type_array )
             {
@@ -2081,7 +2078,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             json_object* poInline = CPL_json_object_object_get(poGMLFile, "inline");
                             if( poInline && json_object_get_type(poInline) == json_type_boolean )
                                 oDesc.bInline = json_object_get_boolean(poInline);
-
 
                             json_object* poLocation = CPL_json_object_object_get(poGMLFile, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
@@ -2572,7 +2568,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
                     CPLXMLNode *node_gf = CPLCreateXMLNode(
                             node_fm, CXT_Element, "gmljp2:GMLJP2Features" );
-
 
                     CPLSetXMLValue(node_gf, "#gml:id", CPLSPrintf("%s_GMLJP2Features_%d",
                                                                     osRootGMLId.c_str(),

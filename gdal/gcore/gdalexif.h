@@ -176,7 +176,6 @@ static const struct tagname {
     { 0x0000, ""}
 };
 
-
 static const struct intr_tag {
   GInt16        tag;
   const char*   name;

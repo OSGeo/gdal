@@ -921,7 +921,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         GUInt16 nRemainingMarkerSize = nMarkerSize - 2;
         GUInt32 nLastVal = 0;
 
-
 #define READ_MARKER_FIELD_UINT8_COMMENT(name, comment) \
         do { if( nRemainingMarkerSize >= 1 ) { \
             nLastVal = *pabyMarkerDataIter; \

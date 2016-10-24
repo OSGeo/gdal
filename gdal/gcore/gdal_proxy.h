@@ -198,7 +198,6 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)
 };
 
-
 /* ******************************************************************** */
 /*                     GDALProxyPoolDataset                             */
 /* ******************************************************************** */
@@ -374,7 +373,6 @@ class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
 /* ******************************************************************** */
 /*            C types and methods declarations                          */
 /* ******************************************************************** */
-
 
 CPL_C_START
 
