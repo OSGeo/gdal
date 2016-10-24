@@ -52,7 +52,6 @@ class GDALFakePDFDataset : public GDALDataset
         GDALFakePDFDataset() {}
 };
 
-
 /************************************************************************/
 /*                         GDALPDFWriter()                              */
 /************************************************************************/
@@ -504,7 +503,6 @@ void GDALPDFWriter::EndObj()
     bInWriteObj = FALSE;
 }
 
-
 /************************************************************************/
 /*                         GDALPDFFind4Corners()                        */
 /************************************************************************/
@@ -801,7 +799,6 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
                  .Add("GCS", nGCSId, 0);
     VSIFPrintfL(fp, "%s\n", oMeasureDict.Serialize().c_str());
     EndObj();
-
 
     StartObj(nGCSId);
     GDALPDFDictionaryRW oGCSDict;
@@ -1904,7 +1901,6 @@ int GDALPDFWriter::WriteClippedImagery(
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                          WriteOGRDataSource()                        */
 /************************************************************************/
@@ -3000,7 +2996,6 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                               EndPage()                              */
@@ -4369,7 +4364,6 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                   "You should rather consider using color table expansion (-expand option in gdal_translate)");
     }
 
-
     int nBlockXSize = nWidth;
     int nBlockYSize = nHeight;
 
@@ -4586,7 +4580,6 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                   pszFilename );
         return NULL;
     }
-
 
     GDALPDFWriter oWriter(fp);
 

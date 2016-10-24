@@ -3490,7 +3490,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 #endif
 }
 
-
 int netCDFDataset::ProcessCFGeolocation( int nVarId )
 {
     bool bAddGeoloc = false;
@@ -3579,7 +3578,6 @@ CPLErr netCDFDataset::Set1DGeolocation( int nVarId, const char *szDimName )
     return CE_None;
 }
 
-
 double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName, int &nVarLen )
 {
     nVarLen = 0;
@@ -3605,7 +3603,6 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName, int &
 
     return pdfVarValues;
 }
-
 
 /************************************************************************/
 /*                          SetProjection()                           */
@@ -3691,7 +3688,6 @@ CPLErr netCDFDataset::SetGeoTransform ( double * padfTransform )
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                         NCDFWriteSRSVariable()                       */
@@ -4124,7 +4120,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
     /* make sure we are in define mode */
     SetDefineMode( true );
 
-
 /* -------------------------------------------------------------------- */
 /*      Rename dimensions if lon/lat                                    */
 /* -------------------------------------------------------------------- */
@@ -4371,7 +4366,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         NCDF_ERR(status);
 
         pfnProgress( 0.20, NULL, pProgressData );
-
 
 /* -------------------------------------------------------------------- */
 /*      Write lon/lat arrays (CF coordinates) if requested              */
@@ -4724,7 +4718,6 @@ CPLErr netCDFDataset::ReadAttributes( int cdfidIn, int var)
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                netCDFDataset::CreateSubDatasetList()                 */
@@ -5870,7 +5863,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         szConventions[nAttlen] = '\0';
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -7037,7 +7029,6 @@ netCDFDataset::Create( const char * pszFilename,
      return poDS;
 }
 
-
 template <class T>
 static CPLErr NCDFCopyBand( GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                             int nXSize, int nYSize,
@@ -7995,7 +7986,6 @@ static bool NCDFIsCfProjection( const char* pszProjection )
     return false;
 }
 
-
 /* Write any needed projection attributes *
  * poPROJCS: ptr to proj crd system
  * pszProjection: name of projection system in GDAL WKT
@@ -8482,14 +8472,12 @@ CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
     return NCDFGetAttr1( nCdfId, nVarId, pszAttrName, pdfValue, NULL, false );
 }
 
-
 /* pszValue is the responsibility of the caller and must be freed */
 CPLErr NCDFGetAttr( int nCdfId, int nVarId, const char *pszAttrName,
                     char **pszValue )
 {
     return NCDFGetAttr1( nCdfId, nVarId, pszAttrName, NULL, pszValue, true );
 }
-
 
 /* By default write NC_CHAR, but detect for int/float/double and */
 /* NC4 string arrays */
@@ -9049,7 +9037,6 @@ static CPLErr NCDFPut1DVar( int nCdfId, int nVarId, const char *pszValue )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                           GetDefaultNoDataValue()                    */
 /************************************************************************/
@@ -9097,7 +9084,6 @@ double NCDFGetDefaultNoDataValue( int nVarType )
 
     return dfNoData;
 }
-
 
 static int NCDFDoesVarContainAttribVal( int nCdfId,
                                  const char * const* papszAttribNames,

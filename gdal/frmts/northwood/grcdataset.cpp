@@ -94,7 +94,6 @@ class NWT_GRCRasterBand : public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable();
 };
 
-
 /************************************************************************/
 /*                           NWT_GRCRasterBand()                        */
 /************************************************************************/
@@ -251,7 +250,6 @@ NWT_GRCDataset::NWT_GRCDataset() :
     poColorTable(NULL)
 {}
 
-
 /************************************************************************/
 /*                            ~NWT_GRCDataset()                         */
 /************************************************************************/
@@ -395,7 +393,6 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_GRC()                          */

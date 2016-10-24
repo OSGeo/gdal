@@ -178,7 +178,6 @@ void WMSMiniDriver_WMS::TiledImageRequest(CPLString *url,
     ImageRequest(url, iri);
 }
 
-
 void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
@@ -194,7 +193,6 @@ void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
 
     CPLDebug("WMS", "URL = %s", url->c_str());
 }
-
 
 const char *WMSMiniDriver_WMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();

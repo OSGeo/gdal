@@ -132,7 +132,6 @@ public:
     Object* getObj() { return &obj; }
 };
 
-
 /************************************************************************/
 /*                         GDALPDFOutputDev                             */
 /************************************************************************/
@@ -2081,7 +2080,6 @@ class PDFImageRasterBand : public PDFRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                        PDFImageRasterBand()                          */
 /************************************************************************/
@@ -2451,7 +2449,6 @@ PDFDataset::~PDFDataset()
         delete papoLayers[i];
     CPLFree( papoLayers );
 }
-
 
 /************************************************************************/
 /*                            IRasterIO()                               */
@@ -3688,7 +3685,6 @@ void PDFDataset::FindLayersPdfium()
     oMDMD.SetMetadata(osLayerList.List(), "LAYERS");
 }
 
-
 /************************************************************************/
 /*                       TurnLayersOnOffPdfium()                       */
 /************************************************************************/
@@ -4744,7 +4740,6 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetMetadataItem("NEATLINE", pszNeatLineWkt);
         CPLFree(pszNeatLineWkt);
     }
-
 
 #ifdef HAVE_POPPLER
   if (bUseLib.test(PDFLIB_POPPLER))
@@ -6020,7 +6015,6 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
     {
         CPLDebug("PDF", "Largest BBox in VP array is element %d", iLargest);
     }
-
 
     GDALPDFObject* poVPElt = poVPArray->Get(iLargest);
     if (poVPElt == NULL || poVPElt->GetType() != PDFObjectType_Dictionary)

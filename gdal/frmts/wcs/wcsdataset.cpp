@@ -436,7 +436,6 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                             WCSDataset()                             */
 /************************************************************************/
@@ -1771,7 +1770,6 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
         return TRUE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Hopefully the error already issued by CPLHTTPFetch() is         */
 /*      sufficient.                                                     */
@@ -2389,7 +2387,6 @@ char **WCSDataset::GetMetadata( const char *pszDomain )
 
     return apszCoverageOfferingMD;
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_WCS()                          */

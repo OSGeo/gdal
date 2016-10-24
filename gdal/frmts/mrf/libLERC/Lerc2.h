@@ -1467,6 +1467,5 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 
 // -------------------------------------------------------------------------- ;
 
-
 NAMESPACE_LERC_END
 #endif

@@ -170,7 +170,6 @@ PlannedCoverageHRVRecord::PlannedCoverageHRVRecord(std::ifstream & ifile)
     UpperWestColumnPlanned = iReadInt(ifile);
 }
 
-
 ImageDescriptionRecord::ImageDescriptionRecord(std::ifstream & ifile)
 {
     TypeOfProjection = iReadByte(ifile);

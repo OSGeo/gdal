@@ -176,7 +176,6 @@ void WMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
     ImageRequest(url, iri);
 }
 
-
 void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
@@ -237,7 +236,6 @@ void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
     URLAppendF(url, "&maxAllowableOffset=");
     CPLDebug("AGS", "URL = %s", url->c_str());
 }
-
 
 const char *WMSMiniDriver_AGS::GetProjectionInWKT()
 {

@@ -1,7 +1,6 @@
 #ifndef SDEERROR_INCLUDED
 #define SDEERROR_INCLUDED
 
-
 #include "gdal_sde.h"
 
 void IssueSDEError( int nErrorCode,

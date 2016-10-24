@@ -228,7 +228,6 @@ int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
     }
 }
 
-
 /************************************************************************/
 /*                              ReadPair()                              */
 /*                                                                      */

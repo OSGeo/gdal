@@ -38,7 +38,6 @@
 
 #define BUFFER_SIZE 1024
 
-
 #ifdef POPPLER_0_23_OR_LATER
 #define getPos_ret_type Goffset
 #define getStart_ret_type Goffset
@@ -52,7 +51,6 @@
 #define setPos_offset_type Guint
 #define moveStart_delta_type int
 #endif
-
 
 class VSIPDFFileStream: public BaseStream
 {

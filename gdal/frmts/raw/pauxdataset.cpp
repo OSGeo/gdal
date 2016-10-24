@@ -264,7 +264,6 @@ void PAuxRasterBand::SetDescription( const char *pszNewDescription )
     GDALRasterBand::SetDescription( pszNewDescription );
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
@@ -321,7 +320,6 @@ PAuxDataset::~PAuxDataset()
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
-
 
     if( bAuxUpdated )
     {

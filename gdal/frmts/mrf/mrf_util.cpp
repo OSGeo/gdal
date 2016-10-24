@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /**
  *
  *  Functions used by the driver, should have prototypes in the header file
@@ -249,7 +248,6 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     // Relative path, prepand the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
 }
-
 
 /**
  *\brief Extracts a numerical value from a XML node

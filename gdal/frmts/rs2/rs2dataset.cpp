@@ -122,7 +122,6 @@ class RS2RasterBand : public GDALPamRasterBand
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-
 /************************************************************************/
 /*                            RS2RasterBand                             */
 /************************************************************************/
@@ -339,7 +338,6 @@ RS2CalibRasterBand::RS2CalibRasterBand(
         SetMetadataItem( "POLARIMETRIC_INTERP", pszPolarization );
     }
 
-
     if (eType == GDT_CInt16)
         eDataType = GDT_CFloat32;
     else
@@ -496,7 +494,6 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return eErr;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              RS2Dataset                              */
@@ -624,7 +621,6 @@ int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1068,8 +1064,6 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     }
 
-
-
 /*--------------------------------------------------------------------- */
 /*      Collect Map projection/Geotransform information, if present     */
 /* -------------------------------------------------------------------- */
@@ -1448,7 +1442,6 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
     return pasGCPList;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -1473,7 +1466,6 @@ CPLErr RS2Dataset::GetGeoTransform( double * padfTransform )
 
     return CE_Failure;
 }
-
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */

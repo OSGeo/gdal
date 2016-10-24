@@ -40,11 +40,7 @@ namespace gdal {
   class PCRasterDatasetTest;
 }
 
-
-
 // namespace {
-
-
 
 //! This class specialises the GDALDataset class for PCRaster datasets.
 /*!

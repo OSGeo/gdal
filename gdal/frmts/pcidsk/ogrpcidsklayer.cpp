@@ -67,7 +67,6 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
             poFeatureDefn->SetGeomType( wkbNone );
     } catch(...) {}
 
-
 /* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
 /* -------------------------------------------------------------------- */

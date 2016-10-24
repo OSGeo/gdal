@@ -86,7 +86,6 @@ class ZMapRasterBand : public GDALPamRasterBand
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
-
 /************************************************************************/
 /*                           ZMapRasterBand()                           */
 /************************************************************************/
@@ -459,7 +458,6 @@ GDALDataset *ZMapDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     return poDS;
 }
-
 
 /************************************************************************/
 /*                       WriteRightJustified()                          */

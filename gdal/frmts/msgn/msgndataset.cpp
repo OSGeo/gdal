@@ -112,7 +112,6 @@ class MSGNRasterBand : public GDALRasterBand
     virtual const char* GetDescription() const { return band_description; }
 };
 
-
 /************************************************************************/
 /*                           MSGNRasterBand()                            */
 /************************************************************************/
@@ -435,7 +434,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nRasterXSize *= 3;
         poDS->nRasterYSize *= 3;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */

@@ -131,7 +131,6 @@ static bool approx_equal(double a, double b)
     return std::abs(a-b) <= epsilon;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              TerragenDataset                         */
@@ -231,7 +230,6 @@ public:
     virtual CPLErr SetUnitType( const char* );
 };
 
-
 /************************************************************************/
 /*                         TerragenRasterBand()                         */
 /************************************************************************/
@@ -250,7 +248,6 @@ TerragenRasterBand::TerragenRasterBand( TerragenDataset *poDSIn ) :
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -284,7 +281,6 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
         return CE_Failure;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Read the scanline into the line buffer.                        */
 /* -------------------------------------------------------------------- */
@@ -306,8 +302,6 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
-
 /************************************************************************/
 /*                            GetUnitType()                             */
 /************************************************************************/
@@ -319,7 +313,6 @@ const char *TerragenRasterBand::GetUnitType()
 
     return poGDS->m_szUnits;
 }
-
 
 /************************************************************************/
 /*                              GetScale()                              */
@@ -346,8 +339,6 @@ double TerragenRasterBand::GetOffset(int* pbSuccess)
 
     return ds.m_dOffset;
 }
-
-
 
 /************************************************************************/
 /*                             IWriteBlock()                            */
@@ -405,7 +396,6 @@ CPLErr TerragenRasterBand::IWriteBlock
     return CE_Failure;
 }
 
-
 CPLErr TerragenRasterBand::SetUnitType( const char* psz )
 {
     TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
@@ -421,8 +411,6 @@ CPLErr TerragenRasterBand::SetUnitType( const char* psz )
 
     return CE_None;
 }
-
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -475,7 +463,6 @@ TerragenDataset::~TerragenDataset()
     if( m_fp != NULL )
         VSIFCloseL( m_fp );
 }
-
 
 bool TerragenDataset::write_header()
 {
@@ -645,7 +632,6 @@ bool TerragenDataset::write_header()
     m_nHeightScale = static_cast<GInt16>( hs );
     m_nBaseHeight = static_cast<GInt16>( bh );
 
-
     // m_nHeightScale is the one that gives us the
     // widest use of the 16-bit space. However, there
     // might be larger heightscales that, even though
@@ -654,8 +640,6 @@ bool TerragenDataset::write_header()
 
     return put(m_nHeightScale) && put(m_nBaseHeight);
 }
-
-
 
 /************************************************************************/
 /*                                get()                                 */
@@ -671,7 +655,6 @@ bool TerragenDataset::get(GInt16& value)
     return false;
 }
 
-
 bool TerragenDataset::get(GUInt16& value)
 {
     if(1 == VSIFReadL(&value, sizeof(value), 1, m_fp))
@@ -681,7 +664,6 @@ bool TerragenDataset::get(GUInt16& value)
     }
     return false;
 }
-
 
 bool TerragenDataset::get(float& value)
 {
@@ -693,7 +675,6 @@ bool TerragenDataset::get(float& value)
     return false;
 }
 
-
 /************************************************************************/
 /*                                put()                                 */
 /************************************************************************/
@@ -703,7 +684,6 @@ bool TerragenDataset::put(GInt16 n)
     CPL_LSBPTR16(&n);
     return 1 == VSIFWriteL(&n, sizeof(n), 1, m_fp);
 }
-
 
 bool TerragenDataset::put(float f)
 {
@@ -715,12 +695,10 @@ bool TerragenDataset::put(float f)
 /*                              tag stuff                               */
 /************************************************************************/
 
-
 bool TerragenDataset::read_next_tag(char* szTag)
 {
     return 1 == VSIFReadL(szTag, 4, 1, m_fp);
 }
-
 
 bool TerragenDataset::write_next_tag(const char* szTag)
 {
@@ -728,13 +706,10 @@ bool TerragenDataset::write_next_tag(const char* szTag)
       reinterpret_cast<void *>( const_cast<char *> ( szTag ) ), 4, 1, m_fp);
 }
 
-
 bool TerragenDataset::tag_is(const char* szTag, const char* sz)
 {
     return 0 == memcmp(szTag, sz, 4);
 }
-
-
 
 /************************************************************************/
 /*                            LoadFromFile()                            */
@@ -816,7 +791,6 @@ int TerragenDataset::LoadFromFile()
             break;
         }
     }
-
 
     if(xpts == 0 || ypts == 0 || m_nDataOffset == 0)
         return FALSE;
@@ -935,7 +909,6 @@ CPLErr TerragenDataset::GetGeoTransform(double* padfTransform)
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                                Create()                                */
 /************************************************************************/
@@ -982,7 +955,6 @@ GDALDataset* TerragenDataset::Create
         delete poDS;
         return NULL;
     }
-
 
     if( nBands != 1 )
     {

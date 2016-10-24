@@ -3,7 +3,6 @@
 
 #include "gdal_sde.h"
 
-
 class SDEDataset : public GDALDataset
 {
     friend class SDERasterBand;
@@ -17,7 +16,6 @@ class SDEDataset : public GDALDataset
         GDALDataType        eDataType;
         SE_RASCOLINFO*      paohSDERasterColumns;
         SE_RASCOLINFO       hRasterColumn;
-
 
         CPLErr              ComputeRasterInfo();
         SE_RASBANDINFO*     paohSDERasterBands;

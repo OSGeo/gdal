@@ -472,7 +472,6 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
     m_osRecordDimName = szTemp;
 }
 
-
 /************************************************************************/
 /*                            GetFillValue()                            */
 /************************************************************************/
@@ -2247,7 +2246,6 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApproxOK */)
         default:
             return OGRERR_FAILURE;
     }
-
 
     FieldDesc fieldDesc;
     fieldDesc.uNoData = nodata;

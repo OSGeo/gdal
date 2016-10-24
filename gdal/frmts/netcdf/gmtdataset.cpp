@@ -86,7 +86,6 @@ class GMTRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           GMTRasterBand()                            */
 /************************************************************************/

@@ -627,8 +627,6 @@ char** VRTWarpedDataset::GetFileList()
     return papszFileList;
 }
 
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*                    VRTWarpedOverviewTransformer                      */
@@ -645,7 +643,6 @@ typedef struct {
     double            dfXOverviewFactor;
     double            dfYOverviewFactor;
 } VWOTInfo;
-
 
 static
 void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer,

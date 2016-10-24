@@ -166,7 +166,6 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
     m_poRasterBand = poNewSrcBand;
 }
 
-
 /************************************************************************/
 /*                          SetSrcMaskBand()                            */
 /************************************************************************/
@@ -913,7 +912,6 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     double dfRYOff = nYOff;
     double dfRXSize = nXSize;
     double dfRYSize = nYSize;
-
 
     if( bDstWinSet )
     {
@@ -2340,7 +2338,6 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 nPixelSpace, nLineSpace, psExtraArg,
                 bIsComplex ? GDT_CFloat32 : GDT_Float32);
     }
-
 
     return eErr;
 }

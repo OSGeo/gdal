@@ -106,8 +106,7 @@ NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
     }
 }
 
-
-char      **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
+char **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
 {
     GDALRasterBand* _poSrcBand = RefUnderlyingRasterBand();
     if (_poSrcBand)
@@ -131,7 +130,6 @@ char      **NITFProxyPamRasterBand::GetMetadata( const char * pszDomain  )
 
     return GDALPamRasterBand::GetMetadata(pszDomain);
 }
-
 
 const char *NITFProxyPamRasterBand::GetMetadataItem( const char * pszName,
                                                      const char * pszDomain )
@@ -221,7 +219,6 @@ CPLErr NITFProxyPamRasterBand::ComputeStatistics( int bApproxOK,
 
     return CE_Failure;
 }
-
 
 #define RB_PROXY_METHOD_GET_DBL_WITH_SUCCESS(methodName) \
 double NITFProxyPamRasterBand::methodName( int *pbSuccess ) \
@@ -333,7 +330,6 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
-
 
 /************************************************************************/
 /*                 UnrefUnderlyingRasterBand()                        */

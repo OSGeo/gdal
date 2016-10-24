@@ -434,7 +434,6 @@ CPLErr MAPDataset::GetGeoTransform( double * padfTransform )
     return (nGCPCount == 0) ? CE_None : CE_Failure;
 }
 
-
 /************************************************************************/
 /*                           GetGCPCount()                              */
 /************************************************************************/

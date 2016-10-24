@@ -87,7 +87,6 @@ class JPEGLSRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                        JPEGLSRasterBand()                            */
 /************************************************************************/
@@ -273,7 +272,6 @@ CPLErr JPEGLSDataset::Uncompress()
         VSIFree(pabyCompressedData);
         return CE_Failure;
     }
-
 
     JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
                                      pabyCompressedData, nFileSize, NULL);

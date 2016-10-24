@@ -1110,7 +1110,6 @@ static char *CPLStrdupIfNotNull( const char *pszString )
   return CPLStrdup( pszString );
 }
 
-
 /************************************************************************/
 /*                          WriteRpcInfo()                              */
 /************************************************************************/
@@ -1951,7 +1950,6 @@ double ENVIDataset::byteSwapDouble(double swapMe)
     CPL_MSBPTR64(&swapMe);
     return swapMe;
 }
-
 
 /************************************************************************/
 /*                             ReadHeader()                             */

@@ -247,7 +247,6 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff,
     return CE_None;
 }
 
-
 double BTRasterBand::GetNoDataValue( int* pbSuccess /*= NULL */ )
 {
     if(pbSuccess != NULL)
@@ -307,7 +306,6 @@ CPLErr BTRasterBand::SetUnitType(const char* psz)
         ds.m_fVscale = 1200.0f / 3937.0f;
     else
         return CE_Failure;
-
 
     float fScale = ds.m_fVscale;
 
@@ -537,7 +535,6 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */

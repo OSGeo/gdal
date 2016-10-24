@@ -147,8 +147,6 @@ double PCRasterRasterBand::GetMinimum(
   return result;
 }
 
-
-
 double PCRasterRasterBand::GetMaximum(
          int* success)
 {
@@ -213,8 +211,6 @@ double PCRasterRasterBand::GetMaximum(
   return result;
 }
 
-
-
 CPLErr PCRasterRasterBand::IReadBlock(
     CPL_UNUSED int nBlockXoff,
     int nBlockYoff,
@@ -233,7 +229,6 @@ CPLErr PCRasterRasterBand::IReadBlock(
 
   return CE_None;
 }
-
 
 CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
                                      int nXOff, int nYOff, int nXSize,
@@ -261,8 +256,6 @@ CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
   }
 }
-
-
 
 CPLErr PCRasterRasterBand::IWriteBlock(
     CPL_UNUSED int nBlockXoff,
@@ -358,7 +351,6 @@ CPLErr PCRasterRasterBand::IWriteBlock(
 
   return CE_None;
 }
-
 
 CPLErr PCRasterRasterBand::SetNoDataValue(double nodata)
 {

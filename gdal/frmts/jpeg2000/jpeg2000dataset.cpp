@@ -211,7 +211,6 @@ class JPEG2000RasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           JPEG2000RasterBand()                       */
 /************************************************************************/
@@ -767,7 +766,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-
 
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {

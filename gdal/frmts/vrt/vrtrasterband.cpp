@@ -531,7 +531,6 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-
         if( poBand->XMLInit( psNode, pszVRTPath ) == CE_None )
         {
             SetMaskBand(poBand);

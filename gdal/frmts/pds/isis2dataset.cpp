@@ -183,7 +183,6 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
 /*                              Identify()                              */
 /************************************************************************/
 
-
 int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->pabyHeader == NULL )
@@ -919,7 +918,6 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
 
     return reinterpret_cast<GDALDataset *>( GDALOpen( osOutFile, GA_Update ) );
 }
-
 
 /************************************************************************/
 /*                            WriteRaster()                             */

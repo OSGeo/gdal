@@ -218,7 +218,6 @@ CPLErr WMTSBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     return poGDS->apoDatasets[0]->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff, pImage);
 }
 
-
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/

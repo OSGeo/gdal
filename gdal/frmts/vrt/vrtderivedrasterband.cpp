@@ -120,8 +120,6 @@ static int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf,
                                 size_t len, int readonly, int infoflags) = NULL;
 static PyObject* (*PyMemoryView_FromBuffer)(Py_buffer *view) = NULL;
 
-
-
 static PyThreadState* gphThreadState = NULL;
 
 /************************************************************************/
@@ -186,7 +184,6 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
         PyErr_Print();
     return poNumpyArray;
 }
-
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
 #if defined(HAVE_DLFCN_H) && !defined(WIN32)
@@ -807,7 +804,6 @@ static CPLString GetPyExceptionString()
             poPyTraceback ? poPyGDALFormatException3 : poPyGDALFormatException2,
             pyArgs, NULL );
         Py_DecRef(pyArgs);
-
 
         if( PyErr_Occurred() )
         {

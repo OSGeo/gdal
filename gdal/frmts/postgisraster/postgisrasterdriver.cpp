@@ -94,7 +94,6 @@ PGconn* PostGISRasterDriver::GetConnection(const char* pszConnectionString,
     if( oIter != oMapConnection.end() )
         return oIter->second;
 
-
     /**
      * There's no existing connection. Create a new one.
      **/

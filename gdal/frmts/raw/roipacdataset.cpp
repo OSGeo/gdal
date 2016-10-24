@@ -470,7 +470,6 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Set all the other header metadata into the ROI_PAC domain       */
 /* -------------------------------------------------------------------- */

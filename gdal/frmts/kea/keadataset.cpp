@@ -173,7 +173,6 @@ int KEADataset::Identify( GDALOpenInfo * poOpenInfo )
         return 0;
 }
 
-
 // static function
 H5::H5File *KEADataset::CreateLL( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
@@ -744,7 +743,6 @@ CPLErr KEADataset::AddBand(GDALDataType eType, char **papszOptions)
 
     return CE_None;
 }
-
 
 int KEADataset::GetGCPCount()
 {

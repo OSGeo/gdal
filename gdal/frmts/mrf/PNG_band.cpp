@@ -33,8 +33,6 @@
 * limitations under the License.
 */
 
-
-
 /*
  * PNG band
  * PNG page compression and decompression functions

@@ -94,7 +94,6 @@ class OZIRasterBand : public GDALPamRasterBand
     virtual GDALRasterBand* GetOverview(int nLevel);
 };
 
-
 /************************************************************************/
 /*                             I/O functions                            */
 /************************************************************************/
@@ -188,7 +187,6 @@ OZIRasterBand::~OZIRasterBand()
     delete poColorTable;
     CPLFree(pabyTranslationTable);
 }
-
 
 /************************************************************************/
 /*                        GetColorInterpretation()                      */

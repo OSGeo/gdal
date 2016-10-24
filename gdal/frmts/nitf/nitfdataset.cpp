@@ -940,7 +940,6 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             fpHDR = VSIFOpenL( pszHDR, "rt" );
         }
 
-
         if( fpHDR != NULL )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpHDR ));
@@ -2016,7 +2015,6 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
-
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -2305,7 +2303,6 @@ void NITFDataset::InitializeNITFDESMetadata()
         ppszDESsList += 1;
     }
 }
-
 
 /************************************************************************/
 /*                       InitializeNITFDESs()                           */
@@ -3157,7 +3154,6 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 }
 
-
 /************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
@@ -3586,7 +3582,6 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Read JPEG Chunk.                                                */
 /* -------------------------------------------------------------------- */
@@ -3828,8 +3823,6 @@ static char **NITFJP2KAKOptions( char **papszOptions )
 
     return papszKAKOptions;
 }
-
-
 
 /************************************************************************/
 /*              NITFExtractTEXTAndCGMCreationOption()                   */
@@ -5018,7 +5011,6 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         return false;
     }
 
-
     // allocate space for graphic header.
     // Size of LS = 4, size of LSSH = 6, and 1 for null character
     char *pachLS = reinterpret_cast<char *>(
@@ -5134,7 +5126,6 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         CPLFree(pszCgmToWrite);
 
     } // End For
-
 
     /* -------------------------------------------------------------------- */
     /*      Write out the graphic segment info.                             */
@@ -5392,7 +5383,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
             PLACE( achTSH+274, TXTFMT        , "STA"                         );
             PLACE( achTSH+277, TXSHDL        , "00000"                       );
         }
-
 
         bOK &= VSIFWriteL( achTSH, sizeof(achTSH), 1, fpVSIL ) == 1;
 

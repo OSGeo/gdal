@@ -102,7 +102,6 @@ class XYZRasterBand : public GDALPamRasterBand
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
-
 /************************************************************************/
 /*                           XYZRasterBand()                            */
 /************************************************************************/
@@ -489,7 +488,6 @@ int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 /*                            IdentifyEx()                              */
 /************************************************************************/
-
 
 int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
                             int& bHasHeaderLine,

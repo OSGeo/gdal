@@ -84,7 +84,6 @@ typedef struct
     int bUseInternalOverviews;
 } JPGDatasetOpenArgs;
 
-
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 GDALDataset* JPEGDataset12Open(JPGDatasetOpenArgs* psArgs);
 GDALDataset* JPEGDataset12CreateCopy( const char * pszFilename,
@@ -1888,7 +1887,6 @@ CPLErr JPGDataset::Restart()
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
 
-
 #if !defined(JPGDataset)
     LoadDefaultTables( 0 );
     LoadDefaultTables( 1 );
@@ -3482,8 +3480,6 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
-
-
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;

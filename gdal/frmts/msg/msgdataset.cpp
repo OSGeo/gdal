@@ -191,7 +191,6 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         return FALSE;
     }
 
-
 // We're confident the string is formatted as an MSG command_line
 
 /* -------------------------------------------------------------------- */

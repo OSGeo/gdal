@@ -427,7 +427,6 @@ CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -1824,7 +1823,6 @@ HKVDataset::CreateCopy( const char * pszFilename,
         poDstBand->FlushCache();
     }
 
-
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -1840,7 +1838,6 @@ HKVDataset::CreateCopy( const char * pszFilename,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_HKV()                           */

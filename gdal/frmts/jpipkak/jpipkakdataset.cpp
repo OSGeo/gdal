@@ -1084,7 +1084,6 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
     return res;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -1426,7 +1425,6 @@ void JPIPKAKDataset::EndAsyncReader(GDALAsyncReader *poARIO)
 {
     delete poARIO;
 }
-
 
 /*****************************************/
 /*             Open()                    */
@@ -1928,7 +1926,6 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         }
     } // nBandsCompleted < nBandCount
 
-
 /* -------------------------------------------------------------------- */
 /*      If the application buffer is of a different type than our       */
 /*      band we need to copy into the application buffer at this        */
@@ -2094,7 +2091,6 @@ static void JPIPWorkerFunc(void *req)
 
         if ((nEnd - nStart) > 0)
             nCurrentTransmissionLength = (int) MAX(bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC), nMinimumTransmissionLength);
-
 
         CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 
