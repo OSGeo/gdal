@@ -354,10 +354,18 @@ void OGRCircularString::segmentize( double dfMaxLength )
     std::vector<double> adfZ;
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
-        double R, cx, cy, alpha0, alpha1, alpha2;
+        const double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
 
         aoRawPoint.push_back(OGRRawPoint(x0,y0));
         if( padfZ )
@@ -367,23 +375,30 @@ void OGRCircularString::segmentize( double dfMaxLength )
         // we can add.
 
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2) )
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2) )
         {
             // It is an arc circle.
-            double dfSegmentLength1 = fabs(alpha1 - alpha0) * R;
-            double dfSegmentLength2 = fabs(alpha2 - alpha1) * R;
-            if( dfSegmentLength1 > dfMaxLength || dfSegmentLength2 > dfMaxLength )
+            const double dfSegmentLength1 = fabs(alpha1 - alpha0) * R;
+            const double dfSegmentLength2 = fabs(alpha2 - alpha1) * R;
+            if( dfSegmentLength1 > dfMaxLength ||
+                dfSegmentLength2 > dfMaxLength )
             {
-                int nIntermediatePoints = 1 + 2 * (int)floor(dfSegmentLength1 / dfMaxLength / 2);
+                const int nIntermediatePoints =
+                    1 + 2 * (int)floor(dfSegmentLength1 / dfMaxLength / 2);
                 double dfStep = (alpha1 - alpha0) / (nIntermediatePoints + 1);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     double alpha = alpha0 + dfStep * j;
-                    double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
+                    const double x = cx + R * cos(alpha);
+                    const double y = cy + R * sin(alpha);
                     aoRawPoint.push_back(OGRRawPoint(x,y));
                     if( padfZ )
                     {
-                        double z = padfZ[i] + (padfZ[i+1] - padfZ[i]) * (alpha - alpha0) / (alpha1 - alpha0);
+                        const double z =
+                            padfZ[i] +
+                            (padfZ[i+1] - padfZ[i]) * (alpha - alpha0) /
+                            (alpha1 - alpha0);
                         adfZ.push_back(z);
                     }
                 }
@@ -399,7 +414,8 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 for( int j = 1; j <= nIntermediatePoints; ++j )
                 {
                     double alpha = alpha1 + dfStep * j;
-                    double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
+                    const double x = cx + R * cos(alpha);
+                    const double y = cy + R * sin(alpha);
                     aoRawPoint.push_back(OGRRawPoint(x,y));
                     if( padfZ )
                     {
@@ -479,26 +495,35 @@ void OGRCircularString::segmentize( double dfMaxLength )
 void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
 
 {
-    double      dfLength = 0;
-
     if( dfDistance < 0 )
     {
         StartPoint( poPoint );
         return;
     }
 
+    double dfLength = 0;
+
     for( int i = 0; i < nPointCount - 2; i += 2 )
     {
-        double x0 = paoPoints[i].x, y0 = paoPoints[i].y,
-               x1 = paoPoints[i+1].x, y1 = paoPoints[i+1].y,
-               x2 = paoPoints[i+2].x, y2 = paoPoints[i+2].y;
-        double R, cx, cy, alpha0, alpha1, alpha2;
+        const double x0 = paoPoints[i].x;
+        const double y0 = paoPoints[i].y;
+        const double x1 = paoPoints[i+1].x;
+        const double y1 = paoPoints[i+1].y;
+        const double x2 = paoPoints[i+2].x;
+        const double y2 = paoPoints[i+2].y;
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
 
         // We have strong constraints on the number of intermediate points
         // we can add.
 
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2) )
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2) )
         {
             // It is an arc circle.
             double dfSegLength = fabs(alpha2 - alpha0) * R;
@@ -507,12 +532,13 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                 if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
-                    double      dfRatio;
+                    const double dfRatio =
+                        (dfDistance - dfLength) / dfSegLength;
 
-                    dfRatio = (dfDistance - dfLength) / dfSegLength;
-
-                    double alpha = alpha0 * (1 - dfRatio) + alpha2 * dfRatio;
-                    double x = cx + R * cos(alpha), y = cy + R * sin(alpha);
+                    const double alpha =
+                        alpha0 * (1 - dfRatio) + alpha2 * dfRatio;
+                    const double x = cx + R * cos(alpha);
+                    const double y = cy + R * sin(alpha);
 
                     poPoint->setX( x );
                     poPoint->setY( y );
@@ -536,9 +562,8 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
                 if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
                 {
-                    double      dfRatio;
-
-                    dfRatio = (dfDistance - dfLength) / dfSegLength;
+                    const double dfRatio =
+                        (dfDistance - dfLength) / dfSegLength;
 
                     poPoint->setX( paoPoints[i].x * (1 - dfRatio)
                                 + paoPoints[i+2].x * dfRatio );
@@ -658,10 +683,10 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
 {
     if( getNumPoints() == 3 && get_IsClosed() )
     {
-        double x0 = getX(0);
-        double y0 = getY(0);
-        double x1 = getX(1);
-        double y1 = getY(1);
+        const double x0 = getX(0);
+        const double y0 = getY(0);
+        const double x1 = getX(1);
+        const double y1 = getY(1);
         cx = (x0 + x1) / 2;
         cy = (y0 + y1) / 2;
         square_R = (x1-cx)*(x1-cx)+(y1-cy)*(y1-cy);
@@ -704,18 +729,27 @@ int OGRCircularString::IsFullCircle( double& cx, double& cy, double& square_R ) 
 double OGRCircularString::get_AreaOfCurveSegments() const
 {
     double dfArea = 0;
-    for( int i=0; i < getNumPoints() - 2; i += 2 )
+    for( int i = 0; i < getNumPoints() - 2; i += 2 )
     {
-        double x0 = getX(i), y0 = getY(i),
-               x1 = getX(i+1), y1 = getY(i+1),
-               x2 = getX(i+2), y2 = getY(i+2);
-        double R, cx, cy, alpha0, alpha1, alpha2;
+        const double x0 = getX(i);
+        const double y0 = getY(i);
+        const double x1 = getX(i+1);
+        const double y1 = getY(i+1);
+        const double x2 = getX(i+2);
+        const double y2 = getY(i+2);
+        double R = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double alpha0 = 0.0;
+        double alpha1 = 0.0;
+        double alpha2 = 0.0;
         if( OGRGeometryFactory::GetCurveParmeters(x0, y0, x1, y1, x2, y2,
-                                            R, cx, cy, alpha0, alpha1, alpha2))
+                                                  R, cx, cy,
+                                                  alpha0, alpha1, alpha2))
         {
             // Should be <= PI in absolute value.
-            double delta_alpha01 = alpha1 - alpha0;
-            double delta_alpha12 = alpha2 - alpha1; // Same.
+            const double delta_alpha01 = alpha1 - alpha0;
+            const double delta_alpha12 = alpha2 - alpha1; // Same.
             // This is my maths, but wikipedia confirms it.
             // c.f http://en.wikipedia.org/wiki/Circular_segment
             dfArea += 0.5 * R * R * fabs( delta_alpha01 - sin(delta_alpha01) +

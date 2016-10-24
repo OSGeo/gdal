@@ -86,11 +86,13 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 {
     int iLine;
-    const char *pszDatum, *pszProj = NULL, *pszProjParms = NULL;
+    const char *pszDatum;
+    const char *pszProj = NULL;
+    const char *pszProjParms = NULL;
 
     Clear();
 
-    int nLines = CSLCount((char**)papszLines);
+    const int nLines = CSLCount((char**)papszLines);
     if( nLines < 5 )
         return OGRERR_NOT_ENOUGH_DATA;
 

@@ -2630,7 +2630,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         // correct orientation of the line string
         if( bEdgeOrientation != bOrientation )
         {
-            int iStartCoord = 0, iEndCoord = poLineString->getNumPoints() - 1;
+            int iStartCoord = 0;
+            int iEndCoord = poLineString->getNumPoints() - 1;
             OGRPoint *poTempStartPoint = new OGRPoint();
             OGRPoint *poTempEndPoint = new OGRPoint();
             while( iStartCoord < iEndCoord )
