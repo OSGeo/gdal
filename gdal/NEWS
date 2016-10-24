@@ -25,6 +25,7 @@ The 2.1.2 release is a bug fix release.
 * gdal_translate & gdalwarp: lower the default value of GDAL_MAX_DATASET_POOL_SIZE
   to 100 on MacOSX (#6604)
 * gdalwarp: when -to RPC_DEM is specified, make -et default to 0 as documented (#6608)
+* gdalwarp: fix failure with cutline on a layer of touching polygons (#6694)
 * gdal_translate: when using -projwin with default nearest neighbour resampling,
   align on integer source pixels (#6610)
 * gdal2xyz: use %d formatting for Int32/UInt32 data types (#6644)
@@ -71,6 +72,7 @@ netCDF driver:
 RMF driver:
 * fix wrong counter decrement that caused compressed RMF to be incorrectly
   decompressed (https://github.com/OSGeo/gdal/pull/153)
+* fix load/store inversion of cm and dm units in MTW files (https://github.com/OSGeo/gdal/pull/162)
 
 ROI_PAC driver:
 * fix computation of line offset for multi-band BIP files, and warn if detecting
@@ -187,7 +189,6 @@ The 2.1.1 release is a bug fix release.
 == Utilities ==
  * gdal_polygonize.py: explicitly set output layer geometry type to be polygon (#6530)
  * gdalwarp: do not densify cutlines by default when CUTLINE_BLEND_DIST is used (#6507)
- * gdalwarp: fix failure with cutline on a layer of touching polygons (#6694)
 
 == GDAL drivers ==
 
