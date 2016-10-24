@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #ifndef OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
 #define OGRDXF_SMOOTH_POLYLINE_H_INCLUDED
 
@@ -36,7 +35,6 @@
 #include "cpl_conv.h"
 #include <vector>
 #include "assert.h"
-
 
 class DXFSmoothPolylineVertex
 {
@@ -46,19 +44,16 @@ public:
     double z;
     double bulge;
 
-
     DXFSmoothPolylineVertex()
         {
             x = y = z = bulge = 0.0;
         }
-
 
     DXFSmoothPolylineVertex( double dfX, double dfY, double dfZ,
                              double dfBulge )
         {
             set(dfX, dfY, dfZ, dfBulge);
         }
-
 
     void set( double dfX, double dfY, double dfZ, double dfBulge )
         {
@@ -68,19 +63,16 @@ public:
             bulge = dfBulge;
         }
 
-
     void scale(double s)
         {
             x *= s;
             y *= s;
         }
 
-
     double length() const
         {
             return (sqrt(x*x + y*y));
         }
-
 
     void normalize()
         {
@@ -91,14 +83,11 @@ public:
             y /= len;
         }
 
-
     bool shares_2D_pos(const DXFSmoothPolylineVertex& v) const
         {
             return (x == v.x && y == v.y);
         }
-
 };
-
 
 class DXFSmoothPolyline
 {
@@ -108,7 +97,6 @@ class DXFSmoothPolyline
     // change in the future.
 
 private:
-
     std::vector<DXFSmoothPolylineVertex> m_vertices;
     mutable bool                         m_blinestringstarted;
     bool                                 m_bClosed;

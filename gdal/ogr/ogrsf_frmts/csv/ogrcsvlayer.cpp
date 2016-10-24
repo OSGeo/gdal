@@ -35,7 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                            CSVSplitLine()                            */
 /*                                                                      */
@@ -498,7 +497,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             bDontHonourStrings = true;
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Search a csvt file for types                                    */
@@ -1282,7 +1280,6 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
     return papszFieldTypes;
 }
 
-
 /************************************************************************/
 /*                            ~OGRCSVLayer()                            */
 /************************************************************************/
@@ -1707,7 +1704,6 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -1866,7 +1862,6 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                          CreateGeomField()                           */

@@ -134,7 +134,6 @@ int OGRDXFWriterDS::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-
 OGRLayer *OGRDXFWriterDS::GetLayer( int iLayer )
 
 {

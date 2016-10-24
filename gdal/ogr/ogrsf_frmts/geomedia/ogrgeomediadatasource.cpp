@@ -228,7 +228,6 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
 
-
     papoLayers = (OGRGeomediaLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
@@ -251,7 +250,6 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                     GetTableNameFromType()                           */
@@ -279,7 +277,6 @@ CPLString OGRGeomediaDataSource::GetTableNameFromType(const char* pszTableType)
 
     return "";
 }
-
 
 /************************************************************************/
 /*                          GetGeomediaSRS()                            */
@@ -335,7 +332,6 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
-
 
 /************************************************************************/
 /*                          GetLayerByName()                            */

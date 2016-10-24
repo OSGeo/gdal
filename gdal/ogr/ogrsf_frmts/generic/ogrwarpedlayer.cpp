@@ -159,7 +159,6 @@ void OGRWarpedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double
     OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
-
 /************************************************************************/
 /*                     SrcFeatureToWarpedFeature()                      */
 /************************************************************************/
@@ -181,7 +180,6 @@ OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature* poSrcFeature)
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                     WarpedFeatureToSrcFeature()                      */
@@ -291,7 +289,6 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                            GetLayerDefn()                           */

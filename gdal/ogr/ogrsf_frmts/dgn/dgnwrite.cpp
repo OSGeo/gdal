@@ -727,7 +727,6 @@ int DGNUpdateElemCore( DGNHandle hDGN, DGNElemCore *psElement,
  * @return TRUE on success, or FALSE on failure.
  */
 
-
 int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
                                DGNElemCore *psElement )
 {
@@ -1534,7 +1533,6 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
  *
  * @return the new element (DGNElemColorTable) or NULL on failure.
  */
-
 
 DGNElemCore *
 DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,

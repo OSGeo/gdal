@@ -589,7 +589,6 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
         }
     }
 
-
     if( !GeoJSONIsObject( pszGeoData_) )
     {
         CPLDebug( "GeoJSON",

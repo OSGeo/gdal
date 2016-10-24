@@ -141,7 +141,6 @@ void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
     ResetReading();
 }
 
-
 /************************************************************************/
 /*                        ClearPendingFeatures()                        */
 /************************************************************************/
@@ -190,7 +189,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     OdDbHandle oHandle = poEntity->getDbHandle();
     poFeature->SetField( "EntityHandle", (const char *) oHandle.ascii() );
-
 
     if( poEntity->colorIndex() != 256 )
     {
@@ -298,7 +296,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     poFeature->SetField( "ExtendedEntity", osFullXData );
 
-
 #ifdef notdef
       // OCS vector.
       case 210:
@@ -312,7 +309,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
       case 230:
         oStyleProperties["230_N.dZ"] = pszValue;
         break;
-
 
       default:
         break;
@@ -1086,7 +1082,6 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
 /************************************************************************/
 /*                      GeometryInsertTransformer                       */
 /************************************************************************/
-
 
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {

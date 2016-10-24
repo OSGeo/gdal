@@ -290,7 +290,6 @@ static const unsigned char abyDefaultPCT[256][3] =
   {28,0,100}
 };
 
-
 /************************************************************************/
 /*                           DGNLookupColor()                           */
 /************************************************************************/
@@ -495,7 +494,6 @@ void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
 
     *pRad50 = rad50;
 }
-
 
 /************************************************************************/
 /*                        DGNGetLineStyleName()                         */
@@ -1050,7 +1048,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
         }
     }
 }
-
 
 /************************************************************************/
 /*                           DGNTypeToName()                            */

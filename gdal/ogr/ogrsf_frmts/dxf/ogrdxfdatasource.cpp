@@ -82,7 +82,6 @@ int OGRDXFDataSource::TestCapability( CPL_UNUSED const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-
 OGRLayer *OGRDXFDataSource::GetLayer( int iLayer )
 
 {

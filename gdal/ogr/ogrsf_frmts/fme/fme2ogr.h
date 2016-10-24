@@ -285,7 +285,6 @@ class OGRFMECacheIndex
 #  define FMECACHE_MAX_RETENTION    3600
 #endif
 
-
 CPL_C_START
 void RegisterOGRFME();
 CPL_C_END

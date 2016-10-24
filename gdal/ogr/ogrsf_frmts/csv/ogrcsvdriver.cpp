@@ -266,7 +266,6 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
     return CE_Failure;
 }
 
-
 /************************************************************************/
 /*                           OGRCSVDriverUnload()                       */
 /************************************************************************/

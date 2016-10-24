@@ -398,7 +398,6 @@ void OGRCARTOTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomI
 /*                         RunDeferredCartofy()                         */
 /************************************************************************/
 
-
 void OGRCARTOTableLayer::RunDeferredCartofy()
 
 {

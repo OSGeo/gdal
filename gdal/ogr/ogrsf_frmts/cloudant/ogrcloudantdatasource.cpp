@@ -114,7 +114,6 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
     return poLayer;
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -159,7 +158,6 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         return OpenDatabase() != NULL;
     }
-
 
     pszKnowProvider = strstr(osURL, "localhost");
     if (pszKnowProvider != NULL &&
@@ -222,7 +220,6 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                          ICreateLayer()                              */

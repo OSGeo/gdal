@@ -185,7 +185,6 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszNameIn, const c
     }
 }
 
-
 /************************************************************************/
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
@@ -200,7 +199,6 @@ void OGRGeoRSSDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
         XML_StopParser(oCurrentParser, XML_FALSE);
     }
 }
-
 
 static void XMLCALL startElementValidateCbk(void *pUserData, const char *pszName, const char **ppszAttr)
 {
@@ -326,7 +324,6 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
     return FALSE;
 #endif
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

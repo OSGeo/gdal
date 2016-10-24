@@ -225,7 +225,6 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (pszUserPwd)
         osUserPwd = pszUserPwd;
 
-
     if ((strstr(osURL, "/_design/") && strstr(osURL, "/_view/")) ||
         strstr(osURL, "/_all_docs"))
     {
@@ -307,7 +306,6 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                          ICreateLayer()                              */
@@ -392,7 +390,6 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
 
         json_object_put(poAnswerObj);
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create validation function                                      */
@@ -671,7 +668,6 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
                      "Invalid WHERE clause. Expecting '_id' = 'a_value'");
             return NULL;
         }
-
 
         return NULL;
     }

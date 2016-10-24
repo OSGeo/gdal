@@ -84,7 +84,6 @@ class OGRDB2DataSource;
 #define DB2_DEBUG_EXIT(ogrdb2fn)
 #endif
 
-
 #define DB2ODBC_PREFIX "DB2ODBC:"
 
 #define UNKNOWN_SRID   -2
@@ -129,7 +128,6 @@ typedef enum
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
 #endif  /* ifdef SQLULEN */
-
 
 /**
  * A class representing an ODBC database session.
@@ -217,8 +215,6 @@ protected:
     char         **m_papszColValues;
     CPL_SQLLEN       *m_panColValueLengths;
 
-
-
     char          *m_pszStatement;
     size_t         m_nStatementMax;
     size_t         m_nStatementLen;
@@ -297,9 +293,6 @@ public:
 
 void OGRDB2AppendEscaped( OGRDB2Statement* poStatement,
                           const char* pszStrValue);
-
-
-
 
 /************************************************************************/
 /*                             OGRDB2Layer                              */
@@ -768,14 +761,11 @@ public:
                                          const char * pszDomain = "" );
     CPLErr              FlushCacheWithErrCode();
 
-
     virtual const char* GetProjectionRef();
     virtual CPLErr      SetProjection( const char* pszProjection );
 
     virtual CPLErr      GetGeoTransform( double* padfGeoTransform );
     virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
-
-
 
     virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                          int, int *,
@@ -866,8 +856,6 @@ public:
     }
     int                 InitializeSession( const char * pszNewName,
                                            int bTestOpen );
-
-
 };
 
 /************************************************************************/

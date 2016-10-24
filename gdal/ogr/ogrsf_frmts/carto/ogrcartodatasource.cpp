@@ -441,7 +441,6 @@ OGRLayer   *OGRCARTODataSource::ICreateLayer( const char *pszNameIn,
         CPLFree(pszTmp);
     }
 
-
     OGRCARTOTableLayer* poLayer = new OGRCARTOTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);

@@ -267,7 +267,6 @@ bool OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
         OGRDODSGetVarPath(poFieldVar).c_str(), "dds",
         poTargetVar, poSuperSeq );
 
-
     if( pszPathToSequence )
         papoFields[poFeatureDefn->GetFieldCount()-1]->pszPathToSequence
             = CPLStrdup( pszPathToSequence );
@@ -1001,7 +1000,6 @@ bool OGRDODSIsFloatInvalid( const float * pfValToCheck )
 /*      For now we are really just checking if the value is NaN, Inf    */
 /*      or -Inf.                                                        */
 /************************************************************************/
-
 
 bool OGRDODSIsDoubleInvalid( const double * pdfValToCheck )
 

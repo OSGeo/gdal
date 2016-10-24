@@ -44,7 +44,6 @@
 #pragma clang diagnostic pop
 #endif
 
-
 typedef enum
 {
     ES_GEOMTYPE_AUTO,
@@ -243,6 +242,5 @@ public:
     json_object*        RunRequest(const char* pszURL, const char* pszPostContent = NULL);
     const CPLString&    GetFID() const { return m_osFID; }
 };
-
 
 #endif /* ndef _OGR_Elastic_H_INCLUDED */

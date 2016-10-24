@@ -153,7 +153,6 @@ OGRLayer *OGRDGNDataSource::GetLayer( int iLayer )
     return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                             PreCreate()                              */
 /*                                                                      */

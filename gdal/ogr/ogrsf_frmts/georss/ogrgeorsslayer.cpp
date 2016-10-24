@@ -199,7 +199,6 @@ OGRGeoRSSLayer::~OGRGeoRSSLayer()
         VSIFCloseL( fpGeoRSS );
 }
 
-
 /************************************************************************/
 /*                            GetLayerDefn()                            */
 /************************************************************************/
@@ -211,8 +210,6 @@ OGRFeatureDefn * OGRGeoRSSLayer::GetLayerDefn()
 
     return poFeatureDefn;
 }
-
-
 
 #ifdef HAVE_EXPAT
 
@@ -1640,8 +1637,6 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
     return OGRERR_NONE;
 }
 
-
-
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
@@ -1706,7 +1701,6 @@ static void XMLCALL dataHandlerLoadSchemaCbk(void *pUserData, const char *data, 
 {
     ((OGRGeoRSSLayer*)pUserData)->dataHandlerLoadSchemaCbk(data, nLen);
 }
-
 
 /************************************************************************/
 /*                       LoadSchema()                         */
@@ -1806,7 +1800,6 @@ void OGRGeoRSSLayer::LoadSchema()
 
     VSIFSeekL( fpGeoRSS, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                         OGRGeoRSSIsInt()                             */

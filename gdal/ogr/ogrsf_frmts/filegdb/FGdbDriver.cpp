@@ -60,7 +60,6 @@ FGdbDriver::~FGdbDriver()
     hMutex = NULL;
 }
 
-
 /************************************************************************/
 /*                              GetName()                               */
 /************************************************************************/
@@ -426,7 +425,6 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     CPLMutexHolderOptionalLockD(hMutex);
 
     bOutHasReopenedDS = FALSE;
-
 
     OGRMutexedDataSource* poMutexedDS = (OGRMutexedDataSource*)poDSInOut;
     FGdbDataSource* poDS = (FGdbDataSource* )poMutexedDS->GetBaseDataSource();

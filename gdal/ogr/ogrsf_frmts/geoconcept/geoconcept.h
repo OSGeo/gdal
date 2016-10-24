@@ -496,5 +496,4 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 }
 #endif
 
-
 #endif /* ndef GEOCONCEPT_H_INCLUDED */

@@ -54,8 +54,6 @@ OGRAbstractProxiedLayer::~OGRAbstractProxiedLayer()
     poPool->UnchainLayer(this);
 }
 
-
-
 /************************************************************************/
 /*                            OGRLayerPool()                            */
 /************************************************************************/
@@ -147,8 +145,6 @@ void OGRLayerPool::UnchainLayer(OGRAbstractProxiedLayer* poLayer)
     poLayer->poPrevLayer = NULL;
     poLayer->poNextLayer = NULL;
 }
-
-
 
 /************************************************************************/
 /*                          OGRProxiedLayer()                           */

@@ -88,7 +88,6 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
                                          bool bArrayAsString = false );
 
-
 /************************************************************************/
 /*                      GeoJSONStringPropertyToFieldType                */
 /************************************************************************/

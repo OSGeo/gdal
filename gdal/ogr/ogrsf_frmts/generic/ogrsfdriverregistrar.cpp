@@ -58,7 +58,6 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar() {}
 /*                           GetRegistrar()                             */
 /************************************************************************/
 
-
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 {
     static      OGRSFDriverRegistrar oSingleton;
@@ -172,7 +171,6 @@ int OGRSFDriverRegistrar::GetOpenDSCount()
     CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
     return 0;
 }
-
 
 /************************************************************************/
 /*                         OGRGetOpenDSCount()                          */
