@@ -241,9 +241,10 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
-                "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
-                 szAttributes, szCoordinate );
+        snprintf(
+            *ppszText + *pnLength, *pnMaxLength - *pnLength,
+            "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
+            szAttributes, szCoordinate);
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
@@ -263,14 +264,16 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         if( bRing )
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LinearRing%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen,
+                      "<gml:LinearRing%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
         }
         else
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LineString%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen,
+                      "<gml:LineString%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
@@ -295,7 +298,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbPolygon )
     {
-        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
+        OGRPolygon *poPolygon = (OGRPolygon *) poGeometry;
 
         // Buffer for polygon tag name + srsName attribute if set
         const size_t nPolyTagLength = 13;
