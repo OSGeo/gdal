@@ -2648,6 +2648,8 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeatureDefn->myGetGeomFieldDefn(iField)->eGeomFormat;
         if( eGeomFormat == OSGF_FGF )
             continue;
+        if( bNeedComma )
+            osCommand += ",";
 
         osCommand += "\"";
         osCommand += OGRSQLiteEscapeName( poFeatureDefn->GetGeomFieldDefn(iField)->GetNameRef());
