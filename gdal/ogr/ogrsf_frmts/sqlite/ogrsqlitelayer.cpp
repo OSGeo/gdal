@@ -134,6 +134,7 @@ int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt, int iCol,
 {
     OGRGeometry* poGeometry = NULL;
     const int nBytes = sqlite3_column_bytes( hStmt, iCol );
+    int nBytesConsumed = 0;
     CPLPushErrorHandler(CPLQuietErrorHandler);
     /* Try as spatialite first since createFromWkb() can sometimes */
     /* interpret spatialite blobs as WKB for certain SRID values */
@@ -151,7 +152,8 @@ int OGRIsBinaryGeomCol( sqlite3_stmt *hStmt, int iCol,
     }
     else if( OGRGeometryFactory::createFromFgf( 
             (GByte*)sqlite3_column_blob( hStmt, iCol ),
-            NULL, &poGeometry, nBytes, NULL ) == OGRERR_NONE )
+            NULL, &poGeometry, nBytes, &nBytesConsumed ) == OGRERR_NONE &&
+             nBytes == nBytesConsumed )
     {
         eGeomFormat = OSGF_FGF;
     }
@@ -315,7 +317,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         }
 
         // Recognise some common geometry column names.
-        if( (EQUAL(oField.GetNameRef(),"wkt_geometry") 
+        if( pszExpectedGeomCol == NULL &&
+            (EQUAL(oField.GetNameRef(),"wkt_geometry") 
              || EQUAL(oField.GetNameRef(),"geometry")
              || EQUALN(oField.GetNameRef(), "asbinary(", 9)
              || EQUALN(oField.GetNameRef(), "astext(", 7)
@@ -384,7 +387,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         }
 
         // SpatialLite / Gaia
-        if( EQUAL(oField.GetNameRef(),"GaiaGeometry") 
+        if( pszExpectedGeomCol == NULL &&
+            EQUAL(oField.GetNameRef(),"GaiaGeometry") 
             && (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
             OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
@@ -396,7 +400,8 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 
         // Recognize a geometry column from trying to build the geometry
         // Usefull for OGRSQLiteSelectLayer
-        if( nColType == SQLITE_BLOB && 
+        if( pszExpectedGeomCol == NULL &&
+            nColType == SQLITE_BLOB && 
             (bAllowMultipleGeomFields || poFeatureDefn->GetGeomFieldCount() == 0) )
         {
             const int nBytes = sqlite3_column_bytes( hStmt, iCol );
