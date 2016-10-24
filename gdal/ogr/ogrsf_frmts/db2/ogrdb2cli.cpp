@@ -86,7 +86,6 @@ OGRDB2Session::~OGRDB2Session()
     CloseSession();
 }
 
-
 /************************************************************************/
 /*                       RollbackTransaction()                          */
 /************************************************************************/
@@ -353,8 +352,6 @@ const char *OGRDB2Session::GetLastError()
     return m_szLastError;
 }
 
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*                           OGRDB2Statement                           */
@@ -500,7 +497,6 @@ int OGRDB2Statement::DB2Execute(const char *pszCallingFunction)
     }
     return CollectResultsInfo();
 }
-
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */
@@ -859,7 +855,6 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
             }
-
 
             return FALSE;
         }

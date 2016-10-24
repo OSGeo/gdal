@@ -296,7 +296,6 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
               "nSRId: '%d', eType: '%d', srText: '%s'",
               nSRId, eType, pszSRText);
 
-
     /* -------------------------------------------------------------------- */
     /*      Parse out schema name if present in layer.  We assume a         */
     /*      schema is provided if there is a dot in the name, and that      */
@@ -419,7 +418,6 @@ OGRErr OGRDB2TableLayer::CreateSpatialIndex()
     GetLayerDefn();
 
     OGRDB2Statement oStatement( poDS->GetSession() );
-
 
     OGREnvelope oExt;
     if (GetExtent(&oExt, TRUE) != OGRERR_NONE)
@@ -576,7 +574,6 @@ OGRDB2Statement *OGRDB2TableLayer::GetStatement()
     return m_poStmt;
 }
 
-
 /************************************************************************/
 /*                           BuildStatement()                           */
 /************************************************************************/
@@ -686,7 +683,6 @@ OGRErr OGRDB2TableLayer::SetAttributeFilter( const char *pszQuery )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -744,7 +740,6 @@ GIntBig OGRDB2TableLayer::GetFeatureCount( int bForce )
     delete poStatement;
     return nRet;
 }
-
 
 /************************************************************************/
 /*                            CreateField()                             */
@@ -913,7 +908,6 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
     if (PrepareFeature(poFeature, 'U'))
         return OGRERR_FAILURE;
 
-
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int nBindNum = 0;
     void** papBindBuffer = (void**)CPLMalloc(sizeof(void*) * nFieldCount);
@@ -963,7 +957,6 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
         }
         nBindNum++;
     }
-
 
     /* -------------------------------------------------------------------- */
     /*      Execute the update.                                             */
@@ -1027,11 +1020,6 @@ OGRErr OGRDB2TableLayer::DeleteFeature( GIntBig nFID )
     }
     return OGRERR_NONE;
 }
-
-
-
-
-
 
 /************************************************************************/
 /*                          isFieldTypeSupported()                      */
@@ -1358,7 +1346,6 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
         nParameterType = SQL_BIGINT;
     }
 
-
     if (pValuePointer) {
         if (!m_poPrepStmt->DB2BindParameterIn(
                     "OGRDB2TableLayer::BindFieldValue",
@@ -1376,7 +1363,6 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                     CreateSpatialIndexIfNecessary()                  */
 /************************************************************************/
@@ -1388,8 +1374,6 @@ void OGRDB2TableLayer::CreateSpatialIndexIfNecessary()
         CreateSpatialIndex();
     }
 }
-
-
 
 /************************************************************************/
 /*                      RunDeferredCreationIfNecessary()                */
@@ -1484,7 +1468,6 @@ OGRErr OGRDB2TableLayer::RunDeferredCreationIfNecessary()
     }
 
     osCommand += ")";
-
 
     OGRErr err = SQLCommand(m_poDS->GetDB(), osCommand.c_str());
     if ( OGRERR_NONE != err )

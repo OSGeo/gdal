@@ -39,7 +39,6 @@
 
 CPL_CVSID("$Id$");
 
-
 class OGRGenSQLGeomFieldDefn: public OGRGeomFieldDefn
 {
     public:
@@ -2132,7 +2131,6 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
 
     return nResult;
 }
-
 
 /************************************************************************/
 /*                         AddFieldDefnToSet()                          */

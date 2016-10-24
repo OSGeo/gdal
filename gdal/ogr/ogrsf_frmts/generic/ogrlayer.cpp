@@ -1111,7 +1111,6 @@ void OGRLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
         ResetReading();
 }
 
-
 void OGRLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
@@ -1179,7 +1178,6 @@ void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
 {
     SetSpatialFilterRect( 0, dfMinX, dfMinY, dfMaxX, dfMaxY );
 }
-
 
 void OGRLayer::SetSpatialFilterRect( int iGeomField,
                                      double dfMinX, double dfMinY,
@@ -1375,7 +1373,6 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
         || m_sFilterEnvelope.MaxX < sGeomEnv.MinX
         || m_sFilterEnvelope.MaxY < sGeomEnv.MinY )
         return FALSE;
-
 
 /* -------------------------------------------------------------------- */
 /*      If the filter geometry is its own envelope and if the           */

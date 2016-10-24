@@ -143,7 +143,6 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
         |
         X (14,24) (Target1)
 
-
 Given:
   Locations Arrow1, Target1, and Target2 we need to compute Arrow2.
 

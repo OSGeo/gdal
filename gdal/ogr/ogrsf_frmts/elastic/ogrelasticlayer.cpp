@@ -750,7 +750,6 @@ OGRErr OGRElasticLayer::SyncToDisk()
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                            GetLayerDefn()                            */
 /************************************************************************/
@@ -1336,7 +1335,6 @@ static json_object* GetContainerForMapping( json_object* poContainer,
     return poContainer;
 }
 
-
 /************************************************************************/
 /*                             BuildMap()                               */
 /************************************************************************/
@@ -1766,7 +1764,6 @@ static json_object* GetContainerForFeature( json_object* poContainer,
     }
     return poContainer;
 }
-
 
 /************************************************************************/
 /*                        BuildJSonFromFeature()                        */

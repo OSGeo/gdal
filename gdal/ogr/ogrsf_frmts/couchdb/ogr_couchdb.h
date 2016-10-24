@@ -43,7 +43,6 @@
 #pragma clang diagnostic pop
 #endif
 
-
 #include <vector>
 #include <map>
 

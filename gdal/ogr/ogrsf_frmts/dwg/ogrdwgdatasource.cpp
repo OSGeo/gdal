@@ -80,7 +80,6 @@ int OGRDWGDataSource::TestCapability( const char * pszCap )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-
 OGRLayer *OGRDWGDataSource::GetLayer( int iLayer )
 
 {

@@ -185,5 +185,4 @@ OGRSpatialReferenceH GCSRSAPI_CALL SysCoord2OGRSpatialReference_GCSRS ( GCSysCoo
 }
 #endif
 
-
 #endif /* ndef GEOCONCEPT_SYSCOORD_H_INCLUDED */

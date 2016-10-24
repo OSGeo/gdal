@@ -12,7 +12,6 @@ available at:
 
   http://www.nar-associates.com/nurbs/
 
-
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
 

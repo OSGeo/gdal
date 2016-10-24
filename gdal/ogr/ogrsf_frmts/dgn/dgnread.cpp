@@ -34,7 +34,6 @@ static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );
 static DGNElemCore *DGNParseTagSet( DGNInfo * );
 
-
 /************************************************************************/
 /*                           DGNGotoElement()                           */
 /************************************************************************/
@@ -121,7 +120,6 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                          DGNGetRawExtents()                          */
 /*                                                                      */
@@ -174,7 +172,6 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
         return false;
     }
 }
-
 
 /************************************************************************/
 /*                        DGNGetElementExtents()                        */
@@ -1163,7 +1160,6 @@ int DGNElemTypeHasDispHdr( int nElemType )
     }
 }
 
-
 /************************************************************************/
 /*                            DGNParseCore()                            */
 /************************************************************************/
@@ -1320,7 +1316,6 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         /* Get User Prompt */
         tagDef->prompt = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
         nDataOffset += strlen(tagDef->prompt)+1;
-
 
         /* Get type */
         tagDef->type = psDGN->abyElem[nDataOffset]

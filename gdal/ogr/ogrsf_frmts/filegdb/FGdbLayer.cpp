@@ -1832,7 +1832,6 @@ OGRErr FGdbLayer::DeleteField( int iFieldToDelete )
     m_vOGRFieldToESRIField.erase (m_vOGRFieldToESRIField.begin() + iFieldToDelete);
     m_vOGRFieldToESRIFieldType.erase( m_vOGRFieldToESRIFieldType.begin() + iFieldToDelete );
 
-
     return m_pFeatureDefn->DeleteFieldDefn( iFieldToDelete );
 }
 
@@ -2893,10 +2892,8 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                 }
             }
 
-
             ///////////////////////////////////////////////////////////////////
             // At this point we have parsed everything about the current field
-
 
             if (fieldType == "esriFieldTypeGeometry")
             {
@@ -2922,7 +2919,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                 fieldName.c_str(), fieldType.c_str() );
                 continue;
             }
-
 
             //TODO: Optimization - modify m_wstrSubFields so it only fetches fields that are mapped
 
@@ -3018,7 +3014,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
 
     return true;
 }
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -3143,7 +3138,6 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     }
     pOutFeature->SetFID(oid);
 
-
     /////////////////////////////////////////////////////////
     // Translate Geometry
     //
@@ -3165,11 +3159,9 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
         pOutFeature->SetGeometryDirectly(pOGRGeo);
     }
 
-
     //////////////////////////////////////////////////////////
     // Map fields
     //
-
 
     int mappedFieldCount = static_cast<int>(m_vOGRFieldToESRIField.size());
 
@@ -3367,12 +3359,10 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
     if (foundBadColumn)
         m_suppressColumnMappingError = true;
 
-
     *ppFeature = pOutFeature;
 
     return true;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -3434,7 +3424,6 @@ OGRFeature *FGdbLayer::GetFeature( GIntBig oid )
 
     return pOGRFeature;
 }
-
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
@@ -3602,7 +3591,6 @@ void FGdbLayer::EndBulkLoad ()
 
 } */
 
-
 /* OGRErr FGdbLayer::CommitTransaction ()
 {
     if ( ! m_pTable )
@@ -3622,7 +3610,6 @@ void FGdbLayer::EndBulkLoad ()
     m_pTable->FreeWriteLock();
     return OGRERR_NONE;
 } */
-
 
 /************************************************************************/
 /*                           GetLayerXML()                              */

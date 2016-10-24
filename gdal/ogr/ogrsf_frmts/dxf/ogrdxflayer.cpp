@@ -181,7 +181,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         oStyleProperties["230_N.dZ"] = pszValue;
         break;
 
-
       default:
         break;
     }
@@ -553,7 +552,6 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
-
 
 /* -------------------------------------------------------------------- */
 /*      We need to escape double quotes with backslashes before they    */
@@ -1072,7 +1070,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             dfBulge = CPLAtof(szLineBuf);
             break;
 
-
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -1090,7 +1087,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     if( bHaveX && bHaveY )
         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
-
 
     if(smoothPolyline.IsEmpty())
     {
@@ -1112,7 +1108,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                         TranslatePOLYLINE()                          */
@@ -1222,7 +1217,6 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             delete poFeature;
             return NULL;
         }
-
 
         // Ignore Spline frame control points ( see #4683 )
         if ((nVertexFlag & 16) == 0)

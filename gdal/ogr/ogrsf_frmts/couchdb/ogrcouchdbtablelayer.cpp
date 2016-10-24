@@ -800,7 +800,6 @@ bool OGRCouchDBTableLayer::FetchNextRows()
     return FetchNextRowsAnalyseDocs(poAnswerObj);
 }
 
-
 /************************************************************************/
 /*                            GetFeature()                              */
 /************************************************************************/
@@ -1709,7 +1708,6 @@ OGRErr OGRCouchDBTableLayer::SetAttributeFilter( const char *pszQuery )
     return eErr;
 }
 
-
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
@@ -2015,7 +2013,6 @@ void OGRCouchDBTableLayer::WriteMetadata()
 
     json_object* poFields = json_object_new_array();
     json_object_object_add(poDoc, "fields", poFields);
-
 
     for(int i=COUCHDB_FIRST_FIELD;i<poFeatureDefn->GetFieldCount();i++)
     {

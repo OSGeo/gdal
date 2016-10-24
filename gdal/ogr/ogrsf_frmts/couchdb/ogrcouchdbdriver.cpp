@@ -79,7 +79,6 @@ OGRDataSource *OGRCouchDBDriver::Open( const char * pszFilename, int bUpdate )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/
