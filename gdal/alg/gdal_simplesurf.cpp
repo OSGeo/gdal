@@ -248,7 +248,6 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
     return poCollection;
 }
 
-
 double GDALSimpleSURF::GetEuclideanDistance(
     GDALFeaturePoint &firstPoint, GDALFeaturePoint &secondPoint)
 {
@@ -482,7 +481,6 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
                 alreadyMatched[bestIndex] = true;
             }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Pruning based on the provided threshold                         */

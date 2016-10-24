@@ -280,7 +280,6 @@ CPL_C_END
 /*                            GDALWarpKernel                            */
 /*                                                                      */
 
-
 /** This is the number of dummy pixels that must be reserved in source arrays
  * in order to satisfy assumptions made in GWKResample(), and more specifically
  * by GWKGetPixelRow() that always read a even number of pixels. So if we are

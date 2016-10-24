@@ -632,7 +632,6 @@ static int FindNearestColor( int nColors, int *panPCT,
 #endif
 }
 
-
 /************************************************************************/
 /*                          FindNearestColor()                          */
 /*                                                                      */

@@ -823,7 +823,6 @@ typedef struct
     CPLCond           *hCond;
 } ChunkThreadData;
 
-
 static void ChunkThreadMain( void *pThreadData )
 
 {
@@ -1255,7 +1254,6 @@ CPLErr GDALWarpOperation::CollectChunkList(
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                             WarpRegion()                             */
@@ -2242,8 +2240,6 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
 
     return CE_None;
 }
-
-
 
 /************************************************************************/
 /*                        ComputeSourceWindow()                         */

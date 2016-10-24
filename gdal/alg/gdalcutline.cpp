@@ -152,7 +152,6 @@ BlendMaskGenerator(
         return CE_None;
     */
 
-
     iXMin = MAX(0,(int) floor(sEnvelope.MinX - dfBlendDist - nXOff));
     iXMax = MIN(nXSize, (int) ceil(sEnvelope.MaxX + dfBlendDist - nXOff));
     iYMin = MAX(0,(int) floor(sEnvelope.MinY - dfBlendDist - nYOff));
@@ -162,7 +161,8 @@ BlendMaskGenerator(
 /*      Loop over potential area within blend line distance,            */
 /*      processing each pixel.                                          */
 /* -------------------------------------------------------------------- */
-    int iY, iX;
+    int iY;
+    int iX;
     double dfLastDist;
 
     for( iY = 0; iY < nYSize; iY++ )
@@ -261,7 +261,6 @@ static int CutlineTransformer( void *pTransformArg,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                       GDALWarpCutlineMasker()                        */

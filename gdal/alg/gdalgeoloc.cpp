@@ -709,7 +709,6 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
 }
 #endif /* def notdef */
 
-
 /************************************************************************/
 /*                       GDALGeoLocRescale()                            */
 /************************************************************************/

@@ -807,7 +807,6 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     psTransform->bApplyDEMVDatumShift =
         CPLFetchBool( papszOptions, "RPC_DEM_APPLY_VDATUM_SHIFT", true );
 
-
     psTransform->nMaxIterations = atoi( CSLFetchNameValueDef(
         papszOptions, "RPC_MAX_ITERATIONS", "0" ) );
 
@@ -1191,7 +1190,6 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
     return true;
 }
 
-
 static
 double BiCubicKernel(double dfVal)
 {
@@ -1501,7 +1499,6 @@ static int GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTrans
         VSIFree(padfDEMBuffer);
         return FALSE;
     }
-
 
     int bGotNoDataValue = FALSE;
     double dfNoDataValue = 0;
