@@ -2124,9 +2124,19 @@ def ogr_spatialite_8():
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('foo', 'bar')
+    f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 -1)'))
+    f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 -1,2 3)'))
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (0 -1)' or \
+       f.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (0 -1,2 3)':
+        gdaltest.post_reason('failed')
+        f.DumpReadable()
+        return 'fail'
     f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 1)'))
     f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)'))
-    lyr.CreateFeature(f)
+    lyr.SetFeature(f)
     f = None
     ds.ExecuteSQL('CREATE VIEW view_test_geom1 AS SELECT OGC_FID AS pk_id, foo, geom1 AS renamed_geom1 FROM test')
 
