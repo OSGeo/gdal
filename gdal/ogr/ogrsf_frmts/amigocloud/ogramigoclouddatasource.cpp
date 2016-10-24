@@ -831,7 +831,6 @@ OGRLayer * OGRAmigoCloudDataSource::ExecuteSQLInternal(
     while(*pszSQLCommand == ' ')
         pszSQLCommand ++;
 
-
     if( !EQUALN(pszSQLCommand, "SELECT", strlen("SELECT")) &&
         !EQUALN(pszSQLCommand, "EXPLAIN", strlen("EXPLAIN")) &&
         !EQUALN(pszSQLCommand, "WITH", strlen("WITH")) )

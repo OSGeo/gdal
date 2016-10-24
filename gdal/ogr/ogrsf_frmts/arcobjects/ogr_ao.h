@@ -48,8 +48,6 @@ using namespace ATL;
 #import "C:\Program Files (x86)\ArcGIS\com\esriGeoDatabase.olb" raw_interfaces_only, raw_native_types, no_namespace, named_guids
 #import "C:\Program Files (x86)\ArcGIS\com\esriDataSourcesGDB.olb" raw_interfaces_only, raw_native_types, no_namespace, named_guids
 
-
-
 /************************************************************************/
 /*                            AOLayer                                  */
 /************************************************************************/
@@ -73,7 +71,6 @@ public:
   virtual OGRFeature* GetFeature( GIntBig nFeatureId );
 
   HRESULT GetTable(ITable** ppTable);
-
 
   virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
   virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
@@ -133,14 +130,12 @@ public:
   AODataSource();
   virtual ~AODataSource();
 
-
   int         Open(IWorkspace* pWorkspace, const char *, int );
 
   const char* GetName() { return m_pszName; }
   int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
 
   OGRLayer*   GetLayer( int );
-
 
   /*
   virtual OGRLayer* ICreateLayer( const char *,

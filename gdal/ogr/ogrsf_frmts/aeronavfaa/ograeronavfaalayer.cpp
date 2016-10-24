@@ -67,7 +67,6 @@ OGRAeronavFAALayer::~OGRAeronavFAALayer()
     VSIFCloseL( fpAeronavFAA );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -79,7 +78,6 @@ void OGRAeronavFAALayer::ResetReading()
     bEOF = false;
     VSIFSeekL( fpAeronavFAA, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -117,8 +115,6 @@ int OGRAeronavFAALayer::TestCapability( CPL_UNUSED const char * pszCap )
     return FALSE;
 }
 
-
-
 static const RecordFieldDesc DOFFields [] =
 {
     { "ORS_CODE",  1, 2, OFTString },
@@ -141,7 +137,6 @@ static const RecordFieldDesc DOFFields [] =
 };
 
 static const RecordDesc DOF = { sizeof(DOFFields)/sizeof(DOFFields[0]), DOFFields, 36, 49 };
-
 
 /************************************************************************/
 /*                       OGRAeronavFAADOFLayer()                        */
@@ -202,7 +197,6 @@ static int GetLatLon(const char* pszLat,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                              GetLatLon()                             */
@@ -266,8 +260,6 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
     }
 }
 
-
-
 static const RecordFieldDesc NAVAIDFields [] =
 {
     { "ID", 2, 6, OFTString },
@@ -285,7 +277,6 @@ static const RecordFieldDesc NAVAIDFields [] =
 };
 
 static const RecordDesc NAVAID = { sizeof(NAVAIDFields)/sizeof(NAVAIDFields[0]), NAVAIDFields, 17, 30 };
-
 
 /************************************************************************/
 /*                    OGRAeronavFAANAVAIDLayer()                        */
@@ -308,7 +299,6 @@ OGRAeronavFAANAVAIDLayer::OGRAeronavFAANAVAIDLayer( VSILFILE* fp,
         poFeatureDefn->AddFieldDefn( &oField );
     }
 }
-
 
 /************************************************************************/
 /*                              GetLatLon()                             */
@@ -375,8 +365,6 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
     }
 }
 
-
-
 /************************************************************************/
 /*                    OGRAeronavFAARouteLayer()                        */
 /************************************************************************/
@@ -408,7 +396,6 @@ OGRAeronavFAARouteLayer::OGRAeronavFAARouteLayer( VSILFILE* fp,
         poFeatureDefn->AddFieldDefn( &oField );
     }
 }
-
 
 /************************************************************************/
 /*                              GetLatLon()                             */
@@ -558,7 +545,6 @@ void OGRAeronavFAARouteLayer::ResetReading()
     osStateName = "";
 }
 
-
 static const RecordFieldDesc IAPFields [] =
 {
     { "LOC_ID",  4, 8, OFTString },
@@ -569,7 +555,6 @@ static const RecordFieldDesc IAPFields [] =
 };
 
 static const RecordDesc IAP = { sizeof(IAPFields)/sizeof(IAPFields[0]), IAPFields, -1, -1 };
-
 
 /************************************************************************/
 /*                     OGRAeronavFAAIAPLayer()                          */
@@ -608,7 +593,6 @@ OGRAeronavFAAIAPLayer::OGRAeronavFAAIAPLayer( VSILFILE* fp,
     }
 
 }
-
 
 /************************************************************************/
 /*                              GetLatLon()                             */

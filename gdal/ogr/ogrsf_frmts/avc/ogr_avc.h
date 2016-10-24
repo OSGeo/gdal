@@ -230,5 +230,4 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
     virtual OGRSpatialReference *GetSpatialRef();
 };
 
-
 #endif /* OGR_AVC_H_INCLUDED */

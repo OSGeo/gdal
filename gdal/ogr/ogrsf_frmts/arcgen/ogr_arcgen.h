@@ -52,7 +52,6 @@ class OGRARCGENLayer : public OGRLayer
                                     VSILFILE* fp, OGRwkbGeometryType eType);
                         virtual ~OGRARCGENLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 
