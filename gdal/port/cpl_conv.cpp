@@ -1546,14 +1546,15 @@ static void CPLShowAccessedOptions()
 
     delete paoGetKeys;
     delete paoSetKeys;
-    paoGetKeys = paoSetKeys = NULL;
+    paoGetKeys = NULL;
+    paoSetKeys = NULL;
 }
 
 /************************************************************************/
 /*                       CPLAccessConfigOption()                        */
 /************************************************************************/
 
-static void CPLAccessConfigOption(const char* pszKey, bool bGet)
+static void CPLAccessConfigOption( const char* pszKey, bool bGet )
 {
     CPLMutexHolderD(&hRegisterConfigurationOptionMutex);
     if (paoGetKeys == NULL)

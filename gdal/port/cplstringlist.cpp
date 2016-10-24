@@ -197,7 +197,8 @@ int CPLStringList::Count() const
     {
         if( papszList == NULL )
         {
-            nCount = nAllocation = 0;
+            nCount = 0;
+            nAllocation = 0;
         }
         else
         {
