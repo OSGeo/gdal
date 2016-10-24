@@ -721,7 +721,6 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
  * @return 0 for points, 1 for lines and 2 for surfaces.
  */
 
-
 /**
  * \brief Get the geometry type that conforms with ISO SQL/MM Part3
  *
@@ -1124,7 +1123,6 @@ void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured )
  * @return TRUE if equivalent or FALSE otherwise.
  */
 
-
 // Backward compatibility method.
 
 //! @cond Doxygen_Suppress
@@ -1502,7 +1500,6 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 
     return ((OGRGeometry *) hGeom)->importFromWkt( ppszSrcText );
 }
-
 
 /************************************************************************/
 /*                        importPreambuleFromWkt()                      */
@@ -2050,7 +2047,6 @@ OGRGeometry::IsSimple(  ) const
 
 #endif /* HAVE_GEOS */
 }
-
 
 /**
  * \brief Returns TRUE if the geometry is simple.
@@ -3001,7 +2997,6 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
  * @return the distance between the geometries or -1 if an error occurs.
  */
 
-
 double OGR_G_Distance( OGRGeometryH hFirst, OGRGeometryH hOther )
 
 {
@@ -3179,7 +3174,6 @@ OGRGeometry *OGRGeometry::Boundary() const
 
 #endif /* HAVE_GEOS */
 }
-
 
 //! @cond Doxygen_Suppress
 /**
@@ -5424,7 +5418,6 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
  *
  * @param dfMaxLength maximum length between 2 consecutive vertices.
  */
-
 
 /************************************************************************/
 /*                       importPreambuleFromWkb()                       */

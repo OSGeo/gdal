@@ -1112,7 +1112,6 @@ void OGRGeometryCollection::setMeasured( OGRBoolean bIsMeasured )
     OGRGeometry::setMeasured( bIsMeasured );
 }
 
-
 /************************************************************************/
 /*                              get_Length()                            */
 /************************************************************************/

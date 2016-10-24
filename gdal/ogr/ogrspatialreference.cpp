@@ -72,7 +72,6 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
     }
 }
 
-
 /************************************************************************/
 /*                        OGRSpatialReference()                         */
 /************************************************************************/
@@ -641,7 +640,6 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 /************************************************************************/
 /*                        OSRExportToPrettyWkt()                        */
 /************************************************************************/
-
 
 /**
  * \brief Convert this SRS into a nicely formatted WKT string for display to a
@@ -1832,7 +1830,6 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
  * @return OGRERR_NONE on success or an error code.
  */
 
-
 OGRErr OGRSpatialReference::CopyGeogCSFrom(
     const OGRSpatialReference * poSrcSRS )
 
@@ -2172,7 +2169,6 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetFromUserInput( pszDef );
 }
-
 
 /************************************************************************/
 /*                          ImportFromUrl()                             */

@@ -481,7 +481,6 @@ static void InitDatumMappingTable()
     papszDatumMapping[nMappingCount*3+2] = NULL;
 }
 
-
 /************************************************************************/
 /*                         OSRImportFromESRI()                          */
 /************************************************************************/

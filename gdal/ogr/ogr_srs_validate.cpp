@@ -554,7 +554,6 @@ static const char * const papszAliasGroupList[] = {
     NULL
 };
 
-
 /************************************************************************/
 /*                              Validate()                              */
 /************************************************************************/
@@ -617,7 +616,6 @@ OGRErr OGRSpatialReference::Validate()
     }
     return eErr;
 }
-
 
 OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 {
@@ -1406,7 +1404,6 @@ OGRErr OGRSpatialReference::ValidateAxis(OGR_SRSNode *poRoot)
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           ValidateUnit()                             */

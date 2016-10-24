@@ -904,7 +904,6 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     return true;
 }
 
-
 /************************************************************************/
 /*                           EPSGGetPCSInfo()                           */
 /************************************************************************/
@@ -1879,7 +1878,6 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
                                 CSVGetFileFieldId(pszFilename,"DATUM_NAME") ) );
     OGREPSGDatumNameMassage( &pszDatumName );
 
-
     const int nEllipsoidCode = atoi(CSLGetField(
         papszRecord, CSVGetFileFieldId(pszFilename, "ELLIPSOID_CODE")));
 
@@ -2212,7 +2210,6 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
         pszAuthName = GetAuthorityName( "PROJCS" );
     else
         pszAuthName = GetAuthorityName( "GEOGCS" );
-
 
     if( eErr == OGRERR_NONE && pszAuthName == NULL )
     {

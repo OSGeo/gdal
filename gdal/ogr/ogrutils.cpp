@@ -1141,7 +1141,6 @@ int OGRParseDate( const char *pszInput,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                           OGRParseXMLDateTime()                      */
 /************************************************************************/
@@ -1321,7 +1320,6 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
     return bRet;
 }
 
-
 /**
   * Returns the day of the week in Gregorian calendar
   *
@@ -1351,7 +1349,6 @@ int OGRGetDayOfWeek( int day, int month, int year )
     const int h = ( q + (((m+1)*26)/10) + K + K/4 + J/4 + 5 * J) % 7;
     return ( h + 5 ) % 7;
 }
-
 
 /************************************************************************/
 /*                         OGRGetRFC822DateTime()                       */
@@ -1646,7 +1643,6 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
     CPLFree(panCheck);
     return eErr;
 }
-
 
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVariant,
                                OGRwkbGeometryType *peGeometryType )

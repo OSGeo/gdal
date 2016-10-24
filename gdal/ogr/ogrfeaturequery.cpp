@@ -186,7 +186,6 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     CPLFree( papszFieldNames );
     CPLFree( paeFieldTypes );
 
-
     return eErr;
 }
 
@@ -446,7 +445,6 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     GIntBig nMaxCount = MAX(nFIDCount1, nFIDCount2);
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
-
 
     for( GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2; )
     {

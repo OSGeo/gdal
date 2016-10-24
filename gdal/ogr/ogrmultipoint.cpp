@@ -358,7 +358,6 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                      importFromWkt_Bracketed()                       */
 /*                                                                      */

@@ -719,7 +719,6 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
               int nSrcStrLen = (int)strlen(pszSrcStr);
 
-
               /* In SQL, the first character is at offset 1 */
               /* And 0 is considered as 1 */
               if (nOffset > 0)

@@ -53,7 +53,6 @@ void swqerror( swq_parse_context *context, const char *msg )
     CPLError( CE_Failure, CPLE_AppDefined, "%s", osMsg.c_str() );
 }
 
-
 /************************************************************************/
 /*                               swqlex()                               */
 /*                                                                      */
@@ -769,7 +768,6 @@ CPLErr swq_expr_compile( const char *where_clause,
     return swq_expr_compile2( where_clause, &field_list,
                               bCheck, poCustomFuncRegistrar, expr_out );
 }
-
 
 /************************************************************************/
 /*                         swq_expr_compile2()                          */

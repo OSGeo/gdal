@@ -184,7 +184,6 @@ bool OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
     return bValidFormat;
 }
 
-
 /************************************************************************/
 /*                       OGRGeocodeCreateSession()                      */
 /************************************************************************/
@@ -394,7 +393,6 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
         OGRReleaseDataSource((OGRDataSourceH) hSession->poDS);
     CPLFree(hSession);
 }
-
 
 /************************************************************************/
 /*                        OGRGeocodeGetCacheLayer()                     */
@@ -1357,7 +1355,6 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
     return hLayer;
 }
 
-
 /************************************************************************/
 /*                              OGRGeocode()                            */
 /************************************************************************/
@@ -1470,7 +1467,6 @@ OGRLayerH OGRGeocode( OGRGeocodingSessionH hSession,
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
 }
 
-
 /************************************************************************/
 /*                      OGRGeocodeReverseSubstitute()                   */
 /************************************************************************/
@@ -1498,7 +1494,6 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
 
     return osURL;
 }
-
 
 /************************************************************************/
 /*                         OGRGeocodeReverse()                          */

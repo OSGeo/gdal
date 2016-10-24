@@ -82,7 +82,6 @@ static const long WAGVII = 29L;  // Wagner VII
 /*  GCTP ellipsoid codes.                                               */
 /************************************************************************/
 
-
 static const long CLARKE1866         = 0L;
 // static const long CLARKE1880         = 1L;
 // static const long BESSEL             = 2L;

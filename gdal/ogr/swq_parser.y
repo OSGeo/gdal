@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
@@ -44,7 +43,6 @@ CPL_CVSID("$Id$");
 /* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
 /* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
-
 %}
 
 %define api.pure
@@ -759,7 +757,6 @@ as_clause:
         }
 
     | SWQT_IDENTIFIER
-
 
 opt_where:
     | SWQT_WHERE value_expr
