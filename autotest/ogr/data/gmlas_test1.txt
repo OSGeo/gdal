@@ -1152,7 +1152,8 @@ OGRFeature(_ogr_fields_metadata):32
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc of boolean_array
+Doc of boolean_array simple type
 
 OGRFeature(_ogr_fields_metadata):33
   layer_name (String) = main_elt
@@ -1197,7 +1198,7 @@ OGRFeature(_ogr_fields_metadata):35
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc myAttr
 
 OGRFeature(_ogr_fields_metadata):36
   layer_name (String) = main_elt
@@ -1212,7 +1213,7 @@ OGRFeature(_ogr_fields_metadata):36
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc myint
 
 OGRFeature(_ogr_fields_metadata):37
   layer_name (String) = main_elt
@@ -1242,7 +1243,7 @@ OGRFeature(_ogr_fields_metadata):38
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc of attr
 
 OGRFeature(_ogr_fields_metadata):39
   layer_name (String) = main_elt
@@ -1962,7 +1963,7 @@ OGRFeature(_ogr_fields_metadata):86
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc myAttr
 
 OGRFeature(_ogr_fields_metadata):87
   layer_name (String) = main_elt_myint_repeated
@@ -1977,7 +1978,7 @@ OGRFeature(_ogr_fields_metadata):87
   field_category (String) = REGULAR
   field_related_layer (String) = (null)
   field_junction_layer (String) = (null)
-  field_documentation (String) = (null)
+  field_documentation (String) = Doc myint
 
 OGRFeature(_ogr_fields_metadata):88
   layer_name (String) = main_elt_sequence_1_dt_unbounded_subelement
@@ -2560,7 +2561,8 @@ OGRFeature(_ogr_layers_metadata):2
   layer_name (String) = main_elt
   layer_xpath (String) = myns:main_elt
   layer_category (String) = TOP_LEVEL_ELEMENT
-  layer_documentation (String) = (null)
+  layer_documentation (String) = Doc of main_elt
+Doc of main_elt complex type
 
 OGRFeature(_ogr_layers_metadata):3
   layer_name (String) = main_elt_dt_array
@@ -2572,7 +2574,7 @@ OGRFeature(_ogr_layers_metadata):4
   layer_name (String) = main_elt_myint_repeated
   layer_xpath (String) = myns:main_elt/myns:myint_repeated
   layer_category (String) = NESTED_ELEMENT
-  layer_documentation (String) = (null)
+  layer_documentation (String) = Doc myint
 
 OGRFeature(_ogr_layers_metadata):5
   layer_name (String) = main_elt_sequence_1_dt_unbounded_subelement
@@ -2638,13 +2640,13 @@ OGRFeature(_ogr_layers_metadata):15
   layer_name (String) = main_elt_group1
   layer_xpath (String) = myns:main_elt;extra=group1
   layer_category (String) = NESTED_ELEMENT
-  layer_documentation (String) = (null)
+  layer_documentation (String) = Doc of group1
 
 OGRFeature(_ogr_layers_metadata):16
   layer_name (String) = main_elt_group3
   layer_xpath (String) = myns:main_elt;extra=group3
   layer_category (String) = NESTED_ELEMENT
-  layer_documentation (String) = (null)
+  layer_documentation (String) = Doc of group3
 
 OGRFeature(_ogr_layers_metadata):17
   layer_name (String) = main_elt_group3_group3_elt3_b2

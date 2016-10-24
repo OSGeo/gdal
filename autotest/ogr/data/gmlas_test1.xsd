@@ -27,6 +27,7 @@
 </xs:element>
 
  <xs:complexType name="myBaseType">
+        <xs:annotation><xs:documentation>Doc of myBaseType</xs:documentation></xs:annotation>
         <xs:sequence>
              <xs:element name="base_int" type="xs:int"/>
         </xs:sequence>
@@ -36,7 +37,9 @@
   </xs:complexType>
 
 <xs:element name="main_elt">
+  <xs:annotation><xs:documentation>Doc of main_elt</xs:documentation></xs:annotation>
   <xs:complexType>
+    <xs:annotation><xs:documentation>Doc of main_elt complex type</xs:documentation></xs:annotation>
     <xs:complexContent>
       <xs:extension base="myns:myBaseType">
          <xs:sequence>
@@ -64,7 +67,9 @@
             <xs:element name="time"  type="xs:time"/>
             <xs:element name="boolean"  type="xs:boolean"/>
             <xs:element name="boolean_array" maxOccurs="2">
+                <xs:annotation><xs:documentation>Doc of boolean_array</xs:documentation></xs:annotation>
                 <xs:simpleType>
+                    <xs:annotation><xs:documentation>Doc of boolean_array simple type</xs:documentation></xs:annotation>
                     <xs:restriction base="xs:boolean"/>
                 </xs:simpleType>
             </xs:element>
@@ -78,7 +83,9 @@
             <xs:element name="required_elt_with_only_optional_attr">
                 <xs:complexType>
                     <xs:sequence/>
-                    <xs:attribute name="attr" type="xs:string"/>
+                    <xs:attribute name="attr" type="xs:string">
+                        <xs:annotation><xs:documentation>Doc of attr</xs:documentation></xs:annotation>
+                    </xs:attribute>
                 </xs:complexType>
             </xs:element>
 
@@ -364,6 +371,7 @@
 </xs:simpleType>
 
 <xs:group name="group1">
+  <xs:annotation><xs:documentation>Doc of group1</xs:documentation></xs:annotation>
   <xs:choice>
       <xs:element name="group1_elt_1"  type="xs:string" maxOccurs="2"/>
       <xs:element name="group1_elt_2"  type="xs:string"/>
@@ -371,12 +379,14 @@
 </xs:group>
 
 <xs:group name="group2">
+  <xs:annotation><xs:documentation>Doc of group2</xs:documentation></xs:annotation>
   <xs:sequence>
       <xs:element name="group2_elt"  type="xs:string"/>
   </xs:sequence>
 </xs:group>
 
 <xs:group name="group3">
+  <xs:annotation><xs:documentation>Doc of group3</xs:documentation></xs:annotation>
   <xs:sequence>
       <xs:element name="group3_elt1" type="xs:string"/>
       <xs:element name="group3_elt1bis" type="xs:string" minOccurs="0"/>
@@ -412,6 +422,7 @@
 </xs:group>
 
 <xs:group name="group4">
+  <xs:annotation><xs:documentation>Doc of group4</xs:documentation></xs:annotation>
   <xs:sequence>
       <xs:element name="group4_elt"  type="xs:string"/>
   </xs:sequence>
