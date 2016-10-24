@@ -185,7 +185,6 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
     return *pResponsiblePID;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             GDALDataset                              */
@@ -687,7 +686,6 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
     return ((GDALDataset *) hDataset)->GetRasterXSize();
 }
-
 
 /************************************************************************/
 /*                           GetRasterYSize()                           */
@@ -1352,7 +1350,6 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 
     return ((GDALDataset *) hDS)->GetGCPs();
 }
-
 
 /************************************************************************/
 /*                              SetGCPs()                               */
@@ -2195,7 +2192,6 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
     *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
 }
 
-
 /************************************************************************/
 /*                        GDALCleanOpenDatasetsList()                   */
 /************************************************************************/
@@ -2553,7 +2549,6 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                        GDAL_OF_VERBOSE_ERROR,
                        NULL, NULL, NULL );
 }
-
 
 /************************************************************************/
 /*                             GDALOpenEx()                             */
@@ -3054,7 +3049,6 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
     return TRUE;
 }
 
-
 static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
 {
     const char *pszDriverName;
@@ -3223,7 +3217,6 @@ GDALDataset::BeginAsyncReader(int nXOff, int nYOff,
 /*                        GDALBeginAsyncReader()                      */
 /************************************************************************/
 
-
 /**
  * \brief Sets up an asynchronous data request
  *
@@ -3345,7 +3338,6 @@ void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO )
 /************************************************************************/
 /*                        GDALEndAsyncReader()                        */
 /************************************************************************/
-
 
 /**
  * End asynchronous request.
@@ -3861,7 +3853,6 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
         pszName, (OGRSpatialReference *) hSpatialRef, eGType, papszOptions );
 }
 
-
 /************************************************************************/
 /*                         GDALDatasetCopyLayer()                       */
 /************************************************************************/
@@ -4089,7 +4080,6 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 @return the current reference count for the datasource object itself.
 */
-
 
 int GDALDataset::GetRefCount() const
 
@@ -5145,7 +5135,6 @@ OGRErr GDALDataset::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
         CSLDestroy( papszTokens );
         return OGRERR_FAILURE;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Remove it.                                                      */

@@ -509,7 +509,6 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 </pre>
  */
 
-
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
                                    void * pImage )
 
@@ -816,7 +815,6 @@ CPLErr CPL_STDCALL GDALGetActualBlockSize( GDALRasterBandH hBand,
  * @return the data type of pixels for this band.
  */
 
-
 GDALDataType GDALRasterBand::GetRasterDataType()
 
 {
@@ -1043,7 +1041,6 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 
     return ((GDALRasterBand *) hBand)->FlushCache();
 }
-
 
 /************************************************************************/
 /*                        UnreferenceBlock()                            */
@@ -1427,7 +1424,6 @@ CPLErr GDALRasterBand::Fill( double dfRealValue, double dfImaginaryValue ) {
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                         GDALFillRaster()                             */
@@ -2198,7 +2194,6 @@ int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
     return poBand->GetOverviewCount();
 }
-
 
 /************************************************************************/
 /*                            GetOverview()                             */
@@ -3643,7 +3638,6 @@ CPLErr GDALRasterBand::AdviseRead(
 /*                        GDALRasterAdviseRead()                        */
 /************************************************************************/
 
-
 /**
  * \brief Advise driver of upcoming read requests.
  *
@@ -4150,7 +4144,6 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
         nSampleCount += nXCheck * nYCheck;
     }
 }
-
 
 template<class T>
 static void ComputeStatisticsInternal( int nXCheck,
@@ -5284,7 +5277,6 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
  * @return CE_None on success or CE_Failure on failure.
  */
 
-
 CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                                             double* adfMinMax )
 {
@@ -6411,7 +6403,6 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
     va_end(args);
 }
 
-
 /************************************************************************/
 /*                           GetVirtualMemAuto()                        */
 /************************************************************************/
@@ -6868,9 +6859,7 @@ void GDALRasterBand::InitRWLock()
         poDS->InitRWLock();
 }
 
-
 //! @endcond
-
 
 /**
  * \fn GDALRasterBand::SetMetadata( char ** papszMetadata, const char * pszDomain)

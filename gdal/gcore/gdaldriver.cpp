@@ -1846,7 +1846,6 @@ int GDALValidateOptions( const char* pszOptionList,
  * this handle can be cast to a GDALDriver *.
  */
 
-
 GDALDriverH CPL_STDCALL
 GDALIdentifyDriver( const char * pszFilename,
                     char **papszFileList )
@@ -1854,7 +1853,6 @@ GDALIdentifyDriver( const char * pszFilename,
 {
     return GDALIdentifyDriverEx( pszFilename, 0, NULL, papszFileList );
 }
-
 
 /************************************************************************/
 /*                         GDALIdentifyDriverEx()                       */
@@ -1896,7 +1894,6 @@ GDALIdentifyDriver( const char * pszFilename,
  *
  * @since GDAL 2.2
  */
-
 
 GDALDriverH CPL_STDCALL
 GDALIdentifyDriverEx( const char* pszFilename,

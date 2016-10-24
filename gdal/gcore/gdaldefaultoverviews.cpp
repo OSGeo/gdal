@@ -353,7 +353,6 @@ int GDALDefaultOverviews::GetOverviewCount( int nBand )
     if( poBand == NULL )
         return 0;
 
-
     if( bOvrIsAux )
         return poBand->GetOverviewCount();
 
@@ -411,7 +410,6 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
-
 int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
 {
@@ -424,7 +422,6 @@ int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
         return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
     }
-
 
     const int nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
 

@@ -124,7 +124,6 @@ GDALAsyncReader::~GDALAsyncReader()
 /*                     GDALARGetNextUpdatedRegion()                     */
 /************************************************************************/
 
-
 /**
  * \brief Get async IO update
  *
@@ -203,7 +202,6 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                          GDALARLockBuffer()                          */
 /************************************************************************/
@@ -250,7 +248,6 @@ void GDALAsyncReader::UnlockBuffer()
 /************************************************************************/
 /*                          GDALARUnlockBuffer()                        */
 /************************************************************************/
-
 
 /**
  * \brief Unlock image buffer.

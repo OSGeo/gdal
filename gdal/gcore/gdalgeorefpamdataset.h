@@ -80,8 +80,6 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
                                  const char * pszDomain = "" );
-
-
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

@@ -109,7 +109,6 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
     GDALSetCacheMax64(nNewSizeInBytes);
 }
 
-
 /************************************************************************/
 /*                        GDALSetCacheMax64()                           */
 /************************************************************************/
@@ -795,7 +794,6 @@ void GDALRasterBlock::Touch()
     TAKE_LOCK;
     Touch_unlocked();
 }
-
 
 void GDALRasterBlock::Touch_unlocked()
 

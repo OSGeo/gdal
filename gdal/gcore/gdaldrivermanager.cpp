@@ -494,7 +494,6 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
         RegisterDriver( static_cast<GDALDriver *>( hDriver ) );
 }
 
-
 /************************************************************************/
 /*                          DeregisterDriver()                          */
 /************************************************************************/
@@ -551,7 +550,6 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
 }
-
 
 /************************************************************************/
 /*                          GetDriverByName()                           */

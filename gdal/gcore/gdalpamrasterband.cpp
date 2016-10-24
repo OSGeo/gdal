@@ -901,7 +901,6 @@ CPLErr GDALPamRasterBand::SetCategoryNames( char ** papszNewNames )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/

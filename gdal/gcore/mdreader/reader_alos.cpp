@@ -238,7 +238,6 @@ void GDALMDReaderALOS::LoadMetadata()
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
     }
 
-
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                                  "Img_CloudQuantityOfAllImage");
     if(NULL != pszCloudCover)

@@ -2881,7 +2881,6 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     return eErr;
 }
 
-
 /************************************************************************/
 /*            GDALRegenerateOverviewsMultiBand()                        */
 /************************************************************************/
@@ -3315,7 +3314,6 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
     return eErr;
 }
 
-
 /************************************************************************/
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
@@ -3457,7 +3455,6 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 /*      Correct the mean and standard deviation of the overviews of     */
 /*      the given band to match the base layer approximately.           */
 /************************************************************************/
-
 
 /** Undocumented
  * @param hBaseBand undocumented.

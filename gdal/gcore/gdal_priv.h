@@ -1146,7 +1146,6 @@ typedef enum
 /*                              GDALDriver                              */
 /* ******************************************************************** */
 
-
 /**
  * \brief Format specific driver.
  *

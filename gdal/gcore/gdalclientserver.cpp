@@ -982,7 +982,6 @@ static int GDALPipeRead(GDALPipe* p, char** ppszStr)
     return TRUE;
 }
 
-
 static int GDALPipeRead(GDALPipe* p, char*** ppapszStr)
 {
     int nStrCount = 0;
@@ -4309,7 +4308,6 @@ CPLErr GDALClientDataset::AddBand( GDALDataType eType,
     return eRet;
 }
 
-
 /************************************************************************/
 /*                             AdviseRead()                             */
 /************************************************************************/
@@ -5518,7 +5516,6 @@ CPLErr GDALClientRasterBand::DeleteNoDataValue()
 {
     if( !SupportsInstr(INSTR_Band_DeleteNoDataValue) )
         return GDALPamRasterBand::DeleteNoDataValue();
-
 
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_DeleteNoDataValue) )

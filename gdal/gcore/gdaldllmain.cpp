@@ -124,7 +124,6 @@ static void GDALDestructor(void)
 
 #endif // __GNUC__
 
-
 /************************************************************************/
 /*  The library set-up/clean-up routine implemented as DllMain entry    */
 /*  point specific for Windows.                                         */

@@ -188,7 +188,6 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
         return GDT_Float64;
 }
 
-
 /************************************************************************/
 /*                        GDALGetDataTypeSizeBytes()                    */
 /************************************************************************/
@@ -561,7 +560,6 @@ GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName(
     return GARIO_ERROR;
 }
 
-
 /************************************************************************/
 /*                        GDALGetAsyncStatusTypeName()                 */
 /************************************************************************/
@@ -758,7 +756,6 @@ GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
 /************************************************************************/
 /*                     GDALGetRandomRasterSample()                      */
 /************************************************************************/
-
 
 /** Undocumented
  * @param hBand undocumented.
@@ -1103,7 +1100,6 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 /*                         GDALLoadOziMapFile()                         */
 /************************************************************************/
 
-
 /** Helper function for translator implementer wanting support for OZI .map
  *
  * @param pszFilename filename of .tab file
@@ -1116,7 +1112,6 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
-
 
 {
     VALIDATE_POINTER1( pszFilename, "GDALLoadOziMapFile", FALSE );
@@ -1323,7 +1318,6 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
-
 {
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
@@ -1368,7 +1362,6 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
-
 
 {
     char **papszLines = CSLLoad2( pszFilename, 1000, 200, NULL );
@@ -1509,7 +1502,6 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /*                         GDALReadTabFile()                            */
 /************************************************************************/
 
-
 /** Helper function for translator implementer wanting support for MapInfo
  * .tab files.
  *
@@ -1524,13 +1516,11 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
-
 {
     return GDALReadTabFile2( pszBaseFilename, padfGeoTransform,
                              ppszWKT, pnGCPCount, ppasGCPs,
                              NULL, NULL );
 }
-
 
 int GDALReadTabFile2( const char * pszBaseFilename,
                       double *padfGeoTransform, char **ppszWKT,
@@ -2957,7 +2947,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
     return CSLCount( *ppapszArgv );
 }
 
-
 /************************************************************************/
 /*                          _FetchDblFromMD()                           */
 /************************************************************************/
@@ -3338,7 +3327,6 @@ int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
 }
 
 CPL_C_END
-
 
 /************************************************************************/
 /*                     GDALSerializeGCPListToXML()                      */
