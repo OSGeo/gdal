@@ -260,7 +260,6 @@ GInt32 INTERPOL(GInt32 a, GInt32 b, int bSrcHasNoData, GInt32 fSrcNoDataValue)
     return nVal;
 }
 
-
 /************************************************************************/
 /*                  GDALGeneric3x3Processing()                          */
 /************************************************************************/
@@ -706,7 +705,6 @@ CPLErr GDALGeneric3x3Processing(
     return eErr;
 }
 
-
 /************************************************************************/
 /*                            GradientAlg                               */
 /************************************************************************/
@@ -750,7 +748,6 @@ template<class T> struct Gradient<T, ZEVENBERGEN_THORNE>
 /*                         GDALHillshade()                              */
 /************************************************************************/
 
-
 typedef struct
 {
     double inv_nsres;
@@ -786,7 +783,6 @@ typedef struct
     cang = sin(alt) * cos(slope) +
            cos(alt) * sin(slope) *
            cos(az - M_PI/2 - aspect);
-
 
 We can avoid a lot of trigonometric computations:
 
@@ -1102,7 +1098,6 @@ void* GDALCreateHillshadeData( double* adfGeoTransform,
 /************************************************************************/
 /*                   GDALHillshadeMultiDirectional()                    */
 /************************************************************************/
-
 
 typedef struct
 {
@@ -2153,7 +2148,6 @@ GDALColorInterp GDALColorReliefRasterBand::GetColorInterpretation()
     return (GDALColorInterp)(GCI_RedBand + nBand - 1);
 }
 
-
 static
 CPLErr GDALColorRelief( GDALRasterBandH hSrcBand,
                         GDALRasterBandH hDstBand1,
@@ -2559,7 +2553,6 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
     return (bOK) ? CE_None : CE_Failure;
 }
 
-
 /************************************************************************/
 /*                         GDALTRIAlg()                                 */
 /************************************************************************/
@@ -2585,7 +2578,6 @@ float GDALTRIAlg( const T* afWin,
             MyAbs(afWin[7]-afWin[4]) +
             MyAbs(afWin[8]-afWin[4])) * 0.125f;
 }
-
 
 /************************************************************************/
 /*                         GDALTPIAlg()                                 */
@@ -3094,7 +3086,6 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                     static_cast<float>(poGDS->dfDstNoDataValue);
         }
     }
-
 
     for( int j = 1; j < nBlockXSize - 1; j++ )
     {

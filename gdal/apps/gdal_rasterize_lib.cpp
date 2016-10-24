@@ -51,7 +51,6 @@ static bool ArgIsNumeric( const char *pszArg )
     return pszEnd != NULL && pszEnd[0] == '\0';
 }
 
-
 /************************************************************************/
 /*                          InvertGeometries()                          */
 /************************************************************************/
@@ -460,7 +459,6 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
     return hDstDS;
 }
 
-
 struct GDALRasterizeOptions
 {
     /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
@@ -496,7 +494,6 @@ struct GDALRasterizeOptions
     OGRSpatialReferenceH hSRS;
     int bTargetAlignedPixels;
 };
-
 
 /************************************************************************/
 /*                             GDALRasterize()                          */

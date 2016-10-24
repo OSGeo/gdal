@@ -126,7 +126,6 @@ struct GDALInfoOptions
     bool bStdoutOutput;
 };
 
-
 static int
 GDALInfoReportCorner( const GDALInfoOptions* psOptions,
                       GDALDatasetH hDataset,
@@ -147,7 +146,6 @@ GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
                         bool bJson,
                         json_object *poMetadata,
                         CPLString& osStr );
-
 
 static void Concat( CPLString& osRet, bool bStdoutOutput,
                     const char* pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (3, 4);
@@ -1554,7 +1552,6 @@ GDALInfoReportCorner( const GDALInfoOptions* psOptions,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                       GDALInfoPrintMetadata()                        */

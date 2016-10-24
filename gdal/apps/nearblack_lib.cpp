@@ -482,7 +482,6 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
-
         if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, NULL, psOptions->pProgressData )) )
         {
             if( bCloseOutDSOnError )
@@ -695,7 +694,6 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
     }
 
 }
-
 
 /************************************************************************/
 /*                            IsInt()                                   */

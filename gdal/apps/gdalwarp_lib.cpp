@@ -401,7 +401,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                          GDALWarpAppOptionsClone()                   */
 /************************************************************************/
@@ -1567,7 +1566,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                       void ** phTransformArg,
                       bool bSetColorInterpretation,
                       GDALWarpAppOptions *psOptions)
-
 
 {
     GDALDriverH hDriver;

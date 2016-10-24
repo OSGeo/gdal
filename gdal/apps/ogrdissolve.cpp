@@ -512,7 +512,6 @@ static void Usage()
     exit( 1 );
 }
 
-
 StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
                                         const char** papszFields) {
 
@@ -602,7 +601,6 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
 
               CPLString fid = ipos->first;
               CPLDebug ("CollectGeometries", "First %s Second %d", ipos->first.c_str(), ipos->second);
-
 
              OGRGeometryCollection* geom = new OGRGeometryCollection;
 

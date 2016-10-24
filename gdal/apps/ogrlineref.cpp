@@ -79,7 +79,6 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-
     printf("Usage: ogrlineref [--help-general] [-progress] [-quiet]\n"
         "               [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE]...]\n"
         "               [-create]\n"
@@ -939,7 +938,6 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
         delete oIter->second;
     }
 
-
     if (!bQuiet)
     {
         fprintf(stdout, "\nSuccess!\n\n");
@@ -949,7 +947,6 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
     {
         GDALDestroyScaledProgress(pProgressArg);
     }
-
 
     return OGRERR_NONE;
 }
@@ -1441,7 +1438,6 @@ int main( int nArgc, char ** papszArgv )
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
     }
-
 
     if(stOper == op_create)
     {

@@ -307,7 +307,6 @@ int main( int nArgc, char **papszArgv )
         }
     }
 
-
     if( write_absolute_path )
     {
         current_path = CPLGetCurrentDir();
@@ -499,7 +498,6 @@ int main( int nArgc, char **papszArgv )
                 if( bSkip )
                     continue;
             }
-
 
 /* -------------------------------------------------------------------- */
 /*      Get layer extents, and create a corresponding polygon           */
