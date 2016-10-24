@@ -431,7 +431,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             double dfDeltaZ = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
                                                 CC_ApproxString, "DELTAZ" ) );
 
-
     /* -------------------------------------------------------------------- */
     /*      Verify that we can find the CSV file containing the ellipsoids  */
     /* -------------------------------------------------------------------- */

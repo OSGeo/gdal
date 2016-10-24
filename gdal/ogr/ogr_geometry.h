@@ -932,7 +932,6 @@ class CPL_DLL OGRSurface : public OGRGeometry
 //! @endcond
 };
 
-
 /************************************************************************/
 /*                          OGRCurvePolygon                             */
 /************************************************************************/
@@ -1372,7 +1371,6 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 
     static OGRMultiCurve* CastToMultiCurve(OGRMultiLineString* poMLS);
 };
-
 
 /************************************************************************/
 /*                          OGRGeometryFactory                          */

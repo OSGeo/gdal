@@ -330,7 +330,6 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
     return poMP;
 }
 
-
 /************************************************************************/
 /*                      OGRWriteToShapeBin()                            */
 /*                                                                      */
@@ -628,7 +627,6 @@ id,WKT
     memcpy( pabyPtr, &nGType, 4 );
     pabyPtr += 4;
 
-
 /* -------------------------------------------------------------------- */
 /*      POINT and POINTZ                                                */
 /* -------------------------------------------------------------------- */
@@ -743,7 +741,6 @@ id,WKT
                 if( dfM > dfMaxM ) dfMaxM = dfM;
             }
         }
-
 
         /* Swap if necessary */
         if( OGR_SWAP( wkbNDR ) )
@@ -1126,7 +1123,6 @@ id,WKT
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                   OGRWriteMultiPatchToShapeBin()                     */
@@ -2345,7 +2341,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         else
                             nVerticesInThisPart =
                                 panPartStart[i+1] - panPartStart[i];
-
 
                         OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                             panPartStart[i], nVerticesInThisPart,

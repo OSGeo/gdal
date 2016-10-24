@@ -87,7 +87,6 @@ OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& oth
     return *this;
 }
 
-
 /************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/

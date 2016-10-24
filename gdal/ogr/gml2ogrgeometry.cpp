@@ -1498,7 +1498,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         }
         double dfNormal = CPLAtof(psChild->psChild->pszValue);
 
-
         OGRLineString* poLS = new OGRLineString();
         if( !ParseGMLCoordinates( psNode, poLS, nSRSDimension ) )
         {
@@ -2147,7 +2146,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         return poMLS;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      MultiCurve                                                      */
 /* -------------------------------------------------------------------- */
@@ -2232,7 +2230,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         else
             return poMC;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      CompositeCurve                                                  */

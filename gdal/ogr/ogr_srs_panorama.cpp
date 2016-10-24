@@ -493,7 +493,6 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /*                      OSRExportToPanorama()                           */
 /************************************************************************/
 
-
 /** Export coordinate system in "Panorama" GIS projection definition.
  *
  * See OGRSpatialReference::exportToPanorama()

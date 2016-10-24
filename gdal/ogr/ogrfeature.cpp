@@ -561,7 +561,6 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
     return (OGRGeometryH)poGeom;
 }
 
-
 /************************************************************************/
 /*                           GetGeomFieldRef()                          */
 /************************************************************************/
@@ -1068,7 +1067,6 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
     return ((OGRFeature *) hFeat)->GetFieldIndex( pszName );
 }
 
-
 /************************************************************************/
 /*                         GetGeomFieldCount()                          */
 /************************************************************************/
@@ -1203,7 +1201,6 @@ int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )
 
     return ((OGRFeature *) hFeat)->GetGeomFieldIndex( pszName );
 }
-
 
 /************************************************************************/
 /*                             IsFieldSet()                             */
@@ -1776,7 +1773,6 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
                 nHour,
                 nMinute,
                 (int)fSecond );
-
 
     if( nTZFlag > 1 )
     {
@@ -4277,7 +4273,6 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
                              int nHour, int nMinute, int nSecond,
                              int nTZFlag )
 
-
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTime" );
 
@@ -4312,7 +4307,6 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
                              int nYear, int nMonth, int nDay,
                              int nHour, int nMinute, float fSecond,
                              int nTZFlag )
-
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTimeEx" );
@@ -4643,7 +4637,6 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
 
         }
     }
-
 
     if( GetStyleString() != NULL )
     {
@@ -5018,7 +5011,6 @@ int OGR_F_Equal( OGRFeatureH hFeat, OGRFeatureH hOtherFeat )
 
     return ((OGRFeature *) hFeat)->Equal( (OGRFeature *) hOtherFeat );
 }
-
 
 /************************************************************************/
 /*                              SetFrom()                               */

@@ -126,7 +126,6 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
     if( err != OGRERR_NONE )
         return err;
 
-
 /* -------------------------------------------------------------------- */
 /*      Instantiate a geometry of the appropriate type, and             */
 /*      initialize from the input stream.                               */
@@ -485,7 +484,6 @@ OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType eGeometryType )
     return (OGRGeometryH) OGRGeometryFactory::createGeometry( eGeometryType );
 }
 
-
 /************************************************************************/
 /*                          destroyGeometry()                           */
 /************************************************************************/
@@ -506,7 +504,6 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 {
     delete poGeom;
 }
-
 
 /************************************************************************/
 /*                        OGR_G_DestroyGeometry()                       */
@@ -1487,7 +1484,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         }
     }
 
-
     /* This a nulti-step algorithm :
        1) Sort polygons by descending areas
        2) For each polygon of rank i, find its smallest enclosing polygon
@@ -1669,7 +1665,6 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     b_i_inside_j = true;
                 }
             }
-
 
             if( b_i_inside_j )
             {
@@ -1975,7 +1970,6 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
     return createFromFgfInternal(pabyData, poSR, ppoReturn, nBytes,
                                  pnBytesConsumed, 0);
 }
-
 
 /************************************************************************/
 /*                       createFromFgfInternal()                        */
@@ -3115,7 +3109,6 @@ OGRGeometryH OGR_G_ForceToLineString( OGRGeometryH hGeom )
         OGRGeometryFactory::forceToLineString( (OGRGeometry *) hGeom );
 }
 
-
 /************************************************************************/
 /*                           forceTo()                                  */
 /************************************************************************/
@@ -3317,7 +3310,6 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     return poGeom;
 }
 
-
 /************************************************************************/
 /*                          OGR_G_ForceTo()                             */
 /************************************************************************/
@@ -3344,7 +3336,6 @@ OGRGeometryH OGR_G_ForceTo( OGRGeometryH hGeom,
         OGRGeometryFactory::forceTo( (OGRGeometry *) hGeom, eTargetType,
                                      (const char* const*)papszOptions );
 }
-
 
 /************************************************************************/
 /*                         GetCurveParmeters()                          */
@@ -3457,7 +3448,6 @@ int OGRGeometryFactory::GetCurveParmeters(
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                      OGRGeometryFactoryStrokeArc()                   */
@@ -3817,7 +3807,6 @@ static inline bool IS_ALMOST_INTEGER(double x)
     const double val = fabs(x - floor(x + 0.5));
     return val < 1.0e-8;
 }
-
 
 static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                             OGRCompoundCurve*& poCC,

@@ -236,7 +236,6 @@ const OGRCurve *OGRCurvePolygon::getExteriorRingCurve() const
  * @return count of internal rings, zero or more.
  */
 
-
 int OGRCurvePolygon::getNumInteriorRings() const
 
 {

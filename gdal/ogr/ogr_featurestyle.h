@@ -64,7 +64,6 @@ typedef struct ogr_style_param
     OGRSType         eType;
 } OGRStyleParamId;
 
-
 typedef struct ogr_style_value
 {
     char            *pszValue;
@@ -108,7 +107,6 @@ class CPL_DLL OGRStyleTable
     const char *GetNextStyle();
     const char *GetLastStyleName();
 };
-
 
 class OGRStyleTool;
 

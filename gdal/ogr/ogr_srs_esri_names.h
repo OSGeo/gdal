@@ -120,8 +120,6 @@ static const char * const apszGcsNameMappingBasedOnProjCS[] = {
 "MONREF_1997_UTM_Zone_47N", "GCS_ITRF_2000", "GCS_MONREF_1997",
 NULL, NULL, NULL};
 
-
-
 static const char * const apszGcsNameMappingBasedOnUnit[] = {
 "Voirol_Unifie_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
 "Voirol_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",

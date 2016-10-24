@@ -123,7 +123,6 @@ static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength
     *pnLength += strlen( *ppszText + *pnLength );
 }
 
-
 /************************************************************************/
 /*                        AppendCoordinateList()                        */
 /************************************************************************/
@@ -518,7 +517,6 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     return psBox;
 }
 
-
 /************************************************************************/
 /*                     AppendGML3CoordinateList()                       */
 /************************************************************************/
@@ -539,7 +537,6 @@ static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, bool bCoordS
     else
         strcat( *ppszText + *pnLength, "<gml:posList>" );
     *pnLength += strlen(*ppszText + *pnLength);
-
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {

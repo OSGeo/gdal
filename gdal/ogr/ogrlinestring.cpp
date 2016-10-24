@@ -1199,7 +1199,6 @@ void OGRSimpleCurve::getPoints( OGRRawPoint * paoPointsOut,
     }
 }
 
-
 /************************************************************************/
 /*                          getPoints()                                 */
 /************************************************************************/
@@ -1986,7 +1985,6 @@ void OGRSimpleCurve::Value( double dfDistance, OGRPoint * poPoint ) const
 #endif
 #endif
 
-
 double OGRSimpleCurve::Project(const OGRPoint *
 #ifdef HAVE_GEOS_PROJECT
                                 poPoint
@@ -2025,7 +2023,6 @@ double OGRSimpleCurve::Project(const OGRPoint *
 /*  Extracts a portion of this OGRLineString into a new OGRLineString   */
 /************************************************************************/
 
-
 /**
 * \brief Get the portion of linestring.
 *
@@ -2041,7 +2038,6 @@ double OGRSimpleCurve::Project(const OGRPoint *
 *
 * @since OGR 1.11.0
 */
-
 
 OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
                                           double dfDistanceTo,
@@ -2073,7 +2069,6 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
 
         return NULL;
     }
-
 
     double dfLength = 0;
 
@@ -2196,7 +2191,6 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
         }
     }
 
-
     if( getCoordinateDimension() == 3 )
         poNewLineString->
             addPoint(paoPoints[nPointCount - 1].x,
@@ -2254,7 +2248,6 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope * psEnvelope ) const
     psEnvelope->MinY = dfMinY;
     psEnvelope->MaxY = dfMaxY;
 }
-
 
 /************************************************************************/
 /*                            getEnvelope()                             */
@@ -2798,7 +2791,6 @@ OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const {
 OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const {
     return (OGRCurveCasterToLinearRing) OGRLineString::CastToLinearRing;
 }
-
 
 /************************************************************************/
 /*                            get_Area()                                */

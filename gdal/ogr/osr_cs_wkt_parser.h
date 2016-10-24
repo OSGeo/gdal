@@ -82,8 +82,6 @@ typedef int YYSTYPE;
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
-
-
 int osr_cs_wkt_parse (osr_cs_wkt_parse_context *context);
 
 #endif /* !YY_OSR_CS_WKT_OSR_CS_WKT_PARSER_H_INCLUDED  */
