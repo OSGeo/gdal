@@ -1225,6 +1225,40 @@ def test_gdalwarp_lib_132():
     return 'success'
 
 ###############################################################################
+# Test cutline with multiple touching polygons
+
+def test_gdalwarp_lib_133():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_gdalwarp_lib_133.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 0,1 1,0 1,0 0))'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((1 0,2 0,2 1,1 1,1 0))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4, 1)
+    src_ds.SetGeoTransform([0,1,0,1,0,-1])
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.Warp('', src_ds, format = 'MEM', cutlineDSName = '/vsimem/test_gdalwarp_lib_133.shp')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 5:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_gdalwarp_lib_133.shp')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1305,6 +1339,7 @@ gdaltest_list = [
     test_gdalwarp_lib_130,
     test_gdalwarp_lib_131,
     test_gdalwarp_lib_132,
+    test_gdalwarp_lib_133,
     test_gdalwarp_lib_cleanup,
     ]
 
