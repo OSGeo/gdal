@@ -187,6 +187,7 @@ The 2.1.1 release is a bug fix release.
 == Utilities ==
  * gdal_polygonize.py: explicitly set output layer geometry type to be polygon (#6530)
  * gdalwarp: do not densify cutlines by default when CUTLINE_BLEND_DIST is used (#6507)
+ * gdalwarp: fix failure with cutline on a layer of touching polygons (#6694)
 
 == GDAL drivers ==
 
