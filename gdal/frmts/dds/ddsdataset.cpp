@@ -45,7 +45,6 @@ using namespace crnlib;
 enum { DDS_COLOR_TYPE_RGB,
        DDS_COLOR_TYPE_RGB_ALPHA };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              DDSDataset                              */
@@ -61,7 +60,6 @@ public:
                                    GDALProgressFunc pfnProgress,
                                    void * pProgressData);
 };
-
 
 /************************************************************************/
 /*                             CreateCopy()                             */

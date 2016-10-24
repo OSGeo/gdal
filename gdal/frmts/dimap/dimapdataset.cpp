@@ -157,7 +157,6 @@ DIMAPDataset::~DIMAPDataset()
     CloseDependentDatasets();
 }
 
-
 /************************************************************************/
 /*                        CloseDependentDatasets()                      */
 /************************************************************************/
@@ -724,7 +723,6 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*               ReadImageInformation() DIMAP Version 1                 */

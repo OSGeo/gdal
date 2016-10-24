@@ -469,8 +469,6 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
                     (GDALGetDataTypeSize( eDataType ) / 8) );
         return TRUE;
     }
-
-
     return FALSE;
 }
 

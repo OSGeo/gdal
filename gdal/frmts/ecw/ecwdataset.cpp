@@ -936,7 +936,6 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            ECWDataset()                              */
 /************************************************************************/
@@ -3377,7 +3376,6 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN,
@@ -3397,7 +3395,6 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
-
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )

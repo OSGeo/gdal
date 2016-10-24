@@ -57,7 +57,6 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
 
     CPLStripXMLNamespace( psRoot, NULL, TRUE );
 
-
 /* -------------------------------------------------------------------- */
 /*      For now we look for projection codes recognised in the BAG      */
 /*      format (see ons_fsd.pdf: Metadata Dataset Character String      */

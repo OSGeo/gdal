@@ -215,7 +215,6 @@ class HFABand
     CPLErr      LoadOverviews();
 };
 
-
 /************************************************************************/
 /*                               HFAEntry                               */
 /*                                                                      */
@@ -378,7 +377,6 @@ class HFAField
     int         GetInstBytes( GByte *, int );
     int         GetInstCount( GByte * pabyData, int nDataSize );
 };
-
 
 /************************************************************************/
 /*                               HFAType                                */

@@ -1381,7 +1381,6 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
 }
 
-
 /************************************************************************/
 /*                           SetRasterBlock()                           */
 /************************************************************************/

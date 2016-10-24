@@ -158,7 +158,6 @@ class CTGRasterBand : public GDALPamRasterBand
     virtual char **GetCategoryNames();
 };
 
-
 /************************************************************************/
 /*                           CTGRasterBand()                            */
 /************************************************************************/
@@ -409,7 +408,6 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
     delete poOpenInfoToDelete;
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */

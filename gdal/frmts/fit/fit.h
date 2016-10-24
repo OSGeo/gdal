@@ -80,7 +80,6 @@ struct FIThead02 {              // file header for version 02
     // user extensible area...
 };
 
-
 struct FIThead01 {              // file header for version 01
     unsigned short magic;       // file ident
     unsigned short version;     // file version

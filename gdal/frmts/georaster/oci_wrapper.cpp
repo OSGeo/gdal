@@ -590,7 +590,6 @@ bool OWStatement::Execute( int nRows )
         return false;
     }
 
-
     if( nStatus == OCI_SUCCESS_WITH_INFO || nStatus == OCI_NO_DATA )
     {
         return false;

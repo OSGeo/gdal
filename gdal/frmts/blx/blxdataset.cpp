@@ -419,7 +419,6 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     return NULL;
 }
 
-
 void GDALRegister_BLX()
 
 {

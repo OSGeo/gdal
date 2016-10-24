@@ -116,7 +116,6 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg);
 
-
   public:
                 JP2KAKDataset();
     virtual ~JP2KAKDataset();

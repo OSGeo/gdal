@@ -136,7 +136,6 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
 /*****************************************************************************
  * COSARDataset Implementation
  *****************************************************************************/
@@ -189,7 +188,6 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     pDS->SetBand(1, new COSARRasterBand(pDS, nRTNB));
     return pDS;
 }
-
 
 /* register the driver with GDAL */
 void GDALRegister_COSAR()

@@ -29,7 +29,6 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -683,7 +682,6 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                  EpsilonDatasetCreateCopy ()                         */

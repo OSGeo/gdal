@@ -55,7 +55,6 @@ typedef struct {
 #define CRT_IMAGE_FDR   0x3FC01212
 #define CRT_IMAGE_DATA  0xEDED1212
 
-
 /* -------------------------------------------------------------------- */
 /*      Main CEOS info structure.                                       */
 /* -------------------------------------------------------------------- */
@@ -103,6 +102,4 @@ void CPL_ODLL        CEOSDestroyRecord( CEOSRecord * );
 CPL_C_END
 
 #endif /* ndef CEOSOPEN_H_INCLUDED */
-
-
 

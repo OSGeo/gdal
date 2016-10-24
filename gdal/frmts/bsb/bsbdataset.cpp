@@ -96,7 +96,6 @@ class BSBRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           BSBRasterBand()                            */
 /************************************************************************/
@@ -222,7 +221,6 @@ BSBDataset::~BSBDataset()
         BSBClose( psInfo );
 }
 
-
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -325,7 +323,6 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
         bUsePMWrap = false;
     else
         bUsePMWrap = true;
-
 
 /* -------------------------------------------------------------------- */
 /*      Apply rewrapping.                                               */
@@ -629,7 +626,6 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     CPLFree(thisLine);
     VSIFClose(gfp);
 }
-
 
 /************************************************************************/
 /*                            ScanForGCPsBSB()                          */

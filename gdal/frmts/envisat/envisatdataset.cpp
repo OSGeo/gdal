@@ -145,7 +145,6 @@ CPLErr MerisL2FlagBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              EnvisatDataset                          */
@@ -180,7 +179,6 @@ class EnvisatDataset : public RawDataset
     virtual const GDAL_GCP *GetGCPs();
     virtual char      **GetMetadataDomainList();
     virtual char **GetMetadata( const char * pszDomain );
-
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

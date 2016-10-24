@@ -116,7 +116,6 @@ static double _suggest_flip_point( const int cnt, GDAL_GCP *gcp )
     return (tmp-floor(tmp))*XDIF + XMIN;
 }
 
-
 void EnvisatUnwrapGCPs( int cnt, GDAL_GCP *gcp )
 {
     if ( cnt < 1 ) return ;

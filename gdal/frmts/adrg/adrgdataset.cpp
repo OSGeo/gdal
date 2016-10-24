@@ -120,7 +120,6 @@ class ADRGRasterBand : public GDALPamRasterBand
 //    virtual GDALRasterBand* GetOverview(int i);
 };
 
-
 /************************************************************************/
 /*                           ADRGRasterBand()                            */
 /************************************************************************/
@@ -436,7 +435,6 @@ static void FinishWriteLeader( VSILFILE* fd, int beginPos, int sizeFieldLength,
     VSIFSeekL(fd, endPos, SEEK_SET);
 }
 
-
 static int BeginHeader(VSILFILE* fd, int sizeFieldLength, int sizeFieldPos, int sizeFieldTag,
                        int nFields)
 {
@@ -520,7 +518,6 @@ static int WriteFieldDecl(VSILFILE* fd, char _data_struct_code , char _data_type
     len += WriteFieldTerminator(fd);
     return len;
 }
-
 
 /************************************************************************/
 /*                          ADRGDataset()                               */

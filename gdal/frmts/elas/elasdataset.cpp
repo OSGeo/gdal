@@ -163,7 +163,6 @@ class ELASRasterBand : public GDALPamRasterBand
     virtual CPLErr IWriteBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           ELASRasterBand()                            */
 /************************************************************************/
@@ -247,7 +246,6 @@ CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /*      ELASDataset                                                     */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            ELASDataset()                             */
@@ -668,7 +666,6 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_ELAS()                         */

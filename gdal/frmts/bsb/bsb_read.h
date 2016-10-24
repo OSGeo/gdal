@@ -38,7 +38,6 @@ CPL_C_START
 typedef struct {
     VSILFILE   *fp;
 
-
     GByte       *pabyBuffer;
     int         nBufferOffset;
     int         nBufferSize;

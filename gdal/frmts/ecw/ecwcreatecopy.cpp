@@ -1803,7 +1803,6 @@ CPLErr ECWWriteDataset::SetProjection( const char *pszWKT )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                             Crystalize()                             */
 /************************************************************************/
@@ -1874,7 +1873,6 @@ CPLErr ECWWriteDataset::FlushLine()
         for( int i = 0; i < nBands; i++ )
             papOutputLine[i] =
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);
-
 
         eErr =  oCompressor.ourWriteLineBIL( (UINT16) nBands, papOutputLine );
         CPLFree( papOutputLine );

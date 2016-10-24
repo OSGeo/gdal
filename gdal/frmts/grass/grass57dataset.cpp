@@ -193,7 +193,6 @@ class GRASSRasterBand : public GDALRasterBand
 
 };
 
-
 /************************************************************************/
 /*                          GRASSRasterBand()                           */
 /************************************************************************/
@@ -469,7 +468,6 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
         }
     }
 
-
     return CE_None;
 }
 
@@ -716,7 +714,6 @@ double GRASSRasterBand::GetNoDataValue( int *pbSuccess )
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            GRASSDataset()                            */
 /************************************************************************/
@@ -864,7 +861,6 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Set error function
     G_set_error_routine ( (GrassErrorHandler) Grass2CPLErrorHook );
-
 
     // GISBASE is path to the directory where GRASS is installed,
     if ( !getenv( "GISBASE" ) ) {

@@ -67,12 +67,10 @@ static const char * const apszAuxMetadataItems[] = {
  NULL
 };
 
-
 const char * const * GetHFAAuxMetaDataList()
 {
     return apszAuxMetadataItems;
 }
-
 
 /************************************************************************/
 /*                          HFAGetDictionary()                          */
@@ -339,7 +337,6 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 
     return psBase->psDependent;
 }
-
 
 /************************************************************************/
 /*                          HFAParseBandInfo()                          */
@@ -1799,8 +1796,6 @@ static const char * const aszDefaultDD[] = {
 NULL
 };
 
-
-
 /************************************************************************/
 /*                            HFACreateLL()                             */
 /*                                                                      */
@@ -2288,7 +2283,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 
     return bRet;
 }
-
 
 /************************************************************************/
 /*                             HFACreate()                              */
@@ -3278,7 +3272,6 @@ static bool HFAReadAndValidatePoly( HFAEntry *poTarget,
 /************************************************************************/
 /*                         HFAReadXFormStack()                          */
 /************************************************************************/
-
 
 int HFAReadXFormStack( HFAHandle hHFA,
                        Efga_Polynomial **ppasPolyListForward,

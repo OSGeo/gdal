@@ -974,7 +974,6 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") )
         return NULL;
 
-
     DODSDataset *poDS = new DODSDataset();
     char **papszVarConstraintList = NULL;
 
@@ -1370,8 +1369,6 @@ void DODSRasterBand::HarvestDAS()
             SetNoDataValue( CPLAtof(oValue.c_str()) );
         }
     }
-
-
 
 /* -------------------------------------------------------------------- */
 /*      Collect color table                                             */

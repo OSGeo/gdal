@@ -91,7 +91,6 @@ class HF2RasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           HF2RasterBand()                            */
 /************************************************************************/
@@ -658,7 +657,6 @@ CPLErr HF2Dataset::GetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
-
 
 static void WriteShort(VSILFILE* fp, GInt16 val)
 {

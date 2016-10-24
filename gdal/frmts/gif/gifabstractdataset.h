@@ -119,5 +119,4 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
     virtual GDALColorTable *GetColorTable();
 };
 
-
 #endif

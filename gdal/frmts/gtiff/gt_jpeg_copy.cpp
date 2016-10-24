@@ -62,7 +62,6 @@ static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
 
 #endif // defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
 
-
 #ifdef JPEG_DIRECT_COPY
 
 /************************************************************************/
