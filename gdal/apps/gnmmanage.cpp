@@ -153,7 +153,6 @@ static void Usage(int bShort = TRUE)
     Usage(NULL, bShort);
 }
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -543,7 +542,6 @@ int main( int nArgc, char ** papszArgv )
 
         if(pszInputDataset == NULL)
             Usage("No input dataset name provided");
-
 
         // open
         poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,

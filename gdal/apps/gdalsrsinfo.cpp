@@ -77,7 +77,6 @@ static void Usage(const char* pszErrorMsg = NULL)
     exit( 1 );
 }
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -359,10 +358,8 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     if( !bDebug )
         CPLSetErrorHandler ( oErrorHandler );
 
-
     return bGotSRS;
 }
-
 
 /************************************************************************/
 /*                      PrintSRS()                                      */

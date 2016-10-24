@@ -494,7 +494,6 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
     return poGeom;
 }
 
-
 /************************************************************************/
 /*                     OGRSplitListFieldLayer                           */
 /************************************************************************/
@@ -765,7 +764,6 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
 
     return true;
 }
-
 
 /************************************************************************/
 /*                       TranslateFeature()                             */
@@ -2040,7 +2038,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             pfnProgress(1.0, "", pProgressArg);
         }
 
-
         if( !bTargetLayersHaveBeenCreated )
         {
             // bTargetLayersHaveBeenCreated not used after here.
@@ -2248,7 +2245,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 pProgressArg = NULL;
             }
 
-
             if (psOptions->bDisplayProgress)
             {
                 if( nCountLayersFeatures != 0 )
@@ -2329,7 +2325,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         return NULL;
     }
 }
-
 
 /************************************************************************/
 /*                               SetZ()                                 */
@@ -3884,7 +3879,6 @@ end_loop:
         if( poFeatureIn != NULL )
             break;
     }
-
 
     if( psOptions->nGroupTransactions )
     {

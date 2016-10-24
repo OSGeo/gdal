@@ -165,7 +165,6 @@ int main( int nArgc, char ** papszArgv )
                         papszArgv[i], pszWKT );
                 CPLFree( pszWKT );
 
-
                 if( bReportXML )
                 {
                     char       *pszRawXML;

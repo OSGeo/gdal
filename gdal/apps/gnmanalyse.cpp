@@ -405,8 +405,6 @@ int main( int nArgc, char ** papszArgv )
         exit( -nArgc );
     }
 
-
-
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( EQUAL(papszArgv[1], "--utility_version") )

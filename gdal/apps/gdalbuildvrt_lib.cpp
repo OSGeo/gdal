@@ -89,7 +89,6 @@ static int ArgIsNumeric( const char *pszArg )
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
 
-
 /************************************************************************/
 /*                         GetSrcDstWin()                               */
 /************************************************************************/
@@ -224,7 +223,6 @@ class VRTBuilder
 
         GDALDataset*     Build(GDALProgressFunc pfnProgress, void * pProgressData);
 };
-
 
 /************************************************************************/
 /*                          VRTBuilder()                                */
@@ -877,16 +875,21 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
     }
 
-
-    for(int i=0;i<nInputFiles;i++)
+    for( int i = 0; i < nInputFiles; i++ )
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
-        double dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
-            dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize;
+        double dfSrcXOff;
+        double dfSrcYOff;
+        double dfSrcXSize;
+        double dfSrcYSize;
+        double dfDstXOff;
+        double dfDstYOff;
+        double dfDstXSize;
+        double dfDstYSize;
         if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,

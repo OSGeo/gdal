@@ -835,7 +835,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /*      virtual input source to copy from.                              */
 /* -------------------------------------------------------------------- */
 
-
     int bSpatialArrangementPreserved = (
            psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0
         && psOptions->adfSrcWin[2] == GDALGetRasterXSize(hSrcDataset)
@@ -1572,7 +1571,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     GDALTranslateOptionsFree(psOptions);
     return hOutDS;
 }
-
 
 /************************************************************************/
 /*                           AttachMetadata()                           */

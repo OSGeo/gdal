@@ -1438,7 +1438,6 @@ end:
     return bRet;
 }
 
-
 /************************************************************************/
 /*                       TestOGRLayerSetNextByIndex()                   */
 /*                                                                      */
@@ -1555,7 +1554,6 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
 
         goto end;
     }
-
 
     if( bVerbose )
         printf( "INFO: SetNextByIndex() read test passed.\n" );
@@ -2140,7 +2138,6 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 
     return bRet;
 }
-
 
 /************************************************************************/
 /*                      TestAttributeFilter()                           */
@@ -3212,8 +3209,6 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
         bRet = FALSE;
     }
 
-
-
     if( bRet && bVerbose )
         printf("INFO: TestLayerSQL passed.\n");
 
@@ -3315,7 +3310,6 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 /*      Test error conditions.                                          */
 /* -------------------------------------------------------------------- */
     bRet &= TestLayerErrorConditions( poLayer );
-
 
 /* -------------------------------------------------------------------- */
 /*      Test some SQL.                                                  */

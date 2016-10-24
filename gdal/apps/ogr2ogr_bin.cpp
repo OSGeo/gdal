@@ -302,7 +302,6 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where|@filename]\n"
             "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
