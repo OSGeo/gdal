@@ -1405,6 +1405,50 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 }
 
 /************************************************************************/
+/*                          ValidateCutline()                           */
+/************************************************************************/
+
+static bool ValidateCutline(OGRGeometryH hGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    if( eType == wkbMultiPolygon )
+    {
+        for( int iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+        {
+            OGRGeometryH hPoly = OGR_G_GetGeometryRef(hGeom,iGeom);
+            if( !ValidateCutline(hPoly) )
+                return false;
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hGeom) )
+        {
+            char *pszWKT = NULL;
+            OGR_G_ExportToWkt( hGeom, &pszWKT );
+            CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+            //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
+            CPLFree( pszWKT );
+
+            if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cutline polygon is invalid.");
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cutline polygon is invalid.");
+                return false;
+            }
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                            LoadCutline()                             */
 /*                                                                      */
 /*      Load blend cutline from OGR datasource.                         */
@@ -1475,6 +1519,12 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
             goto error;
         }
 
+        if( !ValidateCutline(hGeom) )
+        {
+            OGR_F_Destroy( hFeat );
+            goto error;
+        }
+
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
         if( eType == wkbPolygon )
@@ -1488,12 +1538,6 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
                 OGR_G_AddGeometry( hMultiPolygon,
                                    OGR_G_GetGeometryRef(hGeom,iGeom) );
             }
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
-            OGR_F_Destroy( hFeat );
-            goto error;
         }
 
         OGR_F_Destroy( hFeat );
@@ -2339,22 +2383,10 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
             return CE_Failure;
         }
     }
-    else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
+    else if( !ValidateCutline(hMultiPolygon) )
     {
-        char *pszWKT = NULL;
-        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
-        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
-        //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
-        CPLFree( pszWKT );
-
-        if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
-            CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cutline is not valid after transformation");
-            OGR_G_DestroyGeometry( hMultiPolygon );
-            return CE_Failure;
-        }
+        OGR_G_DestroyGeometry( hMultiPolygon );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
