@@ -79,7 +79,6 @@ class GXFRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           GXFRasterBand()                            */
 /************************************************************************/
@@ -176,7 +175,6 @@ GXFDataset::~GXFDataset()
         GXFClose( hGXF );
     CPLFree( pszProjection );
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */

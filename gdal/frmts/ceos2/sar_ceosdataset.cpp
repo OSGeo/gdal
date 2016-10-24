@@ -59,7 +59,6 @@ static const char * const CeosExtension[][6] = {
 /* Jers from Japan- not sure if this is generalized as much as it could be */
 { "VOLD", "Sarl_01", "Imop_%02d", "Sart_01", "NULL", "base" },
 
-
 /* Radarsat: basename, not extension */
 { "vdf_dat", "lea_%02d", "dat_%02d", "tra_%02d", "nul_vdf", "base" },
 
@@ -82,7 +81,6 @@ static const char * const CeosExtension[][6] = {
 static int
 ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
              vsi_l_offset max_bytes );
-
 
 static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 {
@@ -112,7 +110,6 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 /* For ERS calibration and incidence angle information */
 #define ERS_GENERAL_FACILITY_DATA_TC  QuadToTC( 10, 200, 31, 50 )
 #define ERS_GENERAL_FACILITY_DATA_ALT_TC QuadToTC( 10, 216, 31, 50 )
-
 
 #define RSAT_PROC_PARAM_TC QuadToTC( 18, 120, 18, 20 )
 
@@ -738,7 +735,6 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
     return pasGCPList;
 }
 
-
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
@@ -845,7 +841,6 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
                                          CPLES_BackslashQuotable );
     papszTempMD = CSLSetNameValue( NULL, "EscapedRecord", pszSafeCopy );
     CPLFree( pszSafeCopy );
-
 
     // Copy with '\0' replaced by spaces.
 
@@ -1057,7 +1052,6 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "                                ") )
             SetMetadataItem( "CEOS_SENSOR_ID", szField );
 
-
 /* -------------------------------------------------------------------- */
 /*      ORBIT NUMBER                                                    */
 /* -------------------------------------------------------------------- */
@@ -1066,7 +1060,6 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !STARTS_WITH_CI(szField, "        ") )
             SetMetadataItem( "CEOS_ORBIT_NUMBER", szField );
-
 
 /* -------------------------------------------------------------------- */
 /*      Platform latitude                                               */
@@ -1360,13 +1353,11 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_CORNER", szField );
 
-
         GetCeosField( record, 453, "A4", szField );
         szField[4] = '\0';
 
         if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_TRANSPOSE", szField );
-
 
         GetCeosField( record, 457, "A4", szField );
         szField[4] = '\0';
@@ -1374,13 +1365,11 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "    ") )
             SetMetadataItem( "CEOS_DM_START_SAMPLE", szField );
 
-
         GetCeosField( record, 461, "A5", szField );
         szField[5] = '\0';
 
         if( !STARTS_WITH_CI(szField, "     ") )
             SetMetadataItem( "CEOS_DM_START_PULSE", szField );
-
 
         GetCeosField( record, 466, "A16", szField );
         szField[16] = '\0';
@@ -1388,13 +1377,11 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_ALPHA", szField );
 
-
         GetCeosField( record, 482, "A16", szField );
         szField[16] = '\0';
 
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_BETA", szField );
-
 
         GetCeosField( record, 498, "A16", szField );
         szField[16] = '\0';
@@ -1402,13 +1389,11 @@ void SAR_CEOSDataset::ScanForMetadata()
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_SLOW_ALPHA", szField );
 
-
         GetCeosField( record, 514, "A16", szField );
         szField[16] = '\0';
 
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_SLOW_BETA", szField );
-
 
         GetCeosField( record, 530, "A16", szField );
         szField[16] = '\0';

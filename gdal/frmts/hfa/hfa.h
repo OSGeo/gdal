@@ -49,12 +49,10 @@ typedef struct {
         double y;                       /* coordinate y-value */
 } Eprj_Coordinate;
 
-
 typedef struct {
         double width;                   /* pixelsize width */
         double height;                  /* pixelsize height */
 } Eprj_Size;
-
 
 typedef struct {
         char * proName;             /* projection name */
@@ -232,7 +230,6 @@ HFAEvaluateXFormStack( int nStepCount, int bForward,
                        double *pdfX, double *pdfY );
 
 char CPL_DLL **HFAReadCameraModel( HFAHandle psInfo );
-
 
 /* -------------------------------------------------------------------- */
 /*      Projection codes.                                               */

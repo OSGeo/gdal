@@ -105,5 +105,4 @@ class HDF4Dataset : public GDALPamDataset
 char *SPrintArray( GDALDataType eDataType, const void *paDataArray,
                    int nValues, const char *pszDelimiter );
 
-
 #endif /* HDF4DATASET_H_INCLUDED_ */

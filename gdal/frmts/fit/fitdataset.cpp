@@ -99,7 +99,6 @@ public:
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           FITRasterBand()                            */
 /************************************************************************/
@@ -152,12 +151,10 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     /* ... */
 }
 
-
 FITRasterBand::~FITRasterBand()
 {
     VSIFree ( tmpImage );
 }
-
 
 /************************************************************************/
 /*                            IReadBlock()                              */
@@ -174,7 +171,6 @@ FITRasterBand::~FITRasterBand()
                                        poFIT_DS->nBands]; \
                     } \
     }
-
 
 #define COPY_YFIRST(t) { \
                 t *dstp = (t *) pImage; \
@@ -281,7 +277,6 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-
 #ifdef swapping
     unsigned long i = 0;
 
@@ -347,7 +342,6 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 xinc = 1;
                 yinc = 1;
             } // switch
-
 
             if (xinc == 1) {
                 xstart = 0;
@@ -868,7 +862,6 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
 
-
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT01") &&
         !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT02") )
         return NULL;
@@ -901,7 +894,6 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     poDS->eAccess = poOpenInfo->eAccess;
-
 
     poDS->info = new FITinfo;
     FITinfo *info = poDS->info;

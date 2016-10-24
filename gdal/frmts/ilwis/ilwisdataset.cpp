@@ -445,7 +445,6 @@ static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
     return CE_None;
 }
 
-
 ILWISDataset::ILWISDataset() :
     pszProjection(CPLStrdup("")),
     bGeoDirty(FALSE),
@@ -1309,7 +1308,6 @@ ILWISRasterBand::~ILWISRasterBand()
     }
 }
 
-
 /************************************************************************/
 /*                             ILWISOpen()                             */
 /************************************************************************/
@@ -2045,7 +2043,6 @@ int ValueRange::iRaw(double rValueIn)
     rVal -= _r0;
     return intConv(rVal);
 }
-
 
 /************************************************************************/
 /*                    GDALRegister_ILWIS()                              */

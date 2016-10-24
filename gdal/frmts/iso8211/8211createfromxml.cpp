@@ -97,7 +97,6 @@ int main(int nArgc, char* papszArgv[])
         psIter = psIter->psNext;
     }
 
-
     char chInterchangeLevel = '3';
     chInterchangeLevel =
         CPLGetXMLValue(poXMLDDFModule, "_interchangeLevel",

@@ -543,5 +543,4 @@ class CPL_ODLL DDFField
     const char          *pachData;
 };
 
-
 #endif /* ndef ISO8211_H_INCLUDED */

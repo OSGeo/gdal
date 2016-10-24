@@ -2005,7 +2005,6 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     pabySavedDataBuffer = psResult->pabyData;
 
     psResult->pabyData = NULL;
-    psResult->nDataLen = psResult->nDataAlloc = 0;
 
     if( poDS == NULL )
         FlushMemoryResult();

@@ -113,7 +113,6 @@ class GS7BGDataset : public GDALPamDataset
     CPLErr SetGeoTransform( double *padfGeoTransform );
 };
 
-
 const size_t GS7BGDataset::nHEADER_SIZE = 100;
 
 static const long  nHEADER_TAG = 0x42525344;
@@ -1094,7 +1093,6 @@ CPLErr GS7BGDataset::WriteHeader( VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
             "Unable to write data size to grid file.\n" );
         return CE_Failure;
     }
-
 
     return CE_None;
 }

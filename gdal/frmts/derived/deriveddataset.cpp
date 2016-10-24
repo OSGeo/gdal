@@ -42,7 +42,6 @@ class DerivedDataset : public VRTDataset
         static GDALDataset *Open( GDALOpenInfo * );
 };
 
-
 DerivedDataset::DerivedDataset(int nXSize, int nYSize) :
     VRTDataset(nXSize, nYSize)
 {

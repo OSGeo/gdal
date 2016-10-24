@@ -137,7 +137,6 @@ class E00GRIDRasterBand : public GDALPamRasterBand
                                        double *pdfMean, double *padfStdDev );
 };
 
-
 /************************************************************************/
 /*                         E00GRIDRasterBand()                          */
 /************************************************************************/
@@ -682,7 +681,6 @@ CPLErr E00GRIDDataset::GetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                             ReadLine()                               */

@@ -625,7 +625,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                        GDALRegister_HDF5Image()                      */
 /************************************************************************/
@@ -1165,7 +1164,6 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
         }
     }
 }
-
 
 /************************************************************************/
 /*                          CaptureCSKGCPs()                            */

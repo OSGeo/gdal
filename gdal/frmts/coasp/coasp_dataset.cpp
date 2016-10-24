@@ -246,7 +246,6 @@ int COASPMetadataReader::GotoMetadataItem(const char *pszName)
  * Declaration of the COASPDataset class                           *
  *******************************************************************/
 
-
 class COASPRasterBand;
 
 /* A couple of observations based on the data I have available to me:
@@ -330,7 +329,6 @@ CPLErr COASPRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 #endif
         return CE_None;
 }
-
 
 /********************************************************************
  * ================================================================ *
@@ -465,7 +463,6 @@ GDALDataset *COASPDataset::Open( GDALOpenInfo *poOpenInfo )
     nValue = poItem->GetItemValue();
     poDS->nRasterXSize = atoi(nValue);
     free(nValue);
-
 
     /* Horizontal transmit, horizontal receive */
     psChan[0] = 'h';

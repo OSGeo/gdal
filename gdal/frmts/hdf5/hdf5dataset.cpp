@@ -509,7 +509,6 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
     if( H5Gget_objinfo( hHDF5, pszObjName, FALSE, &oStatbuf ) < 0  )
         return -1;
 
-
 /* -------------------------------------------------------------------- */
 /*      Look for next child                                             */
 /* -------------------------------------------------------------------- */
@@ -653,7 +652,6 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                          HDF5AttrIterate()                           */
@@ -913,7 +911,6 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                       HDF5FindDatasetObjectsbyPath()                 */
 /*      Find object by name                                             */
@@ -950,7 +947,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
 /* -------------------------------------------------------------------- */
     return NULL;
 }
-
 
 /************************************************************************/
 /*                       HDF5FindDatasetObjects()                       */
@@ -990,7 +986,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
     return NULL;
 }
 
-
 /************************************************************************/
 /*                        HDF5ListGroupObjects()                        */
 /*                                                                      */
@@ -1005,7 +1000,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
         for( hsize_t i=0; i < poRootGroup->nbObjs; i++ ) {
             poDS->HDF5ListGroupObjects( poRootGroup->poHchild+i, bSUBDATASET );
         }
-
 
     if( poRootGroup->nType == H5G_GROUP ) {
         CreateMetadata( poRootGroup, H5G_GROUP );
@@ -1074,7 +1068,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                       ReadGlobalAttributes()                         */
 /************************************************************************/
@@ -1126,7 +1119,6 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     HDF5ListGroupObjects( poRootGroup, bSUBDATASET );
     return CE_None;
 }
-
 
 /**
  * Reads an array of double attributes from the HDF5 metadata.

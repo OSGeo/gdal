@@ -657,7 +657,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
             piwDatum++;
         } // End of searching for matching datum.
 
-
 /* -------------------------------------------------------------------- */
 /*      If no matching for datum definition, fetch info about an        */
 /*      ellipsoid.  semi major axis is always returned in meters        */

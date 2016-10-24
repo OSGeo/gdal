@@ -552,7 +552,6 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                                 char **papszParmList, uint32 nBitsPerSample );
 };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                        GTiffJPEGOverviewDS                           */
@@ -3840,7 +3839,6 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     return eErr;
 }
 
-
 /************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
@@ -3874,7 +3872,6 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( bTried )
             return eErr;
     }
-
 
     if( poGDS->eVirtualMemIOUsage != VIRTUAL_MEM_IO_NO )
     {
@@ -4156,7 +4153,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       FillCacheForOtherBands()                       */
@@ -5430,7 +5426,6 @@ class GTiffRGBABand CPL_FINAL : public GTiffRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           GTiffRGBABand()                            */
 /************************************************************************/
@@ -5593,7 +5588,6 @@ class GTiffOddBitsBand : public GTiffRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 };
-
 
 /************************************************************************/
 /*                           GTiffOddBitsBand()                         */
@@ -6491,7 +6485,6 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             GTiffBitmapBand                          */
@@ -6512,7 +6505,6 @@ class GTiffBitmapBand : public GTiffOddBitsBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
-
 
 /************************************************************************/
 /*                           GTiffBitmapBand()                          */
@@ -6607,7 +6599,6 @@ class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
     virtual CPLErr IWriteBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                       GTiffSplitBitmapBand()                         */
 /************************************************************************/
@@ -6624,11 +6615,7 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDSIn, int nBandIn )
 /*                      ~GTiffSplitBitmapBand()                         */
 /************************************************************************/
 
-GTiffSplitBitmapBand::~GTiffSplitBitmapBand()
-
-{
-}
-
+GTiffSplitBitmapBand::~GTiffSplitBitmapBand() {}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -6708,7 +6695,6 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int /* nBlockXOff */,
 /*                            GTiffDataset                              */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            GTiffDataset()                            */
@@ -7369,7 +7355,6 @@ template<> bool IsEqualToNoData<double>( double value, double noDataValue )
         CPLIsNan(noDataValue) ?
         CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
 }
-
 
 template<class T>
 bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
@@ -9076,7 +9061,6 @@ CPLErr GTiffDataset::CleanOverviews()
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                   RegisterNewOverviewDataset()                       */
 /************************************************************************/
@@ -9284,7 +9268,6 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       CreateInternalMaskOverviews()                  */
@@ -9631,7 +9614,6 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nExtraSamples, panExtraSampleValues,
                     osMetadata );
 
-
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
             else
@@ -9679,7 +9661,6 @@ CPLErr GTiffDataset::IBuildOverviews(
             pszResampling, GDALDummyProgress, NULL );
         CPLFree(papoOverviewBands);
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
@@ -9836,7 +9817,6 @@ CPLErr GTiffDataset::IBuildOverviews(
     /* -------------------------------------------------------------------- */
         CPLFree( papoOverviewBands );
     }
-
 
     pfnProgress( 1.0, NULL, pProgressData );
 
@@ -10424,7 +10404,6 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
     }
 
-
     uint16 nPhotometric;
     if( !TIFFGetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
         nPhotometric = PHOTOMETRIC_MINISBLACK;
@@ -10481,7 +10460,6 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
             AppendMetadataItem( &psRoot, &psTail, "UNITTYPE",
                                 pszUnitType, nBand,
                                 "unittype", "" );
-
 
         if( strlen(poBand->GetDescription()) > 0 )
         {
@@ -13468,7 +13446,6 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
         CPLFree( pszTabWKT );
     }
 
-
     if( m_bLoadPam && m_nPAMGeorefSrcIndex >= 0 )
     {
 /* -------------------------------------------------------------------- */
@@ -13752,7 +13729,6 @@ void GTiffDataset::ScanDirectories()
     }
 }
 
-
 static int GTiffGetLZMAPreset(char** papszOptions)
 {
     int nLZMAPreset = -1;
@@ -13770,7 +13746,6 @@ static int GTiffGetLZMAPreset(char** papszOptions)
     }
     return nLZMAPreset;
 }
-
 
 static int GTiffGetZLevel(char** papszOptions)
 {
@@ -13935,7 +13910,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         pszProfile = "GDALGeoTIFF";
 
     const bool bTiled = CPLFetchBool( papszParmList, "TILED", false );
-
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
     if( pszValue != NULL )

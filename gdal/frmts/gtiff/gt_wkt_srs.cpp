@@ -1277,7 +1277,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             else
                 strcpy( szInMeters, "1" );
 
-
             oSRS.GetAttrNode( "COMPD_CS|VERT_CS|UNIT" )
                 ->AddChild( new OGR_SRSNode( szInMeters ) );
 
@@ -1604,7 +1603,6 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
                 nProjection = 16000 + nZone;
             else
                 nProjection = 16100 + nZone;
-
 
             GTIFKeySet(psGTIF, ProjectedCSTypeGeoKey, TYPE_SHORT, 1,
                        KvUserDefined );
@@ -2649,7 +2647,6 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
     GTIFDefn *psGTIFDefn = static_cast<GTIFDefn *>(
         CPLCalloc(1, sizeof(GTIFDefn)) );
 #endif
-
 
     if( hGTIF != NULL && GTIFGetDefn( hGTIF, psGTIFDefn ) )
         *ppszWKT = GTIFGetOGISDefn( hGTIF, psGTIFDefn );

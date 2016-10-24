@@ -92,7 +92,6 @@ class DTEDRasterBand : public GDALPamRasterBand
     virtual const char* GetUnitType() { return "m"; }
 };
 
-
 /************************************************************************/
 /*                           DTEDRasterBand()                            */
 /************************************************************************/

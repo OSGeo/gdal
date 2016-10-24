@@ -1187,7 +1187,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     //      Copy information to the raster band(s)
     // --------------------------------------------------------------------
 
-
     for( int i = 1; i <= poDS->nBands; i++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( i );
@@ -3129,7 +3128,6 @@ const char *GetStateName( int nCode )
     }
     return NULL;
 }
-
 
 /************************************************************************/
 /*                            GetSpcs()                                 */

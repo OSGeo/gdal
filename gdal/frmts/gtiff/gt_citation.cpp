@@ -313,7 +313,6 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     return ret;
 }
 
-
 /************************************************************************/
 /*                       SetLinearUnitCitation()                        */
 /*                                                                      */
@@ -564,7 +563,6 @@ void GetGeogCSFromCitation( char* szGCSName, int nGCSName,
     }
     return;
 }
-
 
 /************************************************************************/
 /*               CheckCitationKeyForStatePlaneUTM()                     */

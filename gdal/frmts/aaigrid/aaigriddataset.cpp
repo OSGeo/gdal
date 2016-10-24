@@ -84,7 +84,6 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     bool        bNoDataSet;
     double      dfNoDataValue;
 
-
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
   public:
@@ -209,7 +208,6 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-
     if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -289,7 +287,6 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 
     return poODS->dfNoDataValue;
 }
-
 
 /************************************************************************/
 /*                           SetNoDataValue()                           */
@@ -627,7 +624,6 @@ GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return CommonOpen(poOpenInfo, FORMAT_GRASSASCII);
 }
-
 
 /************************************************************************/
 /*                          ParseHeader()                               */

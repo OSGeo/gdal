@@ -1341,7 +1341,6 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     }
     VSIFCloseL( fpBin );
 
-
 /* -------------------------------------------------------------------- */
 /*      Try writing header file.                                        */
 /* -------------------------------------------------------------------- */

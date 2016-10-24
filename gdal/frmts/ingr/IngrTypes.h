@@ -196,7 +196,6 @@ typedef enum {
     // be decoded to find the end of a raster line.
 } INGR_IndexingMethod;
 
-
 //  ----------------------------------------------------------------------------
 //    Color Table Values ( CTV )
 //  ----------------------------------------------------------------------------

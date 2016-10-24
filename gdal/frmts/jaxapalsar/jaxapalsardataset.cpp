@@ -335,7 +335,6 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                      PALSARJaxaDataset                               */
@@ -350,7 +349,6 @@ int PALSARJaxaDataset::GetGCPCount() {
     return nGCPCount;
 }
 
-
 /************************************************************************/
 /*                             GetGCPs()                                */
 /************************************************************************/
@@ -358,7 +356,6 @@ int PALSARJaxaDataset::GetGCPCount() {
 const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
     return pasGCPList;
 }
-
 
 /************************************************************************/
 /*                            ReadMetadata()                            */

@@ -796,7 +796,6 @@ int DDFFieldDefn::ApplyFormats()
  * @return The subfield pointer, or NULL if there isn't any such subfield.
  */
 
-
 DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
 
 {
