@@ -71,6 +71,7 @@ netCDF driver:
 RMF driver:
 * fix wrong counter decrement that caused compressed RMF to be incorrectly
   decompressed (https://github.com/OSGeo/gdal/pull/153)
+ * fix load/store inversion of cm and dm units in MTW files (https://github.com/OSGeo/gdal/pull/162)
 
 ROI_PAC driver:
 * fix computation of line offset for multi-band BIP files, and warn if detecting
@@ -216,9 +217,6 @@ MRF driver:
 
 PostgisRaster driver:
  * fix potential crash when one tile has a lower number of bands than the max of the table (fixes #6267)
-
-RMF driver:
- * fix load/store inversion of cm and dm units in MTW files (https://github.com/OSGeo/gdal/pull/162)
 
 SAFE driver:
  * fix handling of SLC Products by providing access to measurements as subdatasets (#6514)
