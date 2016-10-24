@@ -48,7 +48,6 @@ CPL_CVSID("$Id$");
 #define A(r,c) _AA[ _nof_eqs * (r) + (c) ]
 #define Ainv(r,c) _Ainv[ _nof_eqs * (r) + (c) ]
 
-
 #define VIZ_GEOREF_SPLINE_DEBUG 0
 
 #ifndef HAVE_ARMADILLO

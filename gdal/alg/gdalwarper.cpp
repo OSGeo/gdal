@@ -585,7 +585,6 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
     if (hAlphaBand == NULL)
         return CE_Failure;
 
-
     // rescale.
     const float inv_alpha_max = static_cast<float>(1.0 / CPLAtof(
       CSLFetchNameValueDef( psWO->papszWarpOptions, "SRC_ALPHA_MAX", "255" )));
@@ -1265,7 +1264,6 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
     CPLFree( psOptions );
 }
-
 
 #define COPY_MEM(target,type,count)                                     \
    do { if( (psSrcOptions->target) != NULL && (count) != 0 )            \

@@ -234,7 +234,6 @@ int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
-
 int CPL_DLL CPL_STDCALL
 GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                      GDALDatasetH hDstDS,

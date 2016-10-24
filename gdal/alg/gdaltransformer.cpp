@@ -146,7 +146,6 @@ points may have failed) or FALSE if the overall transformation fails.
  * @return CE_None if successful or CE_Failure otherwise.
  */
 
-
 CPLErr CPL_STDCALL
 GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          GDALTransformerFunc pfnTransformer,
@@ -163,7 +162,6 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                                      padfGeoTransformOut, pnPixels, pnLines,
                                      adfExtent, 0 );
 }
-
 
 static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
     GDALTransformerFunc pfnTransformer, void *pTransformArg,
@@ -227,7 +225,6 @@ static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
 
     return (nBadCount == nSamplePoints);
 }
-
 
 static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
      GDALTransformerFunc pfnTransformer, void *pTransformArg,
@@ -798,7 +795,6 @@ retry:
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Recompute some bounds so that all return values are consistent  */
 /* -------------------------------------------------------------------- */
@@ -918,7 +914,6 @@ static void* GDALCreateSimilarGenImgProjTransformer( void *hTransformArg, double
     else if( psClonedInfo->pDstTPSTransformArg )
         psClonedInfo->pDstTPSTransformArg = GDALCloneTransformer( psInfo->pDstTPSTransformArg );
 
-
     return psClonedInfo;
 }
 
@@ -995,8 +990,6 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
     return pRet;
 }
-
-
 
 /************************************************************************/
 /*                          InsertCenterLong()                          */
@@ -3468,7 +3461,6 @@ void* GDALCreateSimilarTransformer( void* pTransformArg, double dfRatioX, double
  * @param pTransformArg the handle to update.
  * @param padfGeoTransform the destination geotransform to apply (six doubles).
  */
-
 
 void GDALSetTransformerDstGeoTransform(void *pTransformArg,
                                        const double *padfGeoTransform )

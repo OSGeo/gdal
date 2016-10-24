@@ -97,7 +97,6 @@ If this option is set, all pixels within the MAXDIST threadhold are
 set to this fixed value instead of to a proximity distance.
 */
 
-
 CPLErr CPL_STDCALL
 GDALComputeProximity( GDALRasterBandH hSrcBand,
                       GDALRasterBandH hProximityBand,

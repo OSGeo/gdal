@@ -930,7 +930,6 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  * This field may be NULL if not required for the pfnProgress being used.
  */
 
-
 /************************************************************************/
 /*                           GDALWarpKernel()                           */
 /************************************************************************/
@@ -2101,7 +2100,6 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
             break;
         }
 
-
         case GDT_CFloat64:
         {
             double* pSrc = (double*) poWK->papabySrcImage[iBand];
@@ -2884,7 +2882,6 @@ static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
     return true;
 }
 
-
 /************************************************************************/
 /*                          GWKLanczosSinc()                            */
 /************************************************************************/
@@ -3098,7 +3095,6 @@ typedef bool (*pfnGWKResampleType) ( GDALWarpKernel *poWK, int iBand,
                                     double *pdfDensity,
                                     double *pdfReal, double *pdfImag,
                                     GWKResampleWrkStruct* psWrkStruct );
-
 
 struct _GWKResampleWrkStruct
 {
@@ -3315,7 +3311,6 @@ static bool GWKResample( GDALWarpKernel *poWK, int iBand,
         dfWeight1 = ( bYScaleBelow1 ) ?
                 pfnGetWeight((j - dfDeltaY) * dfYScale):
                 pfnGetWeight(j - dfDeltaY);
-
 
         // Iterate over pixels in row
         double dfAccumulatorRealLocal = 0.0;
@@ -4675,7 +4670,6 @@ static void GWKGeneralCaseThread( void* pData)
                                  &dfValueReal, &dfValueImag, psWrkStruct );
                 }
 
-
                 // If we didn't find any valid inputs skip to next band.
                 if ( dfBandDensity < BAND_DENSITY_THRESHOLD )
                     continue;
@@ -4937,7 +4931,6 @@ static void GWKRealCaseThread( void* pData)
                                  &dfBandDensity,
                                  &dfValueReal, &dfValueImagIgnored, psWrkStruct );
                 }
-
 
                 // If we didn't find any valid inputs skip to next band.
                 if ( dfBandDensity < BAND_DENSITY_THRESHOLD )
@@ -5439,7 +5432,6 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
 {
     return GWKRun( poWK, "GWKNearestFloat", GWKNearestThread<float> );
 }
-
 
 /************************************************************************/
 /*                           GWKAverageOrMode()                         */

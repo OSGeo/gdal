@@ -698,7 +698,6 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     return eErr;
 }
 
-
 /******************************************************************************/
 /*                          GDALFloatEquals()                                 */
 /* Code from:                                                                 */
@@ -751,7 +750,6 @@ GBool GDALFloatEquals(float A, float B)
         return true;
     return false;
 }
-
 
 /************************************************************************/
 /*                           GDALPolygonize()                           */
@@ -829,7 +827,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                                                     pProgressArg,
                                                     GDT_Int32);
 }
-
 
 /************************************************************************/
 /*                           GDALFPolygonize()                           */

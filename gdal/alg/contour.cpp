@@ -122,7 +122,6 @@ class GDALContourGenerator
     double  dfContourInterval;
     double  dfContourOffset;
 
-
     CPLErr AddSegment( double dfLevel,
                        double dfXStart, double dfYStart,
                        double dfXEnd, double dfYEnd, int bLeftHigh );
@@ -487,11 +486,11 @@ CPLErr GDALContourGenerator::ProcessRect(
 /* -------------------------------------------------------------------- */
 /*      Identify the range of elevations over this rect.                */
 /* -------------------------------------------------------------------- */
-    int iStartLevel, iEndLevel;
+    int iStartLevel;
+    int iEndLevel;
 
     double dfMin = MIN(MIN(dfUpLeft,dfUpRight),MIN(dfLoLeft,dfLoRight));
     double dfMax = MAX(MAX(dfUpLeft,dfUpRight),MAX(dfLoLeft,dfLoRight));
-
 
 /* -------------------------------------------------------------------- */
 /*      Compute the set of levels to compute contours for.              */
@@ -1555,7 +1554,6 @@ General Case:
         | \                |
      -- + -+-------------- + --
      12 |  10              | 1
-
 
 Saddle Point:
 

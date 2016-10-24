@@ -228,7 +228,6 @@ No known bug
          */
         qsort(polyInts, ints, sizeof(int), llCompareInt);
 
-
         for (i=0; (i < (ints)); i+=2)
         {
             if( polyInts[i] <= maxx && polyInts[i+1] > minx )
