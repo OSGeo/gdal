@@ -255,11 +255,12 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
                                              char** papszOptions ) CPL_WARN_UNUSED_RESULT;
 
-OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
-                                       int bBestEffort,
-                                       int bAutoClose,
-                                       double dfTolerance,
-                                       OGRErr * peErr ) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL
+OGRBuildPolygonFromEdges( OGRGeometryH hLinesAsCollection,
+                          int bBestEffort,
+                          int bAutoClose,
+                          double dfTolerance,
+                          OGRErr * peErr ) CPL_WARN_UNUSED_RESULT;
 
 /*! @cond Doxygen_Suppress */
 OGRErr CPL_DLL OGRSetGenerate_DB2_V72_BYTE_ORDER(
