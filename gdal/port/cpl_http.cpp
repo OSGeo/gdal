@@ -360,7 +360,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, psResult);
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
-
     CPLHTTPResultWithLimit sResultWithLimit;
     sResultWithLimit.psResult = psResult;
     sResultWithLimit.nMaxFileSize = 0;

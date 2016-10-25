@@ -50,12 +50,10 @@
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
 
-
   The data format used by the zlib library is described by RFCs (Request for
   Comments) 1950 to 1952 in the files http://www.ietf.org/rfc/rfc1950.txt
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
-
 
 /* This file contains a refactoring of gzio.c from zlib project.
 
@@ -190,7 +188,6 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     void              SaveInfo_unlocked();
 };
 
-
 class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
     CPLMutex* hMutex;
@@ -218,7 +215,6 @@ public:
     void  SaveInfo( VSIGZipHandle* poHandle );
     void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
 };
-
 
 /************************************************************************/
 /*                            Duplicate()                               */
@@ -1106,7 +1102,6 @@ size_t VSIGZipHandle::Write( const void * /* pBuffer */,
 /*                               Eof()                                  */
 /************************************************************************/
 
-
 int VSIGZipHandle::Eof()
 {
 #ifdef ENABLE_DEBUG
@@ -1132,7 +1127,6 @@ int VSIGZipHandle::Close()
 {
     return 0;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1406,13 +1400,11 @@ vsi_l_offset VSIGZipWriteHandle::Tell()
     return nCurOffset;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIGZipFilesystemHandler                       */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                   VSIGZipFilesystemHandler()                         */
@@ -1737,7 +1729,6 @@ char** VSIGZipFilesystemHandler::ReadDirEx( const char * /*pszDirname*/,
 /*                   VSIInstallGZipFileHandler()                        */
 /************************************************************************/
 
-
 /**
  * \brief Install GZip file system handler.
  *
@@ -1809,7 +1800,6 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         virtual GIntBig GetModifiedTime() { return nModifiedTime; }
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
 };
-
 
 /************************************************************************/
 /*                           VSIZipReader()                             */
@@ -2199,7 +2189,6 @@ char **VSIZipFilesystemHandler::ReadDirEx( const char *pszDirname,
     return VSIArchiveFilesystemHandler::ReadDirEx(pszDirname, nMaxFiles);
 }
 
-
 /************************************************************************/
 /*                                 Stat()                               */
 /************************************************************************/
@@ -2262,7 +2251,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     CPLMutexHolder oHolder( &hMutex );
     return OpenForWrite_unlocked(pszFilename, pszAccess);
 }
-
 
 VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
                                                          const char *pszAccess)
@@ -2363,7 +2351,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
         return oMapZipWriteHandles[osZipFilename];
     }
 }
-
 
 /************************************************************************/
 /*                          VSIZipWriteHandle()                         */
@@ -2529,7 +2516,6 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
 /*                    VSIInstallZipFileHandler()                        */
 /************************************************************************/
 
-
 /**
  * \brief Install ZIP file system handler.
  *
@@ -2574,7 +2560,6 @@ void VSIInstallZipFileHandler()
 {
     VSIFileManager::InstallHandler( "/vsizip/", new VSIZipFilesystemHandler() );
 }
-
 
 /************************************************************************/
 /*                         CPLZLibDeflate()                             */

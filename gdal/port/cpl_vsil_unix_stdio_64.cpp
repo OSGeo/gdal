@@ -193,7 +193,6 @@ class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
                                             vsi_l_offset nLength );
 };
 
-
 /************************************************************************/
 /*                       VSIUnixStdioHandle()                           */
 /************************************************************************/

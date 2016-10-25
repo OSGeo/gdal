@@ -128,7 +128,6 @@ struct CPLVirtualMem
    - other things I've not identified
 */
 
-
 #define ALIGN_DOWN(p,pagesize)  (void*)(((GUIntptr_t)(p)) / (pagesize) * (pagesize))
 #define ALIGN_UP(p,pagesize)    (void*)(((GUIntptr_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
 
@@ -554,7 +553,6 @@ void CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt)
     CPLReleaseMutex(ctxtVMA->hMutexThreadArray);
 #endif
 }
-
 
 /************************************************************************/
 /*                     CPLVirtualMemGetPageToFill()                     */
@@ -1932,7 +1930,6 @@ void CPLVirtualMemManagerTerminate(void) {}
 
 #endif /* HAVE_VIRTUAL_MEM_VMA */
 
-
 #ifdef HAVE_MMAP
 
 /************************************************************************/
@@ -2055,7 +2052,6 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
 
 #else /* HAVE_MMAP */
 
-
 CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* /* fp */,
                                         vsi_l_offset /* nOffset */,
                                         vsi_l_offset /* nLength */,
@@ -2068,7 +2064,6 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* /* fp */,
              "operating system / configuration");
     return NULL;
 }
-
 
 #endif /* HAVE_MMAP */
 

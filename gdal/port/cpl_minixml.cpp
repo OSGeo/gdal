@@ -271,7 +271,6 @@ static XMLTokenType ReadToken( ParseContext *psContext )
                 }
             }
 
-
             if( chNext == '\"' )
                 bInQuotes = !bInQuotes;
 

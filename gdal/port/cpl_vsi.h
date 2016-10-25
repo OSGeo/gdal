@@ -278,7 +278,6 @@ char CPL_DLL   *VSIStrdupVerbose(  const char* pszStr, const char* pszFile, int 
 /** VSI_STRDUP_VERBOSE */
 #define VSI_STRDUP_VERBOSE( pszStr ) VSIStrdupVerbose(pszStr,__FILE__,__LINE__)
 
-
 GIntBig CPL_DLL CPLGetPhysicalRAM(void);
 GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 

@@ -263,7 +263,6 @@ char **VSIReadDirRecursive( const char *pszPathIn )
     return oFiles.StealList();
 }
 
-
 /************************************************************************/
 /*                             CPLReadDir()                             */
 /*                                                                      */
@@ -427,7 +426,6 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 {
     return VSIStatExL(pszFilename, psStatBuf, 0);
 }
-
 
 /************************************************************************/
 /*                            VSIStatExL()                              */
@@ -890,7 +888,6 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
     return poFileHandle->Read( pBuffer, nSize, nCount );
 }
 
-
 /************************************************************************/
 /*                       VSIFReadMultiRangeL()                          */
 /************************************************************************/
@@ -1149,7 +1146,6 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
     unsigned char cChar = static_cast<unsigned char>(nChar);
     return static_cast<int>(VSIFWriteL(&cChar, 1, 1, fp));
 }
-
 
 /************************************************************************/
 /*                        VSIFGetRangeStatusL()                        */
@@ -1491,7 +1487,6 @@ VSIFileManager::~VSIFileManager()
 
     delete poDefaultHandler;
 }
-
 
 /************************************************************************/
 /*                                Get()                                 */

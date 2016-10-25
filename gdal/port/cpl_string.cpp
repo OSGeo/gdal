@@ -966,8 +966,6 @@ char ** CSLTokenizeString2( const char * pszString,
 static const int CPLSPrintf_BUF_SIZE = 8000;
 static const int CPLSPrintf_BUF_Count = 10;
 
-
-
 /** My own version of CPLSPrintf() that works with 10 static buffer.
  *
  * It returns a ref. to a static buffer that should not be freed and
@@ -1021,7 +1019,6 @@ const char *CPLSPrintf(const char *fmt, ...)
 /**********************************************************************
  *                       CSLAppendPrintf()
  **********************************************************************/
-
 
 /** Use CPLSPrintf() to append a new line at the end of a StringList.
  * Returns the modified StringList.
@@ -1562,7 +1559,6 @@ int CPLTestBoolean( const char *pszValue )
 {
     return CPLTestBool( pszValue ) ? TRUE : FALSE;
 }
-
 
 /**********************************************************************
  *                       CPLFetchBool()

@@ -89,7 +89,6 @@ static char *CPLGetStaticResult()
     return pachBuffer;
 }
 
-
 /************************************************************************/
 /*                        CPLFindFilenameStart()                        */
 /************************************************************************/
@@ -302,7 +301,6 @@ const char *CPLGetBasename( const char *pszFullFilename )
 
     return pszStaticResult;
 }
-
 
 /************************************************************************/
 /*                           CPLGetExtension()                          */
@@ -743,7 +741,6 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 
     return pszStaticResult;
 }
-
 
 /************************************************************************/
 /*                       CPLIsFilenameRelative()                        */

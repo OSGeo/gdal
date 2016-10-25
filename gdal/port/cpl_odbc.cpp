@@ -32,7 +32,6 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
-
 CPL_CVSID("$Id$");
 
 #ifndef SQLColumns_TABLE_CAT

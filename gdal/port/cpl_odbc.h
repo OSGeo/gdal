@@ -70,7 +70,6 @@ class CPL_DLL CPLODBCDriverInstaller
     // Default constructor.
     CPLODBCDriverInstaller();
 
-
     /**
      * Installs ODBC driver or updates definition of already installed driver.
      * Interanally, it calls ODBC's SQLInstallDriverEx function.
@@ -109,17 +108,14 @@ class CPL_DLL CPLODBCDriverInstaller
      */
     int RemoveDriver( const char* pszDriverName, int fRemoveDSN = FALSE );
 
-
     /** The usage count of the driver after this function has been called */
     int GetUsageCount() const {  return m_nUsageCount; }
-
 
     /** Path of the target directory where the driver should be installed.
      * For details, see ODBC API Reference and lpszPathOut
      * parameter of SQLInstallDriverEx
      */
     const char* GetPathOut() const { return m_szPathOut; }
-
 
     /** If InstallDriver returns FALSE, then GetLastError then
      * error message can be obtained by calling this function.

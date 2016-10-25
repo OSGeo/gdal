@@ -63,7 +63,6 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
 
-
 /************************************************************************/
 /*                               RingBuffer                             */
 /************************************************************************/
@@ -288,7 +287,6 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     int                  IsDirectory() const { return bIsDirectory; }
 };
 
-
 /************************************************************************/
 /*                       VSICurlStreamingHandle()                       */
 /************************************************************************/
@@ -482,7 +480,6 @@ static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t coun
         return 0;
     }
 }
-
 
 /************************************************************************/
 /*                           GetFileSize()                              */
@@ -825,7 +822,6 @@ static size_t VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, si
 {
     return ((VSICurlStreamingHandle*)req)->ReceivedBytes((GByte*)buffer, count, nmemb);
 }
-
 
 /************************************************************************/
 /*              VSICurlStreamingHandleReceivedBytesHeader()             */
@@ -1380,7 +1376,6 @@ size_t VSICurlStreamingHandle::Write( const void * /* pBuffer */,
 /*                                 Eof()                                */
 /************************************************************************/
 
-
 int VSICurlStreamingHandle::Eof()
 {
     return bEOF;
@@ -1403,7 +1398,6 @@ int       VSICurlStreamingHandle::Close()
 {
     return 0;
 }
-
 
 /************************************************************************/
 /*                      VSICurlStreamingFSHandler()                     */
@@ -1761,6 +1755,5 @@ void VSIInstallS3StreamingFileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsis3_streaming/", new VSIS3StreamingFSHandler );
 }
-
 
 #endif /*  !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB) */

@@ -65,7 +65,6 @@ struct _CPLQuadTree
   double                    dfSplitRatio;
 };
 
-
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
                                           void* hFeature,
                                           const CPLRectObj *pRect);
@@ -319,7 +318,6 @@ static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode)
     CPLFree(psNode);
 }
 
-
 /************************************************************************/
 /*                       CPLQuadTreeDestroy()                           */
 /************************************************************************/
@@ -336,8 +334,6 @@ void CPLQuadTreeDestroy(CPLQuadTree *hQuadTree)
     CPLQuadTreeNodeDestroy(hQuadTree->psRoot);
     CPLFree(hQuadTree);
 }
-
-
 
 /************************************************************************/
 /*                     CPLQuadTreeSplitBounds()                         */
@@ -497,7 +493,6 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
     return ;
 }
 
-
 /************************************************************************/
 /*                  CPLQuadTreeNodeAddFeatureAlg2()                     */
 /************************************************************************/
@@ -560,7 +555,6 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      If none of that worked, just add it to this psNodes list.         */
 /* -------------------------------------------------------------------- */
@@ -582,7 +576,6 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
         psNode->pasBounds[psNode->nFeatures-1] = *pRect;
     }
 }
-
 
 /************************************************************************/
 /*                  CPLQuadTreeAddFeatureInternal()                     */
@@ -829,7 +822,6 @@ void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode,
                                 pnNodeCount, pnMaxDepth, pnMaxBucketCapacity);
     }
 }
-
 
 /************************************************************************/
 /*                    CPLQuadTreeGetStats()                             */

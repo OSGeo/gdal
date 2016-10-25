@@ -200,7 +200,6 @@ void *CPLMalloc( size_t nSize )
  * @return pointer to allocated memory, only NULL if nNewSize is zero.
  */
 
-
 void * CPLRealloc( void * pData, size_t nNewSize )
 
 {
@@ -862,7 +861,6 @@ long CPLScanLong( const char *pszString, int nMaxLength )
     const std::string osValue( pszString, nLength );
     return atol( osValue.c_str() );
 }
-
 
 /************************************************************************/
 /*                            CPLScanULong()                            */
@@ -1913,7 +1911,6 @@ double CPLDMSToDec( const char *is )
     return v;
 }
 
-
 /************************************************************************/
 /*                            CPLDecToDMS()                             */
 /************************************************************************/
@@ -2257,7 +2254,6 @@ void CPLCloseShared( FILE * fp )
         pasSharedFileListExtra = NULL;
     }
 }
-
 
 /************************************************************************/
 /*                   CPLCleanupSharedFileMutex()                        */
@@ -2646,7 +2642,6 @@ CPLLocaleC::~CPLLocaleC()
     CPLFree( pszOldLocale );
 }
 
-
 /************************************************************************/
 /*                        CPLThreadLocaleC()                            */
 /************************************************************************/
@@ -2738,7 +2733,6 @@ char* CPLsetlocale (int category, const char* locale)
     // Make it thread-locale storage.
     return const_cast<char*>( CPLSPrintf("%s", pszRet) );
 }
-
 
 /************************************************************************/
 /*                       CPLCleanupSetlocaleMutex()                     */
