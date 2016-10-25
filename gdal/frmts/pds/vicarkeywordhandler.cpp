@@ -279,12 +279,10 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
             if( osWord.size() && osWord[osWord.size()-1] == ')'  ) break;
         }
     }
-
     else
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();

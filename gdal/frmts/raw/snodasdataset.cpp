@@ -205,7 +205,6 @@ CPLErr SNODASDataset::GetGeoTransform( double * padfTransform )
     }
 
     return GDALPamDataset::GetGeoTransform( padfTransform );
-
 }
 
 /************************************************************************/

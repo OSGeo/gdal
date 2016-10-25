@@ -505,7 +505,6 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 osUnderlyingSRS.Printf(
                     "PROJCS[\"unnamed\",%s,PROJECTION[\"Lambert_Conformal_Conic_2SP\"],PARAMETER[\"standard_parallel_1\",%s],PARAMETER[\"standard_parallel_2\",%s],PARAMETER[\"latitude_of_origin\",0.0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0]]",
                     pszGEOGCS, osP2.c_str(), osP3.c_str(), osPP.c_str() );
-
         }
     }
 

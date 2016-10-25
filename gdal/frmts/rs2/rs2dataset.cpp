@@ -398,9 +398,9 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   pnImageTmp, nBlockXSize, nRequestYSize,
                                   GDT_Int16,
                                   2, NULL, 4, nBlockXSize * 4, 2, NULL );
-
         }
-        else {
+        else
+        {
             eErr =
                 m_poBandDataset->RasterIO( GF_Read,
                                       nBlockXOff * nBlockXSize,
@@ -1022,7 +1022,6 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSourceAttrs,
             "orbitAndAttitude.orbitInformation.orbitDataFile", "UNK" );
         poDS->SetMetadataItem( "ORBIT_DATA_FILE", pszItem );
-
     }
 
     CPLXMLNode *psSarProcessingInformation =
@@ -1061,7 +1060,6 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSarProcessingInformation,
                                   "generalProcessingInformation.processingTime", "UNK" );
         poDS->SetMetadataItem( "PROCESSING_TIME", pszItem );
-
     }
 
 /*--------------------------------------------------------------------- */
@@ -1137,8 +1135,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                           "corner coordinates inconsistent.");
             }
             else
+            {
                 poDS->bHaveGeoTransform = TRUE;
-
+            }
         }
     }
 

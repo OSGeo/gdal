@@ -2431,7 +2431,6 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             CPLFree( pLatticeY );
             pLatticeY = NULL;
         }
-
     }
 
 /* -------------------------------------------------------------------- */

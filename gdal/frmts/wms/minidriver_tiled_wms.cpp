@@ -609,7 +609,6 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                     "%s Overlay size %dX%d can't be used due to alignment",SIG,sx,sy);
 
                 Pattern=Pattern->psNext;
-
             }
 
             // The tlevel is needed, the tx and ty are not used by this minidriver

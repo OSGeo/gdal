@@ -463,7 +463,6 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
                         poBlock->DropLock();
                     }
-
                 }
                 GDALClose(hDSTile);
             }
@@ -1384,7 +1383,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             delete poDS;
             poDS = NULL;
         }
-
     }
 
     if (poDS)

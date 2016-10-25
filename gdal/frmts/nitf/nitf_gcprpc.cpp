@@ -104,7 +104,6 @@ void NITFDensifyGCPs( GDAL_GCP **psGCPs, int *pnGCPCount )
             psDensifiedGCPs[count+3].dfGCPY = yRightPt;
 
             count += *pnGCPCount;
-
         }
         catch (...)
         {

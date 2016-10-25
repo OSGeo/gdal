@@ -196,7 +196,6 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
             }
             return eErr;
         }
-
 };
 
 /************************************************************************/

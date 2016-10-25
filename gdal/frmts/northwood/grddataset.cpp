@@ -98,7 +98,6 @@ public:
     void FlushCache();
     const char *GetProjectionRef();
     CPLErr SetProjection(const char *pszProjection);
-
 };
 
 /************************************************************************/
@@ -412,7 +411,6 @@ NWT_GRDDataset::~NWT_GRDDataset() {
 
     if (fp != NULL)
         VSIFCloseL(fp);
-
 }
 
 /************************************************************************/

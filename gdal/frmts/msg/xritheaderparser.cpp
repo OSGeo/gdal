@@ -80,10 +80,7 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)
   }
 }
 
-XRITHeaderParser::~XRITHeaderParser()
-{
-
-}
+XRITHeaderParser::~XRITHeaderParser() {}
 
 int XRITHeaderParser::parseInt16(unsigned char * num)
 {

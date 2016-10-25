@@ -1357,7 +1357,6 @@ CPLErr VRTPansharpenedDataset::IRasterIO( GDALRWFlag eRWFlag,
         //{static int bDone = 0; if (!bDone) printf("(2)\n"); bDone = 1; }
         return m_poPansharpener->ProcessRegion(
                     nXOff, nYOff, nXSize, nYSize, pData, eBufType);
-
     }
 
 default_path:

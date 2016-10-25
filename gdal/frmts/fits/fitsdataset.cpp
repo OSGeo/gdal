@@ -67,7 +67,6 @@ public:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               char** papszParmList );
-
 };
 
 /************************************************************************/
@@ -305,7 +304,6 @@ FITSDataset::~FITSDataset() {
     // Close the FITS handle - ignore the error status
     status = 0;
     fits_close_file(hFITS, &status);
-
   }
 }
 

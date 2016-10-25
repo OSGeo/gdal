@@ -60,10 +60,7 @@ MSGCommand::MSGCommand() :
     channel[i] = 0;
 }
 
-MSGCommand::~MSGCommand()
-{
-
-}
+MSGCommand::~MSGCommand() {}
 
 std::string MSGCommand::sTrimSpaces(std::string const& str)
 {

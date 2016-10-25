@@ -218,7 +218,6 @@ class SENTINEL2AlphaBand: public VRTSourcedRasterBand
                               int nPixelSpace, int nLineSpace
 #endif
                               );
-
 };
 
 /************************************************************************/

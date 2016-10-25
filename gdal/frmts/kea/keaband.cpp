@@ -556,7 +556,6 @@ CPLErr KEARasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
                         CPLFree(papszStringData[n]);
                 }
                 CPLFree(papszStringData);
-
             }
         }
     }

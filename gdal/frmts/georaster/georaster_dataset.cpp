@@ -1132,7 +1132,6 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                         return NULL;
                     }
                 }
-
             }
 
             if( ( eErr == CE_None ) && ( ! pfnProgress(

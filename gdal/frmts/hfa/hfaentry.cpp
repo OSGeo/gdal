@@ -265,7 +265,6 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 
     return new HFAEntry(osDictionary, osType,
                         nMIFObjectSize, l_pabyData);
-
 }
 
 /************************************************************************/

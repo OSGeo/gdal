@@ -1151,7 +1151,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             }
                             CSLDestroy(papszDirContent);
                         }
-
                     }
                     /* If not found in sub directory then search in the same directory of the THF file */
                     if (bFound ==0)
@@ -1173,7 +1172,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             }
                             CSLDestroy(papszDirContent);
                         }
-
                     }
 
                     if (bFound ==1)
@@ -1183,10 +1181,8 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                         papszFileNames[nFilenames + 1] = NULL;
                         nFilenames ++;
                     }
-
                 }
             }
-
         }
     }
     return papszFileNames;
@@ -1267,7 +1263,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                         SetMetadataItem( "SRP_CREATIONDATE", dat );
                     }
                 }
-
             }
         } /* End of THF part */
 
@@ -1307,7 +1302,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                 }
             }
         }  /* End of LCF part */
-
     }
 }
 

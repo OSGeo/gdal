@@ -304,7 +304,6 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             CPLError(CE_Failure, CPLE_UserInterrupt,
                       "User terminated CreateCopy()");
         }
-
     }
 
     CPLFree(src_image);

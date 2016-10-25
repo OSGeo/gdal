@@ -327,7 +327,6 @@ bool netCDFLayer::Create(char** papszOptions,
 
             m_osCoordinatesValue += " ";
             m_osCoordinatesValue += pszZVarName;
-
         }
 
         const char* pszFeatureTypeVal = m_osProfileDimName.size() ? "profile" : "point";

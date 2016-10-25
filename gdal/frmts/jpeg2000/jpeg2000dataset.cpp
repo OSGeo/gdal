@@ -771,7 +771,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
             paiDepth[iBand - 1], pabSignedness[iBand - 1] ) );
-
     }
 
     CPLFree( paiDepth );

@@ -1895,7 +1895,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
         if( pRetValue )
             Py_DecRef(pRetValue);
-
         } // End of GIL section
 
         if( pabyTmpBuffer )

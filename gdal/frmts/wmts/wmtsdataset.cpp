@@ -192,7 +192,6 @@ class WMTSBand : public GDALPamRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing, GSpacing,
                               GDALRasterIOExtraArg* psExtraArg );
-
 };
 
 /************************************************************************/

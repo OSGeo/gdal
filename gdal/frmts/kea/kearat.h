@@ -79,7 +79,6 @@ public:
                                 GDALRATFieldUsage eFieldUsage );
 
     virtual CPLXMLNode   *Serialize() const;
-
 };
 
 #endif //KEARAT_H

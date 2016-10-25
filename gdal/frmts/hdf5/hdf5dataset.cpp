@@ -445,7 +445,6 @@ static void CreatePath( HDF5GroupObjects *poH5Object )
                 osUnderscoreSpaceInName.append( papszPath[ i ] );
             }
             CSLDestroy(papszPath);
-
         }
 
         // -1 to give room for NUL in C strings.
@@ -850,7 +849,6 @@ static herr_t HDF5AttrIterate( hid_t hH5ObjID,
             }
         }
         CPLFree( buf );
-
     }
     H5Sclose(hAttrSpace);
     H5Tclose(hAttrNativeType);
@@ -977,7 +975,6 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
 /* -------------------------------------------------------------------- */
             if( poObjectsFound != NULL )
                 return poObjectsFound;
-
         }
     }
 /* -------------------------------------------------------------------- */
@@ -1039,7 +1036,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 
         default:
             return CE_None;
-
         }
         strcat( szDim,szTemp );
 
@@ -1062,7 +1058,6 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
                         poRootGroup->pszUnderscorePath,
                         poDS->GetDataTypeName
                         ( poRootGroup->native ) ) );
-
     }
 
     return CE_None;

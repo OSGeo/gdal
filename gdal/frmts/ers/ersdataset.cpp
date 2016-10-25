@@ -1194,7 +1194,6 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         CPLPopErrorHandler();
-
     }
 
 /* -------------------------------------------------------------------- */

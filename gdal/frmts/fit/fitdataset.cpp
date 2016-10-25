@@ -383,12 +383,12 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                          "FITRasterBand::IReadBlock unsupported "
                          "bytesPerComponent %lu", bytesPerComponent);
             } // switch
-
-        } // scan left/right first
-        else {
-            // scan up/down first
-
-            switch (poFIT_DS->info->space) {
+        } // Scan left/right first.
+        else
+        {
+            // Scan up/down first.
+            switch (poFIT_DS->info->space)
+            {
             case 5:
                 // iflLeftUpperOrigin -* from upper left corner
                 // scan down then right
@@ -461,10 +461,8 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                          "FITRasterBand::IReadBlock unsupported "
                          "bytesPerComponent %lu", bytesPerComponent);
             } // switch
-
-        } // scan up/down first
-
-    } // ! fastpath
+        } // Scan up/down first.
+    } // !fastpath
     return CE_None;
 }
 

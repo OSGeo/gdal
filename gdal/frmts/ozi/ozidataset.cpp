@@ -645,7 +645,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->papoOvrBands[i]->poColorTable = poDS->papoOvrBands[0]->poColorTable->Clone();
             poDS->papoOvrBands[i]->pabyTranslationTable = pabyTranslationTable;
         }
-
     }
 
     poDS->SetBand(1, poDS->papoOvrBands[0]);

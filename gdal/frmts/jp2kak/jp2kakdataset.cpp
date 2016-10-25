@@ -1660,7 +1660,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                       precisions[i] = 16;
                     }*/
                 }
-
             }
 
             if( eBufType == GDT_Byte )

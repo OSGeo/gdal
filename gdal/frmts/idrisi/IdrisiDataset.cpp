@@ -1063,7 +1063,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
             " Try again by selecting a specific band if possible.\n",
                             poSrcDS->GetRasterCount() );
             return NULL;
-
     }
     if ( ( poSrcDS->GetRasterCount() == 3 ) &&
          ( ( poSrcDS->GetRasterBand( 1 )->GetRasterDataType() != GDT_Byte ) ||
@@ -2913,7 +2912,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             *pszRefUnit = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ), CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
             return CE_None;
         }
-
     }
 
 #endif // GDAL_RST_PLUGIN

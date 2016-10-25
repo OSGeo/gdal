@@ -172,7 +172,6 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
         virtual OGRErr                  ICommitTransaction();
         virtual const char             *IGetFilename() { return GetDescription(); }
         virtual int                     GetRowFromIntoTopConvention(int nRow);
-
 };
 
 /************************************************************************/
@@ -1012,7 +1011,6 @@ void MBTilesDataset::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
 
 /************************************************************************/

@@ -2381,7 +2381,6 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 {
                     dfTextDy = dfVal;
                 }
-
             }
             else if (OGR_ST_GetType(hTool) == OGRSTCSymbol)
             {

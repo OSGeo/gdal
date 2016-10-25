@@ -599,7 +599,6 @@ public:
 
 private:
     PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
-
 };
 
 class PNG_Band : public GDALMRFRasterBand {

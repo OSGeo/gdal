@@ -190,7 +190,6 @@ class GRASSRasterBand : public GDALRasterBand
 
   private:
     CPLErr ResetReading( struct Cell_head * );
-
 };
 
 /************************************************************************/
@@ -448,7 +447,6 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
         }
 
         G_copy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
-
     }
     else
     {
@@ -502,12 +500,17 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         nBlockXSize );
 
         G_free ( cbuf );
-
-    } else if ( eDataType == GDT_Int32 ) {
+    }
+    else if ( eDataType == GDT_Int32 )
+    {
         G_get_c_raster_row ( hCell, (CELL *) pImage, nBlockYOff );
-    } else if ( eDataType == GDT_Float32 ) {
+    }
+    else if ( eDataType == GDT_Float32 )
+    {
         G_get_f_raster_row ( hCell, (FCELL *) pImage, nBlockYOff );
-    } else if ( eDataType == GDT_Float64 ) {
+    }
+    else if ( eDataType == GDT_Float64 )
+    {
         G_get_d_raster_row ( hCell, (DCELL *) pImage, nBlockYOff );
     }
 

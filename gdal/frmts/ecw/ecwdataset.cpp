@@ -1135,7 +1135,6 @@ NCS::CError ECWDataset::StatisticsWrite()
     bStatisticsDirty = FALSE;
 
     return error;
-
 }
 
 /************************************************************************/
@@ -3147,7 +3146,6 @@ int ECWTranslateFromWKT( const char *pszWKT,
 
         NCSFree( pszEPSGProj );
         NCSFree( pszEPSGDatum );
-
     }
 
 /* -------------------------------------------------------------------- */

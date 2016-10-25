@@ -623,7 +623,6 @@ void PDSDataset::ParseSRS()
         bGotTransform =
             GDALReadWorldFile( pszFilename, "wld",
                                adfGeoTransform );
-
 }
 
 /************************************************************************/

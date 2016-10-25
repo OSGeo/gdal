@@ -196,7 +196,6 @@ char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
     }
 
     return papszParam;
-
 }
 
 //  ---------------------------------------------------------------------------
@@ -3808,7 +3807,6 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
                              sDInfo.dc_huff_tbl_ptrs[n],
                              nCompressQuality );
         }
-
     }
 
     jpeg_vsiio_src( &sDInfo, fpImage );

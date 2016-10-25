@@ -1162,7 +1162,6 @@ void HFABand::NullBlock( void *pData )
             memcpy( ((GByte *) pData) + nChunkSize * i,
                     abyTmp, nChunkSize );
     }
-
 }
 
 /************************************************************************/

@@ -92,7 +92,6 @@ class MFFDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -286,7 +285,6 @@ MFFDataset::~MFFDataset()
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
     CSLDestroy( m_papszFileList );
-
 }
 
 /************************************************************************/
@@ -642,7 +640,6 @@ void MFFDataset::ScanForProjectionInfo()
             {
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
-
             }
             transform_ok =
                 CPL_TO_BOOL(

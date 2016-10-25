@@ -482,14 +482,15 @@ static GDALDataType mapRasdamanTypesToGDAL(r_Type::r_Type_Id typeId) {
 }
 
 void RasdamanDataset::getTypes(const r_Base_Type* baseType, int &counter, int pos) {
-  if (baseType->isStructType()) {
+  if (baseType->isStructType())
+  {
     r_Structure_Type* tp = (r_Structure_Type*) baseType;
     int elem = tp->count_elements();
-    for (int i = 0; i < elem; ++i) {
+    for (int i = 0; i < elem; ++i)
+    {
       r_Attribute attr = (*tp)[i];
       getTypes(&attr.type_of(), counter, attr.global_offset());
     }
-
   }
   if (baseType->isPrimitiveType()) {
     r_Primitive_Type *primType = (r_Primitive_Type*)baseType;

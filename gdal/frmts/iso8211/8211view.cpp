@@ -231,7 +231,6 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
           printf( "\n" );
       }
       break;
-
     }
 
     return nBytesConsumed;

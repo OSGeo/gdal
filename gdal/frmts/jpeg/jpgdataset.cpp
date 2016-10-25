@@ -1848,7 +1848,6 @@ void JPGDataset::LoadDefaultTables( int n )
         /* symbols[] is the list of Huffman symbols, in code-length order */
         huff_ptr->huffval[i] = DC_HUFFVAL[i];
     }
-
 }
 #endif // !defined(JPGDataset)
 
@@ -3780,8 +3779,7 @@ class GDALJPGDriver: public GDALDriver
 
         char      **GetMetadata( const char * pszDomain = "" );
         const char *GetMetadataItem( const char * pszName,
-                                      const char * pszDomain = "" );
-
+                                     const char * pszDomain = "" );
 };
 
 char** GDALJPGDriver::GetMetadata( const char * pszDomain )

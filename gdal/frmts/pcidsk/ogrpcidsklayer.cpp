@@ -732,7 +732,6 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         poVecSeg->SetVertices( id, aoVertices );
-
     } /* try */
 
 /* -------------------------------------------------------------------- */

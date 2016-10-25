@@ -1542,7 +1542,6 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
         snprintf( szValue, sizeof(szValue), "%d", sChipInfo.FI_COL );
         poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
-
     }
 
     const NITFSeries* series = NITFGetSeriesInfo(pszFilename);
@@ -4354,7 +4353,6 @@ NITFDataset::NITFCreateCopy(
                 {
                     CPLDebug("NITF", "GEOPSB TRE was explicitly defined before. Keeping it.");
                 }
-
             }
             else
             {
@@ -4467,7 +4465,6 @@ NITFDataset::NITFCreateCopy(
                 // we can suppress it from PAM
                 if( !bPrecisionLoss )
                     nGCIFFlags &= ~GCIF_METADATA;
-
             }
             CPLFree(pszRPC);
         }
@@ -5124,7 +5121,6 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                  static_cast<int>( sizeof(achGSH) ), nCGMSize );
 
         CPLFree(pszCgmToWrite);
-
     } // End For
 
     /* -------------------------------------------------------------------- */
@@ -5372,7 +5368,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                 else if (STARTS_WITH(pszOrigMonth, "DEC")) strncpy(pszNewMonth,"12",2);
 
                 PLACE( achTSH+ 12, TXTDT         , achNewDate                );
-
             }
         } else { // Use default value if header information is not found
             PLACE( achTSH+  0, TE            , "TE"                          );

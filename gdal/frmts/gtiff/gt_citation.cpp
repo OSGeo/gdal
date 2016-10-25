@@ -222,7 +222,6 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             ret = CPLStrdup(name);
     }
     return ret;
-
 }
 
 /************************************************************************/
