@@ -63,10 +63,7 @@ GNMRule::GNMRule(const GNMRule &oRule)
     m_soRuleString = oRule.m_soRuleString;
 }
 
-GNMRule::~GNMRule()
-{
-
-}
+GNMRule::~GNMRule() {}
 
 bool GNMRule::IsValid() const
 {

@@ -46,10 +46,7 @@ GNMGenericLayer::GNMGenericLayer(OGRLayer* poLayer,
 /**
  * ~GNMGenericLayer
  */
-GNMGenericLayer::~GNMGenericLayer()
-{
-
-}
+GNMGenericLayer::~GNMGenericLayer() {}
 
 const char *GNMGenericLayer::GetFIDColumn()
 {
