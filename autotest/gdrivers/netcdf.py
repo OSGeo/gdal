@@ -57,7 +57,7 @@ def netcdf_setup():
     gdaltest.netcdf_drv_has_nc2 = False
     gdaltest.netcdf_drv_has_nc4 = False
     gdaltest.netcdf_drv_has_hdf4 = False
-    gdaltest.netcdf_drv_silent = False;
+    gdaltest.netcdf_drv_silent = False
 
     gdaltest.netcdf_drv = gdal.GetDriverByName( 'NETCDF' )
 
@@ -75,7 +75,7 @@ def netcdf_setup():
     #netcdf library version 4.1.1 of Mar  4 2011 12:52:19 $
     if 'NETCDF_VERSION' in metadata:
         v = metadata['NETCDF_VERSION']
-        v = v[ 0 : v.find(' ') ].strip('"');
+        v = v[ 0 : v.find(' ') ].strip('"')
         gdaltest.netcdf_drv_version = v
 
     if 'NETCDF_HAS_NC2' in metadata \
@@ -554,7 +554,7 @@ def netcdf_12():
 
     ds = gdal.Open( 'data/scale_offset.nc' )
 
-    scale = ds.GetRasterBand( 1 ).GetScale();
+    scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
     if scale != 0.01 or offset != 1.5:
@@ -574,7 +574,7 @@ def netcdf_13():
 
     ds = gdal.Open( 'data/no_scale_offset.nc' )
 
-    scale = ds.GetRasterBand( 1 ).GetScale();
+    scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
     if scale != None or offset != None:
@@ -594,7 +594,7 @@ def netcdf_14():
 
     ds = gdal.Open( 'NETCDF:data/two_vars_scale_offset.nc:z' )
 
-    scale = ds.GetRasterBand( 1 ).GetScale();
+    scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
     if scale != 0.01 or offset != 1.5:
@@ -605,10 +605,10 @@ def netcdf_14():
 
     ds = gdal.Open( 'NETCDF:data/two_vars_scale_offset.nc:q' )
 
-    scale = ds.GetRasterBand( 1 ).GetScale();
+    scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
-    scale = ds.GetRasterBand( 1 ).GetScale();
+    scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
     if scale != 0.1 or offset != 2.5:
@@ -2347,7 +2347,7 @@ def netcdf_59():
     # get
     ds = gdal.Open( 'data/unittype.nc' )
 
-    unit = ds.GetRasterBand( 1 ).GetUnitType();
+    unit = ds.GetRasterBand( 1 ).GetUnitType()
 
     if unit != 'm/s':
         gdaltest.post_reason( 'Incorrect unit(%s)' % unit )

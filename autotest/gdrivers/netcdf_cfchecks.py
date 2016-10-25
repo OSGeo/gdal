@@ -2298,7 +2298,7 @@ class CFChecker:
             for val in values[:]:
                 if val < 0 or val > dimProduct-1:
                     outOfRange=1
-                    break;
+                    break
 
             if outOfRange:
                 print("ERROR (8.2): values of",var.id,"must be in the range 0 to",dimProduct-1)

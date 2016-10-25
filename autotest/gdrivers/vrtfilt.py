@@ -95,7 +95,7 @@ def vrtfilt_3():
 
 def vrtfilt_4():
 
-    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1);
+    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1)
 
     filterSourceXML = """    <KernelFilteredSource>
       <SourceFilename>data/rgbsmall.tif</SourceFilename>
@@ -124,7 +124,7 @@ def vrtfilt_4():
 
 def vrtfilt_5():
 
-    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1);
+    vrt_ds = gdal.GetDriverByName('VRT').Create('', 50, 50, 1)
 
     filterSourceXML = """    <KernelFilteredSource>
       <SourceFilename>data/rgbsmall.tif</SourceFilename>

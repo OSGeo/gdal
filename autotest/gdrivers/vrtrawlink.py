@@ -58,7 +58,7 @@ def vrtrawlink_1():
 
 def vrtrawlink_2():
 
-    driver = gdal.GetDriverByName( "VRT" );
+    driver = gdal.GetDriverByName( "VRT" )
     ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
 
     options = [
@@ -171,7 +171,7 @@ def vrtrawlink_4():
 
 def vrtrawlink_5():
 
-    driver = gdal.GetDriverByName( "VRT" );
+    driver = gdal.GetDriverByName( "VRT" )
     ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
 
     # Add a new band pointing to this bogus file.
@@ -219,7 +219,7 @@ def vrtrawlink_5():
 
 def vrtrawlink_6():
 
-    driver = gdal.GetDriverByName( "VRT" );
+    driver = gdal.GetDriverByName( "VRT" )
     ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
 
     # Add a new band pointing to this bogus file.
@@ -265,7 +265,7 @@ def vrtrawlink_6():
 
 def vrtrawlink_7():
 
-    driver = gdal.GetDriverByName( "VRT" );
+    driver = gdal.GetDriverByName( "VRT" )
     ds = driver.Create( 'tmp/rawlink.vrt', 31, 35, 0 )
 
     # Add a new band pointing to this bogus file.
