@@ -127,7 +127,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     ++nOutCounter_;
 
     OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-    if ( bWriteBBOX && !poGeometry->IsEmpty() )
+    if ( bWriteBBOX && poGeometry != NULL && !poGeometry->IsEmpty() )
     {
         OGREnvelope3D sEnvelope;
         poGeometry->getEnvelope(&sEnvelope);
