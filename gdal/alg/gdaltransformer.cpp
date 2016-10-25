@@ -2828,7 +2828,6 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
                 GDALApproxTransformInternal( psATInfo, bDstToSrc, nMiddle,
                                             x, y, z, panSuccess,
                                             x2, y2, z2);
-
         }
         else
         {

@@ -525,7 +525,6 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                           ~(0x01 << (iOffset & 0x1f));
                   }
               }
-
           }
           *pbOutAllValid = bAllValid;
 
