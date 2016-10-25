@@ -60,7 +60,6 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
                     "<FeatureElement>feature</FeatureElement>\n"
                     "<GeometryElement>geometry</GeometryElement>\n"
                     "<ColumnDefinitions>\n");
-
 }
 
 /************************************************************************/

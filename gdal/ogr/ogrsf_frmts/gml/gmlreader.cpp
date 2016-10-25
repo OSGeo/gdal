@@ -510,7 +510,6 @@ GMLFeature *GMLReader::NextFeatureXerces()
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
-
     }
     catch (const XMLException& toCatch)
     {
@@ -587,7 +586,6 @@ GMLFeature *GMLReader::NextFeatureExpat()
         }
         if (!m_bStopParsing)
             m_bStopParsing = ((GMLExpatHandler*)m_poGMLHandler)->HasStoppedParsing();
-
     } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
 
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
@@ -1401,7 +1399,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                     poClass->SetExtents( dfXMin, dfXMax, dfYMin, dfYMax );
                 }
                 delete poGeometry;
-
             }
         }
 

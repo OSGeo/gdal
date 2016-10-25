@@ -536,7 +536,6 @@ private:
     void                CheckUnknownExtensions();
     int                 CreateGeometryExtensionIfNecessary(
                                 OGRwkbGeometryType eGType);
-
 };
 
 /************************************************************************/

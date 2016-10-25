@@ -240,7 +240,6 @@ GMLFeature *NASReader::NextFeature()
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
-
     }
     catch (const XMLException& toCatch)
     {
@@ -312,7 +311,6 @@ void NASReader::PushFeature( const char *pszElement,
         char *pszFID = CPLStrdup( transcode( attrs.getValue( nFIDIndex ) ) );
         SetFeaturePropertyDirectly( "gml_id", pszFID );
     }
-
 }
 
 /************************************************************************/

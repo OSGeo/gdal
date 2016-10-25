@@ -436,7 +436,6 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
                                         atoi(szH), atoi(szM),
                                         static_cast<float>(atoi(szS)) );
                 }
-
             }
         }
 

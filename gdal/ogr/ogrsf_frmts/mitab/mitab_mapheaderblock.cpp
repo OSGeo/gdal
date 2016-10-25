@@ -1084,7 +1084,6 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
                     fprintf(fpOut, "\n");
             }
         }
-
     }
 
     fflush(fpOut);

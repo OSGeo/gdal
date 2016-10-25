@@ -199,7 +199,6 @@ int MIDDATAFile::Close()
     m_pszFname = NULL;
 
     return 0;
-
 }
 
 const char *MIDDATAFile::GetLine()
@@ -310,7 +309,6 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
     CSLDestroy(papszToken);
     return FALSE;
-
 }
 
 GBool MIDDATAFile::GetEof()

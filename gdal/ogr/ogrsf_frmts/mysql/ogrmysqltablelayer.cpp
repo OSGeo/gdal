@@ -154,7 +154,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                  || (nLenType>=3 && EQUAL(pszType+nLenType-3,"set")) )
         {
             oField.SetType( OFTString );
-
         }
         else if( STARTS_WITH_CI(pszType, "char")  )
         {
@@ -170,7 +169,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             CSLDestroy( papszTokens );
             oField.SetType( OFTString );
-
         }
 
         if(nLenType>=4 && EQUAL(pszType+nLenType-4,"text"))
@@ -405,7 +403,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 l_nGeomType = wkbSetZ(l_nGeomType);
 
             poDefn->SetGeomType( l_nGeomType );
-
         }
         else if (eForcedGeomType != wkbUnknown)
             poDefn->SetGeomType(eForcedGeomType);
@@ -474,7 +471,6 @@ void OGRMySQLTableLayer::BuildWhere()
                  "WHERE MBRIntersects(GeomFromText('%s'), `%s`)",
                  szEnvelope,
                  pszGeomColumn);
-
     }
 
     if( pszQuery != NULL )
@@ -690,7 +686,6 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( GIntBig nFID )
                   "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -886,7 +881,6 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             osCommand += pszStrValue;
         }
-
     }
 
     osCommand += ")";
@@ -930,8 +924,8 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
     hResult = NULL;
 
     return OGRERR_NONE;
-
 }
+
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/

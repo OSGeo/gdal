@@ -157,7 +157,6 @@ public:
     OGRFieldType        GetType() {
         return nType;
     };
-
 };
 
 class OGRSOSIDataType {

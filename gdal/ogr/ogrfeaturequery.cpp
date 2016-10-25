@@ -515,7 +515,6 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
             else if (psExpr->nOperation == SWQ_AND )
                 panFIDList = OGRANDGIntBigArray(panFIDList1, nFIDCount1,
                                             panFIDList2, nFIDCount2, nFIDCount);
-
         }
         CPLFree(panFIDList1);
         CPLFree(panFIDList2);

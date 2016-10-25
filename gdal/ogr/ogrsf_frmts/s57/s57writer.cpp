@@ -740,7 +740,6 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 
         CPLFree( padfX );
         CPLFree( padfY );
-
     }
 
 /* -------------------------------------------------------------------- */

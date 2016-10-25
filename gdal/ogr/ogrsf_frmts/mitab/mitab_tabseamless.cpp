@@ -574,7 +574,6 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
             return EncodeFeatureId(m_nCurBaseTableId, nId);  // Found one!
         else
             OpenNextBaseTable();  // Skip to next tile and loop again
-
     } while (nId == -1 && !m_bEOF && m_poCurBaseTable);
 
     return -1;
@@ -735,7 +734,6 @@ OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
     }
 
     return m_poIndexTable->GetExtent(psExtent, bForce);
-
 }
 
 /**********************************************************************
@@ -864,7 +862,6 @@ void TABSeamless::Dump(FILE *fpOut /*=NULL*/)
     else
     {
         fprintf(fpOut, "File is opened: %s\n", m_pszFname);
-
     }
 
     fflush(fpOut);

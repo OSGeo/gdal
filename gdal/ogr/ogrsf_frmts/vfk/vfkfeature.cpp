@@ -205,7 +205,6 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                     /* add last point */
                     ((OGRLineString *) poGeom)->getPoint(0, &pt);
                     poGeomString.addPoint(&pt);
-
                 }
             }
             else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15")) { /* -> circle with radius */
@@ -248,7 +247,6 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                     pt.setY(c_y);
                     poGeomString.addPoint(&pt);
                 }
-
             }
             else if (EQUAL(ftype, "11")) {                          /* curve */
                 const int npoints = ((OGRLineString *) poGeom)->getNumPoints();

@@ -208,7 +208,6 @@ class OGRODBCDataSource : public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
-
 };
 
 /************************************************************************/

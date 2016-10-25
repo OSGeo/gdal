@@ -237,7 +237,6 @@ OGRDB2DataSource::~OGRDB2DataSource()
         if( m_papoSRS[i] != NULL )
             CPLDebug("OGRDB2DataSource::~OGRDB2DataSource","m_papoSRS[%d] is not null", i);
 //LATER            m_papoSRS[i]->Release(); //fails for some reason
-
     }
     CPLFree( m_panSRID );
     CPLFree( m_papoSRS );
@@ -410,7 +409,6 @@ int OGRDB2DataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
 
     return DeleteLayer(m_papoLayers[iLayer]);
-
 }
 
 /************************************************************************/
@@ -452,7 +450,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
         /* For now, always convert layer name to uppercase table name*/
         pszTableName = ToUpper( pszDotPos + 1 );
-
     }
     else
     {
@@ -1547,7 +1544,6 @@ OGRErr OGRDB2DataSource::InitializeMetadataTables()
               "Dynamically creating DB2 spatial metadata tables is "
               "not supported" );
     return OGRERR_FAILURE;
-
 }
 
 /************************************************************************/
@@ -1989,7 +1985,6 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
         pszContentsMinY = osContentsMinY.c_str();
         pszContentsMaxX = osContentsMaxX.c_str();
         pszContentsMaxY = osContentsMaxY.c_str();
-
     }
 
     if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
@@ -2086,7 +2081,6 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     if (nIdxInResult > 0) {
         CPLDebug("OGRDB2DataSource::InitRaster1",
                  "Serious problem as we don't support nIdxInResult");
-
     }
     int nZoomLevel = atoi(oStatement->GetColData( 0));
     double dfPixelXSize = CPLAtof(oStatement->GetColData( 1));
@@ -2365,7 +2359,6 @@ void OGRDB2DataSource::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
 
 /************************************************************************/
@@ -2427,7 +2420,6 @@ void OGRDB2DataSource::FlushCache()
     DB2_DEBUG_ENTER("OGRDB2DataSource::FlushCache");
     FlushCacheWithErrCode();
     DB2_DEBUG_EXIT("OGRDB2DataSource::FlushCache");
-
 }
 
 CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
@@ -2478,7 +2470,6 @@ CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
     CPLDebug("OGRDB2DataSource::FlushCacheWithErrCode","exiting; eErr: %d", eErr);
 
     return eErr;
-
 }
 
 /************************************************************************/

@@ -495,7 +495,6 @@ void ImdReader::ReadModel(const char *pszFilename) {
                 }
             }
             psEntry = psEntry->psNext;
-
         }
 
         psModel = psModel->psNext;

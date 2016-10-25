@@ -2205,7 +2205,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         pasCurves[iCurve].u.EllipseByCenter.bIsComplete = ((nBits & EXT_SHAPE_ELLIPSE_COMPLETE) != 0);
                         iCurve++;
                     }
-
                 }
                 else
                 {

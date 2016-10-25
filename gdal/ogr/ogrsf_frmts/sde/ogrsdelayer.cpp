@@ -1829,7 +1829,6 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
 
                   poFeat->SetField( i, pszUTF8 );
                   CPLFree( pszUTF8 );
-
               }
               else if( nSDEErr != SE_NULL_VALUE )
               {
@@ -1962,7 +1961,6 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               }
           }
           break;
-
         }
     }
 

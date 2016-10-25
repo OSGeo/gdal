@@ -544,7 +544,6 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
                             ( osAptICAO, aosRwyNum[i], adfLat[i], adfLon[i],
                               dfWidth, bBuoys );
                 }
-
             }
 
             if (poWaterRunwayThresholdLayer)
@@ -673,7 +672,6 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
         CPLDebug("XPlane", "Line %d : Unexpected runway number : %s",
                     nLineNumber, pszRwyNum);
     }
-
 }
 
 /************************************************************************/
@@ -2526,7 +2524,6 @@ OGRXPlaneHelipadLayer::OGRXPlaneHelipadLayer() :
 
     OGRFieldDefn oFieldEdgeLighting("edge_lighting", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldEdgeLighting );
-
 }
 
 /************************************************************************/
@@ -2612,7 +2609,6 @@ OGRXPlaneHelipadPolygonLayer::OGRXPlaneHelipadPolygonLayer() :
 
     OGRFieldDefn oFieldEdgeLighting("edge_lighting", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldEdgeLighting );
-
 }
 
 /************************************************************************/
@@ -2719,7 +2715,6 @@ OGRXPlaneTaxiwayRectangleLayer::OGRXPlaneTaxiwayRectangleLayer() :
     OGRFieldDefn oFieldBlueEdgeLighting("edge_lighting", OFTInteger );
     oFieldBlueEdgeLighting.SetWidth( 1 );
     poFeatureDefn->AddFieldDefn( &oFieldBlueEdgeLighting );
-
 }
 
 /************************************************************************/
@@ -2811,7 +2806,6 @@ OGRXPlanePavementLayer::OGRXPlanePavementLayer() :
     oFieldTextureHeading.SetWidth( 6 );
     oFieldTextureHeading.SetPrecision( 2 );
     poFeatureDefn->AddFieldDefn( &oFieldTextureHeading );
-
 }
 
 /************************************************************************/
@@ -2857,7 +2851,6 @@ OGRXPlaneAPTBoundaryLayer::OGRXPlaneAPTBoundaryLayer() :
 
     OGRFieldDefn oFieldName("name", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldName );
-
 }
 
 /************************************************************************/
@@ -2897,7 +2890,6 @@ OGRXPlaneAPTLinearFeatureLayer::OGRXPlaneAPTLinearFeatureLayer() :
 
     OGRFieldDefn oFieldName("name", OFTString );
     poFeatureDefn->AddFieldDefn( &oFieldName );
-
 }
 
 /************************************************************************/

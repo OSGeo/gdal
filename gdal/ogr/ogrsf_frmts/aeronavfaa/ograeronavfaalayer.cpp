@@ -551,7 +551,6 @@ static const RecordFieldDesc IAPFields [] =
     { "MAG_VAR"  ,  52, 54, OFTInteger, },
     { "ELEVATION", 62, 67, OFTInteger },
     { "TYPE", 71, 77, OFTString  },
-
 };
 
 static const RecordDesc IAP = { sizeof(IAPFields)/sizeof(IAPFields[0]), IAPFields, -1, -1 };
@@ -591,7 +590,6 @@ OGRAeronavFAAIAPLayer::OGRAeronavFAAIAPLayer( VSILFILE* fp,
         oField.SetWidth(psRecordDesc->pasFields[i].nLastCol - psRecordDesc->pasFields[i].nStartCol + 1);
         poFeatureDefn->AddFieldDefn( &oField );
     }
-
 }
 
 /************************************************************************/

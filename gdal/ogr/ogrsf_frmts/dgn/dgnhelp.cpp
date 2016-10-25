@@ -1044,7 +1044,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             for( int i = 0; i < nLinkSize; i++ )
                 fprintf( fp, "%02x", pabyData[i] );
             fprintf( fp, "\n" );
-
         }
     }
 }
@@ -1287,7 +1286,6 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     + psElement->attr_data[nAttrOffset+9] * 256
                     + psElement->attr_data[nAttrOffset+10] * 65536
                     + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
-
             }
 
             if( pnLinkageType != NULL )

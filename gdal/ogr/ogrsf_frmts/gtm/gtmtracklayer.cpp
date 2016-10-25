@@ -100,7 +100,6 @@ GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
 
     OGRFieldDefn oFieldColor( "color", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oFieldColor );
-
 }
 
 GTMTrackLayer::~GTMTrackLayer()

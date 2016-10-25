@@ -76,7 +76,6 @@ class OGRRECLayer : public OGRLayer
     int                 TestCapability( const char * );
 
     int                 IsValid() { return bIsValid; }
-
 };
 
 /************************************************************************/

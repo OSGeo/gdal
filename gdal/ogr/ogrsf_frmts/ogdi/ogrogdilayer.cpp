@@ -592,7 +592,6 @@ void OGROGDILayer::BuildFeatureDefn()
             else
                 oField.SetWidth( 64 );
             break;
-
         }
 
         m_poFeatureDefn->AddFieldDefn( &oField );

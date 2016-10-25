@@ -291,7 +291,6 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual int          HasFastSpatialFilter(int /*iGeomCol*/) { return FALSE; }
     virtual CPLString    GetSpatialWhere(int /*iGeomCol*/,
                                          OGRGeometry* /*poFilterGeom*/) { return ""; }
-
 };
 
 /************************************************************************/

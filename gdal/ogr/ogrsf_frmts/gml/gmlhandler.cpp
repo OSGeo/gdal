@@ -272,7 +272,6 @@ void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData, const char *pszN
         pThis->m_bStopParsing = true;
         XML_StopParser(pThis->m_oParser, XML_FALSE);
     }
-
 }
 
 /************************************************************************/
@@ -1187,7 +1186,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 DealWithAttributes(pszName, nLenName, attr);
             }*/
         }
-
     }
     else
     {

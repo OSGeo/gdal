@@ -191,7 +191,6 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
     }
 
     return poGDS->m_poCT;
-
 }
 
 /************************************************************************/
@@ -792,7 +791,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         poGDS->m_asCachedTilesDesc[3].nCol = nColMin + 1;
         poGDS->m_asCachedTilesDesc[1].nIdxWithinTileData = -1;
         poGDS->m_asCachedTilesDesc[3].nIdxWithinTileData = -1;
-
     }
 
     for(int nRow = nRowMin; nRow <= nRowMax; nRow ++)
@@ -875,7 +873,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                 if( poBlock )
                     poBlock->DropLock();
-
             }
         }
     }

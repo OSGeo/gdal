@@ -585,7 +585,6 @@ int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
             nBestCandidate = i;
             dOptimalAreaDiff = dAreaDiff;
         }
-
     }
 
     return nBestCandidate;
@@ -717,7 +716,6 @@ int     TABMAPIndexBlock::GetCurLeafEntryMBR(GInt32 nBlockPtr,
     CPLError(CE_Failure, CPLE_AssertionFailed,
              "Entry to update not found in GetCurLeafEntryMBR()!");
     return -1;
-
 }
 
 /**********************************************************************
@@ -1241,7 +1239,6 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
             m_nCurChildIndex = m_numEntries-1;
 
             continue;
-
         }
         else if (m_numEntries >= GetMaxEntries()-1)
         {
@@ -1446,7 +1443,6 @@ void TABMAPIndexBlock::RecomputeMBR()
                                              m_nMaxX, m_nMaxY,
                                              GetNodeBlockPtr());
     }
-
 }
 
 /**********************************************************************
@@ -1499,7 +1495,6 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
     if (m_poParentRef)
         m_poParentRef->UpdateCurChildMBR(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                          GetNodeBlockPtr());
-
 }
 
 /**********************************************************************
@@ -1572,7 +1567,6 @@ void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
                     m_asEntries[i].XMin, m_asEntries[i].YMin,
                     m_asEntries[i].XMax, m_asEntries[i].YMax );
         }
-
     }
 
     fflush(fpOut);

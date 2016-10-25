@@ -931,7 +931,6 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
         snprintf( szSearchKey, sizeof(szSearchKey), "%d", nPCSCode );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                          szSearchKey, CC_Integer );
-
     }
 
     if( papszRecord == NULL )

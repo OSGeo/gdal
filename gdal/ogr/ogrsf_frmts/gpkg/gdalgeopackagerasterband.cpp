@@ -841,7 +841,6 @@ retry:
         m_poTPD->m_asCachedTilesDesc[3].nCol = nColMin + 1;
         m_poTPD->m_asCachedTilesDesc[1].nIdxWithinTileData = -1;
         m_poTPD->m_asCachedTilesDesc[3].nIdxWithinTileData = -1;
-
     }
 
     for(int nRow = nRowMin; nRow <= nRowMax; nRow ++)
@@ -926,7 +925,6 @@ retry:
                         }
                     }
 #endif
-
                 }
                 else
                 {
@@ -985,7 +983,6 @@ retry:
 
                 if( poBlock )
                     poBlock->DropLock();
-
             }
         }
     }
@@ -2427,7 +2424,6 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                                     (nBlockYSize - nYEndValidity) * nBlockXSize );
                         }
                     }
-
                 }
                 else
                 {

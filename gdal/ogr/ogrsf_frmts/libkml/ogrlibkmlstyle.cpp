@@ -932,7 +932,6 @@ static StyleSelectorPtr StyleFromStyleURL(
                 /***** if found copy it to the table as a new style *****/
                 if( pszTest )
                     poStyleTable->AddStyle(pszStyleMapId, pszTest);
-
             }
             CPLFree(pszUrlTmp);
         }

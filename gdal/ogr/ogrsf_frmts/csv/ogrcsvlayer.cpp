@@ -1271,7 +1271,6 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 
         VSIFCloseL(fpMem);
         VSIUnlink(osTmpMemFile);
-
     }
     VSIFree(pszData);
 

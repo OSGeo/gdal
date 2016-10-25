@@ -178,8 +178,6 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimiting
 
 #else // HAVE_XERCES
 
-void OGRCleanupXercesMutex(void)
-{
-}
+void OGRCleanupXercesMutex(void) {}
 
 #endif // HAVE_XERCES

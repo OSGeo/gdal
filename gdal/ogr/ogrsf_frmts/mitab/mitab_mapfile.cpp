@@ -1375,7 +1375,6 @@ void  TABMAPFile::UpdateMapHeaderInfo(TABGeomType nObjType)
     {
         m_nMinTABVersion = nVersion;
     }
-
 }
 
 /**********************************************************************
@@ -1873,7 +1872,6 @@ int   TABMAPFile::PrepareNewObjViaObjBlock(TABMAPObjHdr *poObjHdr)
             delete m_poCurCoordBlock;
             m_poCurCoordBlock = NULL;
         }
-
     }
 
     return 0;
@@ -3313,9 +3311,7 @@ void TABMAPFile::DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
 
             delete poBlock;
         }
-
     }
-
 }
 
 #endif // DEBUG

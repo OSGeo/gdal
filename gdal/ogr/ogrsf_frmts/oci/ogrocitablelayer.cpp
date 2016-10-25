@@ -1592,7 +1592,6 @@ void OGROCITableLayer::UpdateLayerExtents()
 
         sDimUpdate.Appendf(static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
                            ") WHERE TABLE_NAME = '%s'", poFeatureDefn->GetName());
-
     }
     else
     {

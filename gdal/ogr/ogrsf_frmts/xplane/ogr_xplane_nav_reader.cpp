@@ -405,7 +405,6 @@ void OGRXPlaneNavReader::ParseRecord( int nType )
     {
         CPLAssert(0);
     }
-
 }
 
 /************************************************************************/

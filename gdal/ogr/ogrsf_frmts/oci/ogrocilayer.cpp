@@ -796,7 +796,6 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
 
                 delete poElemLS;
             }
-
         }
 
         *piElement -= 3;

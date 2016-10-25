@@ -305,7 +305,6 @@ void OGRCloudantTableLayer::WriteMetadata()
             {
                 json_object_object_add(poDDocObj, "srsid",
                                    json_object_new_string(pszUrn));
-
             }
         }
     }

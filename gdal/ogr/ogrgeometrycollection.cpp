@@ -756,7 +756,6 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
 /* -------------------------------------------------------------------- */
 
         pszInput = OGRWktReadToken( pszInput, szToken );
-
     } while( szToken[0] == ',' );
 
 /* -------------------------------------------------------------------- */

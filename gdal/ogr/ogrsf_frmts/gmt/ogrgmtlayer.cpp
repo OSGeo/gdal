@@ -559,7 +559,6 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         poGeom = new OGRPoint();
                         break;
                     }
-
                 }
 
                 switch( wkbFlatten(poGeom->getGeometryType()) )

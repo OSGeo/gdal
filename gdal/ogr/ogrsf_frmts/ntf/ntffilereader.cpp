@@ -362,7 +362,6 @@ int NTFFileReader::Open( const char * pszFilenameIn )
             for( int iChar = static_cast<int>(strlen(pszPVName))-1;
                  iChar > 0 && pszPVName[iChar] == ' ';
                  pszPVName[iChar--] = '\0' ) {}
-
         }
 
         delete poRecord;
@@ -1830,7 +1829,6 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
                 GetIndexedRecord( NRT_ATTREC,
                                   atoi(poAnchor->GetField(iStart,iStart+5)) ));
         }
-
     }
 
 /* -------------------------------------------------------------------- */

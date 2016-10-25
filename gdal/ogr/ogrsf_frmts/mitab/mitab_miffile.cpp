@@ -554,7 +554,6 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
               m_nVersion = atoi(papszToken[1]);
 
             CSLDestroy(papszToken);
-
         }
         else if (STARTS_WITH_CI(pszLine, "CHARSET"))
         {
@@ -567,7 +566,6 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
                 m_pszCharset = CPLStrdup(papszToken[1]);
             }
             CSLDestroy(papszToken);
-
         }
         else if (STARTS_WITH_CI(pszLine, "DELIMITER"))
         {
@@ -580,7 +578,6 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
                m_pszDelimiter = CPLStrdup(papszToken[1]);
            }
           CSLDestroy(papszToken);
-
         }
         else if (STARTS_WITH_CI(pszLine, "UNIQUE"))
         {
@@ -664,7 +661,6 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
             //printf("Reading CoordSys\n");
             // Reading CoordSys
         }
-
     }
 
     if (!bAllColumnsRead)
@@ -721,7 +717,6 @@ int MIFFile::ParseMIFHeader(int* pbIsEmpty)
     }
 
     return 0;
-
 }
 
 /************************************************************************/
@@ -940,7 +935,6 @@ void MIFFile::PreParseFile()
                 UpdateExtents(m_poMIFFile->GetXTrans(CPLAtof(papszToken[1])),
                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[2])));
             }
-
         }
         else if (STARTS_WITH_CI(pszLine, "LINE") ||
                  STARTS_WITH_CI(pszLine, "RECT") ||
@@ -992,7 +986,6 @@ void MIFFile::PreParseFile()
                              m_poMIFFile->GetYTrans(CPLAtof(papszToken[3])));
             }
         }
-
       }
 
     CSLDestroy(papszToken);
@@ -1016,7 +1009,6 @@ void MIFFile::PreParseFile()
     }
 
     m_bPreParsed = TRUE;
-
 }
 
 /**********************************************************************
@@ -1424,7 +1416,6 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
                         return NULL;
                         break;
                     }
-
                 }
             }
             CSLDestroy(papszToken);

@@ -1109,7 +1109,6 @@ class TABFeature : public OGRFeature
 
     virtual void DumpMID(FILE *fpOut = NULL);
     virtual void DumpMIF(FILE *fpOut = NULL);
-
 };
 
 /*---------------------------------------------------------------------
@@ -1323,7 +1322,6 @@ class TABPolyline CPL_FINAL : public TABFeature,
     // MapInfo-specific attributes... made available through public vars
     // for now.
     GBool       m_bSmooth;
-
 };
 
 /*---------------------------------------------------------------------
@@ -1447,7 +1445,6 @@ class TABRectangle CPL_FINAL : public TABFeature,
     GBool       m_bRoundCorners;
     double      m_dRoundXRadius;
     double      m_dRoundYRadius;
-
 };
 
 /*---------------------------------------------------------------------

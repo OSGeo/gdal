@@ -286,7 +286,6 @@ class OGRPLScenesV1Layer: public OGRLayer
         virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
         virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-
 };
 
 #endif /* ndef OGR_PLSCENES_H_INCLUDED */

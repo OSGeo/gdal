@@ -375,8 +375,7 @@ typedef struct AVCTableDef_t
     /* Field information read from the arc####.nit file
      */
     AVCFieldInfo *pasFieldDef;
-
-}AVCTableDef;
+} AVCTableDef;
 
 typedef struct AVCField_t
 {
@@ -385,7 +384,7 @@ typedef struct AVCField_t
     float       fFloat;
     double      dDouble;
     GByte       *pszStr;
-}AVCField;
+} AVCField;
 
 /*---------------------------------------------------------------------
  * Stuff related to buffered reading of raw binary files
@@ -411,7 +410,7 @@ typedef struct AVCRawBinFile_t
     /* Handle on dataset's multibyte character encoding info. */
     AVCDBCSInfo *psDBCSInfo;
 
-}AVCRawBinFile;
+} AVCRawBinFile;
 
 /*---------------------------------------------------------------------
  * Stuff related to reading and writing binary coverage files
@@ -459,7 +458,7 @@ typedef struct AVCBinFile_t
         char         **papszPrj;
     }cur;
 
-}AVCBinFile;
+} AVCBinFile;
 
 /*---------------------------------------------------------------------
  * Stuff related to the generation of E00

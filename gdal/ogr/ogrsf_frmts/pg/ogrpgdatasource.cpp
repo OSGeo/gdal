@@ -219,7 +219,6 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
         szNum[iLen] = '\0';
         psVersion->nRelease = atoi(szNum);
     }
-
 }
 
 /************************************************************************/
@@ -754,7 +753,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             CPLDebug("PG","PostGIS version string : '%s'", pszVer);
 
             OGRPGDecodeVersionString(&sPostGISVersion, pszVer);
-
         }
         OGRPGClearResult(hResult);
 
@@ -2790,7 +2788,6 @@ const char* OGRPGDataSource::GetMetadataItem(const char* pszKey,
             osDebugLastTransactionCommand = "";
             return pszRet;
         }
-
     }
     return OGRDataSource::GetMetadataItem(pszKey, pszDomain);
 }

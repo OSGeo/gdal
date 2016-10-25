@@ -656,7 +656,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             CPLDebug( "OSR_USGS", "Unsupported projection: %ld", iProjSys );
             SetLocalCS( CPLString().Printf("GCTP projection number %ld", iProjSys) );
             break;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -721,7 +720,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     SetAuthority( "SPHEROID", "EPSG", 7047 );
                 }
             }
-
         }
         else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {

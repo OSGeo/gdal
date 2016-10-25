@@ -426,7 +426,6 @@ void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "Current index block follows ...\n\n");
         m_poIDBlock->Dump(fpOut);
         fprintf(fpOut, "... end of index block.\n\n");
-
     }
 
     fflush(fpOut);

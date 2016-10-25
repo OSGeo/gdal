@@ -2313,7 +2313,6 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                 INT_TO_DBL(pasCoords[j].nLon),
                                 INT_TO_DBL(pasCoords[j].nLat) );
             }
-
         }
     }
 
@@ -2452,7 +2451,6 @@ OGRGeometry* OGROSMDataSource::BuildGeometryCollection(OSMRelation* psRelation,
                                 INT_TO_DBL(pasCoords[j].nLon),
                                 INT_TO_DBL(pasCoords[j].nLat) );
             }
-
         }
     }
 
@@ -2705,7 +2703,6 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             {
                 bFeatureAdded = true;
             }
-
         }
         else
         {
@@ -4256,7 +4253,6 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer( const char* pszLayerName,
     poFeatureDefn->Reference();
     OGRFieldDefn oField( pszLayerName, OFTString );
     poFeatureDefn->AddFieldDefn( &oField );
-
 }
 
 /************************************************************************/

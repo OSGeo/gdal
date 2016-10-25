@@ -137,7 +137,6 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
     }
 
     m_layers.push_back(pLayer);
-
   }
 
   if (errEncountered && m_layers.size() == 0)

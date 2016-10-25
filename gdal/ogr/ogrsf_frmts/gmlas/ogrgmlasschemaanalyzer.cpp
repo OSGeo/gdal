@@ -915,7 +915,6 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                 osEltXPath.c_str());
                     bFoundGMLFeature = true;
                 }
-
             }
         }
 
@@ -1657,7 +1656,6 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
                     GMLASField::PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE );
             oClass.AddField( oField );
         }
-
     }
 
 #if 0
@@ -2042,7 +2040,6 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                     }
                 }
             }
-
         }
         else if( !bAlreadyVisitedMG &&
                  poParticle->getTermType() == XSParticle::TERM_MODELGROUP )
@@ -2106,7 +2103,6 @@ void GMLASSchemaAnalyzer::BuildMapCountOccurencesOfSameName(
                                               oMapCountOccurencesOfSameName);
         }
     }
-
 }
 
 /************************************************************************/
@@ -2867,7 +2863,6 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         oClass.AddNestedClass( aoNestedClasses[j] );
                     }
                 }
-
             }
         }
         else if( poParticle->getTermType() == XSParticle::TERM_MODELGROUP )

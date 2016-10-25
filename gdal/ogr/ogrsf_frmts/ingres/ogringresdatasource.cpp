@@ -652,7 +652,6 @@ int OGRIngresDataSource::FetchSRSId( OGRSpatialReference * poSRS )
             {
                 nSRSId = *((II_INT4 *)papszRow[0]) + 1;
             }
-
         }
         else
             nSRSId = USER_DEFINED_SR_START+1;

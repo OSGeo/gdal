@@ -563,7 +563,6 @@ int TABView::ParseTABFile(const char *pszDatasetPath,
             for( int iTok = 1; papszTok[iTok] != NULL; iTok++ )
                 m_papszFieldNames = CSLAddString(m_papszFieldNames,
                                                  papszTok[iTok]);
-
         }
         else if (bInsideTableDef &&
                  (EQUAL(papszTok[0],"where")))
@@ -1095,7 +1094,6 @@ OGRErr TABView::GetExtent (OGREnvelope *psExtent, int bForce)
     }
 
     return m_papoTABFiles[m_nMainTableIndex]->GetExtent(psExtent, bForce);
-
 }
 
 /**********************************************************************
@@ -1234,7 +1232,6 @@ void TABView::Dump(FILE *fpOut /*=NULL*/)
     {
         fprintf(fpOut, "File is opened: %s\n", m_pszFname);
         fprintf(fpOut, "View contains %d tables\n", m_numTABFiles);
-
     }
 
     fflush(fpOut);
@@ -1310,7 +1307,6 @@ void TABRelation::ResetAllMembers()
     if (m_poDefn && m_poDefn->Dereference() == 0)
         delete m_poDefn;
     m_poDefn = NULL;
-
 }
 
 /**********************************************************************
@@ -1413,7 +1409,6 @@ int  TABRelation::Init(const char *pszViewName,
             papszSelectedFields = CSLAddString(papszSelectedFields,
                                                poFieldDefn->GetNameRef());
         }
-
     }
 
     /*-----------------------------------------------------------------

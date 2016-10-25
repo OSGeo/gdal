@@ -718,7 +718,6 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
       ;
 
     return 0;
-
 }
 
 /**********************************************************************
@@ -1085,7 +1084,6 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
       fp->WriteLine("    Smooth\n");
 
     return 0;
-
 }
 
 /**********************************************************************
@@ -1249,7 +1247,6 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     SetPenPattern((GByte)atoi(papszToken[2]));
                     SetPenColor((GInt32)atoi(papszToken[3]));
                 }
-
             }
             else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
@@ -1263,7 +1260,6 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     else
                       SetBrushTransparent(TRUE);
                 }
-
             }
             else if (STARTS_WITH_CI(papszToken[0], "CENTER"))
             {
@@ -1472,7 +1468,6 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                    SetPenPattern((GByte)atoi(papszToken[2]));
                    SetPenColor((GInt32)atoi(papszToken[3]));
                }
-
            }
            else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
            {
@@ -1486,7 +1481,6 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                    else
                       SetBrushTransparent(TRUE);
                }
-
            }
        }
        CSLDestroy(papszToken);
@@ -1619,7 +1613,6 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     SetPenPattern((GByte)atoi(papszToken[2]));
                     SetPenColor((GInt32)atoi(papszToken[3]));
                 }
-
             }
             else if (STARTS_WITH_CI(papszToken[0], "BRUSH"))
             {
@@ -1632,9 +1625,7 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                       SetBrushBGColor(atoi(papszToken[3]));
                     else
                       SetBrushTransparent(TRUE);
-
                 }
-
             }
         }
         CSLDestroy(papszToken);
@@ -1790,7 +1781,6 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     SetPenPattern((GByte)atoi(papszToken[2]));
                     SetPenColor((GInt32)atoi(papszToken[3]));
                 }
-
             }
         }
         CSLDestroy(papszToken);
@@ -1939,7 +1929,6 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
                     // papsztoken[3] = Size ???
                 }
-
             }
             else if (STARTS_WITH_CI(papszToken[0], "SPACING"))
             {
@@ -2168,7 +2157,6 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
         break;
     }
     return 0;
-
 }
 
 /**********************************************************************

@@ -1194,7 +1194,6 @@ bool OGRVDVWriterLayer::WriteSchemaIfNeeded()
                     bOK &= VSIFPrintfL(m_fpL, "char[%d]", nWidth) > 0;
                     break;
             }
-
         }
         bOK &= VSIFPrintfL(m_fpL, "\n") > 0;
 

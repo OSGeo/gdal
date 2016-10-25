@@ -429,7 +429,6 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
         pszLink = CSLFetchNameValue(papszOptions, "LINK");
         if (pszLink == NULL)
             pszLink = "channel_link";
-
     }
     else if (eFormat == GEORSS_ATOM && pszHeader == NULL)
     {

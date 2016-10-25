@@ -677,5 +677,4 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     if( poMainLayer != NULL )
         poDS->AddLayer(poMainLayer);
-
 }

@@ -172,7 +172,6 @@ public:
     int         nNumCode;
     char        **papszCodeVal; /* Short code value */
     char        **papszCodeDes; /* Long description of code */
-
 };
 
 /************************************************************************/

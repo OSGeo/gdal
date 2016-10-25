@@ -127,7 +127,6 @@ class Header {
          * \param nIndex Index of the point which has to be removed
          */
         void removePoint(int nIndex);
-
 };
 
 #ifdef notdef

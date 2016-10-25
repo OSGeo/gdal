@@ -304,7 +304,6 @@ char** OGRWFSDataSource::GetMetadataDomainList()
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(),
                                    TRUE,
                                    "", "xml:capabilities", NULL);
-
 }
 
 /************************************************************************/
@@ -1554,7 +1553,6 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                             CPLPopErrorHandler();
                             CPLErrorReset();
                         }
-
                     }
                     CPLFree(pszProj4);
                 }

@@ -126,7 +126,6 @@ class CPL_DLL OGROCISession {
     OCIType *PinTDO( const char * );
 
   private:
-
 };
 
 OGROCISession CPL_DLL*
@@ -382,7 +381,6 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     virtual int         TestCapability( const char * );
-
 };
 
 /************************************************************************/

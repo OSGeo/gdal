@@ -348,7 +348,6 @@ char *OCTProj4Normalize( const char *pszProj4Src )
         CPLLocaleC  oLocaleEnforcer;
         return OCTProj4NormalizeInternal(pszProj4Src);
     }
-
 }
 
 /************************************************************************/

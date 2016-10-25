@@ -321,7 +321,6 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
             if( !GeometryAppend( poMember ) )
                 return FALSE;
         }
-
     }
     else if( poGeometry->getGeometryType() == wkbCompoundCurve
              || poGeometry->getGeometryType() == wkbCompoundCurveZ )

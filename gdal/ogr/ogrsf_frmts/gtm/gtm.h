@@ -136,7 +136,6 @@ private:
     int color;
     int nPoints;
     TrackPoint* pasTrackPoints;
-
 };
 
 class GTM
@@ -196,7 +195,6 @@ private:
     bool readTrackPoints(double& latitude, double& longitude, GIntBig& datetime,
                          unsigned char& start, float& altitude);
     bool readFile(void* pBuffer, size_t nSize, size_t nCount);
-
 };
 
 #endif // OGR_GTM_GTM

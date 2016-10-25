@@ -85,7 +85,6 @@ class OGRPGTableFeatureDefn : public OGRPGFeatureDefn
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldIndex(pszName); }
-
 };
 
 /************************************************************************/
@@ -1009,7 +1008,6 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += ") AS ";
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("AsEWKT_%s", poGeomFieldDefn->GetNameRef()));
-
             }
             else
             {
@@ -1146,7 +1144,6 @@ OGRErr OGRPGTableLayer::DeleteFeature( GIntBig nFID )
                   "a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1233,7 +1230,6 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                   "Unable to update features in tables without\n"
                   "a recognised FID column.");
         return eErr;
-
     }
 
     /* In case the FID column has also been created as a regular field */
@@ -1360,7 +1356,6 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                 }
                 else
                     osCommand += "NULL";
-
             }
         }
     }
@@ -1790,7 +1785,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 }
                 else
                     osCommand += "''";
-
             }
         }
         else if( !bWkbAsOid )
@@ -2651,7 +2645,6 @@ OGRErr OGRPGTableLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn
         poFieldDefn->SetDefault(oField.GetDefault());
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/

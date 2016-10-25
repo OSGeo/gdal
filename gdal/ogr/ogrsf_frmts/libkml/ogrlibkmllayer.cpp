@@ -445,7 +445,6 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
             default:
                 break;
         }
-
     } while ( !poOgrFeature );
 
     /***** set the FID on the ogr feature *****/
