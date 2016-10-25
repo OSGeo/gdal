@@ -583,7 +583,7 @@ def ogr_vrt_14():
     feat.SetGeometryDirectly(geom)
     shp_lyr.CreateFeature(feat)
 
-    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test');
+    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test')
 
     shp_ds = None
 
@@ -953,7 +953,7 @@ def ogr_vrt_20():
     feat.SetGeometryDirectly(geom)
     shp_lyr.CreateFeature(feat)
 
-    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test');
+    shp_ds.ExecuteSQL('CREATE SPATIAL INDEX on test')
 
     shp_ds = None
 

@@ -1026,7 +1026,7 @@ def ogr_shape_23():
     #######################################################
     # Test writing of a polygon with an empty external ring
     layer_name = 'polygonwithemptyinternalring'
-    wkt = 'POLYGON((100 0,100 10,110 10,100 0))';
+    wkt = 'POLYGON((100 0,100 10,110 10,100 0))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
 
@@ -1040,7 +1040,7 @@ def ogr_shape_23():
     wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
-    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))');
+    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))')
     poly.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
     geom.AddGeometry(poly)
 
@@ -1189,7 +1189,7 @@ def ogr_shape_28():
 
     # Check that the hand-written value can be read back
     lyr = ds.GetLayer(0)
-    feat = lyr.GetFeature(23900000);
+    feat = lyr.GetFeature(23900000)
     if feat.GetFieldAsString(0) != 'value_over_2GB':
         print(feat.GetFieldAsString(0))
         return 'fail'
@@ -1220,7 +1220,7 @@ def ogr_shape_28():
     ds = ogr.Open('tmp/hugedbf.dbf', 1)
     gdal.SetConfigOption('SHAPE_2GB_LIMIT', None)
     lyr = ds.GetLayer(0)
-    feat = lyr.GetFeature(23900000);
+    feat = lyr.GetFeature(23900000)
     if feat.GetFieldAsString(0) != 'updated_value':
         print(feat.GetFieldAsString(0))
         return 'fail'
@@ -1410,7 +1410,7 @@ def ogr_shape_32():
     #######################################################
     # Write a geometry repeatedly.
     # File size is pre-calculated according to the geometry's size.
-    wkt = 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))';
+    wkt = 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
 

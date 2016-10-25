@@ -64,7 +64,7 @@ class gml_geom_unit:
         geom_gml = ogr.CreateGeometryFromGML( gml )
 
         if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
-            clean_wkt = geom_wkt.ExportToWkt();
+            clean_wkt = geom_wkt.ExportToWkt()
             gml_wkt = geom_gml.ExportToWkt()
             gdaltest.post_reason( 'WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml) )
             return 'fail'
