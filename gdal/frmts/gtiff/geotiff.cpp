@@ -2819,7 +2819,6 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             {
                                 REACHED(46);
                             }
-
                         }
                     }
 
@@ -10244,7 +10243,6 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                 }
             }
         }
-
     }
 }
 

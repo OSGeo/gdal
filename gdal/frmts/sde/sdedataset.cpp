@@ -307,7 +307,6 @@ SDEDataset::SDEDataset(  )
     dfMaxX              = 0.0;
     dfMaxY              = 0.0;
     SE_rascolinfo_create(&hRasterColumn);
-
 }
 
 /************************************************************************/

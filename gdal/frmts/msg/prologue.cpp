@@ -211,12 +211,10 @@ RadiometricProcessingRecord::RadiometricProcessingRecord(std::ifstream & ifile)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-Prologue::Prologue()
-: m_idr(0)
-, m_rpr(0)
-{
-
-}
+Prologue::Prologue() :
+    m_idr(0),
+    m_rpr(0)
+{}
 
 Prologue::~Prologue()
 {

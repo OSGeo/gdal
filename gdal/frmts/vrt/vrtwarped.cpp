@@ -727,7 +727,6 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
         GDALDeserializeTransformer( psContainer->psChild,
                                     &pfnBaseTransform,
                                     &pBaseTransformerArg );
-
     }
 
     if( pfnBaseTransform == NULL )
@@ -988,7 +987,6 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
             CPLRealloc( m_papoOverviews, sizeof(void*) * m_nOverviewCount ) );
 
         m_papoOverviews[m_nOverviewCount-1] = poOverviewDS;
-
     }
 
     CPLFree( panNewOverviewList );

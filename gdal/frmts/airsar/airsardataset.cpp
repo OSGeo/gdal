@@ -491,7 +491,6 @@ char ** AirSARDataset::ReadHeader( VSILFILE * fp, int nFileOffset,
 
         papszHeadInfo =
             CSLSetNameValue( papszHeadInfo, szPrefixedKeyName, szLine+iValue );
-
     }
 
     return papszHeadInfo;

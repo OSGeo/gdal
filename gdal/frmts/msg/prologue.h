@@ -120,7 +120,6 @@ public:
 private:
   ImageDescriptionRecord * m_idr;
   RadiometricProcessingRecord * m_rpr;
-
 };
 
 #endif // !defined(AFX_PROLOGUE_H__777B5B86_04F4_4A01_86F6_24615DCD8446__INCLUDED_)

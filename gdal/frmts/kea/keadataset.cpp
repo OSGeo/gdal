@@ -399,7 +399,6 @@ GDALDataset *KEADataset::CreateCopy( const char * pszFilename, GDALDataset *pSrc
                   pszFilename, e.what() );
         return NULL;
     }
-
 }
 
 // constructor
@@ -754,7 +753,6 @@ int KEADataset::GetGCPCount()
     {
         return 0;
     }
-
 }
 
 const char* KEADataset::GetGCPProjection()

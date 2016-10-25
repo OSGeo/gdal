@@ -657,10 +657,11 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
     nBlockSize = nBlockXSize * nBlockYSize;
 
     // We're the base level
-    if (nOverview == -1) {
-        for (int i = 0; i<this->nOverviews; i++) {
+    if( nOverview == -1 )
+    {
+        for( int i = 0; i<this->nOverviews; i++ )
+        {
             papoOverviews[i]= new SDERasterBand(poGDS, nBand, i, poBand);
-
         }
     }
     return CE_None;
@@ -699,7 +700,6 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff,
         {
             IssueSDEError( nSDEErr, "SE_rasconstraint_set_interleave" );
         }
-
     }
 
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet

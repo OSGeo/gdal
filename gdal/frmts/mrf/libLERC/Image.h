@@ -81,7 +81,6 @@ protected:
 
   Type type_;
   int width_, height_;
-
 };
 
 NAMESPACE_LERC_END

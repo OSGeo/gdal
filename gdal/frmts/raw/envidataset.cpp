@@ -2079,7 +2079,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                             "HDR" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
-
     }
     else
     {
@@ -2550,7 +2549,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                         "wavelength_units", pszWLUnits);
                 }
             }
-
         }
         CSLDestroy( papszWL );
         CSLDestroy( papszBandNames );

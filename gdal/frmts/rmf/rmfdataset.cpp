@@ -475,7 +475,6 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                      iRow * nLastTileWidth * nDataSize,
                      nLastTileWidth * nDataSize );
         }
-
     }
 
     return CE_None;
@@ -617,7 +616,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   iInPixel++, iOutPixel += poGDS->nBands )
                 pabyTile[iOutPixel] =
                     reinterpret_cast<GByte *>( pImage )[iInPixel];
-
         }
     }
 

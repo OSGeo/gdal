@@ -174,7 +174,6 @@ class NITFDataset : public GDALPamDataset
              NITFDatasetCreate( const char *pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions );
-
 };
 
 /************************************************************************/

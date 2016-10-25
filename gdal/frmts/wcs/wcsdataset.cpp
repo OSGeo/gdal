@@ -2085,7 +2085,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( papszModifiers[iLast] );
             papszModifiers[iLast] = NULL;
         }
-
     }
 
 /* -------------------------------------------------------------------- */

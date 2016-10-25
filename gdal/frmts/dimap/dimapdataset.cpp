@@ -290,7 +290,6 @@ class DIMAPRasterBand : public GDALPamRasterBand
                                   int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc, void *pProgressData );
-
 };
 
 /************************************************************************/
@@ -1462,7 +1461,6 @@ int DIMAPDataset::ReadImageInformation2()
                             GetRasterBand(nBandIndex)->SetMetadataItem(
                                 osMDName, psTag->psChild->pszValue);
                         }
-
                     }
                     psTag = psTag->psNext;
                 }

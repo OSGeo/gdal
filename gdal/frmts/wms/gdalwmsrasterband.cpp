@@ -241,7 +241,6 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                          } else {
                              ret = CE_None;
                          }
-
                     }
                     VSIUnlink(file_name.c_str());
                 }

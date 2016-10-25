@@ -2577,7 +2577,6 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                     GDALCopyWords( &fResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
             }
-
         }
     }
 

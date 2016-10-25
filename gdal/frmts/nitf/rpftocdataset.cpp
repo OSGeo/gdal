@@ -335,7 +335,6 @@ void  RPFTOCProxyRasterBandRGBA::Expand(void* pImage, const void* srcImage)
                     colorTable[four_pixels & 0xFF];
         }
     }
-
 }
 
 /************************************************************************/
@@ -427,10 +426,11 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
             Expand(pImage, cachedImage);
             ret = CE_None;
         }
-
     }
     else
+    {
         ret = CE_Failure;
+    }
 
     proxyDS->UnrefUnderlyingDataset(ds);
 
@@ -538,10 +538,11 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
                 data[i] = remapLUT[data[i]];
             }
         }
-
     }
     else
+    {
         ret = CE_Failure;
+    }
 
     proxyDS->UnrefUnderlyingDataset(ds);
 
@@ -1281,7 +1282,6 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(entryName);
         return NULL;
     }
-
 }
 
 /************************************************************************/

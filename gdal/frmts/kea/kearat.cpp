@@ -773,7 +773,6 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 }
             }
             CPLFree(padfColData);
-
         }
         break;
         case kealib::kea_att_string:

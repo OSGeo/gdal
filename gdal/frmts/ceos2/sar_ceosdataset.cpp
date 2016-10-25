@@ -1131,7 +1131,6 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_PIXEL_SPACING_METERS", szField );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1220,7 +1219,6 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !STARTS_WITH_CI(szField, "                    ") )
             SetMetadataItem( "CEOS_GROUND_TO_SLANT_C3", szField );
-
     }
 /* -------------------------------------------------------------------- */
 /*      Detailed Processing Parameters (Radarsat)                       */
@@ -1335,7 +1333,6 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_INC_ANGLE_LAST_RANGE", szField );
-
     }
 /* -------------------------------------------------------------------- */
 /*      Get process-to-raw data coordinate translation values.  These   */
@@ -1400,7 +1397,6 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if( !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_DM_FAST_ALPHA_2", szField );
-
     }
 
 /* -------------------------------------------------------------------- */

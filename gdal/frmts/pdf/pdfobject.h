@@ -337,7 +337,6 @@ class GDALPDFObjectPdfium : public GDALPDFObject
         virtual GDALPDFStream*      GetStream();
         virtual int                 GetRefNum();
         virtual int                 GetRefGen();
-
 };
 
 #endif // HAVE_PDFIUM

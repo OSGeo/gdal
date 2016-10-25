@@ -714,7 +714,6 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
                 oSRS.SetWellKnownGeogCS( "WGS84" );
             }
         }
-
     } // end of if ( !IsLocal() )
 
 /* -------------------------------------------------------------------- */

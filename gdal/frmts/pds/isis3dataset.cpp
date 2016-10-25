@@ -115,7 +115,6 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 
     nFirstTileOffset = nFirstTileOffsetIn
         + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
-
 }
 
 /************************************************************************/

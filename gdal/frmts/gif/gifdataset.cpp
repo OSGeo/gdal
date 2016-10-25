@@ -582,7 +582,6 @@ GIFDataset::CreateCopy(
             {
                 goto error;
             }
-
         }
     }
     else

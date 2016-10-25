@@ -98,5 +98,4 @@ void WMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequ
     /* 3 digits, like http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
     URLSearchAndReplace(url, "${xxx}", "%03d/%03d/%03d", tiri.m_x / 1000000, (tiri.m_x / 1000) % 1000, tiri.m_x % 1000);
     URLSearchAndReplace(url, "${yyy}", "%03d/%03d/%03d", tms_y / 1000000, (tms_y / 1000) % 1000, tms_y % 1000);
-
 }

@@ -1030,7 +1030,6 @@ void PNGDataset::LoadICCProfile()
 
         SetMetadataItem( "SOURCE_WHITEPOINT",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaWhitepoint[0], dfaWhitepoint[1] ) , "COLOR_PROFILE" );
-
     }
 
     nPamFlags = nOldPamFlags;
@@ -1746,7 +1745,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         faColour[2], faColour[3],
                         faColour[4], faColour[5],
                         faColour[6], faColour[7]);
-
                 }
             }
 
@@ -1755,7 +1753,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CSLDestroy( apapszTokenList[2] );
             CSLDestroy( apapszTokenList[3] );
         }
-
     }
 
 /* -------------------------------------------------------------------- */

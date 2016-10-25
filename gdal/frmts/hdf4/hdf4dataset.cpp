@@ -1279,7 +1279,6 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                       "existing datasets." );
             return NULL;
         }
-
     }
 
     return poDS;

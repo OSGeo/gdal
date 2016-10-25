@@ -384,7 +384,6 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 padfStokesMatrix = NULL;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
-
             }
         }
     }
@@ -410,7 +409,6 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                 padfStokesMatrix = NULL;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
-
             }
         }
     }
@@ -722,7 +720,6 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                 /* -1 so that 0,0 maps to largest Y */
                 dfgcpY = -1*sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
                 dfgcpX = dfgcpPixel*dfsample_size_az;
-
             }
             else
             {
@@ -740,7 +737,6 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
                 dftemp = dfnear_srd + (dfsample_size*dfgcpPixel);
                 dfgcpX = sqrt( dftemp*dftemp - dfaltitude*dfaltitude );
                 dfgcpY = (nLines - dfgcpLine)*dfsample_size_az;
-
             }
             poDS->pasGCPList[ngcp].dfGCPX = dfgcpX;
             poDS->pasGCPList[ngcp].dfGCPY = dfgcpY;
@@ -751,14 +747,12 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
             CPLFree(poDS->pasGCPList[ngcp].pszId);
             poDS->pasGCPList[ngcp].pszId = CPLStrdup( szID );
-
         }
 
         CPLFree(poDS->pszGCPProjection);
         poDS->pszGCPProjection = CPLStrdup(
             "LOCAL_CS[\"Ground range view / unreferenced meters\","
             "UNIT[\"Meter\",1.0]]");
-
     }
 
     CPLFree(pszWorkname);
@@ -1565,7 +1559,6 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             m33 += step;
             m44 += step;
         }
-
     }
     else if ( nBand == 12 ) /* C34 */
     {

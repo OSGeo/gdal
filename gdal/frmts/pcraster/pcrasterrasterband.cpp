@@ -245,7 +245,8 @@ CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg);
   }
-  else{
+  else
+  {
     // the datatype of the incoming data can be of different type than the
     // cell representation used in the raster
     // 'remember' the GDAL type to distinguish it later on in iWriteBlock
@@ -253,7 +254,6 @@ CPLErr PCRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     return GDALRasterBand::IRasterIO(GF_Write, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg);
-
   }
 }
 

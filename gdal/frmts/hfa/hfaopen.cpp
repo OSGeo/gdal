@@ -2174,7 +2174,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 12, &nValue16, 2 );
         }
-
     }
 /* -------------------------------------------------------------------- */
 /*      Create ExternalRasterDMS object.                                */

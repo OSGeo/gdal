@@ -1466,7 +1466,6 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
     psExtraArg->pProgressData = pProgressDataGlobal;
 
     return eErr;
-
 }
 
 /************************************************************************/

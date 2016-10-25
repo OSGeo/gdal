@@ -146,7 +146,6 @@ class EHdrRasterBand : public RawRasterBand
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
                                   double dfMean, double dfStdDev );
     virtual CPLErr SetColorTable( GDALColorTable *poNewCT );
-
 };
 
 /************************************************************************/

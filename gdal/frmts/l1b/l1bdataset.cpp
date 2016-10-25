@@ -324,7 +324,6 @@ class L1BDataset : public GDALPamDataset
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-
 };
 
 /************************************************************************/
@@ -695,7 +694,6 @@ GInt32 L1BDataset::GetInt32(const void* pabyData)
     if( bByteSwap )
         return CPL_SWAP32(lTemp);
     return lTemp;
-
 }
 
 /************************************************************************/
@@ -990,7 +988,6 @@ void L1BDataset::ProcessRecordHeaders()
             SetMetadataItem( "LOCATION", "Descending" );
             break;
     }
-
 }
 
 /************************************************************************/

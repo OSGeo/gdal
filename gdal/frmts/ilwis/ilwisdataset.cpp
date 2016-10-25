@@ -534,9 +534,7 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             adfGeoTransform[4] = 0.0;
             adfGeoTransform[5] = -PixelSizeY;
         }
-
     }
-
 }
 
 /************************************************************************/

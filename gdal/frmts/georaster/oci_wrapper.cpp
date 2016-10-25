@@ -483,7 +483,6 @@ bool OWConnection::GetNextField( OCIParam* phTable,
     *pnScale     = (signed short) nOCIScale;
 
     return true;
-
 }
 
 bool OWConnection::StartTransaction()
@@ -746,7 +745,6 @@ void OWStatement::Bind( sdo_geometry** pphData )
     (dvoid**) 0,
         (ub4*) 0),
         hError );
-
 }
 
 void OWStatement::Bind( OCILobLocator** pphLocator )
@@ -803,7 +801,6 @@ void OWStatement::Bind( OCIArray** pphData, OCIType* type )
         (dvoid **)0,
         (ub4 *)0 ),
         hError);
-
 }
 
 void OWStatement::Bind( char* pszData, int nSize )
@@ -1750,7 +1747,6 @@ bool CheckError( sword nStatus, OCIError* hError )
             CPLError( CE_Failure, CPLE_AppDefined, "%.*s",
                 static_cast<int>(sizeof(szMsg)), szMsg );
             break;
-
     }
 
     return true;

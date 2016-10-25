@@ -336,7 +336,6 @@ bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t 
    }
 
    return bReturnNumOK && bClassificationOK;
-
 }
 
 template<typename DTYPE>
@@ -487,7 +486,6 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       default:
            return CE_Failure;
            break;
-
    }
    return CE_None;
 }
@@ -507,7 +505,6 @@ CPLErr MG4LidarRasterBand::GetStatistics( int bApproxOK, int bForce,
    return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
       pdfMin, pdfMax,
       pdfMean, pdfStdDev );
-
 }
 /************************************************************************/
 /*                           GetNoDataValue()                           */

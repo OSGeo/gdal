@@ -709,9 +709,9 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             poDS->adfGeoTransform[4] = 0.0;
             poDS->adfGeoTransform[5] = 1.0;
         }
-
     }
-    else {
+    else
+    {
         CPLError(CE_Warning, CPLE_AppDefined,
             "Unable to find sceneInfo tag in XML document. "
             "Proceeding with caution.");

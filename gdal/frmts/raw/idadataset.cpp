@@ -161,7 +161,6 @@ class IDADataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType,
                                 char ** /* papszParmList */ );
-
 };
 
 /************************************************************************/

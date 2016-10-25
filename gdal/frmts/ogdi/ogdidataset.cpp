@@ -122,7 +122,6 @@ class OGDIRasterBand : public GDALRasterBand
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eDT, char **papszOptions );
-
 };
 
 /************************************************************************/

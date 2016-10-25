@@ -183,7 +183,6 @@ private:
 
   template<class T>
   bool DecodeHuffman(const Byte** ppByte, T* data) const;
-
 };
 
 // -------------------------------------------------------------------------- ;

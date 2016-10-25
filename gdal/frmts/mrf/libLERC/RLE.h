@@ -63,7 +63,6 @@ protected:
 
   void writeCount(short cnt, Byte** ppCnt, Byte** ppDst) const;
   short readCount(const Byte** ppCnt) const;
-
 };
 
 // -------------------------------------------------------------------------- ;

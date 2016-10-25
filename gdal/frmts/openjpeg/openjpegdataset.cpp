@@ -1990,7 +1990,6 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         poDS->papoOverviewDS[poDS->nOverviewCount ++] = poODS;
-
     }
 
     opj_destroy_codec(pCodec);

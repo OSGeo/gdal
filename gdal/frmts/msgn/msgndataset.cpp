@@ -71,7 +71,6 @@ class MSGNDataset : public GDALDataset
 
     CPLErr     GetGeoTransform( double * padfTransform );
     const char *GetProjectionRef();
-
 };
 
 /************************************************************************/

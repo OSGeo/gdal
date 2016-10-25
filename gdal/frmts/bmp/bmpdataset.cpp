@@ -884,7 +884,6 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     // rcg, release compressed buffer here.
     CPLFree( pabyComprBuf );
     pabyComprBuf = NULL;
-
 }
 
 /************************************************************************/

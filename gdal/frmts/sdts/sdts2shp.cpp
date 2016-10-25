@@ -725,7 +725,6 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
 
         if( !poAttrReader->IsIndexed() )
             delete poAttrFeature;
-
     } /* next module */
 }
 

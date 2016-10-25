@@ -173,10 +173,9 @@ PostGISRasterDataset::PostGISRasterDataset() :
 
         else if (EQUAL(pszTmp, "AVERAGE"))
             resolutionStrategy = AVERAGE_RESOLUTION;
-
     }
-
-    else {
+    else
+    {
         resolutionStrategy = USER_RESOLUTION;
 #ifdef DEBUG_VERBOSE
         pszTmp = "USER";
@@ -254,12 +253,13 @@ PostGISRasterDataset::~PostGISRasterDataset() {
     // of the deleting the source holders just below.
     CloseDependentDatasets();
 
-    if (papoSourcesHolders) {
+    if (papoSourcesHolders)
+    {
         int i;
-        for(i = 0; i < m_nTiles; i++) {
+        for(i = 0; i < m_nTiles; i++)
+        {
             if (papoSourcesHolders[i])
                 delete papoSourcesHolders[i];
-
         }
 
         VSIFree(papoSourcesHolders);
@@ -430,13 +430,11 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
             pszSchema, pszTable);
 
             pszPrimaryKeyName = NULL; // Just in case
-
         }
-
-        else {
+        else
+        {
             pszPrimaryKeyName = CPLStrdup(PQgetvalue(poResult, 0, 0));
         }
-
     }
 
     // Ok, get the primary key
@@ -521,13 +519,13 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
         }
 
         PQclear(poResult);
-
     }
         /***************************************************************
          * Fetch all the schema's raster tables and store them as
          * subdatasets
          **************************************************************/
-    else {
+    else
+    {
         osCommand.Printf("select pg_class.relname as table, "
             "pg_attribute.attname as column from pg_class, "
             "pg_namespace,pg_attribute, pg_type where "
@@ -648,7 +646,6 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
 
         poOV[iOVerview].nFactor =
             atoi(PQgetvalue(poResult, iOVerview, 1));
-
     }
 
     if (pnOverviews)
@@ -1292,7 +1289,6 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
     PQclear(poResult);
 
     return poBMD;
-
 }
 
 /***********************************************************************
@@ -1494,7 +1490,6 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
                 MAX(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
     }
-
 }
 
 /***********************************************************************
@@ -1658,7 +1653,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             CPLAtof(papszParams[POS_SCALEY]);
 
         CSLDestroy(papszParams);
-
     }
 
     /**
@@ -1715,7 +1709,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             }
 
             papoSourcesHolders[nValidTiles++] = poRTDS;
-
         } // end for
 
         l_nTiles = nValidTiles;
@@ -1730,7 +1723,6 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
             adfGeoTransform[GEOTRSFRM_WE_RES] /= l_nTiles;
             adfGeoTransform[GEOTRSFRM_NS_RES] /= l_nTiles;
         }
-
     } // end else
 
     /**
@@ -2003,13 +1995,12 @@ GBool PostGISRasterDataset::SetRasterProperties
         // Query execution error
         if(poResult == NULL ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
-            PQntuples(poResult) < 0) {
-
+            PQntuples(poResult) < 0)
+        {
             bNeedToCheckWholeTable = true;
 
             if (poResult)
                 PQclear(poResult);
-
         }
 
         /**
@@ -2051,7 +2042,8 @@ GBool PostGISRasterDataset::SetRasterProperties
         }
 
         // We should check whole table but we can't
-        if (bNeedToCheckWholeTable && !bCheckAllTiles) {
+        if (bNeedToCheckWholeTable && !bCheckAllTiles)
+        {
             ReportError(CE_Failure, CPLE_AppDefined, "Cannot find "
             "information about %s.%s table in raster_columns view. "
             "Please, execute AddRasterConstraints PostGIS function to "
@@ -2066,7 +2058,6 @@ GBool PostGISRasterDataset::SetRasterProperties
             PQclear(poResult);
 
             return false;
-
         }
 
         // We should check the whole table and we can
@@ -2885,7 +2876,6 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
 
     CPLFree(pszConnectionString);
     return poDS;
-
 }
 
 /************************************************************************/

@@ -370,7 +370,6 @@ class digital_axis
 
         case LEV_DA_PIXEL_SIZED:
             return m_d[1 - m_fixedEnd] * (pixels-1);
-
         }
         CPLAssert(false);
         return 0.0;

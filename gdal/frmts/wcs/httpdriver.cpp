@@ -178,7 +178,6 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
                 poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on windows */
             if( poDS && strcmp(poDS->GetDescription(), osTempFilename) == 0 )
                 poDS->SetDescription(poOpenInfo->pszFilename);
-
         }
     }
     else if( strcmp(poDS->GetDescription(), osResultFilename) == 0 )

@@ -362,9 +362,9 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                     0, sampling);
                 if (eErr == CE_Failure)
                     throw eErr;
-
             }
-            else {
+            else
+            {
                 //
                 // Use the GDAL method, which is slightly different for bilinear interpolation
                 // and also handles nearest mode
@@ -1338,7 +1338,6 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
             CPLError(CE_Failure, CPLE_AppDefined, "Unknown Rset definition");
             return CE_Failure;
         }
-
     }
 
     idxSize = IdxSize(full, int(scale));
@@ -1625,7 +1624,6 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     if (IL_LERC == img.comp)
         img.pagesize.c = 1;
 #endif
-
 }
 
 /**

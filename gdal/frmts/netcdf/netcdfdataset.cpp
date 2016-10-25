@@ -713,7 +713,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         /* See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure */
         if( bSignedData )
             SetMetadataItem( "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
-
     }
 
     /* set default nodata */
@@ -985,7 +984,6 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
         }
 
         return CE_Failure;
-
     }
 
     dfNoDataValue = dfNoData;
@@ -1265,7 +1263,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
         SetMetadataItem( szMetaName, szMetaTemp );
 
         Taken += result * Sum;
-
     } // end loop non-spatial dimensions
 
 /* -------------------------------------------------------------------- */
@@ -1297,7 +1294,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
             CPLFree( pszMetaValue );
             pszMetaValue = NULL;
         }
-
     }
 
     return CE_None;
@@ -2302,7 +2298,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 if( bGotGeogCS )
                     CPLDebug( "GDAL_netCDF", "got spheroid from CF: (%f , %f)",
                               dfEarthRadius, dfInverseFlattening );
-
             }
             //no radius, set as wgs84 as default?
             else
@@ -2392,7 +2387,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                             "using identical std. parallels." );
                         dfStdP1 = CPLAtofM( papszStdParallels[0] );
                         dfStdP2 = dfStdP1;
-
                     }
                     else if( CSLCount( papszStdParallels ) == 2 )
                     {
@@ -2506,7 +2500,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 {
                     oSRS.SetProjCS( "LAEA (WGS84)" );
                 }
-
             }
 
 /* -------------------------------------------------------------------- */
@@ -2536,7 +2529,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
                 if( !bGotGeogCS )
                     oSRS.SetWellKnownGeogCS( "WGS84" );
-
             }
 
 /* -------------------------------------------------------------------- */
@@ -2919,18 +2911,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     oSRS.SetExtension( oSRS.GetRoot()->GetValue(), "PROJ4", osProj4 );
                     CPLFree(pszProj4);
                 }
-
             }
 
 /* -------------------------------------------------------------------- */
 /*      Is this Latitude/Longitude Grid, default                        */
 /* -------------------------------------------------------------------- */
-
         }
         else if( EQUAL( szDimNameX, NCDF_DIMNAME_LON ) )
         {
             oSRS.SetWellKnownGeogCS( "WGS84" );
-
         }
         else
         {
@@ -3398,7 +3387,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 if( bGotGdalSRS && !bGotGdalGT )
                     CPLDebug( "GDAL_netCDF",
                               "Got SRS but no geotransform from GDAL!");
-
             } // if( !bGotCfGT )
         }
     }
@@ -4182,7 +4170,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         /* write projection variable to band variable */
         /* need to call later if there are no bands */
         AddGridMappingRef();
-
     }  /* end if( bWriteGridMapping ) */
 
     pfnProgress( 0.10, NULL, pProgressData );
@@ -4469,7 +4456,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
                     pfnProgress( dfProgress, NULL, pProgressData );
                 }
             }
-
         }
 
         /* Free the srs and transform objects */
@@ -4481,7 +4467,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         CPLFree( padYVal );
         CPLFree( padLonVal );
         CPLFree( padLatVal);
-
     } // projected
 
     /* If not Projected assume Geographic to catch grids without Datum */
@@ -4919,7 +4904,6 @@ CPL_UNUSED
 #else
         return NCDF_FORMAT_HDF5;
 #endif
-
     }
     else if( STARTS_WITH_CI((char*)poOpenInfo->pabyHeader, "\016\003\023\001") )
     {
@@ -5921,7 +5905,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->papszMetadata = NULL;
         poDS->ReadAttributes( cdfid, NC_GLOBAL );
         poDS->ReadAttributes( iGrpId, NC_GLOBAL );
-
     }
     else
     {
@@ -7267,7 +7250,6 @@ netCDFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         panDimIds[nDim-2] = poDS->nYDimID;
         panBandDimPos[1] = nDim-2;
         GDALDestroyScaledProgress( pScaledProgress );
-
     }
 
     /* write extra dim values - after projection for optimization */
@@ -8135,11 +8117,9 @@ static void NCDFWriteProjAttribs( const OGR_SRSNode *poPROJCS,
                 }
                 if( bWriteVal )
                     oOutList.push_back( std::make_pair( *posNCDFAtt, dfValue ) );
-
             }
             // else printf("NOT FOUND!!!\n");
         }
-
     }
     else
     { /* generic mapping, loop over projected values */
@@ -9218,7 +9198,6 @@ static bool NCDFIsVarProjectionX( int nCdfId, int nVarId, const char * pszVarNam
             bVal = NCDFEqual( pszVarName, papszCFProjectionXVarNames );
         else
             bVal = FALSE;
-
     }
     return CPL_TO_BOOL(bVal);
 }

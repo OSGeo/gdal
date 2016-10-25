@@ -701,7 +701,6 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
         bYCC=TRUE;
         cod_in->get("Cycc", 0, 0, bYCC);
-
     }
     catch(...)
     {
@@ -828,7 +827,6 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
             // treat as cartesian, no geo metadata
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
-
         }
     }
     catch(...)
@@ -1915,7 +1913,6 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 
             poJDS->poDecompressor->finish();
             CPLReleaseMutex(poJDS->pGlobalMutex);
-
         }
         catch(...)
         {

@@ -107,7 +107,6 @@ CPLErr MSGDataset::SetProjection( const char * pszNewProjection )
     pszProjection = CPLStrdup( pszNewProjection );
 
     return CE_None;
-
 }
 
 /************************************************************************/
@@ -438,7 +437,6 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
 
       // nBlockYSize : default
       // fScanNorth : default
-
     }
 /* -------------------------------------------------------------------- */
 /*      For the HRV band, read the prologue for shift and splitline.    */

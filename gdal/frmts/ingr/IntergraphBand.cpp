@@ -337,7 +337,6 @@ GDALColorInterp IntergraphRasterBand::GetColorInterpretation()
 
         return GCI_GrayIndex;
     }
-
 }
 
 //  ----------------------------------------------------------------------------
@@ -640,7 +639,6 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     {
         BlackWhiteCT( true );
     }
-
 }
 
 //  ----------------------------------------------------------------------------

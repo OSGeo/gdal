@@ -468,7 +468,6 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* PALSAR data is only available from JAXA in Scattering Matrix form */
         poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
     }
-
 }
 
 /************************************************************************/

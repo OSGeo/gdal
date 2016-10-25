@@ -1011,7 +1011,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelOffset );
                     }
                 }
-
             }
 
             bDirty = TRUE;

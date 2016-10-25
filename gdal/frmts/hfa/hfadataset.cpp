@@ -815,7 +815,6 @@ int HFARasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
     }
 
     return -1;
-
 }
 /************************************************************************/
 /*                          GetRowCount()                               */
@@ -3109,7 +3108,6 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
             papoOvBands[iOverview] = papoOverviewBands[iResult];
         }
-
     }
 
 /* -------------------------------------------------------------------- */

@@ -70,7 +70,6 @@ class SRTMHGTDataset : public GDALPamDataset
     static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
-
 };
 
 /************************************************************************/

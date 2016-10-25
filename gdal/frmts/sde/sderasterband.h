@@ -56,7 +56,6 @@ class SDERasterBand : public GDALRasterBand
     virtual double GetMaximum( int *pbSuccess );
     virtual int GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int nOverview);
-
 };
 
 #endif

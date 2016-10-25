@@ -84,7 +84,6 @@ static int ReadInt( VSILFILE *fp )
                 szBuffer[nRead] = c;
             nRead ++;
         }
-
     }
     szBuffer[MIN(nRead, 11)] = 0;
     return atoi(szBuffer);
@@ -317,7 +316,6 @@ USGSDEMRasterBand::USGSDEMRasterBand( USGSDEMDataset *poDSIn )
 
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = poDSIn->GetRasterYSize();
-
 }
 
 /************************************************************************/

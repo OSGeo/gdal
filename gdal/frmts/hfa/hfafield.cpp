@@ -1662,5 +1662,4 @@ void HFAField::DumpInstValue( FILE *fpOut,
         CPL_IGNORE_RET_VAL(
             VSIFPrintf( fpOut, "%s%s = (no values)\n",
                         pszPrefix, pszFieldName ));
-
 }

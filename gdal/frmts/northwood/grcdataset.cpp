@@ -170,7 +170,6 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
         }
         if( i >= static_cast<int>( poGDS->pGrd->stClassDict->nNumClassifiedItems ) )
             poGDS->papszCategories = CSLAddString( poGDS->papszCategories, "" );
-
     }
 }
 
