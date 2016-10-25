@@ -211,7 +211,6 @@ int CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures)
                   "Falling back to max number of allowed index tree "
                   "levels (%d).",
                   MAX_DEFAULT_TREE_DEPTH );
-
     }
 
     return nMaxDepth;
