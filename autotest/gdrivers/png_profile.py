@@ -117,7 +117,7 @@ def png_copy_icc():
     return 'success'
 
 def cvtTuple2String(a):
-    s = '';
+    s = ''
     for i in range(0, len(a)):
         if (s != ''):
             s = s + ', '

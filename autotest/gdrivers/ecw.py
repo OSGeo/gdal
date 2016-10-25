@@ -1529,13 +1529,13 @@ def ecw_39():
     ds = gdal.Open( 'data/jrc.ecw' )
 
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrcstats.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
-    ds = None;
+    ds = None
     hist = (0, 255, 2, [3, 4])
 
     dswr.GetRasterBand(1).SetDefaultHistogram( 0, 255, [3, 4] )
     dswr = None
 
-    ds = gdal.Open( 'tmp/jrcstats.ecw');
+    ds = gdal.Open( 'tmp/jrcstats.ecw')
 
     result = (hist == ds.GetRasterBand(1).GetDefaultHistogram(force=0))
 
