@@ -949,7 +949,6 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             CPLFree(poGDS->pabyCachedData);
             poGDS->pabyCachedData = NULL;
         }
-
     }
     if (poGDS->pabyCachedData == NULL)
         return CE_Failure;
@@ -2524,12 +2523,8 @@ CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
     if( bReadPixels )
     {
-        CPLErr eErr = ReadPixels(nXOff, nYOff, nXSize, nYSize,
-                                 nPixelSpace, nLineSpace, 0, NULL);
-        if( eErr == CE_None )
-        {
-
-        }
+        const CPLErr eErr = ReadPixels(nXOff, nYOff, nXSize, nYSize,
+                                       nPixelSpace, nLineSpace, 0, NULL);
         return eErr;
     }
 
@@ -3339,7 +3334,6 @@ void PDFDataset::AddLayer(const char* pszLayerName)
 
     osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
                              pszLayerName);
-
 }
 
 #endif//  defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
