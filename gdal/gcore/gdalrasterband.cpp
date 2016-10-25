@@ -4566,7 +4566,6 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nSumThis += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
                     anSum[2] + anSum[3] + anSum[4] + anSum[5] +
                     anSum[6] + anSum[7];
-
         }
 
         if( bComputeMinMax )

@@ -755,7 +755,6 @@ void GDALDriverManager::AutoLoadDrivers()
                                      num2str(GDAL_VERSION_MAJOR) "."
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -846,7 +845,6 @@ void GDALDriverManager::AutoLoadDrivers()
     CSLDestroy( papszSearchPath );
 
 #endif  // GDAL_NO_AUTOLOAD
-
 }
 
 /************************************************************************/

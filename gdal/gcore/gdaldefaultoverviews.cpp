@@ -444,7 +444,6 @@ int GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
     }
 
     return static_cast<int>(0.5 + nRasterYSize / static_cast<double>(nOvrYSize));
-
 }
 
 /************************************************************************/

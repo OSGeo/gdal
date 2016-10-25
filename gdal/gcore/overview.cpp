@@ -825,7 +825,6 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                             nEntryCount, aEntries, nR, nG, nB ) );
                 }
             }
-
         }
 
         eErr = poOverview->RasterIO(
@@ -1381,7 +1380,6 @@ GDALResampleConvolutionHorizontal_3rows_SSE2(
         v_pixels2 = XMMReg4Double::Load4Val(pChunkRow3+i+4);
         v_acc3 += v_pixels1 * v_weight1;
         v_acc3 += v_pixels2 * v_weight2;
-
     }
 
     v_acc1.AddLowAndHigh();
@@ -3421,7 +3419,6 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 
         nSamples += nWidth;
         iLine += nSampleStep;
-
     } while( iLine < nHeight );
 
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
@@ -3567,7 +3564,6 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                     pafData[iPixel] = static_cast<float>(
                         (pafData[iPixel] - dfOverviewMean)
                         * dfGain + dfOrigMean );
-
                 }
             }
 

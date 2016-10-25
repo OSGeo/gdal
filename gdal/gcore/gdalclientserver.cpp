@@ -677,7 +677,6 @@ class GDALClientRasterBand : public GDALPamRasterBand
         /*
         virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
         */
-
 };
 
 /************************************************************************/
@@ -874,7 +873,6 @@ begin:
 #endif
         return GDALPipeReadSocketInternal(p, data, length);
     }
-
 }
 
 /************************************************************************/
@@ -1928,7 +1926,6 @@ GDALServerInstance::~GDALServerInstance()
         GDALClose((GDALDatasetH)poDS);
         poDS = NULL;
     }
-
 }
 
 /************************************************************************/
@@ -2619,7 +2616,6 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr );
-
         }
         else if( instr == INSTR_GetFileList )
         {
@@ -4394,7 +4390,6 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
     eCachedBufType = GDT_Unknown;
     nCachedYStart = -1;
     nCachedLines = 0;
-
 }
 
 /************************************************************************/

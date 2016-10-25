@@ -1097,7 +1097,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
         CPLFree(pszProjection);
         oSRS.exportToWkt( &pszProjection );
-
     }
 
     /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
