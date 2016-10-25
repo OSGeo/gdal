@@ -1596,7 +1596,7 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
         return 'fail'
     bnd = None
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE');
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['INTERLEAVE'] != interleaving:
         gdaltest.post_reason( 'Didnt get expected interleaving')
         return 'fail'
@@ -2210,13 +2210,13 @@ def tiff_write_59():
             ds.GetRasterBand(1).Fill(1)
 
             ds = None
-            ds = gdal.Open("tmp/tiff_write_59.tif", gdal.GA_Update);
+            ds = gdal.Open("tmp/tiff_write_59.tif", gdal.GA_Update)
 
             data = struct.pack(ctype * 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
             ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, data)
 
             ds = None
-            ds = gdal.Open("tmp/tiff_write_59.tif");
+            ds = gdal.Open("tmp/tiff_write_59.tif")
 
             data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 1)
 
@@ -2868,9 +2868,9 @@ def tiff_write_77():
             for band_line in band_lines:
                 cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
                 if band_line[0] == 2:
-                    expected_cs = 255 % 7;
+                    expected_cs = 255 % 7
                 else:
-                    expected_cs = 0 % 7;
+                    expected_cs = 0 % 7
                 if cs != expected_cs:
                     print(cs)
                     gdaltest.post_reason( 'Got wrong checksum' )
@@ -2932,13 +2932,13 @@ def tiff_write_78():
     for band_line in band_lines:
         cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
         if band_line[0] == 1:
-            expected_cs = 0 % 7;
+            expected_cs = 0 % 7
         elif band_line[0] == 2:
-            expected_cs = 255 % 7;
+            expected_cs = 255 % 7
         else:
             # We should expect 0, but due to JPEG YCbCr compression & decompression,
             # this ends up being 1
-            expected_cs = 1 % 7;
+            expected_cs = 1 % 7
         if cs != expected_cs:
             print(cs)
             print(expected_cs)
