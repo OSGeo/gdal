@@ -265,7 +265,6 @@ CPLErr GDALNoDataMaskBand::IRasterIO( GDALRWFlag eRWFlag,
         for( int i = nBufXSize * nBufYSize - 1; i >= 0; --i )
         {
             pabyData[i] = pabyData[i] == byNoData ? 0 : 255;
-
         }
         return CE_None;
     }

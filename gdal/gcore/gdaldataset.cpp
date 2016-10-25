@@ -5952,7 +5952,6 @@ int GDALDataset::IsGenericSQLDialect(const char* pszDialect)
 {
     return ( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") ||
                                     EQUAL(pszDialect,"SQLITE")) );
-
 }
 //! @endcond
 

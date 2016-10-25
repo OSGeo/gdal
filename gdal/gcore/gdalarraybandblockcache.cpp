@@ -151,7 +151,6 @@ bool GDALArrayBandBlockCache::Init()
                                     "Out of memory in InitBlockInfo()." );
                 return false;
             }
-
         }
         else
         {
