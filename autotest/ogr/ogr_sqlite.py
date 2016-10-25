@@ -644,7 +644,7 @@ def ogr_sqlite_13():
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
 
     # Must still be 1
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys");
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.GetFieldAsInteger('count') != 1:
         return 'fail'
@@ -950,7 +950,7 @@ def ogr_sqlite_18():
         print(wkt)
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1");
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('auth_name') != 'OGR' or \
        feat.GetField('proj4text').find('+proj=vandg') != 0:

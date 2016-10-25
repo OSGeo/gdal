@@ -617,7 +617,7 @@ def ogr_wfs_geoserver_wfst():
 
     # Retrieve inserted features
     print('Retrieving created features gml:id')
-    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points");
+    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points")
     feat = sql_lyr.GetNextFeature()
     while feat is not None:
         gml_id = feat.GetFieldAsString(0)
