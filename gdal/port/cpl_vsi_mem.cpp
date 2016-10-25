@@ -782,7 +782,6 @@ void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
         if( oPath[i] == '\\' )
             oPath[i] = '/';
     }
-
 }
 
 /************************************************************************/

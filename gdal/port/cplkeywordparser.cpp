@@ -212,7 +212,6 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();

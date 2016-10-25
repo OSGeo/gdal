@@ -587,7 +587,6 @@ const char *CPLReadLine( FILE * fp )
 
         nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
         nReadSoFar += nBytesReadThisTime;
-
     } while( nBytesReadThisTime >= 127
              && pszRLBuffer[nReadSoFar-1] != 13
              && pszRLBuffer[nReadSoFar-1] != 10 );

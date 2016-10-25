@@ -933,7 +933,6 @@ extern int ZEXPORT cpl_zipWriteInFileInZip (
             uLong uTotalOutBefore = zi->ci.stream.total_out;
             err=deflate(&zi->ci.stream,  Z_NO_FLUSH);
             zi->ci.pos_in_buffered_data += (uInt)(zi->ci.stream.total_out - uTotalOutBefore) ;
-
         }
         else
         {
