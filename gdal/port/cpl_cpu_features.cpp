@@ -97,7 +97,6 @@ static void inline __cpuid( int cpuinfo[4], int level )
 
 #endif
 
-
 #if defined(HAVE_SSE_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSE)
 
 /************************************************************************/
@@ -112,7 +111,6 @@ bool CPLHaveRuntimeSSE()
 }
 
 #endif
-
 
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSSE3)
 
@@ -132,8 +130,6 @@ bool CPLHaveRuntimeSSSE3()
 }
 
 #endif
-
-
 
 #if defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
 

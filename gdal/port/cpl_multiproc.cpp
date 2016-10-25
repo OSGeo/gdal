@@ -729,7 +729,6 @@ void CPLCleanupTLS()
 
 #elif defined(CPL_MULTIPROC_WIN32)
 
-
   /************************************************************************/
   /* ==================================================================== */
   /*                        CPL_MULTIPROC_WIN32                           */
@@ -2238,7 +2237,6 @@ void  CPLDestroySpinLock( CPLSpinLock* psSpin )
 }
 
 #endif /* HAVE_SPINLOCK_IMPL */
-
 
 /************************************************************************/
 /*                            CPLCreateLock()                           */

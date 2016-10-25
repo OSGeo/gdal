@@ -61,7 +61,6 @@ int VSICurlInstallReadCbk ( VSILFILE* /* fp */,
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                    VSICurlUninstallReadCbk()                         */
 /************************************************************************/
@@ -251,7 +250,6 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
     /* Per-thread Curl connection cache */
     std::map<GIntBig, CachedConnection*> mapConnections;
 
-
     char**              ParseHTMLFileList(const char* pszFilename,
                                           int nMaxFiles,
                                           char* pszData,
@@ -292,7 +290,6 @@ public:
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
-
 
     const CachedRegion* GetRegion(const char*     pszURL,
                                   vsi_l_offset    nFileOffsetStart);
@@ -484,7 +481,6 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     bEOF = false;
     return 0;
 }
-
 
 /************************************************************************/
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
@@ -1301,7 +1297,6 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
     return ret;
 }
 
-
 /************************************************************************/
 /*                           ReadMultiRange()                           */
 /************************************************************************/
@@ -1673,7 +1668,6 @@ size_t VSICurlHandle::Write( const void * /* pBuffer */,
 /*                                 Eof()                                */
 /************************************************************************/
 
-
 int       VSICurlHandle::Eof()
 {
     return bEOF;
@@ -1696,9 +1690,6 @@ int       VSICurlHandle::Close()
 {
     return 0;
 }
-
-
-
 
 /************************************************************************/
 /*                   VSICurlFilesystemHandler()                         */
@@ -1800,7 +1791,6 @@ CURL* VSICurlFilesystemHandler::GetCurlHandleFor(CPLString osURL)
     }
 }
 
-
 /************************************************************************/
 /*                   GetRegionFromCacheDisk()                           */
 /************************************************************************/
@@ -1859,7 +1849,6 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
     return NULL;
 }
 
-
 /************************************************************************/
 /*                  AddRegionToCacheDisk()                                */
 /************************************************************************/
@@ -1912,7 +1901,6 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
     }
     return;
 }
-
 
 /************************************************************************/
 /*                          GetRegion()                                 */
@@ -2171,7 +2159,6 @@ static char *VSICurlParserFindEOL( char *pszData )
     else
         return pszData;
 }
-
 
 /************************************************************************/
 /*                   VSICurlParseHTMLDateTimeFileSize()                 */
@@ -3983,7 +3970,6 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
     *pbGotFileList = false;
     CPLString osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
 
-
     VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(osDirnameWithoutPrefix, GetFSPrefix().c_str(), true);
     if( poS3HandleHelper == NULL )
@@ -4177,7 +4163,6 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 
 } /* end of anoymous namespace */
 
-
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
@@ -4191,7 +4176,6 @@ int VSICurlInstallReadCbk (VSILFILE* fp,
                                                 bStopOnInterruptUntilUninstall);
 }
 
-
 /************************************************************************/
 /*                    VSICurlUninstallReadCbk()                         */
 /************************************************************************/
@@ -4200,7 +4184,6 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 {
     return ((VSICurlHandle*)fp)->UninstallReadCbk();
 }
-
 
 /************************************************************************/
 /*                       VSICurlSetOptions()                            */
@@ -4347,7 +4330,5 @@ void VSIInstallS3FileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsis3/", new VSIS3FSHandler );
 }
-
-
 
 #endif /* HAVE_CURL */

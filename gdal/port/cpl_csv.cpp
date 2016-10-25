@@ -1169,7 +1169,6 @@ int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
     return -1;
 }
 
-
 /************************************************************************/
 /*                         CSVScanFileByName()                          */
 /*                                                                      */
@@ -1245,7 +1244,6 @@ typedef struct
     char szPath[512];
     bool  bCSVFinderInitialized;
 } DefaultCSVFileNameTLS;
-
 
 const char * GDALDefaultCSVFilename( const char *pszBasename )
 

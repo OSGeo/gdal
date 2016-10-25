@@ -1001,7 +1001,6 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew,
     return pfnOldHandler;
 }
 
-
 /**********************************************************************
  *                          CPLSetErrorHandler()                      *
  **********************************************************************/
@@ -1071,7 +1070,6 @@ void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 {
     CPLPushErrorHandlerEx(pfnErrorHandlerNew, NULL);
 }
-
 
 /************************************************************************/
 /*                        CPLPushErrorHandlerEx()                       */
@@ -1208,7 +1206,6 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
     // Just to please compiler so it is aware the function does not return.
     abort();
 }
-
 
 /************************************************************************/
 /*                       CPLCleanupErrorMutex()                         */

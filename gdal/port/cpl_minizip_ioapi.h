@@ -78,7 +78,6 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 #define ZCLOSE(filefunc,filestream) ((*((filefunc).zclose_file))((filefunc).opaque,filestream))
 #define ZERROR(filefunc,filestream) ((*((filefunc).zerror_file))((filefunc).opaque,filestream))
 
-
 #ifdef __cplusplus
 }
 #endif

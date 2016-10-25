@@ -474,7 +474,6 @@ char **CPLStringList::StealList()
     return papszRetList;
 }
 
-
 static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
 {
     const char* pszItera = pszKVa;
@@ -726,7 +725,6 @@ const char *CPLStringList::FetchNameValueDef( const char *pszName,
  * @param nInsertAtLineNo the line to insert at, zero to insert at front.
  * @param pszNewLine to the line to insert.  This string will be copied.
  */
-
 
 /************************************************************************/
 /*                        InsertStringDirectly()                        */

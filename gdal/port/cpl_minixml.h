@@ -118,7 +118,6 @@ typedef struct CPLXMLNode
     struct CPLXMLNode  *psChild;
 } CPLXMLNode;
 
-
 CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
 void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );
 CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot,

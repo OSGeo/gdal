@@ -373,7 +373,6 @@ int VSIFPutc( int nChar, FILE * fp )
     return fputc( nChar, fp );
 }
 
-
 #ifdef DEBUG_VSIMALLOC_STATS
 #include "cpl_multiproc.h"
 
@@ -1052,8 +1051,6 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3,
     return 0;
 }
 
-
-
 /**
  VSIMalloc2 allocates (nSize1 * nSize2) bytes.
  In case of overflow of the multiplication, or if memory allocation fails, a
@@ -1288,7 +1285,6 @@ char *VSIStrerror( int nErrno )
 {
     return strerror( nErrno );
 }
-
 
 /************************************************************************/
 /*                        CPLGetPhysicalRAM()                           */

@@ -22,7 +22,6 @@
    Encryption compatible with pkzip 2.04g only supported
    Old compressions used by old PKZip 1.x are not supported
 
-
    I WAIT FEEDBACK at mail info@winimage.com
    Visit also http://www.winimage.com/zLibDll/unzip.htm for evolution
 
@@ -43,8 +42,6 @@
   2. Altered source versions must be plainly marked as such, and must not be
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
-
-
 */
 
 /* for more info about .ZIP format, see
@@ -88,7 +85,6 @@ typedef unzFile__ *unzFile;
 typedef voidp unzFile;
 #endif
 
-
 #define UNZ_OK                          (0)
 #define UNZ_END_OF_LIST_OF_FILE         (-100)
 #define UNZ_ERRNO                       (Z_ERRNO)
@@ -117,7 +113,6 @@ typedef struct unz_global_info_s
                                      the central dir on this disk */
     uLong size_comment;         /* size of the global comment of the zipfile */
 } unz_global_info;
-
 
 /* unz_file_info contain information about a file in the zipfile */
 typedef struct unz_file_info_s
@@ -153,7 +148,6 @@ extern int ZEXPORT cpl_unzStringFileNameCompare (const char* fileName1,
     (like 1 on Unix, 2 on Windows)
 */
 
-
 extern unzFile ZEXPORT cpl_unzOpen (const char *path);
 /*
   Open a Zip file. path contain the full pathname (by example,
@@ -186,7 +180,6 @@ extern int ZEXPORT cpl_unzGetGlobalInfo (unzFile file,
   No preparation of the structure is needed
   return UNZ_OK if there is no problem. */
 
-
 extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file,
                                             char *szComment,
                                             uLong uSizeBuf);
@@ -195,7 +188,6 @@ extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file,
   uSizeBuf is the size of the szComment buffer.
   return the number of byte copied or an error code <0
 */
-
 
 /***************************************************************************/
 /* Unzip package allow you browse the directory of the zipfile */
@@ -224,7 +216,6 @@ extern int ZEXPORT cpl_unzLocateFile (unzFile file,
   UNZ_OK if the file is found. It becomes the current file.
   UNZ_END_OF_LIST_OF_FILE if the file is not found
 */
-
 
 /* ****************************************** */
 /* Ryan supplied functions */
@@ -266,13 +257,11 @@ extern int ZEXPORT cpl_unzGetCurrentFileInfo (unzFile file,
             (commentBufferSize is the size of the buffer)
 */
 
-
 /** Addition for GDAL : START */
 
 extern uLong64 ZEXPORT cpl_unzGetCurrentFileZStreamPos (unzFile file);
 
 /** Addition for GDAL : END */
-
 
 /***************************************************************************/
 /* for reading the content of the current zipfile, you can open it, read data
@@ -319,7 +308,6 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file,
   note : you can set level parameter as NULL (if you did not want known level,
          but you CANNOT set method parameter as NULL
 */
-
 
 extern int ZEXPORT cpl_unzCloseCurrentFile (unzFile file);
 /*
@@ -374,8 +362,6 @@ extern uLong64 ZEXPORT cpl_unzGetOffset (unzFile file);
 
 /* Set the current file offset */
 extern int ZEXPORT cpl_unzSetOffset (unzFile file, uLong64 pos);
-
-
 
 #ifdef __cplusplus
 }

@@ -446,7 +446,6 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
     return pwszResult;
 }
 
-
 /************************************************************************/
 /*                                 CPLIsUTF8()                          */
 /************************************************************************/
@@ -1024,7 +1023,6 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
   return count;
 }
 
-
 /************************************************************************/
 /*                             utf8froma()                              */
 /************************************************************************/
@@ -1192,8 +1190,6 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 }
 
 #endif
-
-
 
 /*
 ** For now we disable the rest which is locale() related.  We may need

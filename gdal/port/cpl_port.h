@@ -82,7 +82,6 @@
 #error "Unexpected value for SIZEOF_VOIDP"
 #endif
 
-
 /* ==================================================================== */
 /*      This will disable most WIN32 stuff in a Cygnus build which      */
 /*      defines unix to 1.                                              */
@@ -778,7 +777,6 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[4] = byTemp;                                       \
 }
 
-
 /* Until we have a safe 64 bits integer data type defined, we'll replace
  * this version of the CPL_SWAP64() macro with a less efficient one.
  */
@@ -944,7 +942,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL
 #endif
-
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** restrict keyword to declare that pointers do not alias */
