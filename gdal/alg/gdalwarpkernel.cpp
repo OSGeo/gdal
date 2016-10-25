@@ -4683,7 +4683,6 @@ static void GWKGeneralCaseThread( void* pData)
                 GWKSetPixelValue( poWK, iBand, iDstOffset,
                                   dfBandDensity,
                                   dfValueReal, dfValueImag );
-
             }
 
             if (!bHasFoundDensity)
@@ -4699,7 +4698,6 @@ static void GWKGeneralCaseThread( void* pData)
                 poWK->panDstValid[iDstOffset>>5] |=
                     0x01 << (iDstOffset & 0x1f);
             }
-
         } /* Next iDstX */
 
 /* -------------------------------------------------------------------- */
@@ -4945,7 +4943,6 @@ static void GWKRealCaseThread( void* pData)
                 GWKSetPixelValueReal( poWK, iBand, iDstOffset,
                                   dfBandDensity,
                                   dfValueReal );
-
             }
 
             if (!bHasFoundDensity)
@@ -4961,7 +4958,6 @@ static void GWKRealCaseThread( void* pData)
                 poWK->panDstValid[iDstOffset>>5] |=
                     0x01 << (iDstOffset & 0x1f);
             }
-
         } /* Next iDstX */
 
 /* -------------------------------------------------------------------- */
@@ -5720,7 +5716,6 @@ static void GWKAverageOrModeThread( void* pData)
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
-
                 } // GRA_Average
 
                 else if ( nAlgo == GWKAOM_Imode || nAlgo == GWKAOM_Fmode ) // poWK->eResample == GRA_Mode
@@ -5831,7 +5826,6 @@ static void GWKAverageOrModeThread( void* pData)
                             bHasFoundDensity = true;
                         }
                     }
-
                 } // GRA_Mode
                 else if ( nAlgo == GWKAOM_Max ) // poWK->eResample == GRA_Max
                 {
@@ -5869,7 +5863,6 @@ static void GWKAverageOrModeThread( void* pData)
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
-
                 } // GRA_Max
                 else if ( nAlgo == GWKAOM_Min ) // poWK->eResample == GRA_Min
                 {
@@ -5907,7 +5900,6 @@ static void GWKAverageOrModeThread( void* pData)
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
-
                 } // GRA_Min
                 else if ( nAlgo == GWKAOM_Quant ) // poWK->eResample == GRA_Med | GRA_Q1 | GRA_Q3
                 {
@@ -5947,7 +5939,6 @@ static void GWKAverageOrModeThread( void* pData)
                         bHasFoundDensity = true;
                         dfValuesTmp.clear();
                     }
-
                 } // Quantile
 
 /* -------------------------------------------------------------------- */
@@ -5980,7 +5971,6 @@ static void GWKAverageOrModeThread( void* pData)
                 poWK->panDstValid[iDstOffset>>5] |=
                     0x01 << (iDstOffset & 0x1f);
             }
-
         } /* Next iDstX */
 
 /* -------------------------------------------------------------------- */

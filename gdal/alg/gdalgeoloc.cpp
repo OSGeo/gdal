@@ -334,7 +334,6 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 (float)(iY * psTransform->dfLINE_STEP + psTransform->dfLINE_OFFSET);
 
             pabyValidFlag[iBMX + iBMY * nBMXSize] = (GByte) (nMaxIter+1);
-
         }
     }
 
@@ -682,12 +681,11 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
 
         iLastX = iX;
         iLastY = iY;
-
     }
 
-    //CPLDebug( "GeoL", "Exceeded step count max (%d) on search for %g,%g.",
-    //          MAX(nXSize,nYSize),
-    //          dfGeoX, dfGeoY );
+    // CPLDebug( "GeoL", "Exceeded step count max (%d) on search for %g,%g.",
+    //           MAX(nXSize,nYSize),
+    //           dfGeoX, dfGeoY );
 
 #ifdef SHAPE_DEBUG
     if( hSHP != NULL )

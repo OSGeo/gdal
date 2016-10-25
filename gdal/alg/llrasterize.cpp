@@ -207,7 +207,6 @@ No known bug
                 }
                 else /*skip top horizontal segments (they are already filled in the regular loop)*/
                     continue;
-
             }
 
             if(( dy < dy2 ) && (dy >= dy1))
@@ -596,8 +595,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     dfY += dfStepY;
                     dfVariant += dfDeltaVariant * dfStepX;
                 }
-            } // next step along segment.
-
-        } // next segment
-    } // next part
+            }  // Next step along segment.
+        }  // Next segment.
+    }  // Next part.
 }

@@ -140,7 +140,6 @@ void RPolygon::Coalesce()
         CPLAssert( anBase[0] == anBase[anBase.size()-2]
                    && anBase[1] == anBase[anBase.size()-1] );
     }
-
 }
 
 /************************************************************************/

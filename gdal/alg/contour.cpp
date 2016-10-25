@@ -159,7 +159,6 @@ public:
     void                SetFixedLevels( int, double * );
     CPLErr              FeedLine( double *padfScanline );
     CPLErr              EjectContours( int bOnlyUnused = FALSE );
-
 };
 
 template<> inline bool GDALContourGenerator::IsNoData<true>(double dfVal) const

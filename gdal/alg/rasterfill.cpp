@@ -787,7 +787,6 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 pabyFiltMask[iX] = 255;
                 pafScanline[iX] = (float) (dfValueSum / dfWeightSum);
             }
-
         }
 
 /* -------------------------------------------------------------------- */
