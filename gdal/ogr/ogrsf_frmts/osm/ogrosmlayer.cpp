@@ -597,7 +597,6 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                                 static_cast<float>(brokendown.tm_sec),
                                 0);
         }
-
     }
     if( bHasUID )
     {

@@ -85,7 +85,6 @@ class OGRDGNLayer : public OGRLayer
     int                 TestCapability( const char * );
 
     OGRErr              ICreateFeature( OGRFeature *poFeature );
-
 };
 
 /************************************************************************/

@@ -417,7 +417,6 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             SetLocalCS( CPLString().Printf("\"Panorama\" projection number %ld",
                                    iProjSys) );
             break;
-
     }
 
 /* -------------------------------------------------------------------- */

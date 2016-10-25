@@ -244,7 +244,6 @@ protected:
   bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
 
   bool  m_bLaunderReservedKeywords;
-
 };
 
 /************************************************************************/

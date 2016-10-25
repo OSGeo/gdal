@@ -157,7 +157,6 @@ void AOLayer::ResetReading()
 
   if (FAILED(hr = m_ipTable->Search(m_ipQF, VARIANT_TRUE, &m_ipCursor)))
     AOErr(hr, "Error Executing Query");
-
 }
 
 /************************************************************************/
@@ -230,7 +229,6 @@ void AOLayer::SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX,
   ISpatialFilterPtr ipSF(m_ipQF);
   ipSF->putref_Geometry(ipEnvelope);
   ipSF->put_SpatialRel(esriSpatialRelIntersects);
-
 }
 
 /************************************************************************/
@@ -275,7 +273,6 @@ void AOLayer::SwitchToSpatialFilter()
   {
     m_ipQF->put_WhereClause(strWhereClause);
   }
-
 }
 
 /************************************************************************/
@@ -290,7 +287,6 @@ OGRErr AOLayer::SetAttributeFilter( const char* pszQuery )
 
     CComBSTR whereClause(_T(""));
     m_ipQF->put_WhereClause(whereClause);
-
   }
   else
   {

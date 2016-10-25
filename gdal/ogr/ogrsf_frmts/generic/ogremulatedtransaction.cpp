@@ -240,7 +240,6 @@ OGRLayer    *OGRDataSourceWithTransaction::GetLayer(int iIndex)
 {
     if( !m_poBaseDataSource ) return NULL;
     return WrapLayer(m_poBaseDataSource->GetLayer(iIndex));
-
 }
 
 OGRLayer    *OGRDataSourceWithTransaction::GetLayerByName(const char *pszName)

@@ -589,7 +589,6 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                     CPL_IGNORE_RET_VAL(OSRGetEllipsoidInfo( pasDatum->nEPSGCode, &pszName,
                                          &dfSemiMajor, &dfInvFlattening ));
                     break;
-
                 }
                 pasDatum++;
             }

@@ -369,5 +369,4 @@ OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
     }
 
     return poSRS;
-
 }

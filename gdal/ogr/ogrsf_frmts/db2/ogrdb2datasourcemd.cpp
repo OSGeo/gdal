@@ -70,7 +70,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
                          GetSession()->GetLastError());
                 return CE_Failure;
             }
-
         }
         if( !m_bDescriptionAsCO && pszDescription != NULL &&
                 pszDescription != m_osDescription )
@@ -880,7 +879,6 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
 #endif
 
     return GDALPamDataset::GetMetadata(pszDomain);
-
 }
 
 /************************************************************************/

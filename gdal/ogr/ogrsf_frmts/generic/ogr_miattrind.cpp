@@ -535,7 +535,6 @@ OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
     {
         if( papoIndexList[i]->iField == iField )
             break;
-
     }
 
     if( i == nIndexCount )

@@ -581,7 +581,6 @@ int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
                 m_pszCharset = CPLStrdup("Neutral");
                 m_eTableType = TABTableNative;
             }
-
         }
         else if (EQUAL(papszTok[0], "!edit_version"))
         {
@@ -930,7 +929,6 @@ int TABFile::ParseTABFileFields()
         {
             // Simply Ignore unrecognized lines
         }
-
     }
 
     CSLDestroy(papszTok);
@@ -1050,7 +1048,6 @@ int TABFile::WriteTABFile()
                             poFieldDefn->GetNameRef(), pszFieldType,
                             GetFieldIndexNumber(iField) );
                 }
-
             }
         }
         else
@@ -2848,7 +2845,6 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "Associated .MAP file ...\n\n");
         m_poMAPFile->Dump(fpOut);
         fprintf(fpOut, "... end of .MAP file dump.\n\n");
-
     }
 
     fflush(fpOut);

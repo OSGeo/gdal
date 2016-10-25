@@ -530,7 +530,6 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psNode->origin.z = DGN_INT32( psDGN->abyElem + 82 );
           }
           DGNTransformPoint( psDGN, &(psNode->origin) );
-
       }
       break;
 

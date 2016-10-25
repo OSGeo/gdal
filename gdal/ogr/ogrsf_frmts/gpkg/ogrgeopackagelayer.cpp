@@ -476,5 +476,4 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
         m_poFeatureDefn->AddFieldDefn( &oField );
         panFieldOrdinals[m_poFeatureDefn->GetFieldCount() - 1] = iCol;
     }
-
 }

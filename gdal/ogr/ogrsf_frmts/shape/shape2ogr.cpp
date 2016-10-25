@@ -1684,7 +1684,6 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               break;
           }
         }
-
     }
 
     return OGRERR_NONE;

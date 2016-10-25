@@ -169,7 +169,6 @@ FGdbLayer::~FGdbLayer()
 
     CSLDestroy(m_papszOptions);
     m_papszOptions = NULL;
-
 }
 
 /************************************************************************/
@@ -1420,7 +1419,6 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
     }
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/
@@ -1798,7 +1796,6 @@ OGRErr FGdbLayer::CreateField(OGRFieldDefn* poField, int bApproxOK)
 
     /* All done and happy */
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/
@@ -2680,7 +2677,6 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode* psRoot)
                 CPLFree(pszUnescaped);
             }
         }
-
     }
 
     OGRwkbGeometryType ogrGeoType;
@@ -2799,7 +2795,6 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode* psSpatialRefNode,
             *pOutWkt = pszUnescaped;
             CPLFree(pszUnescaped);
         }
-
     }
     return *pOutWkt != "" || *pOutWKID != "";
 }
@@ -2981,7 +2976,6 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
             m_vOGRFieldToESRIFieldType.push_back( fieldType );
             if( ogrType == OFTBinary )
                 m_apoByteArrays.push_back(new ByteArray());
-
         }
     }
 
@@ -3055,7 +3049,6 @@ void FGdbLayer::ResetReading()
         GDBErr(hr, "Failed Searching");
 
     m_bFilterDirty = false;
-
 }
 
 /************************************************************************/
@@ -3588,7 +3581,6 @@ void FGdbLayer::EndBulkLoad ()
     m_pTable->LoadOnlyMode(true);
     m_pTable->SetWriteLock();
     return OGRERR_NONE;
-
 } */
 
 /* OGRErr FGdbLayer::CommitTransaction ()

@@ -763,7 +763,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                     SQLResultFree(&oResultTable);
                     return OGRERR_FAILURE;
                 }
-
             }
             else
             {
@@ -772,7 +771,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "geometry column '%s' of type '%s' ignored", pszName, pszType);
             }
-
         }
         else
         {

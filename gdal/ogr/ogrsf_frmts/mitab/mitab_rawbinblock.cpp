@@ -229,7 +229,6 @@ int     TABRawBinBlock::CommitToFile()
 
         if (nCurPos != m_nFileOffset)
             nStatus = -1; // Error message will follow below
-
     }
 
     /*----------------------------------------------------------------

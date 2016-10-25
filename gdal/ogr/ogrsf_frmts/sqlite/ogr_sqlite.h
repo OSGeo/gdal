@@ -318,7 +318,6 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
                                                   int, int bUseComprGeom, GByte **, int * );
-
 };
 
 /************************************************************************/

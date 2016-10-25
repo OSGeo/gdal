@@ -160,7 +160,6 @@ protected:
   char* m_pszName;
   std::vector <AOLayer*> m_layers;
   IWorkspacePtr m_ipWorkspace;
-
 };
 
 /************************************************************************/

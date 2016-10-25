@@ -484,8 +484,9 @@ int OGRDB2Statement::DB2Execute(const char *pszCallingFunction)
     if (m_bPrepared)
     {
         m_nLastRetCode = SQLExecute(m_hStmt);
-
-    } else {
+    }
+    else
+    {
         m_nLastRetCode = SQLExecDirect( m_hStmt, (SQLCHAR *) m_pszStatement, SQL_NTS );
     }
 
@@ -933,7 +934,6 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)
                         && (szWrkData[cbDataLen - 2] == 0))
                         cbDataLen -= 2; // trimming the extra terminators
-
             }
 
             m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
@@ -1374,7 +1374,6 @@ void OGRDB2Statement::Clear()
         CPLFree( m_panColValueLengths );
         m_panColValueLengths = NULL;
     }
-
 }
 
 /************************************************************************/

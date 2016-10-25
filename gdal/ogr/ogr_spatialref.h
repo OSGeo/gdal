@@ -641,7 +641,6 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *pabSuccess = NULL ) = 0;
-
 };
 
 OGRCoordinateTransformation CPL_DLL *

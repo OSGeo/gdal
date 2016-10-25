@@ -549,7 +549,6 @@ bool GMLASReader::Init(const char* pszFilename,
                                                 osBaseDirname,
                                                 m_oCache );
         m_poSAXReader->setEntityResolver( m_poEntityResolver );
-
     }
     else
     {
@@ -1392,10 +1391,8 @@ void GMLASReader::startElement(
                                   poOldLayer,
                                   nOldCurFieldIdx,
                                   osChildId );
-
                     }
                 }
-
             }
         }
 
@@ -1490,7 +1487,6 @@ void GMLASReader::startElement(
                         poJunctionFeature->SetField("parent_pkid", osParentId);
                         poJunctionFeature->SetField("child_pkid", osChildId);
                         PushFeatureReady(poJunctionFeature, poJunctionLayer);
-
                     }
                     idx = IDX_COMPOUND_FOLDED;
 
@@ -1855,7 +1851,6 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
                         osRawContent );
             }
         }
-
     }
 }
 

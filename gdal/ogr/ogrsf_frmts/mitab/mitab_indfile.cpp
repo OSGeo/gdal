@@ -871,7 +871,6 @@ void TABINDFile::Dump(FILE *fpOut /*=NULL*/)
                 m_papoIndexRootNodes[i]->Dump(fpOut);
             }
         }
-
     }
 
     fflush(fpOut);
@@ -1320,10 +1319,8 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                 }/*for iChild*/
 
                 return nRetValue;
-
-            }/*else*/
-
-        }/*while numEntries*/
+            }  // else
+        }  // while numEntries
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0
@@ -1591,7 +1588,6 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
         memmove(m_poDataBlock->GetCurDataPtr()+(m_nKeyLength+4),
                 m_poDataBlock->GetCurDataPtr(),
                 (m_numEntriesInNode-iInsertAt)*(m_nKeyLength+4));
-
     }
 
     /*-----------------------------------------------------------------
@@ -1800,7 +1796,6 @@ int TABINDNode::SplitNode()
                 return -1;
             }
         }
-
     }
     else
     {
@@ -1875,7 +1870,6 @@ int TABINDNode::SplitNode()
                 return -1;
             }
         }
-
     }
 
     /*-----------------------------------------------------------------

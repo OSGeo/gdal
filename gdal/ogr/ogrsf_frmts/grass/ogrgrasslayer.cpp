@@ -185,7 +185,6 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Cannot describe table %s",
                           poLink->table );
-
             }
             db_close_database_shutdown_driver ( poDriver );
             poDriver = NULL;

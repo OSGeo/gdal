@@ -745,7 +745,6 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                   poSC->setPoint( i, x, y, z, m );
               }
           }
-
         }
         break;
       }

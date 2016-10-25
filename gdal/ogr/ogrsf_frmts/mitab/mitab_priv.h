@@ -1296,7 +1296,6 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     virtual void Dump(FILE *fpOut = NULL) { Dump(fpOut, FALSE); };
     void Dump(FILE *fpOut, GBool bDetails);
 #endif
-
 };
 
 /*---------------------------------------------------------------------
@@ -1377,7 +1376,6 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
-
 };
 
 /*---------------------------------------------------------------------
@@ -1466,7 +1464,6 @@ class TABIDFile
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
-
 };
 
 /*---------------------------------------------------------------------

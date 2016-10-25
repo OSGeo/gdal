@@ -4645,7 +4645,6 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
                 fprintf( fpOut, "%s\n", GetFieldAsString( iField ) );
             else
                 fprintf( fpOut, "(null)\n" );
-
         }
     }
 

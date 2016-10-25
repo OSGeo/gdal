@@ -1873,7 +1873,6 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
             osPost += poFDefn->GetNameRef();
             osPost += ">\n";
         }
-
     }
 
     osPost += "    </feature:"; osPost += pszShortName; osPost += ">\n";

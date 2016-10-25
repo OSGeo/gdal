@@ -1419,7 +1419,6 @@ CPLString OGRElasticLayer::BuildMap() {
             json_object_object_add(poPropertyMap, "index", json_object_new_string("no"));
 
         json_object_object_add(poContainer, pszLastComponent, poPropertyMap);
-
     }
 
     for(int i=0;i<m_poFeatureDefn->GetGeomFieldCount();i++)
@@ -1694,7 +1693,6 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
         default:
             break;
     }
-
 }
 
 /************************************************************************/
@@ -2047,8 +2045,10 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
                 return OGRERR_FAILURE;
             }
         }
-
-    } else { // Fall back to using single item upload for every feature
+    }
+    else
+    {
+        // Fall back to using single item upload for every feature.
         CPLString osURL(CPLSPrintf("%s/%s/%s/", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
         if( pszId )
             osURL += pszId;
@@ -2065,7 +2065,6 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
                 pszId = json_object_get_string(poId);
                 poFeature->SetField(0, pszId);
             }
-
         }
         json_object_put(poRes);
     }

@@ -199,8 +199,8 @@ static const TigerFieldInfo rt3_fields[] = {
 
   { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1,     1 },
   { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1,     1 }
-
 };
+
 static const TigerRecordInfo rt3_info =
   {
     rt3_fields,
@@ -444,7 +444,6 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         }
 
         SetFields( psRT3Info, poFeature, achRT3Rec );
-
     }
 
 /* -------------------------------------------------------------------- */

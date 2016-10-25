@@ -2261,7 +2261,6 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
     DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
 
     return psCH;
-
 }
 
 /************************************************************************/

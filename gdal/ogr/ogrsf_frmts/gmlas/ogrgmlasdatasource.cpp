@@ -281,7 +281,6 @@ class GMLASGuessXSDFilename : public DefaultHandler
             const   XMLCh* const    qname,
             const   Attributes& attrs
         );
-
 };
 
 /************************************************************************/

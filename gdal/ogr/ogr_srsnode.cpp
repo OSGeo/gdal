@@ -693,7 +693,6 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
             // swallow whitespace
             while( isspace(*pszInput) )
                 pszInput++;
-
         } while( *pszInput == ',' );
 
         if( *pszInput != ')' && *pszInput != ']' )

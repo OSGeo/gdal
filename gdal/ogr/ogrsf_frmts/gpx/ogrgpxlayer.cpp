@@ -1731,7 +1731,6 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
         poDS->PrintLine("  <rtept lat=\"%s\" lon=\"%s\">", szLat, szLon);
         WriteFeatureAttributes(poFeatureIn, 2);
         poDS->PrintLine("  </rtept>");
-
     }
     else
     {

@@ -356,7 +356,6 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         pszRecoded = CPLRecode(szName, "CP866", CPL_ENC_UTF8);
         passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
-
     }
     else if (passport.version == 4)
     {
@@ -605,7 +604,6 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
                     passport.stMapDescription.Env.MinX = passport.stMapDescription.stProjCoords[i];
             }
             bIsX = !bIsX;
-
         }
         //get geographic corner coords
         /* nObjectsRead = */ VSIFReadL(&dfCorners, 64, 1, fpSXFIn);
@@ -614,7 +612,6 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         {
             passport.stMapDescription.stGeoCoords[i] = dfCorners[i] * TO_DEGREES; // to degree
         }
-
     }
 
     if (NULL != passport.stMapDescription.pSpatRef)
@@ -695,7 +692,6 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         //adfPrjParams[5] = 0;//?
         //adfPrjParams[6] = 0;//?
         //adfPrjParams[7] = 0;// importFromPanorama calc it by itself
-
     }
     else if (passport.version == 4)
     {
@@ -983,7 +979,6 @@ void OGRSXFDataSource::CreateLayers()
     papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
     papoLayers[nLayers] = new OGRSXFLayer(fpSXF, &hIOMutex, 255, CPLString("Not_Classified"), oSXFPassport.version, oSXFPassport.stMapDescription);
     nLayers++;
-
 }
 
 void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)

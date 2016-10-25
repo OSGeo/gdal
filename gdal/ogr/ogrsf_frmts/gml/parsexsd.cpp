@@ -836,7 +836,6 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
                                 /* includes */
                                 bTryAgain = true;
                             }
-
                         }
                         CPLDestroyXMLNode( psIncludedXSDTree );
                     }

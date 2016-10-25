@@ -208,7 +208,6 @@ bool AOToOGRFieldType(esriFieldType aoType, OGRFieldType* pOut)
       */
       return false;
     }
-
   }
 }
 

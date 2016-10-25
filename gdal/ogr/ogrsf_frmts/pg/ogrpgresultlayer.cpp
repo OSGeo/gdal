@@ -349,7 +349,6 @@ void OGRPGResultLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn 
 
         ResetReading();
     }
-
 }
 
 /************************************************************************/

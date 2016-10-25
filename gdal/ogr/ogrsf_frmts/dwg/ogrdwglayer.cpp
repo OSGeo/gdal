@@ -1385,7 +1385,6 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
                 poFeature = apoPendingFeatures.front();
                 apoPendingFeatures.pop();
             }
-
         }
         else
         {

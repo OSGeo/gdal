@@ -2191,7 +2191,6 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1,
             if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
                 poNodeChild->SetValue( mappingTable[iIndex+i+2]);
         }
-
     }
     return iIndex;
 }

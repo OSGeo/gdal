@@ -234,7 +234,6 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
     psDGN->sf_max_y_geo = dfYMax;
 
     DGNSpatialFilterToUOR( psDGN );
-
 }
 
 /************************************************************************/

@@ -292,7 +292,6 @@ public:
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual GIntBig     GetFeatureCount( int );
-
 };
 
 /************************************************************************/

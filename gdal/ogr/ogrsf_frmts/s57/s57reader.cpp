@@ -1411,7 +1411,6 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                 poFeature->SetGeometryDirectly( poMP );
             }
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -2575,7 +2574,6 @@ bool S57Reader::CollectClassList(std::vector<int> &anClassCount)
                 anClassCount.resize(nOBJL+1);
             anClassCount[nOBJL]++;
         }
-
     }
 
     return bSuccess;

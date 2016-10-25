@@ -766,7 +766,6 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
                         return GenerateFeatureDefn(poLayer, poObj);
                     }
                 }
-
             }
 
             OGRGeoJSONReaderAddOrUpdateField(poDefn, it.key, it.val,
@@ -1609,7 +1608,6 @@ OGRLineString* OGRGeoJSONReadLineString( json_object* poObj , bool bRaw )
             {
                 poLine->setPoint( i, pt.getX(), pt.getY(), pt.getZ() );
             }
-
         }
     }
 

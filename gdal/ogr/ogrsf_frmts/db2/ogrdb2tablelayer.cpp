@@ -897,7 +897,6 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
                   "Unable to update features in tables without\n"
                   "a recognised FID column.");
         return eErr;
-
     }
 
     ClearStatement();
@@ -1180,8 +1179,9 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 papBindBuffer[nBindNum] = pszWKT;
                 nBindNum++;
-
-            } else {
+            }
+            else
+            {
                 CPLDebug("OGRDB2TableLayer::ICreateFeature",
                          "Bind parameter failed");
                 FreeBindBuffer(nBindNum, papBindBuffer);
@@ -1205,8 +1205,9 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             papBindBuffer[nBindNum] = NULL;
             nBindNum++;
-
-        } else {
+        }
+        else
+        {
             CPLDebug("OGRDB2TableLayer::ICreateFeature",
                      "Bind parameter failed");
             FreeBindBuffer(nBindNum, papBindBuffer);
@@ -1264,7 +1265,6 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
             if ( oStatement2.GetColData( 0 ) )
             {
                 poFeature->SetFID( atoi(oStatement2.GetColData( 0 ) ));
-
             }
         }
         CPLDebug("OGR_DB2TableLayer::ICreateFeature","Old FID: " CPL_FRMT_GIB

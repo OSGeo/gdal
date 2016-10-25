@@ -472,7 +472,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
             SetGeogCS( osDName, osDName, osEName, dfA, dfInvF );
             SetTOWGS84( dfDeltaX, dfDeltaY, dfDeltaZ );
-
         }
     }
 

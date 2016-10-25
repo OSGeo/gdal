@@ -509,7 +509,6 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
                     dfXOld = dfX;
                     iOldOld = iOld;
                     iOld = i;
-
                 }
             }
         }

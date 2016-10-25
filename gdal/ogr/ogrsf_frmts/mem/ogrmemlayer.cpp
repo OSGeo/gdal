@@ -338,7 +338,6 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         m_papoFeatures[nFID] = poFeatureCloned;
-
     }
     else
     {

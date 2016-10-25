@@ -314,7 +314,6 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
             oZField.iFieldIndex =
                 poFeatureDefn->GetFieldIndex( oZField.pszFieldName );
         }
-
     }
 
 /* -------------------------------------------------------------------- */

@@ -85,7 +85,6 @@ OGRS57DataSource::OGRS57DataSource(char** papszOpenOptionsIn) :
         }
         CPLFree(pszKey);
     }
-
 }
 
 /************************************************************************/

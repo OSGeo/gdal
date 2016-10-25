@@ -423,7 +423,6 @@ ElementPtr geom2kml(
     case wkbNone:
     default:
         break;
-
     }
 
     return poKmlGeometry;
@@ -567,7 +566,6 @@ static OGRGeometry *kml2geom_rec(
                 poOgrPolygon->
                     addRingDirectly( ( OGRLinearRing * ) poOgrTmpGeometry );
             }
-
         }
         const size_t nRings =
             poKmlPolygon->get_innerboundaryis_array_size();

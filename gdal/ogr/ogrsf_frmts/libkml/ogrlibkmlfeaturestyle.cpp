@@ -275,7 +275,6 @@ void kml2featurestyle(
 
                             szbuf[nRead] = '\0';
                             oStyle.append( szbuf );
-
                         } while( !VSIFEofL(fp) );
 
                         VSIFCloseL(fp);

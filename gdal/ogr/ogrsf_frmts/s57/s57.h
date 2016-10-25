@@ -151,7 +151,6 @@ public:
     char        GetAttrClass( int i )
     { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chClass; }
     int         FindAttrByAcronym( const char * );
-
 };
 
 /************************************************************************/
@@ -349,7 +348,6 @@ class CPL_DLL S57Reader
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
 
     char               *RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL);
-
  };
 
 /************************************************************************/

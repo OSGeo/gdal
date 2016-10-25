@@ -1353,8 +1353,7 @@ OGRFeature *OGRSXFLayer::TranslatePolygon(const SXFRecordDescription& certifInfo
             break;
         nOffset += nDelta;
         poLS->addPoint( dfX, dfY, dfZ );
-
-    }    // for
+    }  // for
 
     OGRLinearRing *poLR = new OGRLinearRing();
     poLR->addSubLineString( poLS, 0 );
@@ -1565,8 +1564,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
 
             nOffset += nTextL+2;
         }
-
-    }    // for
+    }  // for
 
     delete poLS;
     poFeature->SetGeometryDirectly( poMLS );

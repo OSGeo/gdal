@@ -183,7 +183,6 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 
         break;
     }
-
 }
 
 /************************************************************************/
@@ -604,7 +603,6 @@ const char * OGRWktReadPoints( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-
     } while( szDelim[0] == ',' );
 
     return pszInput;
@@ -823,7 +821,6 @@ const char * OGRWktReadPointsM( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-
     } while( szDelim[0] == ',' );
 
     return pszInput;

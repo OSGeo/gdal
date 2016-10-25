@@ -295,7 +295,6 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
             if( j == 80 || szHeader[j-1] != '%' )
                 continue;
-
         }
 
         NTFFileReader *poFR = new NTFFileReader( this );

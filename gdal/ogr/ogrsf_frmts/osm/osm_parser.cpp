@@ -1898,7 +1898,6 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
                 {
                     psCtxt->sRelation.sInfo.ts.pszTimeStamp = OSM_AddString(psCtxt, ppszIter[1]);
                     psCtxt->sRelation.sInfo.bTimeStampIsStr = true;
-
                 }
                 ppszIter += 2;
             }
@@ -2294,7 +2293,6 @@ OSMContext* OSM_Open( const char* pszFilename,
             OSM_Close(psCtxt);
             return NULL;
         }
-
     }
 #endif
 

@@ -188,7 +188,6 @@ public:
 
     // For Internal Use
     CPLODBCSession     *GetSession() { return &oSession; }
-
 };
 
 /************************************************************************/

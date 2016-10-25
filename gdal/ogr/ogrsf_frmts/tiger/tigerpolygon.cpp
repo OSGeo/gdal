@@ -325,7 +325,6 @@ static const TigerFieldInfo rtS_2000_Redistricting_fields[] = {
   { "BLOCKCOL",   'R', 'N', OFTInteger,  108, 112,   5,       1,   1,     1 },
   { "BLKSUFCOL",  'L', 'A', OFTString,   113, 113,   1,       1,   1,     1 },
   { "ZCTA5",      'L', 'A', OFTString,   114, 118,   5,       1,   1,     1 }
-
 };
 
 static const TigerRecordInfo rtS_2000_Redistricting_info =
@@ -540,7 +539,6 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         }
 
         SetFields( psRTSInfo, poFeature, achRTSRec );
-
     }
 
     return poFeature;

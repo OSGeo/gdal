@@ -813,7 +813,6 @@ OGRErr OGRMySQLDataSource::DeleteLayer( int iLayer)
         ReportError( osCommand );
         return OGRERR_FAILURE;
     }
-
 }
 
 /************************************************************************/

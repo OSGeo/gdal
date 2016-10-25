@@ -95,7 +95,6 @@ class OGRBNALayer : public OGRLayer
     OGRFeature *        GetFeature( GIntBig nFID );
 
     int                 TestCapability( const char * );
-
 };
 
 /************************************************************************/

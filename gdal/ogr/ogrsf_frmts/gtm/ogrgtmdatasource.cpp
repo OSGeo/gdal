@@ -302,7 +302,6 @@ int OGRGTMDataSource::Open(const char* pszFilename, int bUpdate)
 
     poSRS->Release();
     return TRUE;
-
 }
 
 /************************************************************************/
@@ -445,7 +444,6 @@ OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
         papoLayers = (OGRGTMLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGTMLayer*));
         papoLayers[nLayers-1] = new GTMWaypointLayer( pszName, poSRS, TRUE, this );
         return papoLayers[nLayers-1];
-
     }
     else if (eType == wkbLineString || eType == wkbLineString25D ||
              eType == wkbMultiLineString || eType == wkbMultiLineString25D)
@@ -469,7 +467,6 @@ OGRLayer * OGRGTMDataSource::ICreateLayer( const char * pszLayerName,
                   OGRGeometryTypeToName(eType) );
         return NULL;
     }
-
 }
 
 /************************************************************************/

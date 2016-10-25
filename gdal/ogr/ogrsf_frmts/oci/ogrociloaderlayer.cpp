@@ -79,7 +79,6 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
                   pszLoaderFilename );
         return;
     }
-
 }
 
 /************************************************************************/

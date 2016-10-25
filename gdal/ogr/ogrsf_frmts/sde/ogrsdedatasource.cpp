@@ -423,8 +423,9 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
                            "  Your client/server versions must not match or "
                            "you have some other major configuration problem");
             return FALSE;
-
-        } else {
+        }
+        else
+        {
             IssueSDEError( nSDEErr, "SE_version_get_info parent" );
             return FALSE;
         }
@@ -639,7 +640,6 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
         SE_stateinfo_free(hDummyStateInfo);
         SE_stateinfo_free(hCurrentStateInfo);
         SE_stateinfo_free(hNextStateInfo);
-
     }
     return TRUE;
 }
@@ -798,7 +798,6 @@ void OGRSDEDataSource::CleanupLayerCreation(const char* pszLayerName)
     }
 
     CPLDebug( "OGR_SDE", "CleanupLayerCreation(%s) successful", pszLayerName );
-
 }
 
 /************************************************************************/

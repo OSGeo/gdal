@@ -413,7 +413,6 @@ void field2kml(
                     CPLFree( pszUTF8String );
 
                     continue;
-
                 }
                 /***** end *****/
                 else if( EQUAL( name, oFC.endfield ) )
@@ -1425,7 +1424,6 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
                 case kmldom::ALTITUDEMODE_ABSOLUTE:
                     poOgrFeat->SetField( iField, "absolute" );
                     break;
-
                 }
             } else if( poKmlGroundOverlay->has_gx_altitudemode() )
             {

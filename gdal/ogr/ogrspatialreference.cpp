@@ -2694,7 +2694,6 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
         nUnitsId = 9001;
         dfRefLong = CPLAtof(papszTokens[1]);
         dfRefLat = CPLAtof(papszTokens[2]);
-
     }
     else if( CSLCount(papszTokens) == 2 && atoi(papszTokens[0]) == 42005 )
     {

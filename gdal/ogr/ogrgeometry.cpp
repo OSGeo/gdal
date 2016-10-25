@@ -605,7 +605,6 @@ OGRErr OGRGeometry::transformTo( OGRSpatialReference *poSR )
     delete poCT;
 
     return eErr;
-
 }
 
 /************************************************************************/
@@ -4728,7 +4727,6 @@ OGRGeometry *OGRGeometry::Simplify(UNUSED_IF_NO_GEOS double dTolerance) const
     return poOGRProduct;
 
 #endif /* HAVE_GEOS */
-
 }
 
 /************************************************************************/
@@ -4814,7 +4812,6 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(UNUSED_IF_NO_GEOS double dTol
     return poOGRProduct;
 
 #endif /* HAVE_GEOS */
-
 }
 
 /************************************************************************/
@@ -5626,7 +5623,6 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt( char ** ppszInput,
 /*      Read the delimiter following the surface.                       */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
-
     } while( szToken[0] == ',' && eErr == OGRERR_NONE );
 
     CPLFree( paoPoints );

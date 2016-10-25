@@ -205,7 +205,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         osCoordSys.Printf(
                  "Earth Projection %d",
                  sTABProj.nProjId );
-
     }
     else
         osCoordSys.Printf(

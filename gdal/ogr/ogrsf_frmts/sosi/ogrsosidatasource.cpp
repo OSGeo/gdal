@@ -575,8 +575,9 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
             }
         }
         LC_WsGr(poFileadm); /* Writing the header here! */
-
-    } else {
+    }
+    else
+    {
         if (!poSRS->IsSame(poSpatialRef)) {
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SOSI driver does not support different spatial reference systems in one file.");

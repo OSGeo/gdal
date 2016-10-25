@@ -588,7 +588,6 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
                     snprintf( pszNeedToFree+nOff, nLen-nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
                 else
                     CPLsnprintf( pszNeedToFree+nOff, nLen-nOff, "%.16g", padfItems[j] );
-
             }
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
@@ -1031,7 +1030,6 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
                 snprintf( pszNeedToFree+nOff, nLen-nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
             else
                 CPLsnprintf( pszNeedToFree+nOff, nLen-nOff, "%.16g", padfItems[j] );
-
         }
         strcat( pszNeedToFree+nOff, "}'" );
 

@@ -308,7 +308,6 @@ class TigerPoint : public TigerFileBase
   virtual OGRErr CreateFeature( OGRFeature      *poFeature) { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
   OGRErr CreateFeature( OGRFeature      *poFeature,
                                 int nIndex );
-
 };
 
 /************************************************************************/
@@ -399,7 +398,6 @@ class TigerPolygonEconomic : public TigerFileBase
 {
 public:
                       TigerPolygonEconomic( OGRTigerDataSource *, const char * );
-
 };
 
 /************************************************************************/

@@ -1063,7 +1063,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 papszIter ++;
                             }
                         }
-
                     }
 
                     if (bAddClass)

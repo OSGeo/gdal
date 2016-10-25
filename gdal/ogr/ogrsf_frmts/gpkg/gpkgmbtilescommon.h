@@ -157,7 +157,6 @@ class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
         friend class GDALGPKGMBTilesLikePseudoDataset;
 
         GDALRasterBlock*        AccessibleTryGetLockedBlockRef(int nBlockXOff, int nBlockYOff) { return TryGetLockedBlockRef(nBlockXOff, nBlockYOff); }
-
 };
 
 #endif // GPKGMBTILESCOMMON_H_INCLUDED

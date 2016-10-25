@@ -586,7 +586,6 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Unsupported field type!");
         }
-
     }
 
     return 0;
@@ -740,7 +739,6 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Unsupported field type!");
         }
-
     }
 
     if (poDATFile->CommitRecordToFile() != 0)
@@ -2228,7 +2226,6 @@ int TABPolyline::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
             delete poGeometry;
             return nStatus;
         }
-
     }
     else if (m_nMapInfoType == TAB_GEOM_MULTIPLINE ||
              m_nMapInfoType == TAB_GEOM_MULTIPLINE_C ||
@@ -2436,7 +2433,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
             poLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
-
     }
     else if ((m_nMapInfoType == TAB_GEOM_PLINE ||
               m_nMapInfoType == TAB_GEOM_PLINE_C ) &&
@@ -2513,7 +2509,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
             poPLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
-
     }
     else if ((m_nMapInfoType == TAB_GEOM_MULTIPLINE ||
               m_nMapInfoType == TAB_GEOM_MULTIPLINE_C ||
@@ -2616,7 +2611,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                          "TABPolyline: Object contains an invalid Geometry!");
                 nStatus = -1;
             }
-
         }
 
         if (nStatus == 0)
@@ -2660,7 +2654,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                          "TABPolyline: Object contains an invalid Geometry!");
                 return -1;
             }
-
         }
 
         const GUInt32 nCoordDataSize = poCoordBlock->GetFeatureDataSize();
@@ -2702,7 +2695,6 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
             m_nPenDefIndex = poMapFile->WritePenDef(&m_sPenDef);
             poPLineHdr->m_nPenId = (GByte)m_nPenDefIndex;      // Pen index
         }
-
     }
     else
     {
@@ -2795,7 +2787,6 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
                          "TABPolyline: Object contains an invalid Geometry!");
                 return;
             }
-
         }
     }
     else
@@ -2996,7 +2987,6 @@ TABGeomType TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
             m_nMapInfoType = TAB_GEOM_V450_REGION;
         else
             m_nMapInfoType = TAB_GEOM_REGION;
-
     }
     else
     {
@@ -3218,7 +3208,6 @@ int TABRegion::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
                 poPolygon = NULL;  // We'll alloc a new polygon next loop.
             }
-
         }
 
         CPLFree(pasSecHdrs);
@@ -3476,8 +3465,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
                                       poMapFile, iLastSect) != 0)
                         return 0; // An error happened, return count=0
                 }
-
-            }/*for*/
+            }  // for
         }
         else
         {
@@ -6257,7 +6245,6 @@ const char *TABText::GetLabelStyleString()
 
     CPLFree(pszTextString);
     return pszStyle;
-
 }
 
 /**********************************************************************
@@ -6523,7 +6510,6 @@ int TABMultiPoint::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                 CPLAssert(false); // Just in case lower-level lib is modified
             }
         }
-
     }
     else
     {
@@ -6630,7 +6616,6 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                 // Failed ... error message has already been produced
                 return nStatus;
             }
-
         }
         else
         {
@@ -6906,7 +6891,6 @@ void TABCollection::EmptyCollection()
 
     // Empty OGR Geometry Collection as well
     SyncOGRGeometryCollection(TRUE, TRUE, TRUE);
-
 }
 
 /**********************************************************************

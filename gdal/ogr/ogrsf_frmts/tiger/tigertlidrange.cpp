@@ -96,5 +96,4 @@ TigerTLIDRange::TigerTLIDRange( OGRTigerDataSource * poDSIn,
     /* -------------------------------------------------------------------- */
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }

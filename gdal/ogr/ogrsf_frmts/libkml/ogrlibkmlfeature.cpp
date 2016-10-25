@@ -923,7 +923,6 @@ OGRFeature *kmlgroundoverlay2feat(
         OGRGeometry * const poOgrGeom =
             kml2geom_latlonbox( poKmlOverlay->get_latlonbox(), poOgrSRS );
         poOgrFeat->SetGeometryDirectly( poOgrGeom );
-
     }
     else if( poKmlOverlay->has_gx_latlonquad() )
     {

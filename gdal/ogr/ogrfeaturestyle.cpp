@@ -247,7 +247,6 @@ const char *OGRStyleMgr::InitFromFeature(OGRFeature *poFeature)
       m_pszStyleString = NULL;
 
     return m_pszStyleString;
-
 }
 
 /************************************************************************/
@@ -968,7 +967,6 @@ GBool OGRStyleTable::ModifyStyle(const char *pszName,
 
     RemoveStyle(pszName);
     return AddStyle(pszName, pszStyleString);
-
 }
 
 /****************************************************************************/
@@ -1599,7 +1597,6 @@ int OGRStyleTool::GetSpecificId(const char *pszId, const char *pszWanted)
     }
 
     return nValue;
-
 }
 
 /************************************************************************/
