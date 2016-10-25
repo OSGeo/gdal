@@ -288,7 +288,6 @@ int main( int argc, char ** argv )
 
         GDALDestroyDriverManager();
         return 0;
-
     }
 
     if( !psOptionsForBinary->bQuiet )

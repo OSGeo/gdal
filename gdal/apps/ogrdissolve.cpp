@@ -557,7 +557,6 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
         } else {
             CPLDebug("CollectGeometries", "Geometry was invalid not adding!!!!");
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -631,7 +630,6 @@ StringGeometryMap* CollectGeometries(   OGRLayer* poSrcLayer,
                             collections_i->second->getNumGeometries());
                 OGRGeometry* buffer = collections_i->second->Buffer(0);
                 buffers->insert(std::make_pair(collections_i->first, buffer));
-
     }
 
     for (collections_i = poCollections.begin();
@@ -675,22 +673,26 @@ GeometriesList* FlattenGeometries(GeometriesList* input) {
                             "Collapsing wkbMultiPolygon geometries......"
                             );
                 }
-                if (iGType == wkbGeometryCollection) {
-                        OGRGeometryCollection* geom = (OGRGeometryCollection*)buffer;
-                        GeometriesList* collection = new GeometriesList;
-                            GeometriesList::const_iterator g_i;
-                        for (int i=0; i< geom->getNumGeometries(); i++) {
-                            OGRGeometry* g = (OGRGeometry*)geom->getGeometryRef(i);
-                            collection->push_back(g);
-                        }
-                            GeometriesList* collapsed = FlattenGeometries(collection);
-                            for (g_i=collapsed->begin(); g_i!=collapsed->end(); g_i++){
-                               output->push_back((OGRGeometry*)(*g_i));
-                CPLDebug(   "CollectGeometries",
-                            "Collapsing wkbGeometryCollection geometries......"
-                            );
-
-                            }
+                if (iGType == wkbGeometryCollection)
+                {
+                    OGRGeometryCollection* geom = (OGRGeometryCollection*)buffer;
+                    GeometriesList* collection = new GeometriesList;
+                    GeometriesList::const_iterator g_i;
+                    for (int i=0; i< geom->getNumGeometries(); i++)
+                    {
+                        OGRGeometry* g = (OGRGeometry*)geom->getGeometryRef(i);
+                        collection->push_back(g);
+                    }
+                    GeometriesList* collapsed = FlattenGeometries(collection);
+                    for( g_i = collapsed->begin();
+                         g_i != collapsed->end();
+                         g_i++ )
+                    {
+                        output->push_back((OGRGeometry*)(*g_i));
+                        CPLDebug(
+                            "CollectGeometries",
+                            "Collapsing wkbGeometryCollection geometries." );
+                    }
                 }
                 // CPLDebug(   "CollectGeometries",
                 //             "Buffered Geometry size %d",

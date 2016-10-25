@@ -3493,7 +3493,6 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             poOutputSRS = poSrcLayer->GetLayerDefn()->GetGeomFieldDefn(
                 psInfo->iRequestedSrcGeomField)->GetSpatialRef();
         }
-
     }
 
 /* -------------------------------------------------------------------- */

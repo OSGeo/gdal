@@ -205,7 +205,6 @@ int main( int argc, char ** argv )
                      "gdalinfo warning: subdataset %d of %d requested. "
                      "Reading the main dataset.\n",
                      psOptionsForBinary->nSubdataset, nSubdatasets );
-
         }
     }
 
@@ -235,5 +234,4 @@ int main( int argc, char ** argv )
     CPLCleanupTLS();
 
     exit( 0 );
-
 }

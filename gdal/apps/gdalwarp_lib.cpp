@@ -312,7 +312,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
-
     }
 
     if ( pszThisTargetSRS != NULL )

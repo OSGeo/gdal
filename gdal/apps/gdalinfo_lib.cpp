@@ -290,7 +290,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                            "       %s\n", papszFileList[i] );
             }
         }
-
     }
     CSLDestroy( papszFileList );
 
@@ -434,7 +433,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                         adfGeoTransform[5] );
             }
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -488,7 +486,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                            "GCP Projection = %s\n",
                            GDALGetGCPProjection( hDataset ) );
                 }
-
             }
 
             if(bJson)
@@ -1611,7 +1608,6 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
                 else
                     Concat(osStr, psOptions->bStdoutOutput,
                            "%s  %s\n", pszIndent, papszMetadata[i] );
-
             }
         }
         if(bJson)
@@ -1629,7 +1625,6 @@ static void GDALInfoPrintMetadata( const GDALInfoOptions* psOptions,
             }
         }
     }
-
 }
 
 /************************************************************************/
@@ -1773,7 +1768,6 @@ static void GDALInfoReportMetadata( const GDALInfoOptions* psOptions,
         GDALInfoPrintMetadata( psOptions, hObject, "RPC", "RPC Metadata",
                                pszIndent, bJson, poMetadata, osStr );
     }
-
 }
 
 /************************************************************************/
