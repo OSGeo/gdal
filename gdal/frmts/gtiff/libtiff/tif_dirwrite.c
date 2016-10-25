@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.82 2016-09-02 22:42:00 erouault Exp $ */
+/* $Id: tif_dirwrite.c,v 1.83 2016-10-25 21:35:15 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -542,8 +542,20 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 			{
 				if (!isTiled(tif))
 				{
-					if (!TIFFWriteDirectoryTagLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPOFFSETS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripoffset))
-						goto bad;
+                    /* td_stripoffset might be NULL in an odd OJPEG case. See
+                     *  tif_dirread.c around line 3634.
+                     * XXX: OJPEG hack.
+                     * If a) compression is OJPEG, b) it's not a tiled TIFF,
+                     * and c) the number of strips is 1,
+                     * then we tolerate the absence of stripoffsets tag,
+                     * because, presumably, all required data is in the
+                     * JpegInterchangeFormat stream.
+                     * We can get here when using tiffset on such a file.
+                     * See http://bugzilla.maptools.org/show_bug.cgi?id=2500
+                    */
+                    if (tif->tif_dir.td_stripoffset != NULL &&
+                        !TIFFWriteDirectoryTagLongLong8Array(tif,&ndir,dir,TIFFTAG_STRIPOFFSETS,tif->tif_dir.td_nstrips,tif->tif_dir.td_stripoffset))
+                        goto bad;
 				}
 				else
 				{
