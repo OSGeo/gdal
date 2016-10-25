@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cmath>
 #include <vector>
 #include "cpl_conv.h"
 #include "ogr_geometry.h"
@@ -51,9 +52,9 @@ static bool CheckPoints( OGRLineString *poLine1, int iPoint1,
             && poLine1->getY(iPoint1) == poLine2->getY(iPoint2);
 
     const double dfDeltaX =
-        ABS( poLine1->getX(iPoint1) - poLine2->getX(iPoint2) );
+        std::abs(poLine1->getX(iPoint1) - poLine2->getX(iPoint2));
     const double dfDeltaY =
-        ABS( poLine1->getY(iPoint1) - poLine2->getY(iPoint2) );
+        std::abs(poLine1->getY(iPoint1) - poLine2->getY(iPoint2));
 
     if( dfDeltaX > *pdfDistance || dfDeltaY > *pdfDistance )
         return false;
@@ -82,7 +83,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /* -------------------------------------------------------------------- */
     const int nVertToAdd = poLine->getNumPoints();
 
-    int iStart = bReverse ? nVertToAdd - 1: 0;
+    int iStart = bReverse ? nVertToAdd - 1 : 0;
     const int iEnd = bReverse ? 0 : nVertToAdd - 1;
     const int iStep = bReverse ? -1 : 1;
 
@@ -245,8 +246,11 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                 poLine = dynamic_cast<OGRLineString *>(
                     poLines->getGeometryRef(iEdge));
                 if( poLine == NULL )
+                {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRLineString.");
+                    return NULL;
+                }
                 if( poLine->getNumPoints() < 2 )
                     continue;
 
@@ -274,8 +278,11 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                 poLine = dynamic_cast<OGRLineString *>(
                     poLines->getGeometryRef(iBestEdge));
                 if( poLine == NULL )
+                {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRLineString.");
+                    return NULL;
+                }
 
                 AddEdgeToRing( poRing, poLine, bReverse );
 
