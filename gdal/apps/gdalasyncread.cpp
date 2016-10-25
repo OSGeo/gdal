@@ -530,8 +530,9 @@ int main( int argc, char ** argv )
             hDstDS = NULL;
         }
         else
+        {
             GDALFlushCache( hDstDS );
-
+        }
     } while( eAStatus != GARIO_ERROR && eAStatus != GARIO_COMPLETE
              && eErr == CE_None );
 

@@ -242,7 +242,6 @@ struct GDALTranslateOptions
         a file containing the WKT. Note that this does not cause reprojection of the
         dataset to the specified SRS. */
     char *pszProjSRS;
-
 };
 
 /************************************************************************/
@@ -570,7 +569,6 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         CPLFree( psOptions->pszOutputSRS );
         psOptions->pszOutputSRS = CPLStrdup( pszSRS );
         CPLFree( pszSRS );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1591,7 +1589,6 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
         GDALSetMetadataItem(hDS,pszKey,pszValue,NULL);
         CPLFree( pszKey );
     }
-
 }
 
 /************************************************************************/
@@ -1813,7 +1810,6 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->panBandList[psOptions->nBandCount-1] = nBand;
             if (bMask)
                 psOptions->panBandList[psOptions->nBandCount-1] *= -1;
-
         }
         else if( EQUAL(papszArgv[i],"-mask") &&  papszArgv[i+1] )
         {

@@ -717,7 +717,6 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                     }
                 }
             }
-
         }
         if (!bUserExtent)
         {

@@ -197,7 +197,6 @@ int main( int nArgc, char ** papszArgv )
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
                                            psOptionsForBinary->pszFormat);
-
     }
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */

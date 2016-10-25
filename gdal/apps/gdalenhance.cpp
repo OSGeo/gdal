@@ -556,7 +556,6 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
             int nValue = (int) ((panCumHist[iHist] * nLUTBins) / nTotal);
 
             panLUT[iLUT] = MAX(0,MIN(nLUTBins-1,nValue));
-
         }
 
         (*ppapanLUTs)[iBand] = panLUT;

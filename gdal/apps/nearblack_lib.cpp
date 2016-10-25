@@ -692,7 +692,6 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
             }
         }
     }
-
 }
 
 /************************************************************************/

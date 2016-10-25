@@ -2513,7 +2513,6 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
                     (iBand == 1) ? pasColorAssociation[iColor].nG :
                     (iBand == 2) ? pasColorAssociation[iColor].nB :
                     pasColorAssociation[iColor].nA) > 0;
-
             }
 
             if( eColorSelectionMode != COLOR_SELECTION_NEAREST_ENTRY )
@@ -2534,7 +2533,6 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
                 bOK &= VSIFPrintfL(fp, ",%.18g:0",
                                    dfVal + fabs(dfVal) * DBL_EPSILON) > 0;
             }
-
         }
         bOK &= VSIFPrintfL(fp, "</LUT>\n") > 0;
 
@@ -3116,7 +3114,6 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
             ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
         else
             ((float*)pImage)[j] = fVal;
-
     }
 
     return CE_None;
@@ -3702,7 +3699,6 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                                             psOptions->bComputeAtEdges,
                                             pfnProgress, pProgressData);
         }
-
     }
 
     CPLFree(pData);

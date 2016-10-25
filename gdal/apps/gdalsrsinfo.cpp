@@ -578,7 +578,6 @@ int SearchCSVForWKT( const char *pszFileCSV, const char *pszTarget )
     VSIFCloseL( fp );
 
     return nFound;
-
 }
 
 /* TODO
