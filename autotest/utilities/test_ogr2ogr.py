@@ -553,7 +553,7 @@ def test_ogr2ogr_18():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(32660);
+    srs.ImportFromEPSG(32660)
     lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('POLYGON((700000 4000000,800000 4000000,800000 3000000,700000 3000000,700000 4000000))')
@@ -950,7 +950,7 @@ def test_ogr2ogr_28():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326);
+    srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
     feat = ogr.Feature(lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt('LINESTRING(160 0,165 1,170 2,175 3,177 4,-177 5,-175 6,-170 7,-177 8,177 9,170 10)')
@@ -1005,7 +1005,7 @@ def test_ogr2ogr_29():
 
         ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/wrapdateline_src.shp')
         srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326);
+        srs.ImportFromEPSG(4326)
         lyr = ds.CreateLayer('wrapdateline_src', srs = srs)
         feat = ogr.Feature(lyr.GetLayerDefn())
 
