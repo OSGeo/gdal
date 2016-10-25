@@ -2,7 +2,7 @@
 
 include ../../../GDALmake.opt
 
-OBJ	=	ogrsosidriver.o ogrsosidatasource.o ogrsosilayer.o ogrsosidatatypes.o 
+OBJ	=	ogrsosidriver.o ogrsosidatasource.o ogrsosilayer.o ogrsosidatatypes.o
 
 CPPFLAGS	:=-DLINUX -DUNIX -I.. -I../..  $(SOSI_INC) $(CPPFLAGS)
 

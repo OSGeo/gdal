@@ -32,6 +32,6 @@ sdtslib-marker:	$(SDTSLIB)
 	./install-libs.sh $(SDTSLIB) $(FRMTSLIB)
 	touch sdtslib-marker
 
-libs:	
+libs:
 	(cd ../../../frmts/iso8211; $(MAKE))
 	(cd ../../../frmts/sdts; $(MAKE))

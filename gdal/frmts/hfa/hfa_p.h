@@ -412,10 +412,10 @@ class HFAType
                                   GByte *pabyData, GUInt32 nDataOffset,
                                   int nDataSize, char chReqType,
                                   void *pReqReturn, int *pnRemainingDataSize );
-    CPLErr      SetInstValue( const char * pszField, GByte *pabyData, 
+    CPLErr      SetInstValue( const char * pszField, GByte *pabyData,
                               GUInt32 nDataOffset, int nDataSize,
                               char chReqType, void * pValue );
-    void        DumpInstValue( FILE *fpOut, GByte *pabyData, 
+    void        DumpInstValue( FILE *fpOut, GByte *pabyData,
                                GUInt32 nDataOffset, int nDataSize,
                                const char *pszPrefix = NULL );
 };

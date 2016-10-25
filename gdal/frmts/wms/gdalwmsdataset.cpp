@@ -127,7 +127,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         m_mini_driver->GetCapabilities(&m_mini_driver_caps);
         if (m_mini_driver_caps.m_capabilities_version == -1)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, 
+            CPLError(CE_Failure, CPLE_AppDefined,
                 "GDALWMS: Internal error, mini-driver capabilities version not set.");
             ret = CE_Failure;
         }
@@ -159,13 +159,13 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
 
         if (ret == CE_None)
         {
-            m_block_size_x = atoi(CPLGetXMLValue(config, "BlockSizeX", 
+            m_block_size_x = atoi(CPLGetXMLValue(config, "BlockSizeX",
                 CPLString().Printf("%d", m_default_block_size_x)));
-            m_block_size_y = atoi(CPLGetXMLValue(config, "BlockSizeY", 
+            m_block_size_y = atoi(CPLGetXMLValue(config, "BlockSizeY",
                 CPLString().Printf("%d", m_default_block_size_y)));
             if (m_block_size_x <= 0 || m_block_size_y <= 0)
             {
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                     "GDALWMS: Invalid value in BlockSizeX or BlockSizeY" );
                 ret = CE_Failure;
             }
@@ -176,7 +176,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
             m_clamp_requests = StrToBool(CPLGetXMLValue(config, "ClampRequests", "true"));
             if (m_clamp_requests<0)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, 
+                CPLError(CE_Failure, CPLE_AppDefined,
                     "GDALWMS: Invalid value of ClampRequests, true/false expected.");
                 ret = CE_Failure;
             }
@@ -214,11 +214,11 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
                 const char *sy = CPLGetXMLValue(data_window_node, "SizeY", "");
                 const char *tx = CPLGetXMLValue(data_window_node, "TileX", "0");
                 const char *ty = CPLGetXMLValue(data_window_node, "TileY", "0");
-                const char *tlevel = 
+                const char *tlevel =
                     CPLGetXMLValue(data_window_node, "TileLevel", osDefaultTileLevel);
-                const char *str_tile_count_x = 
+                const char *str_tile_count_x =
                     CPLGetXMLValue(data_window_node, "TileCountX", osDefaultTileCountX);
-                const char *str_tile_count_y = 
+                const char *str_tile_count_y =
                     CPLGetXMLValue(data_window_node, "TileCountY", osDefaultTileCountY);
                 const char *y_origin = CPLGetXMLValue(data_window_node, "YOrigin", "default");
 
@@ -456,7 +456,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         if (advise_read[0] != '\0') {
             const int advise_read_bool = StrToBool(advise_read);
             if (advise_read_bool == -1) {
-                CPLError(CE_Failure, CPLE_AppDefined, 
+                CPLError(CE_Failure, CPLE_AppDefined,
                     "GDALWMS: Invalid value of AdviseRead, true / false expected.");
                 ret = CE_Failure;
             } else {
@@ -473,7 +473,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
             if (verify_advise_read[0] != '\0') {
                 const int verify_advise_read_bool = StrToBool(verify_advise_read);
                 if (verify_advise_read_bool == -1) {
-                    CPLError(CE_Failure, CPLE_AppDefined, 
+                    CPLError(CE_Failure, CPLE_AppDefined,
                         "GDALWMS: Invalid value of VerifyAdviseRead, true / false expected.");
                     ret = CE_Failure;
                 } else {

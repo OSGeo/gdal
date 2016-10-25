@@ -454,7 +454,7 @@ class GMLASXPathMatcher
 
         void    SetRefXPaths(const std::map<CPLString, CPLString>&
                                     oMapPrefixToURIReferenceXPaths,
-                                const std::vector<CPLString>& 
+                                const std::vector<CPLString>&
                                     aosReferenceXPaths);
 
         void    SetDocumentMapURIToPrefix(
@@ -501,7 +501,7 @@ typedef enum
 class GMLASField
 {
     public:
-        typedef enum 
+        typedef enum
         {
             /** Field that is going to be instantiated as a OGR field */
             REGULAR,
@@ -1209,7 +1209,7 @@ class GMLASReader : public DefaultHandler
         int                  m_nMaxLevel;
 
         /** Maximum allowed size of XML content in byte */
-        size_t               m_nMaxContentSize; 
+        size_t               m_nMaxContentSize;
 
         /** Map from a SRS name to a boolean indicating if its coordinate
             order is inverted. */

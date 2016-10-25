@@ -2021,7 +2021,7 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(const char* pszURL)
 
 static bool IsAllowedFilename( const char* pszFilename )
 {
-    const char* pszAllowedFilename = 
+    const char* pszAllowedFilename =
         CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", NULL);
     if( pszAllowedFilename != NULL )
     {

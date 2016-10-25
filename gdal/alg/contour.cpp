@@ -172,7 +172,6 @@ template<> inline bool GDALContourGenerator::IsNoData<false>(double dfVal) const
     return dfVal == dfNoDataValue;
 }
 
-
 /************************************************************************/
 /*                           GDAL_CG_Create()                           */
 /************************************************************************/
@@ -1132,7 +1131,6 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
     return nEnd+1;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                           GDALContourItem                            */
@@ -1460,7 +1458,6 @@ void GDALContourItem::PrepareEjection()
     }
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                   Additional C Callable Functions                    */
@@ -1510,7 +1507,6 @@ CPLErr OGRContourWriter( double dfLevel,
 
     return (eErr == OGRERR_NONE) ? CE_None : CE_Failure;
 }
-
 
 /************************************************************************/
 /*                        GDALContourGenerate()                         */

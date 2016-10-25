@@ -42,7 +42,7 @@ gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
 clean:
 	$(RM) *.o $(O_OBJ)
 
-docs:	
+docs:
 	(cd ..; $(MAKE) docs)
 
 install:

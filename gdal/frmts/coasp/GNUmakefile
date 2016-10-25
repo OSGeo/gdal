@@ -3,7 +3,7 @@ include ../../GDALmake.opt
 
 OBJ	=	coasp_dataset.o
 
-CPPFLAGS	:=	 $(CPPFLAGS) 
+CPPFLAGS	:=	 $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

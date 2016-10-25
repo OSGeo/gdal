@@ -62,7 +62,7 @@ bool OGRInitializeXerces(void)
 
     try
     {
-        CPLDebug("OGR", "XMLPlatformUtils::Initialize()"); 
+        CPLDebug("OGR", "XMLPlatformUtils::Initialize()");
         XMLPlatformUtils::Initialize();
         nCounter ++;
         return true;

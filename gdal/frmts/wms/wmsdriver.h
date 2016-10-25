@@ -145,7 +145,7 @@ public:
 };
 
 /* All data returned by mini-driver as pointer should remain valid for mini-driver lifetime
-   and should be freed by mini-driver destructor unless otherwise specified. 
+   and should be freed by mini-driver destructor unless otherwise specified.
  */
 
 // Base class for minidrivers
@@ -161,7 +161,7 @@ public:
 
 public:
     virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
-    virtual void ImageRequest(CPL_UNUSED CPLString *url, 
+    virtual void ImageRequest(CPL_UNUSED CPLString *url,
         CPL_UNUSED const GDALWMSImageRequestInfo &iri) {};
 
     virtual void TiledImageRequest(CPL_UNUSED CPLString *url,
@@ -175,7 +175,7 @@ public:
         CPL_UNUSED int nYInBlock) {};
 
     // Return data projection in WKT format, NULL if unknown
-    virtual const char *GetProjectionInWKT() { 
+    virtual const char *GetProjectionInWKT() {
         return NULL;
     };
 

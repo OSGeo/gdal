@@ -1,4 +1,3 @@
-
 include GDALmake.opt
 
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
@@ -267,11 +266,9 @@ install-lib:
 	$(INSTALL_DIR) $(DESTDIR)$(INST_LIB)
 	$(INSTALL_LIB) $(GDAL_LIB) $(DESTDIR)$(INST_LIB)
 
-endif # HAVE_LD_SHARED=no 
+endif # HAVE_LD_SHARED=no
 
-
-endif # HAVE_LIBTOOL=no 
-
+endif # HAVE_LIBTOOL=no
 
 gdal.pc:	gdal.pc.in GDALmake.opt ./GNUmakefile VERSION
 	rm -f gdal.pc

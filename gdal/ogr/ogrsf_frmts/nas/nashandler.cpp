@@ -652,7 +652,7 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
     const char *pszLast = NULL;
 
     if( m_nDepth == m_nDepthFeature && poState->m_poFeature != NULL
-        && m_osElementName == 
+        && m_osElementName ==
                  poState->m_poFeature->GetClass()->GetElementName() )
     {
         m_nDepthFeature = 0;

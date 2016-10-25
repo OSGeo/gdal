@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	IdrisiDataset.o 
+OBJ	=	IdrisiDataset.o
 
 
 

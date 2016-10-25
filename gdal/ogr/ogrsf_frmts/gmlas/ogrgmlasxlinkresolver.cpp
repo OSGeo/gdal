@@ -83,7 +83,7 @@ CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
             // Select the minimum between the individual timeout and the
             // remaining time granted by the max global resolution time.
             int nRemaining = m_oConf.m_nMaxGlobalResolutionTime -
-                             m_nGlobalResolutionTime; 
+                             m_nGlobalResolutionTime;
             if( nRemaining < nTimeout )
                 nTimeout = nRemaining;
         }
@@ -250,7 +250,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
 bool GMLASXLinkResolver::IsRawContentResolutionEnabled() const
 {
     return m_oConf.m_bDefaultResolutionEnabled &&
-           m_oConf.m_eDefaultResolutionMode == 
+           m_oConf.m_eDefaultResolutionMode ==
                                         GMLASXLinkResolutionConf::RawContent;
 }
 
