@@ -28,4 +28,3 @@ $(O_OBJ):	ogrlibkmlgeometry.h \
             ogrlibkmlfeaturestyle.h \
             ogrlibkmlstyle.h \
             ogr_libkml.h
-          

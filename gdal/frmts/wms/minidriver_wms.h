@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /*
- * Base class for a WMS minidriver.  
+ * Base class for a WMS minidriver.
  * At least Initialize() and one of the ImageRequest() or TiledImageRequest() has to be provided
  * All minidrivers are instantiated in wmsdriver.cpp, in GDALRegister_WMS()
  */

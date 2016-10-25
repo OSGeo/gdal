@@ -1,9 +1,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,15 @@ FILES	:= $(FILES) JPEG12_band
 XTRA_OPT := $(XTRA_OPT) -DJPEG12_SUPPORTED
 endif
 
-ifeq ($(JPEG_SETTING),internal) 
+ifeq ($(JPEG_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../jpeg/libjpeg
 endif
 
-ifeq ($(PNG_SETTING),internal) 
+ifeq ($(PNG_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../png/libpng -DINTERNAL_PNG
 endif
 
-ifeq ($(LIBZ_SETTING),internal) 
+ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT        :=      $(XTRA_OPT) -I../zlib
 endif
 

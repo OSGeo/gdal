@@ -21,7 +21,7 @@ bsb2raw$(EXE):	bsb2raw.$(OBJ_EXT)
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-dist:	
+dist:
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
 	cp *.cpp *.c *.h $(DISTDIR)

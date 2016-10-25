@@ -87,7 +87,7 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
     const CPLString osPrefix( transcode(prefix) );
     if( !osPrefix.empty() )
     {
-        std::map<CPLString, CPLString>::iterator oIter = 
+        std::map<CPLString, CPLString>::iterator oIter =
                     m_oMapURIToPrefix.find( osURI );
         if( oIter == m_oMapURIToPrefix.end() )
         {
@@ -497,7 +497,7 @@ CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
         GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
         static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
     {
-        if( static_cast<int>(osName.size()) + nDigitsSize < 
+        if( static_cast<int>(osName.size()) + nDigitsSize <
                                         m_nIdentifierMaxLength )
         {
             osName += szDigits;
@@ -956,7 +956,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                     transcode(poEltDecl->getName())));
                     if( !IsIgnoredXPath(osXPath ) )
                     {
-                        if( bFoundGMLFeature && 
+                        if( bFoundGMLFeature &&
                             m_bInstantiateGMLFeaturesOnly &&
                             !DerivesFromGMLFeature(poEltDecl) )
                         {
@@ -1836,7 +1836,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                     }
 
                     // Make sure we will instantiate the referenced element
-                    if( m_oSetEltsForTopClass.find( poSubElt ) == 
+                    if( m_oSetEltsForTopClass.find( poSubElt ) ==
                                 m_oSetEltsForTopClass.end() &&
                         aoSetXPathEltsForTopClass.find( osSubEltXPath )
                                 == aoSetXPathEltsForTopClass.end() )
@@ -1997,7 +1997,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 
                         // Make sure we will instantiate the referenced
                         //element
-                        if( m_oSetEltsForTopClass.find( poTargetElt ) == 
+                        if( m_oSetEltsForTopClass.find( poTargetElt ) ==
                                     m_oSetEltsForTopClass.end() &&
                             aoSetXPathEltsForTopClass.find( osTargetEltXPath )
                                 == aoSetXPathEltsForTopClass.end() )
@@ -2044,7 +2044,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             }
 
         }
-        else if( !bAlreadyVisitedMG && 
+        else if( !bAlreadyVisitedMG &&
                  poParticle->getTermType() == XSParticle::TERM_MODELGROUP )
         {
             XSModelGroup* psSubModelGroup = poParticle->getModelGroupTerm();
@@ -2140,7 +2140,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         return false;
     }
 
-    const size_t nMainAttrListSize = (poMainAttrList != NULL) ? 
+    const size_t nMainAttrListSize = (poMainAttrList != NULL) ?
                                                     poMainAttrList->size(): 0;
     for(size_t j=0; j < nMainAttrListSize; ++j )
     {
@@ -2173,7 +2173,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
     // a sequence of gml:_Metadata but for some reason they have used
     // a sequence of any.
     if( oClass.GetXPath() == "gml:metaDataProperty" &&
-        poModelGroup->getCompositor() == 
+        poModelGroup->getCompositor() ==
                                 XSModelGroup::COMPOSITOR_SEQUENCE &&
         poParticles->size() == 1 &&
         poParticles->elementAt(0)->
@@ -2458,7 +2458,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 // Process attributes
                 XSAttributeUseList* poAttrList =
                                         poEltCT->getAttributeUses();
-                const size_t nAttrListSize = (poAttrList != NULL) ? 
+                const size_t nAttrListSize = (poAttrList != NULL) ?
                                                     poAttrList->size(): 0;
                 for(size_t j=0; j< nAttrListSize; ++j )
                 {
@@ -2616,7 +2616,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     bNothingMoreToDo = true;
                 }
 
-                else 
+                else
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
@@ -2779,7 +2779,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             if( aoFields.size() && bEltRepeatedParticle)
                             {
                                 // We have attributes and the sequence is
-                                // repeated 
+                                // repeated
                                 //   <xs:element name="foo" maxOccurs="unbounded">
                                 //      <xs:complexType>
                                 //          <xs:sequence maxOccurs="unbounded">

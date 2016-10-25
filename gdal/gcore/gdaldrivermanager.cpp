@@ -237,7 +237,7 @@ GDALDriverManager::~GDALDriverManager()
     OSRCleanup();
 
     OGRCleanupXercesMutex();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
 /* -------------------------------------------------------------------- */

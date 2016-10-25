@@ -357,7 +357,6 @@ GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                         char **papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg );
 
-
 /************************************************************************/
 /*  Gridding interface.                                                 */
 /************************************************************************/
@@ -514,7 +513,6 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridLinearOptions;
-
 
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,

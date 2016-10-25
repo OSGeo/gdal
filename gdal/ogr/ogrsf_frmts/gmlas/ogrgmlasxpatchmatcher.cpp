@@ -55,7 +55,7 @@ GMLASXPathMatcher::~GMLASXPathMatcher()
 
 void    GMLASXPathMatcher::SetRefXPaths(const std::map<CPLString, CPLString>&
                                                 oMapPrefixToURIReferenceXPaths,
-                                         const std::vector<CPLString>& 
+                                         const std::vector<CPLString>&
                                                 aosReferenceXPaths)
 {
     m_oMapPrefixToURIReferenceXPaths = oMapPrefixToURIReferenceXPaths;
@@ -116,7 +116,7 @@ void    GMLASXPathMatcher::SetDocumentMapURIToPrefix(
                 bool bIsAttr = ( osCurNode[0] == '@' );
                 CPLString osPrefix;
                 CPLString osLocalname;
-                osPrefix.assign(osCurNode, 
+                osPrefix.assign(osCurNode,
                                 bIsAttr ? 1 : 0,
                                 iPosColumn - (bIsAttr ? 1 : 0));
                 osLocalname.assign(osCurNode, iPosColumn+1,

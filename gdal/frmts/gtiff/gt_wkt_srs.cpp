@@ -563,7 +563,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
             oSRS.SetAuthority( "PROJCS", "EPSG", psDefn->PCS );
         }
-        else 
+        else
         {
             bool bTryGTCitationGeoKey = true;
             if( GDALGTIFKeyGetASCII( hGTIF, PCSCitationGeoKey,

@@ -479,7 +479,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     const char* pszInitEpsgCleanCopy = strstr(pszCleanCopy, "init=epsg:");
     bool bSetAuthorityCode = true;
     // If there's an override, then drop the authority code
-    if( pszInitEpsgCleanCopy != NULL && 
+    if( pszInitEpsgCleanCopy != NULL &&
         strchr(pszInitEpsgCleanCopy, '+') != NULL )
     {
         bSetAuthorityCode = false;

@@ -434,7 +434,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
 {
     m_nTimeOut = atoi( CPLGetXMLValue( psRoot, "Timeout", "0" ) );
 
-    m_nMaxFileSize = atoi( CPLGetXMLValue( psRoot, "MaxFileSize", 
+    m_nMaxFileSize = atoi( CPLGetXMLValue( psRoot, "MaxFileSize",
                                 CPLSPrintf("%d", MAX_FILE_SIZE_DEFAULT)) );
 
     m_nMaxGlobalResolutionTime = atoi(
