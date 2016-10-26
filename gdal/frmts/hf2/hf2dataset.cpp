@@ -613,7 +613,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if (bHasUTMZone && std::abs(nUTMZone) >= 1 && std::abs(nUTMZone) <= 60)
         {
             bHasSRS = true;
-            oSRS.SetUTM(std::abs(nUTMZone), nUTMZone > 0);
+            oSRS.SetUTM(std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0);
         }
         if (bHasSRS)
             oSRS.exportToWkt(&poDS->pszWKT);
