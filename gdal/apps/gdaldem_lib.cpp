@@ -83,15 +83,15 @@
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
 
-#include "cpl_vsi.h"
-#include <algorithm>
 #include <float.h>
+#include <cmath>
 #include <cstdlib>
-#include <math.h>
+#include <algorithm>
 #include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_utils_priv.h"
@@ -1400,7 +1400,7 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             // Check if there is enough distance between the nodata value and
             // its predecessor.
             const double dfNewValue =
-                    pCurrent->dfVal - ABS(pCurrent->dfVal) * DBL_EPSILON;
+                pCurrent->dfVal - std::abs(pCurrent->dfVal) * DBL_EPSILON;
             if( dfNewValue > pPrevious->dfVal )
             {
                 // add one just below the nodata value
@@ -1419,7 +1419,7 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             // Check if there is enough distance between the nodata value and
             // its successor.
             const double dfNewValue =
-                pPrevious->dfVal + ABS(pPrevious->dfVal) * DBL_EPSILON;
+                pPrevious->dfVal + std::abs(pPrevious->dfVal) * DBL_EPSILON;
             if( dfNewValue < pCurrent->dfVal )
             {
                 // add one just above the nodata value
@@ -1461,7 +1461,7 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
             // check if this distance is enough
             const int nEquivalentCount = i - nRepeatedEntryIndex + 1;
             if( dfTotalDist >
-                ABS(pPrevious->dfVal) * nEquivalentCount * DBL_EPSILON )
+                std::abs(pPrevious->dfVal) * nEquivalentCount * DBL_EPSILON )
             {
                 // balance the alterations
                 double dfMultiplier =
@@ -1469,7 +1469,8 @@ static void GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation
                 for( int j = nRepeatedEntryIndex - 1; j < i; ++j )
                 {
                     pasColorAssociation[j].dfVal +=
-                            (ABS(pPrevious->dfVal) * dfMultiplier) * DBL_EPSILON;
+                        (std::abs(pPrevious->dfVal) * dfMultiplier) *
+                        DBL_EPSILON;
                     dfMultiplier += 1.0;
                 }
             }

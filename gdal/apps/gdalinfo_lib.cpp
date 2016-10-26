@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cmath>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -1473,7 +1474,7 @@ GDALInfoReportCorner( const GDALInfoOptions* psOptions,
 /* -------------------------------------------------------------------- */
 /*      Report the georeferenced coordinates.                           */
 /* -------------------------------------------------------------------- */
-    if( ABS(dfGeoX) < 181 && ABS(dfGeoY) < 91 )
+    if( std::abs(dfGeoX) < 181 && std::abs(dfGeoY) < 91 )
     {
         if(bJson)
         {

@@ -36,6 +36,7 @@
 #include "vrtdataset.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -626,11 +627,13 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         for( i = 0; i < psOptions->nBandCount; i++ )
         {
-            if( ABS(psOptions->panBandList[i]) > GDALGetRasterCount(hSrcDataset) )
+            if( std::abs(psOptions->panBandList[i]) >
+                GDALGetRasterCount(hSrcDataset) )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
+                CPLError(CE_Failure, CPLE_AppDefined,
                          "Band %d requested, but only bands 1 to %d available.",
-                         ABS(psOptions->panBandList[i]), GDALGetRasterCount(hSrcDataset) );
+                         std::abs(psOptions->panBandList[i]),
+                         GDALGetRasterCount(hSrcDataset) );
                 GDALTranslateOptionsFree(psOptions);
                 return NULL;
             }
@@ -1108,15 +1111,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if (psOptions->nRGBExpand != 0)
     {
-        GDALRasterBand  *poSrcBand;
-        poSrcBand = ((GDALDataset *)
-                     hSrcDataset)->GetRasterBand(ABS(psOptions->panBandList[0]));
+        GDALRasterBand *poSrcBand =
+            ((GDALDataset *) hSrcDataset)->
+                GetRasterBand(std::abs(psOptions->panBandList[0]));
         if (psOptions->panBandList[0] < 0)
             poSrcBand = poSrcBand->GetMaskBand();
         GDALColorTable* poColorTable = poSrcBand->GetColorTable();
         if (poColorTable == NULL)
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Error : band %d has no color table", ABS(psOptions->panBandList[0]));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error : band %d has no color table",
+                     std::abs(psOptions->panBandList[0]));
             GDALClose((GDALDatasetH) poVDS);
             GDALTranslateOptionsFree(psOptions);
             return NULL;
@@ -1180,7 +1185,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         else
             nSrcBand = psOptions->panBandList[i];
 
-        poSrcBand = ((GDALDataset *) hSrcDataset)->GetRasterBand(ABS(nSrcBand));
+        poSrcBand =
+            ((GDALDataset *) hSrcDataset)->GetRasterBand(std::abs(nSrcBand));
 
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
@@ -1508,7 +1514,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->eMaskMode == MASK_USER)
     {
         GDALRasterBand *poSrcBand =
-            (GDALRasterBand*)GDALGetRasterBand(hSrcDataset, ABS(psOptions->nMaskBand));
+            (GDALRasterBand*)GDALGetRasterBand(hSrcDataset,
+                                               std::abs(psOptions->nMaskBand));
         if (poSrcBand && poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)
         {
             VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)

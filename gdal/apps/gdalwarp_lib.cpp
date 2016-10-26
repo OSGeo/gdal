@@ -37,9 +37,11 @@
 #include "ogr_api.h"
 #include "commonutils.h"
 #include "gdal_priv.h"
-#include <vector>
-#include <algorithm>
 #include "gdal_utils_priv.h"
+
+#include <cmath>
+#include <algorithm>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -1863,7 +1865,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 dfWrkMaxY = adfExtent[3];
                 dfWrkMinY = adfExtent[1];
                 dfWrkResX = adfThisGeoTransform[1];
-                dfWrkResY = ABS(adfThisGeoTransform[5]);
+                dfWrkResY = std::abs(adfThisGeoTransform[5]);
             }
             else
             {
@@ -1872,7 +1874,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 dfWrkMaxY = MAX(dfWrkMaxY,adfExtent[3]);
                 dfWrkMinY = MIN(dfWrkMinY,adfExtent[1]);
                 dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
-                dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
+                dfWrkResY = MIN(dfWrkResY, std::abs(adfThisGeoTransform[5]));
             }
         }
 
