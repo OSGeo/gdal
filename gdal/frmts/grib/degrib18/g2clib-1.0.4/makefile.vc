@@ -8,10 +8,6 @@ GDAL_ROOT       =       ..\..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-!IFDEF JASPER_DIR
-EXTRAFLAGS = $(EXTRAFLAGS) $(JASPER_INCLUDE) -DHAVE_JASPER
-!ENDIF
-
 default: $(OBJ)
         xcopy /D /Y *.obj ..\..\..\o
 
