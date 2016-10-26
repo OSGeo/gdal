@@ -35,6 +35,7 @@
 #include "ogr_spatialref.h"
 
 #include <cctype>
+#include <cmath>
 
 #include <iostream>
 #include <limits>
@@ -2241,10 +2242,10 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
 
     double EPS = 1.0e-12;
 
-    if( ABS(max_pixel - min_pixel) < EPS
-        || ABS(max_line - min_line) < EPS
-        || ABS(max_geox - min_geox) < EPS
-        || ABS(max_geoy - min_geoy) < EPS)
+    if( std::abs(max_pixel - min_pixel) < EPS
+        || std::abs(max_line - min_line) < EPS
+        || std::abs(max_geox - min_geox) < EPS
+        || std::abs(max_geoy - min_geoy) < EPS)
     {
         return FALSE;  // degenerate in at least one dimension.
     }
@@ -2377,10 +2378,11 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     {
         // FIXME? Not sure if it is the more accurate way of computing
         // pixel size
-        double dfPixelSize = 0.5 * (ABS(padfGeoTransform[1])
-            + ABS(padfGeoTransform[2])
-            + ABS(padfGeoTransform[4])
-            + ABS(padfGeoTransform[5]));
+        double dfPixelSize =
+            0.5 * (std::abs(padfGeoTransform[1])
+            + std::abs(padfGeoTransform[2])
+            + std::abs(padfGeoTransform[4])
+            + std::abs(padfGeoTransform[5]));
 
         for( int i = 0; i < nGCPCount; i++ )
         {
@@ -2395,12 +2397,13 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                  + padfGeoTransform[3])
                 - pasGCPs[i].dfGCPY;
 
-            if( ABS(dfErrorX) > 0.25 * dfPixelSize
-                || ABS(dfErrorY) > 0.25 * dfPixelSize )
+            if( std::abs(dfErrorX) > 0.25 * dfPixelSize
+                || std::abs(dfErrorY) > 0.25 * dfPixelSize )
             {
                 CPLDebug("GDAL", "dfErrorX/dfPixelSize = %.2f, "
                          "dfErrorY/dfPixelSize = %.2f",
-                         ABS(dfErrorX)/dfPixelSize, ABS(dfErrorY)/dfPixelSize);
+                         std::abs(dfErrorX)/dfPixelSize,
+                         std::abs(dfErrorY)/dfPixelSize);
                 return FALSE;
             }
         }
