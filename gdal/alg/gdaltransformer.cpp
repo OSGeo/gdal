@@ -36,6 +36,7 @@
 #include "gdal_alg_priv.h"
 #include "cpl_list.h"
 #include "cpl_multiproc.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 CPL_C_START
@@ -1226,7 +1227,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                  || psInfo->adfSrcGeoTransform[2] != 0.0
                  || psInfo->adfSrcGeoTransform[3] != 0.0
                  || psInfo->adfSrcGeoTransform[4] != 0.0
-                 || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
+                 || std::abs(psInfo->adfSrcGeoTransform[5]) != 1.0) )
     {
         if( !GDALInvGeoTransform( psInfo->adfSrcGeoTransform,
                                   psInfo->adfSrcInvGeoTransform ) )
