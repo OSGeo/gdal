@@ -83,13 +83,15 @@
  *  on the continental slope Marine Geodesy, 2007, 30, 3-35
  ****************************************************************************/
 
+// Include before others for mingw for VSIStatBufL
+#include "cpl_conv.h"
+
 #include <float.h>
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
 #include <limits>
 
-#include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
