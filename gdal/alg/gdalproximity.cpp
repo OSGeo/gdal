@@ -30,6 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal_alg.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -126,11 +127,12 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
                 double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
                 GDALGetGeoTransform( hSrcDS, adfGeoTransform );
-                if( ABS(adfGeoTransform[1]) != ABS(adfGeoTransform[5]) )
+                if( std::abs(adfGeoTransform[1]) !=
+                    std::abs(adfGeoTransform[5]) )
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Pixels not square, distances will be inaccurate." );
-                dfDistMult = ABS(adfGeoTransform[1]);
+                dfDistMult = std::abs(adfGeoTransform[1]);
             }
         }
         else if( !EQUAL(pszOpt, "PIXEL") )

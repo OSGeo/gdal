@@ -29,6 +29,7 @@
 
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -300,8 +301,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 dfVariant1 = padfVariant[n + j];
             }
 
-            int nDeltaX = ABS( iX1 - iX );
-            int nDeltaY = ABS( iY1 - iY );
+            int nDeltaX = std::abs( iX1 - iX );
+            int nDeltaY = std::abs( iY1 - iY );
 
             // Step direction depends on line direction.
             const int nXStep = ( iX > iX1 ) ? -1 : 1;

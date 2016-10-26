@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
 #include "gdal_mdreader.h"
+#include <cmath>
 
 #if (defined(__x86_64) || defined(_M_X64))
 #define USE_SSE2_OPTIM
@@ -1099,7 +1100,8 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
                 dfResultX, dfResultY, dfPixelDeltaX, dfPixelDeltaY);
         }
 
-        double dfError = MAX(ABS(dfPixelDeltaX), ABS(dfPixelDeltaY));
+        const double dfError =
+            MAX(std::abs(dfPixelDeltaX), std::abs(dfPixelDeltaY));
         if( dfError < psTransform->dfPixErrThreshold )
         {
             iIter = -1;

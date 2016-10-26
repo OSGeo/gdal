@@ -29,6 +29,7 @@
 #include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include <cstdlib>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -216,8 +217,9 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
             // We are going to add a segment, but should we just extend
             // an existing segment already going in the right direction?
 
-            int nLastLen = MAX(ABS(anString[nSSize-4]-anString[nSSize-2]),
-                               ABS(anString[nSSize-3]-anString[nSSize-1]));
+            const int nLastLen =
+                MAX(std::abs(anString[nSSize-4]-anString[nSSize-2]),
+                    std::abs(anString[nSSize-3]-anString[nSSize-1]));
 
             if( nSSize >= 4
                 && (anString[nSSize-4] - anString[nSSize-2]

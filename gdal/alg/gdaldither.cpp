@@ -50,6 +50,7 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include <cstdlib>
 
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2
@@ -618,9 +619,9 @@ static int FindNearestColor( int nColors, int *panPCT,
     for( int iColor = 0; iColor < nColors; iColor++ )
     {
         int nThisDist =
-            ABS(nRedValue   - panPCT[4*iColor+0])
-            + ABS(nGreenValue - panPCT[4*iColor+1])
-            + ABS(nBlueValue  - panPCT[4*iColor+2]);
+            std::abs(nRedValue - panPCT[4*iColor+0]) +
+            std::abs(nGreenValue - panPCT[4*iColor+1]) +
+            std::abs(nBlueValue - panPCT[4*iColor+2]);
 
         if( nThisDist < nBestDist )
         {

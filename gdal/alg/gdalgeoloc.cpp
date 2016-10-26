@@ -29,6 +29,7 @@
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"
+#include <cmath>
 
 #ifdef SHAPE_DEBUG
 #include "/u/pkg/shapelib/shapefil.h"
@@ -565,7 +566,7 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
             return TRUE;
         }
 
-        if( ABS(dfRightProjection) > ABS(dfDownProjection) )
+        if( std::abs(dfRightProjection) > std::abs(dfDownProjection) )
         {
             // Do we want to move right?
             if( dfRightProjection > 1.0 && iX < nXSize-1 )
@@ -577,7 +578,9 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
             // Do we want to move left?
             else if( dfRightProjection < 0.0 && iX > 0 )
             {
-                iXNext = iX - MAX(1,(int)(ABS(dfRightProjection) - nStepCount)/2);
+                iXNext =
+                    iX - MAX(1, static_cast<int>(std::abs(dfRightProjection)
+                                                 - nStepCount) / 2);
                 iYNext = iY;
             }
 
@@ -592,7 +595,9 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
             else if( dfDownProjection < 0.0 && iY > 0 )
             {
                 iXNext = iX;
-                iYNext = iY - MAX(1,(int)(ABS(dfDownProjection) - nStepCount)/2);
+                iYNext =
+                    iY - MAX(1, static_cast<int>(std::abs(dfDownProjection)
+                                                 - nStepCount) / 2);
             }
 
             // We aren't there, and we have no where to go
@@ -614,7 +619,9 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
             else if( dfDownProjection < 0.0 && iY > 0 )
             {
                 iXNext = iX;
-                iYNext = iY - MAX(1,(int)(ABS(dfDownProjection) - nStepCount)/2);
+                iYNext =
+                    iY - MAX(1, static_cast<int>(std::abs(dfDownProjection)
+                                                 - nStepCount) / 2);
             }
 
             // Do we want to move right?
@@ -627,7 +634,9 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
             // Do we want to move left?
             else if( dfRightProjection < 0.0 && iX > 0 )
             {
-                iXNext = iX - MAX(1,(int)(ABS(dfRightProjection) - nStepCount)/2);
+                iXNext =
+                    iX - MAX(1, static_cast<int>(std::abs(dfRightProjection)
+                                                 - nStepCount) / 2);
                 iYNext = iY;
             }
 
@@ -637,7 +646,7 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
                 return FALSE;
             }
         }
-                adfPathX[nStepCount] = iX;
+        adfPathX[nStepCount] = iX;
         adfPathY[nStepCount] = iY;
 
         nStepCount++;
