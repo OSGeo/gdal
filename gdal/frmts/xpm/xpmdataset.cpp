@@ -32,6 +32,8 @@
 #include "memdataset.h"
 #include "gdal_frmts.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 static unsigned char *ParseXPM( const char *pszInput,
@@ -295,9 +297,12 @@ XPMCreateCopy( const char * pszFilename,
                     nDistance = 0;
                 else
                     nDistance =
-                        ABS(asPixelColor[iColor1].c1-asPixelColor[iColor2].c1)
-                      + ABS(asPixelColor[iColor1].c2-asPixelColor[iColor2].c2)
-                      + ABS(asPixelColor[iColor1].c3-asPixelColor[iColor2].c3);
+                        std::abs(asPixelColor[iColor1].c1 -
+                                 asPixelColor[iColor2].c1)
+                        + std::abs(asPixelColor[iColor1].c2 -
+                                   asPixelColor[iColor2].c2)
+                        + std::abs(asPixelColor[iColor1].c3 -
+                                   asPixelColor[iColor2].c3);
 
                 if( nDistance < nClosestDistance )
                 {

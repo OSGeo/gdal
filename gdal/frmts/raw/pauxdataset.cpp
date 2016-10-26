@@ -32,6 +32,8 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -560,8 +562,8 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
     char szLoRightX[128] = { '\0' };
     char szLoRightY[128] = { '\0' };
 
-    if( ABS(padfGeoTransform[0]) < 181
-        && ABS(padfGeoTransform[1]) < 1 )
+    if( std::abs(padfGeoTransform[0]) < 181
+        && std::abs(padfGeoTransform[1]) < 1 )
     {
         CPLsnprintf( szUpLeftX, sizeof(szUpLeftX), "%.12f",
                      padfGeoTransform[0] );

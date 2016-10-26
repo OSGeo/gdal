@@ -34,6 +34,7 @@
 #include "rawdataset.h"
 
 #include <cctype>
+#include <cmath>
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -1391,7 +1392,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
           && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
           || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
               || tempGeoTransform[4] != 0.0
-              || ABS(tempGeoTransform[5]) != 1.0 ) )
+              || std::abs(tempGeoTransform[5]) != 1.0 ) )
       {
           padfTiepoints[0] =
               tempGeoTransform[0] + tempGeoTransform[1]*0.5 +

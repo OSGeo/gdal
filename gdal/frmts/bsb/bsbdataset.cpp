@@ -33,6 +33,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 //Disabled as people may worry about the BSB patent
@@ -1015,9 +1017,9 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             for( int j = i+1; j < nPCTSize; j++ )
             {
-                int nRange = ABS(abyPCT[i*3+0] - abyPCT[j*3+0])
-                    + ABS(abyPCT[i*3+1] - abyPCT[j*3+1])
-                    + ABS(abyPCT[i*3+2] - abyPCT[j*3+2]);
+                int nRange = std::abs(abyPCT[i*3+0] - abyPCT[j*3+0])
+                    + std::abs(abyPCT[i*3+1] - abyPCT[j*3+1])
+                    + std::abs(abyPCT[i*3+2] - abyPCT[j*3+2]);
 
                 if( nRange < nBestRange )
                 {

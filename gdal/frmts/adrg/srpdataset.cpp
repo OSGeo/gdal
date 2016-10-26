@@ -32,6 +32,8 @@
 #include "gdal_frmts.h"
 #include "iso8211.h"
 #include "ogr_spatialref.h"
+
+#include <cstdlib>
 #include <algorithm>
 
 // Uncomment to recognize also .gen files in addition to .img files
@@ -815,9 +817,9 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
     {
         OGRSpatialReference oSRS;
 
-        if( ABS(ZNA) >= 1 && ABS(ZNA) <= 60 )
+        if( std::abs(ZNA) >= 1 && std::abs(ZNA) <= 60 )
         {
-            oSRS.SetUTM( ABS(ZNA), ZNA > 0 );
+            oSRS.SetUTM(std::abs(ZNA), ZNA > 0);
             oSRS.SetWellKnownGeogCS( "WGS84" );
         }
         else if( ZNA == 61 )

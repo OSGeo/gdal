@@ -32,6 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -667,13 +668,13 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*     Check horizontal source size.                                    */
 /* -------------------------------------------------------------------- */
     int expectedXSize;
-    if( ABS(nLLOriginLat) >= 80 )
+    if( std::abs(nLLOriginLat) >= 80 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 6 + 1;
-    else if( ABS(nLLOriginLat) >= 75 )
+    else if( std::abs(nLLOriginLat) >= 75 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 4 + 1;
-    else if( ABS(nLLOriginLat) >= 70 )
+    else if( std::abs(nLLOriginLat) >= 70 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 3 + 1;
-    else if( ABS(nLLOriginLat) >= 50 )
+    else if( std::abs(nLLOriginLat) >= 50 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 2 + 1;
     else
         expectedXSize = poSrcDS->GetRasterYSize();

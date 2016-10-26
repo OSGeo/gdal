@@ -31,6 +31,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
+#include <cmath>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -608,10 +610,10 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        if (bHasUTMZone && ABS(nUTMZone) >= 1 && ABS(nUTMZone) <= 60)
+        if (bHasUTMZone && std::abs(nUTMZone) >= 1 && std::abs(nUTMZone) <= 60)
         {
             bHasSRS = true;
-            oSRS.SetUTM(ABS(nUTMZone), nUTMZone > 0);
+            oSRS.SetUTM(std::abs(nUTMZone), nUTMZone > 0);
         }
         if (bHasSRS)
             oSRS.exportToWkt(&poDS->pszWKT);
@@ -824,9 +826,10 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         {
             const double dfLinear = oSRS.GetLinearUnits();
 
-            if( ABS(dfLinear - 0.3048) < 0.0000001 )
+            if( std::abs(dfLinear - 0.3048) < 0.0000001 )
                 nExtentUnits = 2;
-            else if( ABS(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+            else if( std::abs(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) <
+                     0.00000001 )
                 nExtentUnits = 3;
             else
                 nExtentUnits = 1;

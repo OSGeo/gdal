@@ -42,6 +42,8 @@
 #include "ogr_spatialref.h"
 #include "idrisi.h"
 
+#include <cmath>
+
 CPL_CVSID( "$Id$" );
 
 #ifdef WIN32
@@ -3189,7 +3191,7 @@ int GetToMeterIndex( const char *pszToMeter )
     {
         for( int i = 0; i < (int) LINEAR_UNITS_COUNT; i++ )
         {
-            if ( ABS( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
+            if ( std::abs( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
             {
                 return i;
             }

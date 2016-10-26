@@ -34,6 +34,7 @@
 
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -1110,7 +1111,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                      || adfGeoTransform[2] != 0.0
                      || adfGeoTransform[3] != 0.0
                      || adfGeoTransform[4] != 0.0
-                     || ABS(adfGeoTransform[5]) != 1.0))
+                     || std::abs(adfGeoTransform[5]) != 1.0))
                 || poSrcDS->GetGCPCount() > 0
                 || poSrcDS->GetMetadata("RPC") != NULL ) )
         {
