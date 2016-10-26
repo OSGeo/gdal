@@ -645,7 +645,8 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
             if( oSRS.importFromWkt( &pszBufPtr ) != OGRERR_NONE )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Unable to parse .prj file, coordinate system missing." );
+                          "Unable to parse .prj file, "
+                          "coordinate system missing." );
             }
             CPLFree( pszBuffer );
         }
@@ -656,19 +657,20 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( oSRS.GetRoot() == NULL )
     {
-        GInt16 nUTMZone, nDatum, nHUnits;
-
+        GInt16 nUTMZone = 0;
         memcpy( &nUTMZone, poDS->abyHeader + 24, 2 );
         nUTMZone = CPL_LSBWORD16( nUTMZone );
 
+        GInt16 nDatum = 0;
         memcpy( &nDatum, poDS->abyHeader + 26, 2 );
         nDatum = CPL_LSBWORD16( nDatum );
 
+        GInt16 nHUnits = 0;
         memcpy( &nHUnits, poDS->abyHeader + 22, 2 );
         nHUnits = CPL_LSBWORD16( nHUnits );
 
         if( nUTMZone != 0 )
-            oSRS.SetUTM( std::abs(nUTMZone), nUTMZone > 0 );
+            oSRS.SetUTM( std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0 );
         else if( nHUnits != 0 )
             oSRS.SetLocalCS( "Unknown" );
 
