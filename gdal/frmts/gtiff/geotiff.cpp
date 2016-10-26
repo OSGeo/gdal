@@ -3953,6 +3953,9 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
     int nStatus = 0;
     VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
     GIntBig nPixelsData = 0;
+    // We need to compute this here as it might not have been computed
+    // previously (which sucks...)
+    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     for( int iY = iYBlockStart; iY <= iYBlockEnd; ++iY )
     {
         for( int iX = iXBlockStart; iX <= iXBlockEnd; ++iX )
