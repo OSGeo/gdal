@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -130,7 +131,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 
     if( nUOMAngle == 9110 )             /* DDD.MMSSsss */
     {
-        dfAngle = ABS(atoi(pszAngle));
+        dfAngle = std::abs(atoi(pszAngle));
         const char *pszDecimal = strchr(pszAngle,'.');
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {

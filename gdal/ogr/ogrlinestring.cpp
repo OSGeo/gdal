@@ -32,6 +32,8 @@
 #include <assert.h>
 #include "ogr_geos.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1388,7 +1390,7 @@ void OGRSimpleCurve::addSubLineString( const OGRLineString *poOtherLine,
 /*      Grow this linestring to hold the additional points.             */
 /* -------------------------------------------------------------------- */
     int nOldPoints = nPointCount;
-    int nPointsToAdd = ABS(nEndVertex-nStartVertex) + 1;
+    int nPointsToAdd = std::abs(nEndVertex - nStartVertex) + 1;
 
     setNumPoints( nPointsToAdd + nOldPoints, FALSE );
     if( nPointCount < nPointsToAdd + nOldPoints

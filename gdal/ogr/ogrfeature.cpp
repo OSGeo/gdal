@@ -40,6 +40,8 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1782,12 +1784,12 @@ static void OGRFeatureFormatDateTimeBuffer(char szTempBuffer[TEMP_BUFFER_SIZE],
     {
         int nOffset = (nTZFlag - 100) * 15;
         int nHours = (int) (nOffset / 60);  // round towards zero
-        int nMinutes = ABS(nOffset - nHours * 60);
+        int nMinutes = std::abs(nOffset - nHours * 60);
 
         if( nOffset < 0 )
         {
             strcat( szTempBuffer, "-" );
-            nHours = ABS(nHours);
+            nHours = std::abs(nHours);
         }
         else
             strcat( szTempBuffer, "+" );
