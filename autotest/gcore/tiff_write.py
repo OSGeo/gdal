@@ -7054,6 +7054,19 @@ def tiff_write_156():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
 
+    # Test fix for #6703
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 1, 512, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=1'])
+    ds.GetRasterBand(1).WriteRaster(0,100,1,1,'X')
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_156.tif')
+    flags, _ = ds.GetRasterBand(1).GetDataCoverageStatus(0,100,1,1)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA:
+        gdaltest.post_reason('failure')
+        print(flags)
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
+
     return 'success'
 
 ###############################################################################
