@@ -32,14 +32,15 @@
 // defined on i586-mingw32msvc.
 #include "cpl_port.h"
 
-#include <ctype.h>
-#include <climits>
-#include <limits>
-
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+
+#include <cmath>
+#include <ctype.h>
+#include <climits>
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -1016,8 +1017,8 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001
-        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
+    if( std::abs(adfGeoTransform[1] + adfGeoTransform[5]) < 0.0000001
+        || std::abs(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
         || (pszForceCellsize && CPLTestBool(pszForceCellsize)) )
         CPLsnprintf( szHeader, sizeof(szHeader),
                  "ncols        %d\n"

@@ -889,8 +889,8 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
             continue;
         }
 
-        if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01
-            && ABS(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
+        if( std::abs(dfULLong - CPLAtof(papszTokens[2])) < 0.01
+            && std::abs(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
         {
             bGotHit = true;
             strncpy( pszTile, papszTokens[0], 7 );
@@ -1029,8 +1029,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         dfULY = CPLDMSToDec( papszTokens[1] );
         CSLDestroy( papszTokens );
 
-        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
-            || ABS(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
+        if( std::abs(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
+            || std::abs(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );

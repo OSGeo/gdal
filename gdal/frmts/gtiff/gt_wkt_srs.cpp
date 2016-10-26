@@ -44,6 +44,8 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include <cmath>
+
 #if HAVE_CXX11
 #include <mutex>
 #endif
@@ -1481,8 +1483,9 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         || fabs(dfLinearUOM-GTIFAtof(SRS_UL_FOOT_CONV)) < 0.0000001 )
         nUOMLengthCode = 9002;  // International foot.
     else if( (pszLinearUOMName != NULL
-              && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT))
-             || ABS(dfLinearUOM-GTIFAtof(SRS_UL_US_FOOT_CONV)) < 0.0000001 )
+              && EQUAL(pszLinearUOMName,SRS_UL_US_FOOT)) ||
+             std::abs(dfLinearUOM-GTIFAtof(SRS_UL_US_FOOT_CONV)) <
+             0.0000001 )
         nUOMLengthCode = 9003;  // US survey foot.
     else if( fabs(dfLinearUOM-1.0) > 0.00000001 )
         nUOMLengthCode = KvUserDefined;
@@ -2684,7 +2687,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
         && nCount >= 2 )
     {
         padfGeoTransform[1] = padfScale[0];
-        padfGeoTransform[5] = - ABS(padfScale[1]);
+        padfGeoTransform[5] = -std::abs(padfScale[1]);
 
         if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
             && nCount >= 6 )
@@ -2855,7 +2858,7 @@ CPLErr GTIFMemBufFromWktEx( const char *pszWKT, const double *padfGeoTransform,
 
     if( padfGeoTransform[0] != 0.0 || padfGeoTransform[1] != 1.0
         || padfGeoTransform[2] != 0.0 || padfGeoTransform[3] != 0.0
-        || padfGeoTransform[4] != 0.0 || ABS(padfGeoTransform[5]) != 1.0 )
+        || padfGeoTransform[4] != 0.0 || std::abs(padfGeoTransform[5]) != 1.0 )
     {
 
         if( padfGeoTransform[2] == 0.0 && padfGeoTransform[4] == 0.0 )

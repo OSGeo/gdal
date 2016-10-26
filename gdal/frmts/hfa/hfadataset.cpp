@@ -36,6 +36,9 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
+#include <cstdlib>
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 static const double R2D = 180.0 / M_PI;
@@ -4259,8 +4262,8 @@ CPLErr HFADataset::WriteProjection()
     sMapInfo.lowerRightCenter.y =
         adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize()-0.5);
 
-    sMapInfo.pixelSize.width = ABS(adfGeoTransform[1]);
-    sMapInfo.pixelSize.height = ABS(adfGeoTransform[5]);
+    sMapInfo.pixelSize.width = std::abs(adfGeoTransform[1]);
+    sMapInfo.pixelSize.height = std::abs(adfGeoTransform[5]);
 
 /* -------------------------------------------------------------------- */
 /*      Handle units.  Try to match up with a known name.               */
@@ -4503,7 +4506,7 @@ static int ESRIToUSGSZone( int nESRIZone )
     if( nESRIZone == INT_MIN )
         return 0;
     if( nESRIZone < 0 )
-        return ABS(nESRIZone);
+        return std::abs(nESRIZone);
 
     const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
     for( int i = 0; i < nPairs; i++ )

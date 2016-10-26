@@ -31,6 +31,8 @@
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
+#include <cmath>
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -481,9 +483,10 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     {
         double dfLinear = oSRS.GetLinearUnits();
 
-        if( ABS(dfLinear - 0.3048) < 0.0000001 )
+        if( std::abs(dfLinear - 0.3048) < 0.0000001 )
             nShortTemp = 2;
-        else if( ABS(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+        else if( std::abs(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV))
+                 < 0.00000001 )
             nShortTemp = 3;
         else
             nShortTemp = 1;
@@ -665,7 +668,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         nHUnits = CPL_LSBWORD16( nHUnits );
 
         if( nUTMZone != 0 )
-            oSRS.SetUTM( ABS(nUTMZone), nUTMZone > 0 );
+            oSRS.SetUTM( std::abs(nUTMZone), nUTMZone > 0 );
         else if( nHUnits != 0 )
             oSRS.SetLocalCS( "Unknown" );
 

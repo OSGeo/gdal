@@ -28,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <math.h>
+#include <cmath>
 #include "ecs.h"
 #include "gdal_frmts.h"
 #include "gdal_priv.h"
@@ -424,11 +424,11 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
     }
 
     if( poODS->nCurrentIndex != 0
-        || ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001
-        || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001
-        || ABS(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance
-        || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
-        || ABS(sWin.ns_res - poODS->sCurrentBounds.ns_res) > dfNSTolerance )
+        || std::abs(sWin.west - poODS->sCurrentBounds.west) > 0.0001
+        || std::abs(sWin.east - poODS->sCurrentBounds.east) > 0.0001
+        || std::abs(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance
+        || std::abs(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
+        || std::abs(sWin.ns_res - poODS->sCurrentBounds.ns_res) > dfNSTolerance )
     {
         CPLDebug( "OGDIRasterBand",
                   "<EstablishAccess: Set Region(%d,%d,%d,%d,%d,%d>",

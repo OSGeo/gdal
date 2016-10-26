@@ -37,8 +37,6 @@
 
 #include "cpl_port.h"  // Must be first.
 
-#include <set>
-
 #include "cpl_csv.h"
 #include "cplkeywordparser.h"
 #include "cpl_minixml.h"
@@ -64,9 +62,13 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include <cmath>
+#include <set>
+
 #if HAVE_CXX11
 #include <mutex>
 #endif
+
 
 CPL_CVSID("$Id$");
 
@@ -9897,7 +9899,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-        || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
+        || adfGeoTransform[4] != 0.0 || std::abs(adfGeoTransform[5]) != 1.0 )
     {
         bNeedsRewrite = true;
 
@@ -13276,7 +13278,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
                 {
                     adfGeoTransform[1] = padfScale[0];
-                    adfGeoTransform[5] = - ABS(padfScale[1]);
+                    adfGeoTransform[5] = -std::abs(padfScale[1]);
 
                     if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
                         && nCount >= 6 )

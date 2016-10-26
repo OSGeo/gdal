@@ -30,6 +30,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <cmath>
 #include <algorithm>
 
 using std::fill;
@@ -444,7 +445,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[3] =
             (GInt32) CPL_MSBWORD32(poDS->sHeader.YOffset);
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = -1.0 * ABS(poDS->sHeader.YPixSize);
+        poDS->adfGeoTransform[5] = -1.0 * std::abs(poDS->sHeader.YPixSize);
 
         CPL_MSBPTR32(&(poDS->sHeader.XPixSize));
         CPL_MSBPTR32(&(poDS->sHeader.YPixSize));
@@ -645,8 +646,8 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
     sHeader.XOffset = CPL_MSBWORD32(nXOff);
     sHeader.YOffset = CPL_MSBWORD32(nYOff);
 
-    sHeader.XPixSize = (float) ABS(adfGeoTransform[1]);
-    sHeader.YPixSize = (float) ABS(adfGeoTransform[5]);
+    sHeader.XPixSize = static_cast<float>(std::abs(adfGeoTransform[1]));
+    sHeader.YPixSize = static_cast<float>(std::abs(adfGeoTransform[5]));
 
     CPL_MSBPTR32(&(sHeader.XPixSize));
     CPL_MSBPTR32(&(sHeader.YPixSize));

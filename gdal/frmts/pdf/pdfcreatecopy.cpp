@@ -38,6 +38,8 @@
 
 #include "pdfobject.h"
 
+#include <cmath>
+
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
 
@@ -860,97 +862,97 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
 
 #ifdef disabled_because_terrago_toolbar_does_not_like_it
                 const char* pszEllipsoidCode = NULL;
-                if( ABS(dfSemiMajor-6378249.145) < 0.01
-                    && ABS(dfInvFlattening-293.465) < 0.0001 )
+                if( std::abs(dfSemiMajor - 6378249.145) < 0.01
+                    && std::abs(dfInvFlattening-293.465) < 0.0001 )
                 {
                     pszEllipsoidCode = "CD";     /* Clark 1880 */
                 }
-                else if( ABS(dfSemiMajor-6378245.0) < 0.01
-                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378245.0) < 0.01
+                         x&& std::abs(dfInvFlattening-298.3) < 0.0001 )
                 {
                     pszEllipsoidCode = "KA";      /* Krassovsky */
                 }
-                else if( ABS(dfSemiMajor-6378388.0) < 0.01
-                         && ABS(dfInvFlattening-297.0) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378388.0) < 0.01
+                         && std::abs(dfInvFlattening-297.0) < 0.0001 )
                 {
                     pszEllipsoidCode = "IN";       /* International 1924 */
                 }
-                else if( ABS(dfSemiMajor-6378160.0) < 0.01
-                         && ABS(dfInvFlattening-298.25) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378160.0) < 0.01
+                         && std::abs(dfInvFlattening-298.25) < 0.0001 )
                 {
                     pszEllipsoidCode = "AN";    /* Australian */
                 }
-                else if( ABS(dfSemiMajor-6377397.155) < 0.01
-                         && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6377397.155) < 0.01
+                         && std::abs(dfInvFlattening-299.1528128) < 0.0001 )
                 {
                     pszEllipsoidCode = "BR";     /* Bessel 1841 */
                 }
-                else if( ABS(dfSemiMajor-6377483.865) < 0.01
-                         && ABS(dfInvFlattening-299.1528128) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6377483.865) < 0.01
+                         && std::abs(dfInvFlattening-299.1528128) < 0.0001 )
                 {
                     pszEllipsoidCode = "BN";   /* Bessel 1841 (Namibia / Schwarzeck)*/
                 }
 #if 0
-                else if( ABS(dfSemiMajor-6378160.0) < 0.01
-                         && ABS(dfInvFlattening-298.247167427) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378160.0) < 0.01
+                         && std::abs(dfInvFlattening-298.247167427) < 0.0001 )
                 {
                     pszEllipsoidCode = "GRS67";      /* GRS 1967 */
                 }
 #endif
-                else if( ABS(dfSemiMajor-6378137) < 0.01
-                         && ABS(dfInvFlattening-298.257222101) < 0.000001 )
+                else if( std::abs(dfSemiMajor-6378137) < 0.01
+                         && std::abs(dfInvFlattening-298.257222101) < 0.000001 )
                 {
                     pszEllipsoidCode = "RF";      /* GRS 1980 */
                 }
-                else if( ABS(dfSemiMajor-6378206.4) < 0.01
-                         && ABS(dfInvFlattening-294.9786982) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378206.4) < 0.01
+                         && std::abs(dfInvFlattening-294.9786982) < 0.0001 )
                 {
                     pszEllipsoidCode = "CC";     /* Clarke 1866 */
                 }
-                else if( ABS(dfSemiMajor-6377340.189) < 0.01
-                         && ABS(dfInvFlattening-299.3249646) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6377340.189) < 0.01
+                         && std::abs(dfInvFlattening-299.3249646) < 0.0001 )
                 {
                     pszEllipsoidCode = "AM";   /* Modified Airy */
                 }
-                else if( ABS(dfSemiMajor-6377563.396) < 0.01
-                         && ABS(dfInvFlattening-299.3249646) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6377563.396) < 0.01
+                         && std::abs(dfInvFlattening-299.3249646) < 0.0001 )
                 {
                     pszEllipsoidCode = "AA";       /* Airy */
                 }
-                else if( ABS(dfSemiMajor-6378200) < 0.01
-                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378200) < 0.01
+                         && std::abs(dfInvFlattening-298.3) < 0.0001 )
                 {
                     pszEllipsoidCode = "HE";    /* Helmert 1906 */
                 }
-                else if( ABS(dfSemiMajor-6378155) < 0.01
-                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378155) < 0.01
+                         && std::abs(dfInvFlattening-298.3) < 0.0001 )
                 {
                     pszEllipsoidCode = "FA";   /* Modified Fischer 1960 */
                 }
 #if 0
-                else if( ABS(dfSemiMajor-6377298.556) < 0.01
-                         && ABS(dfInvFlattening-300.8017) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6377298.556) < 0.01
+                         && std::abs(dfInvFlattening-300.8017) < 0.0001 )
                 {
                     pszEllipsoidCode = "evrstSS";    /* Everest (Sabah & Sarawak) */
                 }
-                else if( ABS(dfSemiMajor-6378165.0) < 0.01
-                         && ABS(dfInvFlattening-298.3) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378165.0) < 0.01
+                         && std::abs(dfInvFlattening-298.3) < 0.0001 )
                 {
                     pszEllipsoidCode = "WGS60";
                 }
-                else if( ABS(dfSemiMajor-6378145.0) < 0.01
-                         && ABS(dfInvFlattening-298.25) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378145.0) < 0.01
+                         && std::abs(dfInvFlattening-298.25) < 0.0001 )
                 {
                     pszEllipsoidCode = "WGS66";
                 }
 #endif
-                else if( ABS(dfSemiMajor-6378135.0) < 0.01
-                         && ABS(dfInvFlattening-298.26) < 0.0001 )
+                else if( std::abs(dfSemiMajor-6378135.0) < 0.01
+                         && std::abs(dfInvFlattening-298.26) < 0.0001 )
                 {
                     pszEllipsoidCode = "WD";
                 }
-                else if( ABS(dfSemiMajor-6378137.0) < 0.01
-                         && ABS(dfInvFlattening-298.257223563) < 0.000001 )
+                else if( std::abs(dfSemiMajor-6378137.0) < 0.01
+                         && std::abs(dfInvFlattening-298.257223563) < 0.000001 )
                 {
                     pszEllipsoidCode = "WE";
                 }

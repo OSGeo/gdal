@@ -33,6 +33,8 @@
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /* used by bagdataset.cpp */
@@ -118,7 +120,7 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
                 }
             }
         }
-        poThis->SetUTM( ABS(nZone), bNorth );
+        poThis->SetUTM( std::abs(nZone), bNorth );
     }
     else if( EQUAL(pszProjection,"Geodetic") )
     {

@@ -35,6 +35,7 @@
 #include "gdal_frmts.h"
 #include "nitfdataset.h"
 #include "gdal_mdreader.h"
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -911,7 +912,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
 
-        oSRSWork.SetUTM( ABS(psImage->nZone), psImage->nZone > 0 );
+        oSRSWork.SetUTM( std::abs(psImage->nZone), psImage->nZone > 0 );
         oSRSWork.SetWellKnownGeogCS( "WGS84" );
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
