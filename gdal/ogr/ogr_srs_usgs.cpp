@@ -33,6 +33,8 @@
 #include "cpl_conv.h"
 #include "cpl_csv.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1177,7 +1179,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 #endif
                 *piDatum = -1;
                 (*ppadfPrjParams)[0] = dfSemiMajor;
-                if ( ABS( dfInvFlattening ) < 0.000000000001 )
+                if ( std::abs( dfInvFlattening ) < 0.000000000001 )
                 {
                     (*ppadfPrjParams)[1] = dfSemiMajor;
                 }

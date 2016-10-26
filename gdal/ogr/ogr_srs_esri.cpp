@@ -36,6 +36,8 @@
 
 #include "ogr_srs_esri_names.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 void  SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName );
@@ -554,7 +556,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
                 if (dfSecond < 0.0 || dfSecond >= 60.0)
                     dfSecond = 0.0;
 
-                dfValue = ABS(CPLAtof(papszTokens[0]))
+                dfValue = std::abs(CPLAtof(papszTokens[0]))
                     + CPLAtof(papszTokens[1]) / 60.0
                     + dfSecond / 3600.0;
 
@@ -1269,7 +1271,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     OGR_SRSNode *poUnit = GetAttrNode( "GEOGCS|UNIT" );
 
     if( poUnit != NULL && poUnit->GetChildCount() >= 2
-        && ABS(GetAngularUnits()-0.0174532925199433) < 0.00000000001 )
+        && std::abs(GetAngularUnits()-0.0174532925199433) < 0.00000000001 )
     {
         poUnit->GetChild(0)->SetValue("Degree");
         poUnit->GetChild(1)->SetValue("0.017453292519943295");
@@ -1281,7 +1283,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     poUnit = GetAttrNode( "PROJCS|UNIT" );
 
     if( poUnit != NULL && poUnit->GetChildCount() >= 2
-        && ABS(GetLinearUnits()- 0.30480060960121924) < 0.000000000000001)
+        && std::abs(GetLinearUnits()- 0.30480060960121924) < 0.000000000000001)
     {
         poUnit->GetChild(0)->SetValue("Foot_US");
         poUnit->GetChild(1)->SetValue("0.30480060960121924");
@@ -1919,7 +1921,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                 bIsSame = true;
                                 dfThisValue = this->GetSemiMajor();
                                 dfOtherValue = oSRSTemp.GetSemiMajor();
-                                if ( ABS( dfThisValue - dfOtherValue ) > 0.01 )
+                                if ( std::abs( dfThisValue -
+                                               dfOtherValue ) > 0.01 )
                                     bIsSame = false;
                                 CPLDebug( "OGR_ESRI",
                                           "morphFromESRI() SemiMajor: "
@@ -1927,7 +1930,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                           dfThisValue, dfOtherValue );
                                 dfThisValue = this->GetInvFlattening();
                                 dfOtherValue = oSRSTemp.GetInvFlattening();
-                                if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
+                                if ( std::abs( dfThisValue -
+                                               dfOtherValue ) > 0.0001 )
                                     bIsSame = false;
                                 CPLDebug( "OGR_ESRI",
                                           "morphFromESRI() InvFlattening: "
@@ -1946,7 +1950,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                               "morphFromESRI() PRIMEM: "
                                               "this = %.15g other = %.15g",
                                               dfThisValue, dfOtherValue );
-                                    if ( ABS( dfThisValue - dfOtherValue )
+                                    if ( std::abs( dfThisValue - dfOtherValue )
                                          > 0.0001 )
                                         bIsSame = false;
                                 }
