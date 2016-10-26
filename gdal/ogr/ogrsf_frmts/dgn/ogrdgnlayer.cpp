@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
+
+#include <cmath>
 #include <list>
 
 CPL_CVSID("$Id$");
@@ -527,7 +529,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       {
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
           // TODO: std::abs abd std::max
-          int nPoints = static_cast<int>(MAX(1,ABS(psArc->sweepang) / 5) + 1);
+          int nPoints =
+              static_cast<int>(MAX(1,std::abs(psArc->sweepang) / 5) + 1);
           if( nPoints > 90 )
               nPoints = 90;
 
@@ -573,11 +576,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           // Add the size info in ground units.
           // TODO: std::abs
-          if( ABS(psText->height_mult) >= 6.0 )
+          if( std::abs(psText->height_mult) >= 6.0 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                            nOgrFSLen-strlen(pszOgrFS), ",s:%dg",
                            static_cast<int>( psText->height_mult ) );
-          else if( ABS(psText->height_mult) > 0.1 )
+          else if( std::abs(psText->height_mult) > 0.1 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                           nOgrFSLen-strlen(pszOgrFS), ",s:%.3fg",
                            psText->height_mult );

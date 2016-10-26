@@ -174,6 +174,8 @@
 #include "mitab_utils.h"
 #include "mitab_geometry.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -4451,8 +4453,8 @@ int TABEllipse::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     const double dYCenter = (sEnvelope.MaxY + sEnvelope.MinY) / 2.0;
     if (m_dXRadius == 0.0 && m_dYRadius == 0.0)
     {
-        m_dXRadius = ABS(sEnvelope.MaxX - sEnvelope.MinX) / 2.0;
-        m_dYRadius = ABS(sEnvelope.MaxY - sEnvelope.MinY) / 2.0;
+        m_dXRadius = std::abs(sEnvelope.MaxX - sEnvelope.MinX) / 2.0;
+        m_dYRadius = std::abs(sEnvelope.MaxY - sEnvelope.MinY) / 2.0;
     }
 
     m_dXMin = dXCenter - m_dXRadius;
@@ -4531,8 +4533,8 @@ int TABEllipse::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     m_dCenterX = (dXMin + dXMax) / 2.0;
     m_dCenterY = (dYMin + dYMax) / 2.0;
-    m_dXRadius = ABS( (dXMax - dXMin) / 2.0 );
-    m_dYRadius = ABS( (dYMax - dYMin) / 2.0 );
+    m_dXRadius = std::abs( (dXMax - dXMin) / 2.0 );
+    m_dYRadius = std::abs( (dYMax - dYMin) / 2.0 );
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
@@ -4861,9 +4863,9 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
         OGRLineString oTmpLine;
         int numPts=0;
         if (m_dEndAngle < m_dStartAngle)
-            numPts = (int) ABS( ((m_dEndAngle+360)-m_dStartAngle)/2 ) + 1;
+            numPts = (int) std::abs( ((m_dEndAngle+360)-m_dStartAngle)/2 ) + 1;
         else
-            numPts = (int) ABS( (m_dEndAngle-m_dStartAngle)/2 ) + 1;
+            numPts = (int) std::abs( (m_dEndAngle-m_dStartAngle)/2 ) + 1;
         numPts = MAX(2, numPts);
 
         TABGenerateArc(&oTmpLine, numPts,
@@ -5031,8 +5033,8 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
 
     m_dCenterX = (dXMin + dXMax) / 2.0;
     m_dCenterY = (dYMin + dYMax) / 2.0;
-    m_dXRadius = ABS( (dXMax - dXMin) / 2.0 );
-    m_dYRadius = ABS( (dYMax - dYMin) / 2.0 );
+    m_dXRadius = std::abs( (dXMax - dXMin) / 2.0 );
+    m_dYRadius = std::abs( (dYMax - dYMin) / 2.0 );
 
     // Read the Arc's MBR and use that as this feature's MBR
     poMapFile->Int2Coordsys(poArcHdr->m_nMinX, poArcHdr->m_nMinY,
@@ -5054,8 +5056,8 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     const int numPts =
         MAX(2,
             (m_dEndAngle < m_dStartAngle
-             ? (int) ABS( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
-             : (int) ABS( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
+             ? (int) std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
+             : (int) std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
 
     TABGenerateArc(poLine, numPts,
                    m_dCenterX, m_dCenterY,
@@ -5540,8 +5542,8 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
      * and for other teta values, use:
      *   W = H * (dY - H * cos(teta)) / (H * sin(teta))
      *----------------------------------------------------------------*/
-    dSin = ABS(dSin);
-    dCos = ABS(dCos);
+    dSin = std::abs(dSin);
+    dCos = std::abs(dCos);
     if (m_dHeight == 0.0)
         m_dWidth = 0.0;
     else if ( dCos > dSin )
@@ -5550,7 +5552,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     else
         m_dWidth = m_dHeight * ((dYMax-dYMin) - m_dHeight*dCos) /
                                                         (m_dHeight*dSin);
-    m_dWidth = ABS(m_dWidth);
+    m_dWidth = std::abs(m_dWidth);
 
     return 0;
 }

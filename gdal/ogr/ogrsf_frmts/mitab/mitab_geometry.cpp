@@ -48,6 +48,7 @@
  *
  **********************************************************************/
 
+#include <cmath>
 #include <algorithm>
 #include <utility>
 
@@ -282,7 +283,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
             point1.x = xintersect[i];
             point2.x = xintersect[i+1];
             /* len = length(point1, point2); */
-            const double len = ABS((point2.x - point1.x));
+            const double len = std::abs((point2.x - point1.x));
             if(len > max_len)
             {
                 max_len = len;

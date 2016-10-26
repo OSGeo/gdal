@@ -167,6 +167,8 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+
+#include <cmath>
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
@@ -1572,8 +1574,8 @@ int TABEllipse::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      *----------------------------------------------------------------*/
     m_dCenterX = (dXMin + dXMax) / 2.0;
     m_dCenterY = (dYMin + dYMax) / 2.0;
-    m_dXRadius = ABS( (dXMax - dXMin) / 2.0 );
-    m_dYRadius = ABS( (dYMax - dYMin) / 2.0 );
+    m_dXRadius = std::abs( (dXMax - dXMin) / 2.0 );
+    m_dYRadius = std::abs( (dYMax - dYMin) / 2.0 );
 
     SetMBR(dXMin, dYMin, dXMax, dYMax);
 
@@ -1739,8 +1741,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     m_dCenterX = (dXMin + dXMax) / 2.0;
     m_dCenterY = (dYMin + dYMax) / 2.0;
-    m_dXRadius = ABS( (dXMax - dXMin) / 2.0 );
-    m_dYRadius = ABS( (dYMax - dYMin) / 2.0 );
+    m_dXRadius = std::abs( (dXMax - dXMin) / 2.0 );
+    m_dYRadius = std::abs( (dYMax - dYMin) / 2.0 );
 
     /*-----------------------------------------------------------------
      * Create and fill geometry object
@@ -1752,8 +1754,8 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     int numPts =
          MAX(2,
              (m_dEndAngle < m_dStartAngle
-              ? (int) ABS( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
-              : (int) ABS( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
+              ? (int) std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
+              : (int) std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
 
     TABGenerateArc(poLine, numPts,
                    m_dCenterX, m_dCenterY,
@@ -2061,8 +2063,8 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
      * and for other teta values, use:
      *   W = H * (dY - H * cos(teta)) / (H * sin(teta))
      *---------------------------------------------------------------- */
-    dSin = ABS(dSin);
-    dCos = ABS(dCos);
+    dSin = std::abs(dSin);
+    dCos = std::abs(dCos);
     if (m_dHeight == 0.0)
         m_dWidth = 0.0;
     else if ( dCos > dSin )
@@ -2071,7 +2073,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     else
         m_dWidth = m_dHeight * ((dYMax-dYMin) - m_dHeight*dCos) /
                                                         (m_dHeight*dSin);
-    m_dWidth = ABS(m_dWidth);
+    m_dWidth = std::abs(m_dWidth);
 
    return 0;
 }
@@ -2137,7 +2139,7 @@ int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
         break;
     }
 
-    if (ABS(GetTextAngle()) >  0.000001)
+    if (std::abs(GetTextAngle()) >  0.000001)
         fp->WriteLine("    Angle %.15g\n",GetTextAngle());
 
     switch (GetTextLineType())
