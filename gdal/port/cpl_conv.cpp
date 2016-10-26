@@ -57,6 +57,7 @@
 
 #include <cerrno>
 #include <clocale>
+#include <cmath>
 #include <cstring>
 
 /* Uncomment to get list of options that have been fetched and set */
@@ -1926,7 +1927,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         return "Invalid angle";
 
     const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
-    const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
+    const double dfABSAngle = std::abs(dfAngle) + dfEpsilon;
     if (dfABSAngle > 361)
     {
         return "Invalid angle";
@@ -2013,7 +2014,7 @@ double CPLPackedDMSToDec( double dfPacked )
 {
     const double dfSign = ( dfPacked < 0.0 )? -1 : 1;
 
-    double dfSeconds = ABS( dfPacked );
+    double dfSeconds = std::abs( dfPacked );
     double dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds -= dfDegrees * 1000000.0;
     double dfMinutes = floor(dfSeconds / 1000.0);
@@ -2047,7 +2048,7 @@ double CPLDecToPackedDMS( double dfDec )
 {
     const double dfSign = ( dfDec < 0.0 ) ? -1 : 1;
 
-    dfDec = ABS( dfDec );
+    dfDec = std::abs( dfDec );
     const double dfDegrees = floor( dfDec );
     const double dfMinutes = floor( ( dfDec - dfDegrees ) * 60.0 );
     const double dfSeconds = ( dfDec - dfDegrees ) * 3600.0 - dfMinutes * 60.0;
