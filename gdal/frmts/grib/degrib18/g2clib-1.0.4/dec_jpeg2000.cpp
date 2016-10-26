@@ -14,13 +14,8 @@
 /* ==================================================================== */
 /* -------------------------------------------------------------------- */
 
-#ifdef HAVE_JASPER
-#include <jasper/jasper.h>
-#define JAS_1_700_2
-#else
 #include <gdal_pam.h>
 #include <cpl_conv.h>
-#endif
 
 CPL_C_START
 // Should this go in an include file?  Otherwise it should be static, correct?
@@ -68,18 +63,9 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 *$$$*/
 
 {
-#ifndef HAVE_JASPER
-    // J2K_SUBFILE method
-
     // create "memory file" from buffer
-    int fileNumber = 0;
-    VSIStatBufL   sStatBuf;
-    CPLString osFileName = "/vsimem/work.jpc";
-
-    // ensure we don't overwrite an existing file accidentally
-    while ( VSIStatL( osFileName, &sStatBuf ) == 0 ) {
-        osFileName.Printf( "/vsimem/work%d.jpc", ++fileNumber );
-    }
+    CPLString osFileName;
+    osFileName.Printf( "/vsimem/work_grib_%p.jpc", injpc );
 
     VSIFCloseL( VSIFileFromMemBuffer(
                     osFileName, (unsigned char*)injpc, bufsize,
@@ -91,14 +77,17 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
 
     if( poJ2KDataset == NULL )
     {
-        printf("dec_jpeg2000: Unable to open JPEG2000 image within GRIB file.\n"
+        fprintf(stderr, "dec_jpeg2000: Unable to open JPEG2000 image within GRIB file.\n"
                   "Is the JPEG2000 driver available?" );
+        VSIUnlink( osFileName );
         return -3;
     }
 
     if( poJ2KDataset->GetRasterCount() != 1 )
     {
-       printf("dec_jpeg2000: Found color image.  Grayscale expected.\n");
+       fprintf(stderr, "dec_jpeg2000: Found color image.  Grayscale expected.\n");
+       GDALClose( poJ2KDataset );
+       VSIUnlink( osFileName );
        return (-5);
     }
 
@@ -127,67 +116,4 @@ int dec_jpeg2000(char *injpc,g2int bufsize,g2int *outfld)
     VSIUnlink( osFileName );
 
     return (eErr == CE_None) ? 0 : -3;
-
-#else
-
-    // JasPer method
-
-    g2int i,j,k;
-    jas_image_t *image=NULL;
-    jas_stream_t *jpcstream;
-    jas_image_cmpt_t *pcmpt;
-    char *opts=NULL;
-    jas_matrix_t *data;
-
-//    jas_init();
-
-//
-//     Create jas_stream_t containing input JPEG200 codestream in memory.
-//
-
-    jpcstream=jas_stream_memopen(injpc,bufsize);
-
-//
-//     Decode JPEG200 codestream into jas_image_t structure.
-//
-
-    image=jpc_decode(jpcstream,opts);
-    if ( image == NULL ) {
-       printf(" jpc_decode failed\n");
-       return -3;
-    }
-
-    pcmpt=image->cmpts_[0];
-
-//   Expecting jpeg2000 image to be grayscale only.
-//   No color components.
-//
-    if (image->numcmpts_ != 1 ) {
-       printf("dec_jpeg2000: Found color image.  Grayscale expected.\n");
-       return (-5);
-    }
-
-//
-//    Create a data matrix of grayscale image values decoded from
-//    the jpeg2000 codestream.
-//
-    data=jas_matrix_create(static_cast<int>(jas_image_height(image)), static_cast<int>(jas_image_width(image)));
-    jas_image_readcmpt(image,0,0,0,jas_image_width(image),
-                       jas_image_height(image),data);
-//
-//    Copy data matrix to output integer array.
-//
-    k=0;
-    for (i=0;i<pcmpt->height_;i++)
-      for (j=0;j<pcmpt->width_;j++)
-        outfld[k++]=static_cast<g2int>(data->rows_[i][j]);
-//
-//     Clean up JasPer work structures.
-//
-    jas_matrix_destroy(data);
-    jas_stream_close(jpcstream);
-    jas_image_destroy(image);
-
-    return 0;
-#endif
 }
