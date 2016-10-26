@@ -32,6 +32,7 @@
 #include "ogr_api.h"
 #include "s57.h"
 
+#include <cmath>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -2156,8 +2157,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             {
                 poLine->addPoint( dfX, dfY );
             }
-            else if( ABS(dlastfX - dfX) > 0.00000001 ||
-                ABS(dlastfY - dfY) > 0.00000001 )
+            else if( std::abs(dlastfX - dfX) > 0.00000001 ||
+                std::abs(dlastfY - dfY) > 0.00000001 )
             {
                 // we need to start a new linestring.
                 poMLS->addGeometryDirectly( poLine );

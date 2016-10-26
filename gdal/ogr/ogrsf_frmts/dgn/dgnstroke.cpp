@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "dgnlibp.h"
-#include <math.h>
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -190,7 +190,8 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         {
             padfTx[k] = (padfMx[k-1] * fabs( padfMx[k+1] - padfMx[k])
                     + padfMx[k] * fabs( padfMx[k-1] - padfMx[k-2] ))
-           / (ABS(padfMx[k+1] - padfMx[k]) + ABS(padfMx[k-1] - padfMx[k-2]));
+           / (std::abs(padfMx[k+1] - padfMx[k]) +
+              std::abs(padfMx[k-1] - padfMx[k-2]));
         }
 
         if( fabs(padfMy[k+1] - padfMy[k]) == 0.0
@@ -202,7 +203,8 @@ int DGNStrokeCurve( CPL_UNUSED DGNHandle hFile,
         {
             padfTy[k] = (padfMy[k-1] * fabs( padfMy[k+1] - padfMy[k])
                     + padfMy[k] * fabs( padfMy[k-1] - padfMy[k-2] ))
-            / (ABS(padfMy[k+1] - padfMy[k]) + ABS(padfMy[k-1] - padfMy[k-2]));
+            / (std::abs(padfMy[k+1] - padfMy[k]) +
+               std::abs(padfMy[k-1] - padfMy[k-2]));
         }
     }
 

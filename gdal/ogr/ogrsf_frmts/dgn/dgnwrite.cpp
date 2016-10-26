@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "dgnlibp.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -1061,7 +1062,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
         /* sweep angle */
         if( dfSweepAngle < 0.0 )
         {
-            nAngle = (int) (ABS(dfSweepAngle) * 360000.0);
+            nAngle = static_cast<int>(std::abs(dfSweepAngle) * 360000.0);
             nAngle |= 0x80000000;
         }
         else if( dfSweepAngle > 364.9999 )

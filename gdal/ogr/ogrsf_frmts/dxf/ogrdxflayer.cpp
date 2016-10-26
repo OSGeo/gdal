@@ -32,6 +32,8 @@
 #include "ogrdxf_polyline_smooth.h"
 #include "ogr_api.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -305,7 +307,7 @@ public:
         Scale2Unit( adfNIn );
         memcpy( adfN, adfNIn, sizeof(double)*3 );
 
-    if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
+    if ((std::abs(adfN[0]) < dSmall) && (std::abs(adfN[1]) < dSmall))
             CrossProduct(adfWY, adfN, adfAX);
     else
             CrossProduct(adfWZ, adfN, adfAX);

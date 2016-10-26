@@ -84,6 +84,9 @@
 
 #include "mitab.h"
 
+#include <cmath>
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -580,7 +583,7 @@ int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
              */
             || (((dOptimalAreaDiff < 0 && dAreaDiff < 0) ||
                  (dOptimalAreaDiff > 0 && dAreaDiff > 0)) &&
-                ABS(dAreaDiff) < ABS(dOptimalAreaDiff)) )
+                std::abs(dAreaDiff) < std::abs(dOptimalAreaDiff)) )
         {
             nBestCandidate = i;
             dOptimalAreaDiff = dAreaDiff;
@@ -1067,8 +1070,8 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
         }
     }
 
-    const int nSrcWidth = ABS(nSrcMaxX - nSrcMinX);
-    const int nSrcHeight = ABS(nSrcMaxY - nSrcMinY);
+    const int nSrcWidth = std::abs(nSrcMaxX - nSrcMinX);
+    const int nSrcHeight = std::abs(nSrcMaxY - nSrcMinY);
 
     // Calculate the separation for each pair (note that it may be negative
     // in case of overlap)

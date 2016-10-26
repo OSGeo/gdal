@@ -37,6 +37,8 @@
 #include "../geojson/ogrgeojsonreader.h"
 #include "../geojson/ogrgeojsonutils.h"
 #include "../xplane/ogr_xplane_geo_utils.h"
+
+#include <cstdlib>
 #include <set>
 
 CPL_CVSID("$Id$");
@@ -1974,7 +1976,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     }
                     else
                     {
-                        const int TZOffset = ABS(nTZ - 100) * 15;
+                        const int TZOffset = std::abs(nTZ - 100) * 15;
                         const int TZHour = TZOffset / 60;
                         const int TZMinute = TZOffset - TZHour * 60;
                         json_object_object_add(poContainer,

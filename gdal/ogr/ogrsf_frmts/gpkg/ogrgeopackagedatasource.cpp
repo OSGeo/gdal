@@ -32,6 +32,8 @@
 #include "swq.h"
 #include "gdalwarper.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 // 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the
@@ -1622,7 +1624,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                                 poODS->GetRasterYSize(),
                                                 GetRasterYSize());
             if( nOvFactor > 64 &&
-                ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
             {
                 nOvFactor = GetFloorPowerOfTwo(nOvFactor);
             }
@@ -1811,7 +1813,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                         poODS->GetRasterYSize(),
                                         GetRasterYSize());
                 if( nOvFactor > 64 &&
-                    ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                    std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
                 {
                     nOvFactor = GetFloorPowerOfTwo(nOvFactor);
                 }
