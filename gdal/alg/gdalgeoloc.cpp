@@ -31,13 +31,6 @@
 #include "gdal_alg.h"
 #include <cmath>
 
-#ifdef SHAPE_DEBUG
-#include "/u/pkg/shapelib/shapefil.h"
-
-SHPHandle hSHP = NULL;
-DBFHandle hDBF = NULL;
-#endif
-
 CPL_CVSID("$Id$");
 
 CPL_C_START
@@ -665,23 +658,10 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
                 return TRUE;
             }
 
-#ifdef SHAPE_DEBUG
-            if( hSHP != NULL )
-            {
-                SHPObject *hObj;
-
-                hObj = SHPCreateSimpleObject( SHPT_ARC, nStepCount,
-                                              adfPathX, adfPathY, NULL );
-                SHPWriteObject( hSHP, -1, hObj );
-                SHPDestroyObject( hObj );
-
-                int iShape = DBFGetRecordCount( hDBF );
-                DBFWriteDoubleAttribute( hDBF, iShape, 0, dfGeoX );
-                DBFWriteDoubleAttribute( hDBF, iShape, 1, dfGeoY );
-            }
+#if DEBUG_VERBOSE
+            CPLDebug( "GeoL", "Looping at step (%d) on search for %g,%g.",
+                      nStepCount, dfGeoX, dfGeoY );
 #endif
-            //CPLDebug( "GeoL", "Looping at step (%d) on search for %g,%g.",
-            //          nStepCount, dfGeoX, dfGeoY );
             return FALSE;
         }
 
@@ -692,24 +672,10 @@ static int FindGeoLocPosition( GDALGeoLocTransformInfo *psTransform,
         iLastY = iY;
     }
 
-    // CPLDebug( "GeoL", "Exceeded step count max (%d) on search for %g,%g.",
-    //           MAX(nXSize,nYSize),
-    //           dfGeoX, dfGeoY );
-
-#ifdef SHAPE_DEBUG
-    if( hSHP != NULL )
-    {
-        SHPObject *hObj;
-
-        hObj = SHPCreateSimpleObject( SHPT_ARC, nStepCount,
-                                      adfPathX, adfPathY, NULL );
-        SHPWriteObject( hSHP, -1, hObj );
-        SHPDestroyObject( hObj );
-
-        int iShape = DBFGetRecordCount( hDBF );
-        DBFWriteDoubleAttribute( hDBF, iShape, 0, dfGeoX );
-        DBFWriteDoubleAttribute( hDBF, iShape, 1, dfGeoY );
-    }
+#if DEBUG_VERBOSE
+    CPLDebug( "GeoL", "Exceeded step count max (%d) on search for %g,%g.",
+              MAX(nXSize,nYSize),
+              dfGeoX, dfGeoY );
 #endif
 
     return FALSE;
@@ -1143,12 +1109,6 @@ int GDALGeoLocTransform( void *pTransformArg,
         int nStartX = -1;
         int nStartY = -1;
 
-#ifdef SHAPE_DEBUG
-        hSHP = SHPCreate( "tracks.shp", SHPT_ARC );
-        hDBF = DBFCreate( "tracks.dbf" );
-        DBFAddField( hDBF, "GEOX", FTDouble, 10, 4 );
-        DBFAddField( hDBF, "GEOY", FTDouble, 10, 4 );
-#endif
         for( i = 0; i < nPointCount; i++ )
         {
             double dfGeoLocX, dfGeoLocY;
@@ -1178,17 +1138,6 @@ int GDALGeoLocTransform( void *pTransformArg,
 
             panSuccess[i] = TRUE;
         }
-
-#ifdef SHAPE_DEBUG
-        if( hSHP != NULL )
-        {
-            DBFClose( hDBF );
-            hDBF = NULL;
-
-            SHPClose( hSHP );
-            hSHP = NULL;
-        }
-#endif
     }
 #endif
 
