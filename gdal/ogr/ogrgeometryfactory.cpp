@@ -3540,8 +3540,9 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                 else
                     eNewType = wkbGeometryCollection;
 
+                OGRGeometry* poMultiGeom = createGeometry(eNewType);
                 OGRGeometryCollection* poMulti =
-                    (OGRGeometryCollection* )createGeometry(eNewType);
+                    reinterpret_cast<OGRGeometryCollection*>(poMultiGeom);
 
                 double dfDateLineOffset =
                     CPLAtofM(CSLFetchNameValueDef(papszOptions,
@@ -3554,18 +3555,18 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
 
                 if( poMulti->getNumGeometries() == 0 )
                 {
-                    delete poMulti;
+                    delete poMultiGeom;
                 }
                 else if( poMulti->getNumGeometries() == 1 )
                 {
                     delete poDstGeom;
                     poDstGeom = poMulti->getGeometryRef(0)->clone();
-                    delete poMulti;
+                    delete poMultiGeom;
                 }
                 else
                 {
                     delete poDstGeom;
-                    poDstGeom = poMulti;
+                    poDstGeom = poMultiGeom;
                 }
             }
         }
