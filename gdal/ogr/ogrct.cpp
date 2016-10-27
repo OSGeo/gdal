@@ -156,6 +156,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     double     *padfTargetY;
     double     *padfTargetZ;
 
+    bool        m_bEmitErrors;
+
 public:
                 OGRProj4CT();
     virtual     ~OGRProj4CT();
@@ -170,6 +172,9 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *panSuccess = NULL );
+
+    virtual bool GetEmitErrors() { return m_bEmitErrors; }
+    virtual void SetEmitErrors(bool bEmitErrors) { m_bEmitErrors = bEmitErrors; }
 };
 
 /************************************************************************/
@@ -501,7 +506,8 @@ OGRProj4CT::OGRProj4CT() :
     pjctx(NULL),
     nMaxCount(0),
     padfOriX(NULL), padfOriY(NULL), padfOriZ(NULL), padfTargetX(NULL),
-    padfTargetY(NULL), padfTargetZ(NULL)
+    padfTargetY(NULL), padfTargetZ(NULL),
+    m_bEmitErrors(true)
 {
     if (pfn_pj_ctx_alloc != NULL)
         pjctx = pfn_pj_ctx_alloc();
@@ -1152,7 +1158,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         if( pabSuccess )
             memset( pabSuccess, 0, sizeof(int) * nCount );
 
-        if( ++nErrorCount < 20 )
+        if( m_bEmitErrors && ++nErrorCount < 20 )
         {
             if (pjctx != NULL)
                 /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */

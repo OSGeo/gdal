@@ -564,11 +564,13 @@ def test_ogr2ogr_18():
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -wrapdateline -t_srs EPSG:4326 tmp/wrapdateline_dst.shp tmp/wrapdateline_src.shp')
 
-    expected_wkt = 'MULTIPOLYGON (((179.222391385437419 36.124095832129363,180.0 36.10605558800065,180.0 27.090340569400169,179.017505655195095 27.107979523625211,179.222391385437419 36.124095832129363)),((-180.0 36.10605558800065,-179.667822828781084 36.098349195413753,-179.974688335419557 27.089886143076747,-180.0 27.090340569400169,-180.0 36.10605558800065)))'
+    expected_wkt = 'MULTIPOLYGON (((-179.667822828781 36.0983491954137,-179.974688335419 27.0898861430767,-180.0 27.0904291236983,-180.0 36.1071354433546,-179.667822828781 36.0983491954137)),((180.0 27.0904291237411,179.017505655195 27.1079795236252,179.222391385437 36.1240958321293,180.0 36.1071354433546,180.0 27.0904291237411)))'
+
     expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
     ds = ogr.Open('tmp/wrapdateline_dst.shp')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
+    got_wkt = feat.GetGeometryRef().ExportToWkt()
     ret = ogrtest.check_feature_geometry(feat, expected_geom)
     feat.Destroy()
     expected_geom.Destroy()
@@ -580,6 +582,7 @@ def test_ogr2ogr_18():
     if ret == 0:
         return 'success'
     else:
+        print(got_wkt)
         return 'fail'
 
 ###############################################################################

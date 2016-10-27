@@ -603,6 +603,9 @@ public:
     /** Fetch internal target coordinate system. */
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
+    virtual bool GetEmitErrors() { return true; }
+    virtual void SetEmitErrors(bool /*bEmitErrors*/) {}
+
     // From CT_MathTransform
 
     /**
