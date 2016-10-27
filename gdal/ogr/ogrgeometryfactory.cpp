@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <new>
 #include <utility>
+#include <vector>
 
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
