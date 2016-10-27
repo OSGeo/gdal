@@ -40,6 +40,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include <limits>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -475,18 +476,16 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {
-            int nRed, nGreen, nBlue;
+            const int nRed = pabyRedLine[iPixel] >> nColorShift;
+            const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
+            const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            nRed = pabyRedLine[iPixel] >> nColorShift;
-            nGreen = pabyGreenLine[iPixel] >> nColorShift;
-            nBlue = pabyBlueLine[iPixel] >> nColorShift;
-
-            ptr->rmin = MIN(ptr->rmin, nRed);
-            ptr->gmin = MIN(ptr->gmin, nGreen);
-            ptr->bmin = MIN(ptr->bmin, nBlue);
-            ptr->rmax = MAX(ptr->rmax, nRed);
-            ptr->gmax = MAX(ptr->gmax, nGreen);
-            ptr->bmax = MAX(ptr->bmax, nBlue);
+            ptr->rmin = std::min(ptr->rmin, nRed);
+            ptr->gmin = std::min(ptr->gmin, nGreen);
+            ptr->bmin = std::min(ptr->bmin, nBlue);
+            ptr->rmax = std::max(ptr->rmax, nRed);
+            ptr->gmax = std::max(ptr->gmax, nGreen);
+            ptr->bmax = std::max(ptr->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )

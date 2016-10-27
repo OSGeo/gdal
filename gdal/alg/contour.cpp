@@ -32,6 +32,8 @@
 #include "gdal_alg.h"
 #include "ogr_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // The amount of a contour interval that pixels should be fudged by if they
@@ -315,19 +317,18 @@ void GDALContourGenerator::SetNoData( double dfNewValue )
 template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
 {
-    double  dfUpLeft, dfUpRight, dfLoLeft, dfLoRight;
-    int     bSubdivide = FALSE;
+    int bSubdivide = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the four corner pixel values.  Value left or right      */
 /*      of the scanline are taken from the nearest pixel on the         */
 /*      scanline itself.                                                */
 /* -------------------------------------------------------------------- */
-    dfUpLeft = padfLastLine[MAX(0,iPixel-1)];
-    dfUpRight = padfLastLine[MIN(nWidth-1,iPixel)];
+    const double dfUpLeft = padfLastLine[std::max(0,iPixel-1)];
+    const double dfUpRight = padfLastLine[std::min(nWidth-1,iPixel)];
 
-    dfLoLeft = padfThisLine[MAX(0,iPixel-1)];
-    dfLoRight = padfThisLine[MIN(nWidth-1,iPixel)];
+    const double dfLoLeft = padfThisLine[std::max(0,iPixel-1)];
+    const double dfLoRight = padfThisLine[std::min(nWidth-1,iPixel)];
 
 /* -------------------------------------------------------------------- */
 /*      Check if we have any nodata values.                             */
@@ -487,8 +488,10 @@ CPLErr GDALContourGenerator::ProcessRect(
     int iStartLevel;
     int iEndLevel;
 
-    double dfMin = MIN(MIN(dfUpLeft,dfUpRight),MIN(dfLoLeft,dfLoRight));
-    double dfMax = MAX(MAX(dfUpLeft,dfUpRight),MAX(dfLoLeft,dfLoRight));
+    const double dfMin =
+        std::min(std::min(dfUpLeft,dfUpRight),std::min(dfLoLeft,dfLoRight));
+    const double dfMax =
+        std::max(std::max(dfUpLeft,dfUpRight),std::max(dfLoLeft,dfLoRight));
 
 /* -------------------------------------------------------------------- */
 /*      Compute the set of levels to compute contours for.              */

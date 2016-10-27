@@ -37,8 +37,10 @@
 #include "cpl_list.h"
 #include "cpl_multiproc.h"
 #include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
+
 CPL_C_START
 void *GDALDeserializeGCPTransformer( CPLXMLNode *psTree );
 void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree );
@@ -347,30 +349,34 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
-    int    nSamplePoints = 0;
-    int    nInXSize = GDALGetRasterXSize( hSrcDS );
-    int    nInYSize = GDALGetRasterYSize( hSrcDS );
-
     if (pfnTransformer == GDALGenImgProjTransform)
     {
-        /* In case CHECK_WITH_INVERT_PROJ has been modified */
+        // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshGenImgProjTransformer(pTransformArg);
     }
 
-#define N_PIXELSTEP 50
-    int nSteps = (int) (double(MIN(nInYSize, nInXSize)) / N_PIXELSTEP + .5);
+    const int nInXSize = GDALGetRasterXSize( hSrcDS );
+    const int nInYSize = GDALGetRasterYSize( hSrcDS );
+
+    const int N_PIXELSTEP = 50;
+    int nSteps = static_cast<int>(
+        (static_cast<double>(std::min(nInYSize, nInXSize)) / N_PIXELSTEP + 0.5));
     if (nSteps < 20)
         nSteps = 20;
-    nSteps = MIN(nSteps,100);
+    nSteps = std::min(nSteps, 100);
 
 retry:
     int nSampleMax = (nSteps + 1)*(nSteps + 1);
     int *pabSuccess = NULL;
-    double *padfX, *padfY, *padfZ;
-    double *padfXRevert, *padfYRevert, *padfZRevert;
+    double *padfX;
+    double *padfY;
+    double *padfZ;
+    double *padfXRevert;
+    double *padfYRevert;
+    double *padfZRevert;
 
     double dfRatio = 0.0;
-    double dfStep = 1. / nSteps;
+    double dfStep = 1.0 / nSteps;
 
     pabSuccess = (int *) VSI_MALLOC3_VERBOSE(sizeof(int), nSteps + 1, nSteps + 1);
     padfX = (double *) VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1);
@@ -393,8 +399,7 @@ retry:
     padfZRevert = padfXRevert + nSampleMax * 2;
 
     // Take N_STEPS steps
-    int iStep;
-    for( iStep = 0; iStep <= nSteps; iStep ++ )
+    for( int iStep = 0; iStep <= nSteps; iStep ++ )
     {
         dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
@@ -419,7 +424,7 @@ retry:
         padfZ[3 * (nSteps + 1) + iStep] = 0.0;
     }
 
-    nSamplePoints = 4 * (nSteps + 1);
+    int nSamplePoints = nSamplePoints = 4 * (nSteps + 1);
 
     memset( pabSuccess, 1, sizeof(int) * nSampleMax );
 
@@ -519,7 +524,7 @@ retry:
         nSamplePoints = 0;
 
         // Take N_STEPS steps
-        for( iStep = 0; iStep <= nSteps; iStep ++ )
+        for( int iStep = 0; iStep <= nSteps; iStep++ )
         {
             dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
@@ -627,10 +632,10 @@ retry:
                     }
                     else
                     {
-                        dfMinXOut = MIN(dfMinXOut,x);
-                        dfMinYOut = MIN(dfMinYOut,y);
-                        dfMaxXOut = MAX(dfMaxXOut,x);
-                        dfMaxYOut = MAX(dfMaxYOut,y);
+                        dfMinXOut = std::min(dfMinXOut,x);
+                        dfMinYOut = std::min(dfMinYOut,y);
+                        dfMaxXOut = std::max(dfMaxXOut,x);
+                        dfMaxYOut = std::max(dfMaxYOut,y);
                     }
 
                     if (!valid_before || x_out_before * x < 0)
@@ -664,10 +669,10 @@ retry:
         }
         else
         {
-            dfMinXOut = MIN(dfMinXOut, padfX[i]);
-            dfMinYOut = MIN(dfMinYOut, padfY[i]);
-            dfMaxXOut = MAX(dfMaxXOut, padfX[i]);
-            dfMaxYOut = MAX(dfMaxYOut, padfY[i]);
+            dfMinXOut = std::min(dfMinXOut, padfX[i]);
+            dfMinYOut = std::min(dfMinYOut, padfY[i]);
+            dfMaxXOut = std::max(dfMaxXOut, padfX[i]);
+            dfMaxYOut = std::max(dfMaxYOut, padfY[i]);
         }
     }
 
@@ -1025,20 +1030,20 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
     int nYSize = GDALGetRasterYSize( hDS );
 
     dfMinLong =
-        MIN(MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+        std::min(std::min(adfGeoTransform[0] + 0 * adfGeoTransform[1]
                 + 0 * adfGeoTransform[2],
                 adfGeoTransform[0] + nXSize * adfGeoTransform[1]
                 + 0 * adfGeoTransform[2]),
-            MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+            std::min(adfGeoTransform[0] + 0 * adfGeoTransform[1]
                 + nYSize * adfGeoTransform[2],
                 adfGeoTransform[0] + nXSize * adfGeoTransform[1]
                 + nYSize * adfGeoTransform[2]));
     dfMaxLong =
-        MAX(MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+        std::max(std::max(adfGeoTransform[0] + 0 * adfGeoTransform[1]
                 + 0 * adfGeoTransform[2],
                 adfGeoTransform[0] + nXSize * adfGeoTransform[1]
                 + 0 * adfGeoTransform[2]),
-            MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+            std::max(adfGeoTransform[0] + 0 * adfGeoTransform[1]
                 + nYSize * adfGeoTransform[2],
                 adfGeoTransform[0] + nXSize * adfGeoTransform[1]
                 + nYSize * adfGeoTransform[2]));

@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -405,7 +407,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALDataType eType;
 
     if( dfMaxSearchDist == 0.0 )
-        dfMaxSearchDist = MAX(nXSize,nYSize) + 1;
+        dfMaxSearchDist = std::max(nXSize,nYSize) + 1;
 
     int nMaxSearchDist = (int) floor(dfMaxSearchDist);
 
@@ -733,8 +735,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             // target value for each quadrant.
             for( iStep = 0; iStep < nThisMaxSearchDist; iStep++ )
             {
-                int iLeftX = MAX(0,iX - iStep);
-                int iRightX = MIN(nXSize-1,iX + iStep);
+                const int iLeftX = std::max(0,iX - iStep);
+                const int iRightX = std::min(nXSize - 1, iX + iStep);
 
                 // top left includes current line
                 QUAD_CHECK(adfQuadDist[0],adfQuadValue[0],
@@ -762,9 +764,9 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
                 // every four steps, recompute maximum distance.
                 if( (iStep & 0x3) == 0 )
-                    nThisMaxSearchDist = (int) floor(
-                        MAX(MAX(adfQuadDist[0],adfQuadDist[1]),
-                            MAX(adfQuadDist[2],adfQuadDist[3])) );
+                    nThisMaxSearchDist = static_cast<int>(floor(
+                        std::max(std::max(adfQuadDist[0], adfQuadDist[1]),
+                                 std::max(adfQuadDist[2], adfQuadDist[3]))));
             }
 
             double dfWeightSum = 0.0;

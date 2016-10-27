@@ -5653,13 +5653,20 @@ static void GWKAverageOrModeThread( void* pData)
                 double dfTotal = 0;
                 int    nCount = 0;  // count of pixels used to compute average/mode
                 int    nCount2 = 0; // count of all pixels sampled, including nodata
-                int iSrcXMin, iSrcXMax,iSrcYMin,iSrcYMax;
 
-                // compute corners in source crs
-                iSrcXMin = MAX( ((int) floor((padfX[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 );
-                iSrcXMax = MIN( ((int) ceil((padfX2[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize );
-                iSrcYMin = MAX( ((int) floor((padfY[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 );
-                iSrcYMax = MIN( ((int) ceil((padfY2[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize );
+                // Compute corners in source crs.
+                int iSrcXMin =
+                    std::max(static_cast<int>(floor(padfX[iDstX] + 1e-10)) -
+                             poWK->nSrcXOff, 0);
+                int iSrcXMax =
+                    std::min(static_cast<int>(ceil(padfX2[iDstX] - 1e-10)) -
+                             poWK->nSrcXOff, nSrcXSize);
+                int iSrcYMin =
+                    std::max(static_cast<int>(floor(padfY[iDstX] + 1e-10)) -
+                             poWK->nSrcYOff, 0);
+                int iSrcYMax =
+                    std::min(static_cast<int>(ceil(padfY2[iDstX] - 1e-10)) -
+                             poWK->nSrcYOff, nSrcYSize);
 
                 // The transformation might not have preserved ordering of coordinates
                 // so do the necessary swapping (#5433)
@@ -5669,13 +5676,13 @@ static void GWKAverageOrModeThread( void* pData)
                 // and take the bounding box of the got source coordinates.
                 if( iSrcXMax < iSrcXMin )
                 {
-                    iSrcXMin = MAX( ((int) floor((padfX2[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 );
-                    iSrcXMax = MIN( ((int) ceil((padfX[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize );
+                    iSrcXMin = std::max( ((int) floor((padfX2[iDstX] + 1e-10))) - poWK->nSrcXOff, 0 );
+                    iSrcXMax = std::min( ((int) ceil((padfX[iDstX] - 1e-10))) - poWK->nSrcXOff, nSrcXSize );
                 }
                 if( iSrcYMax < iSrcYMin )
                 {
-                    iSrcYMin = MAX( ((int) floor((padfY2[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 );
-                    iSrcYMax = MIN( ((int) ceil((padfY[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize );
+                    iSrcYMin = std::max( ((int) floor((padfY2[iDstX] + 1e-10))) - poWK->nSrcYOff, 0 );
+                    iSrcYMax = std::min( ((int) ceil((padfY[iDstX] - 1e-10))) - poWK->nSrcYOff, nSrcYSize );
                 }
                 if( iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize )
                     iSrcXMax ++;
