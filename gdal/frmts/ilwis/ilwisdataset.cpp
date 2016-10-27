@@ -31,6 +31,7 @@
 #include <cfloat>
 #include <climits>
 
+#include <algorithm>
 #include <string>
 
 #include "gdal_frmts.h"
@@ -1955,7 +1956,7 @@ void ValueRange::init( double rRaw0 )
         }
 
         short iBeforeDec = 1;
-        double rMax = MAX(fabs(get_rLo()), fabs(get_rHi()));
+        double rMax = std::max(fabs(get_rLo()), fabs(get_rHi()));
         if (rMax != 0)
             iBeforeDec = (short)floor(log10(rMax)) + 1;
         if (get_rLo() < 0)

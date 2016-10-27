@@ -29,6 +29,8 @@
 
 #include "pcidskdataset2.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -527,10 +529,10 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
                 }
                 else
                 {
-                    psExtent->MinX = MIN(psExtent->MinX,asVertices[i].x);
-                    psExtent->MaxX = MAX(psExtent->MaxX,asVertices[i].x);
-                    psExtent->MinY = MIN(psExtent->MinY,asVertices[i].y);
-                    psExtent->MaxY = MAX(psExtent->MaxY,asVertices[i].y);
+                    psExtent->MinX = std::min(psExtent->MinX, asVertices[i].x);
+                    psExtent->MaxX = std::max(psExtent->MaxX, asVertices[i].x);
+                    psExtent->MinY = std::min(psExtent->MinY, asVertices[i].y);
+                    psExtent->MaxY = std::max(psExtent->MaxY, asVertices[i].y);
                 }
             }
         }

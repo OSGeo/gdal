@@ -30,6 +30,8 @@
 #include "wmsdriver.h"
 #include "minidriver_arcgis_server.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
@@ -246,10 +248,10 @@ double WMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char 
 {
     switch (what)
     {
-        case 'x': return MIN(iri.m_x0, iri.m_x1);
-        case 'y': return MIN(iri.m_y0, iri.m_y1);
-        case 'X': return MAX(iri.m_x0, iri.m_x1);
-        case 'Y': return MAX(iri.m_y0, iri.m_y1);
+    case 'x': return std::min(iri.m_x0, iri.m_x1);
+    case 'y': return std::min(iri.m_y0, iri.m_y1);
+    case 'X': return std::max(iri.m_x0, iri.m_x1);
+    case 'Y': return std::max(iri.m_y0, iri.m_y1);
     }
     return 0.0;
 }

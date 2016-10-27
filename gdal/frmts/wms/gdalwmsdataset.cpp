@@ -43,6 +43,8 @@
 #include "minidriver_tiled_wms.h"
 #include "minidriver_virtualearth.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -290,10 +292,18 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
                     }
                     else
                     {
-                        const int min_overview_size = MAX(32, MIN(m_block_size_x, m_block_size_y));
-                        double a = log(static_cast<double>(MIN(m_data_window.m_sx, m_data_window.m_sy))) / log(2.0)
-                            - log(static_cast<double>(min_overview_size)) / log(2.0);
-                        nOverviews = MAX(0, MIN(static_cast<int>(ceil(a)), 32));
+                        const int min_overview_size =
+                            std::max(32, std::min(m_block_size_x,
+                                                  m_block_size_y));
+                        double a =
+                            log(static_cast<double>(
+                                std::min(m_data_window.m_sx,
+                                         m_data_window.m_sy))) / log(2.0)
+                            - log(static_cast<double>(min_overview_size)) /
+                            log(2.0);
+                        nOverviews =
+                            std::max(0,
+                                     std::min(static_cast<int>(ceil(a)), 32));
                     }
                 }
                 if (ret == CE_None)

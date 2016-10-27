@@ -53,6 +53,7 @@
 #include <gdal_priv.h>
 #include <assert.h>
 
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -703,8 +704,8 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
 
     //  Pagesize, defaults to 512,512,1,c
     image.pagesize = ILSize(
-        MIN(512, image.size.x),
-        MIN(512, image.size.y),
+        std::min(512, image.size.x),
+        std::min(512, image.size.y),
         1,
         image.size.c);
 
@@ -1959,7 +1960,7 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     const int CPYSZ = 32768;
     // Adjust offset to the start of the block
     offset = (offset / CPYSZ) * CPYSZ;
-    GIntBig size = MIN(size_t(CPYSZ), size_t(bias - offset));
+    GIntBig size = std::min(size_t(CPYSZ), size_t(bias - offset));
     size /= sizeof(ILIdx); // In records
     vector<ILIdx> buf(static_cast<size_t>(size));
     ILIdx *buffer = &buf[0]; // Buffer to copy the source to the clone index

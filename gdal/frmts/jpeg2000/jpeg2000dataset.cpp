@@ -34,7 +34,10 @@
 
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
+
 #include <cmath>
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -252,8 +255,8 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDSIn, int nBandIn,
     }
     // FIXME: Figure out optimal block size!
     // Should the block size be fixed or determined dynamically?
-    nBlockXSize = MIN(256, poDSIn->nRasterXSize);
-    nBlockYSize = MIN(256, poDSIn->nRasterYSize);
+    nBlockXSize = std::min(256, poDSIn->nRasterXSize);
+    nBlockYSize = std::min(256, poDSIn->nRasterYSize);
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
 
     if( iDepth % 8 != 0 && !poDSIn->bPromoteTo8Bit )
@@ -296,8 +299,10 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     /* In case the dimensions of the image are not multiple of the block dimensions */
     /* take care of not requesting more pixels than available for the blocks at the */
     /* right or bottom of the image */
-    int nWidthToRead = MIN(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
-    int nHeightToRead = MIN(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
+    const int nWidthToRead =
+        std::min(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nHeightToRead =
+        std::min(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
 
     jas_image_readcmpt( poGDS->psImage, nBand - 1,
                         nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,

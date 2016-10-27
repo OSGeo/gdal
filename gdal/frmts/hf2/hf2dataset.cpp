@@ -33,6 +33,8 @@
 
 #include <cstdlib>
 #include <cmath>
+
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -166,8 +168,10 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
             CPL_LSBPTR32(&fScale);
             CPL_LSBPTR32(&fOff);
 
-            const int nTileWidth = MIN(nBlockXSize, nRasterXSize - nxoff * nBlockXSize);
-            const int nTileHeight = MIN(nBlockXSize, nRasterYSize - nBlockYOff * nBlockXSize);
+            const int nTileWidth =
+                std::min(nBlockXSize, nRasterXSize - nxoff * nBlockXSize);
+            const int nTileHeight =
+                std::min(nBlockXSize, nRasterYSize - nBlockYOff * nBlockXSize);
 
             for(int j=0;j<nTileHeight;j++)
             {
@@ -231,7 +235,8 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
         CPLFree(pabyData);
     }
 
-    const int nTileWidth = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nTileWidth =
+        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     memcpy(pImage, pafBlockData + nBlockXOff * nBlockXSize * nBlockXSize +
                                   nYOffInTile * nBlockXSize,
            nTileWidth * sizeof(float));
@@ -303,8 +308,9 @@ int HF2Dataset::LoadBlockMap()
             CPL_LSBPTR32(&fScale);
             CPL_LSBPTR32(&fOff);
             //printf("fScale = %f, fOff = %f\n", fScale, fOff);
-            const int nCols = MIN(nTileSize, nRasterXSize - nTileSize *i);
-            const int nLines = MIN(nTileSize, nRasterYSize - nTileSize *j);
+            const int nCols = std::min(nTileSize, nRasterXSize - nTileSize * i);
+            const int nLines =
+                std::min(nTileSize, nRasterYSize - nTileSize * j);
             for(int k = 0; k < nLines; k++)
             {
                 GByte nWordSize;
@@ -941,13 +947,14 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     {
         for(int i=0;i<nXBlocks && eErr == CE_None;i++)
         {
-            const int nReqXSize = MIN(nTileSize, nXSize - i * nTileSize);
-            const int nReqYSize = MIN(nTileSize, nYSize - j * nTileSize);
-            eErr = poSrcDS->GetRasterBand(1)->RasterIO(GF_Read,
-                                                i * nTileSize, MAX(0, nYSize - (j + 1) * nTileSize),
-                                                nReqXSize, nReqYSize,
-                                                pTileBuffer, nReqXSize, nReqYSize,
-                                                eReqDT, 0, 0, NULL);
+            const int nReqXSize = std::min(nTileSize, nXSize - i * nTileSize);
+            const int nReqYSize = std::min(nTileSize, nYSize - j * nTileSize);
+            eErr = poSrcDS->GetRasterBand(1)->RasterIO(
+                GF_Read,
+                i * nTileSize, std::max(0, nYSize - (j + 1) * nTileSize),
+                nReqXSize, nReqYSize,
+                pTileBuffer, nReqXSize, nReqYSize,
+                eReqDT, 0, 0, NULL);
             if (eErr != CE_None)
                 break;
 

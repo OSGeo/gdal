@@ -35,6 +35,7 @@
 #include "gdal_frmts.h"
 #include "netcdfdataset.h"
 
+#include <algorithm>
 #include <map> //for NCDFWriteProjAttribs()
 #include <limits>
 
@@ -1360,7 +1361,7 @@ void netCDFRasterBand::CheckData( void * pImage, void * pImageNC,
     // Only check first and last block elements since lon must be monotonic.
     const bool bIsSigned = std::numeric_limits<T>::is_signed;
     if( bCheckLongitude && bIsSigned &&
-        MIN( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 )
+        std::min( ((T *)pImage)[0], ((T *)pImage)[nTmpBlockXSize-1] ) > 180.0 )
     {
         for( size_t j = 0; j < nTmpBlockYSize; j++ )
         {
@@ -2974,7 +2975,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                                            "YES")) )
         {
             // If minimum longitude is > 180, subtract 360 from all.
-            if( MIN( pdfXCoord[0], pdfXCoord[xdim-1] ) > 180.0 )
+            if( std::min( pdfXCoord[0], pdfXCoord[xdim-1] ) > 180.0 )
             {
                 for( size_t i = 0; i < xdim ; i++ )
                         pdfXCoord[i] -= 360;
@@ -3945,11 +3946,12 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         if( hDS_X != NULL && hDS_Y != NULL )
         {
-            int nBand = MAX(1, atoi(CSLFetchNameValueDef( papszGeolocationInfo,
-                                                          "X_BAND", "0" )));
+            int nBand =
+                std::max(1, atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                       "X_BAND", "0" )));
             hBand_X = GDALGetRasterBand( hDS_X, nBand );
-            nBand = MAX(1, atoi(CSLFetchNameValueDef( papszGeolocationInfo,
-                                                      "Y_BAND", "0" )));
+            nBand = std::max(1, atoi(CSLFetchNameValueDef( papszGeolocationInfo,
+                                                           "Y_BAND", "0" )));
             hBand_Y = GDALGetRasterBand( hDS_Y, nBand );
 
             // If geoloc bands are found, do basic validation based on their

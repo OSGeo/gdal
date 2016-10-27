@@ -712,7 +712,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             nYIndex = 1;
             nZIndex = 2;
         }
-        nMinTokens = 1 + MAX(MAX(nXIndex, nYIndex), nZIndex);
+        nMinTokens = 1 + std::max(std::max(nXIndex, nYIndex), nZIndex);
     }
     else
     {

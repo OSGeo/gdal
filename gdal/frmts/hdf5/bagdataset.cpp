@@ -35,6 +35,8 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
@@ -319,7 +321,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 {
     H5OFFSET_TYPE offset[3] = {
-      static_cast<H5OFFSET_TYPE>(MAX(0, nRasterYSize - (nBlockYOff+1)*nBlockYSize)),
+      static_cast<H5OFFSET_TYPE>(
+          std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
       static_cast<H5OFFSET_TYPE>(nBlockXOff * nBlockXSize),
       static_cast<H5OFFSET_TYPE>(0)
     };
@@ -329,9 +332,9 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     //  Blocksize may not be a multiple of imagesize.
     hsize_t count[3] = {
-      MIN( size_t(nBlockYSize), GetYSize() - offset[0] ),
-      MIN( size_t(nBlockXSize), GetXSize() - offset[1] ),
-      static_cast<hsize_t>(0)
+        std::min(static_cast<hsize_t>(nBlockYSize), GetYSize() - offset[0]),
+        std::min(static_cast<hsize_t>(nBlockXSize), GetXSize() - offset[1]),
+        static_cast<hsize_t>(0)
     };
 
     if( nRasterYSize - (nBlockYOff+1)*nBlockYSize < 0 )

@@ -610,7 +610,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         delete poDS;
         return NULL;
     }
-    poDS->nBands = MAX(1,poDS->image.zsize);
+    poDS->nBands = std::max(static_cast<GUInt16>(1), poDS->image.zsize);
     if (poDS->nBands > 256)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,

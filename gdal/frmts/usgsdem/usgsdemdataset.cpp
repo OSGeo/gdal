@@ -85,7 +85,7 @@ static int ReadInt( VSILFILE *fp )
             nRead ++;
         }
     }
-    szBuffer[MIN(nRead, 11)] = 0;
+    szBuffer[std::min(nRead, 11)] = 0;
     return atoi(szBuffer);
 }
 

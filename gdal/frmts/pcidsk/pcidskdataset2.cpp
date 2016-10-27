@@ -31,6 +31,8 @@
 #include "gdal_frmts.h"
 #include "pcidskdataset2.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
@@ -432,7 +434,7 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
 /* -------------------------------------------------------------------- */
 /*      Write out the PCT.                                              */
 /* -------------------------------------------------------------------- */
-        const int nColorCount = MIN(256,poCT->GetColorEntryCount());
+        const int nColorCount = std::min(256, poCT->GetColorEntryCount());
 
         unsigned char abyPCT[768];
         memset( abyPCT, 0, 768 );
@@ -1861,17 +1863,17 @@ GDALDataset *PCIDSK2Dataset::Create( const char * pszFilename,
     std::vector<eChanType> aeChanTypes;
 
     if( eType == GDT_Float32 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_32R );
+      aeChanTypes.resize( std::max(1, nBands), CHN_32R );
     else if( eType == GDT_Int16 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_16S );
+        aeChanTypes.resize( std::max(1, nBands), CHN_16S );
     else if( eType == GDT_UInt16 )
-        aeChanTypes.resize( MAX(1,nBands), CHN_16U );
+        aeChanTypes.resize( std::max(1, nBands), CHN_16U );
     else if( eType == GDT_CInt16 )
-        aeChanTypes.resize( MAX(1, nBands), CHN_C16S );
+        aeChanTypes.resize( std::max(1, nBands), CHN_C16S );
     else if( eType == GDT_CFloat32 )
-        aeChanTypes.resize( MAX(1, nBands), CHN_C32R );
+        aeChanTypes.resize( std::max(1, nBands), CHN_C32R );
     else
-        aeChanTypes.resize( MAX(1,nBands), CHN_8U );
+        aeChanTypes.resize( std::max(1, nBands), CHN_8U );
 
 /* -------------------------------------------------------------------- */
 /*      Reformat options.  Currently no support for jpeg compression    */

@@ -29,6 +29,8 @@
 
 #include "wmsdriver.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 GDALWMSRasterBand::GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band,
@@ -382,15 +384,15 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
                                            GDALWMSTiledImageRequestInfo &tiri,
                                            int x, int y)
 {
-    int x0 = MAX(0, x * nBlockXSize);
-    int y0 = MAX(0, y * nBlockYSize);
-    int x1 = MAX(0, (x + 1) * nBlockXSize);
-    int y1 = MAX(0, (y + 1) * nBlockYSize);
+    int x0 = std::max(0, x * nBlockXSize);
+    int y0 = std::max(0, y * nBlockYSize);
+    int x1 = std::max(0, (x + 1) * nBlockXSize);
+    int y1 = std::max(0, (y + 1) * nBlockYSize);
     if (m_parent_dataset->m_clamp_requests) {
-        x0 = MIN(x0, nRasterXSize);
-        y0 = MIN(y0, nRasterYSize);
-        x1 = MIN(x1, nRasterXSize);
-        y1 = MIN(y1, nRasterYSize);
+        x0 = std::min(x0, nRasterXSize);
+        y0 = std::min(y0, nRasterYSize);
+        x1 = std::min(x1, nRasterXSize);
+        y1 = std::min(y1, nRasterYSize);
     }
 
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
@@ -577,8 +579,14 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     //CPLDebug("WMS", "ReadBlockFromFile: to_buffer_band=%d, (x,y)=(%d, %d)", to_buffer_band, x, y);
 
     /* expected size */
-    const int esx = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize) - MIN(MAX(0, x * nBlockXSize), nRasterXSize);
-    const int esy = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize) - MIN(MAX(0, y * nBlockYSize), nRasterYSize);
+    const int esx =
+        std::min(std::max(0, (x + 1) * nBlockXSize),
+                 nRasterXSize) - std::min(std::max(0, x * nBlockXSize),
+                                          nRasterXSize);
+    const int esy =
+        std::min(std::max(0, (y + 1) * nBlockYSize),
+                 nRasterYSize) - std::min(std::max(0, y * nBlockYSize),
+                                          nRasterYSize);
     ds = reinterpret_cast<GDALDataset*>(GDALOpen(file_name, GA_ReadOnly));
     if (ds != NULL) {
         int sx = ds->GetRasterXSize();
@@ -603,7 +611,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             accepted_as_ct = true;
                             if (!advise_read) {
                                 color_table = new GByte[256 * 4];
-                                const int count = MIN(256, ct->GetColorEntryCount());
+                                const int count =
+                                    std::min(256, ct->GetColorEntryCount());
                                 for (i = 0; i < count; ++i) {
                                     GDALColorEntry ce;
                                     ct->GetColorEntryAsRGB(i, &ce);

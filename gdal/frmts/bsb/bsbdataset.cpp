@@ -34,6 +34,7 @@
 #include "ogr_spatialref.h"
 
 #include <cstdlib>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -292,10 +293,10 @@ GDALHeuristicDatelineWrap( int nPointCount, double *padfX )
         }
         else
         {
-            dfX_PM_Min = MIN(dfX_PM_Min,dfX_PM);
-            dfX_PM_Max = MAX(dfX_PM_Max,dfX_PM);
-            dfX_Dateline_Min = MIN(dfX_Dateline_Min,dfX_Dateline);
-            dfX_Dateline_Max = MAX(dfX_Dateline_Max,dfX_Dateline);
+            dfX_PM_Min = std::min(dfX_PM_Min, dfX_PM);
+            dfX_PM_Max = std::max(dfX_PM_Max, dfX_PM);
+            dfX_Dateline_Min = std::min(dfX_Dateline_Min, dfX_Dateline);
+            dfX_Dateline_Max = std::max(dfX_Dateline_Max, dfX_Dateline);
         }
     }
 

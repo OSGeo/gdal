@@ -38,6 +38,7 @@
 
 #include <cstdlib>
 #include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -1711,7 +1712,7 @@ CPLErr HFARasterAttributeTable::ColorsIO( GDALRWFlag eRWFlag, int iField,
         // the same manner as the color table.
         // TODO(schwehr): Symbolic constants for 255 and 256.
         for( int i = 0; i < iLength; i++ )
-            pnData[i] = MIN(255, static_cast<int>(padfData[i] * 256));
+            pnData[i] = std::min(255, static_cast<int>(padfData[i] * 256));
     }
 
     CPLFree(padfData);
@@ -2236,10 +2237,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             // See bug #1732 for some discussion.
             const short nMax = 255;
             GDALColorEntry sEntry = {
-                MIN(nMax, static_cast<short>(padfRed[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfGreen[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfBlue[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfAlpha[iColor] * 256))
+                std::min(nMax, static_cast<short>(padfRed[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfGreen[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfBlue[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfAlpha[iColor] * 256))
             };
 
             if( padfBins != NULL )
@@ -2476,8 +2477,8 @@ void HFARasterBand::ReadHistogramMetadata()
             if( padfBinValues[i] != floor(padfBinValues[i]) )
                 bAllInteger = false;
 
-            nMaxValue = MAX(nMaxValue, static_cast<int>(padfBinValues[i]));
-            nMinValue = MIN(nMinValue, static_cast<int>(padfBinValues[i]));
+            nMaxValue = std::max(nMaxValue, static_cast<int>(padfBinValues[i]));
+            nMinValue = std::min(nMinValue, static_cast<int>(padfBinValues[i]));
         }
 
         if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )

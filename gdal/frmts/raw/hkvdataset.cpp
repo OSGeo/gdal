@@ -37,6 +37,8 @@
 
 #include <cmath>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1756,8 +1758,8 @@ HKVDataset::CreateCopy( const char * pszFilename,
                     return NULL;
                 }
 
-                const int nTBXSize = MIN(nBlockXSize,nXSize-iXOffset);
-                const int nTBYSize = MIN(nBlockYSize,nYSize-iYOffset);
+                const int nTBXSize = std::min(nBlockXSize, nXSize - iXOffset);
+                const int nTBYSize = std::min(nBlockYSize, nYSize - iYOffset);
 
                 eErr = poSrcBand->RasterIO( GF_Read,
                                             iXOffset, iYOffset,

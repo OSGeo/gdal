@@ -61,8 +61,7 @@ class BTDataset : public GDALPamDataset
     float        m_fVscale;
 
   public:
-
-                BTDataset();
+             BTDataset();
     virtual ~BTDataset();
 
     virtual const char *GetProjectionRef(void);
