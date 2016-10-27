@@ -603,7 +603,10 @@ public:
     /** Fetch internal target coordinate system. */
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
-    virtual bool GetEmitErrors() { return true; }
+    /** Whether the transformer will emit CPLError */
+    virtual bool GetEmitErrors() { return false; }
+
+    /** Set if the transformer must emit CPLError */
     virtual void SetEmitErrors(bool /*bEmitErrors*/) {}
 
     // From CT_MathTransform

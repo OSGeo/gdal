@@ -44,6 +44,7 @@ CPL_CVSID("$Id$");
 /*                         SetRFC7946Settings()                         */
 /************************************************************************/
 
+/*! @cond Doxygen_Suppress */
 void OGRGeoJSONWriteOptions::SetRFC7946Settings()
 {
     bBBOXRFC7946 = true;
@@ -53,6 +54,7 @@ void OGRGeoJSONWriteOptions::SetRFC7946Settings()
     bCanPatchCoordinatesWithNativeData = false;
     bHonourReservedRFC7946Members = true;
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                        json_object_new_coord()                       */
