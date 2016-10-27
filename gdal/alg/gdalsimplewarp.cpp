@@ -29,6 +29,7 @@
 #include "cpl_string.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -219,7 +220,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 panBandInit[iBand] = 0;
             else
                 panBandInit[iBand] =
-                    atoi(papszTokens[MIN(iBand,nTokenCount-1)]);
+                    atoi(papszTokens[std::min(iBand, nTokenCount- 1)]);
         }
 
         CSLDestroy(papszTokens);

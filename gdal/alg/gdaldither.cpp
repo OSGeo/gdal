@@ -51,6 +51,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include <cstdlib>
+#include <algorithm>
 
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2
@@ -345,12 +346,13 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         {
           for( i = 0; i < nXSize; i++ )
           {
-            pabyRed[i] = (GByte)
-                MAX(0,MIN(255,(pabyRed[i]   + panError[i*3+0+3])));
-            pabyGreen[i] = (GByte)
-                MAX(0,MIN(255,(pabyGreen[i] + panError[i*3+1+3])));
-            pabyBlue[i] =  (GByte)
-                MAX(0,MIN(255,(pabyBlue[i]  + panError[i*3+2+3])));
+              pabyRed[i] = static_cast<GByte>(
+                  std::max(0, std::min(255, (pabyRed[i] + panError[i*3+0+3]))));
+              pabyGreen[i] = static_cast<GByte>(
+                  std::max(0,
+                           std::min(255, (pabyGreen[i] + panError[i*3+1+3]))));
+              pabyBlue[i] = static_cast<GByte>(
+                  std::max(0, std::min(255,(pabyBlue[i] + panError[i*3+2+3]))));
           }
 
           memset( panError, 0, sizeof(int) * (nXSize+2) * 3 );
@@ -365,13 +367,14 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 
         for( i = 0; i < nXSize; i++ )
         {
+            const int nRedValue =
+                std::max(0, std::min(255, pabyRed[i] + nLastRedError));
+            const int nGreenValue =
+                std::max(0, std::min(255, pabyGreen[i] + nLastGreenError));
+            const int nBlueValue =
+                std::max(0, std::min(255, pabyBlue[i] + nLastBlueError));
+
             int iIndex, nError, nSixth;
-            int nRedValue, nGreenValue, nBlueValue;
-
-            nRedValue =   MAX(0,MIN(255, pabyRed[i]   + nLastRedError));
-            nGreenValue = MAX(0,MIN(255, pabyGreen[i] + nLastGreenError));
-            nBlueValue =  MAX(0,MIN(255, pabyBlue[i]  + nLastBlueError));
-
             if( psColorIndexMap )
             {
                 GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);

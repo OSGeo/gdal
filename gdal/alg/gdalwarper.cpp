@@ -34,6 +34,7 @@
 #include "gdal_priv.h"
 
 #include <limits>
+#include <algorithm>
 
 #if (defined(__x86_64) || defined(_M_X64))
 #include <emmintrin.h>
@@ -143,7 +144,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
     if( psWOptions->nBandCount == 0 )
     {
-        psWOptions->nBandCount = MIN(GDALGetRasterCount(hSrcDS),
+        psWOptions->nBandCount = std::min(GDALGetRasterCount(hSrcDS),
                                      GDALGetRasterCount(hDstDS));
 
         psWOptions->panSrcBands = (int *)
@@ -903,7 +904,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             {
                 pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                           inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0f, pafMask[iPixel] );
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
                 iPixel ++;
             }
             CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
@@ -959,7 +960,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             {
                 pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                         inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0f, pafMask[iPixel] );
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
             }
         }
         else
@@ -975,7 +976,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             for(; iPixel < nPixels; iPixel++ )
             {
                 pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0f, pafMask[iPixel] );
+                pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
             }
         }
 

@@ -39,6 +39,8 @@
 
 #include "thinplatespline.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 //////////////////////////////////////////////////////////////////////////////
@@ -457,10 +459,10 @@ int VizGeorefSpline2D::solve(void)
         xx = x[p];
         yy = y[p];
 
-        xmax = MAX( xmax, xx );
-        xmin = MIN( xmin, xx );
-        ymax = MAX( ymax, yy );
-        ymin = MIN( ymin, yy );
+        xmax = std::max(xmax, xx);
+        xmin = std::min(xmin, xx);
+        ymax = std::max(ymax, yy);
+        ymin = std::min(ymin, yy);
 
         sumx  += xx;
         sumx2 += xx * xx;

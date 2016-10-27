@@ -30,6 +30,7 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -222,16 +223,18 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         {
             if( bInit )
             {
-                dfMinX = MIN(dfMinX,psTransform->padfGeoLocX[i]);
-                dfMaxX = MAX(dfMaxX,psTransform->padfGeoLocX[i]);
-                dfMinY = MIN(dfMinY,psTransform->padfGeoLocY[i]);
-                dfMaxY = MAX(dfMaxY,psTransform->padfGeoLocY[i]);
+                dfMinX = std::min(dfMinX,psTransform->padfGeoLocX[i]);
+                dfMaxX = std::max(dfMaxX,psTransform->padfGeoLocX[i]);
+                dfMinY = std::min(dfMinY,psTransform->padfGeoLocY[i]);
+                dfMaxY = std::max(dfMaxY,psTransform->padfGeoLocY[i]);
             }
             else
             {
                 bInit = true;
-                dfMinX = dfMaxX = psTransform->padfGeoLocX[i];
-                dfMinY = dfMaxY = psTransform->padfGeoLocY[i];
+                dfMinX = psTransform->padfGeoLocX[i];
+                dfMaxX = psTransform->padfGeoLocX[i];
+                dfMinY = psTransform->padfGeoLocY[i];
+                dfMaxY = psTransform->padfGeoLocY[i];
             }
         }
     }
@@ -609,11 +612,11 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 /*      Get the band handles.                                           */
 /* -------------------------------------------------------------------- */
     const int nXBand =
-        MAX(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "X_BAND" )));
+        std::max(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "X_BAND" )));
     psTransform->hBand_X = GDALGetRasterBand( psTransform->hDS_X, nXBand );
 
     const int nYBand =
-        MAX(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
+        std::max(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
     psTransform->hBand_Y = GDALGetRasterBand( psTransform->hDS_Y, nYBand );
 
     if( psTransform->hBand_X == NULL ||
@@ -741,10 +744,10 @@ int GDALGeoLocTransform( void *pTransformArg,
                 (padfY[i] - psTransform->dfLINE_OFFSET)
                 / psTransform->dfLINE_STEP;
 
-            int iX = MAX(0, static_cast<int>(dfGeoLocPixel));
-            iX = MIN(iX,psTransform->nGeoLocXSize-1);
-            int iY = MAX(0, static_cast<int>(dfGeoLocLine));
-            iY = MIN(iY,psTransform->nGeoLocYSize-1);
+            int iX = std::max(0, static_cast<int>(dfGeoLocPixel));
+            iX = std::min(iX, psTransform->nGeoLocXSize-1);
+            int iY = std::max(0, static_cast<int>(dfGeoLocLine));
+            iY = std::min(iY, psTransform->nGeoLocYSize-1);
 
             double *padfGLX = psTransform->padfGeoLocX + iX + iY * nXSize;
             double *padfGLY = psTransform->padfGeoLocY + iX + iY * nXSize;

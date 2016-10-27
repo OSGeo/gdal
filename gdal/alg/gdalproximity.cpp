@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "gdal_alg.h"
 #include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -484,8 +485,9 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
         float fNearDistSq =
-            static_cast<float>(MAX(dfMaxDist,nXSize) *
-                               MAX(dfMaxDist,nXSize) * 2);
+            static_cast<float>(
+                std::max(dfMaxDist, static_cast<double>(nXSize)) *
+                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0);
 
         if( panNearX[iPixel] != -1 )
         {
