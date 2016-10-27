@@ -76,6 +76,7 @@ CPL_C_END
 #ifdef __cplusplus
 class OGRCoordinateTransformation;
 
+/*! @cond Doxygen_Suppress */
 class OGRGeoJSONWriteOptions
 {
     public:
@@ -99,6 +100,7 @@ class OGRGeoJSONWriteOptions
 
         void SetRFC7946Settings();
 };
+/*! @endcond */
 
 OGREnvelope3D OGRGeoJSONGetBBox( OGRGeometry* poGeometry,
                                  const OGRGeoJSONWriteOptions& oOptions );
