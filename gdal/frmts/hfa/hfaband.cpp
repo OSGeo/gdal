@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1033,7 +1035,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 void HFABand::NullBlock( void *pData )
 
 {
-    const int nChunkSize = MAX(1, HFAGetDataTypeBits(eDataType)/8);
+    const int nChunkSize = std::max(1, HFAGetDataTypeBits(eDataType) / 8);
     int nWords = nBlockXSize * nBlockYSize;
 
     if( !bNoDataSet )
@@ -1081,7 +1083,7 @@ void HFABand::NullBlock( void *pData )
           case EPT_u4:
           {
               const unsigned char byVal = static_cast<unsigned char>(
-                  MAX(0, MIN(15, static_cast<int>(dfNoData))));
+                  std::max(0, std::min(15, static_cast<int>(dfNoData))));
 
               nWords = (nWords + 1) / 2;
 
@@ -1092,13 +1094,14 @@ void HFABand::NullBlock( void *pData )
           case EPT_u8:
             ((unsigned char *) abyTmp)[0] =
                 static_cast<unsigned char>(
-                    MAX(0, MIN(255, static_cast<int>(dfNoData))));
+                    std::max(0, std::min(255, static_cast<int>(dfNoData))));
             break;
 
           case EPT_s8:
               ((signed char *) abyTmp)[0] =
                   static_cast<signed char>(
-                      MAX(-128, MIN(127, static_cast<int>(dfNoData))));
+                      std::max(-128,
+                               std::min(127, static_cast<int>(dfNoData))));
               break;
 
           case EPT_u16:

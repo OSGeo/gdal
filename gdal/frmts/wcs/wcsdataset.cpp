@@ -34,6 +34,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -210,7 +212,8 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
         if( nOverviewCount < 0 )
         {
             for( nOverviewCount = 0;
-                 (MAX(nRasterXSize,nRasterYSize) / (1 << nOverviewCount)) > 900;
+                 (std::max(nRasterXSize, nRasterYSize) /
+                  (1 << nOverviewCount)) > 900;
                  nOverviewCount++ ) {}
         }
         else if( nOverviewCount > 30 )

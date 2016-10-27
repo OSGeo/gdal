@@ -30,6 +30,8 @@
 
 #include "hfa_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int MAX_ENTRY_REPORT = 16;
@@ -1563,7 +1565,8 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     void *pReturn = NULL;
 
-    for( int iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT, nEntries); iEntry++ )
+    const int nMaxEntry = std::min(MAX_ENTRY_REPORT, nEntries);
+    for( int iEntry = 0; iEntry < nMaxEntry; iEntry++ )
     {
         if( nEntries == 1 )
             CPL_IGNORE_RET_VAL(

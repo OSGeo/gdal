@@ -33,6 +33,7 @@
 #include "gdal_frmts.h"
 
 #include <cstdlib>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -266,7 +267,7 @@ XPMCreateCopy( const char * pszFilename,
 
     int  anPixelMapping[256];
     GDALColorEntry asPixelColor[256];
-    int nActiveColors = MIN(poCT->GetColorEntryCount(),256);
+    int nActiveColors = std::min(poCT->GetColorEntryCount(),256);
 
     // Setup initial colortable and pixel value mapping.
     memset( anPixelMapping+0, 0, sizeof(int) * 256 );

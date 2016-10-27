@@ -37,6 +37,7 @@
 #include "ogrgeojsonreader.h"
 
 #include <math.h>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -2268,8 +2269,16 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
             if( oSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
                 oSRS.IsGeographic() )
             {
-                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
-                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                const double minLat =
+                    std::min(
+                        adfSrcGeoTransform[3],
+                        adfSrcGeoTransform[3] +
+                        poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5]);
+                const double maxLat =
+                    std::max(
+                         adfSrcGeoTransform[3],
+                         adfSrcGeoTransform[3] +
+                         poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5]);
                 double maxNorthing = adfGeoTransform[3];
                 double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
                 bool bChanged = false;

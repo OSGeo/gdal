@@ -30,6 +30,8 @@
 #include "wmsdriver.h"
 #include "minidriver_virtualearth.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 WMSMiniDriver_VirtualEarth::WMSMiniDriver_VirtualEarth() {}
@@ -86,7 +88,7 @@ void WMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
     char szTileNumber[64];
     int x = tiri.m_x;
     int y = tiri.m_y;
-    int z = MIN(32,tiri.m_level);
+    int z = std::min(32, tiri.m_level);
 
     for(int i = 0; i < z; i ++)
     {

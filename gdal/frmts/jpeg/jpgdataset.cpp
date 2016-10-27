@@ -40,6 +40,8 @@
 
 #include <setjmp.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int TIFF_VERSION = 42;
@@ -2382,8 +2384,9 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs* psArgs,
     {
         // If the user doesn't provide a value for JPEGMEM, we want to be sure
         // that at least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         poDS->sDInfo.mem->max_memory_to_use =
-            MAX(poDS->sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(poDS->sDInfo.mem->max_memory_to_use, nMinMemory);
     }
 
 /* -------------------------------------------------------------------- */
@@ -3510,8 +3513,9 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
     {
         // If the user doesn't provide a value for JPEGMEM, we want to be sure
         // that at least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         sCInfo.mem->max_memory_to_use =
-                MAX(sCInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
     }
 
     if( eDT == GDT_UInt16 )

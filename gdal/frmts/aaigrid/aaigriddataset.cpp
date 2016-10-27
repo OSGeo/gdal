@@ -40,6 +40,7 @@
 #include <cmath>
 #include <ctype.h>
 #include <climits>
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -663,7 +664,8 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
     const int iWest = CSLFindString( papszTokens, "west" );
 
     if (iNorth == -1 || iSouth == -1 || iEast == -1 || iWest == -1 ||
-        MAX(MAX(iNorth, iSouth), MAX(iEast, iWest)) + 1 >= nTokens)
+        std::max(std::max(iNorth, iSouth),
+                 std::max(iEast, iWest)) + 1 >= nTokens)
     {
         CSLDestroy( papszTokens );
         return FALSE;
