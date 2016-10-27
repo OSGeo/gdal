@@ -229,6 +229,8 @@ GMLFeature *NASReader::NextFeature()
         {
             if( m_poSAXReader == NULL )
                 SetupParser();
+            if( m_poSAXReader == NULL )
+                return NULL;
 
             if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
                 return NULL;
