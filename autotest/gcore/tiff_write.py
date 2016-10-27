@@ -6983,6 +6983,18 @@ def tiff_write_154():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
+    # Test that setting nodata doesn't prevent blocks to be written (#6706)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_154.tif', 1, 100, 1 )
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_154.tif')
+    offset = ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF')
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+    if offset is None or int(offset) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
