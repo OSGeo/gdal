@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <vector>  // Used by OGRGeoJSONLayer.
 #include "ogrgeojsonutils.h"
+#include "ogrgeojsonwriter.h"
 
 class OGRGeoJSONDataSource;
 
@@ -91,6 +92,7 @@ class OGRGeoJSONWriteLayer : public OGRLayer
                           OGRwkbGeometryType eGType,
                           char** papszOptions,
                           bool bWriteFC_BBOXIn,
+                          OGRCoordinateTransformation* poCT,
                           OGRGeoJSONDataSource* poDS );
     ~OGRGeoJSONWriteLayer();
 
@@ -118,6 +120,10 @@ class OGRGeoJSONWriteLayer : public OGRLayer
 
     int nCoordPrecision_;
     int nSignificantFigures_;
+
+    bool bRFC7946_;
+    OGRCoordinateTransformation* poCT_;
+    OGRGeoJSONWriteOptions oWriteOptions_;
 };
 
 /************************************************************************/

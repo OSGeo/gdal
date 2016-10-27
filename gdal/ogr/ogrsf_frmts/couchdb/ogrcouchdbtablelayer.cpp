@@ -1117,7 +1117,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
     json_object* poObjProps = NULL;
 
-    poObjProps = OGRGeoJSONWriteAttributes( poFeature, -1 );
+    poObjProps = OGRGeoJSONWriteAttributes( poFeature );
     if (poObjProps)
     {
         json_object_object_del(poObjProps, "_id");
