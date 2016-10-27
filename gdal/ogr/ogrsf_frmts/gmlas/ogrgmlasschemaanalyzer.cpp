@@ -39,6 +39,7 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 }
 
 #include "ogr_gmlas.h"
+#include "ogr_pgdump.h"
 
 CPL_CVSID("$Id$");
 
@@ -173,6 +174,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
     , m_bInstantiateGMLFeaturesOnly(true)
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
+    , m_bPGIdentifierLaundering(GMLASConfiguration::PG_IDENTIFIER_LAUNDERING_DEFAULT)
 {
     // A few hardcoded namespace uri->prefix mappings
     m_oMapURIToPrefix[ pszXMLNS_URI ] = "xmlns";
@@ -363,36 +365,47 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                 aoFields[i].SetName(TruncateIdentifier(aoFields[i].GetName()));
             }
         }
+    }
 
-        // Detect duplicated field names
-        std::map<CPLString, std::vector<int> > oSetNames;
-        for(int i=0; i< static_cast<int>(aoFields.size());i++)
+    if( m_bPGIdentifierLaundering )
+    {
+        for(size_t i=0; i< aoFields.size();i++)
         {
-            if( aoFields[i].GetCategory() == GMLASField::REGULAR )
-            {
-                CPLString osName( aoFields[i].GetName());
-                if( m_bCaseInsensitiveIdentifier )
-                    osName.toupper();
-                oSetNames[ osName ].push_back(i ) ;
-            }
+            char* pszLaundered = OGRPGCommonLaunderName( aoFields[i].GetName(),
+                                                         "GMLAS" );
+            aoFields[i].SetName( pszLaundered );
+            CPLFree( pszLaundered );
         }
+    }
 
-        // Iterate over the unique names
-        std::map<CPLString, std::vector<int> >::const_iterator
-                oIter = oSetNames.begin();
-        for(; oIter != oSetNames.end(); ++oIter)
+    // Detect duplicated field names
+    std::map<CPLString, std::vector<int> > oSetNames;
+    for(int i=0; i< static_cast<int>(aoFields.size());i++)
+    {
+        if( aoFields[i].GetCategory() == GMLASField::REGULAR )
         {
-            // Has it duplicates ?
-            const size_t nOccurrences = oIter->second.size();
-            if( nOccurrences > 1 )
+            CPLString osName( aoFields[i].GetName());
+            if( m_bCaseInsensitiveIdentifier )
+                osName.toupper();
+            oSetNames[ osName ].push_back(i ) ;
+        }
+    }
+
+    // Iterate over the unique names
+    std::map<CPLString, std::vector<int> >::const_iterator
+            oIter = oSetNames.begin();
+    for(; oIter != oSetNames.end(); ++oIter)
+    {
+        // Has it duplicates ?
+        const size_t nOccurrences = oIter->second.size();
+        if( nOccurrences > 1 )
+        {
+            for(size_t i=0; i<nOccurrences;i++)
             {
-                for(size_t i=0; i<nOccurrences;i++)
-                {
-                    GMLASField& oField = aoFields[oIter->second[i]];
-                    oField.SetName( AddSerialNumber( oField.GetName(),
-                                                     static_cast<int>(i+1),
-                                                     nOccurrences) );
-                }
+                GMLASField& oField = aoFields[oIter->second[i]];
+                oField.SetName( AddSerialNumber( oField.GetName(),
+                                                    static_cast<int>(i+1),
+                                                    nOccurrences) );
             }
         }
     }
@@ -446,6 +459,17 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
         }
     }
 
+    if( m_bPGIdentifierLaundering )
+    {
+        for(size_t i=0; i< aoClasses.size();i++)
+        {
+            char* pszLaundered = OGRPGCommonLaunderName( aoClasses[i]->GetName(),
+                                                         "GMLAS" );
+            aoClasses[i]->SetName( pszLaundered );
+            CPLFree( pszLaundered );
+        }
+    }
+
     // Detect duplicated names. This should normally not happen in normal
     // conditions except if you have classes like
     // prefix_foo, prefix:foo, other_prefix:foo
@@ -494,23 +518,29 @@ CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
     snprintf(szDigits, sizeof(szDigits), "%0*d",
                 nDigitsSize, iOccurrence);
     if( m_nIdentifierMaxLength >=
-        GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
-        static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
+        GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
     {
-        if( static_cast<int>(osName.size()) + nDigitsSize <
-                                        m_nIdentifierMaxLength )
+        if( static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
         {
-            osName += szDigits;
+            if( static_cast<int>(osName.size()) + nDigitsSize <
+                                            m_nIdentifierMaxLength )
+            {
+                osName += szDigits;
+            }
+            else
+            {
+                osName.resize(m_nIdentifierMaxLength - nDigitsSize);
+                osName += szDigits;
+            }
         }
         else
         {
-            osName.resize(m_nIdentifierMaxLength - nDigitsSize);
+            osName.resize(osName.size() - nDigitsSize);
             osName += szDigits;
         }
     }
     else
     {
-        osName.resize(osName.size() - nDigitsSize);
         osName += szDigits;
     }
     return osName;

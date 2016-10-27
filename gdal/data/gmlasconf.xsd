@@ -237,6 +237,21 @@
                 </xs:annotation>
               </xs:element>
 
+              <xs:element name="PostgreSQLIdentifierLaundering" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                  <xs:documentation>
+                    Whether layer and field names should be laundered like the
+                    OGR PostgreSQL driver does by default, ie identifiers put
+                    in lower cases and a few special characters( single quote,
+                    dash, sharp) replaced by underscore. This can help to post-
+                    process the _ogr_layer_relationships layers more easily or,
+                    for write support.
+                    Note: this laundering is safe for other backends as well.
+                    Default is true.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>

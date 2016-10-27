@@ -35,13 +35,13 @@ Feature Count: 1
 Layer SRS WKT:
 (unknown)
 otherns_id: String (0.0) NOT NULL
-optionalStrAttr: String (0.0)
-fixedValUnset: String (0.0) DEFAULT 'fixed_value'
-fixedValSet: String (0.0) DEFAULT 'fixed_value'
-defaultValUnset: String (0.0) DEFAULT 'default_value'
-defaultValSet: String (0.0) DEFAULT 'default_value'
-myAttributeGroupAttr1: String (0.0)
-myAttributeGroupAttr2: Integer (0.0) NOT NULL
+optionalstrattr: String (0.0)
+fixedvalunset: String (0.0) DEFAULT 'fixed_value'
+fixedvalset: String (0.0) DEFAULT 'fixed_value'
+defaultvalunset: String (0.0) DEFAULT 'default_value'
+defaultvalset: String (0.0) DEFAULT 'default_value'
+myattributegroupattr1: String (0.0)
+myattributegroupattr2: Integer (0.0) NOT NULL
 id_attr: String (0.0)
 base_int: Integer (0.0) NOT NULL
 id: String (0.0) NOT NULL
@@ -58,15 +58,15 @@ double_array: RealList (0.0) NOT NULL
 decimal: Real (0.0) NOT NULL
 byte: Integer (0.0) NOT NULL
 short: Integer(Int16) (0.0) NOT NULL
-positiveInteger: Integer (0.0) NOT NULL
+positiveinteger: Integer (0.0) NOT NULL
 dt: DateTime (0.0) NOT NULL
 date: Date (0.0) NOT NULL
 time: Time (0.0) NOT NULL
 boolean: Integer(Boolean) (0.0) NOT NULL
 boolean_array: IntegerList(Boolean) (0.0) NOT NULL
-base64Binary: Binary (0.0) NOT NULL
-hexBinary: Binary (0.0) NOT NULL
-myint_myAttr: String (8.0)
+base64binary: Binary (0.0) NOT NULL
+hexbinary: Binary (0.0) NOT NULL
+myint_myattr: String (8.0)
 myint: Integer (0.0)
 required_elt_with_only_optional_attr_attr: String (0.0)
 optional_elt_with_only_req_attr_attr: String (0.0)
@@ -92,26 +92,26 @@ sequence_1_string_unbounded_subelement: StringList (0.0) NOT NULL
 sequence_unbounded_string_1_subelement: StringList (0.0) NOT NULL
 int_complex_simplifiable: IntegerList (0.0)
 an_abstract_element_in_other_ns_pkid: String (0.0)
-any_type_anyAttributes: String (0.0)
+any_type_anyattributes: String (0.0)
 any_type: String (0.0)
-any_type_optional_anyAttributes: String (0.0)
+any_type_optional_anyattributes: String (0.0)
 any_type_optional: String (0.0)
-any_attr_anyAttributes: String (0.0)
+any_attr_anyattributes: String (0.0)
 any_attr: Integer (0.0)
-any_attr_no_attr_anyAttributes: String (0.0)
+any_attr_no_attr_anyattributes: String (0.0)
 any_attr_no_attr: Integer (0.0)
 group2_elt: String (0.0) NOT NULL
 group4_elt: StringList (0.0) NOT NULL
-rec_A_pkid: String (0.0)
+rec_a_pkid: String (0.0)
 OGRFeature(main_elt):1
   otherns_id (String) = otherns_id
-  optionalStrAttr (String) = (null)
-  fixedValUnset (String) = fixed_value
-  fixedValSet (String) = fixed_value
-  defaultValUnset (String) = default_value
-  defaultValSet (String) = mydefaultValSet
-  myAttributeGroupAttr1 (String) = (null)
-  myAttributeGroupAttr2 (Integer) = 3
+  optionalstrattr (String) = (null)
+  fixedvalunset (String) = fixed_value
+  fixedvalset (String) = fixed_value
+  defaultvalunset (String) = default_value
+  defaultvalset (String) = mydefaultValSet
+  myattributegroupattr1 (String) = (null)
+  myattributegroupattr2 (Integer) = 3
   id_attr (String) = attr_id
   base_int (Integer) = 12
   id (String) = element_id
@@ -128,15 +128,15 @@ OGRFeature(main_elt):1
   decimal (Real) = 1.23456789012
   byte (Integer) = -128
   short (Integer(Int16)) = -32768
-  positiveInteger (Integer) = 1
+  positiveinteger (Integer) = 1
   dt (DateTime) = 2012/01/01 12:34:56+00
   date (Date) = 2012/01/01
   time (Time) = 12:34:56
   boolean (Integer(Boolean)) = 0
   boolean_array (IntegerList(Boolean)) = (2:1,0)
-  base64Binary (Binary) = 62617365363442696E617279
-  hexBinary (Binary) = 68657842696E617279
-  myint_myAttr (String) = 12345678
+  base64binary (Binary) = 62617365363442696E617279
+  hexbinary (Binary) = 68657842696E617279
+  myint_myattr (String) = 12345678
   myint (Integer) = 10
   required_elt_with_only_optional_attr_attr (String) = attr_value
   optional_elt_with_only_req_attr_attr (String) = (null)
@@ -162,17 +162,17 @@ OGRFeature(main_elt):1
   sequence_unbounded_string_1_subelement (StringList) = (2:sequence_unbounded_string_1,sequence_unbounded_string_2)
   int_complex_simplifiable (IntegerList) = (2:10,20)
   an_abstract_element_in_other_ns_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_an_abstract_element_in_other_ns_realization1_1
-  any_type_anyAttributes (String) = { "foo": "bar" }
+  any_type_anyattributes (String) = { "foo": "bar" }
   any_type (String) = A&lt;<foo bar="baz&quot;&gt;">blow</foo><myns:blo></myns:blo>C
-  any_type_optional_anyAttributes (String) = (null)
+  any_type_optional_anyattributes (String) = (null)
   any_type_optional (String) = <baw></baw>
-  any_attr_anyAttributes (String) = { "foo": "bar" }
+  any_attr_anyattributes (String) = { "foo": "bar" }
   any_attr (Integer) = 1
-  any_attr_no_attr_anyAttributes (String) = (null)
+  any_attr_no_attr_anyattributes (String) = (null)
   any_attr_no_attr (Integer) = 2
   group2_elt (String) = group2_elt_1
   group4_elt (StringList) = (2:group4_elt_1,group4_elt_2)
-  rec_A_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_1
+  rec_a_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_1
 
 
 Layer name: main_elt_dt_array
@@ -201,18 +201,18 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-myAttr: String (8.0)
+myattr: String (8.0)
 value: Integer (0.0) NOT NULL
 OGRFeature(main_elt_myint_repeated):1
   ogr_pkid (String) = otherns_id_myint_repeated_1
   parent_otherns_id (String) = otherns_id
-  myAttr (String) = 12345678
+  myattr (String) = 12345678
   value (Integer) = 1
 
 OGRFeature(main_elt_myint_repeated):2
   ogr_pkid (String) = otherns_id_myint_repeated_2
   parent_otherns_id (String) = otherns_id
-  myAttr (String) = (null)
+  myattr (String) = (null)
   value (Integer) = 2
 
 
@@ -423,18 +423,18 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-anyAttributes: String (0.0)
+anyattributes: String (0.0)
 value: String (0.0) NOT NULL
 OGRFeature(main_elt_any_type_repeated):1
   ogr_pkid (String) = otherns_id_any_type_repeated_1
   parent_otherns_id (String) = otherns_id
-  anyAttributes (String) = (null)
+  anyattributes (String) = (null)
   value (String) = <bar></bar>
 
 OGRFeature(main_elt_any_type_repeated):2
   ogr_pkid (String) = otherns_id_any_type_repeated_2
   parent_otherns_id (String) = otherns_id
-  anyAttributes (String) = (null)
+  anyattributes (String) = (null)
   value (String) = <baz></baz>
 
 
@@ -543,57 +543,57 @@ OGRFeature(main_elt_group3_group3_elt3_b2):4
   value (DateTime) = 2016/01/04 12:34:56+00
 
 
-Layer name: rec_A
+Layer name: rec_a
 Geometry: None
 Feature Count: 4
 Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
-rec_B_pkid: String (0.0)
-elt_A: String (0.0)
-OGRFeature(rec_A):4
+rec_b_pkid: String (0.0)
+elt_a: String (0.0)
+OGRFeature(rec_a):4
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_4
-  rec_B_pkid (String) = (null)
-  elt_A (String) = elt_A4
+  rec_b_pkid (String) = (null)
+  elt_a (String) = elt_A4
 
-OGRFeature(rec_A):3
+OGRFeature(rec_a):3
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_3
-  rec_B_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_3
-  elt_A (String) = elt_A3
+  rec_b_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_3
+  elt_a (String) = elt_A3
 
-OGRFeature(rec_A):2
+OGRFeature(rec_a):2
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_2
-  rec_B_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_2
-  elt_A (String) = elt_A2
+  rec_b_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_2
+  elt_a (String) = elt_A2
 
-OGRFeature(rec_A):1
+OGRFeature(rec_a):1
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_1
-  rec_B_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_1
-  elt_A (String) = elt_A
+  rec_b_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_1
+  elt_a (String) = elt_A
 
 
-Layer name: rec_B
+Layer name: rec_b
 Geometry: None
 Feature Count: 3
 Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
-rec_A_pkid: String (0.0)
-elt_B: String (0.0)
-OGRFeature(rec_B):3
+rec_a_pkid: String (0.0)
+elt_b: String (0.0)
+OGRFeature(rec_b):3
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_3
-  rec_A_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_4
-  elt_B (String) = elt_B3
+  rec_a_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_4
+  elt_b (String) = elt_B3
 
-OGRFeature(rec_B):2
+OGRFeature(rec_b):2
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_2
-  rec_A_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_3
-  elt_B (String) = elt_B2
+  rec_a_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_3
+  elt_b (String) = elt_B2
 
-OGRFeature(rec_B):1
+OGRFeature(rec_b):1
   ogr_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_B_1
-  rec_A_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_2
-  elt_B (String) = elt_B
+  rec_a_pkid (String) = 7F881F22BFDC843560B0AACDD8B6211E_rec_A_2
+  elt_b (String) = elt_B
 
 
 Layer name: an_abstract_element_in_other_ns_realization1
@@ -691,7 +691,7 @@ OGRFeature(_ogr_fields_metadata):1
 
 OGRFeature(_ogr_fields_metadata):2
   layer_name (String) = main_elt
-  field_name (String) = optionalStrAttr
+  field_name (String) = optionalstrattr
   field_xpath (String) = myns:main_elt/@optionalStrAttr
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -706,7 +706,7 @@ OGRFeature(_ogr_fields_metadata):2
 
 OGRFeature(_ogr_fields_metadata):3
   layer_name (String) = main_elt
-  field_name (String) = fixedValUnset
+  field_name (String) = fixedvalunset
   field_xpath (String) = myns:main_elt/@fixedValUnset
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -721,7 +721,7 @@ OGRFeature(_ogr_fields_metadata):3
 
 OGRFeature(_ogr_fields_metadata):4
   layer_name (String) = main_elt
-  field_name (String) = fixedValSet
+  field_name (String) = fixedvalset
   field_xpath (String) = myns:main_elt/@fixedValSet
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -736,7 +736,7 @@ OGRFeature(_ogr_fields_metadata):4
 
 OGRFeature(_ogr_fields_metadata):5
   layer_name (String) = main_elt
-  field_name (String) = defaultValUnset
+  field_name (String) = defaultvalunset
   field_xpath (String) = myns:main_elt/@defaultValUnset
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -751,7 +751,7 @@ OGRFeature(_ogr_fields_metadata):5
 
 OGRFeature(_ogr_fields_metadata):6
   layer_name (String) = main_elt
-  field_name (String) = defaultValSet
+  field_name (String) = defaultvalset
   field_xpath (String) = myns:main_elt/@defaultValSet
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -781,7 +781,7 @@ OGRFeature(_ogr_fields_metadata):7
 
 OGRFeature(_ogr_fields_metadata):8
   layer_name (String) = main_elt
-  field_name (String) = myAttributeGroupAttr1
+  field_name (String) = myattributegroupattr1
   field_xpath (String) = myns:main_elt/@myAttributeGroupAttr1
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -796,7 +796,7 @@ OGRFeature(_ogr_fields_metadata):8
 
 OGRFeature(_ogr_fields_metadata):9
   layer_name (String) = main_elt
-  field_name (String) = myAttributeGroupAttr2
+  field_name (String) = myattributegroupattr2
   field_xpath (String) = myns:main_elt/@myAttributeGroupAttr2
   field_type (String) = integer
   field_is_list (Integer(Boolean)) = 0
@@ -1051,7 +1051,7 @@ OGRFeature(_ogr_fields_metadata):25
 
 OGRFeature(_ogr_fields_metadata):26
   layer_name (String) = main_elt
-  field_name (String) = positiveInteger
+  field_name (String) = positiveinteger
   field_xpath (String) = myns:main_elt/myns:positiveInteger
   field_type (String) = positiveInteger
   field_is_list (Integer(Boolean)) = 0
@@ -1157,7 +1157,7 @@ Doc of boolean_array simple type
 
 OGRFeature(_ogr_fields_metadata):33
   layer_name (String) = main_elt
-  field_name (String) = base64Binary
+  field_name (String) = base64binary
   field_xpath (String) = myns:main_elt/myns:base64Binary
   field_type (String) = base64Binary
   field_is_list (Integer(Boolean)) = 0
@@ -1172,7 +1172,7 @@ OGRFeature(_ogr_fields_metadata):33
 
 OGRFeature(_ogr_fields_metadata):34
   layer_name (String) = main_elt
-  field_name (String) = hexBinary
+  field_name (String) = hexbinary
   field_xpath (String) = myns:main_elt/myns:hexBinary
   field_type (String) = hexBinary
   field_is_list (Integer(Boolean)) = 0
@@ -1187,7 +1187,7 @@ OGRFeature(_ogr_fields_metadata):34
 
 OGRFeature(_ogr_fields_metadata):35
   layer_name (String) = main_elt
-  field_name (String) = myint_myAttr
+  field_name (String) = myint_myattr
   field_xpath (String) = myns:main_elt/myns:myint/@myAttr
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -1727,7 +1727,7 @@ OGRFeature(_ogr_fields_metadata):70
 
 OGRFeature(_ogr_fields_metadata):71
   layer_name (String) = main_elt
-  field_name (String) = any_type_anyAttributes
+  field_name (String) = any_type_anyattributes
   field_xpath (String) = myns:main_elt/myns:any_type/@*
   field_type (String) = json_dict
   field_is_list (Integer(Boolean)) = 0
@@ -1772,7 +1772,7 @@ OGRFeature(_ogr_fields_metadata):73
 
 OGRFeature(_ogr_fields_metadata):74
   layer_name (String) = main_elt
-  field_name (String) = any_type_optional_anyAttributes
+  field_name (String) = any_type_optional_anyattributes
   field_xpath (String) = myns:main_elt/myns:any_type_optional/@*
   field_type (String) = json_dict
   field_is_list (Integer(Boolean)) = 0
@@ -1802,7 +1802,7 @@ OGRFeature(_ogr_fields_metadata):75
 
 OGRFeature(_ogr_fields_metadata):76
   layer_name (String) = main_elt
-  field_name (String) = any_attr_anyAttributes
+  field_name (String) = any_attr_anyattributes
   field_xpath (String) = myns:main_elt/myns:any_attr/@*
   field_type (String) = json_dict
   field_is_list (Integer(Boolean)) = 0
@@ -1832,7 +1832,7 @@ OGRFeature(_ogr_fields_metadata):77
 
 OGRFeature(_ogr_fields_metadata):78
   layer_name (String) = main_elt
-  field_name (String) = any_attr_no_attr_anyAttributes
+  field_name (String) = any_attr_no_attr_anyattributes
   field_xpath (String) = myns:main_elt/myns:any_attr_no_attr/@*
   field_type (String) = json_dict
   field_is_list (Integer(Boolean)) = 0
@@ -1922,7 +1922,7 @@ OGRFeature(_ogr_fields_metadata):83
 
 OGRFeature(_ogr_fields_metadata):84
   layer_name (String) = main_elt
-  field_name (String) = rec_A_pkid
+  field_name (String) = rec_a_pkid
   field_xpath (String) = myns:main_elt/myns:rec_A
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -1931,7 +1931,7 @@ OGRFeature(_ogr_fields_metadata):84
   field_default_value (String) = (null)
   field_fixed_value (String) = (null)
   field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
-  field_related_layer (String) = rec_A
+  field_related_layer (String) = rec_a
   field_junction_layer (String) = (null)
   field_documentation (String) = (null)
 
@@ -1952,7 +1952,7 @@ OGRFeature(_ogr_fields_metadata):85
 
 OGRFeature(_ogr_fields_metadata):86
   layer_name (String) = main_elt_myint_repeated
-  field_name (String) = myAttr
+  field_name (String) = myattr
   field_xpath (String) = myns:main_elt/myns:myint_repeated/@myAttr
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -2192,7 +2192,7 @@ OGRFeature(_ogr_fields_metadata):101
 
 OGRFeature(_ogr_fields_metadata):102
   layer_name (String) = main_elt_any_type_repeated
-  field_name (String) = anyAttributes
+  field_name (String) = anyattributes
   field_xpath (String) = myns:main_elt/myns:any_type_repeated/@*
   field_type (String) = json_dict
   field_is_list (Integer(Boolean)) = 0
@@ -2371,8 +2371,8 @@ OGRFeature(_ogr_fields_metadata):113
   field_documentation (String) = (null)
 
 OGRFeature(_ogr_fields_metadata):114
-  layer_name (String) = rec_A
-  field_name (String) = rec_B_pkid
+  layer_name (String) = rec_a
+  field_name (String) = rec_b_pkid
   field_xpath (String) = myns:rec_A/myns:rec_B
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -2381,13 +2381,13 @@ OGRFeature(_ogr_fields_metadata):114
   field_default_value (String) = (null)
   field_fixed_value (String) = (null)
   field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
-  field_related_layer (String) = rec_B
+  field_related_layer (String) = rec_b
   field_junction_layer (String) = (null)
   field_documentation (String) = (null)
 
 OGRFeature(_ogr_fields_metadata):115
-  layer_name (String) = rec_A
-  field_name (String) = elt_A
+  layer_name (String) = rec_a
+  field_name (String) = elt_a
   field_xpath (String) = myns:rec_A/myns:elt_A
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -2401,8 +2401,8 @@ OGRFeature(_ogr_fields_metadata):115
   field_documentation (String) = (null)
 
 OGRFeature(_ogr_fields_metadata):116
-  layer_name (String) = rec_B
-  field_name (String) = rec_A_pkid
+  layer_name (String) = rec_b
+  field_name (String) = rec_a_pkid
   field_xpath (String) = myns:rec_B/myns:rec_A
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -2411,13 +2411,13 @@ OGRFeature(_ogr_fields_metadata):116
   field_default_value (String) = (null)
   field_fixed_value (String) = (null)
   field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
-  field_related_layer (String) = rec_A
+  field_related_layer (String) = rec_a
   field_junction_layer (String) = (null)
   field_documentation (String) = (null)
 
 OGRFeature(_ogr_fields_metadata):117
-  layer_name (String) = rec_B
-  field_name (String) = elt_B
+  layer_name (String) = rec_b
+  field_name (String) = elt_b
   field_xpath (String) = myns:rec_B/myns:elt_B
   field_type (String) = string
   field_is_list (Integer(Boolean)) = 0
@@ -2655,13 +2655,13 @@ OGRFeature(_ogr_layers_metadata):17
   layer_documentation (String) = (null)
 
 OGRFeature(_ogr_layers_metadata):18
-  layer_name (String) = rec_A
+  layer_name (String) = rec_a
   layer_xpath (String) = myns:rec_A
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_documentation (String) = (null)
 
 OGRFeature(_ogr_layers_metadata):19
-  layer_name (String) = rec_B
+  layer_name (String) = rec_b
   layer_xpath (String) = myns:rec_B
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_documentation (String) = (null)
@@ -2803,8 +2803,8 @@ OGRFeature(_ogr_layer_relationships):14
 OGRFeature(_ogr_layer_relationships):15
   parent_layer (String) = main_elt
   parent_pkid (String) = otherns_id
-  parent_element_name (String) = rec_A_pkid
-  child_layer (String) = rec_A
+  parent_element_name (String) = rec_a_pkid
+  child_layer (String) = rec_a
   child_pkid (String) = ogr_pkid
 
 OGRFeature(_ogr_layer_relationships):16
@@ -2829,16 +2829,16 @@ OGRFeature(_ogr_layer_relationships):18
   child_pkid (String) = parent_ogr_pkid
 
 OGRFeature(_ogr_layer_relationships):19
-  parent_layer (String) = rec_A
+  parent_layer (String) = rec_a
   parent_pkid (String) = ogr_pkid
-  parent_element_name (String) = rec_B_pkid
-  child_layer (String) = rec_B
+  parent_element_name (String) = rec_b_pkid
+  child_layer (String) = rec_b
   child_pkid (String) = ogr_pkid
 
 OGRFeature(_ogr_layer_relationships):20
-  parent_layer (String) = rec_B
+  parent_layer (String) = rec_b
   parent_pkid (String) = ogr_pkid
-  parent_element_name (String) = rec_A_pkid
-  child_layer (String) = rec_A
+  parent_element_name (String) = rec_a_pkid
+  child_layer (String) = rec_a
   child_pkid (String) = ogr_pkid
 
