@@ -237,7 +237,7 @@ BSB_SUPPORTED = 1
 # Comment out the following to disable ODBC support.
 ODBC_SUPPORTED = 1
 
-# Uncomment out the following to enable SQL Native Client support for MSSQL Bulk Copy.
+# Uncomment out the following to enable plugin with SQL Native Client support for MSSQL Bulk Copy.
 #SQLNCLI_VERSION = 11
 #SQLNCLI_DIR = C:\Program Files (x86)\Microsoft SQL Server\$(SQLNCLI_VERSION)0\SDK
 #SQLNCLI_LIB = "$(SQLNCLI_DIR)\Lib\x86\sqlncli$(SQLNCLI_VERSION).lib"
@@ -872,5 +872,4 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) $(SQLNCLI_LIB) ws2_32.lib
-		
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib
