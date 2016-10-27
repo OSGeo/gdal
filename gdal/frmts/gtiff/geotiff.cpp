@@ -7164,6 +7164,9 @@ void GTiffDataset::FillEmptyTiles()
         return;
     }
 
+    // Force now tiles at nodata value to be written
+    bWriteEmptyTiles = true;
+
 /* -------------------------------------------------------------------- */
 /*      If set, fill data buffer with no data value.                    */
 /* -------------------------------------------------------------------- */
