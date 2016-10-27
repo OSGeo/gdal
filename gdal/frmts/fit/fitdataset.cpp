@@ -33,6 +33,8 @@
 #include "gdal_pam.h"
 #include "gstEndian.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const size_t FIT_PAGE_SIZE = 128;
@@ -1115,7 +1117,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /*      Generate header.                                                */
 /* -------------------------------------------------------------------- */
     // XXX - should FIT_PAGE_SIZE be based on file page size ??
-    int size = MAX(sizeof(FIThead02), FIT_PAGE_SIZE);
+
+    const size_t size = std::max(sizeof(FIThead02), FIT_PAGE_SIZE);
     FIThead02 *head = (FIThead02 *) malloc(size);
     FreeGuard<FIThead02> guardHead( head );
 
@@ -1200,7 +1203,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     // XXX - need to check all bands
     head->maxValue = firstBand->GetMaximum();
     gst_swapb(head->maxValue);
-    head->dataOffset = size;
+    head->dataOffset = static_cast<unsigned int>(size);
     gst_swapb(head->dataOffset);
 
     CPL_IGNORE_RET_VAL(VSIFWriteL(head, size, 1, fpImage));
