@@ -3266,7 +3266,20 @@ def ogr_geojson_57():
 ]
 }
 """
-    if json.loads(got) != json.loads(expected):
+
+    # with proj 4.9.3
+    expected2 = """{
+"type": "FeatureCollection",
+"bbox": [ 178.5275649, 0.0000000, -179.0681936, 37.0308258 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.0816324, -179.0681936, 37.0308258 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ -179.0681936, 36.9810434 ], [ -180.0, 37.0082839 ], [ -180.0, 36.1071354 ], [ -179.1135277, 36.0816324 ], [ -179.0681936, 36.9810434 ] ] ], [ [ [ 178.8892102, 36.1298163 ], [ 180.0, 36.1071354 ], [ 180.0, 37.0082839 ], [ 178.9112998, 37.0308258 ], [ 178.8892102, 36.1298163 ] ] ] ] } },
+{ "type": "Feature", "properties": { }, "bbox": [ 178.8892102, 36.1298163, -179.0681936, 36.9810434 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.8892102, 36.1298163 ], [ 180.0, 36.5995612 ] ], [ [ -180.0, 36.5995612 ], [ -179.0681936, 36.9810434 ] ] ] } },
+{ "type": "Feature", "properties": { }, "bbox": [ 178.5275649, 0.0, -179.8562277, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 178.5275649, 0.0 ], [ 180.0, 0.0 ] ], [ [ -180.0, 0.0 ], [ -179.8562277, 0.0 ] ] ] } }
+]
+}
+"""
+
+    if json.loads(got) != json.loads(expected) and json.loads(got) != json.loads(expected2):
         gdaltest.post_reason('fail')
         print(got)
         return 'fail'
