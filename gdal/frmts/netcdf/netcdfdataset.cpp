@@ -502,7 +502,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* if nZId and following variables are not passed, the band will have 2 dimensions */
 /* TODO get metadata, missing val from band #1 if nZDim>2 */
 netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
-                                    GDALDataType eType,
+                                    const GDALDataType eTypeIn,
                                     int nBandIn,
                                     bool bSigned,
                                     const char *pszBandName,
@@ -568,7 +568,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 /* -------------------------------------------------------------------- */
 /*      Get the type of the "z" variable, our target raster array.      */
 /* -------------------------------------------------------------------- */
-    eDataType = eType;
+    eDataType = eTypeIn;
 
     switch( eDataType )
     {
@@ -615,7 +615,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                           static_cast<int>(eDataType) );
             nc_datatype = NC_FLOAT;
             eDataType = GDT_Float32;
-            eType = GDT_Float32;
             break;
     }
 
