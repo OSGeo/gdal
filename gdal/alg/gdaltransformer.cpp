@@ -424,7 +424,7 @@ retry:
         padfZ[3 * (nSteps + 1) + iStep] = 0.0;
     }
 
-    int nSamplePoints = nSamplePoints = 4 * (nSteps + 1);
+    int nSamplePoints = 4 * (nSteps + 1);
 
     memset( pabSuccess, 1, sizeof(int) * nSampleMax );
 
