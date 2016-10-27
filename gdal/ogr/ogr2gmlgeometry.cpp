@@ -477,7 +477,10 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     // There must be more after the comma or we have an internal consistency
     // bug in MakeGMLCoordinate.
     if( pszY == NULL || strlen(pszY) < 2)
-        CPLError(CE_Fatal, CPLE_AssertionFailed, "MakeGMLCoordinate failed." );
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MakeGMLCoordinate failed." );
+        return NULL;
+    }
     *pszY = '\0';
     pszY++;
 
