@@ -2305,7 +2305,8 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
 
 static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                                       const OGRLineString* poLS,
-                                      double dfDateLineOffset)
+                                      double dfDateLineOffset,
+                                      double dfXOffset)
 {
     const double dfLeftBorderX = 180 - dfDateLineOffset;
     const double dfRightBorderX = -180 + dfDateLineOffset;
@@ -2316,19 +2317,19 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
     poMulti->addGeometryDirectly(poNewLS);
     for( int i = 0; i < poLS->getNumPoints(); i++ )
     {
-        const double dfX = poLS->getX(i);
-        if( i > 0 && fabs(dfX - poLS->getX(i-1)) > dfDiffSpace )
+        const double dfX = poLS->getX(i) + dfXOffset;
+        if( i > 0 && fabs(dfX - (poLS->getX(i-1) + dfXOffset)) > dfDiffSpace )
         {
-            double dfX1 = poLS->getX(i-1);
+            double dfX1 = poLS->getX(i-1) + dfXOffset;
             double dfY1 = poLS->getY(i-1);
             double dfZ1 = poLS->getY(i-1);
-            double dfX2 = poLS->getX(i);
+            double dfX2 = poLS->getX(i) + dfXOffset;
             double dfY2 = poLS->getY(i);
             double dfZ2 = poLS->getY(i);
 
             if( dfX1 > -180 && dfX1 < dfRightBorderX && dfX2 == 180 &&
                 i+1 < poLS->getNumPoints() &&
-                poLS->getX(i+1) > -180 && poLS->getX(i+1) < dfRightBorderX )
+                poLS->getX(i+1) + dfXOffset > -180 && poLS->getX(i+1) + dfXOffset < dfRightBorderX )
             {
                 if( bIs3D )
                     poNewLS->addPoint(-180, poLS->getY(i), poLS->getZ(i));
@@ -2338,15 +2339,15 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                 i++;
 
                 if( bIs3D )
-                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i),
+                    poNewLS->addPoint(poLS->getX(i) + dfXOffset, poLS->getY(i),
                                       poLS->getZ(i));
                 else
-                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i));
+                    poNewLS->addPoint(poLS->getX(i) + dfXOffset, poLS->getY(i));
                 continue;
             }
             else if( dfX1 > dfLeftBorderX && dfX1 < 180 && dfX2 == -180 &&
                      i+1 < poLS->getNumPoints() &&
-                     poLS->getX(i+1) > dfLeftBorderX && poLS->getX(i+1) < 180 )
+                     poLS->getX(i+1) + dfXOffset > dfLeftBorderX && poLS->getX(i+1) + dfXOffset < 180 )
             {
                 if( bIs3D )
                     poNewLS->addPoint(180, poLS->getY(i), poLS->getZ(i));
@@ -2356,10 +2357,10 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                 i++;
 
                 if( bIs3D )
-                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i),
+                    poNewLS->addPoint(poLS->getX(i) + dfXOffset, poLS->getY(i),
                                       poLS->getZ(i));
                 else
-                    poNewLS->addPoint(poLS->getX(i), poLS->getY(i));
+                    poNewLS->addPoint(poLS->getX(i) + dfXOffset, poLS->getY(i));
                 continue;
             }
 
@@ -2379,17 +2380,17 @@ static void SplitLineStringAtDateline(OGRGeometryCollection* poMulti,
                 const double dfZ = dfRatio * dfZ2 + (1 - dfRatio) * dfZ1;
                 if( bIs3D )
                     poNewLS->addPoint(
-                        poLS->getX(i-1) > dfLeftBorderX ? 180 : -180, dfY, dfZ);
+                        poLS->getX(i-1) + dfXOffset > dfLeftBorderX ? 180 : -180, dfY, dfZ);
                 else
                     poNewLS->addPoint(
-                        poLS->getX(i-1) > dfLeftBorderX ? 180 : -180, dfY);
+                        poLS->getX(i-1) + dfXOffset > dfLeftBorderX ? 180 : -180, dfY);
                 poNewLS = new OGRLineString();
                 if( bIs3D )
                     poNewLS->addPoint(
-                        poLS->getX(i-1) > dfLeftBorderX ? -180 : 180, dfY, dfZ);
+                        poLS->getX(i-1) + dfXOffset > dfLeftBorderX ? -180 : 180, dfY, dfZ);
                 else
                     poNewLS->addPoint(
-                        poLS->getX(i-1) > dfLeftBorderX ? -180 : 180, dfY);
+                        poLS->getX(i-1) + dfXOffset > dfLeftBorderX ? -180 : 180, dfY);
                 poMulti->addGeometryDirectly(poNewLS);
             }
             else
@@ -2467,10 +2468,10 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon* poPoly,
 #endif
 
 /************************************************************************/
-/*                            Sub360ToLon()                             */
+/*                            AddOffsetToLon()                          */
 /************************************************************************/
 
-static void Sub360ToLon( OGRGeometry* poGeom )
+static void AddOffsetToLon( OGRGeometry* poGeom, double dfOffset )
 {
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
@@ -2483,9 +2484,9 @@ static void Sub360ToLon( OGRGeometry* poGeom )
                 OGR_G_GetGeometryCount((OGRGeometryH)poGeom);
             for( int iGeom = 0; iGeom < nSubGeomCount; iGeom++ )
             {
-                Sub360ToLon(
+                AddOffsetToLon(
                     (OGRGeometry*)OGR_G_GetGeometryRef((OGRGeometryH)poGeom,
-                                                       iGeom));
+                                                       iGeom), dfOffset);
             }
 
             break;
@@ -2500,11 +2501,11 @@ static void Sub360ToLon( OGRGeometry* poGeom )
             {
                 if( nCoordDim == 2 )
                     poLineString->setPoint(iPoint,
-                                     poLineString->getX(iPoint) - 360,
+                                     poLineString->getX(iPoint) + dfOffset,
                                      poLineString->getY(iPoint));
                 else
                     poLineString->setPoint(iPoint,
-                                     poLineString->getX(iPoint) - 360,
+                                     poLineString->getX(iPoint) + dfOffset,
                                      poLineString->getY(iPoint),
                                      poLineString->getZ(iPoint));
             }
@@ -2569,6 +2570,7 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
             OGREnvelope oEnvelope;
 
             poGeom->getEnvelope(&oEnvelope);
+            const bool bAroundMinus180 = (oEnvelope.MinX < -180.0);
 
             // Naive heuristics... Place to improve.
 #ifdef HAVE_GEOS
@@ -2580,7 +2582,9 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
             const double dfRightBorderX = -180 + dfDateLineOffset;
             const double dfDiffSpace = 360 - dfDateLineOffset;
 
-            if( oEnvelope.MinX > dfLeftBorderX && oEnvelope.MaxX > 180 )
+            const double dfXOffset = (bAroundMinus180) ? 360.0 : 0.0;
+            if( oEnvelope.MinX + dfXOffset > dfLeftBorderX &&
+                oEnvelope.MaxX + dfXOffset > 180 )
             {
 #ifndef HAVE_GEOS
                 CPLError( CE_Failure, CPLE_NotSupported,
@@ -2601,8 +2605,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                     // Detect big gaps in longitude.
                     for( int i = 1; i < poLS->getNumPoints(); i++ )
                     {
-                        const double dfPrevX = poLS->getX(i-1);
-                        const double dfX = poLS->getX(i);
+                        const double dfPrevX = poLS->getX(i-1) + dfXOffset;
+                        const double dfX = poLS->getX(i) + dfXOffset;
                         const double dfDiffLong = fabs(dfX - dfPrevX);
                         if( dfDiffLong > dfDiffSpace &&
                             ((dfX > dfLeftBorderX &&
@@ -2636,7 +2640,8 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
             if( bSplitLineStringAtDateline )
             {
                 SplitLineStringAtDateline(poMulti, (OGRLineString*)poGeom,
-                                          dfDateLineOffset);
+                                          dfDateLineOffset,
+                                          ( bAroundMinus180 ) ? 360.0 : 0.0 );
             }
 #ifdef HAVE_GEOS
             else if( bWrapDateline )
@@ -2645,10 +2650,12 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                     poDupGeom ? poDupGeom : poGeom;
                 OGRGeometry* poRectangle1 = NULL;
                 OGRGeometry* poRectangle2 = NULL;
-                const char* pszWKT1 =
-                    "POLYGON((0 90,180 90,180 -90,0 -90,0 90))";
-                const char* pszWKT2 =
-                    "POLYGON((180 90,360 90,360 -90,180 -90,180 90))";
+                const char* pszWKT1 = (!bAroundMinus180) ?
+                    "POLYGON((0 90,180 90,180 -90,0 -90,0 90))" :
+                    "POLYGON((0 90,-180 90,-180 -90,0 -90,0 90))";
+                const char* pszWKT2 = (!bAroundMinus180) ?
+                    "POLYGON((180 90,360 90,360 -90,180 -90,180 90))" :
+                    "POLYGON((-180 90,-360 90,-360 -90,-180 -90,-180 90))";
                 OGRGeometryFactory::createFromWkt((char**)&pszWKT1, NULL,
                                                   &poRectangle1);
                 OGRGeometryFactory::createFromWkt((char**)&pszWKT2, NULL,
@@ -2661,7 +2668,7 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 if( poGeom1 != NULL && poGeom2 != NULL )
                 {
                     AddSimpleGeomToMulti(poMulti, poGeom1);
-                    Sub360ToLon(poGeom2);
+                    AddOffsetToLon(poGeom2, (!bAroundMinus180) ? -360.0 : 360.0);
                     AddSimpleGeomToMulti(poMulti, poGeom2);
                 }
                 else
@@ -2702,6 +2709,735 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
     }
 }
 
+#ifdef HAVE_GEOS
+
+/************************************************************************/
+/*                             RemovePoint()                            */
+/************************************************************************/
+
+static void RemovePoint(OGRGeometry* poGeom, OGRPoint* poPoint)
+{
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    switch(eType)
+    {
+        case wkbLineString:
+        {
+            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            const bool bIs3D = ( poLS->getCoordinateDimension() == 3 );
+            int j = 0;
+            for(int i=0;i<poLS->getNumPoints();i++)
+            {
+                if( poLS->getX(i) != poPoint->getX() ||
+                    poLS->getY(i) != poPoint->getY() )
+                {
+                    if( i > j )
+                    {
+                        if( bIs3D )
+                        {
+                            poLS->setPoint( j, poLS->getX(i), poLS->getY(i),
+                                            poLS->getZ(i) );
+                        }
+                        else
+                        {
+                            poLS->setPoint( j, poLS->getX(i), poLS->getY(i) );
+                        }
+                    }
+                    j++;
+                }
+            }
+            poLS->setNumPoints(j);
+            break;
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            if( poPoly->getExteriorRing() != NULL )
+            {
+                RemovePoint(poPoly->getExteriorRing(), poPoint);
+                for( int i=0; i<poPoly->getNumInteriorRings(); ++i )
+                {
+                    RemovePoint(poPoly->getInteriorRing(i), poPoint);
+                }
+            }
+            break;
+        }
+
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* poGC =
+                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            for( int i=0; i<poGC->getNumGeometries(); ++i )
+            {
+                RemovePoint(poGC->getGeometryRef(i), poPoint);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+/************************************************************************/
+/*                              GetDist()                               */
+/************************************************************************/
+
+static double GetDist(double dfDeltaX, double dfDeltaY)
+{
+    return sqrt(dfDeltaX * dfDeltaX + dfDeltaY * dfDeltaY);
+}
+
+/************************************************************************/
+/*                             AlterPole()                              */
+/*                                                                      */
+/* Replace and point at the pole by points really close to the pole,    */
+/* but on the previous and later segments.                              */
+/************************************************************************/
+
+static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
+                      bool bIsRing = false)
+{
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    switch(eType)
+    {
+        case wkbLineString:
+        {
+            if( !bIsRing )
+                return;
+            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            const int nNumPoints = poLS->getNumPoints();
+            if( nNumPoints >= 4 )
+            {
+                const bool bIs3D = ( poLS->getCoordinateDimension() == 3 );
+                std::vector<OGRRawPoint> aoPoints;
+                std::vector<double> adfZ;
+                bool bMustClose = false;
+                for(int i=0;i<nNumPoints;i++)
+                {
+                    const double dfX = poLS->getX(i);
+                    const double dfY = poLS->getY(i);
+                    if( dfX == poPole->getX() && dfY == poPole->getY() )
+                    {
+                        // Replace the pole by points really close to it
+                        if( i == 0 )
+                            bMustClose = true;
+                        if( i == nNumPoints - 1 )
+                            continue;
+                        const int iBefore = (i > 0) ? i-1: nNumPoints-2;
+                        double dfXBefore = poLS->getX(iBefore);
+                        double dfYBefore = poLS->getY(iBefore);
+                        double dfNorm = GetDist(dfXBefore - dfX,
+                                                dfYBefore - dfY);
+                        double dfXInterp = dfX +(dfXBefore-dfX) / dfNorm * 1e-7;
+                        double dfYInterp = dfY +(dfYBefore-dfY) / dfNorm * 1e-7;
+                        OGRRawPoint oPoint;
+                        oPoint.x = dfXInterp;
+                        oPoint.y = dfYInterp;
+                        aoPoints.push_back(oPoint);
+                        adfZ.push_back(poLS->getZ(i));
+
+                        const int iAfter = i+1;
+                        double dfXAfter = poLS->getX(iAfter);
+                        double dfYAfter = poLS->getY(iAfter);
+                        dfNorm = GetDist(dfXAfter - dfX, dfYAfter - dfY);
+                        dfXInterp = dfX + (dfXAfter - dfX) / dfNorm * 1e-7;
+                        dfYInterp = dfY + (dfYAfter - dfY) / dfNorm * 1e-7;
+                        oPoint.x = dfXInterp;
+                        oPoint.y = dfYInterp;
+                        aoPoints.push_back(oPoint);
+                        adfZ.push_back(poLS->getZ(i));
+                    }
+                    else
+                    {
+                        OGRRawPoint oPoint;
+                        oPoint.x = dfX;
+                        oPoint.y = dfY;
+                        aoPoints.push_back(oPoint);
+                        adfZ.push_back(poLS->getZ(i));
+                    }
+                }
+                if( bMustClose )
+                {
+                    aoPoints.push_back(aoPoints[0]);
+                    adfZ.push_back(adfZ[0]);
+                }
+
+                poLS->setPoints(static_cast<int>(aoPoints.size()),
+                                &(aoPoints[0]),
+                                bIs3D ? &adfZ[0] : (double*)NULL);
+            }
+            break;
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            if( poPoly->getExteriorRing() != NULL )
+            {
+                AlterPole(poPoly->getExteriorRing(), poPole, true);
+                for( int i=0; i<poPoly->getNumInteriorRings(); ++i )
+                {
+                    AlterPole(poPoly->getInteriorRing(i), poPole, true);
+                }
+            }
+            break;
+        }
+
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* poGC =
+                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            for( int i=0; i<poGC->getNumGeometries(); ++i )
+            {
+                AlterPole(poGC->getGeometryRef(i), poPole);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+/************************************************************************/
+/*                          IsPolarToWGS84()                            */
+/*                                                                      */
+/* Returns true if poCT transfroms from a projection that includes one  */
+/* of the pole in a continuous way.                                     */
+/************************************************************************/
+
+static bool IsPolarToWGS84( OGRCoordinateTransformation* poCT,
+                            OGRCoordinateTransformation* poRevCT,
+                            bool& bIsNorthPolarOut )
+{
+    bool bIsNorthPolar = false;
+    bool bIsSouthPolar = false;
+    double x = 0.0;
+    double y = 90.0;
+
+    const bool bBackupEmitErrors = poCT->GetEmitErrors();
+    poRevCT->SetEmitErrors(false);
+    poCT->SetEmitErrors(false);
+
+    if( poRevCT->Transform( 1, &x, &y ) &&
+        // Surprisingly pole south projects correctly back &
+        // forth for antartic polar stereographic! so check that
+        // the projected value is not too big
+        fabs(x) < 1e10 && fabs(y) < 1e10 &&
+        poCT->Transform(1, &x, &y) &&
+        fabs(y - 90.0) < 1e-10 )
+    {
+        bIsNorthPolar = true;
+    }
+
+    x = 0.0;
+    y = -90.0;
+    if( poRevCT->Transform( 1, &x, &y ) &&
+        fabs(x) < 1e10 && fabs(y) < 1e10 &&
+        poCT->Transform(1, &x, &y) &&
+        fabs(y - (-90.0)) < 1e-10 )
+    {
+        bIsSouthPolar = true;
+    }
+
+    poCT->SetEmitErrors(bBackupEmitErrors);
+
+    if( bIsNorthPolar && bIsSouthPolar )
+    {
+        bIsNorthPolar = false;
+        bIsSouthPolar = false;
+    }
+
+    bIsNorthPolarOut = bIsNorthPolar;
+    return bIsNorthPolar || bIsSouthPolar;
+}
+
+/************************************************************************/
+/*                     TransformBeforePolarToWGS84()                    */
+/*                                                                      */
+/* Transform the geometry (by intersection), so as to cut each geometry */
+/* that crosses the pole, in 2 parts. Do also tricks for geometries     */
+/* that just touch the pole.                                            */
+/************************************************************************/
+
+static OGRGeometry* TransformBeforePolarToWGS84(
+                                        OGRCoordinateTransformation* poRevCT,
+                                        bool bIsNorthPolar,
+                                        OGRGeometry* poDstGeom,
+                                        bool& bNeedPostCorrectionOut )
+{
+    const int nSign = (bIsNorthPolar) ? 1 : -1;
+
+    // Does the geometry fully contains the pole ? */
+    double dfXPole = 0.0;
+    double dfYPole = nSign * 90.0;
+    poRevCT->Transform( 1, &dfXPole, &dfYPole );
+    OGRPoint oPole(dfXPole, dfYPole);
+    const bool bContainsPole =
+                CPL_TO_BOOL(poDstGeom->Contains(&oPole));
+
+    const double EPS = 1e-9;
+
+    // Does the geometry touches the pole and intersects the antimeridian ?
+    double dfNearPoleAntiMeridianX = 180.0;
+    double dfNearPoleAntiMeridianY = nSign*(90.0 - EPS);
+    poRevCT->Transform( 1,
+                        &dfNearPoleAntiMeridianX,
+                        &dfNearPoleAntiMeridianY );
+    OGRPoint oNearPoleAntimeridian(dfNearPoleAntiMeridianX,
+                                    dfNearPoleAntiMeridianY);
+    const bool bContainsNearPoleAntimeridian = CPL_TO_BOOL(
+        poDstGeom->Contains(&oNearPoleAntimeridian));
+
+    // Does the geometry touches the pole (but not intersect the antimeridian) ?
+    const bool bRegularTouchesPole = 
+        !bContainsPole &&
+        !bContainsNearPoleAntimeridian &&
+        CPL_TO_BOOL(poDstGeom->Touches(&oPole));
+
+    // Create a polygon of nearly a full hemisphere, but excluding the anti
+    // meridian and the pole.
+    OGRPolygon oCutter;
+    OGRLinearRing* poRing = new OGRLinearRing();
+    poRing->addPoint(180.0 - EPS, 0);
+    poRing->addPoint(180.0 - EPS, nSign*(90.0 - EPS));
+    // If the geometry doesn't contain the pole, then we add it to the cutter
+    // geometry, but will later remove it completely (geometry touching the
+    // pole but intersecting the antimeridian), or will replace it by 2
+    // close points (geometry touching the pole without intersecting the
+    // antimeridian)
+    if( !bContainsPole )
+        poRing->addPoint(180.0, nSign*90);
+    poRing->addPoint(-180.0 + EPS, nSign*(90.0 - EPS));
+    poRing->addPoint(-180.0 + EPS, 0);
+    poRing->addPoint(180.0 - EPS, 0);
+    oCutter.addRingDirectly(poRing);
+
+    if( oCutter.transform(poRevCT) == OGRERR_NONE &&
+        // Check that longitudes +/- 180 are continuous
+        // in the polar projection
+        fabs(poRing->getX(0) -
+                poRing->getX(poRing->getNumPoints()-2)) < 1 &&
+        (bContainsPole || bContainsNearPoleAntimeridian ||
+            bRegularTouchesPole) )
+    {
+        if( bContainsPole || bContainsNearPoleAntimeridian )
+        {
+            OGRGeometry* poNewGeom =
+                            poDstGeom->Difference(&oCutter);
+            if( poNewGeom )
+            {
+                if( bContainsNearPoleAntimeridian )
+                    RemovePoint(poNewGeom, &oPole);
+                delete poDstGeom;
+                poDstGeom = poNewGeom;
+            }
+        }
+
+        if( bRegularTouchesPole )
+        {
+            AlterPole(poDstGeom, &oPole);
+        }
+
+        bNeedPostCorrectionOut = true;
+    }
+    return poDstGeom;
+}
+
+/************************************************************************/
+/*                        IsAntimeridianProjToWGS84()                   */
+/*                                                                      */
+/* Returns true if poCT transfroms from a projection that includes the  */
+/* antimeridian in a continuous way.                                    */
+/************************************************************************/
+
+static bool IsAntimeridianProjToWGS84( OGRCoordinateTransformation* poCT,
+                                       OGRCoordinateTransformation* poRevCT,
+                                       OGRGeometry* poDstGeometry )
+{
+    const bool bBackupEmitErrors = poCT->GetEmitErrors();
+    poRevCT->SetEmitErrors(false);
+    poCT->SetEmitErrors(false);
+
+    // Find a reasonable latitude for the geometry
+    OGREnvelope sEnvelope;
+    poDstGeometry->getEnvelope(&sEnvelope);
+    OGRPoint pMean( sEnvelope.MinX, (sEnvelope.MinY + sEnvelope.MaxY) / 2 );
+    if( pMean.transform(poCT) != OGRERR_NONE )
+    {
+        poCT->SetEmitErrors(bBackupEmitErrors);
+        return false;
+    }
+    const double dfMeanLat = pMean.getY();
+
+    // Check that close points on each side of the antimeridian in (long,lat)
+    // project to close points in the source projection, and check that they
+    // roundtrip correctly
+    const double EPS = 1e-8;
+    double x1 = 180 - EPS;
+    double y1 = dfMeanLat;
+    double x2 = -180 + EPS;
+    double y2 = dfMeanLat;
+    if( !poRevCT->Transform( 1, &x1, &y1 ) ||
+        !poRevCT->Transform( 1, &x2, &y2 ) ||
+        GetDist(x2-x1, y2-y1) > 1 ||
+        !poCT->Transform( 1, &x1, &y1 ) ||
+        !poCT->Transform( 1, &x2, &y2 ) ||
+        GetDist(x1 - (180 - EPS), y1 - dfMeanLat) > 2 * EPS ||
+        GetDist(x2 - (-180 + EPS), y2 - dfMeanLat) > 2 * EPS )
+    {
+        poCT->SetEmitErrors(bBackupEmitErrors);
+        return false;
+    }
+
+    poCT->SetEmitErrors(bBackupEmitErrors);
+
+    return true;
+}
+
+/************************************************************************/
+/*                      CollectPointsOnAntimeridian()                   */
+/*                                                                      */
+/* Collect points that are the intersection of the lines of the geometry*/
+/* with the antimeridian.                                               */
+/************************************************************************/
+
+static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
+                                        OGRCoordinateTransformation* poCT,
+                                        OGRCoordinateTransformation* poRevCT,
+                                        std::vector<OGRRawPoint>& aoPoints )
+{
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    switch(eType)
+    {
+        case wkbLineString:
+        {
+            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            const int nNumPoints = poLS->getNumPoints();
+            for(int i=0;i<nNumPoints-1;i++)
+            {
+                const double dfX = poLS->getX(i);
+                const double dfY = poLS->getY(i);
+                const double dfX2 = poLS->getX(i+1);
+                const double dfY2 = poLS->getY(i+1);
+                double dfXTrans = dfX;
+                double dfYTrans = dfY;
+                double dfX2Trans = dfX2;
+                double dfY2Trans = dfY2;
+                poCT->Transform(1, &dfXTrans, &dfYTrans);
+                poCT->Transform(1, &dfX2Trans, &dfY2Trans);
+                // Are we crossing the antimeridian ? (detecting by inversion of
+                // sign of X)
+                if( (dfX2 - dfX) * (dfX2Trans - dfXTrans) < 0 )
+                {
+                    double dfXStart = dfX;
+                    double dfYStart = dfY;
+                    double dfXEnd = dfX2;
+                    double dfYEnd = dfY2;
+                    double dfXStartTrans = dfXTrans;
+                    double dfXEndTrans = dfX2Trans;
+                    int iIter = 0;
+                    const double EPS = 1e-8;
+                    // Find point of the segment intersecting the antimeridian
+                    // by dichotomy
+                    for(; iIter < 50 &&
+                          (fabs(fabs(dfXStartTrans) - 180) > EPS ||
+                           fabs(fabs(dfXEndTrans) - 180) > EPS);
+                          ++iIter )
+                    {
+                        double dfXMid = (dfXStart + dfXEnd) / 2;
+                        double dfYMid = (dfYStart + dfYEnd) / 2;
+                        double dfXMidTrans = dfXMid;
+                        double dfYMidTrans = dfYMid;
+                        poCT->Transform(1, &dfXMidTrans, &dfYMidTrans);
+                        if( (dfXMid - dfXStart) *
+                                        (dfXMidTrans - dfXStartTrans) < 0 )
+                        {
+                            dfXEnd = dfXMid;
+                            dfYEnd = dfYMid;
+                            dfXEndTrans = dfXMidTrans;
+                        }
+                        else
+                        {
+                            dfXStart = dfXMid;
+                            dfYStart = dfYMid;
+                            dfXStartTrans = dfXMidTrans;
+                        }
+                    }
+                    if( iIter < 50 )
+                    {
+                        OGRRawPoint oPoint;
+                        oPoint.x = (dfXStart + dfXEnd) / 2;
+                        oPoint.y = (dfYStart + dfYEnd) / 2;
+                        poCT->Transform(1, &(oPoint.x), &(oPoint.y));
+                        oPoint.x = 180.0;
+                        aoPoints.push_back(oPoint);
+                    }
+                }
+            }
+            break;
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            if( poPoly->getExteriorRing() != NULL )
+            {
+                CollectPointsOnAntimeridian(poPoly->getExteriorRing(),
+                                            poCT, poRevCT, aoPoints);
+                for( int i=0; i<poPoly->getNumInteriorRings(); ++i )
+                {
+                    CollectPointsOnAntimeridian(poPoly->getInteriorRing(i),
+                                                poCT, poRevCT, aoPoints);
+                }
+            }
+            break;
+        }
+
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* poGC =
+                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            for( int i=0; i<poGC->getNumGeometries(); ++i )
+            {
+                CollectPointsOnAntimeridian(poGC->getGeometryRef(i),
+                                            poCT, poRevCT, aoPoints);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+/************************************************************************/
+/*                         SortPointsByAscendingY()                     */
+/************************************************************************/
+
+struct SortPointsByAscendingY
+{
+    bool operator()(const OGRRawPoint& a, const OGRRawPoint& b)
+    {
+        return a.y < b.y;
+    }
+};
+
+/************************************************************************/
+/*                  TransformBeforeAntimeridianToWGS84()                */
+/*                                                                      */
+/* Transform the geometry (by intersection), so as to cut each geometry */
+/* that crosses the antimeridian, in 2 parts.                           */
+/************************************************************************/
+
+static OGRGeometry* TransformBeforeAntimeridianToWGS84(
+                                        OGRCoordinateTransformation* poCT,
+                                        OGRCoordinateTransformation* poRevCT,
+                                        OGRGeometry* poDstGeom,
+                                        bool& bNeedPostCorrectionOut )
+{
+    OGREnvelope sEnvelope;
+    poDstGeom->getEnvelope(&sEnvelope);
+    OGRPoint pMean( sEnvelope.MinX, (sEnvelope.MinY + sEnvelope.MaxY) / 2 );
+    pMean.transform(poCT);
+    const double dfMeanLat = pMean.getY();
+    pMean.setX( 180.0 );
+    pMean.setY( dfMeanLat );
+    pMean.transform(poRevCT);
+    // Check if the antimeridian crosses the bbox of our geometry
+    if( !(pMean.getX() >= sEnvelope.MinX && pMean.getY() >= sEnvelope.MinY &&
+          pMean.getX() <= sEnvelope.MaxX && pMean.getY() <= sEnvelope.MaxY) )
+    {
+        return poDstGeom;
+    }
+
+    // Collect points that are the intersection of the lines of the geometry
+    // with the antimeridian
+    std::vector<OGRRawPoint> aoPoints;
+    CollectPointsOnAntimeridian(poDstGeom, poCT, poRevCT, aoPoints);
+    if( aoPoints.empty() )
+        return poDstGeom;
+
+    SortPointsByAscendingY sortFunc;
+    std::sort( aoPoints.begin(), aoPoints.end(), sortFunc );
+
+    const double EPS = 1e-9;
+
+    // Build a multipolygon (in projected space) with 2 parts: one part left
+    // of the antimeridian, one part east
+    const OGRwkbGeometryType eType = wkbFlatten(poDstGeom->getGeometryType());
+
+    // If we have lines, then to get better accuracy of the intersection with
+    // the main geometry, we need to add extra points
+    const bool bHasLines = (eType == wkbLineString ||
+                            eType == wkbMultiLineString);
+
+    OGRLinearRing* poLR1 = new OGRLinearRing();
+    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MinY );
+    if( bHasLines )
+    {
+        double x = 180.0 - EPS;
+        double y = aoPoints[0].y-EPS;
+        poRevCT->Transform(1, &x, &y);
+        poLR1->addPoint( x, y );
+    }
+    for( size_t i = 0; i < aoPoints.size(); ++i )
+    {
+        double x = 180.0 - EPS;
+        double y = aoPoints[i].y;
+        poRevCT->Transform(1, &x, &y);
+        poLR1->addPoint( x, y );
+    }
+    if( bHasLines )
+    {
+        double x = 180.0 - EPS;
+        double y = aoPoints[aoPoints.size()-1].y+EPS;
+        poRevCT->Transform(1, &x, &y);
+        poLR1->addPoint( x, y );
+    }
+    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MaxY );
+    poLR1->addPoint( sEnvelope.MinX, sEnvelope.MinY );
+    OGRPolygon* poPoly1 = new OGRPolygon();
+    poPoly1->addRingDirectly( poLR1 );
+
+
+    OGRLinearRing* poLR2 = new OGRLinearRing();
+    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MinY );
+    if( bHasLines )
+    {
+        double x = -180.0 + EPS;
+        double y = aoPoints[0].y-EPS;
+        poRevCT->Transform(1, &x, &y);
+        poLR2->addPoint( x, y );
+    }
+    for( size_t i = 0; i < aoPoints.size(); ++i )
+    {
+        double x = -180.0 + EPS;
+        double y = aoPoints[i].y;
+        poRevCT->Transform(1, &x, &y);
+        poLR2->addPoint( x, y );
+    }
+    if( bHasLines )
+    {
+        double x = -180.0 + EPS;
+        double y = aoPoints[aoPoints.size()-1].y+EPS;
+        poRevCT->Transform(1, &x, &y);
+        poLR2->addPoint( x, y );
+    }
+    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MaxY );
+    poLR2->addPoint( sEnvelope.MaxX, sEnvelope.MinY );
+    OGRPolygon* poPoly2 = new OGRPolygon();
+    poPoly2->addRingDirectly( poLR2 );
+
+    OGRMultiPolygon oMP;
+    oMP.addGeometryDirectly(poPoly1);
+    oMP.addGeometryDirectly(poPoly2);
+
+#if DEBUG_VERBOSE
+    char* pszWKT = NULL;
+    oMP.exportToWkt(&pszWKT);
+    CPLDebug("OGR", "MP without antimeridian: %s", pszWKT);
+    CPLFree(pszWKT);
+#endif
+
+    // Get the geometry without the antimeridian
+    OGRGeometry* poInter = poDstGeom->Intersection(&oMP);
+    if( poInter != NULL )
+    {
+        delete poDstGeom;
+        poDstGeom = poInter;
+    }
+
+    bNeedPostCorrectionOut = true;
+    return poDstGeom;
+}
+
+/************************************************************************/
+/*                 SnapCoordsCloseToLatLongBounds()                     */
+/*                                                                      */
+/* This function snaps points really close to the antimerdian or poles  */
+/* to their exact longitudes/latitudes.                                 */
+/************************************************************************/
+
+static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
+{
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    switch(eType)
+    {
+        case wkbLineString:
+        {
+            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            const double EPS = 1e-8;
+            for(int i=0;i<poLS->getNumPoints();i++)
+            {
+                OGRPoint p;
+                poLS->getPoint(i, &p);
+                if( fabs( p.getX() - 180.0 ) < EPS )
+                {
+                    p.setX(180.0);
+                    poLS->setPoint(i, &p);
+                }
+                else if( fabs( p.getX() - -180.0 ) < EPS )
+                {
+                    p.setX(-180.0);
+                    poLS->setPoint(i, &p);
+                }
+
+                if( fabs( p.getY() - 90.0 ) < EPS )
+                {
+                    p.setY(90.0);
+                    poLS->setPoint(i, &p);
+                }
+                else if( fabs( p.getY() - -90.0 ) < EPS )
+                {
+                    p.setY(-90.0);
+                    poLS->setPoint(i, &p);
+                }
+            }
+            break;
+        }
+
+        case wkbPolygon:
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            if( poPoly->getExteriorRing() != NULL )
+            {
+                SnapCoordsCloseToLatLongBounds(poPoly->getExteriorRing());
+                for( int i=0; i<poPoly->getNumInteriorRings(); ++i )
+                {
+                    SnapCoordsCloseToLatLongBounds(poPoly->getInteriorRing(i));
+                }
+            }
+            break;
+        }
+
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            OGRGeometryCollection* poGC =
+                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            for( int i=0; i<poGC->getNumGeometries(); ++i )
+            {
+                SnapCoordsCloseToLatLongBounds(poGC->getGeometryRef(i));
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+#endif
+
 /************************************************************************/
 /*                       transformWithOptions()                         */
 /************************************************************************/
@@ -2720,52 +3456,117 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
     OGRGeometry* poDstGeom = poSrcGeom->clone();
     if( poCT != NULL )
     {
+#ifdef HAVE_GEOS
+        bool bNeedPostCorrection = false;
+
+        if( poCT->GetSourceCS() != NULL &&
+            poCT->GetTargetCS() != NULL )
+        {
+            OGRSpatialReference oSRSWGS84;
+            oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
+            if( poCT->GetTargetCS()->IsSame(&oSRSWGS84) )
+            {
+                OGRCoordinateTransformation* poRevCT =
+                    OGRCreateCoordinateTransformation( &oSRSWGS84,
+                                                       poCT->GetSourceCS() );
+                if( poRevCT != NULL )
+                {
+                    bool bIsNorthPolar = false;
+                    if( IsPolarToWGS84(poCT, poRevCT, bIsNorthPolar) )
+                    {
+                        poDstGeom = TransformBeforePolarToWGS84(
+                                        poRevCT, bIsNorthPolar, poDstGeom,
+                                        bNeedPostCorrection);
+                    }
+                    else if( IsAntimeridianProjToWGS84(poCT, poRevCT,
+                                                       poDstGeom) )
+                    {
+                        poDstGeom = TransformBeforeAntimeridianToWGS84(
+                                        poCT, poRevCT, poDstGeom,
+                                        bNeedPostCorrection);
+                    }
+
+                    delete poRevCT;
+                }
+            }
+        }
+#endif
         OGRErr eErr = poDstGeom->transform(poCT);
         if( eErr != OGRERR_NONE )
         {
             delete poDstGeom;
             return NULL;
         }
+#ifdef HAVE_GEOS
+        if( bNeedPostCorrection )
+        {
+            SnapCoordsCloseToLatLongBounds(poDstGeom);
+        }
+#endif
     }
 
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "NO")) )
     {
         const OGRwkbGeometryType eType =
-            wkbFlatten(poSrcGeom->getGeometryType());
-        OGRwkbGeometryType eNewType;
-        if( eType == wkbPolygon || eType == wkbMultiPolygon )
-            eNewType = wkbMultiPolygon;
-        else if( eType == wkbLineString || eType == wkbMultiLineString )
-            eNewType = wkbMultiLineString;
-        else
-            eNewType = wkbGeometryCollection;
-
-        OGRGeometryCollection* poMulti =
-            (OGRGeometryCollection* )createGeometry(eNewType);
-
-        double dfDateLineOffset =
-            CPLAtofM(CSLFetchNameValueDef(papszOptions,
-                                          "DATELINEOFFSET", "10"));
-        if( dfDateLineOffset <= 0.0 || dfDateLineOffset >= 360.0 )
-            dfDateLineOffset = 10.0;
-
-        CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom,
-                                           dfDateLineOffset);
-
-        if( poMulti->getNumGeometries() == 0 )
+            wkbFlatten(poDstGeom->getGeometryType());
+        if( eType == wkbPoint )
         {
-            delete poMulti;
-        }
-        else if( poMulti->getNumGeometries() == 1 )
-        {
-            delete poDstGeom;
-            poDstGeom = poMulti->getGeometryRef(0)->clone();
-            delete poMulti;
+            OGRPoint* poDstPoint = reinterpret_cast<OGRPoint*>(poDstGeom);
+            if( poDstPoint->getX() > 180 )
+            {
+                poDstPoint->setX(fmod(poDstPoint->getX() + 180, 360) - 180);
+            }
+            else if( poDstPoint->getX() < -180 )
+            {
+                poDstPoint->setX(-(fmod(-poDstPoint->getX() + 180, 360) - 180));
+            }
         }
         else
         {
-            delete poDstGeom;
-            poDstGeom = poMulti;
+            OGREnvelope sEnvelope;
+            poDstGeom->getEnvelope(&sEnvelope);
+            if( sEnvelope.MinX >= -360.0 && sEnvelope.MaxX <= -180.0 )
+                AddOffsetToLon( poDstGeom, 360.0 );
+            else if( sEnvelope.MinX >= 180.0 && sEnvelope.MaxX <= 360.0 )
+                AddOffsetToLon( poDstGeom, -360.0 );
+            else
+            {
+                OGRwkbGeometryType eNewType;
+                if( eType == wkbPolygon || eType == wkbMultiPolygon )
+                    eNewType = wkbMultiPolygon;
+                else if( eType == wkbLineString || eType == wkbMultiLineString )
+                    eNewType = wkbMultiLineString;
+                else
+                    eNewType = wkbGeometryCollection;
+
+                OGRGeometryCollection* poMulti =
+                    (OGRGeometryCollection* )createGeometry(eNewType);
+
+                double dfDateLineOffset =
+                    CPLAtofM(CSLFetchNameValueDef(papszOptions,
+                                                "DATELINEOFFSET", "10"));
+                if( dfDateLineOffset <= 0.0 || dfDateLineOffset >= 360.0 )
+                    dfDateLineOffset = 10.0;
+
+                CutGeometryOnDateLineAndAddToMulti(poMulti, poDstGeom,
+                                                dfDateLineOffset);
+
+                if( poMulti->getNumGeometries() == 0 )
+                {
+                    delete poMulti;
+                }
+                else if( poMulti->getNumGeometries() == 1 )
+                {
+                    delete poDstGeom;
+                    poDstGeom = poMulti->getGeometryRef(0)->clone();
+                    delete poMulti;
+                }
+                else
+                {
+                    delete poDstGeom;
+                    poDstGeom = poMulti;
+                }
+            }
         }
     }
 
