@@ -28,7 +28,8 @@ PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_SDE_DIR) \
 			$(PLUGIN_INGRESDIR) \
 			$(PLUGIN_LIBKMLDIR) \
-            $(PLUGIN_MONGODBDIR)
+			$(PLUGIN_MONGODBDIR) \
+			$(PLUGIN_MSSPATIALDIR)
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -38,6 +39,10 @@ OGDIOBJ =	ogdi\*.obj
 !IFDEF ODBC_SUPPORTED
 ODBCDIR	=	odbc pgeo mssqlspatial geomedia db2 walk
 ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj db2\*.obj walk\*.obj
+!ENDIF
+
+!IFDEF SQLNCLI_LIB
+PLUGIN_MSSPATIALDIR = mssqlspatial
 !ENDIF
 
 !IFDEF SQLITE_LIB

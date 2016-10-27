@@ -1,28 +1,42 @@
+OBJ = \
+	.\ogrmssqlgeometryparser.obj \
+	.\ogrmssqlgeometryvalidator.obj \
+	.\ogrmssqlgeometrywriter.obj \
+	.\ogrmssqlspatialdatasource.obj \
+	.\ogrmssqlspatialdriver.obj \
+	.\ogrmssqlspatiallayer.obj \
+	.\ogrmssqlspatialselectlayer.obj \
+	.\ogrmssqlspatialtablelayer.obj
 
-OBJ	=	ogrmssqlspatialdriver.obj ogrmssqlspatialdatasource.obj ogrmssqlspatiallayer.obj ogrmssqlspatialtablelayer.obj ogrmssqlspatialselectlayer.obj ogrmssqlgeometryparser.obj ogrmssqlgeometryvalidator.obj ogrmssqlgeometrywriter.obj
+PLUGINOBJ = $(OBJ:.\=plugin\)
 
-PLUGIN_DLL = ogr_MSSQLSpatial.dll
+PLUGIN_DLL	= ogr_MSSQLSpatial.dll
 
-GDAL_ROOT	=	..\..\..
+GDAL_ROOT	= ..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
-EXTRAFLAGS = -I.. -I..\.. $(SQLNCLI_INCLUDE)
+EXTRAFLAGS	= -I.. -I..\.. $(SQLNCLI_INCLUDE)
 
-default:	$(OBJ)
+default: $(OBJ)
+
+{.}.cpp{plugin\}.obj:
+	-mkdir plugin
+	$(CPP) $(CPPFLAGS) /DMSSQL_BCP_SUPPORTED=1 /Fo$@ /c $<
 
 plugin: $(PLUGIN_DLL)
 
-$(PLUGIN_DLL):	$(OBJ)
-	link /dll /out:$(PLUGIN_DLL) $(OBJ) $(GDALLIB) $(ODBCLIB) $(SQLNCLI_LIB) $(LDEBUG)
+$(PLUGIN_DLL):	$(PLUGINOBJ)
+	link /dll /out:$(PLUGIN_DLL) $(PLUGINOBJ) $(GDALLIB) $(ODBCLIB) $(SQLNCLI_LIB) $(LDEBUG)
 	if exist $(PLUGIN_DLL).manifest mt -manifest $(PLUGIN_DLL).manifest -outputresource:$(PLUGIN_DLL);2
 
 clean:
-    -del *.lib
+	-del *.lib
 	-del *.obj *.pdb *.exp
-    -del *.exe
+	-del *.exe
 	-del *.dll
 	-del *.manifest
+	-del plugin\*.obj
 
 plugin-install:
 	-mkdir $(PLUGINDIR)
