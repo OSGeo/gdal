@@ -315,6 +315,7 @@ class GMLASConfiguration
         static const bool WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT;
         static const int  MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH = 10;
         static const bool CASE_INSENSITIVE_IDENTIFIER_DEFAULT;
+        static const bool PG_IDENTIFIER_LAUNDERING_DEFAULT;
 
         /** Whether remote schemas are allowed to be download. */
         bool            m_bAllowRemoteSchemaDownload;
@@ -349,6 +350,9 @@ class GMLASConfiguration
 
         /** Whether case insensitive comparison should be used for identifier equality testing */
         bool            m_bCaseInsensitiveIdentifier;
+
+        /** Whether to launder identifiers like postgresql does */
+        bool            m_bPGIdentifierLaundering;
 
         /** Whether remote XSD schemas should be locally cached. */
         bool            m_bAllowXSDCache;
@@ -780,6 +784,9 @@ class GMLASSchemaAnalyzer
         /** Whether case insensitive comparison should be used for identifier equality testing */
         bool            m_bCaseInsensitiveIdentifier;
 
+        /** Whether to launder identifiers like postgresql does */
+        bool            m_bPGIdentifierLaundering;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         XSModelGroupDefinition* GetGroupDefinition( const XSModelGroup* poModelGroup );
@@ -859,6 +866,8 @@ class GMLASSchemaAnalyzer
                                     { m_nIdentifierMaxLength = nLength; }
         void SetCaseInsensitiveIdentifier(bool b)
                                     { m_bCaseInsensitiveIdentifier = b; }
+        void SetPGIdentifierLaundering(bool b)
+                                    { m_bPGIdentifierLaundering = b; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,

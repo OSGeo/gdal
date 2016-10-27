@@ -27,6 +27,9 @@
              case insensitive way. This is important for conversion to
              Postgres when identifiers are laundered in lower case -->
         <CaseInsensitiveIdentifier>true</CaseInsensitiveIdentifier>
+        <!-- Launder identifiers like the OGR PG driver does.
+             Note: this laundering is safe for other backends as well. -->
+        <PostgreSQLIdentifierLaundering>true</PostgreSQLIdentifierLaundering>
     </LayerBuildingRules>
 
     <XLinkResolution>
