@@ -142,12 +142,12 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
         (nLength = json_object_array_length(poJSonArray)) ==
                             json_object_array_length(poNativeArray) )
     {
-        for( int i=0; i < nLength; i++ )
+        if( nLength > 0 )
         {
             json_object* poJSonChild =
-                json_object_array_get_idx(poJSonArray, i);
+                json_object_array_get_idx(poJSonArray, 0);
             json_object* poNativeChild =
-                json_object_array_get_idx(poNativeArray, i);
+                json_object_array_get_idx(poNativeArray, 0);
             if( !OGRGeoJSONIsPatchableArray(poJSonChild, poNativeChild,
                                             nDepth - 1) )
             {
@@ -155,7 +155,6 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
             }
             // Light check as a former extensive check was done in
             // OGRGeoJSONComputePatchableOrCompatibleArray
-            return true;
         }
         return true;
     }
