@@ -48,6 +48,8 @@
 #include "hdf5dataset.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
