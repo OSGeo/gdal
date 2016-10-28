@@ -238,7 +238,8 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDSIn, int nBandIn,
             atoi( CPLGetConfigOption("HDF4_BLOCK_PIXELS", "1000000") );
 
         nBlockYSize = nChunkSize / poDSIn->GetRasterXSize();
-        nBlockYSize = MAX(1,MIN(nBlockYSize,poDSIn->GetRasterYSize()));
+        nBlockYSize =
+            std::max(1, std::min(nBlockYSize, poDSIn->GetRasterYSize()));
     }
     else
     {
@@ -299,7 +300,8 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Work out some block oriented details.                           */
 /* -------------------------------------------------------------------- */
     const int nYOff = nBlockYOff * nBlockYSize;
-    const int nYSize = MIN(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
+    const int nYSize =
+        std::min(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
 
 /* -------------------------------------------------------------------- */
 /*      HDF files with external data files, such as some landsat        */
@@ -573,7 +575,8 @@ CPLErr HDF4ImageRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /*      Work out some block oriented details.                           */
 /* -------------------------------------------------------------------- */
     const int nYOff = nBlockYOff * nBlockYSize;
-    const int nYSize = MIN(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
+    const int nYSize =
+        std::min(nYOff + nBlockYSize, poDS->GetRasterYSize()) - nYOff;
 
 /* -------------------------------------------------------------------- */
 /*      Process based on rank.                                          */
@@ -2453,8 +2456,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     else
     {
         // Aim for 10x10 grid or so.
-        iGCPStepX = std::max( static_cast<int32>(1), ((nXPoints-1) / 11) );
-        iGCPStepY = std::max( static_cast<int32>(1), ((nYPoints-1) / 11) );
+        iGCPStepX = std::max(static_cast<int32>(1), ((nXPoints - 1) / 11));
+        iGCPStepY = std::max(static_cast<int32>(1), ((nYPoints - 1) / 11));
     }
 
 /* -------------------------------------------------------------------- */
