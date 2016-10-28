@@ -12780,12 +12780,15 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
+            const short divisor = 256;
             const GDALColorEntry oEntry = {
-                panRed[iColor] / 256,
-                panGreen[iColor] / 256,
-                panBlue[iColor] / 256,
+                panRed[iColor] / divisor,
+                panGreen[iColor] / divisor,
+                panBlue[iColor] / divisor,
                 bNoDataSet &&
-                static_cast<int>(dfNoDataValue) == iColor ? 0 : 255
+                static_cast<int>(dfNoDataValue) == iColor
+                ? static_cast<short>(0)
+                : static_cast<short>(255)
             };
 
             poColorTable->SetColorEntry( iColor, &oEntry );
@@ -12811,7 +12814,9 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                     panGreen[iColor],
                     panBlue[iColor],
                     bNoDataSet &&
-                    static_cast<int>(dfNoDataValue) == iColor ? 0 : 255
+                    static_cast<int>(dfNoDataValue) == iColor
+                    ? static_cast<short>(0)
+                    : static_cast<short>(255)
                 };
 
                 poColorTable->SetColorEntry( iColor, &oEntry );
