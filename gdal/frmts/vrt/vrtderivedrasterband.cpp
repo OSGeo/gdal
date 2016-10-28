@@ -468,10 +468,10 @@ static bool LoadPythonAPI()
     EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
                         &nSizeNeeded);
 
-    const int nModules =
+    const size_t nModules =
         std::min(size_t(100),
                  static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
-    for(int i=0;i<nModules;i++)
+    for( size_t i = 0; i < nModules; i++ )
     {
         if( GetProcAddress(ahModules[i], "Py_SetProgramName") )
         {
