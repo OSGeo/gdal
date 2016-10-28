@@ -38,6 +38,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 using namespace crnlib;
@@ -281,10 +283,11 @@ DDSDataset::CreateCopy(const char * pszFilename, GDALDataset *poSrcDS,
             crn_uint32 *pDst_pixels = pixels;
             for (uint y = 0; y < cDXTBlockSize; y++)
             {
-                const uint actual_y = MIN(cDXTBlockSize - 1U, y);
+                const uint actual_y = std::min(cDXTBlockSize - 1U, y);
                 for (uint x = 0; x < cDXTBlockSize; x++)
                 {
-                    const uint actual_x = MIN(nXSize - 1U, (block_x * cDXTBlockSize) + x);
+                    const uint actual_x =
+                        std::min(nXSize - 1U, (block_x * cDXTBlockSize) + x);
                     *pDst_pixels++ = pSrc_image[actual_x + actual_y * nXSize];
                 }
             }
