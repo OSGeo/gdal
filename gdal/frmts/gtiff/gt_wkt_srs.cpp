@@ -45,6 +45,7 @@
 #include "xtiffio.h"
 
 #include <cmath>
+#include <algorithm>
 
 #if HAVE_CXX11
 #include <mutex>
@@ -856,7 +857,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         double adfParm[10] = { 0.0 };
         int i = 0;  // Used after for.
 
-        for( ; i < MIN(10, psDefn->nParms); i++ )
+        for( ; i < std::min(10, psDefn->nParms); i++ )
             adfParm[i] = psDefn->ProjParm[i];
 
         for( ; i < 10; i++ )

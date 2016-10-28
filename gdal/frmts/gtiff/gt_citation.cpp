@@ -35,6 +35,8 @@
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const char * const apszUnitMap[] = {
@@ -110,15 +112,15 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             p1 = p + strlen(p);
             char *p2 = strchr(p, '\n');
             if( p2 )
-                p1 = MIN(p1, p2);
+                p1 = std::min(p1, p2);
             p2 = strchr(p, '\0');
             if( p2 )
-                p1 = MIN(p1, p2);
+                p1 = std::min(p1, p2);
             for( int i = 0; keyNames[i] != NULL; i++ )
             {
                 p2 = strstr(p, keyNames[i]);
                 if(p2)
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
             }
         }
 
@@ -181,15 +183,15 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 p1 = p + strlen(p);
                 char *p2 = strchr(p, '\n');
                 if( p2 )
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
                 p2 = strchr(p, '\0');
                 if( p2 )
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
                 for( int j = 0; keyNames[j] != NULL; j++ )
                 {
                     p2 = strstr(p, keyNames[j]);
                     if( p2 )
-                        p1 = MIN(p1, p2);
+                        p1 = std::min(p1, p2);
                 }
             }
             if( p && p1 && p1>p )

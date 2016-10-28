@@ -36,6 +36,8 @@
 #define tmsize_t tsize_t
 #endif
 
+#include <algorithm>
+
 // Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly
 // useful for debugging purposes.
 
@@ -608,8 +610,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
     int nJPEGHeight = nBlockYSize;
     if( !bIsTiled )
     {
-        nJPEGWidth = MIN(nBlockXSize, nXSize - iX * nBlockXSize);
-        nJPEGHeight = MIN(nBlockYSize, nYSize - iY * nBlockYSize);
+        nJPEGWidth = std::min(nBlockXSize, nXSize - iX * nBlockXSize);
+        nJPEGHeight = std::min(nBlockYSize, nYSize - iY * nBlockYSize);
     }
 
     // Code partially derived from libjpeg transupp.c.
@@ -828,8 +830,9 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     {
         // If the user doesn't provide a value for JPEGMEM, be sure that at
         // least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         sDInfo.mem->max_memory_to_use =
-                MAX(sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(sDInfo.mem->max_memory_to_use, nMinMemory);
     }
 
     jpeg_vsiio_src( &sDInfo, fpJPEG );

@@ -860,7 +860,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             papoOverviews[0] = hDstBand;
             int nDstOverviews = hDstBand->GetOverviewCount() + 1;
             CPLAssert( nDstOverviews < knMaxOverviews );
-            nDstOverviews = MIN(knMaxOverviews, nDstOverviews);
+            nDstOverviews = std::min(knMaxOverviews, nDstOverviews);
 
             // TODO(schwehr): Convert to starting with i = 1 and remove +1.
             for( int i = 0; i < nDstOverviews-1 && eErr == CE_None; i++ )
