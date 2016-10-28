@@ -987,8 +987,8 @@ cellsize     0
 
     ds = gdal.GetDriverByName('MEM').Create('', 1000000, 1)
     ds.GetRasterBand(1).WriteRaster(ds.RasterXSize-1,0,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize = ds.RasterXSize/2, buf_ysize = 1, resample_alg = gdal.GRIORA_Average)
-    data = struct.unpack('B' * (ds.RasterXSize/2), data)
+    data = ds.ReadRaster(buf_xsize = int(ds.RasterXSize/2), buf_ysize = 1, resample_alg = gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterXSize/2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])
@@ -1003,8 +1003,8 @@ cellsize     0
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1000000)
     ds.GetRasterBand(1).WriteRaster(0,ds.RasterYSize-1,1,1,struct.pack('B' * 1, 100))
-    data = ds.ReadRaster(buf_xsize = 1, buf_ysize = ds.RasterYSize/2, resample_alg = gdal.GRIORA_Average)
-    data = struct.unpack('B' * (ds.RasterYSize/2), data)
+    data = ds.ReadRaster(buf_xsize = 1, buf_ysize = int(ds.RasterYSize/2), resample_alg = gdal.GRIORA_Average)
+    data = struct.unpack('B' * int(ds.RasterYSize/2), data)
     if data[-1:][0] != 50:
         gdaltest.post_reason('fail')
         print(data[-1:][0])
