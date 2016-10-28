@@ -556,6 +556,7 @@ def stats_byte_partial_tiles():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     # Non optimized code path
@@ -568,6 +569,7 @@ def stats_byte_partial_tiles():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5)
@@ -583,6 +585,7 @@ def stats_byte_partial_tiles():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 32+2, 2)
@@ -595,6 +598,7 @@ def stats_byte_partial_tiles():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 32+2, 2)
@@ -608,6 +612,7 @@ def stats_byte_partial_tiles():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     return 'success'
@@ -676,6 +681,7 @@ def stats_uint16():
             gdaltest.post_reason('did not get expected stats')
             print(stats)
             print(fill_val)
+            print(expected_stats)
             return 'fail'
 
     # Test remaining pixels after multiple of 32
@@ -689,6 +695,7 @@ def stats_uint16():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     # Non optimized code path
@@ -703,6 +710,7 @@ def stats_uint16():
             gdaltest.post_reason('did not get expected stats')
             print(stats)
             print(fill_val)
+            print(expected_stats)
             return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 3, 5, 1, gdal.GDT_UInt16)
@@ -718,6 +726,7 @@ def stats_uint16():
     if max([abs(stats[i] - expected_stats[i]) for i in range(4)]) > 1e-15:
         gdaltest.post_reason('did not get expected stats')
         print(stats)
+        print(expected_stats)
         return 'fail'
 
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_UInt16)
