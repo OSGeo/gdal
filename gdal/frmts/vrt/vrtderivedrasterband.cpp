@@ -42,6 +42,7 @@
   #endif
 #endif
 
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <utility>
