@@ -40,6 +40,8 @@
 
 #include <cmath>
 
+#include <algorithm>
+
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
 
@@ -1689,8 +1691,10 @@ int GDALPDFWriter::WriteImagery(GDALDataset* poDS,
     {
         for(nBlockXOff = 0; nBlockXOff < nXBlocks; nBlockXOff ++)
         {
-            int nReqWidth = MIN(nBlockXSize, nWidth - nBlockXOff * nBlockXSize);
-            int nReqHeight = MIN(nBlockYSize, nHeight - nBlockYOff * nBlockYSize);
+            const int nReqWidth =
+                std::min(nBlockXSize, nWidth - nBlockXOff * nBlockXSize);
+            const int nReqHeight =
+                std::min(nBlockYSize, nHeight - nBlockYOff * nBlockYSize);
             int iImage = nBlockYOff * nXBlocks + nBlockXOff;
 
             void* pScaledData = GDALCreateScaledProgress( iImage / (double)nBlocks,
@@ -1802,8 +1806,10 @@ int GDALPDFWriter::WriteClippedImagery(
     {
         for(nBlockXOff = 0; nBlockXOff < nXBlocks; nBlockXOff ++)
         {
-            int nReqWidth = MIN(nBlockXSize, nWidth - nBlockXOff * nBlockXSize);
-            int nReqHeight = MIN(nBlockYSize, nHeight - nBlockYOff * nBlockYSize);
+            int nReqWidth =
+                std::min(nBlockXSize, nWidth - nBlockXOff * nBlockXSize);
+            int nReqHeight =
+                std::min(nBlockYSize, nHeight - nBlockYOff * nBlockYSize);
             int iImage = nBlockYOff * nXBlocks + nBlockXOff;
 
             void* pScaledData = GDALCreateScaledProgress( iImage / (double)nBlocks,
@@ -1826,11 +1832,15 @@ int GDALPDFWriter::WriteClippedImagery(
                 dfBlockMaxY = dfTmp;
             }
 
-            /* Clip the extent of the block with the extent of the main raster */
-            double dfIntersectMinX = MAX(dfBlockMinX, dfClippingMinX);
-            double dfIntersectMinY = MAX(dfBlockMinY, dfClippingMinY);
-            double dfIntersectMaxX = MIN(dfBlockMaxX, dfClippingMaxX);
-            double dfIntersectMaxY = MIN(dfBlockMaxY, dfClippingMaxY);
+            // Clip the extent of the block with the extent of the main raster.
+            const double dfIntersectMinX =
+                std::max(dfBlockMinX, dfClippingMinX);
+            const double dfIntersectMinY =
+                std::max(dfBlockMinY, dfClippingMinY);
+            const double dfIntersectMaxX =
+                std::min(dfBlockMaxX, dfClippingMaxX);
+            const double dfIntersectMaxY =
+                std::min(dfBlockMaxY, dfClippingMaxY);
 
             if( dfIntersectMinX < dfIntersectMaxX &&
                 dfIntersectMinY < dfIntersectMaxY )

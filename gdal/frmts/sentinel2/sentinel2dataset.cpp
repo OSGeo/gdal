@@ -35,8 +35,10 @@
 #include "ogr_geometry.h"
 #include "gdaljp2metadata.h"
 #include "../vrt/vrtdataset.h"
-#include <set>
+
+#include <algorithm>
 #include <map>
+#include <set>
 #include <vector>
 
 #ifdef HAVE_UNISTD_H
@@ -760,8 +762,9 @@ static bool SENTINEL2GetGranuleList(CPLXMLNode* psMainMTD,
                                            sizeof(szPointerFilename)));
     if (nBytes != -1)
     {
-        szPointerFilename[MIN(nBytes,
-                            static_cast<int>(sizeof(szPointerFilename)-1))] = 0;
+        const int nOffset =
+            std::min(nBytes, static_cast<int>(sizeof(szPointerFilename)-1));
+        szPointerFilename[nOffset] = '\0';
         osDirname = CPLGetDirname(szPointerFilename);
     }
 #endif

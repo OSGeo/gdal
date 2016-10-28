@@ -48,6 +48,8 @@
 #endif // HAVE_POPPLER
 
 #include "pdfcreatecopy.h"
+
+#include <algorithm>
 #include <set>
 
 #define GDAL_DEFAULT_DPI 150.0
@@ -588,8 +590,8 @@ PDFRasterBand::PDFRasterBand( PDFDataset *poDSIn, int nBandIn,
     }
     else
     {
-        nBlockXSize = MIN(1024, poDSIn->GetRasterXSize());
-        nBlockYSize = MIN(1024, poDSIn->GetRasterYSize());
+        nBlockXSize = std::min(1024, poDSIn->GetRasterXSize());
+        nBlockYSize = std::min(1024, poDSIn->GetRasterYSize());
         poDSIn->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 }
@@ -899,9 +901,13 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         poGDS->bTried = TRUE;
         if( nBlockYSize == 1 )
-            poGDS->pabyCachedData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nRasterXSize, nRasterYSize);
+            poGDS->pabyCachedData = static_cast<GByte *>(
+                VSIMalloc3(std::max(3, poGDS->nBands),
+                           nRasterXSize, nRasterYSize));
         else
-            poGDS->pabyCachedData = (GByte*)VSIMalloc3(MAX(3, poGDS->nBands), nBlockXSize, nBlockYSize);
+          poGDS->pabyCachedData = static_cast<GByte *>(
+              VSIMalloc3(std::max(3, poGDS->nBands),
+                         nBlockXSize, nBlockYSize));
     }
     if (poGDS->pabyCachedData == NULL)
         return CE_Failure;
@@ -6397,10 +6403,14 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     // If the non scaling terms of the geotransform are significantly smaller
     // than the pixel size, then nullify them as being just artifacts of
     //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
-    double dfPixelSize = MIN(fabs(adfGeoTransform[1]), fabs(adfGeoTransform[5]));
-    double dfRotationShearTerm = MAX(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4]));
-    if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
-        (bUseLib.test(PDFLIB_PDFIUM) && MIN(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4])) < 1e-5 * dfPixelSize))
+    const double dfPixelSize =
+        std::min(fabs(adfGeoTransform[1]), fabs(adfGeoTransform[5]));
+    const double dfRotationShearTerm =
+        std::max(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4]));
+    if( dfRotationShearTerm < 1e-5 * dfPixelSize ||
+        (bUseLib.test(PDFLIB_PDFIUM) &&
+         std::min(fabs(adfGeoTransform[2]),
+                  fabs(adfGeoTransform[4])) < 1e-5 * dfPixelSize) )
     {
         dfLRX = adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1] + nRasterYSize * adfGeoTransform[2];
         dfLRY = adfGeoTransform[3] + nRasterXSize * adfGeoTransform[4] + nRasterYSize * adfGeoTransform[5];
