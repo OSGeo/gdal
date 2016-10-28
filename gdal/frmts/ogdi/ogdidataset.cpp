@@ -35,6 +35,8 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -403,7 +405,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                                 / sWin.ns_res);
 
         sWin.south = sWin.north - nWinYSize * sWin.ns_res;
-        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+        dfNSTolerance = std::max(poODS->sCurrentBounds.ns_res, sWin.ns_res);
     }
     else if( nBufYSize == 1 )
     {
@@ -413,7 +415,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                                 / sWin.ns_res);
 
         sWin.south = sWin.north - nWinYSize * sWin.ns_res;
-        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+        dfNSTolerance = std::max(poODS->sCurrentBounds.ns_res, sWin.ns_res);
     }
     else
     {

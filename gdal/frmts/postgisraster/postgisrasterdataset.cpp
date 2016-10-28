@@ -38,6 +38,8 @@
 #include "postgisraster.h"
 #include <math.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #ifdef _WIN32
@@ -1450,7 +1452,7 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
 
     else if (resolutionStrategy == HIGHEST_RESOLUTION)  {
         adfGeoTransform[GEOTRSFRM_WE_RES] =
-            MIN(adfGeoTransform[GEOTRSFRM_WE_RES],
+            std::min(adfGeoTransform[GEOTRSFRM_WE_RES],
                 tilePixelSizeX);
 
         /**
@@ -1468,26 +1470,26 @@ void PostGISRasterDataset::UpdateGlobalResolutionWithTileResolution(
             **/
         if (tilePixelSizeY < 0.0)
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MAX(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::max(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
         else
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MIN(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::min(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
     }
 
     else if (resolutionStrategy == LOWEST_RESOLUTION) {
         adfGeoTransform[GEOTRSFRM_WE_RES] =
-            MAX(adfGeoTransform[GEOTRSFRM_WE_RES],
+            std::max(adfGeoTransform[GEOTRSFRM_WE_RES],
                 tilePixelSizeX);
 
         if (tilePixelSizeY < 0.0)
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MIN(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::min(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
         else
             adfGeoTransform[GEOTRSFRM_NS_RES] =
-                MAX(adfGeoTransform[GEOTRSFRM_NS_RES],
+                std::max(adfGeoTransform[GEOTRSFRM_NS_RES],
                 tilePixelSizeY);
     }
 }

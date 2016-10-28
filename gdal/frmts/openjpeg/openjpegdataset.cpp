@@ -55,6 +55,8 @@
 #include "gdaljp2metadata.h"
 #include "vrt/vrtdataset.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -557,7 +559,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
 
         if( nBlocksToLoad > 1 )
         {
-            int l_nThreads = MIN(nBlocksToLoad, nMaxThreads);
+            const int l_nThreads = std::min(nBlocksToLoad, nMaxThreads);
             CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), l_nThreads );
             if( pahThreads == NULL )
             {
@@ -719,8 +721,10 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
     int nDataTypeSize = (GDALGetDataTypeSize(eDataType) / 8);
 
     int nTileNumber = nBlockXOff + nBlockYOff * poBand->nBlocksPerRow;
-    int nWidthToRead = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
-    int nHeightToRead = MIN(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
+    const int nWidthToRead =
+        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nHeightToRead =
+        std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
     pCodec = opj_create_decompress(OPJ_CODEC_J2K);
     if( pCodec == NULL )
@@ -2311,7 +2315,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
                  "or QUALITY != 100 will likely lead to bad visual results");
     }
 
-    int nMaxTileDim = MAX(nBlockXSize, nBlockYSize);
+    const int nMaxTileDim = std::max(nBlockXSize, nBlockYSize);
     int nNumResolutions = 1;
     /* Pickup a reasonable value compatible with PROFILE_1 requirements */
     while( (nMaxTileDim >> (nNumResolutions-1)) > 128 )
@@ -2984,7 +2988,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         if (poCT != NULL)
         {
             pclrBox.SetType("pclr");
-            int nEntries = MIN(256, poCT->GetColorEntryCount());
+            const int nEntries = std::min(256, poCT->GetColorEntryCount());
             nCTComponentCount = atoi(CSLFetchNameValueDef(papszOptions, "CT_COMPONENTS", "0"));
             if( bInspireTG )
             {
@@ -3395,8 +3399,10 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         {
             for(nBlockXOff=0;eErr == CE_None && nBlockXOff<nTilesX;nBlockXOff++)
             {
-                int nWidthToRead = MIN(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
-                int nHeightToRead = MIN(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
+                const int nWidthToRead =
+                    std::min(nBlockXSize, nXSize - nBlockXOff * nBlockXSize);
+                const int nHeightToRead =
+                    std::min(nBlockYSize, nYSize - nBlockYOff * nBlockYSize);
                 eErr = poSrcDS->RasterIO(GF_Read,
                                         nBlockXOff * nBlockXSize,
                                         nBlockYOff * nBlockYSize,
