@@ -352,7 +352,8 @@ static bool LoadPythonAPI()
                                       nBufSize ) );
                         if (nBytes != -1)
                         {
-                            szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
+                            szPointerFilename[std::min(nBytes,
+                                                       nBufSize - 1)] = 0;
                             CPLString osFilename(
                                             CPLGetFilename(szPointerFilename));
                             CPLDebug("VRT", "Which is an alias to: %s",
@@ -466,7 +467,7 @@ static bool LoadPythonAPI()
     EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
                         &nSizeNeeded);
 
-    int nModules = MIN(100, nSizeNeeded / sizeof(HMODULE));
+    const int nModules = std::min(100, nSizeNeeded / sizeof(HMODULE));
     for(int i=0;i<nModules;i++)
     {
         if( GetProcAddress(ahModules[i], "Py_SetProgramName") )
@@ -1700,10 +1701,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         nXOffExt = static_cast<int>(sExtraArg.dfXOff);
         nYOffExt = static_cast<int>(sExtraArg.dfYOff);
-        nXSizeExt = MIN(static_cast<int>(sExtraArg.dfXSize + 0.5),
-                        nRasterXSize - nXOffExt);
-        nYSizeExt = MIN(static_cast<int>(sExtraArg.dfYSize + 0.5),
-                        nRasterYSize - nYOffExt);
+        nXSizeExt = std::min(static_cast<int>(sExtraArg.dfXSize + 0.5),
+                             nRasterXSize - nXOffExt);
+        nYSizeExt = std::min(static_cast<int>(sExtraArg.dfYSize + 0.5),
+                             nRasterYSize - nYOffExt);
     }
 
     // Load values for sources into packed buffers.
