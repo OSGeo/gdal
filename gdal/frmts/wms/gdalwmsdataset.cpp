@@ -34,6 +34,10 @@
  *
  ***************************************************************************/
 
+// Avoid MS Windows min and max macros.
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+
 #include "wmsdriver.h"
 
 #include "minidriver_wms.h"
