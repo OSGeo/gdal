@@ -236,6 +236,8 @@ template <class T, class Tsum>
 static CPLErr
 GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                double dfYRatioDstToSrc,
+                               double dfSrcXDelta,
+                               double dfSrcYDelta,
                                GDALDataType eWrkDataType,
                                T* pChunk,
                                GByte * pabyChunkNodataMask,
@@ -260,9 +262,6 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         tNoDataValue = 0;
     else
         tNoDataValue = (T)fNoDataValue;
-
-    int nOXSize = poOverview->GetXSize();
-    int nOYSize = poOverview->GetYSize();
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
@@ -325,22 +324,32 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     bool bSrcXSpacingIsTwo = true;
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
     {
-        int nSrcXOff = static_cast<int>(0.5 + iDstPixel * dfXRatioDstToSrc);
+        double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
+        // Apply some epsilon to avoid numerical precision issues
+        int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfXRatioDstToSrc > 1 && dfSrcXOff - nSrcXOff > 0.9 &&
+            nSrcXOff < nChunkRightXOff)
+            nSrcXOff ++;
+#endif
         if( nSrcXOff < nChunkXOff )
             nSrcXOff = nChunkXOff;
 
-        int nSrcXOff2 = static_cast<int>(0.5 + (iDstPixel+1)* dfXRatioDstToSrc);
+        double dfSrcXOff2 = dfSrcXDelta + (iDstPixel+1)* dfXRatioDstToSrc;
+        int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfXRatioDstToSrc > 1 && nSrcXOff2 - dfSrcXOff2 > 0.9 &&
+            nSrcXOff2 > nChunkXOff)
+            nSrcXOff2 --;
+#endif
         if( nSrcXOff2 == nSrcXOff )
             nSrcXOff2 ++;
-
-        if( nSrcXOff2 > nChunkRightXOff ||
-            (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
-        {
-            if( nSrcXOff == nChunkRightXOff &&
-                nChunkRightXOff - 1 >= nChunkXOff )
-                nSrcXOff = nChunkRightXOff - 1;
+        if( nSrcXOff2 > nChunkRightXOff )
             nSrcXOff2 = nChunkRightXOff;
-        }
 
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff)] = nSrcXOff - nChunkXOff;
         panSrcXOffShifted[2 * (iDstPixel - nDstXOff) + 1] =
@@ -357,24 +366,31 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
          iDstLine < nDstYOff2 && eErr == CE_None;
          ++iDstLine )
     {
-        int nSrcYOff = static_cast<int>(0.5 + iDstLine * dfYRatioDstToSrc);
+        double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
+        int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfYRatioDstToSrc > 1 && dfSrcYOff - nSrcYOff > 0.9 &&
+            nSrcYOff < nChunkBottomYOff)
+            nSrcYOff ++;
+#endif
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 = static_cast<int>(0.5 + (iDstLine+1) * dfYRatioDstToSrc);
+        double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
+        int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfYRatioDstToSrc > 1 && nSrcYOff2 - dfSrcYOff2 > 0.9 &&
+            nSrcYOff2 > nChunkYOff)
+            nSrcYOff2 --;
+#endif
         if( nSrcYOff2 == nSrcYOff )
             ++nSrcYOff2;
-
-        if( nSrcYOff2 > nChunkBottomYOff ||
-            (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
-        {
-            if( nSrcYOff == nChunkBottomYOff &&
-                nChunkBottomYOff - 1 >= nChunkYOff )
-                nSrcYOff = nChunkBottomYOff - 1;
+        if( nSrcYOff2 > nChunkBottomYOff )
             nSrcYOff2 = nChunkBottomYOff;
-        }
-        if( nSrcYOff2 <= nSrcYOff )
-            CPLDebug( "GDAL", "nSrcYOff=%d nSrcYOff2=%d", nSrcYOff, nSrcYOff2 );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over destination pixels                                    */
@@ -501,8 +517,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
 static CPLErr
 GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                              double /* dfSrcXDelta */,
-                              double /* dfSrcYDelta */,
+                              double dfSrcXDelta,
+                              double dfSrcYDelta,
                               GDALDataType eWrkDataType,
                               void * pChunk,
                               GByte * pabyChunkNodataMask,
@@ -519,6 +535,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     if( eWrkDataType == GDT_Byte )
         return GDALResampleChunk32R_AverageT<GByte, int>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
+            dfSrcXDelta, dfSrcYDelta,
             eWrkDataType,
             static_cast<GByte *>( pChunk ),
             pabyChunkNodataMask,
@@ -534,6 +551,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
              dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
         return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
+            dfSrcXDelta, dfSrcYDelta,
             eWrkDataType,
             static_cast<GUInt16 *>( pChunk ),
             pabyChunkNodataMask,
@@ -548,6 +566,7 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     else if( eWrkDataType == GDT_Float32 )
         return GDALResampleChunk32R_AverageT<float, double>(
             dfXRatioDstToSrc, dfYRatioDstToSrc,
+            dfSrcXDelta, dfSrcYDelta,
             eWrkDataType,
             static_cast<float *>( pChunk ),
             pabyChunkNodataMask,
