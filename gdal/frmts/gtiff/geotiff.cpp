@@ -12780,11 +12780,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
+            // TODO(schwehr): Ensure the color entries are never negative?
             const short divisor = 256;
             const GDALColorEntry oEntry = {
-                panRed[iColor] / divisor,
-                panGreen[iColor] / divisor,
-                panBlue[iColor] / divisor,
+                static_cast<short>(panRed[iColor]) / divisor,
+                static_cast<short>(panGreen[iColor]) / divisor,
+                static_cast<short>(panBlue[iColor]) / divisor,
                 bNoDataSet &&
                 static_cast<int>(dfNoDataValue) == iColor
                 ? static_cast<short>(0)
@@ -12809,10 +12810,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
             for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
             {
+                // TODO(schwehr): Ensure the color entries are never negative?
                 const GDALColorEntry oEntry = {
-                    panRed[iColor],
-                    panGreen[iColor],
-                    panBlue[iColor],
+                    static_cast<short>(panRed[iColor]),
+                    static_cast<short>(panGreen[iColor]),
+                    static_cast<short>(panBlue[iColor]),
                     bNoDataSet &&
                     static_cast<int>(dfNoDataValue) == iColor
                     ? static_cast<short>(0)
