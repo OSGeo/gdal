@@ -35,7 +35,9 @@
 #include "gdal_frmts.h"
 #include "nitfdataset.h"
 #include "gdal_mdreader.h"
+
 #include <cstdlib>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -3443,7 +3445,9 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
     while( iSegOffset < iSegSize-1 )
     {
-        size_t nReadSize = MIN((size_t)sizeof(abyBlock),(size_t)(iSegSize - iSegOffset));
+        const size_t nReadSize =
+            std::min(sizeof(abyBlock),
+                     static_cast<size_t>(iSegSize - iSegOffset));
 
         if( VSIFSeekL( psFile->fp, panJPEGBlockOffset[0] + iSegOffset,
                        SEEK_SET ) != 0 )
@@ -4918,7 +4922,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
         {
             double dfRate = static_cast<GIntBig>(nFileLen-nImageOffset) * 8
                 / static_cast<double>( nPixelCount );
-            dfRate = MAX(0.01, MIN(99.99, dfRate));
+            dfRate = std::max(0.01, std::min(99.99, dfRate));
 
             // We emit in wxyz format with an implicit decimal place
             // between wx and yz as per spec for lossy compression.
@@ -5323,7 +5327,9 @@ static bool NITFWriteTextSegments( const char *pszFilename,
         bOK &= VSIFSeekL( fpVSIL, 0, SEEK_END ) == 0;
 
         if (pszHeaderBuffer!= NULL) {
-            memcpy( achTSH, pszHeaderBuffer, MIN(strlen(pszHeaderBuffer), sizeof(achTSH)) );
+            memcpy( achTSH,
+                    pszHeaderBuffer,
+                    std::min(strlen(pszHeaderBuffer), sizeof(achTSH)) );
 
             // Take care NITF2.0 date format changes
             const char chTimeZone = achTSH[20];
