@@ -205,7 +205,7 @@ def tiff_ovr_4():
             sum = sum + ord(ovimage[i])
 
     average = sum / pix_count
-    exp_average = 154.8144
+    exp_average = 153.0656
     if abs(average - exp_average) > 0.1:
         print(average)
         gdaltest.post_reason( 'got wrong average for overview image' )
@@ -1582,7 +1582,7 @@ def tiff_ovr_40():
             sum = sum + ord(ovimage[i])
 
     average = sum / pix_count
-    exp_average = 154.8144
+    exp_average = 153.0656
     if abs(average - exp_average) > 0.1:
         print(average)
         gdaltest.post_reason( 'got wrong average for overview image' )
