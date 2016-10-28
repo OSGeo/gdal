@@ -34,6 +34,8 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -724,7 +726,7 @@ CPLErr NITFRasterBand::SetColorTable( GDALColorTable *poNewCT )
     GByte abyNITFLUT[768];
     memset( abyNITFLUT, 0, 768 );
 
-    const int nCount = MIN(256,poNewCT->GetColorEntryCount());
+    const int nCount = std::min(256, poNewCT->GetColorEntryCount());
     for( int i = 0; i < nCount; i++ )
     {
         GDALColorEntry sEntry;
