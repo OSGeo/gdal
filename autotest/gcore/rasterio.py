@@ -1050,6 +1050,37 @@ cellsize     0
 
     return 'success'
 
+###############################################################################
+# Test mode downsampling by a factor of 2 on exact boundaries
+
+def rasterio_16():
+
+    gdal.FileFromMemBuffer('/vsimem/rasterio_16.asc',
+"""ncols        6
+nrows        6
+xllcorner    0
+yllcorner    0
+cellsize     0
+  0   0   0   0   0   0
+  2   100 0   0   0   0
+100   100 0   0   0   0
+  0   100 0   0   0   0
+  0   0   0   0   0   0
+  0   0   0   0   0  0""")
+ 
+    ds = gdal.Translate('/vsimem/rasterio_16_out.asc', '/vsimem/rasterio_16.asc', options = '-of AAIGRID -r mode -outsize 50% 50%')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 15:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(ds.ReadAsArray())
+        return 'fail'
+
+    gdal.Unlink('/vsimem/rasterio_16.asc')
+    gdal.Unlink('/vsimem/rasterio_16_out.asc')
+
+    return 'success'
+
 
 gdaltest_list = [
     rasterio_1,
@@ -1066,10 +1097,11 @@ gdaltest_list = [
     rasterio_12,
     rasterio_13,
     rasterio_14,
-    rasterio_15
+    rasterio_15,
+    rasterio_16
     ]
 
-#gdaltest_list = [ rasterio_15 ]
+#gdaltest_list = [ rasterio_16 ]
 
 if __name__ == '__main__':
 
