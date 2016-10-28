@@ -573,7 +573,7 @@ def misc_12():
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         md = drv.GetMetadata()
-        if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
+        if ('DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md) and 'DCAP_RASTER' in md:
 
             nbands = 1
             if drv.ShortName == 'WEBP' or drv.ShortName == 'ADRG':
