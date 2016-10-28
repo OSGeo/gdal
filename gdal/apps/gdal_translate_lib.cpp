@@ -806,25 +806,32 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     hDriver = GDALGetDriverByName( psOptions->pszFormat );
     if( hDriver == NULL )
     {
-        int iDr;
+        CPLError( CE_Failure, CPLE_IllegalArg, "Output driver `%s' not recognised.",
+                  psOptions->pszFormat);
+        GDALTranslateOptionsFree(psOptions);
+        return NULL;
+    }
 
-        CPLError( CE_Failure, CPLE_IllegalArg, "Output driver `%s' not recognised.", psOptions->pszFormat);
-        CPLError( CE_Failure, CPLE_IllegalArg, "The following format drivers are configured and support output:" );
-        for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
-        {
-            hDriver = GDALGetDriver(iDr);
+    char** papszDriverMD = GDALGetMetadata(hDriver, NULL);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
-                (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
-                 || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
-            {
-                CPLError( CE_Failure, CPLE_IllegalArg, "  %s: %s",
-                        GDALGetDriverShortName( hDriver  ),
-                        GDALGetDriverLongName( hDriver ) );
-            }
-        }
-        if(pbUsageError)
-            *pbUsageError = TRUE;
+    if( !CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                           GDAL_DCAP_RASTER, "FALSE") ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s driver has no raster capabilities.",
+                  psOptions->pszFormat );
+        GDALTranslateOptionsFree(psOptions);
+        return NULL;
+    }
+
+    if( !CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                          GDAL_DCAP_CREATE, "FALSE") ) &&
+        !CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                          GDAL_DCAP_CREATECOPY, "FALSE") ))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s driver has no creation capabilities.",
+                  psOptions->pszFormat );
         GDALTranslateOptionsFree(psOptions);
         return NULL;
     }
