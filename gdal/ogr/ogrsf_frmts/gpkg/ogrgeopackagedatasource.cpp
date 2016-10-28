@@ -653,9 +653,11 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 
         if( CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES")) )
         {
+            // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
                     "SELECT name, name, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_gpkg_table "
                     "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'gpkg_%' "
+                    "AND name NOT LIKE 'vgpkg_%' "
                     "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
                     "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
