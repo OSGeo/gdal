@@ -864,8 +864,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
 static CPLErr
 GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                           double /* dfSrcXDelta */,
-                           double /* dfSrcYDelta */,
+                           double dfSrcXDelta,
+                           double dfSrcYDelta,
                            GDALDataType /* eWrkDataType */,
                            void * pChunk,
                            GByte * pabyChunkNodataMask,
@@ -885,9 +885,6 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
 /*      Create the filter kernel and allocate scanline buffer.          */
 /* -------------------------------------------------------------------- */
-    int nOXSize = poOverview->GetXSize();
-    int nOYSize = poOverview->GetYSize();
-
     float *pafDstScanline = static_cast<float *>(
         VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float)) );
     if( pafDstScanline == NULL )
@@ -923,23 +920,31 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
          iDstLine < nDstYOff2 && eErr == CE_None;
          ++iDstLine )
     {
-        int nSrcYOff = static_cast<int>(0.5 + iDstLine * dfYRatioDstToSrc);
+        double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
+        int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfYRatioDstToSrc > 1 && dfSrcYOff - nSrcYOff > 0.9 &&
+            nSrcYOff < nChunkBottomYOff)
+            nSrcYOff ++;
+#endif
         if( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 =
-            static_cast<int>(0.5 + (iDstLine+1) * dfYRatioDstToSrc);
+        double dfSrcYOff2 = dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc;
+        int nSrcYOff2 = static_cast<int>(ceil(dfSrcYOff2 - 1e-8));
+#ifdef only_pixels_with_more_than_10_pct_participation
+        // When oversampling, don't take into account pixels that have a tiny
+        // participation in the resulting pixel
+        if( dfYRatioDstToSrc > 1 && nSrcYOff2 - dfSrcYOff2 > 0.9 &&
+            nSrcYOff2 > nChunkYOff)
+            nSrcYOff2 --;
+#endif
         if( nSrcYOff2 == nSrcYOff )
-            nSrcYOff2 ++;
-
-        if( nSrcYOff2 > nChunkBottomYOff ||
-            (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
-        {
-            if( nSrcYOff == nChunkBottomYOff &&
-                nChunkBottomYOff - 1 >= nChunkYOff )
-                nSrcYOff = nChunkBottomYOff - 1;
+            ++nSrcYOff2;
+        if( nSrcYOff2 > nChunkBottomYOff )
             nSrcYOff2 = nChunkBottomYOff;
-        }
 
         const float * const pafSrcScanline =
             pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
@@ -953,23 +958,32 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
         for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; ++iDstPixel )
         {
-            int nSrcXOff = static_cast<int>(
-                0.5 + iDstPixel * dfXRatioDstToSrc);
+            double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
+            // Apply some epsilon to avoid numerical precision issues
+            int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
+#ifdef only_pixels_with_more_than_10_pct_participation
+            // When oversampling, don't take into account pixels that have a tiny
+            // participation in the resulting pixel
+            if( dfXRatioDstToSrc > 1 && dfSrcXOff - nSrcXOff > 0.9 &&
+                nSrcXOff < nChunkRightXOff)
+                nSrcXOff ++;
+#endif
             if( nSrcXOff < nChunkXOff )
                 nSrcXOff = nChunkXOff;
-            int nSrcXOff2 = static_cast<int>(
-                0.5 + (iDstPixel+1) * dfXRatioDstToSrc);
+
+            double dfSrcXOff2 = dfSrcXDelta + (iDstPixel+1)* dfXRatioDstToSrc;
+            int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
+#ifdef only_pixels_with_more_than_10_pct_participation
+            // When oversampling, don't take into account pixels that have a tiny
+            // participation in the resulting pixel
+            if( dfXRatioDstToSrc > 1 && nSrcXOff2 - dfSrcXOff2 > 0.9 &&
+                nSrcXOff2 > nChunkXOff)
+                nSrcXOff2 --;
+#endif
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
-
-            if( nSrcXOff2 > nChunkRightXOff ||
-                (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
-            {
-                if( nSrcXOff == nChunkRightXOff &&
-                    nChunkRightXOff - 1 >= nChunkXOff )
-                    nSrcXOff = nChunkRightXOff - 1;
+            if( nSrcXOff2 > nChunkRightXOff )
                 nSrcXOff2 = nChunkRightXOff;
-            }
 
             if( eSrcDataType != GDT_Byte || nEntryCount > 256 )
             {
