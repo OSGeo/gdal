@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// Avoid MS Windows min and max macros.
+#define NOMINMAX
+
 #include "wmsdriver.h"
 
 #include <algorithm>
