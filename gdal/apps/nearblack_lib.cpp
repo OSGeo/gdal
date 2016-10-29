@@ -33,6 +33,8 @@
 #include <vector>
 #include "gdal_utils_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 typedef std::vector<int> Color;
@@ -523,7 +525,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
     if( bDoVerticalCheck )
     {
-        int nXSize = MAX(iStart+1,iEnd+1);
+        const int nXSize = std::max(iStart + 1, iEnd + 1);
 
         for( i = 0; i < nXSize; i++ )
         {

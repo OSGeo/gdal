@@ -1869,12 +1869,13 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             }
             else
             {
-                dfWrkMinX = MIN(dfWrkMinX,adfExtent[0]);
-                dfWrkMaxX = MAX(dfWrkMaxX,adfExtent[2]);
-                dfWrkMaxY = MAX(dfWrkMaxY,adfExtent[3]);
-                dfWrkMinY = MIN(dfWrkMinY,adfExtent[1]);
-                dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
-                dfWrkResY = MIN(dfWrkResY, std::abs(adfThisGeoTransform[5]));
+                dfWrkMinX = std::min(dfWrkMinX, adfExtent[0]);
+                dfWrkMaxX = std::max(dfWrkMaxX, adfExtent[2]);
+                dfWrkMaxY = std::max(dfWrkMaxY, adfExtent[3]);
+                dfWrkMinY = std::min(dfWrkMinY,adfExtent[1]);
+                dfWrkResX = std::min(dfWrkResX,adfThisGeoTransform[1]);
+                dfWrkResY =
+                    std::min(dfWrkResY, std::abs(adfThisGeoTransform[5]));
             }
         }
 

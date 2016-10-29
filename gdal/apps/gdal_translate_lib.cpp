@@ -36,7 +36,10 @@
 #include "vrtdataset.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
+
 #include <cstdlib>
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -371,7 +374,7 @@ static int FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
         dfModifiedDstXOff = dfDstULX - dfDstXOff;
         dfModifiedDstXSize = (dfDstLRX - dfDstXOff) - dfModifiedDstXOff;
 
-        dfModifiedDstXOff = MAX(0,dfModifiedDstXOff);
+        dfModifiedDstXOff = std::max(0.0, dfModifiedDstXOff);
         if( dfModifiedDstXOff + dfModifiedDstXSize > dfDstXSize )
             dfModifiedDstXSize = dfDstXSize - dfModifiedDstXOff;
     }
@@ -381,7 +384,7 @@ static int FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
         dfModifiedDstYOff = dfDstULY - dfDstYOff;
         dfModifiedDstYSize = (dfDstLRY - dfDstYOff) - dfModifiedDstYOff;
 
-        dfModifiedDstYOff = MAX(0,dfModifiedDstYOff);
+        dfModifiedDstYOff = std::max(0.0, dfModifiedDstYOff);
         if( dfModifiedDstYOff + dfModifiedDstYSize > dfDstYSize )
             dfModifiedDstYSize = dfDstYSize - dfModifiedDstYOff;
     }
