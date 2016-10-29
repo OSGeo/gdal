@@ -31,6 +31,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
 
+#include <algorithm>
 #include <cmath>
 #include <list>
 
