@@ -584,11 +584,12 @@ def test_gdalwarp_lib_104():
 
 def test_gdalwarp_lib_105():
 
+    # with proj 4.9.3 this will success. We limit the width and height
+    # otherwise a very big raster will be created with 4.9.3 which may cause
+    # hangups in Travis MacOSX
     with gdaltest.error_handler():
-        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+        gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645', width = 100, height = 100)
+
     return 'success'
 
 ###############################################################################
