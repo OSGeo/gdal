@@ -2136,6 +2136,9 @@ def ogr_gmlas_remove_unused_layers_and_fields():
 
 def ogr_gmlas_xlink_resolver():
 
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
