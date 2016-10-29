@@ -12781,15 +12781,15 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
             // TODO(schwehr): Ensure the color entries are never negative?
-            const short divisor = 256;
+            const unsigned short divisor = 256;
             const GDALColorEntry oEntry = {
-                static_cast<short>(panRed[iColor]) / divisor,
-                static_cast<short>(panGreen[iColor]) / divisor,
-                static_cast<short>(panBlue[iColor]) / divisor,
-                bNoDataSet &&
-                static_cast<int>(dfNoDataValue) == iColor
-                ? static_cast<short>(0)
-                : static_cast<short>(255)
+                static_cast<short>(panRed[iColor] / divisor),
+                static_cast<short>(panGreen[iColor] / divisor),
+                static_cast<short>(panBlue[iColor] / divisor),
+                static_cast<short>(
+                    bNoDataSet && static_cast<int>(dfNoDataValue) == iColor
+                    ? 0
+                    : 255)
             };
 
             poColorTable->SetColorEntry( iColor, &oEntry );
