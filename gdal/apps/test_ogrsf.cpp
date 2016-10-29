@@ -34,6 +34,7 @@
 #include "ogr_p.h"
 #include "commonutils.h"
 
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -1759,7 +1760,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
         sLayerExtent.MinX < sLayerExtent.MaxX &&
         sLayerExtent.MinY < sLayerExtent.MaxY )
     {
-        epsilon = MIN( sLayerExtent.MaxX - sLayerExtent.MinX, sLayerExtent.MaxY - sLayerExtent.MinY ) / 10.0;
+        epsilon = std::min(sLayerExtent.MaxX - sLayerExtent.MinX,
+                           sLayerExtent.MaxY - sLayerExtent.MinY) / 10.0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1992,7 +1994,8 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
         sLayerExtent.MinX < sLayerExtent.MaxX &&
         sLayerExtent.MinY < sLayerExtent.MaxY )
     {
-        epsilon = MIN( sLayerExtent.MaxX - sLayerExtent.MinX, sLayerExtent.MaxY - sLayerExtent.MinY ) / 10.0;
+        epsilon = std::min(sLayerExtent.MaxX - sLayerExtent.MinX,
+                           sLayerExtent.MaxY - sLayerExtent.MinY) / 10.0;
     }
 
     GIntBig nTotalFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
