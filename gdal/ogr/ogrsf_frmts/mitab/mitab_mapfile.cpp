@@ -193,8 +193,6 @@
 #include <algorithm>
 #include <utility>
 
-#include <algorithm>
-
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -1609,9 +1607,9 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         m_poCurObjBlock->SetMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
                                 poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
 
-        const GByte nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
-        m_poHeader->m_nMaxSpIndexDepth =
-            std::max(m_poHeader->m_nMaxSpIndexDepth, nNextDepth);
+        const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
+        m_poHeader->m_nMaxSpIndexDepth = static_cast<GByte>(
+            std::max(static_cast<int>(m_poHeader->m_nMaxSpIndexDepth), nNextDepth));
     }
     else
     {
@@ -1800,9 +1798,9 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         if (m_poSpIndex->AddEntry(nMinX, nMinY, nMaxX, nMaxY,
                                   poNewObjBlock->GetStartAddress()) != 0)
             return -1;
-        const GByte nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
-        m_poHeader->m_nMaxSpIndexDepth =
-            std::max(m_poHeader->m_nMaxSpIndexDepth, nNextDepth);
+        const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
+        m_poHeader->m_nMaxSpIndexDepth = static_cast<GByte>(
+            std::max(static_cast<int>(m_poHeader->m_nMaxSpIndexDepth), nNextDepth));
   
         /*-------------------------------------------------------------
          * Delete second object block, no need to commit to file first since
@@ -2015,9 +2013,9 @@ int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
         nStatus = m_poSpIndex->AddEntry(nXMin, nYMin, nXMax, nYMax,
                                         m_poCurObjBlock->GetStartAddress());
 
-        const GByte nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
-        m_poHeader->m_nMaxSpIndexDepth =
-            std::max(m_poHeader->m_nMaxSpIndexDepth, nNextDepth);
+        const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
+        m_poHeader->m_nMaxSpIndexDepth = static_cast<GByte>(
+            std::max(static_cast<int>(m_poHeader->m_nMaxSpIndexDepth), nNextDepth));
     }
 
     /*-----------------------------------------------------------------
@@ -3151,9 +3149,9 @@ int TABMAPFile::CommitSpatialIndex()
      * (it's children will be recursively committed as well)
      *------------------------------------------------------------*/
     // Add 1 to Spatial Index Depth to account to the MapObjectBlocks
-    const GByte nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
-    m_poHeader->m_nMaxSpIndexDepth =
-        std::max(m_poHeader->m_nMaxSpIndexDepth, nNextDepth);
+    const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;
+    m_poHeader->m_nMaxSpIndexDepth = static_cast<GByte>(
+        std::max(static_cast<int>(m_poHeader->m_nMaxSpIndexDepth), nNextDepth));
 
     m_poSpIndex->GetMBR(m_poHeader->m_nXMin, m_poHeader->m_nYMin,
                         m_poHeader->m_nXMax, m_poHeader->m_nYMax);
