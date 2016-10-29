@@ -28,7 +28,10 @@
  ****************************************************************************/
 
 #include "dgnlibp.h"
+
 #include <cmath>
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -933,12 +936,12 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
     DGNPoint sMax = pasVertices[0];
     for( int i = 1; i < nPointCount; i++ )
     {
-        sMin.x = MIN(pasVertices[i].x, sMin.x);
-        sMin.y = MIN(pasVertices[i].y, sMin.y);
-        sMin.z = MIN(pasVertices[i].z, sMin.z);
-        sMax.x = MAX(pasVertices[i].x, sMax.x);
-        sMax.y = MAX(pasVertices[i].y, sMax.y);
-        sMax.z = MAX(pasVertices[i].z, sMax.z);
+        sMin.x = std::min(pasVertices[i].x, sMin.x);
+        sMin.y = std::min(pasVertices[i].y, sMin.y);
+        sMin.z = std::min(pasVertices[i].z, sMin.z);
+        sMax.x = std::max(pasVertices[i].x, sMax.x);
+        sMax.y = std::max(pasVertices[i].y, sMax.y);
+        sMax.z = std::max(pasVertices[i].z, sMax.z);
     }
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
@@ -1179,14 +1182,14 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     DGNUpdateElemCoreExtended( hDGN, psCore );
 
     DGNPoint sMin = {
-        dfOriginX - MAX(dfPrimaryAxis,dfSecondaryAxis),
-        dfOriginY - MAX(dfPrimaryAxis,dfSecondaryAxis),
-        dfOriginZ - MAX(dfPrimaryAxis,dfSecondaryAxis)
+        dfOriginX - std::max(dfPrimaryAxis, dfSecondaryAxis),
+        dfOriginY - std::max(dfPrimaryAxis, dfSecondaryAxis),
+        dfOriginZ - std::max(dfPrimaryAxis, dfSecondaryAxis)
     };
     DGNPoint sMax = {
-        dfOriginX + MAX(dfPrimaryAxis,dfSecondaryAxis),
-        dfOriginY + MAX(dfPrimaryAxis,dfSecondaryAxis),
-        dfOriginZ + MAX(dfPrimaryAxis,dfSecondaryAxis)
+        dfOriginX + std::max(dfPrimaryAxis, dfSecondaryAxis),
+        dfOriginY + std::max(dfPrimaryAxis, dfSecondaryAxis),
+        dfOriginZ + std::max(dfPrimaryAxis, dfSecondaryAxis)
     };
 
     DGNWriteBounds( psDGN, psCore, &sMin, &sMax );
@@ -1493,10 +1496,14 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     };
 
     //calculate new values for bounding box
-    sMin.x=MIN(sLowLeft.x,MIN(sLowRight.x,MIN(sUpLeft.x,sUpRight.x)));
-    sMin.y=MIN(sLowLeft.y,MIN(sLowRight.y,MIN(sUpLeft.y,sUpRight.y)));
-    sMax.x=MAX(sLowLeft.x,MAX(sLowRight.x,MAX(sUpLeft.x,sUpRight.x)));
-    sMax.y=MAX(sLowLeft.y,MAX(sLowRight.y,MAX(sUpLeft.y,sUpRight.y)));
+    sMin.x = std::min(sLowLeft.x,
+                      std::min(sLowRight.x, std::min(sUpLeft.x, sUpRight.x)));
+    sMin.y = std::min(sLowLeft.y,
+                      std::min(sLowRight.y, std::min(sUpLeft.y, sUpRight.y)));
+    sMax.x = std::max(sLowLeft.x,
+                      std::max(sLowRight.x, std::max(sUpLeft.x, sUpRight.x)));
+    sMax.y = std::max(sLowLeft.y,
+                      std::max(sLowRight.y, std::max(sUpLeft.y, sUpRight.y)));
     sMin.x = dfOriginX - dfLengthMult * strlen(pszText);
     sMin.y = dfOriginY - dfHeightMult;
     sMin.z = 0.0;
@@ -1730,12 +1737,12 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
         }
         else
         {
-            sMin.x = MIN(sMin.x,sThisMin.x);
-            sMin.y = MIN(sMin.y,sThisMin.y);
-            sMin.z = MIN(sMin.z,sThisMin.z);
-            sMax.x = MAX(sMax.x,sThisMax.x);
-            sMax.y = MAX(sMax.y,sThisMax.y);
-            sMax.z = MAX(sMax.z,sThisMax.z);
+            sMin.x = std::min(sMin.x, sThisMin.x);
+            sMin.y = std::min(sMin.y, sThisMin.y);
+            sMin.z = std::min(sMin.z, sThisMin.z);
+            sMax.x = std::max(sMax.x, sThisMax.x);
+            sMax.y = std::max(sMax.y, sThisMax.y);
+            sMax.z = std::max(sMax.z, sThisMax.z);
         }
     }
 
@@ -1906,12 +1913,12 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
         }
         else
         {
-            sMin.x = MIN(sMin.x,sThisMin.x);
-            sMin.y = MIN(sMin.y,sThisMin.y);
-            sMin.z = MIN(sMin.z,sThisMin.z);
-            sMax.x = MAX(sMax.x,sThisMax.x);
-            sMax.y = MAX(sMax.y,sThisMax.y);
-            sMax.z = MAX(sMax.z,sThisMax.z);
+            sMin.x = std::min(sMin.x,sThisMin.x);
+            sMin.y = std::min(sMin.y,sThisMin.y);
+            sMin.z = std::min(sMin.z,sThisMin.z);
+            sMax.x = std::max(sMax.x,sThisMax.x);
+            sMax.y = std::max(sMax.y,sThisMax.y);
+            sMax.z = std::max(sMax.z,sThisMax.z);
         }
     }
 
@@ -2108,11 +2115,11 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
         psPoint->z
     };
 
-    const int nIter = MIN(3, psDGN->dimension);
+    const int nIter = std::min(3, psDGN->dimension);
     for( int i = 0; i < nIter; i++ )
     {
         GInt32 nCTI = static_cast<GInt32>(
-            MAX(-2147483647,MIN(2147483647,adfCT[i])));
+            std::max(-2147483647.0, std::min(2147483647.0,adfCT[i])));
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
 
 #ifdef WORDS_BIGENDIAN
@@ -2203,7 +2210,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
         /* establish level */
         int nLevel = papsElems[i]->level;
-        nLevel = MAX(1,MIN(nLevel,64));
+        nLevel = std::max(1,std::min(nLevel,64));
         abyLevelsOccurring[(nLevel-1) >> 3] |= (0x1 << ((nLevel-1)&0x7));
 
         DGNPoint sThisMin = { 0.0, 0.0, 0.0 };
@@ -2216,12 +2223,12 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
         }
         else
         {
-            sMin.x = MIN(sMin.x,sThisMin.x);
-            sMin.y = MIN(sMin.y,sThisMin.y);
-            sMin.z = MIN(sMin.z,sThisMin.z);
-            sMax.x = MAX(sMax.x,sThisMax.x);
-            sMax.y = MAX(sMax.y,sThisMax.y);
-            sMax.z = MAX(sMax.z,sThisMax.z);
+            sMin.x = std::min(sMin.x,sThisMin.x);
+            sMin.y = std::min(sMin.y,sThisMin.y);
+            sMin.z = std::min(sMin.z,sThisMin.z);
+            sMax.x = std::max(sMax.x,sThisMax.x);
+            sMax.y = std::max(sMax.y,sThisMax.y);
+            sMax.z = std::max(sMax.z,sThisMax.z);
         }
     }
 

@@ -528,9 +528,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       case DGNST_ARC:
       {
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
-          // TODO: std::abs abd std::max
-          int nPoints =
-              static_cast<int>(MAX(1,std::abs(psArc->sweepang) / 5) + 1);
+          int nPoints = static_cast<int>(
+              std::max(1.0, std::abs(psArc->sweepang) / 5.0) + 1.0);
           if( nPoints > 90 )
               nPoints = 90;
 
@@ -1169,11 +1168,11 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     int nMSLink = poFeature->GetFieldAsInteger( "MSLink" );
 
     // TODO: Use std::max and std::min.
-    nLevel = MAX(0,MIN(63,nLevel));
-    nColor = MAX(0,MIN(255,nColor));
-    nWeight = MAX(0,MIN(31,nWeight));
-    nStyle = MAX(0,MIN(7,nStyle));
-    nMSLink = MAX(0,nMSLink);
+    nLevel = std::max(0, std::min(63, nLevel));
+    nColor = std::max(0, std::min(255, nColor));
+    nWeight = std::max(0, std::min(31, nWeight));
+    nStyle = std::max(0, std::min(7, nStyle));
+    nMSLink = std::max(0, nMSLink);
 
     DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor,
                        nWeight, nStyle );
