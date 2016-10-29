@@ -31,6 +31,8 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
@@ -1013,7 +1015,7 @@ int GDALDefaultOverviews::GetMaskFlags( int nBand )
 
     const char *pszValue =
         poMaskDS->GetMetadataItem(
-            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", MAX(nBand,1)) );
+            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", std::max(nBand, 1)) );
 
     if( pszValue == NULL )
         return 0x8000;
