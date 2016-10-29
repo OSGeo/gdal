@@ -33,6 +33,8 @@
 #include "cpl_time.h"
 #include "cpl_aws.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #if !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)
@@ -110,7 +112,7 @@ void RingBuffer::Write(void* pBuffer, size_t nSize)
     CPLAssert(nLength + nSize <= nCapacity);
 
     size_t nEndOffset = (nOffset + nLength) % nCapacity;
-    size_t nSz = MIN(nSize, nCapacity - nEndOffset);
+    const size_t nSz = std::min(nSize, nCapacity - nEndOffset);
     memcpy(pabyBuffer + nEndOffset, pBuffer, nSz);
     if (nSz < nSize)
         memcpy(pabyBuffer, (GByte*)pBuffer + nSz, nSize - nSz);
@@ -124,7 +126,7 @@ void RingBuffer::Read(void* pBuffer, size_t nSize)
 
     if (pBuffer)
     {
-        size_t nSz = MIN(nSize, nCapacity - nOffset);
+        const size_t nSz = std::min(nSize, nCapacity - nOffset);
         memcpy(pBuffer, pabyBuffer + nOffset, nSz);
         if (nSz < nSize)
             memcpy((GByte*)pBuffer + nSz, pabyBuffer, nSize - nSz);
@@ -846,7 +848,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
 
     if (nHeaderSize < HEADER_SIZE)
     {
-        size_t nSz = MIN(nSize, HEADER_SIZE - nHeaderSize);
+        const size_t nSz = std::min(nSize, HEADER_SIZE - nHeaderSize);
         memcpy(pabyHeaderData + nHeaderSize, buffer, nSz);
         pabyHeaderData[nHeaderSize + nSz] = '\0';
         nHeaderSize += nSz;
@@ -1153,7 +1155,8 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     /* Can we use the cache ? */
     if( pCachedData != NULL && curOffset < nCachedSize )
     {
-        size_t nSz = MIN(nRemaining, (size_t)(nCachedSize - curOffset));
+        const size_t nSz =
+            std::min(nRemaining, static_cast<size_t>(nCachedSize - curOffset));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
                      (int)curOffset, (int)(curOffset + nSz), m_pszURL);
@@ -1299,7 +1302,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         const size_t nErrorBufferMaxSize = 4096;
         GByte* pabyErrorBuffer = (GByte*)CPLMalloc(nErrorBufferMaxSize + 1);
         size_t nRead = nBufferRequestSize - nRemaining;
-        size_t nErrorBufferSize = MIN(nErrorBufferMaxSize, nRead);
+        size_t nErrorBufferSize = std::min(nErrorBufferMaxSize, nRead);
         memcpy( pabyErrorBuffer, pBuffer, nErrorBufferSize );
         if( nRead < nErrorBufferMaxSize )
             nErrorBufferSize += Read( pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead );
@@ -1353,7 +1356,9 @@ void VSICurlStreamingHandle::AddRegion( vsi_l_offset nFileOffsetStart,
     if (nFileOffsetStart <= nCachedSize &&
         nFileOffsetStart + nSize > nCachedSize)
     {
-        size_t nSz = MIN(nSize, (size_t) (BKGND_BUFFER_SIZE - nFileOffsetStart));
+        const size_t nSz =
+            std::min(nSize,
+                     static_cast<size_t>(BKGND_BUFFER_SIZE - nFileOffsetStart));
         if (ENABLE_DEBUG)
             CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
                      (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), m_pszURL);

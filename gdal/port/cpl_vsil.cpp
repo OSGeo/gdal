@@ -33,6 +33,7 @@
 #include "cpl_vsi_virtual.h"
 
 #include <cassert>
+#include <algorithm>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -1637,7 +1638,10 @@ int VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
         vsi_l_offset nCurOffset = nOriginalPos;
         while( nCurOffset < nNewSize )
         {
-            const int nSize = static_cast<int>(MIN( 4096, nNewSize - nCurOffset ));
+            const vsi_l_offset nMaxOffset = 4096;
+            const int nSize =
+                static_cast<int>(
+                    std::min(nMaxOffset, nNewSize - nCurOffset));
             if( Write(&aoBytes[0], nSize, 1) != 1 )
             {
                 Seek( nOriginalPos, SEEK_SET );

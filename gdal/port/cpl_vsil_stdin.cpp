@@ -38,6 +38,8 @@
 #include <fcntl.h>
 #endif
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /* We buffer the first 1MB of standard input to enable drivers */
@@ -138,7 +140,8 @@ int VSIStdinHandle::ReadAndCache( void* pBuffer, int nToRead )
 
     if (nRealPos < BUFFER_SIZE)
     {
-        int nToCopy = MIN(BUFFER_SIZE - (int)nRealPos, nRead);
+        const int nToCopy =
+            std::min(BUFFER_SIZE - static_cast<int>(nRealPos), nRead);
         memcpy(pabyBuffer + nRealPos, pBuffer, nToCopy);
         nBufferLen += nToCopy;
     }
@@ -208,12 +211,14 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
     CPLDebug("VSI", "Forward seek from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB,
              nCurOff, nOffset);
 
-    char abyTemp[8192];
+    char abyTemp[8192] = {};
     nCurOff = nRealPos;
     while(true)
     {
-        int nToRead = (int) MIN(8192, nOffset - nCurOff);
-        int nRead = ReadAndCache( abyTemp, nToRead );
+        const vsi_l_offset nMaxToRead = 8192;
+        const int nToRead = static_cast<int>(std::min(nMaxToRead,
+                                                      nOffset - nCurOff));
+        const int nRead = ReadAndCache(abyTemp, nToRead);
 
         if (nRead < nToRead)
             return -1;

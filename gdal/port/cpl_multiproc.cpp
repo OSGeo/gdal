@@ -38,6 +38,8 @@
 #include <time.h>
 #include <assert.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #if defined(CPL_MULTIPROC_STUB) && !defined(DEBUG)
@@ -574,7 +576,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
     while( fpLock != NULL && dfWaitInSeconds > 0.0 )
     {
         fclose( fpLock );
-        CPLSleep( MIN(dfWaitInSeconds,0.5) );
+        CPLSleep( std::min(dfWaitInSeconds, 0.5) );
         dfWaitInSeconds -= 0.5;
 
         fpLock = fopen( pszLockFilename, "r" );
@@ -829,7 +831,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
         while( (ret = TryEnterCriticalSection(pcs)) == 0 &&
                dfWaitInSeconds > 0.0 )
         {
-            CPLSleep( MIN(dfWaitInSeconds,0.01) );
+            CPLSleep( std::min(dfWaitInSeconds, 0.01) );
             dfWaitInSeconds -= 0.01;
         }
     }
@@ -1034,7 +1036,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
            && dfWaitInSeconds > 0.0 )
     {
         CloseHandle( hLockFile );
-        CPLSleep( MIN(dfWaitInSeconds,0.125) );
+        CPLSleep( std::min(dfWaitInSeconds, 0.125) );
         dfWaitInSeconds -= 0.125;
 
         hLockFile =
@@ -1645,7 +1647,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
     while( fpLock != NULL && dfWaitInSeconds > 0.0 )
     {
         fclose( fpLock );
-        CPLSleep( MIN(dfWaitInSeconds,0.5) );
+        CPLSleep( std::min(dfWaitInSeconds, 0.5) );
         dfWaitInSeconds -= 0.5;
 
         fpLock = fopen( pszLockFilename, "r" );

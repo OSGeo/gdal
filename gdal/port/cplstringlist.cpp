@@ -28,6 +28,8 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+
+#include <algorithm>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -203,7 +205,7 @@ int CPLStringList::Count() const
         else
         {
             nCount = CSLCount( papszList );
-            nAllocation = MAX(nCount+1,nAllocation);
+            nAllocation = std::max(nCount + 1, nAllocation);
         }
     }
 
@@ -248,7 +250,7 @@ void CPLStringList::EnsureAllocation( int nMaxList )
 
     if( nAllocation <= nMaxList )
     {
-        nAllocation = MAX(nAllocation*2 + 20,nMaxList+1);
+        nAllocation = std::max(nAllocation * 2 + 20, nMaxList + 1);
         if( papszList == NULL )
         {
             papszList = static_cast<char **>(

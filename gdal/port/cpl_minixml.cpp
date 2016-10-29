@@ -44,6 +44,8 @@
 #include "cpl_string.h"
 #include <ctype.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 typedef enum {
@@ -939,7 +941,7 @@ static bool _GrowBuffer( size_t nNeeded,
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
-        *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
+        *pnMaxLength = std::max(*pnMaxLength * 2,nNeeded + 1);
         char* pszTextNew = (char *) VSIRealloc(*ppszText, *pnMaxLength);
         if( pszTextNew == NULL )
             return false;

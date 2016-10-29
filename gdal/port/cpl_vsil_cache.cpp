@@ -28,6 +28,8 @@
  ****************************************************************************/
 
 #include "cpl_vsi_virtual.h"
+
+#include <algorithm>
 #include <map>
 
 //! @cond Doxygen_Suppress
@@ -445,9 +447,9 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         {
             /* We can reach that point when the amount to read exceeds */
             /* the cache size */
-            LoadBlocks( iBlock, 1,
-                        static_cast<GByte *>(pBuffer) + nAmountCopied,
-                        MIN(nSize * nCount - nAmountCopied, m_nChunkSize) );
+            LoadBlocks(iBlock, 1,
+                       static_cast<GByte *>(pBuffer) + nAmountCopied,
+                       std::min(nSize * nCount - nAmountCopied, m_nChunkSize));
             poBlock = oMapOffsetToCache[iBlock];
             CPLAssert(poBlock != NULL);
         }
