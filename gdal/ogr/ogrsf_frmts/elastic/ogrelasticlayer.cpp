@@ -2441,13 +2441,13 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
         json_object* top_left = json_object_new_object();
         json_object_object_add(field, "top_left", top_left);
-        json_object_object_add(top_left, "lat", json_object_new_double(sEnvelope.MaxY));
-        json_object_object_add(top_left, "lon", json_object_new_double(sEnvelope.MinX));
+        json_object_object_add(top_left, "lat", json_object_new_double_with_precision(sEnvelope.MaxY, 6));
+        json_object_object_add(top_left, "lon", json_object_new_double_with_precision(sEnvelope.MinX, 6));
 
         json_object* bottom_right = json_object_new_object();
         json_object_object_add(field, "bottom_right", bottom_right);
-        json_object_object_add(bottom_right, "lat", json_object_new_double(sEnvelope.MinY));
-        json_object_object_add(bottom_right, "lon", json_object_new_double(sEnvelope.MaxX));
+        json_object_object_add(bottom_right, "lat", json_object_new_double_with_precision(sEnvelope.MinY, 6));
+        json_object_object_add(bottom_right, "lon", json_object_new_double_with_precision(sEnvelope.MaxX, 6));
     }
     else
     {
@@ -2468,13 +2468,13 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         json_object_object_add(shape, "coordinates", coordinates);
 
         json_object* top_left = json_object_new_array();
-        json_object_array_add(top_left, json_object_new_double(sEnvelope.MinX));
-        json_object_array_add(top_left, json_object_new_double(sEnvelope.MaxY));
+        json_object_array_add(top_left, json_object_new_double_with_precision(sEnvelope.MinX, 6));
+        json_object_array_add(top_left, json_object_new_double_with_precision(sEnvelope.MaxY, 6));
         json_object_array_add(coordinates, top_left);
 
         json_object* bottom_right = json_object_new_array();
-        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MaxX));
-        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MinY));
+        json_object_array_add(bottom_right, json_object_new_double_with_precision(sEnvelope.MaxX, 6));
+        json_object_array_add(bottom_right, json_object_new_double_with_precision(sEnvelope.MinY, 6));
         json_object_array_add(coordinates, bottom_right);
     }
 }
