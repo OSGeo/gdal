@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
@@ -1585,7 +1587,7 @@ void NTFFileReader::IndexFile()
 /* -------------------------------------------------------------------- */
         if( anIndexSize[iType] <= iId )
         {
-            int nNewSize = MAX(iId+1,anIndexSize[iType] * 2 + 10);
+            const int nNewSize = std::max(iId+1, anIndexSize[iType] * 2 + 10);
 
             apapoRecordIndex[iType] = (NTFRecord **)
                 CPLRealloc(apapoRecordIndex[iType],

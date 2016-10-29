@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -197,7 +199,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
                                                    TRUE, TRUE );
         char **papszFT = CSLTokenizeStringComplex( osFieldTypes, "|",
                                                    TRUE, TRUE );
-        const int nFieldCount = MAX(CSLCount(papszFN),CSLCount(papszFT));
+        const int nFieldCount = std::max(CSLCount(papszFN), CSLCount(papszFT));
 
         for( int iField = 0; iField < nFieldCount; iField++ )
         {

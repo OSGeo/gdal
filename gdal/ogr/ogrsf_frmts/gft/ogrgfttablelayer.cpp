@@ -28,6 +28,8 @@
 
 #include "ogr_gft.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1280,10 +1282,14 @@ void OGRGFTTableLayer::BuildWhere()
 
         CPLString osQuotedGeomColumn(EscapeAndQuote(GetGeometryColumn()));
 
-        osWHERE.Printf("WHERE ST_INTERSECTS(%s, RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
-                       osQuotedGeomColumn.c_str(),
-                       MAX(-90.,sEnvelope.MinY - 1e-11), MAX(-180., sEnvelope.MinX - 1e-11),
-                       MIN(90.,sEnvelope.MaxY + 1e-11), MIN(180.,sEnvelope.MaxX + 1e-11));
+        osWHERE.Printf(
+            "WHERE ST_INTERSECTS(%s, "
+            "RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
+            osQuotedGeomColumn.c_str(),
+            std::max(-90.0, sEnvelope.MinY - 1.0e-11),
+            std::max(-180.0, sEnvelope.MinX - 1.0e-11),
+            std::min(90.0, sEnvelope.MaxY + 1.0e-11),
+            std::min(180.0, sEnvelope.MaxX + 1.0e-11));
     }
 
     if( strlen(osQuery) > 0 )

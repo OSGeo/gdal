@@ -214,7 +214,7 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
         if( pszFIDColumn != NULL && EQUAL(pszFIDColumn, oField.GetNameRef()))
             continue;
 
-        //oField.SetWidth( MAX(0,poStmt->GetColSize( iCol )) );
+        // oField.SetWidth( std::max(0,poStmt->GetColSize( iCol )) );
 
         if( aosIgnoredCols.find( CPLString(oField.GetNameRef()).tolower() ) != aosIgnoredCols.end() )
         {
