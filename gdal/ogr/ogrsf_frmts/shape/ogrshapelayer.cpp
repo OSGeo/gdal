@@ -34,6 +34,8 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 static const char UNSUPPORTED_OP_READ_ONLY[] =
     "%s : unsupported operation on a read-only datasource.";
 
@@ -1661,7 +1663,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     const int nNameSize = static_cast<int>(osFieldName.size());
     char * pszTmp =
-        CPLScanString( osFieldName, MIN( nNameSize, 10) , TRUE, TRUE);
+        CPLScanString( osFieldName, std::min( nNameSize, 10) , TRUE, TRUE);
     char szNewFieldName[10 + 1];
     strncpy(szNewFieldName, pszTmp, 10);
     szNewFieldName[10] = '\0';
@@ -3200,19 +3202,21 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 
                 for( int i = 0; i < psObject->nVertices; i++ )
                 {
-                    adBoundsMin[0] = MIN(adBoundsMin[0], psObject->padfX[i]);
-                    adBoundsMin[1] = MIN(adBoundsMin[1], psObject->padfY[i]);
-                    adBoundsMax[0] = MAX(adBoundsMax[0], psObject->padfX[i]);
-                    adBoundsMax[1] = MAX(adBoundsMax[1], psObject->padfY[i]);
+                    adBoundsMin[0] = std::min(adBoundsMin[0], psObject->padfX[i]);
+                    adBoundsMin[1] = std::min(adBoundsMin[1], psObject->padfY[i]);
+                    adBoundsMax[0] = std::max(adBoundsMax[0], psObject->padfX[i]);
+                    adBoundsMax[1] = std::max(adBoundsMax[1], psObject->padfY[i]);
                     if( psObject->padfZ )
                     {
-                        adBoundsMin[2] = MIN(adBoundsMin[2], psObject->padfZ[i]);
-                        adBoundsMax[2] = MAX(adBoundsMax[2], psObject->padfZ[i]);
+                        adBoundsMin[2] = std::min(adBoundsMin[2],
+                                                  psObject->padfZ[i]);
+                        adBoundsMax[2] = std::max(adBoundsMax[2], psObject->padfZ[i]);
                     }
                     if( psObject->padfM )
                     {
-                        adBoundsMax[3] = MAX(adBoundsMax[3], psObject->padfM[i]);
-                        adBoundsMin[3] = MIN(adBoundsMin[3], psObject->padfM[i]);
+                        adBoundsMax[3] = std::max(adBoundsMax[3], psObject->padfM[i]);
+                        adBoundsMin[3] = std::min(adBoundsMin[3],
+                                                  psObject->padfM[i]);
                     }
                 }
             }

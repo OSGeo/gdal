@@ -44,6 +44,7 @@
 #include "gmlregistry.h"
 #include "gmlreaderp.h"
 
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -2411,14 +2412,15 @@ void OGRGMLDataSource::InsertHeader()
 /*      header so we have room insert the schema.  Move in pretty       */
 /*      big chunks.                                                     */
 /* -------------------------------------------------------------------- */
-        int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
+        int nChunkSize = std::min(nSchemaStart-nSchemaInsertLocation,250000);
         char *pszChunk = (char *) CPLMalloc(nChunkSize);
 
         for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
         {
-            int nBytesToMove =
-                MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
+            const int nBytesToMove =
+                std::min(nChunkSize,
+                         nEndOfUnmovedData - nSchemaInsertLocation );
 
             VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
             VSIFReadL( pszChunk, 1, nBytesToMove, fpOutput );

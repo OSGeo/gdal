@@ -37,6 +37,8 @@
 #include "ogr_expat.h"
 #endif
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // The buffer that are passed to GPB decoding are extended with 0's
@@ -388,7 +390,7 @@ bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
 
     if( (unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated )
     {
-        psCtxt->nStrAllocated = MAX(psCtxt->nStrAllocated * 2,
+        psCtxt->nStrAllocated = std::max(psCtxt->nStrAllocated * 2,
                                           (unsigned int)(pabyDataLimit - pabyData));
         int* panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
             panStrOff, psCtxt->nStrAllocated * sizeof(int));
@@ -489,7 +491,7 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
 
             if( nSize > psCtxt->nNodesAllocated )
             {
-                psCtxt->nNodesAllocated = MAX(psCtxt->nNodesAllocated * 2,
+                psCtxt->nNodesAllocated = std::max(psCtxt->nNodesAllocated * 2,
                                                  nSize);
                 OSMNode* pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
@@ -565,7 +567,7 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
             if( nSize > psCtxt->nTagsAllocated )
             {
 
-                psCtxt->nTagsAllocated = MAX(
+                psCtxt->nTagsAllocated = std::max(
                     psCtxt->nTagsAllocated * 2, nSize);
                 OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
@@ -857,7 +859,7 @@ bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
 
             if( nSize > psCtxt->nTagsAllocated )
             {
-                psCtxt->nTagsAllocated = MAX(
+                psCtxt->nTagsAllocated = std::max(
                     psCtxt->nTagsAllocated * 2, nSize);
                 OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
@@ -985,7 +987,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
 
             if( nSize > psCtxt->nTagsAllocated )
             {
-                psCtxt->nTagsAllocated = MAX(
+                psCtxt->nTagsAllocated = std::max(
                     psCtxt->nTagsAllocated * 2, nSize);
                 OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
@@ -1055,7 +1057,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
             if( nSize > psCtxt->nNodeRefsAllocated )
             {
                 psCtxt->nNodeRefsAllocated =
-                    MAX(psCtxt->nNodeRefsAllocated * 2, nSize);
+                    std::max(psCtxt->nNodeRefsAllocated * 2, nSize);
                 GIntBig* panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
                         psCtxt->panNodeRefs,
                         psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
@@ -1146,7 +1148,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
 
             if( nSize > psCtxt->nTagsAllocated )
             {
-                psCtxt->nTagsAllocated = MAX(
+                psCtxt->nTagsAllocated = std::max(
                     psCtxt->nTagsAllocated * 2, nSize);
                 OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
@@ -1216,7 +1218,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
             if( nSize > psCtxt->nMembersAllocated )
             {
                 psCtxt->nMembersAllocated =
-                    MAX(psCtxt->nMembersAllocated * 2, nSize);
+                    std::max(psCtxt->nMembersAllocated * 2, nSize);
                 OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                         psCtxt->pasMembers,
                         psCtxt->nMembersAllocated * sizeof(OSMMember));
@@ -1554,7 +1556,7 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
                     GByte* pabyUncompressedNew = NULL;
                     if( psCtxt->nUncompressedAllocated <= INT_MAX )
                         psCtxt->nUncompressedAllocated =
-                            MAX(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
+                            std::max(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
                     else
                         psCtxt->nUncompressedAllocated = nUncompressedSize;
                     if( psCtxt->nUncompressedAllocated > 0xFFFFFFFFU - EXTRA_BYTES )
@@ -1932,7 +1934,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
         if( psCtxt->sRelation.nMembers >= psCtxt->nMembersAllocated )
         {
             int nMembersAllocated =
-                MAX(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
+                std::max(psCtxt->nMembersAllocated * 2, psCtxt->sRelation.nMembers + 1);
             OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasMembers,
                     nMembersAllocated * sizeof(OSMMember));
@@ -2410,7 +2412,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
     if( nBlobSize > psCtxt->nBlobSizeAllocated )
     {
         psCtxt->nBlobSizeAllocated =
-            MAX(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
+            std::max(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
         GByte* pabyBlobNew = static_cast<GByte *>(
             VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
                                 psCtxt->nBlobSizeAllocated + EXTRA_BYTES));

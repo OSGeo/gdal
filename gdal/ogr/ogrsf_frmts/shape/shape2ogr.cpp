@@ -31,6 +31,8 @@
 #include "ogrshape.h"
 
 #include "cpl_conv.h"
+
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -1600,7 +1602,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
               int nFieldWidth = poFieldDefn->GetWidth();
               snprintf(szFormat, sizeof(szFormat),
                        "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d",
-                       MIN(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1));
+                       std::min(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1));
               snprintf(szValue, sizeof(szValue), szFormat,
                        poFeature->GetFieldAsInteger64(iField));
 

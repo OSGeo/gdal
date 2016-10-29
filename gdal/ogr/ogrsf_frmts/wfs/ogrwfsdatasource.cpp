@@ -36,6 +36,8 @@
 #include "swq.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int DEFAULT_BASE_START_INDEX = 0;
@@ -1527,24 +1529,24 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                                     poCT->Transform(1, &dfLRX, &dfLRY, NULL))
                                 {
                                     dfMinX = dfULX;
-                                    dfMinX = MIN(dfMinX, dfURX);
-                                    dfMinX = MIN(dfMinX, dfLLX);
-                                    dfMinX = MIN(dfMinX, dfLRX);
+                                    dfMinX = std::min(dfMinX, dfURX);
+                                    dfMinX = std::min(dfMinX, dfLLX);
+                                    dfMinX = std::min(dfMinX, dfLRX);
 
                                     dfMinY = dfULY;
-                                    dfMinY = MIN(dfMinY, dfURY);
-                                    dfMinY = MIN(dfMinY, dfLLY);
-                                    dfMinY = MIN(dfMinY, dfLRY);
+                                    dfMinY = std::min(dfMinY, dfURY);
+                                    dfMinY = std::min(dfMinY, dfLLY);
+                                    dfMinY = std::min(dfMinY, dfLRY);
 
                                     dfMaxX = dfULX;
-                                    dfMaxX = MAX(dfMaxX, dfURX);
-                                    dfMaxX = MAX(dfMaxX, dfLLX);
-                                    dfMaxX = MAX(dfMaxX, dfLRX);
+                                    dfMaxX = std::max(dfMaxX, dfURX);
+                                    dfMaxX = std::max(dfMaxX, dfLLX);
+                                    dfMaxX = std::max(dfMaxX, dfLRX);
 
                                     dfMaxY = dfULY;
-                                    dfMaxY = MAX(dfMaxY, dfURY);
-                                    dfMaxY = MAX(dfMaxY, dfLLY);
-                                    dfMaxY = MAX(dfMaxY, dfLRY);
+                                    dfMaxY = std::max(dfMaxY, dfURY);
+                                    dfMaxY = std::max(dfMaxY, dfLLY);
+                                    dfMaxY = std::max(dfMaxY, dfLRY);
 
                                     poLayer->SetExtents(dfMinX, dfMinY, dfMaxX, dfMaxY);
                                 }

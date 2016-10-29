@@ -126,7 +126,8 @@ OGRPLScenesLayer::OGRPLScenesLayer( OGRPLScenesDataset* poDSIn,
     {
         json_object* poCount = CPL_json_object_object_get(poObjCount10, "count");
         if( poCount != NULL )
-            nFeatureCount = MAX(0, json_object_get_int64(poCount));
+          nFeatureCount = std::max(static_cast<int64_t>(0),
+                                   json_object_get_int64(poCount));
 
         OGRGeoJSONDataSource* poTmpDS = new OGRGeoJSONDataSource();
         OGRGeoJSONReader oReader;
@@ -436,7 +437,8 @@ int OGRPLScenesLayer::GetNextPage()
                 nFeatureCount = 0;
                 return FALSE;
             }
-            nFeatureCount = MAX(0, json_object_get_int64(poCount));
+            nFeatureCount = std::max(static_cast<int64_t>(0),
+                                     json_object_get_int64(poCount));
         }
     }
 
@@ -684,7 +686,8 @@ GIntBig OGRPLScenesLayer::GetFeatureCount(int bForce)
             {
                 json_object* poCount = CPL_json_object_object_get(poObj, "count");
                 if( poCount != NULL )
-                    nFeatureCount = MAX(0, json_object_get_int64(poCount));
+                    nFeatureCount = std::max(static_cast<int64_t>(0),
+                                             json_object_get_int64(poCount));
 
                 // Small optimization, if the feature count is actually 1
                 // then we can fetch it as the full layer

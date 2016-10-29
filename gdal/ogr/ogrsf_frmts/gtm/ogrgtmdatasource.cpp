@@ -4,7 +4,6 @@
  * Purpose:  Implementation of OGRGTMDataSource class.
  * Author:   Leonardo de Paula Rosa Piga; http://lampiao.lsc.ic.unicamp.br/~piga
  *
- *
  ******************************************************************************
  * Copyright (c) 2009, Leonardo de Paula Rosa Piga
  *
@@ -26,7 +25,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogr_gtm.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -498,10 +500,10 @@ void OGRGTMDataSource::checkBounds(float newLat,
     }
     else
     {
-        minlat = MIN(newLat, minlat);
-        maxlat = MAX(newLat, maxlat);
-        minlon = MIN(newLon, minlon);
-        maxlon = MAX(newLon, maxlon);
+        minlat = std::min(newLat, minlat);
+        maxlat = std::max(newLat, maxlat);
+        minlon = std::min(newLon, minlon);
+        maxlon = std::max(newLon, maxlon);
     }
 }
 
