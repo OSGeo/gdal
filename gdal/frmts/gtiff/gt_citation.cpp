@@ -242,7 +242,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     char* pDelimit = NULL;
     char* pStr = psCitation;
     char name[512] = { '\0' };
-    int nameSet = FALSE;
+    bool nameSet = false;
     int nameLen = static_cast<int>(strlen(psCitation));
     bool nameFound = false;
     while((pStr-psCitation+1)< nameLen)
@@ -252,13 +252,13 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             strncpy( name, pStr, pDelimit-pStr );
             name[pDelimit-pStr] = '\0';
             pStr = pDelimit+1;
-            nameSet = TRUE;
+            nameSet = true;
         }
         else
         {
             strcpy (name, pStr);
             pStr += strlen(pStr);
-            nameSet = TRUE;
+            nameSet = true;
         }
         if( strstr(name, "PCS Name = ") )
         {
@@ -384,7 +384,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         {
             osCitation += "|Datum = ";
             osCitation += datumName;
-            bRewriteGeogCitation = TRUE;
+            bRewriteGeogCitation = true;
         }
     }
     if( nSpheroid == KvUserDefined )
@@ -394,7 +394,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         {
             osCitation += "|Ellipsoid = ";
             osCitation += spheroidName;
-            bRewriteGeogCitation = TRUE;
+            bRewriteGeogCitation = true;
         }
     }
 
@@ -403,7 +403,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
     {
         osCitation += "|Primem = ";
         osCitation += primemName;
-        bRewriteGeogCitation = TRUE;
+        bRewriteGeogCitation = true;
 
         double primemValue = poSRS->GetPrimeMeridian(NULL);
         if( angUnitName && !EQUAL(angUnitName, "Degree") )
@@ -419,7 +419,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
     {
         osCitation += "|AUnits = ";
         osCitation += angUnitName;
-        bRewriteGeogCitation = TRUE;
+        bRewriteGeogCitation = true;
     }
 
     if( osCitation[strlen(osCitation) - 1] != '|' )
