@@ -478,7 +478,7 @@ OGREnvelope3D OGRGeoJSONGetBBox( OGRGeometry* poGeometry,
                         dfWestLimit = sEnvelopePart.MinX;
                     }
                 }
-                else if( !bTouchesMinus180 && !bTouchesMinus180 )
+                else if( !bTouchesMinus180 && !bTouchesPlus180 )
                 {
                     if( sEnvelopePart.MinX > 0 &&
                         (sEnvelopePart.MinX < dfWestLimit ||
