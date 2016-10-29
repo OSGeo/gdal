@@ -82,6 +82,8 @@
 #include "cpl_minizip_unzip.h"
 #include "cpl_time.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int Z_BUFSIZE = 65536;  // Original size is 16384
@@ -357,7 +359,7 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
 
     if( transparent == 0 )
     {
-        snapshot_byte_interval = MAX(
+        snapshot_byte_interval = std::max(
             static_cast<vsi_l_offset>(Z_BUFSIZE), compressed_size / 100);
         snapshots = static_cast<GZipSnapshot *>(
             CPLCalloc(sizeof(GZipSnapshot),
@@ -902,8 +904,9 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             }
             if( stream.avail_out > 0 )
             {
-                uInt nToRead = static_cast<uInt>(
-                    MIN(m_compressed_size - (in + nRead), stream.avail_out));
+                const uInt nToRead = static_cast<uInt>(
+                    std::min(m_compressed_size - (in + nRead),
+                             static_cast<vsi_l_offset>(stream.avail_out)));
                 uInt nReadFromFile = static_cast<uInt>(
                     VSIFReadL(next_out, 1, nToRead, (VSILFILE*)m_poBaseHandle));
                 stream.avail_out -= nReadFromFile;
@@ -1304,7 +1307,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
                                   size_t const nSize, size_t const nMemb )
 
 {
-    int nBytesToWrite = (int) (nSize * nMemb);
+    int nBytesToWrite = static_cast<int>(nSize * nMemb);
     int nNextByte = 0;
 
     nCRC = crc32(nCRC, (const Bytef *)pBuffer, nBytesToWrite);
@@ -1320,7 +1323,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
         if( sStream.avail_in > 0 )
             memmove( pabyInBuf, sStream.next_in, sStream.avail_in );
 
-        const int nNewBytesToWrite = MIN(
+        const int nNewBytesToWrite = std::min(
             static_cast<int>(Z_BUFSIZE-sStream.avail_in),
             nBytesToWrite - nNextByte);
         memcpy( pabyInBuf + sStream.avail_in,

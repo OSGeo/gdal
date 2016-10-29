@@ -34,6 +34,8 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
+#include <algorithm>
+
 #define TIMESTAMP_DEBUG
 //#define MEMORY_DEBUG
 
@@ -533,7 +535,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      Add the process memory size.                                    */
 /* -------------------------------------------------------------------- */
 #ifdef MEMORY_DEBUG
-    char szVmSize[32];
+    char szVmSize[32] = {};
     CPLsprintf( szVmSize, "[VmSize: %d] ", CPLGetProcessMemorySize());
     strcat( pszMessage, szVmSize );
 #endif
@@ -696,8 +698,8 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     psCtx->nLastErrNo = err_no;
     strncpy(psCtx->szLastErrMsg, pszMsg, psCtx->nLastErrMsgMax);
     psCtx->szLastErrMsg[
-        MAX(psCtx->nLastErrMsgMax-1,
-            static_cast<int>( strlen(pszMsg) ))] = '\0';
+        std::max(psCtx->nLastErrMsgMax-1,
+                 static_cast<int>( strlen(pszMsg) ))] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
 
