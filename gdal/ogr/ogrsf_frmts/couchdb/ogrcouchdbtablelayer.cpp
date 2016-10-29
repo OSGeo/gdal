@@ -315,7 +315,8 @@ bool OGRCouchDBTableLayer::FetchNextRowsSpatialFilter()
         return false;
 
     CPLString osContent("{\"keys\":[");
-    int nLimit = MIN(nOffset + GetFeaturesToFetch(), (int)aosIdsToFetch.size());
+    const int nLimit =
+        std::min(nOffset + GetFeaturesToFetch(), (int)aosIdsToFetch.size());
     for(int i=nOffset;i<nLimit;i++)
     {
         if (i > nOffset)

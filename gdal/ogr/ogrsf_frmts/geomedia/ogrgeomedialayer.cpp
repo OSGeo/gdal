@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "ogrgeomediageometry.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -112,7 +114,8 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
     {
         OGRFieldDefn    oField( poStmtIn->GetColName(iCol), OFTString );
 
-        oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
+        oField.SetWidth(std::max(static_cast<short>(0),
+                                 poStmtIn->GetColSize(iCol)));
 
         if( pszGeomColumn != NULL
             && EQUAL(poStmtIn->GetColName(iCol),pszGeomColumn) )
