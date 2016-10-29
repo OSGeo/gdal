@@ -728,8 +728,9 @@ def test_gdalwarp_28():
 
     # First is GCC; Second is MSVC 6.0. Third is jpeg8. Fourth is with proj 4.9.2 and internal libjpeg (the correct result actually!)
     # Fifth is proj 4.9.3 and internal libjpeg
+    # Seventh is with proj 4.9.3 and MacOSX 10.11
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295 and cs != 37441:
+    if cs != 47506 and cs != 46728 and cs != 43789 and cs != 26295 and cs != 37441 and cs != 32554:
         print(cs)
         gdaltest.post_reason('Bad checksum')
         return 'fail'
