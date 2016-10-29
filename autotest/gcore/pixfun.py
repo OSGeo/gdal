@@ -264,8 +264,8 @@ def pixfun_phase_c():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('complex128')
 
-    #if not numpy.allclose(data, numpy.arctan2(refdata.imag, refdata.real)):
-    if not numpy.alltrue(data == numpy.arctan2(refdata.imag, refdata.real)):
+    if not numpy.allclose(data, numpy.arctan2(refdata.imag, refdata.real)):
+        print(data - numpy.arctan2(refdata.imag, refdata.real))
         return 'fail'
 
     return 'success'
