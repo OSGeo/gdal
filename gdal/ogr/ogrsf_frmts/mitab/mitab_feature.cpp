@@ -176,6 +176,8 @@
 
 #include <cmath>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -402,10 +404,10 @@ TABFeature *TABFeature::CloneTABFeature(OGRFeatureDefn *poNewDefn/*=NULL*/)
 void TABFeature::SetMBR( double dXMin, double dYMin,
                          double dXMax, double dYMax )
 {
-    m_dXMin = MIN(dXMin, dXMax);
-    m_dYMin = MIN(dYMin, dYMax);
-    m_dXMax = MAX(dXMin, dXMax);
-    m_dYMax = MAX(dYMin, dYMax);
+    m_dXMin = std::min(dXMin, dXMax);
+    m_dYMin = std::min(dYMin, dYMax);
+    m_dXMax = std::max(dXMin, dXMax);
+    m_dYMax = std::max(dYMin, dYMax);
 }
 
 /**********************************************************************
@@ -4114,8 +4116,10 @@ int TABRectangle::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
          * is the way MapInfo seems to do it when a radius bigger than
          * the MBR is passed from TBA to MIF.
          *------------------------------------------------------------*/
-        const double dXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
-        const double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
+        const double dXRadius =
+            std::min(m_dRoundXRadius, (dXMax - dXMin) / 2.0);
+        const double dYRadius =
+            std::min(m_dRoundYRadius, (dYMax - dYMin) / 2.0);
         TABGenerateArc(poRing, 45,
                        dXMin + dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
                        M_PI, 3.0*M_PI/2.0);
@@ -4866,7 +4870,7 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
             numPts = (int) std::abs( ((m_dEndAngle+360)-m_dStartAngle)/2 ) + 1;
         else
             numPts = (int) std::abs( (m_dEndAngle-m_dStartAngle)/2 ) + 1;
-        numPts = MAX(2, numPts);
+        numPts = std::max(2, numPts);
 
         TABGenerateArc(&oTmpLine, numPts,
                        m_dCenterX, m_dCenterY,
@@ -5054,7 +5058,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     OGRLineString *poLine = new OGRLineString;
 
     const int numPts =
-        MAX(2,
+        std::max(2,
             (m_dEndAngle < m_dStartAngle
              ? (int) std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
              : (int) std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));
@@ -8031,7 +8035,10 @@ int TABDebugFeature::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
     if (m_nSize > 0)
     {
         poObjBlock->GotoByteRel(-5);    // Go back to beginning of header
-        poObjBlock->ReadBytes(MIN(m_nSize, (int)sizeof(m_abyBuf)), m_abyBuf);
+        poObjBlock->ReadBytes(
+           std::min(m_nSize,
+                    static_cast<int>(sizeof(m_abyBuf))),
+           m_abyBuf);
     }
 
     return 0;
@@ -8133,7 +8140,10 @@ GByte ITABFeaturePen::GetPenWidthPixel()
 
 void  ITABFeaturePen::SetPenWidthPixel(GByte val)
 {
-    m_sPenDef.nPixelWidth = MIN(MAX(val, 1), 7);
+    const GByte nPixelWidthMin = 1;
+    const GByte nPixelWidthMax = 7;
+    m_sPenDef.nPixelWidth =
+        std::min(std::max(val, nPixelWidthMin), nPixelWidthMax);
     m_sPenDef.nPointWidth = 0;
 }
 
@@ -8145,7 +8155,8 @@ double ITABFeaturePen::GetPenWidthPoint()
 
 void  ITABFeaturePen::SetPenWidthPoint(double val)
 {
-    m_sPenDef.nPointWidth = MIN(MAX(((int)(val*10)), 1), 2037);
+    m_sPenDef.nPointWidth =
+         std::min(std::max(static_cast<int>(val*10), 1), 2037);
     m_sPenDef.nPixelWidth = 1;
 }
 
@@ -8167,12 +8178,12 @@ void ITABFeaturePen::SetPenWidthMIF( int val )
 {
     if (val > 10)
     {
-        m_sPenDef.nPointWidth = MIN((val-10), 2037);
+        m_sPenDef.nPointWidth = std::min((val-10), 2037);
         m_sPenDef.nPixelWidth = 0;
     }
     else
     {
-        m_sPenDef.nPixelWidth = (GByte)MIN(MAX(val, 1), 7);
+        m_sPenDef.nPixelWidth = (GByte)std::min(std::max(val, 1), 7);
         m_sPenDef.nPointWidth = 0;
     }
 }

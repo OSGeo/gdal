@@ -113,6 +113,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -552,9 +554,9 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
                                             GInt32 nXMax, GInt32 nYMax,
                                             GBool bCompressed /*=FALSE*/)
 {
-    if (WriteIntCoord(MIN(nXMin, nXMax), MIN(nYMin, nYMax),
+    if (WriteIntCoord(std::min(nXMin, nXMax), std::min(nYMin, nYMax),
                       bCompressed) != 0 ||
-        WriteIntCoord(MAX(nXMin, nXMax), MAX(nYMin, nYMax),
+        WriteIntCoord(std::max(nXMin, nXMax), std::max(nYMin, nYMax),
                       bCompressed) != 0 )
     {
         return -1;
@@ -955,10 +957,10 @@ int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
 void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY,
                           GInt32 nMaxX, GInt32 nMaxY)
 {
-    m_nMinX = MIN(nMinX, nMaxX);
-    m_nMinY = MIN(nMinY, nMaxY);
-    m_nMaxX = MAX(nMinX, nMaxX);
-    m_nMaxY = MAX(nMinY, nMaxY);
+    m_nMinX = std::min(nMinX, nMaxX);
+    m_nMinY = std::min(nMinY, nMaxY);
+    m_nMaxX = std::max(nMinX, nMaxX);
+    m_nMaxY = std::max(nMinY, nMaxY);
 }
 
 /**********************************************************************

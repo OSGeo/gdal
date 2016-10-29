@@ -106,6 +106,8 @@
 #include "mitab.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -299,7 +301,7 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
          *------------------------------------------------------------*/
         m_nBlockSize = ((1024/m_nRecordSize)+1)*m_nRecordSize;
         if( m_numRecords < INT_MAX / m_nRecordSize )
-            m_nBlockSize = MIN(m_nBlockSize, (m_numRecords*m_nRecordSize));
+            m_nBlockSize = std::min(m_nBlockSize, (m_numRecords*m_nRecordSize));
 
         CPLAssert( m_poRecordBlock == NULL );
         m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
@@ -621,7 +623,7 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 
         m_bUpdated = TRUE;
 
-        m_numRecords = MAX(nRecordId, m_numRecords);
+        m_numRecords = std::max(nRecordId, m_numRecords);
         if( nRecordId == m_numRecords )
             m_bWriteEOF = TRUE;
 
@@ -2035,8 +2037,7 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
     // be padded with zeros if source string is shorter than specified
     // field width.
     //
-    int nLen = static_cast<int>(strlen(pszStr));
-    nLen = MIN(nLen, nWidth);
+    const int nLen = std::min(static_cast<int>(strlen(pszStr)), nWidth);
 
     if ((nLen>0 && m_poRecordBlock->WriteBytes(nLen, (GByte*)pszStr) != 0) ||
         (nWidth-nLen > 0 && m_poRecordBlock->WriteZeros(nWidth-nLen)!=0) )

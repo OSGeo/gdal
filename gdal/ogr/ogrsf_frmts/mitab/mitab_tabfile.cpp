@@ -108,6 +108,8 @@
 
 #include <ctype.h>      /* isspace() */
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const char UNSUPPORTED_OP_READ_ONLY[] =
@@ -969,7 +971,7 @@ int TABFile::WriteTABFile()
 
     // First update file version number...
     int nMapObjVersion = m_poMAPFile->GetMinTABFileVersion();
-    m_nVersion = MAX(m_nVersion, nMapObjVersion);
+    m_nVersion = std::max(m_nVersion, nMapObjVersion);
 
     VSILFILE *fp = VSIFOpenL(m_pszFname, "wt");
     if( fp != NULL )
@@ -1593,7 +1595,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
         return -1;
     }
 
-    m_nLastFeatureId = MAX(m_nLastFeatureId, nFeatureId);
+    m_nLastFeatureId = std::max(m_nLastFeatureId, nFeatureId);
     m_nCurFeatureId = nFeatureId;
 
     delete poObjHdr;
@@ -2054,7 +2056,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                                    OFTString);
 #endif
         poFieldDefn->SetWidth(10);
-        m_nVersion = MAX(m_nVersion, 450);
+        m_nVersion = std::max(m_nVersion, 450);
         break;
       case TABFTime:
         /*-------------------------------------------------
@@ -2067,7 +2069,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                                    OFTString);
 #endif
         poFieldDefn->SetWidth(8);
-        m_nVersion = MAX(m_nVersion, 900);
+        m_nVersion = std::max(m_nVersion, 900);
         break;
       case TABFDateTime:
         /*-------------------------------------------------
@@ -2080,7 +2082,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                                    OFTString);
 #endif
         poFieldDefn->SetWidth(19);
-        m_nVersion = MAX(m_nVersion, 900);
+        m_nVersion = std::max(m_nVersion, 900);
         break;
       case TABFLogical:
         /*-------------------------------------------------
@@ -2378,10 +2380,10 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
         /*-------------------------------------------------------------
          * ... and make sure that Min < Max
          *------------------------------------------------------------*/
-        dXMin = MIN(dX0, dX1);
-        dXMax = MAX(dX0, dX1);
-        dYMin = MIN(dY0, dY1);
-        dYMax = MAX(dY0, dY1);
+        dXMin = std::min(dX0, dX1);
+        dXMax = std::max(dX0, dX1);
+        dYMin = std::min(dY0, dY1);
+        dYMax = std::max(dY0, dY1);
     }
     else
     {
@@ -2426,10 +2428,10 @@ OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
        /*-------------------------------------------------------------
          * ... and make sure that Min < Max
          *------------------------------------------------------------*/
-        psExtent->MinX = MIN(dX0, dX1);
-        psExtent->MaxX = MAX(dX0, dX1);
-        psExtent->MinY = MIN(dY0, dY1);
-        psExtent->MaxY = MAX(dY0, dY1);
+        psExtent->MinX = std::min(dX0, dX1);
+        psExtent->MaxX = std::max(dX0, dX1);
+        psExtent->MinY = std::min(dY0, dY1);
+        psExtent->MaxY = std::max(dY0, dY1);
 
         return OGRERR_NONE;
     }
