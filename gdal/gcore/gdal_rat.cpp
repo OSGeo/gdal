@@ -40,6 +40,8 @@
 #endif
 #include "ogrgeojsonwriter.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /**
@@ -947,13 +949,14 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             return NULL;
 
         for( int iRow = 0; iRow < GetRowCount(); iRow++ )
-            nEntryCount = MAX(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
+            nEntryCount =
+                std::max(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
 
         if( nEntryCount < 0 )
             return NULL;
 
         // Restrict our number of entries to something vaguely sensible.
-        nEntryCount = MIN(65535, nEntryCount);
+        nEntryCount = std::min(65535, nEntryCount);
     }
 
 /* -------------------------------------------------------------------- */

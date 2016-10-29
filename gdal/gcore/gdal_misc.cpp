@@ -37,6 +37,7 @@
 #include <cctype>
 #include <cmath>
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -128,34 +129,34 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
       case GDT_Int16:
       case GDT_CInt16:
-        nBits = MAX(nBits,16);
+        nBits = std::max(nBits, 16);
         bSigned = true;
         break;
 
       case GDT_UInt16:
-        nBits = MAX(nBits,16);
+        nBits = std::max(nBits, 16);
         break;
 
       case GDT_Int32:
       case GDT_CInt32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         bSigned = true;
         break;
 
       case GDT_UInt32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         break;
 
       case GDT_Float32:
       case GDT_CFloat32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         bSigned = true;
         bFloating = true;
         break;
 
       case GDT_Float64:
       case GDT_CFloat64:
-        nBits = MAX(nBits,64);
+        nBits = std::max(nBits, 64);
         bSigned = true;
         bFloating = true;
         break;
@@ -807,7 +808,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     }
 
     int nSampleRate = static_cast<int>(
-        MAX(1, sqrt( static_cast<double>(nBlockCount) ) - 2.0 ) );
+        std::max(1.0, sqrt( static_cast<double>(nBlockCount) ) - 2.0));
 
     if( nSampleRate == nBlocksPerRow && nSampleRate > 1 )
         nSampleRate--;
@@ -820,7 +821,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     if ((nSamples / ((nBlockCount-1) / nSampleRate + 1)) != 0)
         nBlockSampleRate =
-            MAX( 1,
+            std::max( 1,
                  nBlockPixels /
                  (nSamples / ((nBlockCount-1) / nSampleRate + 1)));
 
@@ -2230,14 +2231,14 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     double max_geoy = pasGCPs[0].dfGCPY;
 
     for( int i = 1; i < nGCPCount; ++i ) {
-        min_pixel = MIN(min_pixel, pasGCPs[i].dfGCPPixel);
-        max_pixel = MAX(max_pixel, pasGCPs[i].dfGCPPixel);
-        min_line = MIN(min_line, pasGCPs[i].dfGCPLine);
-        max_line = MAX(max_line, pasGCPs[i].dfGCPLine);
-        min_geox = MIN(min_geox, pasGCPs[i].dfGCPX);
-        max_geox = MAX(max_geox, pasGCPs[i].dfGCPX);
-        min_geoy = MIN(min_geoy, pasGCPs[i].dfGCPY);
-        max_geoy = MAX(max_geoy, pasGCPs[i].dfGCPY);
+        min_pixel = std::min(min_pixel, pasGCPs[i].dfGCPPixel);
+        max_pixel = std::max(max_pixel, pasGCPs[i].dfGCPPixel);
+        min_line = std::min(min_line, pasGCPs[i].dfGCPLine);
+        max_line = std::max(max_line, pasGCPs[i].dfGCPLine);
+        min_geox = std::min(min_geox, pasGCPs[i].dfGCPX);
+        max_geox = std::max(max_geox, pasGCPs[i].dfGCPX);
+        min_geoy = std::min(min_geoy, pasGCPs[i].dfGCPY);
+        max_geoy = std::max(max_geoy, pasGCPs[i].dfGCPY);
     }
 
     double EPS = 1.0e-12;

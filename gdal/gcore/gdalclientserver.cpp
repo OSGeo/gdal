@@ -66,6 +66,8 @@
 #include "cpl_spawn.h"
 #include "cpl_multiproc.h"
 
+#include <algorithm>
+
 /*!
 \page gdal_api_proxy GDAL API Proxy
 
@@ -6365,7 +6367,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
         if( atoi(pszConnPool) > 0 )
         {
             bRecycleChild = TRUE;
-            nMaxRecycled = MIN(atoi(pszConnPool), MAX_RECYCLED);
+            nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
         }
         else if( CPLTestBool(pszConnPool) )
         {

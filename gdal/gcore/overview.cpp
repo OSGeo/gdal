@@ -33,6 +33,8 @@
 #include "gdal_priv.h"
 #include "gdalwarper.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1585,7 +1587,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     double* padfWeights = static_cast<double *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
             static_cast<int>(
-                2 + 2 * MAX(dfXScaledRadius, dfYScaledRadius) +
+                2 + 2 * std::max(dfXScaledRadius, dfYScaledRadius) +
                 0.5) * sizeof(double) ) );
 
     GByte* pabyChunkNodataMaskHorizontalFiltered = NULL;
@@ -2678,10 +2680,10 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
     {
         const int nDstWidth = papoOvrBands[iOverview]->GetXSize();
         const int nDstHeight = papoOvrBands[iOverview]->GetYSize();
-        nMaxOvrFactor = MAX(
+        nMaxOvrFactor = std::max(
             nMaxOvrFactor,
             static_cast<int>(static_cast<double>(nWidth) / nDstWidth + 0.5) );
-        nMaxOvrFactor = MAX(
+        nMaxOvrFactor = std::max(
             nMaxOvrFactor,
             static_cast<int>(static_cast<double>(nHeight) / nDstHeight + 0.5) );
     }
@@ -3135,8 +3137,8 @@ GDALRegenerateOverviewsMultiBand( int nBands, GDALRasterBand** papoSrcBands,
         const int nFullResYChunk =
             1 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
 
-        int nOvrFactor = MAX( static_cast<int>(0.5 + dfXRatioDstToSrc),
-                              static_cast<int>(0.5 + dfYRatioDstToSrc) );
+        int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
+                                   static_cast<int>(0.5 + dfYRatioDstToSrc) );
         if( nOvrFactor == 0 ) nOvrFactor = 1;
         const int nFullResXChunkQueried =
             nFullResXChunk + 2 * nKernelRadius * nOvrFactor;

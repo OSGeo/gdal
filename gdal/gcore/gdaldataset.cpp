@@ -45,6 +45,7 @@
 #include "../sqlite/ogrsqliteexecutesql.h"
 #endif
 
+#include <algorithm>
 #include <map>
 #include <new>
 
@@ -604,11 +605,11 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
         if( papoBands == NULL )
             papoNewBands = (GDALRasterBand **)
-                VSICalloc(sizeof(GDALRasterBand*), MAX(nNewBand,nBands));
+                VSICalloc(sizeof(GDALRasterBand*), std::max(nNewBand, nBands));
         else
             papoNewBands = (GDALRasterBand **)
                 VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
-                           MAX(nNewBand,nBands));
+                           std::max(nNewBand, nBands));
         if (papoNewBands == NULL)
         {
             ReportError(CE_Failure, CPLE_OutOfMemory,
@@ -621,7 +622,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         for( int i = nBands; i < nNewBand; ++i )
             papoBands[i] = NULL;
 
-        nBands = MAX(nBands,nNewBand);
+        nBands = std::max(nBands, nNewBand);
     }
 
 /* -------------------------------------------------------------------- */

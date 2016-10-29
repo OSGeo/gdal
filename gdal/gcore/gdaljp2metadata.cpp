@@ -39,6 +39,8 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+
+#include <algorithm>
 #include <set>
 
 /*! @cond Doxygen_Suppress */
@@ -591,7 +593,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     int abPixelIsPoint[MAX_JP2GEOTIFF_BOXES] = { 0 };
     char** apapszRPCMD[MAX_JP2GEOTIFF_BOXES] = { NULL };
 
-    const int nMax = MIN(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
+    const int nMax = std::min(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
     for( int i = 0; i < nMax; ++i )
     {
     /* -------------------------------------------------------------------- */
@@ -1513,10 +1515,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     double dfY2 = adfGeoTransform[3] + nXSize * adfGeoTransform[4];
     double dfY3 = adfGeoTransform[3] +                               nYSize * adfGeoTransform[5];
     double dfY4 = adfGeoTransform[3] + nXSize * adfGeoTransform[4] + nYSize * adfGeoTransform[5];
-    double dfLCX = MIN(MIN(dfX1,dfX2),MIN(dfX3,dfX4));
-    double dfLCY = MIN(MIN(dfY1,dfY2),MIN(dfY3,dfY4));
-    double dfUCX = MAX(MAX(dfX1,dfX2),MAX(dfX3,dfX4));
-    double dfUCY = MAX(MAX(dfY1,dfY2),MAX(dfY3,dfY4));
+    double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
+    double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
+    double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));
+    double dfUCY = std::max(std::max(dfY1, dfY2), std::max(dfY3, dfY4));
     if( bNeedAxisFlip )
     {
         double dfTmp = dfLCX;

@@ -32,6 +32,8 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
+
 // To be changed if we go to 64-bit RasterIO coordinates and spacing.
 typedef int coord_type;
 typedef int spacing_type;
@@ -1236,10 +1238,10 @@ void GDALTiledVirtualMem::DoIO( GDALRWFlag eRWFlag, size_t nOffset,
     size_t nYTile = nTile / nTilesPerRow;
     size_t nXTile = nTile - nYTile * nTilesPerRow;
 
-    int nReqXSize = MIN( nTileXSize,
-                         nXSize - static_cast<int>(nXTile * nTileXSize) );
-    int nReqYSize = MIN( nTileYSize,
-                         nYSize - static_cast<int>(nYTile * nTileYSize) );
+    int nReqXSize = std::min( nTileXSize,
+                              nXSize - static_cast<int>(nXTile * nTileXSize) );
+    int nReqYSize = std::min( nTileYSize,
+                              nYSize - static_cast<int>(nYTile * nTileYSize) );
     if( eRWFlag == GF_Read && (nReqXSize < nTileXSize ||
                                nReqYSize < nTileYSize) )
         memset(pPage, 0, nBytes);
