@@ -134,6 +134,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 #ifdef __HP_aCC
 #  include <wchar.h>      /* iswspace() */
 #else
@@ -543,7 +545,7 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
         if( nWidth == 0 )
             nWidth = 254;
         else
-            nWidth = MIN(254,nWidth);
+            nWidth = std::min(254, nWidth);
     }
     else
     {

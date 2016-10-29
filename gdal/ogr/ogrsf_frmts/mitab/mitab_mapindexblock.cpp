@@ -87,6 +87,8 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -559,11 +561,10 @@ int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
             /* Need to calculate the expanded MBR to calculate the area
              * difference.
              */
-            GInt32 nXMin2, nYMin2, nXMax2, nYMax2;
-            nXMin2 = MIN(m_asEntries[i].XMin, nXMin);
-            nYMin2 = MIN(m_asEntries[i].YMin, nYMin);
-            nXMax2 = MAX(m_asEntries[i].XMax, nXMax);
-            nYMax2 = MAX(m_asEntries[i].YMax, nYMax);
+            GInt32 nXMin2 = std::min(m_asEntries[i].XMin, nXMin);
+            GInt32 nYMin2 = std::min(m_asEntries[i].YMin, nYMin);
+            GInt32 nXMax2 = std::max(m_asEntries[i].XMax, nXMax);
+            GInt32 nYMax2 = std::max(m_asEntries[i].YMax, nYMax);
 
             dAreaDiff = MITAB_AREA(nXMin2,nYMin2,nXMax2,nYMax2) - dAreaBefore;
         }
@@ -968,10 +969,10 @@ double  TABMAPIndexBlock::ComputeAreaDiff( GInt32 nNodeXMin, GInt32 nNodeYMin,
         /* Need to calculate the expanded MBR to calculate the area
          * difference.
          */
-        nNodeXMin = MIN(nNodeXMin, nEntryXMin);
-        nNodeYMin = MIN(nNodeYMin, nEntryYMin);
-        nNodeXMax = MAX(nNodeXMax, nEntryXMax);
-        nNodeYMax = MAX(nNodeYMax, nEntryYMax);
+        nNodeXMin = std::min(nNodeXMin, nEntryXMin);
+        nNodeYMin = std::min(nNodeYMin, nEntryYMin);
+        nNodeXMax = std::max(nNodeXMax, nEntryXMax);
+        nNodeYMax = std::max(nNodeYMax, nEntryYMax);
 
         dAreaDiff = MITAB_AREA(nNodeXMin,nNodeYMin,
                                nNodeXMax,nNodeYMax) - dNodeAreaBefore;
@@ -1063,10 +1064,10 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
         }
         else
         {
-            nSrcMinX = MIN(nSrcMinX, pasEntries[iEntry].XMin);
-            nSrcMinY = MIN(nSrcMinY ,pasEntries[iEntry].YMin);
-            nSrcMaxX = MAX(nSrcMaxX ,pasEntries[iEntry].XMax);
-            nSrcMaxY = MAX(nSrcMaxY ,pasEntries[iEntry].YMax);
+            nSrcMinX = std::min(nSrcMinX, pasEntries[iEntry].XMin);
+            nSrcMinY = std::min(nSrcMinY, pasEntries[iEntry].YMin);
+            nSrcMaxX = std::max(nSrcMaxX, pasEntries[iEntry].XMax);
+            nSrcMaxY = std::max(nSrcMaxY, pasEntries[iEntry].YMax);
         }
     }
 

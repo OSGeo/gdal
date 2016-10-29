@@ -134,9 +134,9 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 typedef enum { CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT } CLIP_STATE;
 static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
 {
-    if( x < MIN(x0, x1) )
+    if( x < std::min(x0, x1) )
         return CLIP_LEFT;
-    if( x > MAX(x0, x1) )
+    if( x > std::max(x0, x1) )
         return CLIP_RIGHT;
     return CLIP_MIDDLE;
 }

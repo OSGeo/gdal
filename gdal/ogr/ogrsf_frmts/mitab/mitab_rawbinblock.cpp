@@ -72,6 +72,8 @@
 
 #include "mitab.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -472,7 +474,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
 
     m_nCurPos = nOffset;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     return 0;
 }
@@ -627,7 +629,7 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
 
     m_nCurPos = nOffset-m_nFileOffset;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     return 0;
 }
@@ -845,7 +847,7 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
 
     m_nCurPos += nBytesToWrite;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     m_bModified = TRUE;
 
@@ -922,7 +924,7 @@ int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
     // Write by 8 bytes chunks.  The last chunk may be less than 8 bytes.
     for( int i = 0; nStatus == 0 && i< nBytesToWrite; i += 8 )
     {
-        nStatus = WriteBytes(MIN(8, (nBytesToWrite-i)), (GByte*)acZeros);
+        nStatus = WriteBytes(std::min(8, nBytesToWrite - i), (GByte*)acZeros);
     }
 
     return nStatus;
@@ -945,7 +947,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
     int nStatus = 0;
 
     nLen = static_cast<int>(strlen(pszString));
-    nLen = MIN(nLen, nFieldSize);
+    nLen = std::min(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 
     if (nLen > 0)
@@ -955,7 +957,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
      */
     for(i=0; nStatus == 0 && i< numSpaces; i+=8)
     {
-        nStatus = WriteBytes(MIN(8,(numSpaces-i)), (GByte*)acSpaces);
+        nStatus = WriteBytes(std::min(8, numSpaces - i), (GByte*)acSpaces);
     }
 
     return nStatus;

@@ -81,6 +81,7 @@
 #include "mitab_utils.h"
 
 #include <ctype.h>      /* toupper() */
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -800,7 +801,7 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
                       (eType == TABFDate)     ? 4:
                       (eType == TABFTime)     ? 4:
                       /*(eType == TABFDateTime) ? 8: */
-                      (eType == TABFLogical)  ? 4: MIN(128,nFieldSize));
+                      (eType == TABFLogical)  ? 4: std::min(128, nFieldSize));
 
     m_papoIndexRootNodes[nNewIndexNo] = new TABINDNode(m_eAccessMode);
     if (m_papoIndexRootNodes[nNewIndexNo]->InitNode(m_fp, 0, nKeyLength,

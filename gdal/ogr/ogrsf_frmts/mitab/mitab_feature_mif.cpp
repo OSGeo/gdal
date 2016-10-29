@@ -170,6 +170,7 @@
 
 #include <cmath>
 #include <ctype.h>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -1424,8 +1425,10 @@ int TABRectangle::ReadGeometryFromMIFFile(MIDDATAFile *fp)
          * is the way MapInfo seems to do it when a radius bigger than
          * the MBR is passed from TBA to MIF.
          *------------------------------------------------------------*/
-        const double dXRadius = MIN(m_dRoundXRadius, (dXMax-dXMin)/2.0);
-        const double dYRadius = MIN(m_dRoundYRadius, (dYMax-dYMin)/2.0);
+        const double dXRadius =
+            std::min(m_dRoundXRadius, (dXMax - dXMin) / 2.0);
+        const double dYRadius =
+            std::min(m_dRoundYRadius, (dYMax - dYMin) / 2.0);
         TABGenerateArc(poRing, 45,
                        dXMin + dXRadius, dYMin + dYRadius, dXRadius, dYRadius,
                        M_PI, 3.0*M_PI/2.0);
@@ -1752,7 +1755,7 @@ int TABArc::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     OGRLineString *poLine = new OGRLineString;
 
     int numPts =
-         MAX(2,
+         std::max(2,
              (m_dEndAngle < m_dStartAngle
               ? (int) std::abs( ((m_dEndAngle+360.0)-m_dStartAngle)/2.0 ) + 1
               : (int) std::abs( (m_dEndAngle-m_dStartAngle)/2.0 ) + 1));

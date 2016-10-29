@@ -95,6 +95,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -849,7 +851,7 @@ int  TABMAPCoordBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
                     nBytes = (m_nBlockSize - m_nCurPos);
                 }
 
-                nBytes = MIN(nBytes, nBytesToWrite);
+                nBytes = std::min(nBytes, nBytesToWrite);
 
                 // The following call will result in a new block being
                 // allocated in the if() block above.

@@ -56,6 +56,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -270,7 +272,13 @@ int TABToolDefTable::WriteAllToolDefs( TABMAPToolBlock *poBlock )
                 byPixelWidth = 8 + (GByte)(m_papsPen[i]->nPointWidth/0x100);
         }
         else
-            byPixelWidth = MIN(MAX(m_papsPen[i]->nPixelWidth, 1), 7);
+        {
+            const GByte nMinWidth = 1;
+            const GByte nMaxWidth = 7;
+            byPixelWidth =
+                std::min(
+                    std::max(m_papsPen[i]->nPixelWidth, nMinWidth), nMaxWidth);
+        }
 
         poBlock->CheckAvailableSpace(TABMAP_TOOL_PEN);
         poBlock->WriteByte(TABMAP_TOOL_PEN);  // Def Type = Pen
@@ -725,7 +733,7 @@ int     TABToolDefTable::GetMinVersionNumber()
     {
         if (m_papsPen[i]->nPointWidth > 0 )
         {
-            nVersion = MAX(nVersion, 450);  // Raise version to 450
+            nVersion = std::max(nVersion, 450);  // Raise version to 450
         }
     }
 
