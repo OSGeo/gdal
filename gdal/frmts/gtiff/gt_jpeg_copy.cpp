@@ -354,7 +354,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
 /*                      GTIFF_ErrorExitJPEG()                           */
 /************************************************************************/
 
-static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
+static void GTIFF_ErrorExitJPEG( j_common_ptr cinfo )
 {
     jmp_buf *setjmp_buffer = (jmp_buf *) cinfo->client_data;
     char buffer[JMSG_LENGTH_MAX] = { '\0' };
@@ -374,12 +374,13 @@ static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
 /************************************************************************/
 
 static
-void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
-                                  jpeg_decompress_struct& sDInfo,
-                                  jpeg_compress_struct& sCInfo)
+void GTIFF_Set_TIFFTAG_JPEGTABLES( TIFF* hTIFF,
+                                   jpeg_decompress_struct& sDInfo,
+                                   jpeg_compress_struct& sCInfo )
 {
     char szTmpFilename[128] = { '\0' };
-    snprintf(szTmpFilename, sizeof(szTmpFilename), "/vsimem/tables_%p", &sDInfo);
+    snprintf(szTmpFilename, sizeof(szTmpFilename),
+             "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
 
     uint16 nPhotometric = 0;
