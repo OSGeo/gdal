@@ -34,6 +34,8 @@
 
 #include <cstdlib>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the
@@ -3143,14 +3145,15 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
                 oSrcSRS.IsGeographic() )
             {
                 const double minLat =
-                    MIN( adfSrcGeoTransform[3],
-                         adfSrcGeoTransform[3] +
-                         poSrcDS->GetRasterYSize() *
-                         adfSrcGeoTransform[5] );
+                    std::min(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
                 const double maxLat =
-                    MAX( adfSrcGeoTransform[3],
-                         adfSrcGeoTransform[3] +
-                         poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                    std::max(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
                 double maxNorthing = adfGeoTransform[3];
                 double minNorthing =
                     adfGeoTransform[3] + adfGeoTransform[5] * nYSize;

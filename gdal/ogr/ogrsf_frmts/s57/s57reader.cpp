@@ -33,6 +33,8 @@
 #include "s57.h"
 
 #include <cmath>
+
+#include <algorithm>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -523,8 +525,8 @@ bool S57Reader::Ingest()
 
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
         {
-            nCOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
-            nSOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
+            nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
+            nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {
@@ -1574,7 +1576,7 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 {
     OGRLineString * const poLine = new OGRLineString;
 
-    nVertexCount = MAX(2,nVertexCount);
+    nVertexCount = std::max(2, nVertexCount);
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
@@ -3403,10 +3405,10 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                     if( bGotExtents )
                     {
-                        nXMin = MIN(nXMin,nX);
-                        nXMax = MAX(nXMax,nX);
-                        nYMin = MIN(nYMin,nY);
-                        nYMax = MAX(nYMax,nY);
+                        nXMin = std::min(nXMin, nX);
+                        nXMax = std::max(nXMax, nX);
+                        nYMin = std::min(nYMin, nY);
+                        nYMax = std::max(nYMax, nY);
                     }
                     else
                     {
@@ -3434,10 +3436,10 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                     if( bGotExtents )
                     {
-                        nXMin = MIN(nXMin,nX);
-                        nXMax = MAX(nXMax,nX);
-                        nYMin = MIN(nYMin,nY);
-                        nYMax = MAX(nYMax,nY);
+                        nXMin = std::min(nXMin, nX);
+                        nXMax = std::max(nXMax, nX);
+                        nYMin = std::min(nYMin, nY);
+                        nYMax = std::max(nYMax, nY);
                     }
                     else
                     {

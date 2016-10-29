@@ -30,6 +30,8 @@
 #include "memdataset.h"
 #include "gdal_alg_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
@@ -344,7 +346,7 @@ static int GPKGFindBestEntry(GDALColorTable* poCT,
                              GByte c1, GByte c2, GByte c3, GByte c4,
                              int nTileBandCount)
 {
-    const int nEntries = MIN(256, poCT->GetColorEntryCount());
+    const int nEntries = std::min(256, poCT->GetColorEntryCount());
     int iBestIdx = 0;
     int nBestDistance = 4 * 256 * 256;
     for(int i=0;i<nEntries;i++)
@@ -429,7 +431,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(const CPLString& osMemFileName
     if( nBands == 1 && m_poCT != NULL && nTileBandCount != 1 )
     {
         std::map< GUInt32, int > oMapEntryToIndex;
-        int nEntries = MIN(256, m_poCT->GetColorEntryCount());
+        const int nEntries = std::min(256, m_poCT->GetColorEntryCount());
         for(int i=0;i<nEntries;i++)
         {
             const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);
@@ -520,7 +522,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(const CPLString& osMemFileName
         if( poCT != NULL )
         {
             GByte abyCT[4*256];
-            int nEntries = MIN(256, poCT->GetColorEntryCount());
+            const int nEntries = std::min(256, poCT->GetColorEntryCount());
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
@@ -1409,7 +1411,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         else if( nBands == 1 && m_poCT != NULL && nTileBands > 1 )
         {
             GByte abyCT[4*256];
-            int nEntries = MIN(256, m_poCT->GetColorEntryCount());
+            const int nEntries = std::min(256, m_poCT->GetColorEntryCount());
             for( int i = 0; i < nEntries; i++ )
             {
                 const GDALColorEntry* psEntry = m_poCT->GetColorEntry(i);

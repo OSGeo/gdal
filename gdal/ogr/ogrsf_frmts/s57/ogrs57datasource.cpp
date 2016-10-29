@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_s57.h"
 
+#include <algorithm>
 #include <set>
 
 CPL_CVSID("$Id$");
@@ -440,10 +441,10 @@ OGRErr OGRS57DataSource::GetDSExtent( OGREnvelope *psExtent, int bForce )
             oExtents = oModuleEnvelope;
         else
         {
-            oExtents.MinX = MIN(oExtents.MinX,oModuleEnvelope.MinX);
-            oExtents.MaxX = MAX(oExtents.MaxX,oModuleEnvelope.MaxX);
-            oExtents.MinY = MIN(oExtents.MinY,oModuleEnvelope.MinY);
-            oExtents.MaxX = MAX(oExtents.MaxY,oModuleEnvelope.MaxY);
+            oExtents.MinX = std::min(oExtents.MinX, oModuleEnvelope.MinX);
+            oExtents.MaxX = std::max(oExtents.MaxX, oModuleEnvelope.MaxX);
+            oExtents.MinY = std::min(oExtents.MinY, oModuleEnvelope.MinY);
+            oExtents.MaxX = std::max(oExtents.MaxY, oModuleEnvelope.MaxY);
         }
     }
 

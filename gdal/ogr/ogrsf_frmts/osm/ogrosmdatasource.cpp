@@ -581,7 +581,7 @@ bool OGROSMDataSource::AllocMoreBuckets( int nNewBucketIdx, bool bAllocBucket )
 {
     CPLAssert(nNewBucketIdx >= nBuckets);
 
-    const int nNewBuckets = MAX(nBuckets + nBuckets / 2, nNewBucketIdx);
+    const int nNewBuckets = std::max(nBuckets + nBuckets / 2, nNewBucketIdx);
 
     size_t nNewSize = sizeof(Bucket) * nNewBuckets;
     if( static_cast<GUIntBig>(nNewSize) !=
