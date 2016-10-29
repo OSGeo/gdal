@@ -66,7 +66,7 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             const char *pszMetadata )
 
 {
-    toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
+    const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
     // This is a bit of a hack to cause (*tif->tif_cleanup)(tif); to be called.
     // See https://trac.osgeo.org/gdal/ticket/2055
@@ -140,7 +140,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
     }
 
     TIFFWriteDirectory( hTIFF );
-    TIFFSetDirectory( hTIFF, (tdir_t) (TIFFNumberOfDirectories(hTIFF)-1) );
+    TIFFSetDirectory( hTIFF,
+                      static_cast<tdir_t>(TIFFNumberOfDirectories(hTIFF) - 1) );
 
     const toff_t nOffset = TIFFCurrentDirOffset( hTIFF );
 
@@ -301,7 +302,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         if( hBand->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" ) )
         {
             nBandBits =
-                atoi(hBand->GetMetadataItem("NBITS","IMAGE_STRUCTURE"));
+                atoi(hBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
 
             if( nBandBits == 1
                 && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2") )
@@ -504,7 +505,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the file, if it does not already exist.                  */
 /* -------------------------------------------------------------------- */
-    VSIStatBufL  sStatBuf;
+    VSIStatBufL sStatBuf = {};
     VSILFILE* fpL = NULL;
 
     if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
@@ -553,7 +554,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         {
             if( nCompression == COMPRESSION_NONE
                 && dfUncompressedOverviewSize > 4200000000.0 )
-                bCreateBigTIFF = TRUE;
+                bCreateBigTIFF = true;
         }
         else if( EQUAL(pszBIGTIFF,"IF_SAFER") )
         {
@@ -589,7 +590,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                 CE_Warning, CPLE_NotSupported,
                 "BigTIFF requested, but GDAL built without BigTIFF "
                 "enabled libtiff, request ignored." );
-            bCreateBigTIFF = FALSE;
+            bCreateBigTIFF = false;
         }
     #endif
 
@@ -725,8 +726,6 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Open the overview dataset so that we can get at the overview    */
 /*      bands.                                                          */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
-
     GDALDataset *hODS =
         static_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
     if( hODS == NULL )
@@ -751,16 +750,18 @@ GTIFFBuildOverviews( const char * pszFilename,
 /*      Loop writing overview data.                                     */
 /* -------------------------------------------------------------------- */
 
-    int * panOverviewListSorted = static_cast<int*>(
-                                        CPLMalloc(sizeof(int) * nOverviews));
+    int *panOverviewListSorted =
+        static_cast<int*>(CPLMalloc(sizeof(int) * nOverviews));
     memcpy( panOverviewListSorted, panOverviewList, sizeof(int) * nOverviews);
     std::sort(panOverviewListSorted, panOverviewListSorted + nOverviews);
 
     GTIFFSetInExternalOvr(true);
 
+    CPLErr eErr = CE_None;
+
     if( nCompression != COMPRESSION_NONE &&
         nPlanarConfig == PLANARCONFIG_CONTIG &&
-        GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) == FALSE &&
+        !GDALDataTypeIsComplex(papoBandList[0]->GetRasterDataType()) &&
         papoBandList[0]->GetColorTable() == NULL &&
         (STARTS_WITH_CI(pszResampling, "NEAR") ||
          EQUAL(pszResampling, "AVERAGE") ||
@@ -795,7 +796,6 @@ GTIFFBuildOverviews( const char * pszFilename,
                 for( int j = -1; j < poDstBand->GetOverviewCount() &&
                                  eErr == CE_None; j++ )
                 {
-                    int    nOvFactor;
                     GDALRasterBand * poOverview =
                             (j < 0 ) ? poDstBand : poDstBand->GetOverview( j );
                     if( poOverview == NULL )
@@ -804,10 +804,11 @@ GTIFFBuildOverviews( const char * pszFilename,
                         continue;
                     }
 
-                    nOvFactor = GDALComputeOvFactor(poOverview->GetXSize(),
-                                                    poSrcBand->GetXSize(),
-                                                    poOverview->GetYSize(),
-                                                    poSrcBand->GetYSize());
+                    const int nOvFactor =
+                        GDALComputeOvFactor(poOverview->GetXSize(),
+                                            poSrcBand->GetXSize(),
+                                            poOverview->GetYSize(),
+                                            poSrcBand->GetYSize());
 
                     if( nOvFactor == panOverviewListSorted[i]
                         || nOvFactor == GDALOvLevelAdjust2(
@@ -855,7 +856,7 @@ GTIFFBuildOverviews( const char * pszFilename,
                 hDstBand->SetNoDataValue(noDataValue);
 
             // FIXME: this logic regenerates all overview bands, not only the
-            // ones requested
+            // ones requested.
 
             papoOverviews[0] = hDstBand;
             int nDstOverviews = hDstBand->GetOverviewCount() + 1;
@@ -880,7 +881,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             void *pScaledProgressData =
                 GDALCreateScaledProgress(
                     iBand / static_cast<double>( nBands ),
-                    (iBand+1) / static_cast<double>( nBands ),
+                    (iBand + 1) / static_cast<double>( nBands ),
                     pfnProgress, pProgressData );
 
             if( eErr == CE_None )
