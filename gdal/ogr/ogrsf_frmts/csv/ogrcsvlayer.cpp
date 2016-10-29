@@ -33,6 +33,8 @@
 #include "cpl_csv.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -1400,8 +1402,8 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     int iOGRField = 0;
     const int nAttrCount =
-        MIN( CSLCount(papszTokens),
-             nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
+        std::min( CSLCount(papszTokens),
+                  nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
     CPLValueType eType;
 
     for( int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++ )

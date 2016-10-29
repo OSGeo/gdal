@@ -32,6 +32,8 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -174,8 +176,8 @@ static int GetLatLon(const char* pszLat,
     char szDeg[4] = { pszLat[0], pszLat[1], 0 };
     char szMin[3] = { pszLat[3], pszLat[4], 0 };
     char szSec[10];
-    memcpy(szSec, pszLat + 6, MAX((int)sizeof(szSec) - 1, nSecLen));
-    szSec[MAX((int)sizeof(szSec) - 1, nSecLen)] = 0;
+    memcpy(szSec, pszLat + 6, std::max((int)sizeof(szSec) - 1, nSecLen));
+    szSec[std::max((int)sizeof(szSec) - 1, nSecLen)] = 0;
 
     dfLat = atoi(szDeg) + atoi(szMin) / 60. + CPLAtof(szSec) / 3600.;
     if (chLatHemisphere == 'S')
@@ -188,8 +190,8 @@ static int GetLatLon(const char* pszLat,
     szMin[0] = pszLon[4];
     szMin[1] = pszLon[5];
     szMin[2] = 0;
-    memcpy(szSec, pszLon + 7, MAX((int)sizeof(szSec) - 1, nSecLen));
-    szSec[MAX((int)sizeof(szSec) - 1, nSecLen)] = 0;
+    memcpy(szSec, pszLon + 7, std::max((int)sizeof(szSec) - 1, nSecLen));
+    szSec[std::max((int)sizeof(szSec) - 1, nSecLen)] = 0;
 
     dfLon = atoi(szDeg) + atoi(szMin) / 60. + CPLAtof(szSec) / 3600.;
     if (chLonHemisphere == ' ' || chLonHemisphere == 'W')
