@@ -440,7 +440,7 @@ std::string VSICryptFileHeader::CryptKeyCheck(CryptoPP::BlockCipher* poEncCipher
     CryptoPP::StreamTransformationFilter* poEnc = new CryptoPP::StreamTransformationFilter(*poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
     /* Not sure if it is add extra security, but pick up something that is unlikely to be a plain text (random number) */
     poEnc->Put((const byte*)"\xDB\x31\xB9\x1B\xD3\x1C\xFA\x3E\x84\x06\xC1\x42\xC3\xEC\xCD\x9A\x02\x36\x22\x15\x58\x88\x74\x65\x00\x2F\x98\xBC\x69\x22\xE1\x63",
-               std::min(32, poEncCipher->BlockSize()));
+               std::min(32U, poEncCipher->BlockSize()));
     poEnc->MessageEnd();
     delete poEnc;
     delete poMode;
@@ -1023,7 +1023,7 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     {
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
-            const int nToCopy = std::min(
+            int nToCopy = std::min(
                 static_cast<int>(nToRead),
                 static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
             if( nCurPos + nToCopy > poHeader->nPayloadFileSize )
