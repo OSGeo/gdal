@@ -37,6 +37,8 @@
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlstyle.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 using kmldom::CameraPtr;
@@ -474,10 +476,10 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     {
         OGREnvelope sEnvelope;
         poOgrFeat->GetGeometryRef()->getEnvelope(&sEnvelope);
-        m_dfRegionMinX = MIN(m_dfRegionMinX, sEnvelope.MinX);
-        m_dfRegionMinY = MIN(m_dfRegionMinY, sEnvelope.MinY);
-        m_dfRegionMaxX = MAX(m_dfRegionMaxX, sEnvelope.MaxX);
-        m_dfRegionMaxY = MAX(m_dfRegionMaxY, sEnvelope.MaxY);
+        m_dfRegionMinX = std::min(m_dfRegionMinX, sEnvelope.MinX);
+        m_dfRegionMinY = std::min(m_dfRegionMinY, sEnvelope.MinY);
+        m_dfRegionMaxX = std::max(m_dfRegionMaxX, sEnvelope.MaxX);
+        m_dfRegionMaxY = std::max(m_dfRegionMaxY, sEnvelope.MaxY);
     }
 
     FeaturePtr poKmlFeature =

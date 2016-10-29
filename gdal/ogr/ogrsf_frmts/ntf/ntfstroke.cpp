@@ -33,6 +33,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -204,7 +206,7 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 {
     OGRLineString *poLine = new OGRLineString;
 
-    nVertexCount = MAX(2, nVertexCount);
+    nVertexCount = std::max(2, nVertexCount);
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
