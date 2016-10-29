@@ -32,6 +32,7 @@
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ogr_geos.h"
+
 #include <algorithm>
 #include <new>
 #include <utility>
@@ -3637,7 +3638,7 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
     dfEndAngle *= -1;
 
     // Figure out the number of slices to make this into.
-    const int nVertexCount = MAX(2, static_cast<int>(
+    const int nVertexCount = std::max(2, static_cast<int>(
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1));
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
@@ -4643,8 +4644,8 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
 
     const double dfDeltaAlpha10 = alpha1_1 - alpha0_1;
     const double dfDeltaAlpha21 = alpha2_1 - alpha1_1;
-    const double dfMaxDeltaAlpha = MAX(fabs(dfDeltaAlpha10),
-                                       fabs(dfDeltaAlpha21));
+    const double dfMaxDeltaAlpha = std::max(fabs(dfDeltaAlpha10),
+                                            fabs(dfDeltaAlpha21));
     GUInt32 nAlphaRatioRef =
         OGRGF_GetHiddenValue(p1.getX(), p1.getY()) |
         (OGRGF_GetHiddenValue(p2.getX(), p2.getY()) << HIDDEN_ALPHA_HALF_WIDTH);
@@ -4653,9 +4654,9 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     bool bValidAlphaRatio = nAlphaRatioRef > 0 && nAlphaRatioRef < 0xFFFFFFFF;
     int nCountValidAlphaRatio = 1;
 
-    double dfScale = MAX(1.0, R_1);
-    dfScale = MAX(dfScale, fabs(cx_1));
-    dfScale = MAX(dfScale, fabs(cy_1));
+    double dfScale = std::max(1.0, R_1);
+    dfScale = std::max(dfScale, fabs(cx_1));
+    dfScale = std::max(dfScale, fabs(cy_1));
     dfScale = pow(10.0, ceil(log10(dfScale)));
     const double dfInvScale  = 1.0 / dfScale ;
 
@@ -4717,8 +4718,8 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
         printf("j=%d: R = %.16g, cx = %.16g, cy = %.16g, "
-                "rel_diff_R=%.8g rel_diff_cx=%.8g rel_diff_cy=%.8g\n",
-                j, R_2, cx_2, cy_2, dfRelDiffR, dfRelDiffCx, dfRelDiffCy);
+               "rel_diff_R=%.8g rel_diff_cx=%.8g rel_diff_cy=%.8g\n",
+               j, R_2, cx_2, cy_2, dfRelDiffR, dfRelDiffCx, dfRelDiffCy);
 #endif
 
         if( (dfRelDiffR > 1.0e-6 &&
@@ -4735,9 +4736,9 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         if( dfRelDiffR > 0.0 && dfRelDiffCx > 0.0 && dfRelDiffCy > 0.0 )
         {
             const double dfLogRelDiff =
-              MIN(MIN(fabs(log10(dfRelDiffR)),
-                      fabs(log10(dfRelDiffCx))),
-                  fabs(log10(dfRelDiffCy)));
+                std::min(std::min(fabs(log10(dfRelDiffR)),
+                                  fabs(log10(dfRelDiffCx))),
+                         fabs(log10(dfRelDiffCy)));
             // printf("dfLogRelDiff = %f, dfLastLogRelDiff=%f, "
             //        "dfLogRelDiff - dfLastLogRelDiff=%f\n",
             //        dfLogRelDiff, dfLastLogRelDiff,
@@ -4904,8 +4905,8 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
 
     if( poLSNew != NULL )
     {
-        double dfScale2 = MAX(1.0, fabs(p0.getX()));
-        dfScale2 = MAX(dfScale2, fabs(p0.getY()));
+        double dfScale2 = std::max(1.0, fabs(p0.getX()));
+        dfScale2 = std::max(dfScale2, fabs(p0.getY()));
         // Not strictly necessary, but helps having 'clean' lines without
         // duplicated points.
         if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) -
@@ -5023,11 +5024,12 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                     int nSearchRadius = 1;
                     // Extend the search radius if the arc circle radius
                     // is much higher than the coordinate values.
-                    double dfMaxCoords = MAX(fabs(p0.getX()), fabs(p0.getY()));
-                    dfMaxCoords = MAX(dfMaxCoords, poFinalPoint->getX());
-                    dfMaxCoords = MAX(dfMaxCoords, poFinalPoint->getY());
-                    dfMaxCoords = MAX(dfMaxCoords, dfXMid);
-                    dfMaxCoords = MAX(dfMaxCoords, dfYMid);
+                    double dfMaxCoords =
+                        std::max(fabs(p0.getX()), fabs(p0.getY()));
+                    dfMaxCoords = std::max(dfMaxCoords, poFinalPoint->getX());
+                    dfMaxCoords = std::max(dfMaxCoords, poFinalPoint->getY());
+                    dfMaxCoords = std::max(dfMaxCoords, dfXMid);
+                    dfMaxCoords = std::max(dfMaxCoords, dfYMid);
                     if( R_1 > dfMaxCoords * 1000 )
                         nSearchRadius = 100;
                     else if( R_1 > dfMaxCoords * 10 )
@@ -5217,8 +5219,8 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
         // duplicated points.
         else
         {
-            double dfScale = MAX(1.0, fabs(p.getX()));
-            dfScale = MAX(dfScale, fabs(p.getY()));
+            double dfScale = std::max(1.0, fabs(p.getX()));
+            dfScale = std::max(dfScale, fabs(p.getY()));
             if( fabs(poLSNew->getX(poLSNew->getNumPoints()-1) -
                      p.getX()) / dfScale > 1e-8 ||
                 fabs(poLSNew->getY(poLSNew->getNumPoints()-1) -

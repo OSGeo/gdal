@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <vector>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -288,16 +290,16 @@ void OGRCircularString::ExtendEnvelopeWithCircular(
                 switch( ((j+8)%4) )
                 {
                     case 0:
-                        psEnvelope->MaxX = MAX(psEnvelope->MaxX, cx + R);
+                        psEnvelope->MaxX = std::max(psEnvelope->MaxX, cx + R);
                         break;
                     case 1:
-                        psEnvelope->MaxY = MAX(psEnvelope->MaxY, cy + R);
+                        psEnvelope->MaxY = std::max(psEnvelope->MaxY, cy + R);
                         break;
                     case 2:
-                        psEnvelope->MinX = MIN(psEnvelope->MinX, cx - R);
+                        psEnvelope->MinX = std::min(psEnvelope->MinX, cx - R);
                         break;
                     case 3:
-                        psEnvelope->MinY = MIN(psEnvelope->MaxY, cy - R);
+                        psEnvelope->MinY = std::min(psEnvelope->MaxY, cy - R);
                         break;
                     default:
                         CPLAssert(false);

@@ -1040,7 +1040,7 @@ OGRErr OGRGeometryCollection::transform( OGRCoordinateTransformation *poCT )
 {
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        OGRErr eErr = papoGeoms[iGeom]->transform( poCT );
+        const OGRErr eErr = papoGeoms[iGeom]->transform( poCT );
         if( eErr != OGRERR_NONE )
         {
             if( iGeom != 0 )
