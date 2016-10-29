@@ -27,6 +27,8 @@
 #include "swq_parser.hpp"
 #include "cpl_time.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #define YYSTYPE  swq_expr_node*
@@ -43,10 +45,12 @@ void swqerror( swq_parse_context *context, const char *msg )
 
     int n = static_cast<int>(context->pszLastValid - context->pszInput);
 
-    for( int i = MAX(0,n-40); i < n + 40 && context->pszInput[i] != '\0'; i ++ )
+    for( int i = std::max(0, n - 40);
+         i < n + 40 && context->pszInput[i] != '\0';
+         i++ )
         osMsg += context->pszInput[i];
     osMsg += "\n";
-    for( int i=0;i<MIN(n, 40);i++ )
+    for( int i = 0; i < std::min(n, 40); i++ )
         osMsg += " ";
     osMsg += "^";
 

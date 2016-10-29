@@ -34,6 +34,8 @@
 #include "ogr_p.h"
 #include "ogr_attrind.h"
 
+#include <algorithm>
+
 //! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
@@ -442,7 +444,7 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
                             GIntBig panFIDList2[], GIntBig nFIDCount2,
                             GIntBig& nFIDCount)
 {
-    GIntBig nMaxCount = MAX(nFIDCount1, nFIDCount2);
+    GIntBig nMaxCount = std::max(nFIDCount1, nFIDCount2);
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
 

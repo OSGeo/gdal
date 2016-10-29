@@ -38,6 +38,8 @@
 
 #include <cmath>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 void  SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName );
@@ -459,7 +461,7 @@ static void InitDatumMappingTable()
 
         CPLAssert( nMappingCount+1 < nMaxDatumMappings );
 
-        if( MAX(nEPSGNameField,MAX(nDatumCodeField,nESRINameField))
+        if( std::max(nEPSGNameField, std::max(nDatumCodeField, nESRINameField))
             < nFieldCount
             && nMaxDatumMappings > nMappingCount+1 )
         {

@@ -46,6 +46,8 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
@@ -77,7 +79,7 @@ static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
-        *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
+        *pnMaxLength = std::max(*pnMaxLength * 2,nNeeded+1);
         *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
     }
 }
