@@ -177,8 +177,14 @@ class gdal_ext(build_ext):
     def finalize_options(self):
         if self.include_dirs is None:
             self.include_dirs = include_dirs
+        # Needed on recent MacOSX
+        elif isinstance(self.include_dirs, str):
+            self.include_dirs += ':' + ':'.join(include_dirs)
         if self.library_dirs is None:
             self.library_dirs = library_dirs
+        # Needed on recent MacOSX
+        elif isinstance(self.library_dirs, str):
+            self.library_dirs += ':' + ':'.join(library_dirs)
         if self.libraries is None:
             if self.get_compiler() == 'msvc':
                 libraries.remove('gdal')
