@@ -830,6 +830,7 @@ CFLAGS_NOFTRAPV
 HAVE_LIBTOOL
 SO_EXT
 LD_SHARED
+CXX11_SUPPORT
 CXXCPP
 CPP
 OTOOL64
@@ -5272,9 +5273,9 @@ CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
 $as_echo_n "checking if -Wimplicit-fallthrough can be enabled... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
+#if __cplusplus < 201103L || (defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 7)))
     #error "not C++11 or clang >= 3.7"
-    #endif
+#endif
 int
 main ()
 {
@@ -17140,6 +17141,36 @@ if test "x$CXX" == x ; then
   as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
 fi
 
+CXX11_SUPPORT=no
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#if __cplusplus < 201103L
+    #error "-std=c++11 extension is not supported"
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  CXX11_SUPPORT=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Check whether --with-libtool was given.
 if test "${with_libtool+set}" = set; then :
@@ -34646,6 +34677,9 @@ echo "  C compiler:                ${CC} ${CFLAGS}"
 
 
 echo "  C++ compiler:              ${CXX} ${CXXFLAGS}"
+
+
+echo "  C++11 support:             ${CXX11_SUPPORT}"
 
 
 echo ""

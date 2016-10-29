@@ -111,13 +111,23 @@ AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-opera
 
 AC_LANG_POP([C++])
 
+dnl Check C++ compiler compability with C++11
+AX_CXX_COMPILE_STDCXX_11([noext],[optional])
+
+if [test "$HAVE_CXX11" = "1"]; then
+        CXX11_SUPPORT = "yes"
+        CXXFLAGS="$CXXFLAGS -std=c++11"
+else
+        CXX11_SUPPORT = "no"
+fi
+
 dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
 SAVED_CXXFLAGS=$CXXFLAGS
 CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
 AC_MSG_CHECKING([if -Wimplicit-fallthrough can be enabled])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-  [[#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
+  [[#if __cplusplus < 201103L || (defined(__clang__) && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 7)))
     #error "not C++11 or clang >= 3.7"
     #endif]])],
   [CXX_WFLAGS="$CXX_WFLAGS -Wimplicit-fallthrough"]
