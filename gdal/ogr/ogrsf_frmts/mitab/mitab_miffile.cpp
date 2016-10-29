@@ -195,6 +195,8 @@
 
 #include "mitab.h"
 #include "mitab_utils.h"
+
+#include <algorithm>
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
