@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
+
 #include "gdal_ecw.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
