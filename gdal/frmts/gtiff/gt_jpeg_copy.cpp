@@ -598,7 +598,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
     jpeg_create_compress(&sCInfo);
     jpeg_copy_critical_parameters(psDInfo, &sCInfo);
 
-    // ensure libjpeg won't write any extraneous markers.
+    // Ensure libjpeg won't write any extraneous markers.
     sCInfo.write_JFIF_header = FALSE;
     sCInfo.write_Adobe_marker = FALSE;
 
@@ -714,7 +714,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                                 nXBlocksToCopy * (DCTSIZE2 * sizeof(JCOEF)));
                         if( nXBlocksToCopy < compptr->width_in_blocks )
                         {
-                            memset(dst_buffer[offset_y]  + nXBlocksToCopy, 0,
+                            memset(dst_buffer[offset_y] + nXBlocksToCopy, 0,
                                    (compptr->width_in_blocks - nXBlocksToCopy) *
                                    (DCTSIZE2 * sizeof(JCOEF)));
                         }
@@ -769,7 +769,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                TIFFWriteRawTile(
                    hTIFF, iX + iY * nXBlocks,
                    pabyJPEGData,
-                   static_cast<tmsize_t>(nSize) ) )  != nSize )
+                   static_cast<tmsize_t>(nSize) ) ) != nSize )
             eErr = CE_Failure;
     }
     else
@@ -874,7 +874,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     }
     else
     {
-        uint32  nRowsPerStrip;
+        uint32 nRowsPerStrip = 0;
         if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
                         &(nRowsPerStrip) ) )
         {
