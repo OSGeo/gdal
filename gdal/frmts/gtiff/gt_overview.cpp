@@ -496,9 +496,9 @@ GTIFFBuildOverviews( const char * pszFilename,
     {
         const char* pszPredictor =
             CPLGetConfigOption( "PREDICTOR_OVERVIEW", NULL );
-        if( pszPredictor  != NULL )
+        if( pszPredictor != NULL )
         {
-            nPredictor =  atoi( pszPredictor );
+            nPredictor = atoi( pszPredictor );
         }
     }
 
@@ -513,7 +513,7 @@ GTIFFBuildOverviews( const char * pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Compute the uncompressed size.                                  */
     /* -------------------------------------------------------------------- */
-        double  dfUncompressedOverviewSize = 0;
+        double dfUncompressedOverviewSize = 0;
         int nDataTypeSize =
             GDALGetDataTypeSizeBytes(papoBandList[0]->GetRasterDataType());
 
