@@ -118,7 +118,6 @@ AX_CXX_COMPILE_STDCXX_11([noext],[optional])
 
 if [test "$HAVE_CXX11" = "1"]; then
     CXX11_SUPPORT=yes
-    CXXFLAGS="$CXXFLAGS -std=c++11"
 fi
 AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
 
