@@ -1224,7 +1224,6 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
         return OGRERR_CORRUPT_DATA;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Cleanup and return.                                             */
 /* -------------------------------------------------------------------- */

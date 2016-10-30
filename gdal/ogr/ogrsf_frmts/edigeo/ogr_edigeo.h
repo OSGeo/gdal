@@ -63,7 +63,6 @@ class OGREDIGEOLayer : public OGRLayer
                                        OGRSpatialReference* poSRS);
                         virtual ~OGREDIGEOLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
     virtual OGRFeature *        GetFeature(GIntBig nFID);
@@ -241,6 +240,5 @@ class OGREDIGEODataSource : public OGRDataSource
 
     int                         HasUTF8ContentOnly() { return bHasUTF8ContentOnly; }
 };
-
 
 #endif /* ndef OGR_EDIGEO_H_INCLUDED */

@@ -28,12 +28,13 @@
 
 #include "dgnlibp.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );
 static DGNElemCore *DGNParseTagSet( DGNInfo * );
-
 
 /************************************************************************/
 /*                           DGNGotoElement()                           */
@@ -121,7 +122,6 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                          DGNGetRawExtents()                          */
 /*                                                                      */
@@ -174,7 +174,6 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
         return false;
     }
 }
-
 
 /************************************************************************/
 /*                        DGNGetElementExtents()                        */
@@ -533,7 +532,6 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               psNode->origin.z = DGN_INT32( psDGN->abyElem + 82 );
           }
           DGNTransformPoint( psDGN, &(psNode->origin) );
-
       }
       break;
 
@@ -1163,7 +1161,6 @@ int DGNElemTypeHasDispHdr( int nElemType )
     }
 }
 
-
 /************************************************************************/
 /*                            DGNParseCore()                            */
 /************************************************************************/
@@ -1320,7 +1317,6 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
         /* Get User Prompt */
         tagDef->prompt = CPLStrdup( (char *) psDGN->abyElem + nDataOffset );
         nDataOffset += strlen(tagDef->prompt)+1;
-
 
         /* Get type */
         tagDef->type = psDGN->abyElem[nDataOffset]
@@ -1554,9 +1550,9 @@ void DGNInverseTransformPoint( DGNInfo *psDGN, DGNPoint *psPoint )
     psPoint->y = (psPoint->y + psDGN->origin_y) / psDGN->scale;
     psPoint->z = (psPoint->z + psDGN->origin_z) / psDGN->scale;
 
-    psPoint->x = MAX(-2147483647,MIN(2147483647,psPoint->x));
-    psPoint->y = MAX(-2147483647,MIN(2147483647,psPoint->y));
-    psPoint->z = MAX(-2147483647,MIN(2147483647,psPoint->z));
+    psPoint->x = std::max(-2147483647.0, std::min(2147483647.0, psPoint->x));
+    psPoint->y = std::max(-2147483647.0, std::min(2147483647.0, psPoint->y));
+    psPoint->z = std::max(-2147483647.0, std::min(2147483647.0, psPoint->z));
 }
 
 /************************************************************************/
@@ -1573,11 +1569,11 @@ void DGNInverseTransformPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
         (psPoint->z + psDGN->origin_z) / psDGN->scale
     };
 
-    const int nIter = MIN(3, psDGN->dimension);
+    const int nIter = std::min(3, psDGN->dimension);
     for( int i = 0; i < nIter; i++ )
     {
         GInt32 nCTI = static_cast<GInt32>(
-            MAX(-2147483647,MIN(2147483647,adfCT[i])));
+            std::max(-2147483647.0, std::min(2147483647.0, adfCT[i])));
         unsigned char *pabyCTI = (unsigned char *) &nCTI;
 
 #ifdef WORDS_BIGENDIAN
@@ -1836,12 +1832,12 @@ void DGNBuildIndex( DGNInfo *psDGN )
 #endif
             if( psDGN->got_bounds )
             {
-                psDGN->min_x = MIN(psDGN->min_x, anRegion[0]);
-                psDGN->min_y = MIN(psDGN->min_y, anRegion[1]);
-                psDGN->min_z = MIN(psDGN->min_z, anRegion[2]);
-                psDGN->max_x = MAX(psDGN->max_x, anRegion[3]);
-                psDGN->max_y = MAX(psDGN->max_y, anRegion[4]);
-                psDGN->max_z = MAX(psDGN->max_z, anRegion[5]);
+                psDGN->min_x = std::min(psDGN->min_x, anRegion[0]);
+                psDGN->min_y = std::min(psDGN->min_y, anRegion[1]);
+                psDGN->min_z = std::min(psDGN->min_z, anRegion[2]);
+                psDGN->max_x = std::max(psDGN->max_x, anRegion[3]);
+                psDGN->max_y = std::max(psDGN->max_y, anRegion[4]);
+                psDGN->max_z = std::max(psDGN->max_z, anRegion[5]);
             }
             else
             {

@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /******************************************************************************
 *
 * Project:  Meta Raster File Format Driver Implementation, RasterBand
@@ -407,7 +406,6 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
     return CE_None;
 }
 
-
 /**
 *\brief Fetch a block from the backing store dataset and keep a copy in the cache
 *
@@ -543,7 +541,6 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     return RB(xblk, yblk, filesrc, buffer);
 }
 
-
 /**
 *\brief Fetch for a cloned MRF
 *
@@ -636,7 +633,6 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     // Reissue read, it will work from the cloned data
     return IReadBlock(xblk, yblk, buffer);
 }
-
 
 /**
 *\brief read a block in the provided buffer
@@ -789,7 +785,6 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     return RB(xblk, yblk, dst, buffer);
 }
 
-
 /**
 *\brief Write a block from the provided buffer
 *
@@ -893,7 +888,6 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         // Just the right mix of templates and macros make this real tidy
 #define CpySO(T) cpy_stride_out<T> (((T *)tbuffer)+iBand, pabyThisImage,\
                 blockSizeBytes()/sizeof(T), cstride)
-
 
         // Build the page in tbuffer
         switch (GDALGetDataTypeSize(eDataType)/8)

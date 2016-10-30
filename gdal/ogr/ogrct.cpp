@@ -48,8 +48,8 @@ typedef struct { double u, v; } projUV;
 
 #define projPJ void *
 #define projCtx void *
-#define RAD_TO_DEG      57.29577951308232
-#define DEG_TO_RAD      .0174532925199432958
+static const double RAD_TO_DEG = 57.29577951308232;
+static const double DEG_TO_RAD = 0.0174532925199432958;
 
 #else
 
@@ -156,6 +156,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     double     *padfTargetY;
     double     *padfTargetZ;
 
+    bool        m_bEmitErrors;
+
 public:
                 OGRProj4CT();
     virtual     ~OGRProj4CT();
@@ -170,6 +172,9 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *panSuccess = NULL );
+
+    virtual bool GetEmitErrors() { return m_bEmitErrors; }
+    virtual void SetEmitErrors(bool bEmitErrors) { m_bEmitErrors = bEmitErrors; }
 };
 
 /************************************************************************/
@@ -348,7 +353,6 @@ char *OCTProj4Normalize( const char *pszProj4Src )
         CPLLocaleC  oLocaleEnforcer;
         return OCTProj4NormalizeInternal(pszProj4Src);
     }
-
 }
 
 /************************************************************************/
@@ -502,7 +506,8 @@ OGRProj4CT::OGRProj4CT() :
     pjctx(NULL),
     nMaxCount(0),
     padfOriX(NULL), padfOriY(NULL), padfOriZ(NULL), padfTargetX(NULL),
-    padfTargetY(NULL), padfTargetZ(NULL)
+    padfTargetY(NULL), padfTargetZ(NULL),
+    m_bEmitErrors(true)
 {
     if (pfn_pj_ctx_alloc != NULL)
         pjctx = pfn_pj_ctx_alloc();
@@ -1014,7 +1019,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
     bool bTransformDone = false;
     if( bWebMercatorToWGS84 )
     {
-#define REVERSE_SPHERE_RADIUS  (1. / 6378137.)
+        static const double REVERSE_SPHERE_RADIUS = 1.0 / 6378137.0;
 
         double y0 = y[0];
         for( int i = 0; i < nCount; i++ )
@@ -1025,10 +1030,13 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 if( x[i] > M_PI )
                 {
                     if( x[i] < M_PI+1e-14 )
+                    {
                         x[i] = M_PI;
+                    }
                     else if( bCheckWithInvertProj )
                     {
-                        x[i] = y[i] = HUGE_VAL;
+                        x[i] = HUGE_VAL;
+                        y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
                         continue;
                     }
@@ -1042,10 +1050,13 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                 else if( x[i] < -M_PI )
                 {
                     if( x[i] > -M_PI-1e-14 )
+                    {
                         x[i] = -M_PI;
+                    }
                     else if( bCheckWithInvertProj )
                     {
-                        x[i] = y[i] = HUGE_VAL;
+                        x[i] = HUGE_VAL;
+                        y[i] = HUGE_VAL;
                         y0 = HUGE_VAL;
                         continue;
                     }
@@ -1147,7 +1158,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         if( pabSuccess )
             memset( pabSuccess, 0, sizeof(int) * nCount );
 
-        if( ++nErrorCount < 20 )
+        if( m_bEmitErrors && ++nErrorCount < 20 )
         {
             if (pjctx != NULL)
                 /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */
@@ -1232,7 +1243,6 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /************************************************************************/
 /*                           OCTTransformEx()                           */
 /************************************************************************/
-
 
 /** Transform an array of points
  *

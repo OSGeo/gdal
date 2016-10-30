@@ -77,7 +77,6 @@ ILI2Handler::~ILI2Handler() {
   dom_doc->release();
 }
 
-
 void ILI2Handler::startDocument() {
   // the level counter starts with DATASECTION
   level = -1;

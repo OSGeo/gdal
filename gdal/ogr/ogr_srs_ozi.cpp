@@ -86,11 +86,13 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 {
     int iLine;
-    const char *pszDatum, *pszProj = NULL, *pszProjParms = NULL;
+    const char *pszDatum;
+    const char *pszProj = NULL;
+    const char *pszProjParms = NULL;
 
     Clear();
 
-    int nLines = CSLCount((char**)papszLines);
+    const int nLines = CSLCount((char**)papszLines);
     if( nLines < 5 )
         return OGRERR_NOT_ENOUGH_DATA;
 
@@ -199,7 +201,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         if ( iLine == nLines )    /* Try to guess the UTM zone */
         {
             float fMinLongitude = 1000.0f;
-            float fMaxLongitude = -1000.0f;;
+            float fMaxLongitude = -1000.0f;
             float fMinLatitude = 1000.0f;
             float fMaxLatitude = -1000.0f;
             bool bFoundMMPLL = false;
@@ -429,7 +431,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             double dfDeltaZ = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
                                                 CC_ApproxString, "DELTAZ" ) );
 
-
     /* -------------------------------------------------------------------- */
     /*      Verify that we can find the CSV file containing the ellipsoids  */
     /* -------------------------------------------------------------------- */
@@ -471,7 +472,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
             SetGeogCS( osDName, osDName, osEName, dfA, dfInvF );
             SetTOWGS84( dfDeltaX, dfDeltaY, dfDeltaZ );
-
         }
     }
 

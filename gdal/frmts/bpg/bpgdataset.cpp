@@ -37,6 +37,7 @@
 // g++ -fPIC -g -Wall -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -I/home/even/libbpg-0.9.4 frmts/bpg/bpgdataset.cpp -shared -o gdal_BPG.so -L. -lgdal -L/home/even/libbpg-0.9.4/ -lbpg
 
 CPL_C_START
+void CPL_DLL GDALRegister_BPG();
 #include "libbpg.h"
 CPL_C_END
 
@@ -155,7 +156,6 @@ GDALColorInterp BPGRasterBand::GetColorInterpretation()
 /*                             BPGDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            BPGDataset()                              */

@@ -49,7 +49,6 @@ class OGRMDBJavaEnv
 
         int Init();
 
-
     JavaVM *jvm;
     JNIEnv *env;
     int bCalledFromJava;
@@ -185,7 +184,6 @@ public:
     int GetColumnAsInt(int iCol);
     double GetColumnAsDouble(int iCol);
     GByte* GetColumnAsBinary(int iCol, int* pnBytes);
-
 };
 
 typedef enum

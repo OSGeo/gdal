@@ -199,7 +199,6 @@ void GDALMDReaderPleiades::LoadMetadata()
         }
     }
 
-
     const char* pszSatId2;
     if(nCounter == -1)
         pszSatId2 = CSLFetchNameValue(m_papszIMDMD,
@@ -226,7 +225,6 @@ void GDALMDReaderPleiades::LoadMetadata()
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
     }
-
 
     const char* pszDate;
     if(nCounter == -1)

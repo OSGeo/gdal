@@ -33,6 +33,8 @@
 #include "gdal_proxy.h"
 #include "vrtdataset.h"
 
+#include <algorithm>
+
 /*! @cond Doxygen_Suppress */
 
 // #define DEBUG_VERBOSE 1
@@ -165,7 +167,6 @@ void VRTSimpleSource::SetSrcBand( GDALRasterBand *poNewSrcBand )
 {
     m_poRasterBand = poNewSrcBand;
 }
-
 
 /************************************************************************/
 /*                          SetSrcMaskBand()                            */
@@ -579,7 +580,8 @@ CPLErr VRTSimpleSource::XMLInit( CPLXMLNode *psSrc, const char *pszVRTPath )
     // TODO(schwehr): What is the difference between 0 (GDT_Unknown) and -1?
     // Does there need to be a GDT_Uninitialized?
     GDALDataType eDataType = static_cast<GDALDataType>(-1);
-    int nBlockXSize = 0, nBlockYSize = 0;
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
     if( psSrcProperties )
     {
         nRasterXSize =
@@ -913,7 +915,6 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     double dfRXSize = nXSize;
     double dfRYSize = nYSize;
 
-
     if( bDstWinSet )
     {
         if( dfRXOff < m_dfDstXOff )
@@ -1084,7 +1085,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             dfOutRightXOff = INT_MAX;
         *pnOutXSize = (int) ceil(dfOutRightXOff) - *pnOutXOff;
 
-        *pnOutXOff = MAX(0,*pnOutXOff);
+        *pnOutXOff = std::max(0, *pnOutXOff);
         if( *pnOutXSize > INT_MAX - *pnOutXOff ||
             *pnOutXOff + *pnOutXSize > nBufXSize )
             *pnOutXSize = nBufXSize - *pnOutXOff;
@@ -1110,7 +1111,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
             dfOutTopYOff = INT_MAX;
         *pnOutYSize = static_cast<int>( ceil(dfOutTopYOff) ) - *pnOutYOff;
 
-        *pnOutYOff = MAX(0,*pnOutYOff);
+        *pnOutYOff = std::max(0, *pnOutYOff);
         if( *pnOutYSize > INT_MAX - *pnOutYOff ||
             *pnOutYOff + *pnOutYSize > nBufYSize )
             *pnOutYSize = nBufYSize - *pnOutYOff;
@@ -1796,7 +1797,8 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 
             if( eBufType == GDT_Byte )
                 *pDstLocation =
-                    static_cast<GByte>( MIN(255,MAX(0,dfOutputValue + 0.5)) );
+                    static_cast<GByte>(
+                        std::min(255.0, std::max(0.0, dfOutputValue + 0.5)) );
             else
                 GDALCopyWords( &dfOutputValue, GDT_Float32, 4,
                                pDstLocation, eBufType, 8, 1 );
@@ -2340,7 +2342,6 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 bIsComplex ? GDT_CFloat32 : GDT_Float32);
     }
 
-
     return eErr;
 }
 
@@ -2533,7 +2534,10 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                     fResult = static_cast<WorkingDT>(m_nMaxValue);
 
                 if( eBufType == GDT_Byte )
-                    *pDstLocation = (GByte) MIN(255,MAX(0,fResult + 0.5));
+                    *pDstLocation = static_cast<GByte>(
+                        std::min(255.0f,
+                                 std::max(0.0f,
+                                          static_cast<float>(fResult) + 0.5f)));
                 else
                     GDALCopyWords( &fResult, eWrkDataType, 0,
                                 pDstLocation, eBufType, 0, 1 );
@@ -2557,7 +2561,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = static_cast<GByte>(
-                        MIN(255,MAX(0,afResult[0] + 0.5) ) );
+                        std::min(255.0, std::max(0.0, afResult[0] + 0.5) ) );
                 else
                     GDALCopyWords( afResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
@@ -2574,12 +2578,11 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
 
                 if( eBufType == GDT_Byte )
                     *pDstLocation = static_cast<GByte>(
-                        MIN(255,MAX(0,fResult + 0.5)) );
+                        std::min(255.0, std::max(0.0, fResult + 0.5)) );
                 else
                     GDALCopyWords( &fResult, eWrkDataType, 0,
                                    pDstLocation, eBufType, 0, 1 );
             }
-
         }
     }
 

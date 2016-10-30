@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -599,10 +601,11 @@ DDFSubfieldDefn::ExtractIntData( const char * pachSourceData,
 
           if( nFormatWidth > nMaxBytes || nFormatWidth >= (int)sizeof(abyData) )
           {
-              CPLError( CE_Warning, CPLE_AppDefined,
-                        "Attempt to extract int subfield %s with format %s\n"
-                        "failed as only %d bytes available.  Using zero.",
-                        pszName, pszFormatString, MIN(nMaxBytes, (int)sizeof(abyData)) );
+              CPLError(CE_Warning, CPLE_AppDefined,
+                       "Attempt to extract int subfield %s with format %s\n"
+                       "failed as only %d bytes available.  Using zero.",
+                       pszName, pszFormatString,
+                       std::min(nMaxBytes, static_cast<int>(sizeof(abyData))));
               return 0;
           }
 
@@ -719,11 +722,12 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
                  ExtractIntData( pachData, nMaxBytes, NULL ) );
     else if( eType == DDFBinaryString )
     {
-        int     nBytes, i;
-        GByte   *pabyBString = (GByte *) ExtractStringData( pachData, nMaxBytes, &nBytes );
+        int nBytes = 0;
+        GByte *pabyBString =
+            (GByte *) ExtractStringData( pachData, nMaxBytes, &nBytes );
 
         fprintf( fp, "      Subfield `%s' = 0x", pszName );
-        for( i = 0; i < MIN(nBytes,24); i++ )
+        for( int i = 0; i < std::min(nBytes, 24); i++ )
             fprintf( fp, "%02X", pabyBString[i] );
 
         if( nBytes > 24 )
@@ -852,12 +856,12 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
         if( GetBinaryFormat() == NotBinary )
         {
             memset( pachData, ' ', nSize );
-            memcpy( pachData, pszValue, MIN(nValueLength,nSize) );
+            memcpy( pachData, pszValue, std::min(nValueLength, nSize) );
         }
         else
         {
             memset( pachData, 0, nSize );
-            memcpy( pachData, pszValue, MIN(nValueLength,nSize) );
+            memcpy( pachData, pszValue, std::min(nValueLength, nSize) );
         }
     }
 

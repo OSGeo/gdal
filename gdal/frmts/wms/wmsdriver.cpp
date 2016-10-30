@@ -489,12 +489,15 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                                          strlen(pszContent),
                                          FALSE);
     const char* pszLine;
-    int nTileWidth = -1, nTileHeight = -1;
+    int nTileWidth = -1;
+    int nTileHeight = -1;
     int nWKID = -1;
-    double dfMinX = 0, dfMaxY = 0;
-    int bHasMinX = FALSE, bHasMaxY = FALSE;
+    double dfMinX = 0.0;
+    double dfMaxY = 0.0;
+    int bHasMinX = FALSE;
+    int bHasMaxY = FALSE;
     int nExpectedLevel = 0;
-    double dfBaseResolution = 0;
+    double dfBaseResolution = 0.0;
     while((pszLine = CPLReadLine2L(fp, 4096, NULL)) != NULL)
     {
         const char* pszVal;
@@ -968,15 +971,15 @@ GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
     return Open(&oOpenInfo);
 }
 
-/************************************************************************/
-/*                         GDALDeregister_WMS()                         */
-/************************************************************************/
-
-static void GDALDeregister_WMS( GDALDriver * )
-
-{
-    DestroyWMSMiniDriverManager();
-}
+// Define a minidriver factory type, create one and register it
+#define RegisterMinidriver(name) \
+    class WMSMiniDriverFactory_##name : public WMSMiniDriverFactory { \
+    public: \
+        WMSMiniDriverFactory_##name() { m_name = CPLString(#name); };\
+        virtual ~WMSMiniDriverFactory_##name() {};\
+        virtual WMSMiniDriver* New() const { return new WMSMiniDriver_##name;}; \
+    }; \
+    WMSRegisterMiniDriverFactory(new WMSMiniDriverFactory_##name());
 
 /************************************************************************/
 /*                          GDALRegister_WMS()                          */
@@ -987,6 +990,16 @@ void GDALRegister_WMS()
 {
     if( GDALGetDriverByName( "WMS" ) != NULL )
         return;
+
+    // Register all minidrivers here
+    RegisterMinidriver(WMS);
+    RegisterMinidriver(TileService);
+    RegisterMinidriver(WorldWind);
+    RegisterMinidriver(TMS);
+    RegisterMinidriver(TiledWMS);
+    RegisterMinidriver(VirtualEarth);
+    RegisterMinidriver(AGS);
+    RegisterMinidriver(IIP);
 
     GDALDriver *poDriver = new GDALDriver();
 
@@ -999,18 +1012,8 @@ void GDALRegister_WMS()
 
     poDriver->pfnOpen = GDALWMSDataset::Open;
     poDriver->pfnIdentify = GDALWMSDataset::Identify;
-    poDriver->pfnUnloadDriver = GDALDeregister_WMS;
+    poDriver->pfnUnloadDriver = WMSDeregisterMiniDrivers;
     poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
-
-    GDALWMSMiniDriverManager *const mdm = GetGDALWMSMiniDriverManager();
-    mdm->Register(new GDALWMSMiniDriverFactory_WMS());
-    mdm->Register(new GDALWMSMiniDriverFactory_TileService());
-    mdm->Register(new GDALWMSMiniDriverFactory_WorldWind());
-    mdm->Register(new GDALWMSMiniDriverFactory_TMS());
-    mdm->Register(new GDALWMSMiniDriverFactory_TiledWMS());
-    mdm->Register(new GDALWMSMiniDriverFactory_VirtualEarth());
-    mdm->Register(new GDALWMSMiniDriverFactory_AGS());
-    mdm->Register(new GDALWMSMiniDriverFactory_IIP());
 }

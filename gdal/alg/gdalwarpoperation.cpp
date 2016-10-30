@@ -33,6 +33,8 @@
 #include "ogr_api.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 struct _GDALWarpChunk {
@@ -823,7 +825,6 @@ typedef struct
     CPLCond           *hCond;
 } ChunkThreadData;
 
-
 static void ChunkThreadMain( void *pThreadData )
 
 {
@@ -926,12 +927,13 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     asThreadData[1].hIOMutex = hIOMutex;
 
     int iChunk;
-    double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+    double dfPixelsProcessed = 0.0;
+    double dfTotalPixels = nDstXSize*(double)nDstYSize;
 
     CPLErr eErr = CE_None;
     for( iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
     {
-        int    iThread = iChunk % 2;
+        int iThread = iChunk % 2;
 
 /* -------------------------------------------------------------------- */
 /*      Launch thread for this chunk.                                   */
@@ -1147,7 +1149,8 @@ CPLErr GDALWarpOperation::CollectChunkList(
         (((double) nSrcPixelCostInBits) * nSrcXSize * nSrcYSize
          + ((double) nDstPixelCostInBits) * nDstXSize * nDstYSize) / 8.0;
 
-    int nBlockXSize = 1, nBlockYSize = 1;
+    int nBlockXSize = 1;
+    int nBlockYSize = 1;
     if (psOptions->hDstDS)
     {
         GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1),
@@ -1253,7 +1256,6 @@ CPLErr GDALWarpOperation::CollectChunkList(
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                             WarpRegion()                             */
@@ -1392,7 +1394,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         {
             double adfInitRealImag[2];
             GByte *pBandData;
-            const char *pszBandInit = papszInitValues[MIN(iBand,nInitCount-1)];
+            const char *pszBandInit =
+                papszInitValues[std::min(iBand, nInitCount - 1)];
 
             if( EQUAL(pszBandInit,"NO_DATA")
                 && psOptions->padfDstNoDataReal != NULL )
@@ -1410,7 +1413,9 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
 
             if( psOptions->eWorkingDataType == GDT_Byte )
                 memset( pBandData,
-                        MAX(0,MIN(255,(int)adfInitRealImag[0])),
+                        std::max(
+                            0, std::min(255,
+                                        static_cast<int>(adfInitRealImag[0]))),
                         nBandSize);
             else if( !CPLIsNan(adfInitRealImag[0]) && adfInitRealImag[0] == 0.0 &&
                      !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
@@ -2241,8 +2246,6 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
     return CE_None;
 }
 
-
-
 /************************************************************************/
 /*                        ComputeSourceWindow()                         */
 /************************************************************************/
@@ -2275,7 +2278,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         nStepCount =
             atoi(CSLFetchNameValue( psOptions->papszWarpOptions,
                                     "SAMPLE_STEPS" ));
-        nStepCount = MAX(2,nStepCount);
+        nStepCount = std::max(2, nStepCount);
     }
 
     dfStepSize = 1.0 / (nStepCount-1);
@@ -2388,9 +2391,13 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 /* -------------------------------------------------------------------- */
 /*      Collect the bounds, ignoring any failed points.                 */
 /* -------------------------------------------------------------------- */
-    double dfMinXOut=0.0, dfMinYOut=0.0, dfMaxXOut=0.0, dfMaxYOut=0.0;
-    int    bGotInitialPoint = FALSE;
-    int    nFailedCount = 0, i;
+    double dfMinXOut = 0.0;
+    double dfMinYOut = 0.0;
+    double dfMaxXOut = 0.0;
+    double dfMaxYOut = 0.0;
+    int bGotInitialPoint = FALSE;
+    int nFailedCount = 0;
+    int i;
 
     for( i = 0; i < nSamplePoints; i++ )
     {
@@ -2408,10 +2415,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         }
         else
         {
-            dfMinXOut = MIN(dfMinXOut,padfX[i]);
-            dfMinYOut = MIN(dfMinYOut,padfY[i]);
-            dfMaxXOut = MAX(dfMaxXOut,padfX[i]);
-            dfMaxYOut = MAX(dfMaxYOut,padfY[i]);
+            dfMinXOut = std::min(dfMinXOut, padfX[i]);
+            dfMinYOut = std::min(dfMinYOut, padfY[i]);
+            dfMaxXOut = std::max(dfMaxXOut, padfX[i]);
+            dfMaxYOut = std::max(dfMaxYOut, padfY[i]);
         }
     }
 
@@ -2484,10 +2491,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     double dfXScale = (double)nDstXSize / (dfMaxXOut - dfMinXOut);
     double dfYScale = (double)nDstYSize / (dfMaxYOut - dfMinYOut);
     int nXRadius = ( dfXScale < 1.0 ) ?
-        (int)ceil( nResWinSize / dfXScale ) :nResWinSize;
+        (int)ceil( nResWinSize / dfXScale ) : nResWinSize;
     int nYRadius = ( dfYScale < 1.0 ) ?
         (int)ceil( nResWinSize / dfYScale ) : nResWinSize;
-    nResWinSize = MAX(nXRadius, nYRadius);
+    nResWinSize = std::max(nXRadius, nYRadius);
 
 /* -------------------------------------------------------------------- */
 /*      Allow addition of extra sample pixels to source window to       */
@@ -2511,10 +2518,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
              nDstXOff, nDstYOff, nDstXSize, nDstYSize,
              dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
     */
-    *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) );
-    *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) );
-    *pnSrcXOff = MIN(*pnSrcXOff,nRasterXSize);
-    *pnSrcYOff = MIN(*pnSrcYOff,nRasterYSize);
+    *pnSrcXOff = std::max(0, static_cast<int>(floor(dfMinXOut)));
+    *pnSrcYOff = std::max(0, static_cast<int>(floor(dfMinYOut)));
+    *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
+    *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
 
     double dfCeilMaxXOut = ceil(dfMaxXOut);
     if( dfCeilMaxXOut > INT_MAX )
@@ -2523,24 +2530,26 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     if( dfCeilMaxYOut > INT_MAX )
         dfCeilMaxYOut = INT_MAX;
 
-    int nSrcXSizeRaw = MIN( nRasterXSize - *pnSrcXOff,
-                       ((int) dfCeilMaxXOut) - *pnSrcXOff );
-    int nSrcYSizeRaw = MIN( nRasterYSize - *pnSrcYOff,
-                       ((int) dfCeilMaxYOut) - *pnSrcYOff );
-    nSrcXSizeRaw = MAX(0,nSrcXSizeRaw);
-    nSrcYSizeRaw = MAX(0,nSrcYSizeRaw);
+    int nSrcXSizeRaw = std::min(nRasterXSize - *pnSrcXOff,
+                                static_cast<int>(dfCeilMaxXOut) - *pnSrcXOff);
+    int nSrcYSizeRaw = std::min(nRasterYSize - *pnSrcYOff,
+                                static_cast<int>(dfCeilMaxYOut) - *pnSrcYOff);
+    nSrcXSizeRaw = std::max(0, nSrcXSizeRaw);
+    nSrcYSizeRaw = std::max(0, nSrcYSizeRaw);
 
-    *pnSrcXOff = MAX(0,(int) floor( dfMinXOut ) - nResWinSize );
-    *pnSrcYOff = MAX(0,(int) floor( dfMinYOut ) - nResWinSize );
-    *pnSrcXOff = MIN(*pnSrcXOff,nRasterXSize);
-    *pnSrcYOff = MIN(*pnSrcYOff,nRasterYSize);
+    *pnSrcXOff = std::max(0, static_cast<int>(floor(dfMinXOut)) - nResWinSize);
+    *pnSrcYOff = std::max(0, static_cast<int>(floor(dfMinYOut)) - nResWinSize);
+    *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
+    *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
 
-    *pnSrcXSize = MIN( nRasterXSize - *pnSrcXOff,
-                       ((int) dfCeilMaxXOut) - *pnSrcXOff + nResWinSize );
-    *pnSrcYSize = MIN( nRasterYSize - *pnSrcYOff,
-                       ((int) dfCeilMaxYOut) - *pnSrcYOff + nResWinSize );
-    *pnSrcXSize = MAX(0,*pnSrcXSize);
-    *pnSrcYSize = MAX(0,*pnSrcYSize);
+    *pnSrcXSize =
+        std::min(nRasterXSize - *pnSrcXOff,
+                 static_cast<int>(dfCeilMaxXOut) - *pnSrcXOff + nResWinSize);
+    *pnSrcYSize =
+        std::min(nRasterYSize - *pnSrcYOff,
+                 static_cast<int>(dfCeilMaxYOut) - *pnSrcYOff + nResWinSize);
+    *pnSrcXSize = std::max(0,*pnSrcXSize);
+    *pnSrcYSize = std::max(0,*pnSrcYSize);
 
     if( pnSrcXExtraSize )
         *pnSrcXExtraSize = *pnSrcXSize - nSrcXSizeRaw;
@@ -2548,10 +2557,13 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         *pnSrcYExtraSize = *pnSrcYSize - nSrcYSizeRaw;
 
     // Computed the ratio of the clamped source raster window size over
-    // the unclamped source raster window size
+    // the unclamped source raster window size.
     if( pdfSrcFillRatio )
-        *pdfSrcFillRatio = *pnSrcXSize * *pnSrcYSize / MAX(1.0,
-        (dfMaxXOut - dfMinXOut + 2 * nResWinSize) * (dfMaxYOut - dfMinYOut + 2 * nResWinSize));
+        *pdfSrcFillRatio =
+            *pnSrcXSize * *pnSrcYSize /
+            std::max(1.0,
+                     (dfMaxXOut - dfMinXOut + 2 * nResWinSize) *
+                     (dfMaxYOut - dfMinYOut + 2 * nResWinSize));
 
     return CE_None;
 }

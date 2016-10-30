@@ -45,6 +45,7 @@
 #include "../sqlite/ogrsqliteexecutesql.h"
 #endif
 
+#include <algorithm>
 #include <map>
 #include <new>
 
@@ -184,7 +185,6 @@ GIntBig GDALGetResponsiblePIDForCurrentThread()
         return CPLGetPID();
     return *pResponsiblePID;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -605,11 +605,11 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
 
         if( papoBands == NULL )
             papoNewBands = (GDALRasterBand **)
-                VSICalloc(sizeof(GDALRasterBand*), MAX(nNewBand,nBands));
+                VSICalloc(sizeof(GDALRasterBand*), std::max(nNewBand, nBands));
         else
             papoNewBands = (GDALRasterBand **)
                 VSIRealloc(papoBands, sizeof(GDALRasterBand*) *
-                           MAX(nNewBand,nBands));
+                           std::max(nNewBand, nBands));
         if (papoNewBands == NULL)
         {
             ReportError(CE_Failure, CPLE_OutOfMemory,
@@ -622,7 +622,7 @@ void GDALDataset::SetBand( int nNewBand, GDALRasterBand * poBand )
         for( int i = nBands; i < nNewBand; ++i )
             papoBands[i] = NULL;
 
-        nBands = MAX(nBands,nNewBand);
+        nBands = std::max(nBands, nNewBand);
     }
 
 /* -------------------------------------------------------------------- */
@@ -687,7 +687,6 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 
     return ((GDALDataset *) hDataset)->GetRasterXSize();
 }
-
 
 /************************************************************************/
 /*                           GetRasterYSize()                           */
@@ -1352,7 +1351,6 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 
     return ((GDALDataset *) hDS)->GetGCPs();
 }
-
 
 /************************************************************************/
 /*                              SetGCPs()                               */
@@ -2195,7 +2193,6 @@ void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
     *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
 }
 
-
 /************************************************************************/
 /*                        GDALCleanOpenDatasetsList()                   */
 /************************************************************************/
@@ -2553,7 +2550,6 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                        GDAL_OF_VERBOSE_ERROR,
                        NULL, NULL, NULL );
 }
-
 
 /************************************************************************/
 /*                             GDALOpenEx()                             */
@@ -3054,7 +3050,6 @@ static int GDALDumpOpenSharedDatasetsForeach(void* elt, void* user_data)
     return TRUE;
 }
 
-
 static int GDALDumpOpenDatasetsForeach(GDALDataset* poDS, FILE *fp)
 {
     const char *pszDriverName;
@@ -3223,7 +3218,6 @@ GDALDataset::BeginAsyncReader(int nXOff, int nYOff,
 /*                        GDALBeginAsyncReader()                      */
 /************************************************************************/
 
-
 /**
  * \brief Sets up an asynchronous data request
  *
@@ -3345,7 +3339,6 @@ void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO )
 /************************************************************************/
 /*                        GDALEndAsyncReader()                        */
 /************************************************************************/
-
 
 /**
  * End asynchronous request.
@@ -3861,7 +3854,6 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
         pszName, (OGRSpatialReference *) hSpatialRef, eGType, papszOptions );
 }
 
-
 /************************************************************************/
 /*                         GDALDatasetCopyLayer()                       */
 /************************************************************************/
@@ -4089,7 +4081,6 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 
 @return the current reference count for the datasource object itself.
 */
-
 
 int GDALDataset::GetRefCount() const
 
@@ -5058,7 +5049,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAddColumn( const char *pszSQLCommand )
 /*      Add column.                                                     */
 /* -------------------------------------------------------------------- */
 
-    int nWidth = 0, nPrecision = 0;
+    int nWidth = 0;
+    int nPrecision = 0;
     OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
     OGRFieldDefn oFieldDefn(pszColumnName, eType);
     oFieldDefn.SetWidth(nWidth);
@@ -5144,7 +5136,6 @@ OGRErr GDALDataset::ProcessSQLAlterTableDropColumn( const char *pszSQLCommand )
         CSLDestroy( papszTokens );
         return OGRERR_FAILURE;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Remove it.                                                      */
@@ -5352,7 +5343,8 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn( const char *pszSQLCommand )
     OGRFieldDefn* poOldFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nFieldIndex);
     OGRFieldDefn oNewFieldDefn(poOldFieldDefn);
 
-    int nWidth = 0, nPrecision = 0;
+    int nWidth = 0;
+    int nPrecision = 0;
     OGRFieldType eType = GDALDatasetParseSQLType(pszType, nWidth, nPrecision);
     oNewFieldDefn.SetType(eType);
     oNewFieldDefn.SetWidth(nWidth);
@@ -5961,7 +5953,6 @@ int GDALDataset::IsGenericSQLDialect(const char* pszDialect)
 {
     return ( pszDialect != NULL && (EQUAL(pszDialect,"OGRSQL") ||
                                     EQUAL(pszDialect,"SQLITE")) );
-
 }
 //! @endcond
 

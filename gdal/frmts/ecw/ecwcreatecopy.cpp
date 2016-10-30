@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
+
 #include "gdal_ecw.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
@@ -1803,7 +1806,6 @@ CPLErr ECWWriteDataset::SetProjection( const char *pszWKT )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                             Crystalize()                             */
 /************************************************************************/
@@ -1874,7 +1876,6 @@ CPLErr ECWWriteDataset::FlushLine()
         for( int i = 0; i < nBands; i++ )
             papOutputLine[i] =
                 (void *) (pabyBILBuffer + i * nWordSize * nRasterXSize);
-
 
         eErr =  oCompressor.ourWriteLineBIL( (UINT16) nBands, papOutputLine );
         CPLFree( papOutputLine );

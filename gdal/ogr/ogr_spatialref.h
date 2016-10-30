@@ -603,6 +603,12 @@ public:
     /** Fetch internal target coordinate system. */
     virtual OGRSpatialReference *GetTargetCS() = 0;
 
+    /** Whether the transformer will emit CPLError */
+    virtual bool GetEmitErrors() { return false; }
+
+    /** Set if the transformer must emit CPLError */
+    virtual void SetEmitErrors(bool /*bEmitErrors*/) {}
+
     // From CT_MathTransform
 
     /**
@@ -641,7 +647,6 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
                              int *pabSuccess = NULL ) = 0;
-
 };
 
 OGRCoordinateTransformation CPL_DLL *

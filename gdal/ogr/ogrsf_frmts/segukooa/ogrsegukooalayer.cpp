@@ -268,7 +268,6 @@ static bool isleap( int y)
       || y % 400 == 0;
 }
 
-
 OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 {
     if( bEOF )
@@ -437,7 +436,6 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
                                         atoi(szH), atoi(szM),
                                         static_cast<float>(atoi(szS)) );
                 }
-
             }
         }
 
@@ -502,7 +500,6 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                                 SEGP1Fields[i].eType );
         poFeatureDefn->AddFieldDefn( &oField );
     }
-
 
     ResetReading();
 }
@@ -721,7 +718,6 @@ int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                        OGRSEGUKOOALineLayer()                        */

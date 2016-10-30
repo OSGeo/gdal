@@ -186,14 +186,13 @@ int SDTS_IREF::GetSADR( DDFField * poField, int nVertices,
 
         for( int iVertex = 0; iVertex < nVertices; iVertex++ )
         {
-            double adfXYZ[3] = {0.0, 0.0, 0.0};
-
+            double adfXYZ[3] = { 0.0, 0.0, 0.0 };
 
             for( int iEntry = 0;
                  iEntry < poFieldDefn->GetSubfieldCount();
                  iEntry++ )
             {
-                int     nBytesConsumed = 0;
+                int nBytesConsumed = 0;
                 DDFSubfieldDefn *poSF = poFieldDefn->GetSubfield(iEntry);
 
                 switch( poSF->GetType() )

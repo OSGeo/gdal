@@ -365,7 +365,6 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         bNeedComma = true;
     }
 
-
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
         if( i == iFIDAsRegularColumnIndex )
@@ -397,7 +396,6 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                        CreateFeatureViaCopy()                        */
@@ -499,7 +497,6 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
         }
     }
 
-
     /* Now process the remaining fields */
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -591,12 +588,10 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
                     snprintf( pszNeedToFree+nOff, nLen-nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
                 else
                     CPLsnprintf( pszNeedToFree+nOff, nLen-nOff, "%.16g", padfItems[j] );
-
             }
             strcat( pszNeedToFree+nOff, "}" );
             pszStrValue = pszNeedToFree;
         }
-
 
         // We need special formatting for string list values.
         else if( nOGRFieldType == OFTStringList )
@@ -884,7 +879,6 @@ CPLString OGRPGDumpEscapeString( const char* pszStrValue, int nMaxLength,
     return osCommand;
 }
 
-
 /************************************************************************/
 /*                    OGRPGDumpEscapeStringList( )                      */
 /************************************************************************/
@@ -1036,7 +1030,6 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
                 snprintf( pszNeedToFree+nOff, nLen-nOff, (padfItems[j] > 0) ? "Infinity" : "-Infinity" );
             else
                 CPLsnprintf( pszNeedToFree+nOff, nLen-nOff, "%.16g", padfItems[j] );
-
         }
         strcat( pszNeedToFree+nOff, "}'" );
 
@@ -1116,7 +1109,6 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
         osCommand += pszStrValue;
     }
 }
-
 
 /************************************************************************/
 /*                        GByteArrayToBYTEA()                           */

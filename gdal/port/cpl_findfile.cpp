@@ -42,7 +42,6 @@ typedef struct
     char **papszFinderLocations;
 } FindFileTLS;
 
-
 /************************************************************************/
 /*                      CPLFindFileDeinitTLS()                          */
 /************************************************************************/
@@ -253,7 +252,6 @@ void CPLPushFinderLocation( const char *pszLocation )
     pTLSData->papszFinderLocations =
         CSLAddStringMayFail( pTLSData->papszFinderLocations, pszLocation );
 }
-
 
 /************************************************************************/
 /*                       CPLPopFinderLocation()                         */

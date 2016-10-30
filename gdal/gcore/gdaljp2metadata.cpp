@@ -39,6 +39,8 @@
 #include "ogr_api.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+
+#include <algorithm>
 #include <set>
 
 /*! @cond Doxygen_Suppress */
@@ -591,7 +593,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
     int abPixelIsPoint[MAX_JP2GEOTIFF_BOXES] = { 0 };
     char** apapszRPCMD[MAX_JP2GEOTIFF_BOXES] = { NULL };
 
-    const int nMax = MIN(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
+    const int nMax = std::min(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
     for( int i = 0; i < nMax; ++i )
     {
     /* -------------------------------------------------------------------- */
@@ -835,7 +837,6 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     return psHit;
 }
 
-
 /************************************************************************/
 /*                            GMLSRSLookup()                            */
 /*                                                                      */
@@ -926,7 +927,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( psRG != NULL )
     {
         psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
-
 
         CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
         if( psOffset1 != NULL )
@@ -1099,7 +1099,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
         CPLFree(pszProjection);
         oSRS.exportToWkt( &pszProjection );
-
     }
 
     /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
@@ -1516,10 +1515,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
     double dfY2 = adfGeoTransform[3] + nXSize * adfGeoTransform[4];
     double dfY3 = adfGeoTransform[3] +                               nYSize * adfGeoTransform[5];
     double dfY4 = adfGeoTransform[3] + nXSize * adfGeoTransform[4] + nYSize * adfGeoTransform[5];
-    double dfLCX = MIN(MIN(dfX1,dfX2),MIN(dfX3,dfX4));
-    double dfLCY = MIN(MIN(dfY1,dfY2),MIN(dfY3,dfY4));
-    double dfUCX = MAX(MAX(dfX1,dfX2),MAX(dfX3,dfX4));
-    double dfUCY = MAX(MAX(dfY1,dfY2),MAX(dfY3,dfY4));
+    double dfLCX = std::min(std::min(dfX1, dfX2), std::min(dfX3, dfX4));
+    double dfLCY = std::min(std::min(dfY1, dfY2), std::min(dfY3, dfY4));
+    double dfUCX = std::max(std::max(dfX1, dfX2), std::max(dfX3, dfX4));
+    double dfUCY = std::max(std::max(dfY1, dfY2), std::max(dfY3, dfY4));
     if( bNeedAxisFlip )
     {
         double dfTmp = dfLCX;
@@ -1926,7 +1925,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( poCRSURL && json_object_get_type(poCRSURL) == json_type_boolean )
                 bCRSURL = CPL_TO_BOOL(json_object_get_boolean(poCRSURL));
 
-
             json_object* poMetadatas = CPL_json_object_object_get(poRootInstance, "metadata");
             if( poMetadatas && json_object_get_type(poMetadatas) == json_type_array )
             {
@@ -2081,7 +2079,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             json_object* poInline = CPL_json_object_object_get(poGMLFile, "inline");
                             if( poInline && json_object_get_type(poInline) == json_type_boolean )
                                 oDesc.bInline = json_object_get_boolean(poInline);
-
 
                             json_object* poLocation = CPL_json_object_object_get(poGMLFile, "parent_node");
                             if( poLocation && json_object_get_type(poLocation) == json_type_string )
@@ -2572,7 +2569,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
                     CPLXMLNode *node_gf = CPLCreateXMLNode(
                             node_fm, CXT_Element, "gmljp2:GMLJP2Features" );
-
 
                     CPLSetXMLValue(node_gf, "#gml:id", CPLSPrintf("%s_GMLJP2Features_%d",
                                                                     osRootGMLId.c_str(),

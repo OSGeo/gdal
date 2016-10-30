@@ -18,14 +18,13 @@ very-clean: clean
 
 lib:	sublibs $(OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ): gnm.h gnm_priv.h 
+$(OBJ): gnm.h gnm_priv.h
 
 obj:	$(OBJ)
 
 sublibs:
 	(cd gnm_frmts; $(MAKE))
-	
+
 install:	;
 
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
-	

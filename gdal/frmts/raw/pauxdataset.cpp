@@ -32,6 +32,8 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -264,7 +266,6 @@ void PAuxRasterBand::SetDescription( const char *pszNewDescription )
     GDALRasterBand::SetDescription( pszNewDescription );
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
@@ -321,7 +322,6 @@ PAuxDataset::~PAuxDataset()
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
-
 
     if( bAuxUpdated )
     {
@@ -562,8 +562,8 @@ CPLErr PAuxDataset::SetGeoTransform( double * padfGeoTransform )
     char szLoRightX[128] = { '\0' };
     char szLoRightY[128] = { '\0' };
 
-    if( ABS(padfGeoTransform[0]) < 181
-        && ABS(padfGeoTransform[1]) < 1 )
+    if( std::abs(padfGeoTransform[0]) < 181
+        && std::abs(padfGeoTransform[1]) < 1 )
     {
         CPLsnprintf( szUpLeftX, sizeof(szUpLeftX), "%.12f",
                      padfGeoTransform[0] );
@@ -921,7 +921,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     char *pszAuxFilename = static_cast<char *>(
         CPLMalloc( strlen( pszFilename ) + 5 ) );
-    strcpy( pszAuxFilename, pszFilename );;
+    strcpy( pszAuxFilename, pszFilename );
 
     for( int i = static_cast<int>(strlen(pszAuxFilename))-1; i > 0; i-- )
     {

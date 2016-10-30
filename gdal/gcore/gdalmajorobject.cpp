@@ -318,7 +318,6 @@ GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD,
         SetMetadata( papszMD, pszDomain );
 }
 
-
 /************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/

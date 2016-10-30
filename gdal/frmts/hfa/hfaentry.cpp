@@ -265,7 +265,6 @@ HFAEntry* HFAEntry::BuildEntryFromMIFObject( HFAEntry *poContainer,
 
     return new HFAEntry(osDictionary, osType,
                         nMIFObjectSize, l_pabyData);
-
 }
 
 /************************************************************************/
@@ -584,7 +583,6 @@ GByte *HFAEntry::MakeData( int nSize )
 
     return pabyData;
 }
-
 
 /************************************************************************/
 /*                          DumpFieldValues()                           */

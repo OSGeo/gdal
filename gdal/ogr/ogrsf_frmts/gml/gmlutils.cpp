@@ -105,7 +105,6 @@ bool GML_IsSRSLatLongOrder(const char* pszSRSName)
     }
 }
 
-
 /************************************************************************/
 /*                GML_BuildOGRGeometryFromList_CreateCache()            */
 /************************************************************************/

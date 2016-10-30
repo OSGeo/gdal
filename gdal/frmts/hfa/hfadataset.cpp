@@ -36,6 +36,10 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
+#include <cstdlib>
+#include <cmath>
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const double R2D = 180.0 / M_PI;
@@ -94,7 +98,6 @@ static const char * const apszUnitMap[] = {
     "indian_foot", "0.3047995142",
     NULL, NULL
 };
-
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
@@ -242,7 +245,6 @@ static const int anUsgsEsriZones[] =
  5300,    0,
  5400,    0
 };
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -817,7 +819,6 @@ int HFARasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
     }
 
     return -1;
-
 }
 /************************************************************************/
 /*                          GetRowCount()                               */
@@ -1711,7 +1712,7 @@ CPLErr HFARasterAttributeTable::ColorsIO( GDALRWFlag eRWFlag, int iField,
         // the same manner as the color table.
         // TODO(schwehr): Symbolic constants for 255 and 256.
         for( int i = 0; i < iLength; i++ )
-            pnData[i] = MIN(255, static_cast<int>(padfData[i] * 256));
+            pnData[i] = std::min(255, static_cast<int>(padfData[i] * 256));
     }
 
     CPLFree(padfData);
@@ -2121,7 +2122,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
                &nRasterXSize, &nRasterYSize,
                &nBlockXSize, &nBlockYSize, &eHFADataTypeO ) != CE_None )
         {
-            nRasterXSize = nRasterYSize = 0;
+            nRasterXSize = 0;
+            nRasterYSize = 0;
             return;
         }
 
@@ -2235,10 +2237,10 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             // See bug #1732 for some discussion.
             const short nMax = 255;
             GDALColorEntry sEntry = {
-                MIN(nMax, static_cast<short>(padfRed[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfGreen[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfBlue[iColor] * 256)),
-                MIN(nMax, static_cast<short>(padfAlpha[iColor] * 256))
+                std::min(nMax, static_cast<short>(padfRed[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfGreen[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfBlue[iColor] * 256)),
+                std::min(nMax, static_cast<short>(padfAlpha[iColor] * 256))
             };
 
             if( padfBins != NULL )
@@ -2475,8 +2477,8 @@ void HFARasterBand::ReadHistogramMetadata()
             if( padfBinValues[i] != floor(padfBinValues[i]) )
                 bAllInteger = false;
 
-            nMaxValue = MAX(nMaxValue, static_cast<int>(padfBinValues[i]));
-            nMinValue = MIN(nMinValue, static_cast<int>(padfBinValues[i]));
+            nMaxValue = std::max(nMaxValue, static_cast<int>(padfBinValues[i]));
+            nMinValue = std::min(nMinValue, static_cast<int>(padfBinValues[i]));
         }
 
         if( nMinValue < 0 || nMaxValue > 1000 || !bAllInteger )
@@ -3110,7 +3112,6 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 
             papoOvBands[iOverview] = papoOverviewBands[iResult];
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -3430,7 +3431,6 @@ CPLErr HFARasterBand::WriteNamedRAT( const char * /*pszName*/,
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -4263,8 +4263,8 @@ CPLErr HFADataset::WriteProjection()
     sMapInfo.lowerRightCenter.y =
         adfGeoTransform[3] + adfGeoTransform[5] * (GetRasterYSize()-0.5);
 
-    sMapInfo.pixelSize.width = ABS(adfGeoTransform[1]);
-    sMapInfo.pixelSize.height = ABS(adfGeoTransform[5]);
+    sMapInfo.pixelSize.width = std::abs(adfGeoTransform[1]);
+    sMapInfo.pixelSize.height = std::abs(adfGeoTransform[5]);
 
 /* -------------------------------------------------------------------- */
 /*      Handle units.  Try to match up with a known name.               */
@@ -4507,7 +4507,7 @@ static int ESRIToUSGSZone( int nESRIZone )
     if( nESRIZone == INT_MIN )
         return 0;
     if( nESRIZone < 0 )
-        return ABS(nESRIZone);
+        return std::abs(nESRIZone);
 
     const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
     for( int i = 0; i < nPairs; i++ )

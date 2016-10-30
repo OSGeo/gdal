@@ -205,8 +205,6 @@ OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj );
 OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj );
 OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj );
 
-
-
 /************************************************************************/
 /*                          OGRESRIJSONReader                           */
 /************************************************************************/

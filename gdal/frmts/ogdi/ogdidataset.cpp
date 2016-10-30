@@ -28,12 +28,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <math.h>
+#include <cmath>
 #include "ecs.h"
 #include "gdal_frmts.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -122,7 +124,6 @@ class OGDIRasterBand : public GDALRasterBand
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eDT, char **papszOptions );
-
 };
 
 /************************************************************************/
@@ -404,7 +405,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                                 / sWin.ns_res);
 
         sWin.south = sWin.north - nWinYSize * sWin.ns_res;
-        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+        dfNSTolerance = std::max(poODS->sCurrentBounds.ns_res, sWin.ns_res);
     }
     else if( nBufYSize == 1 )
     {
@@ -414,7 +415,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
                                 / sWin.ns_res);
 
         sWin.south = sWin.north - nWinYSize * sWin.ns_res;
-        dfNSTolerance = MAX(poODS->sCurrentBounds.ns_res,sWin.ns_res);
+        dfNSTolerance = std::max(poODS->sCurrentBounds.ns_res, sWin.ns_res);
     }
     else
     {
@@ -425,11 +426,11 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
     }
 
     if( poODS->nCurrentIndex != 0
-        || ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001
-        || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001
-        || ABS(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance
-        || ABS(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
-        || ABS(sWin.ns_res - poODS->sCurrentBounds.ns_res) > dfNSTolerance )
+        || std::abs(sWin.west - poODS->sCurrentBounds.west) > 0.0001
+        || std::abs(sWin.east - poODS->sCurrentBounds.east) > 0.0001
+        || std::abs(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance
+        || std::abs(sWin.ew_res/poODS->sCurrentBounds.ew_res - 1.0) > 0.0001
+        || std::abs(sWin.ns_res - poODS->sCurrentBounds.ns_res) > dfNSTolerance )
     {
         CPLDebug( "OGDIRasterBand",
                   "<EstablishAccess: Set Region(%d,%d,%d,%d,%d,%d>",
@@ -505,7 +506,6 @@ CPLErr OGDIRasterBand::AdviseRead( int nXOff, int nYOff,
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            OGDIDataset()                            */
 /************************************************************************/
@@ -576,7 +576,8 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     int nClientID;
-    char        **papszImages=NULL, **papszMatrices=NULL;
+    char **papszImages = NULL;
+    char **papszMatrices = NULL;
 
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "gltp:") )
         return NULL ;
@@ -597,8 +598,10 @@ GDALDataset *OGDIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Honour quoted strings for the layer name, since some layers     */
 /*      (i.e. RPF/CADRG) have embedded colons.                           */
 /* -------------------------------------------------------------------- */
-    int       nC1=-1, nC2=-1, bInQuotes = FALSE;
-    char      *pszURL = CPLStrdup(poOpenInfo->pszFilename);
+    int nC1 = -1;
+    int nC2 = -1;
+    int bInQuotes = FALSE;
+    char *pszURL = CPLStrdup(poOpenInfo->pszFilename);
 
     for( int i = static_cast<int>(strlen(pszURL))-1; i > 0; i-- )
     {

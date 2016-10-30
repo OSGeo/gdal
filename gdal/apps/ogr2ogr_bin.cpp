@@ -197,7 +197,6 @@ int main( int nArgc, char ** papszArgv )
     {
         CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
                                            psOptionsForBinary->pszFormat);
-
     }
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
@@ -301,7 +300,6 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
 
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
-
 
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where|@filename]\n"

@@ -68,7 +68,6 @@ protected:
                          const char *psBuff, GUInt32 nBufLen,
                          double *dfX, double *dfY, double *dfH = NULL);
 
-
     OGRFeature *TranslatePoint(const SXFRecordDescription& certifInfo, const char * psRecordBuf, GUInt32 nBufLen);
     OGRFeature *TranslateText(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
     OGRFeature *TranslatePolygon(const SXFRecordDescription& certifInfo, const char * psBuff, GUInt32 nBufLen);
@@ -100,7 +99,6 @@ public:
                             size_t nSemanticsSize );
 };
 
-
 /************************************************************************/
 /*                        OGRSXFDataSource                       */
 /************************************************************************/
@@ -116,7 +114,7 @@ class OGRSXFDataSource : public OGRDataSource
 
     VSILFILE* fpSXF;
     CPLMutex  *hIOMutex;
-    void FillLayers(void);
+    void FillLayers();
     void CreateLayers();
     void CreateLayers(VSILFILE* fpRSC);
     OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);

@@ -71,7 +71,7 @@ def ogr_kml_datastore():
         ogrtest.libkml_drv.Deregister()
 
     try:
-        ogrtest.kml_ds = ogr.Open( 'data/samples.kml' );
+        ogrtest.kml_ds = ogr.Open( 'data/samples.kml' )
     except:
         pass
 

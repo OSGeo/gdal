@@ -27,6 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #ifndef OGR_GEOJSON_H_INCLUDED
 #define OGR_GEOJSON_H_INCLUDED
 
@@ -37,8 +38,7 @@
 #include <cstdio>
 #include <vector>  // Used by OGRGeoJSONLayer.
 #include "ogrgeojsonutils.h"
-
-#define SPACE_FOR_BBOX  130
+#include "ogrgeojsonwriter.h"
 
 class OGRGeoJSONDataSource;
 
@@ -49,8 +49,8 @@ class OGRGeoJSONDataSource;
 class OGRGeoJSONLayer : public OGRMemLayer
 {
     friend class OGRGeoJSONDataSource;
-public:
 
+  public:
     static const char* const DefaultName;
     static const OGRwkbGeometryType DefaultGeometryType;
 
@@ -74,8 +74,7 @@ public:
     void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
 
-private:
-
+  private:
     OGRGeoJSONDataSource* poDS_;
     CPLString sFIDColumn_;
     bool bUpdated_;
@@ -93,6 +92,7 @@ class OGRGeoJSONWriteLayer : public OGRLayer
                           OGRwkbGeometryType eGType,
                           char** papszOptions,
                           bool bWriteFC_BBOXIn,
+                          OGRCoordinateTransformation* poCT,
                           OGRGeoJSONDataSource* poDS );
     ~OGRGeoJSONWriteLayer();
 
@@ -120,6 +120,10 @@ class OGRGeoJSONWriteLayer : public OGRLayer
 
     int nCoordPrecision_;
     int nSignificantFigures_;
+
+    bool bRFC7946_;
+    OGRCoordinateTransformation* poCT_;
+    OGRGeoJSONWriteOptions oWriteOptions_;
 };
 
 /************************************************************************/
@@ -176,6 +180,8 @@ class OGRGeoJSONDataSource : public OGRDataSource
     bool IsUpdatable() const { return bUpdatable_; }
 
     virtual void        FlushCache();
+
+    static const size_t SPACE_FOR_BBOX = 130;
 
   private:
     //

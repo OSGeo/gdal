@@ -189,7 +189,6 @@ template<typename T> static void AverageByFour(T *buff, int xsz, int ysz, T ndv)
 #undef use
             // The count/2 is the bias to obtain correct rounding
             *obuff++ = T((count != 0) ? ((acc + count/2) / count) : ndv);
-
         }
         evenline += xsz*2;  // Skips every other line
     }
@@ -379,7 +378,6 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     default: CPLAssert(false); break;
                     }
 #undef resample
-
                 }
                 else if (sampling_mode == SAMPLING_Near) {
 
@@ -405,7 +403,6 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     default: CPLAssert(false); break;
                     }
 #undef resample
-
                 }
 
                 // Done filling the buffer

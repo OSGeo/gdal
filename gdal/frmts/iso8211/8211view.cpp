@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include "iso8211.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static void ViewRecordField( DDFField * poField );
@@ -204,7 +206,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                                            &nBytesConsumed );
 
           printf( "        %s = 0x", poSFDefn->GetName() );
-          for( i = 0; i < MIN(nBytesConsumed,24); i++ )
+          for( i = 0; i < std::min(nBytesConsumed, 24); i++ )
               printf( "%02X", pabyBString[i] );
 
           if( nBytesConsumed > 24 )
@@ -231,7 +233,6 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
           printf( "\n" );
       }
       break;
-
     }
 
     return nBytesConsumed;

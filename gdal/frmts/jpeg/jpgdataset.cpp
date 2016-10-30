@@ -40,6 +40,8 @@
 
 #include <setjmp.h>
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int TIFF_VERSION = 42;
@@ -83,7 +85,6 @@ typedef struct
     int bDoPAMInitialize;
     int bUseInternalOverviews;
 } JPGDatasetOpenArgs;
-
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
 GDALDataset* JPEGDataset12Open(JPGDatasetOpenArgs* psArgs);
@@ -1849,7 +1850,6 @@ void JPGDataset::LoadDefaultTables( int n )
         /* symbols[] is the list of Huffman symbols, in code-length order */
         huff_ptr->huffval[i] = DC_HUFFVAL[i];
     }
-
 }
 #endif // !defined(JPGDataset)
 
@@ -1887,7 +1887,6 @@ CPLErr JPGDataset::Restart()
     jpeg_abort_decompress( &sDInfo );
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
-
 
 #if !defined(JPGDataset)
     LoadDefaultTables( 0 );
@@ -2385,8 +2384,9 @@ GDALDataset *JPGDataset::OpenStage2( JPGDatasetOpenArgs* psArgs,
     {
         // If the user doesn't provide a value for JPEGMEM, we want to be sure
         // that at least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         poDS->sDInfo.mem->max_memory_to_use =
-            MAX(poDS->sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(poDS->sDInfo.mem->max_memory_to_use, nMinMemory);
     }
 
 /* -------------------------------------------------------------------- */
@@ -3482,8 +3482,6 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Initialize JPG access to the file.                              */
 /* -------------------------------------------------------------------- */
-
-
     sCInfo.err = jpeg_std_error( &sJErr );
     sJErr.error_exit = JPGDataset::ErrorExit;
     sErrorStruct.p_previous_emit_message = sJErr.emit_message;
@@ -3515,8 +3513,9 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
     {
         // If the user doesn't provide a value for JPEGMEM, we want to be sure
         // that at least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         sCInfo.mem->max_memory_to_use =
-                MAX(sCInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
     }
 
     if( eDT == GDT_UInt16 )
@@ -3784,8 +3783,7 @@ class GDALJPGDriver: public GDALDriver
 
         char      **GetMetadata( const char * pszDomain = "" );
         const char *GetMetadataItem( const char * pszName,
-                                      const char * pszDomain = "" );
-
+                                     const char * pszDomain = "" );
 };
 
 char** GDALJPGDriver::GetMetadata( const char * pszDomain )

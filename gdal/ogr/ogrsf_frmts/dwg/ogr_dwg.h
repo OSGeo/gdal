@@ -275,5 +275,4 @@ class OGRDWGDriver : public OGRSFDriver
     int         TestCapability( const char * );
 };
 
-
 #endif /* ndef OGR_DWG_H_INCLUDED */

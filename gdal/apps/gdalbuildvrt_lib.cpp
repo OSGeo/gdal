@@ -37,6 +37,8 @@
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #define GEOTRSFRM_TOPLEFT_X            0
@@ -88,7 +90,6 @@ static int ArgIsNumeric( const char *pszArg )
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
-
 
 /************************************************************************/
 /*                         GetSrcDstWin()                               */
@@ -224,7 +225,6 @@ class VRTBuilder
 
         GDALDataset*     Build(GDALProgressFunc pfnProgress, void * pProgressData);
 };
-
 
 /************************************************************************/
 /*                          VRTBuilder()                                */
@@ -719,7 +719,6 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                     }
                 }
             }
-
         }
         if (!bUserExtent)
         {
@@ -744,15 +743,15 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
         }
         else if (resolutionStrategy == HIGHEST_RESOLUTION)
         {
-            we_res = MIN(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
-            /* Yes : as ns_res is negative, the highest resolution is the max value */
-            ns_res = MAX(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            we_res = std::min(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            //ns_res is negative, the highest resolution is the max value.
+            ns_res = std::max(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
         }
         else
         {
-            we_res = MAX(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
-            /* Yes : as ns_res is negative, the lowest resolution is the min value */
-            ns_res = MIN(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
+            we_res = std::max(we_res, padfGeoTransform[GEOTRSFRM_WE_RES]);
+            // ns_res is negative, the lowest resolution is the min value.
+            ns_res = std::min(ns_res, padfGeoTransform[GEOTRSFRM_NS_RES]);
         }
     }
 
@@ -877,16 +876,21 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
     }
 
-
-    for(int i=0;i<nInputFiles;i++)
+    for( int i = 0; i < nInputFiles; i++ )
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
         if (psDatasetProperties->isFileOK == FALSE)
             continue;
 
-        double dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize,
-            dfDstXOff, dfDstYOff, dfDstXSize, dfDstYSize;
+        double dfSrcXOff;
+        double dfSrcYOff;
+        double dfSrcXSize;
+        double dfSrcYSize;
+        double dfDstXOff;
+        double dfDstYOff;
+        double dfDstXSize;
+        double dfDstYSize;
         if ( ! GetSrcDstWin(psDatasetProperties,
                         we_res, ns_res, minX, minY, maxX, maxY,
                         &dfSrcXOff, &dfSrcYOff, &dfSrcXSize, &dfSrcYSize,

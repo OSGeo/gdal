@@ -237,7 +237,6 @@ typedef enum
     ((numSegments) > TAB_REGION_PLINE_450_MAX_SEGMENTS || \
      ((numSegments)*3 + numVerticesTotal) > TAB_REGION_PLINE_450_MAX_VERTICES )
 
-
 /*---------------------------------------------------------------------
  * Codes for the known MapInfo Geometry types
  *--------------------------------------------------------------------*/
@@ -299,7 +298,6 @@ typedef enum
      ((nGeomType) < TAB_GEOM_MULTIPOINT_C)   ? 450:         \
      ((nGeomType) < TAB_GEOM_UNKNOWN1_C)     ? 650: 800 )
 
-
 /*---------------------------------------------------------------------
  * struct TABMAPIndexEntry - Entries found in type 1 blocks of .MAP files
  *
@@ -319,7 +317,6 @@ typedef struct TABMAPIndexEntry_t
 #define TAB_MAX_BLOCK_SIZE              (32768-512)
 
 #define TAB_MAX_ENTRIES_INDEX_BLOCK     ((TAB_MAX_BLOCK_SIZE-4)/20)
-
 
 /*---------------------------------------------------------------------
  * TABVertex
@@ -428,7 +425,6 @@ typedef struct TABProjInfo_t
     double      dAffineParamF;
 
 } TABProjInfo;
-
 
 /*---------------------------------------------------------------------
  * TABPenDef - Pen definition information
@@ -590,7 +586,6 @@ class TABMAPObjHdrWithCoord : public TABMAPObjHdr
      */
 };
 
-
 class TABMAPObjNone CPL_FINAL : public TABMAPObjHdr
 {
   public:
@@ -603,7 +598,6 @@ class TABMAPObjNone CPL_FINAL : public TABMAPObjHdr
 //  protected:
     virtual int ReadObj(TABMAPObjectBlock *) {return 0;};
 };
-
 
 class TABMAPObjPoint: public TABMAPObjHdr
 {
@@ -669,7 +663,6 @@ class TABMAPObjCustomPoint CPL_FINAL : public TABMAPObjPoint
 //  protected:
     virtual int ReadObj(TABMAPObjectBlock *);
 };
-
 
 class TABMAPObjLine CPL_FINAL : public TABMAPObjHdr
 {
@@ -775,7 +768,6 @@ class TABMAPObjArc CPL_FINAL : public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
-
 class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
 {
   public:
@@ -823,7 +815,6 @@ class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
 //  protected:
     virtual int ReadObj(TABMAPObjectBlock *);
 };
-
 
 class TABMAPObjMultiPoint CPL_FINAL : public TABMAPObjHdrWithCoord
 {
@@ -1026,7 +1017,6 @@ class TABRawBinBlock
     // buffer... to be used with extreme care!!!!!!!!!
     GByte *     GetCurDataPtr() { return (m_pabyBuf + m_nCurPos); } ;
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABMAPHeaderBlock
@@ -1306,7 +1296,6 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     virtual void Dump(FILE *fpOut = NULL) { Dump(fpOut, FALSE); };
     void Dump(FILE *fpOut, GBool bDetails);
 #endif
-
 };
 
 /*---------------------------------------------------------------------
@@ -1387,7 +1376,6 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
-
 };
 
 /*---------------------------------------------------------------------
@@ -1435,9 +1423,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
-
 };
-
 
 /*=====================================================================
        Classes to deal with .MAP files at the MapInfo object level
@@ -1478,7 +1464,6 @@ class TABIDFile
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
-
 };
 
 /*---------------------------------------------------------------------
@@ -1626,10 +1611,7 @@ class TABMAPFile
                                int nCurDepth=0,
                                int nMaxDepth=-1);
 #endif
-
 };
-
-
 
 /*---------------------------------------------------------------------
  *                      class TABINDNode
@@ -1719,9 +1701,7 @@ class TABINDNode
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
-
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABINDFile
@@ -1771,9 +1751,7 @@ class TABINDFile
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
-
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABDATFile
@@ -1893,9 +1871,7 @@ class TABDATFile
 #ifdef DEBUG
     void Dump(FILE *fpOut = NULL);
 #endif
-
 };
-
 
 /*---------------------------------------------------------------------
  *                      class TABRelation
@@ -1974,7 +1950,6 @@ class TABRelation
     const char *GetRelFieldName()       {return m_pszRelFieldName;};
 };
 
-
 /*---------------------------------------------------------------------
  *                      class MIDDATAFile
  *
@@ -2028,8 +2003,6 @@ class MIDDATAFile
        GBool       m_bEof;
 };
 
-
-
 /*=====================================================================
                         Function prototypes
  =====================================================================*/
@@ -2038,6 +2011,5 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
                                           int nSize,
                                           GBool bHardBlockSize = TRUE,
                                           TABAccess eAccessMode = TABRead);
-
 
 #endif /* MITAB_PRIV_H_INCLUDED_ */

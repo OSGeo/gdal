@@ -97,7 +97,6 @@ int fitGetDataType(GDALDataType eDataType) {
                      GDALGetColorInterpretationName(colorInterp), nBands); \
             return 0
 
-
 int fitGetColorModel(GDALColorInterp colorInterp, int nBands) {
     // XXX - Should check colorInterp for all bands, not just first one.
 

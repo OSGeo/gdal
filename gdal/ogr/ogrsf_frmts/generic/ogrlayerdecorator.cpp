@@ -47,7 +47,6 @@ OGRLayerDecorator::~OGRLayerDecorator()
         delete m_poDecoratedLayer;
 }
 
-
 OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
 {
     if( !m_poDecoratedLayer ) return NULL;

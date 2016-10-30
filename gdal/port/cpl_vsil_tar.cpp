@@ -109,7 +109,6 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
 };
 
-
 /************************************************************************/
 /*                               VSIIsTGZ()                             */
 /************************************************************************/
@@ -359,7 +358,6 @@ public:
                                     const char *pszAccess,
                                     bool bSetError );
 };
-
 
 /************************************************************************/
 /*                          GetExtensions()                             */

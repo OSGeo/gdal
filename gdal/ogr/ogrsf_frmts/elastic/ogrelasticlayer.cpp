@@ -37,6 +37,8 @@
 #include "../geojson/ogrgeojsonreader.h"
 #include "../geojson/ogrgeojsonutils.h"
 #include "../xplane/ogr_xplane_geo_utils.h"
+
+#include <cstdlib>
 #include <set>
 
 CPL_CVSID("$Id$");
@@ -750,7 +752,6 @@ OGRErr OGRElasticLayer::SyncToDisk()
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                            GetLayerDefn()                            */
 /************************************************************************/
@@ -978,15 +979,24 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 
 static const char BASE32[] = "0123456789bcdefghjkmnpqrstuvwxyz";
 
-static void decode_geohash_bbox(const char *geohash, double lat[2], double lon[2])
+static void decode_geohash_bbox( const char *geohash, double lat[2],
+                                 double lon[2] )
 {
-    int i, j, hashlen;
-    char c, cd, mask, is_even=1;
+    int i;
+    int j;
+    int hashlen;
+    char c;
+    char cd;
+    char mask;
+    char is_even = 1;
     static const char bits[] = {16,8,4,2,1};
-    lat[0] = -90.0; lat[1] = 90.0;
-    lon[0] = -180.0; lon[1] = 180.0;
+    lat[0] = -90.0;
+    lat[1] = 90.0;
+    lon[0] = -180.0;
+    lon[1] = 180.0;
     hashlen = static_cast<int>(strlen(geohash));
-    for (i=0; i<hashlen; i++) {
+    for( i = 0; i<hashlen; i++ )
+    {
         c = static_cast<char>(tolower(geohash[i]));
         cd = static_cast<char>(strchr(BASE32, c)-BASE32);
         for (j=0; j<5; j++) {
@@ -1327,7 +1337,6 @@ static json_object* GetContainerForMapping( json_object* poContainer,
     return poContainer;
 }
 
-
 /************************************************************************/
 /*                             BuildMap()                               */
 /************************************************************************/
@@ -1412,7 +1421,6 @@ CPLString OGRElasticLayer::BuildMap() {
             json_object_object_add(poPropertyMap, "index", json_object_new_string("no"));
 
         json_object_object_add(poContainer, pszLastComponent, poPropertyMap);
-
     }
 
     for(int i=0;i<m_poFeatureDefn->GetGeomFieldCount();i++)
@@ -1687,7 +1695,6 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
         default:
             break;
     }
-
 }
 
 /************************************************************************/
@@ -1757,7 +1764,6 @@ static json_object* GetContainerForFeature( json_object* poContainer,
     }
     return poContainer;
 }
-
 
 /************************************************************************/
 /*                        BuildJSonFromFeature()                        */
@@ -1970,7 +1976,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                     }
                     else
                     {
-                        const int TZOffset = ABS(nTZ - 100) * 15;
+                        const int TZOffset = std::abs(nTZ - 100) * 15;
                         const int TZHour = TZOffset / 60;
                         const int TZMinute = TZOffset - TZHour * 60;
                         json_object_object_add(poContainer,
@@ -2041,8 +2047,10 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
                 return OGRERR_FAILURE;
             }
         }
-
-    } else { // Fall back to using single item upload for every feature
+    }
+    else
+    {
+        // Fall back to using single item upload for every feature.
         CPLString osURL(CPLSPrintf("%s/%s/%s/", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
         if( pszId )
             osURL += pszId;
@@ -2059,7 +2067,6 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
                 pszId = json_object_get_string(poId);
                 poFeature->SetField(0, pszId);
             }
-
         }
         json_object_put(poRes);
     }
@@ -2434,13 +2441,13 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
         json_object* top_left = json_object_new_object();
         json_object_object_add(field, "top_left", top_left);
-        json_object_object_add(top_left, "lat", json_object_new_double(sEnvelope.MaxY));
-        json_object_object_add(top_left, "lon", json_object_new_double(sEnvelope.MinX));
+        json_object_object_add(top_left, "lat", json_object_new_double_with_precision(sEnvelope.MaxY, 6));
+        json_object_object_add(top_left, "lon", json_object_new_double_with_precision(sEnvelope.MinX, 6));
 
         json_object* bottom_right = json_object_new_object();
         json_object_object_add(field, "bottom_right", bottom_right);
-        json_object_object_add(bottom_right, "lat", json_object_new_double(sEnvelope.MinY));
-        json_object_object_add(bottom_right, "lon", json_object_new_double(sEnvelope.MaxX));
+        json_object_object_add(bottom_right, "lat", json_object_new_double_with_precision(sEnvelope.MinY, 6));
+        json_object_object_add(bottom_right, "lon", json_object_new_double_with_precision(sEnvelope.MaxX, 6));
     }
     else
     {
@@ -2461,13 +2468,13 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
         json_object_object_add(shape, "coordinates", coordinates);
 
         json_object* top_left = json_object_new_array();
-        json_object_array_add(top_left, json_object_new_double(sEnvelope.MinX));
-        json_object_array_add(top_left, json_object_new_double(sEnvelope.MaxY));
+        json_object_array_add(top_left, json_object_new_double_with_precision(sEnvelope.MinX, 6));
+        json_object_array_add(top_left, json_object_new_double_with_precision(sEnvelope.MaxY, 6));
         json_object_array_add(coordinates, top_left);
 
         json_object* bottom_right = json_object_new_array();
-        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MaxX));
-        json_object_array_add(bottom_right, json_object_new_double(sEnvelope.MinY));
+        json_object_array_add(bottom_right, json_object_new_double_with_precision(sEnvelope.MaxX, 6));
+        json_object_array_add(bottom_right, json_object_new_double_with_precision(sEnvelope.MinY, 6));
         json_object_array_add(coordinates, bottom_right);
     }
 }

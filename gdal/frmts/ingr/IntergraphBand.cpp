@@ -337,7 +337,6 @@ GDALColorInterp IntergraphRasterBand::GetColorInterpretation()
 
         return GCI_GrayIndex;
     }
-
 }
 
 //  ----------------------------------------------------------------------------
@@ -469,8 +468,6 @@ int IntergraphRasterBand::HandleUninstantiatedTile(int nBlockXOff,
                     (GDALGetDataTypeSize( eDataType ) / 8) );
         return TRUE;
     }
-
-
     return FALSE;
 }
 
@@ -642,7 +639,6 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     {
         BlackWhiteCT( true );
     }
-
 }
 
 //  ----------------------------------------------------------------------------

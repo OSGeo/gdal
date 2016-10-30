@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
@@ -44,7 +43,6 @@ CPL_CVSID("$Id$");
 /* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
 /* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
-
 %}
 
 %define api.pure
@@ -345,14 +343,16 @@ field_value:
         {
             $$ = $1;  // validation deferred.
             $$->eNodeType = SNT_COLUMN;
-            $$->field_index = $$->table_index = -1;
+            $$->field_index = -1;
+            $$->table_index = -1;
         }
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
         {
             $$ = $1;  // validation deferred.
             $$->eNodeType = SNT_COLUMN;
-            $$->field_index = $$->table_index = -1;
+            $$->field_index = -1;
+            $$->table_index = -1;
             $$->table_name = $$->string_value;
             $$->string_value = CPLStrdup($3->string_value);
             delete $3;
@@ -599,7 +599,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             if( !context->poCurSelect->PushField( poNode ) )
             {
@@ -619,7 +620,8 @@ column_spec:
             poNode->eNodeType = SNT_COLUMN;
             poNode->table_name = CPLStrdup(osTableName );
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             if( !context->poCurSelect->PushField( poNode ) )
             {
@@ -646,7 +648,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
             count->PushSubExpression( poNode );
@@ -677,7 +680,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
             count->PushSubExpression( poNode );
@@ -753,7 +757,6 @@ as_clause:
         }
 
     | SWQT_IDENTIFIER
-
 
 opt_where:
     | SWQT_WHERE value_expr

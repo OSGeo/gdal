@@ -37,10 +37,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /** Constructor */
-OGRLinearRing::OGRLinearRing()
-
-{
-}
+OGRLinearRing::OGRLinearRing() {}
 
 /************************************************************************/
 /*                  OGRLinearRing( const OGRLinearRing& )               */
@@ -57,17 +54,13 @@ OGRLinearRing::OGRLinearRing()
 
 OGRLinearRing::OGRLinearRing( const OGRLinearRing& other ) :
     OGRLineString( other )
-{
-}
+{}
 
 /************************************************************************/
 /*                          ~OGRLinearRing()                            */
 /************************************************************************/
 
-OGRLinearRing::~OGRLinearRing()
-
-{
-}
+OGRLinearRing::~OGRLinearRing() {}
 
 /************************************************************************/
 /*                           OGRLinearRing()                            */
@@ -81,7 +74,9 @@ OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 {
     if( poSrcRing == NULL )
     {
-        CPLDebug( "OGR", "OGRLinearRing::OGRLinearRing(OGRLinearRing*poSrcRing) - passed in ring is NULL!" );
+        CPLDebug( "OGR",
+                  "OGRLinearRing::OGRLinearRing(OGRLinearRing*poSrcRing) - "
+                  "passed in ring is NULL!" );
         return;
     }
 
@@ -206,7 +201,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
         nPointSize = 24;
     else
         nPointSize = 16;
-    if (nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize)
+    if( nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize )
         return OGRERR_CORRUPT_DATA;
     int nBufferMinSize = nPointSize * nNewNumPoints;
 
@@ -414,7 +409,6 @@ OGRGeometry *OGRLinearRing::clone() const
     return poNewLinearRing;
 }
 
-
 /************************************************************************/
 /*                            epsilonEqual()                            */
 /************************************************************************/
@@ -446,18 +440,18 @@ int OGRLinearRing::isClockwise() const
 
     // Find the lowest rightmost vertex.
     int v = 0;  // Used after for.
-    for ( int i = 1; i < nPointCount - 1; i++ )
+    for( int i = 1; i < nPointCount - 1; i++ )
     {
         /* => v < end */
-        if ( paoPoints[i].y< paoPoints[v].y ||
-             ( paoPoints[i].y== paoPoints[v].y &&
-               paoPoints[i].x > paoPoints[v].x ) )
+        if( paoPoints[i].y< paoPoints[v].y ||
+            ( paoPoints[i].y== paoPoints[v].y &&
+              paoPoints[i].x > paoPoints[v].x ) )
         {
             v = i;
             bUseFallback = false;
         }
-        else if ( paoPoints[i].y == paoPoints[v].y &&
-                  paoPoints[i].x == paoPoints[v].x )
+        else if( paoPoints[i].y == paoPoints[v].y &&
+                 paoPoints[i].x == paoPoints[v].x )
         {
             /* Two vertex with same coordinates are the lowest rightmost */
             /* vertex! We cannot use that point as the pivot (#5342) */
@@ -467,7 +461,7 @@ int OGRLinearRing::isClockwise() const
 
     // Previous.
     int next = v - 1;
-    if ( next < 0 )
+    if( next < 0 )
     {
         next = nPointCount - 1 - 1;
     }
@@ -485,7 +479,7 @@ int OGRLinearRing::isClockwise() const
 
     // Following.
     next = v + 1;
-    if ( next >= nPointCount - 1 )
+    if( next >= nPointCount - 1 )
     {
         next = 0;
     }
@@ -503,11 +497,11 @@ int OGRLinearRing::isClockwise() const
 
     const double crossproduct = dx1 * dy0 - dx0 * dy1;
 
-    if (!bUseFallback)
+    if( !bUseFallback )
     {
-        if ( crossproduct > 0 )      /* CCW */
+        if( crossproduct > 0 )      /* CCW */
             return FALSE;
-        else if ( crossproduct < 0 )  /* CW */
+        else if( crossproduct < 0 )  /* CW */
             return TRUE;
     }
 
@@ -583,30 +577,33 @@ void OGRLinearRing::closeRings()
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelope) const
+OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
+                                        int bTestEnvelope) const
 {
-    if ( NULL == poPoint )
+    if( NULL == poPoint )
     {
-        CPLDebug( "OGR", "OGRLinearRing::isPointInRing(const  OGRPoint* poPoint) - passed point is NULL!" );
+        CPLDebug( "OGR",
+                  "OGRLinearRing::isPointInRing(const OGRPoint* poPoint) - "
+                  "passed point is NULL!" );
         return 0;
     }
 
     const int iNumPoints = getNumPoints();
 
     // Simple validation
-    if ( iNumPoints < 4 )
+    if( iNumPoints < 4 )
         return 0;
 
     const double dfTestX = poPoint->getX();
     const double dfTestY = poPoint->getY();
 
-    // Fast test if point is inside extent of the ring
-    if (bTestEnvelope)
+    // Fast test if point is inside extent of the ring.
+    if( bTestEnvelope )
     {
         OGREnvelope extent;
         getEnvelope(&extent);
-        if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
-            && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
+        if( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
+               && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
         {
             return 0;
         }
@@ -619,7 +616,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
     double prev_diff_x = getX(0) - dfTestX;
     double prev_diff_y = getY(0) - dfTestY;
 
-    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
+    for( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
     {
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
@@ -631,7 +628,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
         {
             // Check if ray intersects with segment of the ring
             const double dfIntersection = ( x1 * y2 - x2 * y1 ) / (y2 - y1);
-            if ( 0.0 < dfIntersection )
+            if( 0.0 < dfIntersection )
             {
                 // Count intersections
                 iNumCrossings++;
@@ -657,18 +654,21 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint, int bTestEnvelo
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTestEnvelope) const
+OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
+                                                 int bTestEnvelope ) const
 {
-    if ( NULL == poPoint )
+    if( NULL == poPoint )
     {
-        CPLDebug( "OGR", "OGRLinearRing::isPointOnRingBoundary(const  OGRPoint* poPoint) - passed point is NULL!" );
+        CPLDebug( "OGR",
+                  "OGRLinearRing::isPointOnRingBoundary(const OGRPoint* "
+                  "poPoint) - passed point is NULL!" );
         return 0;
     }
 
     const int iNumPoints = getNumPoints();
 
-    // Simple validation
-    if ( iNumPoints < 4 )
+    // Simple validation.
+    if( iNumPoints < 4 )
         return 0;
 
     const double dfTestX = poPoint->getX();
@@ -679,8 +679,8 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
     {
         OGREnvelope extent;
         getEnvelope(&extent);
-        if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
-            && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
+        if( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
+               && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
         {
             return 0;
         }
@@ -689,7 +689,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
     double prev_diff_x = getX(0) - dfTestX;
     double prev_diff_y = getY(0) - dfTestY;
 
-    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
+    for( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
     {
         const double x1 = getX(iPoint) - dfTestX;
         const double y1 = getY(iPoint) - dfTestY;
@@ -697,15 +697,15 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint* poPoint, int bTe
         const double x2 = prev_diff_x;
         const double y2 = prev_diff_y;
 
-        /* If the point is on the segment, return immediately. */
-        /* FIXME? If the test point is not exactly identical to one of */
-        /* the vertices of the ring, but somewhere on a segment, there's */
-        /* little chance that we get 0. So that should be tested against some */
-        /* epsilon. */
+        // If the point is on the segment, return immediately.
+        // FIXME? If the test point is not exactly identical to one of
+        // the vertices of the ring, but somewhere on a segment, there's
+        // little chance that we get 0. So that should be tested against some
+        // epsilon.
 
-        if ( x1 * y2 - x2 * y1 == 0 )
+        if( x1 * y2 - x2 * y1 == 0 )
         {
-            /* If iPoint and iPointPrev are the same, go on */
+            // If iPoint and iPointPrev are the same, go on.
             if( !(x1 == x2 && y1 == y2) )
             {
                 return 1;

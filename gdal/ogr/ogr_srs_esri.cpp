@@ -36,6 +36,10 @@
 
 #include "ogr_srs_esri_names.h"
 
+#include <cmath>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 void  SetNewName( OGRSpatialReference* pOgr, const char* keyName, const char* newName );
@@ -285,19 +289,20 @@ static const int anUsgsEsriZones[] =
 /*      Datum Mapping functions and definitions                         */
 /* -------------------------------------------------------------------- */
 /* TODO adapt existing code and test */
-#define DM_IDX_EPSG_CODE            0
-#define DM_IDX_ESRI_NAME            1
-#define DM_IDX_EPSG_NAME            2
-#define DM_ELT_SIZE                 3
+#define DM_IDX_EPSG_CODE 0
+#define DM_IDX_ESRI_NAME 1
+#define DM_IDX_EPSG_NAME 2
+#define DM_ELT_SIZE      3
 
-#define DM_GET_EPSG_CODE(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_CODE]
-#define DM_GET_ESRI_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
-#define DM_GET_EPSG_NAME(map, i)          map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_NAME]
+#define DM_GET_EPSG_CODE(map, i) map[(i)*DM_ELT_SIZE + DM_IDX_EPSG_CODE]
+#define DM_GET_ESRI_NAME(map, i) map[(i)*DM_ELT_SIZE + DM_IDX_ESRI_NAME]
 
-static char *DMGetEPSGCode(int i) { return DM_GET_EPSG_CODE(papszDatumMapping, i); }
-static char *DMGetESRIName(int i) { return DM_GET_ESRI_NAME(papszDatumMapping, i); }
-/* static char *DMGetEPSGName(int i) { return DM_GET_EPSG_NAME(papszDatumMapping, i); } */
-
+static char *DMGetEPSGCode( int i ) {
+    return DM_GET_EPSG_CODE(papszDatumMapping, i);
+}
+static char *DMGetESRIName( int i ) {
+    return DM_GET_ESRI_NAME(papszDatumMapping, i);
+}
 
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */
@@ -456,7 +461,7 @@ static void InitDatumMappingTable()
 
         CPLAssert( nMappingCount+1 < nMaxDatumMappings );
 
-        if( MAX(nEPSGNameField,MAX(nDatumCodeField,nESRINameField))
+        if( std::max(nEPSGNameField, std::max(nDatumCodeField, nESRINameField))
             < nFieldCount
             && nMaxDatumMappings > nMappingCount+1 )
         {
@@ -479,7 +484,6 @@ static void InitDatumMappingTable()
     papszDatumMapping[nMappingCount*3+1] = NULL;
     papszDatumMapping[nMappingCount*3+2] = NULL;
 }
-
 
 /************************************************************************/
 /*                         OSRImportFromESRI()                          */
@@ -554,7 +558,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
                 if (dfSecond < 0.0 || dfSecond >= 60.0)
                     dfSecond = 0.0;
 
-                dfValue = ABS(CPLAtof(papszTokens[0]))
+                dfValue = std::abs(CPLAtof(papszTokens[0]))
                     + CPLAtof(papszTokens[1]) / 60.0
                     + dfSecond / 3600.0;
 
@@ -1269,7 +1273,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     OGR_SRSNode *poUnit = GetAttrNode( "GEOGCS|UNIT" );
 
     if( poUnit != NULL && poUnit->GetChildCount() >= 2
-        && ABS(GetAngularUnits()-0.0174532925199433) < 0.00000000001 )
+        && std::abs(GetAngularUnits()-0.0174532925199433) < 0.00000000001 )
     {
         poUnit->GetChild(0)->SetValue("Degree");
         poUnit->GetChild(1)->SetValue("0.017453292519943295");
@@ -1281,7 +1285,7 @@ OGRErr OGRSpatialReference::morphToESRI()
     poUnit = GetAttrNode( "PROJCS|UNIT" );
 
     if( poUnit != NULL && poUnit->GetChildCount() >= 2
-        && ABS(GetLinearUnits()- 0.30480060960121924) < 0.000000000000001)
+        && std::abs(GetLinearUnits()- 0.30480060960121924) < 0.000000000000001)
     {
         poUnit->GetChild(0)->SetValue("Foot_US");
         poUnit->GetChild(1)->SetValue("0.30480060960121924");
@@ -1361,7 +1365,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 
         const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
 
-        const double dfInvFlattening = GetInvFlattening();;
+        const double dfInvFlattening = GetInvFlattening();
         double e2 = 0.0;
         if( dfInvFlattening != 0.0 )
         {
@@ -1919,7 +1923,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                 bIsSame = true;
                                 dfThisValue = this->GetSemiMajor();
                                 dfOtherValue = oSRSTemp.GetSemiMajor();
-                                if ( ABS( dfThisValue - dfOtherValue ) > 0.01 )
+                                if ( std::abs( dfThisValue -
+                                               dfOtherValue ) > 0.01 )
                                     bIsSame = false;
                                 CPLDebug( "OGR_ESRI",
                                           "morphFromESRI() SemiMajor: "
@@ -1927,7 +1932,8 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                           dfThisValue, dfOtherValue );
                                 dfThisValue = this->GetInvFlattening();
                                 dfOtherValue = oSRSTemp.GetInvFlattening();
-                                if ( ABS( dfThisValue - dfOtherValue ) > 0.0001 )
+                                if ( std::abs( dfThisValue -
+                                               dfOtherValue ) > 0.0001 )
                                     bIsSame = false;
                                 CPLDebug( "OGR_ESRI",
                                           "morphFromESRI() InvFlattening: "
@@ -1946,7 +1952,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
                                               "morphFromESRI() PRIMEM: "
                                               "this = %.15g other = %.15g",
                                               dfThisValue, dfOtherValue );
-                                    if ( ABS( dfThisValue - dfOtherValue )
+                                    if ( std::abs( dfThisValue - dfOtherValue )
                                          > 0.0001 )
                                         bIsSame = false;
                                 }
@@ -2191,7 +2197,6 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1,
             if( poNodeChild && strlen(poNodeChild->GetValue()) > 0 )
                 poNodeChild->SetValue( mappingTable[iIndex+i+2]);
         }
-
     }
     return iIndex;
 }

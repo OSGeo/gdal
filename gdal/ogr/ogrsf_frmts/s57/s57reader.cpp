@@ -32,6 +32,9 @@
 #include "ogr_api.h"
 #include "s57.h"
 
+#include <cmath>
+
+#include <algorithm>
 #include <string>
 
 CPL_CVSID("$Id$");
@@ -522,8 +525,8 @@ bool S57Reader::Ingest()
 
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
         {
-            nCOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
-            nSOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
+            nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
+            nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {
@@ -774,7 +777,6 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                          AssembleFeature()                           */
@@ -1283,7 +1285,6 @@ OGRFeature *S57Reader::ReadDSID()
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                             ReadVector()                             */
 /*                                                                      */
@@ -1413,7 +1414,6 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                 poFeature->SetGeometryDirectly( poMP );
             }
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1576,7 +1576,7 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 {
     OGRLineString * const poLine = new OGRLineString;
 
-    nVertexCount = MAX(2,nVertexCount);
+    nVertexCount = std::max(2, nVertexCount);
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
 
     poLine->setNumPoints( nVertexCount );
@@ -1593,7 +1593,6 @@ S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
     return poLine;
 }
-
 
 /************************************************************************/
 /*                  S57StrokeArcToOGRGeometry_Points()                  */
@@ -2160,8 +2159,8 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             {
                 poLine->addPoint( dfX, dfY );
             }
-            else if( ABS(dlastfX - dfX) > 0.00000001 ||
-                ABS(dlastfY - dfY) > 0.00000001 )
+            else if( std::abs(dlastfX - dfX) > 0.00000001 ||
+                std::abs(dlastfY - dfY) > 0.00000001 )
             {
                 // we need to start a new linestring.
                 poMLS->addGeometryDirectly( poLine );
@@ -2578,7 +2577,6 @@ bool S57Reader::CollectClassList(std::vector<int> &anClassCount)
                 anClassCount.resize(nOBJL+1);
             anClassCount[nOBJL]++;
         }
-
     }
 
     return bSuccess;
@@ -3098,7 +3096,6 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
     return true;
 }
 
-
 /************************************************************************/
 /*                            ApplyUpdates()                            */
 /*                                                                      */
@@ -3408,10 +3405,10 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                     if( bGotExtents )
                     {
-                        nXMin = MIN(nXMin,nX);
-                        nXMax = MAX(nXMax,nX);
-                        nYMin = MIN(nYMin,nY);
-                        nYMax = MAX(nYMax,nY);
+                        nXMin = std::min(nXMin, nX);
+                        nXMax = std::max(nXMax, nX);
+                        nYMin = std::min(nYMin, nY);
+                        nYMax = std::max(nYMax, nY);
                     }
                     else
                     {
@@ -3439,10 +3436,10 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                     if( bGotExtents )
                     {
-                        nXMin = MIN(nXMin,nX);
-                        nXMax = MAX(nXMax,nX);
-                        nYMin = MIN(nYMin,nY);
-                        nYMax = MAX(nYMax,nY);
+                        nXMin = std::min(nXMin, nX);
+                        nXMax = std::max(nXMax, nX);
+                        nYMin = std::min(nYMin, nY);
+                        nYMax = std::max(nYMax, nY);
                     }
                     else
                     {

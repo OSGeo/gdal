@@ -1451,9 +1451,7 @@ CPLErr CPL_STDCALL GNMDisconnectFeaturesWithId(GNMGenericNetworkH hNet,
     VALIDATE_POINTER1( hNet, "GNMDisconnectFeaturesWithId", CE_Failure );
 
     return ((GNMGenericNetwork*)hNet)->DisconnectFeaturesWithId(nFID);
-
 }
-
 
 CPLErr CPL_STDCALL GNMReconnectFeatures (GNMGenericNetworkH hNet,
                                          GNMGFID nSrcFID, GNMGFID nTgtFID,
@@ -1464,7 +1462,6 @@ CPLErr CPL_STDCALL GNMReconnectFeatures (GNMGenericNetworkH hNet,
 
     return ((GNMGenericNetwork*)hNet)->ReconnectFeatures(nSrcFID, nTgtFID,
                                         nConFID, dfCost, dfInvCost, eDir);
-
 }
 
 CPLErr CPL_STDCALL GNMCreateRule (GNMGenericNetworkH hNet, const char *pszRuleStr)
@@ -1472,7 +1469,6 @@ CPLErr CPL_STDCALL GNMCreateRule (GNMGenericNetworkH hNet, const char *pszRuleSt
     VALIDATE_POINTER1( hNet, "GNMCreateRule", CE_Failure );
 
     return ((GNMGenericNetwork*)hNet)->CreateRule(pszRuleStr);
-
 }
 
 CPLErr CPL_STDCALL GNMDeleteAllRules(GNMGenericNetworkH hNet)

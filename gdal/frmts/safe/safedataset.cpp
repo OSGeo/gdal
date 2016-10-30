@@ -481,7 +481,6 @@ int SAFEDataset::Identify( GDALOpenInfo *poOpenInfo )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -680,22 +679,26 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
                 //check object type
                 pszRepId = CPLGetXMLValue( psDO, "repID", "" );
 
-                if ( EQUAL(pszRepId, "s1Level1ProductSchema") ) {
+                if( EQUAL(pszRepId, "s1Level1ProductSchema") )
+                {
                     /* Get annotation filename */
                     pszAnnotation = CPLGetXMLValue(
                             psDO, "byteStream.fileLocation.href", "");
-                    if( *pszAnnotation == '\0' ) {
+                    if( *pszAnnotation == '\0' )
+                    {
                         continue;
                     }
-
-                } else if ( EQUAL(pszRepId, "s1Level1CalibrationSchema") ) {
+                }
+                else if( EQUAL(pszRepId, "s1Level1CalibrationSchema") )
+                {
                     pszCalibration = CPLGetXMLValue(
                             psDO, "byteStream.fileLocation.href", "");
                     if( *pszCalibration == '\0' ) {
                         continue;
                     }
-
-                } else {
+                }
+                else
+                {
                     continue;
                 }
             }
@@ -1100,7 +1103,6 @@ GDALDataset *SAFEDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                            AddSubDataset()                           */
 /************************************************************************/
@@ -1145,7 +1147,6 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 {
     return pasGCPList;
 }
-
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */

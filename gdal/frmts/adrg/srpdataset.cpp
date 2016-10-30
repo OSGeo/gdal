@@ -32,6 +32,8 @@
 #include "gdal_frmts.h"
 #include "iso8211.h"
 #include "ogr_spatialref.h"
+
+#include <cstdlib>
 #include <algorithm>
 
 // Uncomment to recognize also .gen files in addition to .img files
@@ -114,7 +116,6 @@ class SRPRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
-
 
 /************************************************************************/
 /*                           SRPRasterBand()                            */
@@ -727,7 +728,6 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                     SetMetadataItem( "SRP_EDN", szValue );
                 }
 
-
                 const char* pszCDV07 =
                     record->GetStringSubfield( "QUV", 0, "CDV07", 0 );
                 if (pszCDV07!=NULL)
@@ -817,9 +817,9 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
     {
         OGRSpatialReference oSRS;
 
-        if( ABS(ZNA) >= 1 && ABS(ZNA) <= 60 )
+        if( std::abs(ZNA) >= 1 && std::abs(ZNA) <= 60 )
         {
-            oSRS.SetUTM( ABS(ZNA), ZNA > 0 );
+            oSRS.SetUTM(std::abs(ZNA), ZNA > 0);
             oSRS.SetWellKnownGeogCS( "WGS84" );
         }
         else if( ZNA == 61 )
@@ -872,7 +872,6 @@ char **SRPDataset::GetFileList()
         }
 
         papszFileList = CSLAddString(papszFileList, osIMGFileName.c_str());
-
 
         if( strlen(osQALFileName) > 0 )
             papszFileList = CSLAddString( papszFileList, osQALFileName );
@@ -1047,7 +1046,6 @@ SRPDataset* SRPDataset::OpenDataset(
     poDS->SetMetadataItem( "SRP_NAM", osNAM );
     poDS->SetMetadataItem( "SRP_PRODUCT", osPRT );
 
-
     if (!poDS->GetFromRecord( pszGENFileName, record ) )
     {
         delete poDS;
@@ -1056,7 +1054,6 @@ SRPDataset* SRPDataset::OpenDataset(
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                          GetGENListFromTHF()                         */
@@ -1127,7 +1124,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                     if( pszNAM == NULL)
                         continue;
 
-
                     CPLString osName = CPLString(pszNAM);
 
                     /* Define a subdirectory from Dataset but with only 6 characters */
@@ -1136,7 +1132,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                     CPLString osDatasetDir = CPLFormFilename(osDirName.c_str(), osDirDataset.c_str(), NULL);
 
                     CPLString osGENFileName="";
-
 
                     int bFound=0;
                     if (bFound ==0)
@@ -1158,7 +1153,6 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             }
                             CSLDestroy(papszDirContent);
                         }
-
                     }
                     /* If not found in sub directory then search in the same directory of the THF file */
                     if (bFound ==0)
@@ -1180,9 +1174,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             }
                             CSLDestroy(papszDirContent);
                         }
-
                     }
-
 
                     if (bFound ==1)
                     {
@@ -1191,15 +1183,12 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                         papszFileNames[nFilenames + 1] = NULL;
                         nFilenames ++;
                     }
-
                 }
             }
-
         }
     }
     return papszFileNames;
 }
-
 
 /************************************************************************/
 /*                          AddMetadatafromFromTHF()                         */
@@ -1249,7 +1238,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                     SetMetadataItem( "SRP_VOO", pszVOO );
                 }
 
-
                 int EDN = record->GetIntSubfield( "VDR", 0, "EDN", 0, &bSuccess );
                 if (bSuccess)
                 {
@@ -1258,7 +1246,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                     snprintf(szValue, sizeof(szValue), "%d", EDN);
                     SetMetadataItem( "SRP_EDN", szValue );
                 }
-
 
                 const char* pszCDV07 = record->GetStringSubfield("VDR", 0, "CDV07", 0);
                 if( pszCDV07 != NULL )
@@ -1278,7 +1265,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                         SetMetadataItem( "SRP_CREATIONDATE", dat );
                     }
                 }
-
             }
         } /* End of THF part */
 
@@ -1318,7 +1304,6 @@ void SRPDataset::AddMetadatafromFromTHF(const char* pszFileName)
                 }
             }
         }  /* End of LCF part */
-
     }
 }
 
@@ -1598,7 +1583,6 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
     if (osGENFileName.size() > 0 &&
         osIMGFileName.size() > 0)
     {
-
 
         if( poOpenInfo->eAccess == GA_Update )
         {

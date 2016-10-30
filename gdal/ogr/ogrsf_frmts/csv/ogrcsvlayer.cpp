@@ -33,8 +33,9 @@
 #include "cpl_csv.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+#include <algorithm>
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            CSVSplitLine()                            */
@@ -499,7 +500,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Search a csvt file for types                                    */
 /* -------------------------------------------------------------------- */
@@ -581,7 +581,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             /* in the header line */
             if( iField == 1 && nFieldCount == 2 && papszTokens[1][0] == '\0' )
             {
-                nCSVFieldCount = nFieldCount = 1;
+                nCSVFieldCount = 1;
+                nFieldCount = 1;
                 break;
             }
             pszFieldName = szFieldNameBuffer;
@@ -847,8 +848,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             poFeatureDefn->SetGeomType( wkbPoint );
         else
         {
-            iNfdcLatitudeS = iNfdcLongitudeS = -1;
-            iLatitudeField = iLongitudeField = -1;
+            iNfdcLatitudeS = -1;
+            iNfdcLongitudeS = -1;
+            iLatitudeField = -1;
+            iLongitudeField = -1;
         }
     }
     else if ( iLatitudeField != -1 && iLongitudeField != -1 )
@@ -857,8 +860,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
             poFeatureDefn->SetGeomType( (iZField >= 0) ? wkbPoint25D : wkbPoint );
         else
         {
-            iNfdcLatitudeS = iNfdcLongitudeS = -1;
-            iLatitudeField = iLongitudeField = -1;
+            iNfdcLatitudeS = -1;
+            iNfdcLongitudeS = -1;
+            iLatitudeField = -1;
+            iLongitudeField = -1;
         }
     }
 
@@ -1268,7 +1273,6 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 
         VSIFCloseL(fpMem);
         VSIUnlink(osTmpMemFile);
-
     }
     VSIFree(pszData);
 
@@ -1276,7 +1280,6 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
 
     return papszFieldTypes;
 }
-
 
 /************************************************************************/
 /*                            ~OGRCSVLayer()                            */
@@ -1399,8 +1402,8 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     int iOGRField = 0;
     const int nAttrCount =
-        MIN( CSLCount(papszTokens),
-             nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
+        std::min( CSLCount(papszTokens),
+                  nCSVFieldCount + (bHiddenWKTColumn ? 1 : 0) );
     CPLValueType eType;
 
     for( int iAttr = 0; !bIsEurostatTSV && iAttr < nAttrCount; iAttr++ )
@@ -1702,7 +1705,6 @@ OGRFeature * OGRCSVLayer::GetNextUnfilteredFeature()
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -1861,7 +1863,6 @@ OGRErr OGRCSVLayer::CreateField( OGRFieldDefn *poNewField, int bApproxOK )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                          CreateGeomField()                           */

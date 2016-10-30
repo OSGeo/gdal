@@ -34,6 +34,8 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 // The current opinion is that WKT longitudes like central meridian
@@ -71,7 +73,6 @@ void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue )
         *pszDelim = '.';
     }
 }
-
 
 /************************************************************************/
 /*                        OGRSpatialReference()                         */
@@ -642,7 +643,6 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 /*                        OSRExportToPrettyWkt()                        */
 /************************************************************************/
 
-
 /**
  * \brief Convert this SRS into a nicely formatted WKT string for display to a
  * person.
@@ -909,7 +909,7 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
 {
     char szValue[64] = { '\0' };
 
-    if( ABS(dfValue - static_cast<int>(dfValue)) == 0.0 )
+    if( std::abs(dfValue - static_cast<int>(dfValue)) == 0.0 )
         snprintf( szValue, sizeof(szValue), "%d", static_cast<int>(dfValue) );
     else
         OGRsnPrintDouble( szValue, sizeof(szValue), dfValue );
@@ -1832,7 +1832,6 @@ OGRErr OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS, const char *pszName )
  * @return OGRERR_NONE on success or an error code.
  */
 
-
 OGRErr OGRSpatialReference::CopyGeogCSFrom(
     const OGRSpatialReference * poSrcSRS )
 
@@ -2172,7 +2171,6 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->SetFromUserInput( pszDef );
 }
-
 
 /************************************************************************/
 /*                          ImportFromUrl()                             */
@@ -2698,7 +2696,6 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
         nUnitsId = 9001;
         dfRefLong = CPLAtof(papszTokens[1]);
         dfRefLat = CPLAtof(papszTokens[2]);
-
     }
     else if( CSLCount(papszTokens) == 2 && atoi(papszTokens[0]) == 42005 )
     {
@@ -5631,7 +5628,7 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
                                                      0.0);
     double      dfZone = ( dfCentralMeridian + 186.0 ) / 6.0;
 
-    if( ABS(dfZone - (int) dfZone - 0.5 ) > 0.00001
+    if( std::abs(dfZone - (int) dfZone - 0.5 ) > 0.00001
         || dfCentralMeridian < -177.00001
         || dfCentralMeridian > 177.000001 )
         return 0;
@@ -6491,7 +6488,7 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = SRS_UA_DEGREE_CONV;
 
-    if( ABS(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
+    if( std::abs(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -6501,13 +6498,13 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszThisValue = this->GetAttrValue( "SPHEROID", 1 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 1 );
     if( pszThisValue != NULL && pszOtherValue != NULL
-        && ABS(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.01 )
+        && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.01 )
         return FALSE;
 
     pszThisValue = this->GetAttrValue( "SPHEROID", 2 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 2 );
     if( pszThisValue != NULL && pszOtherValue != NULL
-        && ABS(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.0001 )
+        && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.0001 )
         return FALSE;
 
     return TRUE;
@@ -6570,7 +6567,7 @@ int OGRSpatialReference::IsSameVertCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = "1.0";
 
-    if( ABS(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
+    if( std::abs(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
         return FALSE;
 
     return TRUE;

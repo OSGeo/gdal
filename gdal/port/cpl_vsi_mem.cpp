@@ -259,7 +259,6 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
@@ -613,7 +612,6 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
 
-
     if( oFileList.find(osFilename) == oFileList.end() )
     {
         errno = ENOENT;
@@ -784,7 +782,6 @@ void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
         if( oPath[i] == '\\' )
             oPath[i] = '/';
     }
-
 }
 
 /************************************************************************/

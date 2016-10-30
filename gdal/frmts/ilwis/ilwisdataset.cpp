@@ -31,6 +31,7 @@
 #include <cfloat>
 #include <climits>
 
+#include <algorithm>
 #include <string>
 
 #include "gdal_frmts.h"
@@ -279,7 +280,7 @@ string ReadElement(string section, string entry, string filename)
 
     IniFile MyIniFile (filename);
 
-    return MyIniFile.GetKeyValue(section, entry);;
+    return MyIniFile.GetKeyValue(section, entry);
 }
 
 bool WriteElement(string sSection, string sEntry,
@@ -445,7 +446,6 @@ static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
     return CE_None;
 }
 
-
 ILWISDataset::ILWISDataset() :
     pszProjection(CPLStrdup("")),
     bGeoDirty(FALSE),
@@ -535,9 +535,7 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             adfGeoTransform[4] = 0.0;
             adfGeoTransform[5] = -PixelSizeY;
         }
-
     }
-
 }
 
 /************************************************************************/
@@ -760,7 +758,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
-    int Row = 0, Col = 0;
+    int Row = 0;
+    int Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
     {
         delete poDS;
@@ -1307,7 +1306,6 @@ ILWISRasterBand::~ILWISRasterBand()
         fpRaw = NULL;
     }
 }
-
 
 /************************************************************************/
 /*                             ILWISOpen()                             */
@@ -1958,7 +1956,7 @@ void ValueRange::init( double rRaw0 )
         }
 
         short iBeforeDec = 1;
-        double rMax = MAX(fabs(get_rLo()), fabs(get_rHi()));
+        double rMax = std::max(fabs(get_rLo()), fabs(get_rHi()));
         if (rMax != 0)
             iBeforeDec = (short)floor(log10(rMax)) + 1;
         if (get_rLo() < 0)
@@ -2044,7 +2042,6 @@ int ValueRange::iRaw(double rValueIn)
     rVal -= _r0;
     return intConv(rVal);
 }
-
 
 /************************************************************************/
 /*                    GDALRegister_ILWIS()                              */

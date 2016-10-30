@@ -147,9 +147,10 @@ OGRBoolean OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) 
 OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 
 {
-    int bHasZ = FALSE, bHasM = FALSE;
+    int bHasZ = FALSE;
+    int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -229,7 +230,6 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 /*      Read the delimiter following the surface.                       */
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szToken );
-
     } while( szToken[0] == ',' && eErr == OGRERR_NONE );
 
     CPLFree( paoPoints );

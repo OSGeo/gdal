@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
+
 #include "cpl_minixml.h"
 #include "gdal_ecw.h"
 #include "gdal_frmts.h"
@@ -716,7 +719,8 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /*      The ECW SDK doesn't supersample, so adjust for this case.       */
 /* -------------------------------------------------------------------- */
 
-    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
+    int nNewXSize = nBufXSize;
+    int nNewYSize = nBufYSize;
 
     if ( nXSize < nBufXSize )
         nNewXSize = nXSize;
@@ -935,7 +939,6 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            ECWDataset()                              */
 /************************************************************************/
@@ -1135,7 +1138,6 @@ NCS::CError ECWDataset::StatisticsWrite()
     bStatisticsDirty = FALSE;
 
     return error;
-
 }
 
 /************************************************************************/
@@ -3147,7 +3149,6 @@ int ECWTranslateFromWKT( const char *pszWKT,
 
         NCSFree( pszEPSGProj );
         NCSFree( pszEPSGDatum );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -3376,7 +3377,6 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN,
@@ -3396,7 +3396,6 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
-
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )

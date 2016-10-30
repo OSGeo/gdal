@@ -281,7 +281,6 @@ class GMLASGuessXSDFilename : public DefaultHandler
             const   XMLCh* const    qname,
             const   Attributes& attrs
         );
-
 };
 
 /************************************************************************/
@@ -442,6 +441,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     oAnalyzer.SetInstantiateGMLFeaturesOnly(m_oConf.m_bInstantiateGMLFeaturesOnly);
     oAnalyzer.SetIdentifierMaxLength(m_oConf.m_nIdentifierMaxLength);
     oAnalyzer.SetCaseInsensitiveIdentifier(m_oConf.m_bCaseInsensitiveIdentifier);
+    oAnalyzer.SetPGIdentifierLaundering(m_oConf.m_bPGIdentifierLaundering);
 
     m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:") ?
         poOpenInfo->pszFilename + strlen("GMLAS:") : poOpenInfo->pszFilename;
@@ -606,7 +606,6 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         m_apoLayers[i]->PostInit( m_oConf.m_bIncludeGeometryXML );
     }
     m_bLayerInitFinished = true;
-
 
     // Do optional validation
     m_bValidate = CPLFetchBool(poOpenInfo->papszOpenOptions,

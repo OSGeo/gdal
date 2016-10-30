@@ -81,6 +81,7 @@
 #include "mitab_utils.h"
 
 #include <ctype.h>      /* toupper() */
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -293,7 +294,6 @@ int TABINDFile::Close()
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABINDFile::ReadHeader()
  *
@@ -412,7 +412,6 @@ int TABINDFile::ReadHeader()
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABINDFile::WriteHeader()
@@ -677,7 +676,6 @@ GByte *TABINDFile::BuildKey( int nIndexNumber, double dValue )
     return m_papbyKeyBuffers[nIndexNumber-1];
 }
 
-
 /**********************************************************************
  *                   TABINDFile::FindFirst()
  *
@@ -719,7 +717,6 @@ GInt32 TABINDFile::FindNext(int nIndexNumber, GByte *pKeyValue)
 
     return m_papoIndexRootNodes[nIndexNumber-1]->FindNext(pKeyValue);
 }
-
 
 /**********************************************************************
  *                   TABINDFile::CreateIndex()
@@ -804,7 +801,7 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
                       (eType == TABFDate)     ? 4:
                       (eType == TABFTime)     ? 4:
                       /*(eType == TABFDateTime) ? 8: */
-                      (eType == TABFLogical)  ? 4: MIN(128,nFieldSize));
+                      (eType == TABFLogical)  ? 4: std::min(128, nFieldSize));
 
     m_papoIndexRootNodes[nNewIndexNo] = new TABINDNode(m_eAccessMode);
     if (m_papoIndexRootNodes[nNewIndexNo]->InitNode(m_fp, 0, nKeyLength,
@@ -826,7 +823,6 @@ int TABINDFile::CreateIndex(TABFieldType eType, int nFieldSize)
     return nNewIndexNo+1;
 }
 
-
 /**********************************************************************
  *                   TABINDFile::AddEntry()
  *
@@ -845,7 +841,6 @@ int TABINDFile::AddEntry(int nIndexNumber, GByte *pKeyValue, GInt32 nRecordNo)
 
     return m_papoIndexRootNodes[nIndexNumber-1]->AddEntry(pKeyValue,nRecordNo);
 }
-
 
 /**********************************************************************
  *                   TABINDFile::Dump()
@@ -877,17 +872,12 @@ void TABINDFile::Dump(FILE *fpOut /*=NULL*/)
                 m_papoIndexRootNodes[i]->Dump(fpOut);
             }
         }
-
     }
 
     fflush(fpOut);
 }
 
 #endif // DEBUG
-
-
-
-
 
 /*=====================================================================
  *                      class TABINDNode
@@ -1025,7 +1015,6 @@ int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABINDNode::GotoNodePtr()
@@ -1331,10 +1320,8 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                 }/*for iChild*/
 
                 return nRetValue;
-
-            }/*else*/
-
-        }/*while numEntries*/
+            }  // else
+        }  // while numEntries
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0
@@ -1410,7 +1397,6 @@ GInt32 TABINDNode::FindNext(GByte *pKeyValue)
     // No more nodes were found that contain the key value.
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABINDNode::CommitToFile()
@@ -1603,7 +1589,6 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
         memmove(m_poDataBlock->GetCurDataPtr()+(m_nKeyLength+4),
                 m_poDataBlock->GetCurDataPtr(),
                 (m_numEntriesInNode-iInsertAt)*(m_nKeyLength+4));
-
     }
 
     /*-----------------------------------------------------------------
@@ -1634,7 +1619,6 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABINDNode::UpdateCurChildEntry()
@@ -1667,8 +1651,6 @@ int TABINDNode::UpdateCurChildEntry(GByte *pKeyValue, GInt32 nRecordNo)
 
     return 0;
 }
-
-
 
 /**********************************************************************
  *                   TABINDNode::UpdateSplitChild()
@@ -1716,7 +1698,6 @@ int TABINDNode::UpdateSplitChild(GByte *pKeyValue1, GInt32 nRecordNo1,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABINDNode::SplitNode()
@@ -1816,7 +1797,6 @@ int TABINDNode::SplitNode()
                 return -1;
             }
         }
-
     }
     else
     {
@@ -1891,7 +1871,6 @@ int TABINDNode::SplitNode()
                 return -1;
             }
         }
-
     }
 
     /*-----------------------------------------------------------------
@@ -2076,8 +2055,6 @@ int TABINDNode::SetNextNodePtr(GInt32 nNextNodePtr)
     m_poDataBlock->GotoByteInBlock(8);
     return m_poDataBlock->WriteInt32(nNextNodePtr);
 }
-
-
 
 /**********************************************************************
  *                   TABINDNode::Dump()

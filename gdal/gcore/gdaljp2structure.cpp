@@ -558,7 +558,12 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             CPLCreateXMLNode( psBox, CXT_Element, "DecodedContent" );
         GIntBig nRemainingLength = nBoxDataLength;
         GByte* pabyIter = pabyBoxData;
-        GUInt16 nNumV = 0, nNumH = 0, nDenomV = 1, nDenomH = 1, nExpV = 0, nExpH = 0;
+        GUInt16 nNumV = 0;
+        GUInt16 nNumH = 0;
+        GUInt16 nDenomV = 1;
+        GUInt16 nDenomH = 1;
+        GUInt16 nExpV = 0;
+        GUInt16 nExpH = 0;
         if( nRemainingLength >= 2 )
         {
             GUInt16 nVal;
@@ -916,7 +921,6 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         GUInt16 nRemainingMarkerSize = nMarkerSize - 2;
         GUInt32 nLastVal = 0;
 
-
 #define READ_MARKER_FIELD_UINT8_COMMENT(name, comment) \
         do { if( nRemainingMarkerSize >= 1 ) { \
             nLastVal = *pabyMarkerDataIter; \
@@ -1125,7 +1129,8 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
         else if( abyMarker[1] == 0x55 ) /* TLM */
         {
             READ_MARKER_FIELD_UINT8("Ztlm");
-            int ST = 0, SP = 0;
+            int ST = 0;
+            int SP = 0;
             READ_MARKER_FIELD_UINT8_COMMENT("Stlm",
                     CPLSPrintf("ST=%d SP=%d",
                                (ST = (nLastVal >> 4) & 3),

@@ -31,6 +31,8 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
@@ -353,7 +355,6 @@ int GDALDefaultOverviews::GetOverviewCount( int nBand )
     if( poBand == NULL )
         return 0;
 
-
     if( bOvrIsAux )
         return poBand->GetOverviewCount();
 
@@ -411,7 +412,6 @@ int GDALOvLevelAdjust( int nOvLevel, int nXSize )
     return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
-
 int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
 {
@@ -424,7 +424,6 @@ int GDALOvLevelAdjust2( int nOvLevel, int nXSize, int nYSize )
 
         return static_cast<int>(0.5 + nXSize / static_cast<double>(nOXSize));
     }
-
 
     const int nOYSize = (nYSize + nOvLevel - 1) / nOvLevel;
 
@@ -447,7 +446,6 @@ int GDALComputeOvFactor( int nOvrXSize, int nRasterXSize,
     }
 
     return static_cast<int>(0.5 + nRasterYSize / static_cast<double>(nOvrYSize));
-
 }
 
 /************************************************************************/
@@ -1017,7 +1015,7 @@ int GDALDefaultOverviews::GetMaskFlags( int nBand )
 
     const char *pszValue =
         poMaskDS->GetMetadataItem(
-            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", MAX(nBand,1)) );
+            CPLString().Printf( "INTERNAL_MASK_FLAGS_%d", std::max(nBand, 1)) );
 
     if( pszValue == NULL )
         return 0x8000;

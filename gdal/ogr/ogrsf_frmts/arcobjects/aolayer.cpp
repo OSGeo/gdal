@@ -124,7 +124,6 @@ bool AOLayer::Initialize(ITable* pTable)
   if (wkbFlatten(ogrGeoType) == wkbMultiLineString || wkbFlatten(ogrGeoType) == wkbMultiPoint)
     m_forceMulti = true;
 
-
   // Mapping of Spatial Reference will be passive about errors
   // (it is possible we won't be able to map some ESRI-specific projections)
 
@@ -143,13 +142,10 @@ bool AOLayer::Initialize(ITable* pTable)
     }
   }
 
-
   // Map fields
   //
   return AOToOGRFields(ipFields, m_pFeatureDefn, m_OGRFieldToESRIField);
 }
-
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -161,7 +157,6 @@ void AOLayer::ResetReading()
 
   if (FAILED(hr = m_ipTable->Search(m_ipQF, VARIANT_TRUE, &m_ipCursor)))
     AOErr(hr, "Error Executing Query");
-
 }
 
 /************************************************************************/
@@ -172,7 +167,6 @@ HRESULT AOLayer::GetTable(ITable** ppTable)
 {
   return m_ipTable.QueryInterface(IID_ITable, ppTable);
 }
-
 
 /************************************************************************/
 /*                         SetSpatialFilter()                           */
@@ -235,9 +229,7 @@ void AOLayer::SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX,
   ISpatialFilterPtr ipSF(m_ipQF);
   ipSF->putref_Geometry(ipEnvelope);
   ipSF->put_SpatialRel(esriSpatialRelIntersects);
-
 }
-
 
 /************************************************************************/
 /*                       SwitchToAttributeOnlyFilter()                  */
@@ -281,7 +273,6 @@ void AOLayer::SwitchToSpatialFilter()
   {
     m_ipQF->put_WhereClause(strWhereClause);
   }
-
 }
 
 /************************************************************************/
@@ -296,7 +287,6 @@ OGRErr AOLayer::SetAttributeFilter( const char* pszQuery )
 
     CComBSTR whereClause(_T(""));
     m_ipQF->put_WhereClause(whereClause);
-
   }
   else
   {
@@ -354,7 +344,6 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
   }
 
   pOutFeature->SetGeometryDirectly(pOGRGeo);
-
 
   //////////////////////////////////////////////////////////
   // Map fields
@@ -433,12 +422,10 @@ bool AOLayer::OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature)
   if (foundBadColumn)
     m_suppressColumnMappingError = true;
 
-
   *ppFeature = pOutFeature;
 
   return true;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -513,7 +500,6 @@ OGRFeature *AOLayer::GetFeature( GIntBig oid )
   return pOGRFeature;
 }
 
-
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
@@ -533,8 +519,6 @@ GIntBig AOLayer::GetFeatureCount( int bForce )
 
   return static_cast<int>(rowCount);
 }
-
-
 
 /************************************************************************/
 /*                             GetExtent()                              */
@@ -576,7 +560,6 @@ OGRErr AOLayer::GetExtent (OGREnvelope* psExtent, int bForce)
 
   return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */

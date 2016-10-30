@@ -901,7 +901,6 @@ CPLErr GDALPamRasterBand::SetCategoryNames( char ** papszNewNames )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
@@ -1070,7 +1069,8 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
         return NULL;
 
     for( CPLXMLNode *psXMLHist = psSavedHistograms->psChild;
-         psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+         psXMLHist != NULL;
+         psXMLHist = psXMLHist->psNext )
     {
         if( psXMLHist->eType != CXT_Element
             || !EQUAL(psXMLHist->pszValue,"HistItem") )

@@ -623,7 +623,6 @@ void PDSDataset::ParseSRS()
         bGotTransform =
             GDALReadWorldFile( pszFilename, "wld",
                                adfGeoTransform );
-
 }
 
 /************************************************************************/
@@ -821,7 +820,8 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     /**** Grab format type - pds supports 1,2,4,8,16,32,64 (in theory) **/
     /**** I have only seen 8, 16, 32 (float) in released datasets      **/
     GDALDataType eDataType = GDT_Byte;
-    int nSuffixItems = 0, nSuffixLines = 0;
+    int nSuffixItems = 0;
+    int nSuffixLines = 0;
     int nSuffixBytes = 4; // Default as per PDS specification
     double dfNoData = 0.0;
     double dfScale = 1.0;

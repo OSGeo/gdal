@@ -34,6 +34,8 @@
 #include "vrtdataset.h"
 #include "commonutils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static int
@@ -555,8 +557,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
             iHist = (iLUT * nHistSize) / nLUTBins;
             int nValue = (int) ((panCumHist[iHist] * nLUTBins) / nTotal);
 
-            panLUT[iLUT] = MAX(0,MIN(nLUTBins-1,nValue));
-
+            panLUT[iLUT] = std::max(0, std::min(nLUTBins - 1, nValue));
         }
 
         (*ppapanLUTs)[iBand] = panLUT;
@@ -614,8 +615,9 @@ static CPLErr EnhancerCallback( void *hCBData,
             continue;
         }
 
-        int iBin = (int) ((pafSrcImage[iPixel] - psEInfo->dfScaleMin)*dfScale);
-        iBin = MAX(0,MIN(psEInfo->nLUTBins-1,iBin));
+        int iBin = static_cast<int>(
+            (pafSrcImage[iPixel] - psEInfo->dfScaleMin) * dfScale);
+        iBin = std::max(0, std::min(psEInfo->nLUTBins - 1, iBin));
 
         if( psEInfo->panLUT )
             pabyOutImage[iPixel] = (GByte) psEInfo->panLUT[iBin];

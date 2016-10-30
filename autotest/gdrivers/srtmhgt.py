@@ -47,7 +47,7 @@ def srtmhgt_1():
 
     bandSrc = ds.GetRasterBand(1)
 
-    driver = gdal.GetDriverByName( "GTiff" );
+    driver = gdal.GetDriverByName( "GTiff" )
     dsDst = driver.Create( 'tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16 )
     dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     dsDst.SetGeoTransform((-80.0004166666666663, 0.0008333333333333, 0, 44.0004166666666670, 0, -0.0008333333333333))
@@ -64,7 +64,7 @@ def srtmhgt_1():
     dsDst = None
 
     ds = gdal.Open( 'tmp/n43.dt1.tif' )
-    driver = gdal.GetDriverByName( "SRTMHGT" );
+    driver = gdal.GetDriverByName( "SRTMHGT" )
     dsDst = driver.CreateCopy( 'tmp/n43w080.hgt', ds)
 
     band = dsDst.GetRasterBand(1)
@@ -83,7 +83,7 @@ def srtmhgt_1():
 def srtmhgt_2():
 
     ds = gdal.Open( 'tmp/n43w080.hgt' )
-    driver = gdal.GetDriverByName( "SRTMHGT" );
+    driver = gdal.GetDriverByName( "SRTMHGT" )
     dsDst = driver.CreateCopy( '/vsimem/n43w080.hgt', ds)
 
     band = dsDst.GetRasterBand(1)
@@ -113,7 +113,7 @@ def srtmhgt_2():
 def srtmhgt_3():
 
     ds = gdal.Open( 'tmp/n43w080.hgt' )
-    driver = gdal.GetDriverByName( "SRTMHGT" );
+    driver = gdal.GetDriverByName( "SRTMHGT" )
     driver.CreateCopy( '/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
 
     dsDst = gdal.Open('/vsimem/N43W080.SRTMGL1.hgt.zip')

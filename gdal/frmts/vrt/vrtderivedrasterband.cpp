@@ -42,6 +42,7 @@
   #endif
 #endif
 
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <utility>
@@ -120,8 +121,6 @@ static int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf,
                                 size_t len, int readonly, int infoflags) = NULL;
 static PyObject* (*PyMemoryView_FromBuffer)(Py_buffer *view) = NULL;
 
-
-
 static PyThreadState* gphThreadState = NULL;
 
 /************************************************************************/
@@ -186,7 +185,6 @@ static PyObject* GDALCreateNumpyArray(PyObject* pCreateArray,
         PyErr_Print();
     return poNumpyArray;
 }
-
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
 #if defined(HAVE_DLFCN_H) && !defined(WIN32)
@@ -355,7 +353,8 @@ static bool LoadPythonAPI()
                                       nBufSize ) );
                         if (nBytes != -1)
                         {
-                            szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
+                            szPointerFilename[std::min(nBytes,
+                                                       nBufSize - 1)] = 0;
                             CPLString osFilename(
                                             CPLGetFilename(szPointerFilename));
                             CPLDebug("VRT", "Which is an alias to: %s",
@@ -469,8 +468,10 @@ static bool LoadPythonAPI()
     EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
                         &nSizeNeeded);
 
-    int nModules = MIN(100, nSizeNeeded / sizeof(HMODULE));
-    for(int i=0;i<nModules;i++)
+    const size_t nModules =
+        std::min(size_t(100),
+                 static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
+    for( size_t i = 0; i < nModules; i++ )
     {
         if( GetProcAddress(ahModules[i], "Py_SetProgramName") )
         {
@@ -807,7 +808,6 @@ static CPLString GetPyExceptionString()
             poPyTraceback ? poPyGDALFormatException3 : poPyGDALFormatException2,
             pyArgs, NULL );
         Py_DecRef(pyArgs);
-
 
         if( PyErr_Occurred() )
         {
@@ -1704,10 +1704,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
         nXOffExt = static_cast<int>(sExtraArg.dfXOff);
         nYOffExt = static_cast<int>(sExtraArg.dfYOff);
-        nXSizeExt = MIN(static_cast<int>(sExtraArg.dfXSize + 0.5),
-                        nRasterXSize - nXOffExt);
-        nYSizeExt = MIN(static_cast<int>(sExtraArg.dfYSize + 0.5),
-                        nRasterYSize - nYOffExt);
+        nXSizeExt = std::min(static_cast<int>(sExtraArg.dfXSize + 0.5),
+                             nRasterXSize - nXOffExt);
+        nYSizeExt = std::min(static_cast<int>(sExtraArg.dfYSize + 0.5),
+                             nRasterYSize - nYOffExt);
     }
 
     // Load values for sources into packed buffers.
@@ -1899,7 +1899,6 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         }
         if( pRetValue )
             Py_DecRef(pRetValue);
-
         } // End of GIL section
 
         if( pabyTmpBuffer )

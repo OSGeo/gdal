@@ -34,6 +34,8 @@
 #include "ogr_p.h"
 #include "ogr_attrind.h"
 
+#include <algorithm>
+
 //! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
@@ -185,7 +187,6 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 
     CPLFree( papszFieldNames );
     CPLFree( paeFieldTypes );
-
 
     return eErr;
 }
@@ -443,10 +444,9 @@ GIntBig* OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
                             GIntBig panFIDList2[], GIntBig nFIDCount2,
                             GIntBig& nFIDCount)
 {
-    GIntBig nMaxCount = MAX(nFIDCount1, nFIDCount2);
+    GIntBig nMaxCount = std::max(nFIDCount1, nFIDCount2);
     GIntBig* panFIDList = (GIntBig*) CPLMalloc((size_t)(nMaxCount+1) * sizeof(GIntBig));
     nFIDCount = 0;
-
 
     for( GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2; )
     {
@@ -503,7 +503,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
     if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
          psExpr->nSubExprCount == 2)
     {
-        GIntBig nFIDCount1 = 0, nFIDCount2 = 0;
+        GIntBig nFIDCount1 = 0;
+        GIntBig nFIDCount2 = 0;
         GIntBig* panFIDList1 = EvaluateAgainstIndices( psExpr->papoSubExpr[0], poLayer, nFIDCount1 );
         GIntBig* panFIDList2 = panFIDList1 == NULL ? NULL :
                             EvaluateAgainstIndices( psExpr->papoSubExpr[1], poLayer, nFIDCount2 );
@@ -516,7 +517,6 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices( swq_expr_node *psExpr,
             else if (psExpr->nOperation == SWQ_AND )
                 panFIDList = OGRANDGIntBigArray(panFIDList1, nFIDCount1,
                                             panFIDList2, nFIDCount2, nFIDCount);
-
         }
         CPLFree(panFIDList1);
         CPLFree(panFIDList2);

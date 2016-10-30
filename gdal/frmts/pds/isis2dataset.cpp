@@ -183,7 +183,6 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
 /*                              Identify()                              */
 /************************************************************************/
 
-
 int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->pabyHeader == NULL )
@@ -648,7 +647,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    poDS->nBands = nBands;;
+    poDS->nBands = nBands;
     for( int i = 0; i < poDS->nBands; i++ )
     {
         RawRasterBand *poBand =
@@ -919,7 +918,6 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
 
     return reinterpret_cast<GDALDataset *>( GDALOpen( osOutFile, GA_Update ) );
 }
-
 
 /************************************************************************/
 /*                            WriteRaster()                             */

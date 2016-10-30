@@ -880,7 +880,6 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
         return OGRERR_FAILURE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Set the feature attributes                                      */
 /* -------------------------------------------------------------------- */
@@ -1282,7 +1281,6 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
         if( b3D )
             panfZcoords = (LFLOAT *) CPLMalloc( sizeof(LFLOAT) * nPoints );
 
-
         // Build arrays of points and part offsets
         for( i=0; i < nParts; i++ )
         {
@@ -1342,7 +1340,6 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
             return OGRERR_FAILURE;
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Translate LINESTRING/MULTILINESTRING type.                      */
@@ -1832,7 +1829,6 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
 
                   poFeat->SetField( i, pszUTF8 );
                   CPLFree( pszUTF8 );
-
               }
               else if( nSDEErr != SE_NULL_VALUE )
               {
@@ -1965,7 +1961,6 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
               }
           }
           break;
-
         }
     }
 
@@ -2100,7 +2095,6 @@ OGRFeature *OGRSDELayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
     return TranslateSDERecord();
 }
-
 
 /************************************************************************/
 /*                          ResetStream()                               */
@@ -2349,7 +2343,6 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         return OGRERR_FAILURE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Set field width and precision                                   */
 /* -------------------------------------------------------------------- */
@@ -2382,7 +2375,6 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Create the new field                                            */
 /* -------------------------------------------------------------------- */
@@ -2400,7 +2392,6 @@ OGRErr OGRSDELayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           ISetFeature()                               */
@@ -2546,7 +2537,6 @@ OGRErr OGRSDELayer::DeleteFeature( GIntBig nFID )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */

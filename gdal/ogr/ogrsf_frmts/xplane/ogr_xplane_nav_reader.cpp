@@ -40,7 +40,6 @@ OGRXPlaneReader* OGRXPlaneCreateNavFileReader( OGRXPlaneDataSource* poDataSource
     return poReader;
 }
 
-
 /************************************************************************/
 /*                         OGRXPlaneNavReader()                         */
 /************************************************************************/
@@ -406,9 +405,7 @@ void OGRXPlaneNavReader::ParseRecord( int nType )
     {
         CPLAssert(0);
     }
-
 }
-
 
 /************************************************************************/
 /*                           OGRXPlaneILSLayer()                        */
@@ -491,7 +488,6 @@ OGRFeature*
 /************************************************************************/
 /*                           OGRXPlaneVORLayer()                        */
 /************************************************************************/
-
 
 OGRXPlaneVORLayer::OGRXPlaneVORLayer() : OGRXPlaneLayer("VOR")
 {
@@ -704,7 +700,6 @@ OGRFeature*
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                         OGRXPlaneMarkerLayer                         */
 /************************************************************************/
@@ -840,7 +835,6 @@ OGRFeature*
 /************************************************************************/
 /*                           OGRXPlaneDMELayer                          */
 /************************************************************************/
-
 
 OGRXPlaneDMELayer::OGRXPlaneDMELayer() :
     OGRXPlaneLayer("DME")

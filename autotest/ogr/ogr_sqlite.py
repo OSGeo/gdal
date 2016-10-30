@@ -644,7 +644,7 @@ def ogr_sqlite_13():
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
 
     # Must still be 1
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys");
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.GetFieldAsInteger('count') != 1:
         return 'fail'
@@ -950,7 +950,7 @@ def ogr_sqlite_18():
         print(wkt)
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1");
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('auth_name') != 'OGR' or \
        feat.GetField('proj4text').find('+proj=vandg') != 0:
@@ -2109,9 +2109,19 @@ def ogr_spatialite_8():
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('foo', 'bar')
+    f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 -1)'))
+    f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 -1,2 3)'))
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (0 -1)' or \
+       f.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (0 -1,2 3)':
+        gdaltest.post_reason('failed')
+        f.DumpReadable()
+        return 'fail'
     f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 1)'))
     f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)'))
-    lyr.CreateFeature(f)
+    lyr.SetFeature(f)
     f = None
     ds.ExecuteSQL('CREATE VIEW view_test_geom1 AS SELECT OGC_FID AS pk_id, foo, geom1 AS renamed_geom1 FROM test')
 
@@ -3410,7 +3420,7 @@ def ogr_sqlite_44():
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
     gdal.VSIFCloseL(f)
 
-    if data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125000 ]') != 0:
+    if data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125') != 0:
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'

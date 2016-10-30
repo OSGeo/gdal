@@ -33,6 +33,8 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <algorithm>
+
 CPL_C_START
 void CPL_DLL VSIInstallCryptFileHandler();
 void CPL_DLL VSISetCryptKey( const GByte* pabyKey, int nKeySize );
@@ -413,7 +415,7 @@ static std::string VSICryptGenerateSectorIV(const std::string& osIV,
                                             vsi_l_offset nOffset)
 {
     std::string osSectorIV(osIV);
-    size_t nLength = MIN(sizeof(vsi_l_offset), osSectorIV.size());
+    const size_t nLength = std::min(sizeof(vsi_l_offset), osSectorIV.size());
     for( size_t i=0; i < nLength; i++ )
     {
         osSectorIV[i] = (char)((osSectorIV[i] ^ nOffset) & 0xff);
@@ -438,7 +440,7 @@ std::string VSICryptFileHeader::CryptKeyCheck(CryptoPP::BlockCipher* poEncCipher
     CryptoPP::StreamTransformationFilter* poEnc = new CryptoPP::StreamTransformationFilter(*poMode, poSink, CryptoPP::StreamTransformationFilter::NO_PADDING);
     /* Not sure if it is add extra security, but pick up something that is unlikely to be a plain text (random number) */
     poEnc->Put((const byte*)"\xDB\x31\xB9\x1B\xD3\x1C\xFA\x3E\x84\x06\xC1\x42\xC3\xEC\xCD\x9A\x02\x36\x22\x15\x58\x88\x74\x65\x00\x2F\x98\xBC\x69\x22\xE1\x63",
-               MIN(32, poEncCipher->BlockSize()));
+               std::min(32U, poEncCipher->BlockSize()));
     poEnc->MessageEnd();
     delete poEnc;
     delete poMode;
@@ -566,12 +568,13 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         {
             if( osKey.size() )
             {
-                int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
+                const int nKeySize =
+                    std::min(nMaxKeySize, static_cast<int>(osKey.size()));
                 poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
             }
             else if( pabyGlobalKey )
             {
-                int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
+                const int nKeySize = std::min(nMaxKeySize, nGlobalKeySize);
                 poEncCipher->SetKey(pabyGlobalKey, nKeySize);
             }
         }
@@ -809,13 +812,14 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
     {
         if( osKey.size() )
         {
-            int nKeySize = MIN(nMaxKeySize, (int)osKey.size());
+            const int nKeySize =
+                std::min(nMaxKeySize, static_cast<int>(osKey.size()));
             poEncCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
             poDecCipher->SetKey((const byte*)osKey.c_str(), nKeySize);
         }
         else if( pabyGlobalKey )
         {
-            int nKeySize = MIN(nMaxKeySize, nGlobalKeySize);
+            const int nKeySize = std::min(nMaxKeySize, nGlobalKeySize);
             poEncCipher->SetKey(pabyGlobalKey, nKeySize);
             poDecCipher->SetKey(pabyGlobalKey, nKeySize);
         }
@@ -1019,8 +1023,9 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     {
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
-            int nToCopy = MIN(static_cast<int>(nToRead),
-                              static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
+            int nToCopy = std::min(
+                static_cast<int>(nToRead),
+                static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
             if( nCurPos + nToCopy > poHeader->nPayloadFileSize )
             {
                 bEOF = true;
@@ -1113,8 +1118,9 @@ size_t VSICryptFileHandle::Write( const void *pBuffer, size_t nSize, size_t nMem
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
             bWBDirty = true;
-            int nToCopy = MIN(static_cast<int>(nToWrite),
-                              static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
+            const int nToCopy =
+                std::min(static_cast<int>(nToWrite),
+                         static_cast<int>(nWBSize - (nCurPos - nWBOffset)));
             memcpy(pabyWB + nCurPos - nWBOffset, pabyBuffer, nToCopy);
             pabyBuffer += nToCopy;
             nToWrite -= nToCopy;

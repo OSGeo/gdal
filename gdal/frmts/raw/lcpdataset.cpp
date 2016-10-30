@@ -288,7 +288,6 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
    poDS->pachHeader[LCP_HEADER_SIZE-1] = '\0';
    poDS->SetMetadataItem( "DESCRIPTION", poDS->pachHeader + 6804 );
 
-
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -1476,7 +1475,6 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     CPLFree( padfMax );
     CPLFree( panFound );
     CPLFree( panClasses );
-
 
     // Should be at one of 3 locations, 2104, 3340, or 4164.
     CPLAssert( VSIFTellL( fp ) == 2104  ||

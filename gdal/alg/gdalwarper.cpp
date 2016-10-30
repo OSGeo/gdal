@@ -34,6 +34,7 @@
 #include "gdal_priv.h"
 
 #include <limits>
+#include <algorithm>
 
 #if (defined(__x86_64) || defined(_M_X64))
 #include <emmintrin.h>
@@ -143,7 +144,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 
     if( psWOptions->nBandCount == 0 )
     {
-        psWOptions->nBandCount = MIN(GDALGetRasterCount(hSrcDS),
+        psWOptions->nBandCount = std::min(GDALGetRasterCount(hSrcDS),
                                      GDALGetRasterCount(hDstDS));
 
         psWOptions->panSrcBands = (int *)
@@ -525,7 +526,6 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                           ~(0x01 << (iOffset & 0x1f));
                   }
               }
-
           }
           *pbOutAllValid = bAllValid;
 
@@ -585,7 +585,6 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
     if (hAlphaBand == NULL)
         return CE_Failure;
 
-
     // rescale.
     const float inv_alpha_max = static_cast<float>(1.0 / CPLAtof(
       CSLFetchNameValueDef( psWO->papszWarpOptions, "SRC_ALPHA_MAX", "255" )));
@@ -614,8 +613,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         {
             pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                     inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0F )
-                pafMask[iPixel] = 1.0F;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
             iPixel ++;
@@ -676,8 +675,8 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         {
             pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                       inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0F )
-                pafMask[iPixel] = 1.0F;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
         }
@@ -695,31 +694,31 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         for( ; iPixel + 3 < nPixels; iPixel+=4 )
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0F )
-                pafMask[iPixel] = 1.0F;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
             pafMask[iPixel+1] = pafMask[iPixel+1] * inv_alpha_max;
-            if( pafMask[iPixel+1] >= 1.0F )
-                pafMask[iPixel+1] = 1.0F;
+            if( pafMask[iPixel+1] >= 1.0f )
+                pafMask[iPixel+1] = 1.0f;
             else
                 bOutAllOpaque = false;
             pafMask[iPixel+2] = pafMask[iPixel+2] * inv_alpha_max;
-            if( pafMask[iPixel+2] >= 1.0F )
-                pafMask[iPixel+2] = 1.0F;
+            if( pafMask[iPixel+2] >= 1.0f )
+                pafMask[iPixel+2] = 1.0f;
             else
                 bOutAllOpaque = false;
             pafMask[iPixel+3] = pafMask[iPixel+3] * inv_alpha_max;
-            if( pafMask[iPixel+3] >= 1.0F )
-                pafMask[iPixel+3] = 1.0F;
+            if( pafMask[iPixel+3] >= 1.0f )
+                pafMask[iPixel+3] = 1.0f;
             else
                 bOutAllOpaque = false;
         }
         for( ; iPixel < nPixels; iPixel++ )
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-            if( pafMask[iPixel] >= 1.0F )
-                pafMask[iPixel] = 1.0F;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
             else
                 bOutAllOpaque = false;
         }
@@ -905,7 +904,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             {
                 pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                           inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
                 iPixel ++;
             }
             CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
@@ -961,7 +960,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             {
                 pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
                                                         inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
             }
         }
         else
@@ -977,7 +976,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             for(; iPixel < nPixels; iPixel++ )
             {
                 pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
-                pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
+                pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
             }
         }
 
@@ -1265,7 +1264,6 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
     CPLFree( psOptions );
 }
-
 
 #define COPY_MEM(target,type,count)                                     \
    do { if( (psSrcOptions->target) != NULL && (count) != 0 )            \

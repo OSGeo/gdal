@@ -29,6 +29,8 @@
 #include "iso8211.h"
 #include "cpl_conv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // Note, we implement no constructor for this class to make instantiation
@@ -65,7 +67,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 void DDFField::Dump( FILE * fp )
 
 {
-    int         nMaxRepeat = 8;
+    int nMaxRepeat = 8;
 
     if( getenv("DDF_MAXDUMP") != NULL )
         nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
@@ -75,7 +77,7 @@ void DDFField::Dump( FILE * fp )
     fprintf( fp, "      DataSize = %d\n", nDataSize );
 
     fprintf( fp, "      Data = `" );
-    for( int i = 0; i < MIN(nDataSize,40); i++ )
+    for( int i = 0; i < std::min(nDataSize, 40); i++ )
     {
         if( pachData[i] < 32 || pachData[i] > 126 )
             fprintf( fp, "\\%02X", ((unsigned char *) pachData)[i] );
@@ -232,15 +234,16 @@ int DDFField::GetRepeatCount()
 /*      variable length field, but the count is one, so it isn't        */
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
-    int         iOffset = 0, iRepeatCount = 1;
+    int iOffset = 0;
+    int iRepeatCount = 1;
 
     while( true )
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
-            int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
+            int nBytesConsumed = 0;
             if( poThisSFDefn->GetWidth() > nDataSize - iOffset )
                 nBytesConsumed = poThisSFDefn->GetWidth();
             else

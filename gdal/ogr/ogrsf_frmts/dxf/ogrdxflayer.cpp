@@ -32,6 +32,8 @@
 #include "ogrdxf_polyline_smooth.h"
 #include "ogr_api.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -181,7 +183,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         oStyleProperties["230_N.dZ"] = pszValue;
         break;
 
-
       default:
         break;
     }
@@ -306,7 +307,7 @@ public:
         Scale2Unit( adfNIn );
         memcpy( adfN, adfNIn, sizeof(double)*3 );
 
-    if ((ABS(adfN[0]) < dSmall) && (ABS(adfN[1]) < dSmall))
+    if ((std::abs(adfN[0]) < dSmall) && (std::abs(adfN[1]) < dSmall))
             CrossProduct(adfWY, adfN, adfAX);
     else
             CrossProduct(adfWZ, adfN, adfAX);
@@ -326,9 +327,15 @@ public:
 
         if( dfDeterminant != 0.0 ) {
             const double k = 1.0 / dfDeterminant;
-            const double a11 = adfAX[0], a12 = adfAY[0], a13 = adfN[0];
-            const double a21 = adfAX[1], a22 = adfAY[1], a23 = adfN[1];
-            const double a31 = adfAX[2], a32 = adfAY[2], a33 = adfN[2];
+            const double a11 = adfAX[0];
+            const double a12 = adfAY[0];
+            const double a13 = adfN[0];
+            const double a21 = adfAX[1];
+            const double a22 = adfAY[1];
+            const double a23 = adfN[1];
+            const double a31 = adfAX[2];
+            const double a32 = adfAY[2];
+            const double a33 = adfN[2];
 
             aadfInverse[1][1] = k * Det2x2( a22,a23,a32,a33 );
             aadfInverse[1][2] = k * Det2x2( a13,a12,a33,a32 );
@@ -547,7 +554,6 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
-
 
 /* -------------------------------------------------------------------- */
 /*      We need to escape double quotes with backslashes before they    */
@@ -1066,7 +1072,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             dfBulge = CPLAtof(szLineBuf);
             break;
 
-
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -1084,7 +1089,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     if( bHaveX && bHaveY )
         smoothPolyline.AddPoint(dfX, dfY, dfZ, dfBulge);
-
 
     if(smoothPolyline.IsEmpty())
     {
@@ -1106,7 +1110,6 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                         TranslatePOLYLINE()                          */
@@ -1155,11 +1158,13 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 /* -------------------------------------------------------------------- */
 /*      Collect VERTEXes as a smooth polyline.                          */
 /* -------------------------------------------------------------------- */
-    double              dfX = 0.0, dfY = 0.0, dfZ = 0.0;
-    double              dfBulge = 0.0;
-    DXFSmoothPolyline   smoothPolyline;
-    int                 nVertexFlag = 0;
+    double dfX = 0.0;
+    double dfY = 0.0;
+    double dfZ = 0.0;
+    double dfBulge = 0.0;
+    int nVertexFlag = 0;
 
+    DXFSmoothPolyline smoothPolyline;
     smoothPolyline.setCoordinateDimension(2);
 
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
@@ -1214,7 +1219,6 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             delete poFeature;
             return NULL;
         }
-
 
         // Ignore Spline frame control points ( see #4683 )
         if ((nVertexFlag & 16) == 0)
@@ -1483,7 +1487,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
-    double dfZ1 = 0.0;;
+    double dfZ1 = 0.0;
     double dfRadius = 0.0;
     double dfStartAngle = 0.0;
     double dfEndAngle = 360.0;
@@ -1571,9 +1575,14 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 
 {
     char szLineBuf[257];
-    int nCode, nDegree = -1, nOrder = -1, i;
-    int nControlPoints = -1, nKnots = -1;
-    bool bResult = false, bCalculateKnots = false;
+    int nCode;
+    int nDegree = -1;
+    int nOrder = -1;
+    int i;
+    int nControlPoints = -1;
+    int nKnots = -1;
+    bool bResult = false;
+    bool bCalculateKnots = false;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
     std::vector<double> adfControlPoints;
     std::vector<double> adfKnots;

@@ -396,7 +396,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindUpdateParameters( OGRFeature *poFeatu
     return OGRERR_NONE;
 }
 
-
 //----------------------------------------------------------------------
 // FeatureBindInsertParameters()
 //
@@ -415,7 +414,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindInsertParameters( OGRFeature *poFeatu
         FeatureBindParameters( poFeature, poStmt, &nColCount,
                                bAddFID, bBindNullFields );
 }
-
 
 //----------------------------------------------------------------------
 // FeatureGenerateInsertSQL()
@@ -505,7 +503,6 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL( OGRFeature *poFeatu
     return osSQLFront + osSQLBack;
 }
 
-
 //----------------------------------------------------------------------
 // FeatureGenerateUpdateSQL()
 //
@@ -560,7 +557,6 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 
     return osUpdate + osWhere;
 }
-
 
 //----------------------------------------------------------------------
 // ReadTableDefinition()
@@ -767,7 +763,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                     SQLResultFree(&oResultTable);
                     return OGRERR_FAILURE;
                 }
-
             }
             else
             {
@@ -776,7 +771,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "geometry column '%s' of type '%s' ignored", pszName, pszType);
             }
-
         }
         else
         {
@@ -904,7 +898,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                      OGRGeoPackageTableLayer()                       */
 /************************************************************************/
@@ -936,7 +929,6 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     m_poQueryStatement = NULL;
     memset(m_abHasGeometryExtension, 0, sizeof(m_abHasGeometryExtension));
 }
-
 
 /************************************************************************/
 /*                      ~OGRGeoPackageTableLayer()                      */
@@ -978,7 +970,6 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
     if ( m_poInsertStatement )
         sqlite3_finalize(m_poInsertStatement);
 }
-
 
 /************************************************************************/
 /*                      CreateField()                                   */
@@ -1321,7 +1312,6 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                          ISetFeature()                                */
 /************************************************************************/
@@ -1459,8 +1449,6 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
     return eErr;
 }
 
-
-
 /************************************************************************/
 /*                         SetAttributeFilter()                         */
 /************************************************************************/
@@ -1482,7 +1470,6 @@ OGRErr OGRGeoPackageTableLayer::SetAttributeFilter( const char *pszQuery )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                      ResetReading()                                  */
@@ -1510,7 +1497,6 @@ void OGRGeoPackageTableLayer::ResetReading()
     BuildColumns();
     return;
 }
-
 
 /************************************************************************/
 /*                           ResetStatement()                           */
@@ -1692,7 +1678,6 @@ OGRErr OGRGeoPackageTableLayer::StartTransaction()
     return m_poDS->StartTransaction();
 }
 
-
 /************************************************************************/
 /*                        CommitTransaction()                           */
 /************************************************************************/
@@ -1702,7 +1687,6 @@ OGRErr OGRGeoPackageTableLayer::CommitTransaction()
     return m_poDS->CommitTransaction();
 }
 
-
 /************************************************************************/
 /*                        RollbackTransaction()                         */
 /************************************************************************/
@@ -1711,7 +1695,6 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 {
     return m_poDS->RollbackTransaction();
 }
-
 
 /************************************************************************/
 /*                        GetFeatureCount()                             */
@@ -1745,7 +1728,6 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( CPL_UNUSED int bForce )
     else
         return -1;
 }
-
 
 /************************************************************************/
 /*                        GetExtent()                                   */

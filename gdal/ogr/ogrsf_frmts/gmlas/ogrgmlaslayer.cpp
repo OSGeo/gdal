@@ -73,6 +73,12 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
         poLayerDescFeature->SetField( "layer_category",
                                 m_oFC.IsTopLevelElt() ? "TOP_LEVEL_ELEMENT" :
                                                         "NESTED_ELEMENT" );
+
+        if( !m_oFC.GetDocumentation().empty() )
+        {
+            poLayerDescFeature->SetField( "layer_documentation",
+                                          m_oFC.GetDocumentation() );
+        }
     }
     CPL_IGNORE_RET_VAL(
             poLayersMetadataLayer->CreateFeature(poLayerDescFeature));
@@ -234,7 +240,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                             GMLASField::PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE ||
                     eCategory == GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK )
                 {
-                    poRelationshipsFeature->SetField( "child_pkid", 
+                    poRelationshipsFeature->SetField( "child_pkid",
                         poRelatedLayer->GetLayerDefn()->GetFieldDefn(
                             poRelatedLayer->GetIDFieldIdx())->GetNameRef() );
                 }
@@ -244,7 +250,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK ||
                                eCategory == GMLASField::GROUP);
 
-                    poRelationshipsFeature->SetField( "child_pkid", 
+                    poRelationshipsFeature->SetField( "child_pkid",
                         (CPLString("parent_") + GetLayerDefn()->GetFieldDefn(
                                     GetIDFieldIdx())->GetNameRef()).c_str() );
                 }
@@ -378,7 +384,12 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             }
         }
 
-        // TODO: set field_documentation
+        if( !oField.GetDocumentation().empty() )
+        {
+            poFieldDescFeature->SetField( "field_documentation",
+                                          oField.GetDocumentation() );
+        }
+
         CPL_IGNORE_RET_VAL(poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
         delete poFieldDescFeature;
 
@@ -456,7 +467,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             case GMLAS_FT_GEOMETRY:
             {
                 // Create a geometry field
-                OGRGeomFieldDefn oGeomFieldDefn( osOGRFieldName, 
+                OGRGeomFieldDefn oGeomFieldDefn( osOGRFieldName,
                                                  oField.GetGeomType() );
                 m_poFeatureDefn->AddGeomFieldDefn( &oGeomFieldDefn );
 

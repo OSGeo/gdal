@@ -157,7 +157,6 @@ DIMAPDataset::~DIMAPDataset()
     CloseDependentDatasets();
 }
 
-
 /************************************************************************/
 /*                        CloseDependentDatasets()                      */
 /************************************************************************/
@@ -291,7 +290,6 @@ class DIMAPRasterBand : public GDALPamRasterBand
                                   int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
                                   GDALProgressFunc, void *pProgressData );
-
 };
 
 /************************************************************************/
@@ -724,7 +722,6 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*               ReadImageInformation() DIMAP Version 1                 */
@@ -1464,7 +1461,6 @@ int DIMAPDataset::ReadImageInformation2()
                             GetRasterBand(nBandIndex)->SetMetadataItem(
                                 osMDName, psTag->psChild->pszValue);
                         }
-
                     }
                     psTag = psTag->psNext;
                 }

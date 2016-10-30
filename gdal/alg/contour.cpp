@@ -32,6 +32,8 @@
 #include "gdal_alg.h"
 #include "ogr_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // The amount of a contour interval that pixels should be fudged by if they
@@ -122,7 +124,6 @@ class GDALContourGenerator
     double  dfContourInterval;
     double  dfContourOffset;
 
-
     CPLErr AddSegment( double dfLevel,
                        double dfXStart, double dfYStart,
                        double dfXEnd, double dfYEnd, int bLeftHigh );
@@ -160,7 +161,6 @@ public:
     void                SetFixedLevels( int, double * );
     CPLErr              FeedLine( double *padfScanline );
     CPLErr              EjectContours( int bOnlyUnused = FALSE );
-
 };
 
 template<> inline bool GDALContourGenerator::IsNoData<true>(double dfVal) const
@@ -172,7 +172,6 @@ template<> inline bool GDALContourGenerator::IsNoData<false>(double dfVal) const
 {
     return dfVal == dfNoDataValue;
 }
-
 
 /************************************************************************/
 /*                           GDAL_CG_Create()                           */
@@ -318,19 +317,18 @@ void GDALContourGenerator::SetNoData( double dfNewValue )
 template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( int iPixel )
 
 {
-    double  dfUpLeft, dfUpRight, dfLoLeft, dfLoRight;
-    int     bSubdivide = FALSE;
+    int bSubdivide = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the four corner pixel values.  Value left or right      */
 /*      of the scanline are taken from the nearest pixel on the         */
 /*      scanline itself.                                                */
 /* -------------------------------------------------------------------- */
-    dfUpLeft = padfLastLine[MAX(0,iPixel-1)];
-    dfUpRight = padfLastLine[MIN(nWidth-1,iPixel)];
+    const double dfUpLeft = padfLastLine[std::max(0,iPixel-1)];
+    const double dfUpRight = padfLastLine[std::min(nWidth-1,iPixel)];
 
-    dfLoLeft = padfThisLine[MAX(0,iPixel-1)];
-    dfLoRight = padfThisLine[MIN(nWidth-1,iPixel)];
+    const double dfLoLeft = padfThisLine[std::max(0,iPixel-1)];
+    const double dfLoRight = padfThisLine[std::min(nWidth-1,iPixel)];
 
 /* -------------------------------------------------------------------- */
 /*      Check if we have any nodata values.                             */
@@ -362,7 +360,10 @@ template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( 
 /* -------------------------------------------------------------------- */
     int nGoodCount = 0;
     double dfASum = 0.0;
-    double dfTop=0.0, dfRight=0.0, dfLeft=0.0, dfBottom=0.0;
+    double dfTop = 0.0;
+    double dfRight = 0.0;
+    double dfLeft = 0.0;
+    double dfBottom = 0.0;
 
     if( !IsNoData<bNoDataIsNan>(dfUpLeft) )
     {
@@ -425,7 +426,7 @@ template<EMULATED_BOOL bNoDataIsNan> CPLErr GDALContourGenerator::ProcessPixel( 
     }
     else
     {
-        dfBottom = dfLoLeft;;
+        dfBottom = dfLoLeft;
         dfRight = dfUpRight;
     }
 
@@ -484,11 +485,13 @@ CPLErr GDALContourGenerator::ProcessRect(
 /* -------------------------------------------------------------------- */
 /*      Identify the range of elevations over this rect.                */
 /* -------------------------------------------------------------------- */
-    int iStartLevel, iEndLevel;
+    int iStartLevel;
+    int iEndLevel;
 
-    double dfMin = MIN(MIN(dfUpLeft,dfUpRight),MIN(dfLoLeft,dfLoRight));
-    double dfMax = MAX(MAX(dfUpLeft,dfUpRight),MAX(dfLoLeft,dfLoRight));
-
+    const double dfMin =
+        std::min(std::min(dfUpLeft,dfUpRight),std::min(dfLoLeft,dfLoRight));
+    const double dfMax =
+        std::max(std::max(dfUpLeft,dfUpRight),std::max(dfLoLeft,dfLoRight));
 
 /* -------------------------------------------------------------------- */
 /*      Compute the set of levels to compute contours for.              */
@@ -500,12 +503,13 @@ CPLErr GDALContourGenerator::ProcessRect(
     */
     if( bFixedLevels )
     {
-        int nStart=0, nEnd=nLevelCount-1, nMiddle;
+        int nStart = 0;
+        int nEnd = nLevelCount-1;
 
         iStartLevel = -1;
         while( nStart <= nEnd )
         {
-            nMiddle = (nEnd + nStart) / 2;
+            const int nMiddle = (nEnd + nStart) / 2;
 
             double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
 
@@ -570,21 +574,18 @@ CPLErr GDALContourGenerator::ProcessRect(
         /* Logs how many points we have af left + bottom,
         ** and left + bottom + right.
         */
-        int nPoints1 = 0, nPoints2 = 0, nPoints3 = 0;
-
-
         Intersect( dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLoLeftX, dfLoLeftY,
                    dfLoRight, dfLevel, &nPoints, adfX, adfY );
-        nPoints1 = nPoints;
+        const int nPoints1 = nPoints;
         Intersect( dfLoLeft, dfLoLeftX, dfLoLeftY,
                    dfLoRight, dfLoRightX, dfLoRightY,
                    dfUpRight, dfLevel, &nPoints, adfX, adfY );
-        nPoints2 = nPoints;
+        const int nPoints2 = nPoints;
         Intersect( dfLoRight, dfLoRightX, dfLoRightY,
                    dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfLevel, &nPoints, adfX, adfY );
-        nPoints3 = nPoints;
+        const int nPoints3 = nPoints;
         Intersect( dfUpRight, dfUpRightX, dfUpRightY,
                    dfUpLeft, dfUpLeftX, dfUpLeftY,
                    dfLoLeft, dfLevel, &nPoints, adfX, adfY );
@@ -916,14 +917,15 @@ CPLErr GDALContourGenerator::EjectContours( int bOnlyUnused )
 GDALContourLevel *GDALContourGenerator::FindLevel( double dfLevel )
 
 {
-    int nStart=0, nEnd=nLevelCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nLevelCount - 1;
 
 /* -------------------------------------------------------------------- */
 /*      Binary search to find the requested level.                      */
 /* -------------------------------------------------------------------- */
     while( nStart <= nEnd )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        const int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleLevel = papoLevels[nMiddle]->GetLevel();
 
@@ -1042,11 +1044,12 @@ void GDALContourLevel::RemoveContour( int iTarget )
 int GDALContourLevel::FindContour( double dfX, double dfY )
 
 {
-    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nEntryCount - 1;
 
     while( nEnd >= nStart )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleX = papoEntries[nMiddle]->dfTailX;
 
@@ -1088,11 +1091,12 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
 /* -------------------------------------------------------------------- */
 /*      Find where to insert by binary search.                          */
 /* -------------------------------------------------------------------- */
-    int nStart = 0, nEnd = nEntryCount-1, nMiddle;
+    int nStart = 0;
+    int nEnd = nEntryCount - 1;
 
     while( nEnd >= nStart )
     {
-        nMiddle = (nEnd + nStart) / 2;
+        const int nMiddle = (nEnd + nStart) / 2;
 
         double dfMiddleX = papoEntries[nMiddle]->dfTailX;
 
@@ -1128,7 +1132,6 @@ int GDALContourLevel::InsertContour( GDALContourItem *poNewContour )
 
     return nEnd+1;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1457,7 +1460,6 @@ void GDALContourItem::PrepareEjection()
     }
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                   Additional C Callable Functions                    */
@@ -1508,7 +1510,6 @@ CPLErr OGRContourWriter( double dfLevel,
     return (eErr == OGRERR_NONE) ? CE_None : CE_Failure;
 }
 
-
 /************************************************************************/
 /*                        GDALContourGenerate()                         */
 /************************************************************************/
@@ -1551,7 +1552,6 @@ General Case:
         | \                |
      -- + -+-------------- + --
      12 |  10              | 1
-
 
 Saddle Point:
 

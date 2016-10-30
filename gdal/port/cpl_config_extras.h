@@ -11,7 +11,6 @@
   #define HOST_FILLORDER FILLORDER_LSB2MSB
 #endif
 
-
 #ifdef __LP64__
   #define SIZEOF_UNSIGNED_LONG 8
 #else

@@ -34,6 +34,8 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -210,7 +212,8 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
         if( nOverviewCount < 0 )
         {
             for( nOverviewCount = 0;
-                 (MAX(nRasterXSize,nRasterYSize) / (1 << nOverviewCount)) > 900;
+                 (std::max(nRasterXSize, nRasterYSize) /
+                  (1 << nOverviewCount)) > 900;
                  nOverviewCount++ ) {}
         }
         else if( nOverviewCount > 30 )
@@ -435,7 +438,6 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
 /*                            WCSDataset                                */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                             WCSDataset()                             */
@@ -1771,7 +1773,6 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
         return TRUE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Hopefully the error already issued by CPLHTTPFetch() is         */
 /*      sufficient.                                                     */
@@ -2005,7 +2006,6 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     pabySavedDataBuffer = psResult->pabyData;
 
     psResult->pabyData = NULL;
-    psResult->nDataLen = psResult->nDataAlloc = 0;
 
     if( poDS == NULL )
         FlushMemoryResult();
@@ -2088,7 +2088,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( papszModifiers[iLast] );
             papszModifiers[iLast] = NULL;
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -2390,7 +2389,6 @@ char **WCSDataset::GetMetadata( const char *pszDomain )
 
     return apszCoverageOfferingMD;
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_WCS()                          */

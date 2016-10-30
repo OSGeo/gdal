@@ -63,7 +63,6 @@ void GMLASResourceCache::SetCacheDirectory(const CPLString& osCacheDirectory)
     m_osCacheDirectory = osCacheDirectory;
 }
 
-
 /************************************************************************/
 /*                     RecursivelyCreateDirectoryIfNeeded()             */
 /************************************************************************/

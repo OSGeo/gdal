@@ -48,7 +48,7 @@ using kmldom::HotSpotPtr;
 using kmldom::ItemIconPtr;
 using kmldom::IconStyleIconPtr;
 using kmldom::IconStylePtr;
-using kmldom::KmlFactory;;
+using kmldom::KmlFactory;
 using kmldom::KmlPtr;
 using kmldom::LabelStylePtr;
 using kmldom::LineStylePtr;
@@ -179,8 +179,6 @@ StylePtr addstylestring2kml(
                                  static_cast<GByte>(nG),
                                  static_cast<GByte>(nR) ) );
                 }
-
-
                 break;
             }
             case OGRSTCSymbol:
@@ -830,8 +828,6 @@ static ContainerPtr MyGetContainerFromRoot(
     return poKmlContainer;
 }
 
-
-
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
     const string styleurl,
@@ -936,7 +932,6 @@ static StyleSelectorPtr StyleFromStyleURL(
                 /***** if found copy it to the table as a new style *****/
                 if( pszTest )
                     poStyleTable->AddStyle(pszStyleMapId, pszTest);
-
             }
             CPLFree(pszUrlTmp);
         }
@@ -1205,7 +1200,6 @@ void styletable2kml(
         }
     }
 }
-
 
 /******************************************************************************
  Function to add a ListStyle and select it to a container.

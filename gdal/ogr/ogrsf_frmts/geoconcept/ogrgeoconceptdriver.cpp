@@ -212,7 +212,6 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/

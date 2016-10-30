@@ -33,75 +33,77 @@
 #include "cpl_conv.h"
 #include "cpl_csv.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*  GCTP projection codes.                                              */
 /************************************************************************/
 
-#define GEO     0L      // Geographic
-#define UTM     1L      // Universal Transverse Mercator (UTM)
-#define SPCS    2L      // State Plane Coordinates
-#define ALBERS  3L      // Albers Conical Equal Area
-#define LAMCC   4L      // Lambert Conformal Conic
-#define MERCAT  5L      // Mercator
-#define PS      6L      // Polar Stereographic
-#define POLYC   7L      // Polyconic
-#define EQUIDC  8L      // Equidistant Conic
-#define TM      9L      // Transverse Mercator
-#define STEREO  10L     // Stereographic
-#define LAMAZ   11L     // Lambert Azimuthal Equal Area
-#define AZMEQD  12L     // Azimuthal Equidistant
-#define GNOMON  13L     // Gnomonic
-#define ORTHO   14L     // Orthographic
-#define GVNSP   15L     // General Vertical Near-Side Perspective
-#define SNSOID  16L     // Sinusiodal
-#define EQRECT  17L     // Equirectangular
-#define MILLER  18L     // Miller Cylindrical
-#define VGRINT  19L     // Van der Grinten
-#define HOM     20L     // (Hotine) Oblique Mercator
-#define ROBIN   21L     // Robinson
-#define SOM     22L     // Space Oblique Mercator (SOM)
-#define ALASKA  23L     // Alaska Conformal
-#define GOODE   24L     // Interrupted Goode Homolosine
-#define MOLL    25L     // Mollweide
-#define IMOLL   26L     // Interrupted Mollweide
-#define HAMMER  27L     // Hammer
-#define WAGIV   28L     // Wagner IV
-#define WAGVII  29L     // Wagner VII
-#define OBEQA   30L     // Oblated Equal Area
-#define ISINUS1 31L     // Integerized Sinusoidal Grid (the same as 99)
-#define CEA     97L     // Cylindrical Equal Area (Grid corners set
-                        // in meters for EASE grid)
-#define BCEA    98L     // Cylindrical Equal Area (Grid corners set
-                        // in DMS degs for EASE grid)
-#define ISINUS  99L     // Integerized Sinusoidal Grid
-                        // (added by Raj Gejjagaraguppe ARC for MODIS)
+static const long GEO    = 0L;   // Geographic
+static const long UTM    = 1L;   // Universal Transverse Mercator (UTM)
+static const long SPCS   = 2L;   // State Plane Coordinates
+static const long ALBERS = 3L;   // Albers Conical Equal Area
+static const long LAMCC  = 4L;   // Lambert Conformal Conic
+static const long MERCAT = 5L;   // Mercator
+static const long PS     = 6L;   // Polar Stereographic
+static const long POLYC  = 7L;   // Polyconic
+static const long EQUIDC = 8L;   // Equidistant Conic
+static const long TM     = 9L;   // Transverse Mercator
+static const long STEREO = 10L;  // Stereographic
+static const long LAMAZ  = 11L;  // Lambert Azimuthal Equal Area
+static const long AZMEQD = 12L;  // Azimuthal Equidistant
+static const long GNOMON = 13L;  // Gnomonic
+static const long ORTHO  = 14L;  // Orthographic
+// static const long GVNSP  = 15L;  // General Vertical Near-Side Perspective
+static const long SNSOID = 16L;  // Sinusiodal
+static const long EQRECT = 17L;  // Equirectangular
+static const long MILLER = 18L;  // Miller Cylindrical
+static const long VGRINT = 19L;  // Van der Grinten
+static const long HOM    = 20L;  // (Hotine) Oblique Mercator
+static const long ROBIN  = 21L;  // Robinson
+// static const long SOM    = 22L;  // Space Oblique Mercator (SOM)
+// static const long ALASKA = 23L;  // Alaska Conformal
+// static const long GOODE  = 24L;  // Interrupted Goode Homolosine
+static const long MOLL   = 25L;  // Mollweide
+// static const long IMOLL  = 26L;  // Interrupted Mollweide
+// static const long HAMMER = 27L;  // Hammer
+static const long WAGIV  = 28L;  // Wagner IV
+static const long WAGVII = 29L;  // Wagner VII
+// static const long OBEQA  = 30L;  // Oblated Equal Area
+// static const long ISINUS1 = 31L; // Integerized Sinusoidal Grid (the same as 99)
+// static const long CEA    = 97L;  // Cylindrical Equal Area (Grid corners set
+                                 // in meters for EASE grid)
+// static const long BCEA   = 98L;  // Cylindrical Equal Area (Grid corners set
+                                 // in DMS degs for EASE grid)
+// static const long ISINUS = 99L;  // Integerized Sinusoidal Grid
+                                 // (added by Raj Gejjagaraguppe ARC for MODIS)
 
 /************************************************************************/
 /*  GCTP ellipsoid codes.                                               */
 /************************************************************************/
 
-#define CLARKE1866          0L
-#define CLARKE1880          1L
-#define BESSEL              2L
-#define INTERNATIONAL1967   3L
-#define INTERNATIONAL1909   4L
-#define WGS72               5L
-#define EVEREST             6L
-#define WGS66               7L
-#define GRS1980             8L
-#define AIRY                9L
-#define MODIFIED_EVEREST    10L
-#define MODIFIED_AIRY       11L
-#define WGS84               12L
-#define SOUTHEAST_ASIA      13L
-#define AUSTRALIAN_NATIONAL 14L
-#define KRASSOVSKY          15L
-#define HOUGH               16L
-#define MERCURY1960         17L
-#define MODIFIED_MERCURY    18L
-#define SPHERE              19L
+static const long CLARKE1866         = 0L;
+// static const long CLARKE1880         = 1L;
+// static const long BESSEL             = 2L;
+// static const long INTERNATIONAL1967  = 3L;
+// static const long INTERNATIONAL1909  = 4L;
+// static const long WGS72              = 5L;
+// static const long EVEREST            = 6L;
+// static const long WGS66              = 7L;
+static const long GRS1980            = 8L;
+// static const long AIRY               = 9L;
+// static const long MODIFIED_EVEREST   = 10L;
+// static const long MODIFIED_AIRY      = 11L;
+static const long WGS84              = 12L;
+// static const long SOUTHEAST_ASIA     = 13L;
+// static const long AUSTRALIAN_NATIONAL= 14L;
+// static const long KRASSOVSKY         = 15L;
+// static const long HOUGH              = 16L;
+// static const long MERCURY1960        = 17L;
+// static const long MODIFIED_MERCURY   = 18L;
+// static const long SPHERE             = 19L;
 
 /************************************************************************/
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
@@ -656,7 +658,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             CPLDebug( "OSR_USGS", "Unsupported projection: %ld", iProjSys );
             SetLocalCS( CPLString().Printf("GCTP projection number %ld", iProjSys) );
             break;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -721,7 +722,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     SetAuthority( "SPHEROID", "EPSG", 7047 );
                 }
             }
-
         }
         else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {
@@ -1179,7 +1179,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 #endif
                 *piDatum = -1;
                 (*ppadfPrjParams)[0] = dfSemiMajor;
-                if ( ABS( dfInvFlattening ) < 0.000000000001 )
+                if ( std::abs( dfInvFlattening ) < 0.000000000001 )
                 {
                     (*ppadfPrjParams)[1] = dfSemiMajor;
                 }

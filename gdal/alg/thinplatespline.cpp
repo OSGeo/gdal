@@ -39,6 +39,8 @@
 
 #include "thinplatespline.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 //////////////////////////////////////////////////////////////////////////////
@@ -47,7 +49,6 @@ CPL_CVSID("$Id$");
 
 #define A(r,c) _AA[ _nof_eqs * (r) + (c) ]
 #define Ainv(r,c) _Ainv[ _nof_eqs * (r) + (c) ]
-
 
 #define VIZ_GEOREF_SPLINE_DEBUG 0
 
@@ -146,7 +147,8 @@ bool VizGeorefSpline2D::get_xy(int index, double& outX, double& outY)
     else
     {
         ok = false;
-        outX = outY = 0.0f;
+        outX = 0.0;
+        outY = 0.0;
     }
 
     return(ok);
@@ -435,21 +437,32 @@ int VizGeorefSpline2D::solve(void)
 
     // More than 2 points - first we have to check if it is 1D or 2D case
 
-    double xmax = x[0], xmin = x[0], ymax = y[0], ymin = y[0];
-    double delx, dely;
-    double xx, yy;
-    double sumx = 0.0f, sumy= 0.0f, sumx2 = 0.0f, sumy2 = 0.0f, sumxy = 0.0f;
-    double SSxx, SSyy, SSxy;
+    double xmax = x[0];
+    double xmin = x[0];
+    double ymax = y[0];
+    double ymin = y[0];
+    double delx;
+    double dely;
+    double xx;
+    double yy;
+    double sumx = 0.0;
+    double sumy = 0.0;
+    double sumx2 = 0.0;
+    double sumy2 = 0.0;
+    double sumxy = 0.0;
+    double SSxx;
+    double SSyy;
+    double SSxy;
 
     for ( p = 0; p < _nof_points; p++ )
     {
         xx = x[p];
         yy = y[p];
 
-        xmax = MAX( xmax, xx );
-        xmin = MIN( xmin, xx );
-        ymax = MAX( ymax, yy );
-        ymin = MIN( ymin, yy );
+        xmax = std::max(xmax, xx);
+        xmin = std::min(xmin, xx);
+        ymax = std::max(ymax, yy);
+        ymin = std::min(ymin, yy);
 
         sumx  += xx;
         sumx2 += xx * xx;
@@ -627,10 +640,14 @@ int VizGeorefSpline2D::solve(void)
 
 int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars )
 {
-     int v, r;
-     double tmp, Pu;
+     int v;
+     int r;
+     double tmp;
+     double Pu;
      double fact;
-     int leftP=0, rightP=0, found = 0;
+     int leftP = 0;
+     int rightP = 0;
+     int found = 0;
 
      switch ( type )
      {

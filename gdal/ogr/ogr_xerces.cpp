@@ -62,7 +62,7 @@ bool OGRInitializeXerces(void)
 
     try
     {
-        CPLDebug("OGR", "XMLPlatformUtils::Initialize()"); 
+        CPLDebug("OGR", "XMLPlatformUtils::Initialize()");
         XMLPlatformUtils::Initialize();
         nCounter ++;
         return true;
@@ -178,8 +178,6 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimiting
 
 #else // HAVE_XERCES
 
-void OGRCleanupXercesMutex(void)
-{
-}
+void OGRCleanupXercesMutex(void) {}
 
 #endif // HAVE_XERCES

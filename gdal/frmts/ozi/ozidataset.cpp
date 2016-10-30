@@ -94,7 +94,6 @@ class OZIRasterBand : public GDALPamRasterBand
     virtual GDALRasterBand* GetOverview(int nLevel);
 };
 
-
 /************************************************************************/
 /*                             I/O functions                            */
 /************************************************************************/
@@ -134,7 +133,7 @@ static short ReadShort(GByte**pptr)
     return nVal;
 }
 
-static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static int ReadInt( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
@@ -144,7 +143,7 @@ static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
     return nVal;
 }
 
-static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static short ReadShort( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);
@@ -188,7 +187,6 @@ OZIRasterBand::~OZIRasterBand()
     delete poColorTable;
     CPLFree(pabyTranslationTable);
 }
-
 
 /************************************************************************/
 /*                        GetColorInterpretation()                      */
@@ -647,7 +645,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->papoOvrBands[i]->poColorTable = poDS->papoOvrBands[0]->poColorTable->Clone();
             poDS->papoOvrBands[i]->pabyTranslationTable = pabyTranslationTable;
         }
-
     }
 
     poDS->SetBand(1, poDS->papoOvrBands[0]);

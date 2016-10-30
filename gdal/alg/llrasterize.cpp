@@ -29,6 +29,7 @@
 
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include <cstdlib>
 
 CPL_CVSID("$Id$");
 
@@ -207,7 +208,6 @@ No known bug
                 }
                 else /*skip top horizontal segments (they are already filled in the regular loop)*/
                     continue;
-
             }
 
             if(( dy < dy2 ) && (dy >= dy1))
@@ -227,7 +227,6 @@ No known bug
          * automatically in compile-time, with modularity preserved.
          */
         qsort(polyInts, ints, sizeof(int), llCompareInt);
-
 
         for (i=0; (i < (ints)); i+=2)
         {
@@ -292,7 +291,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             const int iX1 = (int)floor( padfX[n + j] );
             const int iY1 = (int)floor( padfY[n + j] );
 
-            double dfVariant = 0, dfVariant1 = 0;
+            double dfVariant = 0.0;
+            double dfVariant1 = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
@@ -301,8 +301,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 dfVariant1 = padfVariant[n + j];
             }
 
-            int nDeltaX = ABS( iX1 - iX );
-            int nDeltaY = ABS( iY1 - iY );
+            int nDeltaX = std::abs( iX1 - iX );
+            int nDeltaY = std::abs( iY1 - iY );
 
             // Step direction depends on line direction.
             const int nXStep = ( iX > iX1 ) ? -1 : 1;
@@ -404,7 +404,8 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             double dfXEnd = padfX[n + j];
             double dfYEnd = padfY[n + j];
 
-            double dfVariant = 0, dfVariantEnd = 0;
+            double dfVariant = 0.0;
+            double dfVariantEnd = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
@@ -595,8 +596,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     dfY += dfStepY;
                     dfVariant += dfDeltaVariant * dfStepX;
                 }
-            } // next step along segment.
-
-        } // next segment
-    } // next part
+            }  // Next step along segment.
+        }  // Next segment.
+    }  // Next part.
 }

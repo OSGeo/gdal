@@ -118,7 +118,6 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
                 c3 = 'A';
             }  // Else: Use the default values.
 
-
             const unsigned char b3 = CPLBase64DecodeChar[c3];
             const unsigned char b4 = CPLBase64DecodeChar[c4];
 

@@ -545,12 +545,10 @@ private:
      */
     void SetDescriptor(GDALFeaturePoint *poPoint, GDALIntegralImage *poImg);
 
-
 private:
     int octaveStart;
     int octaveEnd;
     GDALOctaveMap *poOctMap;
 };
-
 
 #endif /* GDALSIMPLESURF_H_ */

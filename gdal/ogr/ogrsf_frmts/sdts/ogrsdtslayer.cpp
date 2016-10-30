@@ -176,7 +176,6 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
             }
 
             CPLFree( pszFieldName );
-
         } /* next iSF (subfield) */
     } /* next iTable */
     CSLDestroy( papszATIDRefs );
@@ -403,7 +402,6 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

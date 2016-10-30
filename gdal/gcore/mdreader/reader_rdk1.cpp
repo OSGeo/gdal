@@ -117,7 +117,6 @@ void GDALMDReaderResursDK1::LoadMetadata()
                                            CPLStripQuotes(pszSatId));
     }
 
-
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                                             "MSP_ROOT.Normal.dSceneDate");
 

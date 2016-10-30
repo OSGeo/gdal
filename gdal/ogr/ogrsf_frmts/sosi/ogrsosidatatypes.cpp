@@ -29,7 +29,6 @@ void OGRSOSISimpleDataType::setType (const char *name, OGRFieldType type) {
 }
 OGRSOSISimpleDataType::~OGRSOSISimpleDataType () {}
 
-
 /*** utility methods ***/
 
 static void addType(C2F* map, const char *key, OGRSOSIDataType *type) {

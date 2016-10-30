@@ -2136,6 +2136,9 @@ def ogr_gmlas_remove_unused_layers_and_fields():
 
 def ogr_gmlas_xlink_resolver():
 
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
@@ -2839,7 +2842,7 @@ def ogr_gmlas_identifier_truncation():
 
     ds = gdal.OpenEx('GMLAS:', open_options = [
             'XSD=/vsimem/ogr_gmlas_identifier_truncation.xsd',
-            'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength></LayerBuildingRules></Configuration>'])
+            'CONFIG_FILE=<Configuration><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('v_l_i_clas')
     if lyr is None:
         gdaltest.post_reason('fail')
@@ -2932,7 +2935,8 @@ def ogr_gmlas_identifier_case_ambiguity():
 </xs:schema>""")
 
     ds = gdal.OpenEx('GMLAS:', open_options = [
-            'XSD=/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd'])
+            'XSD=/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd',
+            'CONFIG_FILE=<Configuration><LayerBuildingRules><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>'])
     lyr = ds.GetLayerByName('differentcase1')
     if lyr is None:
         gdaltest.post_reason('fail')

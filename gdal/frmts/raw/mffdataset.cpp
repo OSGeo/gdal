@@ -34,6 +34,7 @@
 #include "rawdataset.h"
 
 #include <cctype>
+#include <cmath>
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -92,7 +93,6 @@ class MFFDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -116,7 +116,6 @@ class MFFTiledBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
-
 
 /************************************************************************/
 /*                            MFFTiledBand()                            */
@@ -149,7 +148,6 @@ MFFTiledBand::~MFFTiledBand()
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -288,7 +286,6 @@ MFFDataset::~MFFDataset()
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
     CSLDestroy( m_papszFileList );
-
 }
 
 /************************************************************************/
@@ -644,7 +641,6 @@ void MFFDataset::ScanForProjectionInfo()
             {
                 pasGCPList[gcp_index].dfGCPX = dfPrjX[gcp_index];
                 pasGCPList[gcp_index].dfGCPY = dfPrjY[gcp_index];
-
             }
             transform_ok =
                 CPL_TO_BOOL(
@@ -681,7 +677,6 @@ void MFFDataset::ScanForProjectionInfo()
 
     delete mffEllipsoids;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1397,7 +1392,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
           && (tempGeoTransform[0] != 0.0 || tempGeoTransform[1] != 1.0
           || tempGeoTransform[2] != 0.0 || tempGeoTransform[3] != 0.0
               || tempGeoTransform[4] != 0.0
-              || ABS(tempGeoTransform[5]) != 1.0 ) )
+              || std::abs(tempGeoTransform[5]) != 1.0 ) )
       {
           padfTiepoints[0] =
               tempGeoTransform[0] + tempGeoTransform[1]*0.5 +
@@ -1629,7 +1624,6 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_MFF()                           */

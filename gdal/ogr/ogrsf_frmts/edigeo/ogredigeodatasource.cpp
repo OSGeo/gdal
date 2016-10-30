@@ -192,7 +192,6 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                             OpenFile()                               */
 /************************************************************************/
@@ -386,7 +385,6 @@ int OGREDIGEODataSource::ReadDIC()
 
     VSIFCloseL(fp);
 
-
     return TRUE;
 }
 
@@ -495,7 +493,6 @@ int OGREDIGEODataSource::ReadSCD()
 
     VSIFCloseL(fp);
 
-
     return TRUE;
 }
 
@@ -593,7 +590,6 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
             poLayer->AddFieldDefn(attrDef.osLAB, eFieldType, objDesc.aosAttrRID[j]);
         }
     }
-
 
     if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") == 0)
     {
@@ -1182,7 +1178,6 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 /*      Now try to chain all arcs together.                             */
 /* -------------------------------------------------------------------- */
     std::vector<xyPairListType> aoXYList;
-
 
     for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
     {

@@ -627,8 +627,6 @@ char** VRTWarpedDataset::GetFileList()
     return papszFileList;
 }
 
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*                    VRTWarpedOverviewTransformer                      */
@@ -645,7 +643,6 @@ typedef struct {
     double            dfXOverviewFactor;
     double            dfYOverviewFactor;
 } VWOTInfo;
-
 
 static
 void* VRTCreateWarpedOverviewTransformer( GDALTransformerFunc pfnBaseTransformer,
@@ -730,7 +727,6 @@ void* VRTDeserializeWarpedOverviewTransformer( CPLXMLNode *psTree )
         GDALDeserializeTransformer( psContainer->psChild,
                                     &pfnBaseTransform,
                                     &pBaseTransformerArg );
-
     }
 
     if( pfnBaseTransform == NULL )
@@ -991,7 +987,6 @@ VRTWarpedDataset::IBuildOverviews( const char * /* pszResampling */,
             CPLRealloc( m_papoOverviews, sizeof(void*) * m_nOverviewCount ) );
 
         m_papoOverviews[m_nOverviewCount-1] = poOverviewDS;
-
     }
 
     CPLFree( panNewOverviewList );

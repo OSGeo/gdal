@@ -64,7 +64,6 @@ PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
     nBlockYSize = nRasterYSize;
 }
 
-
 /************************
  * \brief Destructor
  ************************/
@@ -103,12 +102,12 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
         (PostGISRasterTileDataset *)poDS;
 
     // Get by PKID
-    if (poRTDS->poRDS->pszPrimaryKeyName) {
+    if (poRTDS->poRDS->pszPrimaryKeyName)
+    {
         //osCommand.Printf("select ST_AsBinary(st_band(%s, %d),TRUE) from %s.%s where "
         osCommand.Printf("select st_band(%s, %d) from %s.%s where "
             "%s = '%s'", poRTDS->poRDS->pszColumn, nBand, poRTDS->poRDS->pszSchema, poRTDS->poRDS->pszTable,
             poRTDS->poRDS->pszPrimaryKeyName, poRTDS->pszPKID);
-
     }
 
     // Get by upperleft
@@ -142,7 +141,6 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
         return CE_Failure;
     }
-
 
     // TODO: Check this
     if (bIsOffline) {

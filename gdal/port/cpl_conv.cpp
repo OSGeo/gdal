@@ -57,6 +57,7 @@
 
 #include <cerrno>
 #include <clocale>
+#include <cmath>
 #include <cstring>
 
 /* Uncomment to get list of options that have been fetched and set */
@@ -199,7 +200,6 @@ void *CPLMalloc( size_t nSize )
  * @param nNewSize new size (in bytes) of memory block to allocate.
  * @return pointer to allocated memory, only NULL if nNewSize is zero.
  */
-
 
 void * CPLRealloc( void * pData, size_t nNewSize )
 
@@ -588,7 +588,6 @@ const char *CPLReadLine( FILE * fp )
 
         nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
         nReadSoFar += nBytesReadThisTime;
-
     } while( nBytesReadThisTime >= 127
              && pszRLBuffer[nReadSoFar-1] != 13
              && pszRLBuffer[nReadSoFar-1] != 10 );
@@ -862,7 +861,6 @@ long CPLScanLong( const char *pszString, int nMaxLength )
     const std::string osValue( pszString, nLength );
     return atol( osValue.c_str() );
 }
-
 
 /************************************************************************/
 /*                            CPLScanULong()                            */
@@ -1546,14 +1544,15 @@ static void CPLShowAccessedOptions()
 
     delete paoGetKeys;
     delete paoSetKeys;
-    paoGetKeys = paoSetKeys = NULL;
+    paoGetKeys = NULL;
+    paoSetKeys = NULL;
 }
 
 /************************************************************************/
 /*                       CPLAccessConfigOption()                        */
 /************************************************************************/
 
-static void CPLAccessConfigOption(const char* pszKey, bool bGet)
+static void CPLAccessConfigOption( const char* pszKey, bool bGet )
 {
     CPLMutexHolderD(&hRegisterConfigurationOptionMutex);
     if (paoGetKeys == NULL)
@@ -1912,7 +1911,6 @@ double CPLDMSToDec( const char *is )
     return v;
 }
 
-
 /************************************************************************/
 /*                            CPLDecToDMS()                             */
 /************************************************************************/
@@ -1929,7 +1927,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         return "Invalid angle";
 
     const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
-    const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
+    const double dfABSAngle = std::abs(dfAngle) + dfEpsilon;
     if (dfABSAngle > 361)
     {
         return "Invalid angle";
@@ -2016,7 +2014,7 @@ double CPLPackedDMSToDec( double dfPacked )
 {
     const double dfSign = ( dfPacked < 0.0 )? -1 : 1;
 
-    double dfSeconds = ABS( dfPacked );
+    double dfSeconds = std::abs( dfPacked );
     double dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds -= dfDegrees * 1000000.0;
     double dfMinutes = floor(dfSeconds / 1000.0);
@@ -2050,7 +2048,7 @@ double CPLDecToPackedDMS( double dfDec )
 {
     const double dfSign = ( dfDec < 0.0 ) ? -1 : 1;
 
-    dfDec = ABS( dfDec );
+    dfDec = std::abs( dfDec );
     const double dfDegrees = floor( dfDec );
     const double dfMinutes = floor( ( dfDec - dfDegrees ) * 60.0 );
     const double dfSeconds = ( dfDec - dfDegrees ) * 3600.0 - dfMinutes * 60.0;
@@ -2256,7 +2254,6 @@ void CPLCloseShared( FILE * fp )
         pasSharedFileListExtra = NULL;
     }
 }
-
 
 /************************************************************************/
 /*                   CPLCleanupSharedFileMutex()                        */
@@ -2645,7 +2642,6 @@ CPLLocaleC::~CPLLocaleC()
     CPLFree( pszOldLocale );
 }
 
-
 /************************************************************************/
 /*                        CPLThreadLocaleC()                            */
 /************************************************************************/
@@ -2737,7 +2733,6 @@ char* CPLsetlocale (int category, const char* locale)
     // Make it thread-locale storage.
     return const_cast<char*>( CPLSPrintf("%s", pszRet) );
 }
-
 
 /************************************************************************/
 /*                       CPLCleanupSetlocaleMutex()                     */

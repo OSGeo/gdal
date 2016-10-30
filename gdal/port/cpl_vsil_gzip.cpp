@@ -50,12 +50,10 @@
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
 
-
   The data format used by the zlib library is described by RFCs (Request for
   Comments) 1950 to 1952 in the files http://www.ietf.org/rfc/rfc1950.txt
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
-
 
 /* This file contains a refactoring of gzio.c from zlib project.
 
@@ -83,6 +81,8 @@
 #include <zlib.h>
 #include "cpl_minizip_unzip.h"
 #include "cpl_time.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -190,7 +190,6 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     void              SaveInfo_unlocked();
 };
 
-
 class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
     CPLMutex* hMutex;
@@ -218,7 +217,6 @@ public:
     void  SaveInfo( VSIGZipHandle* poHandle );
     void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
 };
-
 
 /************************************************************************/
 /*                            Duplicate()                               */
@@ -361,7 +359,7 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
 
     if( transparent == 0 )
     {
-        snapshot_byte_interval = MAX(
+        snapshot_byte_interval = std::max(
             static_cast<vsi_l_offset>(Z_BUFSIZE), compressed_size / 100);
         snapshots = static_cast<GZipSnapshot *>(
             CPLCalloc(sizeof(GZipSnapshot),
@@ -906,8 +904,9 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
             }
             if( stream.avail_out > 0 )
             {
-                uInt nToRead = static_cast<uInt>(
-                    MIN(m_compressed_size - (in + nRead), stream.avail_out));
+                const uInt nToRead = static_cast<uInt>(
+                    std::min(m_compressed_size - (in + nRead),
+                             static_cast<vsi_l_offset>(stream.avail_out)));
                 uInt nReadFromFile = static_cast<uInt>(
                     VSIFReadL(next_out, 1, nToRead, (VSILFILE*)m_poBaseHandle));
                 stream.avail_out -= nReadFromFile;
@@ -1106,7 +1105,6 @@ size_t VSIGZipHandle::Write( const void * /* pBuffer */,
 /*                               Eof()                                  */
 /************************************************************************/
 
-
 int VSIGZipHandle::Eof()
 {
 #ifdef ENABLE_DEBUG
@@ -1132,7 +1130,6 @@ int VSIGZipHandle::Close()
 {
     return 0;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1310,7 +1307,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
                                   size_t const nSize, size_t const nMemb )
 
 {
-    int nBytesToWrite = (int) (nSize * nMemb);
+    int nBytesToWrite = static_cast<int>(nSize * nMemb);
     int nNextByte = 0;
 
     nCRC = crc32(nCRC, (const Bytef *)pBuffer, nBytesToWrite);
@@ -1326,7 +1323,7 @@ size_t VSIGZipWriteHandle::Write( const void * const pBuffer,
         if( sStream.avail_in > 0 )
             memmove( pabyInBuf, sStream.next_in, sStream.avail_in );
 
-        const int nNewBytesToWrite = MIN(
+        const int nNewBytesToWrite = std::min(
             static_cast<int>(Z_BUFSIZE-sStream.avail_in),
             nBytesToWrite - nNextByte);
         memcpy( pabyInBuf + sStream.avail_in,
@@ -1406,13 +1403,11 @@ vsi_l_offset VSIGZipWriteHandle::Tell()
     return nCurOffset;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                       VSIGZipFilesystemHandler                       */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                   VSIGZipFilesystemHandler()                         */
@@ -1737,7 +1732,6 @@ char** VSIGZipFilesystemHandler::ReadDirEx( const char * /*pszDirname*/,
 /*                   VSIInstallGZipFileHandler()                        */
 /************************************************************************/
 
-
 /**
  * \brief Install GZip file system handler.
  *
@@ -1809,7 +1803,6 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         virtual GIntBig GetModifiedTime() { return nModifiedTime; }
         virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
 };
-
 
 /************************************************************************/
 /*                           VSIZipReader()                             */
@@ -2199,7 +2192,6 @@ char **VSIZipFilesystemHandler::ReadDirEx( const char *pszDirname,
     return VSIArchiveFilesystemHandler::ReadDirEx(pszDirname, nMaxFiles);
 }
 
-
 /************************************************************************/
 /*                                 Stat()                               */
 /************************************************************************/
@@ -2262,7 +2254,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite( const char *pszFilename
     CPLMutexHolder oHolder( &hMutex );
     return OpenForWrite_unlocked(pszFilename, pszAccess);
 }
-
 
 VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
                                                          const char *pszAccess)
@@ -2363,7 +2354,6 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
         return oMapZipWriteHandles[osZipFilename];
     }
 }
-
 
 /************************************************************************/
 /*                          VSIZipWriteHandle()                         */
@@ -2529,7 +2519,6 @@ void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
 /*                    VSIInstallZipFileHandler()                        */
 /************************************************************************/
 
-
 /**
  * \brief Install ZIP file system handler.
  *
@@ -2574,7 +2563,6 @@ void VSIInstallZipFileHandler()
 {
     VSIFileManager::InstallHandler( "/vsizip/", new VSIZipFilesystemHandler() );
 }
-
 
 /************************************************************************/
 /*                         CPLZLibDeflate()                             */

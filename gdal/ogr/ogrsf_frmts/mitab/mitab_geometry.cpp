@@ -48,6 +48,7 @@
  *
  **********************************************************************/
 
+#include <cmath>
 #include <algorithm>
 #include <utility>
 
@@ -57,7 +58,6 @@ CPL_CVSID("$Id$");
 
 #define OGR_NUM_RINGS(poly)   (poly->getNumInteriorRings()+1)
 #define OGR_GET_RING(poly, i) (i==0?poly->getExteriorRing():poly->getInteriorRing(i-1))
-
 
 /**********************************************************************
  *                   OGRPointInRing()
@@ -115,7 +115,6 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
     return status;
 }
 
-
 /**********************************************************************
  *                   OGRPolygonLabelPoint()
  *
@@ -135,9 +134,9 @@ GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 typedef enum { CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT } CLIP_STATE;
 static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
 {
-    if( x < MIN(x0, x1) )
+    if( x < std::min(x0, x1) )
         return CLIP_LEFT;
-    if( x > MAX(x0, x1) )
+    if( x > std::max(x0, x1) )
         return CLIP_RIGHT;
     return CLIP_MIDDLE;
 }
@@ -277,13 +276,14 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         } while( wrong_order );
 
         // Great, now find longest span.
-        // point1.y = point2.y = y;
+        // point1.y = y;
+        // point2.y = y;
         for( int i = 0; i < nfound; i += 2 )
         {
             point1.x = xintersect[i];
             point2.x = xintersect[i+1];
             /* len = length(point1, point2); */
-            const double len = ABS((point2.x - point1.x));
+            const double len = std::abs((point2.x - point1.x));
             if(len > max_len)
             {
                 max_len = len;
@@ -370,7 +370,6 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 }
 #endif
 
-
 /**********************************************************************
  *                   OGRPolylineCenterPoint()
  *
@@ -405,7 +404,6 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
     return OGRERR_NONE;
 }
-
 
 /**********************************************************************
  *                   OGRPolylineLabelPoint()

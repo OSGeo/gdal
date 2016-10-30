@@ -32,7 +32,6 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
-
 CPL_CVSID("$Id$");
 
 #ifndef SQLColumns_TABLE_CAT
@@ -932,7 +931,6 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)
                         && (szWrkData[cbDataLen - 2] == 0))
                         cbDataLen -= 2; // trimming the extra terminators
-
             }
 
             m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
@@ -1381,7 +1379,6 @@ void CPLODBCStatement::Clear()
         CPLFree( m_panColValueLengths );
         m_panColValueLengths = NULL;
     }
-
 }
 
 /************************************************************************/

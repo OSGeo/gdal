@@ -234,7 +234,6 @@ int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
-
 int CPL_DLL CPL_STDCALL
 GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                      GDALDatasetH hDstDS,
@@ -357,7 +356,6 @@ GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                         void *pTransformArg, double dfBurnValue,
                         char **papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg );
-
 
 /************************************************************************/
 /*  Gridding interface.                                                 */
@@ -515,7 +513,6 @@ typedef struct
     /*! No data marker to fill empty points. */
     double  dfNoDataValue;
 } GDALGridLinearOptions;
-
 
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,

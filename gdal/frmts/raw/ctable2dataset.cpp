@@ -314,7 +314,6 @@ CPLErr CTable2Dataset::SetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/

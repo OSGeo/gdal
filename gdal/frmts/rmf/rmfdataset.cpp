@@ -475,7 +475,6 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                      iRow * nLastTileWidth * nDataSize,
                      nLastTileWidth * nDataSize );
         }
-
     }
 
     return CE_None;
@@ -617,7 +616,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                   iInPixel++, iOutPixel += poGDS->nBands )
                 pabyTile[iOutPixel] =
                     reinterpret_cast<GByte *>( pImage )[iInPixel];
-
         }
     }
 
@@ -1644,10 +1642,10 @@ do {                                                                    \
                 poDS->pszUnitType = CPLStrdup( RMF_UnitsM );
                 break;
             case 1:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsCM );
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsDM );
                 break;
             case 2:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsDM );
+                poDS->pszUnitType = CPLStrdup( RMF_UnitsCM );
                 break;
             case 3:
                 poDS->pszUnitType = CPLStrdup( RMF_UnitsMM );
@@ -1895,9 +1893,9 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     // Elevation units
     if( EQUAL(poDS->pszUnitType, RMF_UnitsM) )
         poDS->sHeader.iElevationUnit = 0;
-    else if( EQUAL(poDS->pszUnitType, RMF_UnitsCM) )
+    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsDM) )
         poDS->sHeader.iElevationUnit = 1;
-    else if( EQUAL(poDS->pszUnitType, RMF_UnitsDM) )
+    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsCM) )
         poDS->sHeader.iElevationUnit = 2;
     else if( EQUAL(poDS->pszUnitType, RMF_UnitsMM) )
         poDS->sHeader.iElevationUnit = 3;

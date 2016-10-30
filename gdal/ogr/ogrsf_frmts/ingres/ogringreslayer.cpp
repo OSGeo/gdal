@@ -169,8 +169,9 @@ OGRGeometry *OGRIngresLayer::TranslateGeometry( const char *pszGeom )
 /*      spaces may occur between tokens.                                */
 /* -------------------------------------------------------------------- */
     double *padfXY = NULL;
-    int    nVertMax = 0, nVertCount = 0;
-    int    nDepth = 0;
+    int nVertMax = 0;
+    int nVertCount = 0;
+    int nDepth = 0;
     const char *pszNext = pszGeom;
 
     while( *pszNext != '\0' )
@@ -386,7 +387,6 @@ OGRFeature *OGRIngresLayer::RecordToFeature( char **papszRow )
             continue;
         }
 
-
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
@@ -565,7 +565,6 @@ int OGRIngresLayer::TestCapability( const char * pszCap )
 #endif
 }
 
-
 /************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
@@ -585,7 +584,6 @@ const char *OGRIngresLayer::GetGeometryColumn()
 {
     return osGeomColumn;
 }
-
 
 /************************************************************************/
 /*                         FetchSRSId()                                 */

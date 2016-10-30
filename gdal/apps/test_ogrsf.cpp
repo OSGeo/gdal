@@ -34,6 +34,7 @@
 #include "ogr_p.h"
 #include "commonutils.h"
 
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -1438,7 +1439,6 @@ end:
     return bRet;
 }
 
-
 /************************************************************************/
 /*                       TestOGRLayerSetNextByIndex()                   */
 /*                                                                      */
@@ -1555,7 +1555,6 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
 
         goto end;
     }
-
 
     if( bVerbose )
         printf( "INFO: SetNextByIndex() read test passed.\n" );
@@ -1761,7 +1760,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
         sLayerExtent.MinX < sLayerExtent.MaxX &&
         sLayerExtent.MinY < sLayerExtent.MaxY )
     {
-        epsilon = MIN( sLayerExtent.MaxX - sLayerExtent.MinX, sLayerExtent.MaxY - sLayerExtent.MinY ) / 10.0;
+        epsilon = std::min(sLayerExtent.MaxX - sLayerExtent.MinX,
+                           sLayerExtent.MaxY - sLayerExtent.MinY) / 10.0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1994,7 +1994,8 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
         sLayerExtent.MinX < sLayerExtent.MaxX &&
         sLayerExtent.MinY < sLayerExtent.MaxY )
     {
-        epsilon = MIN( sLayerExtent.MaxX - sLayerExtent.MinX, sLayerExtent.MaxY - sLayerExtent.MinY ) / 10.0;
+        epsilon = std::min(sLayerExtent.MaxX - sLayerExtent.MinX,
+                           sLayerExtent.MaxY - sLayerExtent.MinY) / 10.0;
     }
 
     GIntBig nTotalFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
@@ -2140,7 +2141,6 @@ static int TestSpatialFilter( OGRLayer *poLayer )
 
     return bRet;
 }
-
 
 /************************************************************************/
 /*                      TestAttributeFilter()                           */
@@ -3212,8 +3212,6 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
         bRet = FALSE;
     }
 
-
-
     if( bRet && bVerbose )
         printf("INFO: TestLayerSQL passed.\n");
 
@@ -3315,7 +3313,6 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 /*      Test error conditions.                                          */
 /* -------------------------------------------------------------------- */
     bRet &= TestLayerErrorConditions( poLayer );
-
 
 /* -------------------------------------------------------------------- */
 /*      Test some SQL.                                                  */

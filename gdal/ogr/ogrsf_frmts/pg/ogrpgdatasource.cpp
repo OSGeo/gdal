@@ -207,7 +207,6 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
     szNum[iLen] = '\0';
     psVersion->nMinor = atoi(szNum);
 
-
     if ( *ptr )
     {
         pszVer = ++ptr;
@@ -220,14 +219,11 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver* psVersion, const char* psz
         szNum[iLen] = '\0';
         psVersion->nRelease = atoi(szNum);
     }
-
 }
-
 
 /************************************************************************/
 /*                     One entry for each PG table                      */
 /************************************************************************/
-
 
 typedef struct
 {
@@ -389,7 +385,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     char* pszConnectionName = CPLStrdup(osConnectionName);
 
-
 /* -------------------------------------------------------------------- */
 /*      Determine if the connection string contains an optional         */
 /*      ACTIVE_SCHEMA portion. If so, parse it out.                     */
@@ -482,7 +477,6 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         pszForcedTables[pszEnd - pszTableStart - 7] = '\0';
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
@@ -759,10 +753,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             CPLDebug("PG","PostGIS version string : '%s'", pszVer);
 
             OGRPGDecodeVersionString(&sPostGISVersion, pszVer);
-
         }
         OGRPGClearResult(hResult);
-
 
         if (sPostGISVersion.nMajor == 0 && sPostGISVersion.nMinor < 8)
         {
@@ -1532,7 +1524,6 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
     if (bNoneAsUnknown && eType == wkbNone)
         eType = wkbUnknown;
 
-
     int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
                                     papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
 
@@ -2124,7 +2115,6 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
     return poLayer;
 }
 
-
 /************************************************************************/
 /*                        OGRPGNoticeProcessor()                        */
 /************************************************************************/
@@ -2695,7 +2685,6 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
     virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) { poGFldDefn->nSRSId = -1; }
 };
 
-
 /************************************************************************/
 /*                     OGRPGNoResetResultLayer()                        */
 /************************************************************************/
@@ -2799,11 +2788,9 @@ const char* OGRPGDataSource::GetMetadataItem(const char* pszKey,
             osDebugLastTransactionCommand = "";
             return pszRet;
         }
-
     }
     return OGRDataSource::GetMetadataItem(pszKey, pszDomain);
 }
-
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */

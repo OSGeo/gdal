@@ -35,8 +35,8 @@
 
 CPL_CVSID("$Id$");
 
-#define TO_DEGREES 57.2957795130823208766
-#define TO_RADIANS 0.017453292519943295769
+static const double TO_DEGREES = 57.2957795130823208766;
+static const double TO_RADIANS = 0.017453292519943295769;
 
 // XXX: this macro computes zone number from the central meridian parameter.
 // Note, that "Panorama" parameters are set in radians.
@@ -50,46 +50,46 @@ CPL_CVSID("$Id$");
 /*  "Panorama" projection codes.                                        */
 /************************************************************************/
 
-#define PAN_PROJ_NONE   -1L
-#define PAN_PROJ_TM     1L      // Gauss-Kruger (Transverse Mercator)
-#define PAN_PROJ_LCC    2L      // Lambert Conformal Conic 2SP
-#define PAN_PROJ_STEREO 5L      // Stereographic
-#define PAN_PROJ_AE     6L      // Azimuthal Equidistant (Postel)
-#define PAN_PROJ_MERCAT 8L      // Mercator
-#define PAN_PROJ_POLYC  10L     // Polyconic
-#define PAN_PROJ_PS     13L     // Polar Stereographic
-#define PAN_PROJ_GNOMON 15L     // Gnomonic
-#define PAN_PROJ_UTM    17L     // Universal Transverse Mercator (UTM)
-#define PAN_PROJ_WAG1   18L     // Wagner I (Kavraisky VI)
-#define PAN_PROJ_MOLL   19L     // Mollweide
-#define PAN_PROJ_EC     20L     // Equidistant Conic
-#define PAN_PROJ_LAEA   24L     // Lambert Azimuthal Equal Area
-#define PAN_PROJ_EQC    27L     // Equirectangular
-#define PAN_PROJ_CEA    28L     // Cylindrical Equal Area (Lambert)
-#define PAN_PROJ_IMWP   29L     // International Map of the World Polyconic
-#define PAN_PROJ_MILLER 34L     // Miller
+static const long PAN_PROJ_NONE   = -1L;
+static const long PAN_PROJ_TM     = 1L;   // Gauss-Kruger (Transverse Mercator)
+static const long PAN_PROJ_LCC    = 2L;   // Lambert Conformal Conic 2SP
+static const long PAN_PROJ_STEREO = 5L;   // Stereographic
+static const long PAN_PROJ_AE     = 6L;   // Azimuthal Equidistant (Postel)
+static const long PAN_PROJ_MERCAT = 8L;   // Mercator
+static const long PAN_PROJ_POLYC  = 10L;  // Polyconic
+static const long PAN_PROJ_PS     = 13L;  // Polar Stereographic
+static const long PAN_PROJ_GNOMON = 15L;  // Gnomonic
+static const long PAN_PROJ_UTM    = 17L;  // Universal Transverse Mercator (UTM)
+static const long PAN_PROJ_WAG1   = 18L;  // Wagner I (Kavraisky VI)
+static const long PAN_PROJ_MOLL   = 19L;  // Mollweide
+static const long PAN_PROJ_EC     = 20L;  // Equidistant Conic
+static const long PAN_PROJ_LAEA   = 24L;  // Lambert Azimuthal Equal Area
+static const long PAN_PROJ_EQC    = 27L;  // Equirectangular
+static const long PAN_PROJ_CEA    = 28L;  // Cylindrical Equal Area (Lambert)
+static const long PAN_PROJ_IMWP   = 29L;  // International Map of the World Polyconic
+static const long PAN_PROJ_MILLER = 34L;  // Miller
 /************************************************************************/
 /*  "Panorama" datum codes.                                             */
 /************************************************************************/
 
-#define PAN_DATUM_NONE      -1L
-#define PAN_DATUM_PULKOVO42 1L  // Pulkovo 1942
-#define PAN_DATUM_WGS84     2L  // WGS84
+static const long PAN_DATUM_NONE      = -1L;
+static const long PAN_DATUM_PULKOVO42 = 1L;  // Pulkovo 1942
+static const long PAN_DATUM_WGS84     = 2L;  // WGS84
 
 /************************************************************************/
 /*  "Panorama" ellipsoid codes.                                         */
 /************************************************************************/
 
-#define PAN_ELLIPSOID_NONE          -1L
-#define PAN_ELLIPSOID_KRASSOVSKY    1L  // Krassovsky, 1940
-#define PAN_ELLIPSOID_WGS72         2L  // WGS, 1972
-#define PAN_ELLIPSOID_INT1924       3L  // International, 1924 (Hayford, 1909)
-#define PAN_ELLIPSOID_CLARCKE1880   4L  // Clarke, 1880
-#define PAN_ELLIPSOID_CLARCKE1866   5L  // Clarke, 1866 (NAD1927)
-#define PAN_ELLIPSOID_EVEREST1830   6L  // Everest, 1830
-#define PAN_ELLIPSOID_BESSEL1841    7L  // Bessel, 1841
-#define PAN_ELLIPSOID_AIRY1830      8L  // Airy, 1830
-#define PAN_ELLIPSOID_WGS84         9L  // WGS, 1984 (GPS)
+static const long PAN_ELLIPSOID_NONE        = -1L;
+static const long PAN_ELLIPSOID_KRASSOVSKY  = 1L;  // Krassovsky, 1940
+// static const long PAN_ELLIPSOID_WGS72       = 2L;  // WGS, 1972
+// static const long PAN_ELLIPSOID_INT1924     = 3L;  // International, 1924 (Hayford, 1909)
+// static const long PAN_ELLIPSOID_CLARCKE1880 = 4L;  // Clarke, 1880
+// static const long PAN_ELLIPSOID_CLARCKE1866 = 5L;  // Clarke, 1866 (NAD1927)
+// static const long PAN_ELLIPSOID_EVEREST1830 = 6L;  // Everest, 1830
+// static const long PAN_ELLIPSOID_BESSEL1841  = 7L;  // Bessel, 1841
+// static const long PAN_ELLIPSOID_AIRY1830    = 8L;  // Airy, 1830
+static const long PAN_ELLIPSOID_WGS84       = 9L;  // WGS, 1984 (GPS)
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
@@ -417,7 +417,6 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             SetLocalCS( CPLString().Printf("\"Panorama\" projection number %ld",
                                    iProjSys) );
             break;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -492,7 +491,6 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /************************************************************************/
 /*                      OSRExportToPanorama()                           */
 /************************************************************************/
-
 
 /** Export coordinate system in "Panorama" GIS projection definition.
  *

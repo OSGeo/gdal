@@ -225,5 +225,4 @@ class OGRWAsPDriver : public OGRSFDriver
     virtual int                 TestCapability( const char * );
 };
 
-
 #endif /* ndef OGR_WASP_H_INCLUDED */

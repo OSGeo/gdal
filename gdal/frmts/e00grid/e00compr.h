@@ -60,7 +60,6 @@
 #ifndef E00COMPR_H_INCLUDED_
 #define E00COMPR_H_INCLUDED_
 
-
 #include <stdio.h>
 
 #include "cpl_port.h"
@@ -152,7 +151,6 @@ struct _E00WriteInfo
 
 typedef struct _E00WriteInfo *E00WritePtr;
 
-
 /*=====================================================================
                         Function prototypes
  =====================================================================*/
@@ -172,7 +170,6 @@ E00WritePtr E00WriteCallbackOpen(void *pRefData,
                                  int nComprLevel);
 void        E00WriteClose(E00WritePtr psInfo);
 int         E00WriteNextLine(E00WritePtr psInfo, const char *pszLine);
-
 
 #ifdef __cplusplus
 }

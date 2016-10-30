@@ -92,7 +92,6 @@ class OGRVDVLayer: public OGRLayer
                             { m_nTotalFeatureCount = nTotalFeatureCount; }
 };
 
-
 class OGRVDV452Field
 {
     public:
@@ -214,6 +213,5 @@ class OGRVDVDataSource : public GDALDataset
                                         GDALDataType /*eType*/,
                                         char ** papszOptions );
 };
-
 
 #endif /* ndef OGR_VDV_H_INCLUDED */

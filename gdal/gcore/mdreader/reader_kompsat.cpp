@@ -235,7 +235,6 @@ char** GDALMDReaderKompsat::ReadTxtToList()
             papszIMD = CSLAddNameValue(papszIMD, CPLSPrintf("%s.%s",
                                        soGroupName.c_str(), szName), pszLine + j);
         }
-
     }
 
     CSLDestroy(papszLines);

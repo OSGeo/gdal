@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "cpl_minixml.h"
+
+#include <algorithm>
 #include <map>
 
 CPL_CVSID("$Id$");
@@ -425,9 +427,10 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
     {
         for( unsigned int i = 0; i < poHandle->aoRegions.size(); i++ )
         {
-            poHandle->nOverallLength = MAX(poHandle->nOverallLength,
-                                           poHandle->aoRegions[i].nDstOffset
-                                           + poHandle->aoRegions[i].nLength);
+            poHandle->nOverallLength =
+                std::max(poHandle->nOverallLength,
+                         poHandle->aoRegions[i].nDstOffset
+                         + poHandle->aoRegions[i].nLength);
         }
     }
 

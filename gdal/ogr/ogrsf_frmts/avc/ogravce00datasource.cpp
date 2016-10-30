@@ -221,7 +221,6 @@ OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
     if (psE00 == NULL)
         return NULL;
 
-
     for( int iSection = 0; iSection < psE00->numSections; iSection++ )
     {
         AVCE00Section *psSec = psE00->pasSections + iSection;

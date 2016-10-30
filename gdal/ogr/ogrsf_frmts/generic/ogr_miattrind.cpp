@@ -338,7 +338,6 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
         CPLCreateXMLElementAndValue( psIndex, "FieldName",
                                      poLayer->GetLayerDefn()->GetFieldDefn(poAI->iField)->GetNameRef() );
 
-
         CPLCreateXMLElementAndValue( psIndex, "IndexIndex",
                                      CPLSPrintf( "%d", poAI->iIndex ) );
     }
@@ -536,7 +535,6 @@ OGRErr OGRMILayerAttrIndex::DropIndex( int iField )
     {
         if( papoIndexList[i]->iField == iField )
             break;
-
     }
 
     if( i == nIndexCount )

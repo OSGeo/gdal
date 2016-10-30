@@ -65,7 +65,6 @@ class OGRXLSLayer : public OGRLayer
                                     unsigned short nColsIn);
                         virtual ~OGRXLSLayer();
 
-
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
 
@@ -78,7 +77,6 @@ class OGRXLSLayer : public OGRLayer
     virtual int                 TestCapability( const char * );
 
     virtual OGRSpatialReference *GetSpatialRef() { return NULL; }
-
 };
 
 /************************************************************************/
@@ -124,6 +122,5 @@ class OGRXLSDriver : public OGRSFDriver
     virtual OGRDataSource*      Open( const char *, int );
     virtual int                 TestCapability( const char * );
 };
-
 
 #endif /* ndef OGR_XLS_H_INCLUDED */

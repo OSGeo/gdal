@@ -39,7 +39,6 @@ static int OGRPLScenesIdentify(GDALOpenInfo* poOpenInfo)
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "PLSCENES:");
 }
 
-
 /************************************************************************/
 /*                            OGRPLScenesOpen()                         */
 /************************************************************************/

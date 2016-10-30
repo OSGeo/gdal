@@ -30,7 +30,6 @@
 #ifndef GDAL_JP2METADATA_GENERATOR_H_INCLUDED
 #define GDAL_JP2METADATA_GENERATOR_H_INCLUDED
 
-
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 

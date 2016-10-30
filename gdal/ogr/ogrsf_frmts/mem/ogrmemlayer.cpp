@@ -31,6 +31,8 @@
 #include "ogr_mem.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -291,7 +293,8 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         if( nFID >= m_nMaxFeatureCount )
         {
             const GIntBig nNewCount =
-                MAX(m_nMaxFeatureCount+m_nMaxFeatureCount/3+10, nFID + 1 );
+                std::max(m_nMaxFeatureCount + m_nMaxFeatureCount/3+10,
+                         nFID + 1);
             if( static_cast<GIntBig>(static_cast<size_t>(sizeof(OGRFeature *)) *
                                      nNewCount) !=
                 static_cast<GIntBig>(sizeof(OGRFeature *)) * nNewCount )
@@ -338,7 +341,6 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         m_papoFeatures[nFID] = poFeatureCloned;
-
     }
     else
     {
@@ -804,7 +806,6 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                          CreateGeomField()                           */

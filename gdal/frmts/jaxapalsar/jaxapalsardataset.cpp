@@ -335,7 +335,6 @@ CPLErr PALSARJaxaRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                      PALSARJaxaDataset                               */
@@ -350,7 +349,6 @@ int PALSARJaxaDataset::GetGCPCount() {
     return nGCPCount;
 }
 
-
 /************************************************************************/
 /*                             GetGCPs()                                */
 /************************************************************************/
@@ -358,7 +356,6 @@ int PALSARJaxaDataset::GetGCPCount() {
 const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
     return pasGCPList;
 }
-
 
 /************************************************************************/
 /*                            ReadMetadata()                            */
@@ -471,7 +468,6 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
         /* PALSAR data is only available from JAXA in Scattering Matrix form */
         poDS->SetMetadataItem( "MATRIX_REPRESENTATION", "SCATTERING" );
     }
-
 }
 
 /************************************************************************/

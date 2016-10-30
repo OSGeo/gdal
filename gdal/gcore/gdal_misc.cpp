@@ -35,7 +35,9 @@
 #include "ogr_spatialref.h"
 
 #include <cctype>
+#include <cmath>
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -127,34 +129,34 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
       case GDT_Int16:
       case GDT_CInt16:
-        nBits = MAX(nBits,16);
+        nBits = std::max(nBits, 16);
         bSigned = true;
         break;
 
       case GDT_UInt16:
-        nBits = MAX(nBits,16);
+        nBits = std::max(nBits, 16);
         break;
 
       case GDT_Int32:
       case GDT_CInt32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         bSigned = true;
         break;
 
       case GDT_UInt32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         break;
 
       case GDT_Float32:
       case GDT_CFloat32:
-        nBits = MAX(nBits,32);
+        nBits = std::max(nBits, 32);
         bSigned = true;
         bFloating = true;
         break;
 
       case GDT_Float64:
       case GDT_CFloat64:
-        nBits = MAX(nBits,64);
+        nBits = std::max(nBits, 64);
         bSigned = true;
         bFloating = true;
         break;
@@ -187,7 +189,6 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
     else
         return GDT_Float64;
 }
-
 
 /************************************************************************/
 /*                        GDALGetDataTypeSizeBytes()                    */
@@ -561,7 +562,6 @@ GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName(
     return GARIO_ERROR;
 }
 
-
 /************************************************************************/
 /*                        GDALGetAsyncStatusTypeName()                 */
 /************************************************************************/
@@ -759,7 +759,6 @@ GDALColorInterp GDALGetColorInterpretationByName( const char *pszName )
 /*                     GDALGetRandomRasterSample()                      */
 /************************************************************************/
 
-
 /** Undocumented
  * @param hBand undocumented.
  * @param nSamples undocumented.
@@ -809,7 +808,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
     }
 
     int nSampleRate = static_cast<int>(
-        MAX(1, sqrt( static_cast<double>(nBlockCount) ) - 2.0 ) );
+        std::max(1.0, sqrt( static_cast<double>(nBlockCount) ) - 2.0));
 
     if( nSampleRate == nBlocksPerRow && nSampleRate > 1 )
         nSampleRate--;
@@ -822,7 +821,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     if ((nSamples / ((nBlockCount-1) / nSampleRate + 1)) != 0)
         nBlockSampleRate =
-            MAX( 1,
+            std::max( 1,
                  nBlockPixels /
                  (nSamples / ((nBlockCount-1) / nSampleRate + 1)));
 
@@ -1103,7 +1102,6 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 /*                         GDALLoadOziMapFile()                         */
 /************************************************************************/
 
-
 /** Helper function for translator implementer wanting support for OZI .map
  *
  * @param pszFilename filename of .tab file
@@ -1116,7 +1114,6 @@ CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
 int CPL_STDCALL GDALLoadOziMapFile( const char *pszFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
-
 
 {
     VALIDATE_POINTER1( pszFilename, "GDALLoadOziMapFile", FALSE );
@@ -1323,7 +1320,6 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
                                     double *padfGeoTransform, char **ppszWKT,
                                     int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
-
 {
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
@@ -1368,7 +1364,6 @@ int CPL_STDCALL GDALReadOziMapFile( const char * pszBaseFilename,
 int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
-
 
 {
     char **papszLines = CSLLoad2( pszFilename, 1000, 200, NULL );
@@ -1509,7 +1504,6 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
 /*                         GDALReadTabFile()                            */
 /************************************************************************/
 
-
 /** Helper function for translator implementer wanting support for MapInfo
  * .tab files.
  *
@@ -1524,13 +1518,11 @@ int CPL_STDCALL GDALReadTabFile( const char * pszBaseFilename,
                                  double *padfGeoTransform, char **ppszWKT,
                                  int *pnGCPCount, GDAL_GCP **ppasGCPs )
 
-
 {
     return GDALReadTabFile2( pszBaseFilename, padfGeoTransform,
                              ppszWKT, pnGCPCount, ppasGCPs,
                              NULL, NULL );
 }
-
 
 int GDALReadTabFile2( const char * pszBaseFilename,
                       double *padfGeoTransform, char **ppszWKT,
@@ -2239,22 +2231,22 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     double max_geoy = pasGCPs[0].dfGCPY;
 
     for( int i = 1; i < nGCPCount; ++i ) {
-        min_pixel = MIN(min_pixel, pasGCPs[i].dfGCPPixel);
-        max_pixel = MAX(max_pixel, pasGCPs[i].dfGCPPixel);
-        min_line = MIN(min_line, pasGCPs[i].dfGCPLine);
-        max_line = MAX(max_line, pasGCPs[i].dfGCPLine);
-        min_geox = MIN(min_geox, pasGCPs[i].dfGCPX);
-        max_geox = MAX(max_geox, pasGCPs[i].dfGCPX);
-        min_geoy = MIN(min_geoy, pasGCPs[i].dfGCPY);
-        max_geoy = MAX(max_geoy, pasGCPs[i].dfGCPY);
+        min_pixel = std::min(min_pixel, pasGCPs[i].dfGCPPixel);
+        max_pixel = std::max(max_pixel, pasGCPs[i].dfGCPPixel);
+        min_line = std::min(min_line, pasGCPs[i].dfGCPLine);
+        max_line = std::max(max_line, pasGCPs[i].dfGCPLine);
+        min_geox = std::min(min_geox, pasGCPs[i].dfGCPX);
+        max_geox = std::max(max_geox, pasGCPs[i].dfGCPX);
+        min_geoy = std::min(min_geoy, pasGCPs[i].dfGCPY);
+        max_geoy = std::max(max_geoy, pasGCPs[i].dfGCPY);
     }
 
     double EPS = 1.0e-12;
 
-    if( ABS(max_pixel - min_pixel) < EPS
-        || ABS(max_line - min_line) < EPS
-        || ABS(max_geox - min_geox) < EPS
-        || ABS(max_geoy - min_geoy) < EPS)
+    if( std::abs(max_pixel - min_pixel) < EPS
+        || std::abs(max_line - min_line) < EPS
+        || std::abs(max_geox - min_geox) < EPS
+        || std::abs(max_geoy - min_geoy) < EPS)
     {
         return FALSE;  // degenerate in at least one dimension.
     }
@@ -2387,10 +2379,11 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
     {
         // FIXME? Not sure if it is the more accurate way of computing
         // pixel size
-        double dfPixelSize = 0.5 * (ABS(padfGeoTransform[1])
-            + ABS(padfGeoTransform[2])
-            + ABS(padfGeoTransform[4])
-            + ABS(padfGeoTransform[5]));
+        double dfPixelSize =
+            0.5 * (std::abs(padfGeoTransform[1])
+            + std::abs(padfGeoTransform[2])
+            + std::abs(padfGeoTransform[4])
+            + std::abs(padfGeoTransform[5]));
 
         for( int i = 0; i < nGCPCount; i++ )
         {
@@ -2405,12 +2398,13 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
                  + padfGeoTransform[3])
                 - pasGCPs[i].dfGCPY;
 
-            if( ABS(dfErrorX) > 0.25 * dfPixelSize
-                || ABS(dfErrorY) > 0.25 * dfPixelSize )
+            if( std::abs(dfErrorX) > 0.25 * dfPixelSize
+                || std::abs(dfErrorY) > 0.25 * dfPixelSize )
             {
                 CPLDebug("GDAL", "dfErrorX/dfPixelSize = %.2f, "
                          "dfErrorY/dfPixelSize = %.2f",
-                         ABS(dfErrorX)/dfPixelSize, ABS(dfErrorY)/dfPixelSize);
+                         std::abs(dfErrorX)/dfPixelSize,
+                         std::abs(dfErrorY)/dfPixelSize);
                 return FALSE;
             }
         }
@@ -2957,7 +2951,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
     return CSLCount( *ppapszArgv );
 }
 
-
 /************************************************************************/
 /*                          _FetchDblFromMD()                           */
 /************************************************************************/
@@ -3338,7 +3331,6 @@ int GDALCheckBandCount( int nBands, int bIsZeroAllowed )
 }
 
 CPL_C_END
-
 
 /************************************************************************/
 /*                     GDALSerializeGCPListToXML()                      */

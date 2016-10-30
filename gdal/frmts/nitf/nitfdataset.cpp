@@ -36,6 +36,9 @@
 #include "nitfdataset.h"
 #include "gdal_mdreader.h"
 
+#include <cstdlib>
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static bool NITFPatchImageLength( const char *pszFilename,
@@ -911,7 +914,7 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
 
-        oSRSWork.SetUTM( ABS(psImage->nZone), psImage->nZone > 0 );
+        oSRSWork.SetUTM( std::abs(psImage->nZone), psImage->nZone > 0 );
         oSRSWork.SetWellKnownGeogCS( "WGS84" );
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
@@ -939,7 +942,6 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
             pszHDR = CPLResetExtension( pszFilename, "HDR" );
             fpHDR = VSIFOpenL( pszHDR, "rt" );
         }
-
 
         if( fpHDR != NULL )
         {
@@ -1543,7 +1545,6 @@ GDALDataset *NITFDataset::OpenInternal( GDALOpenInfo * poOpenInfo,
 
         snprintf( szValue, sizeof(szValue), "%d", sChipInfo.FI_COL );
         poDS->SetMetadataItem( "ICHIP_FI_COL", szValue );
-
     }
 
     const NITFSeries* series = NITFGetSeriesInfo(pszFilename);
@@ -2016,7 +2017,6 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
 }
 
-
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -2092,7 +2092,10 @@ CPLErr NITFDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     CPLFree(pszGCPProjection);
     pszGCPProjection = CPLStrdup(pszGCPProjectionIn);
 
-    int iUL = -1, iUR = -1, iLR = -1, iLL = -1;
+    int iUL = -1;
+    int iUR = -1;
+    int iLR = -1;
+    int iLL = -1;
 
 #define EPS_GCP 1e-5
     for(int i = 0; i < 4; i++ )
@@ -2302,7 +2305,6 @@ void NITFDataset::InitializeNITFDESMetadata()
         ppszDESsList += 1;
     }
 }
-
 
 /************************************************************************/
 /*                       InitializeNITFDESs()                           */
@@ -3154,7 +3156,6 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
 }
 
-
 /************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
@@ -3444,7 +3445,9 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
     while( iSegOffset < iSegSize-1 )
     {
-        size_t nReadSize = MIN((size_t)sizeof(abyBlock),(size_t)(iSegSize - iSegOffset));
+        const size_t nReadSize =
+            std::min(sizeof(abyBlock),
+                     static_cast<size_t>(iSegSize - iSegOffset));
 
         if( VSIFSeekL( psFile->fp, panJPEGBlockOffset[0] + iSegOffset,
                        SEEK_SET ) != 0 )
@@ -3582,7 +3585,6 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
             return CE_Failure;
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Read JPEG Chunk.                                                */
@@ -3825,8 +3827,6 @@ static char **NITFJP2KAKOptions( char **papszOptions )
 
     return papszKAKOptions;
 }
-
-
 
 /************************************************************************/
 /*              NITFExtractTEXTAndCGMCreationOption()                   */
@@ -4358,7 +4358,6 @@ NITFDataset::NITFCreateCopy(
                 {
                     CPLDebug("NITF", "GEOPSB TRE was explicitly defined before. Keeping it.");
                 }
-
             }
             else
             {
@@ -4471,7 +4470,6 @@ NITFDataset::NITFCreateCopy(
                 // we can suppress it from PAM
                 if( !bPrecisionLoss )
                     nGCIFFlags &= ~GCIF_METADATA;
-
             }
             CPLFree(pszRPC);
         }
@@ -4924,7 +4922,7 @@ static bool NITFPatchImageLength( const char *pszFilename,
         {
             double dfRate = static_cast<GIntBig>(nFileLen-nImageOffset) * 8
                 / static_cast<double>( nPixelCount );
-            dfRate = MAX(0.01, MIN(99.99, dfRate));
+            dfRate = std::max(0.01, std::min(99.99, dfRate));
 
             // We emit in wxyz format with an implicit decimal place
             // between wx and yz as per spec for lossy compression.
@@ -5014,7 +5012,6 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpVSIL ));
         return false;
     }
-
 
     // allocate space for graphic header.
     // Size of LS = 4, size of LSSH = 6, and 1 for null character
@@ -5129,9 +5126,7 @@ static bool NITFWriteCGMSegments( const char *pszFilename, char **papszList)
                  static_cast<int>( sizeof(achGSH) ), nCGMSize );
 
         CPLFree(pszCgmToWrite);
-
     } // End For
-
 
     /* -------------------------------------------------------------------- */
     /*      Write out the graphic segment info.                             */
@@ -5332,7 +5327,9 @@ static bool NITFWriteTextSegments( const char *pszFilename,
         bOK &= VSIFSeekL( fpVSIL, 0, SEEK_END ) == 0;
 
         if (pszHeaderBuffer!= NULL) {
-            memcpy( achTSH, pszHeaderBuffer, MIN(strlen(pszHeaderBuffer), sizeof(achTSH)) );
+            memcpy( achTSH,
+                    pszHeaderBuffer,
+                    std::min(strlen(pszHeaderBuffer), sizeof(achTSH)) );
 
             // Take care NITF2.0 date format changes
             const char chTimeZone = achTSH[20];
@@ -5378,7 +5375,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                 else if (STARTS_WITH(pszOrigMonth, "DEC")) strncpy(pszNewMonth,"12",2);
 
                 PLACE( achTSH+ 12, TXTDT         , achNewDate                );
-
             }
         } else { // Use default value if header information is not found
             PLACE( achTSH+  0, TE            , "TE"                          );
@@ -5389,7 +5385,6 @@ static bool NITFWriteTextSegments( const char *pszFilename,
             PLACE( achTSH+274, TXTFMT        , "STA"                         );
             PLACE( achTSH+277, TXSHDL        , "00000"                       );
         }
-
 
         bOK &= VSIFWriteL( achTSH, sizeof(achTSH), 1, fpVSIL ) == 1;
 
@@ -5573,7 +5568,10 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
 
     if( nNPPBH <= 0 || nNPPBV <= 0 ||
         nNPPBH > 9999 || nNPPBV > 9999  )
-        nNPPBH = nNPPBV = 256;
+    {
+        nNPPBH = 256;
+        nNPPBV = 256;
+    }
 
     const int nNBPR = (nXSize + nNPPBH - 1) / nNPPBH;
     const int nNBPC = (nYSize + nNPPBV - 1) / nNPPBV;

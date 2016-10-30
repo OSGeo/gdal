@@ -57,7 +57,6 @@ AODataSource::~AODataSource()
         delete m_layers[i];
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -84,7 +83,6 @@ int AODataSource::Open(IWorkspace* pWorkspace, const char * pszNewName, int bUpd
     {
       return AOErr(hr, "Failed Opening Workspace Layers");
     }
-
 
     return LoadLayers(ipEnumDataset);
 }
@@ -139,7 +137,6 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
     }
 
     m_layers.push_back(pLayer);
-
   }
 
   if (errEncountered && m_layers.size() == 0)
@@ -147,7 +144,6 @@ bool AODataSource::LoadLayers(IEnumDataset* pEnumDataset)
   else
     return true; //at least one worked
 }
-
 
 /************************************************************************/
 /*                            DeleteLayer()                             */

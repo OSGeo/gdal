@@ -94,7 +94,6 @@ static void NTFCount( const char * pszFile )
 
         poRecord = new NTFRecord( fp );
         anCount[poRecord->GetType()]++;
-
     } while( poRecord->GetType() != 99 );
 
     VSIFClose( fp );

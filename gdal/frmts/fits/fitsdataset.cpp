@@ -67,7 +67,6 @@ public:
                               int nXSize, int nYSize, int nBands,
                               GDALDataType eType,
                               char** papszParmList );
-
 };
 
 /************************************************************************/
@@ -89,7 +88,6 @@ public:
   virtual CPLErr IWriteBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                          FITSRasterBand()                           */
 /************************************************************************/
@@ -99,7 +97,7 @@ FITSRasterBand::FITSRasterBand( FITSDataset *poDSIn, int nBandIn )
   poDS = poDSIn;
   nBand = nBandIn;
   eDataType = poDSIn->gdalDataType;
-  nBlockXSize = poDSIn->nRasterXSize;;
+  nBlockXSize = poDSIn->nRasterXSize;
   nBlockYSize = 1;
 }
 
@@ -224,7 +222,6 @@ static bool isIgnorableFITSHeader(const char* name) {
   return false;
 }
 
-
 /************************************************************************/
 /*                            FITSDataset()                            */
 /************************************************************************/
@@ -307,10 +304,8 @@ FITSDataset::~FITSDataset() {
     // Close the FITS handle - ignore the error status
     status = 0;
     fits_close_file(hFITS, &status);
-
   }
 }
-
 
 /************************************************************************/
 /*                           Init()                                     */
@@ -410,7 +405,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   char key[100];
   char value[100];
 
-  int nKeys = 0, nMoreKeys = 0;
+  int nKeys = 0;
+  int nMoreKeys = 0;
   fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {
@@ -463,8 +459,6 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
 
   return CE_None;
 }
-
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -521,7 +515,6 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
       return dataset;
   }
 }
-
 
 /************************************************************************/
 /*                               Create()                               */
@@ -601,7 +594,6 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
     return dataset;
   }
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_FITS()                         */

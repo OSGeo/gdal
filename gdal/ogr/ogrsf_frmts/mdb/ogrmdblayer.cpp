@@ -111,7 +111,6 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
 
     poFeatureDefn->Reference();
 
-
     int nRawColumns = poMDBTable->GetColumnCount();
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
@@ -183,7 +182,6 @@ CPLErr OGRMDBLayer::BuildFeatureDefn()
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -492,7 +490,6 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
                                 int nSRID,
                                 int bHasZ )
 
-
 {
     CPLFree( pszGeomColumn );
 
@@ -564,7 +561,6 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
@@ -572,7 +568,6 @@ CPLErr OGRMDBLayer::Initialize( CPL_UNUSED const char *pszTableName,
 CPLErr OGRMDBLayer::Initialize( const char * /*pszTableName */,
                                 const char *pszGeomCol,
                                 OGRSpatialReference* poSRSIn )
-
 
 {
     CPLFree( pszGeomColumn );

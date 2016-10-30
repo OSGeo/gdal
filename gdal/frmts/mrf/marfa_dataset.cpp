@@ -53,6 +53,7 @@
 #include <gdal_priv.h>
 #include <assert.h>
 
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -191,7 +192,6 @@ CPLErr GDALMRFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int n
 #endif
         );
 }
-
 
 /**
 *\brief Build some overviews
@@ -363,9 +363,9 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                     0, sampling);
                 if (eErr == CE_Failure)
                     throw eErr;
-
             }
-            else {
+            else
+            {
                 //
                 // Use the GDAL method, which is slightly different for bilinear interpolation
                 // and also handles nearest mode
@@ -596,7 +596,6 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
     ds->oOvManager.Initialize( ds, pszFileName );
 
-
     return ds;
 }
 
@@ -705,8 +704,8 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
 
     //  Pagesize, defaults to 512,512,1,c
     image.pagesize = ILSize(
-        MIN(512, image.size.x),
-        MIN(512, image.size.y),
+        std::min(512, image.size.x),
+        std::min(512, image.size.y),
         1,
         image.size.c);
 
@@ -1087,6 +1086,13 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
     // Use the full size
     CPLXMLNode *raster = CPLCreateXMLNode(config, CXT_Element, "Raster");
+
+    // Preserve the file names if not the default ones
+    if (full.datfname != getFname(GetFname(), ILComp_Ext[full.comp]))
+        CPLCreateXMLElementAndValue(raster, "DataFile", full.datfname.c_str());
+    if (full.idxfname != getFname(GetFname(), ".idx"))
+        CPLCreateXMLElementAndValue(raster, "IndexFile", full.idxfname.c_str());
+
     XMLSetAttributeVal(raster, "Size", full.size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", full.pagesize, "%.0f");
 
@@ -1177,7 +1183,6 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
 
     return config;
 }
-
 
 /**
 * \brief Populates the dataset variables from the XML definition
@@ -1334,7 +1339,6 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
             CPLError(CE_Failure, CPLE_AppDefined, "Unknown Rset definition");
             return CE_Failure;
         }
-
     }
 
     idxSize = IdxSize(full, int(scale));
@@ -1433,7 +1437,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
     return img.idxoffset + sizeof(ILIdx) * img.pagecount.l / img.size.z * (img.size.z - zslice);
 }
 
-// Try to implement CreateCopy using Create
+// CreateCopy implemented based on Create
 GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     GDALDataset *poSrcDS, int /*bStrict*/, char **papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1603,6 +1607,12 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     val = opt.FetchNameValue("PHOTOMETRIC");
     if (val) photometric = val;
 
+    val = opt.FetchNameValue("DATANAME");
+    if (val) img.datfname = val;
+
+    val = opt.FetchNameValue("INDEXNAME");
+    if (val) img.idxfname = val;
+
     optlist.Assign(CSLTokenizeString2(opt.FetchNameValue("OPTIONS"),
         " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
@@ -1615,7 +1625,6 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     if (IL_LERC == img.comp)
         img.pagesize.c = 1;
 #endif
-
 }
 
 /**
@@ -1679,8 +1688,10 @@ GDALMRFDataset::Create(const char * pszName,
         poDS->ProcessCreateOptions(papszOptions);
 
         // Set default file names
-        img.datfname = getFname(poDS->GetFname(), ILComp_Ext[img.comp]);
-        img.idxfname = getFname(poDS->GetFname(), ".idx");
+        if (img.datfname.empty())
+            img.datfname = getFname(poDS->GetFname(), ILComp_Ext[img.comp]);
+        if (img.idxfname.empty())
+            img.idxfname = getFname(poDS->GetFname(), ".idx");
 
         poDS->eAccess = GA_Update;
     }
@@ -1944,17 +1955,15 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     assert(offset < bias);
     assert(clonedSource);
 
-
     // Read this block from the remote index, prepare it and store it in the right place
     // The block size in bytes, should be a multiple of 16, to have full index entries
     const int CPYSZ = 32768;
     // Adjust offset to the start of the block
     offset = (offset / CPYSZ) * CPYSZ;
-    GIntBig size = MIN(size_t(CPYSZ), size_t(bias - offset));
+    GIntBig size = std::min(size_t(CPYSZ), size_t(bias - offset));
     size /= sizeof(ILIdx); // In records
     vector<ILIdx> buf(static_cast<size_t>(size));
     ILIdx *buffer = &buf[0]; // Buffer to copy the source to the clone index
-
 
     // Fetch the data from the cloned index
     GDALMRFDataset *pSrc = static_cast<GDALMRFDataset *>(GetSrcDS());

@@ -60,10 +60,7 @@ ReflectanceCalculator::ReflectanceCalculator(std::string sTimeStamp, double rRTO
         m_rHours = iHours + iMins / 60.0;
 }
 
-ReflectanceCalculator::~ReflectanceCalculator()
-{
-
-}
+ReflectanceCalculator::~ReflectanceCalculator() {}
 
 double ReflectanceCalculator::rGetReflectance(double rRadiance, double rLat, double rLon) const
 {

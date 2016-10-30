@@ -634,7 +634,6 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
     }
 
     return OGRERR_NONE;
-
 }
 
 /*!

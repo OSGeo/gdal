@@ -33,6 +33,7 @@
 #include "ogr_geos.h"
 #include "ogr_geometry.h"
 #include "cpl_string.h"
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -133,7 +134,6 @@ BlendMaskGenerator(
 /*      envelope to accelerate later distance operations.               */
 /* -------------------------------------------------------------------- */
     OGREnvelope sEnvelope;
-    int iXMin, iYMin, iXMax, iYMax;
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     GEOSGeom poGEOSPoly;
 
@@ -152,17 +152,25 @@ BlendMaskGenerator(
         return CE_None;
     */
 
-
-    iXMin = MAX(0,(int) floor(sEnvelope.MinX - dfBlendDist - nXOff));
-    iXMax = MIN(nXSize, (int) ceil(sEnvelope.MaxX + dfBlendDist - nXOff));
-    iYMin = MAX(0,(int) floor(sEnvelope.MinY - dfBlendDist - nYOff));
-    iYMax = MIN(nYSize, (int) ceil(sEnvelope.MaxY + dfBlendDist - nYOff));
+    const int iXMin =
+        std::max(0,
+                 static_cast<int>(floor(sEnvelope.MinX - dfBlendDist - nXOff)));
+    const int iXMax =
+        std::min(nXSize,
+                 static_cast<int>(ceil(sEnvelope.MaxX + dfBlendDist - nXOff)));
+    const int iYMin =
+        std::max(0,
+                 static_cast<int>(floor(sEnvelope.MinY - dfBlendDist - nYOff)));
+    const int iYMax =
+        std::min(nYSize,
+                 static_cast<int>(ceil(sEnvelope.MaxY + dfBlendDist - nYOff)));
 
 /* -------------------------------------------------------------------- */
 /*      Loop over potential area within blend line distance,            */
 /*      processing each pixel.                                          */
 /* -------------------------------------------------------------------- */
-    int iY, iX;
+    int iY;
+    int iX;
     double dfLastDist;
 
     for( iY = 0; iY < nYSize; iY++ )
@@ -261,7 +269,6 @@ static int CutlineTransformer( void *pTransformArg,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                       GDALWarpCutlineMasker()                        */

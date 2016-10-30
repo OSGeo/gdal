@@ -291,7 +291,6 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     virtual int          HasFastSpatialFilter(int /*iGeomCol*/) { return FALSE; }
     virtual CPLString    GetSpatialWhere(int /*iGeomCol*/,
                                          OGRGeometry* /*poFilterGeom*/) { return ""; }
-
 };
 
 /************************************************************************/
@@ -328,7 +327,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 
     virtual OGRErr      ResetStatement();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
     OGRErr              RegisterGeometryColumn();
 
     CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields);
@@ -481,6 +480,5 @@ class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOG
     virtual OGRErr               BaseGetExtent(OGREnvelope *psExtent, int bForce) { return OGRGeoPackageLayer::GetExtent(psExtent, bForce); }
     virtual OGRErr               BaseGetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
-
 
 #endif /* OGR_GEOPACKAGE_H_INCLUDED */

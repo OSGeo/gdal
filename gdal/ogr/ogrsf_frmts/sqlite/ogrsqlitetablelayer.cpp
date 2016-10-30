@@ -336,13 +336,14 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char* pszGeomCol)
         aosGeomCols.insert(pszGeomCol);
         std::set<CPLString> aosIgnoredCols(poDS->GetGeomColsForTable(pszTableName));
         aosIgnoredCols.erase(pszGeomCol);
-        BuildFeatureDefn( GetDescription(), hColStmt, aosGeomCols, aosIgnoredCols);
+        BuildFeatureDefn( GetDescription(), hColStmt, &aosGeomCols, aosIgnoredCols);
     }
     else
     {
         std::set<CPLString> aosIgnoredCols;
+        const std::set<CPLString>& aosGeomCols(poDS->GetGeomColsForTable(pszTableName));
         BuildFeatureDefn( GetDescription(), hColStmt,
-                          poDS->GetGeomColsForTable(pszTableName), aosIgnoredCols );
+                          (bIsVirtualShape) ? NULL : &aosGeomCols, aosIgnoredCols );
     }
     sqlite3_finalize( hColStmt );
 
@@ -820,7 +821,6 @@ OGRErr OGRSQLiteTableLayer::SetAttributeFilter( const char *pszQuery )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
@@ -1330,7 +1330,6 @@ OGRErr OGRSQLiteTableLayer::CreateField( OGRFieldDefn *poFieldIn,
         CPLFree( pszSafeName );
     }
 
-
     if( (oField.GetType() == OFTTime || oField.GetType() == OFTDate ||
          oField.GetType() == OFTDateTime) &&
         !(CPLTestBool(
@@ -1810,7 +1809,6 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
 
-
 /* -------------------------------------------------------------------- */
 /*      Drop the original table, and recreate with new field.           */
 /* -------------------------------------------------------------------- */
@@ -1946,7 +1944,6 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char* pszFieldListForSelect,
                                        pszFieldListForSelect,
                                        pszEscapedTableName ),
                            NULL, NULL, &pszErrMsg );
-
 
 /* -------------------------------------------------------------------- */
 /*      Drop the original table                                         */
@@ -2637,6 +2634,8 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
             poFeatureDefn->myGetGeomFieldDefn(iField)->eGeomFormat;
         if( eGeomFormat == OSGF_FGF )
             continue;
+        if( bNeedComma )
+            osCommand += ",";
 
         osCommand += "\"";
         osCommand += OGRSQLiteEscapeName( poFeatureDefn->GetGeomFieldDefn(iField)->GetNameRef());
@@ -3260,7 +3259,6 @@ int OGRSQLiteTableLayer::CreateSpatialIndex(int iGeomCol)
     poFeatureDefn->myGetGeomFieldDefn(iGeomCol)->bHasSpatialIndex = TRUE;
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                      RunDeferredCreationIfNecessary()                */

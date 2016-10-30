@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static int DefaultNTFRecordGrouper( NTFFileReader *, NTFRecord **,
@@ -362,7 +364,6 @@ int NTFFileReader::Open( const char * pszFilenameIn )
             for( int iChar = static_cast<int>(strlen(pszPVName))-1;
                  iChar > 0 && pszPVName[iChar] == ' ';
                  pszPVName[iChar--] = '\0' ) {}
-
         }
 
         delete poRecord;
@@ -1084,7 +1085,6 @@ void NTFFileReader::ApplyAttributeValues( OGRFeature * poFeature,
     CSLDestroy( papszValues );
 }
 
-
 /************************************************************************/
 /*                        ApplyAttributeValue()                         */
 /*                                                                      */
@@ -1587,7 +1587,7 @@ void NTFFileReader::IndexFile()
 /* -------------------------------------------------------------------- */
         if( anIndexSize[iType] <= iId )
         {
-            int nNewSize = MAX(iId+1,anIndexSize[iType] * 2 + 10);
+            const int nNewSize = std::max(iId+1, anIndexSize[iType] * 2 + 10);
 
             apapoRecordIndex[iType] = (NTFRecord **)
                 CPLRealloc(apapoRecordIndex[iType],
@@ -1675,7 +1675,6 @@ static void AddToIndexGroup( NTFRecord **papoGroup, NTFRecord * poRecord )
     papoGroup[i] = poRecord;
     papoGroup[i+1] = NULL;
 }
-
 
 /************************************************************************/
 /*                     GetNextIndexedRecordGroup()                      */
@@ -1832,7 +1831,6 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
                 GetIndexedRecord( NRT_ATTREC,
                                   atoi(poAnchor->GetField(iStart,iStart+5)) ));
         }
-
     }
 
 /* -------------------------------------------------------------------- */

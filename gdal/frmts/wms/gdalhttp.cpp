@@ -30,6 +30,8 @@
 
 #include "wmsdriver.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
@@ -189,7 +191,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
     const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(papszOptions), "MAXCONN");
     if (max_conn_opt && (max_conn_opt[0] != '\0')) {
-        max_conn = MAX(1, MIN(atoi(max_conn_opt), 1000));
+        max_conn = std::max(1, std::min(atoi(max_conn_opt), 1000));
     } else {
         max_conn = 5;
     }
@@ -200,7 +202,7 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
     }
 
     // add at most max_conn requests
-    for (conn_i = 0; conn_i < MIN(nRequestCount, max_conn); ++conn_i) {
+    for (conn_i = 0; conn_i < std::min(nRequestCount, max_conn); ++conn_i) {
         CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
         CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, pasRequest[conn_i].pszURL);
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);

@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -61,10 +62,12 @@ void GDALRasterBand::Init(int bForceCachedIOIn)
 {
     poDS = NULL;
     nBand = 0;
-    nRasterXSize = nRasterYSize = 0;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
 
     eAccess = GA_ReadOnly;
-    nBlockXSize = nBlockYSize = -1;
+    nBlockXSize = -1;
+    nBlockYSize = -1;
     eDataType = GDT_Byte;
 
     nBlocksPerRow = 0;
@@ -507,7 +510,6 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 </pre>
  */
 
-
 CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
                                    void * pImage )
 
@@ -814,7 +816,6 @@ CPLErr CPL_STDCALL GDALGetActualBlockSize( GDALRasterBandH hBand,
  * @return the data type of pixels for this band.
  */
 
-
 GDALDataType GDALRasterBand::GetRasterDataType()
 
 {
@@ -1041,7 +1042,6 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 
     return ((GDALRasterBand *) hBand)->FlushCache();
 }
-
 
 /************************************************************************/
 /*                        UnreferenceBlock()                            */
@@ -1425,7 +1425,6 @@ CPLErr GDALRasterBand::Fill( double dfRealValue, double dfImaginaryValue ) {
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                         GDALFillRaster()                             */
@@ -2196,7 +2195,6 @@ int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
     return poBand->GetOverviewCount();
 }
-
 
 /************************************************************************/
 /*                            GetOverview()                             */
@@ -3108,10 +3106,12 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         if ( bApproxOK )
         {
             nSampleRate = static_cast<int>(
-                MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn)) );
+                std::max(1.0,
+                         sqrt(static_cast<double>(nBlocksPerRow) *
+                              nBlocksPerColumn)));
             // We want to avoid probing only the first column of blocks for
             // a square shaped raster, because it is not unlikely that it may
-            // be padding only (#6378)
+            // be padding only (#6378).
             if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
               nSampleRate += 1;
         }
@@ -3641,7 +3641,6 @@ CPLErr GDALRasterBand::AdviseRead(
 /*                        GDALRasterAdviseRead()                        */
 /************************************************************************/
 
-
 /**
  * \brief Advise driver of upcoming read requests.
  *
@@ -4149,7 +4148,6 @@ void ComputeStatisticsInternalGeneric<GByte>( int nXCheck,
     }
 }
 
-
 template<class T>
 static void ComputeStatisticsInternal( int nXCheck,
                                        int nBlockXSize,
@@ -4571,7 +4569,6 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
             nSumThis += static_cast<GUIntBig>(anSum[0]) + anSum[1] +
                     anSum[2] + anSum[3] + anSum[4] + anSum[5] +
                     anSum[6] + anSum[7];
-
         }
 
         if( bComputeMinMax )
@@ -4834,8 +4831,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 }
                 else
                 {
-                    dfMin = MIN(dfMin, dfValue);
-                    dfMax = MAX(dfMax, dfValue);
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
                 }
 
                 nSampleCount++;
@@ -4861,7 +4858,9 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
         if ( bApproxOK )
         {
             nSampleRate = static_cast<int>(
-                MAX( 1, sqrt((double)nBlocksPerRow * nBlocksPerColumn) ) );
+                std::max(1.0,
+                         sqrt(static_cast<double>(nBlocksPerRow) *
+                              nBlocksPerColumn)));
             // We want to avoid probing only the first column of blocks for
             // a square shaped raster, because it is not unlikely that it may
             // be padding only (#6378)
@@ -5100,8 +5099,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     }
                     else
                     {
-                        dfMin = MIN(dfMin,dfValue);
-                        dfMax = MAX(dfMax,dfValue);
+                        dfMin = std::min(dfMin, dfValue);
+                        dfMax = std::max(dfMax, dfValue);
                     }
 
                     nSampleCount++;
@@ -5282,7 +5281,6 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
  * @return CE_None on success or CE_Failure on failure.
  */
 
-
 CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                                             double* adfMinMax )
 {
@@ -5443,8 +5441,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                 }
                 else
                 {
-                    dfMin = MIN(dfMin, dfValue);
-                    dfMax = MAX(dfMax, dfValue);
+                    dfMin = std::min(dfMin, dfValue);
+                    dfMax = std::max(dfMax, dfValue);
                 }
             }
         }
@@ -5466,10 +5464,12 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
         if ( bApproxOK )
         {
             nSampleRate = static_cast<int>(
-                MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn)) );
+                std::max(1.0,
+                         sqrt(static_cast<double>(nBlocksPerRow) *
+                              nBlocksPerColumn)));
             // We want to avoid probing only the first column of blocks for
             // a square shaped raster, because it is not unlikely that it may
-            // be padding only (#6378)
+            // be padding only (#6378).
             if( nSampleRate == nBlocksPerRow && nBlocksPerRow > 1 )
               nSampleRate += 1;
         }
@@ -5567,8 +5567,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     }
                     else
                     {
-                        dfMin = MIN(dfMin, dfValue);
-                        dfMax = MAX(dfMax, dfValue);
+                        dfMin = std::min(dfMin, dfValue);
+                        dfMax = std::max(dfMax, dfValue);
                     }
                 }
             }
@@ -6409,7 +6409,6 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
     va_end(args);
 }
 
-
 /************************************************************************/
 /*                           GetVirtualMemAuto()                        */
 /************************************************************************/
@@ -6866,9 +6865,7 @@ void GDALRasterBand::InitRWLock()
         poDS->InitRWLock();
 }
 
-
 //! @endcond
-
 
 /**
  * \fn GDALRasterBand::SetMetadata( char ** papszMetadata, const char * pszDomain)

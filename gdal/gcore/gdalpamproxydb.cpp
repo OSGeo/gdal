@@ -268,7 +268,6 @@ void GDALPamProxyDB::SaveDB()
         CPLUnlockFile( hLock );
 }
 
-
 /************************************************************************/
 /*                            InitProxyDB()                             */
 /*                                                                      */

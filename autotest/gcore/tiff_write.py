@@ -1596,7 +1596,7 @@ def tiff_write_big_odd_bits(vrtfilename, tmpfilename, nbits, interleaving):
         return 'fail'
     bnd = None
 
-    md = ds.GetMetadata('IMAGE_STRUCTURE');
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['INTERLEAVE'] != interleaving:
         gdaltest.post_reason( 'Didnt get expected interleaving')
         return 'fail'
@@ -2210,13 +2210,13 @@ def tiff_write_59():
             ds.GetRasterBand(1).Fill(1)
 
             ds = None
-            ds = gdal.Open("tmp/tiff_write_59.tif", gdal.GA_Update);
+            ds = gdal.Open("tmp/tiff_write_59.tif", gdal.GA_Update)
 
             data = struct.pack(ctype * 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
             ds.GetRasterBand(1).WriteRaster(0, 0, 10, 1, data)
 
             ds = None
-            ds = gdal.Open("tmp/tiff_write_59.tif");
+            ds = gdal.Open("tmp/tiff_write_59.tif")
 
             data = ds.GetRasterBand(1).ReadRaster(0, 0, 10, 1)
 
@@ -2868,9 +2868,9 @@ def tiff_write_77():
             for band_line in band_lines:
                 cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
                 if band_line[0] == 2:
-                    expected_cs = 255 % 7;
+                    expected_cs = 255 % 7
                 else:
-                    expected_cs = 0 % 7;
+                    expected_cs = 0 % 7
                 if cs != expected_cs:
                     print(cs)
                     gdaltest.post_reason( 'Got wrong checksum' )
@@ -2932,13 +2932,13 @@ def tiff_write_78():
     for band_line in band_lines:
         cs = new_ds.GetRasterBand(band_line[0]).Checksum(0,band_line[1],1,1)
         if band_line[0] == 1:
-            expected_cs = 0 % 7;
+            expected_cs = 0 % 7
         elif band_line[0] == 2:
-            expected_cs = 255 % 7;
+            expected_cs = 255 % 7
         else:
             # We should expect 0, but due to JPEG YCbCr compression & decompression,
             # this ends up being 1
-            expected_cs = 1 % 7;
+            expected_cs = 1 % 7
         if cs != expected_cs:
             print(cs)
             print(expected_cs)
@@ -6983,6 +6983,18 @@ def tiff_write_154():
 
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
 
+    # Test that setting nodata doesn't prevent blocks to be written (#6706)
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_154.tif', 1, 100, 1 )
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_154.tif')
+    offset = ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF')
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_154.tif')
+    if offset is None or int(offset) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -7051,6 +7063,19 @@ def tiff_write_156():
         print(pct)
         return 'fail'
 
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
+
+    # Test fix for #6703
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_156.tif', 1, 512, options = ['SPARSE_OK=YES', 'BLOCKYSIZE=1'])
+    ds.GetRasterBand(1).WriteRaster(0,100,1,1,'X')
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_156.tif')
+    flags, _ = ds.GetRasterBand(1).GetDataCoverageStatus(0,100,1,1)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA:
+        gdaltest.post_reason('failure')
+        print(flags)
+        return 'fail'
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_156.tif')
 

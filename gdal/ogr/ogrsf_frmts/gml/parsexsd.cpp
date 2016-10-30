@@ -318,7 +318,6 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
     return GMLParseFeatureType(psSchemaNode, pszName, psThis);
 }
 
-
 static
 GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                      const char* pszName,
@@ -421,7 +420,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
         if (pszType != NULL)
         {
             const char* pszStrippedNSType = StripNS(pszType);
-            int nWidth = 0, nPrecision = 0;
+            int nWidth = 0;
+            int nPrecision = 0;
 
             GMLPropertyType gmlType = GMLPT_Untyped;
             if (EQUAL(pszStrippedNSType, "string") ||
@@ -676,7 +676,8 @@ GMLFeatureClass* GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             pszElementName, pszElementName );
 
         GMLPropertyType eType = GMLPT_Untyped;
-        int nWidth = 0, nPrecision = 0;
+        int nWidth = 0;
+        int nPrecision = 0;
         GetSimpleTypeProperties(psSimpleType, &eType, &nWidth, &nPrecision);
 
         if( pszMaxOccurs != NULL && strcmp(pszMaxOccurs, "1") != 0 )
@@ -835,7 +836,6 @@ void CPLXMLSchemaResolveInclude( const char* pszMainSchemaLocation,
                                 /* includes */
                                 bTryAgain = true;
                             }
-
                         }
                         CPLDestroyXMLNode( psIncludedXSDTree );
                     }

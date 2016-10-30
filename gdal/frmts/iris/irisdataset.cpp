@@ -161,7 +161,6 @@ public:
     virtual CPLErr          SetNoDataValue( double );
 };
 
-
 /************************************************************************/
 /*                           IRISRasterBand()                           */
 /************************************************************************/
@@ -339,7 +338,6 @@ CPLErr IRISRasterBand::IReadBlock( int /* nBlockXOff */,
                 fVal = (fVal - 128.0f) * 0.2f;
             ((float *) pImage)[i] = fVal;
         }
-
     }
 
     return CE_None;
@@ -379,7 +377,6 @@ double IRISRasterBand::GetNoDataValue( int * pbSuccess )
 
     return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
-
 
 /************************************************************************/
 /* ==================================================================== */

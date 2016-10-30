@@ -219,7 +219,6 @@ OGRHTFLayer::~OGRHTFLayer()
         VSIFCloseL( fpHTF );
 }
 
-
 /************************************************************************/
 /*                       ~OGRHTFSoundingLayer()                         */
 /************************************************************************/
@@ -245,7 +244,6 @@ void OGRHTFLayer::ResetReading()
     }
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -268,7 +266,6 @@ void OGRHTFPolygonLayer::ResetReading()
             bEOF = true;
     }
 }
-
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -446,7 +443,6 @@ OGRFeature *OGRHTFPolygonLayer::GetNextRawFeature()
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
@@ -562,7 +558,6 @@ int OGRHTFLayer::TestCapability( const char * pszCap )
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -593,7 +588,6 @@ OGRErr OGRHTFLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                             SetExtent()                              */
 /************************************************************************/
@@ -607,7 +601,6 @@ void OGRHTFLayer::SetExtent( double dfMinXIn, double dfMinYIn, double dfMaxXIn,
     dfMaxX = dfMaxXIn;
     dfMaxY = dfMaxYIn;
 }
-
 
 /************************************************************************/
 /*                        OGRHTFMetadataLayer()                         */
@@ -632,7 +625,8 @@ OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn) :
         if (pszSep)
         {
             *pszSep = 0;
-            int i = 0, j = 0;
+            int i = 0;
+            int j = 0;
             for(;pszStr[i];i++)
             {
                 if (pszStr[i] == ' ' || pszStr[i] == '-' || pszStr[i] == '&')

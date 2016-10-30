@@ -37,6 +37,8 @@
 #include "ogrlibkmlfield.h"
 #include "ogrlibkmlstyle.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 using kmldom::CameraPtr;
@@ -366,7 +368,6 @@ OGRLIBKMLLayer::~OGRLIBKMLLayer()
     m_poOgrFeatureDefn->Release();
 }
 
-
 /******************************************************************************
  Method to get the next feature on the layer.
 
@@ -446,7 +447,6 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
             default:
                 break;
         }
-
     } while ( !poOgrFeature );
 
     /***** set the FID on the ogr feature *****/
@@ -476,10 +476,10 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     {
         OGREnvelope sEnvelope;
         poOgrFeat->GetGeometryRef()->getEnvelope(&sEnvelope);
-        m_dfRegionMinX = MIN(m_dfRegionMinX, sEnvelope.MinX);
-        m_dfRegionMinY = MIN(m_dfRegionMinY, sEnvelope.MinY);
-        m_dfRegionMaxX = MAX(m_dfRegionMaxX, sEnvelope.MaxX);
-        m_dfRegionMaxY = MAX(m_dfRegionMaxY, sEnvelope.MaxY);
+        m_dfRegionMinX = std::min(m_dfRegionMinX, sEnvelope.MinX);
+        m_dfRegionMinY = std::min(m_dfRegionMinY, sEnvelope.MinY);
+        m_dfRegionMaxX = std::max(m_dfRegionMaxX, sEnvelope.MaxX);
+        m_dfRegionMaxY = std::max(m_dfRegionMaxY, sEnvelope.MaxY);
     }
 
     FeaturePtr poKmlFeature =
@@ -550,7 +550,6 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
 
     return OGRERR_NONE;
 }
-
 
 /******************************************************************************
  Method to update a feature to a layer.
@@ -705,9 +704,6 @@ OGRErr OGRLIBKMLLayer::GetExtent( OGREnvelope * psExtent, int bForce )
     return OGRLayer::GetExtent(psExtent, bForce);
 }
 
-
-
-
 /******************************************************************************
  Method to create a field on a layer.
 
@@ -759,7 +755,6 @@ OGRErr OGRLIBKMLLayer::CreateField(
 
     return OGRERR_NONE;
 }
-
 
 /******************************************************************************
  Method to write the datasource to disk.

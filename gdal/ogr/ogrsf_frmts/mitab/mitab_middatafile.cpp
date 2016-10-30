@@ -199,7 +199,6 @@ int MIDDATAFile::Close()
     m_pszFname = NULL;
 
     return 0;
-
 }
 
 const char *MIDDATAFile::GetLine()
@@ -268,7 +267,6 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     }
 }
 
-
 void MIDDATAFile::SetTranslation( double dfXMul,double dfYMul,
                                   double dfXTran, double dfYTran )
 {
@@ -287,7 +285,6 @@ double MIDDATAFile::GetYTrans(double dfY)
 {
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
 }
-
 
 GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
@@ -312,15 +309,12 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
     CSLDestroy(papszToken);
     return FALSE;
-
 }
-
 
 GBool MIDDATAFile::GetEof()
 {
     return m_bEof;
 }
-
 
 void MIDDATAFile::SetEof(GBool bEof)
 {

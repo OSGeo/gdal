@@ -37,9 +37,11 @@
 #include "ogr_api.h"
 #include "commonutils.h"
 #include "gdal_priv.h"
-#include <vector>
-#include <algorithm>
 #include "gdal_utils_priv.h"
+
+#include <cmath>
+#include <algorithm>
+#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -312,7 +314,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
         }
-
     }
 
     if ( pszThisTargetSRS != NULL )
@@ -400,7 +401,6 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          GDALWarpAppOptionsClone()                   */
@@ -1424,6 +1424,50 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 }
 
 /************************************************************************/
+/*                          ValidateCutline()                           */
+/************************************************************************/
+
+static bool ValidateCutline(OGRGeometryH hGeom)
+{
+    OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
+    if( eType == wkbMultiPolygon )
+    {
+        for( int iGeom = 0; iGeom < OGR_G_GetGeometryCount( hGeom ); iGeom++ )
+        {
+            OGRGeometryH hPoly = OGR_G_GetGeometryRef(hGeom,iGeom);
+            if( !ValidateCutline(hPoly) )
+                return false;
+        }
+    }
+    else if( eType == wkbPolygon )
+    {
+        if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hGeom) )
+        {
+            char *pszWKT = NULL;
+            OGR_G_ExportToWkt( hGeom, &pszWKT );
+            CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
+            //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
+            CPLFree( pszWKT );
+
+            if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
+                CPLError(CE_Warning, CPLE_AppDefined, "Cutline polygon is invalid.");
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cutline polygon is invalid.");
+                return false;
+            }
+        }
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                            LoadCutline()                             */
 /*                                                                      */
 /*      Load blend cutline from OGR datasource.                         */
@@ -1494,6 +1538,12 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
             goto error;
         }
 
+        if( !ValidateCutline(hGeom) )
+        {
+            OGR_F_Destroy( hFeat );
+            goto error;
+        }
+
         OGRwkbGeometryType eType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
         if( eType == wkbPolygon )
@@ -1507,12 +1557,6 @@ LoadCutline( const char *pszCutlineDSName, const char *pszCLayer,
                 OGR_G_AddGeometry( hMultiPolygon,
                                    OGR_G_GetGeometryRef(hGeom,iGeom) );
             }
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Cutline not of polygon type." );
-            OGR_F_Destroy( hFeat );
-            goto error;
         }
 
         OGR_F_Destroy( hFeat );
@@ -1567,7 +1611,6 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                       void ** phTransformArg,
                       bool bSetColorInterpretation,
                       GDALWarpAppOptions *psOptions)
-
 
 {
     GDALDriverH hDriver;
@@ -1822,16 +1865,17 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 dfWrkMaxY = adfExtent[3];
                 dfWrkMinY = adfExtent[1];
                 dfWrkResX = adfThisGeoTransform[1];
-                dfWrkResY = ABS(adfThisGeoTransform[5]);
+                dfWrkResY = std::abs(adfThisGeoTransform[5]);
             }
             else
             {
-                dfWrkMinX = MIN(dfWrkMinX,adfExtent[0]);
-                dfWrkMaxX = MAX(dfWrkMaxX,adfExtent[2]);
-                dfWrkMaxY = MAX(dfWrkMaxY,adfExtent[3]);
-                dfWrkMinY = MIN(dfWrkMinY,adfExtent[1]);
-                dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
-                dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
+                dfWrkMinX = std::min(dfWrkMinX, adfExtent[0]);
+                dfWrkMaxX = std::max(dfWrkMaxX, adfExtent[2]);
+                dfWrkMaxY = std::max(dfWrkMaxY, adfExtent[3]);
+                dfWrkMinY = std::min(dfWrkMinY,adfExtent[1]);
+                dfWrkResX = std::min(dfWrkResX,adfThisGeoTransform[1]);
+                dfWrkResY =
+                    std::min(dfWrkResY, std::abs(adfThisGeoTransform[5]));
             }
         }
 
@@ -2405,22 +2449,10 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, void *hCutline,
             return CE_Failure;
         }
     }
-    else if( OGRGeometryFactory::haveGEOS() && !OGR_G_IsValid(hMultiPolygon) )
+    else if( !ValidateCutline(hMultiPolygon) )
     {
-        char *pszWKT = NULL;
-        OGR_G_ExportToWkt( hMultiPolygon, &pszWKT );
-        CPLDebug("GDALWARP", "WKT = \"%s\"", pszWKT ? pszWKT : "(null)");
-        //fprintf(stderr, "WKT = \"%s\"\n", pszWKT ? pszWKT : "(null)");
-        CPLFree( pszWKT );
-
-        if( CPLTestBool(CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")) )
-            CPLError(CE_Warning, CPLE_AppDefined, "Cutline is not valid after transformation");
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cutline is not valid after transformation");
-            OGR_G_DestroyGeometry( hMultiPolygon );
-            return CE_Failure;
-        }
+        OGR_G_DestroyGeometry( hMultiPolygon );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */

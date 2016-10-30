@@ -159,7 +159,6 @@ void OGRWarpedLayer::SetSpatialFilterRect( int iGeomField, double dfMinX, double
     OGRLayer::SetSpatialFilterRect(iGeomField, dfMinX, dfMinY, dfMaxX, dfMaxY);
 }
 
-
 /************************************************************************/
 /*                     SrcFeatureToWarpedFeature()                      */
 /************************************************************************/
@@ -181,7 +180,6 @@ OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature* poSrcFeature)
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                     WarpedFeatureToSrcFeature()                      */
@@ -291,7 +289,6 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                            GetLayerDefn()                           */
@@ -470,7 +467,8 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
         {
             double dfXOld = 0.0;
             double dfDXOld = 0.0;
-            int iOld = -1, iOldOld = -1;
+            int iOld = -1;
+            int iOldOld = -1;
             for( int i = 0; i <= NSTEP; i++ )
             {
                 if( pabSuccess[j * (NSTEP + 1) + i] )
@@ -480,8 +478,10 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
 
                     if( !bSet )
                     {
-                        dfMinX = dfMaxX = dfX;
-                        dfMinY = dfMaxY = dfY;
+                        dfMinX = dfX;
+                        dfMaxX = dfX;
+                        dfMinY = dfY;
+                        dfMaxY = dfY;
                         bSet = TRUE;
                     }
                     else
@@ -509,7 +509,6 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
                     dfXOld = dfX;
                     iOldOld = iOld;
                     iOld = i;
-
                 }
             }
         }

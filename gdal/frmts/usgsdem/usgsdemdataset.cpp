@@ -84,9 +84,8 @@ static int ReadInt( VSILFILE *fp )
                 szBuffer[nRead] = c;
             nRead ++;
         }
-
     }
-    szBuffer[MIN(nRead, 11)] = 0;
+    szBuffer[std::min(nRead, 11)] = 0;
     return atoi(szBuffer);
 }
 
@@ -303,7 +302,6 @@ class USGSDEMRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                           USGSDEMRasterBand()                            */
 /************************************************************************/
@@ -318,7 +316,6 @@ USGSDEMRasterBand::USGSDEMRasterBand( USGSDEMDataset *poDSIn )
 
     nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = poDSIn->GetRasterYSize();
-
 }
 
 /************************************************************************/
@@ -757,7 +754,6 @@ const char *USGSDEMDataset::GetProjectionRef()
 {
     return pszProjection;
 }
-
 
 /************************************************************************/
 /*                              Identify()                              */

@@ -106,10 +106,8 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
                 OGRAmigoCloudFID aFID(amigo_id, iNext);
                 mFIDs[aFID.iFID] = aFID;
                 poFeature->SetFID(aFID.iFID);
-
             }
         }
-
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
         {

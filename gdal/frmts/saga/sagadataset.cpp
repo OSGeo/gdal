@@ -96,7 +96,6 @@ class SAGADataset : public GDALPamDataset
     CPLErr SetGeoTransform( double *padfGeoTransform );
 };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            SAGARasterBand                            */
@@ -202,7 +201,6 @@ void SAGARasterBand::SwapBuffer(void* pImage)
             }
         }
     }
-
 }
 
 /************************************************************************/
@@ -305,7 +303,6 @@ double SAGARasterBand::GetNoDataValue( int * pbSuccess )
 /* ==================================================================== */
 /************************************************************************/
 
-
 SAGADataset::SAGADataset() :
     fp(NULL),
     pszProjection(CPLStrdup(""))
@@ -320,7 +317,6 @@ SAGADataset::~SAGADataset()
         VSIFCloseL( fp );
 }
 
-
 /************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
@@ -329,7 +325,6 @@ char** SAGADataset::GetFileList()
 {
     const CPLString osPath = CPLGetPath( GetDescription() );
     const CPLString osName = CPLGetBasename( GetDescription() );
-
 
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
@@ -432,8 +427,13 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     /*      Is this file a SAGA header file?  Read a few lines of text      */
     /*      searching for something starting with nrows or ncols.           */
     /* -------------------------------------------------------------------- */
-    int nRows = -1, nCols = -1;
-    double dXmin = 0.0, dYmin = 0.0, dCellsize = 0.0, dNoData = 0.0, dZFactor = 0.0;
+    int nRows = -1;
+    int nCols = -1;
+    double dXmin = 0.0;
+    double dYmin = 0.0;
+    double dCellsize = 0.0;
+    double dNoData = 0.0;
+    double dZFactor = 0.0;
     int nLineCount = 0;
     char szDataFormat[20] = "DOUBLE";
     char szByteOrderBig[10] = "FALSE";
@@ -483,7 +483,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     VSIFCloseL( fp );
-
 
     /* -------------------------------------------------------------------- */
     /*      Did we get the required keywords?  If not we return with        */
@@ -546,7 +545,6 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
         poBand->m_ByteOrder = 1;
     else if( STARTS_WITH_CI(szByteOrderBig, "FALSE") )
         poBand->m_ByteOrder = 0;
-
 
     /* -------------------------------------------------------------------- */
     /*      Figure out the data type.                                       */
@@ -807,12 +805,10 @@ CPLErr SAGADataset::WriteHeader( CPLString osHDRFilename, GDALDataType eType,
     else
         VSIFPrintfL( fp, "TOPTOBOTTOM\t= FALSE\n" );
 
-
     VSIFCloseL( fp );
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

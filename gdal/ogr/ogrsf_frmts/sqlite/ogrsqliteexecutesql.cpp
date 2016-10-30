@@ -483,7 +483,6 @@ void OGR2SQLITE_IgnoreAllFieldsExceptGeometry(OGRLayer* poLayer)
 }
 #endif
 
-
 /************************************************************************/
 /*                  OGR2SQLITEDealWithSpatialColumn()                   */
 /************************************************************************/

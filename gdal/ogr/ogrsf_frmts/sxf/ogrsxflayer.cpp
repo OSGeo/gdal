@@ -155,7 +155,6 @@ bool OGRSXFLayer::AddRecord( long nFID, unsigned nClassCode, vsi_l_offset nOffse
 
                     offset += 4;
 
-
                     switch (eType) //TODO: set field type form RSC as here sometimes we have the codes and string values can be get from RSC by this code
                     {
                     case SXF_RAT_ASCIIZ_DOS:
@@ -358,7 +357,6 @@ void OGRSXFLayer::ResetReading()
 {
     oNextIt = mnRecordDesc.begin();
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -760,7 +758,6 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
             stCertInfo.eValType = SXF_VT_SHORT;
         }
     }
-
 
     stCertInfo.bFormat = CHECK_BIT(stRecordHeader.nRef[2], 0);
     stCertInfo.eGeomType = eGeomType;
@@ -1321,7 +1318,6 @@ OGRFeature *OGRSXFLayer::TranslateVetorAngle(const SXFRecordDescription& certifI
     return poFeature;
 }
 
-
 /************************************************************************/
 /*                         TranslatePolygon ()                          */
 /************************************************************************/
@@ -1357,8 +1353,7 @@ OGRFeature *OGRSXFLayer::TranslatePolygon(const SXFRecordDescription& certifInfo
             break;
         nOffset += nDelta;
         poLS->addPoint( dfX, dfY, dfZ );
-
-    }    // for
+    }  // for
 
     OGRLinearRing *poLR = new OGRLinearRing();
     poLR->addSubLineString( poLS, 0 );
@@ -1569,8 +1564,7 @@ OGRFeature *OGRSXFLayer::TranslateText(const SXFRecordDescription& certifInfo,
 
             nOffset += nTextL+2;
         }
-
-    }    // for
+    }  // for
 
     delete poLS;
     poFeature->SetGeometryDirectly( poMLS );

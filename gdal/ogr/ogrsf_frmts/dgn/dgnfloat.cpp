@@ -105,8 +105,6 @@ void    DGN2IEEEDouble(void * dbl)
     dt.hi = dt.hi & 0x000fffff;
     dt.hi = dt.hi | (exponent << 20) | sign;
 
-
-
 #ifdef CPL_LSB
 /* -------------------------------------------------------------------- */
 /*      Change the number to a byte swapped format                      */

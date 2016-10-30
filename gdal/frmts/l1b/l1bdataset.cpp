@@ -38,6 +38,8 @@
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 typedef enum {                  // File formats
@@ -324,7 +326,6 @@ class L1BDataset : public GDALPamDataset
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-
 };
 
 /************************************************************************/
@@ -695,7 +696,6 @@ GInt32 L1BDataset::GetInt32(const void* pabyData)
     if( bByteSwap )
         return CPL_SWAP32(lTemp);
     return lTemp;
-
 }
 
 /************************************************************************/
@@ -883,7 +883,7 @@ void L1BDataset::ProcessRecordHeaders()
     }
     else
     {
-        nTargetLines = MIN(DESIRED_LINES_OF_GCPS, nRasterYSize);
+        nTargetLines = std::min(DESIRED_LINES_OF_GCPS, nRasterYSize);
     }
     dfLineStep = 1.0 * (nRasterYSize - 1) / ( nTargetLines - 1 );
 
@@ -931,8 +931,8 @@ void L1BDataset::ProcessRecordHeaders()
 /*      11 per line.                                                    */
 /* -------------------------------------------------------------------- */
 
-            int iGCP;
-            int nDesiredGCPsPerLine = MIN(DESIRED_GCPS_PER_LINE,nGCPsOnThisLine);
+            const int nDesiredGCPsPerLine =
+                std::min(DESIRED_GCPS_PER_LINE, nGCPsOnThisLine);
             int nGCPStep = ( nDesiredGCPsPerLine > 1 ) ?
                 ( nGCPsOnThisLine - 1 ) / ( nDesiredGCPsPerLine-1 ) : 1;
             int iSrcGCP = nGCPCount;
@@ -941,7 +941,7 @@ void L1BDataset::ProcessRecordHeaders()
             if( nGCPStep == 0 )
                 nGCPStep = 1;
 
-            for( iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
+            for( int iGCP = 0; iGCP < nDesiredGCPsPerLine; iGCP++ )
             {
                 if( iGCP == nDesiredGCPsPerLine - 1 )
                     iSrcGCP = nGCPCount + nGCPsOnThisLine - 1;
@@ -990,7 +990,6 @@ void L1BDataset::ProcessRecordHeaders()
             SetMetadataItem( "LOCATION", "Descending" );
             break;
     }
-
 }
 
 /************************************************************************/
@@ -2467,7 +2466,6 @@ CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                         sizeof(GDAL_GCP) );
     GDALInitGCPs( poL1BDS->nGCPsPerLine, pasGCPList );
 
-
     GByte* pabyRecordHeader = (GByte*)CPLMalloc(poL1BDS->nRecordSize);
 
 /* -------------------------------------------------------------------- */
@@ -2654,7 +2652,9 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     CPL_IGNORE_RET_VAL(VSIFReadL( pabyRecordHeader, 1, poL1BDS->nRecordSize, poL1BDS->fp ));
 
-    int nValidValues = MIN(nRasterXSize, pabyRecordHeader[poL1BDS->iGCPCodeOffset]);
+    const int nValidValues =
+        std::min(nRasterXSize,
+                 static_cast<int>(pabyRecordHeader[poL1BDS->iGCPCodeOffset]));
     float* pafData = (float*)pData;
 
     int bHasFractional = ( poL1BDS->nRecordDataEnd + 20 <= poL1BDS->nRecordSize );
@@ -2752,7 +2752,6 @@ GDALDataset* L1BSolarZenithAnglesDataset::CreateSolarZenithAnglesDS(L1BDataset* 
     }
     return poGeolocDS;
 }
-
 
 /************************************************************************/
 /*                     L1BNOAA15AnglesDataset                           */
@@ -3004,7 +3003,6 @@ GDALDataset* L1BCloudsDataset::CreateCloudsDS(L1BDataset* poL1BDS)
     }
     return poGeolocDS;
 }
-
 
 /************************************************************************/
 /*                           DetectFormat()                             */

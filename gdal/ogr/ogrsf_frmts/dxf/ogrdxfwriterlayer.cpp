@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "ogr_featurestyle.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -515,7 +517,6 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
     }
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/
@@ -1202,9 +1203,9 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
     for( int i = 1; i < 256; i++ )
     {
         const int nDist =
-            ABS(nRed - pabyDXFColors[i*3+0])
-            + ABS(nGreen - pabyDXFColors[i*3+1])
-            + ABS(nBlue  - pabyDXFColors[i*3+2]);
+            std::abs(nRed - pabyDXFColors[i*3+0])
+            + std::abs(nGreen - pabyDXFColors[i*3+1])
+            + std::abs(nBlue  - pabyDXFColors[i*3+2]);
 
         if( nDist < nMinDist )
         {

@@ -275,7 +275,7 @@ ElementPtr geom2kml(
         /***** Check if its a wkbLinearRing *****/
         if( extra < 0 )
         {
-            LineStringPtr poKmlLineString = poKmlFactory->CreateLineString();;
+            LineStringPtr poKmlLineString = poKmlFactory->CreateLineString();
             poKmlGeometry = poKmlLineString;
             poKmlLineString->set_coordinates( coordinates );
 
@@ -423,7 +423,6 @@ ElementPtr geom2kml(
     case wkbNone:
     default:
         break;
-
     }
 
     return poKmlGeometry;
@@ -567,7 +566,6 @@ static OGRGeometry *kml2geom_rec(
                 poOgrPolygon->
                     addRingDirectly( ( OGRLinearRing * ) poOgrTmpGeometry );
             }
-
         }
         const size_t nRings =
             poKmlPolygon->get_innerboundaryis_array_size();

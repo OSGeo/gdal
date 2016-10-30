@@ -335,7 +335,6 @@ void  RPFTOCProxyRasterBandRGBA::Expand(void* pImage, const void* srcImage)
                     colorTable[four_pixels & 0xFF];
         }
     }
-
 }
 
 /************************************************************************/
@@ -427,10 +426,11 @@ CPLErr RPFTOCProxyRasterBandRGBA::IReadBlock( int nBlockXOff, int nBlockYOff,
             Expand(pImage, cachedImage);
             ret = CE_None;
         }
-
     }
     else
+    {
         ret = CE_Failure;
+    }
 
     proxyDS->UnrefUnderlyingDataset(ds);
 
@@ -530,7 +530,6 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
             initDone = TRUE;
         }
 
-
         if (samePalette == FALSE)
         {
             unsigned char* data = (unsigned char*)pImage;
@@ -539,10 +538,11 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock( int nBlockXOff, int nBlockYOff,
                 data[i] = remapLUT[data[i]];
             }
         }
-
     }
     else
+    {
         ret = CE_Failure;
+    }
 
     proxyDS->UnrefUnderlyingDataset(ds);
 
@@ -698,7 +698,6 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 /*                  NITFCreateVRTDataSetFromTocEntry()                  */
 /************************************************************************/
 
-
 #define ASSERT_CREATE_VRT(x) do { if (!(x)) { CPLError(CE_Failure, CPLE_AppDefined, "For %s, assert '" #x "' failed", entry->frameEntries[i].fullFilePath); if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); return NULL;} } while(0)
 
 /* Builds a RPFTOCSubDataset from the set of files of the toc entry */
@@ -722,8 +721,9 @@ GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInforma
         (entry->nwLat - entry->seLat)
         / (entry->nVertFrames * entry->vertInterval) + 0.5);
 
-    int nBlockXSize = 0, nBlockYSize = 0;
-    double geoTransf[6];
+    int nBlockXSize = 0;
+    int nBlockYSize = 0;
+    double geoTransf[6] = {};
     char* projectionRef = NULL;
     int index = 0;
 
@@ -1073,8 +1073,11 @@ GDALDataset* RPFTOCDataset::OpenFileTOC(NITFFile *psFile,
 
         bool ok = false;
         char* projectionRef = NULL;
-        double nwLong = 0, nwLat = 0, seLong = 0, seLat = 0;
-        double adfGeoTransform[6];
+        double nwLong = 0.0;
+        double nwLat = 0.0;
+        double seLong = 0.0;
+        double seLat = 0.0;
+        double adfGeoTransform[6] = {};
 
         ds->papszFileList = CSLAddString(ds->papszFileList, pszFilename);
 
@@ -1279,7 +1282,6 @@ GDALDataset *RPFTOCDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(entryName);
         return NULL;
     }
-
 }
 
 /************************************************************************/

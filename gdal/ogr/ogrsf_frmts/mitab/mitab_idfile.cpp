@@ -61,12 +61,13 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABIDFile
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABIDFile::TABIDFile()
@@ -212,7 +213,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
             m_nMaxId = INT_MAX / 4;
         else
             m_nMaxId = (int)(sStatBuf.st_size/4);
-        m_nBlockSize = MIN(1024, m_nMaxId*4);
+        m_nBlockSize = std::min(1024, m_nMaxId * 4);
 
         /*-------------------------------------------------------------
          * Read the first block from the file
@@ -384,11 +385,10 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
             return -1;
     }
 
-    m_nMaxId = MAX(m_nMaxId, nObjId);
+    m_nMaxId = std::max(m_nMaxId, nObjId);
 
     return m_poIDBlock->WriteInt32(nObjPtr);
 }
-
 
 /**********************************************************************
  *                   TABIDFile::GetMaxObjId()
@@ -403,7 +403,6 @@ GInt32 TABIDFile::GetMaxObjId()
 {
     return m_nMaxId;
 }
-
 
 /**********************************************************************
  *                   TABIDFile::Dump()
@@ -429,7 +428,6 @@ void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut, "Current index block follows ...\n\n");
         m_poIDBlock->Dump(fpOut);
         fprintf(fpOut, "... end of index block.\n\n");
-
     }
 
     fflush(fpOut);

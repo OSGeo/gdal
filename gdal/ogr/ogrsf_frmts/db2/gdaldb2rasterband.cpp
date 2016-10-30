@@ -191,7 +191,6 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
     }
 
     return poGDS->m_poCT;
-
 }
 
 /************************************************************************/
@@ -792,7 +791,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         poGDS->m_asCachedTilesDesc[3].nCol = nColMin + 1;
         poGDS->m_asCachedTilesDesc[1].nIdxWithinTileData = -1;
         poGDS->m_asCachedTilesDesc[3].nIdxWithinTileData = -1;
-
     }
 
     for(int nRow = nRowMin; nRow <= nRowMax; nRow ++)
@@ -875,7 +873,6 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                 if( poBlock )
                     poBlock->DropLock();
-
             }
         }
     }
@@ -2037,9 +2034,12 @@ CPLErr GDALDB2RasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                     poGDS->m_asCachedTilesDesc[0].abBandDirty[iBand - 1] = TRUE;
 
-                int nDstXOffset = 0, nDstXSize = nBlockXSize,
-                    nDstYOffset = 0, nDstYSize = nBlockYSize;
-                int nSrcXOffset = 0, nSrcYOffset = 0;
+                int nDstXOffset = 0;
+                int nDstXSize = nBlockXSize;
+                int nDstYOffset = 0;
+                int nDstYSize = nBlockYSize;
+                int nSrcXOffset = 0;
+                int nSrcYOffset = 0;
                 // Composite block data into tile data
                 if( poGDS->m_nShiftXPixelsMod == 0 && poGDS->m_nShiftYPixelsMod == 0 )
                 {

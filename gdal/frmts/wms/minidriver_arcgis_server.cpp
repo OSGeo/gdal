@@ -30,15 +30,15 @@
 #include "wmsdriver.h"
 #include "minidriver_arcgis_server.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(AGS)
+WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
 
-GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS() {}
+WMSMiniDriver_AGS::~WMSMiniDriver_AGS() {}
 
-GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS() {}
-
-CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
+CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     CPLErr ret = CE_None;
     int i;
@@ -130,7 +130,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **p
     return ret;
 }
 
-void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
+void WMSMiniDriver_AGS::GetCapabilities(WMSMiniDriverCapabilities *caps)
 {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 1;
@@ -139,7 +139,7 @@ void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri)
+void WMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri)
 {
     *url = m_base_url;
 
@@ -171,15 +171,14 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
     CPLDebug("AGS", "URL = %s\n", url->c_str());
 }
 
-void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
+void WMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
                                       const GDALWMSImageRequestInfo &iri,
                                       CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
     ImageRequest(url, iri);
 }
 
-
-void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
+void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
@@ -240,20 +239,19 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
     CPLDebug("AGS", "URL = %s", url->c_str());
 }
 
-
-const char *GDALWMSMiniDriver_AGS::GetProjectionInWKT()
+const char *WMSMiniDriver_AGS::GetProjectionInWKT()
 {
     return m_projection_wkt.c_str();
 }
 
-double GDALWMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
+double WMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 {
     switch (what)
     {
-        case 'x': return MIN(iri.m_x0, iri.m_x1);
-        case 'y': return MIN(iri.m_y0, iri.m_y1);
-        case 'X': return MAX(iri.m_x0, iri.m_x1);
-        case 'Y': return MAX(iri.m_y0, iri.m_y1);
+    case 'x': return std::min(iri.m_x0, iri.m_x1);
+    case 'y': return std::min(iri.m_y0, iri.m_y1);
+    case 'X': return std::max(iri.m_x0, iri.m_x1);
+    case 'Y': return std::max(iri.m_y0, iri.m_y1);
     }
     return 0.0;
 }

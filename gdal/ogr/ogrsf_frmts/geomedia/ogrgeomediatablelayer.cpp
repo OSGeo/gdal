@@ -64,7 +64,6 @@ CPLErr OGRGeomediaTableLayer::Initialize( const char *pszTableName,
                                           const char *pszGeomCol,
                                           OGRSpatialReference* poSRSIn )
 
-
 {
     CPLODBCSession *poSession = poDS->GetSession();
 
@@ -246,7 +245,6 @@ OGRErr OGRGeomediaTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           TestCapability()                           */

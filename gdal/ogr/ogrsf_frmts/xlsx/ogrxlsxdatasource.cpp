@@ -1160,7 +1160,6 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
     fpSharedStrings = NULL;
 }
 
-
 /************************************************************************/
 /*                        startElementWBRelsCbk()                       */
 /************************************************************************/
@@ -1320,7 +1319,6 @@ void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE* fpWorkbook)
 
     VSIFCloseL(fpWorkbook);
 }
-
 
 /************************************************************************/
 /*                       startElementStylesCbk()                        */

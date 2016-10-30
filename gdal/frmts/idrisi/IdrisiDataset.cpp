@@ -42,6 +42,8 @@
 #include "ogr_spatialref.h"
 #include "idrisi.h"
 
+#include <cmath>
+
 CPL_CVSID( "$Id$" );
 
 #ifdef WIN32
@@ -1063,7 +1065,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
             " Try again by selecting a specific band if possible.\n",
                             poSrcDS->GetRasterCount() );
             return NULL;
-
     }
     if ( ( poSrcDS->GetRasterCount() == 3 ) &&
          ( ( poSrcDS->GetRasterBand( 1 )->GetRasterDataType() != GDT_Byte ) ||
@@ -1186,7 +1187,6 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     // --------------------------------------------------------------------
     //      Copy information to the raster band(s)
     // --------------------------------------------------------------------
-
 
     for( int i = 1; i <= poDS->nBands; i++ )
     {
@@ -1580,7 +1580,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1600,7 +1601,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1620,7 +1622,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -1640,7 +1643,8 @@ CPLErr IdrisiRasterBand::IWriteBlock( int nBlockXOff,
             {
                 if( bFirstVal )
                 {
-                    fMinimum = fMaximum = fVal;
+                    fMinimum = fVal;
+                    fMaximum = fVal;
                     bFirstVal = false;
                 }
                 else
@@ -2910,7 +2914,6 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             *pszRefUnit = GetUnitDefault( oSRS.GetAttrValue( "UNIT" ), CPLSPrintf( "%f", oSRS.GetLinearUnits() ) );
             return CE_None;
         }
-
     }
 
 #endif // GDAL_RST_PLUGIN
@@ -3126,7 +3129,6 @@ const char *GetStateName( int nCode )
     return NULL;
 }
 
-
 /************************************************************************/
 /*                            GetSpcs()                                 */
 /************************************************************************/
@@ -3189,7 +3191,7 @@ int GetToMeterIndex( const char *pszToMeter )
     {
         for( int i = 0; i < (int) LINEAR_UNITS_COUNT; i++ )
         {
-            if ( ABS( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
+            if ( std::abs( aoLinearUnitsConv[i].dfConv - dfToMeter ) < 0.00001 )
             {
                 return i;
             }

@@ -100,7 +100,6 @@ GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
 
     OGRFieldDefn oFieldColor( "color", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oFieldColor );
-
 }
 
 GTMTrackLayer::~GTMTrackLayer()
@@ -108,7 +107,6 @@ GTMTrackLayer::~GTMTrackLayer()
     /* poDS, poSRS, poCT, pszName, and poFeatureDefn are released in
        parent class */
 }
-
 
 /************************************************************************/
 /*                      WriteFeatureAttributes()                        */
@@ -217,7 +215,6 @@ inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon,
     CPLFree(pBuffer);
 }
 
-
 /************************************************************************/
 /*                           ICreateFeature()                            */
 /************************************************************************/
@@ -307,7 +304,6 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
     return OGRERR_NONE;
 }
 
-
 OGRFeature* GTMTrackLayer::GetNextFeature()
 {
     if( bError )
@@ -359,7 +355,6 @@ GIntBig GTMTrackLayer::GetFeatureCount(int bForce)
 
     return OGRLayer::GetFeatureCount(bForce);
 }
-
 
 void GTMTrackLayer::ResetReading()
 {

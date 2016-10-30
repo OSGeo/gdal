@@ -144,7 +144,6 @@ static bool CPLHasLibXMLBug()
         "</complexType>"
         "</schema>";
 
-
     xmlSchemaParserCtxtPtr pSchemaParserCtxt =
         xmlSchemaNewMemParserCtxt(szLibXMLBugTester, strlen(szLibXMLBugTester));
 

@@ -932,7 +932,6 @@ class CPL_DLL OGRSurface : public OGRGeometry
 //! @endcond
 };
 
-
 /************************************************************************/
 /*                          OGRCurvePolygon                             */
 /************************************************************************/
@@ -1373,7 +1372,6 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     static OGRMultiCurve* CastToMultiCurve(OGRMultiLineString* poMLS);
 };
 
-
 /************************************************************************/
 /*                          OGRGeometryFactory                          */
 /************************************************************************/
@@ -1417,7 +1415,7 @@ class CPL_DLL OGRGeometryFactory
                                            int nPolygonCount,
                                            int *pbResultValidGeometry,
                                            const char **papszOptions = NULL);
-    static int haveGEOS();
+    static bool haveGEOS();
 
     static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
                                               OGRCoordinateTransformation *poCT,

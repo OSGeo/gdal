@@ -115,7 +115,6 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 
     nFirstTileOffset = nFirstTileOffsetIn
         + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
-
 }
 
 /************************************************************************/
@@ -199,7 +198,6 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
-
 
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
@@ -703,7 +701,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset=0, nPixelOffset=0, nBandOffset=0;
+    int nLineOffset = 0;
+    int nPixelOffset = 0;
+    int nBandOffset = 0;
 
     if( EQUAL(szLayout,"BSQ") )
     {
@@ -862,7 +862,6 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
     CSLDestroy( papszTokens );
     return pszDefault;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_ISIS3()                         */

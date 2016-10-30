@@ -491,8 +491,10 @@ int main( int argc, char ** argv )
 /*      Fetch an update and write it to the output file.                */
 /* ==================================================================== */
 
-
-        int nUpXOff, nUpYOff, nUpXSize, nUpYSize;
+        int nUpXOff;
+        int nUpYOff;
+        int nUpXSize;
+        int nUpYSize;
 
         eAStatus = poAsyncReq->GetNextUpdatedRegion( dfTimeout,
                                                      &nUpXOff, &nUpYOff,
@@ -528,8 +530,9 @@ int main( int argc, char ** argv )
             hDstDS = NULL;
         }
         else
+        {
             GDALFlushCache( hDstDS );
-
+        }
     } while( eAStatus != GARIO_ERROR && eAStatus != GARIO_COMPLETE
              && eErr == CE_None );
 

@@ -106,6 +106,8 @@
 #include "mitab.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -120,7 +122,6 @@ CPL_CVSID("$Id$");
  * Even though binary integers are defined as 'C' type, they are stored
  * in binary form inside a 4 bytes string field.
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABDATFile::TABDATFile()
@@ -300,7 +301,7 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
          *------------------------------------------------------------*/
         m_nBlockSize = ((1024/m_nRecordSize)+1)*m_nRecordSize;
         if( m_numRecords < INT_MAX / m_nRecordSize )
-            m_nBlockSize = MIN(m_nBlockSize, (m_numRecords*m_nRecordSize));
+            m_nBlockSize = std::min(m_nBlockSize, (m_numRecords*m_nRecordSize));
 
         CPLAssert( m_poRecordBlock == NULL );
         m_poRecordBlock = new TABRawBinBlock(m_eAccessMode, FALSE);
@@ -524,8 +525,6 @@ int  TABDATFile::WriteHeader()
     return m_poHeaderBlock->CommitToFile();
 }
 
-
-
 /**********************************************************************
  *                   TABDATFile::GetNumFields()
  *
@@ -624,7 +623,7 @@ TABRawBinBlock *TABDATFile::GetRecordBlock(int nRecordId)
 
         m_bUpdated = TRUE;
 
-        m_numRecords = MAX(nRecordId, m_numRecords);
+        m_numRecords = std::max(nRecordId, m_numRecords);
         if( nRecordId == m_numRecords )
             m_bWriteEOF = TRUE;
 
@@ -722,7 +721,6 @@ int TABDATFile::MarkRecordAsExisting()
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABDATFile::ValidateFieldInfoFromTAB()
@@ -999,7 +997,6 @@ int  TABDATFile::AddField(const char *pszName, TABFieldType eType,
 
     return 0;
 }
-
 
 /************************************************************************/
 /*                            DeleteField()                             */
@@ -1520,7 +1517,6 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABDATFile::GetFieldType()
  *
@@ -1773,8 +1769,10 @@ const char *TABDATFile::ReadLogicalField( int nWidth )
  **********************************************************************/
 const char *TABDATFile::ReadDateField(int nWidth)
 {
-    int nDay, nMonth, nYear, status;
-    nDay = nMonth = nYear = 0;
+    int nDay = 0;
+    int nMonth = 0;
+    int nYear = 0;
+    int status = 0;
 
     if ((status = ReadDateField(nWidth, &nYear, &nMonth, &nDay)) == -1)
        return "";
@@ -1837,8 +1835,11 @@ int TABDATFile::ReadDateField(int nWidth, int *nYear, int *nMonth, int *nDay)
  **********************************************************************/
 const char *TABDATFile::ReadTimeField(int nWidth)
 {
-    int nHour, nMinute, nSecond, nMS, status;
-    nHour = nMinute = nSecond = nMS = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    int nSecond = 0;
+    int nMS = 0;
+    int status = 0;
 
     if ((status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS)) == -1)
        return "";
@@ -1909,8 +1910,14 @@ int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
  **********************************************************************/
 const char *TABDATFile::ReadDateTimeField(int nWidth)
 {
-    int nDay, nMonth, nYear, nHour, nMinute, nSecond, nMS, status;
-    nDay = nMonth = nYear = nHour = nMinute = nSecond = nMS = 0;
+    int nDay = 0;
+    int nMonth = 0;
+    int nYear = 0;
+    int nHour = 0;
+    int nMinute = 0;
+    int nSecond = 0;
+    int nMS = 0;
+    int status = 0;
 
     if ((status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
                                     &nMinute, &nSecond, &nMS)) == -1)
@@ -1993,7 +2000,6 @@ double TABDATFile::ReadDecimalField(int nWidth)
     return CPLAtof(pszVal);
 }
 
-
 /**********************************************************************
  *                   TABDATFile::WriteCharField()
  *
@@ -2031,8 +2037,7 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
     // be padded with zeros if source string is shorter than specified
     // field width.
     //
-    int nLen = static_cast<int>(strlen(pszStr));
-    nLen = MIN(nLen, nWidth);
+    const int nLen = std::min(static_cast<int>(strlen(pszStr)), nWidth);
 
     if ((nLen>0 && m_poRecordBlock->WriteBytes(nLen, (GByte*)pszStr) != 0) ||
         (nWidth-nLen > 0 && m_poRecordBlock->WriteZeros(nWidth-nLen)!=0) )
@@ -2242,7 +2247,9 @@ int TABDATFile::WriteDateField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-        nYear = nMonth = nDay = 0;
+        nYear = 0;
+        nMonth = 0;
+        nDay = 0;
     }
     else
     {
@@ -2357,7 +2364,11 @@ int TABDATFile::WriteTimeField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-       nHour = nMin = nSec = nMS = -1;  // Write -1 to .DAT file if value is not set
+        // Write -1 to .DAT file if value is not set
+        nHour = -1;
+        nMin = -1;
+        nSec = -1;
+        nMS = -1;
     }
     else
     {
@@ -2488,8 +2499,13 @@ int TABDATFile::WriteDateTimeField(const char *pszValue,
     }
     else if (strlen(pszValue) == 0)
     {
-        nYear = nMonth = nDay = 0;
-        nHour = nMin = nSec = nMS = 0;
+        nYear = 0;
+        nMonth = 0;
+        nDay = 0;
+        nHour = 0;
+        nMin = 0;
+        nSec = 0;
+        nMS = 0;
     }
     else
     {
@@ -2577,8 +2593,6 @@ int TABDATFile::WriteDecimalField(double dValue, int nWidth, int nPrec,
 
     return m_poRecordBlock->WriteBytes(nWidth, (GByte*)pszVal);
 }
-
-
 
 /**********************************************************************
  *                   TABDATFile::Dump()

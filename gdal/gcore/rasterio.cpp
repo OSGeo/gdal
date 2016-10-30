@@ -36,8 +36,9 @@
 #include "memdataset.h"
 #include "vrtdataset.h"
 
-#include <stdexcept>
+#include <algorithm>
 #include <limits>
+#include <stdexcept>
 
 CPL_CVSID("$Id$");
 
@@ -252,7 +253,6 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         return CE_None;
     }
 
-
 /* ==================================================================== */
 /*      The second case when we don't need subsample data but likely    */
 /*      need data type conversion.                                      */
@@ -356,7 +356,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                      * nBlockXSize)
                     * nBandDataSize;
                 // Fill up as many rows as possible for the loaded block.
-                const int kmax = MIN(
+                const int kmax = std::min(
                     nBlockYSize - (iSrcY % nBlockYSize), nBufYSize - iBufYOff );
                 for(int k=0; k<kmax;k++)
                 {
@@ -410,7 +410,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
             if( psExtraArg->pfnProgress != NULL &&
                 !psExtraArg->pfnProgress(
-                    1.0 * MIN(nBufYSize, iBufYOff + nYInc) / nBufYSize, "",
+                    1.0 * std::min(nBufYSize, iBufYOff + nYInc) / nBufYSize, "",
                     psExtraArg->pProgressData) )
             {
                 return CE_Failure;
@@ -1010,8 +1010,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 nDstBlockYSize /= 2;
         }
 
-        int nOvrFactor = MAX( static_cast<int>(0.5 + dfXRatioDstToSrc),
-                              static_cast<int>(0.5 + dfYRatioDstToSrc) );
+        int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
+                                   static_cast<int>(0.5 + dfYRatioDstToSrc) );
         if( nOvrFactor == 0 ) nOvrFactor = 1;
         int nFullResXSizeQueried =
             nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
@@ -1300,7 +1300,7 @@ CPLErr GDALDataset::RasterIOResampled(
             CPLMalloc( nBandCount * sizeof(GDALRasterBand*)) );
     for(int i=0;i<nBandCount;i++)
     {
-        char szBuffer[64] = { '\0' };;
+        char szBuffer[64] = { '\0' };
         int nRet = CPLPrintPointer(
             szBuffer,
             static_cast<GByte*>(pData) - nPixelSpace * nDestXOffVirtual
@@ -1460,8 +1460,8 @@ CPLErr GDALDataset::RasterIOResampled(
                 nDstBlockYSize /= 2;
         }
 
-        int nOvrFactor = MAX( static_cast<int>(0.5 + dfXRatioDstToSrc),
-                              static_cast<int>(0.5 + dfYRatioDstToSrc) );
+        int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
+                                   static_cast<int>(0.5 + dfYRatioDstToSrc) );
         if( nOvrFactor == 0 ) nOvrFactor = 1;
         int nFullResXSizeQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
@@ -2905,7 +2905,6 @@ void GDALCopyBits( const GByte *pabySrcData, int nSrcOffset, int nSrcStep,
             else
                 pabyDstData[nDstOffset>>3] &= ~(0x80 >> (nDstOffset & 7));
 
-
             nSrcOffset++;
             nDstOffset++;
         }
@@ -3017,12 +3016,12 @@ int GDALBandGetBestOverviewLevel2( GDALRasterBand* poBand,
     const double dfYRes =
         poBand->GetYSize() / static_cast<double>( poBestOverview->GetYSize() );
 
-    int nOXOff = MIN( poBestOverview->GetXSize()-1,
-                      static_cast<int>(nXOff/dfXRes+0.5));
-    int nOYOff = MIN( poBestOverview->GetYSize()-1,
-                      static_cast<int>(nYOff/dfYRes+0.5));
-    int nOXSize = MAX( 1, static_cast<int>(nXSize/dfXRes + 0.5));
-    int nOYSize = MAX( 1, static_cast<int>(nYSize/dfYRes + 0.5));
+    const int nOXOff = std::min( poBestOverview->GetXSize()-1,
+                                 static_cast<int>(nXOff / dfXRes + 0.5));
+    const int nOYOff = std::min( poBestOverview->GetYSize()-1,
+                                 static_cast<int>(nYOff / dfYRes + 0.5));
+    int nOXSize = std::max(1, static_cast<int>(nXSize / dfXRes + 0.5));
+    int nOYSize = std::max(1, static_cast<int>(nYSize / dfYRes + 0.5));
     if( nOXOff + nOXSize > poBestOverview->GetXSize() )
         nOXSize = poBestOverview->GetXSize() - nOXOff;
     if( nOYOff + nOYSize > poBestOverview->GetYSize() )
@@ -3044,7 +3043,6 @@ int GDALBandGetBestOverviewLevel2( GDALRasterBand* poBand,
     return nBestOverviewLevel;
 }
 
-
 /************************************************************************/
 /*                          OverviewRasterIO()                          */
 /*                                                                      */
@@ -3061,7 +3059,6 @@ CPLErr GDALRasterBand::OverviewRasterIO( GDALRWFlag eRWFlag,
                                 GDALDataType eBufType,
                                 GSpacing nPixelSpace, GSpacing nLineSpace,
                                 GDALRasterIOExtraArg* psExtraArg )
-
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -3300,12 +3297,17 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 {
     CPLAssert( NULL != pData );
 
-    GByte      **papabySrcBlock = NULL;
+    GByte **papabySrcBlock = NULL;
     GDALRasterBlock *poBlock = NULL;
     GDALRasterBlock **papoBlocks = NULL;
-    int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
-    int         nBlockXSize=1, nBlockYSize=1;
-    CPLErr      eErr = CE_None;
+    int nLBlockX = -1;
+    int nLBlockY = -1;
+    int iBufYOff;
+    int iBufXOff;
+    int iSrcY;
+    int nBlockXSize = 1;
+    int nBlockYSize = 1;
+    CPLErr eErr = CE_None;
     GDALDataType eDataType = GDT_Byte;
 
 /* -------------------------------------------------------------------- */
@@ -3414,8 +3416,8 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
 
             if( psExtraArg->pfnProgress != NULL &&
                 !psExtraArg->pfnProgress(
-                    1.0 * MAX(nBufYSize,
-                              iBufYOff + nChunkYSize) /
+                    1.0 * std::max(nBufYSize,
+                                   iBufYOff + nChunkYSize) /
                     nBufYSize, "", psExtraArg->pProgressData) )
             {
                 return CE_Failure;
@@ -3651,8 +3653,8 @@ static void GDALCopyWholeRasterGetSwathSize(
     poSrcPrototypeBand->GetBlockSize( &nSrcBlockXSize, &nSrcBlockYSize );
     poDstPrototypeBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
 
-    const int nMaxBlockXSize = MAX(nBlockXSize, nSrcBlockXSize);
-    const int nMaxBlockYSize = MAX(nBlockYSize, nSrcBlockYSize);
+    const int nMaxBlockXSize = std::max(nBlockXSize, nSrcBlockXSize);
+    const int nMaxBlockYSize = std::max(nBlockYSize, nSrcBlockYSize);
 
     int nPixelSize = GDALGetDataTypeSizeBytes(eDT);
     if( bInterleave)
@@ -3679,7 +3681,8 @@ static void GDALCopyWholeRasterGetSwathSize(
     {
       // As a default, take one 1/4 of the cache size.
         nTargetSwathSize =
-            static_cast<int>( MIN(INT_MAX, GDALGetCacheMax64() / 4) );
+            std::min(INT_MAX,
+                     static_cast<int>(GDALGetCacheMax64() / 4));
 
         // but if the minimum idal swath buf size is less, then go for it to
         // avoid unnecessarily abusing RAM usage.
@@ -3690,9 +3693,9 @@ static void GDALCopyWholeRasterGetSwathSize(
                                    (nSrcBlockYSize % nBlockYSize) == 0)) )
         {
             nIdealSwathBufSize =
-                MAX( nIdealSwathBufSize,
-                     static_cast<GIntBig>(nSwathCols) *
-                     nSrcBlockYSize * nPixelSize) ;
+                std::max( nIdealSwathBufSize,
+                          static_cast<GIntBig>(nSwathCols) *
+                          nSrcBlockYSize * nPixelSize) ;
         }
         if( nTargetSwathSize > nIdealSwathBufSize )
             nTargetSwathSize = static_cast<int>(nIdealSwathBufSize);
@@ -3774,7 +3777,8 @@ static void GDALCopyWholeRasterGetSwathSize(
     else if( nSwathLines == 1
         || nMemoryPerCol * nSwathLines < nTargetSwathSize / 10 )
     {
-        nSwathLines = MIN(nYSize,MAX(1,nTargetSwathSize/nMemoryPerCol));
+        nSwathLines =
+            std::min(nYSize, std::max(1, nTargetSwathSize / nMemoryPerCol));
 
         /* If possible try to align to source and target block height */
         if ((nSwathLines % nMaxBlockYSize) != 0 &&
@@ -4186,7 +4190,6 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     return eErr;
 }
 
-
 /************************************************************************/
 /*                     GDALRasterBandCopyWholeRaster()                  */
 /************************************************************************/
@@ -4356,7 +4359,6 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                      GDALCopyRasterIOExtraArg ()                     */

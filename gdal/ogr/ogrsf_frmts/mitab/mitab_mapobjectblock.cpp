@@ -113,6 +113,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
@@ -156,7 +158,6 @@ TABMAPObjectBlock::~TABMAPObjectBlock()
     m_nMaxX = -1000000000;
     m_nMaxY = -1000000000;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjectBlock::InitBlockFromData()
@@ -416,8 +417,8 @@ int     TABMAPObjectBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
-                                        int nFileOffset /* = 0*/)
+int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
+                                     int nFileOffset /* = 0*/ )
 {
     /*-----------------------------------------------------------------
      * Start with the default initialization
@@ -441,7 +442,8 @@ int     TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     m_nCurObjectType = TAB_GEOM_UNSET;
 
     m_numDataBytes = 0;       /* Data size excluding header */
-    m_nCenterX = m_nCenterY = 0;
+    m_nCenterX = 0;
+    m_nCenterY = 0;
     m_nFirstCoordBlock = 0;
     m_nLastCoordBlock = 0;
 
@@ -552,9 +554,9 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
                                             GInt32 nXMax, GInt32 nYMax,
                                             GBool bCompressed /*=FALSE*/)
 {
-    if (WriteIntCoord(MIN(nXMin, nXMax), MIN(nYMin, nYMax),
+    if (WriteIntCoord(std::min(nXMin, nXMax), std::min(nYMin, nYMax),
                       bCompressed) != 0 ||
-        WriteIntCoord(MAX(nXMin, nXMax), MAX(nYMin, nYMax),
+        WriteIntCoord(std::max(nXMin, nXMax), std::max(nYMin, nYMax),
                       bCompressed) != 0 )
     {
         return -1;
@@ -562,7 +564,6 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjectBlock::UpdateMBR()
@@ -647,7 +648,6 @@ void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
     nXMax = m_nMaxX;
     nYMax = m_nMaxY;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjectBlock::PrepareNewObject()
@@ -793,8 +793,6 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
 
 #endif // DEBUG
 
-
-
 /*=====================================================================
  *                      class TABMAPObjHdr and family
  *====================================================================*/
@@ -806,7 +804,6 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
  * of the derived classes.
  *
  **********************************************************************/
-
 
 /**********************************************************************
  *                    TABMAPObjHdr::NewObj()
@@ -899,7 +896,6 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
     return poObj;
 }
 
-
 /**********************************************************************
  *                    TABMAPObjHdr::ReadNextObj()
  *
@@ -961,12 +957,11 @@ int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
 void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY,
                           GInt32 nMaxX, GInt32 nMaxY)
 {
-    m_nMinX = MIN(nMinX, nMaxX);
-    m_nMinY = MIN(nMinY, nMaxY);
-    m_nMaxX = MAX(nMinX, nMaxX);
-    m_nMaxY = MAX(nMinY, nMaxY);
+    m_nMinX = std::min(nMinX, nMaxX);
+    m_nMinY = std::min(nMinY, nMaxY);
+    m_nMaxX = std::max(nMinX, nMaxX);
+    m_nMaxY = std::max(nMinY, nMaxY);
 }
-
 
 /**********************************************************************
  *                   class TABMAPObjLine
@@ -1136,7 +1131,6 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nMaxY = poObjBlock->ReadInt32();
     }
 
-
     if ( ! IsCompressedType() )
     {
         // Init. Compr. Origin to a default value in case type is ever changed
@@ -1165,7 +1159,6 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjPLine::WriteObj()
@@ -1258,7 +1251,6 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     return 0;
 }
 
-
 /**********************************************************************
  *                   class TABMAPObjPoint
  *
@@ -1304,7 +1296,6 @@ int TABMAPObjPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   class TABMAPObjFontPoint
@@ -1379,7 +1370,6 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   class TABMAPObjCustomPoint
@@ -1512,7 +1502,6 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     return 0;
 }
 
-
 /**********************************************************************
  *                   class TABMAPObjArc
  *
@@ -1577,8 +1566,6 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     return 0;
 }
-
-
 
 /**********************************************************************
  *                   class TABMAPObjText
@@ -1797,7 +1784,6 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABMAPObjMultiPoint::WriteObj()
  *
@@ -2011,7 +1997,6 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nCoordDataSize += SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize;
     }
 
-
 #ifdef TABDUMP
     printf("COLLECTION: id=%d, type=%d (0x%x), "
            "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
@@ -2094,7 +2079,6 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPObjCollection::WriteObj()

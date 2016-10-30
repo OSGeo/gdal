@@ -32,13 +32,11 @@
 
 CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(WorldWind)
+WMSMiniDriver_WorldWind::WMSMiniDriver_WorldWind() {}
 
-GDALWMSMiniDriver_WorldWind::GDALWMSMiniDriver_WorldWind() {}
+WMSMiniDriver_WorldWind::~WMSMiniDriver_WorldWind() {}
 
-GDALWMSMiniDriver_WorldWind::~GDALWMSMiniDriver_WorldWind() {}
-
-CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
+CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
     if (ret == CE_None) {
@@ -61,7 +59,7 @@ CPLErr GDALWMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED ch
     return ret;
 }
 
-void GDALWMSMiniDriver_WorldWind::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_WorldWind::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
@@ -69,11 +67,11 @@ void GDALWMSMiniDriver_WorldWind::GetCapabilities(GDALWMSMiniDriverCapabilities 
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_WorldWind::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_WorldWind::ImageRequest(CPL_UNUSED CPLString *url,
                                                CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void WMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
     int worldwind_y = static_cast<int>(floor(((data_window->m_y1 - data_window->m_y0) / (iri.m_y1 - iri.m_y0)) + 0.5)) - tiri.m_y - 1;
     // http://worldwind25.arc.nasa.gov/tile/tile.aspx?T=geocover2000&L=0&X=86&Y=39
@@ -84,6 +82,6 @@ void GDALWMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWM
     URLAppendF(url, "&Y=%d", worldwind_y);
 }
 
-const char *GDALWMSMiniDriver_WorldWind::GetProjectionInWKT() {
+const char *WMSMiniDriver_WorldWind::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }

@@ -78,7 +78,6 @@ class OGRXPlaneLayer : public OGRLayer
     virtual int               TestCapability( const char * pszCap );
 };
 
-
 /************************************************************************/
 /*                           OGRXPlaneDataSource                        */
 /************************************************************************/
@@ -126,6 +125,5 @@ class OGRXPlaneDriver : public OGRSFDriver
 
     virtual int         TestCapability( const char * pszCap );
 };
-
 
 #endif /* ndef OGR_XPLANE_H_INCLUDED */

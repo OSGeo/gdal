@@ -30,6 +30,9 @@
 #include "cpl_conv.h"
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
+
+#include <algorithm>
+#include <cmath>
 #include <list>
 
 CPL_CVSID("$Id$");
@@ -330,7 +333,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     int iLink = 0;
     int nLinkCount = 0;
 
-
     pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
                               anEntityNum + iLink, anMSLink + iLink, NULL );
     while( pabyData && nLinkCount < MAX_LINK )
@@ -527,8 +529,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       case DGNST_ARC:
       {
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
-          // TODO: std::abs abd std::max
-          int nPoints = static_cast<int>(MAX(1,ABS(psArc->sweepang) / 5) + 1);
+          int nPoints = static_cast<int>(
+              std::max(1.0, std::abs(psArc->sweepang) / 5.0) + 1.0);
           if( nPoints > 90 )
               nPoints = 90;
 
@@ -574,11 +576,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           // Add the size info in ground units.
           // TODO: std::abs
-          if( ABS(psText->height_mult) >= 6.0 )
+          if( std::abs(psText->height_mult) >= 6.0 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                            nOgrFSLen-strlen(pszOgrFS), ",s:%dg",
                            static_cast<int>( psText->height_mult ) );
-          else if( ABS(psText->height_mult) > 0.1 )
+          else if( std::abs(psText->height_mult) > 0.1 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                           nOgrFSLen-strlen(pszOgrFS), ",s:%.3fg",
                            psText->height_mult );
@@ -675,7 +677,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           }
 
           // Try to assemble into polygon geometry.
-          OGRGeometry *poGeom = NULL;;
+          OGRGeometry *poGeom = NULL;
 
           if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
               poGeom = reinterpret_cast<OGRPolygon *>(
@@ -1167,11 +1169,11 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     int nMSLink = poFeature->GetFieldAsInteger( "MSLink" );
 
     // TODO: Use std::max and std::min.
-    nLevel = MAX(0,MIN(63,nLevel));
-    nColor = MAX(0,MIN(255,nColor));
-    nWeight = MAX(0,MIN(31,nWeight));
-    nStyle = MAX(0,MIN(7,nStyle));
-    nMSLink = MAX(0,nMSLink);
+    nLevel = std::max(0, std::min(63, nLevel));
+    nColor = std::max(0, std::min(255, nColor));
+    nWeight = std::max(0, std::min(31, nWeight));
+    nStyle = std::max(0, std::min(7, nStyle));
+    nMSLink = std::max(0, nMSLink);
 
     DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor,
                        nWeight, nStyle );

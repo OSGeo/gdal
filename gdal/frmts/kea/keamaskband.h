@@ -48,7 +48,6 @@ protected:
     // we just override these functions from GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
-
 };
 
 #endif //KEAMASKBAND_H

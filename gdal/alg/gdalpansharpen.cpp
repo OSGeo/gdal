@@ -1537,7 +1537,6 @@ CPLErr GDALPansharpenOperation::PansharpenChunk( GDALDataType eWorkDataType,
     return eErr;
 }
 
-
 /************************************************************************/
 /*                             GetOptions()                             */
 /************************************************************************/

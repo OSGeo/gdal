@@ -25,6 +25,8 @@
 
 #include "cpl_port.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
@@ -36,7 +38,7 @@ CPL_CVSID("$Id$");
 #define ICONV_CPP_CONST ICONV_CONST
 #endif
 
-#define CPL_RECODE_DSTBUF_SIZE 32768
+static const size_t CPL_RECODE_DSTBUF_SIZE = 32768;
 
  /* used by cpl_recode.cpp */
 extern void CPLClearRecodeIconvWarningFlags();
@@ -101,15 +103,15 @@ char *CPLRecodeIconv( const char *pszSource,
 /*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
 /* -------------------------------------------------------------------- */
     ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *)pszSource;
-    size_t  nSrcLen = strlen( pszSource );
-    size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
-    size_t  nDstLen = nDstCurLen;
-    char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
-    char    *pszDstBuf = pszDestination;
+    size_t nSrcLen = strlen( pszSource );
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t nDstLen = nDstCurLen;
+    char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
+    char *pszDstBuf = pszDestination;
 
     while ( nSrcLen > 0 )
     {
-        size_t  nConverted =
+        size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
         if ( nConverted == (size_t)-1 )
@@ -252,10 +254,10 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      Allocate destination buffer.                                    */
 /* -------------------------------------------------------------------- */
-    size_t  nDstCurLen = MAX(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
-    size_t  nDstLen = nDstCurLen;
-    char    *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
-    char    *pszDstBuf = pszDestination;
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t nDstLen = nDstCurLen;
+    char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
+    char *pszDstBuf = pszDestination;
 
     while ( nSrcLen > 0 )
     {

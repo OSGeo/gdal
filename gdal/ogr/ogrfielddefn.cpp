@@ -285,7 +285,6 @@ void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
     eType = eTypeIn;
 }
 
-
 /************************************************************************/
 /*                          OGR_Fld_SetType()                           */
 /************************************************************************/
@@ -1217,7 +1216,6 @@ void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
     ((OGRFieldDefn *) hDefn)->SetNullable( bNullableIn );
 }
-
 
 /************************************************************************/
 /*                        OGRUpdateFieldType()                          */

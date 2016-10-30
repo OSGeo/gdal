@@ -27,6 +27,8 @@
 #include "swq_parser.hpp"
 #include "cpl_time.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #define YYSTYPE  swq_expr_node*
@@ -43,16 +45,17 @@ void swqerror( swq_parse_context *context, const char *msg )
 
     int n = static_cast<int>(context->pszLastValid - context->pszInput);
 
-    for( int i = MAX(0,n-40); i < n + 40 && context->pszInput[i] != '\0'; i ++ )
+    for( int i = std::max(0, n - 40);
+         i < n + 40 && context->pszInput[i] != '\0';
+         i++ )
         osMsg += context->pszInput[i];
     osMsg += "\n";
-    for( int i=0;i<MIN(n, 40);i++ )
+    for( int i = 0; i < std::min(n, 40); i++ )
         osMsg += " ";
     osMsg += "^";
 
     CPLError( CE_Failure, CPLE_AppDefined, "%s", osMsg.c_str() );
 }
-
 
 /************************************************************************/
 /*                               swqlex()                               */
@@ -428,8 +431,12 @@ swq_select_summarize( swq_select *select_info,
                def->field_type == SWQ_TIME ||
                def->field_type == SWQ_TIMESTAMP)
             {
-                int nYear, nMonth, nDay, nHour = 0, nMin = 0;
-                float fSec = 0 ;
+                int nYear = 0;
+                int nMonth = 0;
+                int nDay = 0;
+                int nHour = 0;
+                int nMin = 0;
+                float fSec = 0.0f;
                 if( sscanf(value, "%04d/%02d/%02d %02d:%02d:%f",
                            &nYear, &nMonth, &nDay, &nHour, &nMin, &fSec) == 6 ||
                     sscanf(value, "%04d/%02d/%02d",
@@ -765,7 +772,6 @@ CPLErr swq_expr_compile( const char *where_clause,
     return swq_expr_compile2( where_clause, &field_list,
                               bCheck, poCustomFuncRegistrar, expr_out );
 }
-
 
 /************************************************************************/
 /*                         swq_expr_compile2()                          */

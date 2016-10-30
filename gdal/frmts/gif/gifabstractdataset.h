@@ -78,7 +78,7 @@ class GIFAbstractDataset : public GDALPamDataset
     virtual char      **GetMetadataDomainList();
     virtual char  **GetMetadata( const char * pszDomain = "" );
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList();
 
     static int          Identify( GDALOpenInfo * );
 
@@ -118,6 +118,5 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
-
 
 #endif

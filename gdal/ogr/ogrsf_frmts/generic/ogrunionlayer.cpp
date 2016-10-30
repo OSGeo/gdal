@@ -1221,7 +1221,6 @@ void OGRUnionLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
     }
 }
 
-
 /************************************************************************/
 /*                        TranslateFromSrcLayer()                       */
 /************************************************************************/

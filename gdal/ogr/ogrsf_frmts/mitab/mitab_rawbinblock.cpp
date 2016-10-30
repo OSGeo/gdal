@@ -72,12 +72,13 @@
 
 #include "mitab.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABRawBinBlock
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABRawBinBlock::TABRawBinBlock()
@@ -110,7 +111,6 @@ TABRawBinBlock::~TABRawBinBlock()
     if (m_pabyBuf)
         CPLFree(m_pabyBuf);
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::ReadFromFile()
@@ -164,7 +164,6 @@ int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
     return InitBlockFromData(pabyBuf, nSize, m_nSizeUsed,
                              FALSE, fpSrc, nOffset);
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::CommitToFile()
@@ -232,7 +231,6 @@ int     TABRawBinBlock::CommitToFile()
 
         if (nCurPos != m_nFileOffset)
             nStatus = -1; // Error message will follow below
-
     }
 
     /*----------------------------------------------------------------
@@ -420,7 +418,6 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABRawBinBlock::GetBlockType()
  *
@@ -477,7 +474,7 @@ int     TABRawBinBlock::GotoByteInBlock(int nOffset)
 
     m_nCurPos = nOffset;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     return 0;
 }
@@ -632,11 +629,10 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
 
     m_nCurPos = nOffset-m_nFileOffset;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::SetFirstBlockPtr()
@@ -653,7 +649,6 @@ void  TABRawBinBlock::SetFirstBlockPtr(int nOffset)
 {
     m_nFirstBlockPtr = nOffset;
 }
-
 
 /**********************************************************************
  *                   TABRawBinBlock::GetNumUnusedBytes()
@@ -800,8 +795,6 @@ double  TABRawBinBlock::ReadDouble()
     return dValue;
 }
 
-
-
 /**********************************************************************
  *                   TABRawBinBlock::WriteBytes()
  *
@@ -854,13 +847,12 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
 
     m_nCurPos += nBytesToWrite;
 
-    m_nSizeUsed = MAX(m_nSizeUsed, m_nCurPos);
+    m_nSizeUsed = std::max(m_nSizeUsed, m_nCurPos);
 
     m_bModified = TRUE;
 
     return 0;
 }
-
 
 /**********************************************************************
  *                    TABRawBinBlock::Write<datatype>()
@@ -914,7 +906,6 @@ int  TABRawBinBlock::WriteDouble(double dValue)
     return WriteBytes(8, (GByte*)&dValue);
 }
 
-
 /**********************************************************************
  *                    TABRawBinBlock::WriteZeros()
  *
@@ -933,7 +924,7 @@ int  TABRawBinBlock::WriteZeros(int nBytesToWrite)
     // Write by 8 bytes chunks.  The last chunk may be less than 8 bytes.
     for( int i = 0; nStatus == 0 && i< nBytesToWrite; i += 8 )
     {
-        nStatus = WriteBytes(MIN(8, (nBytesToWrite-i)), (GByte*)acZeros);
+        nStatus = WriteBytes(std::min(8, nBytesToWrite - i), (GByte*)acZeros);
     }
 
     return nStatus;
@@ -956,7 +947,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
     int nStatus = 0;
 
     nLen = static_cast<int>(strlen(pszString));
-    nLen = MIN(nLen, nFieldSize);
+    nLen = std::min(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 
     if (nLen > 0)
@@ -966,7 +957,7 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
      */
     for(i=0; nStatus == 0 && i< numSpaces; i+=8)
     {
-        nStatus = WriteBytes(MIN(8,(numSpaces-i)), (GByte*)acSpaces);
+        nStatus = WriteBytes(std::min(8, numSpaces - i), (GByte*)acSpaces);
     }
 
     return nStatus;
@@ -1013,7 +1004,6 @@ void TABRawBinBlock::Dump(FILE *fpOut /*=NULL*/)
 
 #endif // DEBUG
 
-
 /**********************************************************************
  *                          DumpBytes()
  *
@@ -1057,8 +1047,6 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
                              isprint(pcValue[2])?pcValue[2]:'.',
                              isprint(pcValue[3])?pcValue[3]:'.');
 }
-
-
 
 /**********************************************************************
  *                   TABCreateMAPBlockFromFile()
@@ -1150,7 +1138,6 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
 /*=====================================================================
  *                      class TABBinBlockManager
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABBinBlockManager::TABBinBlockManager()

@@ -73,7 +73,6 @@ void GDALMultiDomainMetadata::Clear()
     papoMetadataLists = NULL;
 }
 
-
 /************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
@@ -192,7 +191,8 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int /* bMerge */ )
 /*      Process all <Metadata> elements, each for one domain.           */
 /* ==================================================================== */
     for( psMetadata = psTree->psChild;
-         psMetadata != NULL; psMetadata = psMetadata->psNext )
+         psMetadata != NULL;
+         psMetadata = psMetadata->psNext )
     {
         if( psMetadata->eType != CXT_Element
             || !EQUAL(psMetadata->pszValue,"Metadata") )

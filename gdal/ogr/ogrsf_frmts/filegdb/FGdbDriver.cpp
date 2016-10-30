@@ -60,7 +60,6 @@ FGdbDriver::~FGdbDriver()
     hMutex = NULL;
 }
 
-
 /************************************************************************/
 /*                              GetName()                               */
 /************************************************************************/
@@ -427,7 +426,6 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 
     bOutHasReopenedDS = FALSE;
 
-
     OGRMutexedDataSource* poMutexedDS = (OGRMutexedDataSource*)poDSInOut;
     FGdbDataSource* poDS = (FGdbDataSource* )poMutexedDS->GetBaseDataSource();
     FGdbDatabaseConnection* pConnection = poDS->GetConnection();
@@ -791,9 +789,9 @@ OGRErr FGdbDriver::DeleteDataSource( const char *pszDataSource )
 
     std::wstring wstr = StringToWString(pszDataSource);
 
-    long hr;
+    long hr = 0;
 
-    if (S_OK != (hr = ::DeleteGeodatabase(wstr)))
+    if( S_OK != (hr = ::DeleteGeodatabase(wstr)) )
     {
         GDBErr(hr, "Failed to delete Geodatabase");
         return OGRERR_FAILURE;

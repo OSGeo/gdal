@@ -98,7 +98,6 @@ class OGRCloudantDriver : public OGRCouchDBDriver
     virtual OGRDataSource*      CreateDataSource( const char * pszName,
                                                   char **papszOptions );
     virtual int                 TestCapability( const char * );
-
 };
 
 #endif /* ndef OGR_CLOUDANT_H_INCLUDED */

@@ -139,7 +139,6 @@ static const TigerRecordInfo rt2_info =
     208         // <--- nRecordLength
   };
 
-
 static const TigerFieldInfo rt3_2000_Redistricting_fields[] = {
   // fieldname    fmt  type OFTType       beg  end  len  bDefine bSet bWrite
   { "TLID",       'R', 'N', OFTInteger,     6,  15,  10,       0,   0,     1 },
@@ -200,8 +199,8 @@ static const TigerFieldInfo rt3_fields[] = {
 
   { "VTDL",       'L', 'A', OFTString,    104, 107,   4,       1,   1,     1 },
   { "VTDR",       'L', 'A', OFTString,    108, 111,   4,       1,   1,     1 }
-
 };
+
 static const TigerRecordInfo rt3_info =
   {
     rt3_fields,
@@ -445,7 +444,6 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         }
 
         SetFields( psRT3Info, poFeature, achRT3Rec );
-
     }
 
 /* -------------------------------------------------------------------- */

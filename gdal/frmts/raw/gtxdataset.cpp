@@ -385,7 +385,6 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
         GDALOpen( pszFilename, GA_Update ) );
 }
 
-
 /************************************************************************/
 /*                          GDALRegister_GTX()                          */
 /************************************************************************/

@@ -134,7 +134,6 @@ public:
    CPLString ChannelName;
 };
 
-
 /************************************************************************/
 /*                           MG4LidarRasterBand()                            */
 /************************************************************************/
@@ -310,7 +309,6 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
    return retval;
 }
 
-
 bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
    bool bClassificationOK = true;
@@ -338,9 +336,7 @@ bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t 
    }
 
    return bReturnNumOK && bClassificationOK;
-
 }
-
 
 template<typename DTYPE>
 CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
@@ -490,7 +486,6 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       default:
            return CE_Failure;
            break;
-
    }
    return CE_None;
 }
@@ -510,7 +505,6 @@ CPLErr MG4LidarRasterBand::GetStatistics( int bApproxOK, int bForce,
    return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
       pdfMin, pdfMax,
       pdfMean, pdfStdDev );
-
 }
 /************************************************************************/
 /*                           GetNoDataValue()                           */
@@ -622,8 +616,6 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
 
    CPLDebug( "MG4Lidar", "Opened zoom level %d with size %dx%d.\n",
       iZoom, nRasterXSize, nRasterYSize );
-
-
 
    /* -------------------------------------------------------------------- */
    /*  Handle sample type and color space.                                 */

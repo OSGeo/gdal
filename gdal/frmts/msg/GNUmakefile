@@ -9,7 +9,7 @@ default:	$(OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o PublicDecompWT_all.h
 
-install-obj:	$(O_OBJ:.o=.$(OBJ_EXT)) 
+install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 PublicDecompWT_all.cpp: PublicDecompWT_all.h
 

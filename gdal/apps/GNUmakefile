@@ -1,6 +1,6 @@
 # We get a full absolute path to the tree in this case so that when we
 # generate the various paths in the local gdal-config file they will work
-# from anywhere in the filesystem. 
+# from anywhere in the filesystem.
 
 include ../GDALmake.opt
 
@@ -11,7 +11,7 @@ DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdaladdo$(EXE) gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
-		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
+		gdallocationinfo$(EXE) gdalsrsinfo$(EXE)
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
 	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o

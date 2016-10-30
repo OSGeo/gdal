@@ -152,5 +152,4 @@ void GDALMDReaderRapidEye::LoadMetadata()
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_CLOUDCOVER, pszCC);
     }
-
 }

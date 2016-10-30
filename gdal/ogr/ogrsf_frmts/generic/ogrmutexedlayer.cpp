@@ -43,7 +43,6 @@ OGRMutexedLayer::OGRMutexedLayer( OGRLayer* poDecoratedLayer,
 
 OGRMutexedLayer::~OGRMutexedLayer() {}
 
-
 OGRGeometry *OGRMutexedLayer::GetSpatialFilter()
 {
     CPLMutexHolderOptionalLockD(m_hMutex);

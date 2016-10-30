@@ -434,7 +434,6 @@ int OGR_SRSNode::NeedsQuoting() const
  * is possible error conditions will develop.
  */
 
-
 OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 
 {
@@ -694,7 +693,6 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
             // swallow whitespace
             while( isspace(*pszInput) )
                 pszInput++;
-
         } while( *pszInput == ',' );
 
         if( *pszInput != ')' && *pszInput != ']' )
@@ -718,7 +716,6 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
  *
  * The operation is also applies to all subnodes of the current node.
  */
-
 
 void OGR_SRSNode::MakeValueSafe()
 

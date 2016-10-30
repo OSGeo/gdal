@@ -174,7 +174,7 @@ CPLErr RasterliteDataset::CleanOverviews()
     if (nLevel != 0)
         return CE_Failure;
 
-    CPLString osSQL("BEGIN");;
+    CPLString osSQL("BEGIN");
     OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
 
     const CPLString osResolutionCond =
@@ -503,7 +503,6 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                 eErr = CE_Failure;
                 break;
             }
-
 
             for(int iBand = 0; iBand < nBands; iBand ++)
             {

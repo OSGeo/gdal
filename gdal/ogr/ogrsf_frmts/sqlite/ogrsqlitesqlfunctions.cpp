@@ -1047,7 +1047,6 @@ void OGR2SQLITE_ST_MakePoint(sqlite3_context* pContext,
 
 #endif // #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
-
 /************************************************************************/
 /*                     OGRSQLITE_hstore_get_value()                     */
 /************************************************************************/

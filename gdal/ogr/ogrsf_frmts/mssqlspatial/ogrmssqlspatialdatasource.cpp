@@ -510,7 +510,6 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
     papoLayers[nLayers++] = poLayer;
 
-
     return poLayer;
 }
 
@@ -547,7 +546,6 @@ int OGRMSSQLSpatialDataSource::OpenTable( const char *pszSchemaName, const char 
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                       GetLayerCount()                                */
 /************************************************************************/
@@ -583,7 +581,6 @@ int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, cons
     }
     return FALSE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1165,7 +1162,6 @@ OGRErr OGRMSSQLSpatialDataSource::InitializeMetadataTables()
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                              FetchSRS()                              */

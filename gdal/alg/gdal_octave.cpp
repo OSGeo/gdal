@@ -61,7 +61,9 @@ void GDALIntegralImage::Initialize(const double **padfImg, int nHeightIn, int nW
         for (int j = 0; j < nWidth; j++)
         {
             double val = padfImg[i][j];
-            double a = 0, b = 0, c = 0;
+            double a = 0.0;
+            double b = 0.0;
+            double c = 0.0;
 
             if (i - 1 >= 0 && j - 1 >= 0)
                 a = pMatrix[i - 1][j - 1];
@@ -88,8 +90,6 @@ double GDALIntegralImage::GetValue(int nRow, int nCol)
 
 double GDALIntegralImage::GetRectangleSum(int nRow, int nCol, int nWidthIn, int nHeightIn)
 {
-    double a = 0, b = 0, c = 0, d = 0;
-
     //Left top point of rectangle is first
     int w = nWidthIn - 1;
     int h = nHeightIn - 1;
@@ -103,6 +103,11 @@ double GDALIntegralImage::GetRectangleSum(int nRow, int nCol, int nWidthIn, int 
     //Right bottom point of the rectangle
     int rb_row = (row + h < nHeight) ? (row + h) : (nHeight - 1);
     int rb_col = (col + w < nWidth) ? (col + w) : (nWidth - 1);
+
+    double a = 0.0;
+    double b = 0.0;
+    double c = 0.0;
+    double d = 0.0;
 
     if (lt_row >= 0 && lt_col >= 0)
         a = this->GetValue(lt_row, lt_col);
@@ -141,8 +146,6 @@ GDALIntegralImage::~GDALIntegralImage()
 
     delete[] pMatrix;
 }
-
-
 
 /************************************************************************/
 /* ==================================================================== */

@@ -362,7 +362,6 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 /*                         ParseSqlGeometry()                           */
 /************************************************************************/
 
-
 OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(unsigned char* pszInput,
                                 int nLen, OGRGeometry **poGeom)
 {

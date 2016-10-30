@@ -82,7 +82,6 @@
 #error "Unexpected value for SIZEOF_VOIDP"
 #endif
 
-
 /* ==================================================================== */
 /*      This will disable most WIN32 stuff in a Cygnus build which      */
 /*      defines unix to 1.                                              */
@@ -619,6 +618,17 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
+#elif defined(__cplusplus) && defined(__MINGW32__) &&  __GNUC__ == 4 && __GNUC_MINOR__ == 2
+/* Hack for compatibility with ancient i586-mingw32msvc toolchain */
+extern "C++" {
+#include <cmath>
+static inline int CPLIsNan(float f) { return std::isnan(f); }
+static inline int CPLIsNan(double f) { return std::isnan(f); }
+static inline int CPLIsInf(float f) { return std::isinf(f); }
+static inline int CPLIsInf(double f) { return std::isinf(f); }
+static inline int CPLIsFinite(float f) { return std::isfinite(f); }
+static inline int CPLIsFinite(double f) { return std::isfinite(f); }
+}
 #elif defined(__GNUC__) && ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 4 ) )
 /* When including <cmath> in C++11 the isnan() macro is undefined, so that */
 /* std::isnan() can work (#6489). This is a GCC specific workaround for now. */
@@ -777,7 +787,6 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
 }
-
 
 /* Until we have a safe 64 bits integer data type defined, we'll replace
  * this version of the CPL_SWAP64() macro with a less efficient one.
@@ -944,7 +953,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL
 #endif
-
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** restrict keyword to declare that pointers do not alias */

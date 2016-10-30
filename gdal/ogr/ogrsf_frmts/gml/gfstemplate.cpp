@@ -208,7 +208,6 @@ bool GMLReader::PrescanForTemplate ()
     return iCount > 0;
 }
 
-
 /***************************************************/
 /*                 GFSTemplateList()               */
 /***************************************************/
@@ -290,7 +289,6 @@ void GFSTemplateList::Update( const char *pszName, int bHasGeom )
     pItem = Insert( pszName );
     pItem->Update( bHasGeom );
 }
-
 
 /***************************************************/
 /*          GFSTemplateList::GetClassCount()       */

@@ -32,14 +32,16 @@
 // defined on i586-mingw32msvc.
 #include "cpl_port.h"
 
-#include <ctype.h>
-#include <climits>
-#include <limits>
-
 #include "cpl_string.h"
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+
+#include <cmath>
+#include <ctype.h>
+#include <climits>
+#include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -83,7 +85,6 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     double      adfGeoTransform[6];
     bool        bNoDataSet;
     double      dfNoDataValue;
-
 
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
@@ -209,7 +210,6 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-
     if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -289,7 +289,6 @@ double AAIGRasterBand::GetNoDataValue( int * pbSuccess )
 
     return poODS->dfNoDataValue;
 }
-
 
 /************************************************************************/
 /*                           SetNoDataValue()                           */
@@ -530,7 +529,8 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
             CSLDestroy( papszTokens );
             return FALSE;
         }
-        dfCellDX = dfCellDY = CPLAtofM( papszTokens[i + 1] );
+        dfCellDY = CPLAtofM( papszTokens[i + 1] );
+        dfCellDX = dfCellDY;
     }
 
     int j = 0;
@@ -548,7 +548,8 @@ int AAIGDataset::ParseHeader(const char* pszHeader, const char* pszDataType)
             dfCellDX == dfCellDY &&
             fabs(dfCellDX - (360.0 / nRasterXSize)) < 1e-9)
         {
-            dfCellDX = dfCellDY = 360.0 / nRasterXSize;
+            dfCellDY = 360.0 / nRasterXSize;
+            dfCellDX = dfCellDY;
         }
 
         adfGeoTransform[1] = dfCellDX;
@@ -626,7 +627,6 @@ GDALDataset *GRASSASCIIDataset::Open( GDALOpenInfo * poOpenInfo )
     return CommonOpen(poOpenInfo, FORMAT_GRASSASCII);
 }
 
-
 /************************************************************************/
 /*                          ParseHeader()                               */
 /************************************************************************/
@@ -664,7 +664,8 @@ int GRASSASCIIDataset::ParseHeader(const char* pszHeader, const char* pszDataTyp
     const int iWest = CSLFindString( papszTokens, "west" );
 
     if (iNorth == -1 || iSouth == -1 || iEast == -1 || iWest == -1 ||
-        MAX(MAX(iNorth, iSouth), MAX(iEast, iWest)) + 1 >= nTokens)
+        std::max(std::max(iNorth, iSouth),
+                 std::max(iEast, iWest)) + 1 >= nTokens)
     {
         CSLDestroy( papszTokens );
         return FALSE;
@@ -1018,8 +1019,8 @@ GDALDataset * AAIGDataset::CreateCopy(
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001
-        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
+    if( std::abs(adfGeoTransform[1] + adfGeoTransform[5]) < 0.0000001
+        || std::abs(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001
         || (pszForceCellsize && CPLTestBool(pszForceCellsize)) )
         CPLsnprintf( szHeader, sizeof(szHeader),
                  "ncols        %d\n"

@@ -86,7 +86,6 @@ typedef enum {
     SNT_OPERATION
 } swq_node_type;
 
-
 class swq_field_list;
 class swq_expr_node;
 class swq_select;
@@ -175,7 +174,6 @@ class swq_custom_func_registrar
         virtual ~swq_custom_func_registrar() {}
         virtual const swq_operation *GetOperator( const char * ) = 0;
 };
-
 
 typedef struct {
     char       *data_source;

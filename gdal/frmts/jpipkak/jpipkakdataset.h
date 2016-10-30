@@ -40,12 +40,10 @@
 
 #include <time.h>
 
-
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
     using namespace kdu_core;
     using namespace kdu_supp;
 #endif
-
 
 static void JPIPWorkerFunc(void *);
 
@@ -177,7 +175,7 @@ public:
 
     //gdaldataset methods
     virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();

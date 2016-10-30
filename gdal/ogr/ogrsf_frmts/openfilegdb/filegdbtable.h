@@ -190,7 +190,6 @@ class FileGDBRasterField: public FileGDBGeomField
         virtual          ~FileGDBRasterField() {}
 
         const std::string& GetRasterColumnName() const { return osRasterColumnName; }
-
 };
 
 /************************************************************************/

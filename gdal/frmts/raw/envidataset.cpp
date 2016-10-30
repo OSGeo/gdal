@@ -1110,7 +1110,6 @@ static char *CPLStrdupIfNotNull( const char *pszString )
   return CPLStrdup( pszString );
 }
 
-
 /************************************************************************/
 /*                          WriteRpcInfo()                              */
 /************************************************************************/
@@ -1952,7 +1951,6 @@ double ENVIDataset::byteSwapDouble(double swapMe)
     return swapMe;
 }
 
-
 /************************************************************************/
 /*                             ReadHeader()                             */
 /************************************************************************/
@@ -2081,7 +2079,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                                             "HDR" );
             fpHeader = VSIFOpenL( osHdrFilename, pszMode );
         }
-
     }
     else
     {
@@ -2552,7 +2549,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
                         "wavelength_units", pszWLUnits);
                 }
             }
-
         }
         CSLDestroy( papszWL );
         CSLDestroy( papszBandNames );

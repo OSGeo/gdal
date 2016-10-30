@@ -259,7 +259,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     void                BuildFeatureDefn( const char *pszLayerName,
                                           sqlite3_stmt *hStmt,
-                                          const std::set<CPLString>& aosGeomCols,
+                                          const std::set<CPLString>* paosGeomCols,
                                           const std::set<CPLString>& aosIgnoredCols);
 
     void                ClearStatement();
@@ -277,7 +277,6 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
                                                        const char* pszEscapedGeomCol);
     CPLString           FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
                                                    const char* pszEscapedGeomColName);
-
 
   public:
                         OGRSQLiteLayer();
@@ -319,7 +318,6 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
     static OGRErr       ExportSpatiaLiteGeometry( const OGRGeometry *,
                                                   GInt32, OGRwkbByteOrder,
                                                   int, int bUseComprGeom, GByte **, int * );
-
 };
 
 /************************************************************************/
@@ -347,7 +345,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
 
     void                ClearInsertStmt();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
 
     virtual OGRErr      ResetStatement();
 
@@ -490,7 +488,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     OGRSQLiteLayer     *poUnderlyingLayer;
     OGRSQLiteLayer     *GetUnderlyingLayer();
 
-    void                BuildWhere(void);
+    void                BuildWhere();
 
     virtual OGRErr      ResetStatement();
 

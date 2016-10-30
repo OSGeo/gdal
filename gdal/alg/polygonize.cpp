@@ -29,6 +29,9 @@
 #include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#include <cstdlib>
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -140,7 +143,6 @@ void RPolygon::Coalesce()
         CPLAssert( anBase[0] == anBase[anBase.size()-2]
                    && anBase[1] == anBase[anBase.size()-1] );
     }
-
 }
 
 /************************************************************************/
@@ -185,7 +187,7 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
 void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 
 {
-    nLastLineUpdated = MAX(y1, y2);
+    nLastLineUpdated = std::max(y1, y2);
 
 /* -------------------------------------------------------------------- */
 /*      Is there an existing string ending with this?                   */
@@ -217,8 +219,9 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
             // We are going to add a segment, but should we just extend
             // an existing segment already going in the right direction?
 
-            int nLastLen = MAX(ABS(anString[nSSize-4]-anString[nSSize-2]),
-                               ABS(anString[nSSize-3]-anString[nSSize-1]));
+            const int nLastLen =
+                std::max(std::abs(anString[nSSize-4]-anString[nSSize-2]),
+                         std::abs(anString[nSSize-3]-anString[nSSize-1]));
 
             if( nSSize >= 4
                 && (anString[nSSize-4] - anString[nSSize-2]
@@ -698,7 +701,6 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     return eErr;
 }
 
-
 /******************************************************************************/
 /*                          GDALFloatEquals()                                 */
 /* Code from:                                                                 */
@@ -751,7 +753,6 @@ GBool GDALFloatEquals(float A, float B)
         return true;
     return false;
 }
-
 
 /************************************************************************/
 /*                           GDALPolygonize()                           */
@@ -829,7 +830,6 @@ GDALPolygonize( GDALRasterBandH hSrcBand,
                                                     pProgressArg,
                                                     GDT_Int32);
 }
-
 
 /************************************************************************/
 /*                           GDALFPolygonize()                           */

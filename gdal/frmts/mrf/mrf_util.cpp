@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /**
  *
  *  Functions used by the driver, should have prototypes in the header file
@@ -249,7 +248,6 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
     // Relative path, prepand the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
 }
-
 
 /**
  *\brief Extracts a numerical value from a XML node
@@ -620,6 +618,8 @@ void GDALRegister_mrf()
         "   <Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
         "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
         "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
+        "   <Option name='DATANAME' type='string' description='Data file name'/>\n"
+        "   <Option name='INDEXNAME' type='string' description='Index file name'/>\n"
         "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
         "       <Value>MULTISPECTRAL</Value>"
         "       <Value>RGB</Value>"

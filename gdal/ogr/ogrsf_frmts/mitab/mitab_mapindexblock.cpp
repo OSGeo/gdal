@@ -84,12 +84,16 @@
 
 #include "mitab.h"
 
+#include <cmath>
+#include <cstdlib>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /*=====================================================================
  *                      class TABMAPIndexBlock
  *====================================================================*/
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::TABMAPIndexBlock()
@@ -248,7 +252,6 @@ int     TABMAPIndexBlock::CommitToFile()
             nStatus = WriteNextEntry(&(m_asEntries[i]));
     }
 
-
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
      *----------------------------------------------------------------*/
@@ -262,7 +265,6 @@ int     TABMAPIndexBlock::CommitToFile()
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::InitNewBlock()
@@ -311,8 +313,6 @@ int     TABMAPIndexBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
 
     return 0;
 }
-
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::ReadNextEntry()
@@ -561,11 +561,10 @@ int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
             /* Need to calculate the expanded MBR to calculate the area
              * difference.
              */
-            GInt32 nXMin2, nYMin2, nXMax2, nYMax2;
-            nXMin2 = MIN(m_asEntries[i].XMin, nXMin);
-            nYMin2 = MIN(m_asEntries[i].YMin, nYMin);
-            nXMax2 = MAX(m_asEntries[i].XMax, nXMax);
-            nYMax2 = MAX(m_asEntries[i].YMax, nYMax);
+            GInt32 nXMin2 = std::min(m_asEntries[i].XMin, nXMin);
+            GInt32 nYMin2 = std::min(m_asEntries[i].YMin, nYMin);
+            GInt32 nXMax2 = std::max(m_asEntries[i].XMax, nXMax);
+            GInt32 nYMax2 = std::max(m_asEntries[i].YMax, nYMax);
 
             dAreaDiff = MITAB_AREA(nXMin2,nYMin2,nXMax2,nYMax2) - dAreaBefore;
         }
@@ -585,12 +584,11 @@ int     TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
              */
             || (((dOptimalAreaDiff < 0 && dAreaDiff < 0) ||
                  (dOptimalAreaDiff > 0 && dAreaDiff > 0)) &&
-                ABS(dAreaDiff) < ABS(dOptimalAreaDiff)) )
+                std::abs(dAreaDiff) < std::abs(dOptimalAreaDiff)) )
         {
             nBestCandidate = i;
             dOptimalAreaDiff = dAreaDiff;
         }
-
     }
 
     return nBestCandidate;
@@ -664,7 +662,6 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     CPLPopErrorHandler();
     CPLErrorReset();
 
-
     if (bFound)
     {
         /*-------------------------------------------------------------
@@ -680,7 +677,6 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
      *------------------------------------------------------------*/
     return m_asEntries[nBestCandidate].nBlockPtr;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::GetCurLeafEntryMBR()
@@ -724,9 +720,7 @@ int     TABMAPIndexBlock::GetCurLeafEntryMBR(GInt32 nBlockPtr,
     CPLError(CE_Failure, CPLE_AssertionFailed,
              "Entry to update not found in GetCurLeafEntryMBR()!");
     return -1;
-
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::UpdateLeafEntry()
@@ -785,7 +779,6 @@ int     TABMAPIndexBlock::UpdateLeafEntry(GInt32 nBlockPtr,
              "Entry to update not found in UpdateLeafEntry()!");
     return -1;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::AddEntry()
@@ -976,10 +969,10 @@ double  TABMAPIndexBlock::ComputeAreaDiff( GInt32 nNodeXMin, GInt32 nNodeYMin,
         /* Need to calculate the expanded MBR to calculate the area
          * difference.
          */
-        nNodeXMin = MIN(nNodeXMin, nEntryXMin);
-        nNodeYMin = MIN(nNodeYMin, nEntryYMin);
-        nNodeXMax = MAX(nNodeXMax, nEntryXMax);
-        nNodeYMax = MAX(nNodeYMax, nEntryYMax);
+        nNodeXMin = std::min(nNodeXMin, nEntryXMin);
+        nNodeYMin = std::min(nNodeYMin, nEntryYMin);
+        nNodeXMax = std::max(nNodeXMax, nEntryXMax);
+        nNodeYMax = std::max(nNodeYMax, nEntryYMax);
 
         dAreaDiff = MITAB_AREA(nNodeXMin,nNodeYMin,
                                nNodeXMax,nNodeYMax) - dNodeAreaBefore;
@@ -987,8 +980,6 @@ double  TABMAPIndexBlock::ComputeAreaDiff( GInt32 nNodeXMin, GInt32 nNodeYMin,
 
     return dAreaDiff;
 }
-
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::PickSeedsForSplit()
@@ -1073,15 +1064,15 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
         }
         else
         {
-            nSrcMinX = MIN(nSrcMinX, pasEntries[iEntry].XMin);
-            nSrcMinY = MIN(nSrcMinY ,pasEntries[iEntry].YMin);
-            nSrcMaxX = MAX(nSrcMaxX ,pasEntries[iEntry].XMax);
-            nSrcMaxY = MAX(nSrcMaxY ,pasEntries[iEntry].YMax);
+            nSrcMinX = std::min(nSrcMinX, pasEntries[iEntry].XMin);
+            nSrcMinY = std::min(nSrcMinY, pasEntries[iEntry].YMin);
+            nSrcMaxX = std::max(nSrcMaxX, pasEntries[iEntry].XMax);
+            nSrcMaxY = std::max(nSrcMaxY, pasEntries[iEntry].YMax);
         }
     }
 
-    const int nSrcWidth = ABS(nSrcMaxX - nSrcMinX);
-    const int nSrcHeight = ABS(nSrcMaxY - nSrcMinY);
+    const int nSrcWidth = std::abs(nSrcMaxX - nSrcMinX);
+    const int nSrcHeight = std::abs(nSrcMaxY - nSrcMinY);
 
     // Calculate the separation for each pair (note that it may be negative
     // in case of overlap)
@@ -1152,7 +1143,6 @@ int TABMAPIndexBlock::PickSeedsForSplit( TABMAPIndexEntry *pasEntries,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::SplitNode()
@@ -1253,7 +1243,6 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
             m_nCurChildIndex = m_numEntries-1;
 
             continue;
-
         }
         else if (m_numEntries >= GetMaxEntries()-1)
         {
@@ -1273,7 +1262,6 @@ int     TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                         pasSrcEntries[iEntry].nBlockPtr);
             continue;
         }
-
 
         // Decide which of the two nodes to put this entry in
         RecomputeMBR();
@@ -1415,7 +1403,6 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                                    nNewEntryXMax, nNewEntryYMax);
 }
 
-
 /**********************************************************************
  *                   TABMAPIndexBlock::RecomputeMBR()
  *
@@ -1460,7 +1447,6 @@ void TABMAPIndexBlock::RecomputeMBR()
                                              m_nMaxX, m_nMaxY,
                                              GetNodeBlockPtr());
     }
-
 }
 
 /**********************************************************************
@@ -1513,9 +1499,7 @@ void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
     if (m_poParentRef)
         m_poParentRef->UpdateCurChildMBR(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                          GetNodeBlockPtr());
-
 }
-
 
 /**********************************************************************
  *                   TABMAPIndexBlock::SetMAPBlockManagerRef()
@@ -1587,7 +1571,6 @@ void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
                     m_asEntries[i].XMin, m_asEntries[i].YMin,
                     m_asEntries[i].XMax, m_asEntries[i].YMax );
         }
-
     }
 
     fflush(fpOut);

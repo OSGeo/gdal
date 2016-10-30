@@ -917,7 +917,7 @@ def nitf_38():
     ds = None
 
     ds = gdal.Open( 'NITF_IM:998:tmp/nitf38.ntf' )
-    cs = ds.GetRasterBand(1).Checksum();
+    cs = ds.GetRasterBand(1).Checksum()
     if cs != expected_cs:
         print(cs)
         gdaltest.post_reason( 'bad checksum for image of 998th subdataset' )
@@ -2853,7 +2853,7 @@ def nitf_online_15(driver_to_test, expected_cs = 1054):
         ret = 'success'
     else:
         print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason( 'Did not get expected checksums' );
+        gdaltest.post_reason( 'Did not get expected checksums' )
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -2911,7 +2911,7 @@ def nitf_online_16(driver_to_test):
         for i in range(ds.RasterCount):
             print(ds.GetRasterBand(i+1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason( 'Did not get expected checksums' );
+        gdaltest.post_reason( 'Did not get expected checksums' )
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -2962,7 +2962,7 @@ def nitf_online_17(driver_to_test):
         for i in range(ds.RasterCount):
             print(ds.GetRasterBand(i+1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason( 'Did not get expected checksums' );
+        gdaltest.post_reason( 'Did not get expected checksums' )
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()

@@ -208,10 +208,8 @@ bool AOToOGRFieldType(esriFieldType aoType, OGRFieldType* pOut)
       */
       return false;
     }
-
   }
 }
-
 
 bool AOGeometryToOGRGeometry(bool forceMulti, esriGeometry::IGeometry* pInAOGeo, OGRSpatialReference* pOGRSR, unsigned char* & pInOutWorkingBuffer, long & inOutBufferSize, OGRGeometry** ppOutGeometry)
 {
@@ -251,7 +249,6 @@ bool AOGeometryToOGRGeometry(bool forceMulti, esriGeometry::IGeometry* pInAOGeo,
 
   // force geometries to multi if requested
 
-
   // If it is a polygon, force to MultiPolygon since we always produce multipolygons
   if (wkbFlatten(pOGRGeometry->getGeometryType()) == wkbPolygon)
   {
@@ -268,7 +265,6 @@ bool AOGeometryToOGRGeometry(bool forceMulti, esriGeometry::IGeometry* pInAOGeo,
       pOGRGeometry = OGRGeometryFactory::forceToMultiPoint(pOGRGeometry);
     }
   }
-
 
   *ppOutGeometry = pOGRGeometry;
 

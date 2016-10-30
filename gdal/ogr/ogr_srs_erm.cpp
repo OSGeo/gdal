@@ -91,7 +91,6 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
     if( STARTS_WITH_CI(pszProj, "EPSG:") )
         return importFromEPSG( atoi(pszProj+5) );
 
-
     if( STARTS_WITH_CI(pszDatum, "EPSG:") )
         return importFromEPSG( atoi(pszDatum+5) );
 

@@ -35,6 +35,7 @@
 #include <unistd.h>
 #endif
 
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -197,7 +198,7 @@ retry:  // TODO(schwehr): Stop using goto.
                 readlink( pszFilename, szPointerFilename, nBufSize ) );
             if (nBytes != -1)
             {
-                szPointerFilename[MIN(nBytes, nBufSize - 1)] = 0;
+                szPointerFilename[std::min(nBytes, nBufSize - 1)] = 0;
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
                 papszSiblingsIn = NULL;

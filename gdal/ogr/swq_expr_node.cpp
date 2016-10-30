@@ -350,7 +350,6 @@ void swq_expr_node::Dump( FILE * fp, int depth )
         papoSubExpr[i]->Dump( fp, depth+1 );
 }
 
-
 /************************************************************************/
 /*                       QuoteIfNecessary()                             */
 /*                                                                      */

@@ -143,9 +143,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -195,7 +195,7 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
 class OGRIngresResultLayer : public OGRIngresLayer
 {
-    void                BuildFullQueryStatement(void);
+    void                BuildFullQueryStatement();
 
     char                *pszRawStatement;
 
@@ -211,7 +211,6 @@ class OGRIngresResultLayer : public OGRIngresLayer
     virtual             ~OGRIngresResultLayer();
 
     OGRFeatureDefn     *ReadResultDefinition();
-
 
     virtual void        ResetReading();
     virtual GIntBig     GetFeatureCount( int );
@@ -250,7 +249,6 @@ class OGRIngresDataSource : public OGRDataSource
 
     II_PTR              GetConn() { return hConn; }
 
-
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
     OGRSpatialReference *FetchSRS( int nSRSId );
@@ -269,7 +267,6 @@ class OGRIngresDataSource : public OGRDataSource
                                        OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-
 
     int                 TestCapability( const char * );
 
@@ -303,6 +300,5 @@ class OGRIngresDriver : public OGRSFDriver
                                              char ** = NULL );
     int                 TestCapability( const char * );
 };
-
 
 #endif /* ndef OGR_PG_H_INCLUDED */

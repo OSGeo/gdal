@@ -68,7 +68,6 @@ class SNODASDataset : public RawDataset
     static int Identify( GDALOpenInfo * );
 };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            SNODASRasterBand                          */
@@ -85,7 +84,6 @@ class SNODASRasterBand : public RawRasterBand
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
 };
-
 
 /************************************************************************/
 /*                         SNODASRasterBand()                           */
@@ -207,9 +205,7 @@ CPLErr SNODASDataset::GetGeoTransform( double * padfTransform )
     }
 
     return GDALPamDataset::GetGeoTransform( padfTransform );
-
 }
-
 
 /************************************************************************/
 /*                            GetFileList()                             */

@@ -182,12 +182,10 @@ GDALDefaultRasterAttributeTable *KEARasterAttributeTable::Clone() const
     return poRAT;
 }
 
-
 int KEARasterAttributeTable::GetColumnCount() const
 {
     return (int)m_aoFields.size();
 }
-
 
 const char *KEARasterAttributeTable::GetNameOfCol(int nCol) const
 {
@@ -250,7 +248,6 @@ GDALRATFieldType KEARasterAttributeTable::GetTypeOfCol( int nCol ) const
     }
     return eGDALType;
 }
-
 
 int KEARasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
 {
@@ -730,7 +727,6 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 return eVal;
             }
 
-
             if( eRWFlag == GF_Read )
             {
                 // convert ints back to strings
@@ -777,7 +773,6 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
                 }
             }
             CPLFree(padfColData);
-
         }
         break;
         case kealib::kea_att_string:

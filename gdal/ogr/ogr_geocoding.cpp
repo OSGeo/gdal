@@ -49,7 +49,7 @@ struct timezone
 };
 #endif
 
-#define MICROSEC_IN_SEC   1000000
+static const int MICROSEC_IN_SEC = 1000000;
 
 static
 int OGR_gettimeofday( struct timeval *tv, struct timezone * /* tzIgnored */ )
@@ -183,7 +183,6 @@ bool OGRGeocodeHasStringValidFormat(const char* pszQueryTemplate)
         bValidFormat = false;
     return bValidFormat;
 }
-
 
 /************************************************************************/
 /*                       OGRGeocodeCreateSession()                      */
@@ -394,7 +393,6 @@ void OGRGeocodeDestroySession(OGRGeocodingSessionH hSession)
         OGRReleaseDataSource((OGRDataSourceH) hSession->poDS);
     CPLFree(hSession);
 }
-
 
 /************************************************************************/
 /*                        OGRGeocodeGetCacheLayer()                     */
@@ -1357,7 +1355,6 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
     return hLayer;
 }
 
-
 /************************************************************************/
 /*                              OGRGeocode()                            */
 /************************************************************************/
@@ -1470,7 +1467,6 @@ OGRLayerH OGRGeocode( OGRGeocodingSessionH hSession,
     return OGRGeocodeCommon(hSession, osURL, papszOptions);
 }
 
-
 /************************************************************************/
 /*                      OGRGeocodeReverseSubstitute()                   */
 /************************************************************************/
@@ -1498,7 +1494,6 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
 
     return osURL;
 }
-
 
 /************************************************************************/
 /*                         OGRGeocodeReverse()                          */

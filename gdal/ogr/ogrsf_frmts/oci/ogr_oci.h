@@ -89,7 +89,6 @@ typedef struct
 #define ORA_GTYPE_SOLID           8
 #define ORA_GTYPE_MULTISOLID      9
 
-
 /************************************************************************/
 /*                            OGROCISession                             */
 /************************************************************************/
@@ -127,7 +126,6 @@ class CPL_DLL OGROCISession {
     OCIType *PinTDO( const char * );
 
   private:
-
 };
 
 OGROCISession CPL_DLL*
@@ -383,7 +381,6 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
     virtual OGRSpatialReference *GetSpatialRef() { return poSRS; }
 
     virtual int         TestCapability( const char * );
-
 };
 
 /************************************************************************/
@@ -402,9 +399,9 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     char               *pszQuery;
     char               *pszWHERE;
@@ -569,6 +566,5 @@ OGROCIStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
                                      double dfMaxAngleStepSizeDegrees,
                                      int bForceWholeCircle,
                                      OGRLineString *poLine );
-
 
 #endif /* ndef OGR_OCI_H_INCLUDED */

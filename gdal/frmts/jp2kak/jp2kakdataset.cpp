@@ -43,6 +43,7 @@
 
 #include "subfile_source.h"
 #include "vsil_target.h"
+#include <cmath>
 
 CPL_CVSID("$Id$");
 
@@ -115,7 +116,6 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg);
-
 
   public:
                 JP2KAKDataset();
@@ -1661,7 +1661,6 @@ JP2KAKDataset::DirectRasterIO( GDALRWFlag /* eRWFlag */,
                       precisions[i] = 16;
                     }*/
                 }
-
             }
 
             if( eBufType == GDT_Byte )
@@ -2746,7 +2745,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  || adfGeoTransform[2] != 0.0
                  || adfGeoTransform[3] != 0.0
                  || adfGeoTransform[4] != 0.0
-                 || ABS(adfGeoTransform[5]) != 1.0))
+                 || std::abs(adfGeoTransform[5]) != 1.0))
             || poSrcDS->GetGCPCount() > 0
             || poSrcDS->GetMetadata("RPC") != NULL) )
     {

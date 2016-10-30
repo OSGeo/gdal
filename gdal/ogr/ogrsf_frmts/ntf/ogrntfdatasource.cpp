@@ -175,7 +175,6 @@ int OGRNTFDataSource::GetLayerCount()
         return nLayers + 1;
 }
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -296,7 +295,6 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
 
             if( j == 80 || szHeader[j-1] != '%' )
                 continue;
-
         }
 
         NTFFileReader *poFR = new NTFFileReader( this );
@@ -390,7 +388,6 @@ void OGRNTFDataSource::ResetReading()
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
-
 
 OGRFeature *OGRNTFDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                                               double* pdfProgressPct,

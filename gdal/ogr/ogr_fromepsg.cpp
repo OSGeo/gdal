@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -130,7 +131,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 
     if( nUOMAngle == 9110 )             /* DDD.MMSSsss */
     {
-        dfAngle = ABS(atoi(pszAngle));
+        dfAngle = std::abs(atoi(pszAngle));
         const char *pszDecimal = strchr(pszAngle,'.');
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {
@@ -904,7 +905,6 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
     return true;
 }
 
-
 /************************************************************************/
 /*                           EPSGGetPCSInfo()                           */
 /************************************************************************/
@@ -932,7 +932,6 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
         snprintf( szSearchKey, sizeof(szSearchKey), "%d", nPCSCode );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                          szSearchKey, CC_Integer );
-
     }
 
     if( papszRecord == NULL )
@@ -1380,8 +1379,7 @@ static double OGR_FetchParm( double *padfProjParms,
     return dfResult;
 }
 
-#define OGR_FP(x) OGR_FetchParm( adfProjParms, anParmIds, (x), \
-                                 dfFromGreenwich )
+#define OGR_FP(x) OGR_FetchParm(adfProjParms, anParmIds, (x), dfFromGreenwich)
 
 /************************************************************************/
 /*                           SetEPSGProjCS()                            */
@@ -1880,7 +1878,6 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
                                 CSVGetFileFieldId(pszFilename,"DATUM_NAME") ) );
     OGREPSGDatumNameMassage( &pszDatumName );
 
-
     const int nEllipsoidCode = atoi(CSLGetField(
         papszRecord, CSVGetFileFieldId(pszFilename, "ELLIPSOID_CODE")));
 
@@ -2213,7 +2210,6 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
         pszAuthName = GetAuthorityName( "PROJCS" );
     else
         pszAuthName = GetAuthorityName( "GEOGCS" );
-
 
     if( eErr == OGRERR_NONE && pszAuthName == NULL )
     {

@@ -35,7 +35,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                      OGRWFSRecursiveUnlink()                         */
 /************************************************************************/
@@ -628,7 +627,6 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
 
     return osURL;
 }
-
 
 /************************************************************************/
 /*               OGRWFSFetchContentDispositionFilename()                */
@@ -1657,7 +1655,6 @@ GIntBig OGRWFSLayer::GetFeatureCount( int bForce )
     return nFeatures;
 }
 
-
 /************************************************************************/
 /*                              SetExtent()                             */
 /************************************************************************/
@@ -1745,7 +1742,6 @@ const char* OGRWFSLayer::GetShortName()
         pszShortName ++;
     return pszShortName;
 }
-
 
 /************************************************************************/
 /*                          GetPostHeader()                             */
@@ -1877,7 +1873,6 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
             osPost += poFDefn->GetNameRef();
             osPost += ">\n";
         }
-
     }
 
     osPost += "    </feature:"; osPost += pszShortName; osPost += ">\n";
@@ -2021,7 +2016,6 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                             ISetFeature()                             */
@@ -2403,7 +2397,6 @@ OGRErr OGRWFSLayer::DeleteFeature( GIntBig nFID )
     osFilter = "<ogc:FeatureId fid=\""; osFilter += osGMLID; osFilter += "\"/>\n";
     return DeleteFromFilter(osFilter);
 }
-
 
 /************************************************************************/
 /*                         StartTransaction()                           */

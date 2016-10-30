@@ -189,11 +189,9 @@ public:
   void                AddFieldDefns(const TigerRecordInfo *psRTInfo,
                                     OGRFeatureDefn  *poFeatureDefn);
 
-
   void                SetFields(const TigerRecordInfo *psRTInfo,
                                 OGRFeature      *poFeature,
                                 char            *achRecord);
-
 
   const TigerRecordInfo *psRTInfo;
   const char            *m_pszFileCode;
@@ -307,11 +305,9 @@ class TigerPoint : public TigerFileBase
                                   int nX0, int nX1,
                                   int nY0, int nY1 );
 
-
   virtual OGRErr CreateFeature( OGRFeature      *poFeature) { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
   OGRErr CreateFeature( OGRFeature      *poFeature,
                                 int nIndex );
-
 };
 
 /************************************************************************/
@@ -402,7 +398,6 @@ class TigerPolygonEconomic : public TigerFileBase
 {
 public:
                       TigerPolygonEconomic( OGRTigerDataSource *, const char * );
-
 };
 
 /************************************************************************/
@@ -587,7 +582,6 @@ class OGRTigerDataSource : public OGRDataSource
     const char          *GetDirPath() { return pszPath; }
     char                *BuildFilename( const char * pszModule,
                                         const char * pszExtension );
-
 
     int                 GetModuleCount() const { return nModules; }
     const char         *GetModule( int );

@@ -88,7 +88,6 @@ OGRFeatureDefnH OGR_FD_Create( const char *pszName )
     return (OGRFeatureDefnH) new OGRFeatureDefn( pszName );
 }
 
-
 /************************************************************************/
 /*                          ~OGRFeatureDefn()                           */
 /************************************************************************/
@@ -553,7 +552,6 @@ OGRErr OGR_FD_ReorderFieldDefns( OGRFeatureDefnH hDefn, int* panMap )
     return ((OGRFeatureDefn *) hDefn)->ReorderFieldDefns( panMap );
 }
 
-
 /************************************************************************/
 /*                         GetGeomFieldCount()                          */
 /************************************************************************/
@@ -803,7 +801,6 @@ OGRErr OGR_FD_DeleteGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField )
     return ((OGRFeatureDefn *) hDefn)->DeleteGeomFieldDefn( iGeomField );
 }
 
-
 /************************************************************************/
 /*                         GetGeomFieldIndex()                          */
 /************************************************************************/
@@ -820,7 +817,6 @@ OGRErr OGR_FD_DeleteGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField )
  *
  * @return the geometry field index, or -1 if no match found.
  */
-
 
 int OGRFeatureDefn::GetGeomFieldIndex( const char * pszGeomFieldName )
 
@@ -864,7 +860,6 @@ int OGR_FD_GetGeomFieldIndex( OGRFeatureDefnH hDefn,
 
     return ((OGRFeatureDefn *)hDefn)->GetGeomFieldIndex( pszGeomFieldName );
 }
-
 
 /************************************************************************/
 /*                            GetGeomType()                             */
@@ -1119,7 +1114,6 @@ int OGR_FD_GetReferenceCount( OGRFeatureDefnH hDefn )
  *
  * @return the field index, or -1 if no match found.
  */
-
 
 int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
 

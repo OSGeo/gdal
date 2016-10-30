@@ -49,7 +49,6 @@ void LC_Error(short feil_nr, const char *logtx, const char *vartx)
    }
 }
 
-
 void LC_StartMessage(const char *pszFilnavn) {}
 
 void LC_ShowMessage(double prosent) // TODO: prosent?

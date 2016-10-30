@@ -82,7 +82,6 @@ class SDTSRasterBand : public GDALPamRasterBand
     virtual const char *GetUnitType();
 };
 
-
 /************************************************************************/
 /*                            ~SDTSDataset()                            */
 /************************************************************************/
@@ -234,7 +233,6 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->pszProjection = NULL;
     if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
         poDS->pszProjection = CPLStrdup("");
-
 
 /* -------------------------------------------------------------------- */
 /*      Get metadata from the IDEN file.                                */

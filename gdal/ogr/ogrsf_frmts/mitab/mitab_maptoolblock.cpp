@@ -308,7 +308,6 @@ void TABMAPToolBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
     m_poBlockManagerRef = poBlockMgr;
 };
 
-
 /**********************************************************************
  *                   TABMAPToolBlock::ReadBytes()
  *
@@ -436,9 +435,6 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
 
     return 0;
 }
-
-
-
 
 /**********************************************************************
  *                   TABMAPToolBlock::Dump()

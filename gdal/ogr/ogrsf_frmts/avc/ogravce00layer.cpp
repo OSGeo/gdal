@@ -33,6 +33,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -324,7 +326,7 @@ bool OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
             continue;
 
         OGRFeature *poArc
-            = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
+            = poArcLayer->GetFeature( std::abs(psPAL->pasArcs[iArc].nArcId) );
 
         if( poArc == NULL )
             return false;
@@ -509,7 +511,6 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
                                  psTableRead->hParseInfo->hdr.psTableDef,
                                  static_cast<AVCField *>( hRecord ) );
 }
-
 
 GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
 {

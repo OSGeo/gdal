@@ -148,7 +148,6 @@ public:
     int                 GetSRSId() { return nSRSId; };
 };
 
-
 /************************************************************************/
 /*                           OGRMSSQLGeometryWriter                     */
 /************************************************************************/
@@ -193,7 +192,6 @@ public:
     OGRErr           WriteSqlGeometry(unsigned char* pszBuffer, int nBufLen);
     int              GetDataLen() { return nLen; }
 };
-
 
 /************************************************************************/
 /*                             OGRMSSQLSpatialLayer                     */
@@ -324,7 +322,6 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     char               *pszSchemaName;
 
     OGRwkbGeometryType eGeomType;
-
 
   public:
                         OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );

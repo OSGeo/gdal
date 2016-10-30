@@ -45,7 +45,6 @@
 #pragma clang diagnostic pop
 #endif
 
-
 json_object* OGRCARTOGetSingleRow(json_object* poObj);
 CPLString OGRCARTOEscapeIdentifier(const char* pszStr);
 CPLString OGRCARTOEscapeLiteral(const char* pszStr);

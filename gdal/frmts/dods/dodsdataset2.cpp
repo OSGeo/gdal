@@ -400,7 +400,10 @@ string DODSDataset::SubConstraint( string raw_constraint,
                                    string y_constraint )
 
 {
-    string::size_type x_off, y_off, x_len=3, y_len=3;
+    string::size_type x_off;
+    string::size_type y_off;
+    string::size_type x_len = 3;
+    string::size_type y_len = 3;
     string final_constraint;
 
     x_off = raw_constraint.find( "[x]" );
@@ -529,7 +532,8 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /* -------------------------------------------------------------------- */
     string dim1_name = poArray->dimension_name( dim1 );
     string dim2_name = poArray->dimension_name( dim2 );
-    int iXDim=-1, iYDim=-1;
+    int iXDim = -1;
+    int iYDim = -1;
 
     if( dim1_name == "easting" && dim2_name == "northing" )
     {
@@ -845,7 +849,8 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /* -------------------------------------------------------------------- */
 /*      Get the map arrays for x and y.                                 */
 /* -------------------------------------------------------------------- */
-    Array *poXMap = NULL, *poYMap = NULL;
+    Array *poXMap = NULL;
+    Array *poYMap = NULL;
     int iXDim = GetDimension( oCE, "x", NULL );
     int iYDim = GetDimension( oCE, "y", NULL );
     int iMap;
@@ -968,7 +973,6 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") )
         return NULL;
-
 
     DODSDataset *poDS = new DODSDataset();
     char **papszVarConstraintList = NULL;
@@ -1194,7 +1198,8 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
         throw Error("Variable does not have even 2 dimensions.  For now this is required." );
     }
 
-    int nXDir = 1, nYDir = 1;
+    int nXDir = 1;
+    int nYDir = 1;
     int iXDim = GetDimension( oCE, "x", &nXDir );
     int iYDim = GetDimension( oCE, "y", &nYDir );
 
@@ -1364,8 +1369,6 @@ void DODSRasterBand::HarvestDAS()
             SetNoDataValue( CPLAtof(oValue.c_str()) );
         }
     }
-
-
 
 /* -------------------------------------------------------------------- */
 /*      Collect color table                                             */

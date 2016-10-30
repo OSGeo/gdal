@@ -81,7 +81,6 @@ class OGRVRTGeomFieldProps
 
         OGREnvelope         sStaticEnvelope;
 
-
                         OGRVRTGeomFieldProps();
                        ~OGRVRTGeomFieldProps();
 };

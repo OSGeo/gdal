@@ -2060,7 +2060,6 @@ static const GRIB2LocalTable MRMS_LclTable[] = {
    /* 109 */ {209, 11, 2, "MergedReflectivityQComposite", "Composite Reflectivity Mosaic (max ref)", "dBZ", UC_NONE},
 };
 
-
 /* *INDENT-ON* */
 
 int IsData_NDFD (unsigned short int center, unsigned short int subcenter)

@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include <cctype>
+#include <cstdlib>
 
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
@@ -183,7 +184,6 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
 
         break;
     }
-
 }
 
 /************************************************************************/
@@ -604,7 +604,6 @@ const char * OGRWktReadPoints( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-
     } while( szDelim[0] == ',' );
 
     return pszInput;
@@ -823,7 +822,6 @@ const char * OGRWktReadPointsM( const char * pszInput,
                       szDelim, pszInput, pszOrigInput );
             return NULL;
         }
-
     } while( szDelim[0] == ',' );
 
     return pszInput;
@@ -1141,7 +1139,6 @@ int OGRParseDate( const char *pszInput,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                           OGRParseXMLDateTime()                      */
 /************************************************************************/
@@ -1321,7 +1318,6 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
     return bRet;
 }
 
-
 /**
   * Returns the day of the week in Gregorian calendar
   *
@@ -1352,7 +1348,6 @@ int OGRGetDayOfWeek( int day, int month, int year )
     return ( h + 5 ) % 7;
 }
 
-
 /************************************************************************/
 /*                         OGRGetRFC822DateTime()                       */
 /************************************************************************/
@@ -1377,7 +1372,7 @@ char* OGRGetRFC822DateTime( const OGRField* psField )
     }
     else
     {
-        int TZOffset = ABS(TZFlag - 100) * 15;
+        int TZOffset = std::abs(TZFlag - 100) * 15;
         int TZHour = TZOffset / 60;
         int TZMinute = TZOffset - TZHour * 60;
         pszTZ = CPLStrdup(CPLSPrintf("%c%02d%02d", TZFlag > 100 ? '+' : '-',
@@ -1421,7 +1416,7 @@ char* OGRGetXMLDateTime(const OGRField* psField)
     }
     else
     {
-        const int TZOffset = ABS(TZFlag - 100) * 15;
+        const int TZOffset = std::abs(TZFlag - 100) * 15;
         const int TZHour = TZOffset / 60;
         const int TZMinute = TZOffset - TZHour * 60;
         if( OGR_GET_MS(second) )
@@ -1646,7 +1641,6 @@ OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
     CPLFree(panCheck);
     return eErr;
 }
-
 
 OGRErr OGRReadWKBGeometryType( unsigned char * pabyData, OGRwkbVariant eWkbVariant,
                                OGRwkbGeometryType *peGeometryType )

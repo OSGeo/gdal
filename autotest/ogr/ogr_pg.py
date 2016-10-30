@@ -1591,16 +1591,16 @@ def ogr_pg_32():
     if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
         return 'skip'
 
-    gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys");
+    gdaltest.pg_ds.ExecuteSQL("DELETE FROM spatial_ref_sys")
 
     ######################################################
     # Create Layer with EPSG:4326
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 4326 )
 
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext', srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext', srs = srs)
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (1)')
@@ -1613,10 +1613,10 @@ def ogr_pg_32():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('GEOGCS["WGS 84",AUTHORITY["EPSG","4326"]]')
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs)
 
     # Must still be 1
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (2)')
@@ -1629,10 +1629,10 @@ def ogr_pg_32():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]]""")
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext3', srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext3', srs = srs)
 
     # Must still be 1
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (3)')
@@ -1646,7 +1646,7 @@ def ogr_pg_32():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 26632 )
 
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', geom_type = ogr.wkbPoint, srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext4', geom_type = ogr.wkbPoint, srs = srs)
     feat = ogr.Feature(gdaltest.pg_lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     gdaltest.pg_lyr.CreateFeature(feat)
@@ -1656,7 +1656,7 @@ def ogr_pg_32():
         gdaltest.post_reason('did not get expected SRS')
         return 'fail'
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     # Must be 2 now
     if  feat.count != 2:
@@ -1711,9 +1711,9 @@ def ogr_pg_32():
     srs = osr.SpatialReference()
     srs.SetFromUserInput('+proj=vandg')
 
-    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext5', srs = srs);
+    gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer( 'testsrtext5', srs = srs)
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys");
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     # Must be 3 now
     if  feat.count != 3:
@@ -2300,7 +2300,7 @@ def ogr_pg_44():
     gdaltest.pg_lyr.CreateFeature(feat)
     feat.Destroy()
 
-    gdaltest.pg_ds.ExecuteSQL('ALTER TABLE "select" RENAME COLUMN "ogc_fid" to "AND"');
+    gdaltest.pg_ds.ExecuteSQL('ALTER TABLE "select" RENAME COLUMN "ogc_fid" to "AND"')
 
     ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
     layer = ds.GetLayerByName('select')
@@ -2349,7 +2349,7 @@ def ogr_pg_45():
     nb_feat = lyr.GetFeatureCount()
     tab_feat = [ None for i in range(nb_feat) ]
     for i in range(nb_feat):
-        tab_feat[i] = lyr.GetNextFeature();
+        tab_feat[i] = lyr.GetNextFeature()
 
     lyr.SetNextByIndex(2)
     feat = lyr.GetNextFeature()
@@ -3199,7 +3199,7 @@ def ogr_pg_62():
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     gdaltest.pg_ds.ExecuteSQL('DELLAYER:testsrtext2')
-    gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs);
+    gdaltest.pg_ds.CreateLayer( 'testsrtext2', srs = srs)
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL('SELECT * FROM testsrtext2')
     got_srs = sql_lyr.GetSpatialRef()

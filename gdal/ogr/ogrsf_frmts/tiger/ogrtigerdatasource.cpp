@@ -31,6 +31,7 @@
 #include "ogr_tiger.h"
 
 #include <cctype>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -798,7 +799,7 @@ int OGRTigerDataSource::Create( const char *pszNameIn, char **papszOptionsIn )
     if( GetOption("VERSION") != NULL )
     {
         nVersionCode = atoi(GetOption("VERSION"));
-        nVersionCode = MAX(0,MIN(9999,nVersionCode));
+        nVersionCode = std::max(0, std::min(9999, nVersionCode));
     }
     nVersion = TigerClassifyVersion(nVersionCode);
 

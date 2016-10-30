@@ -196,7 +196,6 @@ char** GeoRasterWrapper::ParseIdentificator( const char* pszStringID )
     }
 
     return papszParam;
-
 }
 
 //  ---------------------------------------------------------------------------
@@ -926,7 +925,6 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
         OCIDescriptorFree( phLocator, OCI_DTYPE_LOB );
 
-
         delete poStmt;
 
         return true;
@@ -1586,7 +1584,6 @@ void GeoRasterWrapper::SetColorMap( int nBand, GDALColorTable* poCT )
             default:
                 nCount = poCT->GetColorEntryCount();
         }
-
 
         for( iColor = 0; iColor < nCount; iColor++ )
         {
@@ -3810,7 +3807,6 @@ void GeoRasterWrapper::UncompressJpeg( unsigned long nInSize )
                              sDInfo.dc_huff_tbl_ptrs[n],
                              nCompressQuality );
         }
-
     }
 
     jpeg_vsiio_src( &sDInfo, fpImage );

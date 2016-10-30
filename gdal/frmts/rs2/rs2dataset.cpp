@@ -53,7 +53,7 @@ static bool IsValidXMLFile( const char *pszPath, const char *pszLut)
 
     CPLFree(pszLutFile);
 
-    return psLut.get() != NULL;;
+    return psLut.get() != NULL;
 }
 
 /************************************************************************/
@@ -121,7 +121,6 @@ class RS2RasterBand : public GDALPamRasterBand
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
-
 
 /************************************************************************/
 /*                            RS2RasterBand                             */
@@ -339,7 +338,6 @@ RS2CalibRasterBand::RS2CalibRasterBand(
         SetMetadataItem( "POLARIMETRIC_INTERP", pszPolarization );
     }
 
-
     if (eType == GDT_CInt16)
         eDataType = GDT_CFloat32;
     else
@@ -400,9 +398,9 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   pnImageTmp, nBlockXSize, nRequestYSize,
                                   GDT_Int16,
                                   2, NULL, 4, nBlockXSize * 4, 2, NULL );
-
         }
-        else {
+        else
+        {
             eErr =
                 m_poBandDataset->RasterIO( GF_Read,
                                       nBlockXOff * nBlockXSize,
@@ -495,7 +493,6 @@ CPLErr RS2CalibRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     return eErr;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -624,7 +621,6 @@ int RS2Dataset::Identify( GDALOpenInfo *poOpenInfo )
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1026,7 +1022,6 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSourceAttrs,
             "orbitAndAttitude.orbitInformation.orbitDataFile", "UNK" );
         poDS->SetMetadataItem( "ORBIT_DATA_FILE", pszItem );
-
     }
 
     CPLXMLNode *psSarProcessingInformation =
@@ -1065,10 +1060,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         pszItem = CPLGetXMLValue( psSarProcessingInformation,
                                   "generalProcessingInformation.processingTime", "UNK" );
         poDS->SetMetadataItem( "PROCESSING_TIME", pszItem );
-
     }
-
-
 
 /*--------------------------------------------------------------------- */
 /*      Collect Map projection/Geotransform information, if present     */
@@ -1143,8 +1135,9 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                           "corner coordinates inconsistent.");
             }
             else
+            {
                 poDS->bHaveGeoTransform = TRUE;
-
+            }
         }
     }
 
@@ -1448,7 +1441,6 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
     return pasGCPList;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -1473,7 +1465,6 @@ CPLErr RS2Dataset::GetGeoTransform( double * padfTransform )
 
     return CE_Failure;
 }
-
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */

@@ -205,7 +205,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         osCoordSys.Printf(
                  "Earth Projection %d",
                  sTABProj.nProjId );
-
     }
     else
         osCoordSys.Printf(
@@ -295,7 +294,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     return CPLStrdup( osCoordSys.c_str() );
 }
 
-
 /************************************************************************/
 /*                      MITABExtractCoordSysBounds                      */
 /*                                                                      */
@@ -329,7 +327,6 @@ bool MITABExtractCoordSysBounds( const char * pszCoordSys,
     CSLDestroy( papszFields );
     return false;
 }
-
 
 /**********************************************************************
  *                     MITABCoordSys2TABProjInfo()

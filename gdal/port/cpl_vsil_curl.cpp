@@ -35,6 +35,8 @@
 #include "cpl_aws.h"
 #include "cpl_minixml.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 #ifndef HAVE_CURL
@@ -60,7 +62,6 @@ int VSICurlInstallReadCbk ( VSILFILE* /* fp */,
 {
     return FALSE;
 }
-
 
 /************************************************************************/
 /*                    VSICurlUninstallReadCbk()                         */
@@ -251,7 +252,6 @@ class VSICurlFilesystemHandler : public VSIFilesystemHandler
     /* Per-thread Curl connection cache */
     std::map<GIntBig, CachedConnection*> mapConnections;
 
-
     char**              ParseHTMLFileList(const char* pszFilename,
                                           int nMaxFiles,
                                           char* pszData,
@@ -292,7 +292,6 @@ public:
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
-
 
     const CachedRegion* GetRegion(const char*     pszURL,
                                   vsi_l_offset    nFileOffsetStart);
@@ -484,7 +483,6 @@ int VSICurlHandle::Seek( vsi_l_offset nOffset, int nWhence )
     bEOF = false;
     return 0;
 }
-
 
 /************************************************************************/
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
@@ -1186,16 +1184,26 @@ retry:
     if (nSize > static_cast<size_t>(nBlocks) * DOWNLOAD_CHUNK_SIZE)
     {
         if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Got more data than expected : %u instead of %d",
-                     static_cast<unsigned int>(nSize), nBlocks * DOWNLOAD_CHUNK_SIZE);
+            CPLDebug(
+                "VSICURL", "Got more data than expected : %u instead of %u",
+                static_cast<unsigned int>(nSize),
+                static_cast<unsigned int>(nBlocks * DOWNLOAD_CHUNK_SIZE));
     }
 
     vsi_l_offset l_startOffset = startOffset;
-    while(nSize > 0)
+    while( nSize > 0 )
     {
-        //if (ENABLE_DEBUG)
-        //    CPLDebug("VSICURL", "Add region %d - %d", startOffset, MIN(DOWNLOAD_CHUNK_SIZE, nSize));
-        size_t nChunkSize = MIN((size_t)DOWNLOAD_CHUNK_SIZE, nSize);
+#if DEBUG_VERBOSE
+        if( ENABLE_DEBUG )
+            CPLDebug(
+                "VSICURL",
+                "Add region %u - %u",
+                static_cast<unsigned int>(startOffset),
+                static_cast<unsigned int>(
+                    std::min(static_cast<size_t>(DOWNLOAD_CHUNK_SIZE), nSize)));
+#endif
+        const size_t nChunkSize =
+            std::min(static_cast<size_t>(DOWNLOAD_CHUNK_SIZE), nSize);
         poFS->AddRegion(pszURL, l_startOffset, nChunkSize, pBuffer);
         l_startOffset += nChunkSize;
         pBuffer += nChunkSize;
@@ -1280,7 +1288,10 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
             bEOF = true;
             return 0;
         }
-        int nToCopy = (int) MIN(nBufferRequestSize, psRegion->nSize - (iterOffset - psRegion->nFileOffsetStart));
+        const int nToCopy = static_cast<int>(
+            std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
+                     psRegion->nSize -
+                     (iterOffset - psRegion->nFileOffsetStart)));
         memcpy(pBuffer, psRegion->pData + iterOffset - psRegion->nFileOffsetStart,
                 nToCopy);
         pBuffer = (char*) pBuffer + nToCopy;
@@ -1300,7 +1311,6 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize, size_t 
 
     return ret;
 }
-
 
 /************************************************************************/
 /*                           ReadMultiRange()                           */
@@ -1673,7 +1683,6 @@ size_t VSICurlHandle::Write( const void * /* pBuffer */,
 /*                                 Eof()                                */
 /************************************************************************/
 
-
 int       VSICurlHandle::Eof()
 {
     return bEOF;
@@ -1696,9 +1705,6 @@ int       VSICurlHandle::Close()
 {
     return 0;
 }
-
-
-
 
 /************************************************************************/
 /*                   VSICurlFilesystemHandler()                         */
@@ -1800,7 +1806,6 @@ CURL* VSICurlFilesystemHandler::GetCurlHandleFor(CPLString osURL)
     }
 }
 
-
 /************************************************************************/
 /*                   GetRegionFromCacheDisk()                           */
 /************************************************************************/
@@ -1859,7 +1864,6 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
     return NULL;
 }
 
-
 /************************************************************************/
 /*                  AddRegionToCacheDisk()                                */
 /************************************************************************/
@@ -1912,7 +1916,6 @@ void VSICurlFilesystemHandler::AddRegionToCacheDisk(CachedRegion* psRegion)
     }
     return;
 }
-
 
 /************************************************************************/
 /*                          GetRegion()                                 */
@@ -2010,7 +2013,8 @@ void VSICurlFilesystemHandler::InvalidateCachedFileProp(const char* pszURL)
 {
     CPLMutexHolder oHolder( &hMutex );
 
-    std::map<CPLString, CachedFileProp*>::iterator oIter = cacheFileSize.find(pszURL);
+    std::map<CPLString, CachedFileProp*>::iterator oIter =
+        cacheFileSize.find(pszURL);
     if( oIter != cacheFileSize.end() )
     {
         delete oIter->second;
@@ -2033,7 +2037,7 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(const char* pszURL)
 
 static bool IsAllowedFilename( const char* pszFilename )
 {
-    const char* pszAllowedFilename = 
+    const char* pszAllowedFilename =
         CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", NULL);
     if( pszAllowedFilename != NULL )
     {
@@ -2171,7 +2175,6 @@ static char *VSICurlParserFindEOL( char *pszData )
     else
         return pszData;
 }
-
 
 /************************************************************************/
 /*                   VSICurlParseHTMLDateTimeFileSize()                 */
@@ -3447,7 +3450,9 @@ size_t VSIS3WriteHandle::ReadCallBackBuffer( char *buffer, size_t size,
 {
     VSIS3WriteHandle* poThis = (VSIS3WriteHandle*)instream;
     int nSizeMax = (int)(size * nitems);
-    int nSizeToWrite = MIN(nSizeMax, poThis->m_nBufferOff - poThis->m_nBufferOffReadCallback);
+    const int nSizeToWrite =
+        std::min(nSizeMax,
+                 poThis->m_nBufferOff - poThis->m_nBufferOffReadCallback);
     memcpy(buffer, poThis->m_pabyBuffer + poThis->m_nBufferOffReadCallback,
            nSizeToWrite);
     poThis->m_nBufferOffReadCallback += nSizeToWrite;
@@ -3555,7 +3560,9 @@ size_t VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize,size_t nMemb)
 
     while( nBytesToWrite > 0 )
     {
-        int nToWriteInBuffer = (int)MIN((size_t)(m_nBufferSize - m_nBufferOff), nBytesToWrite);
+        const int nToWriteInBuffer = static_cast<int>(
+            std::min(static_cast<size_t>(m_nBufferSize - m_nBufferOff),
+                     nBytesToWrite));
         memcpy(m_pabyBuffer + m_nBufferOff, pBuffer, nToWriteInBuffer);
         m_nBufferOff += nToWriteInBuffer;
         m_nCurOffset += nToWriteInBuffer;
@@ -3664,7 +3671,10 @@ size_t VSIS3WriteHandle::ReadCallBackXML(char *buffer, size_t size, size_t nitem
 {
     VSIS3WriteHandle* poThis = (VSIS3WriteHandle*)instream;
     int nSizeMax = (int)(size * nitems);
-    int nSizeToWrite = MIN(nSizeMax, (int)poThis->m_osXML.size() - poThis->m_nOffsetInXML);
+    const int nSizeToWrite =
+        std::min(nSizeMax,
+                 static_cast<int>(poThis->m_osXML.size()) -
+                 poThis->m_nOffsetInXML);
     memcpy(buffer, poThis->m_osXML.c_str() + poThis->m_nOffsetInXML,
            nSizeToWrite);
     poThis->m_nOffsetInXML += nSizeToWrite;
@@ -3817,7 +3827,7 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
                                         const char *pszAccess,
                                         bool bSetError)
 {
-    if (strchr(pszAccess, 'w') != NULL )
+    if (strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL)
     {
         /*if( strchr(pszAccess, '+') != NULL)
         {
@@ -3982,7 +3992,6 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         CPLDebug("S3", "GetFileList(%s)" , pszDirname);
     *pbGotFileList = false;
     CPLString osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
-
 
     VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(osDirnameWithoutPrefix, GetFSPrefix().c_str(), true);
@@ -4177,7 +4186,6 @@ void VSIS3Handle::ProcessGetFileSizeResult(const char* pszContent)
 
 } /* end of anoymous namespace */
 
-
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
 /************************************************************************/
@@ -4191,7 +4199,6 @@ int VSICurlInstallReadCbk (VSILFILE* fp,
                                                 bStopOnInterruptUntilUninstall);
 }
 
-
 /************************************************************************/
 /*                    VSICurlUninstallReadCbk()                         */
 /************************************************************************/
@@ -4200,7 +4207,6 @@ int VSICurlUninstallReadCbk(VSILFILE* fp)
 {
     return ((VSICurlHandle*)fp)->UninstallReadCbk();
 }
-
 
 /************************************************************************/
 /*                       VSICurlSetOptions()                            */
@@ -4347,7 +4353,5 @@ void VSIInstallS3FileHandler(void)
 {
     VSIFileManager::InstallHandler( "/vsis3/", new VSIS3FSHandler );
 }
-
-
 
 #endif /* HAVE_CURL */

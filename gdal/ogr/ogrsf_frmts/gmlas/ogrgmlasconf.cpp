@@ -39,7 +39,6 @@ const bool GMLASXLinkResolutionConf::DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
 const bool GMLASXLinkResolutionConf::ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
 const bool GMLASXLinkResolutionConf::CACHE_RESULTS_DEFAULT = false;
 
-
 const bool GMLASConfiguration::ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
 const bool GMLASConfiguration::ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
 const bool GMLASConfiguration::REMOVE_UNUSED_LAYERS_DEFAULT = false;
@@ -53,6 +52,7 @@ const bool GMLASConfiguration::FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
 const bool GMLASConfiguration::EXPOSE_METADATA_LAYERS_DEFAULT = false;
 const bool GMLASConfiguration::WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
 const bool GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
+const bool GMLASConfiguration::PG_IDENTIFIER_LAUNDERING_DEFAULT = true;
 
 /************************************************************************/
 /*                          GMLASConfiguration()                        */
@@ -68,6 +68,7 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bInstantiateGMLFeaturesOnly(INSTANTIATE_GML_FEATURES_ONLY_DEFAULT)
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
+    , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
     , m_bAllowXSDCache(ALLOW_XSD_CACHE_DEFAULT)
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
@@ -213,7 +214,6 @@ static bool IsValidXPath(const CPLString& osXPath )
     return bOK;
 }
 
-
 /************************************************************************/
 /*                    GMLASConfigurationErrorHandler()                  */
 /************************************************************************/
@@ -329,6 +329,9 @@ bool GMLASConfiguration::Load(const char* pszFilename)
     m_bCaseInsensitiveIdentifier = CPLGetXMLBoolValue( psRoot,
                 "=Configuration.LayerBuildingRules.CaseInsensitiveIdentifier",
                 CASE_INSENSITIVE_IDENTIFIER_DEFAULT );
+    m_bPGIdentifierLaundering = CPLGetXMLBoolValue( psRoot,
+                "=Configuration.LayerBuildingRules.PostgreSQLIdentifierLaundering",
+                PG_IDENTIFIER_LAUNDERING_DEFAULT );
 
     CPLXMLNode* psIgnoredXPaths = CPLGetXMLNode(psRoot,
                                             "=Configuration.IgnoredXPaths");
@@ -436,7 +439,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
 {
     m_nTimeOut = atoi( CPLGetXMLValue( psRoot, "Timeout", "0" ) );
 
-    m_nMaxFileSize = atoi( CPLGetXMLValue( psRoot, "MaxFileSize", 
+    m_nMaxFileSize = atoi( CPLGetXMLValue( psRoot, "MaxFileSize",
                                 CPLSPrintf("%d", MAX_FILE_SIZE_DEFAULT)) );
 
     m_nMaxGlobalResolutionTime = atoi(

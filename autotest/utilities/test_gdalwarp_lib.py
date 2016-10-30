@@ -584,11 +584,12 @@ def test_gdalwarp_lib_104():
 
 def test_gdalwarp_lib_105():
 
+    # with proj 4.9.3 this will success. We limit the width and height
+    # otherwise a very big raster will be created with 4.9.3 which may cause
+    # hangups in Travis MacOSX
     with gdaltest.error_handler():
-        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645')
-    if ds is not None:
-        gdaltest.post_reason('Did not expected dataset')
-        return 'fail'
+        gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645', width = 100, height = 100)
+
     return 'success'
 
 ###############################################################################
@@ -1225,6 +1226,40 @@ def test_gdalwarp_lib_132():
     return 'success'
 
 ###############################################################################
+# Test cutline with multiple touching polygons
+
+def test_gdalwarp_lib_133():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_gdalwarp_lib_133.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,1 0,1 1,0 1,0 0))'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((1 0,2 0,2 1,1 1,1 0))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 4, 1)
+    src_ds.SetGeoTransform([0,1,0,1,0,-1])
+    src_ds.GetRasterBand(1).Fill(255)
+    ds = gdal.Warp('', src_ds, format = 'MEM', cutlineDSName = '/vsimem/test_gdalwarp_lib_133.shp')
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).Checksum() != 5:
+        print(ds.GetRasterBand(1).Checksum())
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_gdalwarp_lib_133.shp')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1305,6 +1340,7 @@ gdaltest_list = [
     test_gdalwarp_lib_130,
     test_gdalwarp_lib_131,
     test_gdalwarp_lib_132,
+    test_gdalwarp_lib_133,
     test_gdalwarp_lib_cleanup,
     ]
 

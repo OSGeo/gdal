@@ -57,11 +57,7 @@ OGRIngresTableLayer::OGRIngresTableLayer( OGRIngresDataSource *poDSIn,
 /*                        ~OGRIngresTableLayer()                         */
 /************************************************************************/
 
-OGRIngresTableLayer::~OGRIngresTableLayer()
-
-{
-}
-
+OGRIngresTableLayer::~OGRIngresTableLayer() {}
 
 /************************************************************************/
 /*                        Initialize()                                  */
@@ -311,7 +307,6 @@ void OGRIngresTableLayer::BuildWhere()
         osWHERE.Printf( "WHERE MBRIntersects(GeomFromText('%s'), %s)",
                         szEnvelope,
                         osGeomColumn.c_str() );
-
     }
 #endif
 
@@ -505,7 +500,6 @@ OGRErr OGRIngresTableLayer::DeleteFeature( GIntBig nFID )
                   "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -821,7 +815,6 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
 
-
 /* -------------------------------------------------------------------- */
 /*      Accumulate fields to be inserted.                               */
 /* -------------------------------------------------------------------- */
@@ -978,7 +971,6 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
         {
             osCommand += pszStrValue;
         }
-
     }
 
     osCommand += ")";
@@ -1015,7 +1007,6 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
 
     return OGRERR_NONE;
-
 }
 
 /************************************************************************/

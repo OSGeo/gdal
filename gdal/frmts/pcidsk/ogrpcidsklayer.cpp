@@ -29,6 +29,8 @@
 
 #include "pcidskdataset2.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -66,7 +68,6 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
         else if( osLayerType == "TABLE" )
             poFeatureDefn->SetGeomType( wkbNone );
     } catch(...) {}
-
 
 /* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
@@ -520,16 +521,18 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
             {
                 if( !bHaveExtent )
                 {
-                    psExtent->MinX = psExtent->MaxX = asVertices[i].x;
-                    psExtent->MinY = psExtent->MaxY = asVertices[i].y;
+                    psExtent->MinX = asVertices[i].x;
+                    psExtent->MaxX = asVertices[i].x;
+                    psExtent->MinY = asVertices[i].y;
+                    psExtent->MaxY = asVertices[i].y;
                     bHaveExtent = true;
                 }
                 else
                 {
-                    psExtent->MinX = MIN(psExtent->MinX,asVertices[i].x);
-                    psExtent->MaxX = MAX(psExtent->MaxX,asVertices[i].x);
-                    psExtent->MinY = MIN(psExtent->MinY,asVertices[i].y);
-                    psExtent->MaxY = MAX(psExtent->MaxY,asVertices[i].y);
+                    psExtent->MinX = std::min(psExtent->MinX, asVertices[i].x);
+                    psExtent->MaxX = std::max(psExtent->MaxX, asVertices[i].x);
+                    psExtent->MinY = std::min(psExtent->MinY, asVertices[i].y);
+                    psExtent->MaxY = std::max(psExtent->MaxY, asVertices[i].y);
                 }
             }
         }
@@ -731,7 +734,6 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         poVecSeg->SetVertices( id, aoVertices );
-
     } /* try */
 
 /* -------------------------------------------------------------------- */

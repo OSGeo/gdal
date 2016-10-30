@@ -67,12 +67,10 @@ static const char * const apszAuxMetadataItems[] = {
  NULL
 };
 
-
 const char * const * GetHFAAuxMetaDataList()
 {
     return apszAuxMetadataItems;
 }
-
 
 /************************************************************************/
 /*                          HFAGetDictionary()                          */
@@ -275,7 +273,8 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 /* -------------------------------------------------------------------- */
 /*      Otherwise create it now.                                        */
 /* -------------------------------------------------------------------- */
-    HFAInfo_t *psDep = psBase->psDependent = HFACreateLL( oRRDFilename );
+    HFAInfo_t *psDep = HFACreateLL( oRRDFilename );
+    psBase->psDependent = psDep;
     if( psDep == NULL )
         return NULL;
 
@@ -338,7 +337,6 @@ HFAInfo_t *HFAGetDependent( HFAInfo_t *psBase, const char *pszFilename )
 
     return psBase->psDependent;
 }
-
 
 /************************************************************************/
 /*                          HFAParseBandInfo()                          */
@@ -1798,8 +1796,6 @@ static const char * const aszDefaultDD[] = {
 NULL
 };
 
-
-
 /************************************************************************/
 /*                            HFACreateLL()                             */
 /*                                                                      */
@@ -2010,12 +2006,14 @@ CPLErr HFAFlush( HFAHandle hHFA )
         bRet &= VSIFReadL( &nHeaderPos, sizeof(GInt32), 1, hHFA->fp ) > 0;
         HFAStandard( 4, &nHeaderPos );
 
-        GUInt32 nOffset = hHFA->nRootPos = hHFA->poRoot->GetFilePos();
+        GUInt32 nOffset = hHFA->poRoot->GetFilePos();
+        hHFA->nRootPos = nOffset;
         HFAStandard( 4, &nOffset );
         bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+8, SEEK_SET ) >= 0;
         bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
 
-        nOffset = hHFA->nDictionaryPos = nNewDictionaryPos;
+        nOffset = nNewDictionaryPos;
+        hHFA->nDictionaryPos = nNewDictionaryPos;
         HFAStandard( 4, &nOffset );
         bRet &= VSIFSeekL( hHFA->fp, nHeaderPos+14, SEEK_SET ) >= 0;
         bRet &= VSIFWriteL( &nOffset, 4, 1, hHFA->fp ) > 0;
@@ -2176,7 +2174,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 12, &nValue16, 2 );
         }
-
     }
 /* -------------------------------------------------------------------- */
 /*      Create ExternalRasterDMS object.                                */
@@ -2286,7 +2283,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
     return bRet;
 }
 
-
 /************************************************************************/
 /*                             HFACreate()                              */
 /************************************************************************/
@@ -2317,7 +2313,8 @@ HFAHandle HFACreate( const char * pszFilename,
         || CPLFetchBool(papszOptions, "COMPRESSED", false);
     const bool bCreateAux = CPLFetchBool(papszOptions, "AUX", false);
 
-    char *pszFullFilename = NULL, *pszRawFilename = NULL;
+    char *pszFullFilename = NULL;
+    char *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Create the low level structure.                                 */
@@ -3275,7 +3272,6 @@ static bool HFAReadAndValidatePoly( HFAEntry *poTarget,
 /*                         HFAReadXFormStack()                          */
 /************************************************************************/
 
-
 int HFAReadXFormStack( HFAHandle hHFA,
                        Efga_Polynomial **ppasPolyListForward,
                        Efga_Polynomial **ppasPolyListReverse )
@@ -3802,6 +3798,7 @@ CPLErr HFASetGeoTransform( HFAHandle hHFA,
     // Assign to polynomial object.
 
     Efga_Polynomial sForward;
+    memset(&sForward, 0, sizeof(sForward));
     Efga_Polynomial *psForward = &sForward;
     sForward.order = 1;
     sForward.polycoefvector[0] = adfRevTransform[0];

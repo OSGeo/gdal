@@ -365,7 +365,6 @@ static OGRGeometry* ParseKMLGeometry(const char* pszKML)
     return poGeom;
 }
 
-
 /************************************************************************/
 /*                         BuildFeatureFromSQL()                        */
 /************************************************************************/

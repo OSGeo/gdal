@@ -65,9 +65,7 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
     virtual OGRFeature *GetFeature( GIntBig nFID );
     virtual OGRErr      ISetFeature( OGRFeature *poFeature );
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-
 };
-
 
 class OGRDataSourceWithTransaction : public OGRDataSource
 {
@@ -163,7 +161,6 @@ OGRDataSource* OGRCreateEmulatedTransactionDataSourceWrapper(
                                             bTakeOwnershipTransactionBehaviour);
 }
 
-
 /************************************************************************/
 /*                      OGRDataSourceWithTransaction                    */
 /************************************************************************/
@@ -191,7 +188,6 @@ OGRDataSourceWithTransaction::~OGRDataSourceWithTransaction()
     if( m_bHasOwnershipTransactionBehaviour )
         delete m_poTransactionBehaviour;
 }
-
 
 OGRLayer* OGRDataSourceWithTransaction::WrapLayer(OGRLayer* poLayer)
 {
@@ -244,7 +240,6 @@ OGRLayer    *OGRDataSourceWithTransaction::GetLayer(int iIndex)
 {
     if( !m_poBaseDataSource ) return NULL;
     return WrapLayer(m_poBaseDataSource->GetLayer(iIndex));
-
 }
 
 OGRLayer    *OGRDataSourceWithTransaction::GetLayerByName(const char *pszName)
@@ -453,7 +448,6 @@ CPLErr      OGRDataSourceWithTransaction::SetMetadataItem( const char * pszName,
     if( !m_poBaseDataSource ) return CE_Failure;
     return m_poBaseDataSource->SetMetadataItem(pszName, pszValue, pszDomain);
 }
-
 
 /************************************************************************/
 /*                       OGRLayerWithTransaction                        */

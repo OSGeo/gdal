@@ -99,13 +99,13 @@ def ogr_geom_area_geometrycollection():
     return 'success'
 
 ###############################################################################
-# Test Area calculation for a LinearRing whose coordinates are shifted by a huge value
-# With algorithm prior to #3556, this would return 0.
+# Test Area calculation for a LinearRing whose coordinates are shifted by a
+# huge value With algorithm prior to #3556, this would return 0.
 
 def ogr_geom_area_linearring_big_offset():
 
     geom = ogr.Geometry( type = ogr.wkbLinearRing )
-    BIGOFFSET = 100000000000.;
+    BIGOFFSET = 1.0e11
     geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 10)
@@ -125,18 +125,17 @@ def ogr_geom_is_empty():
     geom_wkt = 'LINESTRING EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    if (geom.IsEmpty() == False):
+    if not geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
         return 'fail'
 
     geom_wkt = 'POINT( 1 2 )'
-
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
         gdaltest.post_reason ("A geometry could not be created from wkt: %s"%geom_wkt)
         return 'fail'
 
-    if (geom.IsEmpty() == True):
+    if geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
         return 'fail'
     return 'success'
@@ -166,12 +165,12 @@ def ogr_geom_boundary_point():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'GetBoundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
     bnd = geom.Boundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
@@ -189,7 +188,7 @@ def ogr_geom_boundary_multipoint():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
@@ -207,7 +206,7 @@ def ogr_geom_boundary_linestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+    if bnd.GetGeometryType() != ogr.wkbMultiPoint:
         gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
         print(bnd)
         return 'fail'
@@ -220,7 +219,7 @@ def ogr_geom_boundary_linestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+    if bnd.GetGeometryType() != ogr.wkbMultiPoint:
         gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
         return 'fail'
 
@@ -242,7 +241,7 @@ def ogr_geom_boundary_polygon():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbLineString:
+    if bnd.GetGeometryType() != ogr.wkbLineString:
         gdaltest.post_reason( 'Boundary not reported as non-empty LINESTRING' )
         print(bnd)
         return 'fail'

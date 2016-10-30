@@ -208,7 +208,6 @@ class OGRODBCDataSource : public OGRDataSource
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
-
 };
 
 /************************************************************************/
@@ -228,6 +227,5 @@ class OGRODBCDriver : public OGRSFDriver
 
     int                 TestCapability( const char * );
 };
-
 
 #endif /* ndef OGR_ODBC_H_INCLUDED */

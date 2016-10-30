@@ -172,10 +172,10 @@ public:
     virtual CPLErr  GetGeoTransform( double * padfTransform );
     virtual CPLErr  SetGeoTransform( double * );
 
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual CPLErr SetProjection( const char * );
 
-    virtual void   FlushCache( void );
+    virtual void   FlushCache();
 };
 
 // IniFile.h: interface for the IniFile class.

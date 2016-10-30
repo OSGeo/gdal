@@ -78,7 +78,7 @@ class MSGDataset : public GDALDataset
     virtual ~MSGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef();
     virtual CPLErr SetProjection( const char * );
     virtual CPLErr GetGeoTransform( double * padfTransform );
 

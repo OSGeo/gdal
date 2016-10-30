@@ -58,7 +58,6 @@
  **/
 #define MAX_BLOCK_SIZE 2048
 
-
 #define NO_VALID_RES "-1234.56"
 
 /**
@@ -114,7 +113,6 @@ typedef enum
     AVERAGE_APPROX_RESOLUTION
 } ResolutionStrategy;
 
-
 /**
  * The driver can work in these modes:
  * - NO_MODE: Error case
@@ -161,7 +159,6 @@ typedef struct {
     int nFactor;
 } PROverview;
 
-
 // Some tools definitions
 char * ReplaceQuotes(const char *, int);
 char * ReplaceSingleQuotes(const char *, int);
@@ -186,7 +183,6 @@ public:
     PGconn* GetConnection(const char* pszConnectionString,
         const char * pszDbnameIn, const char * pszHostIn, const char * pszPortIn, const char * pszUserIn);
 };
-
 
 /***********************************************************************
  * PostGISRasterDataset: extends VRTDataset to support PostGIS Raster
@@ -349,8 +345,6 @@ public:
     virtual double GetMaximum( int *pbSuccess );
     virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax );
 };
-
-
 
 /***********************************************************************
  * PostGISRasterTileDataset: it holds just a raster tile

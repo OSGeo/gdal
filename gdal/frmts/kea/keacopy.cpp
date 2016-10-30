@@ -465,8 +465,6 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
     }
 }
 
-
-
 bool KEACopyFile( GDALDataset *pDataset, kealib::KEAImageIO *pImageIO,
                   GDALProgressFunc pfnProgress, void *pProgressData )
 {

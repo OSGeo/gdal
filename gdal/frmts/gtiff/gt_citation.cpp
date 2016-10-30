@@ -35,6 +35,8 @@
 #include "gt_citation.h"
 #include "gt_wkt_srs_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const char * const apszUnitMap[] = {
@@ -110,15 +112,15 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             p1 = p + strlen(p);
             char *p2 = strchr(p, '\n');
             if( p2 )
-                p1 = MIN(p1, p2);
+                p1 = std::min(p1, p2);
             p2 = strchr(p, '\0');
             if( p2 )
-                p1 = MIN(p1, p2);
+                p1 = std::min(p1, p2);
             for( int i = 0; keyNames[i] != NULL; i++ )
             {
                 p2 = strstr(p, keyNames[i]);
                 if(p2)
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
             }
         }
 
@@ -181,15 +183,15 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 p1 = p + strlen(p);
                 char *p2 = strchr(p, '\n');
                 if( p2 )
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
                 p2 = strchr(p, '\0');
                 if( p2 )
-                    p1 = MIN(p1, p2);
+                    p1 = std::min(p1, p2);
                 for( int j = 0; keyNames[j] != NULL; j++ )
                 {
                     p2 = strstr(p, keyNames[j]);
                     if( p2 )
-                        p1 = MIN(p1, p2);
+                        p1 = std::min(p1, p2);
                 }
             }
             if( p && p1 && p1>p )
@@ -222,7 +224,6 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             ret = CPLStrdup(name);
     }
     return ret;
-
 }
 
 /************************************************************************/
@@ -241,7 +242,7 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     char* pDelimit = NULL;
     char* pStr = psCitation;
     char name[512] = { '\0' };
-    int nameSet = FALSE;
+    bool nameSet = false;
     int nameLen = static_cast<int>(strlen(psCitation));
     bool nameFound = false;
     while((pStr-psCitation+1)< nameLen)
@@ -251,13 +252,13 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             strncpy( name, pStr, pDelimit-pStr );
             name[pDelimit-pStr] = '\0';
             pStr = pDelimit+1;
-            nameSet = TRUE;
+            nameSet = true;
         }
         else
         {
             strcpy (name, pStr);
             pStr += strlen(pStr);
-            nameSet = TRUE;
+            nameSet = true;
         }
         if( strstr(name, "PCS Name = ") )
         {
@@ -312,7 +313,6 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
     }
     return ret;
 }
-
 
 /************************************************************************/
 /*                       SetLinearUnitCitation()                        */
@@ -384,7 +384,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         {
             osCitation += "|Datum = ";
             osCitation += datumName;
-            bRewriteGeogCitation = TRUE;
+            bRewriteGeogCitation = true;
         }
     }
     if( nSpheroid == KvUserDefined )
@@ -394,7 +394,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         {
             osCitation += "|Ellipsoid = ";
             osCitation += spheroidName;
-            bRewriteGeogCitation = TRUE;
+            bRewriteGeogCitation = true;
         }
     }
 
@@ -403,7 +403,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
     {
         osCitation += "|Primem = ";
         osCitation += primemName;
-        bRewriteGeogCitation = TRUE;
+        bRewriteGeogCitation = true;
 
         double primemValue = poSRS->GetPrimeMeridian(NULL);
         if( angUnitName && !EQUAL(angUnitName, "Degree") )
@@ -419,7 +419,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
     {
         osCitation += "|AUnits = ";
         osCitation += angUnitName;
-        bRewriteGeogCitation = TRUE;
+        bRewriteGeogCitation = true;
     }
 
     if( osCitation[strlen(osCitation) - 1] != '|' )
@@ -527,8 +527,11 @@ void GetGeogCSFromCitation( char* szGCSName, int nGCSName,
                             char **ppszSpheroidName,
                             char **ppszAngularUnits)
 {
-    *ppszGeogName = *ppszDatumName = *ppszPMName =
-        *ppszSpheroidName = *ppszAngularUnits = NULL;
+    *ppszGeogName = NULL;
+    *ppszDatumName = NULL;
+    *ppszPMName = NULL;
+    *ppszSpheroidName = NULL;
+    *ppszAngularUnits = NULL;
 
     char* imgCTName = ImagineCitationTranslation(szGCSName, geoKey);
     if( imgCTName )
@@ -561,7 +564,6 @@ void GetGeogCSFromCitation( char* szGCSName, int nGCSName,
     }
     return;
 }
-
 
 /************************************************************************/
 /*               CheckCitationKeyForStatePlaneUTM()                     */

@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /* should be size of larged possible filename */
@@ -88,7 +90,6 @@ static char *CPLGetStaticResult()
 
     return pachBuffer;
 }
-
 
 /************************************************************************/
 /*                        CPLFindFilenameStart()                        */
@@ -302,7 +303,6 @@ const char *CPLGetBasename( const char *pszFullFilename )
 
     return pszStaticResult;
 }
-
 
 /************************************************************************/
 /*                           CPLGetExtension()                          */
@@ -557,7 +557,9 @@ const char *CPLFormFilename( const char * pszPath,
     else if( pszExtension[0] != '.' && strlen(pszExtension) > 0 )
         pszAddedExtSep = ".";
 
-    if( CPLStrlcpy( pszStaticResult, pszPath, MIN(nLenPath+1, static_cast<size_t>(CPL_PATH_BUF_SIZE)) )
+    if( CPLStrlcpy( pszStaticResult, pszPath,
+                    std::min(nLenPath + 1,
+                             static_cast<size_t>(CPL_PATH_BUF_SIZE)) )
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) ||
         CPLStrlcat( pszStaticResult, pszAddedPathSep, CPL_PATH_BUF_SIZE)
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) ||
@@ -743,7 +745,6 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 
     return pszStaticResult;
 }
-
 
 /************************************************************************/
 /*                       CPLIsFilenameRelative()                        */

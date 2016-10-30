@@ -228,7 +228,6 @@ RawRasterBand::~RawRasterBand()
     CPLFree( pLineBuffer );
 }
 
-
 /************************************************************************/
 /*                             SetAccess()                              */
 /************************************************************************/
@@ -1012,7 +1011,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelOffset );
                     }
                 }
-
             }
 
             bDirty = TRUE;
@@ -1208,7 +1206,6 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*      RawDataset                                                      */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            RawDataset()                              */

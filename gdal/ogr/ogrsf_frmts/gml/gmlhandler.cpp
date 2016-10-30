@@ -272,7 +272,6 @@ void XMLCALL GMLExpatHandler::startElementCbk( void *pUserData, const char *pszN
         pThis->m_bStopParsing = true;
         XML_StopParser(pThis->m_oParser, XML_FALSE);
     }
-
 }
 
 /************************************************************************/
@@ -413,7 +412,6 @@ char* GMLExpatHandler::GetAttributeByIdx(void* attr, unsigned int idx, char** pp
 
 #endif
 
-
 static const char* const apszGMLGeometryElements[] =
 {
     "BoundingBox", /* ows:BoundingBox */
@@ -531,7 +529,6 @@ GMLHandler::~GMLHandler()
     CPLFree( m_pszKieli );
     CPLFree( pasGeometryNames );
 }
-
 
 /************************************************************************/
 /*                             startElement()                           */
@@ -709,7 +706,8 @@ OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
         {
             CPLFree(m_pszCurField);
             m_pszCurField = NULL;
-            m_nCurFieldLen = m_nCurFieldAlloc = 0;
+            m_nCurFieldLen = 0;
+            m_nCurFieldAlloc = 0;
         }
         m_bInCurField = true;
     }
@@ -1101,8 +1099,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
             return startElementGeometry(pszName, nLenName, attr);
         }
     }
-
-
     else if( nLenName == 9 && strcmp(pszName, "boundedBy") == 0 )
     {
         m_inBoundedByDepth = m_nDepth;
@@ -1172,7 +1168,8 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 {
                     CPLFree(m_pszCurField);
                     m_pszCurField = NULL;
-                    m_nCurFieldLen = m_nCurFieldAlloc = 0;
+                    m_nCurFieldLen = 0;
+                    m_nCurFieldAlloc = 0;
                 }
                 m_bInCurField = true;
 
@@ -1189,7 +1186,6 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
                 DealWithAttributes(pszName, nLenName, attr);
             }*/
         }
-
     }
     else
     {
@@ -1540,7 +1536,8 @@ OGRErr GMLHandler::endElementCityGMLGenericAttr()
                                             m_pszCurField, -1 );
         }
         m_pszCurField = NULL;
-        m_nCurFieldLen = m_nCurFieldAlloc = 0;
+        m_nCurFieldLen = 0;
+        m_nCurFieldAlloc = 0;
         m_bInCurField = false;
         CPLFree(m_pszCityGMLGenericAttrName);
         m_pszCityGMLGenericAttrName = NULL;
@@ -1602,7 +1599,8 @@ OGRErr GMLHandler::endElementAttribute()
             m_pszKieli = NULL;
         }
 
-        m_nCurFieldLen = m_nCurFieldAlloc = 0;
+        m_nCurFieldLen = 0;
+        m_nCurFieldAlloc = 0;
         m_bInCurField = false;
         m_nAttributeIndex = -1;
 
@@ -1805,7 +1803,6 @@ OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                         IsGeometryElement()                          */

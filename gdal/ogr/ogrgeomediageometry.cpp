@@ -31,14 +31,14 @@
 
 CPL_CVSID("$Id$");
 
-#define GEOMEDIA_POINT          0xC0
-#define GEOMEDIA_ORIENTED_POINT 0xC8
-#define GEOMEDIA_POLYLINE       0xC2
-#define GEOMEDIA_POLYGON        0xC3
-#define GEOMEDIA_BOUNDARY       0xC5
-#define GEOMEDIA_COLLECTION     0xC6
-#define GEOMEDIA_MULTILINE      0xCB
-#define GEOMEDIA_MULTIPOLYGON   0xCC
+static const int GEOMEDIA_POINT          = 0xC0;
+static const int GEOMEDIA_ORIENTED_POINT = 0xC8;
+static const int GEOMEDIA_POLYLINE       = 0xC2;
+static const int GEOMEDIA_POLYGON        = 0xC3;
+static const int GEOMEDIA_BOUNDARY       = 0xC5;
+static const int GEOMEDIA_COLLECTION     = 0xC6;
+static const int GEOMEDIA_MULTILINE      = 0xCB;
+static const int GEOMEDIA_MULTIPOLYGON   = 0xCC;
 
 /************************************************************************/
 /*                       OGRCreateFromGeomedia()                        */
@@ -371,7 +371,6 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
     return OGRERR_FAILURE;
 }
-
 
 /************************************************************************/
 /*                         OGRGetGeomediaSRS()                          */

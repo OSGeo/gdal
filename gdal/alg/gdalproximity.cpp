@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal_alg.h"
+#include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -97,7 +99,6 @@ If this option is set, all pixels within the MAXDIST threadhold are
 set to this fixed value instead of to a proximity distance.
 */
 
-
 CPLErr CPL_STDCALL
 GDALComputeProximity( GDALRasterBandH hSrcBand,
                       GDALRasterBandH hProximityBand,
@@ -127,11 +128,12 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
                 double adfGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
                 GDALGetGeoTransform( hSrcDS, adfGeoTransform );
-                if( ABS(adfGeoTransform[1]) != ABS(adfGeoTransform[5]) )
+                if( std::abs(adfGeoTransform[1]) !=
+                    std::abs(adfGeoTransform[5]) )
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Pixels not square, distances will be inaccurate." );
-                dfDistMult = ABS(adfGeoTransform[1]);
+                dfDistMult = std::abs(adfGeoTransform[1]);
             }
         }
         else if( !EQUAL(pszOpt, "PIXEL") )
@@ -305,7 +307,10 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 
     for( int i = 0; i < nXSize; i++ )
-        panNearX[i] = panNearY[i] = -1;
+    {
+        panNearX[i] = -1;
+        panNearY[i] = -1;
+    }
 
     for( int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
@@ -480,8 +485,9 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
         float fNearDistSq =
-            static_cast<float>(MAX(dfMaxDist,nXSize) *
-                               MAX(dfMaxDist,nXSize) * 2);
+            static_cast<float>(
+                std::max(dfMaxDist, static_cast<double>(nXSize)) *
+                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0);
 
         if( panNearX[iPixel] != -1 )
         {

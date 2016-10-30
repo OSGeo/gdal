@@ -70,7 +70,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
                          GetSession()->GetLastError());
                 return CE_Failure;
             }
-
         }
         if( !m_bDescriptionAsCO && pszDescription != NULL &&
                 pszDescription != m_osDescription )
@@ -233,7 +232,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                            WriteMetadata()                           */
 /************************************************************************/
@@ -241,8 +239,6 @@ CPLErr OGRDB2DataSource::FlushMetadata()
 void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed by the method */
                                      const char* pszTableName)
 {
-
-
     int bIsEmpty = (psXMLNode == NULL);
     char *pszXML = NULL;
     if( !bIsEmpty )
@@ -393,7 +389,6 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
              "exiting");
     return;
 }
-
 
 /************************************************************************/
 /*                        CreateMetadataTables()                        */
@@ -547,8 +542,6 @@ int OGRDB2DataSource::CreateMetadataTables()
     if ( bCreateTriggers && OGRERR_NONE != SQLCommand(hDB, pszMetadataTriggers) )
         return FALSE;
 #endif
-
-
 
     /* From C.11. gpkg_metadata_reference Table 36. gpkg_metadata_reference Table Definition SQL */
     oStatement.Clear();
@@ -715,7 +708,6 @@ int OGRDB2DataSource::HasMetadataTables()
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
@@ -748,7 +740,6 @@ const char* OGRDB2DataSource::CheckMetadataDomain( const char* pszDomain )
     }
     return pszDomain;
 }
-
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -888,9 +879,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
 #endif
 
     return GDALPamDataset::GetMetadata(pszDomain);
-
 }
-
 
 /************************************************************************/
 /*                          GetMetadataItem()                           */

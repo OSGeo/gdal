@@ -149,7 +149,6 @@ int OGRPGeoDriver::TestCapability( CPL_UNUSED const char * pszCap )
     return FALSE;
 }
 
-
 /*
  * START OF UNIX-only features.
  */

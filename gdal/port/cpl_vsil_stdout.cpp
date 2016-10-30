@@ -227,8 +227,6 @@ int VSIStdoutFilesystemHandler::Stat( const char * /* pszFilename */,
     return -1;
 }
 
-
-
 /************************************************************************/
 /* ==================================================================== */
 /*                   VSIStdoutRedirectFilesystemHandler                 */

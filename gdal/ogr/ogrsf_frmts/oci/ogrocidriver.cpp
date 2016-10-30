@@ -30,7 +30,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                        OGROCIDriverIdentify()                        */
 /************************************************************************/
@@ -79,7 +78,6 @@ static GDALDataset *OGROCIDriverCreate( const char * pszName,
     OGROCIDataSource    *poDS;
 
     poDS = new OGROCIDataSource();
-
 
     if( !poDS->Open( pszName, NULL, TRUE, TRUE ) )
     {

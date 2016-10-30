@@ -116,7 +116,6 @@ static void GenerateTiles(std::string filename,
                 hasNoData = 1;
             }
 
-
             //fill the true or false for hadnoData array if the source data has nodata value
             if (!isJpegDriver)
             {
@@ -845,7 +844,6 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     return poDS;
 }
 
-
 /************************************************************************/
 /*                            KMLRemoveSlash()                          */
 /************************************************************************/
@@ -1226,7 +1224,8 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
                                 else
                                 {
                                     CPLAssert(psLinkDS == poRoot->psFirstLink);
-                                    poRoot->psFirstLink = poRoot->psLastLink = NULL;
+                                    poRoot->psFirstLink = NULL;
+                                    poRoot->psLastLink = NULL;
                                 }
                             }
                             else
@@ -1467,7 +1466,6 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO( GDALRWFlag eRWFlag,
     psExtraArg->pProgressData = pProgressDataGlobal;
 
     return eErr;
-
 }
 
 /************************************************************************/
@@ -1518,7 +1516,6 @@ int KmlSuperOverlayFindRegionStartInternal(CPLXMLNode* psNode,
 
     return FALSE;
 }
-
 
 static
 int KmlSuperOverlayFindRegionStart(CPLXMLNode* psNode,
@@ -1647,7 +1644,6 @@ GDALDataset* KmlSuperOverlayLoadIcon(const char* pszBaseFilename, const char* ps
 
     return poDSIcon;
 }
-
 
 /************************************************************************/
 /*                    KmlSuperOverlayComputeDepth()                     */
@@ -1901,10 +1897,14 @@ void KmlSingleDocRasterDataset::BuildOverviews()
     for(int k = 2; k <= (int)aosDescs.size(); k++)
     {
         const KmlSingleDocRasterTilesDesc& oDesc = aosDescs[aosDescs.size()-k];
-        int nXSize = 0, nYSize = 0, nTileBands = 0, bHasCT = FALSE;
-        if( !KmlSingleDocGetDimensions(osDirname, oDesc, (int)aosDescs.size() - k  + 1,
-                                       nTileSize,
-                                       nXSize, nYSize, nTileBands, bHasCT) )
+        int nXSize = 0;
+        int nYSize = 0;
+        int nTileBands = 0;
+        int bHasCT = FALSE;
+        if( !KmlSingleDocGetDimensions(
+                osDirname, oDesc, (int)aosDescs.size() - k  + 1,
+                nTileSize,
+                nXSize, nYSize, nTileBands, bHasCT) )
         {
             break;
         }
@@ -2234,9 +2234,13 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
     GDALClose( (GDALDatasetH) poImageDS) ;
 
     const KmlSingleDocRasterTilesDesc& oDesc = aosDescs[aosDescs.size()-1];
-    int nXSize = 0, nYSize = 0, nBands = 0, bHasCT = FALSE;
-    if( !KmlSingleDocGetDimensions(osDirname, oDesc, (int)aosDescs.size(), nTileSize,
-                                   nXSize, nYSize, nBands, bHasCT) )
+    int nXSize = 0;
+    int nYSize = 0;
+    int nBands = 0;
+    int bHasCT = FALSE;
+    if( !KmlSingleDocGetDimensions(
+            osDirname, oDesc, (int)aosDescs.size(), nTileSize,
+            nXSize, nYSize, nBands, bHasCT) )
     {
         return NULL;
     }

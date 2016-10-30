@@ -32,6 +32,10 @@
 #include "swq.h"
 #include "gdalwarper.h"
 
+#include <cstdlib>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // 1.1.1: A GeoPackage SHALL contain 0x47503130 ("GP10" in ASCII) in the
@@ -147,7 +151,6 @@ OGRErr GDALGeoPackageDataset::SetApplicationId()
     return OGRERR_NONE;
 }
 
-
 bool GDALGeoPackageDataset::ReOpenDB()
 {
     CPLAssert( hDB != NULL );
@@ -161,7 +164,6 @@ bool GDALGeoPackageDataset::ReOpenDB()
     /* And re-open the file */
     return OpenOrCreateDB(SQLITE_OPEN_READWRITE);
 }
-
 
 /* Returns the first row of first column of SQL as integer */
 OGRErr GDALGeoPackageDataset::PragmaCheck(
@@ -218,7 +220,6 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     CPLErrorReset();
     return eErr;
 }
-
 
 OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
 {
@@ -426,7 +427,6 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
 
     return nSRSId;
 }
-
 
 /************************************************************************/
 /*                        GDALGeoPackageDataset()                       */
@@ -655,9 +655,11 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 
         if( CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "LIST_ALL_TABLES", "YES")) )
         {
+            // vgpkg_ is Spatialite virtual table
             osSQL += "UNION ALL "
                     "SELECT name, name, 0 as is_spatial, 0 AS xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS is_gpkg_table "
                     "FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'gpkg_%' "
+                    "AND name NOT LIKE 'vgpkg_%' "
                     "AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'sqlite_%' "
                     "AND name NOT IN (SELECT table_name FROM gpkg_contents)";
         }
@@ -874,7 +876,6 @@ void GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
 
 /************************************************************************/
@@ -1627,7 +1628,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                                 poODS->GetRasterYSize(),
                                                 GetRasterYSize());
             if( nOvFactor > 64 &&
-                ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
             {
                 nOvFactor = GetFloorPowerOfTwo(nOvFactor);
             }
@@ -1816,7 +1817,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                                         poODS->GetRasterYSize(),
                                         GetRasterYSize());
                 if( nOvFactor > 64 &&
-                    ABS(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
+                    std::abs(nOvFactor - GetFloorPowerOfTwo(nOvFactor)) <= 2 )
                 {
                     nOvFactor = GetFloorPowerOfTwo(nOvFactor);
                 }
@@ -3144,14 +3145,15 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
                 oSrcSRS.IsGeographic() )
             {
                 const double minLat =
-                    MIN( adfSrcGeoTransform[3],
-                         adfSrcGeoTransform[3] +
-                         poSrcDS->GetRasterYSize() *
-                         adfSrcGeoTransform[5] );
+                    std::min(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
                 const double maxLat =
-                    MAX( adfSrcGeoTransform[3],
-                         adfSrcGeoTransform[3] +
-                         poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                    std::max(adfSrcGeoTransform[3],
+                             adfSrcGeoTransform[3] +
+                             poSrcDS->GetRasterYSize() *
+                             adfSrcGeoTransform[5]);
                 double maxNorthing = adfGeoTransform[3];
                 double minNorthing =
                     adfGeoTransform[3] + adfGeoTransform[5] * nYSize;

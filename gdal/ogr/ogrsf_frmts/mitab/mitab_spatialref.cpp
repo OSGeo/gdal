@@ -210,6 +210,8 @@
 
 #include "mitab.h"
 
+#include <cmath>
+
 CPL_CVSID("$Id$");
 
 /* -------------------------------------------------------------------- */
@@ -821,7 +823,6 @@ OGRSpatialReference *TABFile::GetSpatialRef()
      *----------------------------------------------------------------*/
     if (m_poSpatialRef != NULL)
         return m_poSpatialRef;
-
 
     /*-----------------------------------------------------------------
      * Fetch the parameters from the header.
@@ -1637,7 +1638,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = 90.0;
         nParmCount = 3;
 
-        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+        if( std::abs((std::abs(parms[1]) - 90)) > 0.001 )
             sTABProj.nProjId = 28;
     }
 
@@ -1702,7 +1703,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = 90.0;
         nParmCount = 3;
 
-        if( ABS((ABS(parms[1]) - 90)) > 0.001 )
+        if( std::abs((std::abs(parms[1]) - 90)) > 0.001 )
             sTABProj.nProjId = 29;
     }
 

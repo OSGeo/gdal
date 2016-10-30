@@ -588,7 +588,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Create in-memory tile                                           */
 /* -------------------------------------------------------------------- */
-            int nReqXSize = nBlockXSize, nReqYSize = nBlockYSize;
+            int nReqXSize = nBlockXSize;
+            int nReqYSize = nBlockYSize;
             if ((nBlockXOff+1) * nBlockXSize > nXSize)
                 nReqXSize = nXSize - nBlockXOff * nBlockXSize;
             if ((nBlockYOff+1) * nBlockYSize > nYSize)

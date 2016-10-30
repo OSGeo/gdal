@@ -73,7 +73,6 @@
 
 #include "mitab_ogr_driver.h"
 
-
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -160,7 +159,6 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 }
-
 
 /************************************************************************/
 /*                              Create()                                */

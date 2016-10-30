@@ -57,7 +57,6 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 #define VFK_DB_HEADER   "vfk_header"
 #define VFK_DB_TABLE    "vfk_tables"
 
-
 enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
 
 /************************************************************************/

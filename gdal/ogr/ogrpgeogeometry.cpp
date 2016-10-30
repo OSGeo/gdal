@@ -38,14 +38,13 @@
 
 CPL_CVSID("$Id$");
 
-#define SHPP_TRISTRIP   0
-#define SHPP_TRIFAN     1
-#define SHPP_OUTERRING  2
-#define SHPP_INNERRING  3
-#define SHPP_FIRSTRING  4
-#define SHPP_RING       5
-#define SHPP_TRIANGLES  6 /* Multipatch 9.0 specific */
-
+static const int SHPP_TRISTRIP  = 0;
+static const int SHPP_TRIFAN    = 1;
+static const int SHPP_OUTERRING = 2;
+static const int SHPP_INNERRING = 3;
+static const int SHPP_FIRSTRING = 4;
+static const int SHPP_RING      = 5;
+static const int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
 
 typedef enum
 {
@@ -330,7 +329,6 @@ static OGRGeometry* OGRCreateFromMultiPatch(int nParts,
 
     return poMP;
 }
-
 
 /************************************************************************/
 /*                      OGRWriteToShapeBin()                            */
@@ -629,7 +627,6 @@ id,WKT
     memcpy( pabyPtr, &nGType, 4 );
     pabyPtr += 4;
 
-
 /* -------------------------------------------------------------------- */
 /*      POINT and POINTZ                                                */
 /* -------------------------------------------------------------------- */
@@ -744,7 +741,6 @@ id,WKT
                 if( dfM > dfMaxM ) dfMaxM = dfM;
             }
         }
-
 
         /* Swap if necessary */
         if( OGR_SWAP( wkbNDR ) )
@@ -1127,7 +1123,6 @@ id,WKT
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                   OGRWriteMultiPatchToShapeBin()                     */
@@ -2210,7 +2205,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         pasCurves[iCurve].u.EllipseByCenter.bIsComplete = ((nBits & EXT_SHAPE_ELLIPSE_COMPLETE) != 0);
                         iCurve++;
                     }
-
                 }
                 else
                 {
@@ -2346,7 +2340,6 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         else
                             nVerticesInThisPart =
                                 panPartStart[i+1] - panPartStart[i];
-
 
                         OGRCurve* poRing = OGRShapeCreateCompoundCurve(
                             panPartStart[i], nVerticesInThisPart,
@@ -2570,29 +2563,32 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
              || nSHPType == SHPT_POINTZ
              || nSHPType == SHPT_POINTZM )
     {
-        /* int nOffset; */
-        double  dfX, dfY, dfZ = 0, dfM = 0;
-
         if (nBytes < 4 + 8 + 8 + ((bHasZ) ? 8 : 0) + ((bHasM) ? 8 : 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Corrupted Shape : nBytes=%d, nSHPType=%d", nBytes, nSHPType);
+                     "Corrupted Shape : nBytes=%d, nSHPType=%d",
+                     nBytes, nSHPType);
             return OGRERR_FAILURE;
         }
+
+        double dfX = 0.0;
+        double dfY = 0.0;
 
         memcpy( &dfX, pabyShape + 4, 8 );
         memcpy( &dfY, pabyShape + 4 + 8, 8 );
 
         CPL_LSBPTR64( &dfX );
         CPL_LSBPTR64( &dfY );
-        /* nOffset = 20 + 8; */
+        // int nOffset = 20 + 8;
 
+        double dfZ = 0.0;
         if( bHasZ )
         {
             memcpy( &dfZ, pabyShape + 4 + 16, 8 );
             CPL_LSBPTR64( &dfZ );
         }
 
+        double dfM = 0.0;
         if( bHasM )
         {
             memcpy( &dfM, pabyShape + 4 + 16 + ((bHasZ) ? 8 : 0), 8 );

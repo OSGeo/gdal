@@ -148,7 +148,6 @@ OGRPGResultLayer::~OGRPGResultLayer()
     CPLFree( pszGeomTableSchemaName );
 }
 
-
 /************************************************************************/
 /*                      BuildFullQueryStatement()                       */
 /************************************************************************/
@@ -211,7 +210,6 @@ GIntBig OGRPGResultLayer::GetFeatureCount( int bForce )
     return nCount;
 }
 
-
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
@@ -259,7 +257,6 @@ int OGRPGResultLayer::TestCapability( const char * pszCap )
     else
         return FALSE;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -352,7 +349,6 @@ void OGRPGResultLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn 
 
         ResetReading();
     }
-
 }
 
 /************************************************************************/

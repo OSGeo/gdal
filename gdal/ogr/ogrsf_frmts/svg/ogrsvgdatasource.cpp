@@ -105,7 +105,6 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
     }
 }
 
-
 /************************************************************************/
 /*                      dataHandlerValidateCbk()                        */
 /************************************************************************/
@@ -121,7 +120,6 @@ void OGRSVGDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
         XML_StopParser(oCurrentParser, XML_FALSE);
     }
 }
-
 
 static void XMLCALL startElementValidateCbk(void *pUserData,
                                             const char *pszName, const char **ppszAttr)

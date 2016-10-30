@@ -37,7 +37,6 @@
 /*                           OGRXPlaneAPTLayer                          */
 /************************************************************************/
 
-
 class OGRXPlaneAPTLayer : public OGRXPlaneLayer
 {
   public:
@@ -56,7 +55,6 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
                                    double dfHeightTower = 0,
                                    const char* pszTowerName = NULL);
 };
-
 
 /************************************************************************/
 /*                   OGRXPlaneRunwayThresholdLayer                      */
@@ -194,7 +192,6 @@ class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
 /*                          OGRXPlaneRunwayLayer                        */
 /************************************************************************/
 
-
 class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
 {
   public:
@@ -216,11 +213,9 @@ class OGRXPlaneRunwayLayer : public OGRXPlaneLayer
                                    int bHasDistanceRemainingSigns);
 };
 
-
 /************************************************************************/
 /*                        OGRXPlaneStopwayLayer                         */
 /************************************************************************/
-
 
 class OGRXPlaneStopwayLayer : public OGRXPlaneLayer
 {
@@ -240,7 +235,6 @@ class OGRXPlaneStopwayLayer : public OGRXPlaneLayer
 /*                   OGRXPlaneWaterRunwayThresholdLayer                 */
 /************************************************************************/
 
-
 class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
 {
   public:
@@ -258,7 +252,6 @@ class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
                                                    double dfLength,
                                                    double dfHeading);
 };
-
 
 /************************************************************************/
 /*                         OGRXPlaneWaterRunwayLayer                    */
@@ -281,7 +274,6 @@ class OGRXPlaneWaterRunwayLayer : public OGRXPlaneLayer
                                    double dfWidth,
                                    int bBuoys);
 };
-
 
 /************************************************************************/
 /*                        OGRXPlaneHelipadLayer                         */
@@ -320,7 +312,6 @@ class OGRXPlaneHelipadLayer : public OGRXPlaneLayer
 /*                     OGRXPlaneHelipadPolygonLayer                     */
 /************************************************************************/
 
-
 class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
 {
   public:
@@ -340,11 +331,9 @@ class OGRXPlaneHelipadPolygonLayer : public OGRXPlaneLayer
                                    const char* pszEdgeLighing);
 };
 
-
 /************************************************************************/
 /*                    OGRXPlaneTaxiwayRectangleLayer                    */
 /************************************************************************/
-
 
 class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
 {
@@ -362,11 +351,9 @@ class OGRXPlaneTaxiwayRectangleLayer : public OGRXPlaneLayer
                                    int bBlueEdgeLights);
 };
 
-
 /************************************************************************/
 /*                          OGRXPlanePavementLayer                      */
 /************************************************************************/
-
 
 class OGRXPlanePavementLayer : public OGRXPlaneLayer
 {
@@ -385,7 +372,6 @@ class OGRXPlanePavementLayer : public OGRXPlaneLayer
 /*                       OGRXPlaneAPTBoundaryLayer                      */
 /************************************************************************/
 
-
 class OGRXPlaneAPTBoundaryLayer : public OGRXPlaneLayer
 {
   public:
@@ -396,11 +382,9 @@ class OGRXPlaneAPTBoundaryLayer : public OGRXPlaneLayer
                                    OGRPolygon* poPolygon);
 };
 
-
 /************************************************************************/
 /*                 OGRXPlaneAPTLinearFeatureLayer                       */
 /************************************************************************/
-
 
 class OGRXPlaneAPTLinearFeatureLayer : public OGRXPlaneLayer
 {
@@ -411,7 +395,6 @@ class OGRXPlaneAPTLinearFeatureLayer : public OGRXPlaneLayer
                                    const char* pszLinearFeatureName,
                                    OGRMultiLineString* poMultilineString);
 };
-
 
 /************************************************************************/
 /*                         OGRXPlaneATCFreqLayer                         */
@@ -427,7 +410,6 @@ class OGRXPlaneATCFreqLayer : public OGRXPlaneLayer
                                    const char* pszATCFreqName,
                                    double dfFrequency);
 };
-
 
 /************************************************************************/
 /*                     OGRXPlaneStartupLocationLayer                    */
@@ -448,7 +430,6 @@ class OGRXPlaneStartupLocationLayer : public OGRXPlaneLayer
 /************************************************************************/
 /*                     OGRXPlaneAPTLightBeaconLayer                     */
 /************************************************************************/
-
 
 static const sEnumerationElement APTLightBeaconColorType[] =
 {
@@ -488,7 +469,6 @@ class OGRXPlaneAPTWindsockLayer : public OGRXPlaneLayer
                                    double dfLon,
                                    int bIsIllumnited);
 };
-
 
 /************************************************************************/
 /*                       OGRXPlaneTaxiwaySignLayer                      */
@@ -596,8 +576,6 @@ enum
     APT_BOUNDARY_HEADER        = 130,
     APT_TAXI_LOCATION          = 1300, /* added in V_1000 */
 };
-
-
 
 /************************************************************************/
 /*                           OGRXPlaneAptReader                         */

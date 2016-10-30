@@ -35,6 +35,10 @@
 #include <jasper/jasper.h>
 #include "jpeg2000_vsil_io.h"
 
+#include <cmath>
+
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 // XXX: Part of code below extracted from the JasPer internal headers and
@@ -211,7 +215,6 @@ class JPEG2000RasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           JPEG2000RasterBand()                       */
 /************************************************************************/
@@ -252,8 +255,8 @@ JPEG2000RasterBand::JPEG2000RasterBand( JPEG2000Dataset *poDSIn, int nBandIn,
     }
     // FIXME: Figure out optimal block size!
     // Should the block size be fixed or determined dynamically?
-    nBlockXSize = MIN(256, poDSIn->nRasterXSize);
-    nBlockYSize = MIN(256, poDSIn->nRasterYSize);
+    nBlockXSize = std::min(256, poDSIn->nRasterXSize);
+    nBlockYSize = std::min(256, poDSIn->nRasterYSize);
     psMatrix = jas_matrix_create(nBlockYSize, nBlockXSize);
 
     if( iDepth % 8 != 0 && !poDSIn->bPromoteTo8Bit )
@@ -296,8 +299,10 @@ CPLErr JPEG2000RasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     /* In case the dimensions of the image are not multiple of the block dimensions */
     /* take care of not requesting more pixels than available for the blocks at the */
     /* right or bottom of the image */
-    int nWidthToRead = MIN(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
-    int nHeightToRead = MIN(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
+    const int nWidthToRead =
+        std::min(nBlockXSize, poGDS->nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nHeightToRead =
+        std::min(nBlockYSize, poGDS->nRasterYSize - nBlockYOff * nBlockYSize);
 
     jas_image_readcmpt( poGDS->psImage, nBand - 1,
                         nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
@@ -612,11 +617,11 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPEG2000Dataset     *poDS;
-    int                 *paiDepth = NULL, *pabSignedness = NULL;
-    int                 iBand;
+    int *paiDepth = NULL;
+    int *pabSignedness = NULL;
+    int iBand;
 
-    poDS = new JPEG2000Dataset();
+    JPEG2000Dataset *poDS = new JPEG2000Dataset();
 
     poDS->psStream = sS;
     poDS->iFormat = iFormat;
@@ -768,12 +773,10 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 
-
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEG2000RasterBand( poDS, iBand,
             paiDepth[iBand - 1], pabSignedness[iBand - 1] ) );
-
     }
 
     CPLFree( paiDepth );
@@ -925,8 +928,10 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         poBand = poSrcDS->GetRasterBand( iBand + 1);
 
-        sComps[iBand].tlx = sComps[iBand].tly = 0;
-        sComps[iBand].hstep = sComps[iBand].vstep = 1;
+        sComps[iBand].tlx = 0;
+        sComps[iBand].tly = 0;
+        sComps[iBand].hstep = 1;
+        sComps[iBand].vstep = 1;
         sComps[iBand].width = nXSize;
         sComps[iBand].height = nYSize;
         sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
@@ -1111,7 +1116,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                      || adfGeoTransform[2] != 0.0
                      || adfGeoTransform[3] != 0.0
                      || adfGeoTransform[4] != 0.0
-                     || ABS(adfGeoTransform[5]) != 1.0))
+                     || std::abs(adfGeoTransform[5]) != 1.0))
                 || poSrcDS->GetGCPCount() > 0
                 || poSrcDS->GetMetadata("RPC") != NULL ) )
         {

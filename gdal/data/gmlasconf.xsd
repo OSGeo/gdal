@@ -32,6 +32,12 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified" version="1.0">
   <xs:element name="Configuration">
+    <xs:annotation>
+        <xs:documentation>
+            Configuration of GMLAS driver.
+        </xs:documentation>
+    </xs:annotation>
+
     <xs:complexType>
       <xs:sequence>
         <xs:element name="AllowRemoteSchemaDownload" minOccurs="0"
@@ -226,6 +232,21 @@
                     Whether layer and field names should be consider equal in a
                     case insensitive way. This is important for conversion to
                     Postgres when identifiers are laundered in lower case
+                    Default is true.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
+              <xs:element name="PostgreSQLIdentifierLaundering" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                  <xs:documentation>
+                    Whether layer and field names should be laundered like the
+                    OGR PostgreSQL driver does by default, ie identifiers put
+                    in lower cases and a few special characters( single quote,
+                    dash, sharp) replaced by underscore. This can help to post-
+                    process the _ogr_layer_relationships layers more easily or,
+                    for write support.
+                    Note: this laundering is safe for other backends as well.
                     Default is true.
                   </xs:documentation>
                 </xs:annotation>

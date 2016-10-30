@@ -237,7 +237,7 @@ GDALDriverManager::~GDALDriverManager()
     OSRCleanup();
 
     OGRCleanupXercesMutex();
-    
+
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
 /* -------------------------------------------------------------------- */
@@ -494,7 +494,6 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
         RegisterDriver( static_cast<GDALDriver *>( hDriver ) );
 }
 
-
 /************************************************************************/
 /*                          DeregisterDriver()                          */
 /************************************************************************/
@@ -551,7 +550,6 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
 }
-
 
 /************************************************************************/
 /*                          GetDriverByName()                           */
@@ -757,7 +755,6 @@ void GDALDriverManager::AutoLoadDrivers()
                                      num2str(GDAL_VERSION_MAJOR) "."
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -848,7 +845,6 @@ void GDALDriverManager::AutoLoadDrivers()
     CSLDestroy( papszSearchPath );
 
 #endif  // GDAL_NO_AUTOLOAD
-
 }
 
 /************************************************************************/

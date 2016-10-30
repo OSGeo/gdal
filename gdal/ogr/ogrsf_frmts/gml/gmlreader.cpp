@@ -37,17 +37,15 @@
 #include "cpl_multiproc.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$");
+#include <algorithm>
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            ~IGMLReader()                             */
 /************************************************************************/
 
-IGMLReader::~IGMLReader()
-
-{
-}
+IGMLReader::~IGMLReader() {}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -514,7 +512,6 @@ GMLFeature *GMLReader::NextFeatureXerces()
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
-
     }
     catch (const XMLException& toCatch)
     {
@@ -591,7 +588,6 @@ GMLFeature *GMLReader::NextFeatureExpat()
         }
         if (!m_bStopParsing)
             m_bStopParsing = ((GMLExpatHandler*)m_poGMLHandler)->HasStoppedParsing();
-
     } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
 
     return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
@@ -1389,10 +1385,10 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                     poGeometry->getEnvelope( &sEnvelope );
                     if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                     {
-                        dfXMin = MIN(dfXMin,sEnvelope.MinX);
-                        dfXMax = MAX(dfXMax,sEnvelope.MaxX);
-                        dfYMin = MIN(dfYMin,sEnvelope.MinY);
-                        dfYMax = MAX(dfYMax,sEnvelope.MaxY);
+                        dfXMin = std::min(dfXMin, sEnvelope.MinX);
+                        dfXMax = std::max(dfXMax, sEnvelope.MaxX);
+                        dfYMin = std::min(dfYMin, sEnvelope.MinY);
+                        dfYMax = std::max(dfYMax, sEnvelope.MaxY);
                     }
                     else
                     {
@@ -1405,7 +1401,6 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
                     poClass->SetExtents( dfXMin, dfXMax, dfYMin, dfYMax );
                 }
                 delete poGeometry;
-
             }
         }
 

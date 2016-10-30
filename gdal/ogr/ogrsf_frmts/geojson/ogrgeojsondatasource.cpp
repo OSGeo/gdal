@@ -26,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogr_geojson.h"
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonreader.h"
@@ -218,8 +219,12 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     bool bWriteFC_BBOX =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
 
+    const bool bRFC7946 = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "RFC7946", "FALSE"));
+
     const char* pszNativeData = CSLFetchNameValue(papszOptions, "NATIVE_DATA");
-    const char* pszNativeMediaType = CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
+    const char* pszNativeMediaType =
+        CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
@@ -249,9 +254,20 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                 }
                 if( strcmp(it.key, "crs") == 0 )
                 {
-                    bWriteCRSIfWGS84 = true;
+                    if( !bRFC7946 )
+                        bWriteCRSIfWGS84 = true;
                     continue;
                 }
+                // See https://tools.ietf.org/html/rfc7946#section-7.1
+                if( bRFC7946 &&
+                    (strcmp(it.key, "coordinates") == 0 ||
+                     strcmp(it.key, "geometries") == 0 ||
+                     strcmp(it.key, "geometry") == 0 ||
+                     strcmp(it.key, "properties") == 0 ) )
+                {
+                    continue;
+                }
+
                 json_object* poKey = json_object_new_string(it.key);
                 VSIFPrintfL( fpOut_, "%s: ",
                              json_object_to_json_string(poKey) );
@@ -263,7 +279,36 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
         }
     }
 
-    if( poSRS )
+    OGRCoordinateTransformation* poCT = NULL;
+    if( bRFC7946 )
+    {
+        if( poSRS == NULL )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "No SRS set on layer. Assuming it is long/lat on WGS84 ellipsoid");
+        }
+        else
+        {
+            OGRSpatialReference oSRSWGS84;
+            oSRSWGS84.SetWellKnownGeogCS( "WGS84" );
+            if( !poSRS->IsSame(&oSRSWGS84) )
+            {
+                poCT = OGRCreateCoordinateTransformation( poSRS, &oSRSWGS84 );
+                if( poCT == NULL )
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Failed to create coordinate transformation between the "
+                        "input coordinate system and WGS84.  This may be because "
+                        "they are not transformable, or because projection "
+                        "services (PROJ.4 DLL/.so) could not be loaded." );
+
+                    return NULL;
+                }
+            }
+        }
+    }
+    else if( poSRS )
     {
         const char* pszAuthority = poSRS->GetAuthorityName(NULL);
         const char* pszAuthorityCode = poSRS->GetAuthorityCode(NULL);
@@ -311,7 +356,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
 
     OGRGeoJSONWriteLayer* poLayer =
         new OGRGeoJSONWriteLayer( pszNameIn, eGType, papszOptions,
-                                  bWriteFC_BBOX, this );
+                                  bWriteFC_BBOX, poCT, this );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -587,7 +632,6 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
         }
     }
 
-
     if( !GeoJSONIsObject( pszGeoData_) )
     {
         CPLDebug( "GeoJSON",
@@ -766,11 +810,9 @@ void OGRGeoJSONDataSource::FlushCache()
                     if( poFeature->GetNativeData() != NULL )
                     {
                         bAlreadyDone = true;
+                        OGRGeoJSONWriteOptions oOptions;
                         json_object* poObj =
-                            OGRGeoJSONWriteFeature(poFeature,
-                                                   FALSE/* bWriteBBOX */,
-                                                   -1 /*nCoordPrecision*/,
-                                                   -1 /* nSignificatnFigures*/);
+                            OGRGeoJSONWriteFeature(poFeature, oOptions);
                         VSILFILE* fp = VSIFOpenL(pszName_, "wb");
                         if( fp != NULL )
                         {

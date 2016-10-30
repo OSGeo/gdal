@@ -1194,7 +1194,6 @@ bool OGRVDVWriterLayer::WriteSchemaIfNeeded()
                     bOK &= VSIFPrintfL(m_fpL, "char[%d]", nWidth) > 0;
                     break;
             }
-
         }
         bOK &= VSIFPrintfL(m_fpL, "\n") > 0;
 
@@ -1430,7 +1429,6 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
         bRet &= VSIFPrintfL(fpL, "dve; \"%s\"\n", OGRVDVEscapeString(pszDve).c_str()) > 0;
         bRet &= VSIFPrintfL(fpL, "fft; \"%s\"\n", OGRVDVEscapeString(pszFft).c_str()) > 0;
     }
-
 
     for(char** papszIter = papszOptions;
                papszIter != NULL && *papszIter != NULL;

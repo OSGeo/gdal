@@ -182,7 +182,6 @@ bool OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     return true;
 }
 
-
 /************************************************************************/
 /*                          GetSpatialView()                          */
 /************************************************************************/
@@ -253,7 +252,6 @@ void OGRCloudantTableLayer::WriteMetadata()
     osURI += "/";
     osURI += pszSpatialDDoc;
 
-
    json_object* poDDocObj = poDS->GET(osURI);
     if (poDDocObj == NULL)
         return;
@@ -278,7 +276,6 @@ void OGRCloudantTableLayer::WriteMetadata()
         json_object_put(poDDocObj);
         return;
     }
-
 
     if (poSRS)
     {
@@ -308,7 +305,6 @@ void OGRCloudantTableLayer::WriteMetadata()
             {
                 json_object_object_add(poDDocObj, "srsid",
                                    json_object_new_string(pszUrn));
-
             }
         }
     }

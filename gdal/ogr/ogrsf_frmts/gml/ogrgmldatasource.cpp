@@ -44,6 +44,7 @@
 #include "gmlregistry.h"
 #include "gmlreaderp.h"
 
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -1063,7 +1064,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                                 papszIter ++;
                             }
                         }
-
                     }
 
                     if (bAddClass)
@@ -1195,8 +1195,6 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         papoLayers[nLayers] = TranslateGMLSchema(poReader->GetClass(nLayers));
         nLayers++;
     }
-
-
 
     return true;
 }
@@ -1685,7 +1683,6 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
 
     return true;
 }
-
 
 /************************************************************************/
 /*                         WriteTopElements()                           */
@@ -2415,14 +2412,15 @@ void OGRGMLDataSource::InsertHeader()
 /*      header so we have room insert the schema.  Move in pretty       */
 /*      big chunks.                                                     */
 /* -------------------------------------------------------------------- */
-        int nChunkSize = MIN(nSchemaStart-nSchemaInsertLocation,250000);
+        int nChunkSize = std::min(nSchemaStart-nSchemaInsertLocation,250000);
         char *pszChunk = (char *) CPLMalloc(nChunkSize);
 
         for( int nEndOfUnmovedData = nSchemaStart;
              nEndOfUnmovedData > nSchemaInsertLocation; )
         {
-            int nBytesToMove =
-                MIN(nChunkSize, nEndOfUnmovedData - nSchemaInsertLocation );
+            const int nBytesToMove =
+                std::min(nChunkSize,
+                         nEndOfUnmovedData - nSchemaInsertLocation );
 
             VSIFSeekL( fpOutput, nEndOfUnmovedData - nBytesToMove, SEEK_SET );
             VSIFReadL( pszChunk, 1, nBytesToMove, fpOutput );
@@ -2451,9 +2449,10 @@ void OGRGMLDataSource::InsertHeader()
 /*      Close external schema files.                                    */
 /* -------------------------------------------------------------------- */
     else
+    {
         VSIFCloseL( fpSchema );
+    }
 }
-
 
 /************************************************************************/
 /*                            PrintLine()                               */
@@ -2476,7 +2475,6 @@ void OGRGMLDataSource::PrintLine(VSILFILE* fp, const char *fmt, ...)
 
     VSIFPrintfL(fp, "%s%s", osWork.c_str(), pszEOL);
 }
-
 
 /************************************************************************/
 /*                     OGRGMLSingleFeatureLayer                         */

@@ -52,7 +52,6 @@ typedef struct HDF5GroupObjects {
   struct HDF5GroupObjects *poHchild;
 } HDF5GroupObjects;
 
-
 herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
 
 /************************************************************************/

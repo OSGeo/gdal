@@ -40,6 +40,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include <limits>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -411,8 +412,11 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      Build histogram.                                                */
 /* ==================================================================== */
-    GByte *pabyRedLine, *pabyGreenLine, *pabyBlueLine;
-    int iLine, iPixel;
+    GByte *pabyRedLine;
+    GByte *pabyGreenLine;
+    GByte *pabyBlueLine;
+    int iLine;
+    int iPixel;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
@@ -426,8 +430,12 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     if (ptr->next)
         ptr->next->prev = ptr;
 
-    ptr->rmin = ptr->gmin = ptr->bmin = 999;
-    ptr->rmax = ptr->gmax = ptr->bmax = -1;
+    ptr->rmin = 999;
+    ptr->gmin = 999;
+    ptr->bmin = 999;
+    ptr->rmax = -1;
+    ptr->gmax = -1;
+    ptr->bmax = -1;
     ptr->total = (GUIntBig)nXSize * (GUIntBig)nYSize;
 
 /* -------------------------------------------------------------------- */
@@ -468,18 +476,16 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {
-            int nRed, nGreen, nBlue;
+            const int nRed = pabyRedLine[iPixel] >> nColorShift;
+            const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
+            const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            nRed = pabyRedLine[iPixel] >> nColorShift;
-            nGreen = pabyGreenLine[iPixel] >> nColorShift;
-            nBlue = pabyBlueLine[iPixel] >> nColorShift;
-
-            ptr->rmin = MIN(ptr->rmin, nRed);
-            ptr->gmin = MIN(ptr->gmin, nGreen);
-            ptr->bmin = MIN(ptr->bmin, nBlue);
-            ptr->rmax = MAX(ptr->rmax, nRed);
-            ptr->gmax = MAX(ptr->gmax, nGreen);
-            ptr->bmax = MAX(ptr->bmax, nBlue);
+            ptr->rmin = std::min(ptr->rmin, nRed);
+            ptr->gmin = std::min(ptr->gmin, nGreen);
+            ptr->bmin = std::min(ptr->bmin, nBlue);
+            ptr->rmax = std::max(ptr->rmax, nRed);
+            ptr->gmax = std::max(ptr->gmax, nGreen);
+            ptr->bmax = std::max(ptr->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )
@@ -564,7 +570,8 @@ end_and_cleanup:
 
     /* We're done with the boxes now */
     CPLFree(box_list);
-    freeboxes = usedboxes = NULL;
+    freeboxes = NULL;
+    usedboxes = NULL;
 
     if( panHistogram == NULL )
         CPLFree( histogram );
@@ -597,9 +604,12 @@ static void shrinkboxFromBand(Colorbox* ptr,
                               const GByte* pabyGreenBand,
                               const GByte* pabyBlueBand, GUIntBig nPixels)
 {
-    int rmin_new = 255, rmax_new = 0,
-        gmin_new = 255, gmax_new = 0,
-        bmin_new = 255, bmax_new = 0;
+    int rmin_new = 255;
+    int rmax_new = 0;
+    int gmin_new = 255;
+    int gmax_new = 0;
+    int bmin_new = 255;
+    int bmax_new = 0;
     for(GUIntBig i=0;i<nPixels;i++)
     {
         int iR = pabyRedBand[i];
@@ -761,7 +771,8 @@ splitbox(Colorbox* ptr, const T* histogram,
          GByte* pabyBlueBand, T nPixels)
 {
     T hist2[256];
-    int first=0, last=0;
+    int first = 0;
+    int last = 0;
     Colorbox *new_cb;
     const T *iptr;
     T *histp;

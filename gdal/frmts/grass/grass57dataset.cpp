@@ -190,9 +190,7 @@ class GRASSRasterBand : public GDALRasterBand
 
   private:
     CPLErr ResetReading( struct Cell_head * );
-
 };
-
 
 /************************************************************************/
 /*                          GRASSRasterBand()                           */
@@ -294,7 +292,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         nativeNulls = true;
     }
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
     G_set_window( &(((GRASSDataset *)poDS)->sCellInfo) );
@@ -449,7 +447,6 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
         }
 
         G_copy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
-
     }
     else
     {
@@ -468,7 +465,6 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
             G_set_window( sNewWindow );
         }
     }
-
 
     return CE_None;
 }
@@ -504,12 +500,17 @@ CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         nBlockXSize );
 
         G_free ( cbuf );
-
-    } else if ( eDataType == GDT_Int32 ) {
+    }
+    else if ( eDataType == GDT_Int32 )
+    {
         G_get_c_raster_row ( hCell, (CELL *) pImage, nBlockYOff );
-    } else if ( eDataType == GDT_Float32 ) {
+    }
+    else if ( eDataType == GDT_Float32 )
+    {
         G_get_f_raster_row ( hCell, (FCELL *) pImage, nBlockYOff );
-    } else if ( eDataType == GDT_Float64 ) {
+    }
+    else if ( eDataType == GDT_Float64 )
+    {
         G_get_d_raster_row ( hCell, (DCELL *) pImage, nBlockYOff );
     }
 
@@ -716,7 +717,6 @@ double GRASSRasterBand::GetNoDataValue( int *pbSuccess )
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            GRASSDataset()                            */
 /************************************************************************/
@@ -787,10 +787,16 @@ CPLErr GRASSDataset::GetGeoTransform( double * padfGeoTransform )
 bool GRASSDataset::SplitPath( char *path, char **gisdbase, char **location,
                               char **mapset, char **element, char **name )
 {
-    char *p, *ptr[5], *tmp;
-    int  i = 0;
+    char *p;
+    char *ptr[5];
+    char *tmp;
+    int i = 0;
 
-    *gisdbase = *location = *mapset = *element = *name = NULL;
+    *gisdbase = NULL;
+    *location = NULL;
+    *mapset = NULL;
+    *element = NULL;
+    *name = NULL;
 
     if ( !path || strlen(path) == 0 )
         return false;
@@ -858,7 +864,6 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Set error function
     G_set_error_routine ( (GrassErrorHandler) Grass2CPLErrorHook );
-
 
     // GISBASE is path to the directory where GRASS is installed,
     if ( !getenv( "GISBASE" ) ) {

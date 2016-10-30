@@ -39,7 +39,6 @@ static GPKGTileFormat GetTileFormat(const char* pszTF );
 #define DB2LAYERSTATUS_CREATED  2
 #define DB2LAYERSTATUS_DISABLED 3
 
-
 /************************************************************************/
 /*                             Tiling schemes                           */
 /************************************************************************/
@@ -238,7 +237,6 @@ OGRDB2DataSource::~OGRDB2DataSource()
         if( m_papoSRS[i] != NULL )
             CPLDebug("OGRDB2DataSource::~OGRDB2DataSource","m_papoSRS[%d] is not null", i);
 //LATER            m_papoSRS[i]->Release(); //fails for some reason
-
     }
     CPLFree( m_panSRID );
     CPLFree( m_papoSRS );
@@ -347,7 +345,6 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
     return poLayer;
 }
 
-
 /************************************************************************/
 /*                    DeleteLayer(OGRDB2TableLayer * poLayer)           */
 /************************************************************************/
@@ -401,7 +398,6 @@ int OGRDB2DataSource::DeleteLayer( OGRDB2TableLayer * poLayer )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                            DeleteLayer(int iLayer)                   */
 /************************************************************************/
@@ -413,7 +409,6 @@ int OGRDB2DataSource::DeleteLayer( int iLayer )
         return OGRERR_FAILURE;
 
     return DeleteLayer(m_papoLayers[iLayer]);
-
 }
 
 /************************************************************************/
@@ -455,7 +450,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
         /* For now, always convert layer name to uppercase table name*/
         pszTableName = ToUpper( pszDotPos + 1 );
-
     }
     else
     {
@@ -469,7 +463,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup(CSLFetchNameValue(papszOptions, "SCHEMA"));
     }
-
 
     /* -------------------------------------------------------------------- */
     /*      Do we already have this layer?  If so, should we blow it        */
@@ -520,7 +513,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     pszGeomColumn =  CSLFetchNameValue( papszOptions, "GEOM_NAME");
     if (!pszGeomColumn)
         pszGeomColumn = "OGR_geometry";
-
 
     /* -------------------------------------------------------------------- */
     /*      Try to get the SRS Id of this spatial reference system,         */
@@ -615,7 +607,6 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
     m_papoLayers[m_nLayers++] = poLayer;
 
-
     return poLayer;
 }
 
@@ -653,7 +644,6 @@ int OGRDB2DataSource::OpenTable( const char *pszSchemaName,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                       GetLayerCount()                                */
@@ -913,12 +903,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
     }
     CPLDebug("OGR_DB2DataSource::Create","exiting");
     return TRUE;
-
-
 }
-
-
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -1085,8 +1070,6 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
 
     m_pszName = CPLStrdup(pszNewName);
 
-
-
     // if the table parameter was specified, pull out the table names
     if( pszTableSpec != NULL )
     {
@@ -1094,7 +1077,6 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
         int             i;
 
         papszTableList = CSLTokenizeString2( pszTableSpec, ",", 0 );
-
 
         for( i = 0; i < CSLCount(papszTableList); i++ )
         {
@@ -1285,7 +1267,6 @@ int OGRDB2DataSource::Open( const char * pszNewName,
         }
     }
 
-
     /* Determine the available tables if not specified. */
     if (m_papszTableNames == NULL)
     {
@@ -1377,7 +1358,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                             && oStatement2.Fetch() )
                     {
                         if ( oStatement2.GetColData( 0 ) )
-                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));;
+                            pszSRText = CPLStrdup(oStatement2.GetColData( 0 ));
                     }
                 }
                 if (nSRId < 0) { // something went wrong - didn't find srid - use default
@@ -1461,7 +1442,6 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
 
     CPLDebug( "OGRDB2DataSource::ExecuteSQL", "ExecuteSQL(%s) called.",
               pszSQLCommand );
-
 
     /* Execute the command natively */
     OGRDB2Statement *poStatement = new OGRDB2Statement( &m_oSession );
@@ -1564,9 +1544,7 @@ OGRErr OGRDB2DataSource::InitializeMetadataTables()
               "Dynamically creating DB2 spatial metadata tables is "
               "not supported" );
     return OGRERR_FAILURE;
-
 }
-
 
 /************************************************************************/
 /*                              FetchSRS()                              */
@@ -2007,7 +1985,6 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
         pszContentsMinY = osContentsMinY.c_str();
         pszContentsMaxX = osContentsMaxX.c_str();
         pszContentsMaxY = osContentsMaxY.c_str();
-
     }
 
     if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
@@ -2079,7 +2056,6 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                         InitRaster()                                 */
 /************************************************************************/
@@ -2105,7 +2081,6 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     if (nIdxInResult > 0) {
         CPLDebug("OGRDB2DataSource::InitRaster1",
                  "Serious problem as we don't support nIdxInResult");
-
     }
     int nZoomLevel = atoi(oStatement->GetColData( 0));
     double dfPixelXSize = CPLAtof(oStatement->GetColData( 1));
@@ -2220,7 +2195,6 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                         GetTileFormat()                              */
 /************************************************************************/
@@ -2267,7 +2241,6 @@ int OGRDB2DataSource::RegisterWebPExtension()
 #endif
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                    CheckUnknownExtensions()                          */
@@ -2369,7 +2342,6 @@ void OGRDB2DataSource::ParseCompressionOptions(char** papszOptions)
         m_bDither = CPLTestBool(pszDither);
 }
 
-
 /************************************************************************/
 /*                      ComputeTileAndPixelShifts()                     */
 /************************************************************************/
@@ -2387,9 +2359,7 @@ void OGRDB2DataSource::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - m_dfTMSMaxY) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
-
 
 /************************************************************************/
 /*                  CreateExtensionsTableIfNecessary()                  */
@@ -2422,7 +2392,6 @@ OGRErr OGRDB2DataSource::CreateExtensionsTableIfNecessary()
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                         HasExtensionsTable()                         */
 /************************************************************************/
@@ -2451,7 +2420,6 @@ void OGRDB2DataSource::FlushCache()
     DB2_DEBUG_ENTER("OGRDB2DataSource::FlushCache");
     FlushCacheWithErrCode();
     DB2_DEBUG_EXIT("OGRDB2DataSource::FlushCache");
-
 }
 
 CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
@@ -2502,9 +2470,7 @@ CPLErr OGRDB2DataSource::FlushCacheWithErrCode()
     CPLDebug("OGRDB2DataSource::FlushCacheWithErrCode","exiting; eErr: %d", eErr);
 
     return eErr;
-
 }
-
 
 /************************************************************************/
 /*                         SoftStartTransaction()                       */
@@ -2516,8 +2482,6 @@ int OGRDB2DataSource::SoftStartTransaction()
     return m_oSession.BeginTransaction();
 }
 
-
-
 /************************************************************************/
 /*                         SoftCommitTransaction()                      */
 /************************************************************************/
@@ -2528,8 +2492,6 @@ int OGRDB2DataSource::SoftCommitTransaction()
     return m_oSession.CommitTransaction();
 }
 
-
-
 /************************************************************************/
 /*                         SoftRollbackTransaction()                    */
 /************************************************************************/
@@ -2539,8 +2501,6 @@ int OGRDB2DataSource::SoftRollbackTransaction()
     CPLDebug("OGRDB2DataSource::SoftRollbackTransaction", "enter");
     return m_oSession.RollbackTransaction();
 }
-
-
 
 /************************************************************************/
 /*                            CreateCopy()                              */
@@ -2574,8 +2534,6 @@ void DumpStringList(char **papszStrList)
     }
     return ;
 }
-
-
 
 GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         GDALDataset *poSrcDS,
@@ -2870,7 +2828,6 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GetProjectionRef()                           */
@@ -3231,8 +3188,6 @@ CPLErr OGRDB2DataSource::FinalizeRasterRegistration()
     return CE_None;
 }
 
-
-
 /************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
@@ -3573,7 +3528,6 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       RegisterZoomOtherExtension()                   */

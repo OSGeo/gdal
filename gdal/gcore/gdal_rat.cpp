@@ -40,6 +40,8 @@
 #endif
 #include "ogrgeojsonwriter.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /**
@@ -543,7 +545,6 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 /*                             Serialize()                              */
 /************************************************************************/
 
-
 /** Serialize as a XML tree.
  * @return XML tree.
  */
@@ -658,7 +659,6 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 
     if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
         return poRAT;
-
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -818,7 +818,6 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                      InitializeFromColorTable()                      */
 /************************************************************************/
@@ -950,13 +949,14 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             return NULL;
 
         for( int iRow = 0; iRow < GetRowCount(); iRow++ )
-            nEntryCount = MAX(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
+            nEntryCount =
+                std::max(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
 
         if( nEntryCount < 0 )
             return NULL;
 
         // Restrict our number of entries to something vaguely sensible.
-        nEntryCount = MIN(65535, nEntryCount);
+        nEntryCount = std::min(65535, nEntryCount);
     }
 
 /* -------------------------------------------------------------------- */
@@ -1007,7 +1007,6 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
         TranslateToColorTable( nEntryCount );
 }
 
-
 /************************************************************************/
 /*                            DumpReadable()                            */
 /************************************************************************/
@@ -1057,7 +1056,6 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 
     static_cast<GDALRasterAttributeTable *>(hRAT)->DumpReadable( fp );
 }
-
 
 /* \class GDALDefaultRasterAttributeTable
  *

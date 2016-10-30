@@ -134,6 +134,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+#include <algorithm>
+
 #ifdef __HP_aCC
 #  include <wchar.h>      /* iswspace() */
 #else
@@ -153,7 +155,6 @@ IMapInfoFile::IMapInfoFile() :
     m_bBoundsSet(FALSE),
     m_pszCharset(NULL)
 {}
-
 
 /**********************************************************************
  *                   IMapInfoFile::~IMapInfoFile()
@@ -231,7 +232,9 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
         char *pszAdjFname = CPLStrdup(pszFname);
-        GBool bFoundFields = FALSE, bFoundView=FALSE, bFoundSeamless=FALSE;
+        GBool bFoundFields = FALSE;
+        GBool bFoundView = FALSE;
+        GBool bFoundSeamless = FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
         VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
@@ -277,8 +280,6 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname,
 
     return poFile;
 }
-
-
 
 /**********************************************************************
  *                   IMapInfoFile::GetNextFeature()
@@ -544,7 +545,7 @@ int IMapInfoFile::GetTABType( OGRFieldDefn *poField,
         if( nWidth == 0 )
             nWidth = 254;
         else
-            nWidth = MIN(254,nWidth);
+            nWidth = std::min(254, nWidth);
     }
     else
     {
@@ -586,7 +587,6 @@ OGRErr IMapInfoFile::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     return OGRERR_FAILURE;
 }
-
 
 /**********************************************************************
  *                   IMapInfoFile::SetCharset()

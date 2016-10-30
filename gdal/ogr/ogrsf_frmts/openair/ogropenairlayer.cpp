@@ -84,7 +84,6 @@ OGROpenAirLayer::~OGROpenAirLayer()
     VSIFCloseL( fpOpenAir );
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -97,7 +96,6 @@ void OGROpenAirLayer::ResetReading()
     bHasLastLine = false;
     VSIFSeekL( fpOpenAir, 0, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

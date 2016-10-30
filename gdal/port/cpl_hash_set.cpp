@@ -102,7 +102,6 @@ CPLHashSet* CPLHashSetNew( CPLHashSetHashFunc fnHashFunc,
     return set;
 }
 
-
 /************************************************************************/
 /*                          CPLHashSetSize()                            */
 /************************************************************************/
@@ -237,7 +236,6 @@ void CPLHashSetClear( CPLHashSet* set )
 /*                       CPLHashSetForeach()                            */
 /************************************************************************/
 
-
 /**
  * Walk through the hash set and runs the provided function on all the
  * elements
@@ -312,7 +310,6 @@ static void CPLHashSetRehash( CPLHashSet* set )
     set->nAllocatedSize = nNewAllocatedSize;
     set->bRehash = false;
 }
-
 
 /************************************************************************/
 /*                        CPLHashSetFindPtr()                           */

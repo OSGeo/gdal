@@ -26,7 +26,6 @@
    Read zip.h for more info
 */
 
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -118,7 +117,6 @@ typedef struct linkedlist_data_s
     linkedlist_datablock_internal* last_block;
 } linkedlist_data;
 
-
 typedef struct
 {
     z_stream stream;            /* zLib stream structure for inflate */
@@ -161,8 +159,6 @@ typedef struct
     char *globalcomment;
 #endif
 } zip_internal;
-
-
 
 #ifndef NOCRYPT
 #define INCLUDECRYPTINGCODE_IFCRYPTALLOWED
@@ -250,8 +246,6 @@ static int add_data_in_datablock(linkedlist_data*ll,
     return ZIP_OK;
 }
 
-
-
 /****************************************************************************/
 
 #ifndef NO_ADDFILEINEXISTINGZIP
@@ -302,7 +296,6 @@ static void ziplocal_putValue_inmemory (void *dest, uLong x, int nbByte)
 
 /****************************************************************************/
 
-
 static uLong ziplocal_TmzDateToDosDate( const tm_zip *ptm,
                                         uLong /* dosDate */ )
 {
@@ -315,7 +308,6 @@ static uLong ziplocal_TmzDateToDosDate( const tm_zip *ptm,
       (uLong) (((ptm->tm_mday) + (32 * (ptm->tm_mon+1)) + (512 * year)) << 16) |
         ((ptm->tm_sec/2) + (32* ptm->tm_min) + (2048 * (uLong)ptm->tm_hour));
 }
-
 
 /****************************************************************************/
 
@@ -337,7 +329,6 @@ static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
             return ZIP_EOF;
     }
 }
-
 
 /* ===========================================================================
    Reads a long in LSB order from the given gz_stream. Sets
@@ -684,7 +675,6 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
             return err;
     }
 
-
     if (filename==NULL)
         filename="-";
 
@@ -935,7 +925,6 @@ extern int ZEXPORT cpl_zipWriteInFileInZip (
             zi->ci.stream.next_out = zi->ci.buffered_data;
         }
 
-
         if(err != ZIP_OK)
             break;
 
@@ -944,7 +933,6 @@ extern int ZEXPORT cpl_zipWriteInFileInZip (
             uLong uTotalOutBefore = zi->ci.stream.total_out;
             err=deflate(&zi->ci.stream,  Z_NO_FLUSH);
             zi->ci.pos_in_buffered_data += (uInt)(zi->ci.stream.total_out - uTotalOutBefore) ;
-
         }
         else
         {

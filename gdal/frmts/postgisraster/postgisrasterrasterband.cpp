@@ -256,7 +256,6 @@ void PostGISRasterRasterBand::NullBuffer(void* pData,
     }
 }
 
-
 /********************************************************
  * \brief SortTilesByPKID
  ********************************************************/

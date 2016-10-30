@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -288,7 +290,8 @@ CPLErr HFABand::LoadOverviews()
                 papoOverviews[nOverviews-1] = new HFABand( psOvHFA, poChild );
                 if( papoOverviews[nOverviews-1]->nWidth == 0 )
                 {
-                    nWidth = nHeight = 0;
+                    nWidth = 0;
+                    nHeight = 0;
                     delete papoOverviews[nOverviews-1];
                     papoOverviews[nOverviews-1] = NULL;
                     return CE_None;
@@ -875,7 +878,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 #if DEBUG_VERBOSE
                 // TODO(schwehr): Do something smarter with out-of-range data.
                 // Bad data can trigger this assert.  r23498
-                CPLAssert( nDataValue < 256 );
+                CPLAssert(nDataValue < 256);
 #endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
@@ -900,8 +903,8 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 #if DEBUG_VERBOSE
                 // TODO(schwehr): Do something smarter with out-of-range data.
                 // Bad data can trigger this assert.  r23498
-                CPLAssert( nDataValue >= -127 );
-                CPLAssert( nDataValue < 128 );
+                CPLAssert(nDataValue >= -127);
+                CPLAssert(nDataValue < 128);
 #endif
                 ((GByte *) pabyDest)[nPixelsOutput++] =
                     static_cast<GByte>(nDataValue);
@@ -1032,7 +1035,7 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
 void HFABand::NullBlock( void *pData )
 
 {
-    const int nChunkSize = MAX(1, HFAGetDataTypeBits(eDataType)/8);
+    const int nChunkSize = std::max(1, HFAGetDataTypeBits(eDataType) / 8);
     int nWords = nBlockXSize * nBlockYSize;
 
     if( !bNoDataSet )
@@ -1080,7 +1083,7 @@ void HFABand::NullBlock( void *pData )
           case EPT_u4:
           {
               const unsigned char byVal = static_cast<unsigned char>(
-                  MAX(0, MIN(15, static_cast<int>(dfNoData))));
+                  std::max(0, std::min(15, static_cast<int>(dfNoData))));
 
               nWords = (nWords + 1) / 2;
 
@@ -1091,13 +1094,14 @@ void HFABand::NullBlock( void *pData )
           case EPT_u8:
             ((unsigned char *) abyTmp)[0] =
                 static_cast<unsigned char>(
-                    MAX(0, MIN(255, static_cast<int>(dfNoData))));
+                    std::max(0, std::min(255, static_cast<int>(dfNoData))));
             break;
 
           case EPT_s8:
               ((signed char *) abyTmp)[0] =
                   static_cast<signed char>(
-                      MAX(-128, MIN(127, static_cast<int>(dfNoData))));
+                      std::max(-128,
+                               std::min(127, static_cast<int>(dfNoData))));
               break;
 
           case EPT_u16:
@@ -1161,7 +1165,6 @@ void HFABand::NullBlock( void *pData )
             memcpy( ((GByte *) pData) + nChunkSize * i,
                     abyTmp, nChunkSize );
     }
-
 }
 
 /************************************************************************/
@@ -1379,7 +1382,6 @@ void HFABand::ReAllocBlock( int iBlock, int nSize )
     snprintf( szVarName, sizeof(szVarName), "blockinfo[%d].size", iBlock );
     poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
 }
-
 
 /************************************************************************/
 /*                           SetRasterBlock()                           */
@@ -2143,7 +2145,8 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
 /* -------------------------------------------------------------------- */
     bool bCreateLargeRaster = CPLTestBool(
         CPLGetConfigOption("USE_SPILL", "NO") );
-    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+    GIntBig nValidFlagsOffset = 0;
+    GIntBig nDataOffset = 0;
 
     if( (psRRDInfo->nEndOfFile
          + (nOXSize * static_cast<double>(nOYSize))

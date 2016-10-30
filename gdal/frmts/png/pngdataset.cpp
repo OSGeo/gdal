@@ -83,7 +83,6 @@ static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 
 class PNGRasterBand;
 
-
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4324 ) /* 'PNGDataset' : structure was padded due to __declspec(align()) at line where we use jmp_buf */
@@ -109,7 +108,6 @@ class PNGDataset : public GDALPamDataset
 
     int    bGeoTransformValid;
     double adfGeoTransform[6];
-
 
     void        CollectMetadata();
 
@@ -216,7 +214,6 @@ class PNGRasterBand : public GDALPamRasterBand
     int         bHaveNoData;
     double      dfNoDataValue;
 
-
 #ifdef SUPPORT_CREATE
     virtual CPLErr SetColorTable(GDALColorTable*);
     virtual CPLErr IWriteBlock( int, int, void * );
@@ -232,7 +229,6 @@ class PNGRasterBand : public GDALPamRasterBand
         }
 #endif
 };
-
 
 /************************************************************************/
 /*                           PNGRasterBand()                            */
@@ -275,7 +271,6 @@ CPLErr PNGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nPixelSize = 2;
     else
         nPixelSize = 1;
-
 
     const int nXSize = GetXSize();
     if (poGDS->fpImage == NULL)
@@ -420,7 +415,6 @@ double PNGRasterBand::GetNoDataValue( int *pbSuccess )
 /*                             PNGDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            PNGDataset()                            */
@@ -1036,7 +1030,6 @@ void PNGDataset::LoadICCProfile()
 
         SetMetadataItem( "SOURCE_WHITEPOINT",
             CPLString().Printf( "%.9f, %.9f, 1.0", dfaWhitepoint[0], dfaWhitepoint[1] ) , "COLOR_PROFILE" );
-
     }
 
     nPamFlags = nOldPamFlags;
@@ -1752,7 +1745,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         faColour[2], faColour[3],
                         faColour[4], faColour[5],
                         faColour[6], faColour[7]);
-
                 }
             }
 
@@ -1761,7 +1753,6 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CSLDestroy( apapszTokenList[2] );
             CSLDestroy( apapszTokenList[3] );
         }
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -2131,7 +2122,6 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
     // reset band flags and write pixels out.
     this->reset_band_provision_flags();
 
-
     // If first block, write out file header.
     if(x == 0 && y == 0)
     {
@@ -2148,7 +2138,6 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
@@ -2171,7 +2160,6 @@ CPLErr PNGDataset::SetGeoTransform( double * padfTransform )
 
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                           SetColorTable()                            */
@@ -2360,7 +2348,6 @@ CPLErr PNGDataset::write_png_header()
     png_write_info( m_hPNG, m_psPNGInfo );
     return CE_None;
 }
-
 
 /************************************************************************/
 /*                               Create()                               */

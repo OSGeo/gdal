@@ -172,7 +172,6 @@ public:
     int         nNumCode;
     char        **papszCodeVal; /* Short code value */
     char        **papszCodeDes; /* Long description of code */
-
 };
 
 /************************************************************************/
@@ -188,7 +187,6 @@ typedef struct
   NTFCodeList *poCodeList;
 
 } NTFAttDesc;
-
 
 class OGRNTFLayer;
 class OGRNTFRasterLayer;
@@ -292,7 +290,6 @@ class NTFFileReader
     int               SetFPPos( long nPos, long nFeatureId );
     void              Reset();
     void              SetBaseFID( long nFeatureId );
-
 
     OGRGeometry      *ProcessGeometry( NTFRecord *, int * = NULL );
     OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = NULL );

@@ -55,7 +55,6 @@ PostGISRasterTileDataset::PostGISRasterTileDataset( PostGISRasterDataset* poRDSI
     adfGeoTransform[GEOTRSFRM_NS_RES] = 1;
 }
 
-
 /************************
  * \brief Destructor
  ************************/

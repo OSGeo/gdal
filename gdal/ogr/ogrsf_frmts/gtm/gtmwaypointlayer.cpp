@@ -103,11 +103,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
     poFeatureDefn->AddFieldDefn( &oFieldTime );
 }
 
-GTMWaypointLayer::~GTMWaypointLayer()
-{
-
-}
-
+GTMWaypointLayer::~GTMWaypointLayer() {}
 
 /************************************************************************/
 /*                      WriteFeatureAttributes()                        */
@@ -247,7 +243,6 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
         poGeom->transform( poCT );
     }
 
-
     switch( poGeom->getGeometryType() )
     {
     case wkbPoint:
@@ -281,7 +276,6 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
         delete poGeom;
 
     return OGRERR_NONE;
-
 }
 
 OGRFeature* GTMWaypointLayer::GetNextFeature()

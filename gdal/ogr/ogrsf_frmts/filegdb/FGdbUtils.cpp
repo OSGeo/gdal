@@ -474,7 +474,6 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
             pOGRGeometry->assignSpatialReference( pOGRSR );
     }
 
-
     *ppOutGeometry = pOGRGeometry;
 
     return true;

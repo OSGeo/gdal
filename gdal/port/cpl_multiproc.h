@@ -101,7 +101,6 @@ const char CPL_DLL *CPLGetThreadingModel( void );
 
 int CPL_DLL CPLGetNumCPUs( void );
 
-
 typedef struct _CPLLock CPLLock;
 
 /* Currently LOCK_ADAPTIVE_MUTEX is Linux-only and LOCK_SPIN only available */
@@ -120,7 +119,6 @@ int   CPL_DLL  CPLAcquireLock( CPLLock* );
 void  CPL_DLL  CPLReleaseLock( CPLLock* );
 void  CPL_DLL  CPLDestroyLock( CPLLock* );
 void  CPL_DLL  CPLLockSetDebugPerf( CPLLock*, int bEnableIn ); /* only available on x86/x86_64 with GCC for now */
-
 
 CPL_C_END
 
@@ -193,7 +191,6 @@ class CPL_DLL CPLLockHolder
 
     ~CPLLockHolder();
 };
-
 
 #endif /* def __cplusplus */
 

@@ -204,6 +204,38 @@ int main( int argc, char ** argv )
         GDALTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
     }
 
+    if( psOptionsForBinary->pszFormat )
+    {
+        GDALDriverH hDriver = GDALGetDriverByName( psOptionsForBinary->pszFormat );
+        if( hDriver == NULL )
+        {
+            int iDr;
+
+            fprintf(stderr, "Output driver `%s' not recognised.\n",
+                    psOptionsForBinary->pszFormat);
+            fprintf(stderr, "The following format drivers are configured and support output:\n" );
+            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
+            {
+                hDriver = GDALGetDriver(iDr);
+
+                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
+                    (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+                    || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
+                {
+                    fprintf(stderr, "  %s: %s\n",
+                            GDALGetDriverShortName( hDriver  ),
+                            GDALGetDriverLongName( hDriver ) );
+                }
+            }
+
+            GDALTranslateOptionsFree(psOptions);
+            GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
+
+            GDALDestroyDriverManager();
+            exit(1);
+        }
+    }
+
     if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
         CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
 
@@ -288,7 +320,6 @@ int main( int argc, char ** argv )
 
         GDALDestroyDriverManager();
         return 0;
-
     }
 
     if( !psOptionsForBinary->bQuiet )

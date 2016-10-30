@@ -158,7 +158,6 @@ class OGRSVGDataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 
-
 #ifdef HAVE_EXPAT
     void                startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void                dataHandlerValidateCbk(const char *data, int nLen);

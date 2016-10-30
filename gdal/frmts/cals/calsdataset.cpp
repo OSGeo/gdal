@@ -196,7 +196,6 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
             }
             return eErr;
         }
-
 };
 
 /************************************************************************/
@@ -216,7 +215,6 @@ class CALSWrapperSrcDataset: public GDALPamDataset
             SetMetadataItem("TIFFTAG_DOCUMENTNAME", pszPadding);
         }
 };
-
 
 /************************************************************************/
 /* ==================================================================== */

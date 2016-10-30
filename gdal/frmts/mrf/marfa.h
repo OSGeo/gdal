@@ -373,7 +373,7 @@ protected:
     CPLErr Initialize(CPLXMLNode *);
 
     // Do nothing, this is not possible in an MRF
-    CPLErr CleanOverviews(void) { return CE_None; }
+    CPLErr CleanOverviews() { return CE_None; }
 
     // Add uniform scale overlays, returns the new size of the index file
     GIntBig AddOverviews(int scale);
@@ -599,7 +599,6 @@ public:
 
 private:
     PNG_Codec& operator= (const PNG_Codec& src); // not implemented. but suppress MSVC warning about 'assignment operator could not be generated'
-
 };
 
 class PNG_Band : public GDALMRFRasterBand {

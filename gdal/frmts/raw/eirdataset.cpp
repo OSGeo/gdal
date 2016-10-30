@@ -66,7 +66,6 @@ class EIRDataset : public RawDataset
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            EIRDataset                                */
@@ -175,7 +174,6 @@ void EIRDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
     bHDRDirty = true;
     papszHDR = CSLAddString( papszHDR, szNewLine );
 }
-
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
@@ -531,7 +529,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_EIR()                           */

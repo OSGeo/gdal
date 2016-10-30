@@ -231,7 +231,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
     std::set<CPLString> aosGeomCols;
     std::set<CPLString> aosIgnoredCols;
     aosGeomCols.insert(osGeomColumn);
-    BuildFeatureDefn( pszViewName, hColStmt, aosGeomCols, aosIgnoredCols );
+    BuildFeatureDefn( pszViewName, hColStmt, &aosGeomCols, aosIgnoredCols );
     sqlite3_finalize( hColStmt );
 
 /* -------------------------------------------------------------------- */
@@ -376,7 +376,6 @@ OGRErr OGRSQLiteViewLayer::SetAttributeFilter( const char *pszQuery )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
@@ -458,7 +457,6 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
             CPLDebug("SQLITE", "Count not find idx_%s_%s layer. Disabling spatial index",
                      pszEscapedUnderlyingTableName, osUnderlyingGeometryColumn.c_str());
         }
-
     }
 
     if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() )

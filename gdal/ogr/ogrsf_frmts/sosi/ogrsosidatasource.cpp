@@ -39,7 +39,6 @@ CPL_CVSID("$Id$");
 #  define CPL_ENC_ISO8859_10 "ISO8859-10"
 #endif
 
-
 #ifdef WRITE_SUPPORT
 /************************************************************************/
 /*                              utility methods                         */
@@ -576,8 +575,9 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer( const char *pszNameIn,
             }
         }
         LC_WsGr(poFileadm); /* Writing the header here! */
-
-    } else {
+    }
+    else
+    {
         if (!poSRS->IsSame(poSpatialRef)) {
           CPLError( CE_Failure, CPLE_AppDefined,
                     "SOSI driver does not support different spatial reference systems in one file.");

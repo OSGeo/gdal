@@ -36,14 +36,9 @@
 CPL_CVSID("$Id$");
 
 //! @cond Doxygen_Suppress
-GNMGraph::GNMGraph()
-{
-}
+GNMGraph::GNMGraph() {}
 
-GNMGraph::~GNMGraph()
-{
-
-}
+GNMGraph::~GNMGraph() {}
 
 void GNMGraph::AddVertex(GNMGFID nFID)
 {

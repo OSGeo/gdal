@@ -92,7 +92,6 @@ class OGRNULLDataSource : public OGRDataSource
                                       char **papszOptions );
 
     virtual int         TestCapability( const char * );
-
 };
 
 /************************************************************************/

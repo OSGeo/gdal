@@ -363,7 +363,6 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
                         cy + radius*sin((v%nbPt)*(2*M_PI/nbPt)) );
             }
         }
-
     }
 
     return poLine.release();
@@ -423,11 +422,9 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRGeometry * poGeom, const double & dfZ )
     return OGRERR_FAILURE; /* avoid visual warning */
 }
 
-
 /************************************************************************/
 /*                            WriteRoughness()                          */
 /************************************************************************/
-
 
 OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
 
@@ -642,7 +639,6 @@ OGRErr OGRWAsPLayer::ICreateFeature( OGRFeature * poFeature )
                          || (geomType == wkbMultiPolygon25D);
     const bool bRoughness = (-1 != iSecondFieldIdx) || bPolygon ;
 
-
     double z1 = 0.0;
     if ( -1 != iFirstFieldIdx )
     {
@@ -722,7 +718,6 @@ OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -839,7 +834,6 @@ void OGRWAsPLayer::ResetReading()
     VSIFSeekL( hFile, iOffsetFeatureBegin, SEEK_SET );
 }
 
-
 /************************************************************************/
 /*                           AvgZ()                                     */
 /************************************************************************/
@@ -891,8 +885,6 @@ double OGRWAsPLayer::AvgZ( OGRGeometry * poGeom )
     }
     return 0; /* avoid warning */
 }
-
-
 
 /************************************************************************/
 /*                           DouglasPeucker()                           */

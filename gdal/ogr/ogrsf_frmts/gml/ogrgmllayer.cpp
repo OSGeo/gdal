@@ -710,7 +710,6 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         }
     }
 
-
     for( int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount(); iGeomField++ )
     {
         OGRGeomFieldDefn *poFieldDefn = poFeatureDefn->GetGeomFieldDefn(iGeomField);
@@ -1012,7 +1011,6 @@ OGRErr OGRGMLLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
     CPLFree( pszName );
 
-
     poFeatureDefn->AddFieldDefn( &oCleanCopy );
 
     return OGRERR_NONE;
@@ -1055,7 +1053,6 @@ OGRErr OGRGMLLayer::CreateGeomField( OGRGeomFieldDefn *poField, int bApproxOK )
     }
 
     CPLFree( pszName );
-
 
     poFeatureDefn->AddGeomFieldDefn( &oCleanCopy );
 

@@ -405,7 +405,6 @@ typedef struct {
 
 } DGNElemCone;
 
-
 /**
  * Text Node Header.
  *
@@ -434,7 +433,6 @@ typedef struct {
   DGNPoint  origin;             /*!<  Snap origin (as defined by user) */
 
 } DGNElemTextNode;
-
 
 /**
  * B-Spline Surface Header element
@@ -518,7 +516,6 @@ typedef struct {
                              header. */
 } DGNElemKnotWeight;
 
-
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -576,7 +573,6 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemSharedCellDefn structure */
 #define DGNST_SHARED_CELL_DEFN         18
-
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
@@ -644,7 +640,6 @@ typedef struct {
 #define DGNSOT_VOLUME_OF_PROJECTION     0
 #define DGNSOT_VOLUME_OF_REVOLUTION     1
 #define DGNSOT_BOUNDED_VOLUME           2
-
 
 /* -------------------------------------------------------------------- */
 /*      Class                                                           */

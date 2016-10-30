@@ -113,7 +113,6 @@ char **S57FileCollector( const char *pszDataset )
         return papszRetList;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      We presumably have a catalog.  It contains paths to files       */
 /*      that generally lack the ENC_ROOT component.  Try to find the    */

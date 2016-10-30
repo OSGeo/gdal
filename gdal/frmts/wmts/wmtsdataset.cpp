@@ -33,9 +33,11 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "../vrt/gdal_vrt.h"
-#include <vector>
-#include <set>
+
+#include <algorithm>
 #include <map>
+#include <set>
+#include <vector>
 
 extern "C" void GDALRegister_WMTS();
 
@@ -192,7 +194,6 @@ class WMTSBand : public GDALPamRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing, GSpacing,
                               GDALRasterIOExtraArg* psExtraArg );
-
 };
 
 /************************************************************************/
@@ -217,7 +218,6 @@ CPLErr WMTSBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage)
     WMTSDataset* poGDS = (WMTSDataset*) poDS;
     return poGDS->apoDatasets[0]->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff, pImage);
 }
-
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -1097,7 +1097,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLString osSelectLayer(osLayer), osSelectTMS(osTMS), osSelectStyle(osStyle);
     CPLString osSelectLayerTitle, osSelectLayerAbstract;
     CPLString osSelectTileFormat(osTileFormat), osSelectInfoFormat(osInfoFormat);
-    int nCountTileFormat = 0, nCountInfoFormat = 0;
+    int nCountTileFormat = 0;
+    int nCountInfoFormat = 0;
     CPLString osURLTileTemplate;
     CPLString osURLFeatureInfoTemplate;
     std::set<CPLString> aoSetLayers;
@@ -1469,10 +1470,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                 poCT->Transform(1, &dfX2, &dfY2) )
                             {
                                 bExtendBeyondDateLine = TRUE;
-                                sAOI.MinX = MIN(dfX1, dfX2);
-                                sAOI.MinY = MIN(dfY1, dfY2);
-                                sAOI.MaxX = MAX(dfX1, dfX2);
-                                sAOI.MaxY = MAX(dfY1, dfY2);
+                                sAOI.MinX = std::min(dfX1, dfX2);
+                                sAOI.MinY = std::min(dfY1, dfY2);
+                                sAOI.MaxX = std::max(dfX1, dfX2);
+                                sAOI.MaxY = std::max(dfY1, dfY2);
                                 CPLDebug("WMTS",
                                          "ExtendBeyondDateLine using %s bounding box",
                                          oIter->first.c_str());
@@ -1523,10 +1524,14 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                             poCT->Transform(1, &dfX3, &dfY3) &&
                             poCT->Transform(1, &dfX4, &dfY4) )
                         {
-                            sAOI.MinX = MIN(MIN(dfX1, dfX2),MIN(dfX3,dfX4));
-                            sAOI.MinY = MIN(MIN(dfY1, dfY2),MIN(dfY3,dfY4));
-                            sAOI.MaxX = MAX(MAX(dfX1, dfX2),MAX(dfX3,dfX4));
-                            sAOI.MaxY = MAX(MAX(dfY1, dfY2),MAX(dfY3,dfY4));
+                            sAOI.MinX = std::min(std::min(dfX1, dfX2),
+                                                 std::min(dfX3, dfX4));
+                            sAOI.MinY = std::min(std::min(dfY1, dfY2),
+                                                 std::min(dfY3, dfY4));
+                            sAOI.MaxX = std::max(std::max(dfX1, dfX2),
+                                                 std::max(dfX3, dfX4));
+                            sAOI.MaxY = std::max(std::max(dfY1, dfY2),
+                                                 std::max(dfY3, dfY4));
                             bHasAOI = TRUE;
                         }
                         delete poCT;
@@ -1564,10 +1569,13 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
             // only clip in Y since there's a warp over dateline
-            //sAOI.MinX = MAX(sAOI.MinX, oTM.dfTLX);
-            sAOI.MaxY = MIN(sAOI.MaxY, oTM.dfTLY);
-            //sAOI.MaxX = MIN(sAOI.MaxX, oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth);
-            sAOI.MinY = MAX(sAOI.MinY, oTM.dfTLY - oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight);
+            //sAOI.MinX = std::max(sAOI.MinX, oTM.dfTLX);
+            sAOI.MaxY = std::min(sAOI.MaxY, oTM.dfTLY);
+            //sAOI.MaxX = std::min(sAOI.MaxX, oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth);
+            sAOI.MinY =
+                std::max(sAOI.MinY,
+                         oTM.dfTLY -
+                         oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight);
         }
 
         // Clip with limits of most precise TM when available
@@ -1578,10 +1586,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 const WMTSTileMatrixLimits& oTMLimits = aoMapTileMatrixLimits[oTM.osIdentifier];
                 double dfTileWidthUnits = oTM.dfPixelSize * oTM.nTileWidth;
                 double dfTileHeightUnits = oTM.dfPixelSize * oTM.nTileHeight;
-                sAOI.MinX = MAX(sAOI.MinX, oTM.dfTLX + oTMLimits.nMinTileCol * dfTileWidthUnits);
-                sAOI.MaxY = MIN(sAOI.MaxY, oTM.dfTLY - oTMLimits.nMinTileRow * dfTileHeightUnits);
-                sAOI.MaxX = MIN(sAOI.MaxX, oTM.dfTLX + (oTMLimits.nMaxTileCol + 1) * dfTileWidthUnits);
-                sAOI.MinY = MAX(sAOI.MinY, oTM.dfTLY - (oTMLimits.nMaxTileRow + 1) * dfTileHeightUnits);
+                sAOI.MinX = std::max(sAOI.MinX, oTM.dfTLX + oTMLimits.nMinTileCol * dfTileWidthUnits);
+                sAOI.MaxY = std::min(sAOI.MaxY, oTM.dfTLY - oTMLimits.nMinTileRow * dfTileHeightUnits);
+                sAOI.MaxX = std::min(sAOI.MaxX, oTM.dfTLX + (oTMLimits.nMaxTileCol + 1) * dfTileWidthUnits);
+                sAOI.MinY = std::max(sAOI.MinY, oTM.dfTLY - (oTMLimits.nMaxTileRow + 1) * dfTileHeightUnits);
             }
         }
 

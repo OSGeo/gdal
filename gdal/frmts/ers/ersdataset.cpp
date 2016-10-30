@@ -1194,7 +1194,6 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         CPLPopErrorHandler();
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -1341,7 +1340,6 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
     }
     VSIFCloseL( fpBin );
 
-
 /* -------------------------------------------------------------------- */
 /*      Try writing header file.                                        */
 /* -------------------------------------------------------------------- */
@@ -1395,14 +1393,23 @@ GDALDataset *ERSDataset::Create( const char * pszFilename,
 /*      Fetch DATUM, PROJ and UNITS creation option                     */
 /* -------------------------------------------------------------------- */
     const char *pszDatum = CSLFetchNameValue( papszOptions, "DATUM" );
-    if (pszDatum)
-        poDS->osDatumForced = poDS->osDatum = pszDatum;
+    if( pszDatum )
+    {
+        poDS->osDatumForced = pszDatum;
+        poDS->osDatum = pszDatum;
+    }
     const char *pszProj = CSLFetchNameValue( papszOptions, "PROJ" );
-    if (pszProj)
-        poDS->osProjForced = poDS->osProj = pszProj;
+    if( pszProj )
+    {
+        poDS->osProjForced = pszProj;
+        poDS->osProj = pszProj;
+    }
     const char *pszUnits = CSLFetchNameValue( papszOptions, "UNITS" );
-    if (pszUnits)
-        poDS->osUnitsForced = poDS->osUnits = pszUnits;
+    if( pszUnits )
+    {
+        poDS->osUnitsForced = pszUnits;
+        poDS->osUnits = pszUnits;
+    }
 
     if (pszDatum || pszProj || pszUnits)
     {

@@ -62,7 +62,6 @@
 #define FGDB_GEOMETRY_NAME "SHAPE"
 #define FGDB_OID_NAME "OBJECTID"
 
-
 /* The ESRI FGDB API namespace */
 using namespace FileGDBAPI;
 
@@ -245,7 +244,6 @@ protected:
   bool        m_bFilterDirty; //optimization to avoid multiple calls to search until necessary
 
   bool  m_bLaunderReservedKeywords;
-
 };
 
 /************************************************************************/
@@ -321,7 +319,6 @@ public:
   int         Close(int bCloseGeodatabase = FALSE);
   int         ReOpen();
 
-
   int         HasPerLayerCopyingForTransaction();
   void        SetPerLayerCopyingForTransaction(int bFlag) { bPerLayerCopyingForTransaction = bFlag; }
   void        SetSymlinkFlagOnAllLayers();
@@ -395,9 +392,6 @@ public:
 
   void Release(const char* pszName);
   CPLMutex* GetMutex() { return hMutex; }
-
-private:
-
 };
 
 CPL_C_START
@@ -405,5 +399,3 @@ void CPL_DLL RegisterOGRFileGDB();
 CPL_C_END
 
 #endif /* ndef _OGR_PG_H_INCLUDED */
-
-

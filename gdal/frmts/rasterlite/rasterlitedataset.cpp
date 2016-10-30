@@ -37,7 +37,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */
 /************************************************************************/
@@ -464,7 +463,6 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
                         poBlock->DropLock();
                     }
-
                 }
                 GDALClose(hDSTile);
             }
@@ -693,7 +691,8 @@ int RasterliteDataset::CloseDependentDatasets()
 
         CPLFree(padfXResolutions);
         CPLFree(padfYResolutions);
-        padfXResolutions = padfYResolutions = NULL;
+        padfXResolutions = NULL;
+        padfYResolutions = NULL;
 
         delete poCT;
         poCT = NULL;
@@ -978,10 +977,15 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLString osTableName;
     char **papszTokens = NULL;
     int nLevel = 0;
-    double minx = 0, miny = 0, maxx = 0, maxy = 0;
-    int bMinXSet = FALSE, bMinYSet = FALSE, bMaxXSet = FALSE, bMaxYSet = FALSE;
+    double minx = 0.0;
+    double miny = 0.0;
+    double maxx = 0.0;
+    double maxy = 0.0;
+    int bMinXSet = FALSE;
+    int bMinYSet = FALSE;
+    int bMaxXSet = FALSE;
+    int bMaxYSet = FALSE;
     int nReqBands = 0;
-
 
 /* -------------------------------------------------------------------- */
 /*      Parse "file name"                                               */
@@ -1379,7 +1383,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             delete poDS;
             poDS = NULL;
         }
-
     }
 
     if (poDS)

@@ -101,8 +101,6 @@ const XMLCh* GMLASBinInputStream::getContentType() const
     return NULL;
 }
 
-
-
 /************************************************************************/
 /*                          GMLASInputSource()                          */
 /************************************************************************/
@@ -219,7 +217,7 @@ void GMLASErrorHandler::handle (const SAXParseException& e, CPLErr eErr)
 /************************************************************************/
 
 GMLASBaseEntityResolver::GMLASBaseEntityResolver(const CPLString& osBasePath,
-                                                 GMLASXSDCache& oCache) 
+                                                 GMLASXSDCache& oCache)
     : m_oCache(oCache)
 {
     m_aosPathStack.push_back(osBasePath);
@@ -314,7 +312,7 @@ void GMLASReader::Context::Dump()
     }
     CPLDebug("GMLAS", "  m_poLayer = %p (%s)",
              m_poLayer, m_poLayer ? m_poLayer->GetName() : "");
-    CPLDebug("GMLAS", "  m_poGroupLayer = %p (%s)", 
+    CPLDebug("GMLAS", "  m_poGroupLayer = %p (%s)",
              m_poGroupLayer, m_poGroupLayer ? m_poGroupLayer->GetName() : "");
     CPLDebug("GMLAS", "  m_nGroupLayerLevel = %d", m_nGroupLayerLevel);
     CPLDebug("GMLAS", "  m_nLastFieldIdxGroupLayer = %d",
@@ -420,7 +418,7 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
     if( ppoGrammar != NULL )
         *ppoGrammar = NULL;
 
-    const CPLString osModifXSDFilename( 
+    const CPLString osModifXSDFilename(
         (osXSDFilename.find("http://") != 0 &&
         osXSDFilename.find("https://") != 0 &&
         CPLIsFilenameRelative(osXSDFilename)) ?
@@ -436,7 +434,7 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
 
     // Install a temporary entity resolved based on the current XSD
     CPLString osXSDDirname( CPLGetDirname(osModifXSDFilename) );
-    if( osXSDFilename.find("http://") == 0 || 
+    if( osXSDFilename.find("http://") == 0 ||
         osXSDFilename.find("https://") == 0 )
     {
         osXSDDirname = CPLGetDirname(("/vsicurl_streaming/" +
@@ -551,7 +549,6 @@ bool GMLASReader::Init(const char* pszFilename,
                                                 osBaseDirname,
                                                 m_oCache );
         m_poSAXReader->setEntityResolver( m_poEntityResolver );
-
     }
     else
     {
@@ -609,7 +606,7 @@ void GMLASReader::SetField( OGRFeature* poFeature,
         }
     }
     // Transform boolean values to something that OGR understands
-    else if( eType == OFTInteger && 
+    else if( eType == OFTInteger &&
              poFeature->GetFieldDefnRef(nAttrIdx)->GetSubType() == OFSTBoolean )
     {
         if( osAttrValue == "true" )
@@ -853,8 +850,6 @@ void GMLASReader::BuildXMLBlobStartElement(const CPLString& osXPath,
     }
 }
 
-
-
 /************************************************************************/
 /*                          GetLayerByXPath()                           */
 /************************************************************************/
@@ -894,14 +889,13 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
             </xs:choice>
         </xs:group>
 
-
    There are different cases :
     *
               <first_elt_of_group>...</first_elt_of_group>
               <second_elt_of_group>...</first_elt_of_group>
               <first_elt_of_group>  <!-- we are here at startElement() -->
                 ...
-              </first_elt_of_group> 
+              </first_elt_of_group>
 
     *
               <first_elt_of_group>...</first_elt_of_group>
@@ -926,8 +920,6 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
     *
                 <first_elt_of_group>...</first_elt_of_group>
             </end_of_enclosing_element>   <!-- we are here at endElement() -->
-
-
 */
 void GMLASReader::startElement(
             const   XMLCh* const    uri,
@@ -1014,7 +1006,7 @@ void GMLASReader::startElement(
              m_oCurCtxt.m_poLayer != (*m_papoLayers)[i] &&
              m_oCurCtxt.m_poLayer->GetFeatureClass().GetXPath() ==
                     osLayerXPath &&
-             (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0); 
+             (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0);
 
         if( // Case where we haven't yet entered the top-level element, which may
             // be in container elements
@@ -1050,7 +1042,7 @@ void GMLASReader::startElement(
             {
                 // Yuck! Simulate top-level element of a group if we directly jump
                 // into a nested class of it !
-                /* Something like 
+                /* Something like
                     <xs:group name="group">
                         <xs:sequence>
                             <xs:element name="optional_elt" type="xs:string" minOccurs="0"/>
@@ -1128,7 +1120,7 @@ void GMLASReader::startElement(
                             <second_elt_of_group>...</first_elt_of_group>
                             <first_elt_of_group>  <!-- we are here at startElement() -->
                                 ...
-                            </first_elt_of_group> 
+                            </first_elt_of_group>
                     */
                     bPushNewFeature = true;
                 }
@@ -1399,10 +1391,8 @@ void GMLASReader::startElement(
                                   poOldLayer,
                                   nOldCurFieldIdx,
                                   osChildId );
-
                     }
                 }
-
             }
         }
 
@@ -1497,7 +1487,6 @@ void GMLASReader::startElement(
                         poJunctionFeature->SetField("parent_pkid", osParentId);
                         poJunctionFeature->SetField("child_pkid", osChildId);
                         PushFeatureReady(poJunctionFeature, poJunctionLayer);
-
                     }
                     idx = IDX_COMPOUND_FOLDED;
 
@@ -1862,7 +1851,6 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
                         osRawContent );
             }
         }
-
     }
 }
 
@@ -1892,7 +1880,7 @@ void GMLASReader::ExploreXMLDoc( const CPLString& osAttrXPath,
     CPLString osMatchedXPathRule;
     if( oMatcher.MatchesRefXPath(osXPath, osMatchedXPathRule) )
     {
-        std::map<CPLString, size_t>::const_iterator oIter = 
+        std::map<CPLString, size_t>::const_iterator oIter =
                         oMapFieldXPathToIdx.find(osMatchedXPathRule);
         CPLAssert( oIter != oMapFieldXPathToIdx.end() );
         const size_t nFieldRuleIdx = oIter->second;
@@ -1923,7 +1911,7 @@ void GMLASReader::ExploreXMLDoc( const CPLString& osAttrXPath,
         if( m_oCurCtxt.m_poFeature->IsFieldSet(nAttrIdx) &&
             m_oCurCtxt.m_poFeature->GetFieldDefnRef(nAttrIdx)->GetType() == OFTString )
         {
-            osVal = m_oCurCtxt.m_poFeature->GetFieldAsString(nAttrIdx) + 
+            osVal = m_oCurCtxt.m_poFeature->GetFieldAsString(nAttrIdx) +
                     CPLString(" ") + osVal;
         }
         SetField( m_oCurCtxt.m_poFeature, m_oCurCtxt.m_poLayer,
@@ -1967,7 +1955,7 @@ void GMLASReader::endElement(
             OFTString );
 
         // Transform boolean values to something that OGR understands
-        if( (eType == OFTIntegerList || eType == OFTInteger) && 
+        if( (eType == OFTIntegerList || eType == OFTInteger) &&
              m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetSubType() ==
                                                                    OFSTBoolean )
         {
@@ -2005,7 +1993,7 @@ void GMLASReader::endElement(
                                         m_osTextContentList.List() );
             }
         }
-        else 
+        else
         {
             if( m_bIsXMLBlobIncludeUpper && !m_bInitialPass )
             {
@@ -2195,7 +2183,7 @@ void GMLASReader::ProcessGeometry()
                  m_oSetGeomFieldsWithUnknownSRS.find(poGeomFieldDefn) !=
                         m_oSetGeomFieldsWithUnknownSRS.end() )
             {
-                OGRSpatialReference* poSRS = 
+                OGRSpatialReference* poSRS =
                                 new OGRSpatialReference();
                 if( poSRS->SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 {

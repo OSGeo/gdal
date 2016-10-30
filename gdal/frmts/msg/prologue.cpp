@@ -35,7 +35,7 @@ CPL_CVSID("$Id$");
 static
 int size_SatelliteStatus()
 {
-  int iSizePrimary = 1+4+1+1+4+4+1+1+4+4+1;;
+  int iSizePrimary = 1+4+1+1+4+4+1+1+4+4+1;
 
   int iSizeOrbitCoef = 4 + 4 + 8*8 + 8*8 + 8*8 + 8*8 + 8*8 + 8*8;
   int iSizeOrbit = 4 + 4 + 100*iSizeOrbitCoef;
@@ -170,7 +170,6 @@ PlannedCoverageHRVRecord::PlannedCoverageHRVRecord(std::ifstream & ifile)
     UpperWestColumnPlanned = iReadInt(ifile);
 }
 
-
 ImageDescriptionRecord::ImageDescriptionRecord(std::ifstream & ifile)
 {
     TypeOfProjection = iReadByte(ifile);
@@ -212,12 +211,10 @@ RadiometricProcessingRecord::RadiometricProcessingRecord(std::ifstream & ifile)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-Prologue::Prologue()
-: m_idr(0)
-, m_rpr(0)
-{
-
-}
+Prologue::Prologue() :
+    m_idr(0),
+    m_rpr(0)
+{}
 
 Prologue::~Prologue()
 {

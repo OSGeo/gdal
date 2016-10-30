@@ -203,7 +203,7 @@ public:
     bool             PrescanForSchema(bool bGetExtents = true,
                                       bool bAnalyzeSRSPerFeature = true,
                                       bool bOnlyDetectSRS = false);
-    bool             PrescanForTemplate( void );
+    bool             PrescanForTemplate();
     void             ResetReading();
 
     bool             ParseXSD( const char * /* pszFile */ ) { return false; }

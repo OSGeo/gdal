@@ -89,7 +89,6 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
             sExtent.MinY = CPLAtof(poLayerExt->get_attr("y_min").c_str());
             sExtent.MaxY = CPLAtof(poLayerExt->get_attr("y_max").c_str());
         }
-
     }
 
 /* ==================================================================== */

@@ -112,7 +112,7 @@ class OGRGFTTableLayer : public OGRGFTLayer
     CPLString           osWHERE;
     CPLString           osQuery;
 
-    void                BuildWhere(void);
+    void                BuildWhere();
 
     CPLString          osTransaction;
     int                bInTransaction;

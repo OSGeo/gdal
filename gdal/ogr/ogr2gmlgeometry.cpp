@@ -46,10 +46,12 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
-#define SRSDIM_LOC_GEOMETRY (1 << 0)
-#define SRSDIM_LOC_POSLIST  (1 << 1)
+static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
+static const int SRSDIM_LOC_POSLIST = 1 << 1;
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */
@@ -66,32 +68,6 @@ static void MakeGMLCoordinate( char *pszTarget,
             *pszTarget = ',';
         pszTarget++;
     }
-
-#ifdef notdef
-    if( !b3D )
-    {
-        if( x == (int) x && y == (int) y )
-            sprintf( pszTarget, "%d,%d", (int) x, (int) y );
-        else if( fabs(x) < 370 && fabs(y) < 370 )
-            CPLsprintf( pszTarget, "%.16g,%.16g", x, y );
-        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0 )
-            CPLsprintf( pszTarget, "%.16g,%.16g", x, y );
-        else
-            CPLsprintf( pszTarget, "%.3f,%.3f", x, y );
-    }
-    else
-    {
-        if( x == (int) x && y == (int) y && z == (int) z )
-            sprintf( pszTarget, "%d,%d,%d", (int) x, (int) y, (int) z );
-        else if( fabs(x) < 370 && fabs(y) < 370 )
-            CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
-        else if( fabs(x) > 100000000.0 || fabs(y) > 100000000.0
-                 || fabs(z) > 100000000.0 )
-            CPLsprintf( pszTarget, "%.16g,%.16g,%.16g", x, y, z );
-        else
-            CPLsprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
-    }
-#endif
 }
 
 /************************************************************************/
@@ -103,7 +79,7 @@ static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
-        *pnMaxLength = MAX(*pnMaxLength * 2,nNeeded+1);
+        *pnMaxLength = std::max(*pnMaxLength * 2,nNeeded+1);
         *ppszText = (char *) CPLRealloc(*ppszText, *pnMaxLength);
     }
 }
@@ -112,7 +88,8 @@ static void _GrowBuffer( size_t nNeeded, char **ppszText, size_t *pnMaxLength )
 /*                            AppendString()                            */
 /************************************************************************/
 
-static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength,
+static void AppendString( char **ppszText, size_t *pnLength,
+                          size_t *pnMaxLength,
                           const char *pszTextToAppend )
 
 {
@@ -122,7 +99,6 @@ static void AppendString( char **ppszText, size_t *pnLength, size_t *pnMaxLength
     strcat( *ppszText + *pnLength, pszTextToAppend );
     *pnLength += strlen( *ppszText + *pnLength );
 }
-
 
 /************************************************************************/
 /*                        AppendCoordinateList()                        */
@@ -267,9 +243,10 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
-                "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
-                 szAttributes, szCoordinate );
+        snprintf(
+            *ppszText + *pnLength, *pnMaxLength - *pnLength,
+            "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
+            szAttributes, szCoordinate);
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
@@ -289,14 +266,16 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         if( bRing )
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LinearRing%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen,
+                      "<gml:LinearRing%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
         }
         else
         {
-            snprintf( pszLineTagName, nLineTagNameBufLen, "<gml:LineString%s>", szAttributes );
+            snprintf( pszLineTagName, nLineTagNameBufLen,
+                      "<gml:LineString%s>", szAttributes );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           pszLineTagName );
@@ -321,7 +300,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbPolygon )
     {
-        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
+        OGRPolygon *poPolygon = (OGRPolygon *) poGeometry;
 
         // Buffer for polygon tag name + srsName attribute if set
         const size_t nPolyTagLength = 13;
@@ -496,8 +475,16 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     char szCoordinate[256] = {};
     MakeGMLCoordinate( szCoordinate, sEnvelope.MinX, sEnvelope.MinY, 0.0,
                        false );
-    char *pszY = strstr(szCoordinate,",") + 1;
-    pszY[-1] = '\0';
+    char *pszY = strstr(szCoordinate, ",");
+    // There must be more after the comma or we have an internal consistency
+    // bug in MakeGMLCoordinate.
+    if( pszY == NULL || strlen(pszY) < 2)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed, "MakeGMLCoordinate failed." );
+        return NULL;
+    }
+    *pszY = '\0';
+    pszY++;
 
     CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
     CPLCreateXMLElementAndValue( psCoord, "gml:Y", pszY );
@@ -517,7 +504,6 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 
     return psBox;
 }
-
 
 /************************************************************************/
 /*                     AppendGML3CoordinateList()                       */
@@ -539,7 +525,6 @@ static void AppendGML3CoordinateList( const OGRSimpleCurve *poLine, bool bCoordS
     else
         strcat( *ppszText + *pnLength, "<gml:posList>" );
     *pnLength += strlen(*ppszText + *pnLength);
-
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {

@@ -28,6 +28,8 @@
 
 #include "ogr_gft.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -238,7 +240,8 @@ int OGRGFTTableLayer::FetchDescribe()
     }
     else if (iGeometryField < 0 && osGeomColumnName.size() == 0)
     {
-        iLatitudeField = iLongitudeField = -1;
+        iLatitudeField = -1;
+        iLongitudeField = -1;
 
         /* In the unauthenticated case, we try to parse the first record to */
         /* auto-detect the geometry field. */
@@ -1242,7 +1245,6 @@ OGRErr OGRGFTTableLayer::SetAttributeFilter( const char *pszQuery )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
@@ -1280,10 +1282,14 @@ void OGRGFTTableLayer::BuildWhere()
 
         CPLString osQuotedGeomColumn(EscapeAndQuote(GetGeometryColumn()));
 
-        osWHERE.Printf("WHERE ST_INTERSECTS(%s, RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
-                       osQuotedGeomColumn.c_str(),
-                       MAX(-90.,sEnvelope.MinY - 1e-11), MAX(-180., sEnvelope.MinX - 1e-11),
-                       MIN(90.,sEnvelope.MaxY + 1e-11), MIN(180.,sEnvelope.MaxX + 1e-11));
+        osWHERE.Printf(
+            "WHERE ST_INTERSECTS(%s, "
+            "RECTANGLE(LATLNG(%.12f, %.12f), LATLNG(%.12f, %.12f)))",
+            osQuotedGeomColumn.c_str(),
+            std::max(-90.0, sEnvelope.MinY - 1.0e-11),
+            std::max(-180.0, sEnvelope.MinX - 1.0e-11),
+            std::min(90.0, sEnvelope.MaxY + 1.0e-11),
+            std::min(180.0, sEnvelope.MaxX + 1.0e-11));
     }
 
     if( strlen(osQuery) > 0 )

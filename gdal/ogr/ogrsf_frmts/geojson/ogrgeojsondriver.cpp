@@ -291,7 +291,7 @@ OGRESRIFeatureServiceDataset::OGRESRIFeatureServiceDataset(
 {
     poLayer = new OGRESRIFeatureServiceLayer(this);
     osURL = osURLIn;
-    if( CPLURLGetValue(osURL, "resultRecordCount").size() == 0 )
+    if( CPLURLGetValue(osURL, "resultRecordCount").empty() )
     {
         // We assume that if the server sets the exceededTransferLimit, the
         // and resultRecordCount is not set, the number of features returned
@@ -461,7 +461,7 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
         const bool bHasResultOffset =
-            CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").size() > 0;
+          !CPLURLGetValue(poOpenInfo->pszFilename, "resultOffset").empty();
         if( (!bHasResultOffset && (pszFSP == NULL || CPLTestBool(pszFSP))) ||
             (bHasResultOffset && pszFSP != NULL && CPLTestBool(pszFSP)) )
         {
@@ -478,10 +478,10 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 /************************************************************************/
 
 static GDALDataset *OGRGeoJSONDriverCreate( const char * pszName,
-                                            CPL_UNUSED int nBands,
-                                            CPL_UNUSED int nXSize,
-                                            CPL_UNUSED int nYSize,
-                                            CPL_UNUSED GDALDataType eDT,
+                                            int /* nBands */,
+                                            int /* nXSize */,
+                                            int /* nYSize */,
+                                            GDALDataType /* eDT */,
                                             char **papszOptions )
 {
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
@@ -546,10 +546,11 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='WRITE_BBOX' type='boolean' description='whether to write a bbox property with the bounding box of the geometries at the feature and feature collection level' default='NO'/>"
-"  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates' default='15'/>"
+"  <Option name='COORDINATE_PRECISION' type='int' description='Number of decimal for coordinates. Default is 15 for GJ2008 and 7 for RFC7946'/>"
 "  <Option name='SIGNIFICANT_FIGURES' type='int' description='Number of significant figures for floating-point values' default='17'/>"
 "  <Option name='NATIVE_DATA' type='string' description='FeatureCollection level elements.'/>"
 "  <Option name='NATIVE_MEDIA_TYPE' type='string' description='Format of NATIVE_DATA. Must be \"application/vnd.geo+json\", otherwise NATIVE_DATA will be ignored.'/>"
+"  <Option name='RFC7946' type='boolean' description='Whether to use RFC 7946 standard. Otherwise GeoJSON 2008 initial version will be used' default='NO'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

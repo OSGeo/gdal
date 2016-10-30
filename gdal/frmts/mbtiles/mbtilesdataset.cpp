@@ -37,6 +37,7 @@
 #include "ogrgeojsonreader.h"
 
 #include <math.h>
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -172,7 +173,6 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
         virtual OGRErr                  ICommitTransaction();
         virtual const char             *IGetFilename() { return GetDescription(); }
         virtual int                     GetRowFromIntoTopConvention(int nRow);
-
 };
 
 /************************************************************************/
@@ -345,7 +345,8 @@ bool MBTilesDataset::HasNonEmptyGrids()
 
 char* MBTilesDataset::FindKey(int iPixel, int iLine)
 {
-    const int nBlockXSize = 256, nBlockYSize = 256;
+    const int nBlockXSize = 256;
+    const int nBlockYSize = 256;
 
     // Compute shift between GDAL origin and TileMatrixSet origin
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left corner
@@ -953,7 +954,8 @@ CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
 
         // Clamp latitude so that when transformed back to EPSG:3857, we don't
         // have too big northings
-        double tmpx = 0, ok_maxy = MAX_GM;
+        double tmpx = 0.0;
+        double ok_maxy = MAX_GM;
         SphericalMercatorToLongLat(&tmpx, &ok_maxy);
         if( maxy > ok_maxy)
             maxy = ok_maxy;
@@ -1010,7 +1012,6 @@ void MBTilesDataset::ComputeTileAndPixelShifts()
     int nShiftYPixels = (int)floor(0.5 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod = ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
-
 }
 
 /************************************************************************/
@@ -1828,7 +1829,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         OGRFeatureH hFeat;
         int nBands;
         OGRLayerH hSQLLyr = NULL;
-        int nMinLevel = -1, nMaxLevel = -1;
+        int nMinLevel = -1;
+        int nMaxLevel = -1;
         int bHasMinMaxLevel = FALSE;
         int bHasMap;
 
@@ -1905,7 +1907,10 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get bounds                                                      */
 /* -------------------------------------------------------------------- */
-        double dfMinX = 0.0, dfMinY = 0.0, dfMaxX = 0.0, dfMaxY = 0.0;
+        double dfMinX = 0.0;
+        double dfMinY = 0.0;
+        double dfMaxX = 0.0;
+        double dfMaxY = 0.0;
         bool bUseBounds = CPLFetchBool(const_cast<const char**>(poOpenInfo->papszOpenOptions),
                                       "USE_BOUNDS", true);
         const char* pszMinX = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINX");
@@ -2264,8 +2269,16 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
             if( oSRS.SetFromUserInput( pszSrcWKT ) == OGRERR_NONE &&
                 oSRS.IsGeographic() )
             {
-                double minLat = MIN( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
-                double maxLat = MAX( adfSrcGeoTransform[3], adfSrcGeoTransform[3] + poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5] );
+                const double minLat =
+                    std::min(
+                        adfSrcGeoTransform[3],
+                        adfSrcGeoTransform[3] +
+                        poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5]);
+                const double maxLat =
+                    std::max(
+                         adfSrcGeoTransform[3],
+                         adfSrcGeoTransform[3] +
+                         poSrcDS->GetRasterYSize() * adfSrcGeoTransform[5]);
                 double maxNorthing = adfGeoTransform[3];
                 double minNorthing = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
                 bool bChanged = false;
@@ -2292,7 +2305,8 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
 
     int nZoomLevel;
     double dfComputedRes = adfGeoTransform[1];
-    double dfPrevRes = 0, dfRes = 0;
+    double dfPrevRes = 0.0;
+    double dfRes = 0.0;
     const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / 256;
     for(nZoomLevel = 0; nZoomLevel < 25; nZoomLevel++)
     {
@@ -2553,7 +2567,8 @@ CPLErr MBTilesDataset::IBuildOverviews(
             return CE_Failure;
         }
 
-        int nRows = 0, nCols = 0;
+        int nRows = 0;
+        int nCols = 0;
         char** papszResult = NULL;
         sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
         sqlite3_free_table(papszResult);
@@ -2641,7 +2656,8 @@ CPLErr MBTilesDataset::IBuildOverviews(
 
     if( eErr == CE_None )
     {
-        int nRows = 0, nCols = 0;
+        int nRows = 0;
+        int nCols = 0;
         char** papszResult = NULL;
         sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
         sqlite3_free_table(papszResult);

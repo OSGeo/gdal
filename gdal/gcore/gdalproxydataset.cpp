@@ -192,7 +192,6 @@ void GDALProxyDataset::UnrefUnderlyingDataset(
 /*                        GDALProxyRasterBand                           */
 /* ******************************************************************** */
 
-
 #define RB_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
 retType GDALProxyRasterBand::methodName argList \
 { \
@@ -209,7 +208,6 @@ retType GDALProxyRasterBand::methodName argList \
     } \
     return ret; \
 }
-
 
 #define RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(retType, retErrValue, methodName, argList, argParams) \
 retType GDALProxyRasterBand::methodName argList \

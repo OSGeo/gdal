@@ -112,7 +112,6 @@ class GRASSRasterBand : public GDALRasterBand
     virtual double GetNoDataValue( int *pbSuccess = NULL );
 };
 
-
 /************************************************************************/
 /*                          GRASSRasterBand()                           */
 /************************************************************************/
@@ -187,7 +186,7 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         dfNoData = -12345.0;
     }
 
-    nBlockXSize = poDS->nRasterXSize;;
+    nBlockXSize = poDS->nRasterXSize;
     nBlockYSize = 1;
 
     hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset);
@@ -244,7 +243,6 @@ GRASSRasterBand::~GRASSRasterBand()
     if( hCell >= 0 )
         G_close_cell( hCell );
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -386,7 +384,6 @@ double GRASSRasterBand::GetNoDataValue( int *pbSuccess )
 /*                             GRASSDataset                             */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            GRASSDataset()                            */

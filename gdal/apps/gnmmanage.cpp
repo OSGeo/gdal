@@ -153,7 +153,6 @@ static void Usage(int bShort = TRUE)
     Usage(NULL, bShort);
 }
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -469,7 +468,6 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
         }
-
     }
     else if(stOper == op_create)
     {
@@ -534,7 +532,6 @@ int main( int nArgc, char ** papszArgv )
                    "new dataset at %s\n", CPLFormFilename(pszPath,
                     pszNetworkName, NULL));
         }
-
     }
     else if(stOper == op_import)
     {
@@ -543,7 +540,6 @@ int main( int nArgc, char ** papszArgv )
 
         if(pszInputDataset == NULL)
             Usage("No input dataset name provided");
-
 
         // open
         poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
@@ -786,7 +782,6 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("Features connected successfully\n");
         }
-
     }
     else if(stOper == op_delete)
     {

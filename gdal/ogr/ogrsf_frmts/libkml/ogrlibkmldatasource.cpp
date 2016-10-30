@@ -642,7 +642,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
         else if( ( IsKmz() || IsDir() ) && m_poKmlDocKml
                   && m_poKmlDocKml->IsA( kmldom::Type_Document ) )
             poKmlDocument = AsDocument( m_poKmlDocKml );
-
     }
     else if( ( pszPound = strchr( const_cast<char *>(pszSchemaUrl), '#' ) )
              != NULL )
@@ -665,7 +664,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
         else if( ( IsKmz() || IsDir() ) && m_poKmlDocKml
                   && m_poKmlDocKml->IsA( kmldom::Type_Document ) )
             poKmlDocument = AsDocument( m_poKmlDocKml );
-
     }
 
     if( poKmlDocument )
@@ -693,7 +691,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
                     break;
                 }
             }
-
         }
     }
 

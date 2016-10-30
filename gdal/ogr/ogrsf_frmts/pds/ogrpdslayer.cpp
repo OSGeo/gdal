@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 namespace OGRPDS {
@@ -131,7 +133,6 @@ OGRPDSLayer::~OGRPDSLayer()
 
     VSIFCloseL( fpPDS );
 }
-
 
 /************************************************************************/
 /*                           ReadStructure()                            */
@@ -424,7 +425,6 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
     VSIFCloseL(fpStructure);
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -435,7 +435,6 @@ void OGRPDSLayer::ResetReading()
     nNextFID = 0;
     VSIFSeekL( fpPDS, nStartBytes, SEEK_SET );
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */
@@ -460,7 +459,6 @@ OGRFeature *OGRPDSLayer::GetNextFeature()
         delete poFeature;
     }
 }
-
 
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
@@ -662,7 +660,7 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
     {
         char **papszTokens = CSLTokenizeString2(
                 (const char*)pabyRecord, " ", CSLT_HONOURSTRINGS );
-        const int nTokens = MIN(CSLCount(papszTokens), nFieldCount);
+        const int nTokens = std::min(CSLCount(papszTokens), nFieldCount);
         for( int i = 0; i < nTokens; i++ )
         {
             poFeature->SetField(i, papszTokens[i]);

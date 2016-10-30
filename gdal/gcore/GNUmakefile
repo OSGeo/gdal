@@ -46,7 +46,7 @@ $(OBJ):	gdal_priv.h gdal_proxy.h
 clean: mdreader-clean
 	$(RM) *.o $(O_OBJ)
 
-docs:	
+docs:
 	(cd ..; $(MAKE) docs)
 
 gdal_misc.$(OBJ_EXT):	gdal_misc.cpp gdal_version.h

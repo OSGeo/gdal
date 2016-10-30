@@ -24,7 +24,6 @@ extern "C" {
 
 #include "datasource.h"
 
-
 typedef struct {
    sChar GribVersion;        /* 1 if GRIB1, 2 if GRIB2, -1 if it is TDLP */
    sInt4 start;           /* Where this message starts in file. */

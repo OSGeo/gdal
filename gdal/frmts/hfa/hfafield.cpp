@@ -30,6 +30,8 @@
 
 #include "hfa_p.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 static const int MAX_ENTRY_REPORT = 16;
@@ -1058,15 +1060,18 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 
           if( nIndexValue == -3 )
           {
-              dfDoubleRet = nIntRet = nBaseItemType;
+              dfDoubleRet = nBaseItemType;
+              nIntRet = nBaseItemType;
           }
           else if( nIndexValue == -2 )
           {
-              dfDoubleRet = nIntRet = nColumns;
+              dfDoubleRet = nColumns;
+              nIntRet = nColumns;
           }
           else if( nIndexValue == -1 )
           {
-              dfDoubleRet = nIntRet = nRows;
+              dfDoubleRet = nRows;
+              nIntRet = nRows;
           }
           else if( nBaseItemType == EPT_u1 )
           {
@@ -1560,7 +1565,8 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     void *pReturn = NULL;
 
-    for( int iEntry = 0; iEntry < MIN(MAX_ENTRY_REPORT, nEntries); iEntry++ )
+    const int nMaxEntry = std::min(MAX_ENTRY_REPORT, nEntries);
+    for( int iEntry = 0; iEntry < nMaxEntry; iEntry++ )
     {
         if( nEntries == 1 )
             CPL_IGNORE_RET_VAL(
@@ -1659,5 +1665,4 @@ void HFAField::DumpInstValue( FILE *fpOut,
         CPL_IGNORE_RET_VAL(
             VSIFPrintf( fpOut, "%s%s = (no values)\n",
                         pszPrefix, pszFieldName ));
-
 }

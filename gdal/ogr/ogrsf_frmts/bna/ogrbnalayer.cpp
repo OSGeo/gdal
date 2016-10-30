@@ -154,7 +154,6 @@ void OGRBNALayer::ResetReading()
     CPL_IGNORE_RET_VAL(VSIFSeekL( fpBNA, 0, SEEK_SET ));
 }
 
-
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -228,7 +227,6 @@ OGRFeature *OGRBNALayer::GetNextFeature()
         }
     }
 }
-
 
 /************************************************************************/
 /*                      WriteFeatureAttributes()                        */
@@ -555,8 +553,6 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
     return OGRERR_NONE;
 }
 
-
-
 /************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
@@ -570,7 +566,6 @@ OGRErr OGRBNALayer::CreateField( OGRFieldDefn *poField, int /* bApproxOK */ )
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                           BuildFeatureFromBNARecord()                */
@@ -773,7 +768,6 @@ OGRFeature *OGRBNALayer::BuildFeatureFromBNARecord (BNARecord* record, long fid)
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                           FastParseUntil()                           */

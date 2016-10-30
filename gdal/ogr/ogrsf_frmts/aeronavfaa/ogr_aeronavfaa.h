@@ -32,7 +32,6 @@
 
 #include "ogrsf_frmts.h"
 
-
 typedef struct
 {
     const char* pszFieldName;
@@ -48,8 +47,6 @@ typedef struct
     int              nLatStartCol; /* starting at 1 */
     int              nLonStartCol; /* starting at 1 */
 } RecordDesc;
-
-
 
 /************************************************************************/
 /*                         OGRAeronavFAALayer                           */
@@ -73,7 +70,6 @@ protected:
   public:
                         OGRAeronavFAALayer(VSILFILE* fp, const char* pszLayerName);
                         virtual ~OGRAeronavFAALayer();
-
 
     virtual void                ResetReading();
     virtual OGRFeature *        GetNextFeature();
@@ -183,6 +179,5 @@ class OGRAeronavFAADataSource : public OGRDataSource
 
     virtual int                 TestCapability( const char * );
 };
-
 
 #endif /* ndef OGR_AeronavFAA_H_INCLUDED */

@@ -37,8 +37,6 @@
 
 #include "cpl_port.h"  // Must be first.
 
-#include <set>
-
 #include "cpl_csv.h"
 #include "cplkeywordparser.h"
 #include "cpl_minixml.h"
@@ -64,9 +62,14 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#include <cmath>
+#include <algorithm>
+#include <set>
+
 #if HAVE_CXX11
 #include <mutex>
 #endif
+
 
 CPL_CVSID("$Id$");
 
@@ -551,7 +554,6 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     static void SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
                                 char **papszParmList, uint32 nBitsPerSample );
 };
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1335,8 +1337,15 @@ public:
         {
             while( nSeekForward > 0 )
             {
+#if HAVE_CXX11
+                // If size_t is smaller than vsi_l_offset, possible trouble.
+                static_assert(
+                    sizeof(size_t) >= sizeof(vsi_l_offset),
+                    "size_t must be the same size or bigger than vsi_l_offset");
+#endif
                 size_t nToRead = static_cast<size_t>(
-                    MIN( nTempBufferSize, nSeekForward ) );
+                    std::min(nTempBufferSize,
+                             static_cast<size_t>(nSeekForward)));
                 if( VSIFReadL(pTempBuffer, nToRead, 1, fp) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
@@ -1460,7 +1469,7 @@ int GTiffRasterBand::DirectIO( GDALRWFlag eRWFlag,
     // Sub-sampling or over-sampling can only be done at last stage.
     int nReqXSize = nXSize;
     // Can do sub-sampling at the extraction stage.
-    const int nReqYSize = MIN(nBufYSize, nYSize);
+    const int nReqYSize = std::min(nBufYSize, nYSize);
     // TODO(schwehr): Make ppData be GByte**.
     void** ppData = static_cast<void **>(
         VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void*)) );
@@ -2377,8 +2386,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             const int nBlockYOff = nSrcLine / nBlockYSize;
             const int nYOffsetInBlock = nSrcLine % nBlockYSize;
             const int nUsedBlockHeight =
-                MIN( nBufYSize - y,
-                     static_cast<int>(nBlockYSize) - nYOffsetInBlock );
+                std::min( nBufYSize - y,
+                          static_cast<int>(nBlockYSize) - nYOffsetInBlock );
 
             int nBlockXOff = nXOff / nBlockXSize;
             int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2389,8 +2398,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
             {
                 const toff_t nCurOffset = panOffsets[nBlockId];
                 const int nUsedBlockWidth =
-                    MIN( static_cast<int>(nBlockXSize) - nXOffsetInBlock,
-                         nBufXSize - x );
+                    std::min( static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                              nBufXSize - x );
 
                 if( nCurOffset == 0 )
                 {
@@ -2489,8 +2498,8 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 const int nBlockYOff = nSrcLine / nBlockYSize;
                 const int nYOffsetInBlock = nSrcLine % nBlockYSize;
                 const int nUsedBlockHeight =
-                    MIN( nBufYSize - y,
-                         static_cast<int>(nBlockYSize) - nYOffsetInBlock);
+                    std::min( nBufYSize - y,
+                              static_cast<int>(nBlockYSize) - nYOffsetInBlock);
 
                 int nBlockXOff = nXOff / nBlockXSize;
                 int nXOffsetInBlock = nXOff % nBlockXSize;
@@ -2510,8 +2519,9 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                 {
                     const toff_t nCurOffset = panOffsets[nBlockId];
                     const int nUsedBlockWidth =
-                        MIN( static_cast<int>(nBlockXSize) - nXOffsetInBlock,
-                             nBufXSize - x );
+                        std::min(
+                            static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                            nBufXSize - x);
 
                     if( nCurOffset == 0 )
                     {
@@ -2820,7 +2830,6 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                             {
                                 REACHED(46);
                             }
-
                         }
                     }
 
@@ -2924,9 +2933,9 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                         nXOffsetInBlock * nBandsPerBlockDTSize;
                         const toff_t nCurOffset = panOffsets[nBlockId];
                         const int nUsedBlockWidth =
-                            MIN( static_cast<int>(nBlockXSize) -
-                                 nXOffsetInBlock,
-                                 nBufXSize - x);
+                            std::min(
+                                static_cast<int>(nBlockXSize) - nXOffsetInBlock,
+                                nBufXSize - x);
 
                         int nIters = nUsedBlockWidth;
                         if( nCurOffset == 0 )
@@ -3258,9 +3267,10 @@ template<class FetchBuffer> CPLErr GTiffDataset::CommonDirectIO(
                                 nXOffsetInBlock * nBandsPerBlockDTSize;
                             const toff_t nCurOffset = panOffsets[nBlockId];
                             const int nUsedBlockWidth =
-                                MIN( static_cast<int>(nBlockXSize) -
-                                     nXOffsetInBlock,
-                                     nBufXSize - x );
+                                std::min(
+                                    static_cast<int>(nBlockXSize) -
+                                    nXOffsetInBlock,
+                                    nBufXSize - x );
                             int nIters = nUsedBlockWidth;
 
                             if( nCurOffset == 0 )
@@ -3655,7 +3665,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     // Sub-sampling or over-sampling can only be done at last stage.
     int nReqXSize = nXSize;
     // Can do sub-sampling at the extraction stage.
-    int nReqYSize = MIN(nBufYSize, nYSize);
+    const int nReqYSize = std::min(nBufYSize, nYSize);
     void** ppData =
         static_cast<void **>( VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void*)) );
     vsi_l_offset* panOffsets =
@@ -3840,7 +3850,6 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     return eErr;
 }
 
-
 /************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
@@ -3874,7 +3883,6 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( bTried )
             return eErr;
     }
-
 
     if( poGDS->eVirtualMemIOUsage != VIRTUAL_MEM_IO_NO )
     {
@@ -3955,6 +3963,9 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
     int nStatus = 0;
     VSILFILE* fp = VSI_TIFFGetVSILFile(TIFFClientdata( poGDS->hTIFF ));
     GIntBig nPixelsData = 0;
+    // We need to compute this here as it might not have been computed
+    // previously (which sucks...)
+    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     for( int iY = iYBlockStart; iY <= iYBlockEnd; ++iY )
     {
         for( int iX = iXBlockStart; iX <= iXBlockEnd; ++iX )
@@ -3995,8 +4006,11 @@ int GTiffRasterBand::IGetDataCoverageStatus( int nXOff, int nYOff,
             }
             if( bHasData )
             {
-                nPixelsData += (MIN( (iX + 1) * nBlockXSize, nXOff + nXSize ) - MAX( iX * nBlockXSize, nXOff )) *
-                               (MIN( (iY + 1) * nBlockYSize, nYOff + nYSize ) - MAX( iY * nBlockYSize, nYOff ));
+                nPixelsData +=
+                    (std::min( (iX + 1) * nBlockXSize, nXOff + nXSize ) -
+                     std::max( iX * nBlockXSize, nXOff )) *
+                    (std::min( (iY + 1) * nBlockYSize, nYOff + nYSize ) -
+                     std::max( iY * nBlockYSize, nYOff ));
                 nStatus |= GDAL_DATA_COVERAGE_STATUS_DATA;
             }
             if( nMaskFlagStop != 0 && (nMaskFlagStop & nStatus) != 0 )
@@ -4156,7 +4170,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       FillCacheForOtherBands()                       */
@@ -5144,7 +5157,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
     poGDS->bNoDataChanged = true;
 
     bNoDataSet = false;
-    dfNoDataValue = -9999.0;;
+    dfNoDataValue = -9999.0;
     return CE_None;
 }
 
@@ -5159,7 +5172,7 @@ void GTiffRasterBand::NullBlock( void *pData )
 
 {
     const int nWords = nBlockXSize * nBlockYSize;
-    const int nChunkSize = MAX(1, GDALGetDataTypeSizeBytes(eDataType));
+    const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
 
     int bNoDataSetIn = FALSE;
     const double dfNoData = GetNoDataValue( &bNoDataSetIn );
@@ -5430,7 +5443,6 @@ class GTiffRGBABand CPL_FINAL : public GTiffRasterBand
     virtual GDALColorInterp GetColorInterpretation();
 };
 
-
 /************************************************************************/
 /*                           GTiffRGBABand()                            */
 /************************************************************************/
@@ -5593,7 +5605,6 @@ class GTiffOddBitsBand : public GTiffRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 };
-
 
 /************************************************************************/
 /*                           GTiffOddBitsBand()                         */
@@ -6491,7 +6502,6 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-
 /************************************************************************/
 /* ==================================================================== */
 /*                             GTiffBitmapBand                          */
@@ -6512,7 +6522,6 @@ class GTiffBitmapBand : public GTiffOddBitsBand
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
 };
-
 
 /************************************************************************/
 /*                           GTiffBitmapBand()                          */
@@ -6607,7 +6616,6 @@ class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
     virtual CPLErr IWriteBlock( int, int, void * );
 };
 
-
 /************************************************************************/
 /*                       GTiffSplitBitmapBand()                         */
 /************************************************************************/
@@ -6624,11 +6632,7 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand( GTiffDataset *poDSIn, int nBandIn )
 /*                      ~GTiffSplitBitmapBand()                         */
 /************************************************************************/
 
-GTiffSplitBitmapBand::~GTiffSplitBitmapBand()
-
-{
-}
-
+GTiffSplitBitmapBand::~GTiffSplitBitmapBand() {}
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -6708,7 +6712,6 @@ CPLErr GTiffSplitBitmapBand::IWriteBlock( int /* nBlockXOff */,
 /*                            GTiffDataset                              */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            GTiffDataset()                            */
@@ -7174,6 +7177,9 @@ void GTiffDataset::FillEmptyTiles()
         return;
     }
 
+    // Force now tiles at nodata value to be written
+    bWriteEmptyTiles = true;
+
 /* -------------------------------------------------------------------- */
 /*      If set, fill data buffer with no data value.                    */
 /* -------------------------------------------------------------------- */
@@ -7369,7 +7375,6 @@ template<> bool IsEqualToNoData<double>( double value, double noDataValue )
         CPLIsNan(noDataValue) ?
         CPL_TO_BOOL(CPLIsNan(value)) : value == noDataValue;
 }
-
 
 template<class T>
 bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
@@ -9076,7 +9081,6 @@ CPLErr GTiffDataset::CleanOverviews()
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                   RegisterNewOverviewDataset()                       */
 /************************************************************************/
@@ -9155,7 +9159,9 @@ static void CreateTIFFColorTable(GDALColorTable* poColorTable,
         }
         else
         {
-            anTRed[iColor] = anTGreen[iColor] = anTBlue[iColor] = 0;
+            anTRed[iColor] = 0;
+            anTGreen[iColor] = 0;
+            anTBlue[iColor] = 0;
         }
     }
 
@@ -9187,8 +9193,12 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
-    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+    std::vector<unsigned short> anTRed;
+    std::vector<unsigned short> anTGreen;
+    std::vector<unsigned short> anTBlue;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
@@ -9244,7 +9254,8 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
     {
         GDALRasterBand* poOvrBand = poSrcDS->GetRasterBand(1)->GetOverview(i);
 
-        int nOXSize = poOvrBand->GetXSize(), nOYSize = poOvrBand->GetYSize();
+        int nOXSize = poOvrBand->GetXSize();
+        int nOYSize = poOvrBand->GetYSize();
 
         toff_t nOverviewOffset =
                 GTIFFWriteDirectory(hTIFF, FILETYPE_REDUCEDIMAGE,
@@ -9277,7 +9288,6 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
 
     return eErr;
 }
-
 
 /************************************************************************/
 /*                       CreateInternalMaskOverviews()                  */
@@ -9524,8 +9534,12 @@ CPLErr GTiffDataset::IBuildOverviews(
 /* -------------------------------------------------------------------- */
 /*      Do we have a palette?  If so, create a TIFF compatible version. */
 /* -------------------------------------------------------------------- */
-    std::vector<unsigned short> anTRed, anTGreen, anTBlue;
-    unsigned short      *panRed=NULL, *panGreen=NULL, *panBlue=NULL;
+    std::vector<unsigned short> anTRed;
+    std::vector<unsigned short> anTGreen;
+    std::vector<unsigned short> anTBlue;
+    unsigned short *panRed = NULL;
+    unsigned short *panGreen = NULL;
+    unsigned short *panBlue = NULL;
 
     if( nPhotometric == PHOTOMETRIC_PALETTE && poColorTable != NULL )
     {
@@ -9620,7 +9634,6 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nExtraSamples, panExtraSampleValues,
                     osMetadata );
 
-
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
             else
@@ -9668,7 +9681,6 @@ CPLErr GTiffDataset::IBuildOverviews(
             pszResampling, GDALDummyProgress, NULL );
         CPLFree(papoOverviewBands);
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
@@ -9826,7 +9838,6 @@ CPLErr GTiffDataset::IBuildOverviews(
         CPLFree( papoOverviewBands );
     }
 
-
     pfnProgress( 1.0, NULL, pProgressData );
 
     return eErr;
@@ -9907,7 +9918,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 /* -------------------------------------------------------------------- */
     if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
         || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-        || adfGeoTransform[4] != 0.0 || ABS(adfGeoTransform[5]) != 1.0 )
+        || adfGeoTransform[4] != 0.0 || std::abs(adfGeoTransform[5]) != 1.0 )
     {
         bNeedsRewrite = true;
 
@@ -10253,7 +10264,6 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                 }
             }
         }
-
     }
 }
 
@@ -10375,7 +10385,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 /*      Convert all the remaining metadata into a simple XML            */
 /*      format.                                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRoot = NULL, *psTail = NULL;
+    CPLXMLNode *psRoot = NULL;
+    CPLXMLNode *psTail = NULL;
 
     if( bSrcIsGeoTIFF )
     {
@@ -10411,7 +10422,6 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
             GDALWriteIMDFile( pszTIFFFilename, papszIMDMD );
         }
     }
-
 
     uint16 nPhotometric;
     if( !TIFFGetField( l_hTIFF, TIFFTAG_PHOTOMETRIC, &(nPhotometric) ) )
@@ -10469,7 +10479,6 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
             AppendMetadataItem( &psRoot, &psTail, "UNITTYPE",
                                 pszUnitType, nBand,
                                 "unittype", "" );
-
 
         if( strlen(poBand->GetDescription()) > 0 )
         {
@@ -12763,8 +12772,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     }
     else
     {
-        int nMaxColor = 0;
-        GDALColorEntry oEntry;
+        unsigned short nMaxColor = 0;
 
         poColorTable = new GDALColorTable();
 
@@ -12772,18 +12780,23 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
-            oEntry.c1 = panRed[iColor] / 256;
-            oEntry.c2 = panGreen[iColor] / 256;
-            oEntry.c3 = panBlue[iColor] / 256;
-            oEntry.c4 =
-                bNoDataSet &&
-                static_cast<int>(dfNoDataValue) == iColor ? 0 : 255;
+            // TODO(schwehr): Ensure the color entries are never negative?
+            const unsigned short divisor = 256;
+            const GDALColorEntry oEntry = {
+                static_cast<short>(panRed[iColor] / divisor),
+                static_cast<short>(panGreen[iColor] / divisor),
+                static_cast<short>(panBlue[iColor] / divisor),
+                static_cast<short>(
+                    bNoDataSet && static_cast<int>(dfNoDataValue) == iColor
+                    ? 0
+                    : 255)
+            };
 
             poColorTable->SetColorEntry( iColor, &oEntry );
 
-            nMaxColor = MAX(nMaxColor,panRed[iColor]);
-            nMaxColor = MAX(nMaxColor,panGreen[iColor]);
-            nMaxColor = MAX(nMaxColor,panBlue[iColor]);
+            nMaxColor = std::max(nMaxColor, panRed[iColor]);
+            nMaxColor = std::max(nMaxColor, panGreen[iColor]);
+            nMaxColor = std::max(nMaxColor, panBlue[iColor]);
         }
 
         // Bug 1384 - Some TIFF files are generated with color map entry
@@ -12797,12 +12810,16 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
             for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
             {
-                oEntry.c1 = panRed[iColor];
-                oEntry.c2 = panGreen[iColor];
-                oEntry.c3 = panBlue[iColor];
-                oEntry.c4 =
+                // TODO(schwehr): Ensure the color entries are never negative?
+                const GDALColorEntry oEntry = {
+                    static_cast<short>(panRed[iColor]),
+                    static_cast<short>(panGreen[iColor]),
+                    static_cast<short>(panBlue[iColor]),
                     bNoDataSet &&
-                    static_cast<int>(dfNoDataValue) == iColor ? 0 : 255;
+                    static_cast<int>(dfNoDataValue) == iColor
+                    ? static_cast<short>(0)
+                    : static_cast<short>(255)
+                };
 
                 poColorTable->SetColorEntry( iColor, &oEntry );
             }
@@ -13288,7 +13305,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
                 {
                     adfGeoTransform[1] = padfScale[0];
-                    adfGeoTransform[5] = - ABS(padfScale[1]);
+                    adfGeoTransform[5] = -std::abs(padfScale[1]);
 
                     if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
                         && nCount >= 6 )
@@ -13455,7 +13472,6 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
         CPLFree( pszTabWKT );
     }
-
 
     if( m_bLoadPam && m_nPAMGeorefSrcIndex >= 0 )
     {
@@ -13740,7 +13756,6 @@ void GTiffDataset::ScanDirectories()
     }
 }
 
-
 static int GTiffGetLZMAPreset(char** papszOptions)
 {
     int nLZMAPreset = -1;
@@ -13758,7 +13773,6 @@ static int GTiffGetLZMAPreset(char** papszOptions)
     }
     return nLZMAPreset;
 }
-
 
 static int GTiffGetZLevel(char** papszOptions)
 {
@@ -13923,7 +13937,6 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         pszProfile = "GDALGeoTIFF";
 
     const bool bTiled = CPLFetchBool( papszParmList, "TILED", false );
-
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
     if( pszValue != NULL )
@@ -14474,7 +14487,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
         if( l_nBlockYSize == 0 )
             l_nRowsPerStrip =
-                MIN( nYSize,
+                std::min( nYSize,
                      static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0)) );
         else
             l_nRowsPerStrip = l_nBlockYSize;
@@ -14892,7 +14905,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
         poDS->nBlockXSize = nXSize;
         poDS->nBlockYSize =
-            MIN( static_cast<int>(poDS->nRowsPerStrip) , nYSize );
+            std::min( static_cast<int>(poDS->nRowsPerStrip) , nYSize );
     }
 
     poDS->nBlocksPerBand =
@@ -15853,7 +15866,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     // band count as the source. Will fail later in GDALDatasetCopyWholeRaster
     // anyway.
     for( int nBand = 1;
-         nBand <= MIN(poDS->GetRasterCount(), poSrcDS->GetRasterCount()) ;
+         nBand <= std::min(poDS->GetRasterCount(), poSrcDS->GetRasterCount()) ;
          ++nBand )
     {
         GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(nBand);
@@ -17304,7 +17317,8 @@ void GDALRegister_GTiff()
             "       <Value>JPEG</Value>"
             "       <Value>LZW</Value>"
             "       <Value>DEFLATE</Value>" );
-    bHasLZW = bHasDEFLATE = true;
+    bHasLZW = true;
+    bHasDEFLATE = true;
 #else
     TIFFCodec *codecs = TIFFGetConfiguredCODECs();
 

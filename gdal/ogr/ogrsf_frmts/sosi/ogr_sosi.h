@@ -135,7 +135,6 @@ public:
     int                 TestCapability( const char * );
 };
 
-
 /************************************************************************
  *                           OGRSOSIDataTypes                           *
  * OGRSOSIDataTypes provides the correct data types for some of the     *
@@ -158,7 +157,6 @@ public:
     OGRFieldType        GetType() {
         return nType;
     };
-
 };
 
 class OGRSOSIDataType {

@@ -226,7 +226,6 @@ int main( int argc, char ** argv )
         {
             printf( "No Map Info found\n" );
         }
-
     }
 
     // const Eprj_ProParameters *psProParameters;

@@ -107,7 +107,6 @@ CPLErr MSGDataset::SetProjection( const char * pszNewProjection )
     pszProjection = CPLStrdup( pszNewProjection );
 
     return CE_None;
-
 }
 
 /************************************************************************/
@@ -190,7 +189,6 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
                   l_sErr.c_str() );
         return FALSE;
     }
-
 
 // We're confident the string is formatted as an MSG command_line
 
@@ -439,7 +437,6 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDSIn, int nBandIn )
 
       // nBlockYSize : default
       // fScanNorth : default
-
     }
 /* -------------------------------------------------------------------- */
 /*      For the HRV band, read the prologue for shift and splitline.    */

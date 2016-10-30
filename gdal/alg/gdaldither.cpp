@@ -50,6 +50,8 @@
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include <cstdlib>
+#include <algorithm>
 
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2
@@ -344,12 +346,13 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
         {
           for( i = 0; i < nXSize; i++ )
           {
-            pabyRed[i] = (GByte)
-                MAX(0,MIN(255,(pabyRed[i]   + panError[i*3+0+3])));
-            pabyGreen[i] = (GByte)
-                MAX(0,MIN(255,(pabyGreen[i] + panError[i*3+1+3])));
-            pabyBlue[i] =  (GByte)
-                MAX(0,MIN(255,(pabyBlue[i]  + panError[i*3+2+3])));
+              pabyRed[i] = static_cast<GByte>(
+                  std::max(0, std::min(255, (pabyRed[i] + panError[i*3+0+3]))));
+              pabyGreen[i] = static_cast<GByte>(
+                  std::max(0,
+                           std::min(255, (pabyGreen[i] + panError[i*3+1+3]))));
+              pabyBlue[i] = static_cast<GByte>(
+                  std::max(0, std::min(255,(pabyBlue[i] + panError[i*3+2+3]))));
           }
 
           memset( panError, 0, sizeof(int) * (nXSize+2) * 3 );
@@ -364,13 +367,14 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
 
         for( i = 0; i < nXSize; i++ )
         {
+            const int nRedValue =
+                std::max(0, std::min(255, pabyRed[i] + nLastRedError));
+            const int nGreenValue =
+                std::max(0, std::min(255, pabyGreen[i] + nLastGreenError));
+            const int nBlueValue =
+                std::max(0, std::min(255, pabyBlue[i] + nLastBlueError));
+
             int iIndex, nError, nSixth;
-            int nRedValue, nGreenValue, nBlueValue;
-
-            nRedValue =   MAX(0,MIN(255, pabyRed[i]   + nLastRedError));
-            nGreenValue = MAX(0,MIN(255, pabyGreen[i] + nLastGreenError));
-            nBlueValue =  MAX(0,MIN(255, pabyBlue[i]  + nLastBlueError));
-
             if( psColorIndexMap )
             {
                 GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
@@ -454,12 +458,18 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                 GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
                 GInt16* psIndex = &pasDynamicColorMap[nColorCode];
                 if( *psIndex < 0 )
-                    iIndex = *psIndex = static_cast<GInt16>(FindNearestColor( nColors, anPCT,
-                                                          nRedValue,
-                                                          nGreenValue,
-                                                          nBlueValue ));
-                else
+                {
+                    *psIndex = static_cast<GInt16>(
+                        FindNearestColor( nColors, anPCT,
+                                          nRedValue,
+                                          nGreenValue,
+                                          nBlueValue ));
                     iIndex = *psIndex;
+                }
+                else
+                {
+                    iIndex = *psIndex;
+                }
             }
 
             pabyIndex[i] = (GByte) iIndex;
@@ -533,11 +543,10 @@ static int FindNearestColor( int nColors, int *panPCT,
 
 {
 #ifdef USE_SSE2
-    int     iColor;
+    int nBestDist = 768;
+    int nBestIndex = 0;
 
-    int nBestDist = 768, nBestIndex = 0;
-
-    int     anDistanceUnaligned[16+4]; /* 4 for alignment on 16-byte boundary */
+    int anDistanceUnaligned[16+4] = {}; /* 4 for alignment on 16-byte boundary */
     int* anDistance = ALIGN_INT_ARRAY_ON_16_BYTE(anDistanceUnaligned);
 
     const __m128i ff = _mm_set1_epi32(0xFFFFFFFF);
@@ -549,6 +558,7 @@ static int FindNearestColor( int nColors, int *panPCT,
     const __m128i thisColor_low = _mm_srli_epi64(thisColor, 32);
     const __m128i thisColor_high = _mm_slli_epi64(thisColor, 32);
 
+    int iColor;
     for( iColor = 0; iColor < nColors; iColor+=8 )
     {
         __m128i pctColor = _mm_load_si128((__m128i*)&panPCT[iColor]);
@@ -606,17 +616,15 @@ static int FindNearestColor( int nColors, int *panPCT,
     }
     return nBestIndex;
 #else
-    int     iColor;
+    int nBestDist = 768;
+    int nBestIndex = 0;
 
-    int nBestDist = 768, nBestIndex = 0;
-
-    for( iColor = 0; iColor < nColors; iColor++ )
+    for( int iColor = 0; iColor < nColors; iColor++ )
     {
-        int     nThisDist;
-
-        nThisDist = ABS(nRedValue   - panPCT[4*iColor+0])
-                  + ABS(nGreenValue - panPCT[4*iColor+1])
-                  + ABS(nBlueValue  - panPCT[4*iColor+2]);
+        int nThisDist =
+            std::abs(nRedValue - panPCT[4*iColor+0]) +
+            std::abs(nGreenValue - panPCT[4*iColor+1]) +
+            std::abs(nBlueValue - panPCT[4*iColor+2]);
 
         if( nThisDist < nBestDist )
         {
@@ -627,7 +635,6 @@ static int FindNearestColor( int nColors, int *panPCT,
     return nBestIndex;
 #endif
 }
-
 
 /************************************************************************/
 /*                          FindNearestColor()                          */

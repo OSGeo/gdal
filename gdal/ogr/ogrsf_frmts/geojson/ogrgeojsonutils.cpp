@@ -26,6 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "ogrgeojsonutils.h"
 #include <cpl_port.h>
 #include <cpl_conv.h>
@@ -38,10 +39,10 @@ CPL_CVSID("$Id$");
 /*                           GeoJSONIsObject()                          */
 /************************************************************************/
 
-int GeoJSONIsObject( const char* pszText )
+bool GeoJSONIsObject( const char* pszText )
 {
     if( NULL == pszText )
-        return FALSE;
+        return false;
 
     /* Skip UTF-8 BOM (#5630) */
     const GByte* pabyData = reinterpret_cast<const GByte *>(pszText);
@@ -65,7 +66,7 @@ int GeoJSONIsObject( const char* pszText )
     }
 
     if( *pszText != '{' )
-        return FALSE;
+        return false;
 
     return
         (strstr(pszText, "\"type\"") != NULL &&

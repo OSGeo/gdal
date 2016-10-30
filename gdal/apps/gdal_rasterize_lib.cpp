@@ -35,6 +35,8 @@
 #include "cpl_string.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
+
+#include <algorithm>
 #include <vector>
 
 CPL_CVSID("$Id$");
@@ -50,7 +52,6 @@ static bool ArgIsNumeric( const char *pszArg )
     CPLStrtod(pszArg, &pszEnd);
     return pszEnd != NULL && pszEnd[0] == '\0';
 }
-
 
 /************************************************************************/
 /*                          InvertGeometries()                          */
@@ -241,9 +242,12 @@ static CPLErr ProcessLayer(
 
         for( unsigned int iBand = 0; iBand < anBandList.size(); iBand++ )
         {
-            if( adfBurnValues.size() > 0 )
+            if( !adfBurnValues.empty() )
                 adfFullBurnValues.push_back(
-                    adfBurnValues[MIN(iBand,adfBurnValues.size()-1)] );
+                    adfBurnValues[
+                        std::min(iBand,
+                                 static_cast<unsigned int>(
+                                     adfBurnValues.size()) - 1)] );
             else if( pszBurnAttribute )
             {
                 adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
@@ -281,7 +285,10 @@ static CPLErr ProcessLayer(
             {
                 if( adfBurnValues.size() > 0 )
                     adfFullBurnValues.push_back(
-                        adfBurnValues[MIN(iBand,adfBurnValues.size()-1)] );
+                        adfBurnValues[
+                            std::min(iBand,
+                                     static_cast<unsigned int>(
+                                        adfBurnValues.size()) - 1)] );
                 else /* FIXME? Not sure what to do exactly in the else case, but we must insert a value */
                     adfFullBurnValues.push_back( 0.0 );
             }
@@ -368,10 +375,10 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
             }
             else
             {
-                sEnvelop.MinX = MIN(sEnvelop.MinX, sLayerEnvelop.MinX);
-                sEnvelop.MinY = MIN(sEnvelop.MinY, sLayerEnvelop.MinY);
-                sEnvelop.MaxX = MAX(sEnvelop.MaxX, sLayerEnvelop.MaxX);
-                sEnvelop.MaxY = MAX(sEnvelop.MaxY, sLayerEnvelop.MaxY);
+                sEnvelop.MinX = std::min(sEnvelop.MinX, sLayerEnvelop.MinX);
+                sEnvelop.MinY = std::min(sEnvelop.MinY, sLayerEnvelop.MinY);
+                sEnvelop.MaxX = std::max(sEnvelop.MaxX, sLayerEnvelop.MaxX);
+                sEnvelop.MaxY = std::max(sEnvelop.MaxY, sLayerEnvelop.MaxY);
             }
         }
         else
@@ -450,7 +457,9 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (adfInitVals.size() != 0)
     {
-        for(iBand = 0; iBand < MIN(nBandCount,(int)adfInitVals.size()); iBand++)
+        for( iBand = 0;
+             iBand < std::min(nBandCount, static_cast<int>(adfInitVals.size()));
+             iBand++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
             GDALFillRaster(hBand, adfInitVals[iBand], 0);
@@ -459,7 +468,6 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     return hDstDS;
 }
-
 
 struct GDALRasterizeOptions
 {
@@ -496,7 +504,6 @@ struct GDALRasterizeOptions
     OGRSpatialReferenceH hSRS;
     int bTargetAlignedPixels;
 };
-
 
 /************************************************************************/
 /*                             GDALRasterize()                          */
@@ -1094,7 +1101,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-tap option cannot be used without using -tr.");
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;;
+            return NULL;
         }
 
         if( psOptions->anBandList.size() != 0 )

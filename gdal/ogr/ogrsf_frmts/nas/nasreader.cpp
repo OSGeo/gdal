@@ -36,6 +36,8 @@
 
 #include "ogr_geometry.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -229,6 +231,8 @@ GMLFeature *NASReader::NextFeature()
         {
             if( m_poSAXReader == NULL )
                 SetupParser();
+            if( m_poSAXReader == NULL )
+                return NULL;
 
             if( !m_poSAXReader->parseFirst( m_pszFilename, m_oToFill ) )
                 return NULL;
@@ -240,7 +244,6 @@ GMLFeature *NASReader::NextFeature()
 
         poReturn = m_poCompleteFeature;
         m_poCompleteFeature = NULL;
-
     }
     catch (const XMLException& toCatch)
     {
@@ -312,7 +315,6 @@ void NASReader::PushFeature( const char *pszElement,
         char *pszFID = CPLStrdup( transcode( attrs.getValue( nFIDIndex ) ) );
         SetFeaturePropertyDirectly( "gml_id", pszFID );
     }
-
 }
 
 /************************************************************************/
@@ -888,10 +890,10 @@ bool NASReader::PrescanForSchema( bool bGetExtents,
                 double dfYMax = 0.0;
                 if( poClass->GetExtents(&dfXMin, &dfXMax, &dfYMin, &dfYMax) )
                 {
-                    dfXMin = MIN(dfXMin,sEnvelope.MinX);
-                    dfXMax = MAX(dfXMax,sEnvelope.MaxX);
-                    dfYMin = MIN(dfYMin,sEnvelope.MinY);
-                    dfYMax = MAX(dfYMax,sEnvelope.MaxY);
+                    dfXMin = std::min(dfXMin, sEnvelope.MinX);
+                    dfXMax = std::max(dfXMax, sEnvelope.MaxX);
+                    dfYMin = std::min(dfYMin, sEnvelope.MinY);
+                    dfYMax = std::max(dfYMax, sEnvelope.MaxY);
                 }
                 else
                 {

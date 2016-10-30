@@ -183,7 +183,6 @@ private:
 
   template<class T>
   bool DecodeHuffman(const Byte** ppByte, T* data) const;
-
 };
 
 // -------------------------------------------------------------------------- ;
@@ -1466,7 +1465,6 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 }
 
 // -------------------------------------------------------------------------- ;
-
 
 NAMESPACE_LERC_END
 #endif

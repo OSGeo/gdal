@@ -338,7 +338,6 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
     }
 }
 
-
 /************************************************************************/
 /*                      BuildFeatureDefnFromDoc()                       */
 /************************************************************************/
@@ -391,7 +390,6 @@ void OGRCouchDBLayer::BuildFeatureDefnFromDoc(json_object* poDoc)
         poFeatureDefn->SetGeomType(wkbNone);
     }
 }
-
 
 /************************************************************************/
 /*                      BuildFeatureDefnFromRows()                      */

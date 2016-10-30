@@ -190,5 +190,4 @@ void GDALMDReaderLandsat::LoadMetadata()
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
-
 }

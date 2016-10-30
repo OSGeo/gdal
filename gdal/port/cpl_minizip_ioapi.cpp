@@ -9,7 +9,6 @@
    Original licence available in port/LICENCE_minizip
 */
 
-
 /* ioapi.c -- IO base function header for compress/uncompress .zip
    files using zlib + zip or unzip API
 

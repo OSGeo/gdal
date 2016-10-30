@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.24 2015-11-22 15:31:03 erouault Exp $ */
+/* $Id: tif_compress.c,v 1.25 2016-10-25 20:04:22 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -82,7 +82,7 @@ TIFFNoDecode(TIFF* tif, const char* method)
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			     "Compression scheme %u %s decoding is not implemented",
 			     tif->tif_dir.td_compression, method);
-	return (-1);
+	return (0);
 }
 
 static int
