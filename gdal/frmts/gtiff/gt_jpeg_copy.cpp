@@ -237,7 +237,7 @@ CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
     }
 
     VSIFree(pabyJPEGData);
-    if VSIFCloseL(fpJPEG) != 0 )
+    if( VSIFCloseL(fpJPEG) != 0 )
         eErr = CE_Failure;
 
     return eErr;
