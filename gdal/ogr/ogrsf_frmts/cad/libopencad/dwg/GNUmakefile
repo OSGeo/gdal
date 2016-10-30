@@ -1,13 +1,13 @@
 
 include ../../../../../GDALmake.opt
 
-OBJ = \
+OBJ := \
 	io.o \
     r2000.o
 
 O_OBJ =	$(foreach file,$(OBJ),../../../o/$(file))
 
-CPPFLAGS	:=	-I. -I.. -I../.. -I../../.. $(CPPFLAGS) -std=c++11
+CPPFLAGS	:=	-I. -I.. -I../.. -I../../.. $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
