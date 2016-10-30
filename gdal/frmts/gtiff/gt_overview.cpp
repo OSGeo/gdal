@@ -505,7 +505,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the file, if it does not already exist.                  */
 /* -------------------------------------------------------------------- */
-    VSIStatBufL sStatBuf = {};
+    VSIStatBufL sStatBuf;
     VSILFILE* fpL = NULL;
 
     if( VSIStatExL( pszFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) != 0 )
