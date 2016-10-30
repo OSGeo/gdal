@@ -5939,7 +5939,7 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
 
 if test "$HAVE_CXX11" = "1"; then
     CXX11_SUPPORT=yes
-    CPPFLAGS="$CPPFLAGS -std=c++11"
+    CXXFLAGS="$CXXFLAGS -std=c++11"
 fi
 CXX11_SUPPORT=$CXX11_SUPPORT
 
