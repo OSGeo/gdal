@@ -343,7 +343,8 @@ int GDALCADDataset::GetCadEncoding() const
     if( poCADFile == NULL )
         return 0;
     const CADHeader & header = poCADFile->getHeader();
-    return header.getValue( CADHeader::DWGCODEPAGE, 0 ).getDecimal();
+    return static_cast<int>( header.getValue(
+                                        CADHeader::DWGCODEPAGE, 0 ).getDecimal() );
 }
 
 OGRSpatialReference *GDALCADDataset::GetSpatialReference()
