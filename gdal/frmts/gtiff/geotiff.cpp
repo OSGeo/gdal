@@ -7179,6 +7179,9 @@ void GTiffDataset::FillEmptyTiles()
         return;
     }
 
+    // TODO(schwehr): From r35982.  Should this be as follows?
+    // Force new tiles with nodata values to be written.
+
     // Force now tiles at nodata value to be written
     bWriteEmptyTiles = true;
 
@@ -13543,7 +13546,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 if( pszUnitType )
                     poBand->osUnitType = pszUnitType;
             }
-            if( poBand->osDescription.size() == 0 )
+            if( !poBand->osDescription.empty() )
                 poBand->osDescription =
                     poBand->GDALPamRasterBand::GetDescription();
 
@@ -15342,7 +15345,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CreateLL( pszFilename, nXSize, nYSize, l_nBands,
                   eType, dfExtraSpaceForOverviews, papszCreateOptions, &l_fpL,
                   l_osTmpFilename );
-    const bool bStreaming = l_osTmpFilename.size() != 0;
+    const bool bStreaming = !l_osTmpFilename.empty();
 
     CSLDestroy( papszCreateOptions );
     papszCreateOptions = NULL;
