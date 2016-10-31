@@ -99,7 +99,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
     if( poClipRect )
     {
         // If it does not intersect the polym, zero the mask and return.
-        if( !static_cast<OGRGeometry *>(hPolygon)->Intersects(poClipRect) )
+        if( !reinterpret_cast<OGRGeometry *>(hPolygon)->Intersects(poClipRect) )
         {
             memset( pafValidityMask, 0, sizeof(float) * nXSize * nYSize );
 
