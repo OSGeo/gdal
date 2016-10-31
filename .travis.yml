@@ -23,13 +23,13 @@ matrix:
         - BUILD_NAME=osx
 
 before_install:
-  - ./ci/travis/${BUILD_NAME}/before_install.sh
+  - ./gdal/ci/travis/${BUILD_NAME}/before_install.sh
 
 install:
-  - ./ci/travis/${BUILD_NAME}/install.sh
+  - ./gdal/ci/travis/${BUILD_NAME}/install.sh
 
 script:
-  - ./ci/travis/${BUILD_NAME}/script.sh
+  - ./gdal/ci/travis/${BUILD_NAME}/script.sh
 
 notifications:
   email:
