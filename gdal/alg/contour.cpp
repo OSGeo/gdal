@@ -1425,20 +1425,8 @@ void GDALContourItem::PrepareEjection()
     // pointing downwards.
     if( bLeftIsHigh )
     {
-        // Reverse the arrays.
-        // TODO(schwehr): Use std::reverse.  Doing both arrays at the same time
-        // is likely hard on memory caches.
-        for( int i = 0; i < nPoints / 2; i++ )
-        {
-            // TODO(schwehr): Use std::swap.
-            double dfTemp = padfX[i];
-            padfX[i] = padfX[ nPoints - i - 1];
-            padfX[ nPoints - i - 1] = dfTemp;
-
-            dfTemp = padfY[i];
-            padfY[i] = padfY[ nPoints - i - 1];
-            padfY[ nPoints - i - 1] = dfTemp;
-        }
+        std::reverse(padfX, padfX + nPoints);
+        std::reverse(padfY, padfY + nPoints);
     }
 }
 
