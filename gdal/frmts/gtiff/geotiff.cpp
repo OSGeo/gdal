@@ -13546,7 +13546,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 if( pszUnitType )
                     poBand->osUnitType = pszUnitType;
             }
-            if( !poBand->osDescription.empty() )
+            if( poBand->osDescription.empty() )
                 poBand->osDescription =
                     poBand->GDALPamRasterBand::GetDescription();
 
