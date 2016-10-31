@@ -45,9 +45,9 @@ static const double RAD2DEG = 1.0 / DEG2RAD;
 
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
                           int nEncoding) :
+                          poSpatialRef( poSR ),
                           poCADLayer( poCADLayer_ ),
-                          nDWGEncoding( nEncoding),
-                          poSpatialRef( poSR )
+                          nDWGEncoding( nEncoding)
 {
     nNextFID = 0;
 
@@ -643,7 +643,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             poFeature->SetGeometryDirectly( poPoint );
             poFeature->SetField( FIELD_NAME_GEOMTYPE, "CADText" );
 
-            sStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",c:%s)", sTextValue.c_str(), 
+            sStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",c:%s)", sTextValue.c_str(),
                                                               sHexColor.c_str());
             poFeature->SetStyleString( sStyle );
             break;

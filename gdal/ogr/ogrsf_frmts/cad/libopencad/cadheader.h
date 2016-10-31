@@ -77,7 +77,7 @@ public:
     long                getDecimal() const;
     double              getReal() const;
     const std::string&  getString() const;
-    DataType       getType() const;
+    DataType            getType() const;
     double              getX() const;
     double              getY() const;
     double              getZ() const;

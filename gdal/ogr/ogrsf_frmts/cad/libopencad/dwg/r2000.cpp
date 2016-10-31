@@ -28,15 +28,15 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  *******************************************************************************/
-#include "r2000.h"
-#include "io.h"
 #include "cadgeometry.h"
 #include "cadobjects.h"
+#include "io.h"
 #include "opencad_api.h"
+#include "r2000.h"
 
-#include <iostream>
-#include <cstring>
 #include <cassert>
+#include <cstring>
+#include <iostream>
 #include <memory>
 
 #ifdef __APPLE__
@@ -68,8 +68,9 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     size_t dHeaderVarsSectionLength = 0;
 
     pFileIO->Seek( sectionLocatorRecords[0].dSeeker, CADFileIO::SeekOrigin::BEG );
-    pFileIO->Read( buffer, DWGSentinelLength );
-    if( memcmp( buffer, DWGHeaderVariablesStart, DWGSentinelLength ) )
+    pFileIO->Read( buffer, DWGConstants::SentinelLength );
+    if( memcmp( buffer, DWGConstants::HeaderVariablesStart,
+                        DWGConstants::SentinelLength ) )
     {
         DebugMsg( "File is corrupted (wrong pointer to HEADER_VARS section,"
                           "or HEADERVARS starting sentinel corrupted.)" );
@@ -622,8 +623,9 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 
 
     int returnCode = CADErrorCodes::SUCCESS;
-    pFileIO->Read( pabyBuf, DWGSentinelLength );
-    if( memcmp( pabyBuf, DWGHeaderVariablesEnd, DWGSentinelLength ) )
+    pFileIO->Read( pabyBuf, DWGConstants::SentinelLength );
+    if( memcmp( pabyBuf, DWGConstants::HeaderVariablesEnd,
+                         DWGConstants::SentinelLength ) )
     {
         DebugMsg( "File is corrupted (HEADERVARS section ending sentinel "
                           "doesnt match.)" );
@@ -646,8 +648,9 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 
         pFileIO->Seek( sectionLocatorRecords[1].dSeeker, CADFileIO::SeekOrigin::BEG );
 
-        pFileIO->Read( buffer, DWGSentinelLength );
-        if( memcmp( buffer, DWGDSClassesStart, DWGSentinelLength ) )
+        pFileIO->Read( buffer, DWGConstants::SentinelLength );
+        if( memcmp( buffer, DWGConstants::DSClassesStart,
+                            DWGConstants::SentinelLength ) )
         {
             std::cerr << "File is corrupted (wrong pointer to CLASSES section,"
                     "or CLASSES starting sentinel corrupted.)\n";
@@ -679,8 +682,9 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 
         pFileIO->Read( buffer, 2 ); // CLASSES CRC!. TODO: add CRC computing & checking feature.
 
-        pFileIO->Read( buffer, DWGSentinelLength );
-        if( memcmp( buffer, DWGDSClassesEnd, DWGSentinelLength ) )
+        pFileIO->Read( buffer, DWGConstants::SentinelLength );
+        if( memcmp( buffer, DWGConstants::DSClassesEnd,
+                            DWGConstants::SentinelLength ) )
         {
             std::cerr << "File is corrupted (CLASSES section ending sentinel "
                     "doesnt match.)\n";

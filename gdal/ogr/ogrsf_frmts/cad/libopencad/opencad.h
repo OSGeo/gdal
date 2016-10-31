@@ -31,10 +31,10 @@
 #ifndef OPENCAD_H
 #define OPENCAD_H
 
-#define OCAD_VERSION    "0.1.0"
+#define OCAD_VERSION    "0.3.1"
 #define OCAD_VERSION_MAJOR 0
-#define OCAD_VERSION_MINOR 1
-#define OCAD_VERSION_REV   0
+#define OCAD_VERSION_MINOR 3
+#define OCAD_VERSION_REV   1
 
 #ifndef OCAD_COMPUTE_VERSION
 #define OCAD_COMPUTE_VERSION(maj,min,rev) ((maj)*10000+(min)*100+rev) // maj - any, min < 99, rev < 99
@@ -58,22 +58,22 @@
 #    ifdef OCAD_EXPORTS
 #      ifdef __GNUC__
 #        define OCAD_EXTERN extern __attribute__((dllexport))
-#      else        
+#      else
 #        define OCAD_EXTERN extern __declspec(dllexport)
-#      endif 
+#      endif
 #    else
 #      ifdef __GNUC__
 #        define OCAD_EXTERN extern __attribute__((dllimport))
-#      else        
+#      else
 #        define OCAD_EXTERN extern __declspec(dllimport)
-#      endif 
+#      endif
 #    endif
 #   else
 #     if __GNUC__ >= 4
 #       define OCAD_EXTERN __attribute__((visibility("default")))
 #     else
 #       define OCAD_EXTERN                extern
-#     endif 
+#     endif
 #   endif
 #endif
 #endif
@@ -81,8 +81,8 @@
 #if defined(__GNUC__) && __GNUC__ >= 4
 # define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx ) __attribute__((__format__ (__printf__, format_idx, arg_idx)))
 #else
-#  define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )    
-#endif  
+#  define OCAD_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
 #  define snprintf _snprintf

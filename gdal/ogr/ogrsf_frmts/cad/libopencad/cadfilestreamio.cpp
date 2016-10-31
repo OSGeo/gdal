@@ -84,6 +84,7 @@ int CADFileStreamIO::Seek( long offset, CADFileIO::SeekOrigin origin )
         case SeekOrigin::END:
             direction = std::ios_base::end;
             break;
+        default:
         case SeekOrigin::BEG:
             direction = std::ios_base::beg;
             break;

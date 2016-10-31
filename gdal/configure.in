@@ -114,7 +114,7 @@ AC_LANG_POP([C++])
 dnl Check C++ compiler compability with C++11
 AC_MSG_CHECKING([C++ compiler compability with C++11])
 CXX11_SUPPORT=no
-AX_CXX_COMPILE_STDCXX_11([noext],[optional])
+AX_CXX_COMPILE_STDCXX_11([ext],[optional])
 
 if [test "$HAVE_CXX11" = "1"]; then
     CXX11_SUPPORT=yes
