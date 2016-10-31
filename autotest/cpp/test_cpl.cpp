@@ -478,7 +478,7 @@ namespace tut
             bool bOK = (memcmp(pszDecodedString, oReferenceString.szString,
                            nLength) == 0);
             // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
-            if( !bOK && ((getenv("TRAVIS") && getenv("TRAVIS_XCODE_SDK")) || getenv("DO_NOT_FAIL_ON_RECODE_ERRORS")))
+            if( !bOK && (EQUAL(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") || getenv("DO_NOT_FAIL_ON_RECODE_ERRORS")))
             {
                 fprintf(stderr, "Recode from %s failed\n", oTestString.szEncoding);
             }
