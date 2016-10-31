@@ -53,7 +53,8 @@
 
 CPL_CVSID("$Id$")
 
-#define ProjLinearUnitsInterpCorrectGeoKey 3059
+static const geokey_t ProjLinearUnitsInterpCorrectGeoKey =
+    static_cast<geokey_t>(3059);
 
 #ifndef CT_HotineObliqueMercatorAzimuthCenter
 #  define CT_HotineObliqueMercatorAzimuthCenter 9815
@@ -512,7 +513,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     short bLinearUnitsMarkedCorrect = FALSE;
 
-    GDALGTIFKeyGetSHORT(hGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey,
+    GDALGTIFKeyGetSHORT(hGTIF, ProjLinearUnitsInterpCorrectGeoKey,
                &bLinearUnitsMarkedCorrect, 0, 1);
 
     if( EQUAL(pszLinearUnits,"BROKEN")
@@ -2338,7 +2339,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         && nUOMLengthCode != 9001 )
     {
         GTIFKeySet(
-            psGTIF, static_cast<geokey_t>(ProjLinearUnitsInterpCorrectGeoKey),
+            psGTIF, ProjLinearUnitsInterpCorrectGeoKey,
             TYPE_SHORT, 1, static_cast<short>(1));
     }
 
