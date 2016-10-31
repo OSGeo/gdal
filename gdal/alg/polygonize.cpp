@@ -198,15 +198,8 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
         if( anString[nSSize-2] == x1
             && anString[nSSize-1] == y1 )
         {
-            int nTemp;
-
-            nTemp = x2;
-            x2 = x1;
-            x1 = nTemp;
-
-            nTemp = y2;
-            y2 = y1;
-            y1 = nTemp;
+            std::swap(x1, x2);
+            std::swap(y1, y2);
         }
 
         if( anString[nSSize - 2] == x2 &&
