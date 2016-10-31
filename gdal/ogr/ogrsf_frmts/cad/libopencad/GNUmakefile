@@ -5,6 +5,7 @@ SUBDIRS-yes :=	dwg
 
 OBJ := \
 	cadfile.o \
+	cadcolors.o \
 	cadlayer.o \
 	cadclasses.o \
 	cadfileio.o \

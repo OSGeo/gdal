@@ -41,7 +41,7 @@
 #define FIELD_NAME_TEXT "text"
 
 static const double DEG2RAD = M_PI / 180.0;
-static const double RAD2DEG = 1.0 / DEG2RAD;
+// UNUSED static const double RAD2DEG = 1.0 / DEG2RAD;
 
 OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
                           int nEncoding) :
