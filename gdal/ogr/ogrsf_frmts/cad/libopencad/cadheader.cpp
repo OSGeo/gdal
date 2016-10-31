@@ -140,7 +140,7 @@ static const CADHeaderConstantDetail CADHeaderConstantDetails[]{
         FillCADConstantDetail( USERR4, 40 ), FillCADConstantDetail( USERR5, 40 ), FillCADConstantDetail( USRTIMER, 70 ),
         FillCADConstantDetail( VERSIONGUID, 2 ), FillCADConstantDetail( VISRETAIN, 70 ),
         FillCADConstantDetail( WORLDVIEW, 70 ), FillCADConstantDetail( XCLIPFRAME, 290 ),
-        FillCADConstantDetail( XEDIT, 290 ), { -1, -1, NULL }
+        FillCADConstantDetail( XEDIT, 290 ), { -1, -1, nullptr }
 };
 
 //------------------------------------------------------------------------------

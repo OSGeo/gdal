@@ -65,7 +65,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         if( nTokens < 4 )
         {
             CSLDestroy(papszTokens);
-            return FALSE;
+            return NULL;
         }
 
         CPLString osFilename;
