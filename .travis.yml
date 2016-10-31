@@ -19,6 +19,7 @@ matrix:
         - BUILD_NAME=trusty_clang
     - os: osx
       osx_image: xcode8
+      language: objective-c
       env:
         - BUILD_NAME=osx
 
