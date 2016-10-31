@@ -91,15 +91,14 @@ static const char * const apszUnitMap[] = {
 /************************************************************************/
 char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
 {
-    static const char * const keyNames[] = {
-        "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", NULL
-    };
-
     if( !psCitation )
         return NULL;
     char* ret = NULL;
     if( STARTS_WITH_CI(psCitation, "IMAGINE GeoTIFF Support") )
     {
+        const char * const keyNames[] = {
+            "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", NULL };
+
         // This is a handle IMAGING style citation.
         char name[256] = { '\0' };
         char* p1 = NULL;
@@ -116,6 +115,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             p2 = strchr(p, '\0');
             if( p2 )
                 p1 = std::min(p1, p2);
+
             for( int i = 0; keyNames[i] != NULL; i++ )
             {
                 p2 = strstr(p, keyNames[i]);
@@ -124,7 +124,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             }
         }
 
-        // PCS name, GCS name and PRJ name
+        // PCS name, GCS name and PRJ name.
         if( p && p1 )
         {
             switch( keyID )
@@ -716,7 +716,8 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
                     psDefn->PCS) == OGRERR_NONE )
                 return TRUE;
         }
-        else if( pcsName && (pStr = strstr(pcsName, "UTM Zone ")) != NULL )
+        else if( pcsName &&
+                 (/* pStr = */ strstr(pcsName, "UTM Zone ")) != NULL )
         {
             CheckUTM( psDefn, szCTString );
         }
@@ -742,20 +743,6 @@ void CheckUTM( GTIFDefn * psDefn, const char * pszCtString )
 {
     if( !psDefn || !pszCtString )
         return;
-
-    static const char * const apszUtmProjCode[] = {
-        "PSAD56", "17N", "16017",
-        "PSAD56", "18N", "16018",
-        "PSAD56", "19N", "16019",
-        "PSAD56", "20N", "16020",
-        "PSAD56", "21N", "16021",
-        "PSAD56", "17S", "16117",
-        "PSAD56", "18S", "16118",
-        "PSAD56", "19S", "16119",
-        "PSAD56", "20S", "16120",
-        "PSAD56", "21S", "16121",
-        "PSAD56", "22S", "16122",
-        NULL, NULL, NULL};
 
     const char* p = strstr(pszCtString, "Datum = ");
     char datumName[128] = { '\0' };
@@ -793,6 +780,20 @@ void CheckUTM( GTIFDefn * psDefn, const char * pszCtString )
         {
             CPLStrlcpy(utmName, p, sizeof(utmName));
         }
+
+        const char * const apszUtmProjCode[] = {
+            "PSAD56", "17N", "16017",
+            "PSAD56", "18N", "16018",
+            "PSAD56", "19N", "16019",
+            "PSAD56", "20N", "16020",
+            "PSAD56", "21N", "16021",
+            "PSAD56", "17S", "16117",
+            "PSAD56", "18S", "16118",
+            "PSAD56", "19S", "16119",
+            "PSAD56", "20S", "16120",
+            "PSAD56", "21S", "16121",
+            "PSAD56", "22S", "16122",
+            NULL, NULL, NULL };
 
         for( int i=0; apszUtmProjCode[i]!=NULL; i += 3 )
         {

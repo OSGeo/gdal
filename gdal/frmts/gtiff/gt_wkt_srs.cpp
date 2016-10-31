@@ -53,7 +53,8 @@
 
 CPL_CVSID("$Id$")
 
-#define ProjLinearUnitsInterpCorrectGeoKey   3059
+static const geokey_t ProjLinearUnitsInterpCorrectGeoKey =
+    static_cast<geokey_t>(3059);
 
 #ifndef CT_HotineObliqueMercatorAzimuthCenter
 #  define CT_HotineObliqueMercatorAzimuthCenter 9815
@@ -88,7 +89,7 @@ static const char * const papszDatumEquiv[] =
     NULL
 };
 
-// older libgeotiff's won't list this.
+// Older libgeotiff's won't list this.
 #ifndef CT_CylindricalEqualArea
 # define CT_CylindricalEqualArea 28
 #endif
@@ -512,7 +513,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     short bLinearUnitsMarkedCorrect = FALSE;
 
-    GDALGTIFKeyGetSHORT(hGTIF, (geokey_t) ProjLinearUnitsInterpCorrectGeoKey,
+    GDALGTIFKeyGetSHORT(hGTIF, ProjLinearUnitsInterpCorrectGeoKey,
                &bLinearUnitsMarkedCorrect, 0, 1);
 
     if( EQUAL(pszLinearUnits,"BROKEN")
@@ -792,11 +793,11 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     bool bGotFromEPSG = false;
     if( psDefn->Model == ModelTypeProjected &&
         psDefn->PCS != KvUserDefined &&
-        GDALGTIFKeyGetSHORT(hGTIF, ProjectionGeoKey, &tmp, 0, 1  ) == 0 &&
-        GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1  ) == 0 &&
-        GDALGTIFKeyGetSHORT(hGTIF, GeographicTypeGeoKey, &tmp, 0, 1  ) == 0 &&
-        GDALGTIFKeyGetSHORT(hGTIF, GeogGeodeticDatumGeoKey, &tmp, 0, 1  ) == 0 &&
-        GDALGTIFKeyGetSHORT(hGTIF, GeogEllipsoidGeoKey, &tmp, 0, 1  ) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjectionGeoKey, &tmp, 0, 1) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeographicTypeGeoKey, &tmp, 0, 1) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogGeodeticDatumGeoKey, &tmp, 0, 1) == 0 &&
+        GDALGTIFKeyGetSHORT(hGTIF, GeogEllipsoidGeoKey, &tmp, 0, 1) == 0 &&
         CPLTestBool(CPLGetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")) )
     {
         // Save error state as importFromEPSGA() will call CPLReset()
@@ -2338,7 +2339,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
         && nUOMLengthCode != 9001 )
     {
         GTIFKeySet(
-            psGTIF, static_cast<geokey_t>(ProjLinearUnitsInterpCorrectGeoKey),
+            psGTIF, ProjLinearUnitsInterpCorrectGeoKey,
             TYPE_SHORT, 1, static_cast<short>(1));
     }
 
@@ -2703,7 +2704,7 @@ CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
             padfGeoTransform[3] =
                 padfTiePoints[4] - padfTiePoints[1] * padfGeoTransform[5];
 
-            // adjust for pixel is point in transform
+            // Adjust for pixel is point in transform.
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
                 padfGeoTransform[0] -=

@@ -98,7 +98,7 @@ _tiffWriteProc( thandle_t th, tdata_t buf, tsize_t size )
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>( th );
 
     // If we have a write buffer and are at end of file, then accumulate
-    // the bytes until the buffer is full
+    // the bytes until the buffer is full.
     if( psGTH->bAtEndOfFile && psGTH->abyWriteBuffer )
     {
         const GByte* pabyData = reinterpret_cast<GByte *>( buf );
