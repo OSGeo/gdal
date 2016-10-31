@@ -28,15 +28,15 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import sys
+import array
 import os
+import sys
 
 sys.path.append( '../pymod' )
 
 from osgeo import gdal
 from osgeo import ogr
 import gdaltest
-import array
 
 ###############################################################################
 # Test with -a and -i options
@@ -60,7 +60,7 @@ def contour_1():
     wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
 
     size = 160
-    precision = 1. / size
+    precision = 1.0 / size
 
     ds = drv.Create('tmp/gdal_contour.tif', size, size, 1)
     ds.SetProjection( wkt )
