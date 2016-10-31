@@ -52,4 +52,3 @@ default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 clean:	$(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f o/*.o
 	$(RM) o/*.lo
-

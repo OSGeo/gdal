@@ -222,7 +222,7 @@ ifeq ($(HAVE_MONGODB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
-ifeq ($(CXX11_SUPPORT), yes)
+ifeq ($(HAVE_CAD),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DCAD_ENABLED
 endif
 

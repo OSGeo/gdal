@@ -378,7 +378,7 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
         else
         {
             const char * pszPRJFilename = GetPrjFilePath();
-            if(NULL != pszPRJFilename)
+            if( pszPRJFilename && pszPRJFilename[0] ) // check if path exists
             {
                 CPLPushErrorHandler( CPLQuietErrorHandler );
                 char **papszPRJData = CSLLoad( pszPRJFilename );
@@ -387,7 +387,7 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
                 if( poSpatialRef->importFromESRI( papszPRJData ) != OGRERR_NONE )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
-                        "Failed to parse PRJ section, ignoring." );
+                        "Failed to parse PRJ file, ignoring." );
                     delete( poSpatialRef );
                     poSpatialRef = NULL;
                 }
