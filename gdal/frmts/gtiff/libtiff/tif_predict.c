@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.38 2016-09-24 23:11:55 bfriesen Exp $ */
+/* $Id: tif_predict.c,v 1.39 2016-10-31 17:24:26 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
