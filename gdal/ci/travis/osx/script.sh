@@ -2,6 +2,7 @@
 
 set -e
 
+cd gdal
 # CPP unit tests
 cd ../autotest
 cd cpp

@@ -2,6 +2,7 @@
 
 set -e
 
+cd gdal
 # When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
 # Run it in isolation
 # Perl unit tests
