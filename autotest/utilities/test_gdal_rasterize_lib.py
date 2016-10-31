@@ -118,7 +118,7 @@ def test_gdal_rasterize_lib_3():
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
-    ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format = 'MEM', useZ = True, layers = ['n43dt0'], width = 121, height = 121, noData = 0)
+    ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format = 'MEM', outputType = gdal.GDT_Byte, useZ = True, layers = ['n43dt0'], width = 121, height = 121, noData = 0)
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
 
