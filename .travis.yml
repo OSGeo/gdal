@@ -132,9 +132,9 @@ matrix:
       env:
         - BUILD_NAME=precise_32bit
         - DETAILS=""
-    - os: osx
-      osx_image: xcode8
+    - osx_image: xcode8
       language: objective-c
+      compiler: clang
       cache:
         apt: true
         directories:
