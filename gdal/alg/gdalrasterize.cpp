@@ -51,12 +51,13 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
     if( nXStart > nXEnd )
         return;
 
+    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
+
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nXStart <= nXEnd );
     CPLAssert( nXStart < psInfo->nXSize );
     CPLAssert( nXEnd >= 0 );
 
-    GDALRasterizeInfo *psInfo = (GDALRasterizeInfo *) pCBData;
 
     if( nXStart < 0 )
         nXStart = 0;
@@ -122,10 +123,10 @@ static
 void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
 
 {
+    GDALRasterizeInfo *psInfo = static_cast<GDALRasterizeInfo *>(pCBData);
+
     CPLAssert( nY >= 0 && nY < psInfo->nYSize );
     CPLAssert( nX >= 0 && nX < psInfo->nXSize );
-
-    GDALRasterizeInfo *psInfo = (GDALRasterizeInfo *) pCBData;
 
     if( psInfo->eType == GDT_Byte )
     {
