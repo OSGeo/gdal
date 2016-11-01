@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 from osgeo import ogr
@@ -310,7 +309,7 @@ def vsicurl_start_webserver():
 ###############################################################################
 def vsicurl_test_redirect():
 
-    if 'TRAVIS_BRANCH' in os.environ and os.environ['TRAVIS_BRANCH'].find('trusty') >= 0:
+    if gdaltest.is_travis_branch('trusty'):
         print('Skipped on trusty branch, but should be investigated')
         return 'skip'
 
