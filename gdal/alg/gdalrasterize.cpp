@@ -199,16 +199,16 @@ static void GDALCollectRingsFromGeometry(
         aPartSize.push_back( 1 );
         if( eBurnValueSrc != GBV_UserBurnValue )
         {
-            /*switch( eBurnValueSrc )
-            {
-            case GBV_Z:*/
-                aPointVariant.reserve( nNewCount );
-                aPointVariant.push_back( poPoint->getZ() );
-                /*break;
-            case GBV_M:
-                aPointVariant.reserve( nNewCount );
-                aPointVariant.push_back( poPoint->getM() );
-            }*/
+            // TODO(schwehr): Why not have the option for M r18164?
+            // switch( eBurnValueSrc )
+            // {
+            // case GBV_Z:*/
+            aPointVariant.reserve( nNewCount );
+            aPointVariant.push_back( poPoint->getZ() );
+            // break;
+            // case GBV_M:
+            //    aPointVariant.reserve( nNewCount );
+            //    aPointVariant.push_back( poPoint->getM() );
         }
     }
     else if ( eFlatType == wkbLineString )
@@ -539,15 +539,15 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
  * There should be nBandCount values for each geometry.
  * @param papszOptions special options controlling rasterization
  * <ul>
- * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
+ * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
- * <li>"BURN_VALUE_FROM":May be set to "Z" to use the Z values of the
+ * <li>"BURN_VALUE_FROM": May be set to "Z" to use the Z values of the
  * geometries. dfBurnValue is added to this before burning.
  * Defaults to GDALBurnValueSrc.GBV_UserBurnValue in which case just the
  * dfBurnValue is burned. This is implemented only for points and lines for
  * now. The M value may be supported in the future.</li>
- * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
+ * <li>"MERGE_ALG": May be REPLACE (the default) or ADD.  REPLACE results in
  * overwriting of value, while ADD adds the new value to the existing raster,
  * suitable for heatmaps for instance.</li>
  * </ul>
@@ -628,9 +628,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /*      shapes.                                                         */
 /* -------------------------------------------------------------------- */
     const GDALDataType eType =
-        poBand->GetRasterDataType() == GDT_Byte
-        ? GDT_Byte
-        : GDT_Float64;
+        poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
 
     nScanlineBytes = nBandCount * poDS->GetRasterXSize()
         * GDALGetDataTypeSizeBytes(eType);
@@ -751,26 +749,26 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
  * There should be nBandCount values for each layer.
  * @param papszOptions special options controlling rasterization:
  * <ul>
- * <li>"ATTRIBUTE":Identifies an attribute field on the features to be
+ * <li>"ATTRIBUTE": Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</li>
- * <li>"CHUNKYSIZE":The height in lines of the chunk to operate on.
+ * <li>"CHUNKYSIZE": The height in lines of the chunk to operate on.
  * The larger the chunk size the less times we need to make a pass through all
  * the shapes. If it is not set or set to zero the default chunk size will be
  * used. Default size will be estimated based on the GDAL cache buffer size
  * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
  * not exceed the cache.</li>
- * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
+ * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.
- * <li>"BURN_VALUE_FROM":May be set to "Z" to use the Z values of the</li>
+ * <li>"BURN_VALUE_FROM": May be set to "Z" to use the Z values of the</li>
  * geometries. The value from padfLayerBurnValues or the attribute field value
  * is added to this before burning. In default case dfBurnValue is burned as it
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may be
  * supported in the future.</li>
- * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE results in
+ * <li>"MERGE_ALG": May be REPLACE (the default) or ADD.  REPLACE results in
  * overwriting of value, while ADD adds the new value to the existing raster,
  * suitable for heatmaps for instance.</li>
  * </ul>
@@ -828,20 +826,14 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
         CSLFetchNameValue( papszOptions, "CHUNKYSIZE" );
 
     const GDALDataType eType =
-        poBand->GetRasterDataType() == GDT_Byte
-        ? GDT_Byte
-        : GDT_Float64;
+        poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
 
     int nScanlineBytes =
         nBandCount * poDS->GetRasterXSize()
         * GDALGetDataTypeSizeBytes(eType);
 
     int nYChunkSize = 0;
-    if ( pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0 )
-    {
-        ;
-    }
-    else
+    if( !(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0) )
     {
         GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
         if (nYChunkSize64 > INT_MAX)
@@ -1133,20 +1125,20 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
  *
  * @param papszOptions special options controlling rasterization:
  * <ul>
- * <li>"ATTRIBUTE":Identifies an attribute field on the features to be
+ * <li>"ATTRIBUTE": Identifies an attribute field on the features to be
  * used for a burn in value. The value will be burned into all output
  * bands. If specified, padfLayerBurnValues will not be used and can be a NULL
  * pointer.</li>
- * <li>"ALL_TOUCHED":May be set to TRUE to set all pixels touched
+ * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
  * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
- * <li>"BURN_VALUE_FROM":May be set to "Z" to use
+ * <li>"BURN_VALUE_FROM": May be set to "Z" to use
  * the Z values of the geometries. dfBurnValue or the attribute field value is
  * added to this before burning. In default case dfBurnValue is burned as it
  * is. This is implemented properly only for points and lines for now. Polygons
  * will be burned using the Z value from the first point. The M value may
  * be supported in the future.</li>
- * <li>"MERGE_ALG":May be REPLACE (the default) or ADD.  REPLACE
+ * <li>"MERGE_ALG": May be REPLACE (the default) or ADD.  REPLACE
  * results in overwriting of value, while ADD adds the new value to the
  * existing raster, suitable for heatmaps for instance.</li>
  * </ul>
@@ -1212,7 +1204,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /* -------------------------------------------------------------------- */
     int bAllTouched = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
-    GDALRasterMergeAlg eMergeAlg = GRMA_Replace;;
+    GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
     if( GDALRasterizeOptions(papszOptions, &bAllTouched,
                              &eBurnValueSource, &eMergeAlg) == CE_Failure )
     {
