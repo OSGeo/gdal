@@ -49,6 +49,61 @@ matrix:
       env:
         - BUILD_NAME=mingw_w64
         - DETAILS="optimized build, libtool"
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: required
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=python3
+        - DETAILS=""
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: false
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=android
+        - DETAILS=""
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: false
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=big_endian
+        - DETAILS=""
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: true
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=gcc48_stdcpp11
+        - DETAILS=""
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: true
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=gcc52_stdcpp14_sanitize
+        - DETAILS=""
     - os: osx
       osx_image: xcode8
       language: objective-c
