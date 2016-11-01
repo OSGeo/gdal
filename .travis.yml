@@ -14,6 +14,7 @@ matrix:
           - $HOME/.ccache
       env:
         - BUILD_NAME=lucid_clang
+        - DETAILS="debug build, no libtool"
     - os: linux
       compiler: clang
       language: cpp
@@ -25,6 +26,29 @@ matrix:
           - $HOME/.ccache
       env:
         - BUILD_NAME=trusty_clang
+        - DETAILS="optimized build, no libtool"
+    - os: linux
+      compiler: clang
+      language: cpp
+      sudo: required
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=mingw
+        - DETAILS="optimized build, libtool"
+    - os: linux
+      compiler: clang
+      language: cpp
+      sudo: required
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=mingw_w64
+        - DETAILS="optimized build, libtool"
     - os: osx
       osx_image: xcode8
       language: objective-c
@@ -34,6 +58,7 @@ matrix:
           - $HOME/.ccache
       env:
         - BUILD_NAME=osx
+        - DETAILS="debug build, libtool"
 
 before_install:
   - ./gdal/ci/travis/${BUILD_NAME}/before_install.sh
