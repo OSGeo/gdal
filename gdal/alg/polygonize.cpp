@@ -26,11 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_alg_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_alg_priv.h"
 
 #include <cstdlib>
+
 #include <algorithm>
 #include <vector>
 
@@ -48,15 +49,15 @@ CPL_CVSID("$Id$");
 
 class RPolygon {
 public:
-    RPolygon(  double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
+    RPolygon( double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
 
-    double              dfPolyValue;
+    double           dfPolyValue;
     int              nLastLineUpdated;
 
     std::vector< std::vector<int> > aanXY;
 
     void             AddSegment( int x1, int y1, int x2, int y2 );
-    void             Dump();
+    void             Dump() const;
     void             Coalesce();
     void             Merge( int iBaseString, int iSrcString, int iDirection );
 };
@@ -64,20 +65,17 @@ public:
 /************************************************************************/
 /*                                Dump()                                */
 /************************************************************************/
-void RPolygon::Dump()
+void RPolygon::Dump() const
 {
-    size_t iString;
-
     printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
             dfPolyValue, nLastLineUpdated );
 
-    for( iString = 0; iString < aanXY.size(); iString++ )
+    for( size_t iString = 0; iString < aanXY.size(); iString++ )
     {
-        std::vector<int> &anString = aanXY[iString];
-        size_t iVert;
+        const std::vector<int> &anString = aanXY[iString];
 
         printf( "  String %d:\n", (int) iString );
-        for( iVert = 0; iVert < anString.size(); iVert += 2 )
+        for( size_t iVert = 0; iVert < anString.size(); iVert += 2 )
         {
             printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
         }
@@ -91,16 +89,14 @@ void RPolygon::Dump()
 void RPolygon::Coalesce()
 
 {
-    size_t iBaseString;
-
 /* -------------------------------------------------------------------- */
 /*      Iterate over loops starting from the first, trying to merge     */
 /*      other segments into them.                                       */
 /* -------------------------------------------------------------------- */
-    for( iBaseString = 0; iBaseString < aanXY.size(); iBaseString++ )
+    for( size_t iBaseString = 0; iBaseString < aanXY.size(); iBaseString++ )
     {
         std::vector<int> &anBase = aanXY[iBaseString];
-        int bMergeHappened = TRUE;
+        bool bMergeHappened = true;
 
 /* -------------------------------------------------------------------- */
 /*      Keep trying to merge the following strings into our target      */
@@ -109,37 +105,38 @@ void RPolygon::Coalesce()
 /* -------------------------------------------------------------------- */
         while( bMergeHappened )
         {
-            size_t iString;
-
-            bMergeHappened = FALSE;
+            bMergeHappened = false;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over the following strings, trying to find one we can      */
 /*      merge onto the end of our base string.                          */
 /* -------------------------------------------------------------------- */
-            for( iString = iBaseString+1;
+            for( size_t iString = iBaseString+1;
                  iString < aanXY.size();
                  iString++ )
             {
                 std::vector<int> &anString = aanXY[iString];
 
-                if( anBase[anBase.size()-2] == anString[0]
-                    && anBase[anBase.size()-1] == anString[1] )
+                if( anBase[anBase.size() - 2] == anString[0]
+                    && anBase[anBase.size() - 1] == anString[1] )
                 {
-                    Merge( static_cast<int>(iBaseString), static_cast<int>(iString), 1 );
-                    bMergeHappened = TRUE;
+                    Merge( static_cast<int>(iBaseString),
+                           static_cast<int>(iString), 1 );
+                    bMergeHappened = true;
                 }
-                else if( anBase[anBase.size()-2] == anString[anString.size()-2]
-                         && anBase[anBase.size()-1] == anString[anString.size()-1] )
+                else if( anBase[anBase.size() - 2] ==
+                             anString[anString.size() - 2] &&
+                         anBase[anBase.size()-1] ==
+                             anString[anString.size() - 1] )
                 {
-                    Merge( static_cast<int>(iBaseString), static_cast<int>(iString), -1 );
-                    bMergeHappened = TRUE;
+                    Merge( static_cast<int>(iBaseString),
+                           static_cast<int>(iString), -1 );
+                    bMergeHappened = true;
                 }
             }
         }
 
-        /* At this point our loop *should* be closed! */
-
+        // At this point our loop *should* be closed!
         CPLAssert( anBase[0] == anBase[anBase.size()-2]
                    && anBase[1] == anBase[anBase.size()-1] );
     }
@@ -154,30 +151,31 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
 {
     std::vector<int> &anBase = aanXY[iBaseString];
     std::vector<int> &anString = aanXY[iSrcString];
-    int iStart, iEnd, i;
+    int iStart = 1;
+    int iEnd = -1;
 
     if( iDirection == 1 )
     {
-        iStart = 1;
+        // iStart = 1;
         iEnd = static_cast<int>(anString.size()) / 2;
     }
     else
     {
         iStart = static_cast<int>(anString.size()) / 2 - 2;
-        iEnd = -1;
+        // iEnd = -1;
     }
 
-    for( i = iStart; i != iEnd; i += iDirection )
+    for( int i = iStart; i != iEnd; i += iDirection )
     {
         anBase.push_back( anString[i*2+0] );
         anBase.push_back( anString[i*2+1] );
     }
 
-    if( iSrcString < ((int) aanXY.size())-1 )
+    if( iSrcString < static_cast<int>(aanXY.size()) - 1 )
         aanXY[iSrcString] = aanXY[aanXY.size()-1];
 
-    size_t nSize = aanXY.size();
-    aanXY.resize(nSize-1);
+    const size_t nSize = aanXY.size();
+    aanXY.resize(nSize - 1);
 }
 
 /************************************************************************/
@@ -192,9 +190,7 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 /* -------------------------------------------------------------------- */
 /*      Is there an existing string ending with this?                   */
 /* -------------------------------------------------------------------- */
-    size_t iString;
-
-    for( iString = 0; iString < aanXY.size(); iString++ )
+    for( size_t iString = 0; iString < aanXY.size(); iString++ )
     {
         std::vector<int> &anString = aanXY[iString];
         size_t nSSize = anString.size();
@@ -202,32 +198,25 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
         if( anString[nSSize-2] == x1
             && anString[nSSize-1] == y1 )
         {
-            int nTemp;
-
-            nTemp = x2;
-            x2 = x1;
-            x1 = nTemp;
-
-            nTemp = y2;
-            y2 = y1;
-            y1 = nTemp;
+            std::swap(x1, x2);
+            std::swap(y1, y2);
         }
 
-        if( anString[nSSize-2] == x2
-            && anString[nSSize-1] == y2 )
+        if( anString[nSSize - 2] == x2 &&
+            anString[nSSize - 1] == y2 )
         {
             // We are going to add a segment, but should we just extend
             // an existing segment already going in the right direction?
 
             const int nLastLen =
-                std::max(std::abs(anString[nSSize-4]-anString[nSSize-2]),
-                         std::abs(anString[nSSize-3]-anString[nSSize-1]));
+                std::max(std::abs(anString[nSSize - 4] - anString[nSSize - 2]),
+                         std::abs(anString[nSSize - 3] - anString[nSSize - 1]));
 
             if( nSSize >= 4
-                && (anString[nSSize-4] - anString[nSSize-2]
-                    == (anString[nSSize-2] - x1)*nLastLen)
-                && (anString[nSSize-3] - anString[nSSize-1]
-                    == (anString[nSSize-1] - y1)*nLastLen) )
+                && (anString[nSSize - 4] - anString[nSSize - 2]
+                    == (anString[nSSize - 2] - x1) * nLastLen)
+                && (anString[nSSize - 3] - anString[nSSize - 1]
+                    == (anString[nSSize - 1] - y1) * nLastLen) )
             {
                 anString.pop_back();
                 anString.pop_back();
@@ -242,7 +231,7 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
 /* -------------------------------------------------------------------- */
 /*      Create a new string.                                            */
 /* -------------------------------------------------------------------- */
-    size_t nSize = aanXY.size();
+    const size_t nSize = aanXY.size();
     aanXY.resize(nSize + 1);
     std::vector<int> &anString = aanXY[nSize];
 
@@ -334,9 +323,6 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
                     RPolygon *poRPoly, double *padfGeoTransform )
 
 {
-    OGRFeatureH hFeat;
-    OGRGeometryH hPolygon;
-
 /* -------------------------------------------------------------------- */
 /*      Turn bits of lines into coherent rings.                         */
 /* -------------------------------------------------------------------- */
@@ -345,20 +331,18 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 /* -------------------------------------------------------------------- */
 /*      Create the polygon geometry.                                    */
 /* -------------------------------------------------------------------- */
-    size_t iString;
+    OGRGeometryH hPolygon = OGR_G_CreateGeometry( wkbPolygon );
 
-    hPolygon = OGR_G_CreateGeometry( wkbPolygon );
-
-    for( iString = 0; iString < poRPoly->aanXY.size(); iString++ )
+    for( size_t iString = 0; iString < poRPoly->aanXY.size(); iString++ )
     {
         std::vector<int> &anString = poRPoly->aanXY[iString];
         OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-        int iVert;
-
-        // we go last to first to ensure the linestring is allocated to
+        // We go last to first to ensure the linestring is allocated to
         // the proper size on the first try.
-        for( iVert = static_cast<int>(anString.size())/2 - 1; iVert >= 0; iVert-- )
+        for( int iVert = static_cast<int>(anString.size()) / 2 - 1;
+             iVert >= 0;
+             iVert-- )
         {
             double dfX, dfY;
             int    nPixelX, nPixelY;
@@ -382,7 +366,7 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 /* -------------------------------------------------------------------- */
 /*      Create the feature object.                                      */
 /* -------------------------------------------------------------------- */
-    hFeat = OGR_F_Create( OGR_L_GetLayerDefn( hOutLayer ) );
+    OGRFeatureH hFeat = OGR_F_Create( OGR_L_GetLayerDefn( hOutLayer ) );
 
     OGR_F_SetGeometryDirectly( hFeat, hPolygon );
 
@@ -411,18 +395,16 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
 
 template<class DataType>
 static CPLErr
-GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine, int iY, int nXSize,
+GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine,
+                 int iY, int nXSize,
                  DataType *panImageLine )
 
 {
-    CPLErr eErr;
-
-    eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
-                         pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
+    CPLErr eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
+                                pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
     if( eErr == CE_None )
     {
-        int i;
-        for( i = 0; i < nXSize; i++ )
+        for( int i = 0; i < nXSize; i++ )
         {
             if( pabyMaskLine[i] == 0 )
                 panImageLine[i] = GP_NODATA_MARKER;
@@ -453,7 +435,8 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    int nConnectedness = CSLFetchNameValue( papszOptions, "8CONNECTED" ) ? 8 : 4;
+    const int nConnectedness =
+        CSLFetchNameValue( papszOptions, "8CONNECTED" ) ? 8 : 4;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm our output layer will support feature creation.         */
@@ -469,17 +452,26 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Allocate working buffers.                                       */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr = CE_None;
-    int nXSize = GDALGetRasterBandXSize( hSrcBand );
-    int nYSize = GDALGetRasterBandYSize( hSrcBand );
-    DataType *panLastLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
-    DataType *panThisLineVal = (DataType *) VSI_MALLOC2_VERBOSE(sizeof(DataType),nXSize + 2);
-    GInt32 *panLastLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
-    GInt32 *panThisLineId =  (GInt32 *) VSI_MALLOC2_VERBOSE(sizeof(GInt32),nXSize + 2);
-    GByte *pabyMaskLine = (hMaskBand != NULL) ? (GByte *) VSI_MALLOC_VERBOSE(nXSize) : NULL;
-    if (panLastLineVal == NULL || panThisLineVal == NULL ||
+    const int nXSize = GDALGetRasterBandXSize( hSrcBand );
+    const int nYSize = GDALGetRasterBandYSize( hSrcBand );
+
+    DataType *panLastLineVal = static_cast<DataType *>(
+        VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize + 2));
+    DataType *panThisLineVal = static_cast<DataType *>(
+        VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize + 2));
+    GInt32 *panLastLineId = static_cast<GInt32 *>(
+        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize + 2));
+    GInt32 *panThisLineId = static_cast<GInt32 *>(
+        VSI_MALLOC2_VERBOSE(sizeof(GInt32) ,nXSize + 2));
+
+    GByte *pabyMaskLine =
+        hMaskBand != NULL
+        ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
+        : NULL;
+
+    if( panLastLineVal == NULL || panThisLineVal == NULL ||
         panLastLineId == NULL || panThisLineId == NULL ||
-        (hMaskBand != NULL && pabyMaskLine == NULL))
+        (hMaskBand != NULL && pabyMaskLine == NULL) )
     {
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
@@ -504,10 +496,12 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      polygon id map so we will know in advance what polygons are     */
 /*      what on the second pass.                                        */
 /* -------------------------------------------------------------------- */
-    int iY;
-    GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oFirstEnum(nConnectedness);
+    GDALRasterPolygonEnumeratorT<DataType,
+                                 EqualityTest> oFirstEnum(nConnectedness);
 
-    for( iY = 0; eErr == CE_None && iY < nYSize; iY++ )
+    CPLErr eErr = CE_None;
+
+    for( int iY = 0; eErr == CE_None && iY < nYSize; iY++ )
     {
         eErr = GDALRasterIO(
             hSrcBand,
@@ -515,7 +509,8 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
             panThisLineVal, nXSize, 1, eDT, 0, 0 );
 
         if( eErr == CE_None && hMaskBand != NULL )
-            eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
+            eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
+                                   panThisLineVal);
 
         if( iY == 0 )
             oFirstEnum.ProcessLine(
@@ -526,20 +521,15 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
                 panLastLineId,  panThisLineId,
                 nXSize );
 
-        // swap lines
-        DataType *panTmpVal = panLastLineVal;
-        panLastLineVal = panThisLineVal;
-        panThisLineVal = panTmpVal;
-
-        GInt32* panTmp = panThisLineId;
-        panThisLineId = panLastLineId;
-        panLastLineId = panTmp;
+        // Swap lines.
+        std::swap(panLastLineVal, panThisLineVal);
+        std::swap(panLastLineId, panThisLineId);
 
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
         if( eErr == CE_None
-            && !pfnProgress( 0.10 * ((iY+1) / (double) nYSize),
+            && !pfnProgress( 0.10 * ((iY+1) / static_cast<double>(nYSize)),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -559,27 +549,26 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      previous line, and past the beginning and end of the            */
 /*      scanlines.                                                      */
 /* -------------------------------------------------------------------- */
-    int iX;
-
     panThisLineId[0] = -1;
     panThisLineId[nXSize+1] = -1;
 
-    for( iX = 0; iX < nXSize+2; iX++ )
+    for( int iX = 0; iX < nXSize+2; iX++ )
         panLastLineId[iX] = -1;
 
 /* -------------------------------------------------------------------- */
 /*      We will use a new enumerator for the second pass primarily      */
 /*      so we can preserve the first pass map.                          */
 /* -------------------------------------------------------------------- */
-    GDALRasterPolygonEnumeratorT<DataType, EqualityTest> oSecondEnum(nConnectedness);
-    RPolygon **papoPoly = (RPolygon **)
-        CPLCalloc(sizeof(RPolygon*),oFirstEnum.nNextPolygonId);
+    GDALRasterPolygonEnumeratorT<DataType,
+                                 EqualityTest> oSecondEnum(nConnectedness);
+    RPolygon **papoPoly = static_cast<RPolygon **>(
+        CPLCalloc(sizeof(RPolygon*), oFirstEnum.nNextPolygonId));
 
 /* ==================================================================== */
 /*      Second pass during which we will actually collect polygon       */
 /*      edges as geometries.                                            */
 /* ==================================================================== */
-    for( iY = 0; eErr == CE_None && iY < nYSize+1; iY++ )
+    for( int iY = 0; eErr == CE_None && iY < nYSize+1; iY++ )
     {
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
@@ -590,7 +579,8 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
                                  panThisLineVal, nXSize, 1, eDT, 0, 0 );
 
             if( eErr == CE_None && hMaskBand != NULL )
-                eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize, panThisLineVal );
+                eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
+                                        panThisLineVal );
         }
 
         if( eErr != CE_None )
@@ -602,23 +592,27 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         if( iY == nYSize )
         {
-            for( iX = 0; iX < nXSize+2; iX++ )
+            for( int iX = 0; iX < nXSize+2; iX++ )
                 panThisLineId[iX] = -1;
         }
         else if( iY == 0 )
+        {
             oSecondEnum.ProcessLine(
                 NULL, panThisLineVal, NULL, panThisLineId+1, nXSize );
+        }
         else
+        {
             oSecondEnum.ProcessLine(
                 panLastLineVal, panThisLineVal,
                 panLastLineId+1,  panThisLineId+1,
                 nXSize );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Add polygon edges to our polygon list for the pixel             */
 /*      boundaries within and above this line.                          */
 /* -------------------------------------------------------------------- */
-        for( iX = 0; iX < nXSize+1; iX++ )
+        for( int iX = 0; iX < nXSize+1; iX++ )
         {
             AddEdges( panThisLineId, panLastLineId,
                       oFirstEnum.panPolyIdMap, oFirstEnum.panPolyValue,
@@ -632,7 +626,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
         if( iY % 8 == 7 )
         {
-            for( iX = 0;
+            for( int iX = 0;
                  eErr == CE_None && iX < oSecondEnum.nNextPolygonId;
                  iX++ )
             {
@@ -652,19 +646,15 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      Swap pixel value, and polygon id lines to be ready for the      */
 /*      next line.                                                      */
 /* -------------------------------------------------------------------- */
-        DataType *panTmpVal = panLastLineVal;
-        panLastLineVal = panThisLineVal;
-        panThisLineVal = panTmpVal;
-
-        GInt32* panTmp = panThisLineId;
-        panThisLineId = panLastLineId;
-        panLastLineId = panTmp;
+        std::swap(panLastLineVal, panThisLineVal);
+        std::swap(panLastLineId, panThisLineId);
 
 /* -------------------------------------------------------------------- */
 /*      Report progress, and support interrupts.                        */
 /* -------------------------------------------------------------------- */
         if( eErr == CE_None
-            && !pfnProgress( 0.10 + 0.90 * ((iY+1) / (double) nYSize),
+            && !pfnProgress( 0.10 + 0.90 * ((iY + 1) /
+                                            static_cast<double>(nYSize)),
                              "", pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
@@ -675,13 +665,12 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Make a cleanup pass for all unflushed polygons.                 */
 /* -------------------------------------------------------------------- */
-    for( iX = 0; eErr == CE_None && iX < oSecondEnum.nNextPolygonId; iX++ )
+    for( int iX = 0; eErr == CE_None && iX < oSecondEnum.nNextPolygonId; iX++ )
     {
         if( papoPoly[iX] )
         {
-            eErr =
-                EmitPolygonToLayer( hOutLayer, iPixValField,
-                                    papoPoly[iX], adfGeoTransform );
+            eErr = EmitPolygonToLayer( hOutLayer, iPixValField,
+                                       papoPoly[iX], adfGeoTransform );
 
             delete papoPoly[iX];
             papoPoly[iX] = NULL;
@@ -708,48 +697,43 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /******************************************************************************/
 GBool GDALFloatEquals(float A, float B)
 {
-    /**
-     * This function will allow maxUlps-1 floats between A and B.
-     */
+    // This function will allow maxUlps-1 floats between A and B.
     const int maxUlps = MAX_ULPS;
-    int aInt, bInt;
 
-    /**
-     * Make sure maxUlps is non-negative and small enough that the default NAN
-     * won't compare as equal to anything.
-     */
+    // Make sure maxUlps is non-negative and small enough that the default NAN
+    // won't compare as equal to anything.
 #if MAX_ULPS <= 0 || MAX_ULPS >= 4 * 1024 * 1024
 #error "Invalid MAX_ULPS"
 #endif
 
-    /**
-     * This assignation could violate strict aliasing. It causes a warning with
-     * gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
-     * at http://trac.osgeo.org/gdal/ticket/4005#comment:6
-     */
-    //int aInt = *(int*)&A;
+    // This assignation could violate strict aliasing. It causes a warning with
+    // gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
+    // at http://trac.osgeo.org/gdal/ticket/4005#comment:6
+    int aInt;
     memcpy(&aInt, &A, 4);
 
-    /**
-     * Make aInt lexicographically ordered as a twos-complement int
-     */
-    if (aInt < 0)
+    // Make aInt lexicographically ordered as a twos-complement int.
+    if( aInt < 0 )
         aInt = 0x80000000 - aInt;
-    /**
-     * Make bInt lexicographically ordered as a twos-complement int
-     */
-    //int bInt = *(int*)&B;
+
+    // Make bInt lexicographically ordered as a twos-complement int.
+    int bInt;
     memcpy(&bInt, &B, 4);
 
-    if (bInt < 0)
+    if( bInt < 0 )
         bInt = 0x80000000 - bInt;
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
-    int intDiff = abs((int) (((GUIntBig)((GIntBig)aInt - (GIntBig)bInt)) & 0xFFFFFFFFU) );
+    const int intDiff =
+        abs(static_cast<int>(static_cast<GUIntBig>(
+            static_cast<GIntBig>(aInt) - static_cast<GIntBig>(bInt))
+            & 0xFFFFFFFFU));
 #else
-    /* to make -ftrapv happy we compute the diff on larger type and cast down later */
-    int intDiff = abs((int)((GIntBig)aInt - (GIntBig)bInt));
+    // To make -ftrapv happy we compute the diff on larger type and
+    // cast down later.
+    const int intDiff = abs(static_cast<int>(
+        static_cast<GIntBig>(aInt) - static_cast<GIntBig>(bInt)));
 #endif
-    if (intDiff <= maxUlps)
+    if( intDiff <= maxUlps )
         return true;
     return false;
 }

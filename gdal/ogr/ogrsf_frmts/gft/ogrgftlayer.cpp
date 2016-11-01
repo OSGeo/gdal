@@ -328,7 +328,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
         else if (eType == wkbPolygon)
             poColl = new OGRMultiPolygon();
         else {
-            CPLAssert(0);
+            CPLAssert(false);
         }
 
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)

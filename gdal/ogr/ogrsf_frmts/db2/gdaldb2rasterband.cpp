@@ -1130,7 +1130,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
     }
     else
     {
-        CPLAssert(0);
+        CPLAssert(false);
     }
 
     GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
