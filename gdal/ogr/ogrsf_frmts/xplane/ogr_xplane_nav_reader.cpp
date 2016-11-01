@@ -403,7 +403,7 @@ void OGRXPlaneNavReader::ParseRecord( int nType )
     }
     else
     {
-        CPLAssert(0);
+        CPLAssert(false);
     }
 }
 
