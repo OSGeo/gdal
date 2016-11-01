@@ -121,6 +121,17 @@ matrix:
       env:
         - BUILD_NAME=ubuntu_1604
         - DETAILS=""
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: required
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
+      env:
+        - BUILD_NAME=precise_32bit
+        - DETAILS=""
     - os: osx
       osx_image: xcode8
       language: objective-c
