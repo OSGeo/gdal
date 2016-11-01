@@ -2,7 +2,6 @@
 
 set -e
 
-cd gdal
 export CCACHE_CPP2=yes
 
 curl http://download.osgeo.org/proj/proj-4.9.2.tar.gz > proj-4.9.2.tar.gz

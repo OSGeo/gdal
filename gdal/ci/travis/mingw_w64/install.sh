@@ -2,7 +2,6 @@
 
 set -e
 
-cd gdal
 export CCACHE_CPP2=yes
 
 wine64 cmd /c dir
