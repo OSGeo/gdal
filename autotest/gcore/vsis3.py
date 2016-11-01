@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import gdal
 
@@ -221,7 +220,7 @@ def vsis3_2():
 
     if data != 'foo':
 
-        if 'TRAVIS_BRANCH' in os.environ and os.environ['TRAVIS_BRANCH'].find('trusty') >= 0:
+        if gdaltest.is_travis_branch('trusty'):
             print('Skipped on trusty branch, but should be investigated')
             return 'skip'
 
@@ -302,7 +301,7 @@ def vsis3_3():
     f = open_for_read('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
     if f is None:
 
-        if 'TRAVIS_BRANCH' in os.environ and os.environ['TRAVIS_BRANCH'].find('trusty') >= 0:
+        if gdaltest.is_travis_branch('trusty'):
             print('Skipped on trusty branch, but should be investigated')
             return 'skip'
 

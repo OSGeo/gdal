@@ -174,11 +174,8 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     return ret
 
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
-    else:
-        val = ''
-    if val.find('mingw') < 0:
+    from gdaltest import is_travis_branch
+    if not is_travis_branch('mingw'):
         has_subprocess = False
         try:
             import subprocess
@@ -256,11 +253,8 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     return (ret_stdout, ret_stderr)
 
 def runexternal_out_and_err(cmd, check_memleak = True):
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
-    else:
-        val = ''
-    if val.find('mingw') < 0:
+    from gdaltest import is_travis_branch
+    if not is_travis_branch('mingw'):
         has_subprocess = False
         try:
             import subprocess
