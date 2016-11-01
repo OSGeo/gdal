@@ -91,7 +91,7 @@ matrix:
     - os: linux
       compiler: gcc
       language: cpp
-      sudo: true
+      sudo: required
       cache:
         apt: true
         directories:
@@ -102,7 +102,7 @@ matrix:
     - os: linux
       compiler: gcc
       language: cpp
-      sudo: true
+      sudo: required
       cache:
         apt: true
         directories:
@@ -113,7 +113,7 @@ matrix:
     - os: linux
       compiler: gcc
       language: cpp
-      sudo: true
+      sudo: required
       cache:
         apt: true
         directories:
