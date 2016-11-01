@@ -41,7 +41,7 @@ CPL_C_START
 /** Source of the burn value */
 typedef enum {
     /*! Use value from padfBurnValue */    GBV_UserBurnValue = 0,
-    /*! Use value from the Z coordinate */    GBV_Z = 1,
+    /*! Use value from the Z coordinate */ GBV_Z = 1,
     /*! Use value form the M value */    GBV_M = 2
 } GDALBurnValueSrc;
 
@@ -78,17 +78,17 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                        double *padfX, double *padfY, double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
-void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
+void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
+                                 int nPartCount, int *panPartSize,
+                                 double *padfX, double *padfY,
+                                 double *padfVariant,
+                                 llPointFunc pfnPointFunc, void *pCBData );
+
+void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
                                 int nPartCount, int *panPartSize,
                                 double *padfX, double *padfY,
                                 double *padfVariant,
-                                llPointFunc pfnPointFunc, void *pCBData );
-
-void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
-                               int nPartCount, int *panPartSize,
-                               double *padfX, double *padfY,
-                               double *padfVariant,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData );
+                                llScanlineFunc pfnScanlineFunc, void *pCBData );
 
 CPL_C_END
 
@@ -155,21 +155,21 @@ void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
 /*      Color table related                                             */
 /************************************************************************/
 
-/* definitions exists for T = GUInt32 and T = GUIntBig */
+// Definitions exists for T = GUInt32 and T = GUIntBig.
 template<class T> int
 GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
-                           GDALRasterBandH hGreen,
-                           GDALRasterBandH hBlue,
-                           GByte* pabyRedBand,
-                           GByte* pabyGreenBand,
-                           GByte* pabyBlueBand,
-                           int (*pfnIncludePixel)(int,int,void*),
-                           int nColors,
-                           int nBits,
-                           T* panHistogram,
-                           GDALColorTableH hColorTable,
-                           GDALProgressFunc pfnProgress,
-                           void * pProgressArg );
+                                 GDALRasterBandH hGreen,
+                                 GDALRasterBandH hBlue,
+                                 GByte* pabyRedBand,
+                                 GByte* pabyGreenBand,
+                                 GByte* pabyBlueBand,
+                                 int (*pfnIncludePixel)(int,int,void*),
+                                 int nColors,
+                                 int nBits,
+                                 T* panHistogram,
+                                 GDALColorTableH hColorTable,
+                                 GDALProgressFunc pfnProgress,
+                                 void * pProgressArg );
 
 int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                                GDALRasterBandH hGreen,
@@ -182,11 +182,12 @@ int GDALDitherRGB2PCTInternal( GDALRasterBandH hRed,
                                GDALProgressFunc pfnProgress,
                                void * pProgressArg );
 
-#define PRIME_FOR_65536                                 98317
+#define PRIME_FOR_65536 98317
 
-/* See HashHistogram structure in gdalmediancut.cpp and ColorIndex structure in gdaldither.cpp */
-/* 6 * sizeof(int) should be the size of the largest of both structures */
-#define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536         (6 * sizeof(int) * PRIME_FOR_65536)
+// See HashHistogram structure in gdalmediancut.cpp and ColorIndex structure in
+// gdaldither.cpp 6 * sizeof(int) should be the size of the largest of both
+// structures.
+#define MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 (6 * sizeof(int) * PRIME_FOR_65536)
 
 /************************************************************************/
 /*      Float comparison function.                                      */
