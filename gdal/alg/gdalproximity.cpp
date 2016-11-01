@@ -30,7 +30,9 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal_alg.h"
+
 #include <cmath>
+
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -223,7 +225,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     if( pszOpt != NULL )
     {
         char **papszValuesTokens =
-            CSLTokenizeStringComplex( pszOpt, ",", FALSE,FALSE);
+            CSLTokenizeStringComplex( pszOpt, ",", FALSE, FALSE);
 
         nTargetValues = CSLCount(papszValuesTokens);
         panTargetValues = static_cast<int *>(
@@ -360,7 +362,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 
     for( int iLine = nYSize-1; eErr == CE_None && iLine >= 0; iLine-- )
     {
-        // Read first pass proximity
+        // Read first pass proximity.
         eErr =
             GDALRasterIO( hWorkProximityBand, GF_Read, 0, iLine, nXSize, 1,
                           pafProximity, nXSize, 1, GDT_Float32, 0, 0 );
@@ -375,12 +377,12 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         if( eErr != CE_None )
             break;
 
-        // Right to left
+        // Right to left.
         ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               FALSE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
 
-        // Left to right
+        // Left to right.
         ProcessProximityLine( panSrcScanline, panNearX, panNearY,
                               TRUE, iLine, nXSize, dfMaxDist, pafProximity,
                               pdfSrcNoData, nTargetValues, panTargetValues );
