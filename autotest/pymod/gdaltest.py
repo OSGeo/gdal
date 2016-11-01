@@ -1657,6 +1657,19 @@ def skip_on_travis():
         return True
     return False
 
+###############################################################################
+# Return True if the provided name is in TRAVIS_BRANCH or BUILD_NAME
+
+def is_travis_branch(name):
+    if 'TRAVIS_BRANCH' in os.environ:
+        val = os.environ['TRAVIS_BRANCH']
+        if val.find(name) >= 0:
+            return True
+    if 'BUILD_NAME' in os.environ:
+        val = os.environ['BUILD_NAME']
+        if val.find(name) >= 0:
+            return True
+    return False
 
 ###############################################################################
 # find_lib_linux()
