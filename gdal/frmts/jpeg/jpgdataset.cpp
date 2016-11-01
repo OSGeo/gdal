@@ -1074,7 +1074,7 @@ GDALColorInterp JPGRasterBand::GetColorInterpretation()
             return GCI_BlackBand;
     }
 
-    CPLAssert(0);
+    CPLAssert(false);
     return GCI_Undefined;
 }
 
@@ -1646,7 +1646,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
                 break;
 
             default:
-                CPLAssert(0);
+                CPLAssert(false);
         }
 
         pabyScanline = static_cast<GByte *>(

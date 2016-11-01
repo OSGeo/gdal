@@ -2224,7 +2224,7 @@ double GetMaximumSegmentLength( OGRGeometry* poGeom )
         }
 
         default:
-            CPLAssert(0);
+            CPLAssert(false);
             return 0.0;
     }
 }
