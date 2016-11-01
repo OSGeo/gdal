@@ -68,6 +68,9 @@ matrix:
         apt: true
         directories:
           - $HOME/.ccache
+      apt:
+        packages:
+          - ccache
       env:
         - BUILD_NAME=android
         - DETAILS=""
@@ -79,6 +82,9 @@ matrix:
         apt: true
         directories:
           - $HOME/.ccache
+      apt:
+        packages:
+          - ccache
       env:
         - BUILD_NAME=big_endian
         - DETAILS=""
