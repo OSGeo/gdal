@@ -28,6 +28,10 @@ matrix:
     - os: osx
       osx_image: xcode8
       language: objective-c
+      cache:
+        apt: true
+        directories:
+          - $HOME/.ccache
       env:
         - BUILD_NAME=osx
 

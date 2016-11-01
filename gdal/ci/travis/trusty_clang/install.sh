@@ -5,7 +5,7 @@ set -e
 cd gdal
 # --with-mongocxx=/usr/local
 export CCACHE_CPP2=yes
-CC="ccache clang" CXX="ccache clang" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local
+CC="ccache clang" CXX="ccache clang" LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local
 # Those ln -s are weird but otherwise Python bindings build fail with clang not being found
 sudo ln -s /usr/local/clang-3.5.0/bin/clang /usr/bin/clang
 sudo ln -s /usr/local/clang-3.5.0/bin/clang++ /usr/bin/clang++
