@@ -10,7 +10,7 @@ GDAL - Geospatial Data Abstraction Library
 | Python 3                 | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=python3&label=python3)](https://travis-ci.org/OSGeo/gdal) |
 | MacOS X                  | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=osx&label=osx)](https://travis-ci.org/OSGeo/gdal) |
 | MSVC 2008                | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc9?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
-| MSVC 2013 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc12_full?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
+| MSVC 2013 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/trunk?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal) |
 | MSVC 2015 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc13?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
 | MinGW                    | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=mingw&label=mingw)](https://travis-ci.org/OSGeo/gdal) |
 | MinGW_W64                | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=mingw_w64&label=mingw_w64)](https://travis-ci.org/OSGeo/gdal) |
