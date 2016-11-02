@@ -1076,7 +1076,7 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
                         return false;
                     break;
                 default:
-                    CPLAssert(0);
+                    CPLAssert(false);
             }
 
             eNodeType = SNT_CONSTANT;
@@ -1129,7 +1129,7 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
                     else
                         return false;
                     break;
-                default: CPLAssert(0);
+                default: CPLAssert(false);
             }
 
             eNodeType = SNT_CONSTANT;

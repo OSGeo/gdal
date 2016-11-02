@@ -2290,7 +2290,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             return psLock;
         }
         default:
-            CPLAssert(0);
+            CPLAssert(false);
             return NULL;
     }
 }
@@ -2322,7 +2322,7 @@ int   CPLCreateOrAcquireLock( CPLLock** ppsLock, CPLLockType eType )
             break;
         }
         default:
-            CPLAssert(0);
+            CPLAssert(false);
             return FALSE;
     }
 #ifdef DEBUG_CONTENTION

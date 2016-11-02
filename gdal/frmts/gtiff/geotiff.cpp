@@ -4119,7 +4119,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "TIFFReadEncodedTile() failed.\n" );
+                          "TIFFReadEncodedTile() failed." );
 
                 eErr = CE_Failure;
             }
@@ -4132,7 +4132,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 memset( pImage, 0, nBlockBufSize );
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "TIFFReadEncodedStrip() failed.\n" );
+                        "TIFFReadEncodedStrip() failed." );
 
                 eErr = CE_Failure;
             }
@@ -7179,7 +7179,7 @@ void GTiffDataset::FillEmptyTiles()
         return;
     }
 
-    // Force now tiles at nodata value to be written
+    // Force tiles completely filled with the nodata value to be written.
     bWriteEmptyTiles = true;
 
 /* -------------------------------------------------------------------- */
@@ -9440,8 +9440,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in TIFF currently only"
-                  " supported when operating on all bands.\n"
-                  "Operation failed.\n" );
+                  " supported when operating on all bands.  "
+                  "Operation failed." );
         return CE_Failure;
     }
 
@@ -11034,9 +11034,11 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
         static_cast<GByte*>(
             VSIGetMemFileBuffer( osTmpFilename, &nDataLength, FALSE) );
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
-    const bool bSwap =
-        (bLittleEndian && !CPL_IS_LSB) ||
-        (!bLittleEndian && CPL_IS_LSB);
+#if CPL_IS_LSB
+    const bool bSwap = !bLittleEndian;
+#else
+    const bool bSwap = bLittleEndian;
+#endif
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
     vsi_l_offset nMaxOffset = 0;
     if( bBigTIFF )
@@ -11913,7 +11915,7 @@ GDALDataset *GTiffDataset::OpenDir( GDALOpenInfo * poOpenInfo )
     {
         CPLError(
             CE_Failure, CPLE_OpenFailed,
-            "Unable to extract offset or filename, should take the form\n"
+            "Unable to extract offset or filename, should take the form:\n"
             "GTIFF_DIR:<dir>:filename or GTIFF_DIR:off:<dir_offset>:filename" );
         return NULL;
     }
@@ -13543,7 +13545,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 if( pszUnitType )
                     poBand->osUnitType = pszUnitType;
             }
-            if( poBand->osDescription.size() == 0 )
+            if( poBand->osDescription.empty() )
                 poBand->osDescription =
                     poBand->GDALPamRasterBand::GetDescription();
 
@@ -13622,7 +13624,7 @@ void GTiffDataset::ScanDirectories()
             }
             else
             {
-                CPLDebug( "GTiff", "Opened %dx%d overview.\n",
+                CPLDebug( "GTiff", "Opened %dx%d overview.",
                           poODS->GetRasterXSize(), poODS->GetRasterYSize());
                 ++nOverviewCount;
                 papoOverviewDS = static_cast<GTiffDataset **>(
@@ -13939,7 +13941,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     if( l_nBands > 65535 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to create %dx%dx%d TIFF file, but bands\n"
+                  "Attempt to create %dx%dx%d TIFF file, but bands "
                   "must be lesser or equal to 65535.",
                   nXSize, nYSize, l_nBands );
 
@@ -14413,7 +14415,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         else
         {
             CPLError( CE_Warning, CPLE_IllegalArg,
-                      "PHOTOMETRIC=%s value not recognised, ignoring.\n"
+                      "PHOTOMETRIC=%s value not recognised, ignoring.  "
                       "Set the Photometric Interpretation as MINISBLACK.",
                       pszValue );
             TIFFSetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
@@ -14423,7 +14425,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         {
             CPLError( CE_Warning, CPLE_IllegalArg,
                       "PHOTOMETRIC=%s value does not correspond to number "
-                      "of bands (%d), ignoring.\n"
+                      "of bands (%d), ignoring.  "
                       "Set the Photometric Interpretation as MINISBLACK.",
                       pszValue, l_nBands );
             TIFFSetField(l_hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
@@ -15342,7 +15344,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CreateLL( pszFilename, nXSize, nYSize, l_nBands,
                   eType, dfExtraSpaceForOverviews, papszCreateOptions, &l_fpL,
                   l_osTmpFilename );
-    const bool bStreaming = l_osTmpFilename.size() != 0;
+    const bool bStreaming = !l_osTmpFilename.empty();
 
     CSLDestroy( papszCreateOptions );
     papszCreateOptions = NULL;
@@ -17153,11 +17155,11 @@ static void GTiffTagExtender(TIFF *tif)
 
 {
     const TIFFFieldInfo xtiffFieldInfo[] = {
-        { TIFFTAG_GDAL_METADATA, -1,-1, TIFF_ASCII, FIELD_CUSTOM,
+        { TIFFTAG_GDAL_METADATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM,
           TRUE, FALSE, const_cast<char *>( "GDALMetadata" ) },
-        { TIFFTAG_GDAL_NODATA, -1,-1, TIFF_ASCII, FIELD_CUSTOM,
+        { TIFFTAG_GDAL_NODATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM,
           TRUE, FALSE, const_cast<char*>( "GDALNoDataValue" ) },
-        { TIFFTAG_RPCCOEFFICIENT, -1,-1, TIFF_DOUBLE, FIELD_CUSTOM,
+        { TIFFTAG_RPCCOEFFICIENT, -1, -1, TIFF_DOUBLE, FIELD_CUSTOM,
           TRUE, TRUE, const_cast<char *>( "RPCCoefficient" ) }
     };
 

@@ -1491,7 +1491,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
                 break;
 
               case SWQ_GEOMETRY:
-                  CPLAssert(0);
+                  CPLAssert(false);
                   break;
 
               default:

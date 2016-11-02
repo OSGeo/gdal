@@ -1268,7 +1268,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
     }
     else
     {
-        CPLAssert(0);
+        CPLAssert(false);
     }
 
     GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);

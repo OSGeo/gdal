@@ -268,7 +268,7 @@ GDALProxyPoolCacheEntry* GDALDatasetPool::_RefDataset(const char* pszFileName,
         if (lastEntryWithZeroRefCount->prev)
             lastEntryWithZeroRefCount->prev->next = lastEntryWithZeroRefCount->next;
         else {
-            CPLAssert(0);
+            CPLAssert(false);
         }
         if (lastEntryWithZeroRefCount->next)
             lastEntryWithZeroRefCount->next->prev = lastEntryWithZeroRefCount->prev;
@@ -397,7 +397,7 @@ void GDALDatasetPool::Unref()
     CPLMutexHolderD( GDALGetphDLMutex() );
     if (! singleton)
     {
-        CPLAssert(0);
+        CPLAssert(false);
         return;
     }
     if (singleton->refCountOfDisableRefCount == 0)

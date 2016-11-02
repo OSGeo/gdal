@@ -1291,7 +1291,7 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
         CSLDestroy(papszTokens);
     }
 
-    CPLAssert(0);
+    CPLAssert(false);
 
     papszTokens = NULL;
 
@@ -1658,7 +1658,7 @@ bool OGRXPlaneAptReader::ParseLinearGeometry(
         CSLDestroy(papszTokens);
     }
 
-    CPLAssert(0);
+    CPLAssert(false);
 
     papszTokens = NULL;
 
