@@ -239,14 +239,14 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     }
 
     const bool bIsNAD27 =
-        EQUAL(pszEM,"E000")
-        || EQUAL(pszEM,"D-01")
-        || EQUAL(pszEM,"D-03")
-        || EQUAL(pszEM,"D-07")
-        || EQUAL(pszEM,"D-09")
-        || EQUAL(pszEM,"D-11")
-        || EQUAL(pszEM,"D-13")
-        || EQUAL(pszEM,"D-17");
+        EQUAL(pszEM, "E000")
+        || EQUAL(pszEM, "D-01")
+        || EQUAL(pszEM, "D-03")
+        || EQUAL(pszEM, "D-07")
+        || EQUAL(pszEM, "D-09")
+        || EQUAL(pszEM, "D-11")
+        || EQUAL(pszEM, "D-13")
+        || EQUAL(pszEM, "D-17");
 
 
 /* -------------------------------------------------------------------- */
@@ -493,7 +493,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         const PCIDatums *pasDatum = asDatums;
 
         // Search for matching datum.
-        while ( pasDatum->pszPCIDatum )
+        while( pasDatum->pszPCIDatum )
         {
             if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
             {
@@ -524,7 +524,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                 {
                     if( CSLCount(papszLineItems) > 3
-                        && EQUALN(papszLineItems[0],szEarthModel,4) )
+                        && EQUALN(papszLineItems[0], szEarthModel, 4) )
                     {
                         papszDatumDefn = papszLineItems;
                         strncpy( szEarthModel, papszLineItems[2], 4 );
@@ -549,7 +549,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
             pasDatum = asEllips;
 
-            while ( pasDatum->pszPCIDatum )
+            while( pasDatum->pszPCIDatum )
             {
                 if( EQUALN( szEarthModel, pasDatum->pszPCIDatum, 4 ) )
                 {
@@ -578,7 +578,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                     while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                     {
                         if( CSLCount(papszLineItems) > 3
-                            && EQUALN(papszLineItems[0],szEarthModel,4) )
+                            && EQUALN(papszLineItems[0], szEarthModel, 4) )
                         {
                             dfSemiMajor = CPLAtof( papszLineItems[2] );
                             const double dfSemiMinor =
@@ -922,7 +922,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     else if( EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         CPLPrintStringFill( szProj, "OM", 16 );
-        (*ppadfPrjParams)[2] = GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        (*ppadfPrjParams)[2] =
+            GetNormProjParm( SRS_PP_LONGITUDE_OF_CENTER, 0.0);
         (*ppadfPrjParams)[3] = GetNormProjParm( SRS_PP_LATITUDE_OF_CENTER, 0.0);
         (*ppadfPrjParams)[14] = GetNormProjParm( SRS_PP_AZIMUTH, 0.0);
         // Note: Ignoring rectified_grid_angle which has no PCI analog.
@@ -1069,7 +1070,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     {
         const char *pszAuthority = GetAuthorityName("GEOGCS");
 
-        if( pszAuthority && EQUAL(pszAuthority,"EPSG") )
+        if( pszAuthority && EQUAL(pszAuthority, "EPSG") )
         {
             const int nGCS_EPSG = atoi(GetAuthorityCode("GEOGCS"));
 
@@ -1128,8 +1129,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                 while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                 {
                     if( CSLCount(papszLineItems) >= 4
-                        && CPLIsEqual(dfSemiMajor,CPLAtof(papszLineItems[2]))
-                        && CPLIsEqual(dfSemiMinor,CPLAtof(papszLineItems[3])) )
+                        && CPLIsEqual(dfSemiMajor, CPLAtof(papszLineItems[2]))
+                        && CPLIsEqual(dfSemiMinor, CPLAtof(papszLineItems[3])) )
                     {
                         strncpy( szEarthModel, papszLineItems[0], 5 );
                         szEarthModel[4] = '\0';
@@ -1159,7 +1160,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /*      pci_datum.txt for a match.                                      */
 /* -------------------------------------------------------------------- */
     if( szEarthModel[0] == 'E'
-        && !EQUAL(szEarthModel,"E999")
+        && !EQUAL(szEarthModel, "E999")
         && pszDatum != NULL )
     {
         const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
@@ -1180,8 +1181,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                 // PCI round-tripping.  We won't usually get exact matches
                 // from other sources.
                 if( CSLCount(papszLineItems) > 3
-                    && EQUAL(papszLineItems[1],pszDatum)
-                    && EQUAL(papszLineItems[2],szEarthModel) )
+                    && EQUAL(papszLineItems[1], pszDatum)
+                    && EQUAL(papszLineItems[2], szEarthModel) )
                 {
                     strncpy( szEarthModel, papszLineItems[0], 5 );
                     szEarthModel[4] = '\0';
@@ -1217,7 +1218,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                     if( dfScale >= 0.999 && dfScale <= 1.001 )
                         dfScale = (dfScale-1.0) * 1000000.0;
 
-                    if( !CPLIsEqual(adfTOWGS84[6],dfScale) )
+                    if( !CPLIsEqual(adfTOWGS84[6], dfScale) )
                         bTOWGS84Match = false;
                 }
 

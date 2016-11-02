@@ -94,10 +94,10 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             continue;
         }
 
-        if( strstr(pszLine,",") == NULL )
+        if( strstr(pszLine, ",") == NULL )
             continue;
 
-        if( EQUALN(pszLine,pszCode,strlen(pszCode))
+        if( EQUALN(pszLine, pszCode, strlen(pszCode))
             && pszLine[strlen(pszCode)] == ',' )
         {
             char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
