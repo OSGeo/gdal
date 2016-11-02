@@ -37,7 +37,7 @@ matrix:
           - $HOME/.ccache
       env:
         - BUILD_NAME=mingw
-        - DETAILS="optimized build, libtool"
+        - DETAILS="debug build, libtool"
     - os: linux
       compiler: clang
       language: cpp
