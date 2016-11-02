@@ -3,6 +3,7 @@
 set -e
 
 cd gdal
+export CCACHE_CPP2=yes
 
 # Disable --with-fgdb=/usr/local since it causes /usr/local/include/GeodatabaseManagement.h:56:1: error: expected constructor, destructor, or type conversion before ‘(’ token EXT_FILEGDB_API fgdbError CreateGeodatabase(const std::wstring& path, Geodatabase& geodatabase);
 # Disable --with-mongocxx=/usr/local since it should also likely be compiled with C+11, but this fails because boost itself should probably be

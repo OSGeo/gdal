@@ -10,12 +10,12 @@ cd proj-4.9.2/nad
 curl http://download.osgeo.org/proj/proj-datumgrid-1.5.tar.gz > proj-datumgrid-1.5.tar.gz
 tar xvzf proj-datumgrid-1.5.tar.gz
 cd ..
-CC="ccache i586-mingw32msvc-gcc" CXX="ccache i586-mingw32msvc-g++" LD=i586-mingw32msvc-ld ./configure --host=i586-mingw32msvc
+disableCC="ccache i586-mingw32msvc-gcc" disableCXX="ccache i586-mingw32msvc-g++" CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++ LD=i586-mingw32msvc-ld ./configure --host=i586-mingw32msvc
 make -j3
 cd ..
 # build GDAL
 cd gdal
-CC="ccache i586-mingw32msvc-gcc" CXX="ccache i586-mingw32msvc-g++" ./configure --enable-debug --host=i586-mingw32msvc
+disableCC="ccache i586-mingw32msvc-gcc" disableCXX="ccache i586-mingw32msvc-g++" CC=i586-mingw32msvc-gcc CXX=i586-mingw32msvc-g++  ./configure --enable-debug --host=i586-mingw32msvc
 LD=i586-mingw32msvc-ld make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 LD=i586-mingw32msvc-ld make USER_DEFS="-Wextra -Werror" test_ogrsf.exe
