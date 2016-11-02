@@ -197,8 +197,8 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
             {
                 for( size_t j = 0; j < oLayer.getImageCount(); ++j )
                 {
-                    nSubRasterLayer = i;
-                    nSubRasterFID = j;
+                    nSubRasterLayer = static_cast<long>( i );
+                    nSubRasterFID = static_cast<long>( j );
                     GDALDataset::SetMetadataItem( CPLSPrintf("SUBDATASET_%d_NAME",
                         nRasters),
                         CPLSPrintf("CAD:%s:%ld:%ld", osCADFilename.c_str(), i, j),

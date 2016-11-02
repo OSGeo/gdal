@@ -47,6 +47,8 @@ public:
     bool isNull() const;
     long getAsLong() const;
     long getAsLong( const CADHandle& ref_handle ) const;
+private:
+    long getAsLong(const std::vector<unsigned char>& handle) const;
 protected:
     unsigned char              code;
     std::vector<unsigned char> handleOrOffset;

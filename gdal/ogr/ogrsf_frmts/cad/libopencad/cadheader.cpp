@@ -34,6 +34,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <time.h>
 
 using namespace std;
 
@@ -173,43 +174,41 @@ void CADHandle::addOffset( unsigned char val )
 
 long CADHandle::getAsLong( const CADHandle& ref_handle ) const
 {
-    long result = 0;
     switch( code )
     {
         case 0x06:
         {
-            memcpy( & result, ref_handle.handleOrOffset.data(), ref_handle.handleOrOffset.size() );
-            SwapEndianness( result, ref_handle.handleOrOffset.size() );
-            return result + 1;
+            return getAsLong(ref_handle.handleOrOffset) + 1;
         }
         case 0x08:
         {
-            memcpy( & result, ref_handle.handleOrOffset.data(), ref_handle.handleOrOffset.size() );
-            SwapEndianness( result, ref_handle.handleOrOffset.size() );
-            return result - 1;
+            return getAsLong(ref_handle.handleOrOffset) - 1;
         }
         case 0x0A:
         {
-            memcpy( & result, ref_handle.handleOrOffset.data(), ref_handle.handleOrOffset.size() );
-            SwapEndianness( result, ref_handle.handleOrOffset.size() );
-            return result + this->getAsLong();
+            return getAsLong(ref_handle.handleOrOffset) + getAsLong(handleOrOffset);
         }
         case 0x0C:
         {
-            memcpy( & result, ref_handle.handleOrOffset.data(), ref_handle.handleOrOffset.size() );
-            SwapEndianness( result, ref_handle.handleOrOffset.size() );
-            return result - this->getAsLong();
+            return getAsLong(ref_handle.handleOrOffset) - getAsLong(handleOrOffset);
         }
     }
 
-    return this->getAsLong();
+    return getAsLong(handleOrOffset);
 }
 
 long CADHandle::getAsLong() const
 {
+    return getAsLong(handleOrOffset);
+}
+
+long CADHandle::getAsLong(const std::vector<unsigned char>& handle) const
+{
     long result = 0;
-    memcpy( & result, handleOrOffset.data(), handleOrOffset.size() );
-    SwapEndianness( result, handleOrOffset.size() );
+    if( handle.empty() )
+        return result;
+    memcpy( &result, handle.data(), handle.size() );
+    SwapEndianness( result, handle.size() );
     return result;
 }
 
@@ -308,9 +307,8 @@ CADVariant::CADVariant( time_t val )
     type        = DataType::DATETIME;
     dateTimeVal = val;
 
-    //TODO: data/time format
     char str_buff[256];
-    snprintf( str_buff, 255, "%ld", dateTimeVal );
+    strftime(str_buff, 255, "%Y-%m-%d %H:%M:%S", localtime(&dateTimeVal));
     stringVal = str_buff;
 
     decimalVal = 0;

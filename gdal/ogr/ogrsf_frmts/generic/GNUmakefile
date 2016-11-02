@@ -234,3 +234,4 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 $(O_OBJ):	../../../GDALmake.opt ../../swq.h
+
