@@ -28,11 +28,12 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
-#include "cpl_port.h"
-#include "cpl_error.h"
+
 #include "cpl_conv.h"
-#include "cpl_string.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "cpl_string.h"
 
 #ifdef PROJ_STATIC
 #include "proj_api.h"
@@ -76,7 +77,7 @@ static int (*pfn_pj_ctx_get_errno)( projCtx ) = NULL;
 static projCtx (*pfn_pj_ctx_alloc)(void) = NULL;
 static void    (*pfn_pj_ctx_free)( projCtx ) = NULL;
 
-// Locale-safe proj starts with 4.10
+// Locale-safe proj starts with 4.10.
 #if defined(PJ_LOCALE_SAFE)
 static bool      bProjLocaleSafe = PJ_LOCALE_SAFE != 0;
 #else
@@ -174,7 +175,8 @@ public:
                              int *panSuccess = NULL );
 
     virtual bool GetEmitErrors() { return m_bEmitErrors; }
-    virtual void SetEmitErrors(bool bEmitErrors) { m_bEmitErrors = bEmitErrors; }
+    virtual void SetEmitErrors( bool bEmitErrors )
+        { m_bEmitErrors = bEmitErrors; }
 };
 
 /************************************************************************/
@@ -267,11 +269,11 @@ static bool LoadProjLibrary_unlocked()
     CPLErrorReset();
 #endif
 
-    if (pfn_pj_ctx_alloc != NULL &&
+    if( pfn_pj_ctx_alloc != NULL &&
         pfn_pj_ctx_free != NULL &&
         pfn_pj_init_plus_ctx != NULL &&
         pfn_pj_ctx_get_errno != NULL &&
-        CPLTestBool(CPLGetConfigOption("USE_PROJ_480_FEATURES", "YES")))
+        CPLTestBool(CPLGetConfigOption("USE_PROJ_480_FEATURES", "YES")) )
     {
         CPLDebug("OGRCT", "PROJ >= 4.8.0 features enabled");
     }
@@ -317,22 +319,19 @@ static bool LoadProjLibrary()
  */
 static char *OCTProj4NormalizeInternal( const char *pszProj4Src )
 {
-    char        *pszNewProj4Def, *pszCopy;
-    projPJ      psPJSource = NULL;
-
-    psPJSource = pfn_pj_init_plus( pszProj4Src );
+    projPJ psPJSource = pfn_pj_init_plus( pszProj4Src );
 
     if( psPJSource == NULL )
         return CPLStrdup( pszProj4Src );
 
-    pszNewProj4Def = pfn_pj_get_def( psPJSource, 0 );
+    char *pszNewProj4Def = pfn_pj_get_def( psPJSource, 0 );
 
     pfn_pj_free( psPJSource );
 
     if( pszNewProj4Def == NULL )
         return CPLStrdup( pszProj4Src );
 
-    pszCopy = CPLStrdup( pszNewProj4Def );
+    char *pszCopy = CPLStrdup( pszNewProj4Def );
     pfn_pj_dalloc( pszNewProj4Def );
 
     return pszCopy;
@@ -343,14 +342,17 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 {
     CPLMutexHolderD( &hPROJMutex );
 
-    if( !LoadProjLibrary_unlocked() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
+    if( !LoadProjLibrary_unlocked() || pfn_pj_dalloc == NULL ||
+        pfn_pj_get_def == NULL )
         return CPLStrdup( pszProj4Src );
 
     if( bProjLocaleSafe )
+    {
         return OCTProj4NormalizeInternal(pszProj4Src);
+    }
     else
     {
-        CPLLocaleC  oLocaleEnforcer;
+        CPLLocaleC oLocaleEnforcer;
         return OCTProj4NormalizeInternal(pszProj4Src);
     }
 }
@@ -381,7 +383,8 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
 /**
  * \brief OGRCoordinateTransformation destructor.
  *
- * This function is the same as OGRCoordinateTransformation::~OGRCoordinateTransformation()
+ * This function is the same as
+ * OGRCoordinateTransformation::~OGRCoordinateTransformation()
  * and OCTDestroyCoordinateTransformation()
  *
  * This static method will destroy a OGRCoordinateTransformation.  It is
@@ -394,7 +397,7 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
  * @since GDAL 1.7.0
  */
 
-void OGRCoordinateTransformation::DestroyCT(OGRCoordinateTransformation* poCT)
+void OGRCoordinateTransformation::DestroyCT( OGRCoordinateTransformation* poCT )
 {
     delete poCT;
 }
@@ -442,10 +445,8 @@ OGRCreateCoordinateTransformation( OGRSpatialReference *poSource,
         delete poCT;
         return NULL;
     }
-    else
-    {
-        return poCT;
-    }
+
+    return poCT;
 }
 
 /************************************************************************/
@@ -505,11 +506,15 @@ OGRProj4CT::OGRProj4CT() :
     dfThreshold(0.0),
     pjctx(NULL),
     nMaxCount(0),
-    padfOriX(NULL), padfOriY(NULL), padfOriZ(NULL), padfTargetX(NULL),
-    padfTargetY(NULL), padfTargetZ(NULL),
+    padfOriX(NULL),
+    padfOriY(NULL),
+    padfOriZ(NULL),
+    padfTargetX(NULL),
+    padfTargetY(NULL),
+    padfTargetZ(NULL),
     m_bEmitErrors(true)
 {
-    if (pfn_pj_ctx_alloc != NULL)
+    if( pfn_pj_ctx_alloc != NULL )
         pjctx = pfn_pj_ctx_alloc();
 }
 
@@ -532,7 +537,7 @@ OGRProj4CT::~OGRProj4CT()
             delete poSRSTarget;
     }
 
-    if (pjctx != NULL)
+    if( pjctx != NULL )
     {
         pfn_pj_ctx_free(pjctx);
 
@@ -574,8 +579,8 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         return InitializeNoLock(poSourceIn, poTargetIn);
     }
 
-    CPLLocaleC  oLocaleEnforcer;
-    if (pjctx != NULL)
+    CPLLocaleC oLocaleEnforcer;
+    if( pjctx != NULL )
     {
         return InitializeNoLock(poSourceIn, poTargetIn);
     }
@@ -629,7 +634,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         OGR_SRSNode *poUNITS = poSRSTarget->GetAttrNode( "GEOGCS|UNIT" );
         if( poUNITS && poUNITS->GetChildCount() >= 2 )
         {
-            double dfTargetToRadians = CPLAtof(poUNITS->GetChild(1)->GetValue());
+            const double dfTargetToRadians =
+                CPLAtof(poUNITS->GetChild(1)->GetValue());
             if( dfTargetToRadians != 0.0 )
                 dfTargetFromRadians = 1 / dfTargetToRadians;
         }
@@ -678,9 +684,9 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
     // OGRThreadSafety: The following variable is not a thread safety issue
     // since the only issue is incrementing while accessing which at worse
     // means debug output could be one "increment" late.
-    static int   nDebugReportCount = 0;
+    static int nDebugReportCount = 0;
 
-    char        *pszSrcProj4Defn = NULL;
+    char *pszSrcProj4Defn = NULL;
 
     if( poSRSSource->exportToProj4( &pszSrcProj4Defn ) != OGRERR_NONE )
     {
@@ -697,7 +703,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         return FALSE;
     }
 
-    char        *pszDstProj4Defn = NULL;
+    char *pszDstProj4Defn = NULL;
 
     if( poSRSTarget->exportToProj4( &pszDstProj4Defn ) != OGRERR_NONE )
     {
@@ -732,7 +738,8 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
         memmove(pszNeedle, pszNeedle + 1, strlen(pszNeedle + 1)+1);
 
     if( (strstr(pszSrcProj4Defn, "+datum=WGS84") != NULL ||
-         strstr(pszSrcProj4Defn, "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != NULL) &&
+         strstr(pszSrcProj4Defn,
+                "+ellps=WGS84 +towgs84=0,0,0,0,0,0,0 ") != NULL) &&
         strstr(pszDstProj4Defn, "+nadgrids=@null ") != NULL &&
         strstr(pszDstProj4Defn, "+towgs84") == NULL )
     {
@@ -800,7 +807,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
     if( !bWebMercatorToWGS84 )
     {
-        if (pjctx)
+        if( pjctx )
             psPJSource = pfn_pj_init_plus_ctx( pjctx, pszSrcProj4Defn );
         else
             psPJSource = pfn_pj_init_plus( pszSrcProj4Defn );
@@ -850,7 +857,7 @@ int OGRProj4CT::InitializeNoLock( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
     if( !bWebMercatorToWGS84 )
     {
-        if (pjctx)
+        if( pjctx )
             psPJTarget = pfn_pj_init_plus_ctx( pjctx, pszDstProj4Defn );
         else
             psPJTarget = pfn_pj_init_plus( pszDstProj4Defn );
@@ -1044,7 +1051,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                     {
                         do {
                             x[i] -= 2 * M_PI;
-                        } while ( x[i] > M_PI );
+                        } while( x[i] > M_PI );
                     }
                 }
                 else if( x[i] < -M_PI )
@@ -1099,7 +1106,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         // For some projections, we cannot detect if we are trying to reproject
         // coordinates outside the validity area of the projection. So let's do
         // the reverse reprojection and compare with the source coordinates.
-        if (nCount > nMaxCount)
+        if( nCount > nMaxCount )
         {
             nMaxCount = nCount;
             padfOriX = (double*) CPLRealloc(padfOriX, sizeof(double)*nCount);
@@ -1111,27 +1118,27 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
         }
         memcpy(padfOriX, x, sizeof(double)*nCount);
         memcpy(padfOriY, y, sizeof(double)*nCount);
-        if (z)
+        if( z )
         {
             memcpy(padfOriZ, z, sizeof(double)*nCount);
         }
         err = pfn_pj_transform( psPJSource, psPJTarget, nCount, 1, x, y, z );
-        if (err == 0)
+        if( err == 0 )
         {
             memcpy(padfTargetX, x, sizeof(double)*nCount);
             memcpy(padfTargetY, y, sizeof(double)*nCount);
-            if (z)
+            if( z )
             {
                 memcpy(padfTargetZ, z, sizeof(double)*nCount);
             }
 
             err = pfn_pj_transform( psPJTarget, psPJSource , nCount, 1,
                                     padfTargetX, padfTargetY, (z) ? padfTargetZ : NULL);
-            if (err == 0)
+            if( err == 0 )
             {
                 for( int i = 0; i < nCount; i++ )
                 {
-                    if ( x[i] != HUGE_VAL && y[i] != HUGE_VAL &&
+                    if( x[i] != HUGE_VAL && y[i] != HUGE_VAL &&
                         (fabs(padfTargetX[i] - padfOriX[i]) > dfThreshold ||
                          fabs(padfTargetY[i] - padfOriY[i]) > dfThreshold) )
                     {
@@ -1160,8 +1167,8 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 
         if( m_bEmitErrors && ++nErrorCount < 20 )
         {
-            if (pjctx != NULL)
-                /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */
+            if( pjctx != NULL )
+                // pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0.
                 CPLAcquireMutex(hPROJMutex, 1000.0);
 
             const char *pszError = NULL;
@@ -1175,18 +1182,19 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
             else
                 CPLError( CE_Failure, CPLE_AppDefined, "%s", pszError );
 
-            if (pjctx != NULL)
-                /* pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0 */
+            if( pjctx != NULL )
+                // pfn_pj_strerrno not yet thread-safe in PROJ 4.8.0.
                 CPLReleaseMutex(hPROJMutex);
         }
         else if( nErrorCount == 20 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Reprojection failed, err = %d, further errors will be suppressed on the transform object.",
+                      "Reprojection failed, err = %d, further errors will be "
+                      "suppressed on the transform object.",
                       err );
         }
 
-        if (pjctx == NULL)
+        if( pjctx == NULL )
             CPLReleaseMutex(hPROJMutex);
         return FALSE;
     }
