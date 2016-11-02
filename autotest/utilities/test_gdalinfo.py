@@ -783,7 +783,7 @@ def test_gdalinfo_40():
     if 'coordinates' not in ret['wgs84Extent']:
         print(ret)
         return 'fail'
-    if ret['wgs84Extent']['coordinates'] != [ [ -180.0, 90.0 ], [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ] ]:
+    if ret['wgs84Extent']['coordinates'] != [ [ [ -180.0, 90.0 ], [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ] ] ]:
         print(ret)
         return 'fail'
 
