@@ -762,6 +762,33 @@ def test_gdalinfo_39():
 
     return 'success'
 
+###############################################################################
+# Test -json wgs84Extent
+
+def test_gdalinfo_40():
+    if test_cli_utilities.get_gdalinfo_path() is None:
+        return 'skip'
+
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/small_world.tif')
+    ret = json.loads(ret)
+    if 'wgs84Extent' not in ret:
+        print(ret)
+        return 'fail'
+    if 'type' not in ret['wgs84Extent']:
+        print(ret)
+        return 'fail'
+    if ret['wgs84Extent']['type'] != 'Polygon':
+        print(ret)
+        return 'fail'
+    if 'coordinates' not in ret['wgs84Extent']:
+        print(ret)
+        return 'fail'
+    if ret['wgs84Extent']['coordinates'] != [ [ [ -180.0, 90.0 ], [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ] ] ]:
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_gdalinfo_1,
     test_gdalinfo_2,
@@ -802,6 +829,7 @@ gdaltest_list = [
     test_gdalinfo_37,
     test_gdalinfo_38,
     test_gdalinfo_39,
+    test_gdalinfo_40,
     ]
 
 
