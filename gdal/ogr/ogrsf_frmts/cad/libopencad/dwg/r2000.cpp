@@ -565,14 +565,15 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     {
         int Flags = ReadBITLONG( pabyBuf, nBitOffsetFromStart );
         oHeader.addValue( CADHeader::CELWEIGHT, Flags & 0x001F );
-        oHeader.addValue( CADHeader::ENDCAPS, static_cast<bool>(Flags & 0x0060) );
-        oHeader.addValue( CADHeader::JOINSTYLE, static_cast<bool>(Flags & 0x0180) );
-        oHeader.addValue( CADHeader::LWDISPLAY, static_cast<bool>(!( Flags & 0x0200 )) );
-        oHeader.addValue( CADHeader::XEDIT, static_cast<bool>(!( Flags & 0x0400 )) );
-        oHeader.addValue( CADHeader::EXTNAMES, static_cast<bool>(Flags & 0x0800) );
-        oHeader.addValue( CADHeader::PSTYLEMODE, static_cast<bool>(Flags & 0x2000) );
-        oHeader.addValue( CADHeader::OLESTARTUP, static_cast<bool>(Flags & 0x4000) );
-    } else
+        oHeader.addValue( CADHeader::ENDCAPS, Flags & 0x0060 );
+        oHeader.addValue( CADHeader::JOINSTYLE, Flags & 0x0180 );
+        oHeader.addValue( CADHeader::LWDISPLAY, !( Flags & 0x0200 ) );
+        oHeader.addValue( CADHeader::XEDIT, !( Flags & 0x0400 ) );
+        oHeader.addValue( CADHeader::EXTNAMES, Flags & 0x0800 );
+        oHeader.addValue( CADHeader::PSTYLEMODE, Flags & 0x2000 );
+        oHeader.addValue( CADHeader::OLESTARTUP, Flags & 0x4000 );
+    }
+    else
     {
         SkipBITLONG( pabyBuf, nBitOffsetFromStart );
     }
@@ -673,7 +674,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             stClass.sCppClassName    = ReadTV( pabySectionContent, nBitOffsetFromStart );
             stClass.sDXFRecordName   = ReadTV( pabySectionContent, nBitOffsetFromStart );
             stClass.bWasZombie       = ReadBIT( pabySectionContent, nBitOffsetFromStart );
-            stClass.bIsEntity        = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart ) == 0x1F2 ? true : false;
+            stClass.bIsEntity        = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart ) == 0x1F2;
 
             oClasses.addClass( stClass );
         }
@@ -1259,8 +1260,9 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             CADImageObject * cadImage = static_cast<CADImageObject *>(
                     readedObject.get());
 
-            unique_ptr<CADImageDefObject> cadImageDef( static_cast<CADImageDefObject *>(
-                                                               GetObject( cadImage->hImageDef.getAsLong() ) ) );
+            unique_ptr<CADImageDefObject> cadImageDef(
+                static_cast<CADImageDefObject *>( GetObject(
+                    cadImage->hImageDef.getAsLong() ) ) );
 
 
             image->setClippingBoundaryType( cadImage->dClipBoundaryType );
@@ -1272,10 +1274,14 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             image->setImageSizeInPx( imageSizeInPx );
             CADVector pixelSizeInACADUnits( cadImageDef->dfXPixelSize, cadImageDef->dfYPixelSize );
             image->setPixelSizeInACADUnits( pixelSizeInACADUnits );
-            image->setResolutionUnits( ( CADImage::ResolutionUnit ) cadImageDef->dResUnits );
-            image->setOptions( cadImage->dDisplayProps & 0x08, cadImage->bClipping, cadImage->dBrightness,
+            image->setResolutionUnits(
+                static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
+            bool bTransparency = static_cast<bool>(cadImage->dDisplayProps & 0x08);
+            image->setOptions( bTransparency,
+                               cadImage->bClipping,
+                               cadImage->dBrightness,
                                cadImage->dContrast );
-            for( const CADVector& clipPt :  cadImage->avertClippingPolygonVertexes )
+            for( const CADVector& clipPt : cadImage->avertClippingPolygonVertexes )
             {
                 image->addClippingPoint( clipPt );
             }
@@ -2057,7 +2063,8 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D( long dObjectSize, CADCommonED
     if( ReadBIT( pabyInput, nBitOffsetFromStart ) )
     {
         polyline->vectExtrusion = CADVector( 0.0f, 0.0f, 1.0f );
-    } else
+    }
+    else
     {
         CADVector vectExtrusion = ReadVector( pabyInput, nBitOffsetFromStart );
         polyline->vectExtrusion = vectExtrusion;
@@ -2580,9 +2587,9 @@ CADLayerObject * DWGFileR2000::getLayerObject( long dObjectSize, const char * pa
 
     layer->nNumReactors = ReadBITLONG( pabyInput, nBitOffsetFromStart );
     layer->sLayerName   = ReadTV( pabyInput, nBitOffsetFromStart );
-    layer->b64Flag      = ReadBIT( pabyInput, nBitOffsetFromStart );
+    layer->b64Flag      = static_cast<bool>(ReadBIT( pabyInput, nBitOffsetFromStart ));
     layer->dXRefIndex   = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    layer->bXDep        = ReadBIT( pabyInput, nBitOffsetFromStart );
+    layer->bXDep        = static_cast<bool>(ReadBIT( pabyInput, nBitOffsetFromStart ));
 
     short dFlags = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
     layer->bFrozen           = dFlags & 0x01;
