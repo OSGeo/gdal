@@ -628,16 +628,16 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                               poCornerCoordinates, poWGS84ExtentCoordinates,
                               osStr );
         GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
+                              "lowerRight",
+                              GDALGetRasterXSize(hDataset),
+                              GDALGetRasterYSize(hDataset),
+                              bJson, poCornerCoordinates,
+                              poWGS84ExtentCoordinates, osStr );
+        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
                               "upperRight",
                               GDALGetRasterXSize(hDataset), 0.0, bJson,
                               poCornerCoordinates, poWGS84ExtentCoordinates,
                               osStr );
-        GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
-                              "lowerRight",
-                              GDALGetRasterXSize(hDataset)
-                              , GDALGetRasterYSize(hDataset),
-                              bJson, poCornerCoordinates,
-                              poWGS84ExtentCoordinates, osStr );
         GDALInfoReportCorner( psOptions, hDataset, hTransform, hTransformWGS84,
                               "center",
                               GDALGetRasterXSize(hDataset) / 2.0,
