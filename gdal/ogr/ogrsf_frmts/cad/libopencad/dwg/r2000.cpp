@@ -698,11 +698,7 @@ int DWGFileR2000::CreateFileMap()
 {
     // Seems like ODA specification is completely awful. CRC is included in section size.
     // section size
-    char * pabySectionContent;
-    unsigned short dSectionSize;
-    size_t         nRecordsInSection;
-    size_t         nSection = 0;
-    size_t         nBitOffsetFromStart;
+    size_t nSection = 0;
 
     typedef pair<long, long> ObjHandleOffset;
     ObjHandleOffset          previousObjHandleOffset;
@@ -715,10 +711,10 @@ int DWGFileR2000::CreateFileMap()
 
     while( true )
     {
-        dSectionSize = 0;
+        unsigned short dSectionSize = 0;
 
         // read section size
-        pFileIO->Read( & dSectionSize, 2 );
+        pFileIO->Read( &dSectionSize, 2 );
         SwapEndianness( dSectionSize, sizeof( dSectionSize ) );
 
         DebugMsg( "Object map section #%zd size: %hu\n", ++nSection, dSectionSize );
@@ -726,28 +722,31 @@ int DWGFileR2000::CreateFileMap()
         if( dSectionSize == 2 )
             break; // last section is empty.
 
-        pabySectionContent  = new char[dSectionSize + 4];
-        nBitOffsetFromStart = 0;
-        nRecordsInSection   = 0;
+        char * pabySectionContent  = new char[dSectionSize + 4];
+        size_t nBitOffsetFromStart = 0;
+        size_t nRecordsInSection   = 0;
 
         // read section data
         pFileIO->Read( pabySectionContent, dSectionSize );
+        unsigned int dSectionBitSize = (dSectionSize * 8) - 128; // 8 + 8*7
 
-        while( ( nBitOffsetFromStart / 8 ) < ( ( size_t ) dSectionSize - 2 ) )
+        while( nBitOffsetFromStart < dSectionBitSize )
         {
-            tmpOffset.first  = ReadUMCHAR( pabySectionContent, nBitOffsetFromStart );
-            tmpOffset.second = ReadMCHAR( pabySectionContent, nBitOffsetFromStart );
+            tmpOffset.first  = ReadUMCHAR( pabySectionContent, nBitOffsetFromStart ); // 8 + 8*8
+            tmpOffset.second = ReadMCHAR( pabySectionContent, nBitOffsetFromStart ); // 8 + 8*8
 
             if( 0 == nRecordsInSection )
             {
                 previousObjHandleOffset = tmpOffset;
-            } else
+            }
+            else
             {
                 previousObjHandleOffset.first += tmpOffset.first;
                 previousObjHandleOffset.second += tmpOffset.second;
             }
 #ifdef _DEBUG
-            assert( mapObjects.find( previousObjHandleOffset.first ) == mapObjects.end() );
+            assert( mapObjects.find( previousObjHandleOffset.first ) ==
+                                                                mapObjects.end() );
 #endif //_DEBUG
             mapObjects.insert( previousObjHandleOffset );
             ++nRecordsInSection;
