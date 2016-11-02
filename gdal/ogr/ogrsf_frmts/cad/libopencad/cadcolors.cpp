@@ -28,7 +28,7 @@
  *******************************************************************************/
  #include "cadcolors.h"
 
- const RGBColor CADACIColors[256]
+ const RGBColor CADACIColors[]
  {
          { 0,   0,   0 },
          { 255, 0,   0 },
