@@ -565,13 +565,13 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     {
         int Flags = ReadBITLONG( pabyBuf, nBitOffsetFromStart );
         oHeader.addValue( CADHeader::CELWEIGHT, Flags & 0x001F );
-        oHeader.addValue( CADHeader::ENDCAPS, Flags & 0x0060 );
-        oHeader.addValue( CADHeader::JOINSTYLE, Flags & 0x0180 );
-        oHeader.addValue( CADHeader::LWDISPLAY, !( Flags & 0x0200 ) );
-        oHeader.addValue( CADHeader::XEDIT, !( Flags & 0x0400 ) );
-        oHeader.addValue( CADHeader::EXTNAMES, Flags & 0x0800 );
-        oHeader.addValue( CADHeader::PSTYLEMODE, Flags & 0x2000 );
-        oHeader.addValue( CADHeader::OLESTARTUP, Flags & 0x4000 );
+        oHeader.addValue( CADHeader::ENDCAPS, ( Flags & 0x0060 ) != 0 );
+        oHeader.addValue( CADHeader::JOINSTYLE, (Flags & 0x0180) != 0);
+        oHeader.addValue( CADHeader::LWDISPLAY, ( Flags & 0x0200 ) == 0);
+        oHeader.addValue( CADHeader::XEDIT, ( Flags & 0x0400 ) == 0);
+        oHeader.addValue( CADHeader::EXTNAMES, ( Flags & 0x0800 ) != 0 );
+        oHeader.addValue( CADHeader::PSTYLEMODE, ( Flags & 0x2000 ) != 0 );
+        oHeader.addValue( CADHeader::OLESTARTUP, ( Flags & 0x4000 ) != 0);
     }
     else
     {
@@ -1276,7 +1276,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             image->setPixelSizeInACADUnits( pixelSizeInACADUnits );
             image->setResolutionUnits(
                 static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
-            bool bTransparency = static_cast<bool>(cadImage->dDisplayProps & 0x08);
+            bool bTransparency = (cadImage->dDisplayProps & 0x08) != 0;
             image->setOptions( bTransparency,
                                cadImage->bClipping,
                                cadImage->dBrightness,
@@ -2587,16 +2587,16 @@ CADLayerObject * DWGFileR2000::getLayerObject( long dObjectSize, const char * pa
 
     layer->nNumReactors = ReadBITLONG( pabyInput, nBitOffsetFromStart );
     layer->sLayerName   = ReadTV( pabyInput, nBitOffsetFromStart );
-    layer->b64Flag      = static_cast<bool>(ReadBIT( pabyInput, nBitOffsetFromStart ));
+    layer->b64Flag      = ReadBIT( pabyInput, nBitOffsetFromStart ) != 0;
     layer->dXRefIndex   = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    layer->bXDep        = static_cast<bool>(ReadBIT( pabyInput, nBitOffsetFromStart ));
+    layer->bXDep        = ReadBIT( pabyInput, nBitOffsetFromStart ) != 0;
 
     short dFlags = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    layer->bFrozen           = dFlags & 0x01;
-    layer->bOn               = dFlags & 0x02;
-    layer->bFrozenInNewVPORT = dFlags & 0x04;
-    layer->bLocked           = dFlags & 0x08;
-    layer->bPlottingFlag     = dFlags & 0x10;
+    layer->bFrozen           = (dFlags & 0x01) != 0;
+    layer->bOn               = (dFlags & 0x02) != 0;
+    layer->bFrozenInNewVPORT = (dFlags & 0x04) != 0;
+    layer->bLocked           = (dFlags & 0x08) != 0;
+    layer->bPlottingFlag     = (dFlags & 0x10) != 0;
     layer->dLineWeight       = dFlags & 0x03E0;
     layer->dCMColor          = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
     layer->hLayerControl     = ReadHANDLE( pabyInput, nBitOffsetFromStart );
