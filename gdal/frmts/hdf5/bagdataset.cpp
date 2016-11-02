@@ -320,10 +320,11 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 {
+    const int nXOff = nBlockXOff * nBlockXSize;
     H5OFFSET_TYPE offset[3] = {
       static_cast<H5OFFSET_TYPE>(
           std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
-      static_cast<H5OFFSET_TYPE>(nBlockXOff * nBlockXSize),
+      static_cast<H5OFFSET_TYPE>(nXOff),
       static_cast<H5OFFSET_TYPE>(0)
     };
 
