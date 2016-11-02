@@ -418,9 +418,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( STARTS_WITH_CI(pszProj, "SPCS") )
     {
-        int     iZone;
-
-        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
+        const int iZone =
+            static_cast<int>(CPLScanLong( const_cast<char *>(pszProj) + 5, 4 ));
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_METER, 1.0 );
@@ -428,9 +427,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( STARTS_WITH_CI(pszProj, "SPIF") )
     {
-        int     iZone;
-
-        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
+        const int iZone =
+            static_cast<int>(CPLScanLong( const_cast<char *>(pszProj) + 5, 4 ));
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_FOOT,
@@ -439,9 +437,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
     else if( STARTS_WITH_CI(pszProj, "SPAF") )
     {
-        int     iZone;
-
-        iZone = (int)CPLScanLong( (char *)pszProj + 5, 4 );
+        const int iZone =
+            static_cast<int>(CPLScanLong( const_cast<char *>(pszProj) + 5, 4 ));
 
         SetStatePlane( iZone, !bIsNAD27 );
         SetLinearUnitsAndUpdateParameters( SRS_UL_US_FOOT,
@@ -459,8 +456,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
         int bNorth = TRUE;
 
-        int iZone = (int)CPLScanLong( (char *)pszProj + 4, 5 );
-        if ( iZone < 0 )
+        int iZone =
+            static_cast<int>(CPLScanLong( const_cast<char *>(pszProj) + 4, 5 ));
+        if( iZone < 0 )
         {
             iZone = -iZone;
             bNorth = FALSE;
@@ -477,7 +475,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         if (byZoneID != 0 )
         {
             CPLDebug("OSR_PCI", "Found MGRS zone in UTM projection string: %c",
-                byZoneID);
+                     byZoneID);
 
             if (byZoneID >= 'N' && byZoneID <= 'X')
             {
