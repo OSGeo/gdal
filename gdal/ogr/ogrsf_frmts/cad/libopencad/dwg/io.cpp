@@ -389,7 +389,7 @@ std::string ReadTV( const char * pabyInput, size_t& nBitOffsetFromStart )
 long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     // TODO: bit offset is calculated, but function has nothing to do with it.
-    long long result      = 0;
+    long result = 0;
     /*bool   negative = false;*/
     size_t    nByteOffset = nBitOffsetFromStart / 8;
     /*size_t nBitOffsetInByte = nBitOffsetFromStart % 8;*/
@@ -457,7 +457,7 @@ long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     SwapEndianness( aMCharBytes, MCharBytesCount ); // MSB to LSB
 
-    memcpy( & result, aMCharBytes, MCharBytesCount );
+    memcpy( &result, aMCharBytes, MCharBytesCount );
 
     return result;
 }
@@ -540,9 +540,10 @@ long ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
 
     SwapEndianness( aMCharBytes, MCharBytesCount ); // MSB to LSB
 
-    memcpy( & result, aMCharBytes, MCharBytesCount );
+    memcpy( &result, aMCharBytes, MCharBytesCount );
 
-    if( negative ) result *= -1;
+    if( negative )
+        result *= -1;
 
     return result;
 }
@@ -719,9 +720,9 @@ double ReadBITDOUBLEWD( const char * pabyInput, size_t& nBitOffsetFromStart, dou
 
 CADHandle ReadHANDLE( const char * pabyInput, size_t& nBitOffsetFromStart )
 {
-    CADHandle          result( Read4B( pabyInput, nBitOffsetFromStart ) );
-    unsigned char      counter = Read4B( pabyInput, nBitOffsetFromStart );
-    for( unsigned char i       = 0; i < counter; ++i )
+    CADHandle result( Read4B( pabyInput, nBitOffsetFromStart ) );
+    unsigned char counter = Read4B( pabyInput, nBitOffsetFromStart );
+    for( unsigned char i = 0; i < counter; ++i )
     {
         result.addOffset( ReadCHAR( pabyInput, nBitOffsetFromStart ) );
     }
