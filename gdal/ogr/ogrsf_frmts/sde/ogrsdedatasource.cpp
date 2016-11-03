@@ -1324,7 +1324,7 @@ void OGRSDEDataSource::EnumerateSpatialTables()
 
     for( iTable = 0; iTable < nTableListCount; iTable++ )
     {
-       ICreateLayerFromRegInfo( ahTableList[iTable] );
+       CreateLayerFromRegInfo( ahTableList[iTable] );
     }
 
     SE_registration_free_info_list( nTableListCount, ahTableList );
@@ -1354,14 +1354,14 @@ void OGRSDEDataSource::OpenSpatialTable( const char* pszTableName )
     }
     else
     {
-       ICreateLayerFromRegInfo( tableinfo );
+       CreateLayerFromRegInfo( tableinfo );
     }
 
     SE_reginfo_free( tableinfo );
 }
 
 /************************************************************************/
-/*                      ICreateLayerFromRegInfo()                       */
+/*                      CreateLayerFromRegInfo()                       */
 /************************************************************************/
 
 void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
