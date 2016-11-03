@@ -1,10 +1,11 @@
 #
 # Makefile building opencad library
-# 
+#
 
 OBJ = \
 	cadclasses.obj \
 	caddictionary.obj \
+	cadcolors.obj \
 	cadfile.obj \
 	cadfileio.obj \
 	cadfilestreamio.obj \
@@ -13,7 +14,7 @@ OBJ = \
 	cadlayer.obj \
 	cadobjects.obj \
 	cadtables.obj \
-	opencad.obj 
+	opencad.obj
 
 GDAL_ROOT	=	..\..\..\..
 EXTRAFLAGS =	-I. -I.. -I..\.. -I..\..\.. -Idwg $(SOFTWARNFLAGS) -DOCAD_EXTERN=""
