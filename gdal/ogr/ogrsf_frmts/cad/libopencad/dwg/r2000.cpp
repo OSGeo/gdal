@@ -793,13 +793,16 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbRasterImage" ) )
         {
             dObjectType = CADObject::IMAGE;
-        } else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbRasterImageDef" ) )
+        }
+        else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbRasterImageDef" ) )
         {
             dObjectType = CADObject::IMAGEDEF;
-        } else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbRasterImageDefReactor" ) )
+        }
+        else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbRasterImageDefReactor" ) )
         {
             dObjectType = CADObject::IMAGEDEFREACTOR;
-        } else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbWipeout" ) )
+        }
+        else if( !strcmp( cadClass.sCppClassName.c_str(), "AcDbWipeout" ) )
         {
             dObjectType = CADObject::WIPEOUT;
         }
@@ -946,7 +949,8 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
                 return getEntity( dObjectType, dObjectSize, stCommonEntityData, pabySectionContent,
                                   nBitOffsetFromStart );
         }
-    } else
+    }
+    else
     {
         switch( dObjectType )
         {
@@ -1418,12 +1422,12 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
     if( readedObject->stCed.nCMColor == 256 ) // BYLAYER CASE
     {
         CADLayer& oCurrentLayer = this->GetLayer( iLayerIndex );
-        poGeometry->setColor( CADACIColors[oCurrentLayer.getColor()] );
+        poGeometry->setColor( getCADACIColor( oCurrentLayer.getColor() ) );
     }
     else if( readedObject->stCed.nCMColor <= 255 &&
              readedObject->stCed.nCMColor >= 0 ) // Excessive check until BYBLOCK case will not be implemented
     {
-        poGeometry->setColor( CADACIColors[readedObject->stCed.nCMColor] );
+        poGeometry->setColor( getCADACIColor( readedObject->stCed.nCMColor ) );
     }
 
     // Applying EED
@@ -3647,7 +3651,8 @@ CADXRecordObject * DWGFileR2000::getXRecord( long dObjectSize, const char * paby
 
     xrecord->hXDictionary = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    while( nBitOffsetFromStart / 8 < ( ( size_t ) dObjectSize + 4 ) )
+    size_t dObjectSizeBit = (dObjectSize + 4) * 8;
+    while( nBitOffsetFromStart < dObjectSizeBit )
     {
         xrecord->hObjIdHandles.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
     }
@@ -3655,9 +3660,9 @@ CADXRecordObject * DWGFileR2000::getXRecord( long dObjectSize, const char * paby
     nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
     xrecord->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
 #ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
+    if( nBitOffsetFromStart != dObjectSizeBit )
         DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
+                  ( nBitOffsetFromStart - dObjectSizeBit ) / 8 );
 #endif
 
     return xrecord;
@@ -3751,23 +3756,27 @@ CADDictionary DWGFileR2000::GetNOD()
 
     for( size_t i = 0; i < spoNamedDictObj->sItemNames.size(); ++i )
     {
-        unique_ptr<CADObject> spoDictRecord( GetObject( spoNamedDictObj->hItemHandles[i].getAsLong() ) );
+        CADObject* spoDictRecord = GetObject( spoNamedDictObj->hItemHandles[i].getAsLong() );
 
-        if( spoDictRecord == nullptr ) continue; // skip unreaded objects
+        if( spoDictRecord == nullptr )
+            continue; // skip unreaded objects
 
         if( spoDictRecord->getType() == CADObject::ObjectType::DICTIONARY )
         {
             // TODO: add implementation of DICTIONARY reading
-        } else if( spoDictRecord->getType() == CADObject::ObjectType::XRECORD )
+        }
+        else if( spoDictRecord->getType() == CADObject::ObjectType::XRECORD )
         {
             CADXRecord       * cadxRecord       = new CADXRecord();
-            CADXRecordObject * cadxRecordObject = ( CADXRecordObject * ) spoDictRecord.get();
+            CADXRecordObject * cadxRecordObject = ( CADXRecordObject * ) spoDictRecord;
 
             string xRecordData( cadxRecordObject->abyDataBytes.begin(), cadxRecordObject->abyDataBytes.end() );
             cadxRecord->setRecordData( xRecordData );
 
             stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], ( CADDictionaryRecord * ) cadxRecord ) );
         }
+
+        delete spoNamedDictObj;
     }
 
     return stNOD;

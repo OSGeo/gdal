@@ -28,7 +28,6 @@
  *******************************************************************************/
  #include "cadcolors.h"
 
-extern const RGBColor CADACIColors[256];
 const RGBColor CADACIColors[]
 {
     { 0,   0,   0 },
@@ -288,3 +287,10 @@ const RGBColor CADACIColors[]
     { 190, 190, 190 },
     { 255, 255, 255 }
 };
+
+const RGBColor getCADACIColor(short index) const
+{
+    if(index < 0 || index > 255)
+        return {255, 255, 255};
+    return CADACIColors[index];
+}
