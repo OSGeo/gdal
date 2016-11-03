@@ -29,9 +29,9 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
-#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
