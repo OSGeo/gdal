@@ -322,6 +322,9 @@ static char *DMGetESRIName( int i ) {
 static int ESRIToUSGSZone( int nESRIZone )
 
 {
+    // anUsgsEsriZones is a series of ints where 2 consecutive integers
+    // are used to map from USGS to ESRI state plane zones.
+    // TODO(schwehr): Would be better as a std::map.
     const int nPairs = sizeof(anUsgsEsriZones) / (2 * sizeof(int));
 
     for( int i = 0; i < nPairs; i++ )
@@ -458,6 +461,7 @@ static void InitDatumMappingTable()
     int nMappingCount = 0;
     const int nMaxDatumMappings = 1000;
     char **papszFields = NULL;
+    // TODO(schwehr): Explain the 3.
     papszDatumMapping = static_cast<char **>(
         CPLCalloc(sizeof(char*), nMaxDatumMappings*3) );
 
@@ -2476,7 +2480,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(
     // If the CS name is known.
     if( code == 0 && !datumName && !unitsName && pcsCode == 32767 && csName )
     {
-        char codeS[10];
+        char codeS[10] = {};
         if( FindCodeFromDict( "esri_StatePlane_extra.wkt", csName, codeS )
             != OGRERR_NONE )
             return OGRERR_FAILURE;
