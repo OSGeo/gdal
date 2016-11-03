@@ -29,9 +29,9 @@
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
-#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -44,7 +44,11 @@ static const double TO_RADIANS = 0.017453292519943295769;
 //
 //              zone = (central_meridian + 3) / 6
 //
-#define TO_ZONE(x) (((x) + 0.05235987755982989) / 0.1047197551196597 + 0.5)
+static int TO_ZONE( double x )
+{
+  return
+      static_cast<int>((x + 0.05235987755982989) / 0.1047197551196597 + 0.5);
+}
 
 /************************************************************************/
 /*  "Panorama" projection codes.                                        */
@@ -140,7 +144,8 @@ static const int aoEllips[] =
     7003   // Australian National, 1965
 };
 
-#define NUMBER_OF_ELLIPSOIDS    static_cast<int>(sizeof(aoEllips)/sizeof(aoEllips[0]))
+static const int NUMBER_OF_ELLIPSOIDS =
+    static_cast<int>(sizeof(aoEllips)/sizeof(aoEllips[0]));
 
 /************************************************************************/
 /*                        OSRImportFromPanorama()                       */
@@ -159,7 +164,7 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
     VALIDATE_POINTER1( hSRS, "OSRImportFromPanorama", OGRERR_FAILURE );
 
     return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys,
-                                                               iDatum,iEllips,
+                                                               iDatum, iEllips,
                                                                padfPrjParams );
 }
 
@@ -257,9 +262,9 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
     if( padfPrjParams == NULL )
     {
         padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
-        if ( !padfPrjParams )
+        if( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
-        for ( int i = 0; i < 7; i++ )
+        for( int i = 0; i < 7; i++ )
             padfPrjParams[i] = 0.0;
         bProjAllocated = true;
     }
@@ -267,7 +272,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection code.                    */
 /* -------------------------------------------------------------------- */
-    switch ( iProjSys )
+    switch( iProjSys )
     {
         case PAN_PROJ_NONE:
             break;
@@ -276,8 +281,8 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             {
                 int nZone;
 
-                if ( padfPrjParams[7] == 0.0 )
-                    nZone = (int) TO_ZONE(padfPrjParams[3]);
+                if( padfPrjParams[7] == 0.0 )
+                    nZone = TO_ZONE(padfPrjParams[3]);
                 else
                     nZone = (int) padfPrjParams[7];
 
@@ -334,18 +339,18 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 // parameter, because usually it is not contained in the
                 // "Panorama" projection definition.
                 // FIXME: what to do with negative values?
-                int    nZone;
-                double  dfCenterLong;
+                int nZone = 0;
+                double dfCenterLong = 0.0;
 
-                if ( padfPrjParams[7] == 0.0 )
+                if( padfPrjParams[7] == 0.0 )
                 {
-                    nZone = (int)TO_ZONE(padfPrjParams[3]);
+                    nZone = TO_ZONE(padfPrjParams[3]);
                     dfCenterLong = TO_DEGREES * padfPrjParams[3];
                 }
                 else
                 {
-                    nZone = (int) padfPrjParams[7];
-                    dfCenterLong = 6 * (double)nZone - 3;
+                    nZone = static_cast<int>(padfPrjParams[7]);
+                    dfCenterLong = 6.0 * nZone - 3.0;
                 }
 
                 padfPrjParams[5] = nZone * 1000000.0 + 500000.0;
@@ -423,52 +428,53 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /*      Try to translate the datum/spheroid.                            */
 /* -------------------------------------------------------------------- */
 
-    if ( !IsLocal() )
+    if( !IsLocal() )
     {
-        if ( iDatum > 0 && iDatum < NUMBER_OF_DATUMS && aoDatums[iDatum] )
+        if( iDatum > 0 && iDatum < NUMBER_OF_DATUMS && aoDatums[iDatum] )
         {
             OGRSpatialReference oGCS;
             oGCS.importFromEPSG( aoDatums[iDatum] );
             CopyGeogCSFrom( &oGCS );
         }
-
-        else if ( iEllips > 0
-                  && iEllips < NUMBER_OF_ELLIPSOIDS
-                  && aoEllips[iEllips] )
+        else if( iEllips > 0
+                 && iEllips < NUMBER_OF_ELLIPSOIDS
+                 && aoEllips[iEllips] )
         {
-            char    *pszName = NULL;
-            double  dfSemiMajor, dfInvFlattening;
+            char *pszName = NULL;
+            double dfSemiMajor = 0.0;
+            double dfInvFlattening = 0.0;
 
-            if ( OSRGetEllipsoidInfo( aoEllips[iEllips], &pszName,
-                            &dfSemiMajor, &dfInvFlattening ) == OGRERR_NONE )
+            if( OSRGetEllipsoidInfo( aoEllips[iEllips], &pszName,
+                                     &dfSemiMajor,
+                                     &dfInvFlattening ) == OGRERR_NONE )
             {
-                SetGeogCS( CPLString().Printf(
-                            "Unknown datum based upon the %s ellipsoid",
-                            pszName ),
-                           CPLString().Printf(
-                            "Not specified (based on %s spheroid)", pszName ),
-                           pszName, dfSemiMajor, dfInvFlattening,
-                           NULL, 0.0, NULL, 0.0 );
+                SetGeogCS(
+                   CPLString().Printf(
+                       "Unknown datum based upon the %s ellipsoid",
+                       pszName ),
+                   CPLString().Printf(
+                       "Not specified (based on %s spheroid)", pszName ),
+                   pszName, dfSemiMajor, dfInvFlattening,
+                   NULL, 0.0, NULL, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iEllips] );
             }
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup ellipsoid code %ld, likely due to"
-                          " missing GDAL gcs.csv\n"
-                          " file.  Falling back to use Pulkovo 42.", iEllips );
+                          "Failed to lookup ellipsoid code %ld, likely due to "
+                          "missing GDAL gcs.csv "
+                          "file.  Falling back to use Pulkovo 42.", iEllips );
                 SetWellKnownGeogCS( "EPSG:4284" );
             }
 
-            if ( pszName )
+            if( pszName )
                 CPLFree( pszName );
         }
-
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Wrong datum code %ld. Supported datums are 1--%ld only.\n"
-                      "Falling back to use Pulkovo 42.",
+                      "Wrong datum code %ld. Supported datums are 1--%ld "
+                      "only.  Falling back to use Pulkovo 42.",
                       iDatum, NUMBER_OF_DATUMS - 1 );
             SetWellKnownGeogCS( "EPSG:4284" );
         }
@@ -482,7 +488,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     FixupOrdering();
 
-    if ( bProjAllocated && padfPrjParams )
+    if( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );
 
     return OGRERR_NONE;
@@ -557,15 +563,16 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     *piDatum = 0L;
     *piEllips = 0L;
     *piZone = 0L;
-    for ( int i = 0; i < 7; i++ )
+    for( int i = 0; i < 7; i++ )
         padfPrjParams[i] = 0.0;
 
 /* ==================================================================== */
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
     if( IsLocal() )
+    {
         *piProjSys = PAN_PROJ_NONE;
-
+    }
     else if( pszProjection == NULL )
     {
 #ifdef DEBUG
@@ -574,7 +581,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 #endif
         *piProjSys = PAN_PROJ_NONE;
     }
-
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
     {
         *piProjSys = PAN_PROJ_MERCAT;
@@ -586,7 +592,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
     {
         *piProjSys = PAN_PROJ_PS;
@@ -598,7 +603,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_POLYCONIC) )
     {
         *piProjSys = PAN_PROJ_POLYC;
@@ -609,7 +613,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_EQUIDISTANT_CONIC) )
     {
         *piProjSys = PAN_PROJ_EC;
@@ -624,7 +627,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         *piProjSys = PAN_PROJ_LCC;
@@ -639,10 +641,9 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
     {
-        int bNorth;
+        int bNorth = FALSE;
 
         *piZone = GetUTMZone( &bNorth );
 
@@ -667,14 +668,12 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                 GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
         }
     }
-
     else if( EQUAL(pszProjection, SRS_PT_WAGNER_I) )
     {
         *piProjSys = PAN_PROJ_WAG1;
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC) )
     {
         *piProjSys = PAN_PROJ_STEREO;
@@ -686,7 +685,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         *piProjSys = PAN_PROJ_AE;
@@ -697,7 +695,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_GNOMONIC) )
     {
         *piProjSys = PAN_PROJ_GNOMON;
@@ -708,7 +705,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_MOLLWEIDE) )
     {
         *piProjSys = PAN_PROJ_MOLL;
@@ -717,7 +713,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         *piProjSys = PAN_PROJ_LAEA;
@@ -728,7 +723,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
     {
         *piProjSys = PAN_PROJ_EQC;
@@ -739,7 +733,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
         *piProjSys = PAN_PROJ_CEA;
@@ -750,7 +743,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     else if( EQUAL(pszProjection, SRS_PT_IMW_POLYCONIC) )
     {
         *piProjSys = PAN_PROJ_IMWP;
@@ -763,7 +755,6 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         padfPrjParams[5] = GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 );
         padfPrjParams[6] = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 );
     }
-
     // Projection unsupported by "Panorama" GIS
     else
     {
@@ -778,12 +769,12 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
-    if ( pszDatum == NULL )
+    if( pszDatum == NULL )
     {
         *piDatum = PAN_DATUM_NONE;
         *piEllips = PAN_ELLIPSOID_NONE;
     }
-    else if ( EQUAL( pszDatum, "Pulkovo_1942" ) )
+    else if( EQUAL( pszDatum, "Pulkovo_1942" ) )
     {
         *piDatum = PAN_DATUM_PULKOVO42;
         *piEllips = PAN_ELLIPSOID_KRASSOVSKY;
@@ -794,11 +785,11 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         *piEllips = PAN_ELLIPSOID_WGS84;
     }
 
-    // If not found well known datum, translate ellipsoid
+    // If not found well known datum, translate ellipsoid.
     else
     {
-        double      dfSemiMajor = GetSemiMajor();
-        double      dfInvFlattening = GetInvFlattening();
+        const double dfSemiMajor = GetSemiMajor();
+        const double dfInvFlattening = GetInvFlattening();
 
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",
@@ -807,17 +798,17 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 #endif
 
         int i = 0;  // Used after for.
-        for ( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
+        for( ; i < NUMBER_OF_ELLIPSOIDS; i++ )
         {
-            if ( aoEllips[i] )
+            if( aoEllips[i] )
             {
                 double dfSM = 0.0;
                 double dfIF = 1.0;
 
-                if ( OSRGetEllipsoidInfo( aoEllips[i], NULL,
-                                          &dfSM, &dfIF ) == OGRERR_NONE
-                     && CPLIsEqual(dfSemiMajor, dfSM)
-                     && CPLIsEqual(dfInvFlattening, dfIF) )
+                if( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                                         &dfSM, &dfIF ) == OGRERR_NONE
+                    && CPLIsEqual(dfSemiMajor, dfSM)
+                    && CPLIsEqual(dfInvFlattening, dfIF) )
                 {
                     *piEllips = i;
                     break;
@@ -825,7 +816,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
             }
         }
 
-        if ( i == NUMBER_OF_ELLIPSOIDS )    // Didn't found matches.
+        if( i == NUMBER_OF_ELLIPSOIDS )  // Didn't found matches.
         {
 #ifdef DEBUG
             CPLDebug( "OSR_Panorama",

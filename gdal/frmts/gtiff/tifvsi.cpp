@@ -29,9 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-/*
- * TIFF Library UNIX-specific Routines.
- */
+// TIFF Library UNIX-specific Routines.
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "tifvsi.h"

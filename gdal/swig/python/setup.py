@@ -191,12 +191,12 @@ class gdal_ext(build_ext):
         if self.include_dirs is None:
             self.include_dirs = include_dirs
         # Needed on recent MacOSX
-        elif isinstance(self.include_dirs, str):
+        elif isinstance(self.include_dirs, str) and sys.platform == 'darwin':
             self.include_dirs += ':' + ':'.join(include_dirs)
         if self.library_dirs is None:
             self.library_dirs = library_dirs
         # Needed on recent MacOSX
-        elif isinstance(self.library_dirs, str):
+        elif isinstance(self.library_dirs, str) and sys.platform == 'darwin':
             self.library_dirs += ':' + ':'.join(library_dirs)
         if self.libraries is None:
             if self.get_compiler() == 'msvc':

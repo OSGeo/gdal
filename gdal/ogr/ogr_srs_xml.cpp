@@ -342,14 +342,14 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLNode(
             CPLCreateXMLNode( psXMLParent, CXT_Element, "gml:usesAxis" ),
             CXT_Element, "gml:CoordinateSystemAxis" );
-    if (!psAxisXML)
+    if( !psAxisXML )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "addAxis failed." );
         return NULL;
     }
     addGMLId( psAxisXML );
 
-    if( EQUAL(pszAxis,"Lat") )
+    if( EQUAL(pszAxis, "Lat") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -361,7 +361,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lat" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "north" );
     }
-    else if( EQUAL(pszAxis,"Long") )
+    else if( EQUAL(pszAxis, "Long") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -373,7 +373,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "Lon" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
-    else if( EQUAL(pszAxis,"E") )
+    else if( EQUAL(pszAxis, "E") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -384,7 +384,7 @@ static CPLXMLNode *addAxis( CPLXMLNode *psXMLParent,
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisAbbrev", "E" );
         CPLCreateXMLElementAndValue( psAxisXML, "gml:axisDirection", "east" );
     }
-    else if( EQUAL(pszAxis,"N") )
+    else if( EQUAL(pszAxis, "N") )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psAxisXML, CXT_Attribute, "gml:uom" ),
@@ -521,7 +521,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
     {
         CPLXMLNode *psEllipseXML
             = CPLCreateXMLNode(
-                CPLCreateXMLNode(psDatumXML,CXT_Element,"gml:usesEllipsoid" ),
+                CPLCreateXMLNode(psDatumXML, CXT_Element, "gml:usesEllipsoid" ),
                 CXT_Element, "gml:Ellipsoid" );
 
         addGMLId( psEllipseXML );
@@ -536,7 +536,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
             = CPLCreateXMLNode( psEllipseXML, CXT_Element,
                                       "gml:semiMajorAxis" );
 
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML, CXT_Attribute, "uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9001" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text,
@@ -548,7 +548,7 @@ static CPLXMLNode *exportGeogCSToXML( const OGRSpatialReference *poSRS )
                                   "gml:secondDefiningParameter" ),
                 CXT_Element, "gml:inverseFlattening" );
 
-        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML,CXT_Attribute,"uom"),
+        CPLCreateXMLNode( CPLCreateXMLNode(psParmXML, CXT_Attribute, "uom"),
                           CXT_Text, "urn:ogc:def:uom:EPSG::9201" );
 
         CPLCreateXMLNode( psParmXML, CXT_Text,
@@ -617,7 +617,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
     {
         AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method",
                            9807 );
@@ -753,15 +753,15 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
     const char *pszUnitName, *pszUnitsPer;
     OGR_SRSNode *poNode = poSRS->GetAttrNode( pszTarget );
 
-    CPLAssert( EQUAL(pszClass,"AngularUnit")
-               || EQUAL(pszClass,"LinearUnit") );
+    CPLAssert( EQUAL(pszClass, "AngularUnit")
+               || EQUAL(pszClass, "LinearUnit") );
 
     psSrcXML = CPLGetXMLNode( psSrcXML, pszClass );
     if( psSrcXML == NULL )
         goto DefaultTarget;
 
     pszUnitName = CPLGetXMLValue( psSrcXML, "NameSet.name", "unnamed" );
-    if( EQUAL(pszClass,"AngularUnit") )
+    if( EQUAL(pszClass, "AngularUnit") )
         pszUnitsPer = CPLGetXMLValue( psSrcXML, "radiansPerUnit", NULL );
     else
         pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
@@ -800,7 +800,7 @@ static void importXMLUnits( CPLXMLNode *psSrcXML, const char *pszClass,
 
   DefaultTarget:
     poUnits = new OGR_SRSNode( "UNIT" );
-    if( EQUAL(pszClass,"AngularUnit") )
+    if( EQUAL(pszClass, "AngularUnit") )
     {
         poUnits->AddChild( new OGR_SRSNode( SRS_UA_DEGREE ) );
         poUnits->AddChild( new OGR_SRSNode( SRS_UA_DEGREE_CONV ) );
@@ -925,7 +925,7 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
         return nDefault;
 
     const char* pszHrefVal = CPLGetXMLValue( psNode, "xlink:href", NULL );
-    if (pszHrefVal == NULL)
+    if( pszHrefVal == NULL )
         pszHrefVal = CPLGetXMLValue( psNode, "href", NULL );
 
     CPLString osObjectType, osAuthority, osValue;
@@ -933,7 +933,7 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
                          &osObjectType, &osAuthority, NULL, &osValue ) )
         return nDefault;
 
-    if( !EQUAL(osAuthority,"EPSG")
+    if( !EQUAL(osAuthority, "EPSG")
         || !EQUAL(osObjectType, pszEPSGObjectType) )
         return nDefault;
 
@@ -964,8 +964,8 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
         if( psUsesParameter->eType != CXT_Element )
             continue;
 
-        if( !EQUAL(psUsesParameter->pszValue,"usesParameterValue")
-            && !EQUAL(psUsesParameter->pszValue,"usesValue") )
+        if( !EQUAL(psUsesParameter->pszValue, "usesParameterValue")
+            && !EQUAL(psUsesParameter->pszValue, "usesValue") )
             continue;
 
         if( getEPSGObjectCodeValue( CPLGetXMLNode(psUsesParameter,
@@ -1050,7 +1050,7 @@ static OGRErr importGeogCSFromXML( OGRSpatialReference *poSRS,
 
         if( oIdSRS.GetAuthorityCode( "LOCAL_CS" ) != NULL
             && oIdSRS.GetAuthorityName( "LOCAL_CS" ) != NULL
-            && EQUAL(oIdSRS.GetAuthorityName("LOCAL_CS"),"EPSG") )
+            && EQUAL(oIdSRS.GetAuthorityName("LOCAL_CS"), "EPSG") )
         {
             return poSRS->importFromEPSG(
                 atoi(oIdSRS.GetAuthorityCode("LOCAL_CS")) );
@@ -1159,7 +1159,7 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 
     if( poSRS->GetAuthorityCode( "PROJCS" ) != NULL
         && poSRS->GetAuthorityName( "PROJCS" ) != NULL
-        && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG")
+        && EQUAL(poSRS->GetAuthorityName("PROJCS"), "EPSG")
         && (CPLGetXMLNode( psCRS, "definedByConversion.Conversion" ) == NULL
             || CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" ) == NULL) )
     {
@@ -1189,8 +1189,8 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
     if( psConv == NULL || psConv->eType != CXT_Element )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find a conversion node under the definedByConversion\n"
-                  "node of the ProjectedCRS." );
+                  "Unable to find a conversion node under the "
+                  "definedByConversion node of the ProjectedCRS." );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -1269,13 +1269,13 @@ OGRErr OGRSpatialReference::importFromXML( const char *pszXML )
 
     for( CPLXMLNode* psNode = psTree; psNode != NULL; psNode = psNode->psNext )
     {
-        if( EQUAL(psNode->pszValue,"GeographicCRS") )
+        if( EQUAL(psNode->pszValue, "GeographicCRS") )
         {
             eErr = importGeogCSFromXML( this, psNode );
             break;
         }
 
-        else if( EQUAL(psNode->pszValue,"ProjectedCRS") )
+        else if( EQUAL(psNode->pszValue, "ProjectedCRS") )
         {
             eErr = importProjCSFromXML( this, psNode );
             break;
