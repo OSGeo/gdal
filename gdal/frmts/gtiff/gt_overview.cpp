@@ -173,7 +173,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
             CPLString osItem;
             CPLString osName;
 
-            osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand+1 );
+            osName.Printf( "INTERNAL_MASK_FLAGS_%d", iBand + 1 );
             if( poBaseDS->GetMetadataItem( osName ) )
             {
                 osItem.Printf( "<Item name=\"%s\">%s</Item>",
@@ -781,7 +781,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand *poSrcBand = papoBandList[iBand];
-            GDALRasterBand *poDstBand = hODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *poDstBand = hODS->GetRasterBand( iBand + 1 );
             papapoOverviewBands[iBand] =
                 static_cast<GDALRasterBand **>(
                     CPLCalloc(sizeof(void *), nOverviews) );
@@ -848,7 +848,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         for( int iBand = 0; iBand < nBands && eErr == CE_None; iBand++ )
         {
             GDALRasterBand *hSrcBand = papoBandList[iBand];
-            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand+1 );
+            GDALRasterBand *hDstBand = hODS->GetRasterBand( iBand + 1 );
 
             int bHasNoData = FALSE;
             const double noDataValue = hSrcBand->GetNoDataValue(&bHasNoData);
@@ -864,7 +864,7 @@ GTIFFBuildOverviews( const char * pszFilename,
             nDstOverviews = std::min(knMaxOverviews, nDstOverviews);
 
             // TODO(schwehr): Convert to starting with i = 1 and remove +1.
-            for( int i = 0; i < nDstOverviews-1 && eErr == CE_None; i++ )
+            for( int i = 0; i < nDstOverviews - 1 && eErr == CE_None; i++ )
             {
                 papoOverviews[i+1] = hDstBand->GetOverview(i);
                 if( papoOverviews[i+1] == NULL )
