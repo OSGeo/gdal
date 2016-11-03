@@ -488,8 +488,8 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
         {
             long top = 1L << nBitsPerSample;
             float refbw[6] = { 0.0 };
-            refbw[1] = (float)(top-1L);
-            refbw[2] = (float)(top>>1);
+            refbw[1] = static_cast<float>(top - 1L);
+            refbw[2] = static_cast<float>(top >> 1);
             refbw[3] = refbw[1];
             refbw[4] = refbw[2];
             refbw[5] = refbw[1];
