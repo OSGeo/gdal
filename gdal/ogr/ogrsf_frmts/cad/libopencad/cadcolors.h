@@ -41,6 +41,6 @@ typedef struct
 /**
  * @brief Lookup table to translate ACI to RGB color.
  */
- const RGBColor getCADACIColor(short index) const;
+ const RGBColor getCADACIColor(short index);
 
 #endif // CADCOLORS_H

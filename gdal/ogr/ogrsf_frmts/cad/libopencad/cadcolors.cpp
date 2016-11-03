@@ -288,7 +288,7 @@ const RGBColor CADACIColors[]
     { 255, 255, 255 }
 };
 
-const RGBColor getCADACIColor(short index) const
+const RGBColor getCADACIColor(short index)
 {
     if(index < 0 || index > 255)
         return {255, 255, 255};
