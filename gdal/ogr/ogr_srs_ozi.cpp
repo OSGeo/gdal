@@ -85,7 +85,6 @@ OGRErr OSRImportFromOzi( OGRSpatialReferenceH hSRS,
 
 OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 {
-    int iLine;
     const char *pszDatum;
     const char *pszProj = NULL;
     const char *pszProjParms = NULL;
@@ -98,7 +97,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
     pszDatum = papszLines[4];
 
-    for( iLine = 5; iLine < nLines; iLine++ )
+    for( int iLine = 5; iLine < nLines; iLine++ )
     {
         if( STARTS_WITH_CI(papszLines[iLine], "Map Projection") )
         {
@@ -116,10 +115,10 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
-    char    **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
-    char    **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
+    char **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
+    char **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
                                                          TRUE, TRUE );
-    char    **papszDatum = NULL;
+    char **papszDatum = NULL;
 
     if( CSLCount(papszProj) < 2 )
     {
@@ -134,7 +133,8 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     {
         if( CSLCount(papszProjParms) < 6 ) goto not_enough_data;
         double dfScale = CPLAtof(papszProjParms[3]);
-        if( papszProjParms[3][0] == 0 ) dfScale = 1; /* if unset, default to scale = 1 */
+        // If unset, default to scale = 1.
+        if( papszProjParms[3][0] == 0 ) dfScale = 1;
         SetMercator( CPLAtof(papszProjParms[1]), CPLAtof(papszProjParms[2]),
                      dfScale,
                      CPLAtof(papszProjParms[4]), CPLAtof(papszProjParms[5]) );
@@ -170,8 +170,9 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                  papszProj[1], "(UTM) Universal Transverse Mercator") &&
              nLines > 5 )
     {
-        /* Look for the UTM zone in the calibration point data */
-        for( iLine = 5; iLine < nLines; iLine++ )
+        // Look for the UTM zone in the calibration point data.
+        int iLine = 5;  // Used after for.
+        for( ; iLine < nLines; iLine++ )
         {
             if( STARTS_WITH_CI(papszLines[iLine], "Point") )
             {
@@ -216,8 +217,10 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                         CSLDestroy(papszTok);
                         continue;
                     }
-                    float fLongitude = static_cast<float>(CPLAtofM(papszTok[2]));
-                    float fLatitude = static_cast<float>(CPLAtofM(papszTok[3]));
+                    const float fLongitude =
+                        static_cast<float>(CPLAtofM(papszTok[2]));
+                    const float fLatitude =
+                        static_cast<float>(CPLAtofM(papszTok[3]));
                     CSLDestroy(papszTok);
 
                     bFoundMMPLL = true;
@@ -232,23 +235,28 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                         fMaxLatitude = fLatitude;
                 }
             }
-            float fMedianLatitude = ( fMinLatitude + fMaxLatitude ) / 2;
-            float fMedianLongitude = ( fMinLongitude + fMaxLongitude ) / 2;
+            const float fMedianLatitude = (fMinLatitude + fMaxLatitude) / 2;
+            const float fMedianLongitude = (fMinLongitude + fMaxLongitude) / 2;
             if( bFoundMMPLL && fMaxLatitude <= 90 )
             {
-                int nUtmZone;
+                int nUtmZone = 0;
                 if( fMedianLatitude >= 56 && fMedianLatitude <= 64 &&
                     fMedianLongitude >= 3 && fMedianLongitude <= 12 )
-                    nUtmZone = 32;                                             /* Norway exception */
+                    nUtmZone = 32;  // Norway exception.
                 else if( fMedianLatitude >= 72 && fMedianLatitude <= 84 &&
                          fMedianLongitude >= 0 && fMedianLongitude <= 42 )
-                    nUtmZone = (int) ((fMedianLongitude + 3 ) / 12) * 2 + 31;  /* Svalbard exception */
+                    // Svalbard exception.
+                    nUtmZone =
+                        static_cast<int>((fMedianLongitude + 3) / 12) * 2 + 31;
                 else
-                    nUtmZone = (int) ((fMedianLongitude + 180 ) / 6) + 1;
+                    nUtmZone =
+                        static_cast<int>((fMedianLongitude + 180 ) / 6) + 1;
                 SetUTM( nUtmZone, fMedianLatitude >= 0 );
             }
             else
+            {
                 CPLDebug( "OSR_Ozi", "UTM Zone not found");
+            }
         }
     }
     else if( STARTS_WITH_CI(papszProj[1], "(I) France Zone I") )
@@ -263,7 +271,6 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     {
         SetLCC1SP( 44.1, 2.337229167, 0.99987750, 600000, 3200000 );
     }
-
     else if( STARTS_WITH_CI(papszProj[1], "(IV) France Zone IV") )
     {
         SetLCC1SP( 42.165, 2.337229167, 0.99994471, 234.358, 4185861.369 );
@@ -315,7 +322,8 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     else if( STARTS_WITH_CI(papszProj[1], "Bonne") )
     {
     }
-    else if( STARTS_WITH_CI(papszProj[1], "(MT0) Montana State Plane Zone 2500") )
+    else if( STARTS_WITH_CI(papszProj[1],
+                            "(MT0) Montana State Plane Zone 2500") )
     {
     }
     else if( STARTS_WITH_CI(papszProj[1], "ITA1) Italy Grid Zone 1") )
@@ -324,20 +332,21 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     else if( STARTS_WITH_CI(papszProj[1], "ITA2) Italy Grid Zone 2") )
     {
     }
-    else if( STARTS_WITH_CI(papszProj[1], "(VICMAP-TM) Victoria Aust.(pseudo AMG)") )
+    else if( STARTS_WITH_CI(papszProj[1],
+                            "(VICMAP-TM) Victoria Aust.(pseudo AMG)") )
     {
     }
     else if( STARTS_WITH_CI(papszProj[1], "VICGRID) Victoria Australia") )
     {
     }
-    else if( STARTS_WITH_CI(papszProj[1], "(VG94) VICGRID94 Victoria Australia") )
+    else if( STARTS_WITH_CI(papszProj[1],
+                            "(VG94) VICGRID94 Victoria Australia") )
     {
     }
     else if( STARTS_WITH_CI(papszProj[1], "Gnomonic") )
     {
     }
 */
-
     else
     {
         CPLDebug( "OSR_Ozi", "Unsupported projection: \"%s\"", papszProj[1] );
@@ -357,19 +366,18 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 
     if( !IsLocal() )
     {
-
 /* -------------------------------------------------------------------- */
 /*      Verify that we can find the CSV file containing the datums      */
 /* -------------------------------------------------------------------- */
         if( CSVScanFileByName( CSVFilename( "ozi_datum.csv" ),
-                            "EPSG_DATUM_CODE",
-                            "4326", CC_Integer ) == NULL )
+                               "EPSG_DATUM_CODE",
+                               "4326", CC_Integer ) == NULL )
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                    "Unable to open OZI support file %s.  "
-                    "Try setting the GDAL_DATA environment variable to point "
-                    "to the directory containing OZI csv files.",
-                    CSVFilename( "ozi_datum.csv" ) );
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Unable to open OZI support file %s.  "
+                     "Try setting the GDAL_DATA environment variable to point "
+                     "to the directory containing OZI csv files.",
+                     CSVFilename( "ozi_datum.csv" ));
             goto other_error;
         }
 
@@ -387,8 +395,9 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
             goto other_error;
         }
 
-        int nDatumCode = atoi( CSVGetField( pszOziDatum, "NAME", papszDatum[0],
-                                            CC_ApproxString, "EPSG_DATUM_CODE" ) );
+        const int nDatumCode =
+            atoi( CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                               CC_ApproxString, "EPSG_DATUM_CODE" ) );
 
         if( nDatumCode > 0 ) // There is a matching EPSG code
         {
@@ -398,23 +407,28 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
         }
         else // We use the parameters from the CSV files
         {
-            CPLString osEllipseCode = CSVGetField( pszOziDatum, "NAME", papszDatum[0],
-                                                CC_ApproxString, "ELLIPSOID_CODE" );
-            double dfDeltaX = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
-                                                CC_ApproxString, "DELTAX" ) );
-            double dfDeltaY = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
-                                                CC_ApproxString, "DELTAY" ) );
-            double dfDeltaZ = CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
-                                                CC_ApproxString, "DELTAZ" ) );
+            CPLString osEllipseCode =
+                CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                             CC_ApproxString, "ELLIPSOID_CODE" );
+            const double dfDeltaX =
+                CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                     CC_ApproxString, "DELTAX" ) );
+            const double dfDeltaY =
+                CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                     CC_ApproxString, "DELTAY" ) );
+            const double dfDeltaZ =
+                CPLAtof(CSVGetField( pszOziDatum, "NAME", papszDatum[0],
+                                     CC_ApproxString, "DELTAZ" ) );
 
     /* -------------------------------------------------------------------- */
     /*      Verify that we can find the CSV file containing the ellipsoids  */
     /* -------------------------------------------------------------------- */
             if( CSVScanFileByName( CSVFilename( "ozi_ellips.csv" ),
-                                "ELLIPSOID_CODE",
-                                "20", CC_Integer ) == NULL )
+                                   "ELLIPSOID_CODE",
+                                   "20", CC_Integer ) == NULL )
             {
-                CPLError( CE_Failure, CPLE_OpenFailed,
+                CPLError(
+                    CE_Failure, CPLE_OpenFailed,
                     "Unable to open OZI support file %s.  "
                     "Try setting the GDAL_DATA environment variable to point "
                     "to the directory containing OZI csv files.",
@@ -427,8 +441,9 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     /* -------------------------------------------------------------------- */
             const char *pszOziEllipse = CSVFilename( "ozi_ellips.csv" );
 
-            CPLString osEName = CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
-                                        CC_ApproxString, "NAME" );
+            CPLString osEName =
+                CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
+                             CC_ApproxString, "NAME" );
             if( strlen(osEName) == 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -437,15 +452,16 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                 goto other_error;
             }
 
-            double dfA = CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
-                                        CC_ApproxString, "A" ));
-            double dfInvF = CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE", osEllipseCode,
-                                            CC_ApproxString, "INVF" ));
+            const double dfA =
+                CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE",
+                                     osEllipseCode, CC_ApproxString, "A" ));
+            const double dfInvF =
+                CPLAtof(CSVGetField( pszOziEllipse, "ELLIPSOID_CODE",
+                                     osEllipseCode, CC_ApproxString, "INVF" ));
 
     /* -------------------------------------------------------------------- */
     /*      Create geographic coordinate system.                            */
     /* -------------------------------------------------------------------- */
-
             SetGeogCS( osDName, osDName, osEName, dfA, dfInvF );
             SetTOWGS84( dfDeltaX, dfDeltaY, dfDeltaZ );
         }
