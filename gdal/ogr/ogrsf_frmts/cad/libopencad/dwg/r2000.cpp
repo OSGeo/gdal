@@ -3753,6 +3753,8 @@ CADDictionary DWGFileR2000::GetNOD()
 
     unique_ptr<CADDictionaryObject> spoNamedDictObj(
             ( CADDictionaryObject * ) GetObject( oTables.GetTableHandle( CADTables::NamedObjectsDict ).getAsLong() ) );
+    if( spoNamedDictObj == nullptr )
+        return stNOD;
 
     for( size_t i = 0; i < spoNamedDictObj->sItemNames.size(); ++i )
     {
@@ -3776,7 +3778,7 @@ CADDictionary DWGFileR2000::GetNOD()
             stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], ( CADDictionaryRecord * ) cadxRecord ) );
         }
 
-        delete spoNamedDictObj;
+        delete spoDictRecord;
     }
 
     return stNOD;
