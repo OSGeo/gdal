@@ -1249,8 +1249,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "-D PI=%015.15lff -D outType=%s -D dstMinVal=%015.15lff -D dstMaxVal=%015.15lff "
             "-D useDstNoDataReal=%d -D vecf=%s %s -D doCubicSpline=%d "
             "-D useUseBandSrcValid=%d -D iCoordMult=%d ",
-            /* FIXME: Is it really a ATI specific thing ? */
-            (warper->imageFormat == CL_FLOAT && (warper->eCLVendor == VENDOR_AMD || warper->eCLVendor == VENDOR_INTEL)) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
+            (warper->imageFormat == CL_FLOAT) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
             warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
