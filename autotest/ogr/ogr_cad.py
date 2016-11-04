@@ -52,7 +52,7 @@ def ogr_cad_1():
     except:
         return 'skip'
 
-    return 'success'    
+    return 'success'
 
 ###############################################################################
 # Check driver properly opens simple file, reads correct feature (ellipse).
@@ -90,6 +90,10 @@ def ogr_cad_2():
 
     feat = gdaltest.cad_layer.GetNextFeature()
 
+    if feat is None:
+        gdaltest.post_reason( 'cad feature 0 get failed.' )
+        return 'fail'
+
     if feat.cadgeom_type != 'CADEllipse':
         gdaltest.post_reason( 'cad geometry type is wrong. Expected CADEllipse, got: %s'
                               % feat.cadgeom_type )
@@ -110,11 +114,15 @@ def ogr_cad_2():
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason( 'Got unexpected style string on feture 0:\n%s\ninstead of:\n%s.'
+        gdaltest.post_reason( 'got unexpected style string on feture 0:\n%s\ninstead of:\n%s.'
                               % ( feat.GetStyleString(), expected_style ) )
         return 'fail'
 
     geom = feat.GetGeometryRef()
+    if geom is None:
+        gdaltest.post_reason( 'cad geometry is None.' )
+        return 'fail'
+
     if geom.GetGeometryType() != ogr.wkbLineString25D:
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
