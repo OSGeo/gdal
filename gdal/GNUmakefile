@@ -148,7 +148,15 @@ docs:
 	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
 	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
 # Generate HTML docs
-	doxygen Doxyfile
+# Current DoxygenLayout.xml works only with Doxygen >= 1.8
+	@if [ `doxygen --version | awk -F . '{print $$1}'` -eq "1" ] && [ `doxygen --version | awk -F . '{print $$2}'` -lt "8" ]; then \
+	  echo "Using deprecated doxygen version. Removing custom layout"; \
+	  sed "s/LAYOUT_FILE.*$$/LAYOUT_FILE=\/dev\/null/" < Doxyfile > Doxyfile.stripped.tmp; \
+	  doxygen Doxyfile.stripped.tmp; \
+	  rm Doxyfile.stripped.tmp; \
+	else \
+	  doxygen Doxyfile; \
+	fi
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
