@@ -450,10 +450,11 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     else if( padfPrjParams[0] != 0.0 &&
                              padfPrjParams[1] != 0.0 )
                     {
+                        const double dfUnpackedAngle =
+                            pfnUnpackAnglesFn(padfPrjParams[0]);
                         iZone = static_cast<long>(
-                            ((pfnUnpackAnglesFn(padfPrjParams[0]) + 180.0)
-                             / 6.0) + 1.0);
-                        if( pfnUnpackAnglesFn(padfPrjParams[0]) < 0 )
+                            ((dfUnpackedAngle + 180.0) / 6.0) + 1.0);
+                        if( dfUnpackedAngle < 0 )
                             bNorth = FALSE;
                     }
                 }
