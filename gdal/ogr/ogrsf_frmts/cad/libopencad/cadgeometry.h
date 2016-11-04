@@ -120,6 +120,7 @@ class CADUnknown : public CADGeometry
 {
 public:
     CADUnknown();
+    virtual ~CADUnknown(){}
 
     virtual void print() const override;
     void         transform( const Matrix& matrix ) override;
@@ -131,8 +132,9 @@ public:
 class CADPoint3D : public CADGeometry
 {
 public:
-              CADPoint3D();
-              CADPoint3D( const CADVector& positionIn, double thicknessIn );
+    CADPoint3D();
+    CADPoint3D( const CADVector& positionIn, double thicknessIn );
+    virtual ~CADPoint3D(){}
     CADVector getPosition() const;
     void      setPosition( const CADVector& value );
 
@@ -158,7 +160,7 @@ class CADLine : public CADGeometry
 public:
     CADLine();
     CADLine( const CADPoint3D& startIn, const CADPoint3D& endIn );
-
+    virtual ~CADLine(){}
     CADPoint3D getStart() const;
     void       setStart( const CADPoint3D& value );
 
@@ -179,7 +181,7 @@ class CADPolyline3D : public CADGeometry
 {
 public:
     CADPolyline3D();
-
+    virtual ~CADPolyline3D(){}
     void   addVertex( const CADVector& vertex );
     size_t getVertexCount() const;
     CADVector& getVertex( size_t index );
@@ -198,6 +200,7 @@ class CADLWPolyline : public CADPolyline3D
 {
 public:
     CADLWPolyline();
+    virtual ~CADLWPolyline(){}
 
     double getConstWidth() const;
     void   setConstWidth( double value );
@@ -234,6 +237,7 @@ class CADCircle : public CADPoint3D
 {
 public:
     CADCircle();
+    virtual ~CADCircle(){}
 
     double getRadius() const;
     void   setRadius( double value );
@@ -250,6 +254,7 @@ class CADText : public CADPoint3D
 {
 public:
     CADText();
+    virtual ~CADText(){}
 
     std::string getTextValue() const;
     void   setTextValue( const std::string& value );
@@ -278,6 +283,7 @@ class CADArc : public CADCircle
 {
 public:
     CADArc();
+    virtual ~CADArc(){}
 
     double getStartingAngle() const;
     void   setStartingAngle( double value );
@@ -298,6 +304,7 @@ class CADEllipse : public CADArc
 {
 public:
     CADEllipse();
+    virtual ~CADEllipse(){}
 
     double getAxisRatio() const;
     void   setAxisRatio( double value );
@@ -318,6 +325,7 @@ class CADSpline : public CADGeometry
 {
 public:
     CADSpline();
+    virtual ~CADSpline(){}
 
     long getScenario() const;
     void setScenario( long value );
@@ -367,6 +375,7 @@ class CADSolid : public CADPoint3D
 {
 public:
     CADSolid();
+    virtual ~CADSolid(){}
 
     double getElevation() const;
     void   setElevation( double value );
@@ -387,6 +396,7 @@ class CADRay : public CADPoint3D
 {
 public:
     CADRay();
+    virtual ~CADRay(){}
 
     CADVector getVectVector() const;
     void      setVectVector( const CADVector& value );
@@ -401,6 +411,7 @@ class CADHatch : public CADGeometry
 {
 public:
     CADHatch();
+    virtual ~CADHatch(){}
 };
 
 /**
@@ -418,6 +429,7 @@ public:
     };
 
     CADImage();
+    virtual ~CADImage(){}
 
     CADVector getVertInsertionPoint() const;
     void      setVertInsertionPoint( const CADVector& value );
@@ -479,6 +491,7 @@ class CADMText : public CADText
 {
 public:
     CADMText();
+    virtual ~CADMText(){}
 
     double getRectWidth() const;
     void   setRectWidth( double value );
@@ -511,6 +524,7 @@ class CADFace3D : public CADGeometry
 {
 public:
     CADFace3D();
+    virtual ~CADFace3D(){}
 
     void      addCorner( const CADVector& corner );
     CADVector getCorner( size_t index );
@@ -532,6 +546,7 @@ class CADPolylinePFace : public CADGeometry
 {
 public:
     CADPolylinePFace();
+    virtual ~CADPolylinePFace(){}
 
     void addVertex( const CADVector& vertex );
 
@@ -548,6 +563,7 @@ class CADXLine : public CADRay
 {
 public:
     CADXLine();
+    virtual ~CADXLine(){}
 
     virtual void print() const override;
 };
@@ -559,6 +575,7 @@ class CADMLine : public CADPoint3D
 {
 public:
     CADMLine();
+    virtual ~CADMLine(){}
 
     double getScale() const;
     void   setScale( double value );
@@ -585,6 +602,7 @@ class CADAttrib : public CADText
 {
 public:
     CADAttrib();
+    virtual ~CADAttrib(){}
 
     double getElevation() const;
     void   setElevation( double );
@@ -614,6 +632,7 @@ class CADAttdef : public CADAttrib
 {
 public:
     CADAttdef();
+    virtual ~CADAttdef(){}
 
     std::string getPrompt() const;
     void   setPrompt( const std::string& );

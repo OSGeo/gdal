@@ -203,6 +203,8 @@ public:
         WIPEOUT              = 0x72                  // 114
     };
 
+    virtual ~CADObject(){}
+
     ObjectType getType() const;
     long       getSize() const;
 
@@ -286,6 +288,7 @@ struct CADCommonEHD
 class CADEntityObject : public CADObject
 {
 public:
+    virtual ~CADEntityObject(){}
     struct CADCommonED  stCed;
     struct CADCommonEHD stChed;
 };
@@ -297,6 +300,7 @@ class CADTextObject : public CADEntityObject
 {
 public:
     CADTextObject();
+    virtual ~CADTextObject(){}
     unsigned char DataFlags;
     double        dfElevation;
     CADVector     vertInsetionPoint;
@@ -322,6 +326,7 @@ class CADAttribObject : public CADEntityObject
 {
 public:
     CADAttribObject();
+    virtual ~CADAttribObject(){}
     unsigned char DataFlags;
     double        dfElevation;
     CADVector     vertInsetionPoint;
@@ -352,6 +357,7 @@ class CADAttdefObject : public CADAttribObject
 {
 public:
     CADAttdefObject();
+    virtual ~CADAttdefObject(){}
     std::string sPrompt;
 };
 
@@ -362,6 +368,7 @@ class CADBlockObject : public CADEntityObject
 {
 public:
     CADBlockObject();
+    virtual ~CADBlockObject(){}
     std::string sBlockName;
 };
 
@@ -373,6 +380,7 @@ class CADEndblkObject : public CADEntityObject
 {
 public:
     CADEndblkObject();
+    virtual ~CADEndblkObject(){}
     // it actually has nothing more thatn CED and CEHD.
 };
 
@@ -384,6 +392,7 @@ class CADSeqendObject : public CADEntityObject
 {
 public:
     CADSeqendObject();
+    virtual ~CADSeqendObject(){}
     // it actually has nothing more thatn CED and CEHD.
 };
 
@@ -394,6 +403,7 @@ class CADInsertObject : public CADEntityObject
 {
 public:
     CADInsertObject();
+    virtual ~CADInsertObject(){}
     CADVector vertInsertionPoint;
     CADVector vertScales;
     double    dfRotation;
@@ -413,6 +423,7 @@ class CADMInsertObject : public CADEntityObject
 {
 public:
     CADMInsertObject();
+    virtual ~CADMInsertObject(){}
     CADVector vertInsertionPoint;
     CADVector vertScales;
     double    dfRotation;
@@ -437,6 +448,7 @@ class CADVertex2DObject : public CADEntityObject
 {
 public:
     CADVertex2DObject();
+    virtual ~CADVertex2DObject(){}
     CADVector vertPosition; // Z must be taken from 2d polyline elevation.
     double    dfStartWidth;
     double    dfEndWidth;
@@ -458,7 +470,7 @@ class CADVertex3DObject : public CADEntityObject
 {
 public:
     CADVertex3DObject();
-
+    virtual ~CADVertex3DObject(){}
     CADVector vertPosition;
 };
 
@@ -469,6 +481,7 @@ class CADVertexMeshObject : public CADEntityObject
 {
 public:
     CADVertexMeshObject();
+    virtual ~CADVertexMeshObject(){}
     CADVector vertPosition;
 };
 
@@ -479,6 +492,7 @@ class CADVertexPFaceObject : public CADEntityObject
 {
 public:
     CADVertexPFaceObject();
+    virtual ~CADVertexPFaceObject(){}
     CADVector vertPosition;
 };
 
@@ -489,6 +503,7 @@ class CADVertexPFaceFaceObject : public CADEntityObject
 {
 public:
     CADVertexPFaceFaceObject();
+    virtual ~CADVertexPFaceFaceObject(){}
     // TODO: check DXF ref to get info what does it mean.
     short iVertexIndex1;
     short iVertexIndex2;
@@ -503,7 +518,7 @@ class CADPolyline2DObject : public CADEntityObject
 {
 public:
     CADPolyline2DObject();
-
+    virtual ~CADPolyline2DObject(){}
     short     dFlags;
     short     dCurveNSmoothSurfType;
     double    dfStartWidth;
@@ -526,6 +541,7 @@ class CADPolyline3DObject : public CADEntityObject
 {
 public:
     CADPolyline3DObject();
+    virtual ~CADPolyline3DObject(){}
     unsigned char SplinedFlags;
     unsigned char ClosedFlags;
 
@@ -543,6 +559,7 @@ class CADArcObject : public CADEntityObject
 {
 public:
     CADArcObject();
+    virtual ~CADArcObject(){}
     CADVector vertPosition;
     double    dfRadius;
     double    dfThickness;
@@ -558,6 +575,7 @@ class CADCircleObject : public CADEntityObject
 {
 public:
     CADCircleObject();
+    virtual ~CADCircleObject(){}
     CADVector vertPosition;
     double    dfRadius;
     double    dfThickness;
@@ -571,6 +589,7 @@ class CADLineObject : public CADEntityObject
 {
 public:
     CADLineObject();
+    virtual ~CADLineObject(){}
     CADVector vertStart;
     CADVector vertEnd;
     double    dfThickness;
@@ -584,6 +603,7 @@ class CADBlockControlObject : public CADObject
 {
 public:
     CADBlockControlObject();
+    virtual ~CADBlockControlObject(){}
     long           nObjectSizeInBits;
     CADHandle      hObjectHandle;
     CADEedArray    aEED;
@@ -602,6 +622,7 @@ class CADBlockHeaderObject : public CADObject
 {
 public:
     CADBlockHeaderObject();
+    virtual ~CADBlockHeaderObject(){}
     long                  nObjectSizeInBits;
     CADHandle             hObjectHandle;
     CADEedArray           aEED;
@@ -644,6 +665,7 @@ class CADLayerControlObject : public CADObject
 {
 public:
     CADLayerControlObject();
+    virtual ~CADLayerControlObject(){}
 
     long           nObjectSizeInBits;
     CADHandle      hObjectHandle;
@@ -663,6 +685,7 @@ class CADLayerObject : public CADObject
 {
 public:
     CADLayerObject();
+    virtual ~CADLayerObject(){}
 
     long        nObjectSizeInBits;
     CADHandle   hObjectHandle;
@@ -698,6 +721,7 @@ class CADLineTypeControlObject : public CADObject
 {
 public:
     CADLineTypeControlObject();
+    virtual ~CADLineTypeControlObject(){}
 
     long           nObjectSizeInBits;
     CADHandle      hObjectHandle;
@@ -728,6 +752,7 @@ class CADLineTypeObject : public CADObject
 {
 public:
     CADLineTypeObject();
+    virtual ~CADLineTypeObject(){}
 
     long                  nObjectSizeInBits;
     CADHandle             hObjectHandle;
@@ -758,6 +783,7 @@ class CADPointObject : public CADEntityObject
 {
 public:
     CADPointObject();
+    virtual ~CADPointObject(){}
 
     CADVector vertPosition;
     double    dfThickness;
@@ -772,6 +798,7 @@ class CADSolidObject : public CADEntityObject
 {
 public:
     CADSolidObject();
+    virtual ~CADSolidObject(){}
 
     double            dfThickness;
     double            dfElevation;
@@ -786,6 +813,7 @@ class CADEllipseObject : public CADEntityObject
 {
 public:
     CADEllipseObject();
+    virtual ~CADEllipseObject(){}
 
     CADVector vertPosition;
     CADVector vectSMAxis;
@@ -802,6 +830,7 @@ class CADRayObject : public CADEntityObject
 {
 public:
     CADRayObject();
+    virtual ~CADRayObject(){}
 
     CADVector vertPosition;
     CADVector vectVector;
@@ -814,6 +843,7 @@ class CADXLineObject : public CADEntityObject
 {
 public:
     CADXLineObject();
+    virtual ~CADXLineObject(){}
 
     CADVector vertPosition;
     CADVector vectVector;
@@ -826,6 +856,7 @@ class CADDictionaryObject : public CADObject
 {
 public:
     CADDictionaryObject();
+    virtual ~CADDictionaryObject(){}
 
     long          nObjectSizeInBits;
     CADHandle     hObjectHandle;
@@ -851,6 +882,7 @@ class CADLWPolylineObject : public CADEntityObject
 {
 public:
     CADLWPolylineObject();
+    virtual ~CADLWPolylineObject(){}
 
     bool                         bClosed;
     double                       dfConstWidth;
@@ -870,6 +902,7 @@ class CADSplineObject : public CADEntityObject
 {
 public:
     CADSplineObject();
+    virtual ~CADSplineObject(){}
 
     long dScenario;
     long dSplineFlags; // 2013+
@@ -932,6 +965,7 @@ typedef struct _dimdata
 class CADDimensionObject : public CADEntityObject
 {
 public:
+virtual ~CADDimensionObject(){}
     CADCommonDimensionData cdd;
     CADVector              vert10pt;
     CADHandle              hDimstyle;
@@ -945,6 +979,7 @@ class CADDimensionOrdinateObject : public CADDimensionObject
 {
 public:
     CADDimensionOrdinateObject();
+    virtual ~CADDimensionOrdinateObject(){}
     CADVector     vert13pt, vert14pt;
     unsigned char Flags2;
 };
@@ -956,6 +991,7 @@ class CADDimensionLinearObject : public CADDimensionObject
 {
 public:
     CADDimensionLinearObject();
+    virtual ~CADDimensionLinearObject(){}
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -969,6 +1005,7 @@ class CADDimensionAlignedObject : public CADDimensionObject
 {
 public:
     CADDimensionAlignedObject();
+    virtual ~CADDimensionAlignedObject(){}
     CADVector vert13pt, vert14pt;
 
     double dfExtLnRot;
@@ -981,6 +1018,7 @@ class CADDimensionAngular3PtObject : public CADDimensionObject
 {
 public:
     CADDimensionAngular3PtObject();
+    virtual ~CADDimensionAngular3PtObject(){}
     CADVector vert13pt, vert14pt;
     CADVector vert15pt;
 };
@@ -992,6 +1030,7 @@ class CADDimensionAngular2LnObject : public CADDimensionAngular3PtObject
 {
 public:
     CADDimensionAngular2LnObject();
+    virtual ~CADDimensionAngular2LnObject(){}
 
     CADVector vert16pt;
 };
@@ -1003,6 +1042,7 @@ class CADDimensionRadiusObject : public CADDimensionObject
 {
 public:
     CADDimensionRadiusObject();
+    virtual ~CADDimensionRadiusObject(){}
 
     CADVector vert15pt;
     double    dfLeaderLen;
@@ -1015,6 +1055,7 @@ class CADDimensionDiameterObject : public CADDimensionRadiusObject
 {
 public:
     CADDimensionDiameterObject();
+    virtual ~CADDimensionDiameterObject(){}
 };
 
 /**
@@ -1024,6 +1065,7 @@ class CADImageObject : public CADEntityObject
 {
 public:
     CADImageObject();
+    virtual ~CADImageObject(){}
 
     long      dClassVersion;
     CADVector vertInsertion;
@@ -1058,6 +1100,7 @@ class CADImageDefReactorObject : public CADObject
 {
 public:
     CADImageDefReactorObject();
+    virtual ~CADImageDefReactorObject(){}
 
     long              nObjectSizeInBits;
     CADHandle         hObjectHandle;
@@ -1077,6 +1120,7 @@ class CADImageDefObject : public CADImageDefReactorObject
 {
 public:
     CADImageDefObject();
+    virtual ~CADImageDefObject(){}
 
     double        dfXImageSizeInPx;
     double        dfYImageSizeInPx;
@@ -1094,6 +1138,7 @@ class CADMTextObject : public CADEntityObject
 {
 public:
     CADMTextObject();
+    virtual ~CADMTextObject(){}
 
     CADVector vertInsertionPoint;
     CADVector vectExtrusion;
@@ -1144,6 +1189,7 @@ class CADMLineObject : public CADEntityObject
 {
 public:
     CADMLineObject();
+    virtual ~CADMLineObject(){}
 
     double        dfScale;
     unsigned char dJust;
@@ -1165,6 +1211,7 @@ class CAD3DFaceObject : public CADEntityObject
 {
 public:
     CAD3DFaceObject();
+    virtual ~CAD3DFaceObject(){}
 
     bool              bHasNoFlagInd; // 2000+
     bool              bZZero;
@@ -1179,6 +1226,7 @@ class CADPolylinePFaceObject : public CADEntityObject
 {
 public:
     CADPolylinePFaceObject();
+    virtual ~CADPolylinePFaceObject(){}
 
     short             nNumVertexes;
     short             nNumFaces;
@@ -1202,6 +1250,7 @@ public:
     } _gradient_color;
 
     CADHatchObject();
+    virtual ~CADHatchObject(){}
 
     long                    dIsGradientFill; // 2004+
     long                    dReserved;
@@ -1236,6 +1285,7 @@ class CADXRecordObject : public CADObject
 {
 public:
     CADXRecordObject();
+    virtual ~CADXRecordObject(){}
     long                                nObjectSizeInBits;
     CADHandle                           hObjectHandle;
     CADEedArray                         aEED;

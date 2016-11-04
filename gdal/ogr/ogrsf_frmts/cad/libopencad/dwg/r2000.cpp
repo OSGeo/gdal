@@ -774,14 +774,14 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
-    size_t             nSectionSize = dObjectSize + nBitOffsetFromStart / 8 + 2;
-    unique_ptr<char[]> sectionContentPtr( new char[nSectionSize + 4] );
+    size_t nSectionSize = dObjectSize + nBitOffsetFromStart / 8 + 2;
+    unique_ptr<char[]> sectionContentPtr( new char[nSectionSize + 64] ); // 64 is extra buffer size
     char * pabySectionContent = sectionContentPtr.get();
     pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
     pFileIO->Read( pabySectionContent, nSectionSize );
 
     nBitOffsetFromStart = 0;
-    dObjectSize         = ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
+    dObjectSize = ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
     short dObjectType = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart );
 
     if( dObjectType >= 500 )
@@ -3630,15 +3630,18 @@ CADXRecordObject * DWGFileR2000::getXRecord( long dObjectSize, const char * paby
         {
             ReadCHAR( pabyInput, nBitOffsetFromStart );
         }
-    } else if( dIndicatorNumber == 70 )
+    }
+    else if( dIndicatorNumber == 70 )
     {
         ReadRAWSHORT( pabyInput, nBitOffsetFromStart );
-    } else if( dIndicatorNumber == 10 )
+    }
+    else if( dIndicatorNumber == 10 )
     {
         ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
         ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
         ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
-    } else if( dIndicatorNumber == 40 )
+    }
+    else if( dIndicatorNumber == 40 )
     {
         ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
     }
@@ -3751,13 +3754,15 @@ CADDictionary DWGFileR2000::GetNOD()
     CADDictionary stNOD;
 
     unique_ptr<CADDictionaryObject> spoNamedDictObj(
-            ( CADDictionaryObject * ) GetObject( oTables.GetTableHandle( CADTables::NamedObjectsDict ).getAsLong() ) );
+            static_cast<CADDictionaryObject*>( GetObject( oTables.GetTableHandle(
+                CADTables::NamedObjectsDict ).getAsLong() ) ) );
     if( spoNamedDictObj == nullptr )
         return stNOD;
 
     for( size_t i = 0; i < spoNamedDictObj->sItemNames.size(); ++i )
     {
-        CADObject* spoDictRecord = GetObject( spoNamedDictObj->hItemHandles[i].getAsLong() );
+        unique_ptr<CADObject> spoDictRecord (
+                    GetObject( spoNamedDictObj->hItemHandles[i].getAsLong() ) );
 
         if( spoDictRecord == nullptr )
             continue; // skip unreaded objects
@@ -3765,24 +3770,19 @@ CADDictionary DWGFileR2000::GetNOD()
         if( spoDictRecord->getType() == CADObject::DICTIONARY )
         {
             // TODO: add implementation of DICTIONARY reading
-            CADDictionaryObject * poDictionary = static_cast<CADDictionaryObject*>(spoDictRecord);
-            delete poDictionary;
         }
         else if( spoDictRecord->getType() == CADObject::XRECORD )
         {
-            CADXRecord       * cadxRecord       = new CADXRecord();
-            CADXRecordObject * cadxRecordObject = static_cast<CADXRecordObject*>(spoDictRecord);
+            CADXRecord * cadxRecord = new CADXRecord();
+            CADXRecordObject * cadxRecordObject =
+                static_cast<CADXRecordObject*>(spoDictRecord.get());
 
-            string xRecordData( cadxRecordObject->abyDataBytes.begin(), cadxRecordObject->abyDataBytes.end() );
+            string xRecordData( cadxRecordObject->abyDataBytes.begin(),
+                                cadxRecordObject->abyDataBytes.end() );
             cadxRecord->setRecordData( xRecordData );
 
-            stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], ( CADDictionaryRecord * ) cadxRecord ) );
-
-            delete cadxRecordObject;
-        }
-        else
-        {
-            delete spoDictRecord;
+            stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i],
+                static_cast<CADDictionaryRecord*>(cadxRecord) ) );
         }
     }
 
