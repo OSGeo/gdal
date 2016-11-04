@@ -52,6 +52,8 @@ def ogr_cad_1():
     except:
         return 'skip'
 
+    return 'success'    
+
 ###############################################################################
 # Check driver properly opens simple file, reads correct feature (ellipse).
 def ogr_cad_2():
