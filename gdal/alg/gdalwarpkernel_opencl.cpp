@@ -247,8 +247,7 @@ static const char* getCLDataTypeString( cl_channel_type dataType )
 }
 
 /*
- Finds an appropriate OpenCL device. If the user specifies a preference, the
- code for it should be here (but not currently supported). For debugging, it's
+ Finds an appropriate OpenCL device. For debugging, it's
  always easier to use CL_DEVICE_TYPE_CPU because then printf() can be called
  from the kernel. If debugging is on, we can print the name and stats about the
  device we're using.
@@ -266,9 +265,25 @@ static cl_device_id get_device(OCLVendor *peVendor)
     cl_device_id preferred_device_id = NULL;
     int preferred_is_gpu = FALSE;
 
-    err = clGetPlatformIDs( 10, platforms, &num_platforms );
-    if( err != CL_SUCCESS || num_platforms == 0 )
+    static bool gbBuggyOpenCL = false;
+    if( gbBuggyOpenCL )
         return NULL;
+    try
+    {
+        err = clGetPlatformIDs( 10, platforms, &num_platforms );
+        if( err != CL_SUCCESS || num_platforms == 0 )
+            return NULL;
+    }
+    catch( ... )
+    {
+        gbBuggyOpenCL = true;   
+        CPLDebug("OpenCL", "clGetPlatformIDs() threw a C++ exception");
+        // This should normally not happen. But that does happen with
+        // intel-opencl 0r2.0-54426 when run under xvfb-run 
+        return NULL;
+    }
+    
+    bool bUseOpenCLCPU = CPLTestBool( CPLGetConfigOption("OPENCL_USE_CPU", "FALSE") );
 
     // In case we have several implementations, pick up the non Intel one by
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
@@ -281,8 +296,11 @@ static cl_device_id get_device(OCLVendor *peVendor)
 
         // Find the GPU CL device, this is what we really want
         // If there is no GPU device is CL capable, fall back to CPU
-        err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 1,
-                             &device, NULL);
+        if( bUseOpenCLCPU )
+            err = CL_DEVICE_NOT_FOUND;
+        else
+            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 1,
+                                 &device, NULL);
         is_gpu = (err == CL_SUCCESS);
         if (err != CL_SUCCESS)
         {
@@ -299,7 +317,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
         err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name),
                             device_name, &returned_size);
         assert(err == CL_SUCCESS);
-        
+
         if( num_platforms > 1 )
             CPLDebug( "OpenCL", "Found vendor='%s' / device='%s' (%s implementation).",
                       vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
