@@ -766,8 +766,6 @@ int DWGFileR2000::CreateFileMap()
 
 CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 {
-    CADObject * readed_object  = nullptr;
-
     char   pabyObjectSize[8];
     size_t nBitOffsetFromStart = 0;
     pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
@@ -986,7 +984,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         }
     }
 
-    return readed_object;
+    return nullptr;
 }
 
 CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle )
@@ -2563,6 +2561,7 @@ CADDictionaryObject * DWGFileR2000::getDictionary( long dObjectSize, const char 
         DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
                   ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
 #endif // _DEBUG
+
     return dictionary;
 }
 
@@ -3763,22 +3762,28 @@ CADDictionary DWGFileR2000::GetNOD()
         if( spoDictRecord == nullptr )
             continue; // skip unreaded objects
 
-        if( spoDictRecord->getType() == CADObject::ObjectType::DICTIONARY )
+        if( spoDictRecord->getType() == CADObject::DICTIONARY )
         {
             // TODO: add implementation of DICTIONARY reading
+            CADDictionaryObject * poDictionary = static_cast<CADDictionaryObject*>(spoDictRecord);
+            delete poDictionary;
         }
-        else if( spoDictRecord->getType() == CADObject::ObjectType::XRECORD )
+        else if( spoDictRecord->getType() == CADObject::XRECORD )
         {
             CADXRecord       * cadxRecord       = new CADXRecord();
-            CADXRecordObject * cadxRecordObject = ( CADXRecordObject * ) spoDictRecord;
+            CADXRecordObject * cadxRecordObject = static_cast<CADXRecordObject*>(spoDictRecord);
 
             string xRecordData( cadxRecordObject->abyDataBytes.begin(), cadxRecordObject->abyDataBytes.end() );
             cadxRecord->setRecordData( xRecordData );
 
             stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], ( CADDictionaryRecord * ) cadxRecord ) );
-        }
 
-        delete spoDictRecord;
+            delete cadxRecordObject;
+        }
+        else
+        {
+            delete spoDictRecord;
+        }
     }
 
     return stNOD;

@@ -303,7 +303,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
         case CADGeometry::CIRCLE:
         {
-            CADCircle * const poCADCircle = ( CADCircle* ) poCADGeometry;
+            CADCircle * poCADCircle = static_cast<CADCircle*>(poCADGeometry);
             OGRCircularString * poCircle = new OGRCircularString();
 
             CADVector stCircleCenter = poCADCircle->getPosition();
@@ -339,7 +339,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
         case CADGeometry::ARC:
         {
-            CADArc * const poCADArc = ( CADArc* ) poCADGeometry;
+            CADArc * poCADArc = static_cast<CADArc*>(poCADGeometry);
             OGRCircularString * poCircle = new OGRCircularString();
 
             // Need at least 3 points in arc
@@ -687,7 +687,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
         case CADGeometry::ELLIPSE:
         {
-            CADEllipse * const poCADEllipse = ( CADEllipse* ) poCADGeometry;
+            CADEllipse * poCADEllipse = static_cast<CADEllipse*>(poCADGeometry);
 
             // FIXME: Start/end angles should be swapped to work exactly as DXF driver.
             // is it correct?
@@ -745,12 +745,12 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                      "Unhandled feature. Skipping it." );
 
             poFeature->SetField( FIELD_NAME_GEOMTYPE, "CADUnknown" );
-            delete( poCADGeometry );
+            delete poCADGeometry;
             return poFeature;
         }
     }
 
-    delete( poCADGeometry );
+    delete poCADGeometry;
     poFeature->GetGeometryRef()->assignSpatialReference( poSpatialRef );
     return poFeature;
 }
