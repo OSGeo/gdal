@@ -317,7 +317,7 @@ static cl_int set_supported_formats(struct oclWarper *warper,
 
     //Find what we *can* handle
     handleErr(err = clGetSupportedImageFormats(warper->context,
-                                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                               CL_MEM_READ_ONLY,
                                                CL_MEM_OBJECT_IMAGE2D,
                                                256, fmtBuf, &numRet));
     for (i = 0; i < numRet; ++i) {
