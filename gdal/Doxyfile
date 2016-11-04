@@ -578,6 +578,9 @@ HTML_HEADER            =
 
 HTML_FOOTER            = doc/gdal_footer.html
 
+# Custom layout (see http://www.stack.nl/~dimitri/doxygen/manual/customize.html)
+LAYOUT_FILE 	       = DoxygenLayout.xml
+
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading
 # style sheet that is used by each HTML page. It can be used to
 # fine-tune the look of the HTML output. If the tag is left blank doxygen
