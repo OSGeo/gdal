@@ -2018,7 +2018,14 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
     warper->context = clCreateContext(0, 1, &(warper->dev), NULL, NULL, &err);
     handleErrGoto(err, error_label);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     warper->queue = clCreateCommandQueue(warper->context, warper->dev, 0, &err);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
     handleErrGoto(err, error_label);
 
     //Ensure that we hand handle imagery of these dimensions
@@ -2081,7 +2088,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
         //Copy over values
         for (i = 0; i < warper->numBands; ++i)
-            warper->fDstNoDataReal[i] = dfDstNoDataReal[i];
+            warper->fDstNoDataReal[i] = (float) dfDstNoDataReal[i];
     }
 
     //Alloc working host image memory
@@ -2240,13 +2247,13 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
     //Copy selected coordinates
     for (i = 0; i < width; i += coordMult) {
         if (success[i]) {
-            xyPtr[0] = rowSrcX[i] - srcXOff;
-            xyPtr[1] = rowSrcY[i] - srcYOff;
+            xyPtr[0] = (float) (rowSrcX[i] - srcXOff);
+            xyPtr[1] = (float) (rowSrcY[i] - srcYOff);
 
             if(lastRow) {
                 //Adjust bottom row so interpolator returns correct value
-                xyPtr[0] = dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0];
-                xyPtr[1] = dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1];
+                xyPtr[0] = (float) (dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0]);
+                xyPtr[1] = (float) (dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1]);
             }
         } else {
             xyPtr[0] = -99.0f;
@@ -2280,17 +2287,17 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
         if((height-1) % coordMult)
             b = ((height-1) % coordMult)/(double)coordMult;
 
-        xyPtr[xyChSize  ] = (((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
+        xyPtr[xyChSize  ] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize]
-                              + (1.0 - a) * b * xyPtr[0]) - origX)/(-a * b);
+                              + (1.0 - a) * b * xyPtr[0]) - origX)/(-a * b));
 
-        xyPtr[xyChSize+1] = (((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
+        xyPtr[xyChSize+1] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize+1]
-                              + (1.0 - a) * b * xyPtr[1]) - origY)/(-a * b);
+                              + (1.0 - a) * b * xyPtr[1]) - origY)/(-a * b));
     } else {
         //Adjust last coordinate so interpolator returns correct value
-        xyPtr[xyChSize  ] = dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0];
-        xyPtr[xyChSize+1] = dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1];
+        xyPtr[xyChSize  ] = (float) (dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0]);
+        xyPtr[xyChSize+1] = (float) (dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1]);
     }
 
     return CL_SUCCESS;
