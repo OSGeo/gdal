@@ -4455,7 +4455,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: attachment; filename=my.json
 \r
@@ -4493,7 +4493,7 @@ Content-Disposition: attachment; filename=my.json
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 \r
 {
 "type":"FeatureCollection",

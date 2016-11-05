@@ -132,7 +132,7 @@ def ogr_gmlas_virtual_file():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_8.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt" type="xs:string"/>
@@ -299,7 +299,7 @@ def ogr_gmlas_invalid_schema():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_invalid_schema.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:foo/>
@@ -336,7 +336,7 @@ def ogr_gmlas_invalid_xml():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_invalid_xml.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -400,7 +400,7 @@ def ogr_gmlas_same_element_in_different_ns():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_same_element_in_different_ns.xml',
 """<myns:elt xmlns:myns="http://myns"
-             xmlns:other_ns="http://other_ns" 
+             xmlns:other_ns="http://other_ns"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                   xsi:schemaLocation="http://myns ogr_gmlas_same_element_in_different_ns.xsd">
     <other_ns:realizationOfAbstractElt>
@@ -411,7 +411,7 @@ def ogr_gmlas_same_element_in_different_ns():
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_same_element_in_different_ns.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:myns="http://myns"
-           xmlns:other_ns="http://other_ns" 
+           xmlns:other_ns="http://other_ns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:import namespace="http://other_ns" schemaLocation="ogr_gmlas_same_element_in_different_ns_other_ns.xsd"/>
@@ -440,7 +440,7 @@ def ogr_gmlas_same_element_in_different_ns():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_same_element_in_different_ns_other_ns.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:other_ns="http://other_ns" 
+           xmlns:other_ns="http://other_ns"
            targetNamespace="http://other_ns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="abstractElt" abstract="true"/>
@@ -523,7 +523,7 @@ def ogr_gmlas_unexpected_repeated_element():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_unexpected_repeated_element.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -578,7 +578,7 @@ def ogr_gmlas_unexpected_repeated_element_variant():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_unexpected_repeated_element.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -834,7 +834,7 @@ def ogr_gmlas_validate():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_validate.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -1607,7 +1607,7 @@ def ogr_gmlas_instantiate_only_gml_feature():
     <xs:complexContent>
       <xs:extension base="typeB">
         <xs:sequence/>
-      </xs:extension> 
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
@@ -1615,7 +1615,7 @@ def ogr_gmlas_instantiate_only_gml_feature():
     <xs:complexContent>
       <xs:extension base="typeA">
         <xs:sequence/>
-      </xs:extension> 
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 
@@ -1638,7 +1638,7 @@ def ogr_gmlas_instantiate_only_gml_feature():
         <xs:sequence>
             <xs:element ref="nonFeature"/>
         </xs:sequence>
-      </xs:extension> 
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 </xs:element>
@@ -1887,7 +1887,7 @@ def ogr_gmlas_inline_identifier():
         <xs:sequence>
             <xs:element ref="identifier" minOccurs="0"/>
         </xs:sequence>
-      </xs:extension> 
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 </xs:element>
@@ -1899,7 +1899,7 @@ def ogr_gmlas_inline_identifier():
         <xs:sequence>
             <xs:element ref="identifier" minOccurs="0"/>
         </xs:sequence>
-      </xs:extension> 
+      </xs:extension>
     </xs:complexContent>
   </xs:complexType>
 </xs:element>
@@ -2025,7 +2025,7 @@ def ogr_gmlas_validate_ignored_fixed_attribute():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_validate_ignored_fixed_attribute.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -2639,7 +2639,7 @@ def ogr_gmlas_recoding():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_recoding.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -2763,7 +2763,7 @@ def ogr_gmlas_truncated_xml():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_truncated_xml.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="main_elt">
@@ -2799,7 +2799,7 @@ def ogr_gmlas_identifier_truncation():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_identifier_truncation.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="very_long_identifier_class">
@@ -2912,7 +2912,7 @@ def ogr_gmlas_identifier_case_ambiguity():
 
     gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_identifier_case_ambiguity.xsd',
 """<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:myns="http://myns" 
+           xmlns:myns="http://myns"
            targetNamespace="http://myns"
            elementFormDefault="qualified" attributeFormDefault="unqualified">
 <xs:element name="differentcase">
