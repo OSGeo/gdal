@@ -2137,15 +2137,25 @@ if test "$with_hdf5" = "no" ; then
 
 elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
 
-  AC_CHECK_LIB(hdf5,H5Fopen,HAVE_HDF5=yes,HAVE_HDF5=no,)
+  HDF5_CFLAGS=""
+  HDF5_LIBS=""
+  PKG_PROG_PKG_CONFIG([0.25]) # check and set $PKG_CONFIG
+  PKG_CHECK_MODULES([HDF5], [hdf5], [HAVE_HDF5=yes], [HAVE_HDF5=no])
+  if test "$HAVE_HDF5" = "yes"; then
+    LIBS="$HDF5_LIBS $LIBS"
+    HDF5_INCLUDE="$HDF5_CFLAGS"
+  else
 
-  if test "$HAVE_HDF5" = "yes" ; then
-    LIBS="-lhdf5 $LIBS"
-  fi
+    AC_CHECK_LIB(hdf5,H5Fopen,HAVE_HDF5=yes,HAVE_HDF5=no,)
 
-dnl Some Linux distros install hdf include files here.
-  if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
-    HDF5_INCLUDE="-I/usr/include"
+    if test "$HAVE_HDF5" = "yes" ; then
+        LIBS="-lhdf5 $LIBS"
+    fi
+
+    dnl Some Linux distros install hdf include files here.
+    if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
+        HDF5_INCLUDE="-I/usr/include"
+    fi
   fi
 
 else
