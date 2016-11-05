@@ -3744,7 +3744,7 @@ AC_ARG_WITH(webp,[  --with-webp[=ARG]    Include WEBP support (ARG=no, yes or li
 
 WEBP_SETTING=no
 
-if test "$with_webp" = "yes" ; then
+if test "$with_webp" = "yes" -o "$with_webp" = "" ; then
 
   AC_CHECK_LIB(webp,WebPDecodeRGB,WEBP_SETTING=yes,WEBP_SETTING=no,)
 
