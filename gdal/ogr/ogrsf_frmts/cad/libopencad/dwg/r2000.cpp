@@ -1129,8 +1129,8 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::ATTDEF:
         {
-            CADAttdef       * attdef    = new CADAttdef();
-            CADAttdefObject * cadAttrib = static_cast<CADAttdefObject *>(
+            CADAttdef * attdef = new CADAttdef();
+            CADAttdefObject * cadAttrib = static_cast<CADAttdefObject*>(
                     readedObject.get() );
 
             attdef->setPosition( cadAttrib->vertInsetionPoint );
@@ -2170,16 +2170,18 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, CADCommonED
     attdef->stCed     = stCommonEntityData;
     attdef->DataFlags = ReadCHAR( pabyInput, nBitOffsetFromStart );
 
-    if( !( attdef->DataFlags & 0x01 ) )
+    if( ( attdef->DataFlags & 0x01 ) == 0 )
         attdef->dfElevation = ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
 
     CADVector vertInsetionPoint = ReadRAWVector( pabyInput, nBitOffsetFromStart );
     attdef->vertInsetionPoint = vertInsetionPoint;
 
-    if( !( attdef->DataFlags & 0x02 ) )
+    if( ( attdef->DataFlags & 0x02 ) == 0 )
     {
-        double    x = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart, vertInsetionPoint.getX() );
-        double    y = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart, vertInsetionPoint.getY() );
+        double x = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart,
+            vertInsetionPoint.getX() );
+        double y = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart,
+            vertInsetionPoint.getY() );
         CADVector vertAlignmentPoint( x, y );
         attdef->vertAlignmentPoint = vertAlignmentPoint;
     }
@@ -2187,28 +2189,29 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, CADCommonED
     if( ReadBIT( pabyInput, nBitOffsetFromStart ) )
     {
         attdef->vectExtrusion = CADVector( 0.0f, 0.0f, 1.0f );
-    } else
+    }
+    else
     {
         CADVector vectExtrusion = ReadVector( pabyInput, nBitOffsetFromStart );
         attdef->vectExtrusion = vectExtrusion;
     }
 
-    attdef->dfThickness = ReadBIT( pabyInput, nBitOffsetFromStart ) ? 0.0f : ReadBITDOUBLE( pabyInput,
-                                                                                            nBitOffsetFromStart );
+    attdef->dfThickness = ReadBIT( pabyInput, nBitOffsetFromStart ) ? 0.0f :
+                          ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
 
-    if( !( attdef->DataFlags & 0x04 ) )
+    if( ( attdef->DataFlags & 0x04 ) == 0 )
         attdef->dfObliqueAng  = ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
-    if( !( attdef->DataFlags & 0x08 ) )
+    if( ( attdef->DataFlags & 0x08 ) == 0 )
         attdef->dfRotationAng = ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
     attdef->dfHeight          = ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
-    if( !( attdef->DataFlags & 0x10 ) )
+    if( ( attdef->DataFlags & 0x10 ) == 0 )
         attdef->dfWidthFactor = ReadRAWDOUBLE( pabyInput, nBitOffsetFromStart );
     attdef->sTextValue        = ReadTV( pabyInput, nBitOffsetFromStart );
-    if( !( attdef->DataFlags & 0x20 ) )
+    if( ( attdef->DataFlags & 0x20 ) == 0 )
         attdef->dGeneration   = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    if( !( attdef->DataFlags & 0x40 ) )
+    if( ( attdef->DataFlags & 0x40 ) == 0 )
         attdef->dHorizAlign   = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    if( !( attdef->DataFlags & 0x80 ) )
+    if( ( attdef->DataFlags & 0x80 ) == 0 )
         attdef->dVertAlign    = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
 
     attdef->sTag         = ReadTV( pabyInput, nBitOffsetFromStart );

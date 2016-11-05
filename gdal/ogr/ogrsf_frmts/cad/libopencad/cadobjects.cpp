@@ -154,7 +154,7 @@ CADAttdefObject::CADAttdefObject()
 // CADAttribObject
 //------------------------------------------------------------------------------
 
-CADAttribObject::CADAttribObject()
+CADAttribObject::CADAttribObject() : bLockPosition(false)
 {
     type = ATTRIB;
 }
