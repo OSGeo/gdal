@@ -676,6 +676,11 @@ GDALDataset *IdrisiDataset::Open( GDALOpenInfo *poOpenInfo )
 
     poDS->nRasterXSize = atoi_nz( CSLFetchNameValue( poDS->papszRDC, rdcCOLUMNS ) );
     poDS->nRasterYSize = atoi_nz( CSLFetchNameValue( poDS->papszRDC, rdcROWS ) );
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
+    {
+        delete poDS;
+        return NULL;
+    }
 
     // --------------------------------------------------------------------
     //      Create band information

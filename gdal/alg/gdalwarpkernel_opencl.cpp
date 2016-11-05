@@ -247,8 +247,7 @@ static const char* getCLDataTypeString( cl_channel_type dataType )
 }
 
 /*
- Finds an appropriate OpenCL device. If the user specifies a preference, the
- code for it should be here (but not currently supported). For debugging, it's
+ Finds an appropriate OpenCL device. For debugging, it's
  always easier to use CL_DEVICE_TYPE_CPU because then printf() can be called
  from the kernel. If debugging is on, we can print the name and stats about the
  device we're using.
@@ -256,45 +255,126 @@ static const char* getCLDataTypeString( cl_channel_type dataType )
 static cl_device_id get_device(OCLVendor *peVendor)
 {
     cl_int err = 0;
-    cl_device_id device = NULL;
     size_t returned_size = 0;
     cl_char vendor_name[1024] = {0};
     cl_char device_name[1024] = {0};
 
     cl_platform_id platforms[10];
     cl_uint num_platforms;
+    cl_uint i;
+    cl_device_id preferred_device_id = NULL;
+    int preferred_is_gpu = FALSE;
 
-    err = clGetPlatformIDs( 10, platforms, &num_platforms );
-    if( err != CL_SUCCESS || num_platforms == 0 )
+    static bool gbBuggyOpenCL = false;
+    if( gbBuggyOpenCL )
         return NULL;
-
-    // Find the GPU CL device, this is what we really want
-    // If there is no GPU device is CL capable, fall back to CPU
-    err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    if (err != CL_SUCCESS)
+    try
     {
-        // Find the CPU CL device, as a fallback
-        err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_CPU, 1, &device, NULL);
-        if( err != CL_SUCCESS || device == 0 )
+        err = clGetPlatformIDs( 10, platforms, &num_platforms );
+        if( err != CL_SUCCESS || num_platforms == 0 )
             return NULL;
     }
+    catch( ... )
+    {
+        gbBuggyOpenCL = true;   
+        CPLDebug("OpenCL", "clGetPlatformIDs() threw a C++ exception");
+        // This should normally not happen. But that does happen with
+        // intel-opencl 0r2.0-54426 when run under xvfb-run 
+        return NULL;
+    }
+    
+    bool bUseOpenCLCPU = CPLTestBool( CPLGetConfigOption("OPENCL_USE_CPU", "FALSE") );
 
-    // Get some information about the returned device
-    err = clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(vendor_name),
-                          vendor_name, &returned_size);
-    err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name),
-                           device_name, &returned_size);
-    assert(err == CL_SUCCESS);
-    CPLDebug( "OpenCL", "Connected to %s %s.", vendor_name, device_name);
+    // In case we have several implementations, pick up the non Intel one by
+    // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
+    for( i=0; i<num_platforms;i++)
+    {
+        cl_device_id device = NULL;
+        const char* pszBlacklistedVendor;
+        const char* pszPreferredVendor;
+        int is_gpu;
+
+        // Find the GPU CL device, this is what we really want
+        // If there is no GPU device is CL capable, fall back to CPU
+        if( bUseOpenCLCPU )
+            err = CL_DEVICE_NOT_FOUND;
+        else
+            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 1,
+                                 &device, NULL);
+        is_gpu = (err == CL_SUCCESS);
+        if (err != CL_SUCCESS)
+        {
+            // Find the CPU CL device, as a fallback
+            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_CPU, 1,
+                                 &device, NULL);
+            if( err != CL_SUCCESS || device == 0 )
+                continue;
+        }
+
+        // Get some information about the returned device
+        err = clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(vendor_name),
+                            vendor_name, &returned_size);
+        err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name),
+                            device_name, &returned_size);
+        assert(err == CL_SUCCESS);
+
+        if( num_platforms > 1 )
+            CPLDebug( "OpenCL", "Found vendor='%s' / device='%s' (%s implementation).",
+                      vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
+        
+        pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", NULL);
+        if( pszBlacklistedVendor &&
+            EQUAL( (const char*)vendor_name, pszBlacklistedVendor ) ) 
+        {
+            CPLDebug("OpenCL", "Blacklisted vendor='%s' / device='%s' implementation skipped",
+                     vendor_name, device_name);
+            continue;
+        }
+            
+        if( preferred_device_id == NULL || (is_gpu && !preferred_is_gpu) )
+        {
+            preferred_device_id = device;
+            preferred_is_gpu = is_gpu;
+        }
+            
+        pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", NULL);
+        if( pszPreferredVendor )
+        {
+            if( EQUAL( (const char*)vendor_name, pszPreferredVendor ) )
+            {
+                preferred_device_id = device;
+                preferred_is_gpu = is_gpu;
+                break;
+            }
+        }
+        else if( is_gpu && !STARTS_WITH((const char*)vendor_name, "Intel") )
+        {
+            preferred_device_id = device;
+            preferred_is_gpu = is_gpu;
+            break;
+        }
+    }
+    if( preferred_device_id == NULL )
+    {
+        CPLDebug("OpenCL", "No implementation found");
+        return NULL;
+    }
+    
+    err = clGetDeviceInfo(preferred_device_id, CL_DEVICE_VENDOR, sizeof(vendor_name),
+                            vendor_name, &returned_size);
+    err |= clGetDeviceInfo(preferred_device_id, CL_DEVICE_NAME, sizeof(device_name),
+                            device_name, &returned_size);
+    CPLDebug( "OpenCL", "Connected to vendor='%s' / device='%s' (%s implementation).",
+              vendor_name, device_name, (preferred_is_gpu) ? "GPU" : "CPU");
 
     if (STARTS_WITH((const char*)vendor_name, "Advanced Micro Devices"))
         *peVendor = VENDOR_AMD;
-    else if (STARTS_WITH((const char*)vendor_name, "Intel(R) Corporation"))
+    else if (STARTS_WITH((const char*)vendor_name, "Intel"))
         *peVendor = VENDOR_INTEL;
     else
         *peVendor = VENDOR_OTHER;
 
-    return device;
+    return preferred_device_id;
 }
 
 /*
@@ -317,7 +397,7 @@ static cl_int set_supported_formats(struct oclWarper *warper,
 
     //Find what we *can* handle
     handleErr(err = clGetSupportedImageFormats(warper->context,
-                                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                               CL_MEM_READ_ONLY,
                                                CL_MEM_OBJECT_IMAGE2D,
                                                256, fmtBuf, &numRet));
     for (i = 0; i < numRet; ++i) {
@@ -1253,8 +1333,7 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             "-D PI=%015.15lff -D outType=%s -D dstMinVal=%015.15lff -D dstMaxVal=%015.15lff "
             "-D useDstNoDataReal=%d -D vecf=%s %s -D doCubicSpline=%d "
             "-D useUseBandSrcValid=%d -D iCoordMult=%d ",
-            /* FIXME: Is it really a ATI specific thing ? */
-            (warper->imageFormat == CL_FLOAT && (warper->eCLVendor == VENDOR_AMD || warper->eCLVendor == VENDOR_INTEL)) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
+            (warper->imageFormat == CL_FLOAT) ? "-D USE_CLAMP_TO_DST_FLOAT=1 " : "",
             warper->srcWidth, warper->srcHeight, warper->dstWidth, warper->dstHeight,
             warper->useUnifiedSrcDensity, warper->useUnifiedSrcValid,
             warper->useDstDensity, warper->useDstValid, warper->imagWorkCL != NULL,
@@ -2018,7 +2097,14 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
     warper->context = clCreateContext(0, 1, &(warper->dev), NULL, NULL, &err);
     handleErrGoto(err, error_label);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     warper->queue = clCreateCommandQueue(warper->context, warper->dev, 0, &err);
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
     handleErrGoto(err, error_label);
 
     //Ensure that we hand handle imagery of these dimensions
@@ -2081,7 +2167,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
         //Copy over values
         for (i = 0; i < warper->numBands; ++i)
-            warper->fDstNoDataReal[i] = dfDstNoDataReal[i];
+            warper->fDstNoDataReal[i] = (float) dfDstNoDataReal[i];
     }
 
     //Alloc working host image memory
@@ -2240,13 +2326,13 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
     //Copy selected coordinates
     for (i = 0; i < width; i += coordMult) {
         if (success[i]) {
-            xyPtr[0] = rowSrcX[i] - srcXOff;
-            xyPtr[1] = rowSrcY[i] - srcYOff;
+            xyPtr[0] = (float) (rowSrcX[i] - srcXOff);
+            xyPtr[1] = (float) (rowSrcY[i] - srcYOff);
 
             if(lastRow) {
                 //Adjust bottom row so interpolator returns correct value
-                xyPtr[0] = dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0];
-                xyPtr[1] = dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1];
+                xyPtr[0] = (float) (dstHeightMod * (xyPtr[0] - xyPrevPtr[0]) + xyPrevPtr[0]);
+                xyPtr[1] = (float) (dstHeightMod * (xyPtr[1] - xyPrevPtr[1]) + xyPrevPtr[1]);
             }
         } else {
             xyPtr[0] = -99.0f;
@@ -2280,17 +2366,17 @@ cl_int GDALWarpKernelOpenCL_setCoordRow(struct oclWarper *warper,
         if((height-1) % coordMult)
             b = ((height-1) % coordMult)/(double)coordMult;
 
-        xyPtr[xyChSize  ] = (((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
+        xyPtr[xyChSize  ] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[0]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize]
-                              + (1.0 - a) * b * xyPtr[0]) - origX)/(-a * b);
+                              + (1.0 - a) * b * xyPtr[0]) - origX)/(-a * b));
 
-        xyPtr[xyChSize+1] = (((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
+        xyPtr[xyChSize+1] = (float) ((((1.0 - a) * (1.0 - b) * xyPrevPtr[1]
                               + a * (1.0 - b) * xyPrevPtr[xyChSize+1]
-                              + (1.0 - a) * b * xyPtr[1]) - origY)/(-a * b);
+                              + (1.0 - a) * b * xyPtr[1]) - origY)/(-a * b));
     } else {
         //Adjust last coordinate so interpolator returns correct value
-        xyPtr[xyChSize  ] = dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0];
-        xyPtr[xyChSize+1] = dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1];
+        xyPtr[xyChSize  ] = (float) (dstWidthMod * (rowSrcX[width-1] - srcXOff - xyPtr[0]) + xyPtr[0]);
+        xyPtr[xyChSize+1] = (float) (dstWidthMod * (rowSrcY[width-1] - srcYOff - xyPtr[1]) + xyPtr[1]);
     }
 
     return CL_SUCCESS;

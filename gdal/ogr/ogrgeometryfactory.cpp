@@ -2523,6 +2523,7 @@ static void AddOffsetToLon( OGRGeometry* poGeom, double dfOffset )
 /*                        AddSimpleGeomToMulti()                        */
 /************************************************************************/
 
+#ifdef HAVE_GEOS
 static void AddSimpleGeomToMulti( OGRGeometryCollection* poMulti,
                                   const OGRGeometry* poGeom )
 {
@@ -2553,6 +2554,7 @@ static void AddSimpleGeomToMulti( OGRGeometryCollection* poMulti,
             break;
     }
 }
+#endif // #ifdef HAVE_GEOS
 
 /************************************************************************/
 /*                 CutGeometryOnDateLineAndAddToMulti()                 */

@@ -148,7 +148,13 @@ docs:
 	(cd doc/ru ; doxygen ; cp html/*.* ../../html/. )
 	(cd doc/br ; doxygen ; cp html/*.* ../../html/. )
 # Generate HTML docs
-	doxygen Doxyfile
+# Current DoxygenLayout.xml works only with Doxygen >= 1.8
+	@if [ `doxygen --version | awk -F . '{print $$1}'` -eq "1" ] && [ `doxygen --version | awk -F . '{print $$2}'` -lt "8" ]; then \
+	  echo "Using deprecated doxygen version. Removing custom layout"; \
+	  (cat Doxyfile; echo "LAYOUT_FILE=/dev/null") | doxygen -; \
+	else \
+	  doxygen Doxyfile; \
+	fi
 	cp data/gdalicon.png html
 	cp doc/images/*.* html
 	cp doc/grid/*.png html
@@ -165,7 +171,7 @@ docs:
 
 man:
 # Generate man pages
-	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
+	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=apps swig/python/scripts"; echo "FILE_PATTERNS=*.cpp *.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES" ; echo "LAYOUT_FILE=/dev/null") | doxygen -
 # Remove "Directory reference" file. Not sure if there's a better way of doing it.
 	 @find man -name '_home_*_gdal_apps_.1' -exec rm {} \;
 

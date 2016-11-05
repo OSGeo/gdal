@@ -1044,7 +1044,7 @@ def ogr_gpkg_19():
     gdal.PopErrorHandler()
 
     ds = None
-
+    
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if ds.GetMetadataDomainList() != ['']:
         print(ds.GetMetadataDomainList())
@@ -1092,6 +1092,9 @@ def ogr_gpkg_19():
     lyr.SetMetadataItem('DESCRIPTION', 'another_desc')
     ds = None
 
+    # FIXME? Is it expected to have a .aux.xml here ?
+    gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg.aux.xml')
+
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg', update = 1)
     lyr = ds.GetLayer('test_with_md')
     if lyr.GetMetadata() != {'IDENTIFIER': 'another_ident', 'DESCRIPTION': 'another_desc'}:
@@ -1137,6 +1140,7 @@ def ogr_gpkg_19():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg')
+    gdal.Unlink('/vsimem/ogr_gpkg_19.gpkg.aux.xml')
 
     return 'success'
 
@@ -1723,7 +1727,7 @@ def ogr_gpkg_25():
 
     ds = None
 
-    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_25.sqlite')
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_25.gpkg')
 
     return 'success'
 
@@ -2157,7 +2161,7 @@ def ogr_gpkg_33():
     ds.ReleaseResultSet(sql_lyr)
     ds = None
 
-    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_32.gpkg')
+    gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_33.gpkg')
 
     return 'success'
 
@@ -2850,6 +2854,11 @@ def ogr_gpkg_cleanup():
         return 'skip'
 
     gdaltest.gpkg_ds = None
+
+    if gdal.ReadDir('/vsimem') is not None:
+        print(gdal.ReadDir('/vsimem'))
+        for f in gdal.ReadDir('/vsimem'):
+            gdal.Unlink('/vsimem/' + f)
 
     try:
         os.remove( 'tmp/gpkg_test.gpkg' )
