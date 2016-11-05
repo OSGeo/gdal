@@ -153,7 +153,8 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
     }
 
     // Applying spatial ref info
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialRef );
+    if (poFeatureDefn->GetGeomFieldCount() != 0)
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialRef );
 
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
