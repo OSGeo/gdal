@@ -36,9 +36,9 @@
 #include "ogr_xerces.h"
 
 #include "cpl_port.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
-#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -89,7 +89,7 @@ void OGRDeinitializeXerces(void)
                  "Unpaired OGRInitializeXerces / OGRDeinitializeXerces calls");
         return;
     }
-    nCounter --;
+    nCounter--;
     if( nCounter == 0 )
     {
         if( CPLTestBool(CPLGetConfigOption("OGR_XERCES_TERMINATE", "YES")) )
@@ -125,11 +125,9 @@ CPLString transcode( const XMLCh *panXMLString, int nLimitingChars )
     return osRet;
 }
 
-CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimitingChars )
+CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
+                      int nLimitingChars )
 {
-    bool bSimpleASCII = true;
-    int nChars = 0;
-
     if( panXMLString == NULL )
     {
         osRet = "(null)";
@@ -139,6 +137,9 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimiting
     osRet.clear();
     if( nLimitingChars > 0 )
         osRet.reserve(nLimitingChars);
+
+    bool bSimpleASCII = true;
+    int nChars = 0;
     for(int i = 0; panXMLString[i] != 0 &&
                         (nLimitingChars < 0 || i < nLimitingChars); i++ )
     {
@@ -146,8 +147,8 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimiting
         {
             bSimpleASCII = false;
         }
-        osRet += (char) panXMLString[i];
-        nChars ++;
+        osRet += static_cast<char>(panXMLString[i]);
+        nChars++;
     }
 
     if( bSimpleASCII )
@@ -158,7 +159,8 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet, int nLimiting
 /*      all simple ASCII characters.  Redo using the more expensive     */
 /*      recoding API.                                                   */
 /* -------------------------------------------------------------------- */
-    wchar_t *pwszSource = (wchar_t *) CPLMalloc(sizeof(wchar_t) * (nChars+1) );
+    wchar_t *pwszSource =
+        static_cast<wchar_t *>(CPLMalloc(sizeof(wchar_t) * (nChars+1) ));
     for( int i = 0 ; i < nChars; i++ )
         pwszSource[i] = panXMLString[i];
     pwszSource[nChars] = 0;
