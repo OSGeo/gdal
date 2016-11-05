@@ -78,7 +78,7 @@ GDALCADDataset::~GDALCADDataset()
     CPLFree( papoLayers );
 
     if( poSpatialReference)
-        delete poSpatialReference;
+        poSpatialReference->Release();
 
     if( poCADFile )
         delete poCADFile;
