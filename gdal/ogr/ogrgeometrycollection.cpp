@@ -1124,7 +1124,7 @@ void OGRGeometryCollection::setMeasured( OGRBoolean bIsMeasured )
  * @note No warning will be issued if a member of the collection does not
  *       support the get_Length method.
  *
- * @return computed area.
+ * @return computed length.
  */
 
 double OGRGeometryCollection::get_Length() const
