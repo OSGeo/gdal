@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_spatialref.h"
-#include "ogr_p.h"
 #include "osr_cs_wkt.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -68,14 +68,14 @@ static const char * const papszParameters[] =
     SRS_PP_LONGITUDE_OF_1ST_POINT,
     SRS_PP_LATITUDE_OF_2ND_POINT,
     SRS_PP_LONGITUDE_OF_2ND_POINT,
-    SRS_PP_PEG_POINT_LATITUDE, /* for SCH */
-    SRS_PP_PEG_POINT_LONGITUDE, /* for SCH */
-    SRS_PP_PEG_POINT_HEADING, /* for SCH */
-    SRS_PP_PEG_POINT_HEIGHT, /* for SCH */
+    SRS_PP_PEG_POINT_LATITUDE,   // For SCH.
+    SRS_PP_PEG_POINT_LONGITUDE,  // For SCH.
+    SRS_PP_PEG_POINT_HEADING,    // For SCH.
+    SRS_PP_PEG_POINT_HEIGHT,     // For SCH.
     NULL
 };
 
-// the following projection lists are incomplete.  they will likely
+// The following projection lists are incomplete.  They will likely
 // change after the CT RPF response.  Examples show alternate forms with
 // underscores instead of spaces.  Should we use the EPSG names were available?
 // Plate-Caree has an accent in the spec!
@@ -147,9 +147,7 @@ static const char * const papszProjectionUnsupported[] =
     NULL
 };
 
-/*
-** List of supported projections with the PARAMETERS[] acceptable for each.
-*/
+// List of supported projections with the PARAMETERS[] acceptable for each.
 static const char * const papszProjWithParms[] = {
 
     SRS_PT_TRANSVERSE_MERCATOR,
@@ -580,26 +578,25 @@ OGRErr OGRSpatialReference::Validate()
 /* -------------------------------------------------------------------- */
     if( poRoot == NULL )
     {
-        CPLDebug( "OGRSpatialReference::Validate",
-                  "No root pointer." );
+        CPLDebug( "OGRSpatialReference::Validate", "No root pointer." );
         return OGRERR_CORRUPT_DATA;
     }
 
     OGRErr eErr = Validate(poRoot);
 
-    /* Even if hand-validation has succeeded, try a more formal validation */
-    /* using the CT spec grammar */
+    // Even if hand-validation has succeeded, try a more formal validation
+    // using the CT spec grammar.
     static int bUseCTGrammar = -1;
     if( bUseCTGrammar < 0 )
-        bUseCTGrammar = CPLTestBool(CPLGetConfigOption("OSR_USE_CT_GRAMMAR", "TRUE"));
+        bUseCTGrammar =
+            CPLTestBool(CPLGetConfigOption("OSR_USE_CT_GRAMMAR", "TRUE"));
 
     if( eErr == OGRERR_NONE && bUseCTGrammar )
     {
-        osr_cs_wkt_parse_context sContext;
         char* pszWKT = NULL;
-
         exportToWkt(&pszWKT);
 
+        osr_cs_wkt_parse_context sContext;
         sContext.pszInput = pszWKT;
         sContext.pszLastSuccess = pszWKT;
         sContext.pszNext = pszWKT;
@@ -890,7 +887,8 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(), "PROJECTION") )
             {
-                if( poNode->GetChildCount() != 1 && poNode->GetChildCount() != 2 )
+                if( poNode->GetChildCount() != 1 &&
+                    poNode->GetChildCount() != 2 )
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
                               "PROJECTION has wrong number of children (%d), "
@@ -899,9 +897,9 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
                     return OGRERR_CORRUPT_DATA;
                 }
-                else if( CSLFindString( (char **)papszProjectionSupported,
+                else if( CSLFindString( papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1
-                      && CSLFindString( (char **)papszProjectionUnsupported,
+                      && CSLFindString( papszProjectionUnsupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -910,7 +908,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
                     return OGRERR_UNSUPPORTED_SRS;
                 }
-                else if( CSLFindString( (char **)papszProjectionSupported,
+                else if( CSLFindString( papszProjectionSupported,
                                         poNode->GetChild(0)->GetValue()) == -1)
                 {
                     CPLDebug( "OGRSpatialReference::Validate",
@@ -925,7 +923,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                     poNode = poNode->GetChild(1);
                     if( EQUAL(poNode->GetValue(), "AUTHORITY") )
                     {
-                        OGRErr eErr = ValidateAuthority(poNode);
+                        const OGRErr eErr = ValidateAuthority(poNode);
                         if( eErr != OGRERR_NONE )
                             return eErr;
                     }
@@ -980,7 +978,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
             if( EQUAL(poNode->GetValue(), "DATUM") )
             {
-                /* validated elsewhere */
+                // Validated elsewhere.
             }
             else if( EQUAL(poNode->GetValue(), "PRIMEM") )
             {
@@ -997,13 +995,13 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
             else if( EQUAL(poNode->GetValue(), "UNIT") )
             {
-                OGRErr eErr = ValidateUnit(poNode);
+                const OGRErr eErr = ValidateUnit(poNode);
                 if( eErr != OGRERR_NONE )
                     return eErr;
             }
             else if( EQUAL(poNode->GetValue(), "AXIS") )
             {
-                OGRErr eErr = ValidateAxis(poNode);
+                const OGRErr eErr = ValidateAxis(poNode);
                 if( eErr != OGRERR_NONE )
                     return eErr;
             }
@@ -1127,9 +1125,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /*      If this is projected, try to validate the detailed set of       */
 /*      parameters used for the projection.                             */
 /* -------------------------------------------------------------------- */
-    OGRErr  eErr;
-
-    eErr = ValidateProjection(poRoot);
+    const OGRErr eErr = ValidateProjection(poRoot);
     if( eErr != OGRERR_NONE )
         return eErr;
 
@@ -1163,7 +1159,8 @@ OGRErr OSRValidate( OGRSpatialReferenceH hSRS )
  * @param pszParm1 first string
  * @param pszParm2 second string
  *
- * @return TRUE if both strings are aliases according to the AliasGroupList, FALSE otherwise
+ * @return TRUE if both strings are aliases according to the
+ * AliasGroupList, FALSE otherwise
  */
 int OGRSpatialReference::IsAliasFor( const char *pszParm1,
                                      const char *pszParm2 )
@@ -1172,7 +1169,7 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 /* -------------------------------------------------------------------- */
 /*      Look for a group containing pszParm1.                           */
 /* -------------------------------------------------------------------- */
-    int iGroup = 0; // Used after for.
+    int iGroup = 0;  // Used after for.
     for( ; papszAliasGroupList[iGroup] != NULL; iGroup++ )
     {
         int i = iGroup;  // Used after for.
@@ -1266,7 +1263,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
                 break;
         }
 
-        /* This parameter is not an exact match, is it an alias? */
+        // This parameter is not an exact match, is it an alias?
         if( papszProjWithParms[i] == NULL )
         {
             for( i = iOffset; papszProjWithParms[i] != NULL; i++ )
@@ -1306,7 +1303,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
  * @return OGRERR_NONE if the VERT_DATUM's arguments validate, an error code
  *         otherwise
  */
-OGRErr OGRSpatialReference::ValidateVertDatum(OGR_SRSNode *poRoot)
+OGRErr OGRSpatialReference::ValidateVertDatum( OGR_SRSNode *poRoot )
 {
     if( !EQUAL(poRoot->GetValue(), "VERT_DATUM") )
         return OGRERR_NONE;
@@ -1364,7 +1361,7 @@ OGRErr OGRSpatialReference::ValidateVertDatum(OGR_SRSNode *poRoot)
  * @return OGRERR_NONE if the AUTHORITY's arguments validate, an error code
  *         otherwise
  */
-OGRErr OGRSpatialReference::ValidateAuthority(OGR_SRSNode *poRoot)
+OGRErr OGRSpatialReference::ValidateAuthority( OGR_SRSNode *poRoot )
 {
     if( !EQUAL(poRoot->GetValue(), "AUTHORITY") )
         return OGRERR_NONE;
@@ -1372,8 +1369,8 @@ OGRErr OGRSpatialReference::ValidateAuthority(OGR_SRSNode *poRoot)
     if( poRoot->GetChildCount() != 2 )
     {
         CPLDebug( "OGRSpatialReference::Validate",
-                    "AUTHORITY has wrong number of children (%d), not 2.",
-                    poRoot->GetChildCount() );
+                  "AUTHORITY has wrong number of children (%d), not 2.",
+                  poRoot->GetChildCount() );
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -1390,7 +1387,7 @@ OGRErr OGRSpatialReference::ValidateAuthority(OGR_SRSNode *poRoot)
  * @return OGRERR_NONE if the AXIS's arguments validate, an error code
  *         otherwise
  */
-OGRErr OGRSpatialReference::ValidateAxis(OGR_SRSNode *poRoot)
+OGRErr OGRSpatialReference::ValidateAxis( OGR_SRSNode *poRoot )
 {
     if( !EQUAL(poRoot->GetValue(), "AXIS") )
         return OGRERR_NONE;
@@ -1416,7 +1413,7 @@ OGRErr OGRSpatialReference::ValidateAxis(OGR_SRSNode *poRoot)
  * @return OGRERR_NONE if the UNIT's arguments validate, an error code
  *         otherwise
  */
-OGRErr OGRSpatialReference::ValidateUnit(OGR_SRSNode *poRoot)
+OGRErr OGRSpatialReference::ValidateUnit( OGR_SRSNode *poRoot )
 {
     if( !EQUAL(poRoot->GetValue(), "UNIT") )
         return OGRERR_NONE;
@@ -1425,16 +1422,16 @@ OGRErr OGRSpatialReference::ValidateUnit(OGR_SRSNode *poRoot)
         && poRoot->GetChildCount() != 3 )
     {
         CPLDebug( "OGRSpatialReference::Validate",
-                    "UNIT has wrong number of children (%d), not 2.",
-                    poRoot->GetChildCount() );
+                  "UNIT has wrong number of children (%d), not 2.",
+                  poRoot->GetChildCount() );
         return OGRERR_CORRUPT_DATA;
     }
     else if( CPLAtof(poRoot->GetChild(1)->GetValue()) == 0.0 )
     {
         CPLDebug( "OGRSpatialReference::Validate",
-                    "UNIT does not appear to have meaningful"
-                    "coefficient (%s).",
-                    poRoot->GetChild(1)->GetValue() );
+                  "UNIT does not appear to have meaningful"
+                  "coefficient (%s).",
+                  poRoot->GetChild(1)->GetValue() );
         return OGRERR_CORRUPT_DATA;
     }
 
