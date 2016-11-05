@@ -44,7 +44,7 @@ static int OGRCADDriverIdentify( GDALOpenInfo *poOpenInfo )
         poOpenInfo->pabyHeader[1] != 'C' )
         return FALSE;
 
-    return IdentifyCADFile ( new VSILFileIO( poOpenInfo->pszFilename ) ) == 0 ?
+    return IdentifyCADFile ( new VSILFileIO( poOpenInfo->pszFilename ), true ) == 0 ?
         FALSE : TRUE;
 }
 
@@ -153,7 +153,12 @@ CPLString CADRecode( const CPLString& sString, int CADEncoding )
     switch( CADEncoding )
     {
         case 29:
-            return CPLString( CPLRecode( sString, "CP1251", CPL_ENC_UTF8 ) );
+        {
+            char* pszRecoded = CPLRecode( sString, "CP1251", CPL_ENC_UTF8 );
+            CPLString soRecoded(pszRecoded);
+            CPLFree(pszRecoded);
+            return soRecoded;
+        }
         default:
             CPLError( CE_Failure, CPLE_NotSupported,
                   "CADRecode() function does not support provided CADEncoding." );

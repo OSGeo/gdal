@@ -41,7 +41,10 @@ CADFile::CADFile( CADFileIO * poFileIO )
 CADFile::~CADFile()
 {
     if( nullptr != pFileIO )
+    {
+        pFileIO->Close();
         delete pFileIO;
+    }
 }
 
 const CADHeader& CADFile::getHeader() const

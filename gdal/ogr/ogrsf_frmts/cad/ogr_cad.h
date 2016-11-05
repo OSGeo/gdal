@@ -73,6 +73,7 @@ class GDALCADDataset : public GDALDataset
     CPLString      soWKT;
     double         adfGeoTransform[6];
     GDALDataset   *poRasterDS;
+    OGRSpatialReference *poSpatialReference;
 
 public:
     GDALCADDataset();

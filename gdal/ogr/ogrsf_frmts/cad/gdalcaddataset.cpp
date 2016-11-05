@@ -54,7 +54,8 @@ GDALCADDataset::GDALCADDataset() :
     poCADFile(NULL),
     papoLayers(NULL),
     nLayers(0),
-    poRasterDS(NULL)
+    poRasterDS(NULL),
+    poSpatialReference(NULL)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -75,8 +76,12 @@ GDALCADDataset::~GDALCADDataset()
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
+
+    if( poSpatialReference)
+        delete poSpatialReference;
+
     if( poCADFile )
-        delete( poCADFile );
+        delete poCADFile;
 }
 
 void GDALCADDataset::FillTransform(CADImage* pImage, double dfUnits)
@@ -349,11 +354,13 @@ int GDALCADDataset::GetCadEncoding() const
 
 OGRSpatialReference *GDALCADDataset::GetSpatialReference()
 {
-    OGRSpatialReference *poSpatialRef = NULL;
+    if( poSpatialReference )
+        return poSpatialReference;
+
     if( poCADFile != NULL )
     {
         CPLString sESRISpatRef;
-        poSpatialRef = new OGRSpatialReference();
+        poSpatialReference = new OGRSpatialReference();
         CADDictionary oNOD = poCADFile->GetNOD();
         CPLString sESRISpatRefData = oNOD.getRecordByName("ESRI_PRJ");
         if( !sESRISpatRefData.empty() )
@@ -365,12 +372,12 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
         {
             char** papszPRJData = NULL;
             papszPRJData = CSLAddString( papszPRJData, sESRISpatRef );
-            if( poSpatialRef->importFromESRI( papszPRJData ) != OGRERR_NONE )
+            if( poSpatialReference->importFromESRI( papszPRJData ) != OGRERR_NONE )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                         "Failed to parse PRJ section, ignoring." );
-                delete( poSpatialRef );
-                poSpatialRef = NULL;
+                delete poSpatialReference;
+                poSpatialReference = NULL;
             }
 
             CSLDestroy( papszPRJData );
@@ -384,12 +391,12 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
                 char **papszPRJData = CSLLoad( pszPRJFilename );
                 CPLPopErrorHandler();
 
-                if( poSpatialRef->importFromESRI( papszPRJData ) != OGRERR_NONE )
+                if( poSpatialReference->importFromESRI( papszPRJData ) != OGRERR_NONE )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                         "Failed to parse PRJ file, ignoring." );
-                    delete( poSpatialRef );
-                    poSpatialRef = NULL;
+                    delete poSpatialReference;
+                    poSpatialReference = NULL;
                 }
 
                 if( papszPRJData )
@@ -398,14 +405,14 @@ OGRSpatialReference *GDALCADDataset::GetSpatialReference()
         }
     }
 
-    if( poSpatialRef != NULL )
+    if( poSpatialReference )
     {
         char *pszProjection = NULL;
-        poSpatialRef->exportToWkt( &pszProjection );
+        poSpatialReference->exportToWkt( &pszProjection );
         soWKT = pszProjection;
         CPLFree( pszProjection );
     }
-    return poSpatialRef;
+    return poSpatialReference;
 }
 
 const char* GDALCADDataset::GetPrjFilePath()

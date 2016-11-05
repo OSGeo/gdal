@@ -51,7 +51,9 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
 {
     nNextFID = 0;
 
-    poFeatureDefn = new OGRFeatureDefn( CADRecode( poCADLayer_.getName(), nDWGEncoding ) );
+    char *pszRecoded = CADRecode( poCADLayer_.getName(), nDWGEncoding );
+    poFeatureDefn = new OGRFeatureDefn( pszRecoded );
+    CPLFree( pszRecoded );
 
     // Setting up layer geometry type
     OGRwkbGeometryType eGeomType;
