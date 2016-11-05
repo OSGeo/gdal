@@ -1044,7 +1044,7 @@ def ogr_gpkg_19():
     gdal.PopErrorHandler()
 
     ds = None
-    
+
     ds = ogr.Open('/vsimem/ogr_gpkg_19.gpkg')
     if ds.GetMetadataDomainList() != ['']:
         print(ds.GetMetadataDomainList())
