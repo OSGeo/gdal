@@ -30,8 +30,8 @@
 #include <cmath>
 #include <vector>
 #include "cpl_conv.h"
-#include "ogr_geometry.h"
 #include "ogr_api.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
