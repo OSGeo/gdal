@@ -2803,7 +2803,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 if( poEltCT->getParticle()->getMaxOccursUnbounded() )
                                     oField.SetMaxOccurs( MAXOCCURS_UNLIMITED );
                                 else
-                                    oField.SetMaxOccurs( poEltCT->getParticle()->getMaxOccurs() );
+                                    oField.SetMaxOccurs( static_cast<int>(
+                                        poEltCT->getParticle()->getMaxOccurs()));
                             }
                             oField.SetArray( true );
                             oClass.AddField( oField );
