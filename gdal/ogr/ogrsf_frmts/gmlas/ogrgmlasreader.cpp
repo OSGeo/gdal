@@ -914,7 +914,7 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
     *
               <first_elt_of_group>...</first_elt_of_group>
               <first_elt_of_another_group>  <!-- we are here at startElement() -->
-                ...</first_elt_of_group>
+                ...</first_elt_of_another_group>
 
     *
               <first_elt_of_group>...</first_elt_of_group>
@@ -1017,6 +1017,7 @@ void GMLASReader::startElement(
                     osLayerXPath &&
              (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0);
 
+        int nTmpIdx;
         if( // Case where we haven't yet entered the top-level element, which may
             // be in container elements
             (m_osCurSubXPath.empty() &&
@@ -1037,7 +1038,8 @@ void GMLASReader::startElement(
             // of a top-level feature to a regular sub-element of that top-level
             // feature
             (m_oCurCtxt.m_poGroupLayer != NULL &&
-             (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0) )
+             ((nTmpIdx = (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath)) >= 0 ||
+              nTmpIdx == IDX_COMPOUND_FOLDED)) )
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("GMLAS", "Matches layer %s (%s)",
@@ -1170,7 +1172,6 @@ void GMLASReader::startElement(
                 {
                     // This is the case where we switch from an element that was
                     // in a group to a regular element of the same level
-                    // Cf group_case_C in above doc
 
                     // Push group feature as ready
                     CPLAssert( m_oCurCtxt.m_poFeature );
@@ -1229,6 +1230,7 @@ void GMLASReader::startElement(
         CPLDebug("GMLAS", "Current layer: %s", m_oCurCtxt.m_poLayer->GetName() );
 #endif
 
+
         bool bHasProcessedAttributes = false;
 
         // Find if we can match this element with one of our fields
@@ -1238,6 +1240,16 @@ void GMLASReader::startElement(
                             GetOGRGeomFieldIndexFromXPath(m_osCurSubXPath);
         if( idx >= 0 || geom_idx >= 0 )
         {
+            // Sanity check. Shouldn't normally happen !
+            if( m_oCurCtxt.m_poFeature == NULL ||
+                m_oCurCtxt.m_poLayer->GetLayerDefn() !=
+                                        m_oCurCtxt.m_poFeature->GetDefnRef() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Inconsistant m_poLayer / m_poFeature state");
+                m_bParsingError = true;
+                return; 
+            }
 
             bool bPushNewFeature = false;
             const int nFCFieldIdx = (idx >= 0) ?
