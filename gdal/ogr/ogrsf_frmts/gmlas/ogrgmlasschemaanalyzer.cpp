@@ -2797,6 +2797,14 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             GMLASField oField (oNestedClass.GetFields()[0] );
                             oField.SetName( osEltName + "_" +
                                             oField.GetName() );
+                            if( oField.GetMaxOccurs() == 1 && bEltRepeatedParticle &&
+                                poEltCT->getParticle() != NULL )
+                            {
+                                if( poEltCT->getParticle()->getMaxOccursUnbounded() )
+                                    oField.SetMaxOccurs( MAXOCCURS_UNLIMITED );
+                                else
+                                    oField.SetMaxOccurs( poEltCT->getParticle()->getMaxOccurs() );
+                            }
                             oField.SetArray( true );
                             oClass.AddField( oField );
                         }

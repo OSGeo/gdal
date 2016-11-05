@@ -125,6 +125,12 @@
                 </xs:simpleType>
             </xs:element>
 
+            <xs:element name="list_of_boolean">
+                <xs:simpleType>
+                    <xs:list itemType="xs:boolean" />
+                </xs:simpleType>
+            </xs:element>
+
             <xs:element name="list_of_integer">
                 <xs:simpleType>
                     <xs:list itemType="xs:integer" />

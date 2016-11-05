@@ -660,6 +660,23 @@ void GMLASReader::SetField( OGRFeature* poFeature,
             poLayer->GetFeatureClass().GetFields()[nFCFieldIdx].IsList() )
         {
             char** papszTokens = CSLTokenizeString2( osAttrValue.c_str(), " ", 0 );
+            if( eType == OFTIntegerList &&
+                poFeature->GetFieldDefnRef(nAttrIdx)->GetSubType() == OFSTBoolean )
+            {
+                for( char** papszIter = papszTokens; *papszIter != NULL; ++papszIter )
+                {
+                    if( strcmp(*papszIter, "true") == 0 )
+                    {
+                        (*papszIter)[0] = '1';
+                        (*papszIter)[1] = '\0';
+                    }
+                    else if( strcmp(*papszIter, "false") == 0 )
+                    {
+                        (*papszIter)[0] = '0';
+                        (*papszIter)[1] = '\0';
+                    }
+                }
+            }
             poFeature->SetField( nAttrIdx, papszTokens );
             CSLDestroy(papszTokens);
         }
@@ -1975,17 +1992,6 @@ void GMLASReader::endElement(
                 m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetType() :
             OFTString );
 
-        // Transform boolean values to something that OGR understands
-        if( (eType == OFTIntegerList || eType == OFTInteger) &&
-             m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetSubType() ==
-                                                                   OFSTBoolean )
-        {
-            if( m_osTextContent == "true" )
-                m_osTextContent = "1";
-            else
-                m_osTextContent = "0";
-        }
-
         // Assign XML content to field value
         if( IsArrayType(eType) )
         {
@@ -1994,9 +2000,9 @@ void GMLASReader::endElement(
             if( nFCFieldIdx >= 0 &&
                 m_oCurCtxt.m_poLayer->GetFeatureClass().GetFields()[nFCFieldIdx].IsList() )
             {
-                char** papszTokens = CSLTokenizeString2( m_osTextContent.c_str(), " ", 0 );
-                m_oCurCtxt.m_poFeature->SetField( m_nCurFieldIdx, papszTokens );
-                CSLDestroy(papszTokens);
+                SetField( m_oCurCtxt.m_poFeature,
+                          m_oCurCtxt.m_poLayer,
+                          m_nCurFieldIdx, m_osTextContent );
             }
             else if( m_nTextContentListEstimatedSize > m_nMaxContentSize )
             {
@@ -2006,6 +2012,17 @@ void GMLASReader::endElement(
             }
             else
             {
+                // Transform boolean values to something that OGR understands
+                if( eType == OFTIntegerList &&
+                    m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->
+                                                GetSubType() == OFSTBoolean )
+                {
+                    if( m_osTextContent == "true" )
+                        m_osTextContent = "1";
+                    else
+                        m_osTextContent = "0";
+                }
+
                 m_osTextContentList.AddString( m_osTextContent );
                 // 16 is an arbitrary number for the cost of a new entry in the
                 // string list
