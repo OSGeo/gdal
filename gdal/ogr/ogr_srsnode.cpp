@@ -441,8 +441,8 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /*      Build a list of the WKT format for the children.                */
 /* -------------------------------------------------------------------- */
     char **papszChildrenWkt = static_cast<char **>(
-        CPLCalloc(sizeof(char*),(nChildren+1)) );
-    size_t nLength = strlen(pszValue)+4;
+        CPLCalloc(sizeof(char*), nChildren + 1) );
+    size_t nLength = strlen(pszValue) + 4;
 
     for( int i = 0; i < nChildren; i++ )
     {
@@ -479,7 +479,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
     for( int i = 0; i < nChildren; i++ )
     {
         strcat( *ppszResult, papszChildrenWkt[i] );
-        if( i == nChildren-1 )
+        if( i == nChildren - 1 )
             strcat( *ppszResult, "]" );
         else
             strcat( *ppszResult, "," );
@@ -515,8 +515,8 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
 /*      Build a list of the WKT format for the children.                */
 /* -------------------------------------------------------------------- */
     char **papszChildrenWkt = static_cast<char **>(
-        CPLCalloc(sizeof(char*),(nChildren+1)) );
-    size_t nLength = strlen(pszValue)+4;
+        CPLCalloc(sizeof(char*), nChildren + 1) );
+    size_t nLength = strlen(pszValue) + 4;
 
     for( int i = 0; i < nChildren; i++ )
     {
@@ -543,7 +543,9 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
         strcat( *ppszResult, "\"" );
     }
     else
+    {
         strcat( *ppszResult, pszValue );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Add the children strings with appropriate brackets and commas.  */
@@ -604,13 +606,11 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
     return importFromWkt( ppszInput, 0, &nNodes );
 }
 
-OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNodes )
+OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
+                                   int* pnNodes )
 
 {
-    const char  *pszInput = *ppszInput;
-    bool bInQuotedString = false;
-
-    /* Sanity checks */
+    // Sanity checks.
     if( nRecLevel == 10 )
     {
         return OGRERR_CORRUPT_DATA;
@@ -620,6 +620,9 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
         return OGRERR_CORRUPT_DATA;
     }
 
+    const char *pszInput = *ppszInput;
+    bool bInQuotedString = false;
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing children of this node.                       */
 /* -------------------------------------------------------------------- */
@@ -628,8 +631,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
 /* -------------------------------------------------------------------- */
 /*      Read the ``value'' for this node.                               */
 /* -------------------------------------------------------------------- */
-    char        szToken[512];
-    szToken[0] = '\0';
+    char szToken[512] = {};
     size_t nTokenLen = 0;
 
     while( *pszInput != '\0' &&
@@ -649,7 +651,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
                  && (*pszInput == ' ' || *pszInput == '\t'
                      || *pszInput == 10 || *pszInput == 13) )
         {
-            /* just skip over whitespace */
+            // Skip over whitespace.
         }
         else
         {
@@ -672,12 +674,11 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
     {
         do
         {
-
             pszInput++; // Skip bracket or comma.
 
             OGR_SRSNode *poNewChild = new OGR_SRSNode();
 
-            (*pnNodes) ++;
+            (*pnNodes)++;
             const OGRErr eErr =
                 poNewChild->importFromWkt(
                     const_cast<char **>( &pszInput ),
@@ -690,7 +691,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
 
             AddChild( poNewChild );
 
-            // swallow whitespace
+            // Swallow whitespace.
             while( isspace(*pszInput) )
                 pszInput++;
         } while( *pszInput == ',' );
@@ -701,7 +702,7 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput, int nRecLevel, int* pnNode
         pszInput++;
     }
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = const_cast<char *>(pszInput);
 
     return OGRERR_NONE;
 }
