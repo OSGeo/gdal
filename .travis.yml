@@ -64,6 +64,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: false
+      dist: trusty
       cache:
         apt: true
         directories:
