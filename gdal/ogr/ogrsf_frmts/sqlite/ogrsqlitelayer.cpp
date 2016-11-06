@@ -3113,7 +3113,9 @@ void OGRSQLiteLayer::ClearStatement()
 {
     if( hStmt != NULL )
     {
+#ifdef DEBUG_VERBOSE
         CPLDebug( "OGR_SQLITE", "finalize %p", hStmt );
+#endif
         sqlite3_finalize( hStmt );
         hStmt = NULL;
     }
