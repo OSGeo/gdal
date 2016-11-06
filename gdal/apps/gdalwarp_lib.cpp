@@ -629,7 +629,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
     void* hUniqueTransformArg = NULL;
-    int bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != NULL );
+    const bool bInitDestSetByUser = ( CSLFetchNameValue( psOptions->papszWarpOptions, "INIT_DEST" ) != NULL );
 
     const char* pszWarpThreads = CSLFetchNameValue(psOptions->papszWarpOptions, "NUM_THREADS");
     if( pszWarpThreads != NULL )
@@ -1087,8 +1087,13 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             CSLDestroy( papszTokens );
 
-            psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+            if( psWO->nBandCount > 1 &&
+                CSLFetchNameValue(psWO->papszWarpOptions, "UNIFIED_SRC_NODATA") == NULL )
+            {
+                CPLDebug("WARP", "Set UNIFIED_SRC_NODATA=YES");
+                psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                "UNIFIED_SRC_NODATA", "YES" );
+            }
         }
 
 /* -------------------------------------------------------------------- */

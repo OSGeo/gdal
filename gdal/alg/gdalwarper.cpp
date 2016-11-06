@@ -1118,10 +1118,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
  * situations.</li>
  *
- * <li>UNIFIED_SRC_NODATA=YES/[NO]: By default nodata masking values considered
+ * <li>UNIFIED_SRC_NODATA=YES/NO: By default nodata masking values considered
  * independently for each band.  However, sometimes it is desired to treat all
  * bands as nodata if and only if, all bands match the corresponding nodata
- * values.  To get this behavior set this option to YES.</li>
+ * values. To get this behavior set this option to YES.
+ * Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp /
+ * GDALWarp()</li>
  *
  * <li>CUTLINE: This may contain the WKT geometry for a cutline.  It will
  * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
