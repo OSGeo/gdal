@@ -34,8 +34,8 @@
 
 CPL_CVSID("$Id$");
 
-/* why would fipszone and zone be parameters when they relate to a composite
-   projection which renders done into a non-zoned projection? */
+// Why would fipszone and zone be parameters when they relate to a composite
+// projection which renders done into a non-zoned projection?
 
 static const char * const papszParameters[] =
 {
@@ -705,7 +705,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 OGRErr eErr = ValidateAxis(poNode);
                 if( eErr != OGRERR_NONE )
                     return eErr;
-                nCountAxis ++;
+                nCountAxis++;
             }
             else if( EQUAL(poNode->GetValue(), "AUTHORITY") )
             {
@@ -794,7 +794,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
                 OGRErr eErr = ValidateAxis(poNode);
                 if( eErr != OGRERR_NONE )
                     return eErr;
-                nCountAxis ++;
+                nCountAxis++;
             }
             else if( EQUAL(poNode->GetValue(), "AUTHORITY") )
             {
@@ -856,7 +856,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 
             if( EQUAL(poNode->GetValue(), "GEOGCS") )
             {
-                /* validated elsewhere */
+                // Validated elsewhere.
             }
             else if( EQUAL(poNode->GetValue(), "UNIT") )
             {
