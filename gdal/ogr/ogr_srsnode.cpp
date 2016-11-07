@@ -384,7 +384,7 @@ OGR_SRSNode *OGR_SRSNode::Clone() const
 int OGR_SRSNode::NeedsQuoting() const
 
 {
-    // non-terminals are never quoted.
+    // Non-terminals are never quoted.
     if( GetChildCount() != 0 )
         return FALSE;
 
@@ -464,7 +464,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
     if( NeedsQuoting() )
     {
         strcat( *ppszResult, "\"" );
-        strcat( *ppszResult, pszValue ); /* should we do quoting? */
+        strcat( *ppszResult, pszValue );  // Should we do quoting?
         strcat( *ppszResult, "\"" );
     }
     else
@@ -539,7 +539,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
     if( NeedsQuoting() )
     {
         strcat( *ppszResult, "\"" );
-        strcat( *ppszResult, pszValue ); /* should we do quoting? */
+        strcat( *ppszResult, pszValue );  // Should we do quoting?
         strcat( *ppszResult, "\"" );
     }
     else
@@ -631,41 +631,43 @@ OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
 /* -------------------------------------------------------------------- */
 /*      Read the ``value'' for this node.                               */
 /* -------------------------------------------------------------------- */
-    char szToken[512] = {};
-    size_t nTokenLen = 0;
-
-    while( *pszInput != '\0' &&
-           nTokenLen + 1 < sizeof(szToken) )
     {
-        if( *pszInput == '"' )
+        char szToken[512] = {};
+        size_t nTokenLen = 0;
+
+        while( *pszInput != '\0' &&
+               nTokenLen + 1 < sizeof(szToken) )
         {
-            bInQuotedString = !bInQuotedString;
-        }
-        else if( !bInQuotedString
-              && (*pszInput == '[' || *pszInput == ']' || *pszInput == ','
-                  || *pszInput == '(' || *pszInput == ')' ) )
-        {
-            break;
-        }
-        else if( !bInQuotedString
-                 && (*pszInput == ' ' || *pszInput == '\t'
-                     || *pszInput == 10 || *pszInput == 13) )
-        {
-            // Skip over whitespace.
-        }
-        else
-        {
-            szToken[nTokenLen++] = *pszInput;
+            if( *pszInput == '"' )
+            {
+                bInQuotedString = !bInQuotedString;
+            }
+            else if( !bInQuotedString
+                  && (*pszInput == '[' || *pszInput == ']' || *pszInput == ','
+                      || *pszInput == '(' || *pszInput == ')' ) )
+            {
+                break;
+            }
+            else if( !bInQuotedString
+                     && (*pszInput == ' ' || *pszInput == '\t'
+                         || *pszInput == 10 || *pszInput == 13) )
+            {
+                // Skip over whitespace.
+            }
+            else
+            {
+                szToken[nTokenLen++] = *pszInput;
+            }
+
+            pszInput++;
         }
 
-        pszInput++;
+        if( *pszInput == '\0' || nTokenLen == sizeof(szToken) - 1 )
+            return OGRERR_CORRUPT_DATA;
+
+        szToken[nTokenLen++] = '\0';
+        SetValue( szToken );
     }
-
-    if( *pszInput == '\0' || nTokenLen == sizeof(szToken) - 1 )
-        return OGRERR_CORRUPT_DATA;
-
-    szToken[nTokenLen++] = '\0';
-    SetValue( szToken );
 
 /* -------------------------------------------------------------------- */
 /*      Read children, if we have a sublist.                            */
@@ -809,8 +811,8 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
     {
         for( int i = 0; papszSrcValues[i] != NULL; i += nStepSize )
         {
-            if( EQUAL(papszSrcValues[i],pszValue) &&
-                ! EQUAL(papszDstValues[i],"") )
+            if( EQUAL(papszSrcValues[i], pszValue) &&
+                !EQUAL(papszDstValues[i], "") )
             {
                 SetValue( papszDstValues[i] );
                 break;
@@ -869,7 +871,7 @@ void OGR_SRSNode::StripNodes( const char * pszName )
 /*                           FixupOrdering()                            */
 /************************************************************************/
 
-/* EXTENSION ... being a OSR extension... is arbitrary placed before the AUTHORITY */
+// EXTENSION, being a OSR extension, is arbitrary placed before the AUTHORITY.
 static const char * const apszPROJCSRule[] =
 { "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "EXTENSION",
   "AUTHORITY", NULL };
