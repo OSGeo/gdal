@@ -60,25 +60,26 @@ static const char* GMLGetCoordTokenPos(const char* pszStr,
     while( true )
     {
         ch = *pszStr;
-        if (ch == '\0')
+        if( ch == '\0' )
         {
             *ppszNextToken = NULL;
             return NULL;
         }
-        else if (!(ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ' || ch == ','))
+        else if( !(ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ' ||
+                   ch == ',') )
             break;
-        pszStr ++;
+        pszStr++;
     }
 
     const char* pszToken = pszStr;
-    while((ch = *pszStr) != '\0')
+    while( (ch = *pszStr) != '\0' )
     {
-        if (ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ' || ch == ',')
+        if( ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ' || ch == ',' )
         {
             *ppszNextToken = pszStr;
             return pszToken;
         }
-        pszStr ++;
+        pszStr++;
     }
     *ppszNextToken = NULL;
     return pszToken;
@@ -316,7 +317,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
             if( chDecimal == '.' )
                 dfX = OGRFastAtof( pszCoordString );
             else
-                dfX = CPLAtofDelim( pszCoordString, chDecimal) ;
+                dfX = CPLAtofDelim( pszCoordString, chDecimal);
             while( *pszCoordString != '\0'
                    && *pszCoordString != chCS
                    && !isspace((unsigned char)*pszCoordString) )
@@ -328,7 +329,8 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                         "Corrupt <coordinates> value." );
                 return false;
             }
-            else if( chCS == ',' && pszCS == NULL && isspace((unsigned char)*pszCoordString) )
+            else if( chCS == ',' && pszCS == NULL &&
+                     isspace((unsigned char)*pszCoordString) )
             {
                 // In theory, the coordinates inside a coordinate tuple should
                 // be separated by a comma. However it has been found in the
@@ -346,7 +348,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
             if( chDecimal == '.' )
                 dfY = OGRFastAtof( pszCoordString );
             else
-                dfY = CPLAtofDelim( pszCoordString, chDecimal) ;
+                dfY = CPLAtofDelim( pszCoordString, chDecimal);
             while( *pszCoordString != '\0'
                    && *pszCoordString != chCS
                    && *pszCoordString != chTS
@@ -359,7 +361,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                 if( chDecimal == '.' )
                     dfZ = OGRFastAtof( pszCoordString );
                 else
-                    dfZ = CPLAtofDelim( pszCoordString, chDecimal) ;
+                    dfZ = CPLAtofDelim( pszCoordString, chDecimal);
                 nDimension = 3;
                 while( *pszCoordString != '\0'
                        && *pszCoordString != chCS
@@ -410,8 +412,10 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                 if( psPointPropertyIter->eType != CXT_Element  )
                     continue;
 
-                const char* pszBareElement = BareGMLElement(psPointPropertyIter->pszValue);
-                if (EQUAL(pszBareElement,"Point") || EQUAL(pszBareElement,"ElevatedPoint") )
+                const char* pszBareElement =
+                    BareGMLElement(psPointPropertyIter->pszValue);
+                if( EQUAL(pszBareElement,"Point") ||
+                    EQUAL(pszBareElement,"ElevatedPoint") )
                 {
                     OGRPoint oPoint;
                     if( ParseGMLCoordinates( psPointPropertyIter, &oPoint, nSRSDimension ) )
@@ -444,7 +448,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
             continue;
 
         const char* pszPos = GetElementText( psPos );
-        if (pszPos == NULL)
+        if( pszPos == NULL )
         {
             poGeometry->empty();
             return true;
@@ -457,7 +461,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         const char* pszZ = (pszCur != NULL) ?
                             GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
 
-        if (pszY == NULL)
+        if( pszY == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Did not get 2+ values in <gml:pos>%s</gml:pos> tuple.",
@@ -494,15 +498,15 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         // available for gml3.1 SF.
         const char* pszSRSDimension = CPLGetXMLValue( (CPLXMLNode*) psPosList, "srsDimension", NULL);
         // If not found at the posList level, try on the enclosing element.
-        if (pszSRSDimension == NULL)
+        if( pszSRSDimension == NULL )
             pszSRSDimension = CPLGetXMLValue( (CPLXMLNode*) psGeomNode, "srsDimension", NULL);
-        if (pszSRSDimension != NULL)
+        if( pszSRSDimension != NULL )
             nDimension = atoi(pszSRSDimension);
         else if( nSRSDimension != 0 )
             // Or use one coming from a still higher level element (#5606).
             nDimension = nSRSDimension;
 
-        if (nDimension != 2 && nDimension != 3)
+        if( nDimension != 2 && nDimension != 3 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "srsDimension = %d not supported", nDimension);
@@ -510,7 +514,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
         }
 
         const char* pszPosList = GetElementText( psPosList );
-        if (pszPosList == NULL)
+        if( pszPosList == NULL )
         {
             poGeometry->empty();
             return true;
@@ -518,20 +522,20 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
 
         bool bSuccess = false;
         const char* pszCur = pszPosList;
-        while (true)
+        while( true )
         {
             const char* pszX = GMLGetCoordTokenPos(pszCur, &pszCur);
-            if (pszX == NULL && bSuccess)
+            if( pszX == NULL && bSuccess )
                 break;
             const char* pszY = (pszCur != NULL) ?
                     GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
             const char* pszZ = (nDimension == 3 && pszCur != NULL) ?
                     GMLGetCoordTokenPos(pszCur, &pszCur) : NULL;
 
-            if (pszY == NULL || (nDimension == 3 && pszZ == NULL))
+            if( pszY == NULL || (nDimension == 3 && pszZ == NULL) )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
-                        "Did not get at least %d values or invalid number of \n"
+                        "Did not get at least %d values or invalid number of "
                         "set of coordinates <gml:posList>%s</gml:posList>",
                         nDimension, pszPosList);
                 return false;
@@ -542,7 +546,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
             double dfZ = (pszZ != NULL) ? OGRFastAtof(pszZ) : 0.0;
             bSuccess = AddPoint( poGeometry, dfX, dfY, dfZ, nDimension );
 
-            if ( !bSuccess || pszCur == NULL)
+            if( !bSuccess || pszCur == NULL )
                 break;
         }
 
@@ -651,7 +655,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
             if( iExterior == 1 && iInterior == iCount - 1 )
             {
                 // Searching the unique Polygon containing holes.
-                for ( int ig = 0; ig < iCount; ig++)
+                for( int ig = 0; ig < iCount; ig++ )
                 {
                     OGRPolygon * poPg = (OGRPolygon*)poColl->getGeometryRef(ig);
                     if( poPg->getNumInteriorRings() > 0 )
@@ -718,12 +722,12 @@ bool GML2OGRGeometry_AddToCompositeCurve(OGRCompoundCurve* poCC,
 /************************************************************************/
 
 static
-bool GML2OGRGeometry_AddToMultiSurface(OGRMultiSurface* poMS,
-                                      OGRGeometry*& poGeom,
-                                      const char* pszMemberElement,
-                                      bool& bChildrenAreAllPolygons)
+bool GML2OGRGeometry_AddToMultiSurface( OGRMultiSurface* poMS,
+                                        OGRGeometry*& poGeom,
+                                        const char* pszMemberElement,
+                                        bool& bChildrenAreAllPolygons )
 {
-    if (poGeom == NULL)
+    if( poGeom == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
                     pszMemberElement );
@@ -741,7 +745,7 @@ bool GML2OGRGeometry_AddToMultiSurface(OGRMultiSurface* poMS,
             return false;
         }
     }
-    else if (eType == wkbMultiPolygon || eType == wkbMultiSurface)
+    else if( eType == wkbMultiPolygon || eType == wkbMultiSurface )
     {
         OGRMultiSurface* poMS2 = (OGRMultiSurface*) poGeom;
         for( int i = 0; i < poMS2->getNumGeometries(); i++ )
@@ -821,7 +825,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
     if( psNode == NULL )
         return NULL;
 
-    const char* pszSRSDimension = CPLGetXMLValue( (CPLXMLNode*) psNode, "srsDimension", NULL);
+    const char* pszSRSDimension =
+        CPLGetXMLValue( (CPLXMLNode*) psNode, "srsDimension", NULL);
     if( pszSRSDimension != NULL )
         nSRSDimension = atoi(pszSRSDimension);
 
@@ -829,16 +834,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         pszSRSName = CPLGetXMLValue( (CPLXMLNode*) psNode, "srsName", NULL);
 
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
-    if (nPseudoBoolGetSecondaryGeometryOption < 0)
-        nPseudoBoolGetSecondaryGeometryOption = CPLTestBool(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
-    bool bGetSecondaryGeometry = bIgnoreGSG ? false : CPL_TO_BOOL(nPseudoBoolGetSecondaryGeometryOption);
+    if( nPseudoBoolGetSecondaryGeometryOption < 0 )
+        nPseudoBoolGetSecondaryGeometryOption =
+            CPLTestBool(CPLGetConfigOption("GML_GET_SECONDARY_GEOM", "NO"));
+    bool bGetSecondaryGeometry =
+        bIgnoreGSG ? false : CPL_TO_BOOL(nPseudoBoolGetSecondaryGeometryOption);
 
     // Arbitrary value, but certainly large enough for reasonable usages.
     if( nRecLevel == 32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Too many recursion levels (%d) while parsing GML geometry.",
-                    nRecLevel );
+                  "Too many recursion levels (%d) while parsing GML geometry.",
+                  nRecLevel );
         return NULL;
     }
 
@@ -858,7 +865,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         // Find outer ring.
         const CPLXMLNode *psChild =
             FindBareXMLChild( psNode, "outerBoundaryIs" );
-        if (psChild == NULL)
+        if( psChild == NULL )
            psChild = FindBareXMLChild( psNode, "exterior");
 
         psChild = GetChildElement(psChild);
@@ -870,10 +877,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 
         // Translate outer ring and add to polygon.
         OGRGeometry* poGeom =
-            GML2OGRGeometry_XMLNode_Internal( psChild,
-                                              nPseudoBoolGetSecondaryGeometryOption,
-                                              nRecLevel + 1, nSRSDimension,
-                                              pszSRSName );
+            GML2OGRGeometry_XMLNode_Internal(
+                psChild,
+                nPseudoBoolGetSecondaryGeometryOption,
+                nRecLevel + 1, nSRSDimension,
+                pszSRSName );
         if( poGeom == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior ring");
@@ -921,22 +929,25 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
              psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
-                && (EQUAL(BareGMLElement(psChild->pszValue),"innerBoundaryIs") ||
-                    EQUAL(BareGMLElement(psChild->pszValue),"interior")))
+                && (EQUAL(BareGMLElement(psChild->pszValue),
+                          "innerBoundaryIs") ||
+                    EQUAL(BareGMLElement(psChild->pszValue), "interior")))
             {
                 const CPLXMLNode* psInteriorChild = GetChildElement(psChild);
-                if (psInteriorChild != NULL)
+                if( psInteriorChild != NULL )
                     poGeom =
-                        GML2OGRGeometry_XMLNode_Internal( psInteriorChild,
-                                                          nPseudoBoolGetSecondaryGeometryOption,
-                                                          nRecLevel + 1,
-                                                          nSRSDimension,
-                                                          pszSRSName );
+                        GML2OGRGeometry_XMLNode_Internal(
+                            psInteriorChild,
+                            nPseudoBoolGetSecondaryGeometryOption,
+                            nRecLevel + 1,
+                            nSRSDimension,
+                            pszSRSName );
                 else
                     poGeom = NULL;
-                if (poGeom == NULL)
+                if( poGeom == NULL )
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined, "Invalid interior ring");
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "Invalid interior ring");
                     delete poCP;
                     return NULL;
                 }
@@ -955,7 +966,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 {
                     if( !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
                     {
-                        if (wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
+                        if( wkbFlatten(poGeom->getGeometryType()) ==
+                            wkbLineString )
                         {
                             OGRLineString* poLS = (OGRLineString*)poGeom;
                             poGeom = OGRCurve::CastToLinearRing(poLS);
@@ -965,7 +977,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                             // Might fail if some rings are not closed.
                             // We used to be tolerant about that with Polygon.
                             // but we have become stricter with CurvePolygon.
-                            poCP = OGRSurface::CastToCurvePolygon( (OGRPolygon*)poCP );
+                            poCP = OGRSurface::CastToCurvePolygon(
+                                (OGRPolygon*)poCP );
                             if( poCP == NULL )
                             {
                                 delete poGeom;
@@ -1030,14 +1043,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             {
                 const CPLXMLNode* psCurveChild = GetChildElement(psChild);
                 OGRGeometry* poGeom = NULL;
-                if (psCurveChild != NULL)
+                if( psCurveChild != NULL )
                 {
                     poGeom =
-                        GML2OGRGeometry_XMLNode_Internal( psCurveChild,
-                                                          nPseudoBoolGetSecondaryGeometryOption,
-                                                          nRecLevel + 1,
-                                                          nSRSDimension,
-                                                          pszSRSName );
+                        GML2OGRGeometry_XMLNode_Internal(
+                            psCurveChild,
+                            nPseudoBoolGetSecondaryGeometryOption,
+                            nRecLevel + 1,
+                            nSRSDimension,
+                            pszSRSName );
                 }
                 else
                 {
@@ -1251,7 +1265,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
     if( EQUAL(pszBaseGeometry,"Arc") ||
         EQUAL(pszBaseGeometry,"Circle") )
     {
-        OGRLineString   *poLine = new OGRLineString();
+        OGRLineString *poLine = new OGRLineString();
 
         if( !ParseGMLCoordinates( psNode, poLine, nSRSDimension ) ||
             poLine->getNumPoints() != 3 )
@@ -1269,53 +1283,57 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         double dy01 = y1 - y0;
         double dx12 = x2 - x1;
         double dy12 = y2 - y1;
-        double c01 = dx01 * (x0 + x1) / 2 + dy01 * (y0 + y1) / 2;
-        double c12 = dx12 * (x1 + x2) / 2 + dy12 * (y1 + y2) / 2;
+        double c01 = dx01 * (x0 + x1) / 2.0 + dy01 * (y0 + y1) / 2.0;
+        double c12 = dx12 * (x1 + x2) / 2.0 + dy12 * (y1 + y2) / 2.0;
         double det = dx01 * dy12 - dx12 * dy01;
-        if (det == 0)
+        if( det == 0 )
         {
             return poLine;
         }
-        double cx =  (c01 * dy12 - c12 * dy01) / det;
-        double cy =  (- c01 * dx12 + c12 * dx01) / det;
+        double cx = (c01 * dy12 - c12 * dy01) / det;
+        double cy = (-c01 * dx12 + c12 * dx01) / det;
 
         double alpha0 = atan2(y0 - cy, x0 - cx);
         double alpha1 = atan2(y1 - cy, x1 - cx);
         double alpha2 = atan2(y2 - cy, x2 - cx);
         double alpha3;
+        // TODO(schwehr): Use a dist function.
         double R = sqrt((x0 - cx) * (x0 - cx) + (y0 - cy) * (y0 - cy));
 
         // If det is negative, the orientation if clockwise.
-        if (det < 0)
+        if( det < 0 )
         {
-            if (alpha1 > alpha0)
-                alpha1 -= 2 * M_PI;
-            if (alpha2 > alpha1)
-                alpha2 -= 2 * M_PI;
-            alpha3 = alpha0 - 2 * M_PI;
+            if( alpha1 > alpha0 )
+                alpha1 -= 2.0 * M_PI;
+            if( alpha2 > alpha1 )
+                alpha2 -= 2.0 * M_PI;
+            alpha3 = alpha0 - 2.0 * M_PI;
         }
         else
         {
-            if (alpha1 < alpha0)
-                alpha1 += 2 * M_PI;
-            if (alpha2 < alpha1)
-                alpha2 += 2 * M_PI;
-            alpha3 = alpha0 + 2 * M_PI;
+            if( alpha1 < alpha0 )
+                alpha1 += 2.0 * M_PI;
+            if( alpha2 < alpha1 )
+                alpha2 += 2.0 * M_PI;
+            alpha3 = alpha0 + 2.0 * M_PI;
         }
 
         CPLAssert((alpha0 <= alpha1 && alpha1 <= alpha2 && alpha2 <= alpha3) ||
                   (alpha0 >= alpha1 && alpha1 >= alpha2 && alpha2 >= alpha3));
 
-        int nSign = (det >= 0) ? 1 : -1;
+        const int nSign = (det >= 0) ? 1 : -1;
 
-        double dfRemainder;
-        double dfStep = CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * M_PI;
+        const double dfStep =
+            CPLAtof(CPLGetConfigOption("OGR_ARC_STEPSIZE","4")) / 180 * M_PI;
 
-        // make sure the segments are not too short
-        double dfMinStepLength = CPLAtof( CPLGetConfigOption("OGR_ARC_MINLENGTH","0") );
-        if ( dfMinStepLength > 0.0 && dfStep * R < dfMinStepLength )
+        // Make sure the segments are not too short.
+        const double dfMinStepLength =
+            CPLAtof( CPLGetConfigOption("OGR_ARC_MINLENGTH", "0") );
+        if( dfMinStepLength > 0.0 && dfStep * R < dfMinStepLength )
         {
-            CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with segment length %lf at radius %lf; min segment length is %lf)",
+            CPLDebug( "GML",
+                      "Increasing arc step to %lf° (was %lf° with segment "
+                      "length %lf at radius %lf; min segment length is %lf)",
                       dfMinStepLength * 180.0 / M_PI / R,
                       dfStep * 180.0 / M_PI,
                       dfStep * R,
@@ -1324,21 +1342,23 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             dfStep = dfMinStepLength / R;
         }
 
-        if (dfStep < 4. / 180 * M_PI)
+        if( dfStep < 4.0 / 180 * M_PI )
         {
-            CPLDebug( "GML", "Increasing arc step to %lf° (was %lf° with length %lf at radius %lf).",
-                      4. / 180 * M_PI,
+            CPLDebug( "GML",
+                      "Increasing arc step to %lf° (was %lf° with length %lf "
+                      "at radius %lf).",
+                      4.0 / 180 * M_PI,
                       dfStep * 180.0 / M_PI,
                       dfStep * R,
                       R );
-            dfStep = 4. / 180 * M_PI;
+            dfStep = 4.0 / 180 * M_PI;
         }
 
         poLine->setNumPoints(0);
 
         dfStep *= nSign;
 
-        dfRemainder = fmod(alpha1 - alpha0, dfStep) / 2.0;
+        double dfRemainder = fmod(alpha1 - alpha0, dfStep) / 2.0;
 
         poLine->addPoint(x0, y0);
 
@@ -1360,7 +1380,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             poLine->addPoint(cx + R * cos(alpha), cy + R * sin(alpha));
         }
 
-        if (EQUAL(pszBaseGeometry,"Circle"))
+        if( EQUAL(pszBaseGeometry,"Circle") )
         {
             for( double alpha = alpha2;
                  (alpha - alpha3) * nSign < 0;
@@ -1625,9 +1645,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                 double dfLat = 0.0;
                 if( bInvertedAxisOrder )
                 {
-                    OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
-                                             dfDistance, 90-dfAngle, /* not sure of angle conversion here...*/
-                                             &dfLat, &dfLong);
+                    OGRXPlane_ExtendPosition(
+                       dfCenterX, dfCenterY,
+                       dfDistance,
+                       // Not sure of angle conversion here.
+                       90.0 - dfAngle,
+                       &dfLat, &dfLong);
                     p.setY( dfLat );
                     p.setX( dfLong );
                 }
@@ -1646,7 +1669,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             if( bInvertedAxisOrder )
             {
                 OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
-                                         dfDistance, 90-dfEndAngle, /* not sure of angle conversion here...*/
+                                         dfDistance,
+                                         // Not sure of angle conversion here.
+                                         90.0 - dfEndAngle,
                                          &dfLat, &dfLong);
                 p.setY( dfLat );
                 p.setX( dfLong );
@@ -1825,8 +1850,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"Envelope") )
     {
-        const CPLXMLNode* psLowerCorner = FindBareXMLChild( psNode, "lowerCorner");
-        const CPLXMLNode* psUpperCorner = FindBareXMLChild( psNode, "upperCorner");
+        const CPLXMLNode* psLowerCorner =
+            FindBareXMLChild( psNode, "lowerCorner");
+        const CPLXMLNode* psUpperCorner =
+            FindBareXMLChild( psNode, "upperCorner");
         if( psLowerCorner == NULL || psUpperCorner == NULL )
             return NULL;
         const char* pszLowerCorner = GetElementText(psLowerCorner);
@@ -1865,12 +1892,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         return poPoly;
     }
 
-/* -------------------------------------------------------------------- */
-/*      MultiPolygon / MultiSurface / CompositeSurface                  */
-/*                                                                      */
-/* For CompositeSurface, this is a very rough approximation to deal with*/
-/* it as a MultiPolygon, because it can several faces of a 3D volume... */
-/* -------------------------------------------------------------------- */
+/* --------------------------------------------------------------------- */
+/*      MultiPolygon / MultiSurface / CompositeSurface                   */
+/*                                                                       */
+/* For CompositeSurface, this is a very rough approximation to deal with */
+/* it as a MultiPolygon, because it can several faces of a 3D volume.    */
+/* --------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"MultiPolygon") ||
         EQUAL(pszBaseGeometry,"MultiSurface") ||
         EQUAL(pszBaseGeometry,"CompositeSurface") )
@@ -1882,7 +1909,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         bool bReconstructTopology = false;
         bool bChildrenAreAllPolygons = true;
 
-        // Iterate over children
+        // Iterate over children.
         for( const CPLXMLNode *psChild = psNode->psChild;
              psChild != NULL;
              psChild = psChild->psNext )
@@ -1894,7 +1921,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             {
                 const CPLXMLNode* psSurfaceChild = GetChildElement(psChild);
 
-                if (psSurfaceChild != NULL)
+                if( psSurfaceChild != NULL )
                 {
                     // Cf #5421 where there are PolygonPatch with only inner
                     // rings.
@@ -1925,7 +1952,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                           nPseudoBoolGetSecondaryGeometryOption,
                                           nRecLevel + 1,
                                           nSRSDimension, pszSRSName );
-                                if (poRing == NULL)
+                                if( poRing == NULL )
                                 {
                                     CPLError( CE_Failure, CPLE_AppDefined, "Invalid interior ring");
                                     delete poMS;
@@ -1954,9 +1981,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                             GML2OGRGeometry_XMLNode_Internal( psSurfaceChild,
                                   nPseudoBoolGetSecondaryGeometryOption,
                                   nRecLevel + 1, nSRSDimension, pszSRSName );
-                        if( !GML2OGRGeometry_AddToMultiSurface(poMS, poGeom,
-                                                               pszMemberElement,
-                                                               bChildrenAreAllPolygons) )
+                        if( !GML2OGRGeometry_AddToMultiSurface(
+                                 poMS, poGeom,
+                                 pszMemberElement,
+                                 bChildrenAreAllPolygons) )
                         {
                             delete poGeom;
                             delete poMS;
@@ -1965,8 +1993,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     }
                 }
             }
-            else if (psChild->eType == CXT_Element
-                    && EQUAL(pszMemberElement,"surfaceMembers") )
+            else if( psChild->eType == CXT_Element
+                     && EQUAL(pszMemberElement,"surfaceMembers") )
             {
                 for( const CPLXMLNode *psChild2 = psChild->psChild;
                      psChild2 != NULL;
@@ -2046,18 +2074,21 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             {
                 const CPLXMLNode* psPointChild = GetChildElement(psChild);
 
-                if (psPointChild != NULL)
+                if( psPointChild != NULL )
                 {
                     OGRGeometry *poPointMember =
                         GML2OGRGeometry_XMLNode_Internal( psPointChild,
                               nPseudoBoolGetSecondaryGeometryOption,
                               nRecLevel + 1, nSRSDimension, pszSRSName );
-                    if( poPointMember == NULL
-                        || wkbFlatten(poPointMember->getGeometryType()) != wkbPoint )
+                    if( poPointMember == NULL ||
+                        wkbFlatten(poPointMember->getGeometryType()) !=
+                        wkbPoint )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
-                                "MultiPoint: Got %.500s geometry as pointMember instead of POINT",
-                                poPointMember ? poPointMember->getGeometryName() : "NULL" );
+                                  "MultiPoint: Got %.500s geometry as "
+                                  "pointMember instead of POINT",
+                                  poPointMember
+                                  ? poPointMember->getGeometryName() : "NULL" );
                         delete poPointMember;
                         delete poMP;
                         return NULL;
@@ -2066,8 +2097,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     poMP->addGeometryDirectly( poPointMember );
                 }
             }
-            else if (psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"pointMembers") )
+            else if( psChild->eType == CXT_Element
+                     && EQUAL(BareGMLElement(psChild->pszValue),
+                              "pointMembers") )
             {
                 for( const CPLXMLNode *psChild2 = psChild->psChild;
                      psChild2 != NULL;
@@ -2079,7 +2111,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                         OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal(
                             psChild2, nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName );
-                        if (poGeom == NULL)
+                        if( poGeom == NULL )
                         {
                             CPLError( CE_Failure, CPLE_AppDefined, "Invalid %s",
                                     BareGMLElement(psChild2->pszValue));
@@ -2087,15 +2119,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                             return NULL;
                         }
 
-                        if (wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
+                        if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
                         {
                             poMP->addGeometryDirectly( (OGRPoint *)poGeom );
                         }
                         else
                         {
                             CPLError( CE_Failure, CPLE_AppDefined,
-                                    "Got %.500s geometry as pointMember instead of POINT.",
-                                    poGeom->getGeometryName() );
+                                      "Got %.500s geometry as pointMember "
+                                      "instead of POINT.",
+                                      poGeom->getGeometryName() );
                             delete poGeom;
                             delete poMP;
                             return NULL;
@@ -2191,8 +2224,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     }
             }
             }
-            else if (psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"curveMembers") )
+            else if( psChild->eType == CXT_Element &&
+                     EQUAL(BareGMLElement(psChild->pszValue), "curveMembers") )
             {
                 for( const CPLXMLNode *psChild2 = psChild->psChild;
                      psChild2 != NULL;
@@ -2203,7 +2236,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                         OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal(
                             psChild2, nPseudoBoolGetSecondaryGeometryOption,
                             nRecLevel + 1, nSRSDimension, pszSRSName );
-                        if (poGeom == NULL ||
+                        if( poGeom == NULL ||
                             !OGR_GT_IsCurve(poGeom->getGeometryType()) )
                         {
                             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2256,8 +2289,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     OGRGeometry*poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psChild2, nPseudoBoolGetSecondaryGeometryOption,
                         nRecLevel + 1, nSRSDimension, pszSRSName );
-                    if( !GML2OGRGeometry_AddToCompositeCurve(poCC, poGeom,
-                                                                bChildrenAreAllLineString) )
+                    if( !GML2OGRGeometry_AddToCompositeCurve(
+                             poCC, poGeom, bChildrenAreAllLineString) )
                     {
                         delete poGeom;
                         delete poCC;
@@ -2265,8 +2298,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     }
                 }
             }
-            else if (psChild->eType == CXT_Element
-                && EQUAL(BareGMLElement(psChild->pszValue),"curveMembers") )
+            else if( psChild->eType == CXT_Element &&
+                     EQUAL(BareGMLElement(psChild->pszValue), "curveMembers") )
             {
                 for( const CPLXMLNode *psChild2 = psChild->psChild;
                      psChild2 != NULL;
@@ -2413,7 +2446,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 /*      MultiGeometry                                                   */
 /* CAUTION: OGR < 1.8.0 produced GML with GeometryCollection, which is  */
 /* not a valid GML 2 keyword! The right name is MultiGeometry. Let's be */
-/* tolerant with the non compliant files we produced...                 */
+/* tolerant with the non compliant files we produced.                   */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"MultiGeometry") ||
         EQUAL(pszBaseGeometry,"GeometryCollection") )
@@ -2430,7 +2463,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             {
                 const CPLXMLNode* psGeometryChild = GetChildElement(psChild);
 
-                if (psGeometryChild != NULL)
+                if( psGeometryChild != NULL )
                 {
                     OGRGeometry *poGeom = GML2OGRGeometry_XMLNode_Internal(
                         psGeometryChild, nPseudoBoolGetSecondaryGeometryOption,
@@ -2438,7 +2471,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                     if( poGeom == NULL )
                     {
                         CPLError( CE_Failure, CPLE_AppDefined,
-                                "GeometryCollection: Failed to get geometry in geometryMember" );
+                                  "GeometryCollection: Failed to get geometry "
+                                  "in geometryMember" );
                         delete poGeom;
                         delete poGC;
                         return NULL;
@@ -2757,13 +2791,16 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 
 #ifndef HAVE_GEOS
             static bool bWarningAlreadyEmitted = false;
-            if (!bWarningAlreadyEmitted)
+            if( !bWarningAlreadyEmitted )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Interpreating that GML TopoSurface geometry requires GDAL to be built with GEOS support.\n"
-                        "As a workaround, you can try defining the GML_FACE_HOLE_NEGATIVE configuration option\n"
-                        "to YES, so that the 'old' interpretation algorithm is used. But be warned that\n"
-                        "the result might be incorrect.\n");
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Interpreating that GML TopoSurface geometry requires GDAL "
+                    "to be built with GEOS support.  As a workaround, you can "
+                    "try defining the GML_FACE_HOLE_NEGATIVE configuration "
+                    "option to YES, so that the 'old' interpretation algorithm "
+                    "is used. But be warned that the result might be "
+                    "incorrect.");
                 bWarningAlreadyEmitted = true;
             }
             return NULL;
@@ -3022,25 +3059,25 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
               }
             }
 
-/*            if( poFaceGeom == NULL )
-            {
-              CPLError( CE_Failure, CPLE_AppDefined,
-                        "Failed to get Face geometry in directedFace" );
-              delete poFaceGeom;
-              return NULL;
-            }*/
+            // if( poFaceGeom == NULL )
+            // {
+            //     CPLError( CE_Failure, CPLE_AppDefined,
+            //               "Failed to get Face geometry in directedFace" );
+            //     delete poFaceGeom;
+            //     return NULL;
+            // }
 
             poTS->addRingDirectly( poFaceGeom );
           }
         }
 
-/*        if( poTS == NULL )
-        {
-          CPLError( CE_Failure, CPLE_AppDefined,
-                    "Failed to get TopoSurface geometry" );
-          delete poTS;
-          return NULL;
-        }*/
+        // if( poTS == NULL )
+        // {
+        //     CPLError( CE_Failure, CPLE_AppDefined,
+        //               "Failed to get TopoSurface geometry" );
+        //     delete poTS;
+        //     return NULL;
+        // }
 
         return poTS;
     }
@@ -3132,7 +3169,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 
         // Find trianglePatches.
         const CPLXMLNode *psChild = FindBareXMLChild( psNode, "trianglePatches" );
-        if (psChild == NULL)
+        if( psChild == NULL )
             psChild = FindBareXMLChild( psNode, "patches" );
 
         psChild = GetChildElement(psChild);
@@ -3185,7 +3222,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         psChild = GetChildElement(psChild);
         if( psChild == NULL )
         {
-            /* <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid GML */
+            // <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid
+            // GML.
             return new OGRPolygon();
         }
 
@@ -3204,7 +3242,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
         if( psChild != NULL )
         {
             static bool bWarnedOnce = false;
-            if (!bWarnedOnce)
+            if( !bWarnedOnce )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "<interior> elements of <Solid> are ignored");
@@ -3343,7 +3381,7 @@ OGRGeometryH OGR_G_CreateFromGML( const char *pszGML )
         return NULL;
     }
 
-/* ------------------------------------------------------------ -------- */
+/* -------------------------------------------------------------------- */
 /*      Try to parse the XML snippet using the MiniXML API.  If this    */
 /*      fails, we assume the minixml api has already posted a CPL       */
 /*      error, and just return NULL.                                    */
