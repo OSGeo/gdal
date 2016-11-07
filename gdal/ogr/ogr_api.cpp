@@ -134,7 +134,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
@@ -181,7 +181,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
@@ -228,7 +228,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
@@ -275,7 +275,7 @@ double OGR_G_GetM( OGRGeometryH hGeom, int i )
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
@@ -325,9 +325,9 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
     {
       case wkbPoint:
       {
-        if (pabyX) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
-        if (pabyY) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
-        if (pabyZ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
+        if( pabyX ) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
+        if( pabyY ) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
+        if( pabyZ ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
         return 1;
       }
       break;
@@ -387,10 +387,10 @@ int OGR_G_GetPointsZM( OGRGeometryH hGeom,
     {
       case wkbPoint:
       {
-        if (pabyX) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
-        if (pabyY) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
-        if (pabyZ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
-        if (pabyM) *((double*)pabyM) = ((OGRPoint *)hGeom)->getM();
+        if( pabyX ) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
+        if( pabyY ) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
+        if( pabyZ ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
+        if( pabyM ) *((double*)pabyM) = ((OGRPoint *)hGeom)->getM();
         return 1;
       }
       break;
@@ -453,7 +453,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = 0;
@@ -522,7 +522,7 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
       case wkbCircularString:
       {
           OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-          if (i < 0 || i >= poSC->getNumPoints())
+          if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = 0;
@@ -674,9 +674,9 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
       {
         ((OGRPoint *) hGeom)->setX( *( (double *)pabyX ) );
         ((OGRPoint *) hGeom)->setY( *( (double *)pabyY ) );
-        if (pabyZ)
+        if( pabyZ )
             ((OGRPoint *) hGeom)->setZ( *(double *)pabyZ );
-        if (pabyM)
+        if( pabyM )
             ((OGRPoint *) hGeom)->setM( *(double *)pabyM );
         break;
       }
@@ -692,11 +692,11 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
              ((nMStride == 0 && pabyM == NULL) ||
               (nMStride == (int)sizeof(double) && pabyM != NULL)) )
         {
-            if (!pabyZ && !pabyM)
+            if( !pabyZ && !pabyM )
                 poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY );
-            else if (pabyZ && !pabyM)
+            else if( pabyZ && !pabyM )
                 poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ );
-            else if (!pabyZ && pabyM)
+            else if( !pabyZ && pabyM )
                 poSC->setPointsM( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyM );
             else
                 poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY, (double *)pabyZ, (double *)pabyM );
@@ -705,7 +705,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
         {
           poSC->setNumPoints( nPointsIn );
 
-          if (!pabyZ && !pabyM)
+          if( !pabyZ && !pabyM )
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
@@ -714,7 +714,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                   poSC->setPoint( i, x, y );
               }
           }
-          else if (pabyZ && !pabyM)
+          else if( pabyZ && !pabyM )
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
@@ -724,7 +724,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                   poSC->setPoint( i, x, y, z );
               }
           }
-          else if (!pabyZ && pabyM)
+          else if( !pabyZ && pabyM )
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
@@ -798,7 +798,7 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          if (i < 0)
+          if( i < 0 )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
@@ -855,7 +855,7 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          if (i < 0)
+          if( i < 0 )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
@@ -914,7 +914,7 @@ void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          if (i < 0)
+          if( i < 0 )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
@@ -975,7 +975,7 @@ void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          if (i < 0)
+          if( i < 0 )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
