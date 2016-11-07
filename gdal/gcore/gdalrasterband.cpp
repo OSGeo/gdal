@@ -230,7 +230,7 @@ GDALRasterBand::~GDALRasterBand()
  *
  * @param nYSize The height of the region of the band to be accessed in lines.
  *
- * @param pData The buffer into which the data should be read, or from which
+ * @param[in,out] pData The buffer into which the data should be read, or from which
  * it should be written. This buffer must contain at least nBufXSize *
  * nBufYSize words of type eBufType. It is organized in left to right,
  * top to bottom pixel order. Spacing is controlled by the nPixelSpace,
@@ -254,7 +254,7 @@ GDALRasterBand::~GDALRasterBand()
  * pData to the start of the next. If defaulted (0) the size of the datatype
  * eBufType * nBufXSize is used.
  *
- * @param psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg structure with additional
+ * @param[in] psExtraArg (new in GDAL 2.0) pointer to a GDALRasterIOExtraArg structure with additional
  * arguments to specify resampling and progress callback, or NULL for default
  * behaviour. The GDAL_RASTERIO_RESAMPLING configuration option can also be defined
  * to override the default resampling to one of BILINEAR, CUBIC, CUBICSPLINE,
