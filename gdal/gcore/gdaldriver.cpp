@@ -1644,7 +1644,7 @@ int GDALValidateOptions( const char* pszOptionList,
                     }
                     ++pszValueIter;
                 }
-                if( *pszValueIter == '0' )
+                if( *pszValueIter == '\0' )
                 {
                     if( pszMin && atoi(pszValue) < atoi(pszMin) )
                     {
@@ -1677,7 +1677,7 @@ int GDALValidateOptions( const char* pszOptionList,
                         break;
                     }
                     ++pszValueIter;
-                    if( *pszValueIter == '0' )
+                    if( *pszValueIter == '\0' )
                     {
                         if( pszMin && atoi(pszValue) < atoi(pszMin) )
                         {
