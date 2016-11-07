@@ -1168,11 +1168,10 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
 /*      Try to set the GEOGCS info.                                     */
 /* -------------------------------------------------------------------- */
 
-    OGRErr eErr = OGRERR_NONE;
     CPLXMLNode *psSubXML = CPLGetXMLNode( psCRS, "baseCRS.GeographicCRS" );
     if( psSubXML != NULL )
     {
-        eErr = importGeogCSFromXML( poSRS, psSubXML );
+        const OGRErr eErr = importGeogCSFromXML( poSRS, psSubXML );
         if( eErr != OGRERR_NONE )
             return eErr;
     }
