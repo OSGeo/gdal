@@ -398,7 +398,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
          psPos != NULL;
          psPos = psPos->psNext )
     {
-        if( psPos->eType != CXT_Element  )
+        if( psPos->eType != CXT_Element )
             continue;
 
         const char* pszSubElement = BareGMLElement(psPos->pszValue);
@@ -409,7 +409,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode, OGRGeometry *poGe
                  psPointPropertyIter != NULL;
                  psPointPropertyIter = psPointPropertyIter->psNext )
             {
-                if( psPointPropertyIter->eType != CXT_Element  )
+                if( psPointPropertyIter->eType != CXT_Element )
                     continue;
 
                 const char* pszBareElement =
@@ -1820,7 +1820,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry,"BoxType") || EQUAL(pszBaseGeometry,"Box") )
     {
-        OGRLineString  oPoints;
+        OGRLineString oPoints;
 
         if( !ParseGMLCoordinates( psNode, &oPoints, nSRSDimension ) )
             return NULL;
@@ -2541,9 +2541,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             if( poGeom == NULL
                 || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
             {
-                //  CPLError( CE_Failure, CPLE_AppDefined,
-                //            "Got %.500s geometry as Member instead of POINT.",
-                //            poGeom ? poGeom->getGeometryName() : "NULL" );
+                // CPLError( CE_Failure, CPLE_AppDefined,
+                //           "Got %.500s geometry as Member instead of POINT.",
+                //           poGeom ? poGeom->getGeometryName() : "NULL" );
                 if( poGeom != NULL) delete poGeom;
                 goto nonode;
             }
@@ -2582,9 +2582,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
             if( poGeom == NULL
                 || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
             {
-                //  CPLError( CE_Failure, CPLE_AppDefined,
-                //            "Got %.500s geometry as Member instead of POINT.",
-                //            poGeom ? poGeom->getGeometryName() : "NULL" );
+                // CPLError( CE_Failure, CPLE_AppDefined,
+                //           "Got %.500s geometry as Member instead of POINT.",
+                //           poGeom ? poGeom->getGeometryName() : "NULL" );
                 if( poGeom != NULL) delete poGeom;
                 goto nonode;
             }

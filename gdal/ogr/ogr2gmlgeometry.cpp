@@ -116,8 +116,8 @@ static void AppendCoordinateList( OGRLineString *poLine,
                                   size_t *pnMaxLength )
 
 {
-    char        szCoordinate[256];
-    bool        b3D = wkbHasZ(poLine->getGeometryType()) != FALSE;
+    char szCoordinate[256] = {};
+    bool b3D = wkbHasZ(poLine->getGeometryType()) != FALSE;
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
@@ -207,7 +207,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( eType == wkbPoint )
     {
-        char    szCoordinate[256];
+        char szCoordinate[256] = {};
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         MakeGMLCoordinate( szCoordinate,
@@ -216,9 +216,10 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
-                "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
-                 szAttributes, szCoordinate );
+        snprintf(
+            *ppszText + *pnLength, *pnMaxLength - *pnLength,
+            "<gml:Point%s><gml:coordinates>%s</gml:coordinates></gml:Point>",
+            szAttributes, szCoordinate );
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
@@ -227,7 +228,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eType == wkbPoint25D )
     {
-        char    szCoordinate[256];
+        char szCoordinate[256] = {};
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
         MakeGMLCoordinate( szCoordinate,
@@ -689,9 +690,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 60 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
-                "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
-                 szAttributes, szCoordinate );
+        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
+                  "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
+                  szAttributes, szCoordinate );
 
         *pnLength += strlen( *ppszText + *pnLength );
     }
@@ -715,7 +716,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         _GrowBuffer( *pnLength + strlen(szCoordinate) + 70 + nAttrsLength,
                      ppszText, pnMaxLength );
 
-        snprintf( *ppszText + *pnLength, *pnMaxLength -  *pnLength,
+        snprintf( *ppszText + *pnLength, *pnMaxLength - *pnLength,
                   "<gml:Point%s><gml:pos>%s</gml:pos></gml:Point>",
                   szAttributes, szCoordinate );
 
@@ -1030,7 +1031,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /*                       OGR_G_ExportToGMLTree()                        */
 /************************************************************************/
 
-/**  Convert a geometry into GML format. */
+/** Convert a geometry into GML format. */
 CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 
 {
@@ -1038,7 +1039,7 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
     if( pszText == NULL )
         return NULL;
 
-    CPLXMLNode  *psTree = CPLParseXMLString( pszText );
+    CPLXMLNode *psTree = CPLParseXMLString( pszText );
 
     CPLFree( pszText );
 

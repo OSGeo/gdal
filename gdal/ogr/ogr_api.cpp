@@ -466,7 +466,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
             *pdfX = poSC->getX( i );
             *pdfY = poSC->getY( i );
             if( pdfZ != NULL )
-                *pdfZ =  poSC->getZ( i );
+                *pdfZ = poSC->getZ( i );
           }
       }
       break;
@@ -537,9 +537,9 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
             *pdfX = poSC->getX( i );
             *pdfY = poSC->getY( i );
             if( pdfZ != NULL )
-                *pdfZ =  poSC->getZ( i );
+                *pdfZ = poSC->getZ( i );
             if( pdfM != NULL )
-                *pdfM =  poSC->getM( i );
+                *pdfM = poSC->getM( i );
           }
       }
       break;
@@ -685,12 +685,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
       {
         OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
 
-        if(  nXStride == (int)sizeof(double) &&
-             nYStride == (int)sizeof(double) &&
-             ((nZStride == 0 && pabyZ == NULL) ||
-              (nZStride == (int)sizeof(double) && pabyZ != NULL)) &&
-             ((nMStride == 0 && pabyM == NULL) ||
-              (nMStride == (int)sizeof(double) && pabyM != NULL)) )
+        if( nXStride == (int)sizeof(double) &&
+            nYStride == (int)sizeof(double) &&
+            ((nZStride == 0 && pabyZ == NULL) ||
+             (nZStride == (int)sizeof(double) && pabyZ != NULL)) &&
+            ((nMStride == 0 && pabyM == NULL) ||
+             (nMStride == (int)sizeof(double) && pabyM != NULL)) )
         {
             if( !pabyZ && !pabyM )
                 poSC->setPoints( nPointsIn, (double *)pabyX, (double *)pabyY );

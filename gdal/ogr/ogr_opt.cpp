@@ -586,7 +586,7 @@ char **OPTGetParameterList( const char *pszProjectionMethod,
  * returned name should not be modified or freed.
  *
  * @param ppszType location at which to return the parameter type for
- * the parameter.  This pointer may be NULL to skip.  The  returned type
+ * the parameter.  This pointer may be NULL to skip.  The returned type
  * should not be modified or freed.  The type values are described above.
  *
  * @param pdfDefaultValue location at which to put the default value for

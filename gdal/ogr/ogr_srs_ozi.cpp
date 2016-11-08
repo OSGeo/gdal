@@ -277,7 +277,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     }
 
 /*
- *  Note : The following projections have not been implemented yet
+ *  Note: The following projections have not been implemented yet
  *
  */
 
@@ -421,7 +421,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                                      CC_ApproxString, "DELTAZ" ) );
 
     /* -------------------------------------------------------------------- */
-    /*      Verify that we can find the CSV file containing the ellipsoids  */
+    /*     Verify that we can find the CSV file containing the ellipsoids.  */
     /* -------------------------------------------------------------------- */
             if( CSVScanFileByName( CSVFilename( "ozi_ellips.csv" ),
                                    "ELLIPSOID_CODE",
