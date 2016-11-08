@@ -1409,7 +1409,7 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        return ((OGRGeometryCollection *)hGeom)->removeGeometry( iGeom,bDelete);
+        return ((OGRGeometryCollection *)hGeom)->removeGeometry(iGeom, bDelete);
     }
     else
     {
