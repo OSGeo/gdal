@@ -4043,6 +4043,45 @@ def ogr_gml_78():
     return 'success'
 
 ###############################################################################
+# Test SRSNAME_FORMAT
+
+def ogr_gml_79():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+
+    tests = [ [ 'SHORT', 'EPSG:4326', '2 49' ],
+              [ 'OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
+              [ 'OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
+            ]
+    for (srsname_format, expected_srsname, expected_coords) in tests:
+
+        ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
+                options = ['FORMAT=GML3', 'SRSNAME_FORMAT='+srsname_format] )
+        lyr = ds.CreateLayer('firstlayer', srs = sr)
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        geom = ogr.CreateGeometryFromWkt('POINT (2 49)')
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+        ds = None
+
+        f = gdal.VSIFOpenL("/vsimem/ogr_gml_79.xml", "rb")
+        if f is not None:
+            data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+            gdal.VSIFCloseL(f)
+
+        if data.find(expected_srsname) < 0 or data.find(expected_coords) < 0:
+            gdaltest.post_reason('fail')
+            print(srsname_format)
+            print(data)
+            return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gml_79.xml')
+    gdal.Unlink('/vsimem/ogr_gml_79.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4252,12 +4291,13 @@ gdaltest_list = [
     ogr_gml_76,
     ogr_gml_77,
     ogr_gml_78,
+    ogr_gml_79,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [
     ogr_gml_clean_files,
     ogr_gml_1,
-    ogr_gml_77,
+    ogr_gml_79,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

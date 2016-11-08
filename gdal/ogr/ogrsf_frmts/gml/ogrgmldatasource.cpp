@@ -93,7 +93,7 @@ OGRGMLDataSource::OGRGMLDataSource() :
     bIsOutputGML3(false),
     bIsOutputGML3Deegree(false),
     bIsOutputGML32(false),
-    bIsLongSRSRequired(false),
+    eSRSNameFormat(SRSNAME_SHORT),
     bWriteSpaceIndentation(true),
     poWriteGlobalSRS(NULL),
     bWriteGlobalSRS(false),
@@ -149,7 +149,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
                 bool bCoordSwap = false;
                 char* pszSRSName = NULL;
                 if (poWriteGlobalSRS)
-                    pszSRSName = GML_GetSRSName(poWriteGlobalSRS, IsLongSRSRequired(), &bCoordSwap);
+                    pszSRSName = GML_GetSRSName(poWriteGlobalSRS, eSRSNameFormat, &bCoordSwap);
                 else
                     pszSRSName = CPLStrdup("");
                 char szLowerCorner[75], szUpperCorner[75];
@@ -1575,8 +1575,35 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     if (bIsOutputGML3Deegree || bIsOutputGML32)
         bIsOutputGML3 = true;
 
-    bIsLongSRSRequired =
-        CPLTestBool(CSLFetchNameValueDef(papszCreateOptions, "GML3_LONGSRS", "YES"));
+    eSRSNameFormat = (bIsOutputGML3) ? SRSNAME_OGC_URN : SRSNAME_SHORT;
+    if( bIsOutputGML3 ) 
+    {
+        const char* pszLongSRS = CSLFetchNameValue(papszCreateOptions, "GML3_LONGSRS");
+        const char* pszSRSNameFormat = CSLFetchNameValue(papszCreateOptions, "SRSNAME_FORMAT");
+        if( pszSRSNameFormat )
+        {
+            if( pszLongSRS )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                            "Both GML3_LONGSRS and SRSNAME_FORMAT specified. "
+                            "Ignoring GML3_LONGSRS");
+            }
+            if( EQUAL(pszSRSNameFormat, "SHORT") )
+                eSRSNameFormat = SRSNAME_SHORT;
+            else if( EQUAL(pszSRSNameFormat, "OGC_URN") )
+                eSRSNameFormat = SRSNAME_OGC_URN;
+            else if( EQUAL(pszSRSNameFormat, "OGC_URL") )
+                eSRSNameFormat = SRSNAME_OGC_URL;
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                            "Invalid value for SRSNAME_FORMAT. "
+                            "Using SRSNAME_OGC_URN");
+            }
+        }
+        else if( pszLongSRS && !CPLTestBool(pszLongSRS) )
+            eSRSNameFormat = SRSNAME_SHORT;
+    }
 
     bWriteSpaceIndentation =
         CPLTestBool(CSLFetchNameValueDef(papszCreateOptions, "SPACE_INDENTATION", "YES"));

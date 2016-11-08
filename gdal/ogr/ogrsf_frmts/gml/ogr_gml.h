@@ -124,7 +124,7 @@ class OGRGMLDataSource : public OGRDataSource
     bool                bIsOutputGML3;
     bool                bIsOutputGML3Deegree; /* if TRUE, then bIsOutputGML3 is also TRUE */
     bool                bIsOutputGML32; /* if TRUE, then bIsOutputGML3 is also TRUE */
-    bool                bIsLongSRSRequired;
+    OGRGMLSRSNameFormat eSRSNameFormat;
     bool                bWriteSpaceIndentation;
 
     OGRSpatialReference* poWriteGlobalSRS;
@@ -194,7 +194,7 @@ class OGRGMLDataSource : public OGRDataSource
     bool                IsGML3Output() const { return bIsOutputGML3; }
     bool                IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
     bool                IsGML32Output() const { return bIsOutputGML32; }
-    bool                IsLongSRSRequired() const { return bIsLongSRSRequired; }
+    OGRGMLSRSNameFormat GetSRSNameFormat() const { return eSRSNameFormat; }
     int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 
