@@ -896,15 +896,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         if( CSLFetchNameValue(papszNV, "no_uoff") != NULL
             || CSLFetchNameValue(papszNV, "no_off") != NULL )
         {
-            /* From PJ_omerc, when alpha is defined but not gamma */
-            /* the default gamma value is alpha */
-            /*  if( alp || gam )
-                {
-                    if( alp )
-                    {
-                        gamma0 = asin(sin(alpha_c) / D);
-                    if( !gam )
-                        gamma = alpha_c; */
+            // From PJ_omerc, when alpha is defined but not gamma
+            // the default gamma value is alpha.
+            // if( alp || gam )
+            // {
+            //     if( alp )
+            //     {
+            //         gamma0 = asin(sin(alpha_c) / D);
+            //         if( !gam )
+            //             gamma = alpha_c;
             SetHOM( OSR_GDV( papszNV, "lat_0", 0.0 ),
                     OSR_GDV( papszNV, "lonc", 0.0 ),
                     OSR_GDV( papszNV, "alpha", 0.0 ),
@@ -928,7 +928,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ),
                   OSR_GDV( papszNV, "lon_0", 0.0 ),
-                  90.0,  90.0,
+                  90.0, 90.0,
                   OSR_GDV( papszNV, "k", 1.0 ),
                   OSR_GDV( papszNV, "x_0", 0.0 ),
                   OSR_GDV( papszNV, "y_0", 0.0 ) );
@@ -1037,7 +1037,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     const char *pszValue = CSLFetchNameValue(papszNV, "datum");
     if( pszValue == NULL )
     {
-        /* do nothing */
+        // Do nothing.
     }
     else if( (EQUAL(pszValue, "NAD27") || EQUAL(pszValue, "NAD83")
               || EQUAL(pszValue, "WGS84") || EQUAL(pszValue, "WGS72"))
@@ -1410,13 +1410,13 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
 /*                           exportToProj4()                            */
 /************************************************************************/
 
-#define SAFE_PROJ4_STRCAT(szNewStr)  do { \
+#define SAFE_PROJ4_STRCAT(szNewStr) do { \
     if( CPLStrlcat(szProj4, szNewStr, sizeof(szProj4)) >= sizeof(szProj4) ) { \
         CPLError(CE_Failure, CPLE_AppDefined, \
                  "String overflow when formatting proj.4 string"); \
         *ppszProj4 = CPLStrdup(""); \
         return OGRERR_FAILURE; \
-    } } while(0);
+    } } while( false );
 
 /**
  * \brief Export coordinate system in PROJ.4 format.
@@ -1428,14 +1428,16 @@ OGRErr CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH hSRS,
  * LOCAL_CS coordinate systems are not translatable.  An empty string
  * will be returned along with OGRERR_NONE.
  *
- * Special processing for Transverse Mercator with GDAL &gt;= 1.10 and PROJ &gt;= 4.8 :
- * if the OSR_USE_ETMERC configuration option is set to YES, the PROJ.4
+ * Special processing for Transverse Mercator with GDAL &gt;= 1.10 and PROJ
+ * &gt;= 4.8 :
+ * If the OSR_USE_ETMERC configuration option is set to YES, the PROJ.4
  * definition built from the SRS will use the 'etmerc' projection method,
  * rather than the default 'tmerc'. This will give better accuracy (at the
  * expense of computational speed) when reprojection occurs near the edges
  * of the validity area for the projection.
  * Starting with GDAL &gt;= 2.2, setting OSR_USE_ETMERC to NO will expand to the
- * 'tmerc' projection method (useful with PROJ &gt;= 4.9.3, where utm uses etmerc)
+ * 'tmerc' projection method (useful with PROJ &gt;= 4.9.3, where utm uses
+ * etmerc)
  *
  * This method is the equivalent of the C function OSRExportToProj4().
  *
@@ -1485,8 +1487,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     const char *pszProjection = GetAttrValue("PROJECTION");
 
-    char szProj4[512];
-    szProj4[0] = '\0';
+    char szProj4[512] = {};
 
     if( pszProjection == NULL && IsGeographic() )
     {
@@ -2423,11 +2424,11 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         pszPROJ4Ellipse = "GRS80";
     }
 
-    char szEllipseDef[128];
+    char szEllipseDef[128] = {};
 
     if( pszPROJ4Ellipse == NULL )
-      CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+a=%.16g +b=%.16g ",
-                 GetSemiMajor(), GetSemiMinor() );
+        CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+a=%.16g +b=%.16g ",
+                     GetSemiMajor(), GetSemiMinor() );
     else
         CPLsnprintf( szEllipseDef, sizeof(szEllipseDef), "+ellps=%s ",
                  pszPROJ4Ellipse );
@@ -2478,7 +2479,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         szEllipseDef[0] = '\0';
         SAFE_PROJ4_STRCAT( "+nadgrids=" );
         SAFE_PROJ4_STRCAT( pszProj4Grids );
-        SAFE_PROJ4_STRCAT(  " " );
+        SAFE_PROJ4_STRCAT( " " );
         pszPROJ4Datum = NULL;
     }
 
@@ -2558,7 +2559,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         // The ellipsedef may already have been appended and will now
         // be empty, otherwise append now.
         SAFE_PROJ4_STRCAT( szEllipseDef );
-        szEllipseDef[0] = '\0';
+        // szEllipseDef[0] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -2598,7 +2599,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /* -------------------------------------------------------------------- */
 /*      Handle linear units.                                            */
 /* -------------------------------------------------------------------- */
-    const char  *pszPROJ4Units=NULL;
+    const char *pszPROJ4Units=NULL;
     char *pszLinearUnits = NULL;
     double dfLinearConv = GetLinearUnits( &pszLinearUnits );
 
@@ -2634,7 +2635,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have vertical datum grids, attach them to the proj.4 string.*/
+/*   If we have vertical datum grids, attach them to the proj.4 string. */
 /* -------------------------------------------------------------------- */
     const char *pszProj4Geoids = GetExtension( "VERT_DATUM", "PROJ4_GRIDS" );
 
@@ -2642,7 +2643,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         SAFE_PROJ4_STRCAT( "+geoidgrids=" );
         SAFE_PROJ4_STRCAT( pszProj4Geoids );
-        SAFE_PROJ4_STRCAT(  " " );
+        SAFE_PROJ4_STRCAT( " " );
     }
 
 /* -------------------------------------------------------------------- */
