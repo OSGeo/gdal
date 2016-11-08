@@ -1162,7 +1162,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                     dfDistance = OGRXPlane_Distance(p.getX(), p.getY(), p2.getX(), p2.getY());
                                 else
                                     dfDistance = OGRXPlane_Distance(p.getY(), p.getX(), p2.getY(), p2.getX());
-                                //CPLDebug("OGR", "%f %f\n", dfDistance, dfLastCurveApproximateArcRadius / 10 );
+                                // CPLDebug("OGR", "%f %f",
+                                //          dfDistance,
+                                //          dfLastCurveApproximateArcRadius
+                                //          / 10.0 );
                                 if( dfDistance < dfLastCurveApproximateArcRadius / 5 )
                                 {
                                     CPLDebug("OGR", "Moving approximate start of ArcByCenterPoint to end of previous curve");
@@ -1187,7 +1190,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal( const CPLXMLNode *psNode,
                                     dfDistance = OGRXPlane_Distance(p.getX(), p.getY(), p2.getX(), p2.getY());
                                 else
                                     dfDistance = OGRXPlane_Distance(p.getY(), p.getX(), p2.getY(), p2.getX());
-                                //CPLDebug("OGR", "%f %f\n", dfDistance, dfLastCurveApproximateArcRadius / 10 );
+                                // CPLDebug("OGR", "%f %f", dfDistance, dfLastCurveApproximateArcRadius / 10 );
                                 // "A-311 WHEELER AFB OAHU, HI.xml" needs more than 10%
                                 if( dfDistance < dfLastCurveApproximateArcRadius / 5 )
                                 {
