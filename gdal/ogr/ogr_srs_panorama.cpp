@@ -261,7 +261,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     if( padfPrjParams == NULL )
     {
-        padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
+        padfPrjParams = static_cast<double *>(CPLMalloc(8 * sizeof(double)));
         if( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
         for( int i = 0; i < 7; i++ )
