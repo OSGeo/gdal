@@ -757,8 +757,8 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             if( bIsGML3Output )
             {
                 papszOptions = CSLAddString(papszOptions, "FORMAT=GML3");
-                if( poDS->GetSRSNameFormat() == SRSNAME_AUTHORITY )
-                    papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=AUTHORITY");
+                if( poDS->GetSRSNameFormat() == SRSNAME_SHORT )
+                    papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=SHORT");
                 else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URN )
                     papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=OGC_URN");
                 else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URL )
