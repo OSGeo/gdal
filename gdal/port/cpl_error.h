@@ -162,7 +162,13 @@ void CPL_DLL CPL_STDCALL CPLPushErrorHandlerEx( CPLErrorHandler, void* );
 void CPL_DLL CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug );
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
-void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... )  CPL_PRINT_FUNC_FORMAT (2, 3);
+#ifdef WITHOUT_CPLDEBUG
+#define CPLDebug(...)  /* Eat all CPLDebug calls. */
+#else
+void CPL_DLL CPL_STDCALL CPLDebug(const char *, const char *, ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3);
+#endif
+
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int ) CPL_NO_RETURN;
 
 #ifdef DEBUG
