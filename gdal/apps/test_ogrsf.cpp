@@ -3120,7 +3120,8 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL));
     if( poSQLLyr == NULL )
     {
-        printf( "ERROR: ExecuteSQL(%s) failed at line %s (but succeeded before).\n",
+        printf( "ERROR: ExecuteSQL(%s) failed at line %d "
+                "(but succeeded before).\n",
                 osSQL.c_str(), __LINE__ );
         bRet = FALSE;
         return bRet;
