@@ -98,7 +98,7 @@ OGRwkbGeometryType OGRCompoundCurve::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbCompoundCurveZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbCompoundCurveM;
     else if( flags & OGR_G_3D )
         return wkbCompoundCurveZ;
@@ -309,7 +309,7 @@ void OGRCompoundCurve::Value( double dfDistance, OGRPoint *poPoint ) const
     for( int iGeom = 0; iGeom < oCC.nCurveCount; iGeom++ )
     {
         const double dfSegLength = oCC.papoCurves[iGeom]->get_Length();
-        if (dfSegLength > 0)
+        if( dfSegLength > 0 )
         {
             if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                              dfDistance) )
@@ -365,7 +365,7 @@ OGRCompoundCurve::CurveToLine( double dfMaxAngleStepSizeDegrees,
 /*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean  OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
+OGRBoolean OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
 {
     if( poOther == this )
         return TRUE;
@@ -595,7 +595,7 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
 /*                             transform()                              */
 /************************************************************************/
 
-OGRErr  OGRCompoundCurve::transform( OGRCoordinateTransformation *poCT )
+OGRErr OGRCompoundCurve::transform( OGRCoordinateTransformation *poCT )
 {
     return oCC.transform(this, poCT);
 }
