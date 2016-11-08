@@ -620,7 +620,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
-            (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
+            (strcmp(psPlace->pszValue, "place") == 0 ||  // Nominatim.
              strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
         {
             CPLXMLNode* psChild = psPlace->psChild;
@@ -641,7 +641,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                     {
                         oFieldDefn.SetType(OFTReal);
                     }
-                    else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
+                    else if( strcmp(pszName, "lon") == 0 ||  // Nominatim.
                             strcmp(pszName, "lng") == 0 /* Geonames */ )
                     {
                         oFieldDefn.SetType(OFTReal);
@@ -664,7 +664,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
     while( psPlace != NULL )
     {
         if( psPlace->eType == CXT_Element &&
-            (strcmp(psPlace->pszValue, "place") == 0 || /* Nominatim */
+            (strcmp(psPlace->pszValue, "place") == 0 ||  // Nominatim.
              strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
         {
             bool bFoundLat = false;
@@ -695,7 +695,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                             bFoundLat = true;
                             dfLat = CPLAtofM(pszVal);
                         }
-                        else if( strcmp(pszName, "lon") == 0 ||  /* Nominatim */
+                        else if( strcmp(pszName, "lon") == 0 ||  // Nominatim.
                                  strcmp(pszName, "lng") == 0 /* Geonames */ )
                         {
                             bFoundLon = true;
@@ -1388,8 +1388,8 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
  *     country (or a list of countries). The codes must fellow ISO 3166-1, i.e.
  *     gb for United Kingdom, de for Germany, etc.. (Known to work with OSM and
  *     MapQuest Nominatim)
- * <li>LIMIT=number: the number of records to return. Unlimited if not specified.
- *     (Known to work with OSM and MapQuest Nominatim)
+ * <li>LIMIT=number: the number of records to return. Unlimited if not
+ *     specified.  (Known to work with OSM and MapQuest Nominatim)
  * <li>RAW_FEATURE=YES: to specify that a 'raw' field must be added to the
  *     returned feature with the raw XML content.
  * <li>EXTRA_QUERY_PARAMETERS=params: additional parameters for the GET
@@ -1478,7 +1478,7 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
     if( iPos != std::string::npos )
     {
         const CPLString osEnd(osURL.substr(iPos + 5));
-        osURL = osURL.substr(0,iPos);
+        osURL = osURL.substr(0, iPos);
         osURL += CPLSPrintf("%.8f", dfLon);
         osURL += osEnd;
     }
@@ -1487,7 +1487,7 @@ static CPLString OGRGeocodeReverseSubstitute( CPLString osURL,
     if( iPos != std::string::npos )
     {
         const CPLString osEnd(osURL.substr(iPos + 5));
-        osURL = osURL.substr(0,iPos);
+        osURL = osURL.substr(0, iPos);
         osURL += CPLSPrintf("%.8f", dfLat);
         osURL += osEnd;
     }
