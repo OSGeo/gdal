@@ -1105,13 +1105,13 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 
     // Check that all fields are available and that the axis_order field
     // is the one with highest index.
-    if( !( iAxisOrientationField >= 0 &&
-            iAxisOrientationField < iAxisOrderField &&
-            iAxisAbbrevField >= 0 &&
-            iAxisAbbrevField < iAxisOrderField &&
-            iAxisOrderField >= 0 &&
-            iAxisNameCodeField >= 0 &&
-            iAxisNameCodeField < iAxisOrderField ) )
+    if( !(iAxisOrientationField >= 0 &&
+          iAxisOrientationField < iAxisOrderField &&
+          iAxisAbbrevField >= 0 &&
+          iAxisAbbrevField < iAxisOrderField &&
+          iAxisOrderField >= 0 &&
+          iAxisNameCodeField >= 0 &&
+          iAxisNameCodeField < iAxisOrderField) )
     {
         CSLDestroy( papszAxis1 );
         CSLDestroy( papszAxis2 );

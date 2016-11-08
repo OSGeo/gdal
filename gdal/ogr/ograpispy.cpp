@@ -218,7 +218,7 @@ static CPLString OGRAPISpyGetString( const char* pszStr )
             osRet += "\\\\";
         else
             osRet += *pszStr;
-        pszStr ++;
+        pszStr++;
     }
     osRet += "'";
     return osRet;
@@ -364,7 +364,7 @@ static CPLString OGRAPISpyGetGeomType( OGRwkbGeometryType eType )
 
 static CPLString OGRAPISpyGetFieldType(OGRFieldType eType)
 {
-    switch(eType)
+    switch( eType )
     {
         casePrefixOgrDot(OFTInteger)
         casePrefixOgrDot(OFTInteger64)

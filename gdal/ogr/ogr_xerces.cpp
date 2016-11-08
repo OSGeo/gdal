@@ -56,7 +56,7 @@ bool OGRInitializeXerces(void)
     CPLMutexHolderD(&hMutex);
     if( nCounter > 0 )
     {
-        nCounter ++;
+        nCounter++;
         return true;
     }
 
@@ -140,8 +140,8 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
 
     bool bSimpleASCII = true;
     int nChars = 0;
-    for(int i = 0; panXMLString[i] != 0 &&
-                        (nLimitingChars < 0 || i < nLimitingChars); i++ )
+    for( int i = 0; panXMLString[i] != 0 &&
+           (nLimitingChars < 0 || i < nLimitingChars); i++ )
     {
         if( panXMLString[i] > 127 )
         {

@@ -1212,7 +1212,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 {
     OGR_SRSNode *poPROJCS = poRoot->GetNode( "PROJCS" );
 
-    if( poPROJCS == NULL  )
+    if( poPROJCS == NULL )
         return OGRERR_NONE;
 
     if( poPROJCS->GetNode( "PROJECTION" ) == NULL )

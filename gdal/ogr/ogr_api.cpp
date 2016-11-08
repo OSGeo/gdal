@@ -342,7 +342,8 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
       break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Incompatible geometry for operation");
         return 0;
         break;
     }
