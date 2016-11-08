@@ -622,7 +622,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
     {
         if( psPlace->eType == CXT_Element &&
             (strcmp(psPlace->pszValue, "place") == 0 ||  // Nominatim.
-             strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
+             strcmp(psPlace->pszValue, "geoname") == 0) )
         {
             CPLXMLNode* psChild = psPlace->psChild;
             while( psChild != NULL )
@@ -643,7 +643,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                         oFieldDefn.SetType(OFTReal);
                     }
                     else if( strcmp(pszName, "lon") == 0 ||  // Nominatim.
-                            strcmp(pszName, "lng") == 0 /* Geonames */ )
+                             strcmp(pszName, "lng") == 0 )  // Geonames.
                     {
                         oFieldDefn.SetType(OFTReal);
                     }
@@ -666,7 +666,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
     {
         if( psPlace->eType == CXT_Element &&
             (strcmp(psPlace->pszValue, "place") == 0 ||  // Nominatim.
-             strcmp(psPlace->pszValue, "geoname") == 0 /* Geonames */) )
+             strcmp(psPlace->pszValue, "geoname") == 0 ) )  // Geonames.
         {
             bool bFoundLat = false;
             bool bFoundLon = false;
@@ -684,7 +684,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                 if( !(psChild->eType == CXT_Element ||
                       psChild->eType == CXT_Attribute) )
                 {
-                    // do nothing
+                    // Do nothing.
                 }
                 else if( (nIdx = poFDefn->GetFieldIndex(pszName)) >= 0 )
                 {
@@ -697,7 +697,7 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                             dfLat = CPLAtofM(pszVal);
                         }
                         else if( strcmp(pszName, "lon") == 0 ||  // Nominatim.
-                                 strcmp(pszName, "lng") == 0 /* Geonames */ )
+                                 strcmp(pszName, "lng") == 0 )  // Geonames.
                         {
                             bFoundLon = true;
                             dfLon = CPLAtofM(pszVal);
