@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <errno.h>
 #include <iconv.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
 
 static unsigned utf8decode(const char* p, const char* end, int* len)
