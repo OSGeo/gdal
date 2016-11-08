@@ -564,6 +564,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                     size_t *pnMaxLength,
                                     bool bIsSubGeometry,
                                     GMLSRSNameFormat eSRSNameFormat,
+                                    bool bCoordSwap,
                                     bool bLineStringAsCurve,
                                     const char* pszGMLId,
                                     int nSRSDimensionLocFlags,
@@ -584,8 +585,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         poSRS = poParentSRS;
     else
         poSRS = poGeometry->getSpatialReference();
-
-    bool bCoordSwap = false;
 
     char szAttributes[256] = {};
     size_t nAttrsLength = 0;
@@ -608,18 +607,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         if( NULL != pszAuthName && strlen(pszAuthName) < 10 &&
             NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
         {
-            if ( EQUAL( pszAuthName, "EPSG" ) &&
-                eSRSNameFormat != SRSNAME_SHORT &&
-                !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-                 ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
-            {
-                OGRSpatialReference oSRS;
-                if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
-                {
-                    if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
-                        bCoordSwap = true;
-                }
-            }
             if (!bIsSubGeometry)
             {
                 if (eSRSNameFormat == SRSNAME_OGC_URN)
@@ -854,6 +841,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                           "<gml:curveMember>" );
             if( !OGR2GML3GeometryAppend( poCC->getCurve(i), poSRS, ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
+                                         bCoordSwap,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, false, NULL) )
                 return false;
@@ -896,7 +884,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
             if( !OGR2GML3GeometryAppend( poCP->getExteriorRingCurve(), poSRS,
                                          ppszText, pnLength, pnMaxLength,
-                                         true, eSRSNameFormat, bLineStringAsCurve,
+                                         true, eSRSNameFormat, bCoordSwap,
+                                         bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, true, NULL) )
             {
                 return false;
@@ -915,6 +904,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
             if( !OGR2GML3GeometryAppend( poRing, poSRS, ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
+                                         bCoordSwap,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags, true, NULL) )
                 return false;
@@ -997,7 +987,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
             if( !OGR2GML3GeometryAppend( poMember, poSRS,
                                          ppszText, pnLength, pnMaxLength,
-                                         true, eSRSNameFormat, bLineStringAsCurve,
+                                         true, eSRSNameFormat, bCoordSwap,
+                                         bLineStringAsCurve,
                                          pszGMLIdSub, nSRSDimensionLocFlags,
                                          false, NULL ) )
             {
@@ -1202,9 +1193,44 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             pszNamespaceDecl = "http://www.opengis.net/gml/3.2";
         else if( bNamespaceDecl )
             pszNamespaceDecl = "http://www.opengis.net/gml";
-        if( !OGR2GML3GeometryAppend( (OGRGeometry *) hGeometry, NULL, &pszText,
-                                     &nLength, &nMaxLength, false, eSRSNameFormat,
-                                     bLineStringAsCurve, pszGMLId, nSRSDimensionLocFlags, false,
+
+        bool bCoordSwap = false;
+        const char* pszCoordSwap = CSLFetchNameValue(papszOptions, "COORD_SWAP");
+        OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry*>(hGeometry);
+        if( pszCoordSwap )
+            bCoordSwap = CPLTestBool(pszCoordSwap);
+        else
+        {
+            const OGRSpatialReference* poSRS = poGeometry->getSpatialReference();
+            if( poSRS != NULL )
+            {
+                const char* pszTarget = poSRS->IsProjected() ? 
+                                                            "PROJCS" : "GEOGCS";
+                const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
+                const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
+                if( NULL != pszAuthName && NULL != pszAuthCode &&
+                    EQUAL( pszAuthName, "EPSG" ) &&
+                    eSRSNameFormat != SRSNAME_SHORT &&
+                    !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
+                    ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
+                {
+                    OGRSpatialReference oSRS;
+                    if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
+                    {
+                        if (oSRS.EPSGTreatsAsLatLong() ||
+                            oSRS.EPSGTreatsAsNorthingEasting())
+                            bCoordSwap = true;
+                    }
+                }
+            }
+        }
+
+        if( !OGR2GML3GeometryAppend( poGeometry, NULL, &pszText,
+                                     &nLength, &nMaxLength, false,
+                                     eSRSNameFormat,
+                                     bCoordSwap,
+                                     bLineStringAsCurve, pszGMLId,
+                                     nSRSDimensionLocFlags, false,
                                      pszNamespaceDecl ))
         {
             CPLFree( pszText );
