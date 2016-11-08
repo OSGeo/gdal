@@ -559,7 +559,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Search the database for the corresponding datum code.           */
 /* -------------------------------------------------------------------- */
-    const char  *pszFilename = CSVFilename("gcs.override.csv");
+    const char *pszFilename = CSVFilename("gcs.override.csv");
     char szSearchKey[24] = { '\0' };
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nGCSCode );
 
@@ -923,8 +923,8 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     const char *pszFilename = CSVFilename( "pcs.override.csv" );
     char szSearchKey[24] = { '\0' };
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nPCSCode );
-    char  **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
-                                             szSearchKey, CC_Integer );
+    char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
+                                            szSearchKey, CC_Integer );
 
     if( papszRecord == NULL )
     {
@@ -1666,8 +1666,8 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
 /* -------------------------------------------------------------------- */
 /*      Fetch record from the vertcs.csv or override file.              */
 /* -------------------------------------------------------------------- */
-    const char  *pszFilename = CSVFilename( "vertcs.override.csv" );
-    char szSearchKey[24] = { 0 };
+    const char *pszFilename = CSVFilename( "vertcs.override.csv" );
+    char szSearchKey[24] = {};
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nVertCSCode );
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                      szSearchKey, CC_Integer );
@@ -1757,7 +1757,7 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
 /* -------------------------------------------------------------------- */
 /*      Fetch record from the compdcs.csv or override file.             */
 /* -------------------------------------------------------------------- */
-    char szSearchKey[24] = { 0 };
+    char szSearchKey[24] = {};
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nCCSCode );
 
 // So far no override file needed.
@@ -1766,7 +1766,7 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
 //                                     szSearchKey, CC_Integer );
 
     //if( papszRecord == NULL )
-    const char  *pszFilename = CSVFilename( "compdcs.csv" );
+    const char *pszFilename = CSVFilename( "compdcs.csv" );
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                             szSearchKey, CC_Integer );
 
@@ -2563,7 +2563,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
         pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
         pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
 
-        if( pszAuthName == NULL ||  pszAuthCode == NULL )
+        if( pszAuthName == NULL || pszAuthCode == NULL )
         {
             // Don't exactly recognise datum.
         }

@@ -1244,8 +1244,8 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      Prepare very specific PROJCS names for UTM coordinate           */
 /*      systems.                                                        */
 /* -------------------------------------------------------------------- */
-        int bNorth = 0;
-        int nZone  = 0;
+        int bNorth = FALSE;
+        int nZone = 0;
 
         // Get zone from name first.
         if( pszProjCSName && STARTS_WITH_CI(pszProjCSName, "UTM Zone ") )
@@ -2502,7 +2502,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(
             if( pcsCode == statePlanePcsCodeToZoneCode[i] )
             {
                 searchCode = statePlanePcsCodeToZoneCode[i+1];
-                int unitIndex =  searchCode % 10;
+                int unitIndex = searchCode % 10;
                 if( (unitCode == 1 && !(unitIndex == 0 || unitIndex == 1))
                     || (unitCode == 2 && !(unitIndex == 2 || unitIndex == 3 ||
                                            unitIndex == 4 ))

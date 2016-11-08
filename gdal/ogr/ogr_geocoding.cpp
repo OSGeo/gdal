@@ -44,8 +44,8 @@
 #if !(defined(__GNUC__) && defined(_TIMEZONE_DEFINED))
 struct timezone
 {
-  int  tz_minuteswest; // Minutes W of Greenwich.
-  int  tz_dsttime;     // Type of DST correction.
+    int tz_minuteswest; // Minutes W of Greenwich.
+    int tz_dsttime;     // Type of DST correction.
 };
 #endif
 
@@ -1316,14 +1316,14 @@ static OGRLayerH OGRGeocodeCommon( OGRGeocodingSessionH hSession,
                          dfCurrentTime);
             }
 
-            psResult = CPLHTTPFetch( osURLWithEmail,  papszHTTPOptions );
+            psResult = CPLHTTPFetch( osURLWithEmail, papszHTTPOptions );
 
             gettimeofday(&tv, NULL);
             *pdfLastQueryTime = tv.tv_sec + tv.tv_usec / 1e6;
         }
         else
         {
-            psResult = CPLHTTPFetch( osURLWithEmail,  papszHTTPOptions );
+            psResult = CPLHTTPFetch( osURLWithEmail, papszHTTPOptions );
         }
 
         CSLDestroy(papszHTTPOptions);
