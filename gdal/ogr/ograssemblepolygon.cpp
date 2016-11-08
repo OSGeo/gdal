@@ -297,12 +297,12 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
 /* -------------------------------------------------------------------- */
         dfBestDist = dfTolerance;
 
-        if( !CheckPoints(poRing,0,poRing,poRing->getNumPoints()-1,
+        if( !CheckPoints(poRing, 0, poRing, poRing->getNumPoints() - 1,
                          &dfBestDist) )
         {
             CPLDebug( "OGR",
                       "Failed to close ring %d.\n"
-                      "End Points are: (%.8f,%.7f) and (%.7f,%.7f)\n",
+                      "End Points are: (%.8f,%.7f) and (%.7f,%.7f)",
                       static_cast<int>(aoRings.size()),
                       poRing->getX(0), poRing->getY(0),
                       poRing->getX(poRing->getNumPoints() - 1),

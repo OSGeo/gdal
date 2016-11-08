@@ -107,7 +107,7 @@ OGRwkbGeometryType OGRCircularString::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbCircularStringZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbCircularStringM;
     else if( flags & OGR_G_3D )
         return wkbCircularStringZ;
@@ -138,9 +138,9 @@ OGRErr OGRCircularString::importFromWkb( unsigned char * pabyData,
 
 {
     OGRErr eErr = OGRSimpleCurve::importFromWkb(pabyData, nSize, eWkbVariant);
-    if (eErr == OGRERR_NONE)
+    if( eErr == OGRERR_NONE )
     {
-        if (!IsValidFast())
+        if( !IsValidFast() )
         {
             empty();
             return OGRERR_CORRUPT_DATA;
@@ -157,10 +157,10 @@ OGRErr OGRCircularString::importFromWkb( unsigned char * pabyData,
 
 OGRErr OGRCircularString::exportToWkb( OGRwkbByteOrder eByteOrder,
                                        unsigned char * pabyData,
-                                       OGRwkbVariant eWkbVariant  ) const
+                                       OGRwkbVariant eWkbVariant ) const
 
 {
-    if (!IsValidFast())
+    if( !IsValidFast() )
     {
         return OGRERR_FAILURE;
     }
@@ -182,9 +182,9 @@ OGRErr OGRCircularString::importFromWkt( char ** ppszInput )
 
 {
     const OGRErr eErr = OGRSimpleCurve::importFromWkt(ppszInput);
-    if (eErr == OGRERR_NONE)
+    if( eErr == OGRERR_NONE )
     {
-        if (!IsValidFast())
+        if( !IsValidFast() )
         {
             empty();
             return OGRERR_CORRUPT_DATA;
@@ -202,7 +202,7 @@ OGRCircularString::exportToWkt( char ** ppszDstText,
                                 CPL_UNUSED OGRwkbVariant eWkbVariant ) const
 
 {
-    if (!IsValidFast())
+    if( !IsValidFast() )
     {
         return OGRERR_FAILURE;
     }
@@ -344,9 +344,9 @@ void OGRCircularString::segmentize( double dfMaxLength )
 
     // So as to make sure that the same line followed in both directions
     // result in the same segmentized line.
-    if ( paoPoints[0].x < paoPoints[nPointCount - 1].x ||
-         (paoPoints[0].x == paoPoints[nPointCount - 1].x &&
-          paoPoints[0].y < paoPoints[nPointCount - 1].y) )
+    if( paoPoints[0].x < paoPoints[nPointCount - 1].x ||
+        (paoPoints[0].x == paoPoints[nPointCount - 1].x &&
+         paoPoints[0].y < paoPoints[nPointCount - 1].y) )
     {
         reversePoints();
         segmentize(dfMaxLength);
@@ -370,7 +370,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
         double alpha1 = 0.0;
         double alpha2 = 0.0;
 
-        aoRawPoint.push_back(OGRRawPoint(x0,y0));
+        aoRawPoint.push_back(OGRRawPoint(x0, y0));
         if( padfZ )
             adfZ.push_back(padfZ[i]);
 
@@ -398,7 +398,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     double alpha = alpha0 + dfStep * j;
                     const double x = cx + R * cos(alpha);
                     const double y = cy + R * sin(alpha);
-                    aoRawPoint.push_back(OGRRawPoint(x,y));
+                    aoRawPoint.push_back(OGRRawPoint(x, y));
                     if( padfZ )
                     {
                         const double z =
@@ -409,7 +409,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
                     }
                 }
             }
-            aoRawPoint.push_back(OGRRawPoint(x1,y1));
+            aoRawPoint.push_back(OGRRawPoint(x1, y1));
             if( padfZ )
                 adfZ.push_back(padfZ[i+1]);
 
@@ -461,7 +461,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 }
             }
 
-            aoRawPoint.push_back(OGRRawPoint(x1,y1));
+            aoRawPoint.push_back(OGRRawPoint(x1, y1));
             if( padfZ )
                 adfZ.push_back(padfZ[i+1]);
 
@@ -551,7 +551,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         {
             // It is an arc circle.
             const double dfSegLength = fabs(alpha2 - alpha0) * R;
-            if (dfSegLength > 0)
+            if( dfSegLength > 0 )
             {
                 if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
@@ -581,7 +581,7 @@ void OGRCircularString::Value( double dfDistance, OGRPoint * poPoint ) const
         {
             // It is a straight line.
             const double dfSegLength = dist(x0, y0, x2, y2);
-            if (dfSegLength > 0)
+            if( dfSegLength > 0 )
             {
                 if( (dfLength <= dfDistance) && ((dfLength + dfSegLength) >=
                                                 dfDistance) )
@@ -642,8 +642,8 @@ OGRLineString* OGRCircularString::CurveToLine(
 OGRBoolean OGRCircularString::IsValidFast() const
 
 {
-    if (nPointCount == 1 || nPointCount == 2 ||
-        (nPointCount >= 3 && (nPointCount % 2) == 0))
+    if( nPointCount == 1 || nPointCount == 2 ||
+        (nPointCount >= 3 && (nPointCount % 2) == 0) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Bad number of points in circular string : %d", nPointCount);
