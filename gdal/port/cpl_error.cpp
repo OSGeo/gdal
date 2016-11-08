@@ -474,6 +474,9 @@ static int CPLGetProcessMemorySize()
  *        Remaining arguments are assumed to be for format.
  */
 
+#ifdef WITHOUT_CPLDEBUG
+// Do not include CPLDebug.  Only available in custom builds.
+#else
 void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
 {
@@ -623,6 +626,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
     VSIFree( pszMessage );
 }
+#endif  // !WITHOUT_CPLDEBUG
 
 /**********************************************************************
  *                          CPLErrorReset()
