@@ -161,7 +161,7 @@ const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
 OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 
 {
-    if( nChildren > 0 && EQUAL(pszName,pszValue) )
+    if( nChildren > 0 && EQUAL(pszName, pszValue) )
         return this;
 
 /* -------------------------------------------------------------------- */
@@ -170,7 +170,7 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nChildren; i++ )
     {
-        if( EQUAL(papoChildNodes[i]->pszValue,pszName)
+        if( EQUAL(papoChildNodes[i]->pszValue, pszName)
             && papoChildNodes[i]->nChildren > 0 )
             return papoChildNodes[i];
     }
@@ -824,7 +824,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /*      Is this the target node?                                        */
 /* -------------------------------------------------------------------- */
     if( pszNode != NULL )
-        bChildOfHit = EQUAL(pszValue,pszNode);
+        bChildOfHit = EQUAL(pszValue, pszNode);
 
 /* -------------------------------------------------------------------- */
 /*      Recurse                                                         */
@@ -926,7 +926,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
 
     for( int i = 0; apszOrderingRules[i] != NULL; i++ )
     {
-        if( EQUAL(apszOrderingRules[i][0],pszValue) )
+        if( EQUAL(apszOrderingRules[i][0], pszValue) )
         {
             papszRule = apszOrderingRules[i] + 1;
             break;
@@ -941,7 +941,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
 /*      (panChildPr) with the priority code for each child (derived     */
 /*      from the rule) and we then bubble sort based on this.           */
 /* -------------------------------------------------------------------- */
-    int  *panChildKey = static_cast<int *>(
+    int *panChildKey = static_cast<int *>(
         CPLCalloc(sizeof(int), GetChildCount()));
 
     for( int i = 1; i < GetChildCount(); i++ )
