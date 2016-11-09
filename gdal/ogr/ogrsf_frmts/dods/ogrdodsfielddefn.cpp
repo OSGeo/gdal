@@ -98,7 +98,7 @@ bool OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
     if( poTarget != NULL && EQUAL(pszFieldScope,"dds") )
     {
         string oTargPath = OGRDODSGetVarPath( poTarget );
-        int    nTargPathLen = strlen(oTargPath.c_str());
+        int    nTargPathLen = static_cast<int>(strlen(oTargPath.c_str()));
 
         if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen)
             && pszFieldNameIn[nTargPathLen] == '.' )
@@ -113,7 +113,7 @@ bool OGRDODSFieldDefn::Initialize( const char *pszFieldNameIn,
         else if( poSuperSeq != NULL  )
         {
             oTargPath = OGRDODSGetVarPath( poSuperSeq );
-            nTargPathLen = strlen(oTargPath.c_str());
+            nTargPathLen = static_cast<int>(strlen(oTargPath.c_str()));
 
             if( EQUALN(oTargPath.c_str(),pszFieldNameIn,nTargPathLen)
                 && pszFieldNameIn[nTargPathLen] == '.' )

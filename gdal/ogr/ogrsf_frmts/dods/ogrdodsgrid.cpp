@@ -47,8 +47,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     paoArrayRefs(NULL),
     nDimCount(0),
     paoDimensions(NULL),
-    nMaxRawIndex(0),
-    pRawData(NULL)
+    nMaxRawIndex(0)
 {
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */
@@ -456,7 +455,7 @@ OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
 /*      Establish the values for the various dimension indices.         */
 /* -------------------------------------------------------------------- */
     int iDim;
-    int nRemainder = nFeatureId;
+    int nRemainder = static_cast<int>(nFeatureId);
 
     for( iDim = nDimCount-1; iDim >= 0; iDim-- )
     {
@@ -494,7 +493,8 @@ OGRFeature *OGRDODSGridLayer::GetFeature( GIntBig nFeatureId )
     {
         OGRDODSArrayRef *poRef = paoArrayRefs + iArray;
 
-        ArrayEntryToField( poRef->poArray, poRef->pRawData, nFeatureId,
+        ArrayEntryToField( poRef->poArray, poRef->pRawData,
+                           static_cast<int>(nFeatureId),
                            poFeature, poRef->iFieldIndex );
     }
 
