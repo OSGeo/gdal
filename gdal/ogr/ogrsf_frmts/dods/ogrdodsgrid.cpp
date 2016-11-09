@@ -366,7 +366,7 @@ OGRDODSGridLayer::~OGRDODSGridLayer()
 /*                         ArrayEntryToField()                          */
 /************************************************************************/
 
-bool OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
+bool OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawDataIn,
                                           int iArrayIndex,
                                           OGRFeature *poFeature, int iField )
 
@@ -375,49 +375,49 @@ bool OGRDODSGridLayer::ArrayEntryToField( Array *poArray, void *pRawData,
     {
       case dods_byte_c:
       {
-          GByte *pabyRawData = (GByte *) pRawData;
+          GByte *pabyRawData = (GByte *) pRawDataIn;
           poFeature->SetField( iField, pabyRawData[iArrayIndex] );
       }
       break;
 
       case dods_int16_c:
       {
-          GInt16 *panRawData = (GInt16 *) pRawData;
+          GInt16 *panRawData = (GInt16 *) pRawDataIn;
           poFeature->SetField( iField, panRawData[iArrayIndex] );
       }
       break;
 
       case dods_uint16_c:
       {
-          GUInt16 *panRawData = (GUInt16 *) pRawData;
+          GUInt16 *panRawData = (GUInt16 *) pRawDataIn;
           poFeature->SetField( iField, panRawData[iArrayIndex] );
       }
       break;
 
       case dods_int32_c:
       {
-          GInt32 *panRawData = (GInt32 *) pRawData;
+          GInt32 *panRawData = (GInt32 *) pRawDataIn;
           poFeature->SetField( iField, panRawData[iArrayIndex] );
       }
       break;
 
       case dods_uint32_c:
       {
-          GUInt32 *panRawData = (GUInt32 *) pRawData;
+          GUInt32 *panRawData = (GUInt32 *) pRawDataIn;
           poFeature->SetField( iField, (int) panRawData[iArrayIndex] );
       }
       break;
 
       case dods_float32_c:
       {
-          float * pafRawData = (float *) pRawData;
+          float * pafRawData = (float *) pRawDataIn;
           poFeature->SetField( iField, pafRawData[iArrayIndex] );
       }
       break;
 
       case dods_float64_c:
       {
-          double * padfRawData = (double *) pRawData;
+          double * padfRawData = (double *) pRawDataIn;
           poFeature->SetField( iField, padfRawData[iArrayIndex] );
       }
       break;
