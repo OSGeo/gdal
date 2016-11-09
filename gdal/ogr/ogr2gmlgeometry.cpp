@@ -251,7 +251,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbLineString )
     {
-        bool bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING");
+        bool bRing = EQUAL(poGeometry->getGeometryName(), "LINEARRING");
 
         // Buffer for tag name + srsName attribute if set
         const size_t nLineTagLength = 16;
@@ -492,7 +492,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 
     MakeGMLCoordinate( szCoordinate, sEnvelope.MaxX, sEnvelope.MaxY, 0.0,
                        false );
-    pszY = strstr(szCoordinate,",") + 1;
+    pszY = strstr(szCoordinate, ",") + 1;
     pszY[-1] = '\0';
 
     CPLCreateXMLElementAndValue( psCoord, "gml:X", szCoordinate );
@@ -715,8 +715,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbLineString )
     {
-        bool bRing = EQUAL(poGeometry->getGeometryName(),"LINEARRING") ||
-                    bForceLineStringAsLinearRing;
+        const bool bRing =
+            EQUAL(poGeometry->getGeometryName(), "LINEARRING") ||
+            bForceLineStringAsLinearRing;
         if( !bRing && bLineStringAsCurve )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
@@ -786,10 +787,10 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             poSC->getX(0) == poSC->getX(2) &&
             poSC->getY(0) == poSC->getY(2) )
         {
-            double dfMidX = (poSC->getX(0) + poSC->getX(1)) / 2;
-            double dfMidY = (poSC->getY(0) + poSC->getY(1)) / 2;
-            double dfDirX = (poSC->getX(1) - poSC->getX(0)) / 2;
-            double dfDirY = (poSC->getY(1) - poSC->getY(0)) / 2;
+            double dfMidX = (poSC->getX(0) + poSC->getX(1)) / 2.0;
+            double dfMidY = (poSC->getY(0) + poSC->getY(1)) / 2.0;
+            double dfDirX = (poSC->getX(1) - poSC->getX(0)) / 2.0;
+            double dfDirY = (poSC->getY(1) - poSC->getY(0)) / 2.0;
             double dfNormX = -dfDirY;
             double dfNormY = dfDirX;
             double dfNewX = dfMidX + dfNormX;
@@ -828,11 +829,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbCompoundCurve )
     {
-        AppendString( ppszText, pnLength, pnMaxLength,
-                        "<gml:CompositeCurve" );
-        AppendString( ppszText, pnLength, pnMaxLength,
-                        szAttributes );
-        AppendString( ppszText, pnLength, pnMaxLength,">");
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:CompositeCurve" );
+        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
+        AppendString( ppszText, pnLength, pnMaxLength, ">");
 
         OGRCompoundCurve* poCC = (OGRCompoundCurve*)poGeometry;
         for( int i = 0; i < poCC->getNumCurves(); i++ )
@@ -1174,8 +1173,10 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             CPLError(CE_Warning, CPLE_AppDefined,
                      "FORMAT=GML32 specified but not GMLID set");
         const char* pszSRSDimensionLoc =
-                CSLFetchNameValueDef(papszOptions,"SRSDIMENSION_LOC","POSLIST");
-        char** papszSRSDimensionLoc = CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
+                CSLFetchNameValueDef(papszOptions, "SRSDIMENSION_LOC",
+                                     "POSLIST");
+        char** papszSRSDimensionLoc =
+            CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
         int nSRSDimensionLocFlags = 0;
         for( int i = 0; papszSRSDimensionLoc[i] != NULL; i++ )
         {
@@ -1195,7 +1196,8 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             pszNamespaceDecl = "http://www.opengis.net/gml";
 
         bool bCoordSwap = false;
-        const char* pszCoordSwap = CSLFetchNameValue(papszOptions, "COORD_SWAP");
+        const char* pszCoordSwap =
+            CSLFetchNameValue(papszOptions, "COORD_SWAP");
         OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry*>(hGeometry);
         if( pszCoordSwap )
             bCoordSwap = CPLTestBool(pszCoordSwap);
