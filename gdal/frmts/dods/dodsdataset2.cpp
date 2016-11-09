@@ -309,7 +309,6 @@ public:
 DODSDataset::DODSDataset() :
     poConnect(NULL),
     bGotGeoTransform(FALSE),
-    poDDS(new DDS( poBaseTypeFactory )),
     poBaseTypeFactory(new BaseTypeFactory())
 {
     adfGeoTransform[0] = 0.0;
@@ -318,6 +317,8 @@ DODSDataset::DODSDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    // Need to be done after poBaseTypeFactory initialization
+    poDDS = new DDS( poBaseTypeFactory );
 }
 
 /************************************************************************/
