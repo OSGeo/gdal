@@ -1690,7 +1690,9 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else if (poDS->bUseSetDecodeArea)
     {
-        if( nTileH == 1 && nTileW < 20 * 1024 * 1204 )
+        // Arbitrary threshold... ~4 million at least needed for the GRIB2
+        // images mentionned below.
+        if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
         {
             // Some GRIB2 JPEG2000 compressed images are a 2D image organized
             // as a single line image...
