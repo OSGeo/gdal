@@ -179,12 +179,12 @@ static int GetDimension( string oCE, const char *pszDimName,
 class DODSDataset : public GDALDataset
 {
 private:
-    AISConnect *poConnect;      //< Virtual connection to the data source
+    AISConnect *poConnect;      // Virtual connection to the data source
 
-    string oURL;                //< data source URL
+    string oURL;                // data source URL
     double adfGeoTransform[6];
     int    bGotGeoTransform;
-    string oWKT;                //< Constructed WKT string
+    string oWKT;                // Constructed WKT string
 
     DAS    oDAS;
     DDS   *poDDS;

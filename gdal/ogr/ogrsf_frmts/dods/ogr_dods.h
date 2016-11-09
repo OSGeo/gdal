@@ -242,8 +242,6 @@ class OGRDODSGridLayer : public OGRDODSLayer
     OGRDODSDim         *paoDimensions;
     int                 nMaxRawIndex;
 
-    void               *pRawData;
-
     bool                ArrayEntryToField( Array *poArray, void *pRawData,
                                            int iArrayIndex,
                                            OGRFeature *poFeature, int iField );
