@@ -2741,7 +2741,7 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     /* Create the table! */
     CPLString osCommand;
 
-    char* pszSQL = sqlite3_mprintf("CREATE TABLE '%q' ( ", pszLayerName);
+    char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ( ", pszLayerName);
     osCommand += pszSQL;
     sqlite3_free(pszSQL);
 
