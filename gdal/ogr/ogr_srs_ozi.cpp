@@ -117,7 +117,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 /* -------------------------------------------------------------------- */
     char **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
     char **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
-                                                         TRUE, TRUE );
+                                                      TRUE, TRUE );
     char **papszDatum = NULL;
 
     if( CSLCount(papszProj) < 2 )

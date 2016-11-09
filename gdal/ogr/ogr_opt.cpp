@@ -505,7 +505,7 @@ char **OPTGetProjectionMethods()
 
     for( int i = 1; papszProjectionDefinitions[i] != NULL; ++i )
     {
-        if( EQUAL(papszProjectionDefinitions[i-1],"*") )
+        if( EQUAL(papszProjectionDefinitions[i-1], "*") )
             papszList = CSLAddString(papszList, papszProjectionDefinitions[i]);
     }
 
