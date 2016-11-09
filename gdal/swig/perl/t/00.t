@@ -221,6 +221,11 @@ $dataset->GeoTransform($transform);
 my $transform2 = $dataset->GeoTransform();
 is_deeply($transform, $transform2, "Set and get geotransform.");
 
+eval {
+    $dataset->GeoTransform(5,2,0,3,0);
+};
+ok($@ ne '', "It is an error to set GeoTransform with too few values.");
+
 my @t = (5,2,0,3,0,4);
 my @c = (2,3);
 $transform = Geo::GDAL::GeoTransform->new(@t);
