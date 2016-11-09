@@ -512,6 +512,8 @@
         do_confess(NEED_ARRAY_REF, 1);
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
+    if (av_len(av)+1 < $dim0)
+      do_confess(NOT_ENOUGH_ELEMENTS, 1);
     for (unsigned int i=0; i<$dim0; i++) {
         SV *sv = *av_fetch(av, i, 0);
         if (!SvOK(sv))

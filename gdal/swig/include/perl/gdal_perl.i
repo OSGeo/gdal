@@ -1611,12 +1611,13 @@ sub CreateMaskBand {
 
 sub Piddle {
     # TODO: add Piddle sub to dataset too to make Width x Height x Bands piddles
-    error("PDL is not available.") unless $Geo::GDAL::HAVE_PDL;
+    Geo::GDAL::error("PDL is not available.") unless $Geo::GDAL::HAVE_PDL;
     my $self = shift;
     my $t = $self->{DataType};
     unless (defined wantarray) {
         my $pdl = shift;
-        error("The datatype of the Piddle and the band do not match.") unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
+        Geo::GDAL::error("The datatype of the Piddle and the band do not match.") 
+          unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
         my ($xoff, $yoff, $xsize, $ysize) = @_;
         $xoff //= 0;
         $yoff //= 0;
@@ -1647,12 +1648,15 @@ sub Piddle {
     my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $t, 0, 0, $alg);
     my $pdl = PDL->new;
     my $datatype = $DATATYPE2PDL{$t};
-    error("The band datatype is not supported by PDL.") if $datatype < 0;
+    Geo::GDAL::error("The band datatype is not supported by PDL.") if $datatype < 0;
     $pdl->set_datatype($datatype);
     $pdl->setdims([$xdim, $ydim]);
     my $data = $pdl->get_dataref();
     $$data = $buf;
     $pdl->upd_data;
+    # FIXME: we want approximate equality since no data value can be very large floating point value
+    my $bad = GetNoDataValue($self);
+    return $pdl->setbadif($pdl == $bad) if defined $bad;
     return $pdl;
 }
 
