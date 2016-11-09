@@ -89,7 +89,7 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
 /* -------------------------------------------------------------------- */
 /*      Remove repeated and trailing underscores.                       */
 /* -------------------------------------------------------------------- */
-    int j = 0; // Used after for loop.
+    int j = 0;  // Used after for loop.
     for( int i = 1; pszDatum[i] != '\0'; i++ )
     {
         if( pszDatum[j] == '_' && pszDatum[i] == '_' )
@@ -132,7 +132,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     if( nUOMAngle == 9110 )  // DDD.MMSSsss
     {
         dfAngle = std::abs(atoi(pszAngle));
-        const char *pszDecimal = strchr(pszAngle,'.');
+        const char *pszDecimal = strchr(pszAngle, '.');
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {
             char szMinutes[3] = { '\0', '\0', '\0' };
@@ -184,7 +184,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     {
         dfAngle = CPLAtof(pszAngle) / 3600.0;
     }
-    else // Decimal degrees.  Some cases missing, but seemingly never used.
+    else  // Decimal degrees.  Some cases missing, but seemingly never used.
     {
         CPLAssert( nUOMAngle == 9102 || nUOMAngle == 0 );
 
@@ -874,7 +874,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
                 dfInMeters = 1.0;
             adfProjParms[i] = CPLAtof(pszValue) * dfInMeters;
         }
-        else if( EQUAL(pszValue,"") )  // Null field.
+        else if( EQUAL(pszValue, "") )  // Null field.
         {
             adfProjParms[i] = 0.0;
         }
@@ -965,7 +965,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     {
         const char *pszValue =
             CSLGetField( papszRecord,
-                         CSVGetFileFieldId(pszFilename,"UOM_CODE"));
+                         CSVGetFileFieldId(pszFilename, "UOM_CODE"));
         if( atoi(pszValue) > 0 )
             *pnUOMLengthCode = atoi(pszValue);
         else
@@ -979,7 +979,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     {
         const char *pszValue =
             CSLGetField( papszRecord,
-                         CSVGetFileFieldId(pszFilename,"UOM_ANGLE_CODE") );
+                         CSVGetFileFieldId(pszFilename, "UOM_ANGLE_CODE") );
 
         if( atoi(pszValue) > 0 )
             *pnUOMAngleCode = atoi(pszValue);
@@ -994,7 +994,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     {
         const char *pszValue =
             CSLGetField( papszRecord,
-                         CSVGetFileFieldId(pszFilename,"SOURCE_GEOGCRS_CODE"));
+                         CSVGetFileFieldId(pszFilename, "SOURCE_GEOGCRS_CODE"));
         if( atoi(pszValue) > 0 )
             *pnGeogCS = atoi(pszValue);
         else
@@ -1008,7 +1008,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     {
         const char *pszValue =
             CSLGetField( papszRecord,
-                         CSVGetFileFieldId(pszFilename,"COORD_OP_CODE"));
+                         CSVGetFileFieldId(pszFilename, "COORD_OP_CODE"));
 
         if( atoi(pszValue) > 0 )
             *pnTRFCode = atoi(pszValue);
@@ -1176,13 +1176,13 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 
     for( int iAO = 0; iAO < 2; iAO++ )
     {
-        if( EQUAL(apszAxisName[iAO],"N") )
+        if( EQUAL(apszAxisName[iAO], "N") )
             apszAxisName[iAO] = "Northing";
-        else if( EQUAL(apszAxisName[iAO],"E") )
+        else if( EQUAL(apszAxisName[iAO], "E") )
             apszAxisName[iAO] = "Easting";
-        else if( EQUAL(apszAxisName[iAO],"S") )
+        else if( EQUAL(apszAxisName[iAO], "S") )
             apszAxisName[iAO] = "Southing";
-        else if( EQUAL(apszAxisName[iAO],"W") )
+        else if( EQUAL(apszAxisName[iAO], "W") )
             apszAxisName[iAO] = "Westing";
     }
 
@@ -1698,12 +1698,12 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
 /* -------------------------------------------------------------------- */
     const char *pszMethod =
         CSLGetField( papszRecord,
-                     CSVGetFileFieldId(pszFilename,"COORD_OP_METHOD_CODE_1"));
-    if( pszMethod && EQUAL(pszMethod,"9665") )
+                     CSVGetFileFieldId(pszFilename, "COORD_OP_METHOD_CODE_1"));
+    if( pszMethod && EQUAL(pszMethod, "9665") )
     {
         const char *pszParm11 =
             CSLGetField( papszRecord,
-                         CSVGetFileFieldId(pszFilename,"PARM_1_1"));
+                         CSVGetFileFieldId(pszFilename, "PARM_1_1"));
 
         poSRS->SetExtension( "VERT_CS|VERT_DATUM", "PROJ4_GRIDS", pszParm11 );
     }
@@ -1873,8 +1873,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
                                                                "DATUM_CODE")));
 
     char *pszDatumName =
-        CPLStrdup( CSLGetField( papszRecord,
-                                CSVGetFileFieldId(pszFilename,"DATUM_NAME") ) );
+        CPLStrdup( CSLGetField(papszRecord,
+                               CSVGetFileFieldId(pszFilename, "DATUM_NAME")) );
     OGREPSGDatumNameMassage( &pszDatumName );
 
     const int nEllipsoidCode = atoi(CSLGetField(
@@ -1964,7 +1964,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 
         for( int iCoeff = 0; iCoeff < 7; iCoeff++ )
         {
-            CPLsnprintf( szValue, sizeof(szValue), "%g", adfBursaTransform[iCoeff] );
+            CPLsnprintf( szValue, sizeof(szValue),
+                         "%g", adfBursaTransform[iCoeff] );
             poWGS84->AddChild( new OGR_SRSNode( szValue ) );
         }
 
@@ -2022,8 +2023,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     poSRS->SetAuthority( "SPHEROID", "EPSG", nEllipsoidCode );
     poSRS->SetAuthority( "PRIMEM", "EPSG", nPMCode );
 
-//    if( nUOMAngle > 0 )
-//        poSRS->SetAuthority( "GEOGCS|UNIT", "EPSG", nUOMAngle );
+    // if( nUOMAngle > 0 )
+    //     poSRS->SetAuthority( "GEOGCS|UNIT", "EPSG", nUOMAngle );
 
     poSRS->SetAuthority( "GEOCCS", "EPSG", nGCSCode );
 
@@ -2115,12 +2116,13 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
  * This method will initialize the spatial reference based on the
  * passed in EPSG GCS or PCS code.
  *
- * This method is similar to importFromEPSG() except that EPSG preferred
- * axis ordering *will* be applied for geographic and projected coordinate systems.
- * EPSG normally defines geographic coordinate systems to use lat/long, and
- * also there are also a few projected coordinate systems that use northing/easting
- * order contrary to typical GIS use).  See OGRSpatialReference::importFromEPSG()
- * for more details on operation of this method.
+ * This method is similar to importFromEPSG() except that EPSG preferred axis
+ * ordering *will* be applied for geographic and projected coordinate systems.
+ * EPSG normally defines geographic coordinate systems to use lat/long, and also
+ * there are also a few projected coordinate systems that use northing/easting
+ * order contrary to typical GIS use).  See
+ * OGRSpatialReference::importFromEPSG() for more details on operation of this
+ * method.
  *
  * This method is the same as the C function OSRImportFromEPSGA().
  *
@@ -2193,7 +2195,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
         char *pszNormalized = OCTProj4Normalize( szWrkDefn );
 
-        if( strstr(pszNormalized,"proj=") != NULL )
+        if( strstr(pszNormalized, "proj=") != NULL )
             eErr = importFromProj4( pszNormalized );
 
         CPLFree( pszNormalized );
@@ -2300,11 +2302,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 /* -------------------------------------------------------------------- */
 /*      Get the index id from stateplane.csv.                           */
 /* -------------------------------------------------------------------- */
-    int nAdjustedId = 0;
-    if( bNAD83 )
-        nAdjustedId = nZone;
-    else
-        nAdjustedId = nZone + 10000;
+    const int nAdjustedId = bNAD83 ? nZone : nZone + 10000;
 
 /* -------------------------------------------------------------------- */
 /*      Turn this into a PCS code.  We assume there will only be one    */
@@ -2449,7 +2447,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
 /*      Do we already have it?                                          */
 /* -------------------------------------------------------------------- */
-    if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+    if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
         return atoi(GetAuthorityCode( "GEOGCS" ));
 
 /* -------------------------------------------------------------------- */
@@ -2465,30 +2463,30 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
 /*      Is this a "well known" geographic coordinate system?            */
 /* -------------------------------------------------------------------- */
-    const bool bWGS = strstr(pszGEOGCS,"WGS") != NULL
+    const bool bWGS = strstr(pszGEOGCS, "WGS") != NULL
         || strstr(pszDatum, "WGS")
-        || strstr(pszGEOGCS,"World Geodetic System")
-        || strstr(pszGEOGCS,"World_Geodetic_System")
+        || strstr(pszGEOGCS, "World Geodetic System")
+        || strstr(pszGEOGCS, "World_Geodetic_System")
         || strstr(pszDatum, "World Geodetic System")
         || strstr(pszDatum, "World_Geodetic_System");
 
-    const bool bNAD = strstr(pszGEOGCS,"NAD") != NULL
+    const bool bNAD = strstr(pszGEOGCS, "NAD") != NULL
         || strstr(pszDatum, "NAD")
-        || strstr(pszGEOGCS,"North American")
-        || strstr(pszGEOGCS,"North_American")
+        || strstr(pszGEOGCS, "North American")
+        || strstr(pszGEOGCS, "North_American")
         || strstr(pszDatum, "North American")
         || strstr(pszDatum, "North_American");
 
-    if( bWGS && (strstr(pszGEOGCS,"84") || strstr(pszDatum,"84")) )
+    if( bWGS && (strstr(pszGEOGCS, "84") || strstr(pszDatum, "84")) )
         return 4326;
 
-    if( bWGS && (strstr(pszGEOGCS,"72") || strstr(pszDatum,"72")) )
+    if( bWGS && (strstr(pszGEOGCS, "72") || strstr(pszDatum, "72")) )
         return 4322;
 
-    if( bNAD && (strstr(pszGEOGCS,"83") || strstr(pszDatum,"83")) )
+    if( bNAD && (strstr(pszGEOGCS, "83") || strstr(pszDatum, "83")) )
         return 4269;
 
-    if( bNAD && (strstr(pszGEOGCS,"27") || strstr(pszDatum,"27")) )
+    if( bNAD && (strstr(pszGEOGCS, "27") || strstr(pszDatum, "27")) )
         return 4267;
 
 /* -------------------------------------------------------------------- */
@@ -2498,7 +2496,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
     pszAuthName = GetAuthorityName( "GEOGCS|DATUM" );
 
     if( pszAuthName != NULL
-        && EQUAL(pszAuthName,"epsg")
+        && EQUAL(pszAuthName, "epsg")
         && GetPrimeMeridian() == 0.0 )
     {
         const int nDatum = atoi(GetAuthorityCode("GEOGCS|DATUM"));
@@ -2558,29 +2556,32 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
     if( (nZone = GetUTMZone( &bNorth )) != 0
         && GetAuthorityCode( "PROJCS") == NULL )
     {
-        const char *pszAuthName, *pszAuthCode;
-
-        pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
-        pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+        const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+        const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
 
         if( pszAuthName == NULL || pszAuthCode == NULL )
         {
             // Don't exactly recognise datum.
         }
-        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4326 )
-        { // WGS84
+        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+        {
+            // WGS84
             if( bNorth )
                 SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
             else
                 SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
         }
-        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4267
+        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
                  && nZone >= 3 && nZone <= 22 && bNorth )
+        {
             SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
-        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4269
+        }
+        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
                  && nZone >= 3 && nZone <= 23 && bNorth )
+        {
             SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
-        else if( EQUAL(pszAuthName,"EPSG") && atoi(pszAuthCode) == 4322 )
+        }
+        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
         { // WGS72
             if( bNorth )
                 SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
@@ -2648,7 +2649,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
 
     const char *pszAuth = GetAuthorityName( "GEOGCS" );
 
-    if( pszAuth == NULL || !EQUAL(pszAuth,"EPSG") )
+    if( pszAuth == NULL || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
     OGR_SRSNode * const poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
@@ -2657,7 +2658,7 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
         return FALSE;
 
     if( poFirstAxis->GetChildCount() >= 2
-        && EQUAL(poFirstAxis->GetChild(1)->GetValue(),"NORTH") )
+        && EQUAL(poFirstAxis->GetChild(1)->GetValue(), "NORTH") )
         return TRUE;
 
     return FALSE;
@@ -2711,7 +2712,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
 
     const char *pszAuth = GetAuthorityName( "PROJCS" );
 
-    if( pszAuth == NULL || !EQUAL(pszAuth,"EPSG") )
+    if( pszAuth == NULL || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
     OGR_SRSNode * const poFirstAxis = GetAttrNode( "PROJCS|AXIS" );
@@ -2720,7 +2721,7 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
         return FALSE;
 
     if( poFirstAxis->GetChildCount() >= 2
-        && EQUAL(poFirstAxis->GetChild(1)->GetValue(),"NORTH") )
+        && EQUAL(poFirstAxis->GetChild(1)->GetValue(), "NORTH") )
         return TRUE;
 
     return FALSE;
