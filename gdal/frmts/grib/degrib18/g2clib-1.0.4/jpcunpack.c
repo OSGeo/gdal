@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-   int dec_jpeg2000(char *,g2int ,g2int *);
-
 g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
                 g2float *fld)
 //$$$  SUBPROGRAM DOCUMENTATION BLOCK
@@ -59,7 +57,7 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
                     "Data field NOT unpacked.\n");
             return(1);
          }
-         /* iret= (g2int) */ dec_jpeg2000((char *) cpack,len,ifld);
+         /* iret= (g2int) */ dec_jpeg2000(cpack,len,ifld,ndpts);
          for (j=0;j<ndpts;j++) {
            fld[j]=(((g2float)ifld[j]*bscale)+ref)*dscale;
          }
