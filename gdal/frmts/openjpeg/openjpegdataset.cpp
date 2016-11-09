@@ -1713,8 +1713,16 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else if (poDS->bUseSetDecodeArea)
     {
-        if (nTileW > 1024) nTileW = 1024;
-        if (nTileH > 1024) nTileH = 1024;
+        if( nTileH == 1 && nTileW < 20 * 1024 * 1204 )
+        {
+            // Some GRIB2 JPEG2000 compressed images are a 2D image organized
+            // as a single line image...
+        }
+        else
+        {
+            if (nTileW > 1024) nTileW = 1024;
+            if (nTileH > 1024) nTileH = 1024;
+        }
     }
 
     GDALColorTable* poCT = NULL;
