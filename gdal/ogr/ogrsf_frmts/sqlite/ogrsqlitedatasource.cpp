@@ -331,6 +331,12 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
+    // Close any remaining iterator
+    for( int i = 0; i < nLayers; i++ )
+        papoLayers[i]->ResetReading();
+
+    // Create spatial indices in a transaction for faster execution
+    SoftStartTransaction();
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( papoLayers[iLayer]->IsTableLayer() )
@@ -341,6 +347,7 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
             poLayer->CreateSpatialIndexIfNecessary();
         }
     }
+    SoftCommitTransaction();
 
     SaveStatistics();
 
