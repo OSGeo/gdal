@@ -73,11 +73,8 @@ CPL_CVSID("$Id$");
 OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     nFID(OGRNullFID),
     poDefn(poDefnIn),
-    papoGeometries(static_cast<OGRGeometry **>(
-        VSI_CALLOC_VERBOSE(poDefnIn->GetGeomFieldCount(),
-                           sizeof(OGRGeometry *)))),
-    pauFields(static_cast<OGRField *>(
-        VSI_MALLOC_VERBOSE(poDefnIn->GetFieldCount() * sizeof(OGRField)))),
+    papoGeometries(NULL),
+    pauFields(NULL),
     m_pszNativeData(NULL),
     m_pszNativeMediaType(NULL),
     m_pszStyleString(NULL),
@@ -85,6 +82,13 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     m_pszTmpFieldValue(NULL)
 {
     poDefnIn->Reference();
+
+    pauFields = static_cast<OGRField *>(
+        VSI_MALLOC_VERBOSE(poDefn->GetFieldCount() * sizeof(OGRField)));
+
+    papoGeometries = static_cast<OGRGeometry **>(
+        VSI_CALLOC_VERBOSE(poDefn->GetGeomFieldCount(),
+                           sizeof(OGRGeometry*)));
 
     // Initialize array to the unset special value.
     if( pauFields != NULL )
@@ -132,6 +136,8 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 OGRFeature::~OGRFeature()
 
 {
+    // TODO(rouault): Explain testing pauFields for access to poDefn.
+    // Change added in r31981.
     const int nFieldcount = pauFields != NULL ? poDefn->GetFieldCount() : 0;
     for( int i = 0; i < nFieldcount; i++ )
     {
@@ -168,6 +174,8 @@ OGRFeature::~OGRFeature()
         }
     }
 
+    // TODO(rouault): Explain testing papoGeometries for access to poDefn.
+    // Change added in r31981.
     const int nGeomFieldCount =
         papoGeometries != NULL ? poDefn->GetGeomFieldCount() : 0;
 
@@ -664,7 +672,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
         poGeom = poFeature->GetGeomFieldRef(iField);
     }
 
-    return (OGRGeometryH)poGeom;
+    return reinterpret_cast<OGRGeometryH>(poGeom);
 }
 
 /************************************************************************/
@@ -1233,7 +1241,8 @@ int OGRFeature::IsFieldSet( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return FALSE;
 
-            return OGR_G_Area((OGRGeometryH)papoGeometries[0]) != 0.0;
+            return OGR_G_Area(
+                reinterpret_cast<OGRGeometryH>(papoGeometries[0])) != 0.0;
 
           default:
             return FALSE;
@@ -1447,8 +1456,8 @@ int OGRFeature::GetFieldAsInteger( int iField )
         case SPF_OGR_GEOM_AREA:
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return 0;
-            return
-                static_cast<int>(OGR_G_Area((OGRGeometryH)papoGeometries[0]));
+            return static_cast<int>(
+                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
 
         default:
             return 0;
@@ -1687,12 +1696,13 @@ double OGRFeature::GetFieldAsDouble( int iField )
         switch( iSpecialField )
         {
         case SPF_FID:
-            return (double)GetFID();
+            return static_cast<double>(GetFID());
 
         case SPF_OGR_GEOM_AREA:
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return 0.0;
-            return OGR_G_Area((OGRGeometryH)papoGeometries[0]);
+            return
+                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0]));
 
         default:
             return 0.0;
@@ -1718,7 +1728,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
     }
     else if( eType == OFTInteger64 )
     {
-        return (double) pauFields[iField].Integer64;
+        return static_cast<double>(pauFields[iField].Integer64);
     }
     else if( eType == OFTString )
     {
@@ -1897,8 +1907,9 @@ const char *OGRFeature::GetFieldAsString( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return "";
 
-            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
-                      OGR_G_Area((OGRGeometryH)papoGeometries[0]) );
+            CPLsnprintf(
+                szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
+                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
             m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
             if( m_pszTmpFieldValue == NULL )
                 return "";
@@ -5394,7 +5405,7 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap,
                   int nCount = 0;
                   const int *panValues =
                       poSrcFeature->GetFieldAsIntegerList( iField, &nCount);
-                  SetField( iDstField, nCount, (int*) panValues );
+                  SetField(iDstField, nCount, const_cast<int *>(panValues));
               }
           }
           break;
@@ -5426,7 +5437,7 @@ OGRErr OGRFeature::SetFieldsFrom( OGRFeature * poSrcFeature, int *panMap,
                   int nCount = 0;
                   const double *padfValues =
                       poSrcFeature->GetFieldAsDoubleList( iField, &nCount);
-                  SetField( iDstField, nCount, (double*) padfValues );
+                  SetField(iDstField, nCount, const_cast<double *>(padfValues));
               }
           }
           break;
@@ -5638,7 +5649,7 @@ void OGRFeature::SetStyleTable( OGRStyleTable *poStyleTable )
 {
     if( m_poStyleTable )
         delete m_poStyleTable;
-    m_poStyleTable = ( poStyleTable ) ? poStyleTable->Clone() : NULL;
+    m_poStyleTable = poStyleTable ? poStyleTable->Clone() : NULL;
 }
 
 //************************************************************************/
@@ -5761,8 +5772,8 @@ OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", NULL );
 
-    return (OGRStyleTableH)
-        reinterpret_cast<OGRFeature *>(hFeat)->GetStyleTable();
+    return reinterpret_cast<OGRStyleTableH>(
+        reinterpret_cast<OGRFeature *>(hFeat)->GetStyleTable());
 }
 
 /************************************************************************/
@@ -5776,7 +5787,7 @@ void OGR_F_SetStyleTableDirectly( OGRFeatureH hFeat,
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTableDirectly" );
 
     reinterpret_cast<OGRFeature *>(hFeat)->
-        SetStyleTableDirectly( (OGRStyleTable *) hStyleTable);
+        SetStyleTableDirectly(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
 /************************************************************************/
@@ -5791,7 +5802,7 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
     VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
 
     reinterpret_cast<OGRFeature *>(hFeat)->
-        SetStyleTable( (OGRStyleTable *) hStyleTable);
+        SetStyleTable(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
 /************************************************************************/
