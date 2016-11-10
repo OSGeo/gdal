@@ -1435,7 +1435,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
                 nFID > INT_MAX ? INT_MAX :
                 nFID < INT_MIN ? INT_MIN : static_cast<int>(nFID);
 
-            if( (GIntBig)nVal != nFID )
+            if( static_cast<GIntBig>(nVal) != nFID )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Integer overflow occurred when trying to return "
@@ -1475,7 +1475,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
             nVal64 > INT_MAX ? INT_MAX :
             nVal64 < INT_MIN ? INT_MIN : static_cast<int>(nVal64);
 
-        if( (GIntBig)nVal != nVal64 )
+        if( static_cast<GIntBig>(nVal) != nVal64 )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Integer overflow occurred when trying to return 64bit "
@@ -1485,7 +1485,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
     }
     else if( eType == OFTReal )
     {
-        return (int) pauFields[iField].Real;
+        return static_cast<int>(pauFields[iField].Real);
     }
     else if( eType == OFTString )
     {
@@ -1574,7 +1574,8 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
         case SPF_OGR_GEOM_AREA:
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
                 return 0;
-            return (int)OGR_G_Area((OGRGeometryH)papoGeometries[0]);
+            return static_cast<int>(
+                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
 
         default:
             return 0;
@@ -1592,7 +1593,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTInteger )
     {
-        return (GIntBig) pauFields[iField].Integer;
+        return static_cast<GIntBig>(pauFields[iField].Integer);
     }
     else if( eType == OFTInteger64 )
     {
@@ -1600,7 +1601,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
     }
     else if( eType == OFTReal )
     {
-        return (GIntBig) pauFields[iField].Real;
+        return static_cast<GIntBig>(pauFields[iField].Real);
     }
     else if( eType == OFTString )
     {
@@ -1996,15 +1997,17 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
         if( ms != 0 )
-            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
-                  pauFields[iField].Date.Hour,
-                  pauFields[iField].Date.Minute,
-                  pauFields[iField].Date.Second );
+            snprintf(
+                szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
+                pauFields[iField].Date.Hour,
+                pauFields[iField].Date.Minute,
+                pauFields[iField].Date.Second );
         else
-            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
-                  pauFields[iField].Date.Hour,
-                  pauFields[iField].Date.Minute,
-                  (int)pauFields[iField].Date.Second );
+            snprintf(
+                szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
+                pauFields[iField].Date.Hour,
+                pauFields[iField].Date.Minute,
+                static_cast<int>(pauFields[iField].Date.Second) );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
         if( m_pszTmpFieldValue == NULL )
@@ -2155,7 +2158,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         int nCount = pauFields[iField].Binary.nCount;
 
-        if( nCount > (int) sizeof(szTempBuffer) / 2 - 4 )
+        if( nCount > static_cast<int>(sizeof(szTempBuffer)) / 2 - 4 )
             nCount = sizeof(szTempBuffer) / 2 - 4;
 
         char *pszHex =
@@ -2583,7 +2586,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
     else if( poFDefn->GetType() == OFTString )
     {
         *pnBytes = static_cast<int>(strlen(pauFields[iField].String));
-        return (GByte*)pauFields[iField].String;
+        return reinterpret_cast<GByte *>(pauFields[iField].String);
     }
 
     return NULL;
@@ -3089,10 +3092,10 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     if( eType == OFTInteger )
     {
         const int nVal32 =
-            (nValue < INT_MIN ) ? INT_MIN :
-            (nValue > INT_MAX) ? INT_MAX : static_cast<int>(nValue);
+            nValue < INT_MIN ? INT_MIN :
+            nValue > INT_MAX ? INT_MAX : static_cast<int>(nValue);
 
-        if( (GIntBig)nVal32 != nValue )
+        if( static_cast<GIntBig>(nVal32) != nValue )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Integer overflow occurred when trying to set "
@@ -3110,8 +3113,9 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     }
     else if( eType == OFTIntegerList )
     {
-        int nVal32 = (nValue < INT_MIN ) ? INT_MIN :
-            (nValue > INT_MAX) ? INT_MAX : (int)nValue;
+        int nVal32 =
+            nValue < INT_MIN ? INT_MIN :
+            nValue > INT_MAX ? INT_MAX : static_cast<int>(nValue);
 
         if( static_cast<GIntBig>(nVal32) != nValue )
         {
@@ -3255,12 +3259,12 @@ void OGRFeature::SetField( int iField, double dfValue )
     }
     else if( eType == OFTIntegerList )
     {
-        int nValue = (int) dfValue;
+        int nValue = static_cast<int>(dfValue);
         SetField( iField, 1, &nValue );
     }
     else if( eType == OFTInteger64List )
     {
-      GIntBig nValue = static_cast<GIntBig>(dfValue);
+        GIntBig nValue = static_cast<GIntBig>(dfValue);
         SetField( iField, 1, &nValue );
     }
     else if( eType == OFTString )
@@ -3386,10 +3390,10 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         long nVal = strtol(pszValue, &pszLast, 10);
         nVal = OGRFeatureGetIntegerValue(poFDefn, static_cast<int>(nVal));
         pauFields[iField].Integer =
-            (nVal > INT_MAX) ? INT_MAX :
-            (nVal < INT_MIN) ? INT_MIN : static_cast<int>(nVal);
+            nVal > INT_MAX ? INT_MAX :
+            nVal < INT_MIN ? INT_MIN : static_cast<int>(nVal);
         if( bWarn && (errno == ERANGE ||
-                      nVal != (long)pauFields[iField].Integer ||
+                      nVal != static_cast<long>(pauFields[iField].Integer) ||
                       !pszLast || *pszLast ) )
             CPLError(
                 CE_Warning, CPLE_AppDefined,
@@ -3578,7 +3582,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             else
             {
                 const char *papszValues[2] = { pszValue, NULL };
-                SetField( iField, (char **) papszValues );
+                SetField( iField, const_cast<char **>(papszValues) );
             }
         }
     }
@@ -3801,8 +3805,8 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
         {
             const GIntBig nValue = panValues[i];
             const int nVal32 =
-                (nValue < INT_MIN ) ? INT_MIN :
-                (nValue > INT_MAX) ? INT_MAX : static_cast<int>(nValue);
+                nValue < INT_MIN ? INT_MIN :
+                nValue > INT_MAX ? INT_MAX : static_cast<int>(nValue);
 
             if( static_cast<GIntBig>(nVal32) != nValue )
             {
@@ -3820,7 +3824,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
         OGRField uField;
         uField.Integer64List.nCount = nCount;
         uField.Set.nMarker2 = 0;
-        uField.Integer64List.paList = (GIntBig*) panValues;
+        uField.Integer64List.paList = const_cast<GIntBig *>(panValues);
 
         SetField( iField, &uField );
     }
@@ -3936,7 +3940,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         std::vector<int> anValues;
 
         for( int i = 0; i < nCount; i++ )
-            anValues.push_back( (int) padfValues[i] );
+            anValues.push_back( static_cast<int>(padfValues[i]) );
 
         SetField( iField, nCount, &anValues[0] );
     }
@@ -4262,13 +4266,13 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
             return;
         }
 
-        pauFields[iField].Date.Year = (GInt16)nYear;
-        pauFields[iField].Date.Month = (GByte)nMonth;
-        pauFields[iField].Date.Day = (GByte)nDay;
-        pauFields[iField].Date.Hour = (GByte)nHour;
-        pauFields[iField].Date.Minute = (GByte)nMinute;
+        pauFields[iField].Date.Year = static_cast<GInt16>(nYear);
+        pauFields[iField].Date.Month = static_cast<GByte>(nMonth);
+        pauFields[iField].Date.Day = static_cast<GByte>(nDay);
+        pauFields[iField].Date.Hour = static_cast<GByte>(nHour);
+        pauFields[iField].Date.Minute = static_cast<GByte>(nMinute);
         pauFields[iField].Date.Second = fSecond;
-        pauFields[iField].Date.TZFlag = (GByte)nTZFlag;
+        pauFields[iField].Date.TZFlag = static_cast<GByte>(nTZFlag);
     }
     else if( eType == OFTString || eType == OFTStringList )
     {
