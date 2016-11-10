@@ -1193,7 +1193,7 @@ int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldIndex", 0 );
 
-    return static_cast<OGRFeature *>(hFeat)->GetGeomFieldIndex( pszName );
+    return reinterpret_cast<OGRFeature *>(hFeat)->GetGeomFieldIndex( pszName );
 }
 
 /************************************************************************/
@@ -1266,7 +1266,7 @@ int OGR_F_IsFieldSet( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSet", 0 );
 
-    OGRFeature* poFeature = static_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
 
     if( iField < 0 || iField >= poFeature->GetFieldCount() )
     {
@@ -1343,7 +1343,7 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_UnsetField" );
 
-    static_cast<OGRFeature *>(hFeat)->UnsetField( iField );
+    reinterpret_cast<OGRFeature *>(hFeat)->UnsetField( iField );
 }
 
 /************************************************************************/
@@ -1384,7 +1384,7 @@ OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetRawFieldRef", NULL );
 
-    return static_cast<OGRFeature *>(hFeat)->GetRawFieldRef( iField );
+    return reinterpret_cast<OGRFeature *>(hFeat)->GetRawFieldRef( iField );
 }
 
 /************************************************************************/
