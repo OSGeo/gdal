@@ -136,52 +136,53 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 OGRFeature::~OGRFeature()
 
 {
-    // TODO(rouault): Explain testing pauFields for access to poDefn.
-    // Change added in r31981.
-    const int nFieldcount = pauFields != NULL ? poDefn->GetFieldCount() : 0;
-    for( int i = 0; i < nFieldcount; i++ )
+    if( pauFields != NULL )
     {
-        OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(i);
-
-        if( !IsFieldSet(i) )
-            continue;
-
-        switch( poFDefn->GetType() )
+        const int nFieldcount = poDefn->GetFieldCount();
+        for( int i = 0; i < nFieldcount; i++ )
         {
-          case OFTString:
-            if( pauFields[i].String != NULL )
-                VSIFree( pauFields[i].String );
-            break;
+            OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(i);
 
-          case OFTBinary:
-            if( pauFields[i].Binary.paData != NULL )
-                VSIFree( pauFields[i].Binary.paData );
-            break;
+            if( !IsFieldSet(i) )
+                continue;
 
-          case OFTStringList:
-            CSLDestroy( pauFields[i].StringList.paList );
-            break;
+            switch( poFDefn->GetType() )
+            {
+              case OFTString:
+                if( pauFields[i].String != NULL )
+                    VSIFree( pauFields[i].String );
+                break;
 
-          case OFTIntegerList:
-          case OFTInteger64List:
-          case OFTRealList:
-            CPLFree( pauFields[i].IntegerList.paList );
-            break;
+              case OFTBinary:
+                if( pauFields[i].Binary.paData != NULL )
+                    VSIFree( pauFields[i].Binary.paData );
+                break;
 
-          default:
-            // TODO(schwehr): Add support for wide strings.
-            break;
+              case OFTStringList:
+                CSLDestroy( pauFields[i].StringList.paList );
+                break;
+
+              case OFTIntegerList:
+              case OFTInteger64List:
+              case OFTRealList:
+                CPLFree( pauFields[i].IntegerList.paList );
+                break;
+
+              default:
+                // TODO(schwehr): Add support for wide strings.
+                break;
+            }
         }
     }
 
-    // TODO(rouault): Explain testing papoGeometries for access to poDefn.
-    // Change added in r31981.
-    const int nGeomFieldCount =
-        papoGeometries != NULL ? poDefn->GetGeomFieldCount() : 0;
-
-    for( int i = 0; i < nGeomFieldCount; i++ )
+    if( papoGeometries != NULL )
     {
-        delete papoGeometries[i];
+        const int nGeomFieldCount = poDefn->GetGeomFieldCount();
+
+        for( int i = 0; i < nGeomFieldCount; i++ )
+        {
+            delete papoGeometries[i];
+        }
     }
 
     poDefn->Release();
