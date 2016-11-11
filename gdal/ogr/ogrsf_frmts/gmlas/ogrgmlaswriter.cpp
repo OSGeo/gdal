@@ -376,7 +376,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         }
         poOtherMetadataLayer->ResetReading();
 
-        for( size_t i = 1; i <= oMapToUri.size(); ++i )
+        for( int i = 1; i <= static_cast<int>(oMapToUri.size()); ++i )
         {
             if( oMapToUri.find(i) != oMapToUri.end() )
             {
