@@ -36,6 +36,8 @@
 
 #include <algorithm>
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                          GMLASWriter                                 */
 /************************************************************************/
@@ -252,7 +254,7 @@ GMLASWriter::GMLASWriter(const char * pszFilename,
     , m_poLayerRelationshipsLayer(NULL)
     , m_osTargetNameSpace(szOGRGMLAS_URI)
     , m_osTargetNameSpacePrefix(szOGRGMLAS_PREFIX)
-    , m_osIndentation(std::string(' ', INDENT_SIZE_DEFAULT))
+    , m_osIndentation(std::string(INDENT_SIZE_DEFAULT, ' '))
     , m_nIndentLevel(0)
 {
 
