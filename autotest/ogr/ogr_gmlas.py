@@ -3076,6 +3076,11 @@ def ogr_gmlas_writer_check_xml_read_back():
     if ogr.GetDriverByName('SQLite') is None:
         return 'skip'
 
+    # Skip tests when -fsanitize is used
+    if gdaltest.is_travis_branch('sanitize'):
+       print('Skipping because of -sanitize')
+       return 'skip'
+
     import test_cli_utilities
 
     if test_cli_utilities.get_ogrinfo_path() is None:
