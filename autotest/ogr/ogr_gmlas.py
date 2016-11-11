@@ -84,6 +84,7 @@ def ogr_gmlas_basic():
     ret = ret.replace('\r\n', '\n')
     expected = open('data/gmlas_test1.txt', 'rb').read().decode('utf-8')
     expected = expected.replace('\r\n', '\n')
+    ret = ret.replace('data\\', 'data/') # Windows
     if ret != expected:
         gdaltest.post_reason('fail')
         print('Got:')
