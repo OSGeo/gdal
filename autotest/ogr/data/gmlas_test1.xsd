@@ -101,6 +101,15 @@
             <xs:element name="int_nillable"  type="xs:int" nillable="true"/>
             <xs:element name="int_min_occurs_0_nillable"  type="xs:int" nillable="true" minOccurs="0"/>
             <xs:element name="int_min_occurs_0_nillable_bis"  type="xs:int" nillable="true" minOccurs="0"/>
+            <xs:element name="simpleContent_extension_min_occurs_0_nillable" minOccurs="0" nillable="true">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:string">
+                            <xs:attribute name="nilReason" type="xs:string"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
 
             <xs:element name="anonymous_type">
                 <xs:simpleType>
@@ -205,6 +214,14 @@
                 </xs:complexType>
             </xs:element>
 
+            <xs:element name="unbounded_sequence_1_dt" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="subelement" type="xs:dateTime"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
             <xs:element name="sequence_1_dt_unbounded">
                 <xs:complexType>
                     <xs:sequence>
@@ -215,8 +232,8 @@
 
             <xs:element name="sequence_unbounded_dt_1">
                 <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="subelement" type="xs:dateTime" maxOccurs="unbounded"/>
+                    <xs:sequence maxOccurs="unbounded">
+                        <xs:element name="subelement" type="xs:dateTime"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -299,6 +316,9 @@
 
             <xs:element ref="myns:rec_A" minOccurs="0"/>
 
+            <xs:element name="myext" type="myns:superExtensionType"/>
+            <xs:element name="myext2" type="myns:superExtensionType" minOccurs="0"/>
+
           </xs:sequence>
 
         <xs:attribute name="optionalStrAttr" type="xs:string"/>
@@ -328,6 +348,21 @@
             </xs:attribute>
         </xs:extension>
     </xs:simpleContent>
+</xs:complexType>
+
+<!-- This models swe:CategoryType and swe:AbstractSWEType -->
+<xs:complexType name="superExtensionType">
+    <xs:complexContent>
+        <xs:extension base="myns:extensionType">
+        </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+
+<xs:complexType name="extensionType">
+    <xs:sequence>
+        <xs:element name="extension" type="xs:anyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="optional"/>
 </xs:complexType>
 
 <xs:element name="rec_A">

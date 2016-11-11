@@ -10,5 +10,6 @@
         <myns:reference_inexisting_target_elt xlink:href="#BAR"/>
         <myns:reference_existing_target_elt xlink:href="#BAZ"/>
         <myns:reference_existing_abstract_target_elt xlink:href="#BAW"/>
+        <myns:reference_existing_abstract_target_elt_nillable xsi:nil="true"/>
     </myns:main_elt>
 </gml:FeatureCollection>

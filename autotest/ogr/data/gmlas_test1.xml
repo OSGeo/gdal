@@ -57,6 +57,7 @@
     <MYNS:int_nillable xsi:nil="true"/>
     <!-- no element int_min_occurs_0_nillable -->
     <MYNS:int_min_occurs_0_nillable_bis xsi:nil="true"/>
+    <MYNS:simpleContent_extension_min_occurs_0_nillable xsi:nil="true" nilReason="unknown"/>
 
     <MYNS:anonymous_type>3</MYNS:anonymous_type>
     <MYNS:union>42</MYNS:union>
@@ -85,6 +86,14 @@
         <MYNS:subelement>sequence_unbounded_string_1</MYNS:subelement>
         <MYNS:subelement>sequence_unbounded_string_2</MYNS:subelement>
     </MYNS:sequence_unbounded_string_1>
+
+
+    <MYNS:unbounded_sequence_1_dt>
+        <MYNS:subelement>2012-01-01T12:34:56Z</MYNS:subelement>
+    </MYNS:unbounded_sequence_1_dt>
+    <MYNS:unbounded_sequence_1_dt>
+        <MYNS:subelement>2012-01-02T12:34:56Z</MYNS:subelement>
+    </MYNS:unbounded_sequence_1_dt>
 
     <MYNS:sequence_1_dt_unbounded>
         <MYNS:subelement>2012-01-01T12:34:56Z</MYNS:subelement>
@@ -202,5 +211,14 @@
         </MYNS:rec_B>
         <MYNS:elt_A>elt_A</MYNS:elt_A>
     </MYNS:rec_A>
+
+    <MYNS:myext>
+      <MYNS:extension>
+        <foo/>
+      </MYNS:extension>
+      <MYNS:extension>
+        <bar/>
+      </MYNS:extension>
+    </MYNS:myext>
 
 </MYNS:main_elt>

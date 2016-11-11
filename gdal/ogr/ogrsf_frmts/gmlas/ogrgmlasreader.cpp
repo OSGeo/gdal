@@ -287,6 +287,13 @@ InputSource* GMLASBaseEntityResolver::resolveEntity(
 {
     CPLString osSystemId(transcode(systemId));
 
+    if( osSystemId.find("/gml/2.1.2/") != std::string::npos )
+        m_osGMLVersionFound = "2.1.2";
+    else if( osSystemId.find("/gml/3.1.1/") != std::string::npos )
+        m_osGMLVersionFound = "3.1.1";
+    else if( osSystemId.find("/gml/3.2.1/") != std::string::npos )
+        m_osGMLVersionFound = "3.2.1";
+
     CPLString osNewPath;
     VSILFILE* fp = m_oCache.Open(osSystemId,
                                  m_aosPathStack.back(),
@@ -294,6 +301,12 @@ InputSource* GMLASBaseEntityResolver::resolveEntity(
 
     if( fp != NULL )
     {
+        if( osNewPath.find("/vsicurl_streaming/") == 0 )
+            m_oSetSchemaURLs.insert(
+                            osNewPath.substr(strlen("/vsicurl_streaming/")));
+        else
+            m_oSetSchemaURLs.insert(osNewPath);
+
         CPLDebug("GMLAS", "Opening %s", osNewPath.c_str());
         DoExtraSchemaProcessing( osNewPath, fp );
     }
@@ -1012,7 +1025,7 @@ void GMLASReader::startElement(
         osLayerXPath = (*m_papoLayers)[i]->GetFeatureClass().GetXPath();
         if( (*m_papoLayers)[i]->GetFeatureClass().IsRepeatedSequence() )
         {
-            size_t iPosExtra = osLayerXPath.find(";extra=");
+            size_t iPosExtra = osLayerXPath.find(szEXTRA_SUFFIX);
             if (iPosExtra != std::string::npos)
             {
                 osLayerXPath.resize(iPosExtra);
@@ -1255,6 +1268,15 @@ void GMLASReader::startElement(
                             GetOGRFieldIndexFromXPath(m_osCurSubXPath);
         int geom_idx = m_oCurCtxt.m_poLayer->
                             GetOGRGeomFieldIndexFromXPath(m_osCurSubXPath);
+
+        if( idx < 0 && idx != IDX_COMPOUND_FOLDED )
+        {
+            /* Special case for a layer that matches everything, as found */
+            /* in swe:extension */
+            idx = m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
+              m_oCurCtxt.m_poLayer->GetFeatureClass().GetXPath() + szMATCH_ALL);
+        }
+
         if( idx >= 0 || geom_idx >= 0 )
         {
             // Sanity check. Shouldn't normally happen !
@@ -1472,7 +1494,8 @@ void GMLASReader::startElement(
                     CPLAssert( !osNestedXPath.empty() );
 
                     OGRGMLASLayer* poJunctionLayer = GetLayerByXPath(
-                                osAbstractElementXPath + "|" + osNestedXPath);
+                        GMLASSchemaAnalyzer::BuildJunctionTableXPath(
+                            osAbstractElementXPath, osNestedXPath));
                     OGRGMLASLayer* poSubLayer = GetLayerByXPath(osNestedXPath);
 
                     if( poSubLayer && poJunctionLayer )
@@ -1521,9 +1544,9 @@ void GMLASReader::startElement(
                         OGRFeature* poJunctionFeature =
                                 new OGRFeature(poJunctionLayer->GetLayerDefn());
                         poJunctionFeature->SetFID(nGlobalCounter);
-                        poJunctionFeature->SetField("occurrence", nCounter);
-                        poJunctionFeature->SetField("parent_pkid", osParentId);
-                        poJunctionFeature->SetField("child_pkid", osChildId);
+                        poJunctionFeature->SetField(szOCCURRENCE, nCounter);
+                        poJunctionFeature->SetField(szPARENT_PKID, osParentId);
+                        poJunctionFeature->SetField(szCHILD_PKID, osChildId);
                         PushFeatureReady(poJunctionFeature, poJunctionLayer);
                     }
                     idx = IDX_COMPOUND_FOLDED;
@@ -1542,8 +1565,8 @@ void GMLASReader::startElement(
                 !( m_oCurCtxt.m_poLayer->
                             GetFCFieldIndexFromXPath(m_osCurSubXPath) >= 0 &&
                     attrs.getLength() == 1 &&
-                    m_oMapURIToPrefix[ transcode( attrs.getURI(0) ) ] == "xsi" &&
-                    transcode(attrs.getLocalName(0)) == "nil" ) )
+                    m_oMapURIToPrefix[ transcode( attrs.getURI(0) ) ] == szXSI_PREFIX &&
+                    transcode(attrs.getLocalName(0)) == szNIL ) )
             {
                 CPLString osMatchedXPath;
                 if( m_oIgnoredXPathMatcher.MatchesRefXPath(
@@ -1610,7 +1633,8 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
 {
     // Browse through attributes and match them with one of our fields
     const int nWildcardAttrIdx =
-        m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(m_osCurSubXPath + "/@*");
+        m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(m_osCurSubXPath + "/" +
+                                                        szAT_ANY_ATTR);
     json_object* poWildcard = NULL;
 
     for(unsigned int i=0; i < attrs.getLength(); i++)
@@ -1641,34 +1665,45 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
             osAttrXPath += osAttrLocalname;
         }
 
-        int nAttrIdx = m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(osAttrXPath);
+        const int nAttrIdx = m_oCurCtxt.m_poLayer->
+                                    GetOGRFieldIndexFromXPath(osAttrXPath);
         int nFCIdx;
         if( nAttrIdx >= 0 )
         {
-            SetField( m_oCurCtxt.m_poFeature,
-                        m_oCurCtxt.m_poLayer,
-                        nAttrIdx, osAttrValue );
+            const OGRFieldType eType(
+                m_oCurCtxt.m_poFeature->GetFieldDefnRef(nAttrIdx)->GetType());
+            if( osAttrValue.empty() && eType == OFTString  )
+            {
+                m_oCurCtxt.m_poFeature->SetField( nAttrIdx, "" );
+            }
+            else
+            {
+                SetField( m_oCurCtxt.m_poFeature,
+                          m_oCurCtxt.m_poLayer,
+                          nAttrIdx, osAttrValue );
+            }
 
-            if( osAttrNSPrefix == "xlink" &&
-                osAttrLocalname == "href" &&
+            if( osAttrNSPrefix == szXLINK_PREFIX &&
+                osAttrLocalname == szHREF &&
                 !osAttrValue.empty() )
             {
                 ProcessXLinkHref( osAttrXPath, osAttrValue );
             }
         }
 
-        else if( osAttrNSPrefix != "xmlns" &&
-                 osAttrLocalname != "xmlns" &&
-                    !(osAttrNSPrefix == "xsi" &&
-                        osAttrLocalname == "schemaLocation") &&
-                    !(osAttrNSPrefix == "xsi" &&
-                        osAttrLocalname == "noNamespaceSchemaLocation") &&
-                    !(osAttrNSPrefix == "xsi" &&
-                        osAttrLocalname == "nil") &&
+        else if( osAttrNSPrefix != szXMLNS_PREFIX &&
+                 osAttrLocalname != szXMLNS_PREFIX &&
+                    !(osAttrNSPrefix == szXSI_PREFIX &&
+                        osAttrLocalname == szSCHEMA_LOCATION) &&
+                    !(osAttrNSPrefix == szXSI_PREFIX &&
+                        osAttrLocalname == szNO_NAMESPACE_SCHEMA_LOCATION) &&
+                    !(osAttrNSPrefix == szXSI_PREFIX &&
+                        osAttrLocalname == szNIL) &&
                     // Do not warn about fixed attributes on geometry properties
                     !(m_nCurGeomFieldIdx >= 0 && (
-                    (osAttrNSPrefix == "xlink" && osAttrLocalname == "type") ||
-                    (osAttrNSPrefix == "" && osAttrLocalname == "owns"))) )
+                    (osAttrNSPrefix == szXLINK_PREFIX &&
+                     osAttrLocalname == szTYPE) ||
+                    (osAttrNSPrefix == "" && osAttrLocalname == szOWNS))) )
         {
             CPLString osMatchedXPath;
             if( nWildcardAttrIdx >= 0 )
@@ -2212,7 +2247,7 @@ void GMLASReader::ProcessGeometry()
     if( m_bInitialPass )
     {
         const char* pszSRSName = CPLGetXMLValue(psInterestNode,
-                                                "srsName", NULL);
+                                                szSRS_NAME, NULL);
         if( pszSRSName != NULL )
         {
             // If we are doing a first pass, store the SRS of the geometry
@@ -2260,7 +2295,7 @@ void GMLASReader::ProcessGeometry()
     if( poGeom != NULL )
     {
         const char* pszSRSName = CPLGetXMLValue(psInterestNode,
-                                                "srsName", NULL);
+                                                szSRS_NAME, NULL);
         bool bSwapXY = false;
         if( pszSRSName != NULL )
         {
