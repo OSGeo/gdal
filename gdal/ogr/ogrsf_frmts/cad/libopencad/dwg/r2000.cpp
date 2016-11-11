@@ -3781,8 +3781,9 @@ CADDictionary DWGFileR2000::GetNOD()
                                 cadxRecordObject->abyDataBytes.end() );
             cadxRecord->setRecordData( xRecordData );
 
-            stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i],
-                static_cast<CADDictionaryRecord*>(cadxRecord) ) );
+			shared_ptr<CADDictionaryRecord> cadxRecordPtr(static_cast<CADDictionaryRecord*>(cadxRecord));
+
+            stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], cadxRecordPtr ) );
         }
     }
 

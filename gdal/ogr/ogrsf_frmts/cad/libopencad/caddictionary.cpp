@@ -75,11 +75,6 @@ CADDictionary::CADDictionary()
 
 CADDictionary::~CADDictionary()
 {
-    for( size_t i = 0; i < astXRecords.size(); ++i )
-    {
-        if( astXRecords[i].second != nullptr )
-            delete( astXRecords[i].second );
-    }
 }
 
 size_t CADDictionary::getRecordsCount()
@@ -103,10 +98,11 @@ string CADDictionary::getRecordByName(const string& name) const
     {
         if( astXRecords[i].first.compare(name) == 0 )
         {
-            CADDictionaryRecord* poRecord = astXRecords[i].second;
-            if(poRecord == nullptr || poRecord->getType() != CADObject::XRECORD)
+			std::shared_ptr<CADDictionaryRecord> XRecordPtr = astXRecords[i].second;
+            if(XRecordPtr == nullptr ||
+				XRecordPtr->getType() != CADObject::XRECORD)
                 continue;
-            CADXRecord * poXRecord = ( CADXRecord* ) poRecord;
+            CADXRecord * poXRecord = static_cast<CADXRecord*>(XRecordPtr.get() );
             return poXRecord->getRecordData();
         }
     }
