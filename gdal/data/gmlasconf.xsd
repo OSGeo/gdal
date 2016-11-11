@@ -719,6 +719,158 @@
             </xs:sequence>
           </xs:complexType>
         </xs:element>
+
+        <xs:element name="WriterConfig" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>Configuration of GMLAS writer
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+
+              <xs:element name="IndentationSize" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Number of spaces used to indent each level of nesting in
+                    XML ouput.
+                    Default is 2.
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:nonNegativeInteger">
+                        <xs:maxInclusive value="8"/>
+                    </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+
+              <xs:element name="Comment" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Comment to add at top of output XML file.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
+              <xs:element name="LineFormat" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Line format.
+                    Default is platform dependant (CR-LF on Windows, LF otherwise)
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="NATIVE">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    Platform dependant (CR-LF on Windows, LF otherwise)
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="CRLF">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    Windows end-of-line style : CR-LF
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="FieldsFromXPath">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    Unix end-of-line style: LF
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+
+              <xs:element name="SRSNameFormat" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    Format to use for srsName attributes on geometries.
+                    Default is OGC_URL.
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="SHORT">
+                            <xs:annotation>
+                                <xs:documentation>
+srsName will be in the form AUTHORITY_NAME:AUTHORITY_CODE
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="OGC_URN">
+                            <xs:annotation>
+                                <xs:documentation>
+srsName will be in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="OGC_URL">
+                            <xs:annotation>
+                                <xs:documentation>
+ssrsName will be in the form http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+
+              <xs:element name="Wrapping" minOccurs="0">
+                <xs:annotation>
+                  <xs:documentation>
+                    How to wrap features in a collection.
+                    Default is WFS2_FEATURECOLLECTION
+                  </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="WFS2_FEATURECOLLECTION">
+                            <xs:annotation>
+                                <xs:documentation>
+Use wfs:FeatureCollection / wfs:member wrapping
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="GMLAS_FEATURECOLLECTION">
+                            <xs:annotation>
+                                <xs:documentation>
+Use ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember wrapping
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+
+              <xs:element name="Timestamp" minOccurs="0" type="xs:dateTime">
+                <xs:annotation>
+                  <xs:documentation>
+                    User-specified XML dateTime value for timestamp to use in
+                    wfs:FeatureCollection attribute.
+                    Only valid for WRAPPING=WFS2_FEATURECOLLECTION.
+                    Default is current date-time.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
+              <xs:element name="WFS20SchemaLocation" minOccurs="0" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>
+                    Path or URL to OGC WFS 2.0 schema.
+                    Only valid for WRAPPING=WFS2_FEATURECOLLECTION.
+                    Default is http://schemas.opengis.net/wfs/2.0/wfs.xsd.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
       </xs:sequence>
     </xs:complexType>
   </xs:element>

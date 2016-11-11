@@ -58,38 +58,12 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
 
     SetDescription( m_poFeatureDefn->GetName() );
 
-    OGRLayer* poLayersMetadataLayer = m_poDS->GetLayersMetadataLayer();
-    OGRFeature* poLayerDescFeature =
-                        new OGRFeature(poLayersMetadataLayer->GetLayerDefn());
-    poLayerDescFeature->SetField( "layer_name", GetName() );
-    if( !m_oFC.GetParentXPath().empty() )
-    {
-        poLayerDescFeature->SetField( "layer_category", "JUNCTION_TABLE" );
-    }
-    else
-    {
-        poLayerDescFeature->SetField( "layer_xpath", m_oFC.GetXPath() );
-
-        poLayerDescFeature->SetField( "layer_category",
-                                m_oFC.IsTopLevelElt() ? "TOP_LEVEL_ELEMENT" :
-                                                        "NESTED_ELEMENT" );
-
-        if( !m_oFC.GetDocumentation().empty() )
-        {
-            poLayerDescFeature->SetField( "layer_documentation",
-                                          m_oFC.GetDocumentation() );
-        }
-    }
-    CPL_IGNORE_RET_VAL(
-            poLayersMetadataLayer->CreateFeature(poLayerDescFeature));
-    delete poLayerDescFeature;
-
     // Are we a regular table ?
     if( m_oFC.GetParentXPath().empty() )
     {
         if( bAlwaysGenerateOGRPKId )
         {
-            OGRFieldDefn oFieldDefn( "ogr_pkid", OFTString );
+            OGRFieldDefn oFieldDefn( szOGR_PKID, OFTString );
             oFieldDefn.SetNullable( false );
             m_nIDFieldIdx = m_poFeatureDefn->GetFieldCount();
             m_bIDFieldIsGenerated = true;
@@ -127,13 +101,56 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
         // (We could perhaps try to be clever to determine if we really need it)
         if( m_nIDFieldIdx < 0 )
         {
-            OGRFieldDefn oFieldDefn( "ogr_pkid", OFTString );
+            OGRFieldDefn oFieldDefn( szOGR_PKID, OFTString );
             oFieldDefn.SetNullable( false );
             m_nIDFieldIdx = m_poFeatureDefn->GetFieldCount();
             m_bIDFieldIsGenerated = true;
             m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
         }
     }
+
+    OGRLayer* poLayersMetadataLayer = m_poDS->GetLayersMetadataLayer();
+    OGRFeature* poLayerDescFeature =
+                        new OGRFeature(poLayersMetadataLayer->GetLayerDefn());
+    poLayerDescFeature->SetField( szLAYER_NAME, GetName() );
+    if( !m_oFC.GetParentXPath().empty() )
+    {
+        poLayerDescFeature->SetField( szLAYER_CATEGORY, szJUNCTION_TABLE );
+    }
+    else
+    {
+        poLayerDescFeature->SetField( szLAYER_XPATH, m_oFC.GetXPath() );
+
+        poLayerDescFeature->SetField( szLAYER_CATEGORY,
+                                m_oFC.IsTopLevelElt() ? szTOP_LEVEL_ELEMENT :
+                                                        szNESTED_ELEMENT );
+
+        if( m_nIDFieldIdx >= 0 )
+        {
+            poLayerDescFeature->SetField( szLAYER_PKID_NAME,
+                m_poFeatureDefn->GetFieldDefn(m_nIDFieldIdx)->GetNameRef() );
+        }
+
+        // If we are a child class, then add a field to reference the parent.
+        if( m_poParentLayer != NULL )
+        {
+            CPLString osFieldName(szPARENT_PREFIX);
+            osFieldName += m_poParentLayer->GetLayerDefn()->GetFieldDefn(
+                                    m_poParentLayer->GetIDFieldIdx())->GetNameRef();
+            poLayerDescFeature->SetField( szLAYER_PARENT_PKID_NAME,
+                                          osFieldName.c_str() );
+        }
+
+        if( !m_oFC.GetDocumentation().empty() )
+        {
+            poLayerDescFeature->SetField( szLAYER_DOCUMENTATION,
+                                          m_oFC.GetDocumentation() );
+        }
+    }
+    CPL_IGNORE_RET_VAL(
+            poLayersMetadataLayer->CreateFeature(poLayerDescFeature));
+    delete poLayerDescFeature;
+
 }
 
 /************************************************************************/
@@ -151,41 +168,41 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
     if( !m_oFC.GetParentXPath().empty() )
     {
         {
-            OGRFieldDefn oFieldDefn( "occurrence", OFTInteger );
+            OGRFieldDefn oFieldDefn( szOCCURRENCE, OFTInteger );
             oFieldDefn.SetNullable( false );
             m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
             OGRFeature* poFieldDescFeature =
                         new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
-            poFieldDescFeature->SetField( "layer_name", GetName() );
-            poFieldDescFeature->SetField( "field_name", oFieldDefn.GetNameRef() );
+            poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+            poFieldDescFeature->SetField( szFIELD_NAME, oFieldDefn.GetNameRef() );
             CPL_IGNORE_RET_VAL(
                     poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
             delete poFieldDescFeature;
         }
 
         {
-            OGRFieldDefn oFieldDefn( "parent_pkid", OFTString );
+            OGRFieldDefn oFieldDefn( szPARENT_PKID, OFTString );
             oFieldDefn.SetNullable( false );
             m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
             OGRFeature* poFieldDescFeature =
                                 new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
-            poFieldDescFeature->SetField( "layer_name", GetName() );
-            poFieldDescFeature->SetField( "field_name", oFieldDefn.GetNameRef() );
+            poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+            poFieldDescFeature->SetField( szFIELD_NAME, oFieldDefn.GetNameRef() );
             CPL_IGNORE_RET_VAL(
                     poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
             delete poFieldDescFeature;
         }
         {
-            OGRFieldDefn oFieldDefn( "child_pkid", OFTString );
+            OGRFieldDefn oFieldDefn( szCHILD_PKID, OFTString );
             oFieldDefn.SetNullable( false );
             m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
             OGRFeature* poFieldDescFeature =
                                 new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
-            poFieldDescFeature->SetField( "layer_name", GetName() );
-            poFieldDescFeature->SetField( "field_name", oFieldDefn.GetNameRef() );
+            poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+            poFieldDescFeature->SetField( szFIELD_NAME, oFieldDefn.GetNameRef() );
             CPL_IGNORE_RET_VAL(
                     poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
             delete poFieldDescFeature;
@@ -197,7 +214,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
     // If we are a child class, then add a field to reference the parent.
     if( m_poParentLayer != NULL )
     {
-        CPLString osFieldName("parent_");
+        CPLString osFieldName(szPARENT_PREFIX);
         osFieldName += m_poParentLayer->GetLayerDefn()->GetFieldDefn(
                                 m_poParentLayer->GetIDFieldIdx())->GetNameRef();
         OGRFieldDefn oFieldDefn( osFieldName, OFTString );
@@ -206,6 +223,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         m_poFeatureDefn->AddFieldDefn( &oFieldDefn );
     }
 
+    int nFieldIndex = 0;
     for(int i=0; i< static_cast<int>(oFields.size()); i++ )
     {
         OGRGMLASLayer* poRelatedLayer = NULL;
@@ -224,23 +242,22 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             {
                 OGRFeature* poRelationshipsFeature =
                     new OGRFeature(poRelationshipsLayer->GetLayerDefn());
-                poRelationshipsFeature->SetField( "parent_layer",
-                                                    GetName() );
-                poRelationshipsFeature->SetField( "parent_pkid",
+                poRelationshipsFeature->SetField( szPARENT_LAYER, GetName() );
+                poRelationshipsFeature->SetField( szPARENT_PKID,
                         GetLayerDefn()->GetFieldDefn(
                                 GetIDFieldIdx())->GetNameRef() );
                 if( !oField.GetName().empty() )
                 {
-                    poRelationshipsFeature->SetField( "parent_element_name",
-                                                    oField.GetName() );
+                    poRelationshipsFeature->SetField( szPARENT_ELEMENT_NAME,
+                                                      oField.GetName() );
                 }
-                poRelationshipsFeature->SetField( "child_layer",
-                                                poRelatedLayer->GetName() );
+                poRelationshipsFeature->SetField(szCHILD_LAYER,
+                                                 poRelatedLayer->GetName() );
                 if( eCategory ==
                             GMLASField::PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE ||
                     eCategory == GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK )
                 {
-                    poRelationshipsFeature->SetField( "child_pkid",
+                    poRelationshipsFeature->SetField( szCHILD_PKID,
                         poRelatedLayer->GetLayerDefn()->GetFieldDefn(
                             poRelatedLayer->GetIDFieldIdx())->GetNameRef() );
                 }
@@ -250,8 +267,9 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK ||
                                eCategory == GMLASField::GROUP);
 
-                    poRelationshipsFeature->SetField( "child_pkid",
-                        (CPLString("parent_") + GetLayerDefn()->GetFieldDefn(
+                    poRelationshipsFeature->SetField( szCHILD_PKID,
+                        (CPLString(szPARENT_PREFIX) +
+                            GetLayerDefn()->GetFieldDefn(
                                     GetIDFieldIdx())->GetNameRef()).c_str() );
                 }
                 CPL_IGNORE_RET_VAL(poRelationshipsLayer->CreateFeature(
@@ -267,7 +285,11 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
 
         OGRFeature* poFieldDescFeature =
                             new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
-        poFieldDescFeature->SetField( "layer_name", GetName() );
+        poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+
+        ++nFieldIndex;
+        poFieldDescFeature->SetField( szFIELD_INDEX, nFieldIndex);
+
         if( oField.GetName().empty() )
         {
             CPLAssert( eCategory == GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK ||
@@ -275,13 +297,13 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         }
         else
         {
-            poFieldDescFeature->SetField( "field_name",
+            poFieldDescFeature->SetField( szFIELD_NAME,
                                           oField.GetName().c_str() );
         }
         if( !oField.GetXPath().empty() )
         {
-            poFieldDescFeature->SetField( "field_xpath",
-                                        oField.GetXPath().c_str() );
+            poFieldDescFeature->SetField( szFIELD_XPATH,
+                                          oField.GetXPath().c_str() );
         }
         else if( !oField.GetAlternateXPaths().empty() )
         {
@@ -293,7 +315,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                 if( j != 0 ) osXPath += ",";
                 osXPath += aoXPaths[j];
             }
-            poFieldDescFeature->SetField( "field_xpath", osXPath.c_str() );
+            poFieldDescFeature->SetField( szFIELD_XPATH, osXPath.c_str() );
         }
         if( oField.GetTypeName().empty() )
         {
@@ -305,56 +327,62 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         }
         else
         {
-            poFieldDescFeature->SetField( "field_type",
+            poFieldDescFeature->SetField( szFIELD_TYPE,
                                         oField.GetTypeName().c_str() );
         }
-        poFieldDescFeature->SetField( "field_is_list",
+        poFieldDescFeature->SetField( szFIELD_IS_LIST,
                                       static_cast<int>(oField.IsList()) );
         if( oField.GetMinOccurs() != -1 )
         {
-            poFieldDescFeature->SetField( "field_min_occurs",
+            poFieldDescFeature->SetField( szFIELD_MIN_OCCURS,
                                         oField.GetMinOccurs() );
         }
         if( oField.GetMaxOccurs() == MAXOCCURS_UNLIMITED )
         {
-            poFieldDescFeature->SetField( "field_max_occurs", INT_MAX );
+            poFieldDescFeature->SetField( szFIELD_MAX_OCCURS, INT_MAX );
         }
         else if( oField.GetMaxOccurs() != -1 )
         {
-            poFieldDescFeature->SetField( "field_max_occurs",
+            poFieldDescFeature->SetField( szFIELD_MAX_OCCURS,
                                         oField.GetMaxOccurs() );
+        }
+        if( oField.GetMaxOccurs() == MAXOCCURS_UNLIMITED ||
+            oField.GetMaxOccurs() > 1 )
+        {
+            poFieldDescFeature->SetField( szFIELD_REPETITION_ON_SEQUENCE,
+                                oField.GetRepetitionOnSequence() ? 1 : 0);
         }
         if( !oField.GetFixedValue().empty() )
         {
-            poFieldDescFeature->SetField( "field_fixed_value",
-                                         oField.GetFixedValue() );
+            poFieldDescFeature->SetField( szFIELD_FIXED_VALUE,
+                                          oField.GetFixedValue() );
         }
         if( !oField.GetDefaultValue().empty() )
         {
-            poFieldDescFeature->SetField( "field_default_value",
-                                         oField.GetDefaultValue() );
+            poFieldDescFeature->SetField( szFIELD_DEFAULT_VALUE,
+                                          oField.GetDefaultValue() );
         }
         switch( eCategory )
         {
             case GMLASField::REGULAR:
-                poFieldDescFeature->SetField( "field_category",
-                                             "REGULAR");
+                poFieldDescFeature->SetField(szFIELD_CATEGORY,
+                                             szREGULAR);
                 break;
             case GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK:
-                poFieldDescFeature->SetField( "field_category",
-                                             "PATH_TO_CHILD_ELEMENT_NO_LINK");
+                poFieldDescFeature->SetField(szFIELD_CATEGORY,
+                                             szPATH_TO_CHILD_ELEMENT_NO_LINK);
                 break;
             case GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK:
-                poFieldDescFeature->SetField( "field_category",
-                                             "PATH_TO_CHILD_ELEMENT_WITH_LINK");
+                poFieldDescFeature->SetField(szFIELD_CATEGORY,
+                                             szPATH_TO_CHILD_ELEMENT_WITH_LINK);
                 break;
             case GMLASField::PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE:
-                poFieldDescFeature->SetField( "field_category",
-                                "PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE");
+                poFieldDescFeature->SetField(szFIELD_CATEGORY,
+                                szPATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE);
                 break;
             case GMLASField::GROUP:
-                poFieldDescFeature->SetField( "field_category",
-                                             "GROUP");
+                poFieldDescFeature->SetField(szFIELD_CATEGORY,
+                                             szGROUP);
                 break;
             default:
                 CPLAssert(FALSE);
@@ -362,8 +390,8 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         }
         if( poRelatedLayer != NULL )
         {
-            poFieldDescFeature->SetField( "field_related_layer",
-                                         poRelatedLayer->GetName() );
+            poFieldDescFeature->SetField( szFIELD_RELATED_LAYER,
+                                          poRelatedLayer->GetName() );
         }
 
         if( eCategory == GMLASField::PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE)
@@ -379,14 +407,14 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                         osAbstractElementXPath + "|" + osNestedXPath);
             if( poJunctionLayer != NULL )
             {
-                poFieldDescFeature->SetField( "field_junction_layer",
-                                            poJunctionLayer->GetName() );
+                poFieldDescFeature->SetField( szFIELD_JUNCTION_LAYER,
+                                              poJunctionLayer->GetName() );
             }
         }
 
         if( !oField.GetDocumentation().empty() )
         {
-            poFieldDescFeature->SetField( "field_documentation",
+            poFieldDescFeature->SetField( szFIELD_DOCUMENTATION,
                                           oField.GetDocumentation() );
         }
 
@@ -492,7 +520,7 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
                 m_oMapOGRGeomFieldIdxtoFCFieldIdx[ iOGRGeomIdx ] = i;
 
                 // Suffix the regular non-geometry field
-                osOGRFieldName += "_xml";
+                osOGRFieldName += szXML_SUFFIX;
                 eType = OFTString;
                 break;
             }
@@ -558,16 +586,16 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
         m_oMapOGRFieldIdxtoFCFieldIdx[iOGRIdx] = i;
 
         // Create field to receive resolved xlink:href content, if needed
-        if( oField.GetXPath().find("@xlink:href") != std::string::npos &&
+        if( oField.GetXPath().find(szAT_XLINK_HREF) != std::string::npos &&
             m_poDS->GetConf().m_oXLinkResolution.m_bDefaultResolutionEnabled &&
             m_poDS->GetConf().m_oXLinkResolution.m_eDefaultResolutionMode
                                         == GMLASXLinkResolutionConf::RawContent )
         {
             CPLString osRawContentFieldname(osOGRFieldName);
-            size_t nPos = osRawContentFieldname.find("_href");
+            size_t nPos = osRawContentFieldname.find(szHREF_SUFFIX);
             if( nPos != std::string::npos )
                 osRawContentFieldname.resize(nPos);
-            osRawContentFieldname += "_rawcontent";
+            osRawContentFieldname += szRAW_CONTENT_SUFFIX;
             OGRFieldDefn oFieldDefnRaw( osRawContentFieldname, OFTString );
             m_poFeatureDefn->AddFieldDefn( &oFieldDefnRaw );
 
@@ -592,7 +620,7 @@ void OGRGMLASLayer::CreateCompoundFoldedMappings()
     CPLString oFCXPath(m_oFC.GetXPath());
     if( m_oFC.IsRepeatedSequence() )
     {
-        size_t iPosExtra = oFCXPath.find(";extra=");
+        size_t iPosExtra = oFCXPath.find(szEXTRA_SUFFIX);
         if (iPosExtra != std::string::npos)
         {
             oFCXPath.resize(iPosExtra);

@@ -1,0 +1,325 @@
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>GMLAS - Mapping examples</title>
+
+<style type="text/css">
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>GMLAS - Mapping examples</h1>
+
+<p>This page gives a few examples of how XML constructs are mapped to OGR layers
+and fields by the <a href="drv_gmlas.html">GMLAS</a> driver.</p>
+
+<table>
+
+<tr><th>Schema</th><th>Document</th><th>OGR layers</th><th>Comments</th></tr>
+<tr><td>
+<pre>
+&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
+&lt;element name="MyFeature"&gt;
+  &lt;complexType&gt;
+    &lt;sequence&gt;
+        &lt;element name="name" type="string"/&gt;
+    &lt;/sequence&gt;
+    &lt;attribute name="id" type="ID" use="required"/&gt;
+    &lt;attribute name="attr" type="string"/&gt;
+  &lt;/complexType&gt;
+&lt;/element&gt;
+&lt;/schema&gt;
+</pre>
+</td>
+<td>
+<pre>
+&lt;MyFeature id="my_id" attr="attr_value"&gt;
+    &lt;name&gt;my_name&lt;/name&gt;
+&lt;/MyFeature&gt;
+</pre>
+</td>
+<td>
+<pre>
+Layer name: MyFeature
+Geometry: None
+id: String (0.0) NOT NULL
+attr: String (0.0)
+name: String (0.0) NOT NULL
+OGRFeature(MyFeature):1
+  id (String) = my_id
+  attr (String) = attr_value
+  name (String) = my_name
+</pre>
+</td>
+<td>Element with attributes and sub-elements of simple type and maximum cardinality
+of 1.</td>
+</tr>
+
+<tr><td>
+<pre>
+&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
+&lt;element name="MyFeature"&gt;
+  &lt;complexType&gt;
+    &lt;sequence&gt;
+        &lt;element name="str_array" type="string"
+                 maxOccurs="2"/&gt;
+        &lt;element name="dt_array" type="dateTime"
+                 maxOccurs="unbounded"/&gt;
+    &lt;/sequence&gt;
+    &lt;attribute name="id" type="ID" use="required"/&gt;
+  &lt;/complexType&gt;
+&lt;/element&gt;
+&lt;/schema&gt;
+</pre>
+</td>
+<td>
+<pre>
+&lt;MyFeature id="my_id"&gt;
+    &lt;str_array&gt;first string&lt;/str_array&gt;
+    &lt;str_array&gt;second string&lt;/str_array&gt;
+    &lt;dt_array&gt;2016-09-24T15:31:00Z&lt;/dt_array&gt;
+    &lt;dt_array&gt;2016-09-24T15:32:00Z&lt;/dt_array&gt;
+&lt;/MyFeature&gt;
+</pre>
+</td>
+<td>
+<pre>
+Layer name: MyFeature
+Geometry: None
+id: String (0.0) NOT NULL
+str_array: StringList (0.0) NOT NULL
+OGRFeature(MyFeature):1
+  id (String) = my_id
+  str_array (StringList) = 
+    (2:first string,second string)
+
+Layer name: MyFeature_dt_array
+Geometry: None
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+value: DateTime (0.0)
+OGRFeature(MyFeature_dt_array):1
+  ogr_pkid (String) = my_id_dt_array_1
+  parent_id (String) = my_id
+  value (DateTime) = 2016/09/24 15:31:00+00
+
+OGRFeature(MyFeature_dt_array):2
+  ogr_pkid (String) = my_id_dt_array_2
+  parent_id (String) = my_id
+  value (DateTime) = 2016/09/24 15:32:00+00
+</pre>
+</td>
+<td>Case of array and child layer</td>
+</tr>
+
+<tr>
+<td>
+<pre>
+&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
+&lt;element name="MyFeature"&gt;
+  &lt;complexType&gt;
+    &lt;sequence&gt;
+      &lt;element name="identifier"&gt;
+        &lt;complexType&gt;
+          &lt;sequence&gt;
+            &lt;element name="name"&gt;
+              &lt;complexType&gt;
+                &lt;simpleContent&gt;
+                  &lt;extension base="string"&gt;
+                    &lt;attribute name="lang"
+                               type="string"/&gt;
+                  &lt;/extension&gt;
+                &lt;/simpleContent&gt;
+              &lt;/complexType&gt;
+            &lt;/element&gt;
+            &lt;element name="namespace" type="string"
+                     minOccurs="0"/&gt;
+          &lt;/sequence&gt;
+        &lt;/complexType&gt;
+      &lt;/element&gt;
+    &lt;/sequence&gt;
+    &lt;attribute name="id" type="ID" use="required"/&gt;
+  &lt;/complexType&gt;
+&lt;/element&gt;
+&lt;/schema&gt;
+</pre>
+</td>
+<td>
+<pre>
+&lt;MyFeature id="my_id"&gt;
+    &lt;identifier&gt;
+        &lt;name lang="en"&gt;my_name&lt;/name&gt;
+        &lt;namespace&gt;baz&lt;/namespace&gt;
+    &lt;/identifier&gt;
+&lt;/MyFeature&gt;
+</pre>
+</td>
+<td>
+<pre>
+Layer name: MyFeature
+Geometry: None
+id: String (0.0) NOT NULL
+identifier_name_lang: String (0.0)
+identifier_name: String (0.0)
+identifier_namespace: String (0.0)
+OGRFeature(MyFeature):1
+  id (String) = my_id
+  identifier_name_lang (String) = en
+  identifier_name (String) = my_name
+  identifier_namespace (String) = baz
+</pre>
+</td>
+<td>Case of nested element, that can be folded into main layer. Use of
+an attribute on a sub-element.</td>
+</tr>
+
+<tr>
+<td>
+<pre>
+&lt;schema xmlns:myns="http://myns"
+        targetNamespace="http://myns"
+        elementFormDefault="qualified"
+        xmlns="http://www.w3.org/2001/XMLSchema"&gt;
+
+&lt;element name="AbstractFeature" abstract="true"/&gt;
+
+&lt;element name="FeatureCollection"&gt;
+  &lt;complexType&gt;&lt;sequence&gt;
+      &lt;element ref="myns:AbstractFeature" maxOccurs="unbounded"/&gt;
+  &lt;/sequence&gt;&lt;/complexType&gt;
+&lt;/element&gt;
+
+&lt;complexType name="namesType"&gt;
+  &lt;sequence&gt;
+    &lt;element ref="myns:name" maxOccurs="unbounded"/&gt;
+  &lt;/sequence&gt;
+&lt;/complexType&gt;
+
+&lt;element name="MyFeature" substitutionGroup="myns:AbstractFeature"&gt;
+  &lt;complexType&gt;&lt;sequence&gt;
+      &lt;element name="names" type="myns:namesType"/&gt;
+    &lt;/sequence&gt;
+    &lt;attribute name="id" type="ID" use="required"/&gt;
+  &lt;/complexType&gt;
+&lt;/element&gt;
+
+&lt;element name="MyFeature2" substitutionGroup="myns:AbstractFeature"&gt;
+  &lt;complexType&gt;&lt;sequence&gt;
+      &lt;element name="names" type="myns:namesType"/&gt;
+    &lt;/sequence&gt;
+    &lt;attribute name="id" type="ID" use="required"/&gt;
+  &lt;/complexType&gt;
+&lt;/element&gt;
+
+&lt;element name="name"&gt;
+  &lt;complexType&gt;&lt;sequence&gt;
+      &lt;element name="name" type="string"/&gt;
+      &lt;element name="lang" type="string"/&gt;
+  &lt;/sequence&gt;&lt;/complexType&gt;
+&lt;/element&gt;
+
+&lt;/schema&gt;
+</pre>
+</td>
+<td>
+<pre>
+&lt;FeatureCollection xmlns="http://myns"&gt;
+  &lt;MyFeature id="my_id"&gt;
+    &lt;names&gt;
+        &lt;name&gt;
+          &lt;name&gt;name&lt;/name&gt;
+          &lt;lang&gt;en&lt;/lang&gt;
+        &lt;/name&gt;
+        &lt;name&gt;
+          &lt;name&gt;nom&lt;/name&gt;
+          &lt;lang&gt;fr&lt;/lang&gt;
+        &lt;/name&gt;
+    &lt;/names&gt;
+  &lt;/MyFeature&gt;
+  &lt;MyFeature2 id="my_id2"&gt;
+    &lt;names&gt;
+        &lt;name&gt;
+          &lt;name&gt;nom2&lt;/name&gt;
+          &lt;lang&gt;fr&lt;/lang&gt;
+        &lt;/name&gt;
+    &lt;/names&gt;
+  &lt;/MyFeature2&gt;
+&lt;/FeatureCollection&gt;
+</pre>
+</td>
+<td>
+<pre>
+Layer name: name
+OGRFeature(name):1
+  ogr_pkid (String) = _name_1
+  name (String) = name
+  lang (String) = en
+
+OGRFeature(name):2
+  ogr_pkid (String) = _name_2
+  name (String) = nom
+  lang (String) = fr
+
+OGRFeature(name):3
+  ogr_pkid (String) = _name_3
+  name (String) = nom2
+  lang (String) = fr
+
+
+Layer name: MyFeature
+OGRFeature(MyFeature):1
+  id (String) = my_id
+
+Layer name: MyFeature2
+OGRFeature(MyFeature2):1
+  id (String) = my_id2
+
+
+Layer name: MyFeature_names_name_name
+OGRFeature(MyFeature_names_name_name):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = my_id
+  child_pkid (String) = _name_1
+
+OGRFeature(MyFeature_names_name_name):2
+  occurrence (Integer) = 2
+  parent_pkid (String) = my_id
+  child_pkid (String) = _name_2
+
+
+Layer name: MyFeature2_names_name_name
+OGRFeature(MyFeature2_names_name_name):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = my_id2
+  child_pkid (String) = _name_3
+
+</pre>
+</td>
+<td>Case of a common element "name" referenced by 2 layers "MyFeature" and
+"MyFeature1". The links are established through the junction layers
+"MyFeature_names_name_name" and "MyFeature2_names_name_name".
+</td>
+</tr>
+
+</table>
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="drv_gmlas.html">GMLAS</a>: main documentation page for GMLAS driver.</li>
+</ul>
+
+</body>
+</html>

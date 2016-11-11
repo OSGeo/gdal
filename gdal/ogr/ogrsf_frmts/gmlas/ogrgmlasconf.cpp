@@ -31,28 +31,15 @@
 // Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
 
+#define CONSTANT_DEFINITION
+#undef OGR_GMLAS_CONSTS_INCLUDED_REFEFINABLE
+#include "ogr_gmlas_consts.h"
+
 #include "cpl_minixml.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
-
-const bool GMLASXLinkResolutionConf::DEFAULT_RESOLUTION_ENABLED_DEFAULT = false;
-const bool GMLASXLinkResolutionConf::ALLOW_REMOTE_DOWNLOAD_DEFAULT = true;
-const bool GMLASXLinkResolutionConf::CACHE_RESULTS_DEFAULT = false;
-
-const bool GMLASConfiguration::ALLOW_REMOTE_SCHEMA_DOWNLOAD_DEFAULT = true;
-const bool GMLASConfiguration::ALWAYS_GENERATE_OGR_ID_DEFAULT = false;
-const bool GMLASConfiguration::REMOVE_UNUSED_LAYERS_DEFAULT = false;
-const bool GMLASConfiguration::REMOVE_UNUSED_FIELDS_DEFAULT = false;
-const bool GMLASConfiguration::USE_ARRAYS_DEFAULT = true;
-const bool GMLASConfiguration::INCLUDE_GEOMETRY_XML_DEFAULT = false;
-const bool GMLASConfiguration::INSTANTIATE_GML_FEATURES_ONLY_DEFAULT = true;
-const bool GMLASConfiguration::ALLOW_XSD_CACHE_DEFAULT = true;
-const bool GMLASConfiguration::VALIDATE_DEFAULT = false;
-const bool GMLASConfiguration::FAIL_IF_VALIDATION_ERROR_DEFAULT = false;
-const bool GMLASConfiguration::EXPOSE_METADATA_LAYERS_DEFAULT = false;
-const bool GMLASConfiguration::WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT = true;
-const bool GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT = true;
-const bool GMLASConfiguration::PG_IDENTIFIER_LAUNDERING_DEFAULT = true;
 
 /************************************************************************/
 /*                          GMLASConfiguration()                        */
@@ -73,6 +60,10 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
     , m_bExposeMetadataLayers(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT)
+    , m_nIndentSize(INDENT_SIZE_DEFAULT)
+    , m_osSRSNameFormat(szSRSNAME_DEFAULT)
+    , m_osWrapping(szWFS2_FEATURECOLLECTION)
+    , m_osWFS20SchemaLocation(szWFS20_SCHEMALOCATION)
 {
 }
 
@@ -409,6 +400,33 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                                             "=Configuration.XLinkResolution");
     if( psXLinkResolutionNode != NULL )
         m_oXLinkResolution.LoadFromXML( psXLinkResolutionNode );
+
+    // Parse WriterConfig
+    CPLXMLNode* psWriterConfig = CPLGetXMLNode( psRoot,
+                                                "=Configuration.WriterConfig");
+    if( psWriterConfig != NULL )
+    {
+        m_nIndentSize = atoi( CPLGetXMLValue( psWriterConfig,
+                                    "IndentationSize",
+                                    CPLSPrintf("%d", INDENT_SIZE_DEFAULT ) ) );
+        m_nIndentSize = std::min( INDENT_SIZE_MAX,
+                                  std::max( INDENT_SIZE_MIN, m_nIndentSize ) );
+
+        m_osComment = CPLGetXMLValue( psWriterConfig, "Comment", "" );
+
+        m_osLineFormat = CPLGetXMLValue( psWriterConfig, "LineFormat", "" );
+
+        m_osSRSNameFormat = CPLGetXMLValue( psWriterConfig, "SRSNameFormat", "" );
+
+        m_osWrapping = CPLGetXMLValue( psWriterConfig, "Wrapping",
+                                       szWFS2_FEATURECOLLECTION );
+
+        m_osTimestamp = CPLGetXMLValue( psWriterConfig, "Timestamp", "" );
+
+        m_osWFS20SchemaLocation = CPLGetXMLValue( psWriterConfig,
+                                                  "WFS20SchemaLocation",
+                                                  szWFS20_SCHEMALOCATION );
+    }
 
     Finalize();
 

@@ -1,30 +1,23 @@
-<html>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>GMLAS - Geography Markup Language (GML) driven by application schemas</title>
-
-<style>
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-th, td {
-    padding: 5px;
-}
-</style>
-
 </head>
 
-<body bgcolor="#ffffff">
+<body>
 
 <h1>GMLAS - Geography Markup Language (GML) driven by application schemas</h1>
 
 <p>Available in GDAL &gt;= 2.2</p>
 
-<p>This driver can read XML files of arbitrary structure, included those
+<p>This driver can read and write XML files of arbitrary structure, included those
 containing so called Complex Features, provided that they are accompanied by
 one or several XML schemas that describe the structure of their
 content. While this driver is generic to any XML schema, the main target is to
-be able to read documents referencing directly or indirectly to the
+be able to read and write documents referencing directly or indirectly to the
 GML namespace.</p>
 
 <p>The driver requires Xerces-C &gt;= 3.1.</p>
@@ -42,8 +35,6 @@ in that case the schemas must be explicitly provided with the XSD open option.</
 
 
 <h2>Mapping of XML structure to OGR layers and fields</h2>
-
-<h3>General principles</h3>
 
 <p>The driver scans the XML schemas referenced by the XML/GML to build the OGR
 layers and fields. It is strictly required that the schemas, directly or indirectly
@@ -64,411 +55,22 @@ several parents.</p>
 the schemas. Unexpected content in the document will be silently ignored, as
 well as content required by the schema and absent from the document.</p>
 
-<h3>Examples</h3>
-
-<table>
-
-<tr><th>Schema</th><th>Document</th><th>OGR layers</th><th>Comments</th></tr>
-<tr><td>
-<pre>
-&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
-&lt;element name="MyFeature"&gt;
-  &lt;complexType&gt;
-    &lt;sequence&gt;
-        &lt;element name="name" type="string"/&gt;
-    &lt;/sequence&gt;
-    &lt;attribute name="id" type="ID" use="required"/&gt;
-    &lt;attribute name="attr" type="string"/&gt;
-  &lt;/complexType&gt;
-&lt;/element&gt;
-&lt;/schema&gt;
-</pre>
-</td>
-<td>
-<pre>
-&lt;MyFeature id="my_id" attr="attr_value"&gt;
-    &lt;name&gt;my_name&lt;/name&gt;
-&lt;/MyFeature&gt;
-</pre>
-</td>
-<td>
-<pre>
-Layer name: MyFeature
-Geometry: None
-id: String (0.0) NOT NULL
-attr: String (0.0)
-name: String (0.0) NOT NULL
-OGRFeature(MyFeature):1
-  id (String) = my_id
-  attr (String) = attr_value
-  name (String) = my_name
-</pre>
-</td>
-<td>Element with attributes and sub-elements of simple type and maximum cardinality
-of 1.</td>
-</tr>
-
-<tr><td>
-<pre>
-&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
-&lt;element name="MyFeature"&gt;
-  &lt;complexType&gt;
-    &lt;sequence&gt;
-        &lt;element name="str_array" type="string"
-                 maxOccurs="2"/&gt;
-        &lt;element name="dt_array" type="dateTime"
-                 maxOccurs="unbounded"/&gt;
-    &lt;/sequence&gt;
-    &lt;attribute name="id" type="ID" use="required"/&gt;
-  &lt;/complexType&gt;
-&lt;/element&gt;
-&lt;/schema&gt;
-</pre>
-</td>
-<td>
-<pre>
-&lt;MyFeature id="my_id"&gt;
-    &lt;str_array&gt;first string&lt;/str_array&gt;
-    &lt;str_array&gt;second string&lt;/str_array&gt;
-    &lt;dt_array&gt;2016-09-24T15:31:00Z&lt;/dt_array&gt;
-    &lt;dt_array&gt;2016-09-24T15:32:00Z&lt;/dt_array&gt;
-&lt;/MyFeature&gt;
-</pre>
-</td>
-<td>
-<pre>
-Layer name: MyFeature
-Geometry: None
-id: String (0.0) NOT NULL
-str_array: StringList (0.0) NOT NULL
-OGRFeature(MyFeature):1
-  id (String) = my_id
-  str_array (StringList) = 
-    (2:first string,second string)
-
-Layer name: MyFeature_dt_array
-Geometry: None
-ogr_pkid: String (0.0) NOT NULL
-parent_id: String (0.0) NOT NULL
-value: DateTime (0.0)
-OGRFeature(MyFeature_dt_array):1
-  ogr_pkid (String) = my_id_dt_array_1
-  parent_id (String) = my_id
-  value (DateTime) = 2016/09/24 15:31:00+00
-
-OGRFeature(MyFeature_dt_array):2
-  ogr_pkid (String) = my_id_dt_array_2
-  parent_id (String) = my_id
-  value (DateTime) = 2016/09/24 15:32:00+00
-</pre>
-</td>
-<td>Case of array and child layer</td>
-</tr>
-
-<tr>
-<td>
-<pre>
-&lt;schema xmlns="http://www.w3.org/2001/XMLSchema"&gt;
-&lt;element name="MyFeature"&gt;
-  &lt;complexType&gt;
-    &lt;sequence&gt;
-      &lt;element name="identifier"&gt;
-        &lt;complexType&gt;
-          &lt;sequence&gt;
-            &lt;element name="name"&gt;
-              &lt;complexType&gt;
-                &lt;simpleContent&gt;
-                  &lt;extension base="string"&gt;
-                    &lt;attribute name="lang"
-                               type="string"/&gt;
-                  &lt;/extension&gt;
-                &lt;/simpleContent&gt;
-              &lt;/complexType&gt;
-            &lt;/element&gt;
-            &lt;element name="namespace" type="string"
-                     minOccurs="0"/&gt;
-          &lt;/sequence&gt;
-        &lt;/complexType&gt;
-      &lt;/element&gt;
-    &lt;/sequence&gt;
-    &lt;attribute name="id" type="ID" use="required"/&gt;
-  &lt;/complexType&gt;
-&lt;/element&gt;
-&lt;/schema&gt;
-</pre>
-</td>
-<td>
-<pre>
-&lt;MyFeature id="my_id"&gt;
-    &lt;identifier&gt;
-        &lt;name lang="en"&gt;my_name&lt;/name&gt;
-        &lt;namespace&gt;baz&lt;/namespace&gt;
-    &lt;/identifier&gt;
-&lt;/MyFeature&gt;
-</pre>
-</td>
-<td>
-<pre>
-Layer name: MyFeature
-Geometry: None
-id: String (0.0) NOT NULL
-identifier_name_lang: String (0.0)
-identifier_name: String (0.0)
-identifier_namespace: String (0.0)
-OGRFeature(MyFeature):1
-  id (String) = my_id
-  identifier_name_lang (String) = en
-  identifier_name (String) = my_name
-  identifier_namespace (String) = baz
-</pre>
-</td>
-<td>Case of nested element, that can be folded into main layer. Use of
-an attribute on a sub-element.</td>
-</tr>
-
-<tr>
-<td>
-<pre>
-&lt;schema xmlns:myns="http://myns"
-        targetNamespace="http://myns"
-        elementFormDefault="qualified"
-        xmlns="http://www.w3.org/2001/XMLSchema"&gt;
-
-&lt;element name="AbstractFeature" abstract="true"/&gt;
-
-&lt;element name="FeatureCollection"&gt;
-  &lt;complexType&gt;&lt;sequence&gt;
-      &lt;element ref="myns:AbstractFeature" maxOccurs="unbounded"/&gt;
-  &lt;/sequence&gt;&lt;/complexType&gt;
-&lt;/element&gt;
-
-&lt;complexType name="namesType"&gt;
-  &lt;sequence&gt;
-    &lt;element ref="myns:name" maxOccurs="unbounded"/&gt;
-  &lt;/sequence&gt;
-&lt;/complexType&gt;
-
-&lt;element name="MyFeature" substitutionGroup="myns:AbstractFeature"&gt;
-  &lt;complexType&gt;&lt;sequence&gt;
-      &lt;element name="names" type="myns:namesType"/&gt;
-    &lt;/sequence&gt;
-    &lt;attribute name="id" type="ID" use="required"/&gt;
-  &lt;/complexType&gt;
-&lt;/element&gt;
-
-&lt;element name="MyFeature2" substitutionGroup="myns:AbstractFeature"&gt;
-  &lt;complexType&gt;&lt;sequence&gt;
-      &lt;element name="names" type="myns:namesType"/&gt;
-    &lt;/sequence&gt;
-    &lt;attribute name="id" type="ID" use="required"/&gt;
-  &lt;/complexType&gt;
-&lt;/element&gt;
-
-&lt;element name="name"&gt;
-  &lt;complexType&gt;&lt;sequence&gt;
-      &lt;element name="name" type="string"/&gt;
-      &lt;element name="lang" type="string"/&gt;
-  &lt;/sequence&gt;&lt;/complexType&gt;
-&lt;/element&gt;
-
-&lt;/schema&gt;
-</pre>
-</td>
-<td>
-<pre>
-&lt;FeatureCollection xmlns="http://myns"&gt;
-  &lt;MyFeature id="my_id"&gt;
-    &lt;names&gt;
-        &lt;name&gt;
-          &lt;name&gt;name&lt;/name&gt;
-          &lt;lang&gt;en&lt;/lang&gt;
-        &lt;/name&gt;
-        &lt;name&gt;
-          &lt;name&gt;nom&lt;/name&gt;
-          &lt;lang&gt;fr&lt;/lang&gt;
-        &lt;/name&gt;
-    &lt;/names&gt;
-  &lt;/MyFeature&gt;
-  &lt;MyFeature2 id="my_id2"&gt;
-    &lt;names&gt;
-        &lt;name&gt;
-          &lt;name&gt;nom2&lt;/name&gt;
-          &lt;lang&gt;fr&lt;/lang&gt;
-        &lt;/name&gt;
-    &lt;/names&gt;
-  &lt;/MyFeature2&gt;
-&lt;/FeatureCollection&gt;
-</pre>
-</td>
-<td>
-<pre>
-Layer name: name
-OGRFeature(name):1
-  ogr_pkid (String) = _name_1
-  name (String) = name
-  lang (String) = en
-
-OGRFeature(name):2
-  ogr_pkid (String) = _name_2
-  name (String) = nom
-  lang (String) = fr
-
-OGRFeature(name):3
-  ogr_pkid (String) = _name_3
-  name (String) = nom2
-  lang (String) = fr
-
-
-Layer name: MyFeature
-OGRFeature(MyFeature):1
-  id (String) = my_id
-
-Layer name: MyFeature2
-OGRFeature(MyFeature2):1
-  id (String) = my_id2
-
-
-Layer name: MyFeature_names_name_name
-OGRFeature(MyFeature_names_name_name):1
-  occurrence (Integer) = 1
-  parent_pkid (String) = my_id
-  child_pkid (String) = _name_1
-
-OGRFeature(MyFeature_names_name_name):2
-  occurrence (Integer) = 2
-  parent_pkid (String) = my_id
-  child_pkid (String) = _name_2
-
-
-Layer name: MyFeature2_names_name_name
-OGRFeature(MyFeature2_names_name_name):1
-  occurrence (Integer) = 1
-  parent_pkid (String) = my_id2
-  child_pkid (String) = _name_3
-
-</pre>
-</td>
-<td>Case of a common element "name" referenced by 2 layers "MyFeature" and
-"MyFeature1". The links are established through the junction layers
-"MyFeature_names_name_name" and "MyFeature2_names_name_name".
-</td>
-</tr>
-
-</table>
+<p>Consult the <a href="drv_gmlas_mapping_examples.html">GMLAS mapping examples</a>
+page for more details.</p>
 
 <h2>Metadata layers</h2>
 
-<p>Three special layers "_ogr_fields_metadata", "_ogr_layers_metadata"
-and "_ogr_layer_relationships" add extra information to the basic ones you
-can get from the OGR data model on OGR layers and fields.</p>
+<p>Three special layers "_ogr_fields_metadata", "_ogr_layers_metadata",
+"_ogr_layer_relationships" and "_ogr_other_metadata" add extra information to
+the basic ones you can get from the OGR data model on OGR layers and fields.</p>
 
 <p>Those layers are exposed if the EXPOSE_METADATA_LAYERS open option is set
 to YES (or if enabled in the configuration). They can also be individually
 retrieved by specifying their name in calls to GetLayerByName(), or on
 as layer names with the ogrinfo and ogr2ogr utility.</p>
 
-<h3>_ogr_fields_metadata layer</h3>
-
-<p>This layer gives metadata about OGR fields, and also "abstract" fields
-that describe the relation ship between a parent and child layer.</p>
-
-<p>Its structure is:
-<br/>
-<br/>
-<table>
-<tr><th>Field name</th><th>Description</th></tr>
-<tr><td>layer_name</td><td>Name of the layer to which the field belongs to</td></tr>
-<tr><td>field_name</td><td>Name of the field. May be null when field_category is
-PATH_TO_CHILD_ELEMENT_NO_LINK or GROUP</td></tr>
-<tr><td>field_xpath</td><td>XPath of the element/attribute whose content is used
-for the field. The XPath is relative to the element that is the direct parent
-of this element/attribute, or a parent element in case of flattening. May be
-null for a field generated by OGR.</td></tr>
-<tr><td>field_type</td><td>the XML schema base data type (string, int, long, ID, ...).
-Extended with "geometry". May be null for a field generated by OGR</td></tr>
-<tr><td>field_is_list</td><td>Whether the XML type is a list.</td></tr>
-<tr><td>field_min_occurs</td><td>Integer value with the minimum number of occurrences
-of values. 0 or 1 typically. Or more for array types. May be
-null for a field generated by OGR</td></tr>
-<tr><td>field_max_occurs</td><td>Integer value with the maximum number of occurrences
-of values. 1 typically. Or more for array types. 2147483647 means unlimited.  May be
-null for a field generated by OGR</td></tr>
-<tr><td>field_default_value</td><td>Default value of the field, or null</td></tr>
-<tr><td>field_fixed_value</td><td>Fixed value of the field, or null</td></tr>
-<tr><td>field_category</td><td>Category of the field. May be REGULAR,
-PATH_TO_CHILD_ELEMENT_NO_LINK, PATH_TO_CHILD_ELEMENT_WITH_LINK,
-PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE or GROUP. May be null for a field
-generated by OGR.</td></tr>
-<tr><td>field_related_layer</td><td>Name of the child layer for
-field_category != REGULAR</td></tr>
-<tr><td>field_junction_layer</td><td>Name of the junction layer. Only
-set if field_category is equal to PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE</td></tr>
-<tr><td>field_documentation</td><td>Documentation from the schema.</td></tr>
-</table>
-</p>
-
-<p>Explanation of field_category values:
-<ul>
-<li>REGULAR: the field is made from the value of an element or attribute that
-is a direct child of the element that is the root of the layer considered.</li>
-<li>PATH_TO_CHILD_ELEMENT_NO_LINK: A field declared with this category
-is not instantiated as a OGR field of the layer 'layer_name'. It is merely there
-to declare the relationship between the parent and child layers. This is when
-a sub-element is of a complex type or a repeated sub-element of simple type that
-does not match one of the OGR array types.</li>
-<li>PATH_TO_CHILD_ELEMENT_WITH_LINK: the content of this field is the primary
-key of a OGR feature of another layer. The field_related_layer field contains
-the name of that linked layer.</li>
-<li>PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE: A field declared with this category
-is not instantiated as a OGR field of the layer 'layer_name'. It is merely there
-to declare the relationship between the parent and child layers. This is when
-the link between the parent and child layer is done through a junction table
-(case where the child layer is referenced by other parent layers).</li>
-<li>GROUP: A field declared with this category
-is not instantiated as a OGR field of the layer 'layer_name'. It is merely there
-to declare the relationship between the parent and child layers. This is when
-a layer uses XML schema group constructs with repeated cardinality.</li>
-</ul>
-</p>
-
-<h3>_ogr_layers_metadata layer</h3>
-
-<p>This layer gives metadata about OGR layers.</p>
-
-<p>Its structure is:
-<br/>
-<br/>
-<table border="1">
-<tr><th>Field name</th><th>Description</th></tr>
-<tr><td>layer_name</td><td>Name of the layer</td></tr>
-<tr><td>layer_xpath</td><td>XPath of the element that is used as the root
-element for the layer. May be suffixed with ";extra=XXXX" for group constructs
-or repeated sequences of repeated elements, so as to distinguish for the XPath
-of their parent element. Will be null for junction tables.</td></tr>
-<tr><td>layer_category</td><td>Category of the layer. One of TOP_LEVEL_ELEMENT,
-NESTED_ELEMENT or JUNCTION_TABLE</td></tr>
-<tr><td>layer_documentation</td><td>Documentation from the schema.</td></tr>
-</table>
-</p>
-
-<h3>_ogr_layer_relationships layer</h3>
-
-<p>This layer gives metadata about relationship between OGR layers.</p>
-
-<p>Its structure is:
-<br/>
-<br/>
-<table border="1">
-<tr><th>Field name</th><th>Description</th></tr>
-<tr><td>parent_layer</td><td>Name of the parent layer</td></tr>
-<tr><td>parent_pkid</td><td>Name of the primary key of the parent layer</td></tr>
-<tr><td>parent_element_name</td><td>Name of the XML element that links from the
-parent to the child. Will be null when the child layer is due to group constructs
-or repeated sequences of repeated elements of the parent.</td></tr>
-<tr><td>child_layer</td><td>Name of the child layer</td></tr></td></tr>
-<tr><td>child_pkid</td><td>Name of the primary key of the child layer</td></tr></td></tr>
-</table>
-</p>
+<p>Consult the <a href="drv_gmlas_metadata_layers.html">GMLAS metadata layers</a>
+page for more details.</p>
 
 <h2>Configuration file</h2>
 
@@ -477,6 +79,7 @@ gmlasconf.xml</a> file is provided in the data directory of the GDAL installatio
 Its structure and content is documented in <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/gmlasconf.xsd">
 gmlasconf.xsd</a> schema.</p>
 <p>This configuration file enables the user to modify the following settings:
+</p>
 <ul>
 <li>whether remote schemas should be downloaded. Enabled by default.</li>
 <li>whether the local cache of schemas is enabled. Enabled by default.</li>
@@ -485,10 +88,10 @@ gmlasconf.xsd</a> schema.</p>
 Disabled by default.</li>
 <li>whether validation error should cause dataset opening to fail.
 Disabled by default.</li>
-<li>whether the 3 metadata layers should be exposed by default. Disabled by default.</li>
-<li>whether a 'ogr_pkid' field should always be generated. Disable by default.
+<li>whether the metadata layers should be exposed by default. Disabled by default.</li>
+<li>whether a 'ogr_pkid' field should always be generated. Disabled by default.
 Turning that on can be useful on layers that have a ID attribute whose uniqueness
-is not guaranteed for example between documents, which could cause issues when appending several
+is not guaranteed among various documents. Which could cause issues when appending several
 documents into a target database table.</li>
 <li>whether layers and fields that are not used in the XML document should be
 removed. Disable by default.</li>
@@ -502,7 +105,7 @@ one element in the schemas derive from them. Enabled by default.</li>
 <li>a definition of XPaths of elements and attributes that must be ignored, so
 as to lighten the number of OGR layers and fields.</li>
 </ul>
-</p>
+
 <p>This file can be adapted and modified versions can be provided to the driver
 with the CONFIG_FILE open option. None of the elements of the configuration file
 are required. When they are absent, the default value indicated in the schema
@@ -531,12 +134,20 @@ definition of the GML geometry.</p>
 
 <h2>Performance issues with large multi-layer GML files.</h2>
 
-TODO
+<p>Traditionnaly to read a OGR datasource, one iterate over layers with
+GDALDataset::GetLayer(), and for each layer one iterate over features with
+OGRLayer::GetNextFeature(). While this approach still works for the GMLAS driver,
+it may result in very poor performance on big documents or documents using
+complex schemas that are translated in many OGR layers.</p>
+
+<p>It is thus recommanded to use GDALDataset::GetNextFeature() to iterate over
+features as soon as they appear in the .gml/.xml file. This may return features
+from non-sequential layers, when the features include nested elements.</p>
 
 <h2>Open options</h2>
 
 <ul>
-<li> <b>XSD</b>=filename: to specify an explicit XSD application schema to use
+<li> <b>XSD</b>=filename(s): to specify an explicit XSD application schema to use
 (or a list of filenames, provided they are comma separated). "http://"
 or "https://" URLs can be used. This option is not required when the XML/GML
 document has a schemaLocation attribute with valid links in its root element.</li>
@@ -544,9 +155,9 @@ document has a schemaLocation attribute with valid links in its root element.</l
 XML configuration file conforming to the <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/gmlasconf.xsd">
 gmlasconf.xsd</a> schema. It is also possible to provide the XML content directly
 inlined provided that the very first characters are &lt;Configuration&gt;.</li>
-<li> <b>EXPOSE_METADATA_LAYERS</b>=YES/NO: whether the 3 metadata layers
-"_ogr_fields_metadata", "_ogr_layers_metadata" and "_ogr_layer_relationships" should
-be reported by default. Default is NO.</li>
+<li> <b>EXPOSE_METADATA_LAYERS</b>=YES/NO: whether the metadata layers
+"_ogr_fields_metadata", "_ogr_layers_metadata", "_ogr_layer_relationships" and
+"ogr_other_metadata" should be reported by default. Default is NO.</li>
 <li> <b>VALIDATE</b>=YES/NO: whether the document should be validated against
 the schemas. Validation is done at dataset opening. Default is NO.</li>
 <li> <b>FAIL_IF_VALIDATION_ERROR</b>=YES/NO: Whether a validation error should
@@ -565,30 +176,165 @@ friendly order is assumed and thus no swapping is done. When SWAP_COORDINATES
 is set to YES, coordinates will be always swapped regarding the order they appear
 in the GML, and when it set to NO, they will be kept in the same order. The default
 is AUTO.</li>
+<li> <b>REMOVE_UNUSED_LAYERS</b>=YES/NO: Whether unused layers should be removed
+from the reported layers. Default to NO</li>
+<li> <b>REMOVE_UNUSED_FIELDS</b>=YES/NO: Whether unused fields should be removed
+from the reported layers. Default to NO</li>
+</ul>
+
+<h2>Creation support</h2>
+
+<p>The GMLAS driver can write XML documents in a schema-driven way by converting
+a source dataset (contrary to most other drivers that have read support that
+implement the CreateLayer() and CreateFeature() interfaces). The typical
+workflow is to use the read side of the GMLAS driver to produce a SQLite/Spatialite/
+PostGIS database, potentially modify the features imported and re-export
+this database as a new XML document.</p>
+
+<p>The driver will identify in the source dataset "top-level" layers, and in
+those layers will find which features are not referenced by other top-level
+layers. As the creation of the output XML is schema-driver, the schemas need to
+be available. There are two possible ways:</p>
+<ul>
+<li>either the result of the processing of the schemas was stored as the
+4 _ogr_* metadata tables in the source dataset by using the
+EXPOSE_METADATA_LAYERS=YES open option when converting the source .xml),</li>
+<li>or the schemas can be specified at creation time with the INPUT_XSD creation
+option.</li>
+</ul>
+
+<p>By default, the driver will "wrap" the features inside a WFS 2.0
+wfs:FeatureCollection / wfs:member element.
+It is also possible to ask the driver to create instead a custom wrapping .xsd
+file that declares the ogr_gmlas:FeatureCollecion / ogr_gmlas:featureMember XML
+elements.</p>
+
+<p>Note that while the file resulting from the export should be XML valid, there
+is no strong guarantee that it will validate against the additional constraints
+expressed in XML schema(s). This will depend on the content of the features
+(for example if converting from a GML file that is not conformant to the
+schemas, the output of the driver will generally be not validating)</p>
+
+<p>If the input layers have geometries stored as GML content in a _xml suffixed
+field, then the driver will compare the OGR geometry built from that XML content
+with the OGR geometry stored in the dedicated geometry field of the feature. If
+both match, then the GML content stored in the _xml suffixed field will be used,
+such as to preserve particularities of the initial GML content.
+Otherwise GML will be exported from the OGR geometry.</p>
+
+<p>To increase export performance on very large databases, creating attribute
+indexes on the fields pointed by the 'layer_pkid_name' attribute in
+'_ogr_layers_metadata' might help.</p>
+
+<h3>ogr2ogr behaviour</h3>
+
+<p>When using ogr2ogr / GDALVectorTranslate() to convert to XML/GML from a
+source database, there are restrictions to the options that can be used.
+Only the following options of ogr2ogr are supported:</p>
+
+<ul>
+<li>dataset creation options (see below)</li>
+<li>layer names</li>
+<li>spatial filter through -spat option.</li>
+<li>attribute filter through -where option</li>
+</ul>
+
+<p>The effect of spatial and attribute filtering will only apply
+on top-levels layers. Sub-features selected through joins will not be affected
+by those filters.</p>
+
+<h3>Dataset creation options</h3>
+
+<p>The supported dataset creation options are:</p>
+<ul>
+<li> <b>INPUT_XSD</b>=filename(s): to specify an explicit XSD application schema to use
+(or a list of filenames, provided they are comma separated). "http://"
+or "https://" URLs can be used. This option is not required when the source
+dataset has a _ogr_other_metadata with schemas and locations filled.</li>
+
+<li> <b>CONFIG_FILE</b>=filename or inline XML definition: filename of a
+XML configuration file conforming to the <a href="http://svn.osgeo.org/gdal/trunk/gdal/data/gmlasconf.xsd">
+gmlasconf.xsd</a> schema. It is also possible to provide the XML content directly
+inlined provided that the very first characters are &lt;Configuration&gt;.</li>
+
+<li> <b>LAYERS</b>=layers. Comma separated list of layers to export as top-level
+features. The special value "{SPATIAL_LAYERS}" can also be used to specify
+all layers that have geometries. When LAYERS is not specified, the driver will
+identify in the source dataset "top-level" layers, and in those layers will find
+which features are not referenced by other top-level layers.</li>
+
+<li> <b>SRSNAME_FORMAT</b>=SHORT/OGC_URN/OGC_URL (Only valid for GML 3 output)
+Defaults to OGC_URL.
+If SHORT, then srsName will be in the form AUTHORITY_NAME:AUTHORITY_CODE
+If OGC_URN, then srsName will be in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE
+If OGC_URL, then srsName will be in the form http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE
+For OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit
+AXIS order,  but that the same SRS authority code imported with
+ImportFromEPSGA() should be treated as lat/long or northing/easting,
+then the function will take care of coordinate order swapping.</li>
+
+<li> <b>INDENT_SIZE</b>=[0-8]. Number of spaces for each indentation level.
+Default is 2.</li>
+
+<li> <b>COMMENT</b>=string. Comment to add at top of generated XML file as a
+XML comment.</li>
+
+<li> <b>LINEFORMAT</b>=CRLF/LF. End-of-line sequence to use. Defaults to
+CRLF on Windows and LF on other platforms.</li>
+
+<li> <b>WRAPPING</b>=WFS2_FEATURECOLLECTION/GMLAS_FEATURECOLLECTION. Whether to
+wrap features in a wfs:FeatureCollection or in a ogr_gmlas:FeatureCollection.
+Defaults to WFS2_FEATURECOLLECTION.</li>
+
+<li> <b>TIMESTAMP</b>=XML date time. User-specified XML dateTime value for
+timestamp to use in wfs:FeatureCollection attribute. If not specified, current
+date time is used. Only valid for WRAPPING=WFS2_FEATURECOLLECTION.</li>
+
+<li> <b>WFS20_SCHEMALOCATION</b>=Path or URL to wfs.xsd. Only valid for
+WRAPPING=WFS2_FEATURECOLLECTION. Default is "http://schemas.opengis.net/wfs/2.0/wfs.xsd"</li>
+
+<li> <b>GENERATE_XSD</b>=YES/NO. Whether to generate a .xsd file that has
+the structure of the wrapping ogr_gmlas:FeatureCollecion / ogr_gmlas:featureMember
+elements. Only valid for WRAPPING=GMLAS_FEATURECOLLECTION. Default to YES.</li>
+
+<li> <b>OUTPUT_XSD_FILENAME</b>=string. Wrapping .xsd filename. If not specified,
+same basename as output file with .xsd extension. Note that it is possible
+to use this option even if GENERATE_XSD=NO, so that the wrapping .xsd appear
+in the schemaLocation attribute of the .xml file. Only valid for
+WRAPPING=GMLAS_FEATURECOLLECTION</li>
+
 </ul>
 
 <h2>Examples</h2>
 
 <p>
 Listing content of a data file:
+</p>
 <pre>
 ogrinfo -ro GMLAS:my.gml
 </pre>
-</p>
 
 <p>
-Convering to PostGIS:
+Converting to PostGIS:
+</p>
 <pre>
 ogr2ogr -f PostgreSQL PG:'host=myserver dbname=warmerda' GMLAS:my.gml -nlt CONVERT_TO_LINEAR
 </pre>
+
+<p>
+Converting to Spatialite and back to GML
 </p>
+<pre>
+ogr2ogr -f SQLite tmp.sqlite GMLAS:in.gml -dsco SPATILIATE=YES -nlt CONVERT_TO_LINEAR -oo EXPOSE_METADATA_LAYERS=YES
+ogr2ogr -f GMLAS out.gml tmp.sqlite
+</pre>
 
 <h2>See Also</h2>
 
 <ul>
 <li> <a href="drv_gml.html">GML</a>: general purpose driver not requiring the presence of schemas,
-but with limited support for complex features<p>
-<li> <a href="drv_nas.html">NAS/ALKIS</a>: specialized GML driver for cadastral data in Germany<p>
+but with limited support for complex features<br/></li>
+<li> <a href="drv_nas.html">NAS/ALKIS</a>: specialized GML driver for cadastral data in Germany</li>
 </ul>
 
 <h2>Credits</h2>

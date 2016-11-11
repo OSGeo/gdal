@@ -47,6 +47,7 @@ GMLASField::GMLASField()
     , m_eCategory(REGULAR)
     , m_nMinOccurs(-1)
     , m_nMaxOccurs(-1)
+    , m_bRepetitionOnSequence(false)
     , m_bIncludeThisEltInBlob(false)
     , m_bIgnored(false)
 {
@@ -58,59 +59,59 @@ GMLASField::GMLASField()
 
 GMLASFieldType GMLASField::GetTypeFromString( const CPLString& osType )
 {
-    if( osType == "string" ||
-        osType == "token" ||
-        osType == "NMTOKEN" ||
-        osType == "NCName" )
+    if( osType == szXS_STRING ||
+        osType == szXS_TOKEN ||
+        osType == szXS_NMTOKEN ||
+        osType == szXS_NCNAME )
     {
         // token has special processing by XML processor: all leading/trailing
         // white space is removed
         return GMLAS_FT_STRING;
     }
-    else if( osType == "ID" )
+    else if( osType == szXS_ID )
         return GMLAS_FT_ID;
-    else if( osType == "boolean" )
+    else if( osType == szXS_BOOLEAN )
         return GMLAS_FT_BOOLEAN;
-    else if( osType == "short" )
+    else if( osType == szXS_SHORT )
         return GMLAS_FT_SHORT;
-    else if( osType == "int" )
+    else if( osType == szXS_INT )
         return GMLAS_FT_INT32;
-    else if( osType == "byte" ||
-             osType == "integer" ||
-             osType == "negativeInteger" ||
-             osType == "nonNegativeInteger" ||
-             osType == "nonPositiveInteger" ||
-             osType == "positiveInteger" ||
-             osType == "unsignedByte" ||
-             osType == "unsignedShort" ||
-             osType == "unsignedInt") // FIXME ?
+    else if( osType == szXS_BYTE ||
+             osType == szXS_INTEGER ||
+             osType == szXS_NEGATIVE_INTEGER ||
+             osType == szXS_NON_NEGATIVE_INTEGER ||
+             osType == szXS_NON_POSITIVE_INTEGER ||
+             osType == szXS_POSITIVE_INTEGER ||
+             osType == szXS_UNSIGNED_BYTE ||
+             osType == szXS_UNSIGNED_SHORT ||
+             osType == szXS_UNSIGNED_INT) // FIXME ?
         return GMLAS_FT_INT32;
-    else if( osType == "long" ||
-             osType == "unsignedLong" )
+    else if( osType == szXS_LONG ||
+             osType == szXS_UNSIGNED_LONG )
         return GMLAS_FT_INT64;
-    else if( osType == "float" )
+    else if( osType == szXS_FLOAT )
         return GMLAS_FT_FLOAT;
-    else if( osType == "double" )
+    else if( osType == szXS_DOUBLE )
         return GMLAS_FT_DOUBLE;
-    else if( osType == "decimal" )
+    else if( osType == szXS_DECIMAL )
         return GMLAS_FT_DECIMAL;
-    else if( osType == "date" )
+    else if( osType == szXS_DATE )
         return GMLAS_FT_DATE;
-    else if( osType == "time" )
+    else if( osType == szXS_TIME )
         return GMLAS_FT_TIME;
-    else if( osType == "dateTime" )
+    else if( osType == szXS_DATETIME )
         return GMLAS_FT_DATETIME;
-    else if( osType == "anyURI" )
+    else if( osType == szXS_ANY_URI )
         return GMLAS_FT_ANYURI;
-    else if( osType == "anyType" )
+    else if( osType == szXS_ANY_TYPE )
         return GMLAS_FT_ANYTYPE;
-    else if( osType == "anySimpleType" )
+    else if( osType == szXS_ANY_SIMPLE_TYPE )
         return GMLAS_FT_ANYSIMPLETYPE;
-    else if( osType == "duration" )
+    else if( osType == szXS_DURATION )
         return GMLAS_FT_STRING;
-    else if( osType == "base64Binary" )
+    else if( osType == szXS_BASE64BINARY )
         return GMLAS_FT_BASE64BINARY;
-    else if( osType == "hexBinary" )
+    else if( osType == szXS_HEXBINARY )
         return GMLAS_FT_HEXBINARY;
     else
     {
