@@ -38,6 +38,9 @@
 
 CPL_CVSID("$Id$");
 
+namespace GMLAS
+{
+
 /************************************************************************/
 /*                          GMLASWriter                                 */
 /************************************************************************/
@@ -48,7 +51,7 @@ typedef std::vector<PairNSElement> XPathComponents;
 
 typedef std::pair<CPLString, CPLString> PairLayerNameColName;
 
-    class LayerDescription
+class LayerDescription
 {
     public:
         CPLString osName;
@@ -3035,6 +3038,9 @@ void GMLASWriter::PrintLine(VSILFILE* fp, const char *fmt, ...)
     VSIFWriteL(m_osEOL.c_str(), 1, m_osEOL.size(), fp);
 }
 
+}; /* namespace GMLAS */
+
+
 /************************************************************************/
 /*                           GMLASFakeDataset                           */
 /************************************************************************/
@@ -3067,7 +3073,7 @@ GDALDataset *OGRGMLASDriverCreateCopy(
     if( STARTS_WITH_CI(pszFilename, szGMLAS_PREFIX) )
         pszFilename += strlen(szGMLAS_PREFIX);
 
-    GMLASWriter oWriter(pszFilename, poSrcDS, papszOptions);
+    GMLAS::GMLASWriter oWriter(pszFilename, poSrcDS, papszOptions);
     if( !oWriter.Write(pfnProgress, pProgressData) )
         return NULL;
 
