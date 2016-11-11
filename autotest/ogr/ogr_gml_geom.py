@@ -1151,6 +1151,33 @@ def gml_write_gml3_srs():
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
         return 'fail'
 
+    # Test SRSNAME_FORMAT=SHORT
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=SHORT'] )
+    expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Test SRSNAME_FORMAT=SRSNAME_FORMAT
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URN'] )
+    expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Test SRSNAME_FORMAT=OGC_URL
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URL'] )
+    expected_gml = '<gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

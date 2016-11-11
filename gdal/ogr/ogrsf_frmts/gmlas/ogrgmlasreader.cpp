@@ -660,6 +660,23 @@ void GMLASReader::SetField( OGRFeature* poFeature,
             poLayer->GetFeatureClass().GetFields()[nFCFieldIdx].IsList() )
         {
             char** papszTokens = CSLTokenizeString2( osAttrValue.c_str(), " ", 0 );
+            if( eType == OFTIntegerList &&
+                poFeature->GetFieldDefnRef(nAttrIdx)->GetSubType() == OFSTBoolean )
+            {
+                for( char** papszIter = papszTokens; *papszIter != NULL; ++papszIter )
+                {
+                    if( strcmp(*papszIter, "true") == 0 )
+                    {
+                        (*papszIter)[0] = '1';
+                        (*papszIter)[1] = '\0';
+                    }
+                    else if( strcmp(*papszIter, "false") == 0 )
+                    {
+                        (*papszIter)[0] = '0';
+                        (*papszIter)[1] = '\0';
+                    }
+                }
+            }
             poFeature->SetField( nAttrIdx, papszTokens );
             CSLDestroy(papszTokens);
         }
@@ -914,7 +931,7 @@ OGRGMLASLayer* GMLASReader::GetLayerByXPath( const CPLString& osXPath )
     *
               <first_elt_of_group>...</first_elt_of_group>
               <first_elt_of_another_group>  <!-- we are here at startElement() -->
-                ...</first_elt_of_group>
+                ...</first_elt_of_another_group>
 
     *
               <first_elt_of_group>...</first_elt_of_group>
@@ -1017,6 +1034,7 @@ void GMLASReader::startElement(
                     osLayerXPath &&
              (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0);
 
+        int nTmpIdx;
         if( // Case where we haven't yet entered the top-level element, which may
             // be in container elements
             (m_osCurSubXPath.empty() &&
@@ -1037,7 +1055,8 @@ void GMLASReader::startElement(
             // of a top-level feature to a regular sub-element of that top-level
             // feature
             (m_oCurCtxt.m_poGroupLayer != NULL &&
-             (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath) >= 0) )
+             ((nTmpIdx = (*m_papoLayers)[i]->GetOGRFieldIndexFromXPath(m_osCurSubXPath)) >= 0 ||
+              nTmpIdx == IDX_COMPOUND_FOLDED)) )
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("GMLAS", "Matches layer %s (%s)",
@@ -1170,7 +1189,6 @@ void GMLASReader::startElement(
                 {
                     // This is the case where we switch from an element that was
                     // in a group to a regular element of the same level
-                    // Cf group_case_C in above doc
 
                     // Push group feature as ready
                     CPLAssert( m_oCurCtxt.m_poFeature );
@@ -1229,6 +1247,7 @@ void GMLASReader::startElement(
         CPLDebug("GMLAS", "Current layer: %s", m_oCurCtxt.m_poLayer->GetName() );
 #endif
 
+
         bool bHasProcessedAttributes = false;
 
         // Find if we can match this element with one of our fields
@@ -1238,6 +1257,16 @@ void GMLASReader::startElement(
                             GetOGRGeomFieldIndexFromXPath(m_osCurSubXPath);
         if( idx >= 0 || geom_idx >= 0 )
         {
+            // Sanity check. Shouldn't normally happen !
+            if( m_oCurCtxt.m_poFeature == NULL ||
+                m_oCurCtxt.m_poLayer->GetLayerDefn() !=
+                                        m_oCurCtxt.m_poFeature->GetDefnRef() )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "Inconsistant m_poLayer / m_poFeature state");
+                m_bParsingError = true;
+                return; 
+            }
 
             bool bPushNewFeature = false;
             const int nFCFieldIdx = (idx >= 0) ?
@@ -1963,17 +1992,6 @@ void GMLASReader::endElement(
                 m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetType() :
             OFTString );
 
-        // Transform boolean values to something that OGR understands
-        if( (eType == OFTIntegerList || eType == OFTInteger) &&
-             m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->GetSubType() ==
-                                                                   OFSTBoolean )
-        {
-            if( m_osTextContent == "true" )
-                m_osTextContent = "1";
-            else
-                m_osTextContent = "0";
-        }
-
         // Assign XML content to field value
         if( IsArrayType(eType) )
         {
@@ -1982,9 +2000,9 @@ void GMLASReader::endElement(
             if( nFCFieldIdx >= 0 &&
                 m_oCurCtxt.m_poLayer->GetFeatureClass().GetFields()[nFCFieldIdx].IsList() )
             {
-                char** papszTokens = CSLTokenizeString2( m_osTextContent.c_str(), " ", 0 );
-                m_oCurCtxt.m_poFeature->SetField( m_nCurFieldIdx, papszTokens );
-                CSLDestroy(papszTokens);
+                SetField( m_oCurCtxt.m_poFeature,
+                          m_oCurCtxt.m_poLayer,
+                          m_nCurFieldIdx, m_osTextContent );
             }
             else if( m_nTextContentListEstimatedSize > m_nMaxContentSize )
             {
@@ -1994,6 +2012,17 @@ void GMLASReader::endElement(
             }
             else
             {
+                // Transform boolean values to something that OGR understands
+                if( eType == OFTIntegerList &&
+                    m_oCurCtxt.m_poFeature->GetFieldDefnRef(m_nCurFieldIdx)->
+                                                GetSubType() == OFSTBoolean )
+                {
+                    if( m_osTextContent == "true" )
+                        m_osTextContent = "1";
+                    else
+                        m_osTextContent = "0";
+                }
+
                 m_osTextContentList.AddString( m_osTextContent );
                 // 16 is an arbitrary number for the cost of a new entry in the
                 // string list

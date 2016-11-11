@@ -485,11 +485,25 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /*      Get the geotransform, if there is one, so we can convert the    */
 /*      vectors into georeferenced coordinates.                         */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
-    if( hSrcDS )
-        GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+    const char* pszDatasetForGeoRef = CSLFetchNameValue(papszOptions,
+                                                        "DATASET_FOR_GEOREF");
+    if( pszDatasetForGeoRef )
+    {
+        GDALDatasetH hSrcDS = GDALOpen(pszDatasetForGeoRef, GA_ReadOnly);
+        if( hSrcDS )
+        {
+            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+            GDALClose(hSrcDS);
+        }
+    }
+    else
+    {
+        GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
+        if( hSrcDS )
+            GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      The first pass over the raster is only used to build up the     */

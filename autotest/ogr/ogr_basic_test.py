@@ -680,7 +680,7 @@ def ogr_basic_13():
 # Test ogr.Open(.) in an empty directory
 
 def ogr_basic_14():
-    
+
     os.mkdir('tmp/ogr_basic_14')
     os.chdir('tmp/ogr_basic_14')
     ds = ogr.Open('.')

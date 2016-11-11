@@ -609,7 +609,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                         pfnUnpackAnglesFn(padfPrjParams[4]),
                         pfnUnpackAnglesFn(padfPrjParams[3]),
                         0.0, padfPrjParams[2],
-                        padfPrjParams[6],  padfPrjParams[7] );
+                        padfPrjParams[6], padfPrjParams[7] );
             }
             else
             {
@@ -619,7 +619,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                             pfnUnpackAnglesFn(padfPrjParams[11]),
                             pfnUnpackAnglesFn(padfPrjParams[10]),
                             padfPrjParams[2],
-                            padfPrjParams[6],  padfPrjParams[7] );
+                            padfPrjParams[6], padfPrjParams[7] );
             }
             break;
 
@@ -673,7 +673,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
         double dfSemiMajor = 0.0;
         double dfInvFlattening = 0.0;
 
-        if( iDatum < 0  ) // Use specified ellipsoid parameters.
+        if( iDatum < 0 ) // Use specified ellipsoid parameters.
         {
             if( padfPrjParams[0] > 0.0 )
             {
@@ -833,7 +833,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                                           long *piDatum ) const
 
 {
-    const char  *pszProjection = GetAttrValue("PROJECTION");
+    const char *pszProjection = GetAttrValue("PROJECTION");
 
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
@@ -1138,7 +1138,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
-    const char  *pszDatum = GetAttrValue( "DATUM" );
+    const char *pszDatum = GetAttrValue( "DATUM" );
 
     if( pszDatum )
     {

@@ -117,7 +117,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
 /* -------------------------------------------------------------------- */
     char **papszProj = CSLTokenizeStringComplex( pszProj, ",", TRUE, TRUE );
     char **papszProjParms = CSLTokenizeStringComplex( pszProjParms, ",",
-                                                         TRUE, TRUE );
+                                                      TRUE, TRUE );
     char **papszDatum = NULL;
 
     if( CSLCount(papszProj) < 2 )
@@ -196,7 +196,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                 break;
             }
         }
-        if( iLine == nLines )    /* Try to guess the UTM zone */
+        if( iLine == nLines )  // Try to guess the UTM zone.
         {
             float fMinLongitude = 1000.0f;
             float fMaxLongitude = -1000.0f;
@@ -277,7 +277,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
     }
 
 /*
- *  Note : The following projections have not been implemented yet
+ *  Note: The following projections have not been implemented yet
  *
  */
 
@@ -421,7 +421,7 @@ OGRErr OGRSpatialReference::importFromOzi( const char * const* papszLines )
                                      CC_ApproxString, "DELTAZ" ) );
 
     /* -------------------------------------------------------------------- */
-    /*      Verify that we can find the CSV file containing the ellipsoids  */
+    /*     Verify that we can find the CSV file containing the ellipsoids.  */
     /* -------------------------------------------------------------------- */
             if( CSVScanFileByName( CSVFilename( "ozi_ellips.csv" ),
                                    "ELLIPSOID_CODE",

@@ -121,8 +121,7 @@ public:
 /*      services shared by major objects.                               */
 /* ******************************************************************** */
 
-//! Object with metadata.
-
+/** Object with metadata. */
 class CPL_DLL GDALMajorObject
 {
   protected:
@@ -317,10 +316,9 @@ typedef void signature_changed;
 #endif
 //! @endcond
 
-//! A set of associated raster bands, usually from one file.
-
 class OGRFeature;
 
+/** A set of associated raster bands, usually from one file. */
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
     friend GDALDatasetH CPL_STDCALL GDALOpenEx( const char* pszFilename,
@@ -630,10 +628,10 @@ private:
 /*                           GDALRasterBlock                            */
 /* ******************************************************************** */
 
-//! A single raster block in the block cache.
-// And the global block manager that manages a least-recently-used list of
-// blocks from various datasets/bands
-
+/** A single raster block in the block cache.
+ *
+ * And the global block manager that manages a least-recently-used list of
+ * blocks from various datasets/bands */
 class CPL_DLL GDALRasterBlock
 {
     friend class GDALAbstractBandBlockCache;
@@ -744,7 +742,7 @@ class CPL_DLL GDALRasterBlock
 /*                             GDALColorTable                           */
 /* ******************************************************************** */
 
-/*! A color table / palette. */
+/** A color table / palette. */
 
 class CPL_DLL GDALColorTable
 {
@@ -824,7 +822,7 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(GDALRasterBand* poBa
 /*                            GDALRasterBand                            */
 /* ******************************************************************** */
 
-//! A single raster band (or channel).
+/** A single raster band (or channel). */
 
 class CPL_DLL GDALRasterBand : public GDALMajorObject
 {

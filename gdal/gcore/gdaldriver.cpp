@@ -1644,21 +1644,21 @@ int GDALValidateOptions( const char* pszOptionList,
                     }
                     ++pszValueIter;
                 }
-                if( *pszValueIter == '0' )
+                if( *pszValueIter == '\0' )
                 {
                     if( pszMin && atoi(pszValue) < atoi(pszMin) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be >= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                        break;
+                        bRet = false;
                     }
                     if( pszMax && atoi(pszValue) > atoi(pszMax) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be <= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                        break;
+                        bRet = false;
                     }
                 }
             }
@@ -1677,22 +1677,22 @@ int GDALValidateOptions( const char* pszOptionList,
                         break;
                     }
                     ++pszValueIter;
-                    if( *pszValueIter == '0' )
+                }
+                if( *pszValueIter == '\0' )
+                {
+                    if( pszMin && atoi(pszValue) < atoi(pszMin) )
                     {
-                        if( pszMin && atoi(pszValue) < atoi(pszMin) )
-                        {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "'%s' is an unexpected value for %s %s that should be >= %s.",
-                                pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                            break;
-                        }
-                        if( pszMax && atoi(pszValue) > atoi(pszMax) )
-                        {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "'%s' is an unexpected value for %s %s that should be <= %s.",
-                                pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                            break;
-                        }
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "'%s' is an unexpected value for %s %s that should be >= %s.",
+                            pszValue, pszKey, pszErrorMessageOptionType, pszMin);
+                        bRet = false;
+                    }
+                    if( pszMax && atoi(pszValue) > atoi(pszMax) )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "'%s' is an unexpected value for %s %s that should be <= %s.",
+                            pszValue, pszKey, pszErrorMessageOptionType, pszMax);
+                        bRet = false;
                     }
                 }
             }
@@ -1714,16 +1714,14 @@ int GDALValidateOptions( const char* pszOptionList,
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be >= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                        CPLFree(pszKey);
-                        break;
+                        bRet = false;
                     }
                     if( pszMax && dfVal > CPLAtof(pszMax) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be <= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                        CPLFree(pszKey);
-                        break;
+                        bRet = false;
                     }
                 }
             }

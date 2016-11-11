@@ -62,6 +62,7 @@
     <MYNS:union>42</MYNS:union>
 
     <MYNS:list_of_string>a b c</MYNS:list_of_string>
+    <MYNS:list_of_boolean>true false</MYNS:list_of_boolean>
     <MYNS:list_of_integer>1 2 3</MYNS:list_of_integer>
     <MYNS:list_of_integer64>123456789012 2 3</MYNS:list_of_integer64>
     <MYNS:list_of_real>1.25 2.5 5.0</MYNS:list_of_real>

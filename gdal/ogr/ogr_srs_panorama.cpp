@@ -261,7 +261,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
     if( padfPrjParams == NULL )
     {
-        padfPrjParams = (double *)CPLMalloc( 8 * sizeof(double) );
+        padfPrjParams = static_cast<double *>(CPLMalloc(8 * sizeof(double)));
         if( !padfPrjParams )
             return OGRERR_NOT_ENOUGH_MEMORY;
         for( int i = 0; i < 7; i++ )
@@ -555,7 +555,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 {
     CPLAssert( padfPrjParams );
 
-    const char  *pszProjection = GetAttrValue("PROJECTION");
+    const char *pszProjection = GetAttrValue("PROJECTION");
 
 /* -------------------------------------------------------------------- */
 /*      Fill all projection parameters with zero.                       */
@@ -767,7 +767,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
 /*      Translate the datum.                                            */
 /* -------------------------------------------------------------------- */
-    const char  *pszDatum = GetAttrValue( "DATUM" );
+    const char *pszDatum = GetAttrValue( "DATUM" );
 
     if( pszDatum == NULL )
     {

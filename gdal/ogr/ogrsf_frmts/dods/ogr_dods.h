@@ -41,39 +41,7 @@
 #include <algorithm>
 #include <exception>
 
-#define DEFAULT_BASETYPE_FACTORY
-
-// #define DODS_DEBUG 1
-#include <debug.h>
-
-#include <BaseType.h>  // DODS
-#include <Byte.h>
-#include <Int16.h>
-#include <UInt16.h>
-#include <Int32.h>
-#include <UInt32.h>
-#include <Float32.h>
-#include <Float64.h>
-#include <Str.h>
-#include <Url.h>
-#include <Array.h>
-#include <Structure.h>
-#include <Sequence.h>
-#include <Grid.h>
-
-#ifdef LIBDAP_310
-/* AISConnect.h/AISConnect class was renamed to Connect.h/Connect in libdap 3.10 */
-#include <Connect.h>
-#define AISConnect Connect
-#else
-#include <AISConnect.h>
-#endif
-
-#include <DDS.h>
-#include <DAS.h>
-#include <BaseTypeFactory.h>
-#include <Error.h>
-#include <escaping.h>
+#include "libdap_headers.h"
 
 using namespace libdap;
 
@@ -273,8 +241,6 @@ class OGRDODSGridLayer : public OGRDODSLayer
     int                 nDimCount;
     OGRDODSDim         *paoDimensions;
     int                 nMaxRawIndex;
-
-    void               *pRawData;
 
     bool                ArrayEntryToField( Array *poArray, void *pRawData,
                                            int iArrayIndex,

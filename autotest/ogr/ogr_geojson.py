@@ -3069,7 +3069,7 @@ def ogr_geojson_56():
     return 'success'
 
 ###############################################################################
-# Test RFC 7946 and reprojection 
+# Test RFC 7946 and reprojection
 
 def ogr_geojson_57():
     if gdaltest.geojson_drv is None:

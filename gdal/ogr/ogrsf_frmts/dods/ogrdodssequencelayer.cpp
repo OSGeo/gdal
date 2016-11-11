@@ -443,7 +443,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         return NULL;
 
     if( poSuperSeq == NULL )
-        iSubSeq = nFeatureId;
+        iSubSeq = static_cast<int>(nFeatureId);
     else
     {
         int nSeqOffset = 0;
@@ -458,7 +458,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         {
             if( nSeqOffset + panSubSeqSize[iSuperSeq] > nFeatureId )
             {
-                iSubSeq = nFeatureId - nSeqOffset;
+                iSubSeq = static_cast<int>(nFeatureId) - nSeqOffset;
                 break;
             }
             nSeqOffset += panSubSeqSize[iSuperSeq];

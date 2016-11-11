@@ -35,34 +35,7 @@
 
 #include <debug.h>
 
-#include <BaseType.h>  // DODS
-#include <Byte.h>
-#include <Int16.h>
-#include <UInt16.h>
-#include <Int32.h>
-#include <UInt32.h>
-#include <Float32.h>
-#include <Float64.h>
-#include <Str.h>
-#include <Url.h>
-#include <Array.h>
-#include <Structure.h>
-#include <Sequence.h>
-#include <Grid.h>
-
-#ifdef LIBDAP_310
-/* AISConnect.h/AISConnect class was renamed to Connect.h/Connect in libdap 3.10 */
-#include <Connect.h>
-#define AISConnect Connect
-#else
-#include <AISConnect.h>
-#endif
-
-#include <DDS.h>
-#include <DAS.h>
-#include <BaseTypeFactory.h>
-#include <Error.h>
-#include <escaping.h>
+#include "libdap_headers.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -206,12 +179,12 @@ static int GetDimension( string oCE, const char *pszDimName,
 class DODSDataset : public GDALDataset
 {
 private:
-    AISConnect *poConnect;      //< Virtual connection to the data source
+    AISConnect *poConnect;      // Virtual connection to the data source
 
-    string oURL;                //< data source URL
+    string oURL;                // data source URL
     double adfGeoTransform[6];
     int    bGotGeoTransform;
-    string oWKT;                //< Constructed WKT string
+    string oWKT;                // Constructed WKT string
 
     DAS    oDAS;
     DDS   *poDDS;
@@ -309,7 +282,6 @@ public:
 DODSDataset::DODSDataset() :
     poConnect(NULL),
     bGotGeoTransform(FALSE),
-    poDDS(new DDS( poBaseTypeFactory )),
     poBaseTypeFactory(new BaseTypeFactory())
 {
     adfGeoTransform[0] = 0.0;
@@ -318,6 +290,8 @@ DODSDataset::DODSDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    // Need to be done after poBaseTypeFactory initialization
+    poDDS = new DDS( poBaseTypeFactory );
 }
 
 /************************************************************************/
@@ -495,6 +469,8 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /* -------------------------------------------------------------------- */
     BaseType *poVar = get_variable( GetDDS(), oVarName );
 
+    if( poVar == NULL )
+        return papszResultList;
     if( poVar->type() == dods_array_c )
     {
         poGrid = NULL;
@@ -1024,7 +1000,11 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*      Did we get any target variables?                                */
 /* -------------------------------------------------------------------- */
         if( CSLCount(papszVarConstraintList) == 0 )
-            throw Error( "No apparent raster grids or arrays found in DDS.");
+        {
+            CPLDebug( "DODS", "No apparent raster grids or arrays found in DDS.");
+            delete poDS;
+            return NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      For now we support only a single band.                          */

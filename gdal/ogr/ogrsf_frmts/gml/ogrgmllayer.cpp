@@ -734,7 +734,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             {
                 bool bCoordSwap;
 
-                char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->IsLongSRSRequired(), &bCoordSwap);
+                char* pszSRSName = GML_GetSRSName(poGeom->getSpatialReference(), poDS->GetSRSNameFormat(), &bCoordSwap);
                 char szLowerCorner[75], szUpperCorner[75];
                 if (bCoordSwap)
                 {
@@ -753,9 +753,17 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 CPLFree(pszSRSName);
             }
 
-            char** papszOptions = (bIsGML3Output) ? CSLAddString(NULL, "FORMAT=GML3") : NULL;
-            if (bIsGML3Output && !poDS->IsLongSRSRequired())
-                papszOptions = CSLAddString(papszOptions, "GML3_LONGSRS=NO");
+            char** papszOptions = NULL;
+            if( bIsGML3Output )
+            {
+                papszOptions = CSLAddString(papszOptions, "FORMAT=GML3");
+                if( poDS->GetSRSNameFormat() == SRSNAME_SHORT )
+                    papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=SHORT");
+                else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URN )
+                    papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=OGC_URN");
+                else if( poDS->GetSRSNameFormat() == SRSNAME_OGC_URL )
+                    papszOptions = CSLAddString(papszOptions, "SRSNAME_FORMAT=OGC_URL");
+            }
             const char* pszSRSDimensionLoc = poDS->GetSRSDimensionLoc();
             if( pszSRSDimensionLoc != NULL )
                 papszOptions = CSLSetNameValue(papszOptions, "SRSDIMENSION_LOC", pszSRSDimensionLoc);
@@ -784,19 +792,22 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
             else
                 pszGeometry = poGeom->exportToGML(papszOptions);
             CSLDestroy(papszOptions);
-            if (bWriteSpaceIndentation)
-                VSIFPrintfL(fp, "      ");
-            if( bRemoveAppPrefix )
-                poDS->PrintLine( fp, "<%s>%s</%s>",
-                                 poFieldDefn->GetNameRef(),
-                                 pszGeometry,
-                                 poFieldDefn->GetNameRef() );
-            else
-                poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
-                                 pszPrefix, poFieldDefn->GetNameRef(),
-                                 pszGeometry,
-                                 pszPrefix, poFieldDefn->GetNameRef() );
-            CPLFree( pszGeometry );
+            if( pszGeometry )
+            {
+                if (bWriteSpaceIndentation)
+                    VSIFPrintfL(fp, "      ");
+                if( bRemoveAppPrefix )
+                    poDS->PrintLine( fp, "<%s>%s</%s>",
+                                    poFieldDefn->GetNameRef(),
+                                    pszGeometry,
+                                    poFieldDefn->GetNameRef() );
+                else
+                    poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
+                                    pszPrefix, poFieldDefn->GetNameRef(),
+                                    pszGeometry,
+                                    pszPrefix, poFieldDefn->GetNameRef() );
+                CPLFree( pszGeometry );
+            }
         }
     }
 

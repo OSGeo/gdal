@@ -1,10 +1,11 @@
 /******************************************************************************
- * Project:  OGR
- * Purpose:  Convenience functions for parsing with Xerces-C library
- * Author:   Even Rouault, <even.rouault at spatialys.com>
+ *
+ * Project:  GDAL
+ * Purpose:  Includes libdap headers
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2016, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2016, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,40 +24,49 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ *****************************************************************************/
 
-#ifndef OGR_XERCES_INCLUDED
-#define OGR_XERCES_INCLUDED
-
-// Must be first for DEBUG_BOOL case
-#ifdef HAVE_XERCES
-#include "ogr_xerces_headers.h"
-#endif
+#ifndef LIBDAP_HEADERS_H
+#define LIBDAP_HEADERS_H
 
 #include "cpl_port.h"
-#include "cpl_string.h"
 
-#ifdef HAVE_XERCES
-
-/* All those functions are for in-tree drivers use only ! */
-
-/* Thread-safe initialization/de-initialization. Calls should be paired */
-bool CPL_DLL OGRInitializeXerces(void);
-void CPL_DLL OGRDeinitializeXerces(void);
-
-namespace OGR
-{
-CPLString CPL_DLL transcode( const XMLCh *panXMLString, int nLimitingChars = -1 );
-CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet,
-                              int nLimitingChars = -1 );
-}
-
-#ifndef OGR_USING
-using OGR::transcode;
+#ifdef HAVE_GCC_SYSTEM_HEADER
+#pragma GCC system_header
 #endif
 
-#endif /* HAVE_XERCES */
+#define DEFAULT_BASETYPE_FACTORY
 
-void OGRCleanupXercesMutex(void);
+// #define DODS_DEBUG 1
+#include <debug.h>
 
-#endif /* OGR_XERCES_INCLUDED */
+#include <BaseType.h>  // DODS
+#include <Byte.h>
+#include <Int16.h>
+#include <UInt16.h>
+#include <Int32.h>
+#include <UInt32.h>
+#include <Float32.h>
+#include <Float64.h>
+#include <Str.h>
+#include <Url.h>
+#include <Array.h>
+#include <Structure.h>
+#include <Sequence.h>
+#include <Grid.h>
+
+#ifdef LIBDAP_310
+/* AISConnect.h/AISConnect class was renamed to Connect.h/Connect in libdap 3.10 */
+#include <Connect.h>
+#define AISConnect Connect
+#else
+#include <AISConnect.h>
+#endif
+
+#include <DDS.h>
+#include <DAS.h>
+#include <BaseTypeFactory.h>
+#include <Error.h>
+#include <escaping.h>
+
+#endif

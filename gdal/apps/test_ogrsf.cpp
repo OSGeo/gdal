@@ -3118,7 +3118,14 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
     /* Try ResetReading(), GetNextFeature(), ResetReading(), GetNextFeature() */
     poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL));
-
+    if( poSQLLyr == NULL )
+    {
+        printf( "ERROR: ExecuteSQL(%s) failed at line %d "
+                "(but succeeded before).\n",
+                osSQL.c_str(), __LINE__ );
+        bRet = FALSE;
+        return bRet;
+    }
     LOG_ACTION(poSQLLyr->ResetReading());
 
     poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());

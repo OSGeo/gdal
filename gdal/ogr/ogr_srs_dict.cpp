@@ -131,7 +131,8 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
  * files are searched for in the "GDAL" domain using CPLFindFile().  Normally
  * this results in searching /usr/local/share/gdal or somewhere similar.
  *
- * This method is the same as the C++ method OGRSpatialReference::importFromDict().
+ * This method is the same as the C++ method
+ * OGRSpatialReference::importFromDict().
  *
  * @param hSRS spatial reference system handle.
  *

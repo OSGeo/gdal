@@ -331,15 +331,27 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
-    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
+    if( nLayers > 0 )
     {
-        if( papoLayers[iLayer]->IsTableLayer() )
+        // Close any remaining iterator
+        for( int i = 0; i < nLayers; i++ )
+            papoLayers[i]->ResetReading();
+
+        // Create spatial indices in a transaction for faster execution
+        if( hDB )
+            SoftStartTransaction();
+        for( int iLayer = 0; iLayer < nLayers; iLayer++ )
         {
-            OGRSQLiteTableLayer* poLayer =
-                (OGRSQLiteTableLayer*) papoLayers[iLayer];
-            poLayer->RunDeferredCreationIfNecessary();
-            poLayer->CreateSpatialIndexIfNecessary();
+            if( papoLayers[iLayer]->IsTableLayer() )
+            {
+                OGRSQLiteTableLayer* poLayer =
+                    (OGRSQLiteTableLayer*) papoLayers[iLayer];
+                poLayer->RunDeferredCreationIfNecessary();
+                poLayer->CreateSpatialIndexIfNecessary();
+            }
         }
+        if( hDB )
+            SoftCommitTransaction();
     }
 
     SaveStatistics();
@@ -2694,7 +2706,7 @@ OGRErr OGRSQLiteBaseDataSource::DoTransactionCommand(const char* pszCommand)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s transaction failed: %s",
-                  pszCommand, pszErrMsg );
+                  pszCommand, pszErrMsg ? pszErrMsg : "(null)" );
         sqlite3_free( pszErrMsg );
         return OGRERR_FAILURE;
     }
