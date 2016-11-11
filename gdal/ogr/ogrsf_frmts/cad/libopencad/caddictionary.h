@@ -32,6 +32,7 @@
 #define CADDICTIONARY_H
 
 #include "cadobjects.h"
+#include <memory>
 
 /*
  * @brief Base-class for XRecord and Dictionary.
@@ -67,7 +68,7 @@ private:
 /*
  * @brief Class which implements Dictionary
  */
-typedef std::pair< std::string, CADDictionaryRecord*> CADDictionaryItem;
+typedef std::pair< std::string, std::shared_ptr<CADDictionaryRecord>> CADDictionaryItem;
 class OCAD_EXTERN CADDictionary : public CADDictionaryRecord
 {
 public:
