@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.96 2016-09-04 21:32:56 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.97 2016-09-24 23:11:55 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -95,6 +95,10 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			    td->td_bitspersample);
 			return (0);
 	}
+        if (td->td_sampleformat == SAMPLEFORMAT_IEEEFP) {
+                sprintf(emsg, "Sorry, can not handle images with IEEE floating-point samples");
+                return (0);
+        }
 	colorchannels = td->td_samplesperpixel - td->td_extrasamples;
 	if (!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric)) {
 		switch (colorchannels) {
@@ -182,27 +186,25 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 				    "Planarconfiguration", td->td_planarconfig);
 				return (0);
 			}
-			if( td->td_samplesperpixel != 3 || colorchannels != 3 )
-            {
-                sprintf(emsg,
-                        "Sorry, can not handle image with %s=%d, %s=%d",
-                        "Samples/pixel", td->td_samplesperpixel,
-                        "colorchannels", colorchannels);
-                return 0;
-            }
+			if ( td->td_samplesperpixel != 3 || colorchannels != 3 ) {
+                                sprintf(emsg,
+                                        "Sorry, can not handle image with %s=%d, %s=%d",
+                                        "Samples/pixel", td->td_samplesperpixel,
+                                        "colorchannels", colorchannels);
+                                return 0;
+                        }
 			break;
 		case PHOTOMETRIC_CIELAB:
-            if( td->td_samplesperpixel != 3 || colorchannels != 3 || td->td_bitspersample != 8 )
-            {
-                sprintf(emsg,
-                        "Sorry, can not handle image with %s=%d, %s=%d and %s=%d",
-                        "Samples/pixel", td->td_samplesperpixel,
-                        "colorchannels", colorchannels,
-                        "Bits/sample", td->td_bitspersample);
-                return 0;
-            }
+                        if ( td->td_samplesperpixel != 3 || colorchannels != 3 || td->td_bitspersample != 8 ) {
+                                sprintf(emsg,
+                                        "Sorry, can not handle image with %s=%d, %s=%d and %s=%d",
+                                        "Samples/pixel", td->td_samplesperpixel,
+                                        "colorchannels", colorchannels,
+                                        "Bits/sample", td->td_bitspersample);
+                                return 0;
+                        }
 			break;
-		default:
+                default:
 			sprintf(emsg, "Sorry, can not handle image with %s=%d",
 			    photoTag, photometric);
 			return (0);
