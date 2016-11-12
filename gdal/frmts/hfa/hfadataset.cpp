@@ -5550,6 +5550,24 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszMD );
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Read the elevation metadata, if present.                        */
+    /* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < poDS->nBands; iBand++ )
+    {
+        HFARasterBand *poBand = (HFARasterBand *) poDS->GetRasterBand( iBand+1 );
+        const char    *pszEU = HFAReadElevationUnit( hHFA, iBand );
+
+        if( pszEU != NULL )
+        {
+            poBand->SetUnitType( pszEU );
+            if( poDS->nBands == 1 )
+            {
+                poDS->SetMetadataItem( "ELEVATION_UNITS", pszEU );
+            }
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Check for dependent dataset value.                              */
 /* -------------------------------------------------------------------- */

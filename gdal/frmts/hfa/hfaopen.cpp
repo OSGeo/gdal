@@ -3744,6 +3744,29 @@ char **HFAReadCameraModel( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                         HFAReadElevationUnit()                       */
+/************************************************************************/
+
+const char *HFAReadElevationUnit( HFAHandle hHFA, int iBand )
+{
+    if( hHFA->nBands <= iBand )
+        return NULL;
+
+    HFABand    *poBand( hHFA->papoBand[iBand] );
+    if( poBand == NULL || poBand->poNode == NULL )
+    {
+        return NULL;
+    }
+    HFAEntry  *poElevInfo;
+    poElevInfo = poBand->poNode->GetNamedChild( "Elevation_Info" );
+    if( poElevInfo == NULL )
+    {
+        return NULL;
+    }
+    return poElevInfo->GetStringField( "elevationUnit" );
+}
+
+/************************************************************************/
 /*                         HFASetGeoTransform()                         */
 /*                                                                      */
 /*      Set a MapInformation and XForm block.  Allows for rotated       */
