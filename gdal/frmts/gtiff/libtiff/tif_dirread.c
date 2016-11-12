@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.201 2016-04-27 11:38:00 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.203 2016-11-11 20:22:01 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -3628,6 +3628,7 @@ TIFFReadDirectory(TIFF* tif)
 	if (tif->tif_dir.td_planarconfig == PLANARCONFIG_SEPARATE)
 		tif->tif_dir.td_stripsperimage /= tif->tif_dir.td_samplesperpixel;
 	if (!TIFFFieldSet(tif, FIELD_STRIPOFFSETS)) {
+#ifdef OJPEG_SUPPORT
 		if ((tif->tif_dir.td_compression==COMPRESSION_OJPEG) &&
 		    (isTiled(tif)==0) &&
 		    (tif->tif_dir.td_nstrips==1)) {
@@ -3640,7 +3641,9 @@ TIFFReadDirectory(TIFF* tif)
 			 * JpegInterchangeFormat stream.
 			 */
 			TIFFSetFieldBit(tif, FIELD_STRIPOFFSETS);
-		} else {
+		} else
+#endif
+        {
 			MissingRequired(tif,
 				isTiled(tif) ? "TileOffsets" : "StripOffsets");
 			goto bad;
@@ -4997,6 +5000,11 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 					if (err==TIFFReadDirEntryErrOk)
 					{
 						int m;
+                        if( data[dp->tdir_count-1] != '\0' )
+                        {
+                            TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
+                            data[dp->tdir_count-1] = '\0';
+                        }
 						m=TIFFSetField(tif,dp->tdir_tag,(uint16)(dp->tdir_count),data);
 						if (data!=0)
 							_TIFFfree(data);
@@ -5169,6 +5177,11 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				if (err==TIFFReadDirEntryErrOk)
 				{
 					int m;
+                    if( data[dp->tdir_count-1] != '\0' )
+                    {
+                        TIFFWarningExt(tif->tif_clientdata,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
+                        data[dp->tdir_count-1] = '\0';
+                    }
 					m=TIFFSetField(tif,dp->tdir_tag,(uint32)(dp->tdir_count),data);
 					if (data!=0)
 						_TIFFfree(data);
