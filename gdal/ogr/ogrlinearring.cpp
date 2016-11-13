@@ -143,7 +143,7 @@ int OGRLinearRing::WkbSize() const
 /************************************************************************/
 
 OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
-                                     CPL_UNUSED  int nSize,
+                                     CPL_UNUSED int nSize,
                                      CPL_UNUSED OGRwkbVariant eWkbVariant )
 
 {
@@ -168,7 +168,7 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 /*                           _importFromWkb()                           */
 /*                                                                      */
 /*      Helper method for OGRPolygon.  NOT A NORMAL importFromWkb()     */
-/*      method!                                                         */
+/*      method.                                                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -183,18 +183,17 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex count.                                           */
 /* -------------------------------------------------------------------- */
-    int         nNewNumPoints;
+    int nNewNumPoints = 0;
 
     memcpy( &nNewNumPoints, pabyData, 4 );
 
     if( OGR_SWAP( eByteOrder ) )
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
 
-    /* Check if the wkb stream buffer is big enough to store
-     * fetched number of points.
-     * 16, 24, or 32 - size of point structure
-     */
-    int nPointSize;
+    // Check if the wkb stream buffer is big enough to store
+    // fetched number of points.
+    // 16, 24, or 32 - size of point structure.
+    int nPointSize = 0;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
         nPointSize = 32;
     else if( (_flags & OGR_G_3D) || (_flags & OGR_G_MEASURED) )
@@ -212,7 +211,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
         return OGRERR_NOT_ENOUGH_DATA;
     }
 
-    /* (Re)Allocation of paoPoints buffer. */
+    // (Re)Allocation of paoPoints buffer.
     setNumPoints( nNewNumPoints, FALSE );
 
     if( _flags & OGR_G_3D )
@@ -289,11 +288,11 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /*                            _exportToWkb()                            */
 /*                                                                      */
 /*      Helper method for OGRPolygon.  THIS IS NOT THE NORMAL           */
-/*      exportToWkb() METHOD!                                           */
+/*      exportToWkb() METHOD.                                           */
 /************************************************************************/
 
-OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
-                                     unsigned char * pabyData ) const
+OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
+                                    unsigned char * pabyData ) const
 
 {
 
@@ -305,7 +304,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
-    int nWords;
+    int nWords = 0;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
     {
         nWords = 4 * nPointCount;
@@ -375,7 +374,7 @@ OGRErr  OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /************************************************************************/
 /*                              _WkbSize()                              */
 /*                                                                      */
-/*      Helper method for OGRPolygon.  NOT THE NORMAL WkbSize() METHOD! */
+/*      Helper method for OGRPolygon.  NOT THE NORMAL WkbSize() METHOD. */
 /************************************************************************/
 
 int OGRLinearRing::_WkbSize( int _flags ) const
@@ -442,7 +441,7 @@ int OGRLinearRing::isClockwise() const
     int v = 0;  // Used after for.
     for( int i = 1; i < nPointCount - 1; i++ )
     {
-        /* => v < end */
+        // => v < end.
         if( paoPoints[i].y< paoPoints[v].y ||
             ( paoPoints[i].y== paoPoints[v].y &&
               paoPoints[i].x > paoPoints[v].x ) )
@@ -453,8 +452,8 @@ int OGRLinearRing::isClockwise() const
         else if( paoPoints[i].y == paoPoints[v].y &&
                  paoPoints[i].x == paoPoints[v].x )
         {
-            /* Two vertex with same coordinates are the lowest rightmost */
-            /* vertex! We cannot use that point as the pivot (#5342) */
+            // Two vertex with same coordinates are the lowest rightmost
+            // vertex.  Cannot use that point as the pivot (#5342).
             bUseFallback = true;
         }
     }
@@ -469,8 +468,8 @@ int OGRLinearRing::isClockwise() const
     if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
         epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
     {
-        /* Don't try to be too clever by retrying with a next point */
-        /* This can lead to false results as in the case of #3356 */
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
         bUseFallback = true;
     }
 
@@ -487,8 +486,8 @@ int OGRLinearRing::isClockwise() const
     if( epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
         epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON) )
     {
-        /* Don't try to be too clever by retrying with a next point */
-        /* This can lead to false results as in the case of #3356 */
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
         bUseFallback = true;
     }
 
@@ -499,9 +498,9 @@ int OGRLinearRing::isClockwise() const
 
     if( !bUseFallback )
     {
-        if( crossproduct > 0 )      /* CCW */
+        if( crossproduct > 0 )       // CCW
             return FALSE;
-        else if( crossproduct < 0 )  /* CW */
+        else if( crossproduct < 0 )  // CW
             return TRUE;
     }
 
@@ -534,13 +533,13 @@ int OGRLinearRing::isClockwise() const
 void OGRLinearRing::reverseWindingOrder()
 
 {
-    int pos = 0;
-    OGRPoint pointA, pointB;
+    OGRPoint pointA;
+    OGRPoint pointB;
 
     for( int i = 0; i < nPointCount / 2; i++ )
     {
         getPoint( i, &pointA );
-        pos = nPointCount - i - 1;
+        const int pos = nPointCount - i - 1;
         getPoint( pos, &pointB );
         setPoint( i, &pointB );
         setPoint( pos, &pointA );
@@ -732,7 +731,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
  * @return new geometry.
  */
 
-OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
+OGRLineString* OGRLinearRing::CastToLineString( OGRLinearRing* poLR )
 {
     return TransferMembersAndDestroy(poLR, new OGRLineString());
 }
@@ -742,7 +741,8 @@ OGRLineString* OGRLinearRing::CastToLineString(OGRLinearRing* poLR)
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
-OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
+OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
+{
     return (OGRCurveCasterToLineString) OGRLinearRing::CastToLineString;
 }
 
@@ -750,7 +750,8 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const {
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
-OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const {
+OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const
+{
     return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
 }
 //! @endcond
