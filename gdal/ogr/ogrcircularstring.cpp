@@ -500,12 +500,12 @@ void OGRCircularString::segmentize( double dfMaxLength )
     {
         nPointCount = (int)aoRawPoint.size();
         paoPoints = static_cast<OGRRawPoint *>(
-                OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nPointCount));
+                CPLRealloc(paoPoints, sizeof(OGRRawPoint) * nPointCount));
         memcpy(paoPoints, &aoRawPoint[0], sizeof(OGRRawPoint) * nPointCount);
         if( padfZ )
         {
             padfZ = static_cast<double *>(
-                OGRRealloc(padfZ, sizeof(double) * aoRawPoint.size()));
+                CPLRealloc(padfZ, sizeof(double) * aoRawPoint.size()));
             memcpy(padfZ, &adfZ[0], sizeof(double) * nPointCount);
         }
     }
