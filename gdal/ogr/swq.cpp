@@ -189,7 +189,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         {
             GIntBig nVal = CPLAtoGIntBig(osToken);
             if( CPL_INT64_FITS_ON_INT32(nVal) )
-                *ppNode = new swq_expr_node( (int)nVal );
+                *ppNode = new swq_expr_node( static_cast<int>(nVal) );
             else
                 *ppNode = new swq_expr_node( nVal );
             return SWQT_INTEGER_NUMBER;
@@ -448,10 +448,10 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_mday = nDay;
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMin;
-                    brokendowntime.tm_sec = (int)fSec;
+                    brokendowntime.tm_sec = static_cast<int>(fSec);
                     summary->count++;
                     summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
-                    summary->sum += fmod((double)fSec, 1);
+                    summary->sum += fmod(static_cast<double>(fSec), 1.0);
                 }
             }
             else

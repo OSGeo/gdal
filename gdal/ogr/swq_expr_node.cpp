@@ -125,7 +125,7 @@ swq_expr_node::swq_expr_node( swq_op eOp )
 
     eNodeType = SNT_OPERATION;
 
-    nOperation = (int) eOp;
+    nOperation = static_cast<int>(eOp);
     nSubExprCount = 0;
     papoSubExpr = NULL;
 }
@@ -356,7 +356,8 @@ void swq_expr_node::Dump( FILE * fp, int depth )
 /*      Add quoting if necessary to unparse a string.                   */
 /************************************************************************/
 
-CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote )
+CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr,
+                                           char chQuote )
 
 {
     if( osExpr[0] == '_' )
@@ -364,10 +365,10 @@ CPLString swq_expr_node::QuoteIfNecessary( const CPLString &osExpr, char chQuote
     if( osExpr == "*" )
         return osExpr;
 
-    for( int i = 0; i < (int) osExpr.size(); i++ )
+    for( int i = 0; i < static_cast<int>(osExpr.size()); i++ )
     {
         char ch = osExpr[i];
-        if( (!(isalnum((int)ch) || ch == '_')) || ch == '.' )
+        if( (!(isalnum(static_cast<int>(ch)) || ch == '_')) || ch == '.' )
         {
             return Quote(osExpr, chQuote);
         }
@@ -394,7 +395,7 @@ CPLString swq_expr_node::Quote( const CPLString &osTarget, char chQuote )
 
     osNew += chQuote;
 
-    for( int i = 0; i < (int) osTarget.size(); i++ )
+    for( int i = 0; i < static_cast<int>(osTarget.size()); i++ )
     {
         if( osTarget[i] == chQuote )
         {
@@ -629,7 +630,7 @@ CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char** apszSubExpr)
             else if( i > 2 )
                 osExpr += ", ";
 
-            int nLen = (int)strlen(apszSubExpr[i]);
+            const int nLen = static_cast<int>(strlen(apszSubExpr[i]));
             if( (i == 1 &&
                 (apszSubExpr[i][0] == '\'' &&
                  nLen > 2 && apszSubExpr[i][nLen-1] == '\'')) ||
@@ -778,9 +779,10 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
                         "Evaluate(): Unable to find definition for operator %s.",
                         string_value );
             else
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "Evaluate(): Unable to find definition for operator %d.",
-                        nOperation );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Evaluate(): Unable to find definition for operator %d.",
+                    nOperation );
             poRetNode = NULL;
         }
         else
@@ -790,7 +792,7 @@ swq_expr_node *swq_expr_node::Evaluate( swq_field_fetcher pfnFetcher,
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < (int) apoValues.size(); i++ )
+    for( int i = 0; i < static_cast<int>(apoValues.size()); i++ )
     {
         if( anValueNeedsFree[i] )
             delete apoValues[i];
