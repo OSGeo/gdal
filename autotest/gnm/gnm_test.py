@@ -128,6 +128,7 @@ def gnm_import():
         gdaltest.post_reason('failed to import pipes')
         return 'fail'
     dspipes = None
+    new_lyr = None
 
     #wells
     dswells = gdal.OpenEx('data/wells.shp', gdal.OF_VECTOR)
@@ -137,6 +138,7 @@ def gnm_import():
         gdaltest.post_reason('failed to import wells')
         return 'fail'
     dswells = None
+    new_lyr = None
 
     if ds.GetLayerCount() != 2:
         gdaltest.post_reason('expected 2 layers')
@@ -187,6 +189,7 @@ def gnm_graph_dijkstra():
         return 'fail'
 
     if lyr.GetFeatureCount() == 0:
+        dn.ReleaseResultSet(lyr)
         gdaltest.post_reason('failed to get path')
         return 'fail'
 
@@ -214,6 +217,7 @@ def gnm_graph_kshortest():
         return 'fail'
 
     if lyr.GetFeatureCount() < 20:
+        dn.ReleaseResultSet(lyr)
         gdaltest.post_reason('failed to get path')
         return 'fail'
 
