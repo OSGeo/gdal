@@ -163,9 +163,10 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromPanorama", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromPanorama( iProjSys,
-                                                               iDatum, iEllips,
-                                                               padfPrjParams );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        importFromPanorama( iProjSys,
+                            iDatum, iEllips,
+                            padfPrjParams );
 }
 
 /************************************************************************/
@@ -257,7 +258,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
 /*      Use safe defaults if projection parameters are not supplied.    */
 /* -------------------------------------------------------------------- */
-    int bProjAllocated = false;
+    bool bProjAllocated = false;
 
     if( padfPrjParams == NULL )
     {
@@ -279,12 +280,10 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 
         case PAN_PROJ_UTM:
             {
-                int nZone;
-
-                if( padfPrjParams[7] == 0.0 )
-                    nZone = TO_ZONE(padfPrjParams[3]);
-                else
-                    nZone = (int) padfPrjParams[7];
+                const int nZone =
+                    padfPrjParams[7] == 0.0
+                    ? TO_ZONE(padfPrjParams[3])
+                    : static_cast<int>(padfPrjParams[7]);
 
                 // XXX: no way to determine south hemisphere. Always assume
                 // northern hemisphere.
@@ -513,10 +512,11 @@ OGRErr OSRExportToPanorama( OGRSpatialReferenceH hSRS,
     VALIDATE_POINTER1( piEllips, "OSRExportToPanorama", OGRERR_FAILURE );
     VALIDATE_POINTER1( padfPrjParams, "OSRExportToPanorama", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->exportToPanorama( piProjSys,
-                                                             piDatum, piEllips,
-                                                             piZone,
-                                                             padfPrjParams );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        exportToPanorama( piProjSys,
+                          piDatum, piEllips,
+                          piZone,
+                          padfPrjParams );
 }
 
 /************************************************************************/
