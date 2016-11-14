@@ -597,29 +597,14 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
         hDriver = GDALGetDriverByName( psOptions->pszFormat );
+        char** papszDriverMD = (hDriver) ? GDALGetMetadata(hDriver, NULL): NULL;
         if( hDriver == NULL
-            || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
+            || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE") )
+            || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) )
         {
-            int iDr;
-
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Output driver `%s' not recognised or does not support "
-                      " direct output file creation.", psOptions->pszFormat);
-            fprintf(stderr, "The following format drivers are configured\n"
-                    "and support direct output:\n" );
-
-            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
-            {
-                hDriver = GDALGetDriver(iDr);
-
-                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
-                {
-                    fprintf(stderr, "  %s: %s\n",
-                            GDALGetDriverShortName( hDriver  ),
-                            GDALGetDriverLongName( hDriver ) );
-                }
-            }
-            fprintf(stderr, "\n" );
+                      "direct output file creation.", psOptions->pszFormat);
             GDALRasterizeOptionsFree(psOptionsToFree);
             return NULL;
         }
