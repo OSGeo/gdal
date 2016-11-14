@@ -278,10 +278,12 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
         poRet->field_type = node->field_type;
 
         if( SWQ_IS_INTEGER(sub_node_values[0]->field_type) )
-            sub_node_values[0]->float_value = (double) sub_node_values[0]->int_value;
+            sub_node_values[0]->float_value =
+                static_cast<double>(sub_node_values[0]->int_value);
         if( node->nSubExprCount > 1 &&
             SWQ_IS_INTEGER(sub_node_values[1]->field_type) )
-            sub_node_values[1]->float_value = (double)sub_node_values[1]->int_value;
+            sub_node_values[1]->float_value =
+                static_cast<double>(sub_node_values[1]->int_value);
 
         if( node->nOperation != SWQ_ISNULL )
         {
@@ -708,26 +710,27 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
 
           case SWQ_SUBSTR:
           {
-              int nOffset, nSize;
               const char *pszSrcStr = sub_node_values[0]->string_value;
 
+              int nOffset = 0;
               if( SWQ_IS_INTEGER(sub_node_values[1]->field_type) )
-                  nOffset = (int)sub_node_values[1]->int_value;
+                  nOffset = static_cast<int>(sub_node_values[1]->int_value);
               else if( sub_node_values[1]->field_type == SWQ_FLOAT )
-                  nOffset = (int) sub_node_values[1]->float_value;
-              else
-                  nOffset = 0;
+                  nOffset = static_cast<int>(sub_node_values[1]->float_value);
+              // else
+              //     nOffset = 0;
 
+              int nSize = 0;
               if( node->nSubExprCount < 3 )
                   nSize = 100000;
               else if( SWQ_IS_INTEGER(sub_node_values[2]->field_type) )
-                  nSize = (int)sub_node_values[2]->int_value;
+                  nSize = static_cast<int>(sub_node_values[2]->int_value);
               else if( sub_node_values[2]->field_type == SWQ_FLOAT )
-                  nSize = (int) sub_node_values[2]->float_value;
-              else
-                  nSize = 0;
+                  nSize = static_cast<int>(sub_node_values[2]->float_value);
+              // else
+              //    nSize = 0;
 
-              int nSrcStrLen = (int)strlen(pszSrcStr);
+              const int nSrcStrLen = static_cast<int>(strlen(pszSrcStr));
 
               // In SQL, the first character is at offset 1.
               // 0 is considered as 1.
@@ -752,7 +755,7 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
                   nSize = nSrcStrLen - nOffset;
 
               CPLString osResult = pszSrcStr + nOffset;
-              if( (int)osResult.size() > nSize )
+              if( static_cast<int>(osResult.size()) > nSize )
                   osResult.resize( nSize );
 
               poRet->string_value = CPLStrdup(osResult);
@@ -1373,7 +1376,7 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
             if( node->nSubExprCount > 2 )
             {
                 int nWidth = static_cast<int>(sub_node_values[2]->int_value);
-                if( nWidth > 0 && (int) strlen(osRet) > nWidth )
+                if( nWidth > 0 && static_cast<int>(strlen(osRet)) > nWidth )
                     osRet.resize(nWidth);
             }
 

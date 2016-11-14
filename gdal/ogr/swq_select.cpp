@@ -606,7 +606,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                 // SRID
                 if( poExpr->nSubExprCount > 3 )
                 {
-                    col_def->nSRID = (int)poExpr->papoSubExpr[3]->int_value;
+                    col_def->nSRID =
+                        static_cast<int>(poExpr->papoSubExpr[3]->int_value);
                 }
             }
         }
@@ -629,7 +630,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                     result_columns--;
                     return FALSE;
                 }
-                col_def->field_length = (int)poExpr->papoSubExpr[2]->int_value;
+                col_def->field_length =
+                    static_cast<int>(poExpr->papoSubExpr[2]->int_value);
             }
 
             // field width.
