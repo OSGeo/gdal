@@ -92,6 +92,7 @@ install:
 - nmake /f makefile.vc test_ogrsf.exe MSVC_VER=1800 DEBUG=1 %WIN64_ARG% USER_DEFS=/WX
 - cd ..
 - cd swig\python
+- echo 'GNM_ENABLED=yes' > setup_vars.ini
 - python setup.py build
 - python setup.py install
 - cd ..\..
