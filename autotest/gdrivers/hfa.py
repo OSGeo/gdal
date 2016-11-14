@@ -1390,6 +1390,36 @@ def hfa_createcopy_statistics():
 
     return 'success'
 
+###############################################################################
+# Test GetUnitType()
+
+def hfa_read_elevation_units():
+
+    ds = gdal.Open('../gcore/data/erdas_cm.img')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'cm':
+        gdaltest.post_reason('Failed to read elevation units')
+        print(unittype)
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('../gcore/data/erdas_feet.img')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'feet':
+        gdaltest.post_reason('Failed to read elevation units')
+        print(unittype)
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('../gcore/data/erdas_m.img')
+    unittype = ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'meters':
+        gdaltest.post_reason('Failed to read elevation units')
+        print(unittype)
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 ###############################################################################
 #
@@ -1436,7 +1466,8 @@ gdaltest_list = [
     hfa_read_tmso_projection,
     hfa_read_homva_projection,
     hfa_write_tmso_projection,
-    hfa_write_homva_projection ]
+    hfa_write_homva_projection,
+    hfa_read_elevation_units ]
 
 if __name__ == '__main__':
 
