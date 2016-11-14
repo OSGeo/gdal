@@ -1005,7 +1005,7 @@ into a list of bands.  The default is to burn into band 1.</dd>
 <dt> <b>-i</b>: </dt><dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated
 with the first feature into all parts of the image <em>not</em> inside the
-provided a polygon.</dd>
+provided polygon.</dd>
 
 <dt> <b>-at</b>: </dt><dd>
 Enables the ALL_TOUCHED rasterization option so that all pixels touched
