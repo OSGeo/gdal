@@ -298,7 +298,7 @@ def doit(opts, args):
 
 ################################################################
 def main():
-    usage = "usage: %prog [-A <filename>] [--A_band] [-B...-Z filename] [other_options]"
+    usage = "usage: %prog [-A <filename>] [--A_band=n] [-B...-Z filename] [other_options]"
     parser = OptionParser(usage)
 
     # define options
