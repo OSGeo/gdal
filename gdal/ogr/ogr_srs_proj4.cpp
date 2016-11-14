@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_conv.h"
 #include "ogr_spatialref.h"
 #include "ogr_p.h"
-#include "cpl_conv.h"
 
 #include <cmath>
 #include <vector>
@@ -353,7 +353,8 @@ OGRErr OSRImportFromProj4( OGRSpatialReferenceH hSRS, const char *pszProj4 )
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromProj4", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromProj4( pszProj4 );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        importFromProj4( pszProj4 );
 }
 
 /************************************************************************/
@@ -528,7 +529,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     {
         const char *pszNumber = pszInitEpsg + strlen("init=epsg:");
 
-        OGRErr eErr = importFromEPSG( atoi(pszNumber) );
+        const OGRErr eErr = importFromEPSG( atoi(pszNumber) );
         if( eErr != OGRERR_NONE || strchr(pszNumber, '+') == NULL )
         {
             CPLFree( pszNormalized );
@@ -585,7 +586,9 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
     }
     else
+    {
         pszPM = "Greenwich";
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
@@ -667,8 +670,8 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
     else if( EQUAL(pszProj, "utm") )
     {
-        SetUTM( (int) OSR_GDV( papszNV, "zone", 0.0 ),
-                (int) OSR_GDV( papszNV, "south", 1.0 ) );
+        SetUTM(static_cast<int>(OSR_GDV( papszNV, "zone", 0.0)),
+               static_cast<int>(OSR_GDV( papszNV, "south", 1.0)) );
     }
     else if( EQUAL(pszProj, "merc")  // 2SP form.
              && OSR_GDV(papszNV, "lat_ts", 1000.0) < 999.0 )
@@ -1737,14 +1740,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection, SRS_PT_GAUSSSCHREIBERTMERCATOR) )
     {
-        CPLsnprintf( szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
-                 "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g "
-                 "+k_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, -21.116666667),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 55.53333333309),
-                 GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0),
-                 GetNormProjParm(SRS_PP_FALSE_EASTING, 160000.000),
-                 GetNormProjParm(SRS_PP_FALSE_NORTHING, 50000.000) );
+        CPLsnprintf(
+            szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
+            "+proj=gstmerc +lat_0=%.16g +lon_0=%.16g "
+            "+k_0=%.16g +x_0=%.16g +y_0=%.16g ",
+            GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, -21.116666667),
+            GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 55.53333333309),
+            GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0),
+            GetNormProjParm(SRS_PP_FALSE_EASTING, 160000.000),
+            GetNormProjParm(SRS_PP_FALSE_NORTHING, 50000.000) );
     }
     else if( EQUAL(pszProjection, SRS_PT_GNOMONIC) )
     {
