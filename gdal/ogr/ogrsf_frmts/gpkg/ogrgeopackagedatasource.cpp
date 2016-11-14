@@ -1074,7 +1074,7 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     if( CPLTestBool(CSLFetchNameValueDef(papszOpenOptionsIn, "USE_TILE_EXTENT", "NO")) )
     {
         pszSQL = sqlite3_mprintf(
-            "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM '%q' WHERE zoom_level = %d",
+            "SELECT MIN(tile_column), MIN(tile_row), MAX(tile_column), MAX(tile_row) FROM \"%w\" WHERE zoom_level = %d",
             pszTableName, atoi(SQLResultGetValue(&oResult, 0, 0)));
         SQLResult oResult2;
         err = SQLQuery(hDB, pszSQL, &oResult2);
@@ -1577,7 +1577,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
     {
         for(int i=0;i<m_nOverviewCount;i++)
             m_papoOverviewDS[i]->FlushCache();
-        char* pszSQL = sqlite3_mprintf("DELETE FROM '%q' WHERE zoom_level < %d",
+        char* pszSQL = sqlite3_mprintf("DELETE FROM \"%w\" WHERE zoom_level < %d",
                                        m_osRasterTable.c_str(),
                                        m_nZoomLevel);
         char* pszErrMsg = NULL;
@@ -1730,7 +1730,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
                         return CE_Failure;
                     }
 
-                    pszSQL = sqlite3_mprintf("UPDATE '%q' SET zoom_level = %d "
+                    pszSQL = sqlite3_mprintf("UPDATE \"%w\" SET zoom_level = %d "
                         "WHERE zoom_level = %d",
                         m_osRasterTable.c_str(),
                         m_nZoomLevel - k + 1,
@@ -2811,7 +2811,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
         m_osDescription = CSLFetchNameValueDef(papszOptions, "RASTER_DESCRIPTION", "");
 
         /* From C.7. sample_tile_pyramid (Informative) Table 31. EXAMPLE: tiles table Create Table SQL (Informative) */
-        char* pszSQL = sqlite3_mprintf("CREATE TABLE '%q' ("
+        char* pszSQL = sqlite3_mprintf("CREATE TABLE \"%w\" ("
           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
           "zoom_level INTEGER NOT NULL,"
           "tile_column INTEGER NOT NULL,"
@@ -2825,44 +2825,44 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
             return FALSE;
 
         /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger Definition SQL  */
-        char* pszSQLTriggers = sqlite3_mprintf("CREATE TRIGGER '%q_zoom_insert' "
-        "BEFORE INSERT ON '%q' "
+        char* pszSQLTriggers = sqlite3_mprintf("CREATE TRIGGER \"%w_zoom_insert\" "
+        "BEFORE INSERT ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: zoom_level not specified for table in gpkg_tile_matrix') "
         "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM gpkg_tile_matrix WHERE table_name = '%q')) ; "
         "END; "
-        "CREATE TRIGGER '%q_zoom_update' "
-        "BEFORE UPDATE OF zoom_level ON '%q' "
+        "CREATE TRIGGER \"%w_zoom_update\" "
+        "BEFORE UPDATE OF zoom_level ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: zoom_level not specified for table in gpkg_tile_matrix') "
         "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM gpkg_tile_matrix WHERE table_name = '%q')) ; "
         "END; "
-        "CREATE TRIGGER '%q_tile_column_insert' "
-        "BEFORE INSERT ON '%q' "
+        "CREATE TRIGGER \"%w_tile_column_insert\" "
+        "BEFORE INSERT ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_column cannot be < 0') "
         "WHERE (NEW.tile_column < 0) ; "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_column must by < matrix_width specified for table and zoom level in gpkg_tile_matrix') "
         "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
         "END; "
-        "CREATE TRIGGER '%q_tile_column_update' "
-        "BEFORE UPDATE OF tile_column ON '%q' "
+        "CREATE TRIGGER \"%w_tile_column_update\" "
+        "BEFORE UPDATE OF tile_column ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_column cannot be < 0') "
         "WHERE (NEW.tile_column < 0) ; "
         "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_column must by < matrix_width specified for table and zoom level in gpkg_tile_matrix') "
         "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
         "END; "
-        "CREATE TRIGGER '%q_tile_row_insert' "
-        "BEFORE INSERT ON '%q' "
+        "CREATE TRIGGER \"%w_tile_row_insert\" "
+        "BEFORE INSERT ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_row cannot be < 0') "
         "WHERE (NEW.tile_row < 0) ; "
         "SELECT RAISE(ABORT, 'insert on table ''%q'' violates constraint: tile_row must by < matrix_height specified for table and zoom level in gpkg_tile_matrix') "
         "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM gpkg_tile_matrix WHERE table_name = '%q' AND zoom_level = NEW.zoom_level)); "
         "END; "
-        "CREATE TRIGGER '%q_tile_row_update' "
-        "BEFORE UPDATE OF tile_row ON '%q' "
+        "CREATE TRIGGER \"%w_tile_row_update\" "
+        "BEFORE UPDATE OF tile_row ON \"%w\" "
         "FOR EACH ROW BEGIN "
         "SELECT RAISE(ABORT, 'update on table ''%q'' violates constraint: tile_row cannot be < 0') "
         "WHERE (NEW.tile_row < 0) ; "
@@ -3700,7 +3700,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     if( eErr == OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE '%q'", osLayerName.c_str());
+        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", osLayerName.c_str());
         eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
     }
