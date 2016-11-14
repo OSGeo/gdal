@@ -80,11 +80,10 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
         return;
 
-    int i = 0;
     int nTruncations = 0;
     while( nPrecision > 0 )
     {
-        i = 0;
+        int i = 0;
         int nCountBeforeDot = 0;
         int iDotPos = -1;
         while( pszBuffer[i] != '\0' )
@@ -220,8 +219,8 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
     {
-        snprintf( szX, bufSize, "%d", (int) x );
-        snprintf( szY, bufSize, "%d", (int) y );
+        snprintf( szX, bufSize, "%d", static_cast<int>(x) );
+        snprintf( szY, bufSize, "%d", static_cast<int>(y) );
     }
     else
     {
@@ -742,7 +741,9 @@ const char * OGRWktReadPointsM( const char * pszInput,
             }
         }
         else if( *ppadfZ != NULL )
+        {
             (*ppadfZ)[*pnPointsRead] = 0.0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      If there are unexpectedly even more coordinates,                */
@@ -786,7 +787,9 @@ const char * OGRWktReadPointsM( const char * pszInput,
             }
         }
         else if( *ppadfM != NULL )
+        {
             (*ppadfM)[*pnPointsRead] = 0.0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      If there are still more coordinates and we do not have Z        */
@@ -1428,9 +1431,11 @@ char* OGRGetXMLDateTime(const OGRField* psField)
                 year, month, day, hour, minute, second,
                 (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
         else
-            pszRet = CPLStrdup(CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
-                            year, month, day, hour, minute, (int)second,
-                            (TZFlag > 100) ? '+' : '-', TZHour, TZMinute));
+            pszRet = CPLStrdup(
+                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+                           year, month, day, hour, minute,
+                           static_cast<int>(second),
+                           TZFlag > 100 ? '+' : '-', TZHour, TZMinute));
     }
     return pszRet;
 }
@@ -1605,7 +1610,8 @@ double OGRFastAtof(const char* pszStr)
             return OGRCallAtofOnShortString(pszStr);
         else
         {
-            if( countFractionnal < sizeof(adfTenPower) / sizeof(adfTenPower[0]) )
+            if( countFractionnal < sizeof(adfTenPower) /
+                sizeof(adfTenPower[0]) )
                 return dfSign * (dfVal / adfTenPower[countFractionnal]);
             else
                 return OGRCallAtofOnShortString(pszStr);
@@ -1620,7 +1626,7 @@ double OGRFastAtof(const char* pszStr)
  * @return OGRERR_NONE if panPermutation is a permutation of [0, nSize - 1].
  * @since OGR 1.9.0
  */
-OGRErr OGRCheckPermutation(int* panPermutation, int nSize)
+OGRErr OGRCheckPermutation( int* panPermutation, int nSize )
 {
     OGRErr eErr = OGRERR_NONE;
     int* panCheck = static_cast<int *>(CPLCalloc(nSize, sizeof(int)));
@@ -1665,9 +1671,9 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the geometry type.                                          */
 /* -------------------------------------------------------------------- */
-    int bIs3D = FALSE;
-    int bIsMeasured = FALSE;
-    int iRawType;
+    bool bIs3D = false;
+    bool bIsMeasured = false;
+    int iRawType = 0;
 
     memcpy(&iRawType, pabyData + 1, 4);
     if( OGR_SWAP(eByteOrder))
@@ -1679,14 +1685,14 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
     if( 0x40000000 & iRawType )
     {
         iRawType &= ~0x40000000;
-        bIsMeasured = TRUE;
+        bIsMeasured = true;
     }
     // Old-style OGC z-bit is flipped? Tests also Z bit in PostGIS WKB.
     if( wkb25DBitInternalUse & iRawType )
     {
         // Clean off top 3 bytes.
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;
+        bIs3D = true;
     }
 
     // ISO SQL/MM Part3 draft -> Deprecated.
@@ -1779,7 +1785,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
     {
         // Clean off top 3 bytes.
         iRawType &= 0x000000FF;
-        bIs3D = TRUE;
+        bIs3D = true;
     }
 
     if( eWkbVariant == wkbVariantPostGIS1 )
@@ -1820,7 +1826,7 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
         iRawType |= wkb25DBitInternalUse;
     }
 
-    *peGeometryType = (OGRwkbGeometryType)iRawType;
+    *peGeometryType = static_cast<OGRwkbGeometryType>(iRawType);
 
     return OGRERR_NONE;
 }
