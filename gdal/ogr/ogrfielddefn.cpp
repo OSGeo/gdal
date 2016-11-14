@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogr_feature.h"
+
 #include "ogr_api.h"
 #include "ogr_p.h"
 #include "ograpispy.h"
@@ -47,11 +48,18 @@ CPL_CVSID("$Id$");
  * @param eTypeIn the type of the new field.
  */
 
-OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
-
-{
-    Initialize( pszNameIn, eTypeIn );
-}
+OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
+    pszName(CPLStrdup(pszNameIn)),
+    eType(eTypeIn),
+    eJustify(OJUndefined),
+    // Should nWidth & nPrecision be defined in some particular way for numbers?
+    nWidth(0),
+    nPrecision(0),
+    pszDefault(NULL),
+    bIgnore(FALSE),
+    eSubType(OFSTNone),
+    bNullable(TRUE)
+{}
 
 /************************************************************************/
 /*                            OGRFieldDefn()                            */
@@ -65,17 +73,18 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn )
  * @param poPrototype the field definition to clone.
  */
 
-OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
-
+OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype ) :
+    pszName(CPLStrdup(poPrototype->GetNameRef())),
+    eType(poPrototype->GetType()),
+    eJustify(poPrototype->GetJustify()),
+    nWidth(poPrototype->GetWidth()),
+    nPrecision(poPrototype->GetPrecision()),
+    pszDefault(NULL),
+    bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
+    eSubType(poPrototype->GetSubType()),
+    bNullable(poPrototype->IsNullable())
 {
-    Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
-
-    SetJustify( poPrototype->GetJustify() );
-    SetWidth( poPrototype->GetWidth() );
-    SetPrecision( poPrototype->GetPrecision() );
-    SetSubType( poPrototype->GetSubType() );
-    SetNullable( poPrototype->IsNullable() );
-    SetDefault( poPrototype->GetDefault() );
+    SetDefault(poPrototype->GetDefault());
 }
 
 /************************************************************************/
@@ -96,27 +105,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype )
 OGRFieldDefnH OGR_Fld_Create( const char *pszName, OGRFieldType eType )
 
 {
-    return (OGRFieldDefnH) (new OGRFieldDefn(pszName,eType));
-}
-
-/************************************************************************/
-/*                             Initialize()                             */
-/************************************************************************/
-
-void OGRFieldDefn::Initialize( const char * pszNameIn, OGRFieldType eTypeIn )
-
-{
-    pszName = CPLStrdup( pszNameIn );
-    eType = eTypeIn;
-    eJustify = OJUndefined;
-
-    nWidth = 0;         // should these be defined in some particular way
-    nPrecision = 0;     // for numbers?
-
-    pszDefault = NULL;
-    bIgnore = FALSE;
-    eSubType = OFSTNone;
-    bNullable = TRUE;
+    return (OGRFieldDefnH) (new OGRFieldDefn(pszName, eType));
 }
 
 /************************************************************************/
@@ -142,7 +131,7 @@ OGRFieldDefn::~OGRFieldDefn()
 void OGR_Fld_Destroy( OGRFieldDefnH hDefn )
 
 {
-    delete (OGRFieldDefn *) hDefn;
+    delete reinterpret_cast<OGRFieldDefn *>(hDefn);
 }
 
 /************************************************************************/
@@ -179,7 +168,7 @@ void OGRFieldDefn::SetName( const char * pszNameIn )
 void OGR_Fld_SetName( OGRFieldDefnH hDefn, const char *pszName )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetName( pszName );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetName( pszName );
 }
 
 /************************************************************************/
@@ -219,7 +208,7 @@ const char *OGR_Fld_GetNameRef( OGRFieldDefnH hDefn )
         OGRAPISpy_Fld_GetXXXX(hDefn, "GetNameRef");
 #endif
 
-    return ((OGRFieldDefn *) hDefn)->GetNameRef();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetNameRef();
 }
 
 /************************************************************************/
@@ -257,7 +246,7 @@ OGRFieldType OGR_Fld_GetType( OGRFieldDefnH hDefn )
         OGRAPISpy_Fld_GetXXXX(hDefn, "GetType");
 #endif
 
-    return ((OGRFieldDefn *) hDefn)->GetType();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetType();
 }
 
 /************************************************************************/
@@ -279,7 +268,8 @@ void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eTypeIn, eSubType) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. "
+                 "Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     eType = eTypeIn;
@@ -302,7 +292,7 @@ void OGRFieldDefn::SetType( OGRFieldType eTypeIn )
 void OGR_Fld_SetType( OGRFieldDefnH hDefn, OGRFieldType eType )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetType( eType );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetType(eType);
 }
 
 /************************************************************************/
@@ -342,7 +332,7 @@ OGRFieldSubType OGR_Fld_GetSubType( OGRFieldDefnH hDefn )
         OGRAPISpy_Fld_GetXXXX(hDefn, "GetSubType");
 #endif
 
-    return ((OGRFieldDefn *) hDefn)->GetSubType();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetSubType();
 }
 
 /************************************************************************/
@@ -364,7 +354,8 @@ void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
     if( !OGR_AreTypeSubTypeCompatible(eType, eSubTypeIn) )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Type and subtype of field definition are not compatible. Resetting to OFSTNone");
+                 "Type and subtype of field definition are not compatible. "
+                 "Resetting to OFSTNone");
         eSubType = OFSTNone;
     }
     else
@@ -391,7 +382,7 @@ void OGRFieldDefn::SetSubType( OGRFieldSubType eSubTypeIn )
 void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetSubType( eSubType );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetSubType(eSubType);
 }
 
 /************************************************************************/
@@ -401,12 +392,12 @@ void OGR_Fld_SetSubType( OGRFieldDefnH hDefn, OGRFieldSubType eSubType )
 /**
  * \brief Set default field value.
  *
- * The default field value is taken into account by drivers (generally those with
- * a SQL interface) that support it at field creation time. OGR will generally not
- * automatically set the default field value to null fields by itself when calling
- * OGRFeature::CreateFeature() / OGRFeature::SetFeature(), but will let the
- * low-level layers to do the job. So retrieving the feature from the layer is
- * recommended.
+ * The default field value is taken into account by drivers (generally those
+ * with a SQL interface) that support it at field creation time. OGR will
+ * generally not automatically set the default field value to null fields by
+ * itself when calling OGRFeature::CreateFeature() / OGRFeature::SetFeature(),
+ * but will let the low-level layers to do the job. So retrieving the feature
+ * from the layer is recommended.
  *
  * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
@@ -436,7 +427,8 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
     {
         if( pszDefaultIn[strlen(pszDefaultIn)-1] != '\'' )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Incorrectly quoted string literal");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incorrectly quoted string literal");
             return;
         }
         const char* pszPtr = pszDefaultIn + 1;  // Used after for.
@@ -448,15 +440,17 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
                     break;
                 if( pszPtr[1] != '\'' )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Incorrectly quoted string literal");
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Incorrectly quoted string literal");
                     return;
                 }
-                pszPtr ++;
+                pszPtr++;
             }
         }
         if( *pszPtr == '\0' )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Incorrectly quoted string literal");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Incorrectly quoted string literal");
             return;
         }
     }
@@ -471,12 +465,12 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
 /**
  * \brief Set default field value.
  *
- * The default field value is taken into account by drivers (generally those with
- * a SQL interface) that support it at field creation time. OGR will generally not
- * automatically set the default field value to null fields by itself when calling
- * OGRFeature::CreateFeature() / OGRFeature::SetFeature(), but will let the
- * low-level layers to do the job. So retrieving the feature from the layer is
- * recommended.
+ * The default field value is taken into account by drivers (generally those
+ * with a SQL interface) that support it at field creation time. OGR will
+ * generally not automatically set the default field value to null fields by
+ * itself when calling OGRFeature::CreateFeature() / OGRFeature::SetFeature(),
+ * but will let the low-level layers to do the job. So retrieving the feature
+ * from the layer is recommended.
  *
  * The accepted values are NULL, a numeric value, a literal value enclosed
  * between single quote characters (and inner single quote characters escaped by
@@ -497,9 +491,9 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
  * @since GDAL 2.0
  */
 
-void   CPL_DLL OGR_Fld_SetDefault( OGRFieldDefnH hDefn, const char* pszDefault )
+void CPL_DLL OGR_Fld_SetDefault( OGRFieldDefnH hDefn, const char* pszDefault )
 {
-    ((OGRFieldDefn *) hDefn)->SetDefault( pszDefault );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetDefault( pszDefault );
 }
 
 /************************************************************************/
@@ -537,7 +531,7 @@ const char* OGRFieldDefn::GetDefault() const
 
 const char *OGR_Fld_GetDefault( OGRFieldDefnH hDefn )
 {
-    return ((OGRFieldDefn *) hDefn)->GetDefault();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetDefault();
 }
 
 /************************************************************************/
@@ -603,7 +597,7 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
 
 int OGR_Fld_IsDefaultDriverSpecific( OGRFieldDefnH hDefn )
 {
-    return ((OGRFieldDefn *) hDefn)->IsDefaultDriverSpecific();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->IsDefaultDriverSpecific();
 }
 
 /************************************************************************/
@@ -803,7 +797,7 @@ int OGR_AreTypeSubTypeCompatible( OGRFieldType eType, OGRFieldSubType eSubType )
 OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
 
 {
-    return ((OGRFieldDefn *) hDefn)->GetJustify();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetJustify();
 }
 
 /************************************************************************/
@@ -839,7 +833,7 @@ OGRJustification OGR_Fld_GetJustify( OGRFieldDefnH hDefn )
 void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetJustify( eJustify );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetJustify( eJustify );
 }
 
 /************************************************************************/
@@ -871,7 +865,7 @@ void OGR_Fld_SetJustify( OGRFieldDefnH hDefn, OGRJustification eJustify )
 int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
 
 {
-    return ((OGRFieldDefn *) hDefn)->GetWidth();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetWidth();
 }
 
 /************************************************************************/
@@ -903,7 +897,7 @@ int OGR_Fld_GetWidth( OGRFieldDefnH hDefn )
 void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetWidth( nNewWidth );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetWidth( nNewWidth );
 }
 
 /************************************************************************/
@@ -939,7 +933,7 @@ void OGR_Fld_SetWidth( OGRFieldDefnH hDefn, int nNewWidth )
 int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 
 {
-    return ((OGRFieldDefn *) hDefn)->GetPrecision();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->GetPrecision();
 }
 
 /************************************************************************/
@@ -975,7 +969,7 @@ int OGR_Fld_GetPrecision( OGRFieldDefnH hDefn )
 void OGR_Fld_SetPrecision( OGRFieldDefnH hDefn, int nPrecision )
 
 {
-    ((OGRFieldDefn *) hDefn)->SetPrecision( nPrecision );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetPrecision( nPrecision );
 }
 
 /************************************************************************/
@@ -1029,13 +1023,13 @@ void OGRFieldDefn::Set( const char *pszNameIn,
  */
 
 void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
-                        OGRFieldType eTypeIn,
-                        int nWidthIn, int nPrecisionIn,
-                        OGRJustification eJustifyIn )
+                  OGRFieldType eTypeIn,
+                  int nWidthIn, int nPrecisionIn,
+                  OGRJustification eJustifyIn )
 
 {
-    ((OGRFieldDefn *) hDefn)->Set( pszNameIn, eTypeIn, nWidthIn,
-                                   nPrecisionIn, eJustifyIn );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->
+        Set(pszNameIn, eTypeIn, nWidthIn, nPrecisionIn, eJustifyIn);
 }
 
 /************************************************************************/
@@ -1067,7 +1061,7 @@ void OGR_Fld_Set( OGRFieldDefnH hDefn, const char *pszNameIn,
 
 int OGR_Fld_IsIgnored( OGRFieldDefnH hDefn )
 {
-    return ((OGRFieldDefn *) hDefn)->IsIgnored();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->IsIgnored();
 }
 
 /************************************************************************/
@@ -1099,7 +1093,7 @@ int OGR_Fld_IsIgnored( OGRFieldDefnH hDefn )
 
 void OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int ignore )
 {
-    ((OGRFieldDefn *) hDefn)->SetIgnored( ignore );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetIgnored( ignore );
 }
 
 /************************************************************************/
@@ -1115,12 +1109,13 @@ void OGR_Fld_SetIgnored( OGRFieldDefnH hDefn, int ignore )
 
 int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 {
-    return (strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
-            eType == poOtherFieldDefn->eType &&
-            eSubType == poOtherFieldDefn->eSubType &&
-            nWidth == poOtherFieldDefn->nWidth &&
-            nPrecision == poOtherFieldDefn->nPrecision &&
-            bNullable == poOtherFieldDefn->bNullable);
+    return
+        strcmp(pszName, poOtherFieldDefn->pszName) == 0 &&
+        eType == poOtherFieldDefn->eType &&
+        eSubType == poOtherFieldDefn->eSubType &&
+        nWidth == poOtherFieldDefn->nWidth &&
+        nPrecision == poOtherFieldDefn->nPrecision &&
+        bNullable == poOtherFieldDefn->bNullable;
 }
 
 /************************************************************************/
@@ -1168,7 +1163,7 @@ int OGRFieldDefn::IsSame( const OGRFieldDefn * poOtherFieldDefn ) const
 
 int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 {
-    return ((OGRFieldDefn *) hDefn)->IsNullable();
+    return reinterpret_cast<OGRFieldDefn *>(hDefn)->IsNullable();
 }
 
 /************************************************************************/
@@ -1180,8 +1175,8 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
  *
  * \brief Set whether this field can receive null values.
  *
- * By default, fields are nullable, so this method is generally called with FALSE
- * to set a not-null constraint.
+ * By default, fields are nullable, so this method is generally called with
+ * FALSE to set a not-null constraint.
  *
  * Drivers that support writing not-null constraint will advertize the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
@@ -1199,8 +1194,8 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 /**
  * \brief Set whether this field can receive null values.
  *
- * By default, fields are nullable, so this method is generally called with FALSE
- * to set a not-null constraint.
+ * By default, fields are nullable, so this method is generally called with
+ * FALSE to set a not-null constraint.
  *
  * Drivers that support writing not-null constraint will advertize the
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
@@ -1214,7 +1209,7 @@ int OGR_Fld_IsNullable( OGRFieldDefnH hDefn )
 
 void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 {
-    ((OGRFieldDefn *) hDefn)->SetNullable( bNullableIn );
+    reinterpret_cast<OGRFieldDefn *>(hDefn)->SetNullable( bNullableIn );
 }
 
 /************************************************************************/
@@ -1222,7 +1217,8 @@ void OGR_Fld_SetNullable( OGRFieldDefnH hDefn, int bNullableIn )
 /************************************************************************/
 
 /**
- * \brief Update the type of a field definition by "merging" its existing type with a new type.
+ * \brief Update the type of a field definition by "merging" its existing type
+ * with a new type.
  *
  * The update is done such as broadening the type. For example a OFTInteger
  * updated with OFTInteger64 will be promoted to OFTInteger64.
