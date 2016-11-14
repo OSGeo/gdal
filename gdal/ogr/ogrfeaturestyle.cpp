@@ -161,8 +161,7 @@ OGRStyleMgrH OGR_SM_Create( OGRStyleTableH hStyleTable )
  */
 OGRStyleMgr::~OGRStyleMgr()
 {
-    if( m_pszStyleString )
-        CPLFree(m_pszStyleString);
+    CPLFree(m_pszStyleString);
 }
 
 /************************************************************************/

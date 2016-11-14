@@ -467,8 +467,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                 SetWellKnownGeogCS( "EPSG:4284" );
             }
 
-            if( pszName )
-                CPLFree( pszName );
+            CPLFree( pszName );
         }
         else
         {
