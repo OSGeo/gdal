@@ -82,7 +82,7 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
 {
     for( unsigned int i = 0; i < N_OPERATIONS; ++i )
     {
-        if( EQUAL(pszName,swq_apsOperations[i].pszName) )
+        if( EQUAL(pszName, swq_apsOperations[i].pszName) )
             return &(swq_apsOperations[i]);
     }
 
