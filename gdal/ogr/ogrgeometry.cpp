@@ -1682,7 +1682,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
  *
  * @param ppszDstText a text buffer is allocated by the program, and assigned
  *                    to the passed pointer. After use, *ppszDstText should be
- *                    freed with OGRFree().
+ *                    freed with CPLFree().
  * @param eWkbVariant the specification that must be conformed too :
  *                    - wbkVariantOgc for old-style 99-402 extended
  *                      dimension (Z) WKB types
@@ -1710,7 +1710,7 @@ OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
  * @param hGeom handle on the geometry to convert to a text format from.
  * @param ppszSrcText a text buffer is allocated by the program, and assigned
  *                    to the passed pointer. After use, *ppszDstText should be
- *                    freed with OGRFree().
+ *                    freed with CPLFree().
  *
  * @return Currently OGRERR_NONE is always returned.
  */
@@ -1741,7 +1741,7 @@ OGRErr OGR_G_ExportToWkt( OGRGeometryH hGeom, char **ppszSrcText )
  * @param hGeom handle on the geometry to convert to a text format from.
  * @param ppszSrcText a text buffer is allocated by the program, and assigned
  *                    to the passed pointer. After use, *ppszDstText should be
- *                    freed with OGRFree().
+ *                    freed with CPLFree().
  *
  * @return Currently OGRERR_NONE is always returned.
  *
