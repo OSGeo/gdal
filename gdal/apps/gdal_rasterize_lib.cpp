@@ -252,16 +252,10 @@ static CPLErr ProcessLayer(
             {
                 adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
             }
-            /* I have made the 3D option exclusive to other options since it
-               can be used to modify the value from "-burn value" or
-               "-a attribute_name" */
-            if( b3D )
+            else if( b3D )
             {
-                // TODO: get geometry "z" value
                 /* Points and Lines will have their "z" values collected at the
-                   point and line levels respectively. However filled polygons
-                   (GDALdllImageFilledPolygon) can use some help by getting
-                   their "z" values here. */
+                   point and line levels respectively. Not implemented for polygons */
                 adfFullBurnValues.push_back( 0.0 );
             }
         }
@@ -1060,14 +1054,17 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         }
     }
 
-    if( psOptions->adfBurnValues.size() == 0 &&
-        psOptions->pszBurnAttribute == NULL && !(psOptions->b3D) )
+    int nExclusiveOptionsCount = 0;
+    nExclusiveOptionsCount += (!psOptions->adfBurnValues.empty()) ? 1 : 0;
+    nExclusiveOptionsCount += (psOptions->pszBurnAttribute != NULL) ? 1 : 0;
+    nExclusiveOptionsCount += (psOptions->b3D) ? 1 : 0;
+    if( nExclusiveOptionsCount != 1 )
     {
-        if( psOptionsForBinary == NULL )
+        if( nExclusiveOptionsCount == 0 && psOptionsForBinary == NULL )
             psOptions->adfBurnValues.push_back(255);
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "At least one of -3d, -burn or -a required." );
+            CPLError(CE_Failure, CPLE_NotSupported, "One and only one of -3d, -burn or -a is required." );
             GDALRasterizeOptionsFree(psOptions);
             return NULL;
         }

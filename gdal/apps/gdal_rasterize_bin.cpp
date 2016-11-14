@@ -42,7 +42,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 {
     printf(
         "Usage: gdal_rasterize [-b band]* [-i] [-at]\n"
-        "       [-burn value]* | [-a attribute_name] [-3d] [-add]\n"
+        "       {[-burn value]* | [-a attribute_name] | [-3d]} [-add]\n"
         "       [-l layername]* [-where expression] [-sql select_statement]\n"
         "       [-dialect dialect] [-of format] [-a_srs srs_def]\n"
         "       [-co \"NAME=VALUE\"]* [-a_nodata value] [-init value]*\n"
