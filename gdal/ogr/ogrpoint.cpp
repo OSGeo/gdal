@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
@@ -137,10 +138,7 @@ OGRPoint::OGRPoint( const OGRPoint& other ) :
 /*                             ~OGRPoint()                              */
 /************************************************************************/
 
-OGRPoint::~OGRPoint()
-
-{
-}
+OGRPoint::~OGRPoint() {}
 
 /************************************************************************/
 /*                       operator=( const OGRPoint& )                   */
@@ -356,7 +354,7 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
     }
 
     // Detect coordinates are not NaN --> NOT EMPTY.
-    if( !( x != x && y != y ) )
+    if( !(CPLIsNan(x) && CPLIsNan(y)) )
         flags |= OGR_G_NOT_EMPTY_POINT;
 
     return OGRERR_NONE;
@@ -376,7 +374,8 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] =
+        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
     pabyData += 1;
 
 /* -------------------------------------------------------------------- */
@@ -390,12 +389,15 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = wkbFlatten(nGType);
         if( Is3D() )
             // Explicitly set wkb25DBit.
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+            nGType =
+                static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
         if( IsMeasured() )
-            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
     else if( eWkbVariant == wkbVariantIso )
+    {
         nGType = getIsoGeometryType();
+    }
 
     if( eByteOrder == wkbNDR )
         nGType = CPL_LSBWORD32( nGType );
@@ -411,7 +413,7 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 
     if( IsEmpty() && eWkbVariant == wkbVariantIso )
     {
-        double dNan = std::numeric_limits<double>::quiet_NaN();
+        const double dNan = std::numeric_limits<double>::quiet_NaN();
         memcpy( pabyData, &dNan, 8 );
         if( OGR_SWAP( eByteOrder ) )
             CPL_SWAPDOUBLE( pabyData );
@@ -538,12 +540,11 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
         if( padfM != NULL )
             m = padfM[0];
     }
-    if( padfZ != NULL )
-        CPLFree( padfZ );
-    if( padfM != NULL )
-        CPLFree( padfM );
 
-    *ppszInput = (char *) pszInput;
+    CPLFree( padfZ );
+    CPLFree( padfM );
+
+    *ppszInput = const_cast<char *>(pszInput);
 
     return OGRERR_NONE;
 }
