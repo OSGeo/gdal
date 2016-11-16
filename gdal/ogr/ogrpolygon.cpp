@@ -253,7 +253,7 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
  * @return pointer to interior ring.  May be NULL.
  */
 
-OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
+OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
 {
     if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
         return NULL;
@@ -312,7 +312,7 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
                                   OGRwkbVariant eWkbVariant )
 
 {
-    OGRwkbByteOrder eByteOrder;
+    OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
     // coverity[tainted_data]
     OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
@@ -361,7 +361,8 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
 /*      Set the byte order.                                             */
 /* -------------------------------------------------------------------- */
-    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER((unsigned char) eByteOrder);
+    pabyData[0] =
+        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
 
 /* -------------------------------------------------------------------- */
 /*      Set the geometry feature type.                                  */
@@ -373,9 +374,10 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = wkbFlatten(nGType);
         if( Is3D() )
             // Explicitly set wkb25DBit.
-            nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
+            nGType =
+                static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
         if( IsMeasured() )
-            nGType = (OGRwkbGeometryType)(nGType | 0x40000000);
+            nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
     else if( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
@@ -440,8 +442,8 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
         return OGRERR_NONE;
 
     OGRRawPoint *paoPoints = NULL;
-    int          nMaxPoints = 0;
-    double      *padfZ = NULL;
+    int nMaxPoints = 0;
+    double *padfZ = NULL;
 
     eErr = importFromWKTListOnly( ppszInput, bHasZ, bHasM,
                                   paoPoints, nMaxPoints, padfZ );
@@ -561,13 +563,13 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
         oCC.papoCurves[oCC.nCurveCount] = poLR;
 
         if( bHasM && bHasZ )
-            poLR->setPoints( nPoints, paoPoints, padfZ, padfM );
+            poLR->setPoints(nPoints, paoPoints, padfZ, padfM);
         else if( bHasM )
-            poLR->setPointsM( nPoints, paoPoints, padfM );
+            poLR->setPointsM(nPoints, paoPoints, padfM);
         else if( bHasZ )
-            poLR->setPoints( nPoints, paoPoints, padfZ );
+            poLR->setPoints(nPoints, paoPoints, padfZ);
         else
-            poLR->setPoints( nPoints, paoPoints, padfZ );
+            poLR->setPoints(nPoints, paoPoints);
 
         oCC.nCurveCount++;
 
@@ -587,7 +589,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = const_cast<char *>(pszInput);
     return OGRERR_NONE;
 }
 /*! @endcond */
