@@ -78,7 +78,8 @@ OGRMultiLineString::~OGRMultiLineString() {}
  * @since GDAL 2.1
  */
 
-OGRMultiLineString& OGRMultiLineString::operator=( const OGRMultiLineString& other )
+OGRMultiLineString &
+OGRMultiLineString::operator=( const OGRMultiLineString& other )
 {
     if( this != &other )
     {
@@ -96,7 +97,7 @@ OGRwkbGeometryType OGRMultiLineString::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbMultiLineStringZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbMultiLineStringM;
     else if( flags & OGR_G_3D )
         return wkbMultiLineString25D;
@@ -118,7 +119,8 @@ const char * OGRMultiLineString::getGeometryName() const
 /*                          isCompatibleSubType()                       */
 /************************************************************************/
 
-OGRBoolean OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
+OGRBoolean
+OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
     return wkbFlatten(eGeomType) == wkbLineString;
 }
