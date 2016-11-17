@@ -40,7 +40,9 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#ifdef HAVE_GEOS
 #include "geos_c.h"
+#endif
 
 #include <climits>
 #include <cmath>
