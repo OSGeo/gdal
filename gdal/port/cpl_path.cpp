@@ -31,14 +31,16 @@
 #include "cpl_conv.h"
 
 #include <ctype.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#ifndef _WIN32
 #include <unistd.h>
-#include <string>
+#endif
 
 #include <algorithm>
+#include <string>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_config.h"
