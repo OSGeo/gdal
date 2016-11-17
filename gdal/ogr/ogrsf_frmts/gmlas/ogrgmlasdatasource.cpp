@@ -405,7 +405,9 @@ void GMLASGuessXSDFilename::startElement(
                 for( int j = 0; j < nTokens; j+= 2 )
                 {
                     if( !STARTS_WITH(papszTokens[j], szWFS_URI) &&
-                        !STARTS_WITH(papszTokens[j], szGML_URI) )
+                        !(EQUAL(papszTokens[j], szGML_URI) ||
+                          STARTS_WITH(papszTokens[j],
+                                    (CPLString(szGML_URI)+ "/").c_str())) )
                     {
                         CPLDebug("GMLAS", "Schema to analyze: %s -> %s",
                                  papszTokens[j], papszTokens[j+1]);
