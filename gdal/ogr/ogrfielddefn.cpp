@@ -27,11 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_feature.h"
 
+#include <cstring>
+
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 #include "ograpispy.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -105,7 +113,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype ) :
 OGRFieldDefnH OGR_Fld_Create( const char *pszName, OGRFieldType eType )
 
 {
-    return (OGRFieldDefnH) (new OGRFieldDefn(pszName, eType));
+    return reinterpret_cast<OGRFieldDefnH>(new OGRFieldDefn(pszName, eType));
 }
 
 /************************************************************************/
