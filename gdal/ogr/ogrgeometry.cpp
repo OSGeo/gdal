@@ -1901,8 +1901,8 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetSpatialReference", NULL );
 
-    return (OGRSpatialReferenceH)
-        reinterpret_cast<OGRGeometry *>(hGeom)->getSpatialReference();
+    return reinterpret_cast<OGRSpatialReferenceH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->getSpatialReference());
 }
 
 /**
