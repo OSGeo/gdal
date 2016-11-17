@@ -27,9 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_api.h"
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -63,9 +74,9 @@ OGRGeometryCollection::OGRGeometryCollection()
 
 OGRGeometryCollection::OGRGeometryCollection(
     const OGRGeometryCollection& other ) :
-    OGRGeometry( other ),
-    nGeomCount( 0 ),
-    papoGeoms( NULL )
+    OGRGeometry(other),
+    nGeomCount(0),
+    papoGeoms(NULL)
 {
     for( int i = 0; i < other.nGeomCount; i++ )
     {
@@ -126,7 +137,7 @@ void OGRGeometryCollection::empty()
         {
             delete papoGeoms[i];
         }
-        OGRFree( papoGeoms );
+        CPLFree( papoGeoms );
     }
 
     nGeomCount = 0;
@@ -801,7 +812,7 @@ OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 
 {
     size_t nCumulativeLength = 0;
-    OGRErr eErr;
+    OGRErr eErr = OGRERR_NONE;
     bool bMustWriteComma = false;
 
 /* -------------------------------------------------------------------- */
@@ -814,7 +825,7 @@ OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
 
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        eErr = papoGeoms[iGeom]->exportToWkt( &(papszGeoms[iGeom]), eWkbVariant );
+        eErr = papoGeoms[iGeom]->exportToWkt(&(papszGeoms[iGeom]), eWkbVariant);
         if( eErr != OGRERR_NONE )
             goto error;
 
@@ -834,7 +845,8 @@ OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
             // Skip empty subgeoms.
             if( papszGeoms[iGeom][nSkip] != '(' )
             {
-                CPLDebug( "OGR", "OGRGeometryCollection::exportToWkt() - skipping %s.",
+                CPLDebug( "OGR",
+                          "OGRGeometryCollection::exportToWkt() - skipping %s.",
                           papszGeoms[iGeom] );
                 CPLFree( papszGeoms[iGeom] );
                 papszGeoms[iGeom] = NULL;
@@ -845,7 +857,9 @@ OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         {
             char *substr = NULL;
             if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
-                memmove(substr, substr+strlen(" Z"), 1+strlen(substr+strlen(" Z")));
+                memmove(substr,
+                        substr+strlen(" Z"),
+                        1 + strlen(substr+strlen(" Z")));
         }
 
         nCumulativeLength += strlen(papszGeoms[iGeom] + nSkip);
