@@ -27,13 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_spatialref.h"
+
+#include <cmath>
+#include <cstring>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
-#include "cpl_port.h"
 #include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 #ifdef PROJ_STATIC
 #include "proj_api.h"
@@ -474,10 +479,10 @@ OCTNewCoordinateTransformation(
     OGRSpatialReferenceH hSourceSRS, OGRSpatialReferenceH hTargetSRS )
 
 {
-    return (OGRCoordinateTransformationH)
+    return reinterpret_cast<OGRCoordinateTransformationH>(
         OGRCreateCoordinateTransformation(
-            (OGRSpatialReference *) hSourceSRS,
-            (OGRSpatialReference *) hTargetSRS );
+            reinterpret_cast<OGRSpatialReference *>(hSourceSRS),
+            reinterpret_cast<OGRSpatialReference *>(hTargetSRS)));
 }
 
 /************************************************************************/
