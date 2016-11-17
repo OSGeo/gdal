@@ -41,9 +41,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi polygon collection.
  */
 
-OGRMultiPolygon::OGRMultiPolygon()
-{
-}
+OGRMultiPolygon::OGRMultiPolygon() {}
 
 /************************************************************************/
 /*              OGRMultiPolygon( const OGRMultiPolygon& )               */
@@ -60,16 +58,13 @@ OGRMultiPolygon::OGRMultiPolygon()
 
 OGRMultiPolygon::OGRMultiPolygon( const OGRMultiPolygon& other ) :
     OGRMultiSurface(other)
-{
-}
+{}
 
 /************************************************************************/
 /*                         ~OGRMultiPolygon()                           */
 /************************************************************************/
 
-OGRMultiPolygon::~OGRMultiPolygon()
-{
-}
+OGRMultiPolygon::~OGRMultiPolygon() {}
 
 /************************************************************************/
 /*                  operator=( const OGRMultiPolygon&)                    */
@@ -102,7 +97,7 @@ OGRwkbGeometryType OGRMultiPolygon::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbMultiPolygonZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbMultiPolygonM;
     else if( flags & OGR_G_3D )
         return wkbMultiPolygon25D;
@@ -124,7 +119,8 @@ const char * OGRMultiPolygon::getGeometryName() const
 /*                          isCompatibleSubType()                       */
 /************************************************************************/
 
-OGRBoolean OGRMultiPolygon::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
+OGRBoolean
+OGRMultiPolygon::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
     return wkbFlatten(eGeomType) == wkbPolygon;
 }
@@ -134,7 +130,7 @@ OGRBoolean OGRMultiPolygon::isCompatibleSubType( OGRwkbGeometryType eGeomType ) 
 /************************************************************************/
 
 OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText,
-                                        OGRwkbVariant eWkbVariant ) const
+                                     OGRwkbVariant eWkbVariant ) const
 
 {
     return exportToWktInternal( ppszDstText, eWkbVariant, "POLYGON" );
@@ -144,7 +140,8 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText,
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRMultiPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+OGRBoolean
+OGRMultiPolygon::hasCurveGeometry( int /* bLookForNonLinear */ ) const
 {
     return FALSE;
 }
@@ -173,5 +170,6 @@ OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
 
 OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface(OGRMultiPolygon* poMP)
 {
-    return (OGRMultiSurface*) TransferMembersAndDestroy(poMP, new OGRMultiSurface());
+    return (OGRMultiSurface*)
+        TransferMembersAndDestroy(poMP, new OGRMultiSurface());
 }
