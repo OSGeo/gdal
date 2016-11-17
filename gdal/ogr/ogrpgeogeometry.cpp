@@ -2118,7 +2118,7 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                     CPL_LSBPTR64(&dfVal1);
                     memcpy( &dfVal2, pabyShape + nOffset + 8, 8 );
                     CPL_LSBPTR64(&dfVal2);
-                    int nBits = 0.0;
+                    int nBits = 0;
                     memcpy( &nBits, pabyShape + nOffset + 16, 4 );
                     CPL_LSBPTR32(&nBits);
 
