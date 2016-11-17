@@ -1737,6 +1737,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     CPLString osRootGMLId = "ID_GMLJP2_0";
     CPLString osGridCoverage;
     CPLString osGridCoverageFile;
+    CPLString osCoverageRangeTypeXML;
     bool bCRSURL = true;
     std::vector<GMLJP2V2MetadataDesc> aoMetadata;
     std::vector<GMLJP2V2AnnotationDesc> aoAnnotations;
@@ -1771,6 +1772,19 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             "GMLJP2RectifiedGridCoverage or a GMLJP2ReferenceableGridCoverage",
             "If not specified, GDAL will auto-generate a GMLJP2RectifiedGridCoverage" ],
         "grid_coverage_file": "gmljp2gridcoverage.xml",
+
+        "#grid_coverage_range_type_field_predefined_name_doc": [
+            "One of Color, Elevation_meter or Panchromatic ",
+            "to fill gmlcov:rangeType/swe:DataRecord/swe:field",
+            "Only used if grid_coverage_file is not defined.",
+            "Exclusive with grid_coverage_range_type_file" ],
+        "grid_coverage_range_type_field_predefined_name": "Color",
+
+        "#grid_coverage_range_type_file_doc": [
+            "File that is XML content to put under gml:RectifiedGrid/gmlcov:rangeType",
+            "Only used if grid_coverage_file is not defined.",
+            "Exclusive with grid_coverage_range_type_field_predefined_name" ],
+        "grid_coverage_range_type_file": "grid_coverage_range_type.xml",
 
         "#crs_url_doc": [
             "true for http://www.opengis.net/def/crs/EPSG/0/XXXX CRS URL.",
@@ -1810,7 +1824,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 "#parent_node": ["Where to put the metadata.",
                                  "Under CoverageCollection (default) or GridCoverage" ],
                 "parent_node": "CoverageCollection"
-            },
+            }
         ],
 
         "#annotations_doc": [ "An array of filenames, either directly KML files",
@@ -1855,7 +1869,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
         ],
 
-        "#styles_doc: [ "An array of styles. For example SLD files" ],
+        "#styles_doc": [ "An array of styles. For example SLD files" ],
         "styles" : [
             {
                 "#file_doc": "Can use relative or absolute paths.",
@@ -1867,7 +1881,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
         ],
 
-        "#extensions_doc: [ "An array of extensions." ],
+        "#extensions_doc": [ "An array of extensions." ],
         "extensions" : [
             {
                 "#file_doc": "Can use relative or absolute paths.",
@@ -1920,6 +1934,75 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             json_object* poGridCoverageFile = CPL_json_object_object_get(poRootInstance, "grid_coverage_file");
             if( poGridCoverageFile && json_object_get_type(poGridCoverageFile) == json_type_string )
                 osGridCoverageFile = json_object_get_string(poGridCoverageFile);
+
+            json_object* poGCRTFPN =
+                CPL_json_object_object_get(poRootInstance, "grid_coverage_range_type_field_predefined_name");
+            if( poGCRTFPN && json_object_get_type(poGCRTFPN) == json_type_string )
+            {
+                CPLString osPredefinedName( json_object_get_string(poGCRTFPN) );
+                if( EQUAL(osPredefinedName, "Color") )
+                {
+                    osCoverageRangeTypeXML =
+    "<swe:DataRecord>"
+        "<swe:field name=\"Color\">"
+            "<swe:Quantity definition=\"http://www.opengis.net/def/ogc-eo/opt/SpectralMode/Color\">"
+                "<swe:description>Color image</swe:description>"
+                "<swe:uom code=\"unity\"/>"
+            "</swe:Quantity>"
+        "</swe:field>"
+    "</swe:DataRecord>";
+                }
+                else if( EQUAL(osPredefinedName, "Elevation_meter") )
+                {
+                    osCoverageRangeTypeXML =
+    "<swe:DataRecord>"
+        "<swe:field name=\"Elevation\">"
+            "<swe:Quantity definition=\"http://inspire.ec.europa.eu/enumeration/ElevationPropertyTypeValue/height\" "
+                          "referenceFrame=\"http://www.opengis.net/def/crs/EPSG/0/5714\">"
+                "<swe:description>Elevation above sea level</swe:description>"
+                "<swe:uom code=\"m\"/>"
+            "</swe:Quantity>"
+        "</swe:field>"
+    "</swe:DataRecord>";
+                }
+                else if( EQUAL(osPredefinedName, "Panchromatic") )
+                {
+                    osCoverageRangeTypeXML =
+    "<swe:DataRecord>"
+        "<swe:field name=\"Panchromatic\">"
+            "<swe:Quantity definition=\"http://www.opengis.net/def/ogc-eo/opt/SpectralMode/Panchromatic\">"
+                "<swe:description>Panchromatic Channel</swe:description>"
+                "<swe:uom code=\"unity\"/>"
+            "</swe:Quantity>"
+        "</swe:field>"
+    "</swe:DataRecord>";
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Unrecognized value for grid_coverage_range_type_field_predefined_name");
+                }
+            }
+            else
+            {
+                json_object* poGCRTFile =
+                    CPL_json_object_object_get(poRootInstance, "grid_coverage_range_type_file");
+                if( poGCRTFile && json_object_get_type(poGCRTFile) == json_type_string )
+                {
+                    CPLXMLNode* psTmp = CPLParseXMLFile(json_object_get_string(poGCRTFile));
+                    if( psTmp != NULL )
+                    {
+                        CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
+                        if( psTmpRoot )
+                        {
+                            char* pszTmp = CPLSerializeXMLTree(psTmpRoot);
+                            osCoverageRangeTypeXML = pszTmp;
+                            CPLFree(pszTmp);
+                        }
+                        CPLDestroyXMLNode(psTmp);
+                    }
+                }
+            }
 
             json_object* poCRSURL = CPL_json_object_object_get(poRootInstance, "crs_url");
             if( poCRSURL && json_object_get_type(poCRSURL) == json_type_boolean )
@@ -2342,7 +2425,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 "        <gml:fileStructure>inapplicable</gml:fileStructure>\n"
 "      </gml:File>\n"
 "     </gml:rangeSet>\n"
-"     <gmlcov:rangeType/>\n"
+"     <gmlcov:rangeType>%s</gmlcov:rangeType>\n"
 "   </gmljp2:GMLJP2RectifiedGridCoverage>\n",
             osRootGMLId.c_str(),
             osRootGMLId.c_str(),
@@ -2350,12 +2433,15 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
             pszComment,
             szSRSName, adfXVector[0], adfXVector[1],
-            szSRSName, adfYVector[0], adfYVector[1] );
+            szSRSName, adfYVector[0], adfYVector[1],
+            osCoverageRangeTypeXML.c_str() );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Main node.                                                      */
 /* -------------------------------------------------------------------- */
+
+    // Per http://docs.opengeospatial.org/is/08-085r5/08-085r5.html#requirement_11
     osDoc.Printf(
 //"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 "<gmljp2:GMLJP2CoverageCollection gml:id=\"%s\"\n"
@@ -2365,15 +2451,18 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 "     xmlns:swe=\"http://www.opengis.net/swe/2.0\"\n"
 "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
 "     xsi:schemaLocation=\"http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd\">\n"
-"  <gml:gridDomain/>\n"
+"  <gml:domainSet nilReason=\"inapplicable\"/>\n"
 "  <gml:rangeSet>\n"
-"   <gml:File>\n"
-"     <gml:rangeParameters/>\n"
-"     <gml:fileName>gmljp2://codestream</gml:fileName>\n"
-"     <gml:fileStructure>inapplicable</gml:fileStructure>\n"
-"   </gml:File>\n"
+"    <gml:DataBlock>\n"
+"       <gml:rangeParameters nilReason=\"inapplicable\"/>\n"
+"       <gml:doubleOrNilReasonTupleList>inapplicable</gml:doubleOrNilReasonTupleList>\n"
+"     </gml:DataBlock>\n"
 "  </gml:rangeSet>\n"
-"  <gmlcov:rangeType/>\n"
+"  <gmlcov:rangeType>\n"
+"    <swe:DataRecord>\n"
+"      <swe:field name=\"Collection\"> </swe:field>\n"
+"    </swe:DataRecord>\n"
+"  </gmlcov:rangeType>\n"
 "  <gmljp2:featureMember>\n"
 "%s"
 "  </gmljp2:featureMember>\n"

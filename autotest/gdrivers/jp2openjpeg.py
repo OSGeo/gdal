@@ -2318,15 +2318,18 @@ def jp2openjpeg_45():
      xmlns:swe="http://www.opengis.net/swe/2.0"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://www.opengis.net/gmljp2/2.0 http://schemas.opengis.net/gmljp2/2.0/gmljp2.xsd">
-  <gml:gridDomain/>
+  <gml:domainSet nilReason="inapplicable"/>
   <gml:rangeSet>
-   <gml:File>
-     <gml:rangeParameters/>
-     <gml:fileName>gmljp2://codestream</gml:fileName>
-     <gml:fileStructure>inapplicable</gml:fileStructure>
-   </gml:File>
+    <gml:DataBlock>
+       <gml:rangeParameters nilReason="inapplicable"/>
+       <gml:doubleOrNilReasonTupleList>inapplicable</gml:doubleOrNilReasonTupleList>
+     </gml:DataBlock>
   </gml:rangeSet>
-  <gmlcov:rangeType/>
+  <gmlcov:rangeType>
+    <swe:DataRecord>
+      <swe:field name="Collection"> </swe:field>
+    </swe:DataRecord>
+  </gmlcov:rangeType>
   <gmljp2:featureMember>
    <gmljp2:GMLJP2RectifiedGridCoverage gml:id="RGC_1_ID_GMLJP2_0">
      <gml:domainSet>
@@ -2355,7 +2358,7 @@ def jp2openjpeg_45():
         <gml:fileStructure>inapplicable</gml:fileStructure>
       </gml:File>
      </gml:rangeSet>
-     <gmlcov:rangeType/>
+     <gmlcov:rangeType></gmlcov:rangeType>
    </gmljp2:GMLJP2RectifiedGridCoverage>
   </gmljp2:featureMember>
 </gmljp2:GMLJP2CoverageCollection>
@@ -2420,6 +2423,62 @@ def jp2openjpeg_45():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
+    # Test valid values for grid_coverage_range_type_field_predefined_name
+    for predefined in [ ['Color', 'Color'], ['Elevation_meter', 'Elevation'], ['Panchromatic', 'Panchromatic'] ]:
+        gdal.FileFromMemBuffer("/vsimem/conf.json", '{ "root_instance": { "grid_coverage_range_type_field_predefined_name": "%s" } }' % predefined[0])
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/conf.json'])
+        gdal.Unlink('/vsimem/conf.json')
+        del out_ds
+        ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+        gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+        if gmljp2.find(predefined[1]) < 0:
+            gdaltest.post_reason('fail')
+            print(predefined[0])
+            print(gmljp2)
+            return 'fail'
+        ds = None
+        gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # Test invalid value for grid_coverage_range_type_field_predefined_name
+    gdal.FileFromMemBuffer("/vsimem/conf.json", '{ "root_instance": { "grid_coverage_range_type_field_predefined_name": "invalid" } }')
+    with gdaltest.error_handler():
+        out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/conf.json'])
+    gdal.Unlink('/vsimem/conf.json')
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    if gmljp2.find('<gmlcov:rangeType></gmlcov:rangeType>') < 0:
+        gdaltest.post_reason('fail')
+        print(gmljp2)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+    # Test valid values for grid_coverage_range_type_file
+    gdal.FileFromMemBuffer("/vsimem/grid_coverage_range_type_file.xml",
+"""
+<swe:DataRecord><swe:field name="custom_datarecord">
+    <swe:Quantity definition="http://custom">
+        <swe:description>custom</swe:description>
+        <swe:uom code="unity"/>
+    </swe:Quantity></swe:field></swe:DataRecord>
+""")
+    gdal.FileFromMemBuffer("/vsimem/conf.json", '{ "root_instance": { "grid_coverage_range_type_file": "/vsimem/grid_coverage_range_type_file.xml" } }')
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_45.jp2', src_ds, options = ['GMLJP2V2_DEF=/vsimem/conf.json'])
+    gdal.Unlink('/vsimem/conf.json')
+    gdal.Unlink('/vsimem/grid_coverage_range_type_file.xml')
+    del out_ds
+    ds = gdal.Open('/vsimem/jp2openjpeg_45.jp2')
+    gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
+    if gmljp2.find("custom_datarecord") < 0:
+        gdaltest.post_reason('fail')
+        print(predefined[0])
+        print(gmljp2)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
+
+
     # Test most invalid cases
     import json
 
@@ -2439,6 +2498,8 @@ def jp2openjpeg_45():
 
     conf = {
     "root_instance": {
+        "grid_coverage_range_type_file": "/vsimem/i_dont_exist.xml",
+
         "metadata": [
                 "<invalid_root/>",
                 "/vsimem/i_dont_exist.xml",
@@ -3580,7 +3641,7 @@ gdaltest_list = [
 
 disabled_gdaltest_list = [
     jp2openjpeg_1,
-    jp2openjpeg_49,
+    jp2openjpeg_45,
     jp2openjpeg_cleanup ]
 
 if __name__ == '__main__':
