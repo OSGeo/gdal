@@ -27,7 +27,7 @@ A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es.
 A p&aacute;gina
 <a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.0-News">novidades</a> descreve o
-lan&ccedil;amento em Junho de 2015 da release 2.0.0 da biblioteca GDAL/OGR.
+lan&ccedil;amento em Outubro de 2016 da release 2.1.2 da biblioteca GDAL/OGR.
 
 Tradicionalmente a bilioteca GDAL referia-se a dados Raster enquanto que OGR
 referia-se a dados Vetorias (Simple Features). Mas a partir da ver&ccedil;&atilde;o 2.0 as duas partes
@@ -108,6 +108,26 @@ Download:
 or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 </ul>
 -->
+
+\section foss4g Conference
+
+\htmlonly
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td><a href="http://2017.foss4g.org/">
+<img src="foss4g2017.png" alt="FOSS4G 2017" border="0">
+</a></td>
+
+<td><a href="http://2017.foss4g.org">FOSS4G 2017</a> 
+
+&Eacute; a principal confer&egrave;ncia anual de software geoespacial livre e de c&oacute;digo aberto.
+Ele incluir&aacute; apresentações relacionadas ao GDAL/OGR, e alguns dos membros da comunidade 
+de desenvolvimento da GDAL/OGR estar&atilde;o participando. &Eacute; o evento para aqueles interessados em GDAL/OGR,
+outras tecnologias geoespaciais FOSS e da comunidade em torno deles.
+A confer&egrave;ncia ser&aacute; realizada em Boston, EUA, de <strong>14 a 18 de agosto de 2017.</strong>.</td>
+</table>
+
+\endhtmlonly
 
 \section index_maillist Lista de discuss&atilde;o por correio eletr&ograve;nico
 
