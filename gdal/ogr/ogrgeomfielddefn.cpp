@@ -629,5 +629,5 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 
 void OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int bNullableIn )
 {
-  reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetNullable(bNullableIn);
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetNullable(bNullableIn);
 }
