@@ -545,8 +545,9 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char szSRSId[100];
 
-    if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
-        strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );
+    const char* pszSRID = CSLFetchNameValue( papszOptions, "SRID" );
+    if( pszSRID != NULL )
+        snprintf( szSRSId, sizeof(szSRSId), "%s", pszSRID );
     else if( poSRS != NULL )
         snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
@@ -637,8 +638,11 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
-    if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
-        poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );
+    const char* pszDIM = CSLFetchNameValue(papszOptions,"DIM");
+    if( pszDIM != NULL )
+        poLayer->SetDimension( atoi(pszDIM) );
+    else if( eType != wkbNone )
+        poLayer->SetDimension( (wkbFlatten(eType) == eType) ? 2 : 3 );
 
     poLayer->SetOptions( papszOptions );
     if( eType != wkbNone && !bGeomNullable )
