@@ -30,12 +30,12 @@
 #include "cpl_port.h"
 #include "cpl_conv.h"
 
-#include <ctype.h>
+#include <cctype>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#ifndef _WIN32
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
