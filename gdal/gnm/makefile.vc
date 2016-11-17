@@ -1,10 +1,16 @@
 
-EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
+EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff $(ZLIB_FLAGS) \
 		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 
 GDAL_ROOT = 	..
 
 !INCLUDE ..\nmake.opt
+
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\frmts\zlib
+!ENDIF
 
 GNM_FRMTS =	gnm_frmts\gnm_frmts.lib
 OBJ_GNM	=	gnmnetwork.obj gnmgenericnetwork.obj gnmlayer.obj gnmrule.obj \
