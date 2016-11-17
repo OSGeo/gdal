@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:myns="http://myns"
+    targetNamespace="http://myns"
+    elementFormDefault="qualified">
+
+    <!-- Use construct similar to gmljp2:GMLJP2CoverageCollection -->
+    <element name="main" type="myns:mainType">
+    </element>
+    <complexType name="mainType">
+        <sequence>
+            <element name="featureMember" maxOccurs="unbounded">
+                <complexType>
+                    <sequence>
+                        <choice maxOccurs="unbounded">
+                            <element ref="myns:a"/>
+                            <element ref="myns:b"/>
+                        </choice>
+                    </sequence>
+                    <attribute name="attr" type="string"/>
+                </complexType>
+            </element>
+        </sequence>
+    </complexType>
+
+    <element name="a">
+        <complexType>
+            <sequence>
+                <element ref="myns:c"/>
+                <element ref="myns:d"/>
+            </sequence>
+        </complexType>
+    </element>
+
+    <element name="b">
+        <complexType>
+            <sequence>
+                <element ref="myns:c"/>
+                <element ref="myns:d"/>
+            </sequence>
+        </complexType>
+    </element>
+
+    <element name="c">
+        <complexType>
+            <sequence>
+                <element name="e" type="string"/>
+            </sequence>
+        </complexType>
+    </element>
+
+    <element name="d">
+        <complexType>
+            <sequence>
+                <element name="f" type="string"/>
+            </sequence>
+        </complexType>
+    </element>
+
+</schema>
