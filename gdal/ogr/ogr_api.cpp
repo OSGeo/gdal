@@ -28,9 +28,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_geometry.h"
+#include "cpl_port.h"
 #include "ogr_api.h"
+
+#include <cstddef>
+
 #include "cpl_error.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 
@@ -55,11 +59,15 @@ int OGR_G_GetPointCount( OGRGeometryH hGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_GetPointCount", 0 );
 
     const OGRwkbGeometryType eGType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( eGType == wkbPoint )
+    {
         return 1;
+    }
     else if( OGR_GT_IsCurve(eGType) )
-        return ((OGRCurve *) hGeom)->getNumPoints();
+    {
+        return reinterpret_cast<OGRCurve *>(hGeom)->getNumPoints();
+    }
     else
     {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep
@@ -89,19 +97,20 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPointCount" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
-        poSC->setNumPoints( nNewPointCount );
-        break;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
+          poSC->setNumPoints( nNewPointCount );
+          break;
       }
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -121,12 +130,15 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetX", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
-              return ((OGRPoint *) hGeom)->getX();
+          {
+              return reinterpret_cast<OGRPoint *>(hGeom)->getX();
+          }
           else
           {
               CPLError(CE_Failure, CPLE_NotSupported,
@@ -138,7 +150,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
@@ -148,9 +160,9 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        return 0.0;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          return 0.0;
     }
 }
 
@@ -170,12 +182,15 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetY", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
-              return ((OGRPoint *) hGeom)->getY();
+          {
+              return reinterpret_cast<OGRPoint *>(hGeom)->getY();
+          }
           else
           {
               CPLError(CE_Failure, CPLE_NotSupported,
@@ -187,7 +202,7 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
@@ -197,7 +212,8 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported, "Incompatible geometry for operation");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Incompatible geometry for operation");
         return 0.0;
     }
 }
@@ -218,12 +234,15 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetZ", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
-              return ((OGRPoint *) hGeom)->getZ();
+          {
+              return reinterpret_cast<OGRPoint *>(hGeom)->getZ();
+          }
           else
           {
               CPLError(CE_Failure, CPLE_NotSupported,
@@ -235,7 +254,7 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
@@ -267,12 +286,15 @@ double OGR_G_GetM( OGRGeometryH hGeom, int i )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetM", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
-              return ((OGRPoint *) hGeom)->getM();
+          {
+              return reinterpret_cast<OGRPoint *>(hGeom)->getM();
+          }
           else
           {
               CPLError(CE_Failure, CPLE_NotSupported,
@@ -284,7 +306,7 @@ double OGR_G_GetM( OGRGeometryH hGeom, int i )
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
@@ -336,21 +358,23 @@ int OGR_G_GetPoints( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetPoints", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-        if( pabyX ) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
-        if( pabyY ) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
-        if( pabyZ ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
-        return 1;
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          if( pabyX ) *(static_cast<double *>(pabyX)) = poPoint->getX();
+          if( pabyY ) *(static_cast<double *>(pabyY)) = poPoint->getY();
+          if( pabyZ ) *(static_cast<double *>(pabyZ)) = poPoint->getZ();
+          return 1;
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride);
           return poSC->getNumPoints();
       }
@@ -400,26 +424,28 @@ int OGR_G_GetPointsZM( OGRGeometryH hGeom,
                        void* pabyX, int nXStride,
                        void* pabyY, int nYStride,
                        void* pabyZ, int nZStride,
-                       void* pabyM, int nMStride)
+                       void* pabyM, int nMStride )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetPointsZM", 0 );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-        if( pabyX ) *((double*)pabyX) = ((OGRPoint *)hGeom)->getX();
-        if( pabyY ) *((double*)pabyY) = ((OGRPoint *)hGeom)->getY();
-        if( pabyZ ) *((double*)pabyZ) = ((OGRPoint *)hGeom)->getZ();
-        if( pabyM ) *((double*)pabyM) = ((OGRPoint *)hGeom)->getM();
-        return 1;
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          if( pabyX ) *static_cast<double *>(pabyX) = poPoint->getX();
+          if( pabyY ) *static_cast<double *>(pabyY) = poPoint->getY();
+          if( pabyZ ) *static_cast<double *>(pabyZ) = poPoint->getZ();
+          if( pabyM ) *static_cast<double *>(pabyM) = poPoint->getM();
+          return 1;
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           poSC->getPoints(pabyX, nXStride, pabyY, nYStride, pabyZ, nZStride,
                           pabyM, nMStride);
           return poSC->getNumPoints();
@@ -427,10 +453,10 @@ int OGR_G_GetPointsZM( OGRGeometryH hGeom,
       break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        return 0;
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          return 0;
+          break;
     }
 }
 
@@ -454,16 +480,18 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_GetPoint" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              *pdfX = ((OGRPoint *)hGeom)->getX();
-              *pdfY = ((OGRPoint *)hGeom)->getY();
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              *pdfX = poPoint->getX();
+              *pdfY = poPoint->getY();
               if( pdfZ != NULL )
-                  *pdfZ = ((OGRPoint *)hGeom)->getZ();
+                  *pdfZ = poPoint->getZ();
           }
           else
           {
@@ -476,14 +504,14 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
-              *pdfX = 0;
-              *pdfY = 0;
+              *pdfX = 0.0;
+              *pdfY = 0.0;
               if( pdfZ != NULL )
-                  *pdfZ = 0;
+                  *pdfZ = 0.0;
           }
           else
           {
@@ -523,18 +551,20 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_GetPointZM" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              *pdfX = ((OGRPoint *)hGeom)->getX();
-              *pdfY = ((OGRPoint *)hGeom)->getY();
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              *pdfX = poPoint->getX();
+              *pdfY = poPoint->getY();
               if( pdfZ != NULL )
-                  *pdfZ = ((OGRPoint *)hGeom)->getZ();
+                  *pdfZ = poPoint->getZ();
               if( pdfM != NULL )
-                  *pdfM = ((OGRPoint *)hGeom)->getM();
+                  *pdfM = poPoint->getM();
           }
           else
           {
@@ -547,33 +577,33 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
           if( i < 0 || i >= poSC->getNumPoints() )
           {
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
-              *pdfX = 0;
-              *pdfY = 0;
+              *pdfX = 0.0;
+              *pdfY = 0.0;
               if( pdfZ != NULL )
-                  *pdfZ = 0;
+                  *pdfZ = 0.0;
               if( pdfM != NULL )
-                  *pdfM = 0;
+                  *pdfM = 0.0;
           }
           else
           {
-            *pdfX = poSC->getX( i );
-            *pdfY = poSC->getY( i );
-            if( pdfZ != NULL )
-                *pdfZ = poSC->getZ( i );
-            if( pdfM != NULL )
-                *pdfM = poSC->getM( i );
+              *pdfX = poSC->getX( i );
+              *pdfY = poSC->getY( i );
+              if( pdfZ != NULL )
+                  *pdfZ = poSC->getZ( i );
+              if( pdfM != NULL )
+                  *pdfM = poSC->getM( i );
           }
       }
       break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -616,27 +646,30 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
     double * const padfY = static_cast<double *>(pabyY);
     double * const padfZ = static_cast<double *>(pabyZ);
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-        ((OGRPoint *) hGeom)->setX( *padfX );
-        ((OGRPoint *) hGeom)->setY( *padfY );
-        if( pabyZ != NULL )
-            ((OGRPoint *) hGeom)->setZ(*( padfZ ) );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX( *padfX );
+          poPoint->setY( *padfY );
+          if( pabyZ != NULL )
+              poPoint->setZ(*( padfZ ) );
         break;
       }
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
 
-        if( nXStride == (int)sizeof(double) &&
-            nYStride == (int)sizeof(double) &&
+        const int nSizeDouble = (int)sizeof(double);
+        if( nXStride == nSizeDouble &&
+            nYStride == nSizeDouble &&
             ((nZStride == 0 && pabyZ == NULL) ||
-             (nZStride == (int)sizeof(double) && pabyZ != NULL)) )
+             (nZStride == nSizeDouble && pabyZ != NULL)) )
         {
-          poSC->setPoints( nPointsIn, padfX, padfY, padfZ );
+            poSC->setPoints(nPointsIn, padfX, padfY, padfZ);
         }
         else
         {
@@ -710,29 +743,32 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
     double * const padfZ = static_cast<double *>(pabyZ);
     double * const padfM = static_cast<double *>(pabyM);
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-        ((OGRPoint *) hGeom)->setX( *padfX );
-        ((OGRPoint *) hGeom)->setY( *padfY );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX(*padfX);
+          poPoint->setY(*padfY);
         if( pabyZ )
-            ((OGRPoint *) hGeom)->setZ( *padfZ );
+            poPoint->setZ(*padfZ);
         if( pabyM )
-            ((OGRPoint *) hGeom)->setM( *padfM );
+            poPoint->setM(*padfM);
         break;
       }
       case wkbLineString:
       case wkbCircularString:
       {
-        OGRSimpleCurve* poSC = (OGRSimpleCurve *)hGeom;
+          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
 
-        if( nXStride == (int)sizeof(double) &&
-            nYStride == (int)sizeof(double) &&
+        const int nSizeDouble = static_cast<int>(sizeof(double));
+        if( nXStride == nSizeDouble &&
+            nYStride == nSizeDouble &&
             ((nZStride == 0 && padfZ == NULL) ||
-             (nZStride == (int)sizeof(double) && padfZ != NULL)) &&
+             (nZStride == nSizeDouble && padfZ != NULL)) &&
             ((nMStride == 0 && padfM == NULL) ||
-             (nMStride == (int)sizeof(double) && padfM != NULL)) )
+             (nMStride == nSizeDouble && padfM != NULL)) )
         {
             if( !padfZ && !padfM )
                 poSC->setPoints( nPointsIn, padfX, padfY );
@@ -821,15 +857,17 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              ((OGRPoint *) hGeom)->setX( dfX );
-              ((OGRPoint *) hGeom)->setY( dfY );
-              ((OGRPoint *) hGeom)->setZ( dfZ );
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              poPoint->setX(dfX);
+              poPoint->setY(dfY);
+              poPoint->setZ(dfZ);
           }
           else
           {
@@ -847,13 +885,13 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY, dfZ );
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->setPoint(i, dfX, dfY, dfZ);
           break;
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
         break;
     }
 }
@@ -881,14 +919,16 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoint_2D" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              ((OGRPoint *) hGeom)->setX( dfX );
-              ((OGRPoint *) hGeom)->setY( dfY );
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              poPoint->setX(dfX);
+              poPoint->setY(dfY);
           }
           else
           {
@@ -906,13 +946,13 @@ void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY );
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->setPoint(i, dfX, dfY);
           break;
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
         break;
     }
 }
@@ -941,15 +981,17 @@ void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPointM" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              ((OGRPoint *) hGeom)->setX( dfX );
-              ((OGRPoint *) hGeom)->setY( dfY );
-              ((OGRPoint *) hGeom)->setM( dfM );
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              poPoint->setX(dfX);
+              poPoint->setY(dfY);
+              poPoint->setM(dfM);
           }
           else
           {
@@ -967,14 +1009,15 @@ void OGR_G_SetPointM( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRSimpleCurve *) hGeom)->setPointM( i, dfX, dfY, dfM );
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->
+              setPointM(i, dfX, dfY, dfM);
           break;
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1003,16 +1046,18 @@ void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPointZM" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              ((OGRPoint *) hGeom)->setX( dfX );
-              ((OGRPoint *) hGeom)->setY( dfY );
-              ((OGRPoint *) hGeom)->setZ( dfZ );
-              ((OGRPoint *) hGeom)->setM( dfM );
+              OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+              poPoint->setX(dfX);
+              poPoint->setY(dfY);
+              poPoint->setZ(dfZ);
+              poPoint->setM(dfM);
           }
           else
           {
@@ -1030,14 +1075,15 @@ void OGR_G_SetPointZM( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return;
           }
-          ((OGRSimpleCurve *) hGeom)->setPoint( i, dfX, dfY, dfZ, dfM );
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->
+              setPoint(i, dfX, dfY, dfZ, dfM);
           break;
       }
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1062,25 +1108,27 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_AddPoint" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-          ((OGRPoint *) hGeom)->setX( dfX );
-          ((OGRPoint *) hGeom)->setY( dfY );
-          ((OGRPoint *) hGeom)->setZ( dfZ );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX(dfX);
+          poPoint->setY(dfY);
+          poPoint->setZ(dfZ);
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY, dfZ );
-        break;
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->addPoint(dfX, dfY, dfZ);
+          break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1104,24 +1152,26 @@ void OGR_G_AddPoint_2D( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_AddPoint_2D" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-          ((OGRPoint *) hGeom)->setX( dfX );
-          ((OGRPoint *) hGeom)->setY( dfY );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX(dfX);
+          poPoint->setY(dfY);
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY );
-        break;
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->addPoint(dfX, dfY);
+          break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1146,25 +1196,27 @@ void OGR_G_AddPointM( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_AddPointM" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-          ((OGRPoint *) hGeom)->setX( dfX );
-          ((OGRPoint *) hGeom)->setY( dfY );
-          ((OGRPoint *) hGeom)->setM( dfM );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX(dfX);
+          poPoint->setY(dfY);
+          poPoint->setM(dfM);
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
-        ((OGRSimpleCurve *) hGeom)->addPointM( dfX, dfY, dfM );
-        break;
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->addPointM(dfX, dfY, dfM);
+          break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1190,26 +1242,29 @@ void OGR_G_AddPointZM( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_AddPointZM" );
 
-    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    switch( wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
       case wkbPoint:
       {
-          ((OGRPoint *) hGeom)->setX( dfX );
-          ((OGRPoint *) hGeom)->setY( dfY );
-          ((OGRPoint *) hGeom)->setZ( dfZ );
-          ((OGRPoint *) hGeom)->setM( dfM );
+          OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
+          poPoint->setX( dfX );
+          poPoint->setY( dfY );
+          poPoint->setZ( dfZ );
+          poPoint->setM( dfM );
       }
       break;
 
       case wkbLineString:
       case wkbCircularString:
-          ((OGRSimpleCurve *) hGeom)->addPoint( dfX, dfY, dfZ, dfM );
-        break;
+          reinterpret_cast<OGRSimpleCurve *>(hGeom)->
+              addPoint(dfX, dfY, dfZ, dfM);
+          break;
 
       default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        break;
+          CPLError(CE_Failure, CPLE_NotSupported,
+                   "Incompatible geometry for operation");
+          break;
     }
 }
 
@@ -1238,18 +1293,25 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryCount", 0 );
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        if( ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve() == NULL )
+        if( reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                getExteriorRingCurve() == NULL )
             return 0;
         else
-            return ((OGRCurvePolygon *)hGeom)->getNumInteriorRings() + 1;
+            return reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                getNumInteriorRings() + 1;
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
-        return ((OGRCompoundCurve *)hGeom)->getNumCurves();
+    {
+        return reinterpret_cast<OGRCompoundCurve *>(hGeom)->getNumCurves();
+    }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
-        return ((OGRGeometryCollection *)hGeom)->getNumGeometries();
+    {
+        return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            getNumGeometries();
+    }
     else
     {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep
@@ -1294,21 +1356,29 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryRef", NULL );
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         if( iSubGeom == 0 )
-            return (OGRGeometryH)
-                ((OGRCurvePolygon *)hGeom)->getExteriorRingCurve();
+            return reinterpret_cast<OGRGeometryH>(
+                reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                    getExteriorRingCurve());
         else
-            return (OGRGeometryH)
-                ((OGRCurvePolygon *)hGeom)->getInteriorRingCurve(iSubGeom-1);
+            return reinterpret_cast<OGRGeometryH>(
+                reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                    getInteriorRingCurve(iSubGeom - 1));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
-        return (OGRGeometryH) ((OGRCompoundCurve *)hGeom)->getCurve(iSubGeom);
+    {
+      return reinterpret_cast<OGRGeometryH>(
+          reinterpret_cast<OGRCompoundCurve *>(hGeom)->getCurve(iSubGeom));
+    }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
-        return (OGRGeometryH)
-            ((OGRGeometryCollection *)hGeom)->getGeometryRef( iSubGeom );
+    {
+        return reinterpret_cast<OGRGeometryH>(
+            reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+                getGeometryRef(iSubGeom));
+    }
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1355,21 +1425,25 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     OGRErr eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
-            eErr = ((OGRCurvePolygon *)hGeom)->addRing( (OGRCurve *) hNewSubGeom );
+        if( OGR_GT_IsCurve( wkbFlatten(reinterpret_cast<OGRGeometry *>(
+                hNewSubGeom)->getGeometryType()) ) )
+            eErr = reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                addRing(reinterpret_cast<OGRCurve *>(hNewSubGeom));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
     {
-        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
-            eErr = ((OGRCompoundCurve *)hGeom)->addCurve( (OGRCurve *) hNewSubGeom );
+        if( OGR_GT_IsCurve( wkbFlatten(reinterpret_cast<OGRGeometry *>(
+                hNewSubGeom)->getGeometryType()) ) )
+            eErr = reinterpret_cast<OGRCompoundCurve *>(hGeom)->
+                addCurve(reinterpret_cast<OGRCurve *>(hNewSubGeom));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometry(
-                                                (OGRGeometry *) hNewSubGeom );
+        eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            addGeometry(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
 
     return eErr;
@@ -1414,25 +1488,30 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
     OGRErr eErr = OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
+
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
-            eErr = ((OGRCurvePolygon *)hGeom)->addRingDirectly( (OGRCurve *) hNewSubGeom );
+        if( OGR_GT_IsCurve( wkbFlatten(reinterpret_cast<OGRGeometry *>(
+                hNewSubGeom)->getGeometryType()) ) )
+            eErr = reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+                addRingDirectly(reinterpret_cast<OGRCurve *>(hNewSubGeom));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbCompoundCurve) )
     {
-        if( OGR_GT_IsCurve( wkbFlatten(((OGRGeometry *) hNewSubGeom)->getGeometryType()) ) )
-            eErr = ((OGRCompoundCurve *)hGeom)->addCurveDirectly( (OGRCurve *) hNewSubGeom );
+        if( OGR_GT_IsCurve( wkbFlatten(reinterpret_cast<OGRGeometry *>(
+                hNewSubGeom)->getGeometryType()) ) )
+            eErr = reinterpret_cast<OGRCompoundCurve *>(hGeom)->
+              addCurveDirectly(reinterpret_cast<OGRCurve *>(hNewSubGeom));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        eErr = ((OGRGeometryCollection *)hGeom)->addGeometryDirectly(
-                                                (OGRGeometry *) hNewSubGeom );
+        eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            addGeometryDirectly(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
 
     if( eErr != OGRERR_NONE )
-        delete (OGRGeometry*)hNewSubGeom;
+        delete reinterpret_cast<OGRGeometry *>(hNewSubGeom);
 
     return eErr;
 }
@@ -1470,7 +1549,7 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     VALIDATE_POINTER1( hGeom, "OGR_G_RemoveGeometry", OGRERR_FAILURE );
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1479,7 +1558,8 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        return ((OGRGeometryCollection *)hGeom)->removeGeometry(iGeom, bDelete);
+        return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            removeGeometry(iGeom, bDelete);
     }
     else
     {
@@ -1513,15 +1593,16 @@ double OGR_G_Length( OGRGeometryH hGeom )
     double dfLength = 0.0;
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsCurve(eType) )
     {
-        dfLength = ((OGRCurve *) hGeom)->get_Length();
+        dfLength = reinterpret_cast<OGRCurve *>(hGeom)->get_Length();
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
              eType == wkbGeometryCollection )
     {
-        dfLength = ((OGRGeometryCollection *) hGeom)->get_Length();
+        dfLength = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            get_Length();
     }
     else
     {
@@ -1560,19 +1641,19 @@ double OGR_G_Area( OGRGeometryH hGeom )
     double dfArea = 0.0;
 
     const OGRwkbGeometryType eType =
-        wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType());
+        wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSurface(eType) )
     {
-        dfArea = ((OGRSurface *) hGeom)->get_Area();
+        dfArea = reinterpret_cast<OGRSurface *>(hGeom)->get_Area();
     }
     else if( OGR_GT_IsCurve(eType) )
     {
-        dfArea = ((OGRCurve *) hGeom)->get_Area();
+        dfArea = reinterpret_cast<OGRCurve *>(hGeom)->get_Area();
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
              eType == wkbGeometryCollection )
     {
-        dfArea = ((OGRGeometryCollection *) hGeom)->get_Area();
+        dfArea = reinterpret_cast<OGRGeometryCollection *>(hGeom)->get_Area();
     }
     else
     {
@@ -1629,7 +1710,8 @@ double OGR_G_GetArea( OGRGeometryH hGeom )
 int OGR_G_HasCurveGeometry( OGRGeometryH hGeom, int bLookForNonLinear )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_HasCurveGeometry", FALSE );
-    return ((OGRGeometry *) hGeom)->hasCurveGeometry(bLookForNonLinear);
+    return reinterpret_cast<OGRGeometry *>(hGeom)->
+        hasCurveGeometry(bLookForNonLinear);
 }
 
 /************************************************************************/
@@ -1667,8 +1749,10 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
                                               char** papszOptions )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetLinearGeometry", NULL );
-    return (OGRGeometryH) ((OGRGeometry *) hGeom)->getLinearGeometry(dfMaxAngleStepSizeDegrees,
-                                                                     (const char* const*)papszOptions );
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->
+            getLinearGeometry(dfMaxAngleStepSizeDegrees,
+                              papszOptions ));
 }
 
 /************************************************************************/
@@ -1704,7 +1788,10 @@ OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
                                              char** papszOptions )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetCurveGeometry", NULL );
-    return (OGRGeometryH) ((OGRGeometry *) hGeom)->getCurveGeometry((const char* const*)papszOptions);
+
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->
+            getCurveGeometry(papszOptions));
 }
 
 /************************************************************************/
@@ -1730,11 +1817,12 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Value", NULL );
 
-    if( OGR_GT_IsCurve(((OGRGeometry *) hGeom)->getGeometryType()) )
+    if( OGR_GT_IsCurve(reinterpret_cast<OGRGeometry *>(hGeom)->
+                           getGeometryType()) )
     {
         OGRPoint* p = new OGRPoint();
-        ((OGRCurve *) hGeom)->Value(dfDistance, p);
-        return (OGRGeometryH)p;
+        reinterpret_cast<OGRCurve *>(hGeom)->Value(dfDistance, p);
+        return reinterpret_cast<OGRGeometryH>(p);
     }
     else
     {
@@ -1792,7 +1880,7 @@ void OGRSetNonLinearGeometriesEnabledFlag( int bFlag )
  * @since GDAL 2.0
  * @see OGRSetNonLinearGeometriesEnabledFlag()
  */
-int OGRGetNonLinearGeometriesEnabledFlag(void)
+int OGRGetNonLinearGeometriesEnabledFlag( void )
 {
     return bNonLinearGeometriesEnabled;
 }
