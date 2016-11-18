@@ -462,7 +462,7 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
 
     if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 &&
-        sEnvelope.MinX == 0 && sEnvelope.MaxY == 0 )
+        sEnvelope.MinY == 0 && sEnvelope.MaxY == 0 )
     {
         // TODO: There is apparently a special way of representing a null box
         // geometry. Should use it here eventually.
@@ -865,7 +865,13 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbPolygon || eFType == wkbCurvePolygon )
     {
-        OGRCurvePolygon      *poCP = (OGRCurvePolygon *) poGeometry;
+        const OGRCurvePolygon *poCP =
+            dynamic_cast<const OGRCurvePolygon *>(poGeometry);
+        if( poCP == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        }
 
         // Buffer for polygon tag name + srsName attribute if set
         const size_t nPolyTagLength = 13;
@@ -905,7 +911,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
         for( int iRing = 0; iRing < poCP->getNumInteriorRings(); iRing++ )
         {
-            OGRCurve *poRing = poCP->getInteriorRingCurve(iRing);
+            const OGRCurve *poRing = poCP->getInteriorRingCurve(iRing);
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:interior>" );
@@ -935,11 +941,17 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
              || eFType == wkbMultiPoint
              || eFType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
+        const OGRGeometryCollection *poGC =
+            dynamic_cast<const OGRGeometryCollection *>(poGeometry);
+        if( poGC == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRGeometryCollection.");
+        }
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
-        // Buffer for opening tag + srsName attribute
+        // Buffer for opening tag + srsName attribute.
         char* pszElemOpen = NULL;
 
         if( eFType == wkbMultiPolygon || eFType == wkbMultiSurface )
@@ -984,7 +996,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
         for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
-            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
+            const OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
             AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
@@ -1097,13 +1109,14 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      swapping.
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
- * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3,
- *      added in GDAL 2.2). Defaults to OGC_URN.
- *      If SHORT, then srsName will be in the form AUTHORITY_NAME:AUTHORITY_CODE
- *      If OGC_URN, then srsName will be in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE
- *      If OGC_URL, then srsName will be in the form http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE
- *      For OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit
- *      AXIS order,  but that the same SRS authority code imported with
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
+ *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ *      the form AUTHORITY_NAME:AUTHORITY_CODE If OGC_URN, then srsName will be
+ *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE If OGC_URL,
+ *      then srsName will be in the form
+ *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE For
+ *      OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit AXIS
+ *      order, but that the same SRS authority code imported with
  *      ImportFromEPSGA() should be treated as lat/long or northing/easting,
  *      then the function will take care of coordinate order swapping.
  * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
@@ -1115,9 +1128,10 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      srsDimension attribute.
  *      There are diverging implementations. Some put in on the
  *      &lt;gml:posList&gt; element, other on the top geometry element.
- * <li> NAMESPACE_DECL=YES/NO. If set to YES, xmlns:gml="http://www.opengis.net/gml"
- *      will be added to the root node for GML < 3.2 or
- *      xmlns:gml="http://www.opengis.net/gml/3.2" for GML 3.2
+
+ * <li> NAMESPACE_DECL=YES/NO. If set to YES,
+ *      xmlns:gml="http://www.opengis.net/gml" will be added to the root node
+ *      for GML < 3.2 or xmlns:gml="http://www.opengis.net/gml/3.2" for GML 3.2
  * </ul>
  *
  * Note that curve geometries like CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON,
@@ -1145,13 +1159,19 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     pszText[0] = '\0';
 
     const char* pszFormat = CSLFetchNameValue(papszOptions, "FORMAT");
-    bool bNamespaceDecl = CPLTestBool(CSLFetchNameValueDef(papszOptions, "NAMESPACE_DECL", "NO")) != FALSE;
+    const bool bNamespaceDecl =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                         "NAMESPACE_DECL", "NO")) != FALSE;
     if( pszFormat && (EQUAL(pszFormat, "GML3") || EQUAL(pszFormat, "GML32")) )
     {
-        const char* pszLineStringElement = CSLFetchNameValue(papszOptions, "GML3_LINESTRING_ELEMENT");
-        bool bLineStringAsCurve = (pszLineStringElement && EQUAL(pszLineStringElement, "curve"));
-        const char* pszLongSRS = CSLFetchNameValue(papszOptions, "GML3_LONGSRS");
-        const char* pszSRSNameFormat = CSLFetchNameValue(papszOptions, "SRSNAME_FORMAT");
+        const char* pszLineStringElement =
+            CSLFetchNameValue(papszOptions, "GML3_LINESTRING_ELEMENT");
+        const bool bLineStringAsCurve =
+            pszLineStringElement && EQUAL(pszLineStringElement, "curve");
+        const char* pszLongSRS =
+            CSLFetchNameValue(papszOptions, "GML3_LONGSRS");
+        const char* pszSRSNameFormat =
+            CSLFetchNameValue(papszOptions, "SRSNAME_FORMAT");
         GMLSRSNameFormat eSRSNameFormat = SRSNAME_OGC_URN;
         if( pszSRSNameFormat )
         {
@@ -1212,18 +1232,20 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             bCoordSwap = CPLTestBool(pszCoordSwap);
         else
         {
-            const OGRSpatialReference* poSRS = poGeometry->getSpatialReference();
+            const OGRSpatialReference* poSRS =
+                poGeometry->getSpatialReference();
             if( poSRS != NULL )
             {
-                const char* pszTarget = poSRS->IsProjected() ? 
-                                                            "PROJCS" : "GEOGCS";
+                const char* pszTarget =
+                    poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
                 const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
                 const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
                 if( NULL != pszAuthName && NULL != pszAuthCode &&
                     EQUAL( pszAuthName, "EPSG" ) &&
                     eSRSNameFormat != SRSNAME_SHORT &&
                     !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-                    ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
+                    ((OGRSpatialReference*)poSRS)->
+                          EPSGTreatsAsNorthingEasting()))
                 {
                     OGRSpatialReference oSRS;
                     if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
@@ -1247,20 +1269,21 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             CPLFree( pszText );
             return NULL;
         }
-        else
-            return pszText;
+
+        return pszText;
     }
 
     const char* pszNamespaceDecl = NULL;
     if( bNamespaceDecl )
         pszNamespaceDecl = "http://www.opengis.net/gml";
-    if( !OGR2GMLGeometryAppend( (OGRGeometry *) hGeometry, &pszText,
-                                &nLength, &nMaxLength, false,
-                                pszNamespaceDecl ))
+    if( !OGR2GMLGeometryAppend(
+            reinterpret_cast<OGRGeometry *>(hGeometry), &pszText,
+            &nLength, &nMaxLength, false,
+            pszNamespaceDecl) )
     {
         CPLFree( pszText );
         return NULL;
     }
-    else
-        return pszText;
+
+    return pszText;
 }
