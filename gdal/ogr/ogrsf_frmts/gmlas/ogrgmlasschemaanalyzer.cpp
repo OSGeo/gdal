@@ -1212,24 +1212,31 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 
         std::set<XSModelGroup*> oSetVisitedModelGroups;
 
-        std::map< CPLString, int > oMapCountOccurencesOfSameName;
-        BuildMapCountOccurencesOfSameName(
-            poCT->getParticle()->getModelGroupTerm(),
-            oMapCountOccurencesOfSameName);
-
         oClass.SetDocumentation( GetAnnotationDoc(poEltDecl) );
 
-        if( !ExploreModelGroup(
-                            poCT->getParticle()->getModelGroupTerm(),
-                            poCT->getAttributeUses(),
-                            oClass,
-                            0,
-                            oSetVisitedModelGroups,
-                            poModel,
-                            oMapCountOccurencesOfSameName) )
+        // might be NULL on swe:values for example
+        if( poCT->getParticle() != NULL )
         {
-            bError = true;
-            return false;
+            std::map< CPLString, int > oMapCountOccurencesOfSameName;
+            BuildMapCountOccurencesOfSameName(
+                poCT->getParticle()->getModelGroupTerm(),
+                oMapCountOccurencesOfSameName);
+            if( !ExploreModelGroup(
+                                poCT->getParticle()->getModelGroupTerm(),
+                                poCT->getAttributeUses(),
+                                oClass,
+                                0,
+                                oSetVisitedModelGroups,
+                                poModel,
+                                oMapCountOccurencesOfSameName) )
+            {
+                bError = true;
+                return false;
+            }
+        }
+        else
+        {
+            // TODO ?
         }
 
         LaunderFieldNames( oClass );

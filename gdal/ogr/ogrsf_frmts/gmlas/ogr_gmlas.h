@@ -1228,7 +1228,7 @@ class GMLASReader : public DefaultHandler
             /** Current XPath, relative to (current) top-level feature */
             CPLString       m_osCurSubXPath;
 
-            void Dump();
+            void Dump() const;
         };
 
         /** Current context */
@@ -1322,6 +1322,9 @@ class GMLASReader : public DefaultHandler
 
         void        PushFeatureReady( OGRFeature* poFeature,
                                       OGRGMLASLayer* poLayer );
+
+        void        PushContext( const Context& oContext );
+        void        PopContext();
 
         void        BuildXMLBlobStartElement(const CPLString& osXPath,
                                              const  Attributes& attrs);

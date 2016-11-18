@@ -3545,6 +3545,34 @@ def ogr_gmlas_writer_errors():
     return 'success'
 
 ###############################################################################
+# Test reading a particular construct with group, etc... that could cause
+# crashes
+
+def ogr_gmlas_read_fake_gmljp2():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    ds = gdal.OpenEx('GMLAS:data/fake_gmljp2.xml')
+
+    count = 0
+    while True:
+        f, l = ds.GetNextFeature()
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        count += 1
+
+    if count != 6:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -3609,6 +3637,7 @@ gdaltest_list = [
     ogr_gmlas_writer_gml_original_xml,
     ogr_gmlas_writer_options,
     ogr_gmlas_writer_errors,
+    ogr_gmlas_read_fake_gmljp2,
     ogr_gmlas_cleanup ]
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_writer_gml, ogr_gmlas_cleanup ]
