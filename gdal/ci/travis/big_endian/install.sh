@@ -8,7 +8,7 @@ unset CXX
 
 cd gdal
 export CCACHE_CPP2=yes
-CC="ccache armeb-linux-gnueabihf-gcc" CXX="ccache armeb-linux-gnueabihf-g++" ./configure --host=armeb-linux-gnueabihf --without-libtool
+CC="ccache armeb-linux-gnueabihf-gcc" CXX="ccache armeb-linux-gnueabihf-g++" ./configure --host=armeb-linux-gnueabihf --without-libtool --without-cpp11
 make USER_DEFS="-Werror" -j3
 cd apps
 make USER_DEFS="-Werror" test_ogrsf
