@@ -112,12 +112,12 @@ AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-opera
 AC_LANG_POP([C++])
 
 CXX11_SUPPORT=no
-AC_ARG_WITH([c++11],
-	    AS_HELP_STRING([--without-c++11],
+AC_ARG_WITH([cpp11],
+	    AS_HELP_STRING([--without-cpp11],
 	       [Disable C++11 compiler options]),,)
 
-AC_MSG_CHECKING([for c++11])
-if test "$with_c++11" = yes -o x"$with_c++11" = x ; then
+AC_MSG_CHECKING([if use C++11 compiler options])
+if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
     dnl Check C++ compiler compability with C++11
     AC_MSG_CHECKING([C++ compiler compability with C++11])
     AX_CXX_COMPILE_STDCXX_11([ext],[optional])
@@ -128,7 +128,7 @@ if test "$with_c++11" = yes -o x"$with_c++11" = x ; then
     AC_MSG_RESULT([enabled])
 else
     AC_MSG_RESULT([disabled by user])
-fi    
+fi
 AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
 
 dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
@@ -3018,10 +3018,10 @@ AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo echo checking for GNM ... support disabled
+  AC_MSG_RESULT([disabled by user])
 else
-  echo checking for GNM ... enabled
   GNM_ENABLED=yes
+  AC_MSG_RESULT([enabled])
 fi
 AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
 

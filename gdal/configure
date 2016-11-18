@@ -926,7 +926,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_c__11
+with_cpp11
 enable_shared
 enable_static
 with_pic
@@ -1699,7 +1699,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --without-c++11         Disable C++11 compiler options
+  --without-cpp11         Disable C++11 compiler options
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -5284,15 +5284,15 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 CXX11_SUPPORT=no
 
-# Check whether --with-c++11 was given.
-if test "${with_c__11+set}" = set; then :
-  withval=$with_c__11;
+# Check whether --with-cpp11 was given.
+if test "${with_cpp11+set}" = set; then :
+  withval=$with_cpp11;
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for c++11" >&5
-$as_echo_n "checking for c++11... " >&6; }
-if test "$with_c++11" = yes -o x"$with_c++11" = x ; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if use C++11 compiler options" >&5
+$as_echo_n "checking if use C++11 compiler options... " >&6; }
+if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler compability with C++11" >&5
 $as_echo_n "checking C++ compiler compability with C++11... " >&6; }
           ax_cxx_compile_cxx11_required=false
@@ -26055,10 +26055,12 @@ fi
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo echo checking for GNM ... support disabled
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
 else
-  echo checking for GNM ... enabled
   GNM_ENABLED=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
 fi
 GNM_ENABLED=$GNM_ENABLED
 
