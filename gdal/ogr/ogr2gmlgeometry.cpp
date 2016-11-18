@@ -1213,6 +1213,9 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     if( hGeometry == NULL )
         return CPLStrdup( "" );
 
+    // Do not use hGeometry after here.
+    OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry*>(hGeometry);
+
     size_t nLength = 0;
     size_t nMaxLength = 1;
 
@@ -1288,7 +1291,6 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         bool bCoordSwap = false;
         const char* pszCoordSwap =
             CSLFetchNameValue(papszOptions, "COORD_SWAP");
-        OGRGeometry* poGeometry = reinterpret_cast<OGRGeometry*>(hGeometry);
         if( pszCoordSwap )
             bCoordSwap = CPLTestBool(pszCoordSwap);
         else
@@ -1338,7 +1340,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
     if( bNamespaceDecl )
         pszNamespaceDecl = "http://www.opengis.net/gml";
     if( !OGR2GMLGeometryAppend(
-            reinterpret_cast<OGRGeometry *>(hGeometry), &pszText,
+            poGeometry, &pszText,
             &nLength, &nMaxLength, false,
             pszNamespaceDecl) )
     {
