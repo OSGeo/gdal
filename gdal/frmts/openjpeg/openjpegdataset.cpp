@@ -3287,7 +3287,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         /* coverity[tainted_data] */
         while( nRead < nCodeStreamLength )
         {
-            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4049 :
+            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4096 :
                                         (int)(nCodeStreamLength-nRead);
             if( (int)VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead )
             {
