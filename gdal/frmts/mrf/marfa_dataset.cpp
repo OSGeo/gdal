@@ -1861,11 +1861,18 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
         VSIFSeekL(l_dfp, 0, SEEK_END);
         GUIntBig offset = VSIFTellL(l_dfp);
 
-        if (spacing != 0) { // This should not be true in MP safe mode
-            // Use the same buffer, MRF doesn't care about the spacing content
-            int pad = (size >= spacing) ? spacing : size;
-            if (pad != spacing)
-                CPLError(CE_Warning, CPLE_FileIO, "MRF spacing failed, check the output");
+        if( spacing != 0 )
+        {
+            // This should not be true in MP safe mode.
+            // Use the same buffer, MRF doesn't care about the spacing content.
+            // TODO(lplesea): Make sure size doesn't overflow.
+            const int pad =
+                static_cast<int>(size) >= spacing
+                ? spacing
+                : static_cast<int>(size);
+            if( pad != spacing )
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "MRF spacing failed, check the output");
             offset += pad;
             VSIFWriteL(buff, 1, spacing, l_dfp);
         }
