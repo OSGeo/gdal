@@ -53,7 +53,6 @@ GNMFileNetwork::~GNMFileNetwork()
 
 	m_mpLayerDatasetMap.clear();
 
-
     GDALClose(m_pGraphDS);
     GDALClose(m_pFeaturesDS);
     GDALClose(m_pMetadataDS);
