@@ -448,6 +448,7 @@ protected:
     int hasVersions;  // Does it support versions
     int verCount;     // The last version
     int bCrystalized; // Unset only during the create process
+    int spacing;      // How many spare bytes before each tile data
 
     // Freeform sticky dataset options, as a list of key-value pairs
     CPLStringList optlist;
