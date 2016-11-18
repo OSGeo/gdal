@@ -2998,10 +2998,10 @@ AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo echo checking for GNM ... support disabled
+  AC_MSG_RESULT([disabled by user])
 else
-  echo checking for GNM ... enabled
   GNM_ENABLED=yes
+  AC_MSG_RESULT([enabled])
 fi
 AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
 
