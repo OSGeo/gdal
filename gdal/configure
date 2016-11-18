@@ -926,6 +926,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_c__11
 enable_shared
 enable_static
 with_pic
@@ -1698,6 +1699,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --without-c++11         Disable C++11 compiler options
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -5280,10 +5282,20 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler compability with C++11" >&5
-$as_echo_n "checking C++ compiler compability with C++11... " >&6; }
 CXX11_SUPPORT=no
-      ax_cxx_compile_cxx11_required=false
+
+# Check whether --with-c++11 was given.
+if test "${with_c__11+set}" = set; then :
+  withval=$with_c__11;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for c++11" >&5
+$as_echo_n "checking for c++11... " >&6; }
+if test "$with_c++11" = yes -o x"$with_c++11" = x ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler compability with C++11" >&5
+$as_echo_n "checking C++ compiler compability with C++11... " >&6; }
+          ax_cxx_compile_cxx11_required=false
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5597,10 +5609,8 @@ $as_echo "$ax_cv_cxx_compile_cxx11" >&6; }
     ac_success=yes
   fi
 
-
-
     if test x$ac_success = xno; then
-                for switch in -std=c++11 -std=c++0x +std=c++11 "-h std=c++11"; do
+    for switch in -std=gnu++11 -std=gnu++0x; do
       cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_$switch" | $as_tr_sh`
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
 $as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
@@ -5919,6 +5929,8 @@ $as_echo "$ac_res" >&6; }
       fi
     done
   fi
+
+
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -5943,8 +5955,14 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
 
 
 
-if test "$HAVE_CXX11" = "1"; then
-    CXX11_SUPPORT=yes
+    if test "$HAVE_CXX11" = "1"; then
+        CXX11_SUPPORT=yes
+    fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
 fi
 CXX11_SUPPORT=$CXX11_SUPPORT
 
