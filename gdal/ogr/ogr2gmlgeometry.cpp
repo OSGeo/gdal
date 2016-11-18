@@ -39,14 +39,23 @@
  *
  */
 
-#include "cpl_error.h"
-#include "cpl_conv.h"
-#include "cpl_minixml.h"
+#include "cpl_port.h"
 #include "ogr_api.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-
-#include <algorithm>
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -452,8 +461,8 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     memset( &sEnvelope, 0, sizeof(sEnvelope) );
     ((OGRGeometry *) hGeometry)->getEnvelope( &sEnvelope );
 
-    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0
-        && sEnvelope.MaxX == 0 && sEnvelope.MaxY == 0 )
+    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 &&
+        sEnvelope.MinX == 0 && sEnvelope.MaxY == 0 )
     {
         // TODO: There is apparently a special way of representing a null box
         // geometry. Should use it here eventually.
