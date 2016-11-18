@@ -765,8 +765,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             SetWellKnownGeogCS( "WGS84" );
         }
 
-        if( pszName )
-            CPLFree( pszName );
+        CPLFree( pszName );
     }
 
 /* -------------------------------------------------------------------- */

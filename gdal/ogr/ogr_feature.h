@@ -31,9 +31,9 @@
 #ifndef OGR_FEATURE_H_INCLUDED
 #define OGR_FEATURE_H_INCLUDED
 
-#include "ogr_geometry.h"
-#include "ogr_featurestyle.h"
 #include "cpl_atomic_ops.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 
 /**
  * \file ogr_feature.h
@@ -73,8 +73,6 @@ class CPL_DLL OGRFieldDefn
     OGRFieldSubType     eSubType;
 
     int                 bNullable;
-
-    void                Initialize( const char *, OGRFieldType );
 
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
@@ -293,9 +291,9 @@ class CPL_DLL OGRFeature
 
   protected:
 //! @cond Doxygen_Suppress
-    char *              m_pszStyleString;
+    char                *m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
-    char *              m_pszTmpFieldValue;
+    char                *m_pszTmpFieldValue;
 //! @endcond
 
   public:
@@ -488,24 +486,24 @@ class CPL_DLL OGRFeatureQuery
     OGRFeatureDefn *poTargetDefn;
     void           *pSWQExpr;
 
-    char          **FieldCollector( void *, char ** );
+    char      **FieldCollector( void *, char ** );
 
-    GIntBig       *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
+    GIntBig    *EvaluateAgainstIndices( swq_expr_node*, OGRLayer *,
                                            GIntBig& nFIDCount );
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
   public:
                 OGRFeatureQuery();
-                ~OGRFeatureQuery();
+               ~OGRFeatureQuery();
 
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*
-                             poCustomFuncRegistrar = NULL );
+                         poCustomFuncRegistrar = NULL );
     int         Evaluate( OGRFeature * );
 
-    GIntBig       *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
+    GIntBig    *EvaluateAgainstIndices( OGRLayer *, OGRErr * );
 
     int         CanUseIndex( OGRLayer * );
 

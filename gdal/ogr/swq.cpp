@@ -23,15 +23,15 @@
 
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
+#include "cpl_time.h"
 #include "swq.h"
 #include "swq_parser.hpp"
-#include "cpl_time.h"
 
 #include <algorithm>
 
 CPL_CVSID("$Id$");
 
-#define YYSTYPE  swq_expr_node*
+#define YYSTYPE swq_expr_node *
 
 /************************************************************************/
 /*                               swqlex()                               */
@@ -106,7 +106,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         pszInput++;
 
-        char *token = (char *) CPLMalloc(strlen(pszInput)+1);
+        char *token = static_cast<char *>(CPLMalloc(strlen(pszInput) + 1));
         int i_token = 0;
 
         while( *pszInput != '\0' )
@@ -178,9 +178,9 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         context->pszNext = pszNext;
 
-        if( strstr(osToken,".")
-            || strstr(osToken,"e")
-            || strstr(osToken,"E") )
+        if( strstr(osToken, ".")
+            || strstr(osToken, "e")
+            || strstr(osToken, "E") )
         {
             *ppNode = new swq_expr_node( CPLAtof(osToken) );
             return SWQT_FLOAT_NUMBER;
@@ -189,7 +189,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         {
             GIntBig nVal = CPLAtoGIntBig(osToken);
             if( CPL_INT64_FITS_ON_INT32(nVal) )
-                *ppNode = new swq_expr_node( (int)nVal );
+                *ppNode = new swq_expr_node( static_cast<int>(nVal) );
             else
                 *ppNode = new swq_expr_node( nVal );
             return SWQT_INTEGER_NUMBER;
@@ -214,61 +214,61 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         context->pszNext = pszNext;
 
-        if( EQUAL(osToken,"IN") )
+        if( EQUAL(osToken, "IN") )
             nReturn = SWQT_IN;
-        else if( EQUAL(osToken,"LIKE") )
+        else if( EQUAL(osToken, "LIKE") )
             nReturn = SWQT_LIKE;
-        else if( EQUAL(osToken,"ILIKE") )
+        else if( EQUAL(osToken, "ILIKE") )
             nReturn = SWQT_LIKE;
-        else if( EQUAL(osToken,"ESCAPE") )
+        else if( EQUAL(osToken, "ESCAPE") )
             nReturn = SWQT_ESCAPE;
-        else if( EQUAL(osToken,"NULL") )
+        else if( EQUAL(osToken, "NULL") )
             nReturn = SWQT_NULL;
-        else if( EQUAL(osToken,"IS") )
+        else if( EQUAL(osToken, "IS") )
             nReturn = SWQT_IS;
-        else if( EQUAL(osToken,"NOT") )
+        else if( EQUAL(osToken, "NOT") )
             nReturn = SWQT_NOT;
-        else if( EQUAL(osToken,"AND") )
+        else if( EQUAL(osToken, "AND") )
             nReturn = SWQT_AND;
-        else if( EQUAL(osToken,"OR") )
+        else if( EQUAL(osToken, "OR") )
             nReturn = SWQT_OR;
-        else if( EQUAL(osToken,"BETWEEN") )
+        else if( EQUAL(osToken, "BETWEEN") )
             nReturn = SWQT_BETWEEN;
-        else if( EQUAL(osToken,"SELECT") )
+        else if( EQUAL(osToken, "SELECT") )
             nReturn = SWQT_SELECT;
-        else if( EQUAL(osToken,"LEFT") )
+        else if( EQUAL(osToken, "LEFT") )
             nReturn = SWQT_LEFT;
-        else if( EQUAL(osToken,"JOIN") )
+        else if( EQUAL(osToken, "JOIN") )
             nReturn = SWQT_JOIN;
-        else if( EQUAL(osToken,"WHERE") )
+        else if( EQUAL(osToken, "WHERE") )
             nReturn = SWQT_WHERE;
-        else if( EQUAL(osToken,"ON") )
+        else if( EQUAL(osToken, "ON") )
             nReturn = SWQT_ON;
-        else if( EQUAL(osToken,"ORDER") )
+        else if( EQUAL(osToken, "ORDER") )
             nReturn = SWQT_ORDER;
-        else if( EQUAL(osToken,"BY") )
+        else if( EQUAL(osToken, "BY") )
             nReturn = SWQT_BY;
-        else if( EQUAL(osToken,"FROM") )
+        else if( EQUAL(osToken, "FROM") )
             nReturn = SWQT_FROM;
-        else if( EQUAL(osToken,"AS") )
+        else if( EQUAL(osToken, "AS") )
             nReturn = SWQT_AS;
-        else if( EQUAL(osToken,"ASC") )
+        else if( EQUAL(osToken, "ASC") )
             nReturn = SWQT_ASC;
-        else if( EQUAL(osToken,"DESC") )
+        else if( EQUAL(osToken, "DESC") )
             nReturn = SWQT_DESC;
-        else if( EQUAL(osToken,"DISTINCT") )
+        else if( EQUAL(osToken, "DISTINCT") )
             nReturn = SWQT_DISTINCT;
-        else if( EQUAL(osToken,"CAST") )
+        else if( EQUAL(osToken, "CAST") )
             nReturn = SWQT_CAST;
-        else if( EQUAL(osToken,"UNION") )
+        else if( EQUAL(osToken, "UNION") )
             nReturn = SWQT_UNION;
-        else if( EQUAL(osToken,"ALL") )
+        else if( EQUAL(osToken, "ALL") )
             nReturn = SWQT_ALL;
 
-        /* Unhandled by OGR SQL */
-        else if( EQUAL(osToken,"LIMIT") ||
-                 EQUAL(osToken,"OUTER") ||
-                 EQUAL(osToken,"INNER") )
+        // Unhandled by OGR SQL.
+        else if( EQUAL(osToken, "LIMIT") ||
+                 EQUAL(osToken, "OUTER") ||
+                 EQUAL(osToken, "INNER") )
             nReturn = SWQT_RESERVED_KEYWORD;
 
         else
@@ -319,8 +319,8 @@ swq_select_summarize( swq_select *select_info,
 /* -------------------------------------------------------------------- */
     if( select_info->column_summary == NULL )
     {
-        select_info->column_summary = (swq_summary *)
-            CPLMalloc(sizeof(swq_summary) * select_info->result_columns);
+        select_info->column_summary = static_cast<swq_summary *>(
+            CPLMalloc(sizeof(swq_summary) * select_info->result_columns));
         memset( select_info->column_summary, 0,
                 sizeof(swq_summary) * select_info->result_columns );
 
@@ -347,20 +347,20 @@ swq_select_summarize( swq_select *select_info,
         {
             if( value == NULL )
             {
-                if (summary->distinct_list[i] == NULL)
+                if( summary->distinct_list[i] == NULL )
                     break;
             }
             else if( summary->distinct_list[i] != NULL &&
-                     strcmp(value,summary->distinct_list[i]) == 0 )
+                     strcmp(value, summary->distinct_list[i]) == 0 )
                 break;
         }
 
         if( i == summary->count )
         {
-            char  **old_list = summary->distinct_list;
+            char **old_list = summary->distinct_list;
 
-            summary->distinct_list = (char **)
-                CPLMalloc(sizeof(char *) * (size_t)(summary->count+1));
+            summary->distinct_list = static_cast<char **>(
+                CPLMalloc(sizeof(char *) * (size_t)(summary->count + 1)));
             if( summary->count )
             {
                 memcpy( summary->distinct_list, old_list,
@@ -382,9 +382,9 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_MIN:
         if( value != NULL && value[0] != '\0' )
         {
-            if(def->field_type == SWQ_DATE ||
-               def->field_type == SWQ_TIME ||
-               def->field_type == SWQ_TIMESTAMP)
+            if( def->field_type == SWQ_DATE ||
+                def->field_type == SWQ_TIME ||
+                def->field_type == SWQ_TIMESTAMP )
             {
                 if( strcmp( value, summary->szMin ) < 0 )
                 {
@@ -404,9 +404,9 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_MAX:
         if( value != NULL && value[0] != '\0' )
         {
-            if(def->field_type == SWQ_DATE ||
-               def->field_type == SWQ_TIME ||
-               def->field_type == SWQ_TIMESTAMP)
+            if( def->field_type == SWQ_DATE ||
+                def->field_type == SWQ_TIME ||
+                def->field_type == SWQ_TIMESTAMP )
             {
                 if( strcmp( value, summary->szMax ) > 0 )
                 {
@@ -427,9 +427,9 @@ swq_select_summarize( swq_select *select_info,
       case SWQCF_SUM:
         if( value != NULL && value[0] != '\0' )
         {
-            if(def->field_type == SWQ_DATE ||
-               def->field_type == SWQ_TIME ||
-               def->field_type == SWQ_TIMESTAMP)
+            if( def->field_type == SWQ_DATE ||
+                def->field_type == SWQ_TIME ||
+                def->field_type == SWQ_TIMESTAMP )
             {
                 int nYear = 0;
                 int nMonth = 0;
@@ -448,10 +448,10 @@ swq_select_summarize( swq_select *select_info,
                     brokendowntime.tm_mday = nDay;
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMin;
-                    brokendowntime.tm_sec = (int)fSec;
+                    brokendowntime.tm_sec = static_cast<int>(fSec);
                     summary->count++;
                     summary->sum += CPLYMDHMSToUnixTime(&brokendowntime);
-                    summary->sum += fmod((double)fSec, 1);
+                    summary->sum += fmod(static_cast<double>(fSec), 1.0);
                 }
             }
             else
@@ -487,9 +487,9 @@ static int FORCE_CDECL swq_compare_int( const void *item1, const void *item2 )
 {
     const char* pszStr1 = *((const char **) item1);
     const char* pszStr2 = *((const char **) item2);
-    if (pszStr1 == NULL)
+    if( pszStr1 == NULL )
         return (pszStr2 == NULL) ? 0 : -1;
-    else if (pszStr2 == NULL)
+    else if( pszStr2 == NULL )
         return 1;
 
     const GIntBig v1 = CPLAtoGIntBig(pszStr1);
@@ -507,9 +507,9 @@ static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
 {
     const char* pszStr1 = *((const char **) item1);
     const char* pszStr2 = *((const char **) item2);
-    if (pszStr1 == NULL)
+    if( pszStr1 == NULL )
         return (pszStr2 == NULL) ? 0 : -1;
-    else if (pszStr2 == NULL)
+    else if( pszStr2 == NULL )
         return 1;
 
     const double v1 = CPLAtof(pszStr1);
@@ -527,9 +527,9 @@ static int FORCE_CDECL swq_compare_string( const void *item1, const void *item2 
 {
     const char* pszStr1 = *((const char **) item1);
     const char* pszStr2 = *((const char **) item2);
-    if (pszStr1 == NULL)
+    if( pszStr1 == NULL )
         return (pszStr2 == NULL) ? 0 : -1;
-    else if (pszStr2 == NULL)
+    else if( pszStr2 == NULL )
         return 1;
 
     return strcmp( pszStr1, pszStr2 );
@@ -630,26 +630,26 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < field_list->count; i++ )
     {
-        int  t_id = 0;
-
         if( !EQUAL( field_list->names[i], field_token ) )
             continue;
 
-        /* Do the table specifications match? */
+        int t_id = 0;
+
+        // Do the table specifications match?/
         if( tables_enabled )
         {
             t_id = field_list->table_ids[i];
             if( table_name[0] != '\0'
-                && !EQUAL(table_name,field_list->table_defs[t_id].table_alias))
+                && !EQUAL(table_name, field_list->table_defs[t_id].table_alias))
                 continue;
 
-//            if( t_id != 0 && table_name[0] == '\0' )
-//                continue;
+            // if( t_id != 0 && table_name[0] == '\0' )
+            //     continue;
         }
         else if( table_name[0] != '\0' )
             break;
 
-        /* We have a match, return various information */
+        // We have a match, return various information.
         if( this_type != NULL )
         {
             if( field_list->types != NULL )
@@ -685,7 +685,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
                 if( tables_enabled )
                 {
                     int t_id = field_list->table_ids[i];
-                    if( EQUAL(table_name,field_list->table_defs[t_id].table_alias) )
+                    if( EQUAL(table_name,
+                              field_list->table_defs[t_id].table_alias) )
                         break;
                 }
             }
@@ -758,7 +759,7 @@ CPLErr swq_expr_compile( const char *where_clause,
                          swq_expr_node **expr_out )
 
 {
-    swq_field_list  field_list;
+    swq_field_list field_list;
 
     field_list.count = field_count;
     field_list.names = field_names;
@@ -840,9 +841,11 @@ static const char* const apszSQLReservedKeywords[] = {
 
 int swq_is_reserved_keyword(const char* pszStr)
 {
-    for(int i = 0; i < (int)(sizeof(apszSQLReservedKeywords)/sizeof(char*)); i++)
+    for( int i = 0;
+         i < (int)(sizeof(apszSQLReservedKeywords) / sizeof(char*));
+         i++ )
     {
-        if (EQUAL(pszStr, apszSQLReservedKeywords[i]))
+        if( EQUAL(pszStr, apszSQLReservedKeywords[i]) )
             return TRUE;
     }
     return FALSE;
@@ -854,7 +857,7 @@ int swq_is_reserved_keyword(const char* pszStr)
 
 const char* SWQFieldTypeToString( swq_field_type field_type )
 {
-    switch(field_type)
+    switch( field_type )
     {
         case SWQ_INTEGER:   return "integer";
         case SWQ_INTEGER64: return "bigint";

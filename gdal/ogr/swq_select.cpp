@@ -72,8 +72,7 @@ swq_select::~swq_select()
         CPLFree( table_def->table_name );
         CPLFree( table_def->table_alias );
     }
-    if( table_defs != NULL )
-        CPLFree( table_defs );
+    CPLFree( table_defs );
 
     for( int i = 0; i < result_columns; i++ )
     {
@@ -520,50 +519,50 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
         const char *pszTypeName = poExpr->papoSubExpr[1]->string_value;
         int parse_precision = 0;
 
-        if( EQUAL(pszTypeName,"character") )
+        if( EQUAL(pszTypeName, "character") )
         {
             col_def->target_type = SWQ_STRING;
             col_def->field_length = 1;
         }
-        else if( strcasecmp(pszTypeName,"boolean") == 0 )
+        else if( strcasecmp(pszTypeName, "boolean") == 0 )
         {
             col_def->target_type = SWQ_BOOLEAN;
         }
-        else if( strcasecmp(pszTypeName,"integer") == 0 )
+        else if( strcasecmp(pszTypeName, "integer") == 0 )
         {
             col_def->target_type = SWQ_INTEGER;
         }
-        else if( strcasecmp(pszTypeName,"bigint") == 0 )
+        else if( strcasecmp(pszTypeName, "bigint") == 0 )
         {
             col_def->target_type = SWQ_INTEGER64;
         }
-        else if( strcasecmp(pszTypeName,"smallint") == 0 )
+        else if( strcasecmp(pszTypeName, "smallint") == 0 )
         {
             col_def->target_type = SWQ_INTEGER;
             col_def->target_subtype = OFSTInt16;
         }
-        else if( strcasecmp(pszTypeName,"float") == 0 )
+        else if( strcasecmp(pszTypeName, "float") == 0 )
         {
             col_def->target_type = SWQ_FLOAT;
         }
-        else if( strcasecmp(pszTypeName,"numeric") == 0 )
+        else if( strcasecmp(pszTypeName, "numeric") == 0 )
         {
             col_def->target_type = SWQ_FLOAT;
             parse_precision = 1;
         }
-        else if( strcasecmp(pszTypeName,"timestamp") == 0 )
+        else if( strcasecmp(pszTypeName, "timestamp") == 0 )
         {
             col_def->target_type = SWQ_TIMESTAMP;
         }
-        else if( strcasecmp(pszTypeName,"date") == 0 )
+        else if( strcasecmp(pszTypeName, "date") == 0 )
         {
             col_def->target_type = SWQ_DATE;
         }
-        else if( strcasecmp(pszTypeName,"time") == 0 )
+        else if( strcasecmp(pszTypeName, "time") == 0 )
         {
             col_def->target_type = SWQ_TIME;
         }
-        else if( strcasecmp(pszTypeName,"geometry") == 0 )
+        else if( strcasecmp(pszTypeName, "geometry") == 0 )
         {
             col_def->target_type = SWQ_GEOMETRY;
         }
@@ -607,7 +606,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                 // SRID
                 if( poExpr->nSubExprCount > 3 )
                 {
-                    col_def->nSRID = (int)poExpr->papoSubExpr[3]->int_value;
+                    col_def->nSRID =
+                        static_cast<int>(poExpr->papoSubExpr[3]->int_value);
                 }
             }
         }
@@ -630,7 +630,8 @@ int swq_select::PushField( swq_expr_node *poExpr, const char *pszAlias,
                     result_columns--;
                     return FALSE;
                 }
-                col_def->field_length = (int)poExpr->papoSubExpr[2]->int_value;
+                col_def->field_length =
+                    static_cast<int>(poExpr->papoSubExpr[2]->int_value);
             }
 
             // field width.

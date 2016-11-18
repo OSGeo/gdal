@@ -5609,8 +5609,7 @@ void OGR_F_SetStyleString( OGRFeatureH hFeat, const char *pszStyle )
 
 void OGRFeature::SetStyleStringDirectly( char *pszString )
 {
-    if( m_pszStyleString )
-        CPLFree(m_pszStyleString);
+    CPLFree(m_pszStyleString);
     m_pszStyleString = pszString;
 }
 

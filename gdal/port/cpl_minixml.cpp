@@ -41,12 +41,17 @@
 #include "cpl_minixml.h"
 
 #include <cctype>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
 
 #include <algorithm>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -2014,7 +2019,6 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 
     while( psRoot != NULL )
     {
-
         if( psRoot->eType == CXT_Element || psRoot->eType == CXT_Attribute )
         {
             if( pszNamespace != NULL )
@@ -2051,7 +2055,9 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
             psRoot = psRoot->psNext;
         }
         else
+        {
             break;
+        }
     }
 }
 

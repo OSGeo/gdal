@@ -239,20 +239,52 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( hDS == NULL )
     {
-        OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
+        GDALDriverManager *poDM = GetGDALDriverManager();
 
         fprintf( stderr, "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
                 psOptionsForBinary->pszDataSource );
 
-        for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+        for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
         {
-            fprintf( stderr, "  -> %s\n", poR->GetDriver(iDriver)->GetDescription() );
+            GDALDriver* poIter = poDM->GetDriver(iDriver);
+            char** papszDriverMD = poIter->GetMetadata();
+            if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) )
+            {
+                fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+            }
         }
 
         GDALVectorTranslateOptionsFree(psOptions);
         GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
+    }
+
+    if( hODS != NULL )
+    {
+        GDALDriverManager *poDM = GetGDALDriverManager();
+
+        GDALDriver* poDriver = poDM->GetDriverByName(psOptionsForBinary->pszFormat);
+        if( poDriver == NULL )
+        {
+            fprintf( stderr,  "Unable to find driver `%s'.\n", psOptionsForBinary->pszFormat );
+            fprintf( stderr,  "The following drivers are available:\n" );
+
+            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+            {
+                GDALDriver* poIter = poDM->GetDriver(iDriver);
+                char** papszDriverMD = poIter->GetMetadata();
+                if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) &&
+                    (CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) ||
+                     CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATECOPY, "FALSE") )) )
+                {
+                    fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+                }
+            }
+            GDALVectorTranslateOptionsFree(psOptions);
+            GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+            goto exit;
+        }
     }
 
     if( !(psOptionsForBinary->bQuiet) )
@@ -311,7 +343,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
             "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] \n"
             "               [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
-            "               [-dim 2|3|layer_dim] [layer [layer ...]]\n"
+            "               [-dim XY|XYZ|XYM|XYZM|layer_dim] [layer [layer ...]]\n"
             "\n"
             "Advanced options :\n"
             "               [-gt n] [-ds_transaction]\n"

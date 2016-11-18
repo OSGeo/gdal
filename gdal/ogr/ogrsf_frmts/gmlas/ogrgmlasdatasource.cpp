@@ -59,101 +59,128 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_bEndOfReaderLayers = false;
     m_nCurMetadataLayerIdx = -1;
     m_poFieldsMetadataLayer = new OGRMemLayer
-                                    ("_ogr_fields_metadata", NULL, wkbNone );
+                                    (szOGR_FIELDS_METADATA, NULL, wkbNone );
     {
-        OGRFieldDefn oFieldDefn("layer_name", OFTString);
+        OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_name", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_INDEX, OFTInteger);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_xpath", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_NAME, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_type", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_XPATH, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_is_list", OFTInteger);
+        OGRFieldDefn oFieldDefn(szFIELD_TYPE, OFTString);
+        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn(szFIELD_IS_LIST, OFTInteger);
         oFieldDefn.SetSubType(OFSTBoolean);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_min_occurs", OFTInteger);
+        OGRFieldDefn oFieldDefn(szFIELD_MIN_OCCURS, OFTInteger);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_max_occurs", OFTInteger);
+        OGRFieldDefn oFieldDefn(szFIELD_MAX_OCCURS, OFTInteger);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_default_value", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_REPETITION_ON_SEQUENCE, OFTInteger);
+        oFieldDefn.SetSubType(OFSTBoolean);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_fixed_value", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_DEFAULT_VALUE, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_category", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_FIXED_VALUE, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_related_layer", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_CATEGORY, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_junction_layer", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_RELATED_LAYER, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("field_documentation", OFTString);
+        OGRFieldDefn oFieldDefn(szFIELD_JUNCTION_LAYER, OFTString);
+        m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn(szFIELD_DOCUMENTATION, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
 
     m_poLayersMetadataLayer = new OGRMemLayer
-                                    ("_ogr_layers_metadata", NULL, wkbNone );
+                                    (szOGR_LAYERS_METADATA, NULL, wkbNone );
     {
-        OGRFieldDefn oFieldDefn("layer_name", OFTString);
+        OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("layer_xpath", OFTString);
+        OGRFieldDefn oFieldDefn(szLAYER_XPATH, OFTString);
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("layer_category", OFTString);
+        OGRFieldDefn oFieldDefn(szLAYER_CATEGORY, OFTString);
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("layer_documentation", OFTString);
+        OGRFieldDefn oFieldDefn(szLAYER_PKID_NAME, OFTString);
+        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn(szLAYER_PARENT_PKID_NAME, OFTString);
+        m_poLayersMetadataLayer->CreateField(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn(szLAYER_DOCUMENTATION, OFTString);
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
     }
 
-    m_poRelationshipsLayer = new OGRMemLayer("_ogr_layer_relationships",
+    m_poRelationshipsLayer = new OGRMemLayer(szOGR_LAYER_RELATIONSHIPS,
                                              NULL, wkbNone );
     {
-        OGRFieldDefn oFieldDefn("parent_layer", OFTString);
+        OGRFieldDefn oFieldDefn(szPARENT_LAYER, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("parent_pkid", OFTString);
+        OGRFieldDefn oFieldDefn(szPARENT_PKID, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("parent_element_name", OFTString);
+        OGRFieldDefn oFieldDefn(szPARENT_ELEMENT_NAME, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("child_layer", OFTString);
+        OGRFieldDefn oFieldDefn(szCHILD_LAYER, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
     }
     {
-        OGRFieldDefn oFieldDefn("child_pkid", OFTString);
+        OGRFieldDefn oFieldDefn(szCHILD_PKID, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
+    }
+    m_poOtherMetadataLayer = new OGRMemLayer(szOGR_OTHER_METADATA,
+                                             NULL, wkbNone );
+    {
+        OGRFieldDefn oFieldDefn(szKEY, OFTString);
+        m_poOtherMetadataLayer->CreateField(&oFieldDefn);
+    }
+    {
+        OGRFieldDefn oFieldDefn(szVALUE, OFTString);
+        m_poOtherMetadataLayer->CreateField(&oFieldDefn);
     }
 }
 
@@ -168,6 +195,7 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
     delete m_poFieldsMetadataLayer;
     delete m_poLayersMetadataLayer;
     delete m_poRelationshipsLayer;
+    delete m_poOtherMetadataLayer;
     if( m_fpGML != NULL )
         VSIFCloseL(m_fpGML);
     if( m_fpGMLParser != NULL )
@@ -214,11 +242,12 @@ OGRLayer    *OGRGMLASDataSource::GetLayerByName(const char* pszName)
     if( poLayer )
         return poLayer;
 
-    OGRLayer* apoLayers[3];
+    OGRLayer* apoLayers[4];
     apoLayers[0] = m_poFieldsMetadataLayer;
     apoLayers[1] = m_poLayersMetadataLayer;
     apoLayers[2] = m_poRelationshipsLayer;
-    for( int i=0;i<3;++i)
+    apoLayers[3] = m_poOtherMetadataLayer;
+    for( size_t i=0; i < CPL_ARRAYSIZE(apoLayers); ++i)
     {
         if( EQUAL(pszName, apoLayers[i]->GetName()) )
         {
@@ -364,10 +393,10 @@ void GMLASGuessXSDFilename::startElement(
         CPLString osAttrLocalname( transcode(attrs.getLocalName(i)) );
         CPLString osAttrValue( transcode(attrs.getValue(i)) );
 
-        if( osAttrURIPrefix == pszXSI_URI &&
-            osAttrLocalname == "schemaLocation" )
+        if( osAttrURIPrefix == szXSI_URI &&
+            osAttrLocalname == szSCHEMA_LOCATION )
         {
-            CPLDebug("GMLAS", "schemaLocation=%s", osAttrValue.c_str());
+            CPLDebug("GMLAS", "%s=%s", szSCHEMA_LOCATION, osAttrValue.c_str());
 
             char** papszTokens = CSLTokenizeString2(osAttrValue, " ", 0 );
             int nTokens = CSLCount(papszTokens);
@@ -375,8 +404,10 @@ void GMLASGuessXSDFilename::startElement(
             {
                 for( int j = 0; j < nTokens; j+= 2 )
                 {
-                    if( !STARTS_WITH(papszTokens[j], pszWFS_URI) &&
-                        !STARTS_WITH(papszTokens[j], pszGML_URI) )
+                    if( !STARTS_WITH(papszTokens[j], szWFS_URI) &&
+                        !(EQUAL(papszTokens[j], szGML_URI) ||
+                          STARTS_WITH(papszTokens[j],
+                                    (CPLString(szGML_URI)+ "/").c_str())) )
                     {
                         CPLDebug("GMLAS", "Schema to analyze: %s -> %s",
                                  papszTokens[j], papszTokens[j+1]);
@@ -387,10 +418,11 @@ void GMLASGuessXSDFilename::startElement(
             }
             CSLDestroy(papszTokens);
         }
-        else if( osAttrURIPrefix == pszXSI_URI &&
-                 osAttrLocalname == "noNamespaceSchemaLocation" )
+        else if( osAttrURIPrefix == szXSI_URI &&
+                 osAttrLocalname == szNO_NAMESPACE_SCHEMA_LOCATION )
         {
-            CPLDebug("GMLAS", "noNamespaceSchemaLocation=%s", osAttrValue.c_str());
+            CPLDebug("GMLAS", "%s=%s",
+                     szNO_NAMESPACE_SCHEMA_LOCATION, osAttrValue.c_str());
             m_aoFilenames.push_back( PairURIFilename( "", osAttrValue ) );
         }
     }
@@ -400,16 +432,270 @@ void GMLASGuessXSDFilename::startElement(
 }
 
 /************************************************************************/
+/*                         FillOtherMetadataLayer()                     */
+/************************************************************************/
+
+void OGRGMLASDataSource::FillOtherMetadataLayer(
+                                GDALOpenInfo* poOpenInfo,
+                                const CPLString& osConfigFile,
+                                const std::vector<PairURIFilename>& aoXSDs,
+                                const std::set<CPLString>& oSetSchemaURLs)
+{
+    // 2 "secret" options just used for tests
+    const bool bKeepRelativePathsForMetadata =
+        CPLTestBool( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                            szKEEP_RELATIVE_PATHS_FOR_METADATA_OPTION, "NO") );
+
+    const bool bExposeConfiguration =
+        CPLTestBool( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                            szEXPOSE_CONFIGURATION_IN_METADATA_OPTION, "YES") );
+
+    const bool bExposeSchemaNames =
+        CPLTestBool( CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                            szEXPOSE_SCHEMAS_NAME_IN_METADATA_OPTION, "YES") );
+
+    OGRFeatureDefn* poFDefn = m_poOtherMetadataLayer->GetLayerDefn();
+
+    if( !osConfigFile.empty() && bExposeConfiguration )
+    {
+        if( STARTS_WITH(osConfigFile, "<Configuration") )
+        {
+            OGRFeature* poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY, szCONFIGURATION_INLINED );
+            poFeature->SetField( szVALUE, osConfigFile.c_str());
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+        }
+        else
+        {
+            OGRFeature* poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY, szCONFIGURATION_FILENAME );
+            char* pszCurDir = CPLGetCurrentDir();
+            if( !bKeepRelativePathsForMetadata &&
+                CPLIsFilenameRelative(osConfigFile) && pszCurDir != NULL)
+            {
+                poFeature->SetField( szVALUE,
+                                     CPLFormFilename(pszCurDir,
+                                                     osConfigFile, NULL));
+            }
+            else
+            {
+                poFeature->SetField( szVALUE, osConfigFile.c_str());
+            }
+            CPLFree(pszCurDir);
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+
+            GByte* pabyRet = NULL;
+            if( VSIIngestFile( NULL, osConfigFile, &pabyRet, NULL, -1 ) )
+            {
+                poFeature = new OGRFeature(poFDefn);
+                poFeature->SetField( szKEY, szCONFIGURATION_INLINED );
+                poFeature->SetField( szVALUE, reinterpret_cast<char*>(pabyRet));
+                CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+                delete poFeature;
+            }
+            VSIFree(pabyRet);
+        }
+    }
+
+    const char* const apszMeaningfulOptionsToStoreInMD[] =
+    {
+        szSWAP_COORDINATES_OPTION,
+        szREMOVE_UNUSED_LAYERS_OPTION,
+        szREMOVE_UNUSED_FIELDS_OPTION
+    };
+    for( size_t i=0; i < CPL_ARRAYSIZE(apszMeaningfulOptionsToStoreInMD); ++i )
+    {
+        const char* pszKey = apszMeaningfulOptionsToStoreInMD[i];
+        const char* pszVal = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
+                                               pszKey);
+        if( pszVal )
+        {
+            OGRFeature* poFeature = new OGRFeature(
+                                        poFDefn);
+            poFeature->SetField( szKEY, pszKey );
+            poFeature->SetField( szVALUE, pszVal );
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+        }
+    }
+
+    CPLString osAbsoluteGMLFilename;
+    if( !m_osGMLFilename.empty() )
+    {
+        OGRFeature* poFeature = new OGRFeature(poFDefn);
+        poFeature->SetField( szKEY, szDOCUMENT_FILENAME );
+        char* pszCurDir = CPLGetCurrentDir();
+        if( !bKeepRelativePathsForMetadata &&
+            CPLIsFilenameRelative(m_osGMLFilename) && pszCurDir != NULL)
+        {
+            osAbsoluteGMLFilename = CPLFormFilename(pszCurDir,
+                                                    m_osGMLFilename, NULL);
+        }
+        else
+            osAbsoluteGMLFilename = m_osGMLFilename;
+        poFeature->SetField( szVALUE, osAbsoluteGMLFilename.c_str() );
+        CPLFree(pszCurDir);
+        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+        delete poFeature;
+    }
+
+    int nNSIdx = 1;
+    std::set<CPLString> oSetVisitedURI;
+    for( int i = 0; i < static_cast<int>(aoXSDs.size()); i++ )
+    {
+        const CPLString osURI(aoXSDs[i].first);
+        const CPLString osXSDFilename(aoXSDs[i].second);
+
+        oSetVisitedURI.insert(osURI);
+
+        if( osURI == szOGRGMLAS_URI )
+            continue;
+
+        OGRFeature* poFeature = new OGRFeature(poFDefn);
+        poFeature->SetField( szKEY, CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx) );
+        poFeature->SetField( szVALUE, osURI.c_str());
+        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+        delete poFeature;
+
+        poFeature = new OGRFeature(poFDefn);
+        poFeature->SetField( szKEY,
+                             CPLSPrintf(szNAMESPACE_LOCATION_FMT, nNSIdx) );
+
+        const CPLString osAbsoluteXSDFilename(
+            (osXSDFilename.find("http://") != 0 &&
+             osXSDFilename.find("https://") != 0 &&
+             CPLIsFilenameRelative(osXSDFilename)) ?
+                CPLString(CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
+                                        osXSDFilename, NULL)) :
+                osXSDFilename );
+        poFeature->SetField( szVALUE, osAbsoluteXSDFilename.c_str());
+        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+        delete poFeature;
+
+        if( m_oMapURIToPrefix.find(osURI) != m_oMapURIToPrefix.end() )
+        {
+            poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY,
+                                 CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx) );
+            poFeature->SetField( szVALUE, m_oMapURIToPrefix[osURI].c_str());
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+        }
+
+        nNSIdx ++;
+    }
+
+    std::map<CPLString,CPLString>::const_iterator oIter =
+                                                m_oMapURIToPrefix.begin();
+    for( ; oIter != m_oMapURIToPrefix.end(); ++oIter )
+    {
+        const CPLString& osURI( oIter->first );
+        const CPLString& osPrefix( oIter->second );
+
+        if( oSetVisitedURI.find( osURI ) == oSetVisitedURI.end() &&
+            osURI != szXML_URI &&
+            osURI != szXS_URI &&
+            osURI != szXSI_URI &&
+            osURI != szXMLNS_URI &&
+            osURI != szOGRGMLAS_URI )
+        {
+            OGRFeature* poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY,
+                                 CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx) );
+            poFeature->SetField( szVALUE, osURI.c_str());
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+
+            poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY,
+                                 CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx) );
+            poFeature->SetField( szVALUE, osPrefix.c_str());
+            CPL_IGNORE_RET_VAL(
+                            m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
+
+            nNSIdx ++;
+        }
+    }
+
+    if( !m_osGMLVersionFound.empty() )
+    {
+        OGRFeature* poFeature = new OGRFeature(poFDefn);
+        poFeature->SetField( szKEY, szGML_VERSION );
+        poFeature->SetField( szVALUE, m_osGMLVersionFound );
+        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+        delete poFeature;
+    }
+
+    std::set<CPLString>::const_iterator oIterSet = oSetSchemaURLs.begin();
+    int nSchemaIdx = 1;
+    for( ; bExposeSchemaNames &&
+           oIterSet != oSetSchemaURLs.end(); ++oIterSet )
+    {
+        OGRFeature* poFeature = new OGRFeature(poFDefn);
+        poFeature->SetField( szKEY, CPLSPrintf(szSCHEMA_NAME_FMT, nSchemaIdx) );
+        poFeature->SetField( szVALUE, (*oIterSet).c_str() );
+        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+        delete poFeature;
+
+        nSchemaIdx ++;
+    }
+}
+
+/************************************************************************/
+/*                         BuildXSDVector()                             */
+/************************************************************************/
+
+std::vector<PairURIFilename> OGRGMLASDataSource::BuildXSDVector(
+                                            const CPLString& osXSDFilenames)
+{
+    std::vector<PairURIFilename> aoXSDs;
+    char** papszTokens = CSLTokenizeString2(osXSDFilenames," ,",0);
+    char* pszCurDir = CPLGetCurrentDir();
+    for( int i=0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    {
+        if( !STARTS_WITH(papszTokens[i], "http://") &&
+            !STARTS_WITH(papszTokens[i], "https://") &&
+            CPLIsFilenameRelative(papszTokens[i]) &&
+            pszCurDir != NULL )
+        {
+            aoXSDs.push_back(PairURIFilename("",
+                        CPLFormFilename(pszCurDir, papszTokens[i], NULL)));
+        }
+        else
+        {
+            aoXSDs.push_back(PairURIFilename("",papszTokens[i]));
+        }
+    }
+    CPLFree(pszCurDir);
+    CSLDestroy(papszTokens);
+    return aoXSDs;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 {
-    const char* pszConfigFile = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
-                                                  "CONFIG_FILE");
-    if( pszConfigFile == NULL )
-        pszConfigFile = CPLFindFile("gdal", "gmlasconf.xml");
-    if( pszConfigFile == NULL )
+    CPLString osConfigFile = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                  szCONFIG_FILE_OPTION, "");
+    if( osConfigFile.empty() )
+    {
+        const char* pszConfigFile = CPLFindFile("gdal",
+                                                szDEFAULT_CONF_FILENAME);
+        if( pszConfigFile )
+            osConfigFile = pszConfigFile;
+    }
+    if( osConfigFile.empty() )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No configuration file found. Using hard-coded defaults");
@@ -417,7 +703,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        if( !m_oConf.Load(pszConfigFile) )
+        if( !m_oConf.Load(osConfigFile) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Loading of configuration failed");
@@ -427,8 +713,8 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     m_oCache.SetCacheDirectory( m_oConf.m_osXSDCacheDirectory );
     const bool bRefreshCache(CPLTestBool(
-                            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                "REFRESH_CACHE", "NO") ));
+                       CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                            szREFRESH_CACHE_OPTION, "NO") ));
     m_oCache.SetRefreshMode( bRefreshCache );
     m_oCache.SetAllowDownload( m_oConf.m_bAllowRemoteSchemaDownload );
 
@@ -438,16 +724,19 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
-    oAnalyzer.SetInstantiateGMLFeaturesOnly(m_oConf.m_bInstantiateGMLFeaturesOnly);
+    oAnalyzer.SetInstantiateGMLFeaturesOnly(
+                                        m_oConf.m_bInstantiateGMLFeaturesOnly);
     oAnalyzer.SetIdentifierMaxLength(m_oConf.m_nIdentifierMaxLength);
-    oAnalyzer.SetCaseInsensitiveIdentifier(m_oConf.m_bCaseInsensitiveIdentifier);
+    oAnalyzer.SetCaseInsensitiveIdentifier(
+                                        m_oConf.m_bCaseInsensitiveIdentifier);
     oAnalyzer.SetPGIdentifierLaundering(m_oConf.m_bPGIdentifierLaundering);
 
-    m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:") ?
-        poOpenInfo->pszFilename + strlen("GMLAS:") : poOpenInfo->pszFilename;
+    m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX) ?
+        poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX) :
+        poOpenInfo->pszFilename;
 
-    CPLString osXSDFilename = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                   "XSD", "");
+    CPLString osXSDFilenames = CSLFetchNameValueDef(
+                                poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
 
     VSILFILE* fpGML = NULL;
     if( !m_osGMLFilename.empty() )
@@ -460,86 +749,74 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
             return false;
         }
     }
-    else if( osXSDFilename.empty() )
+    else if( osXSDFilenames.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "XSD open option must be provided when no XML data file is passed");
+                 "%s open option must be provided when no "
+                 "XML data file is passed",
+                 szXSD_OPTION);
         return false;
     }
 
     std::vector<PairURIFilename> aoXSDs;
-    if( osXSDFilename.empty() )
+    if( osXSDFilenames.empty() )
     {
         GMLASGuessXSDFilename guesser;
         aoXSDs = guesser.Guess(m_osGMLFilename, fpGML);
     }
     else
     {
-        char** papszTokens = CSLTokenizeString2(osXSDFilename," ,",0);
-        char* pszCurDir = CPLGetCurrentDir();
-        for( int i=0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
-        {
-            if( !STARTS_WITH(papszTokens[i], "http://") &&
-                !STARTS_WITH(papszTokens[i], "https://") &&
-                CPLIsFilenameRelative(papszTokens[i]) &&
-                pszCurDir != NULL )
-            {
-                aoXSDs.push_back(PairURIFilename("",
-                            CPLFormFilename(pszCurDir, papszTokens[i], NULL)));
-            }
-            else
-            {
-                aoXSDs.push_back(PairURIFilename("",papszTokens[i]));
-            }
-        }
-        CPLFree(pszCurDir);
-        CSLDestroy(papszTokens);
-        m_aoXSDs = aoXSDs;
+        aoXSDs = BuildXSDVector(osXSDFilenames);
     }
     if( fpGML )
     {
-        VSIFSeekL(fpGML, 0, SEEK_SET);
-        std::string osBuffer;
-        osBuffer.resize(8192);
-        size_t nRead = VSIFReadL(&osBuffer[0], 1, 8192, fpGML);
-        osBuffer.resize(nRead);
-        size_t nPos = osBuffer.find("timeStamp=\"");
-        if( nPos != std::string::npos )
+        m_osHash = CSLFetchNameValueDef(
+                                    poOpenInfo->papszOpenOptions, "HASH", "");
+        if( m_osHash.empty() )
         {
-            size_t nPos2 = osBuffer.find('"', nPos+strlen("timeStamp=\""));
-            if( nPos2 != std::string::npos )
-                osBuffer.replace(nPos, nPos2-nPos+1, nPos2-nPos+1, ' ');
-        }
-        CPL_SHA256Context ctxt;
-        CPL_SHA256Init(&ctxt);
-        CPL_SHA256Update(&ctxt, osBuffer.data(), osBuffer.size());
+            VSIFSeekL(fpGML, 0, SEEK_SET);
+            std::string osBuffer;
+            osBuffer.resize(8192);
+            size_t nRead = VSIFReadL(&osBuffer[0], 1, 8192, fpGML);
+            osBuffer.resize(nRead);
+            size_t nPos = osBuffer.find("timeStamp=\"");
+            if( nPos != std::string::npos )
+            {
+                size_t nPos2 = osBuffer.find('"', nPos+strlen("timeStamp=\""));
+                if( nPos2 != std::string::npos )
+                    osBuffer.replace(nPos, nPos2-nPos+1, nPos2-nPos+1, ' ');
+            }
+            CPL_SHA256Context ctxt;
+            CPL_SHA256Init(&ctxt);
+            CPL_SHA256Update(&ctxt, osBuffer.data(), osBuffer.size());
 
-        VSIStatBufL sStat;
-        if( VSIStatL(m_osGMLFilename, &sStat) == 0 )
-        {
-            m_nFileSize = sStat.st_size;
-            CPL_SHA256Update(&ctxt, &(sStat.st_size), sizeof(sStat.st_size));
-        }
+            VSIStatBufL sStat;
+            if( VSIStatL(m_osGMLFilename, &sStat) == 0 )
+            {
+                m_nFileSize = sStat.st_size;
+                CPL_SHA256Update(&ctxt, &(sStat.st_size), sizeof(sStat.st_size));
+            }
 
-        GByte abyHash[CPL_SHA256_HASH_SIZE];
-        CPL_SHA256Final(&ctxt, abyHash);
-        // Half of the hash should be enough for our purpose
-        char* pszHash = CPLBinaryToHex(CPL_SHA256_HASH_SIZE / 2, abyHash);
-        m_osHash = pszHash;
-        CPLFree(pszHash);
+            GByte abyHash[CPL_SHA256_HASH_SIZE];
+            CPL_SHA256Final(&ctxt, abyHash);
+            // Half of the hash should be enough for our purpose
+            char* pszHash = CPLBinaryToHex(CPL_SHA256_HASH_SIZE / 2, abyHash);
+            m_osHash = pszHash;
+            CPLFree(pszHash);
+        }
 
         VSIFSeekL(fpGML, 0, SEEK_SET);
-
         PushUnusedGMLFilePointer(fpGML);
     }
 
     if( aoXSDs.empty() )
     {
-        if( osXSDFilename.empty() )
+        if( osXSDFilenames.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "No schema locations found when analyzing data file: XSD open "
-                    "option must be provided");
+                     "No schema locations found when analyzing data file: "
+                     "%s open option must be provided",
+                     szXSD_OPTION);
         }
         else
         {
@@ -548,6 +825,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         }
         return false;
     }
+
     bool bRet = oAnalyzer.Analyze( m_oCache,
                                    CPLGetDirname(m_osGMLFilename),
                                    aoXSDs );
@@ -556,20 +834,30 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         return false;
     }
 
+    if( !osXSDFilenames.empty() )
+        m_aoXSDsManuallyPassed = aoXSDs;
+
     m_oMapURIToPrefix = oAnalyzer.GetMapURIToPrefix();
 
+    m_osGMLVersionFound = oAnalyzer.GetGMLVersionFound();
+
+    const std::set<CPLString>& oSetSchemaURLs = oAnalyzer.GetSchemaURLS();
+
+    FillOtherMetadataLayer(poOpenInfo, osConfigFile, aoXSDs, oSetSchemaURLs);
+
     if( CPLFetchBool(poOpenInfo->papszOpenOptions,
-                     "EXPOSE_METADATA_LAYERS",
+                     szEXPOSE_METADATA_LAYERS_OPTION,
                      m_oConf.m_bExposeMetadataLayers) )
     {
         m_apoRequestedMetadataLayers.push_back(m_poFieldsMetadataLayer);
         m_apoRequestedMetadataLayers.push_back(m_poLayersMetadataLayer);
         m_apoRequestedMetadataLayers.push_back(m_poRelationshipsLayer);
+        m_apoRequestedMetadataLayers.push_back(m_poOtherMetadataLayer);
     }
 
     const char* pszSwapCoordinates = CSLFetchNameValueDef(
                                            poOpenInfo->papszOpenOptions,
-                                           "SWAP_COORDINATES",
+                                           szSWAP_COORDINATES_OPTION,
                                            "AUTO");
     if( EQUAL(pszSwapCoordinates, "AUTO") )
     {
@@ -609,15 +897,15 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     // Do optional validation
     m_bValidate = CPLFetchBool(poOpenInfo->papszOpenOptions,
-                              "VALIDATE",
+                               szVALIDATE_OPTION,
                                m_oConf.m_bValidate);
 
     m_bRemoveUnusedLayers = CPLFetchBool(poOpenInfo->papszOpenOptions,
-                              "REMOVE_UNUSED_LAYERS",
+                               szREMOVE_UNUSED_LAYERS_OPTION,
                                m_oConf.m_bRemoveUnusedLayers);
 
     m_bRemoveUnusedFields = CPLFetchBool(poOpenInfo->papszOpenOptions,
-                              "REMOVE_UNUSED_FIELDS",
+                               szREMOVE_UNUSED_FIELDS_OPTION,
                                m_oConf.m_bRemoveUnusedFields);
 
     m_oXLinkResolver.SetConf( m_oConf.m_oXLinkResolution );
@@ -628,7 +916,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         CPLErrorReset();
         RunFirstPassIfNeeded( NULL, NULL, NULL );
         if( CPLFetchBool( poOpenInfo->papszOpenOptions,
-                          "FAIL_IF_VALIDATION_ERROR",
+                          szFAIL_IF_VALIDATION_ERROR_OPTION,
                           m_oConf.m_bFailIfValidationError ) &&
             CPLGetLastErrorType() != CE_None )
         {
@@ -704,9 +992,8 @@ void OGRGMLASDataSource::ResetReading()
 {
     delete m_poReader;
     m_poReader = NULL;
-    m_poFieldsMetadataLayer->ResetReading();
-    m_poLayersMetadataLayer->ResetReading();
-    m_poRelationshipsLayer->ResetReading();
+    for(size_t i=0; i<m_apoRequestedMetadataLayers.size();++i)
+        m_apoRequestedMetadataLayers[i]->ResetReading();
     m_bEndOfReaderLayers = false;
     m_nCurMetadataLayerIdx = -1;
 }
@@ -800,8 +1087,12 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                 *ppoBelongingLayer = poBelongingLayer;
             if( pdfProgressPct != NULL )
             {
-                *pdfProgressPct = dfInitialScanRatio +
-                    (1.0 - dfInitialScanRatio) * VSIFTellL(m_fpGMLParser) / m_nFileSize;
+                const vsi_l_offset nOffset = VSIFTellL(m_fpGMLParser);
+                if( nOffset == m_nFileSize )
+                    *pdfProgressPct = 1.0;
+                else
+                    *pdfProgressPct = dfInitialScanRatio +
+                        (1.0 - dfInitialScanRatio) * nOffset / m_nFileSize;
             }
             GDALDestroyScaledProgress(pScaledProgress);
             if( poFeature == NULL )
@@ -926,7 +1217,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
                                  GetMapURIToPrefix(),
                                  GetLayers(),
                                  m_bValidate,
-                                 m_aoXSDs );
+                                 m_aoXSDsManuallyPassed );
 
         poReaderFirstPass->SetFileSize( m_nFileSize );
 

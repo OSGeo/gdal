@@ -252,16 +252,10 @@ static CPLErr ProcessLayer(
             {
                 adfFullBurnValues.push_back( OGR_F_GetFieldAsDouble( hFeat, iBurnField ) );
             }
-            /* I have made the 3D option exclusive to other options since it
-               can be used to modify the value from "-burn value" or
-               "-a attribute_name" */
-            if( b3D )
+            else if( b3D )
             {
-                // TODO: get geometry "z" value
                 /* Points and Lines will have their "z" values collected at the
-                   point and line levels respectively. However filled polygons
-                   (GDALdllImageFilledPolygon) can use some help by getting
-                   their "z" values here. */
+                   point and line levels respectively. Not implemented for polygons */
                 adfFullBurnValues.push_back( 0.0 );
             }
         }
@@ -597,29 +591,14 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
         hDriver = GDALGetDriverByName( psOptions->pszFormat );
+        char** papszDriverMD = (hDriver) ? GDALGetMetadata(hDriver, NULL): NULL;
         if( hDriver == NULL
-            || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
+            || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE") )
+            || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) )
         {
-            int iDr;
-
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Output driver `%s' not recognised or does not support "
-                      " direct output file creation.", psOptions->pszFormat);
-            fprintf(stderr, "The following format drivers are configured\n"
-                    "and support direct output:\n" );
-
-            for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
-            {
-                hDriver = GDALGetDriver(iDr);
-
-                if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL) != NULL )
-                {
-                    fprintf(stderr, "  %s: %s\n",
-                            GDALGetDriverShortName( hDriver  ),
-                            GDALGetDriverLongName( hDriver ) );
-                }
-            }
-            fprintf(stderr, "\n" );
+                      "direct output file creation.", psOptions->pszFormat);
             GDALRasterizeOptionsFree(psOptionsToFree);
             return NULL;
         }
@@ -1075,14 +1054,17 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         }
     }
 
-    if( psOptions->adfBurnValues.size() == 0 &&
-        psOptions->pszBurnAttribute == NULL && !(psOptions->b3D) )
+    int nExclusiveOptionsCount = 0;
+    nExclusiveOptionsCount += (!psOptions->adfBurnValues.empty()) ? 1 : 0;
+    nExclusiveOptionsCount += (psOptions->pszBurnAttribute != NULL) ? 1 : 0;
+    nExclusiveOptionsCount += (psOptions->b3D) ? 1 : 0;
+    if( nExclusiveOptionsCount != 1 )
     {
-        if( psOptionsForBinary == NULL )
+        if( nExclusiveOptionsCount == 0 && psOptionsForBinary == NULL )
             psOptions->adfBurnValues.push_back(255);
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "At least one of -3d, -burn or -a required." );
+            CPLError(CE_Failure, CPLE_NotSupported, "One and only one of -3d, -burn or -a is required." );
             GDALRasterizeOptionsFree(psOptions);
             return NULL;
         }

@@ -28,13 +28,17 @@
 
 #include "cpl_port.h"
 #include "ogr_geometry.h"
-#include "ogr_p.h"
 
 #include <cmath>
+#include <cstring>
 
 #include <algorithm>
 #include <vector>
 
+#include "cpl_error.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -496,16 +500,16 @@ void OGRCircularString::segmentize( double dfMaxLength )
     }
 
     // Is there actually something to modify?
-    if( nPointCount < (int)aoRawPoint.size() )
+    if( nPointCount < static_cast<int>(aoRawPoint.size()) )
     {
-        nPointCount = (int)aoRawPoint.size();
+        nPointCount = static_cast<int>(aoRawPoint.size());
         paoPoints = static_cast<OGRRawPoint *>(
-                OGRRealloc(paoPoints, sizeof(OGRRawPoint) * nPointCount));
+                CPLRealloc(paoPoints, sizeof(OGRRawPoint) * nPointCount));
         memcpy(paoPoints, &aoRawPoint[0], sizeof(OGRRawPoint) * nPointCount);
         if( padfZ )
         {
             padfZ = static_cast<double *>(
-                OGRRealloc(padfZ, sizeof(double) * aoRawPoint.size()));
+                CPLRealloc(padfZ, sizeof(double) * aoRawPoint.size()));
             memcpy(padfZ, &adfZ[0], sizeof(double) * nPointCount);
         }
     }

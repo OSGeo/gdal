@@ -27,7 +27,7 @@ A bilioteca GDAL tamb&eacute;m conta com uma variadade de programas
 para a tradu&ccedil;&atilde;o de formatos bem como uma s&eacute;rie de outras fun&ccedil;&otilde;es.
 A p&aacute;gina
 <a href="http://trac.osgeo.org/gdal/wiki/Release/2.0.0-News">novidades</a> descreve o
-lan&ccedil;amento em Junho de 2015 da release 2.0.0 da biblioteca GDAL/OGR.
+lan&ccedil;amento em Outubro de 2016 da release 2.1.2 da biblioteca GDAL/OGR.
 
 Tradicionalmente a bilioteca GDAL referia-se a dados Raster enquanto que OGR
 referia-se a dados Vetorias (Simple Features). Mas a partir da ver&ccedil;&atilde;o 2.0 as duas partes
@@ -44,7 +44,7 @@ Download:
 
 <ul>
 <li> <a href="http://trac.osgeo.org/gdal/">Wiki</a> - Documenta&ccedil;&atilde;o e dicas mantidas por v&aacute;rios desenvolvedores e contribuidores
-<li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">Downloads</a> - <Programas execut&aacute;veis prontos para usar
+<li> <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">Downloads</a> - Programas execut&aacute;veis prontos para usar
 <li> <a href="formats_list.html">Formatos raster suportados</a> (142 drivers): <a href="frmt_gtiff.html">GeoTIFF</a>, <a href="frmt_hfa.html">Erdas Imagine</a>, <a href="frmt_ecw.html">ECW</a>, <a href="frmt_mrsid.html">MrSID</a>, <a href="frmt_jp2openjpeg.html">JPEG2000</a>, <a href="frmt_dted.html">DTED</a>, <a href="frmt_nitf.html">NITF</a>, <a href="drv_geopackage_raster.html">GeoPackage</a>, ...
 <li> <a href="ogr_formats.html">Formatos vectorais suportados</a> (84 drivers): <a href="drv_shapefile.html">ESRI Shapefile</a>, <a href="drv_sde.html">ESRI ArcSDE</a>, <a href="drv_openfilegdb.html">ESRI FileGDB</a>, <a href="drv_mitab.html">MapInfo (tab and mid/mif)</a>, <a href="drv_gml.html">GML</a>, <a href="drv_libkml.html">KML</a>, <a href="drv_pg.html">PostGIS</a>, <a href="drv_oci.html">Oracle Spatial</a>, <a href="drv_geopackage.html">GeoPackage</a>, ...
 <li> <a href="gdal_utilities.html">Programas utilit&aacute;rios para raster</a>: <a href="gdalinfo.html">gdalinfo</a>, <a href="gdal_translate.html">gdal_translate</a>, <a href="gdaladdo.html">gdaladdo</a>, <a href="gdalwarp.html">gdalwarp</a>, ...
@@ -109,7 +109,27 @@ or <a href="http://home.gdal.org/projects/opengis/wkt_prop.doc">doc</a> format.
 </ul>
 -->
 
-\section index_maillist Lista de discuss&atilde;o por correio eletr&ograve;nico
+\section foss4g Conference
+
+\htmlonly
+<table border="0" cellspacing="4" cellpadding="4">
+
+<tr><td><a href="http://2017.foss4g.org/">
+<img src="foss4g2017.png" alt="FOSS4G 2017" border="0">
+</a></td>
+
+<td><a href="http://2017.foss4g.org">FOSS4G 2017</a> 
+
+&Eacute; a principal confer&ecirc;ncia anual de software geoespacial livre e de c&oacute;digo aberto.
+Ele incluir&aacute; apresentações relacionadas ao GDAL/OGR, e alguns dos membros da comunidade 
+de desenvolvimento da GDAL/OGR estar&atilde;o participando. &Eacute; o evento para aqueles interessados em GDAL/OGR,
+outras tecnologias geoespaciais FOSS e da comunidade em torno deles.
+A confer&ecirc;ncia ser&aacute; realizada em Boston, EUA, de <strong>14 a 18 de agosto de 2017.</strong>.</td>
+</table>
+
+\endhtmlonly
+
+\section index_maillist Lista de discuss&atilde;o por correio eletr&ocirc;nico
 
 A lista <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">gdal-announce</a>
 &eacute; uma lista de pequeno volume de mensagens usada somente para anunciar lan&ccedil;amento de

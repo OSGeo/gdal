@@ -42,9 +42,7 @@ CPL_CVSID("$Id$");
 static int OGRGMLASDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "GMLAS:") )
-        return FALSE;
-    return TRUE;
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX);
 }
 
 /************************************************************************/
@@ -90,11 +88,10 @@ void RegisterOGRGMLAS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Geography Markup Language (GML) "
                                "driven by application schemas" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gml" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "gml xml" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmlas.html" );
 
-    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GMLAS:" );
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, szGMLAS_PREFIX );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
@@ -108,13 +105,16 @@ void RegisterOGRGMLAS()
 "  <Option name='VALIDATE' type='boolean' description='Whether validation "
         "against the schema should be done' default='NO'/>"
 "  <Option name='FAIL_IF_VALIDATION_ERROR' type='boolean' "
-    "description='Whether a validation error should cause dataset opening to fail' "
+    "description='Whether a validation error should cause dataset opening "
+    "to fail' "
     "default='NO'/>"
 "  <Option name='REFRESH_CACHE' type='boolean' "
-    "description='Whether remote schemas and resolved xlink resources should be downloaded from the server' "
+    "description='Whether remote schemas and resolved xlink resources should "
+    "be downloaded from the server' "
     "default='NO'/>"
 "  <Option name='SWAP_COORDINATES' type='string-select' "
-    "description='Whether the order of geometry coordinates should be inverted.' "
+    "description='Whether the order of geometry coordinates should be "
+    "inverted.' "
     "default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>YES</Value>"
@@ -126,9 +126,63 @@ void RegisterOGRGMLAS()
     "description='Whether unused fields should be removed' " "default='NO'/>"
 "</OpenOptionList>" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+(CPLString("<CreationOptionList>") +
+"  <Option name='" + szINPUT_XSD_OPTION + "' type='string' description='"
+"Space separated list of filenames of XML schemas that apply to the data file'/>"
+"  <Option name='" + szCONFIG_FILE_OPTION + "' type='string' "
+            "description='Filename of the configuration file'/>"
+            "'Space separated list of filenames of XML schemas that apply'/>"
+"  <Option name='" +szLAYERS_OPTION + "' type='string' "
+            "description='Comma separated list of layer names to export'/>"
+"  <Option name='" + szSRSNAME_FORMAT_OPTION + "' type='string-select' "
+                    "description='Format of srsName' "
+                    "default='" + szSRSNAME_DEFAULT +"'>"
+"    <Value>" + szSHORT + "</Value>"
+"    <Value>" + szOGC_URN + "</Value>"
+"    <Value>" + szOGC_URL + "</Value>"
+"  </Option>"
+"  <Option name='" +szINDENT_SIZE_OPTION + "' type='int' min='0' max='8' "
+    "description='Number of spaces for each indentation level' default='2'/>"
+"  <Option name='" +szCOMMENT_OPTION  +"' type='string' description='"
+        "Comment to add at top of generated XML file'/>"
+"  <Option name='"+ szLINEFORMAT_OPTION + "' type='string-select' "
+                            "description='end-of-line sequence' "
+#ifdef WIN32
+                            "default='" + szCRLF + "'>"
+#else
+                            "default='" +szLF + "'>"
+#endif
+"    <Value>" +szCRLF + "</Value>"
+"    <Value>" +szLF + "</Value>"
+"  </Option>"
+"  <Option name='" + szWRAPPING_OPTION + "' type='string-select' "
+          "description='How to wrap features' "
+          "default='" +szWFS2_FEATURECOLLECTION + "'>"
+"    <Value>" + szWFS2_FEATURECOLLECTION + "</Value>"
+"    <Value>" + szGMLAS_FEATURECOLLECTION + "</Value>"
+"  </Option>"
+"  <Option name='" + szTIMESTAMP_OPTION +"' type='string' "
+    "description='User-specified XML "
+    "dateTime value for timestamp to use in wfs:FeatureCollection attribute."
+    "Only valid for " +szWRAPPING_OPTION + "=" + szWFS2_FEATURECOLLECTION +"'/>"
+"  <Option name='" + szWFS20_SCHEMALOCATION_OPTION + "' type='string' "
+    "description='Path or URL to wfs.xsd. Only valid for " +
+    szWRAPPING_OPTION + "=" + szWFS2_FEATURECOLLECTION +"'/>"
+"  <Option name='" + szGENERATE_XSD_OPTION + "' type='boolean' "
+          "description='Whether to generate a .xsd file. Only valid for "
+          + szWRAPPING_OPTION + "=" + szGMLAS_FEATURECOLLECTION +"' "
+          "default='YES'/>"
+"  <Option name='" + szOUTPUT_XSD_FILENAME_OPTION + "' type='string' "
+          "description='Wrapping .xsd filename. If not specified, same "
+          "basename as output file with .xsd extension. Only valid for "
+          + szWRAPPING_OPTION + "=" + szGMLAS_FEATURECOLLECTION +"'/>"
+"</CreationOptionList>").c_str() );
+
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRGMLASDriverOpen;
+    poDriver->pfnCreateCopy = OGRGMLASDriverCreateCopy;
     poDriver->pfnIdentify = OGRGMLASDriverIdentify;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

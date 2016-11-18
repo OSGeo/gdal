@@ -342,6 +342,7 @@ typedef struct
 class SetupTargetLayer
 {
 public:
+    GDALDataset          *m_poSrcDS;
     GDALDataset          *m_poDstDS;
     char                **m_papszLCO;
     OGRSpatialReference  *m_poOutputSRS;
@@ -1183,6 +1184,320 @@ GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTran
 }
 
 /************************************************************************/
+/*                     GDALVectorTranslateCreateCopy()                  */
+/************************************************************************/
+
+static GDALDataset* GDALVectorTranslateCreateCopy(
+                                    GDALDriver* poDriver,
+                                    const char* pszDest,
+                                    GDALDataset* poDS,
+                                    const GDALVectorTranslateOptions* psOptions)
+{
+    const char* const szErrorMsg = "%s not supported by this output driver";
+    if( psOptions->bSkipFailures )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-skipfailures");
+        return NULL;
+    }
+    if( psOptions->nLayerTransaction >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-lyr_transaction or -ds_transaction");
+        return NULL;
+    }
+    if( psOptions->nFIDToFetch >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-fid");
+        return NULL;
+    }
+    if( psOptions->papszLCO )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-lco");
+        return NULL;
+    }
+    if( psOptions->bAddMissingFields )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-addfields");
+        return NULL;
+    }
+    if( psOptions->pszOutputSRSDef )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-a_srs/-t_srs");
+        return NULL;
+    }
+    if( psOptions->pszSourceSRSDef )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-s_srs");
+        return NULL;
+    }
+    if( !psOptions->bExactFieldNameMatch )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-relaxedFieldNameMatch");
+        return NULL;
+    }
+    if( psOptions->pszNewLayerName )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-nln");
+        return NULL;
+    }
+    if( psOptions->papszSelFields )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-select");
+        return NULL;
+    }
+    if( psOptions->pszSQLStatement )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-sql");
+        return NULL;
+    }
+    if( psOptions->pszDialect )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-dialect");
+        return NULL;
+    }
+    if( psOptions->eGType != GEOMTYPE_UNCHANGED ||
+        psOptions->eGeomTypeConversion != GTC_DEFAULT )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-nlt");
+        return NULL;
+    }
+    if( psOptions->papszFieldTypesToString )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-fieldTypeToString");
+        return NULL;
+    }
+    if( psOptions->papszMapFieldType )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-mapFieldType");
+        return NULL;
+    }
+    if( psOptions->bUnsetFieldWidth )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-unsetFieldWidth");
+        return NULL;
+    }
+    if( psOptions->bWrapDateline )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-wrapdateline");
+        return NULL;
+    }
+    if( psOptions->bClipSrc )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipsrc");
+        return NULL;
+    }
+    if( psOptions->pszClipSrcSQL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipsrcsql");
+        return NULL;
+    }
+    if( psOptions->pszClipSrcLayer )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipsrclayer");
+        return NULL;
+    }
+    if( psOptions->pszClipSrcWhere )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipsrcwhere");
+        return NULL;
+    }
+    if( psOptions->pszClipDstDS || psOptions->hClipDst )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipdst");
+        return NULL;
+    }
+    if( psOptions->pszClipDstSQL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipdstsql");
+        return NULL;
+    }
+    if( psOptions->pszClipDstLayer )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipdstlayer");
+        return NULL;
+    }
+    if( psOptions->pszClipDstWhere )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-clipdstwhere");
+        return NULL;
+    }
+    if( psOptions->bSplitListFields )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-splitlistfields");
+        return NULL;
+    }
+    if( psOptions->nMaxSplitListSubFields >= 0 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-maxsubfields");
+        return NULL;
+    }
+    if( psOptions->bExplodeCollections )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-explodecollections");
+        return NULL;
+    }
+    if( psOptions->pszZField )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-zfield");
+        return NULL;
+    }
+    if( psOptions->nGCPCount )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-gcp");
+        return NULL;
+    }
+    if( psOptions->papszFieldMap )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-fieldmap");
+        return NULL;
+    }
+    if( psOptions->bForceNullable )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-forceNullable");
+        return NULL;
+    }
+    if( psOptions->bUnsetDefault )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-unsetDefault");
+        return NULL;
+    }
+    if( psOptions->bUnsetFid )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-unsetFid");
+        return NULL;
+    }
+    if( !psOptions->bCopyMD )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-nomd");
+        return NULL;
+    }
+    if( !psOptions->bNativeData )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-noNativeData");
+        return NULL;
+    }
+    if( psOptions->papszMetadataOptions )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-mo");
+        return NULL;
+    }
+
+    if( psOptions->pszWHERE )
+    {
+        // Hack for GMLAS driver
+        if( EQUAL(poDriver->GetDescription(), "GMLAS") )
+        {
+            if( psOptions->papszLayers == NULL )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "-where not supported by this output driver "
+                         "without explicit layer name(s)");
+                return NULL;
+            }
+            else
+            {
+                char** papszIter = psOptions->papszLayers;
+                for( ; *papszIter != NULL; ++papszIter )
+                {
+                    OGRLayer* poSrcLayer = poDS->GetLayerByName(*papszIter);
+                    if( poSrcLayer != NULL )
+                    {
+                        poSrcLayer->SetAttributeFilter( psOptions->pszWHERE );
+                    }
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-where");
+            return NULL;
+        }
+    }
+
+    if( psOptions->hSpatialFilter )
+    {
+        for( int i=0; i<poDS->GetLayerCount();++i)
+        {
+            OGRLayer* poSrcLayer = poDS->GetLayer(i);
+            if( poSrcLayer &&
+                poSrcLayer->GetLayerDefn()->GetGeomFieldCount() > 0 &&
+                (psOptions->papszLayers == NULL ||
+                 CSLFindString(psOptions->papszLayers,
+                               poSrcLayer->GetName())>=0) )
+            {
+                if( psOptions->pszGeomField != NULL )
+                {
+                    const int iGeomField = poSrcLayer->GetLayerDefn()->
+                            GetGeomFieldIndex(psOptions->pszGeomField);
+                    if( iGeomField >= 0 )
+                        poSrcLayer->SetSpatialFilter( iGeomField,
+                            reinterpret_cast<OGRGeometry*>(
+                                                psOptions->hSpatialFilter) );
+                    else
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Cannot find geometry field %s in layer %s. "
+                                  "Applying to first geometry field",
+                                  psOptions->pszGeomField,
+                                  poSrcLayer->GetName() );
+                }
+                else
+                {
+                    poSrcLayer->SetSpatialFilter(
+                        reinterpret_cast<OGRGeometry*>(
+                                            psOptions->hSpatialFilter) );
+                }
+            }
+        }
+    }
+
+    char** papszDSCO = CSLDuplicate(psOptions->papszDSCO);
+    if( psOptions->papszLayers )
+    {
+        // Hack for GMLAS driver
+        if( EQUAL(poDriver->GetDescription(), "GMLAS") )
+        {
+            CPLString osLayers;
+            char** papszIter = psOptions->papszLayers;
+            for( ; *papszIter != NULL; ++papszIter )
+            {
+                if( !osLayers.empty() )
+                    osLayers += ",";
+                osLayers += *papszIter;
+            }
+            papszDSCO = CSLSetNameValue(papszDSCO, "LAYERS", osLayers);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg,
+                     "Specifying layers");
+            CSLDestroy(papszDSCO);
+            return NULL;
+        }
+    }
+
+    // Hack for GMLAS driver (this speed up deletion by avoiding the GML
+    // driver to try parsing a pre-existing file). Could be potentially
+    // removed if the GML driver implemented fast dataset opening (ie
+    // without parsing) and GetFileList()
+    if( EQUAL(poDriver->GetDescription(), "GMLAS") )
+    {
+        GDALDriverH hIdentifyingDriver = GDALIdentifyDriver(pszDest, NULL);
+        if( hIdentifyingDriver != NULL &&
+            EQUAL( GDALGetDescription(hIdentifyingDriver), "GML" ) )
+        {
+            VSIUnlink( pszDest );
+            VSIUnlink( CPLResetExtension(pszDest, "gfs") );
+        }
+    }
+
+    GDALDataset* poOut = poDriver->CreateCopy(pszDest, poDS, FALSE,
+                                              papszDSCO,
+                                              psOptions->pfnProgress,
+                                              psOptions->pProgressData);
+    CSLDestroy(papszDSCO);
+    return poOut;
+}
+
+/************************************************************************/
 /*                           GDALVectorTranslate()                      */
 /************************************************************************/
 /**
@@ -1445,25 +1760,42 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     bool bNewDataSource = false;
     if( !bUpdate )
     {
-        OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
+        GDALDriverManager *poDM = GetGDALDriverManager();
 
-        poDriver = poR->GetDriverByName(psOptions->pszFormat);
+        poDriver = poDM->GetDriverByName(psOptions->pszFormat);
         if( poDriver == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Unable to find driver `%s'.", psOptions->pszFormat );
-            fprintf( stderr,  "The following drivers are available:\n" );
-
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
-            {
-                fprintf( stderr,  "  -> `%s'\n", poR->GetDriver(iDriver)->GetDescription() );
-            }
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Unable to find driver `%s'.", psOptions->pszFormat );
             GDALVectorTranslateOptionsFree(psOptions);
             return NULL;
         }
 
-        if( !CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(), GDAL_DCAP_CREATE, "FALSE") ) )
+        char** papszDriverMD = poDriver->GetMetadata();
+        if( !CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                               GDAL_DCAP_VECTOR, "FALSE") ) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "%s driver does not support data source creation.",
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s driver has no vector capabilities.",
+                      psOptions->pszFormat );
+            GDALVectorTranslateOptionsFree(psOptions);
+            return NULL;
+        }
+
+        if( !CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                               GDAL_DCAP_CREATE, "FALSE") ) )
+        {
+            if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD,
+                                            GDAL_DCAP_CREATECOPY, "FALSE") ) )
+            {
+                poODS = GDALVectorTranslateCreateCopy(poDriver, pszDest,
+                                                      poDS, psOptions);
+                GDALVectorTranslateOptionsFree(psOptions);
+                return poODS;
+            }
+
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s driver does not support data source creation.",
                     psOptions->pszFormat );
             GDALVectorTranslateOptionsFree(psOptions);
             return NULL;
@@ -1643,6 +1975,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /*      Create layer setup and transformer objects.                     */
 /* -------------------------------------------------------------------- */
     SetupTargetLayer oSetup;
+    oSetup.m_poSrcDS = poDS;
     oSetup.m_poDstDS = poODS;
     oSetup.m_papszLCO = psOptions->papszLCO;
     oSetup.m_poOutputSRS = poOutputSRS;
@@ -1863,7 +2196,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
         GDALProgressFunc pfnProgress = NULL;
         void        *pProgressArg = NULL;
-        if ( psOptions->bDisplayProgress )
+        if ( !psOptions->bQuiet )
         {
             pfnProgress = psOptions->pfnProgress;
             pProgressArg = psOptions->pProgressData;
@@ -2805,6 +3138,19 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
             CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
+        }
+        // Special case for conversion from GMLAS driver to ensure that
+        // source geometry field name will be used as much as possible
+        // FIXME: why not make this general behaviour ?
+        else if( anRequestedGeomFields.size() == 0 &&
+                 nSrcGeomFieldCount == 1 &&
+                 m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
+                 m_poSrcDS != NULL &&
+                 m_poSrcDS->GetDriver() != NULL &&
+                 EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GMLAS") )
+        {
+            anRequestedGeomFields.push_back(0);
+            eGCreateLayerType = wkbNone;
         }
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
@@ -4007,7 +4353,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
         else if( EQUAL(papszArgv[i],"-f") && i+1 < nArgc )
         {
             CPLFree(psOptions->pszFormat);
-            psOptions->pszFormat = CPLStrdup(papszArgv[++i]);
+            const char* pszFormatArg = papszArgv[++i];
+            psOptions->pszFormat = CPLStrdup(pszFormatArg);
             if( psOptionsForBinary )
             {
                 psOptionsForBinary->bFormatExplicitlySet = TRUE;

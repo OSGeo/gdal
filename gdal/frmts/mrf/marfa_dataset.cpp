@@ -80,6 +80,7 @@ GDALMRFDataset::GDALMRFDataset() :
     hasVersions(FALSE),
     verCount(0),
     bCrystalized(FALSE), // Assume not in create mode
+    spacing(0),
     poSrcDS(NULL),
     level(-1),
     cds(NULL),
@@ -1092,6 +1093,8 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
         CPLCreateXMLElementAndValue(raster, "DataFile", full.datfname.c_str());
     if (full.idxfname != getFname(GetFname(), ".idx"))
         CPLCreateXMLElementAndValue(raster, "IndexFile", full.idxfname.c_str());
+    if (spacing != 0)
+        XMLSetAttributeVal(raster, "Spacing", static_cast<double>(spacing), "%.0f");
 
     XMLSetAttributeVal(raster, "Size", full.size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", full.pagesize, "%.0f");
@@ -1202,6 +1205,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
 
     hasVersions = on(CPLGetXMLValue(config, "Raster.versioned", "no"));
     mp_safe = on(CPLGetXMLValue(config, "Raster.mp_safe", "no"));
+    spacing = atoi(CPLGetXMLValue(config, "Raster.Spacing", "0"));
 
     Quality = full.quality;
     if (CE_None != ret)
@@ -1613,6 +1617,9 @@ void GDALMRFDataset::ProcessCreateOptions(char **papszOptions)
     val = opt.FetchNameValue("INDEXNAME");
     if (val) img.idxfname = val;
 
+    val = opt.FetchNameValue("SPACING");
+    if (val) spacing = atoi(val);
+
     optlist.Assign(CSLTokenizeString2(opt.FetchNameValue("OPTIONS"),
         " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
 
@@ -1790,6 +1797,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     if (l_ifp == NULL || l_dfp == NULL)
         return CE_Failure;
 
+    // If it has versions, might need to start a new one
     if (hasVersions) {
         int new_version = false; // Assume no need to build new version
         int new_tile = false;
@@ -1798,7 +1806,7 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
         VSIFSeekL(l_ifp, infooffset, SEEK_SET);
         VSIFReadL(&tinfo, 1, sizeof(ILIdx), l_ifp);
 
-        if (verCount != 0) { // We have at least two versions before we test buffers
+        if (verCount != 0) { // We need at least two versions before we test buffers
             ILIdx prevtinfo = { 0, 0 };
 
             // Read the previous one
@@ -1848,11 +1856,30 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
     tinfo.size = net64(size);
 
     if (size) do {
+
         // These statements are the critical MP section for the data file
         VSIFSeekL(l_dfp, 0, SEEK_END);
         GUIntBig offset = VSIFTellL(l_dfp);
+
+        if( spacing != 0 )
+        {
+            // This should not be true in MP safe mode.
+            // Use the same buffer, MRF doesn't care about the spacing content.
+            // TODO(lplesea): Make sure size doesn't overflow.
+            const int pad =
+                static_cast<int>(size) >= spacing
+                ? spacing
+                : static_cast<int>(size);
+            if( pad != spacing )
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "MRF spacing failed, check the output");
+            offset += pad;
+            VSIFWriteL(buff, 1, spacing, l_dfp);
+        }
+
         if (static_cast<size_t>(size) != VSIFWriteL(buff, 1, static_cast<size_t>(size), l_dfp))
             ret = CE_Failure;
+        // End of critical section
 
         tinfo.offset = net64(offset);
         //

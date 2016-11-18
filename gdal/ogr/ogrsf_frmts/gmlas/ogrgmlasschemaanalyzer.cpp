@@ -173,12 +173,12 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
     , m_bUseArrays(true)
     , m_bInstantiateGMLFeaturesOnly(true)
     , m_nIdentifierMaxLength(0)
-    , m_bCaseInsensitiveIdentifier(GMLASConfiguration::CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
-    , m_bPGIdentifierLaundering(GMLASConfiguration::PG_IDENTIFIER_LAUNDERING_DEFAULT)
+    , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
+    , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
 {
     // A few hardcoded namespace uri->prefix mappings
-    m_oMapURIToPrefix[ pszXMLNS_URI ] = "xmlns";
-    m_oMapURIToPrefix[ pszXSI_URI ] = "xsi";
+    m_oMapURIToPrefix[ szXMLNS_URI ] = szXMLNS_PREFIX;
+    m_oMapURIToPrefix[ szXSI_URI ] = szXSI_PREFIX;
 }
 
 /************************************************************************/
@@ -198,8 +198,8 @@ CPLString GMLASSchemaAnalyzer::GetPrefix( const CPLString& osNamespaceURI )
         // If the schema doesn't define a xmlns:MYPREFIX=myuri, then forge a
         // fake prefix for conveniency
         CPLString osPrefix;
-        if( osNamespaceURI.find("http://www.opengis.net/") == 0 )
-            osPrefix = osNamespaceURI.substr( strlen("http://www.opengis.net/") );
+        if( osNamespaceURI.find(szOPENGIS_URL) == 0 )
+            osPrefix = osNamespaceURI.substr( strlen(szOPENGIS_URL) );
         else if( osNamespaceURI.find("http://") == 0 )
             osPrefix = osNamespaceURI.substr( strlen("http://") );
         else
@@ -354,8 +354,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
     while( bHasDoneSomeRenaming );
 
     // Now check if we must truncate names
-    if( m_nIdentifierMaxLength >=
-                    GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
+    if( m_nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
     {
         for(size_t i=0; i< aoFields.size();i++)
         {
@@ -446,8 +445,7 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
         CollectClassesReferences( m_aoClasses[i], aoClasses );
     }
 
-    if( m_nIdentifierMaxLength >=
-                    GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
+    if( m_nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
     {
         for(size_t i=0; i< aoClasses.size();i++)
         {
@@ -517,8 +515,7 @@ CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
     char szDigits[4];
     snprintf(szDigits, sizeof(szDigits), "%0*d",
                 nDigitsSize, iOccurrence);
-    if( m_nIdentifierMaxLength >=
-        GMLASConfiguration::MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
+    if( m_nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
     {
         if( static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
         {
@@ -738,7 +735,7 @@ static XSComplexTypeDefinition* IsEltCompatibleOfFC(
 {
     XSTypeDefinition* poTypeDef = poEltDecl->getTypeDefinition();
     if( poTypeDef->getTypeCategory() == XSTypeDefinition::COMPLEX_TYPE &&
-        transcode(poEltDecl->getName()) != "FeatureCollection" )
+        transcode(poEltDecl->getName()) != szFEATURE_COLLECTION )
     {
         XSComplexTypeDefinition* poCT =
                     reinterpret_cast<XSComplexTypeDefinition*>(poTypeDef);
@@ -787,7 +784,7 @@ bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration* poEltDecl)
 
 bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                   const CPLString& osBaseDirname,
-                                  const std::vector<PairURIFilename>& aoXSDs)
+                                  std::vector<PairURIFilename>& aoXSDs)
 {
     GMLASUniquePtr<XMLGrammarPool> poGrammarPool(
          (new XMLGrammarPoolImpl(XMLPlatformUtils::fgMemoryManager)));
@@ -797,6 +794,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                                     m_oMapURIToPrefix,
                                                     oCache );
 
+    aoNamespaces.push_back("");
     for( size_t i = 0; i < aoXSDs.size(); i++ )
     {
         const CPLString osURI(aoXSDs[i].first);
@@ -845,10 +843,22 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         // schemaLocation if the grammar returns an empty namespace.
         CPLString osGrammarURI( transcode(poGrammar->getTargetNamespace()) );
         if( osGrammarURI.empty() )
-            aoNamespaces.push_back( osURI );
-        else
+        {
+            if( !osURI.empty() )
+                osGrammarURI = osURI;
+        }
+        if( !osGrammarURI.empty() )
+        {
+            // Patch back the aoXSDs element in case we didn't know the
+            // namespace URI initially
+            if( osURI.empty() )
+                aoXSDs[i].first = osGrammarURI;
             aoNamespaces.push_back( osGrammarURI );
+        }
     }
+
+    m_osGMLVersionFound = oXSDEntityResolver.GetGMLVersionFound();
+    m_oSetSchemaURLs = oXSDEntityResolver.GetSchemaURLS();
 
     m_oIgnoredXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
 
@@ -878,10 +888,10 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     for( ; oIterNS != oMapURIToPrefixWithEmpty.end(); ++oIterNS)
     {
         const CPLString& osNSURI(oIterNS->first);
-        if( osNSURI == pszXS_URI ||
-            osNSURI == pszXSI_URI ||
-            osNSURI == pszXMLNS_URI ||
-            osNSURI == pszXLINK_URI )
+        if( osNSURI == szXS_URI ||
+            osNSURI == szXSI_URI ||
+            osNSURI == szXMLNS_URI ||
+            osNSURI == szXLINK_URI )
         {
             continue;
         }
@@ -917,15 +927,15 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
             XSElementDeclaration* poSubstGroup =
                             poEltDecl->getSubstitutionGroupAffiliation();
             const CPLString osEltXPath(
-                            transcode(poEltDecl->getNamespace()) + ":" +
-                            transcode(poEltDecl->getName()));
+                            MakeXPath(transcode(poEltDecl->getNamespace()),
+                                      transcode(poEltDecl->getName())));
             if( poSubstGroup )
             {
                 m_oMapParentEltToChildElt[poSubstGroup].push_back(poEltDecl);
 #ifdef DEBUG_VERBOSE
-                CPLString osParentType(
-                            transcode(poSubstGroup->getNamespace()) + ":" +
-                            transcode(poSubstGroup->getName()));
+                CPLString osParentType(MakeXPath(
+                            transcode(poSubstGroup->getNamespace()),
+                            transcode(poSubstGroup->getName())));
                 CPLDebug("GMLAS", "%s is a substitution for %s",
                         osEltXPath.c_str(),
                         osParentType.c_str());
@@ -1202,24 +1212,31 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 
         std::set<XSModelGroup*> oSetVisitedModelGroups;
 
-        std::map< CPLString, int > oMapCountOccurencesOfSameName;
-        BuildMapCountOccurencesOfSameName(
-            poCT->getParticle()->getModelGroupTerm(),
-            oMapCountOccurencesOfSameName);
-
         oClass.SetDocumentation( GetAnnotationDoc(poEltDecl) );
 
-        if( !ExploreModelGroup(
-                            poCT->getParticle()->getModelGroupTerm(),
-                            poCT->getAttributeUses(),
-                            oClass,
-                            0,
-                            oSetVisitedModelGroups,
-                            poModel,
-                            oMapCountOccurencesOfSameName) )
+        // might be NULL on swe:values for example
+        if( poCT->getParticle() != NULL )
         {
-            bError = true;
-            return false;
+            std::map< CPLString, int > oMapCountOccurencesOfSameName;
+            BuildMapCountOccurencesOfSameName(
+                poCT->getParticle()->getModelGroupTerm(),
+                oMapCountOccurencesOfSameName);
+            if( !ExploreModelGroup(
+                                poCT->getParticle()->getModelGroupTerm(),
+                                poCT->getAttributeUses(),
+                                oClass,
+                                0,
+                                oSetVisitedModelGroups,
+                                poModel,
+                                oMapCountOccurencesOfSameName) )
+            {
+                bError = true;
+                return false;
+            }
+        }
+        else
+        {
+            // TODO ?
         }
 
         LaunderFieldNames( oClass );
@@ -1387,7 +1404,7 @@ static bool IsAnyType(XSComplexTypeDefinition* poType)
     XSParticleList* poParticles = NULL;
     return XMLString::equals(poType->getBaseType()->getNamespace(),
                              PSVIUni::fgNamespaceXmlSchema) &&
-        transcode( poType->getBaseType()->getName() ) == "anyType" &&
+        transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE &&
         (poParticle = poType->getParticle()) != NULL &&
         (poGroupTerm = poParticle->getModelGroupTerm()) != NULL &&
         (poParticles = poGroupTerm->getParticles()) != NULL &&
@@ -1453,7 +1470,7 @@ void GMLASSchemaAnalyzer::SetFieldFromAttribute(
         {
             // We should probably create an auxiliary table here, but this
             // is too corner case for now...
-            oField.SetType( GMLAS_FT_STRING, "string" );
+            oField.SetType( GMLAS_FT_STRING, szXS_STRING );
         }
     }
 
@@ -1625,7 +1642,7 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             oField.SetMaxOccurs( nMaxOccurs );
             oField.SetCategory( GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK );
             oField.SetRelatedClassXPath(osSubEltXPath);
-            oField.SetType( GMLAS_FT_STRING, "string" );
+            oField.SetType( GMLAS_FT_STRING, szXS_STRING );
             oClass.AddField( oField );
         }
     }
@@ -1667,8 +1684,8 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             }
             // Create a fake XPath binding the parent xpath (to an abstract
             // element) to the child element
-            oJunctionTable.SetXPath( osElementXPath + "|" +
-                                        osSubEltXPath );
+            oJunctionTable.SetXPath(
+                BuildJunctionTableXPath(osElementXPath, osSubEltXPath) );
             oJunctionTable.SetParentXPath( oClass.GetXPath() );
             oJunctionTable.SetChildXPath( osSubEltXPath );
             m_aoClasses.push_back(oJunctionTable);
@@ -1836,7 +1853,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             else if( poElt->getAbstract() &&
                      IsGMLNamespace(osEltNS) &&
                      osEltName != "_Feature" &&
-                     osEltName != "AbstractFeature" )
+                     osEltName != "AbstractFeature" &&
+                     osEltName != "AbstractTimeObject" )
             {
                 // Do nothing
             }
@@ -2100,12 +2118,12 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 
 bool GMLASSchemaAnalyzer::IsGMLNamespace(const CPLString& osURI)
 {
-    if( osURI.find(pszGML_URI) == 0 )
+    if( osURI.find(szGML_URI) == 0 )
         return true;
     // Below is mostly for unit tests were we use xmlns:gml="http://fake_gml"
     std::map<CPLString,CPLString>::const_iterator oIter =
                                         m_oMapURIToPrefix.find(osURI);
-    return oIter != m_oMapURIToPrefix.end() && oIter->second == "gml";
+    return oIter != m_oMapURIToPrefix.end() && oIter->second == szGML_PREFIX;
 }
 
 /************************************************************************/
@@ -2133,6 +2151,26 @@ void GMLASSchemaAnalyzer::BuildMapCountOccurencesOfSameName(
                                               oMapCountOccurencesOfSameName);
         }
     }
+}
+
+/************************************************************************/
+/*                         ComposeMinOccurs()                           */
+/************************************************************************/
+
+static int ComposeMinOccurs(int nVal1, int nVal2)
+{
+    return nVal1 * nVal2;
+}
+
+/************************************************************************/
+/*                         ComposeMaxOccurs()                           */
+/************************************************************************/
+
+static int ComposeMaxOccurs(int nVal1, int nVal2)
+{
+    if( nVal1 == MAXOCCURS_UNLIMITED || nVal2 == MAXOCCURS_UNLIMITED )
+        return MAXOCCURS_UNLIMITED;
+    return nVal1 * nVal2;
 }
 
 /************************************************************************/
@@ -2240,6 +2278,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         {
             XSElementDeclaration* poElt = poParticle->getElementTerm();
             const CPLString osEltName(transcode(poElt->getName()));
+
             std::map< CPLString, int >::const_iterator oIter =
                 oMapCountOccurencesOfSameName.find(osEltName);
             const bool bEltNameWillNeedPrefix =
@@ -2297,7 +2336,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 oField.SetName( osEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
-                oField.SetType( GMLAS_FT_GEOMETRY, "geometry" );
+                oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
                 if( nMaxOccurs > 1 || nMaxOccurs == MAXOCCURS_UNLIMITED )
                 {
                     // Repeated geometry property can happen in some schemas
@@ -2318,7 +2357,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             else if( poElt->getAbstract() &&
                      IsGMLNamespace(osEltNS) &&
                      osEltName != "_Feature" &&
-                     osEltName != "AbstractFeature" )
+                     osEltName != "AbstractFeature" &&
+                     osEltName != "AbstractTimeObject" )
             {
                 GMLASField oField;
                 oField.SetName( osEltName );
@@ -2326,14 +2366,14 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 oField.SetMaxOccurs( nMaxOccurs );
                 if( osEltName == "AbstractGeometry" )
                 {
-                    oField.SetType( GMLAS_FT_GEOMETRY, "geometry" );
+                    oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
                     oField.SetGeomType( wkbUnknown );
                     oField.SetArray( nMaxOccurs > 1 ||
                                      nMaxOccurs == MAXOCCURS_UNLIMITED );
                 }
                 else
                 {
-                    oField.SetType( GMLAS_FT_ANYTYPE, "anyType" );
+                    oField.SetType( GMLAS_FT_ANYTYPE, szXS_ANY_TYPE );
                 }
                 oField.SetIncludeThisEltInBlob( true );
                 oField.SetDocumentation( GetAnnotationDoc( poElt ) );
@@ -2377,7 +2417,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             reinterpret_cast<XSSimpleTypeDefinition*>(poTypeDef);
                 GMLASField oField;
                 SetFieldTypeAndWidthFromDefinition(poST, oField);
-                oField.SetMinOccurs( nMinOccurs );
+                oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
                 oField.SetDocumentation( GetAnnotationDoc( poElt ) );
 
@@ -2392,7 +2432,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         !IsCompatibleOfArray(oField.GetType()) )
                     {
                         // Really particular case. This is a workaround
-                        oField.SetType( GMLAS_FT_STRING, "string" );
+                        oField.SetType( GMLAS_FT_STRING, szXS_STRING );
                     }
                     else
                     {
@@ -2429,6 +2469,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
 
                     oClass.AddNestedClass( oNestedClass );
 
+                    oField.SetType( GMLAS_FT_STRING, "" );
                     oField.SetName( osEltName );
                     oField.SetXPath( osElementXPath );
                     oField.SetCategory(
@@ -2454,9 +2495,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     if( nMinOccurs == 0 && poElt->getNillable() )
                     {
                         GMLASField oFieldNil;
-                        oFieldNil.SetName( osEltName +
-                                           "_nil" );
-                        oFieldNil.SetXPath( osElementXPath + "/@xsi:nil" );
+                        oFieldNil.SetName( osEltName + "_" + szNIL );
+                        oFieldNil.SetXPath( osElementXPath + "/" +
+                                            szAT_XSI_NIL );
                         oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
                         oFieldNil.SetMinOccurs( 0 );
                         oFieldNil.SetMaxOccurs( 1 );
@@ -2474,10 +2515,16 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 bool bNothingMoreToDo = false;
                 std::vector<GMLASFeatureClass> aoNestedClasses;
 
-                const bool bEltRepeatedParticle =
-                    poEltCT->getParticle() != NULL &&
-                    (poEltCT->getParticle()->getMaxOccursUnbounded() ||
-                     poEltCT->getParticle()->getMaxOccurs() > 1);
+                const int nMinOccursEltParticle = poEltCT->getParticle() ?
+                  static_cast<int>(poEltCT->getParticle()->getMinOccurs()) : -1;
+                const int nMaxOccursEltParticle = poEltCT->getParticle() ?
+                    (poEltCT->getParticle()->getMaxOccursUnbounded() ?
+                        MAXOCCURS_UNLIMITED :
+                        static_cast<int>(poEltCT->getParticle()->getMaxOccurs()))
+                    : -1;
+
+                const bool bEltRepeatedParticle = nMaxOccursEltParticle > 1 ||
+                                nMaxOccursEltParticle == MAXOCCURS_UNLIMITED;
                 const bool bMoveNestedClassToTop =
                         !bRepeatedParticle && !bEltRepeatedParticle;
 
@@ -2495,7 +2542,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     SetFieldFromAttribute(oField, poAttr,
                                           osElementXPath,
                                           osNamePrefix);
-                    if( nMinOccurs == 0 )
+                    if( nMinOccurs == 0 || bIsChoice )
                     {
                         oField.SetMinOccurs(0);
                         oField.SetNotNullable(false);
@@ -2525,19 +2572,19 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 if( poAttrWildcard != NULL )
                 {
                     GMLASField oField;
-                    oField.SetType( GMLASField::GetTypeFromString("string"),
-                                    "json_dict" );
+                    oField.SetType( GMLASField::GetTypeFromString(szXS_STRING),
+                                    szFAKEXS_JSON_DICT );
                     if( !bMoveNestedClassToTop )
                     {
                         oField.SetName( "anyAttributes" );
                     }
                     else
                     {
-                        oField.SetName( osEltName +
-                                                    "_anyAttributes" );
+                        oField.SetName( osEltName + "_anyAttributes" );
                     }
-                    oField.SetXPath(  osElementXPath + "/@*" );
-                    oField.SetDocumentation( GetAnnotationDoc( poAttrWildcard->getAnnotation() ) );
+                    oField.SetXPath(  osElementXPath + "/" + szAT_ANY_ATTR );
+                    oField.SetDocumentation( GetAnnotationDoc(
+                                            poAttrWildcard->getAnnotation() ) );
 
                     aoFields.push_back(oField);
                 }
@@ -2581,8 +2628,25 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         }
 
                         oField.SetName( osEltName );
-                        oField.SetMinOccurs( nMinOccurs );
+                        oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
+
+                        // If the element has minOccurs=0 and is nillable, then we
+                        // need an extra field to be able to distinguish between the
+                        // case of the missing element or the element with
+                        // xsi:nil="true"
+                        if( nMinOccurs == 0 && poElt->getNillable() )
+                        {
+                            GMLASField oFieldNil;
+                            oFieldNil.SetName( osEltName + "_" + szNIL );
+                            oFieldNil.SetXPath( osElementXPath + "/" +
+                                                szAT_XSI_NIL );
+                            oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
+                            oFieldNil.SetMinOccurs( 0 );
+                            oFieldNil.SetMaxOccurs( 1 );
+                            aoFields.push_back(oFieldNil);
+                        }
+
                     }
                     oField.SetXPath( osElementXPath );
                     oField.SetDocumentation( GetAnnotationDoc( poElt ) );
@@ -2597,7 +2661,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 else if( IsAnyType(poEltCT) )
                 {
                     GMLASField oField;
-                    oField.SetType( GMLAS_FT_ANYTYPE, "anyType" );
+                    oField.SetType( GMLAS_FT_ANYTYPE, szXS_ANY_TYPE );
                     if( bRepeatedParticle )
                     {
                         oField.SetName( "value" );
@@ -2695,16 +2759,31 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         // handle substitutions
                         if( poTargetElt != NULL && !poTargetElt->getAbstract() )
                         {
+                            // If the element is nillable, then we
+                            // need an extra field to be able to distinguish between the
+                            // case of the missing element or the element with
+                            // xsi:nil="true"
+                            if( poElt->getNillable() )
+                            {
+                                GMLASField oFieldNil;
+                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetXPath( osElementXPath + "/" +
+                                                    szAT_XSI_NIL );
+                                oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
+                                oFieldNil.SetMinOccurs( 0 );
+                                oFieldNil.SetMaxOccurs( 1 );
+                                aoFields.push_back(oFieldNil);
+                            }
+
                             GMLASField oField;
                             // Fake xpath
                             oField.SetXPath(
                                 GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
-                                            osElementXPath + "/@xlink:href"));
-                            oField.SetName( osEltName +
-                                                                    "_pkid" );
+                                            osElementXPath + "/" + szAT_XLINK_HREF));
+                            oField.SetName( osEltName + szPKID_SUFFIX );
                             oField.SetMinOccurs(0);
                             oField.SetMaxOccurs(1);
-                            oField.SetType( GMLAS_FT_STRING, "string" );
+                            oField.SetType( GMLAS_FT_STRING, szXS_STRING );
                             oField.SetCategory(
                                 GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK );
                             oField.SetRelatedClassXPath(osTargetElement);
@@ -2712,6 +2791,22 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         }
                         else if( poTargetElt != NULL && poTargetElt->getAbstract() )
                         {
+                            // If the element is nillable, then we
+                            // need an extra field to be able to distinguish between the
+                            // case of the missing element or the element with
+                            // xsi:nil="true"
+                            if( poElt->getNillable() )
+                            {
+                                GMLASField oFieldNil;
+                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetXPath( osElementXPath + "/" +
+                                                    szAT_XSI_NIL );
+                                oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
+                                oFieldNil.SetMinOccurs( 0 );
+                                oFieldNil.SetMaxOccurs( 1 );
+                                aoFields.push_back(oFieldNil);
+                            }
+
                             // e.g importing http://inspire.ec.europa.eu/schemas/ad/4.0
                             // references bu-base:AbstractConstruction, but sometimes
                             // there are no realization available for it, so no
@@ -2797,14 +2892,11 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             GMLASField oField (oNestedClass.GetFields()[0] );
                             oField.SetName( osEltName + "_" +
                                             oField.GetName() );
-                            if( oField.GetMaxOccurs() == 1 && bEltRepeatedParticle &&
+                            if( oField.GetMaxOccurs() == 1 &&
+                                bEltRepeatedParticle &&
                                 poEltCT->getParticle() != NULL )
                             {
-                                if( poEltCT->getParticle()->getMaxOccursUnbounded() )
-                                    oField.SetMaxOccurs( MAXOCCURS_UNLIMITED );
-                                else
-                                    oField.SetMaxOccurs( static_cast<int>(
-                                        poEltCT->getParticle()->getMaxOccurs()));
+                                oField.SetMaxOccurs( nMaxOccursEltParticle );
                             }
                             oField.SetArray( true );
                             oClass.AddField( oField );
@@ -2836,13 +2928,17 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 oNestedClass.SetName( oClass.GetName() + "_" +
                                         osEltName + "_sequence" );
                                 oNestedClass.SetXPath( oNestedClass.GetXPath() +
-                                        ";extra=sequence");
+                                        szEXTRA_SUFFIX + "sequence");
                                 oNestedClass.SetIsRepeatedSequence( true );
 
                                 GMLASField oField;
                                 oField.SetXPath( osElementXPath );
                                 oField.SetCategory(
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK);
+                                if( nMaxOccursEltParticle != 1 )
+                                    oField.SetRepetitionOnSequence( true );
+                                oField.SetMinOccurs( nMinOccursEltParticle );
+                                oField.SetMaxOccurs( nMaxOccursEltParticle );
                                 oField.SetRelatedClassXPath( oNestedClass.GetXPath() );
                                 oIntermediateNestedClass.AddField(oField);
 
@@ -2852,7 +2948,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
                             else
                             {
-                                oNestedClass.SetIsRepeatedSequence( bEltRepeatedParticle );
+                                oNestedClass.SetIsRepeatedSequence(
+                                                        bEltRepeatedParticle );
                                 oNestedClass.PrependFields( aoFields );
 
                                 oClass.AddNestedClass( oNestedClass );
@@ -2861,6 +2958,28 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             GMLASField oField;
                             oField.SetName( osEltName );
                             oField.SetXPath( osElementXPath );
+                            if( bRepeatedParticle )
+                            {
+                                if( poEltCT->getParticle() != NULL )
+                                {
+                                    oField.SetMinOccurs( ComposeMinOccurs(
+                                        nMinOccurs, nMinOccursEltParticle) );
+                                    oField.SetMaxOccurs( ComposeMaxOccurs(
+                                        nMaxOccurs, nMaxOccursEltParticle) );
+                                }
+                                else
+                                {
+                                    oField.SetMinOccurs( nMinOccurs );
+                                    oField.SetMaxOccurs( nMaxOccurs );
+                                }
+                            }
+                            else if( poEltCT->getParticle() != NULL )
+                            {
+                                if( nMaxOccursEltParticle != 1 )
+                                    oField.SetRepetitionOnSequence( true );
+                                oField.SetMinOccurs( nMinOccursEltParticle );
+                                oField.SetMaxOccurs( nMaxOccursEltParticle );
+                            }
                             oField.SetCategory(
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK);
                             oField.SetRelatedClassXPath( oField.GetXPath() );
@@ -2889,6 +3008,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     GMLASField oField;
                     oField.SetName( osEltName );
                     oField.SetXPath( osElementXPath );
+                    oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
+                    oField.SetMaxOccurs( nMaxOccurs );
                     oField.SetCategory(
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK);
                     oField.SetRelatedClassXPath( oField.GetXPath() );
@@ -2945,13 +3066,15 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 // This is a nasty hack. We set a unique fake xpath *AFTER*
                 // processing the group, so that we can add a fake GROUP field
                 // pointing to the nested class
-                oNestedClass.SetXPath( oClass.GetXPath() + ";extra=" + osGroupName );
+                oNestedClass.SetXPath( oClass.GetXPath() + szEXTRA_SUFFIX + osGroupName );
 
                 if( m_bUseArrays &&
                     oNestedClass.GetFields().size() == 1 &&
                     IsCompatibleOfArray(oNestedClass.GetFields()[0].GetType()) )
                 {
                     GMLASField oField(oNestedClass.GetFields()[0]);
+                    oField.SetMinOccurs( ComposeMinOccurs(oField.GetMinOccurs(), nMinOccurs) );
+                    oField.SetMaxOccurs( ComposeMaxOccurs(oField.GetMaxOccurs(), nMaxOccurs) );
                     oField.SetArray( true );
                     oClass.AddField( oField );
                 }
@@ -2982,6 +3105,22 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     return false;
                 }
             }
+        }
+        else if( poParticle->getTermType() == XSParticle::TERM_WILDCARD )
+        {
+            /* Special case for a layer that matches everything, as found */
+            /* in swe:extension */
+            XSWildcard* poWildcard = poParticle->getWildcardTerm();
+            GMLASField oField;
+            oField.SetXPath( oClass.GetXPath() + szMATCH_ALL );
+            oField.SetName( "value" );
+            oField.SetType( GMLAS_FT_ANYTYPE, szXS_ANY_TYPE );
+            oField.SetIncludeThisEltInBlob( true );
+            oField.SetMinOccurs( nMinOccurs );
+            oField.SetMaxOccurs( 1 );
+            oField.SetDocumentation(
+                        GetAnnotationDoc( poWildcard->getAnnotation() ) );
+            oClass.AddField(oField);
         }
     }
 

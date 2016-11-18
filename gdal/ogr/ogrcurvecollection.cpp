@@ -474,7 +474,7 @@ void OGRCurveCollection::empty( OGRGeometry* poGeom )
         {
             delete papoCurves[i];
         }
-        OGRFree( papoCurves );
+        CPLFree( papoCurves );
     }
 
     nCurveCount = 0;

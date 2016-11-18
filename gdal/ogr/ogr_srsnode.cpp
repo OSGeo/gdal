@@ -425,7 +425,7 @@ int OGR_SRSNode::NeedsQuoting() const
 /**
  * Convert this tree of nodes into WKT format.
  *
- * Note that the returned WKT string should be freed with OGRFree() or
+ * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
  * @param ppszResult the resulting string is returned in this pointer.
@@ -497,7 +497,7 @@ OGRErr OGR_SRSNode::exportToWkt( char ** ppszResult ) const
 /**
  * Convert this tree of nodes into pretty WKT format.
  *
- * Note that the returned WKT string should be freed with OGRFree() or
+ * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
  *
  * @param ppszResult the resulting string is returned in this pointer.

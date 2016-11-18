@@ -1,0 +1,15 @@
+<main xmlns="http://myns"
+      xmlns:myns="http://myns"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://myns fake_gmljp2.xsd">
+    <featureMember>
+        <a>
+            <c>
+                <e>e</e>
+            </c>
+            <d>
+                <f>f</f>
+            </d>
+        </a>
+    </featureMember>
+</main>

@@ -96,7 +96,7 @@ OGRwkbGeometryType OGRMultiCurve::getGeometryType() const
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
         return wkbMultiCurveZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if( flags & OGR_G_MEASURED )
         return wkbMultiCurveM;
     else if( flags & OGR_G_3D )
         return wkbMultiCurveZ;
