@@ -25366,10 +25366,12 @@ fi
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo echo checking for GNM ... support disabled
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
+$as_echo "disabled by user" >&6; }
 else
-  echo checking for GNM ... enabled
   GNM_ENABLED=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
 fi
 GNM_ENABLED=$GNM_ENABLED
 
