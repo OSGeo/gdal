@@ -1358,7 +1358,7 @@ def ogr_interlis2_4():
             ok = ogrtest.check_feature_geometry(geom, val) == 0
         if not ok:
             gdaltest.post_reason('geom check failed.')
-            print geom
+            print(geom)
             return 'fail'
 
     return 'success'
