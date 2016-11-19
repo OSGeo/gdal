@@ -28,8 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gnm_frmts.h"
 #include "gnmfile.h"
+#include "gnm_frmts.h"
+#include "gnm_priv.h"
 
 CPL_CVSID("$Id$");
 

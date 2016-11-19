@@ -211,5 +211,6 @@ devinstall: install libinstall
 !IFDEF INCLUDE_GNM_FRMTS
 	copy gnm\gnm.h $(INCDIR)
 	copy gnm\gnm_api.h $(INCDIR)
+    copy gnm\gnmgraph.h $(INCDIR)
 !ENDIF
 	copy apps\gdal_utils.h $(INCDIR)

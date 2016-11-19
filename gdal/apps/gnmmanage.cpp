@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "commonutils.h"
 #include "cpl_string.h"
+#include "gdal.h"
 #include "gnm.h"
+#include "gnm_priv.h"
 
 //#include "ogr_p.h"
 //#include "gnm.h"
