@@ -32,11 +32,11 @@
 
 #include <cstring>
 
-#include "ogr_core.h"
-#include "ogr_srs_api.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
