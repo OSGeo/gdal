@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gnm_api.h"
+#include "gnm_priv.h"
 #include "ogrsf_frmts.h"
 
 #include <set>

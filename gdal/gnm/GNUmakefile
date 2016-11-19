@@ -1,7 +1,7 @@
 
 include ../GDALmake.opt
 
-INST_H_FILES	=	gnm.h gnm_api.h
+INST_H_FILES	=	gnm.h gnm_api.h gnmgraph.h
 
 OBJ	=	gnmnetwork.o gnmgenericnetwork.o gnmlayer.o gnmrule.o gnmresultlayer.o \
         gnmgraph.o
