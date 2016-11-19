@@ -2079,6 +2079,8 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
                                   adfTOWGS84[6]);
             }
         }
+
+        poSRS->AutoIdentifyEPSG();
     }
 
     return poSRS;
