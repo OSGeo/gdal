@@ -1960,7 +1960,6 @@ def tiff_read_md5():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    print metadata
     if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
