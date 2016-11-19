@@ -1503,7 +1503,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         poLine->getPoint(2, &p);
         poCC->addPoint(&p);
         const double alpha4 =
-            (alpha2 > alpha0) ? alpha0 + kdf2PI : alpha0 - kdf2PI;
+            alpha2 > alpha0 ? alpha0 + kdf2PI : alpha0 - kdf2PI;
         const double alpha3 = (alpha2 + alpha4) / 2.0;
         double x = cx + R * cos(alpha3);
         double y = cy + R * sin(alpha3);
@@ -2915,7 +2915,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 OGRGeometry *poFaceCollectionGeom = NULL;
                 OGRPolygon *poFaceGeom = NULL;
 
-//#ifdef HAVE_GEOS
                 poFaceCollectionGeom = poCollectedGeom->Polygonize();
                 if( poFaceCollectionGeom == NULL )
                 {
@@ -2927,11 +2926,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
 
                 poFaceGeom = GML2FaceExtRing( poFaceCollectionGeom );
-//#else
-                // poFaceGeom = (OGRPolygon*) OGRBuildPolygonFromEdges(
-                //     reinterpret_cast<OGRGeometryH>(poCollectedGeom),
-                //     FALSE, TRUE, 0, NULL);
-//#endif
 
                 if( poFaceGeom == NULL )
                 {

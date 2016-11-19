@@ -1338,16 +1338,11 @@ public:
         {
             while( nSeekForward > 0 )
             {
-#if HAVE_CXX11
-                // If size_t is smaller than vsi_l_offset, possible trouble.
-                static_assert(
-                    sizeof(size_t) >= sizeof(vsi_l_offset),
-                    "size_t must be the same size or bigger than vsi_l_offset");
-#endif
-                size_t nToRead = static_cast<size_t>(
-                    std::min(nTempBufferSize,
-                             static_cast<size_t>(nSeekForward)));
-                if( VSIFReadL(pTempBuffer, nToRead, 1, fp) != 1 )
+                vsi_l_offset nToRead = nSeekForward;
+                if( nToRead > nTempBufferSize )
+                    nToRead = nTempBufferSize;
+                if( VSIFReadL(pTempBuffer, static_cast<size_t>(nToRead),
+                              1, fp) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Cannot seek to block %d", nBlockId);

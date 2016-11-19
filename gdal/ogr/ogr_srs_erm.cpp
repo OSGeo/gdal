@@ -27,7 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -48,9 +58,8 @@ OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromERM", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromERM( pszProj,
-                                                          pszDatum,
-                                                          pszUnits );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        importFromERM(pszProj, pszDatum, pszUnits);
 }
 
 /************************************************************************/
@@ -141,8 +150,8 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToERM", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->exportToERM( pszProj, pszDatum,
-                                                        pszUnits );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        exportToERM(pszProj, pszDatum, pszUnits);
 }
 
 /************************************************************************/
