@@ -344,14 +344,17 @@ the below syntax (elements starting with "#" are documentation, and can be omitt
         ],
 
         "#gml_filelist_doc" :[
-            "An array of GML files. Can be either GML filenames, ",
+            "An array of GML files or vector files that will be on-the-fly converted",
+            "to GML 3.2. Can be either GML filenames (or other OGR datasource names), ",
             "or a more complete description" ],
         "gml_filelist": [
 
             "my.gml",
 
+            "my.shp",
+
             {
-                "#file_doc": "Can use relative or absolute paths. Exclusive of remote_resource",
+                "#file_doc": "OGR datasource. Can use relative or absolute paths. Exclusive of remote_resource",
                 "file": "converted/test_0.gml",
 
                 "#remote_resource_doc": "URL of a feature collection that must be referenced through a xlink:href",
