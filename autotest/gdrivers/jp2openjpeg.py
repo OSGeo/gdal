@@ -2917,6 +2917,10 @@ def jp2openjpeg_45():
         gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'
+    if myshape_gml.find("""http://www.opengis.net/def/crs/EPSG/0/4326""") < 0:
+        gdaltest.post_reason('fail')
+        print(myshape_gml)
+        return 'fail'
 
     myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
     if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
