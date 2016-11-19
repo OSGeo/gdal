@@ -867,9 +867,9 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
     // needs to be reacquired within the destructor during driver
     // deregistration.
 
-#if HAVE_CXX11
-    std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#endif
+//#if HAVE_CXX11
+//    std::lock_guard<std::mutex> oLock(oDeleteMutex);
+//#endif
 
     if( poDM != NULL )
     {
