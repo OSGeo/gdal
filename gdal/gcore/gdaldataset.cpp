@@ -4217,12 +4217,12 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
     {
         if(NULL == pszSRSWKT)
         {
-        poDstLayer =ICreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
-                                  poSrcDefn->GetGeomType(), papszOptions );
-    }
+            poDstLayer =ICreateLayer( pszNewName, poSrcLayer->GetSpatialRef(),
+                                      poSrcDefn->GetGeomType(), papszOptions );
+        }
         else
         {
-            // remove DST_WKT from option list to prevent WARNINfrom driver
+            // remove DST_WKT from option list to prevent warning from driver
             int nSRSPos = CSLFindName(papszOptions, "DST_SRSWKT");
             papszOptions = CSLRemoveStrings(papszOptions, nSRSPos, 1, NULL);
             poDstLayer = ICreateLayer( pszNewName, &oDstSpaRef,
