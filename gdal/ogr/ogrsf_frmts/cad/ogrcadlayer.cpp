@@ -211,7 +211,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     if( NULL == poCADGeometry || GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                 "Failed to get geometry with ID = %lld from layer \"%s\". Libopencad errorcode: %d",
+                 "Failed to get geometry with ID = " CPL_FRMT_GIB " from layer \"%s\". Libopencad errorcode: %d",
                  nFID, poCADLayer.getName().c_str(), GetLastErrorCode() );
         return NULL;
     }

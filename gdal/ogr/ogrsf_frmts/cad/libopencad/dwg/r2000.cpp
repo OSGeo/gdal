@@ -79,7 +79,8 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     }
 
     pFileIO->Read( & dHeaderVarsSectionLength, 4 );
-    DebugMsg( "Header variables section length: %zd\n", dHeaderVarsSectionLength );
+        DebugMsg( "Header variables section length: %d\n",
+                  static_cast<int>(dHeaderVarsSectionLength) );
 
     size_t nBitOffsetFromStart = 0;
     pabyBuf = new char[dHeaderVarsSectionLength + 4];
@@ -660,7 +661,8 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         }
 
         pFileIO->Read( & dSectionSize, 4 );
-        DebugMsg( "Classes section length: %zd\n", dSectionSize );
+        DebugMsg( "Classes section length: %d\n",
+                  static_cast<int>(dSectionSize) );
 
         pabySectionContent = new char[dSectionSize + 4];
         pFileIO->Read( pabySectionContent, dSectionSize );
@@ -718,7 +720,8 @@ int DWGFileR2000::CreateFileMap()
         pFileIO->Read( &dSectionSize, 2 );
         SwapEndianness( dSectionSize, sizeof( dSectionSize ) );
 
-        DebugMsg( "Object map section #%zd size: %hu\n", ++nSection, dSectionSize );
+        DebugMsg( "Object map section #%d size: %d\n",
+                  static_cast<int>(++nSection), dSectionSize );
 
         if( dSectionSize == 2 )
             break; // last section is empty.

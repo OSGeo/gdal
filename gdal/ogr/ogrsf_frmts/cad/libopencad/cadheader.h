@@ -680,7 +680,7 @@ public:
      */
     int              addValue( short code, const CADVariant& val );
     int              addValue( short code, const char * val );
-    int              addValue( short code, long val );
+    //int              addValue( short code, long val );
     int              addValue( short code, int val );
     int              addValue( short code, short val );
     int              addValue( short code, double val );

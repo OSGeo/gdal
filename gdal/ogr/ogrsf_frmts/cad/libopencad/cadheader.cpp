@@ -418,12 +418,12 @@ int CADHeader::addValue( short code, const char * val )
 {
     return addValue( code, CADVariant( val ) );
 }
-
+/*
 int CADHeader::addValue( short code, long val )
 {
     return addValue( code, CADVariant( val ) );
 }
-
+*/
 int CADHeader::addValue( short code, int val )
 {
     return addValue( code, CADVariant( val ) );
