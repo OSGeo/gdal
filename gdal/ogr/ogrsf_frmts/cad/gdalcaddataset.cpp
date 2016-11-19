@@ -206,12 +206,12 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                     nSubRasterFID = static_cast<long>( j );
                     GDALDataset::SetMetadataItem( CPLSPrintf("SUBDATASET_%d_NAME",
                         nRasters),
-                        CPLSPrintf("CAD:%s:%ld:%ld", osCADFilename.c_str(), i, j),
-                        "SUBDATASETS" );
+                        CPLSPrintf("CAD:%s:%ld:%ld", osCADFilename.c_str(),
+                            nSubRasterLayer, nSubRasterFID), "SUBDATASETS" );
                     GDALDataset::SetMetadataItem( CPLSPrintf("SUBDATASET_%d_DESC",
                         nRasters),
-                        CPLSPrintf("%s - %ld", oLayer.getName().c_str(), j),
-                        "SUBDATASETS" );
+                        CPLSPrintf("%s - %ld", oLayer.getName().c_str(),
+                                    nSubRasterFID), "SUBDATASETS" );
                     nRasters++;
                 }
             }

@@ -1,9 +1,9 @@
 GDAL_ROOT = .
- 
+
 !INCLUDE nmake.opt
 
 ##############################################################################
-# The following determines whether we are linking all the OGR formats 
+# The following determines whether we are linking all the OGR formats
 # into the DLL, or only the minimum spatial reference related stuff required
 # for a raster-gdal build.
 
@@ -14,15 +14,15 @@ GDAL_ROOT = .
 
 OGR_BASE_INCLUDE = /INCLUDE:$(SYM_PREFIX)OSRValidate \
 		/INCLUDE:$(SYM_PREFIX)OPTGetProjectionMethods \
-		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount 
+		/INCLUDE:$(SYM_PREFIX)OGR_G_GetPointCount
 
 
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:$(SYM_PREFIX)OGRRegisterAll
 
-!IFDEF INCLUDE_GNM_FRMTS        
-CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED        
+!IFDEF INCLUDE_GNM_FRMTS
+CPPFLAGS = $(CPPFLAGS) -DGNM_ENABLED
 !ENDIF
 
 !IF DEFINED(STDCALL) && !DEFINED(WIN64)
@@ -56,7 +56,7 @@ PLUGIN_TARGET = plugin_dir
 TARGET_LIB = staticlib
 !ENDIF
 
-DEFAULT_TARGETS = 
+DEFAULT_TARGETS =
 
 default:	$(TARGET_LIB) $(PLUGIN_TARGET) apps_dir
 
@@ -69,7 +69,7 @@ appslib-target:
 	$(MAKE) /f makefile.vc appslib
 	cd ..
 
-clean:	
+clean:
 	cd port
 	$(MAKE) /f makefile.vc clean
 	cd ..
@@ -211,5 +211,6 @@ devinstall: install libinstall
 !IFDEF INCLUDE_GNM_FRMTS
 	copy gnm\gnm.h $(INCDIR)
 	copy gnm\gnm_api.h $(INCDIR)
+    copy gnm\gnmgraph.h $(INCDIR)
 !ENDIF
 	copy apps\gdal_utils.h $(INCDIR)
