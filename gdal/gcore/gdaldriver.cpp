@@ -1754,6 +1754,14 @@ int GDALValidateOptions( const char* pszOptionList,
                                 bMatchFound = true;
                                 break;
                             }
+                            if( psOptionNode->eType == CXT_Attribute &&
+                                (EQUAL(psOptionNode->pszValue, "alias") ||
+                                 EQUAL(psOptionNode->pszValue, "deprecated_alias") ) &&
+                                 EQUAL(psOptionNode->psChild->pszValue, pszValue) )
+                            {
+                                bMatchFound = true;
+                                break;
+                            }
                             psOptionNode = psOptionNode->psNext;
                         }
                         if (bMatchFound)
