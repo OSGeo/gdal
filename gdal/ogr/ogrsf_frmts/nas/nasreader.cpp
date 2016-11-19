@@ -576,6 +576,7 @@ void NASReader::SetFeaturePropertyDirectly( const char *pszElement,
                       poClass->GetName(), pszElement,
                       poProp->papszSubProperties[0], pszValue,
                       poIdProp && poIdProp->nSubProperties>0 &&
+                      poIdProp->papszSubProperties &&
                       poIdProp->papszSubProperties[0] ?
                       poIdProp->papszSubProperties[0] : "(null)" );
         }
