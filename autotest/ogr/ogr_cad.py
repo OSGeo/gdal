@@ -36,6 +36,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
@@ -417,6 +418,25 @@ def ogr_cad_8():
     return 'success'
 
 ###############################################################################
+# Open a not handled DWG version
+
+def ogr_cad_9():
+    if gdaltest.cad_dr is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/AC1018_signature.dwg')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    msg = gdal.GetLastErrorMsg()
+    if msg.find('does not support this version') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 def ogr_cad_cleanup():
     gdaltest.cad_layer = None
@@ -433,6 +453,7 @@ gdaltest_list = [
     ogr_cad_6,
     ogr_cad_7,
     ogr_cad_8,
+    ogr_cad_9,
     ogr_cad_cleanup ]
 
 if __name__ == '__main__':
