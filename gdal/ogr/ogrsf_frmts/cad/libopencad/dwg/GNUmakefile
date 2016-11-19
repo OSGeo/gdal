@@ -12,7 +12,7 @@ CPPFLAGS	:=	-I. -I.. -I../.. -I../../.. $(CPPFLAGS)
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../../o/%.$(OBJ_EXT):	%.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	rm -f *.o $(O_OBJ)
