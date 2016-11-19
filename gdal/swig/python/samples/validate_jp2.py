@@ -463,7 +463,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
             if expected_ftyp_branding is None:
                 if gmljp2_found and gmljp2.find('gmljp2:GMLJP2CoverageCollection') >= 0:
                     expected_ftyp_branding = 'jpx '
-                else
+                else:
                     expected_ftyp_branding = 'jp2 '
 
             if get_field_val(ftyp, 'BR') != expected_ftyp_branding:
