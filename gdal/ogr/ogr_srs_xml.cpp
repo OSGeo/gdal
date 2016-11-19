@@ -27,8 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
