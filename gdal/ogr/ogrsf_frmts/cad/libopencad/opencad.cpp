@@ -161,8 +161,6 @@ int IdentifyCADFile( CADFileIO * pCADFileIO, bool bOwn )
     int result = CheckCADFile(pCADFileIO);
     if(bOwn)
     {
-        if( pCADFileIO->IsOpened() )
-            pCADFileIO->Close();
         delete pCADFileIO;
     }
     return result;
