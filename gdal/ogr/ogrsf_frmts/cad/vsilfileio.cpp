@@ -30,14 +30,17 @@
 *******************************************************************************/
 #include "vsilfileio.h"
 
-VSILFileIO::VSILFileIO(const char* pszFilePath) : CADFileIO(pszFilePath)
+VSILFileIO::VSILFileIO(const char* pszFilePath) :
+    CADFileIO(pszFilePath),
+    m_oFileStream(nullptr)
 {
 
 }
 
 VSILFileIO::~VSILFileIO()
 {
-
+    if( m_oFileStream )
+        Close();
 }
 
 const char* VSILFileIO::ReadLine()
@@ -59,7 +62,7 @@ bool VSILFileIO::Open(int mode)
 
     std::string sOpenMode = "r";
     if( mode & OpenMode::binary )
-        sOpenMode = "r+b";
+        sOpenMode = "rb";
 
     m_oFileStream = VSIFOpenL( m_soFilePath.c_str(), sOpenMode.c_str() );
 
@@ -71,7 +74,9 @@ bool VSILFileIO::Open(int mode)
 
 bool VSILFileIO::Close()
 {
-    return VSIFCloseL( m_oFileStream ) == 0 ? true : false;
+    bool bRet = VSIFCloseL( m_oFileStream ) == 0 ? true : false;
+    m_oFileStream = nullptr;
+    return bRet;
 }
 
 int VSILFileIO::Seek(long offset, CADFileIO::SeekOrigin origin)
