@@ -16,7 +16,7 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
 			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
-			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(GMLAS_DIR)
+			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(GMLAS_DIR) $(CAD_DIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
@@ -241,6 +241,11 @@ PLUGIN_MONGODBDIR = mongodb
 !ENDIF
 !ENDIF
 
+!IF $(MSVC_VER) >= 1800
+CAD_DIR = cad
+CAD_OBJ = cad\*.obj cad\libopencad\*.obj cad\libopencad\dwg\*.obj
+!ENDIF
+
 !ELSE
 
 DIRLIST		=	generic mitab
@@ -273,7 +278,7 @@ default:
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
 				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
-				$(CSW_OBJ) $(MONGODBOBJ) $(GMLAS_OBJ)
+				$(CSW_OBJ) $(MONGODBOBJ) $(GMLAS_OBJ) $(CAD_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \

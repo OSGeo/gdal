@@ -1412,6 +1412,23 @@ left of the values that appear in the file).</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/zmap/zmapdataset.cpp</tt>.</p>
 
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+<h2><a name="CAD">CAD -- AutoCAD DWG raster layer</a></h2>
+
+<p>(GDAL >= 2.2.0)</p>
+
+<p>
+OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
+versions can be seen in libopencad documentation. All drawing entities are
+separated into layers as they are in DWG file. The rasters are usally a separate
+georeferenced files (GeoTiff, Jpeg, Png etc.) which exist in DWG file as separate
+layers. The driver try to get spatial reference and other methadata from DWG
+Image description and set it to GDALDataset.
+</p>
+
+<p>NOTE: Implemented as <tt>ogr/ogrsf_frmts/cad/gdalcaddataset.cpp</tt>.</p>
+
 <hr>
 <p>
 <a href="formats_list.html">Full list of GDAL Raster Formats</a>

@@ -222,6 +222,10 @@ ifeq ($(HAVE_MONGODB),yes)
 CXXFLAGS :=	$(CXXFLAGS) -DMONGODB_ENABLED
 endif
 
+ifeq ($(HAVE_CAD),yes)
+CXXFLAGS :=	$(CXXFLAGS) -DCAD_ENABLED
+endif
+
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
