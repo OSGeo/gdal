@@ -66,7 +66,11 @@
 #include <algorithm>
 #include <set>
 
-#if HAVE_CXX11
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+
+#if HAVE_CXX11_MUTEX
 #include <mutex>
 #endif
 
@@ -17182,16 +17186,16 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
 #else
 static CPLMutex* hGTiffOneTimeInitMutex = NULL;
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 #else
     CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);
