@@ -4790,6 +4790,22 @@ def ogr_shape_101():
 
     return 'success'
 
+###############################################################################
+# Test reading invalid .prj
+
+def ogr_shape_102():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_102.shp')
+    lyr = ds.CreateLayer('ogr_shape_102', geom_type = ogr.wkbPoint)
+    ds = None
+    gdal.FileFromMemBuffer('/vsimem/ogr_shape_102.prj', 'invalid')
+    ds = ogr.Open('/vsimem/ogr_shape_102.shp')
+    lyr = ds.GetLayer(0)
+    lyr.GetSpatialRef()
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_102.shp')
+
+    return 'success'
 
 def ogr_shape_cleanup():
 
@@ -4935,6 +4951,7 @@ gdaltest_list = [
     ogr_shape_99,
     ogr_shape_100,
     ogr_shape_101,
+    ogr_shape_102,
     ogr_shape_cleanup ]
 
 # gdaltest_list = [ ogr_shape_101 ]
