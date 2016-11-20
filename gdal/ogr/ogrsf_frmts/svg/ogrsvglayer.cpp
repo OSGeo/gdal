@@ -41,7 +41,9 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
                           OGRSVGDataSource* poDSIn) :
     poFeatureDefn(NULL),
     poSRS(NULL),
-    poDS(NULL),
+    poDS(poDSIn),
+    osLayerName(pszLayerName),
+    svgGeomType(svgGeomTypeIn),
     nTotalFeatures(0),
     nNextFID(0),
     fpSVG(NULL),
@@ -68,9 +70,6 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
 #endif
 
 {
-    poDS = poDSIn;
-    svgGeomType = svgGeomTypeIn;
-    osLayerName = pszLayerName;
     SetDescription( pszLayerName );
 
     poSRS = new OGRSpatialReference("PROJCS[\"WGS 84 / Pseudo-Mercator\","

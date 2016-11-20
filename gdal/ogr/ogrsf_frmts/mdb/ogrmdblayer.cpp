@@ -38,28 +38,21 @@ CPL_CVSID("$Id$");
 /*                            OGRMDBLayer()                            */
 /************************************************************************/
 
-OGRMDBLayer::OGRMDBLayer(OGRMDBDataSource* poDSIn, OGRMDBTable* poMDBTableIn)
+OGRMDBLayer::OGRMDBLayer(OGRMDBDataSource* poDSIn, OGRMDBTable* poMDBTableIn) :
+    poMDBTable(poMDBTableIn),
+    eGeometryType(MDB_GEOM_NONE),
+    poFeatureDefn(NULL),
+    poSRS(NULL),
+    nSRSId(-2), // we haven't even queried the database for it yet.
+    iNextShapeId(0),
+    poDS(poDSIn),
+    iGeomColumn(-1),
+    pszGeomColumn(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL),
+    bHasExtent(FALSE)
 
 {
-    this->poDS = poDSIn;
-    this->poMDBTable = poMDBTableIn;
-
-    eGeometryType = MDB_GEOM_NONE;
-
-    iGeomColumn = -1;
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
-
-    panFieldOrdinals = NULL;
-
-    poFeatureDefn = NULL;
-
-    iNextShapeId = 0;
-
-    poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet.
-
-    bHasExtent = FALSE;
 }
 
 /************************************************************************/

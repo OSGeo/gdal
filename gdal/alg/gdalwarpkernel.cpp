@@ -934,46 +934,46 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /*                           GDALWarpKernel()                           */
 /************************************************************************/
 
-GDALWarpKernel::GDALWarpKernel()
+GDALWarpKernel::GDALWarpKernel() :
+    papszWarpOptions( NULL ),
+    eResample( GRA_NearestNeighbour ),
+    eWorkingDataType( GDT_Unknown ),
+    nBands( 0 ),
+    nSrcXSize( 0 ),
+    nSrcYSize( 0 ),
+    nSrcXExtraSize( 0 ),
+    nSrcYExtraSize( 0 ),
+    papabySrcImage( NULL ),
+    papanBandSrcValid( NULL ),
+    panUnifiedSrcValid( NULL ),
+    pafUnifiedSrcDensity( NULL ),
+    nDstXSize( 0 ),
+    nDstYSize( 0 ),
+    papabyDstImage( NULL ),
+    panDstValid( NULL ),
+    pafDstDensity( NULL ),
+    dfXScale( 1.0 ),
+    dfYScale( 1.0 ),
+    dfXFilter( 0.0 ),
+    dfYFilter( 0.0 ),
+    nXRadius( 0 ),
+    nYRadius( 0 ),
+    nFiltInitX( 0 ),
+    nFiltInitY( 0 ),
+    nSrcXOff( 0 ),
+    nSrcYOff( 0 ),
+    nDstXOff( 0 ),
+    nDstYOff( 0 ),
+    pfnTransformer( NULL ),
+    pTransformerArg( NULL ),
+    pfnProgress( GDALDummyProgress ),
+    pProgress( NULL ),
+    dfProgressBase( 0.0 ),
+    dfProgressScale( 1.0 ),
+    padfDstNoDataReal( NULL ),
+    psThreadData( NULL )
 
 {
-    eResample = GRA_NearestNeighbour;
-    eWorkingDataType = GDT_Unknown;
-    nBands = 0;
-    nDstXOff = 0;
-    nDstYOff = 0;
-    nDstXSize = 0;
-    nDstYSize = 0;
-    nSrcXOff = 0;
-    nSrcYOff = 0;
-    nSrcXSize = 0;
-    nSrcYSize = 0;
-    nSrcXExtraSize = 0;
-    nSrcYExtraSize = 0;
-    dfXScale = 1.0;
-    dfYScale = 1.0;
-    dfXFilter = 0.0;
-    dfYFilter = 0.0;
-    nXRadius = 0;
-    nYRadius = 0;
-    nFiltInitX = 0;
-    nFiltInitY = 0;
-    pafDstDensity = NULL;
-    pafUnifiedSrcDensity = NULL;
-    panDstValid = NULL;
-    panUnifiedSrcValid = NULL;
-    papabyDstImage = NULL;
-    papabySrcImage = NULL;
-    papanBandSrcValid = NULL;
-    pfnProgress = GDALDummyProgress;
-    pProgress = NULL;
-    dfProgressBase = 0.0;
-    dfProgressScale = 1.0;
-    pfnTransformer = NULL;
-    pTransformerArg = NULL;
-    papszWarpOptions = NULL;
-    padfDstNoDataReal = NULL;
-    psThreadData = NULL;
 }
 
 /************************************************************************/
