@@ -695,7 +695,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLString osBandList;
     int       bSelectingBands = FALSE;
 
-    if( strlen(osBandIdentifier) && nBandCount > 0 )
+    if( strlen(osBandIdentifier) && nBandCount > 0 && panBandList != NULL )
     {
         int iBand;
 

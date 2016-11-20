@@ -3463,7 +3463,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
 
                 numRingsTotal += poPolygon->getNumInteriorRings()+1;
 
-                if (ppasSecHdrs)
+                if (ppasSecHdrs && poMapFile)
                 {
                     if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                       poMapFile, iLastSect) != 0)
@@ -3476,7 +3476,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
             poPolygon = (OGRPolygon*)poGeom;
             numRingsTotal = poPolygon->getNumInteriorRings()+1;
 
-            if (ppasSecHdrs)
+            if (ppasSecHdrs && poMapFile)
             {
                 if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                   poMapFile, iLastSect) != 0)
