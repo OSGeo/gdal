@@ -677,6 +677,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
 
           for( int i = 0; i < nPointsIn; ++i )
           {
+            // TODO(schwehr): Fix casts.
             const double x = *(double*)((char*)pabyX + i * nXStride);
             const double y = *(double*)((char*)pabyY + i * nYStride);
             if( pabyZ )
@@ -787,6 +788,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
+                  // TODO(schwehr): Fix casts.
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);
                   poSC->setPoint( i, x, y );
@@ -796,6 +798,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
+                  // TODO(schwehr): Fix casts.
                   double x = *(double*)((char*)pabyX + i * nXStride);
                   double y = *(double*)((char*)pabyY + i * nYStride);
                   double z = *(double*)((char*)pabyZ + i * nZStride);
@@ -1824,10 +1827,8 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
         reinterpret_cast<OGRCurve *>(hGeom)->Value(dfDistance, p);
         return reinterpret_cast<OGRGeometryH>(p);
     }
-    else
-    {
-        return NULL;
-    }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -1880,6 +1881,7 @@ void OGRSetNonLinearGeometriesEnabledFlag( int bFlag )
  * @since GDAL 2.0
  * @see OGRSetNonLinearGeometriesEnabledFlag()
  */
+
 int OGRGetNonLinearGeometriesEnabledFlag( void )
 {
     return bNonLinearGeometriesEnabled;
