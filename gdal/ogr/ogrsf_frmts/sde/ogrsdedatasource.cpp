@@ -1462,7 +1462,7 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
                   sGenericEnvelope.maxy );
     }
 
-    if( poSRS && poSRS->IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
         LONG nSDEErr;
 

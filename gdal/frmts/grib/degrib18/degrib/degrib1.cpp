@@ -1517,6 +1517,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             newIndex = i;
          }
          /* A 0 in bitmap means no data. A 1 in bitmap means data. */
+         // cppcheck-suppress nullPointer
          if (!bitmap[i]) {
             meta->gridAttrib.numMiss++;
             data[newIndex] = UNDEFINED;
@@ -1566,6 +1567,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             } else {
                newIndex = i;
             }
+            // cppcheck-suppress nullPointer
             if (!bitmap[i]) {
                data[newIndex] = resetPrim;
             }

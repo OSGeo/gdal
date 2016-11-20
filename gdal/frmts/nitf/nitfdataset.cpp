@@ -5289,7 +5289,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 
         const char *pszHeaderBuffer = NULL;
-        for( int iOpt2 = 0; papszList != NULL && papszList[iOpt2] != NULL; iOpt2++ ) {
+        for( int iOpt2 = 0; papszList[iOpt2] != NULL; iOpt2++ ) {
             if( !STARTS_WITH_CI(papszList[iOpt2], "HEADER_") )
                 continue;
 

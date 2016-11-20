@@ -4709,9 +4709,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
               pszUnits = pszUnitsName;
           else
               pszUnits = "meters";
-          int proNu = 0;
-          if( psPro )
-              proNu = psPro->proNumber;
+          int proNu = psPro->proNumber;
           if( oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum,
                                                pszUnits, proNu) == OGRERR_NONE )
           {

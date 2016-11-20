@@ -299,7 +299,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
               poExifTags++)
         {
             if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
-                CPLAssert( NULL != poExifTags && NULL != poExifTags->name );
+                CPLAssert( NULL != poExifTags->name );
 
                 CPLStrlcpy(szName, poExifTags->name, sizeof(szName));
                 break;
@@ -312,7 +312,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                  poGPSTags++ )
             {
                 if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
-                    CPLAssert( NULL != poGPSTags && NULL != poGPSTags->name );
+                    CPLAssert( NULL != poGPSTags->name );
                     CPLStrlcpy(szName, poGPSTags->name, sizeof(szName));
                     break;
                 }
@@ -325,7 +325,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             const struct intr_tag *poInterTags = intr_tags;
             for( ; poInterTags->tag; poInterTags++)
                 if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
-                    CPLAssert( NULL != poInterTags && NULL != poInterTags->name );
+                    CPLAssert( NULL != poInterTags->name );
                     CPLStrlcpy(szName, poInterTags->name, sizeof(szName));
                     break;
                 }

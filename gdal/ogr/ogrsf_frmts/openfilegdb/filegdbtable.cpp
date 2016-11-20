@@ -2722,6 +2722,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             }
 
             return poMP;
+            // cppcheck-suppress duplicateBreak
             break;
         }
 
@@ -3048,7 +3049,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
 
             delete[] papoRings;
             return poRet;
-
+            // cppcheck-suppress duplicateBreak
             break;
         }
 
@@ -3141,7 +3142,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             VSIFree(padfXYZ);
 
             return poMP;
-
+            // cppcheck-suppress duplicateBreak
             break;
         }
 

@@ -2062,7 +2062,8 @@ public:
             {
                 x[i] *= dfXScale;
                 y[i] *= dfYScale;
-                z[i] *= dfZScale;
+                if( z )
+                    z[i] *= dfZScale;
 
                 const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
                 const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
@@ -2072,7 +2073,8 @@ public:
 
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
-                z[i] += dfZOffset;
+                if( z )
+                    z[i] += dfZOffset;
 
                 if( pabSuccess )
                     pabSuccess[i] = TRUE;

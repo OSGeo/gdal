@@ -3217,7 +3217,9 @@ static int splitGroup (sInt4 *Data, int numData, TDLGroupType * group,
    if (f_secMiss) {
       /* 11 = primMiss 10 = secMiss 01, 00 = data. */
       minBit = 2;
-   } else if (f_primMiss) {
+   }
+   // cppcheck-suppress duplicateBranch
+   else if (f_primMiss) {
       /* 1 = primMiss 0 = data. */
       /* might try minBit = 1 here. */
       minBit = 1;

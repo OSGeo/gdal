@@ -769,6 +769,7 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
                       const swq_expr_node* poValue1,
                       const swq_expr_node* poValue2)
 {
+    int ret = 0;
     switch( poFieldDefn->GetType() )
     {
         case OFTInteger:
@@ -783,26 +784,25 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
             else
                 n2 = (int) poValue2->int_value;
             if( n1 < n2 )
-                return -1;
-
-            if( n1 == n2 )
-                return 0;
+                ret = -1;
+            else if( n1 == n2 )
+                ret = 0;
             else
-                return 1;
+                ret = 1;
             break;
         }
 
         case OFTReal:
             if( poValue1->float_value < poValue2->float_value )
-                return -1;
+                ret = -1;
             if( poValue1->float_value == poValue2->float_value )
-                return 0;
+                ret = 0;
             else
-                return 1;
+                ret = 1;
             break;
 
         case OFTString:
-            return strcmp(poValue1->string_value, poValue2->string_value);
+            ret = strcmp(poValue1->string_value, poValue2->string_value);
             break;
 
         case OFTDate:
@@ -816,16 +816,15 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
                  poValue2->field_type == SWQ_DATE ||
                  poValue2->field_type == SWQ_TIME))
             {
-                return strcmp(poValue1->string_value, poValue2->string_value);
+                ret = strcmp(poValue1->string_value, poValue2->string_value);
             }
-            return 0;
             break;
         }
 
         default:
-            return 0;
             break;
     }
+    return ret;
 }
 
 /***********************************************************************/

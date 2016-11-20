@@ -1399,17 +1399,27 @@ XSModelGroupDefinition* GMLASSchemaAnalyzer::GetGroupDefinition( const XSModelGr
 
 static bool IsAnyType(XSComplexTypeDefinition* poType)
 {
-    XSModelGroup* poGroupTerm = NULL;
-    XSParticle* poParticle = NULL;
-    XSParticleList* poParticles = NULL;
-    return XMLString::equals(poType->getBaseType()->getNamespace(),
+    if( XMLString::equals(poType->getBaseType()->getNamespace(),
                              PSVIUni::fgNamespaceXmlSchema) &&
-        transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE &&
-        (poParticle = poType->getParticle()) != NULL &&
-        (poGroupTerm = poParticle->getModelGroupTerm()) != NULL &&
-        (poParticles = poGroupTerm->getParticles()) != NULL &&
-        poParticles->size() == 1 &&
-        poParticles->elementAt(0)->getTermType() == XSParticle::TERM_WILDCARD;
+        transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE )
+    {
+        XSParticle* poParticle = poType->getParticle();
+        if( poParticle != NULL )
+        {
+            XSModelGroup* poGroupTerm = poParticle->getModelGroupTerm();
+            if( poGroupTerm != NULL )
+            {
+                XSParticleList* poParticles =  poGroupTerm->getParticles();
+                if( poParticles != NULL )
+                {
+                    return poParticles->size() == 1 &&
+                           poParticles->elementAt(0)->getTermType() ==
+                                                    XSParticle::TERM_WILDCARD;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 /************************************************************************/

@@ -848,7 +848,11 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
                                       const OGRGeoJSONWriteOptions& oOptions )
 {
-    CPLAssert( NULL != poGeometry );
+    if( poGeometry == NULL )
+    {
+        CPLAssert( false );
+        return NULL;
+    }
 
     OGRwkbGeometryType eType = poGeometry->getGeometryType();
     // For point empty, return a null geometry. For other empty geometry types,

@@ -901,6 +901,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->SetMetadataItem( CPLSPrintf(pszFirst, i ), pszValue );
             CPLFree( pszValue );
         }
+        else
+        {
+            CPLFree(pszHeader);
+            delete poDS;
+            return NULL;
+        }
         pszTemp += nValueLen;
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
         if ( pszTemp )
@@ -911,6 +917,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                                TRUE, TRUE );
             poDS->SetMetadataItem( CPLSPrintf(pszSecond, i ), pszValue );
             CPLFree( pszValue );
+        }
+        else
+        {
+            CPLFree(pszHeader);
+            delete poDS;
+            return NULL;
         }
         pszTemp += nValueLen;
     }
@@ -962,8 +974,16 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             pszTemp = strpbrk( pszTemp, "-.0123456789" );
             if ( pszTemp )
+            {
                 adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
-            pszTemp = strpbrk( pszTemp, " \t" );
+                pszTemp = strpbrk( pszTemp, " \t" );
+            }
+            if (pszTemp == NULL )
+            {
+                CPLFree(pszHeader);
+                delete poDS;
+                return NULL;
+            }
         }
     }
 
