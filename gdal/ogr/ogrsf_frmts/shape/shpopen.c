@@ -2101,7 +2101,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             {
                 char str[128];
                 snprintf( str, sizeof(str),
-                         "Error in fread() reading object of size %u at offset %u from .shp file",
+                         "Error in fread() reading object of size %d at offset %u from .shp file",
                          nEntitySize, psSHP->panRecOffset[hEntity] );
 
                 psSHP->sHooks.Error( str );
@@ -2185,7 +2185,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
          */
         char str[128];
         snprintf( str, sizeof(str),
-                 "Error in fread() reading object of size %u at offset %u from .shp file",
+                 "Error in fread() reading object of size %d at offset %u from .shp file",
                  nEntitySize, psSHP->panRecOffset[hEntity] );
 
         psSHP->sHooks.Error( str );
