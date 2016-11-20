@@ -48,7 +48,7 @@ static double tp2c( GByte *r )
         return 0.0;
 
     // Extract sign: bit 7 of byte 5.
-    const int sign = r[5] & 0x80 ? -1 : 1;
+    const int sign = (r[5] & 0x80) ? -1 : 1;
 
     // Extract mantissa from first bit of byte 1 to bit 7 of byte 5.
     double mant = 0.0;

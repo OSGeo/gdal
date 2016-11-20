@@ -279,10 +279,10 @@ TIFFClientOpen(
 		 * Setup header and write.
 		 */
 		#ifdef WORDS_BIGENDIAN
-		tif->tif_header.common.tiff_magic = tif->tif_flags & TIFF_SWAB
+		tif->tif_header.common.tiff_magic = (tif->tif_flags & TIFF_SWAB)
 		    ? TIFF_LITTLEENDIAN : TIFF_BIGENDIAN;
 		#else
-		tif->tif_header.common.tiff_magic = tif->tif_flags & TIFF_SWAB
+		tif->tif_header.common.tiff_magic = (tif->tif_flags & TIFF_SWAB)
 		    ? TIFF_BIGENDIAN : TIFF_LITTLEENDIAN;
 		#endif
 		if (!(tif->tif_flags&TIFF_BIGTIFF))

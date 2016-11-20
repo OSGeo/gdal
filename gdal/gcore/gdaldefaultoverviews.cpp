@@ -917,7 +917,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
         if( poTBand == NULL )
             return CE_Failure;
 
-        const int nBands = nFlags & GMF_PER_DATASET ?
+        const int nBands = (nFlags & GMF_PER_DATASET) ?
             1 : poDS->GetRasterCount();
 
         char **papszOpt = CSLSetNameValue( NULL, "COMPRESS", "DEFLATE" );
