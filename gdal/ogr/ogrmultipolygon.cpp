@@ -27,8 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -168,8 +171,17 @@ OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
  * @return new geometry.
  */
 
-OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface(OGRMultiPolygon* poMP)
+OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface( OGRMultiPolygon* poMP )
 {
-    return (OGRMultiSurface*)
+    OGRGeometryCollection *poGC =
         TransferMembersAndDestroy(poMP, new OGRMultiSurface());
+
+    OGRMultiSurface* poMultiSurface = dynamic_cast<OGRMultiSurface *>(poGC);
+    if( poMultiSurface == NULL )
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRMultiSurface.");
+    }
+
+    return poMultiSurface;
 }
