@@ -537,7 +537,7 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
 
 {
-    OGRGeometryFactory::destroyGeometry( (OGRGeometry *) hGeom );
+    OGRGeometryFactory::destroyGeometry(reinterpret_cast<OGRGeometry *>(hGeom));
 }
 
 /************************************************************************/

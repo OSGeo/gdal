@@ -26,8 +26,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include "ogr_core.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -71,7 +82,14 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
         {
             for( int i = 0; i < nCurveCount; i++ )
             {
-                papoCurves[i] = (OGRCurve*)other.papoCurves[i]->clone();
+                OGRCurve *poCurve =
+                    dynamic_cast<OGRCurve *>(other.papoCurves[i]->clone());
+                if( poCurve == NULL )
+                {
+                    CPLError(CE_Fatal, CPLE_AppDefined,
+                             "dynamic_cast failed.  Expected OGRCurve.");
+                }
+                papoCurves[i] = poCurve;
             }
         }
     }
@@ -117,7 +135,15 @@ OGRCurveCollection::operator=( const OGRCurveCollection& other )
             {
                 for( int i = 0; i < nCurveCount; i++ )
                 {
-                    papoCurves[i] = (OGRCurve*)other.papoCurves[i]->clone();
+                    OGRCurve *poCurve =
+                        dynamic_cast<OGRCurve *>(other.papoCurves[i]->clone());
+                    if( poCurve == NULL )
+                    {
+                        CPLError(CE_Fatal, CPLE_AppDefined,
+                                 "dynamic_cast failed.  Expected OGRCurve.");
+                    }
+
+                    papoCurves[i] = poCurve;
                 }
             }
         }
@@ -270,7 +296,15 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
         }
 
         if( eErr == OGRERR_NONE )
-            eErr = pfnAddCurveDirectlyFromWkb(poGeom, (OGRCurve*)poSubGeom);
+        {
+            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poSubGeom);
+            if( poCurve == NULL )
+            {
+                CPLError(CE_Fatal, CPLE_AppDefined,
+                         "dynamic_cast failed.  Expected OGRCurve.");
+            }
+            eErr = pfnAddCurveDirectlyFromWkb(poGeom, poCurve);
+        }
         if( eErr != OGRERR_NONE )
         {
             delete poSubGeom;

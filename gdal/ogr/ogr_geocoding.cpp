@@ -468,8 +468,9 @@ static OGRLayer* OGRGeocodeGetCacheLayer( OGRGeocodingSessionH hSession,
                                                    "METADATA", "FALSE");
                 }
 
-                poDS = (OGRDataSource*) OGR_Dr_CreateDataSource(
-                            hDriver, hSession->pszCacheFilename, papszOptions);
+                poDS = reinterpret_cast<OGRDataSource *>(
+                    OGR_Dr_CreateDataSource(
+                        hDriver, hSession->pszCacheFilename, papszOptions));
 
                 if( poDS == NULL &&
                     (EQUAL(osExt, "SQLITE") || EQUAL(osExt, "CSV")))
@@ -480,8 +481,9 @@ static OGRLayer* OGRGeocodeGetCacheLayer( OGRGeocodingSessionH hSession,
                                    CACHE_LAYER_NAME, osExt.c_str()));
                     CPLDebug("OGR", "Switch geocode cache file to %s",
                              hSession->pszCacheFilename);
-                    poDS = (OGRDataSource*) OGR_Dr_CreateDataSource(
-                            hDriver, hSession->pszCacheFilename, papszOptions);
+                    poDS = reinterpret_cast<OGRDataSource *>(
+                        OGR_Dr_CreateDataSource(
+                            hDriver, hSession->pszCacheFilename, papszOptions));
                 }
 
                 CSLDestroy(papszOptions);
