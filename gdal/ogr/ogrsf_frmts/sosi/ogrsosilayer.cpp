@@ -268,6 +268,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_SYMBOL: {
             //CPLError( CE_Warning, CPLE_OpenFailed, "Geometry of type SYMBOL treated as point (PUNKT).");
+            CPL_FALLTHROUGH
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
