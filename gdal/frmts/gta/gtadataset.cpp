@@ -774,6 +774,7 @@ GTADataset::GTADataset()
     nLastBlockYOff = -1;
     pBlock = NULL;
     DataOffset = 0;
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
 /************************************************************************/

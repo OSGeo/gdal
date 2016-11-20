@@ -60,6 +60,11 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn, int bUpdate )
     papszAllColumns = NULL;
     bHaveLayerInfo = FALSE;
     bUseNSTRING = FALSE;
+
+    pszOwnerName = NULL;
+    pszDbTableName = NULL;
+    bVersioned = FALSE;
+    bQueryActive = FALSE;
 }
 
 /************************************************************************/

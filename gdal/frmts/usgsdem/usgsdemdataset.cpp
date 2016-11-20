@@ -480,7 +480,9 @@ USGSDEMDataset::USGSDEMDataset() :
     fVRes(0.0),
     pszUnits(NULL),
     fp(NULL)
-{ }
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~USGSDEMDataset()                         */

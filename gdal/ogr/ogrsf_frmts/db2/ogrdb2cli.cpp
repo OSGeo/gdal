@@ -366,6 +366,7 @@ OGRDB2Statement::OGRDB2Statement( OGRDB2Session *poSession )
 
 {
     DB2_DEBUG_ENTER("OGRDB2Statement::OGRDB2Statement");
+    m_nLastRetCode = 0;
     m_bPrepared = FALSE;
 
     m_poSession = poSession;

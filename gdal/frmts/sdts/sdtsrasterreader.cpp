@@ -46,6 +46,11 @@ SDTSRasterReader::SDTSRasterReader() :
     nYStart(0)
 {
     strcpy( szINTR, "CE" );
+    memset( szModule, 0, sizeof(szModule) );
+    memset( adfTransform, 0, sizeof(adfTransform) );
+    memset( szFMT, 0, sizeof(szFMT) );
+    memset( szUNITS, 0, sizeof(szUNITS) );
+    memset( szLabel, 0, sizeof(szLabel) );
 }
 
 /************************************************************************/

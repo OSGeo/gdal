@@ -146,7 +146,9 @@ TABDATFile::TABDATFile() :
     m_bWriteHeaderInitialized(FALSE),
     m_bWriteEOF(FALSE),
     m_bUpdated(FALSE)
-    // TODO(schwehr): m_szBuffer({})
+#if HAVE_CXX11
+    , m_szBuffer{}
+#endif
 {}
 
 /**********************************************************************

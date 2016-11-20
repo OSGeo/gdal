@@ -155,6 +155,7 @@ OGRSOSIDataSource::OGRSOSIDataSource() {
     poCurveHeaders = NULL;
 
     pszEncoding = CPL_ENC_UTF8;
+    nNumFeatures = 0;
 
     SOSIInitTypes();
 

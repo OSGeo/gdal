@@ -44,7 +44,7 @@ class Range {
             SelafinTypeDef eType;
             int nMin,nMax;
             List *poNext;
-            List():poNext(NULL) {}
+            List():eType(POINTS),nMin(0),nMax(0),poNext(NULL) {}
             List(SelafinTypeDef eTypeP,int nMinP,int nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
         } List;
         List *poVals,*poActual;

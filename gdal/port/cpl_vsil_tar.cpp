@@ -134,6 +134,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     fp = VSIFOpenL(pszTarFileName, "rb");
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     m_bIsFuzzerFriendly = false;
+    m_abyBuffer[0] = '\0';
     m_abyBufferIdx = 0;
     m_abyBufferSize = 0;
     m_nCurOffsetOld = 0;

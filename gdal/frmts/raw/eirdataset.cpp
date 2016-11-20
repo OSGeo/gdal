@@ -82,7 +82,9 @@ EIRDataset::EIRDataset() :
     bHDRDirty(false),
     papszHDR(NULL),
     papszExtraFiles(NULL)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~EIRDataset()                            */

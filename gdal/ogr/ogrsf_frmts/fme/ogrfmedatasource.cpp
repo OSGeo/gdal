@@ -173,6 +173,8 @@ OGRFMEDataSource::OGRFMEDataSource()
     poUserDirectives = NULL;
 
     bUseCaching = FALSE;
+    poFMEString = NULL;
+    bCoordSysOverride = FALSE;
 }
 
 /************************************************************************/

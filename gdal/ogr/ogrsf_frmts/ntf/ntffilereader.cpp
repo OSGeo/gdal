@@ -88,6 +88,7 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource ) :
     papoLineCache(NULL)
 {
     apoCGroup[0] = NULL;
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     memset( apoTypeTranslation, 0, sizeof(apoTypeTranslation) );
     for( int i = 0; i < 100; i++ )
     {

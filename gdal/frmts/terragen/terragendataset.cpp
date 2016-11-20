@@ -446,6 +446,11 @@ TerragenDataset::TerragenDataset() :
     m_adfTransform[3] = 0.0;
     m_adfTransform[4] = 0.0;
     m_adfTransform[5] = m_dSCAL;
+    m_span_m[0] = 0.0;
+    m_span_m[1] = 0.0;
+    m_span_px[0] = 0.0;
+    m_span_px[1] = 0.0;
+    memset( m_szUnits, 0, sizeof(m_szUnits) );
 }
 
 /************************************************************************/
