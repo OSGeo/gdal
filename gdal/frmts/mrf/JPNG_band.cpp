@@ -172,7 +172,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
             retval = codec.CompressPNG(dst, src);
         }
     }
-    catch (CPLErr err) {
+    catch (const CPLErr& err) {
         retval = err;
     }
 

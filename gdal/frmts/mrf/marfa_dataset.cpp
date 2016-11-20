@@ -295,7 +295,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 CPLDestroyXMLNode(config);
                 config = NULL;
             }
-            catch (CPLErr e) {
+            catch (const CPLErr& e) {
                 if (config)
                     CPLDestroyXMLNode(config);
                 throw e; // Rethrow
@@ -400,7 +400,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             }
         }
     }
-    catch (CPLErr e) {
+    catch (const CPLErr& e) {
         eErr = e;
     }
 
@@ -1703,7 +1703,7 @@ GDALMRFDataset::Create(const char * pszName,
         poDS->eAccess = GA_Update;
     }
 
-    catch (CPLString e) {
+    catch (const CPLString& e) {
         CPLError(CE_Failure, CPLE_OpenFailed, "%s", e.c_str());
         delete poDS;
         return NULL;

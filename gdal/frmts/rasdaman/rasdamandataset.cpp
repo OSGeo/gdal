@@ -398,7 +398,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       }
     }
   }
-  catch (r_Error error) {
+  catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return CPLGetLastErrorType();
   }
@@ -680,7 +680,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     rasDataset->databasename = databasename;
 
     return rasDataset;
-  } catch (r_Error error) {
+  } catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     delete rasDataset;
     return NULL;
