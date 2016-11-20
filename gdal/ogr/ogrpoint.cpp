@@ -29,11 +29,17 @@
 
 #include "cpl_port.h"
 #include "ogr_geometry.h"
-#include "ogr_p.h"
 
+#include <cstdio>
+#include <cstring>
 #include <algorithm>
 #include <limits>
 #include <new>
+
+#include "cpl_conv.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
