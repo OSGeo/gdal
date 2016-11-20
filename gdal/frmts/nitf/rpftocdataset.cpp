@@ -74,7 +74,9 @@ class RPFTOCDataset : public GDALPamDataset
         pszProjection(NULL),
         bGotGeoTransform(FALSE),
         papszFileList(NULL)
-    {}
+    {
+        memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+    }
 
     virtual ~RPFTOCDataset()
     {
@@ -295,6 +297,7 @@ class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
             eDataType = GDT_Byte;
             this->nBand = nBandIn;
             blockByteSize = nBlockXSize * nBlockYSize;
+            memset( colorTable, 0, sizeof(colorTable) );
         }
         virtual ~RPFTOCProxyRasterBandRGBA() {}
 
@@ -464,6 +467,7 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
             this->nBlockYSize = nBlockYSizeIn;
             eDataType = GDT_Byte;
             this->nBand = nBandIn;
+            memset( remapLUT, 0, sizeof(remapLUT) );
         }
 
         virtual GDALColorInterp GetColorInterpretation()

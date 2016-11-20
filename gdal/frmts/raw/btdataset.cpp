@@ -343,7 +343,7 @@ BTDataset::BTDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-    // TODO(schwehr): Initialize abyHeader.
+    memset( abyHeader, 0, sizeof(abyHeader) );
 }
 
 /************************************************************************/

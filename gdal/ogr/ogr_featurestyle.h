@@ -178,7 +178,14 @@ class CPL_DLL OGRStyleTool
 
   public:
 
-    OGRStyleTool(){}
+    OGRStyleTool() :
+        m_bModified(FALSE),
+        m_bParsed(FALSE),
+        m_dfScale(0.0),
+        m_eUnit(OGRSTUGround),
+        m_eClassId(OGRSTCNone),
+        m_pszStyleString(NULL)
+        {}
     OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 

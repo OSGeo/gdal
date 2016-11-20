@@ -311,7 +311,11 @@ public:
 class digital_axis
 {
  public:
-  digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED), m_fixedEnd(0) {}
+    digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED), m_fixedEnd(0)
+    {
+        m_d[0] = 0.0;
+        m_d[1] = 0.0;
+    }
 
     bool get(LevellerDataset& ds, VSILFILE* fp, int n)
     {
@@ -634,7 +638,11 @@ LevellerDataset::LevellerDataset() :
     m_dElevBase(),
     m_fp(NULL),
     m_nDataOffset()
-{}
+{
+    memset( m_szElevUnits, 0, sizeof(m_szElevUnits) );
+    memset( m_adfTransform, 0, sizeof(m_adfTransform) );
+    memset( m_dLogSpan, 0, sizeof(m_dLogSpan) );
+}
 
 /************************************************************************/
 /*                          ~LevellerDataset()                          */

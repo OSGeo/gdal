@@ -117,6 +117,7 @@ void FileGDBTable::Init()
     nFilterYMin = 0;
     nFilterYMax = 0;
     osObjectIdColName = "";
+    achGUIDBuffer[0] = 0;
     nChSaved = -1;
     pabyTablXBlockMap = NULL;
     nCountBlocksBeforeIBlockIdx = 0;

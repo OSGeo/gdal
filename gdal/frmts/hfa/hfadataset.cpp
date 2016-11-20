@@ -3452,6 +3452,7 @@ HFADataset::HFADataset() :
     nGCPCount(0)
 {
     memset(asGCPList, 0, sizeof(asGCPList));
+    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/

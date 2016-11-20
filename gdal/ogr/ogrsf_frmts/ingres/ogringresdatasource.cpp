@@ -88,6 +88,8 @@ OGRIngresDataSource::OGRIngresDataSource()
     panSRID = NULL;
     papoSRS = NULL;
     poActiveLayer = NULL;
+    bDSUpdate = FALSE;
+    bNewIngres = FALSE;
 }
 
 /************************************************************************/

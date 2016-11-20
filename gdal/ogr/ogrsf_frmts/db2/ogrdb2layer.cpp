@@ -38,13 +38,17 @@ CPL_CVSID("$Id$");
 OGRDB2Layer::OGRDB2Layer()
 
 {
+    m_poDS = NULL;
+    poFeatureDefn = NULL;
     poDS = NULL;
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
     bIsIdentityFid = FALSE;
     cGenerated = ' ';
+    nLayerStatus = 0;
     panFieldOrdinals = NULL;
     m_poStmt = NULL;
+    m_poPrepStmt = NULL;
     iNextShapeId = 0;
     poSRS = NULL;
     nSRSId = -1; // we haven't even queried the database for it yet.

@@ -58,6 +58,8 @@ OGROCIDataSource::OGROCIDataSource()
     pszDBName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    bDSUpdate = FALSE;
+    bNoLogging = FALSE;
     poSession = NULL;
     papoSRS = NULL;
     panSRID = NULL;

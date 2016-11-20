@@ -100,6 +100,13 @@ GeoRasterWrapper::GeoRasterWrapper()
     bAutoBlocking       = false;
     eModelCoordLocation = MCL_DEFAULT;
     phRPC               = NULL;
+    poConnection        = NULL;
+    iDefaultRedBand     = 0;
+    iDefaultGreenBand   = 0;
+    iDefaultBlueBand    = 0;
+    anULTCoordinate[0]  = 0;
+    anULTCoordinate[1]  = 0;
+    anULTCoordinate[2]  = 0;
 }
 
 //  ---------------------------------------------------------------------------

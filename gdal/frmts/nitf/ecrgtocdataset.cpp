@@ -72,6 +72,7 @@ class ECRGTOCDataset : public GDALPamDataset
     {
         papszSubDatasets = NULL;
         papszFileList = NULL;
+        memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     }
 
     virtual ~ECRGTOCDataset()

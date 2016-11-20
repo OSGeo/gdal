@@ -97,9 +97,14 @@ class WMTSTileMatrixSet
     public:
         OGRSpatialReference         oSRS;
         CPLString                   osSRS;
-        int                         bBoundingBoxValid;
+        bool                        bBoundingBoxValid;
         OGREnvelope                 sBoundingBox; /* expressed in TMS SRS */
         std::vector<WMTSTileMatrix> aoTM;
+
+        WMTSTileMatrixSet() :
+            bBoundingBoxValid(false)
+        {
+        }
 };
 
 /************************************************************************/
@@ -634,7 +639,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
         }
         int bSwap = oTMS.oSRS.EPSGTreatsAsLatLong() || oTMS.oSRS.EPSGTreatsAsNorthingEasting();
         CPLXMLNode* psBB = CPLGetXMLNode(psIter, "BoundingBox");
-        oTMS.bBoundingBoxValid = FALSE;
+        oTMS.bBoundingBoxValid = false;
         if( psBB != NULL )
         {
             CPLString osCRS = CPLGetXMLValue(psBB, "crs", "");
@@ -652,7 +657,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                         oTMS.sBoundingBox.MinY = CPLAtof(papszLC[(bSwap)? 0 : 1]);
                         oTMS.sBoundingBox.MaxX = CPLAtof(papszUC[(bSwap)? 1 : 0]);
                         oTMS.sBoundingBox.MaxY = CPLAtof(papszUC[(bSwap)? 0 : 1]);
-                        oTMS.bBoundingBoxValid = TRUE;
+                        oTMS.bBoundingBoxValid = true;
                     }
                     CSLDestroy(papszLC);
                     CSLDestroy(papszUC);
@@ -671,7 +676,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                 oTMS.sBoundingBox.MinY = -90;
                 oTMS.sBoundingBox.MaxX = 180;
                 oTMS.sBoundingBox.MaxY = 90;
-                oTMS.bBoundingBoxValid = TRUE;
+                oTMS.bBoundingBoxValid = true;
             }
         }
 

@@ -540,7 +540,9 @@ ADRGDataset::ADRGDataset() :
     fdTHF(NULL),
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                          ~ADRGDataset()                              */

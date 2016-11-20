@@ -196,10 +196,13 @@ class TimeCode {
     long        lYear;
     long        lDay;
     long        lMillisecond;
-    char        pszString[L1B_TIMECODE_LENGTH];
+    char        szString[L1B_TIMECODE_LENGTH];
 
   public:
-    TimeCode() : lYear(0), lDay(0), lMillisecond(0) {}
+    TimeCode() : lYear(0), lDay(0), lMillisecond(0)
+    {
+        memset( szString, 0, sizeof(szString) );
+    }
 
     void SetYear(long year)
     {
@@ -218,10 +221,10 @@ class TimeCode {
     long GetMillisecond() { return lMillisecond; }
     char* PrintTime()
     {
-        snprintf(pszString, L1B_TIMECODE_LENGTH,
+        snprintf(szString, L1B_TIMECODE_LENGTH,
                  "year: %ld, day: %ld, millisecond: %ld",
                  lYear, lDay, lMillisecond);
-        return pszString;
+        return szString;
     }
 };
 #undef L1B_TIMECODE_LENGTH

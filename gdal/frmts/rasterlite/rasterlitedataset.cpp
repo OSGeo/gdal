@@ -601,7 +601,7 @@ RasterliteDataset::RasterliteDataset() :
     bCheckForExistingOverview(TRUE),
     hDS(NULL)
 {
-    // TODO(schwehr): Set adfGeoTransform.
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
 /************************************************************************/

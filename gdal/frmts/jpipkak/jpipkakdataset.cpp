@@ -1495,6 +1495,13 @@ JPIPKAKAsyncReader::JPIPKAKAsyncReader()
     pAppBuf = NULL;
     pBuf = NULL;
     nDataRead = 0;
+    nAppPixelSpace = 0;
+    nAppLineSpace = 0;
+    nAppBandSpace = 0;
+    nLevel = 0;
+    nQualityLayers = 0;
+    bHighPriority = FALSE;
+    bComplete = FALSE;
 }
 
 /************************************************************************/
