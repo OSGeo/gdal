@@ -31,11 +31,21 @@
 
 // PGeo == ESRI Personal GeoDatabase.
 
+#include "cpl_port.h"
 #include "ogrpgeogeometry.h"
-#include "ogr_p.h"
-#include "cpl_string.h"
-#include "ogr_api.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstring>
 #include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 

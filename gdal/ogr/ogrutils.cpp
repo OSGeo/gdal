@@ -28,16 +28,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cctype>
-#include <cstdlib>
-
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
-
-#include "ogr_geometry.h"
+#include "cpl_port.h"
 #include "ogr_p.h"
 
-# include "ogrsf_frmts.h"
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
