@@ -3045,7 +3045,7 @@ void FGdbLayer::ResetReading()
 
     // Search non-spatial
 
-    if FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows))
+    if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows)) )
         GDBErr(hr, "Failed Searching");
 
     m_bFilterDirty = false;
