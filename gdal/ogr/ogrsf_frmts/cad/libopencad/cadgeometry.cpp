@@ -114,10 +114,11 @@ CADVector Matrix::multiply( const CADVector& vector ) const
 
 CADGeometry::CADGeometry() :
     geometryType( UNDEFINED ),
-    thickness( 0 ),
-    geometry_color{0,0,0}
+    thickness( 0 )
 {
-
+    geometry_color.R = 0;
+    geometry_color.G = 0;
+    geometry_color.B = 0;
 }
 
 CADGeometry::~CADGeometry()
