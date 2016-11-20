@@ -187,7 +187,7 @@ OGRDB2DataSource::OGRDB2DataSource()
     m_pabyHugeColorArray = NULL;
     m_poCT = NULL;
     m_bInWriteTile = FALSE;
-    m_hTempDB = NULL;
+    //m_hTempDB = NULL;
     m_bInFlushCache = FALSE;
     m_nTileInsertionCount = 0;
     m_osTilingScheme = "CUSTOM";
@@ -737,10 +737,10 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         }
     }
 
-    int bFileExists = FALSE;
+    //int bFileExists = FALSE;
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
-        bFileExists = TRUE;
+        //bFileExists = TRUE;
         if( nBandsIn == 0 ||
                 !CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) )
         {
@@ -806,7 +806,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Error creating layer: %s", GetSession()->GetLastError() );
             CPLDebug("OGR_DB2DataSource::Create", "create failed");
-            return NULL;
+            return FALSE;
         }
 
         // Remove entries from raster catalog tables - will cascade
@@ -2246,7 +2246,7 @@ int OGRDB2DataSource::RegisterWebPExtension()
 /*                    CheckUnknownExtensions()                          */
 /************************************************************************/
 
-void OGRDB2DataSource::CheckUnknownExtensions(int bCheckRasterTable)
+void OGRDB2DataSource::CheckUnknownExtensions(int /*bCheckRasterTable*/)
 {
     if( !HasExtensionsTable() )
         return;
@@ -2522,7 +2522,7 @@ static const WarpResamplingAlg asResamplingAlg[] =
     { "AVERAGE", GRA_Average },
 };
 
-void DumpStringList(char **papszStrList)
+static void DumpStringList(char **papszStrList)
 {
     if (papszStrList == NULL)
         return ;
@@ -2906,12 +2906,12 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Set projection failed in gpkg.contents "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             CPLDebug("OGRDB2DataSource::SetProjection",
                      "Set projection failed in gpkg.contents "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             return CE_Failure;
@@ -2925,12 +2925,12 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Set projection in gpkg.tile_matrix_set failed "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             CPLDebug("OGRDB2DataSource::SetProjection",
                      "Set projection in gpkg.tile_matrix_set failed "
-                     "for table %s; ",
+                     "for table %s: %s",
                      m_osRasterTable.c_str(),
                      GetSession()->GetLastError());
             return CE_Failure;
@@ -3378,12 +3378,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                         SoftRollbackTransaction();
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "updating tile_matrix failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         CPLDebug("OGRDB2DataSource::IBuildOverviews",
                                  "updating tile_matrix failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         return CE_Failure;
@@ -3404,12 +3404,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                         SoftRollbackTransaction();
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "update failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         CPLDebug("OGRDB2DataSource::IBuildOverviews",
                                  "update failed "
-                                 "for table %s; ",
+                                 "for table %s: %s ",
                                  m_osRasterTable.c_str(),
                                  GetSession()->GetLastError());
                         return CE_Failure;
@@ -3442,12 +3442,12 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                     SoftRollbackTransaction();
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "insert into tile_matrix failed "
-                             "for table %s; ",
+                             "for table %s: %s ",
                              m_osRasterTable.c_str(),
                              GetSession()->GetLastError());
                     CPLDebug("OGRDB2DataSource::IBuildOverviews",
                              "insert into tile_matrix failed "
-                             "for table %s; ",
+                             "for table %s: %s ",
                              m_osRasterTable.c_str(),
                              GetSession()->GetLastError());
                     return CE_Failure;

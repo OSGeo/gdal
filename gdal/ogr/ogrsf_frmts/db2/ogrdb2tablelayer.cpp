@@ -96,6 +96,11 @@ OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn )
     pszSchemaName = NULL;
     pszFIDColumn = NULL;
     eGeomType = wkbNone;
+
+    bLaunderColumnNames = false;
+    bPreservePrecision = false;
+    bNeedSpatialIndex = false;
+    m_iSrs = 0;
 }
 
 /************************************************************************/
@@ -647,7 +652,7 @@ OGRFeature *OGRDB2TableLayer::GetFeature( GIntBig nFeatureId )
 
     m_poStmt = new OGRDB2Statement( poDS->GetSession() );
     CPLString osFields = BuildFields();
-    m_poStmt->Appendf( "select %s from %s where %s = %ld", osFields.c_str(),
+    m_poStmt->Appendf( "select %s from %s where %s = " CPL_FRMT_GIB, osFields.c_str(),
                        poFeatureDefn->GetName(), pszFIDColumn, nFeatureId );
 
     if( !m_poStmt->DB2Execute("OGR_DB2TableLayer::GetFeature") )
@@ -775,14 +780,14 @@ OGRErr OGRDB2TableLayer::CreateField( OGRFieldDefn *poFieldIn,
     if( oField.GetType() == OFTInteger )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "int" );
     }
     else if( oField.GetType() == OFTInteger64 )
     {
         if( oField.GetWidth() > 0 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,0)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,0)", oField.GetWidth() );
         else
             strcpy( szFieldType, "bigint" );
     }
@@ -790,7 +795,7 @@ OGRErr OGRDB2TableLayer::CreateField( OGRFieldDefn *poFieldIn,
     {
         if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
                 && bPreservePrecision )
-            sprintf( szFieldType, "numeric(%d,%d)",
+            snprintf( szFieldType, sizeof(szFieldType), "numeric(%d,%d)",
                      oField.GetWidth(), oField.GetPrecision() );
         else
             strcpy( szFieldType, "float" );
@@ -800,7 +805,7 @@ OGRErr OGRDB2TableLayer::CreateField( OGRFieldDefn *poFieldIn,
         if( oField.GetWidth() == 0 || !bPreservePrecision )
             strcpy( szFieldType, "varchar(MAX)" );
         else
-            sprintf( szFieldType, "varchar(%d)", oField.GetWidth() );
+            snprintf( szFieldType, sizeof(szFieldType), "varchar(%d)", oField.GetWidth() );
     }
     else if( oField.GetType() == OFTDate )
     {
@@ -1295,7 +1300,7 @@ void OGRDB2TableLayer::FreeBindBuffer(int nBindNum, void **papBindBuffer)
 /* non-empty field value                                                */
 /************************************************************************/
 
-OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
+OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement * /*poStatement*/,
                                         OGRFeature* poFeature, int i,
                                         int nBindNum, void **papBindBuffer)
 {
@@ -1363,6 +1368,7 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement *poStatement,
     return OGRERR_NONE;
 }
 
+#ifdef notdef
 /************************************************************************/
 /*                     CreateSpatialIndexIfNecessary()                  */
 /************************************************************************/
@@ -1374,6 +1380,7 @@ void OGRDB2TableLayer::CreateSpatialIndexIfNecessary()
         CreateSpatialIndex();
     }
 }
+#endif
 
 /************************************************************************/
 /*                      RunDeferredCreationIfNecessary()                */
