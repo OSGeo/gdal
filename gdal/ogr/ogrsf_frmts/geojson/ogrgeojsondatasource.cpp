@@ -294,7 +294,8 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
 
     if( !bFoundNameInNativeData &&
         CPLFetchBool(papszOptions, "WRITE_NAME", true) &&
-        !EQUAL(pszNameIn, OGRGeoJSONLayer::DefaultName))
+        !EQUAL(pszNameIn, OGRGeoJSONLayer::DefaultName) &&
+        !EQUAL(pszNameIn, "") )
     {
         json_object* poName = json_object_new_string(pszNameIn);
         VSIFPrintfL( fpOut_, "\"name\": %s,\n",
