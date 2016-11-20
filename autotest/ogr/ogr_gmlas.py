@@ -234,11 +234,11 @@ def ogr_gmlas_non_existing_gml():
         return 'skip'
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('GMLAS:/vsimem/i_dont_exist.gml')
+        ds = gdal.OpenEx('GMLAS:/vsimem/i_do_not_exist.gml')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot open /vsimem/i_dont_exist.gml') < 0:
+    if gdal.GetLastErrorMsg().find('Cannot open /vsimem/i_do_not_exist.gml') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -254,11 +254,11 @@ def ogr_gmlas_non_existing_xsd():
         return 'skip'
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/i_dont_exist.xsd'])
+        ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/i_do_not_exist.xsd'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gdal.GetLastErrorMsg().find('Cannot resolve /vsimem/i_dont_exist.xsd') < 0:
+    if gdal.GetLastErrorMsg().find('Cannot resolve /vsimem/i_do_not_exist.xsd') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -3436,8 +3436,8 @@ def ogr_gmlas_writer_errors():
     # Invalid input schema
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format = 'GMLAS', \
-                                      datasetCreationOptions = [ 'INPUT_XSD=/i_dont/exist.xsd' ])
-    if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve /i_dont/exist.xsd') < 0:
+                                      datasetCreationOptions = [ 'INPUT_XSD=/i_do_not/exist.xsd' ])
+    if ret_ds is not None or gdal.GetLastErrorMsg().find('Cannot resolve /i_do_not/exist.xsd') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -3478,7 +3478,7 @@ def ogr_gmlas_writer_errors():
     # Invalid CONFIG_FILE
     with gdaltest.error_handler():
         ret_ds = gdal.VectorTranslate('/vsimem/valid.xml', tmp_ds, format = 'GMLAS', \
-                                      datasetCreationOptions = [ 'CONFIG_FILE=/i/dont/exist' ])
+                                      datasetCreationOptions = [ 'CONFIG_FILE=/i/do_not/exist' ])
     if ret_ds is not None or gdal.GetLastErrorMsg().find('Loading of configuration failed') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())

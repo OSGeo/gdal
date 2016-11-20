@@ -114,7 +114,7 @@ protected:
 };
 
 /**
- * @brief Geometry class which represents Unhandled geometry (means that library cant read it yet)
+ * @brief Geometry class which represents Unhandled geometry (means that library can't read it yet)
  */
 class CADUnknown : public CADGeometry
 {

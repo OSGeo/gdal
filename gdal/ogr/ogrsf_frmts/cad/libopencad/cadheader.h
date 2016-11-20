@@ -340,7 +340,7 @@ public:
                               0 = Off
                               1 = On */
         DRAGVS, /**< Hard-pointer ID to visual style while creating 3D
-                              solid primitives. The defualt value is NULL */
+                              solid primitives. The default value is NULL */
         DWGCODEPAGE, /**< Drawing code page; set to the system code page
                               when a new drawing is created, but not otherwise
                               maintained by AutoCAD */

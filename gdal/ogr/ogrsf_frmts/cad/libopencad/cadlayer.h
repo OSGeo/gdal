@@ -74,7 +74,7 @@ public:
 
     std::unordered_set<std::string> getAttributesTags();
 
-    // cadinserthandle is 0 by default because if entity isnt a part of custom block - its a part of ModelSpace block.
+    // cadinserthandle is 0 by default because if entity isn't a part of custom block - its a part of ModelSpace block.
     void addHandle( long handle, enum CADObject::ObjectType type, long cadinserthandle = 0 );
 
     size_t getGeometryCount() const;

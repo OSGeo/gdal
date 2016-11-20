@@ -1342,7 +1342,7 @@ void GMLASReader::startElement(
                                         m_oCurCtxt.m_poFeature->GetDefnRef() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant m_poLayer / m_poFeature state");
+                            "Inconsistent m_poLayer / m_poFeature state");
                 m_bParsingError = true;
                 return; 
             }
@@ -1899,7 +1899,7 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
     else
     {
         const int nRuleIdx =
-                        m_oXLinkResolver.GetMachingResolutionRule(osAttrValue);
+                        m_oXLinkResolver.GetMatchingResolutionRule(osAttrValue);
         if( nRuleIdx >= 0 )
         {
             const GMLASXLinkResolutionConf::URLSpecificResolution& oRule(

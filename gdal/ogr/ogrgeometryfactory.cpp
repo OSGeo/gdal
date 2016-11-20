@@ -2955,7 +2955,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
 /************************************************************************/
 /*                          IsPolarToWGS84()                            */
 /*                                                                      */
-/* Returns true if poCT transfroms from a projection that includes one  */
+/* Returns true if poCT transforms from a projection that includes one  */
 /* of the pole in a continuous way.                                     */
 /************************************************************************/
 
@@ -2974,7 +2974,7 @@ static bool IsPolarToWGS84( OGRCoordinateTransformation* poCT,
 
     if( poRevCT->Transform( 1, &x, &y ) &&
         // Surprisingly, pole south projects correctly back &
-        // forth for antartic polar stereographic.  Therefore, check that
+        // forth for antarctic polar stereographic.  Therefore, check that
         // the projected value is not too big.
         fabs(x) < 1e10 && fabs(y) < 1e10 &&
         poCT->Transform(1, &x, &y) &&
@@ -3100,7 +3100,7 @@ static OGRGeometry* TransformBeforePolarToWGS84(
 /************************************************************************/
 /*                        IsAntimeridianProjToWGS84()                   */
 /*                                                                      */
-/* Returns true if poCT transfroms from a projection that includes the  */
+/* Returns true if poCT transforms from a projection that includes the  */
 /* antimeridian in a continuous way.                                    */
 /************************************************************************/
 

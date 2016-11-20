@@ -2645,7 +2645,7 @@ OGRLayer* GMLASWriter::GetFilteredLayer(
         return poSrcLayer;
     }
 
-    // RDBMS drivers will really create a new iterator independant of the
+    // RDBMS drivers will really create a new iterator independent of the
     // underlying layer when using a SELECT statement
     GDALDriver* poDriver = m_poSrcDS->GetDriver();
     if( poDriver != NULL &&

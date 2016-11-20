@@ -4466,7 +4466,7 @@ NITFDataset::NITFCreateCopy(
                 osRPC00B += pszRPC;
                 papszFullOptions = CSLAddString( papszFullOptions, osRPC00B ) ;
 
-                // If no precision loss occured during RPC conversion, then
+                // If no precision loss occurred during RPC conversion, then
                 // we can suppress it from PAM
                 if( !bPrecisionLoss )
                     nGCIFFlags &= ~GCIF_METADATA;

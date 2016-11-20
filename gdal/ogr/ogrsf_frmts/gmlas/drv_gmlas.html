@@ -140,7 +140,7 @@ OGRLayer::GetNextFeature(). While this approach still works for the GMLAS driver
 it may result in very poor performance on big documents or documents using
 complex schemas that are translated in many OGR layers.</p>
 
-<p>It is thus recommanded to use GDALDataset::GetNextFeature() to iterate over
+<p>It is thus recommended to use GDALDataset::GetNextFeature() to iterate over
 features as soon as they appear in the .gml/.xml file. This may return features
 from non-sequential layers, when the features include nested elements.</p>
 
@@ -206,7 +206,7 @@ option.</li>
 <p>By default, the driver will "wrap" the features inside a WFS 2.0
 wfs:FeatureCollection / wfs:member element.
 It is also possible to ask the driver to create instead a custom wrapping .xsd
-file that declares the ogr_gmlas:FeatureCollecion / ogr_gmlas:featureMember XML
+file that declares the ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember XML
 elements.</p>
 
 <p>Note that while the file resulting from the export should be XML valid, there
@@ -294,7 +294,7 @@ date time is used. Only valid for WRAPPING=WFS2_FEATURECOLLECTION.</li>
 WRAPPING=WFS2_FEATURECOLLECTION. Default is "http://schemas.opengis.net/wfs/2.0/wfs.xsd"</li>
 
 <li> <b>GENERATE_XSD</b>=YES/NO. Whether to generate a .xsd file that has
-the structure of the wrapping ogr_gmlas:FeatureCollecion / ogr_gmlas:featureMember
+the structure of the wrapping ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember
 elements. Only valid for WRAPPING=GMLAS_FEATURECOLLECTION. Default to YES.</li>
 
 <li> <b>OUTPUT_XSD_FILENAME</b>=string. Wrapping .xsd filename. If not specified,

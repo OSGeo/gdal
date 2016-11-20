@@ -416,9 +416,9 @@ long ReadUMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
         aMCharBytes[i] &= binary( 01111111 );
     }
 
-    // TODO: this code doesnt cover case when char.bytescount > 3, but its
+    // TODO: this code doesn't cover case when char.bytescount > 3, but its
     //       possible on large files.
-    // I just cant write an algorithm that does this.
+    // I just can't write an algorithm that does this.
     switch( MCharBytesCount )
     {
         case 1:
@@ -499,9 +499,9 @@ long ReadMCHAR( const char * pabyInput, size_t& nBitOffsetFromStart )
         aMCharBytes[i] &= binary( 01111111 );
     }
 
-    // TODO: this code doesnt cover case when char.bytescount > 3, but its
+    // TODO: this code doesn't cover case when char.bytescount > 3, but its
     //       possible on large files.
-    // I just cant write an algorithm that does this.
+    // I just can't write an algorithm that does this.
     switch( MCharBytesCount )
     {
         case 1:

@@ -483,7 +483,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                                       + pow( stNextVertex.getY() - stCurrentVertex.getY(), 2 ) );
 
                 /*
-                 * Handling straigth polyline segment.
+                 * Handling straight polyline segment.
                  */
                 if( ( dfLength == 0 ) || ( adfBulges[iCurrentVertex] == 0 ) )
                 {

@@ -118,8 +118,8 @@ AC_ARG_WITH([cpp11],
 
 AC_MSG_CHECKING([if use C++11 compiler options])
 if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
-    dnl Check C++ compiler compability with C++11
-    AC_MSG_CHECKING([C++ compiler compability with C++11])
+    dnl Check C++ compiler compatibility with C++11
+    AC_MSG_CHECKING([C++ compiler compatibility with C++11])
     AX_CXX_COMPILE_STDCXX_11([ext],[optional])
 
     if [test "$HAVE_CXX11" = "1"]; then
