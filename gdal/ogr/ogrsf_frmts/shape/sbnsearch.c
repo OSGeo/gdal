@@ -918,7 +918,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
     if( bMinX > bMaxX || bMinY > bMaxY )
         return NULL;
 
-    if( bMaxX < 0 || bMaxY < 0 || bMinX > 255 || bMinX > 255 )
+    if( bMaxX < 0 || bMaxY < 0 || bMinX > 255 || bMinY > 255 )
         return NULL;
 
     if( hSBN->nShapeCount == 0 )
