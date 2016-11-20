@@ -2080,7 +2080,8 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
             }
         }
 
-        poSRS->AutoIdentifyEPSG();
+        if( poSRS )
+            poSRS->AutoIdentifyEPSG();
     }
 
     return poSRS;
