@@ -856,6 +856,7 @@ bool GML2OGRGeometry_AddToMultiSurface( OGRMultiSurface* poMS,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRMultiSurface.");
+            return false;
         }
         for( int i = 0; i < poMS2->getNumGeometries(); i++ )
         {
@@ -3478,8 +3479,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                             CE_Fatal, CPLE_AppDefined,
                             "dynamic_cast failed.  Expected OGRMultiPolygon.");
                     }
-
-                    poMP->addGeometryDirectly( poPolygon );
+                    else
+                    {
+                        poMP->addGeometryDirectly( poPolygon );
+                    }
                 }
             }
         }
