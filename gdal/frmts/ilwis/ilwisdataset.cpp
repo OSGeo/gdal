@@ -1436,7 +1436,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
         // No match found. Assume it is a self-created domain. Read its type and decide the GDAL type.
         string pszDomainFileName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"dom" ));
         string domType = ReadElement("Domain", "Type", pszDomainFileName.c_str());
-        if EQUAL(domType.c_str(),"domainvalue") // is it a self-created domain of type=DomainValue?
+        if( EQUAL(domType.c_str(),"domainvalue") ) // is it a self-created domain of type=DomainValue?
         {
             ReadValueDomainProperties(pszFileName);
         }

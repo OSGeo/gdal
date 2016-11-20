@@ -67,6 +67,27 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+# Those warnings in libjpeg seems to be false positives
+#grep "arrayIndexOutOfBoundsCond" ${LOG_FILE} | grep frmts/jpeg/libjpeg > /dev/null && echo "arrayIndexOutOfBoundsCond issues in frmts/jpeg/libjpeg ignored"
+grep "arrayIndexOutOfBoundsCond" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg
+if [[ $? -eq 0 ]] ; then
+    echo "arrayIndexOutOfBoundsCond check failed"
+    exit 1
+fi
+
+grep "arrayIndexOutOfBounds," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "arrayIndexOutOfBounds issues in frmts/hdf4/hdf-eos ignored"
+grep "arrayIndexOutOfBounds," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos
+if [[ $? -eq 0 ]] ; then
+    echo "arrayIndexOutOfBounds check failed"
+    exit 1
+fi
+
+grep "syntaxError" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "syntaxError check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 
