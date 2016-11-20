@@ -56,6 +56,14 @@ ogrinfo -ro http://featureserver/data/.geojson OGRGeoJSON
 It's also valid to assume that OGRDataSource::GetLayerCount() for GeoJSON datasource always returns 1.
 </p>
 
+<p>Starting with GDAL 2.2, the layer name is built with the following logic:</p>
+<ol>
+<li>If a "name" member is found at the FeatureCollection level, it is used.</li>
+<li>Otherwise if the filename is regular (ie not a URL with query parameters), then
+the filename without extension and path is used as the layer name.</li>
+<li>Otherwise OGRGeoJSON is used.</li>
+</ol>
+
 <p>Accessing Web Service as a datasource (i.e. FeatureServer), each request will produce new layer.
 This behavior conforms to stateless nature of HTTP transaction and is similar to how Web browsers operate:
 single request == single page.</p>
@@ -185,6 +193,11 @@ Default to 17. If explicitly specified, and COORDINATE_PRECISION is not, this wi
 <a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard.
 Otherwise <a href="http://geojson.org/geojson-spec.html">GeoJSON 2008</a> initial version will be used.
 Default is NO (thus GeoJSON 2008)</li>
+<li><b>WRITE_NAME</b>=YES/NO. (OGR &gt;= 2.2) Whether to write a "name" property
+at feature collection level with layer name. Defaults to YES.</li>
+<li><b>DESCRIPTION</b>=string. (OGR &gt;= 2.2) (Long) description to write in a
+"description" property at feature collection level. On reading, this will be
+reported in the DESCRIPTION metadata item of the layer.</li>
 </ul>
 
 <h2>VSI Virtual File System API support</h2>
