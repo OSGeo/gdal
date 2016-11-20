@@ -178,7 +178,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      If the module is a point one, dump to Shapefile.                */
 /* -------------------------------------------------------------------- */
-    else if( pszMODN[0] == 'N' || pszMODN[0] == 'N' )
+    else if( pszMODN[0] == 'N' || pszMODN[0] == 'n' )
     {
         WritePointShapefile( pszShapefile, &oTransfer, pszMODN );
     }
