@@ -2214,31 +2214,33 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         return false;
     }
 
-    const size_t nMainAttrListSize = (poMainAttrList != NULL) ?
-                                                    poMainAttrList->size(): 0;
-    for(size_t j=0; j < nMainAttrListSize; ++j )
+    if( poMainAttrList != NULL )
     {
-        GMLASField oField;
-        XSAttributeUse* poAttr = poMainAttrList->elementAt(j);
-        SetFieldFromAttribute(oField, poAttr, oClass.GetXPath());
-
-        if( IsIgnoredXPath( oField.GetXPath() ) )
+        const size_t nMainAttrListSize = poMainAttrList->size();
+        for(size_t j=0; j < nMainAttrListSize; ++j )
         {
-#ifdef DEBUG_VERBOSE
-            CPLDebug("GMLAS", "%s is in ignored xpaths",
-                     oField.GetXPath().c_str());
-#endif
-            if( !oField.GetFixedValue().empty() )
-            {
-                oField.SetIgnored();
-            }
-            else
-            {
-                continue;
-            }
-        }
+            GMLASField oField;
+            XSAttributeUse* poAttr = poMainAttrList->elementAt(j);
+            SetFieldFromAttribute(oField, poAttr, oClass.GetXPath());
 
-        oClass.AddField(oField);
+            if( IsIgnoredXPath( oField.GetXPath() ) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GMLAS", "%s is in ignored xpaths",
+                        oField.GetXPath().c_str());
+#endif
+                if( !oField.GetFixedValue().empty() )
+                {
+                    oField.SetIgnored();
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            oClass.AddField(oField);
+        }
     }
 
     XSParticleList* poParticles = poModelGroup->getParticles();
