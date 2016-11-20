@@ -65,7 +65,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -84,7 +84,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -162,12 +162,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -184,12 +184,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;

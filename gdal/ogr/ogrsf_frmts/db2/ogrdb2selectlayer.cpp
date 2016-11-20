@@ -79,7 +79,7 @@ OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
     if (nNameLength > 0)
     {
         char szLayerName[512];
-        sprintf(szLayerName, "%s.%s",szSchemaName, szTableName);
+        snprintf(szLayerName, sizeof(szLayerName), "%s.%s",szSchemaName, szTableName);
         poBaseLayer = (OGRDB2Layer *) poDS->GetLayerByName((const char*)
                       szLayerName);
         if (poBaseLayer != NULL)

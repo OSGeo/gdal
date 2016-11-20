@@ -154,7 +154,7 @@ protected:
 
 public:
     OGRDB2Session( );
-    ~OGRDB2Session();
+    virtual ~OGRDB2Session();
 // From CPLODBCSession
     int         EstablishSession( const char *pszDSN,
                                   const char *pszUserid,
@@ -380,7 +380,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
     int                 bPreservePrecision;
     int                 bNeedSpatialIndex;
 
-    int                 nUploadGeometryFormat;
+    //int                 nUploadGeometryFormat;
     char                *m_pszQuery;
 
     void                ClearStatement();
@@ -397,28 +397,28 @@ class OGRDB2TableLayer : public OGRDB2Layer
     OGRwkbGeometryType eGeomType;
 
 // From GPKG
-    char*                       m_pszTableName;
+    //char*                       m_pszTableName;
     int                         m_iSrs;
-    OGREnvelope*                m_poExtent;
+    //OGREnvelope*                m_poExtent;
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
     CPLString                   osQuery;
     OGRBoolean                  m_bExtentChanged;
 
-    int                         m_bInsertStatementWithFID;
+    //int                         m_bInsertStatementWithFID;
 
-    int                         bDeferredSpatialIndexCreation;
-    int                         m_bHasSpatialIndex;
-    int                         bDropRTreeTable;
-    int                         m_anHasGeometryExtension[wkbMultiSurface+1];
-    int                         m_bPreservePrecision;
-    int                         m_bTruncateFields;
-    int                         m_bDeferredCreation;
-    int                         m_iFIDAsRegularColumnIndex;
+    //int                         bDeferredSpatialIndexCreation;
+    //int                         m_bHasSpatialIndex;
+    //int                         bDropRTreeTable;
+    //int                         m_anHasGeometryExtension[wkbMultiSurface+1];
+    //int                         m_bPreservePrecision;
+    //int                         m_bTruncateFields;
+    //int                         m_bDeferredCreation;
+    //int                         m_iFIDAsRegularColumnIndex;
 
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
-    int                         m_bHasReadMetadataFromStorage;
+    //int                         m_bHasReadMetadataFromStorage;
     OGRErr              RegisterGeometryColumn();
     void                BuildWhere();
 //    OGRErr              SyncToDisk();
@@ -487,7 +487,7 @@ public:
     }
 
     int                 FetchSRSId();
-    void                CreateSpatialIndexIfNecessary();
+    //void                CreateSpatialIndexIfNecessary();
 
     int                 DropSpatialIndex(int bCalledFromSQLFunction = FALSE);
     /*
@@ -562,6 +562,8 @@ public:
     virtual OGRFeature *GetFeature( GIntBig nFeatureId );
 
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+            { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     virtual int         TestCapability( const char * );
 };
@@ -660,7 +662,7 @@ class OGRDB2DataSource : public GDALPamDataset
 
     CPLString           m_osWHERE;
 
-    int                 m_hTempDB;  //LATER - flag that partial_tiles exists
+    //int                 m_hTempDB;  //LATER - flag that partial_tiles exists
     CPLString           m_osTempDBFilename;
 
     int                 m_bInFlushCache;

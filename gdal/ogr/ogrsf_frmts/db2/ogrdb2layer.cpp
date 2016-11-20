@@ -59,7 +59,8 @@ OGRDB2Layer::~OGRDB2Layer()
 {
     CPLDebug("OGRDB2Layer::~OGRDB2Layer","entering");
     CPLDebug("OGRDB2Layer::~OGRDB2Layer",
-             "m_nFeaturesRead: %d; poFeatureDefn: %p", m_nFeaturesRead,poFeatureDefn);
+             "m_nFeaturesRead: " CPL_FRMT_GIB "; poFeatureDefn: %p",
+             m_nFeaturesRead,poFeatureDefn);
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "OGR_DB2Layer",
@@ -474,8 +475,9 @@ const char *OGRDB2Layer::GetGeometryColumn()
 char* OGRDB2Layer::GByteArrayToHexString( const GByte* pabyData, int nLen)
 {
     char* pszTextBuf;
+    const size_t nBufLen = nLen*2+3;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*2+3);
+    pszTextBuf = (char *) CPLMalloc(nBufLen);
 
     int  iSrc, iDst=0;
 
@@ -483,12 +485,12 @@ char* OGRDB2Layer::GByteArrayToHexString( const GByte* pabyData, int nLen)
     {
         if( iSrc == 0 )
         {
-            sprintf( pszTextBuf+iDst, "0x%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "0x%02x", pabyData[iSrc] );
             iDst += 4;
         }
         else
         {
-            sprintf( pszTextBuf+iDst, "%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "%02x", pabyData[iSrc] );
             iDst += 2;
         }
     }
