@@ -227,14 +227,14 @@ def ogr_geojson_2():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('point')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called point')
         return 'fail'
 
     extent = (100.0, 100.0, 0.0, 0.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPoint, 0, extent)
+    rc = validate_layer(lyr, 'point', 1, ogr.wkbPoint, 0, extent)
     if not rc:
         return 'fail'
 
@@ -259,14 +259,14 @@ def ogr_geojson_3():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('linestring')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called linestring')
         return 'fail'
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbLineString, 0, extent)
+    rc = validate_layer(lyr, 'linestring', 1, ogr.wkbLineString, 0, extent)
     if not rc:
         return 'fail'
 
@@ -291,14 +291,14 @@ def ogr_geojson_4():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('polygon')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called polygon')
         return 'fail'
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbPolygon, 0, extent)
+    rc = validate_layer(lyr, 'polygon', 1, ogr.wkbPolygon, 0, extent)
     if not rc:
         return 'fail'
 
@@ -323,14 +323,14 @@ def ogr_geojson_5():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('geometrycollection')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called geometrycollection')
         return 'fail'
 
     extent = (100.0, 102.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
+    rc = validate_layer(lyr, 'geometrycollection', 1, ogr.wkbGeometryCollection, 0, extent)
     if not rc:
         return 'fail'
 
@@ -355,14 +355,14 @@ def ogr_geojson_6():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('multipoint')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called multipoint')
         return 'fail'
 
     extent = (100.0, 101.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPoint, 0, extent)
+    rc = validate_layer(lyr, 'multipoint', 1, ogr.wkbMultiPoint, 0, extent)
     if not rc:
         return 'fail'
 
@@ -387,14 +387,14 @@ def ogr_geojson_7():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('multilinestring')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called multilinestring')
         return 'fail'
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiLineString, 0, extent)
+    rc = validate_layer(lyr, 'multilinestring', 1, ogr.wkbMultiLineString, 0, extent)
     if not rc:
         return 'fail'
 
@@ -419,14 +419,14 @@ def ogr_geojson_8():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('multipolygon')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called multipolygon')
         return 'fail'
 
     extent = (100.0, 103.0, 0.0, 3.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbMultiPolygon, 0, extent)
+    rc = validate_layer(lyr, 'multipolygon', 1, ogr.wkbMultiPolygon, 0, extent)
     if not rc:
         return 'fail'
 
@@ -514,14 +514,14 @@ def ogr_geojson_11():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('srs_name')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called srs_name')
         return 'fail'
 
     extent = (100.0, 102.0, 0.0, 1.0)
 
-    rc = validate_layer(lyr, 'OGRGeoJSON', 1, ogr.wkbGeometryCollection, 0, extent)
+    rc = validate_layer(lyr, 'srs_name', 1, ogr.wkbGeometryCollection, 0, extent)
     if not rc:
         return 'fail'
 
@@ -2735,9 +2735,9 @@ def ogr_geojson_52():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('OGRGeoJSON')
+    lyr = ds.GetLayerByName('nullvalues')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called OGRGeoJSON')
+        gdaltest.post_reason('Missing layer called nullvalues')
         return 'fail'
 
     fld = lyr.GetLayerDefn().GetFieldDefn(0)
@@ -3086,7 +3086,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2000000 2000000,2000000 -2000000,-2000000 -2000000,-2000000 2000000,2000000 2000000))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3115,7 +3115,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((-2000000 -2000000,-1000000 -2000000,-1000000 2000000,-2000000 2000000,-2000000 -2000000))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3142,7 +3142,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((-2000000 2000000,0 0,-2000000 -2000000,-2000000 2000000))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3168,7 +3168,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((2000000 2000000,0 0,2000000 -2000000,2000000 2000000)))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3194,7 +3194,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((100000 100000,-100000 100000,0 0,100000 100000))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3220,7 +3220,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((2000000 2000000,2000000 -2000000,-2000000 -2000000,-2000000 2000000,2000000 2000000)))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3252,7 +3252,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(670000 0,850000 0)'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3294,7 +3294,7 @@ def ogr_geojson_57():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((670000 4000000,700000 4000000,700000 4100000,670000 4100000,670000 4000000))'))
     lyr.CreateFeature(f)
 
-    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+    gdal.VectorTranslate('/vsimem/out.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['WRITE_NAME=NO', 'RFC7946=YES', 'WRITE_BBOX=YES'])
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -3311,6 +3311,67 @@ def ogr_geojson_57():
         print(got)
         return 'fail'
 
+
+    return 'success'
+
+###############################################################################
+# Test using the name member of FeatureCollection
+
+def ogr_geojson_58():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('{ "type": "FeatureCollection", "name": "layer_name", "features": []}')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('layer_name')
+    if lyr is None:
+        gdaltest.post_reason('Missing layer called layer_name')
+        return 'fail'
+    ds = None
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_58.json')
+    lyr = ds.CreateLayer('foo')
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_58.json')
+    if ds.GetLayerByName('foo') is None:
+        gdaltest.post_reason('Missing layer called foo')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/ogr_geojson_58.json')
+
+    return 'success'
+
+###############################################################################
+# Test using the description member of FeatureCollection
+
+def ogr_geojson_59():
+    if gdaltest.geojson_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('{ "type": "FeatureCollection", "description": "my_description", "features": []}')
+    if ds is None:
+        gdaltest.post_reason('Failed to open datasource')
+        return 'fail'
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetMetadataItem('DESCRIPTION') != 'my_description':
+        gdaltest.post_reason('Did not get DESCRIPTION')
+        return 'fail'
+    ds = None
+
+    ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_59.json')
+    lyr = ds.CreateLayer('foo', options = ['DESCRIPTION=my desc'])
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_59.json')
+    lyr = ds.GetLayerByName('foo')
+    if lyr.GetMetadataItem('DESCRIPTION') != 'my desc':
+        gdaltest.post_reason('Did not get DESCRIPTION')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/ogr_geojson_59.json')
 
     return 'success'
 
@@ -3372,6 +3433,8 @@ gdaltest_list = [
     ogr_geojson_55,
     ogr_geojson_56,
     ogr_geojson_57,
+    ogr_geojson_58,
+    ogr_geojson_59,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

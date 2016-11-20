@@ -117,6 +117,7 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
         return FALSE;
     }
 
+    SetDescription( poOpenInfo->pszFilename );
     LoadLayers(poOpenInfo->papszOpenOptions);
     if( nLayers_ == 0 )
     {
@@ -226,6 +227,7 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
     const char* pszNativeMediaType =
         CSLFetchNameValue(papszOptions, "NATIVE_MEDIA_TYPE");
     bool bWriteCRSIfWGS84 = true;
+    bool bFoundNameInNativeData = false;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
@@ -268,6 +270,17 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                     continue;
                 }
 
+                if( strcmp(it.key, "name") == 0 )
+                    bFoundNameInNativeData = true;
+
+                // If a native description exists, ignore it if an explicit
+                // DESCRIPTION option has been provided.
+                if( strcmp(it.key, "description") == 0 &&
+                    CSLFetchNameValue(papszOptions, "DESCRIPTION") )
+                {
+                    continue;
+                }
+
                 json_object* poKey = json_object_new_string(it.key);
                 VSIFPrintfL( fpOut_, "%s: ",
                              json_object_to_json_string(poKey) );
@@ -277,6 +290,25 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
             }
             json_object_put(poObj);
         }
+    }
+
+    if( !bFoundNameInNativeData &&
+        CPLFetchBool(papszOptions, "WRITE_NAME", true) &&
+        !EQUAL(pszNameIn, OGRGeoJSONLayer::DefaultName))
+    {
+        json_object* poName = json_object_new_string(pszNameIn);
+        VSIFPrintfL( fpOut_, "\"name\": %s,\n",
+                     json_object_to_json_string(poName) );
+        json_object_put(poName);
+    }
+
+    const char* pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
+    if( pszDescription )
+    {
+        json_object* poDesc = json_object_new_string(pszDescription);
+        VSIFPrintfL( fpOut_, "\"description\": %s,\n",
+                     json_object_to_json_string(poDesc) );
+        json_object_put(poDesc);
     }
 
     OGRCoordinateTransformation* poCT = NULL;
