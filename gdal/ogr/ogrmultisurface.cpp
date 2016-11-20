@@ -26,9 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
-#include "ogr_p.h"
+
+#include <cstddef>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
 
 CPL_CVSID("$Id$");
 
@@ -206,7 +213,12 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
                 const_cast<char **>(&pszInput), NULL, &poGeom );
-            poSurface = (OGRSurface*) poGeom;
+            poSurface = dynamic_cast<OGRSurface*>(poGeom);
+            if( poSurface == NULL )
+            {
+                CPLError(CE_Fatal, CPLE_AppDefined,
+                         "dynamic_cast failed.  Expected OGRSurface.");
+            }
         }
         else
         {
@@ -312,7 +324,8 @@ OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
     for( int i = 0; i < poMS->nGeomCount; i++ )
     {
         poMS->papoGeoms[i] =
-            OGRSurface::CastToPolygon( (OGRSurface*)poMS->papoGeoms[i] );
+            OGRSurface::CastToPolygon(
+                dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]));
         if( poMS->papoGeoms[i] == NULL )
         {
             delete poMS;
@@ -320,7 +333,13 @@ OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
         }
     }
 
-    return
-        (OGRMultiPolygon*)
-            TransferMembersAndDestroy(poMS, new OGRMultiPolygon());
+    OGRGeometryCollection *poGC =
+           TransferMembersAndDestroy(poMS, new OGRMultiPolygon());
+    OGRMultiPolygon* poMultiPolygon = dynamic_cast<OGRMultiPolygon *>(poGC);
+    if( poMultiPolygon == NULL )
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRMultiPolygon.");
+    }
+    return poMultiPolygon;
 }
