@@ -2056,7 +2056,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     {
         for( int i = 0; i < poRAT->GetColumnCount(); i++ )
         {
-            if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Value")
+            if( STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Value") )
             {
                 iValue = i;
                 break;

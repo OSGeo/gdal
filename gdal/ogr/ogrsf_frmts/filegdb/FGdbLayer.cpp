@@ -3035,8 +3035,8 @@ void FGdbLayer::ResetReading()
         //spatial query
         FileGDBAPI::Envelope env(ogrEnv.MinX, ogrEnv.MaxX, ogrEnv.MinY, ogrEnv.MaxY);
 
-        if FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, env, true, *m_pEnumRows))
-        GDBErr(hr, "Failed Searching");
+        if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, env, true, *m_pEnumRows)) )
+            GDBErr(hr, "Failed Searching");
 
         m_bFilterDirty = false;
 

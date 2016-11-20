@@ -976,7 +976,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        if EQUAL(l_pszVRTPath, "")
+        if( EQUAL(l_pszVRTPath, "") )
         {
             CPLFree(l_pszVRTPath);
             l_pszVRTPath = NULL;

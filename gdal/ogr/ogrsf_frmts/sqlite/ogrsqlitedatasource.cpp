@@ -1692,7 +1692,7 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return !bIsSpatiaLiteDB;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
-    else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return bUpdate;
