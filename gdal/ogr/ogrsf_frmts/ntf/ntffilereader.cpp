@@ -493,9 +493,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         dfScale = 10000;
     else if( nProduct == NPC_BASEDATA )
         dfScale = 625000;
-    else if( nProduct == NPC_BOUNDARYLINE )
-        dfScale = 10000;
-    else
+    else /*if( nProduct == NPC_BOUNDARYLINE ) or default case */
         dfScale = 10000;
 
     if( dfScale != 0.0 )

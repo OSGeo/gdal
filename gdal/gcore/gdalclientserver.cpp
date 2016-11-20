@@ -6361,6 +6361,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
         CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
+        // cppcheck-suppress duplicateExpression
         CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");

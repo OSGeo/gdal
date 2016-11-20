@@ -2833,10 +2833,15 @@ char **NITFGenericMetadataRead( char **papszMD,
     CPLXMLNode* psTresNode = NULL;
     CPLXMLNode* psIter = NULL;
 
-    if (psFile == NULL && psImage == NULL)
-        return papszMD;
+    if (psFile == NULL)
+    {
+        if( psImage == NULL)
+            return papszMD;
+        psTreeNode = NITFLoadXMLSpec(psImage->psFile);
+    }
+    else
+        psTreeNode = NITFLoadXMLSpec(psFile);
 
-    psTreeNode = NITFLoadXMLSpec(psFile ? psFile : psImage->psFile);
     if (psTreeNode == NULL)
         return papszMD;
 

@@ -223,9 +223,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetWellKnownGeogCS( "NAD83" );
     else if( EQUAL(poXREF->pszDatum, "WGC") )
         oSRS.SetWellKnownGeogCS( "WGS72" );
-    else if( EQUAL(poXREF->pszDatum, "WGE") )
-        oSRS.SetWellKnownGeogCS( "WGS84" );
-    else
+    else /* if( EQUAL(poXREF->pszDatum, "WGE") ) or default */
         oSRS.SetWellKnownGeogCS( "WGS84" );
 
     oSRS.Fixup();

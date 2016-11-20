@@ -730,10 +730,11 @@ OGRErr OGRMIAttrIndex::RemoveEntry( OGRField * /*psKey*/, GIntBig /*nFID*/ )
 GByte *OGRMIAttrIndex::BuildKey( OGRField *psKey )
 
 {
+    GByte* ret = NULL;
     switch( poFldDefn->GetType() )
     {
       case OFTInteger:
-        return poINDFile->BuildKey( iIndex, psKey->Integer );
+        ret = poINDFile->BuildKey( iIndex, psKey->Integer );
         break;
 
       case OFTInteger64:
@@ -743,23 +744,23 @@ GByte *OGRMIAttrIndex::BuildKey( OGRField *psKey )
             CPLError(CE_Warning, CPLE_NotSupported,
                      "64bit integer value passed to OGRMIAttrIndex::BuildKey()");
         }
-        return poINDFile->BuildKey( iIndex, (int)psKey->Integer64 );
+        ret = poINDFile->BuildKey( iIndex, (int)psKey->Integer64 );
         break;
       }
 
       case OFTReal:
-        return poINDFile->BuildKey( iIndex, psKey->Real );
+        ret = poINDFile->BuildKey( iIndex, psKey->Real );
         break;
 
       case OFTString:
-        return poINDFile->BuildKey( iIndex, psKey->String );
+        ret = poINDFile->BuildKey( iIndex, psKey->String );
         break;
 
       default:
         CPLAssert( false );
-
-        return NULL;
+        break;
     }
+    return ret;
 }
 
 /************************************************************************/

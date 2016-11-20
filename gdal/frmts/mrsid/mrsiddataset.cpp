@@ -1141,7 +1141,7 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
     const LTIMetadataRecord *poMetadataRec = NULL;
     poMetadata->get( pszKey, poMetadataRec );
 
-    if ( !poMetadataRec->isScalar() )
+    if ( poMetadataRec == NULL || !poMetadataRec->isScalar() )
         return FALSE;
 
     // XXX: return FALSE if we have more than one element in metadata record

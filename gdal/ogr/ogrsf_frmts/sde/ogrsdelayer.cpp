@@ -1188,6 +1188,7 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                 poDS->IssueSDEError( nSDEErr, "SE_shape_make_nil" );
                 return OGRERR_FAILURE;
             }
+            return OGRERR_NONE;
         }
 
         // Get total number of points in polygon

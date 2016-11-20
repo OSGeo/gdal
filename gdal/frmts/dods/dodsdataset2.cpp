@@ -1130,6 +1130,7 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
         throw InternalErr(
             CPLSPrintf( "Could not find DDS definition for variable %s.",
                         oVarNameIn.c_str() ) );
+        // cppcheck-suppress duplicateBreak
         return;
     }
 

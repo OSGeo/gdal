@@ -365,9 +365,9 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
             else
             {
                 oStatement.Appendf("INSERT INTO gpkg.metadata_reference "
-                                   "(reference_scope, table_name, md_file_id) "
-                                   "VALUES ('table', '%s', %d)",
-                                   pszTableName, nNewId);
+                                   "(reference_scope, md_file_id) "
+                                   "VALUES ('geopackage', %d)",
+                                   nNewId);
             }
         }
         else

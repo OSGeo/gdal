@@ -198,12 +198,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
             VSIFPrintf( fpLoader, "    \"%s\" FLOAT EXTERNAL",
                         poFldDefn->GetNameRef() );
         }
-        else if( poFldDefn->GetType() == OFTString )
-        {
-            VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
-                        poFldDefn->GetNameRef() );
-        }
-        else
+        else /* if( poFldDefn->GetType() == OFTString ) or default case */
         {
             VSIFPrintf( fpLoader, "    \"%s\" VARCHARC(4)",
                         poFldDefn->GetNameRef() );

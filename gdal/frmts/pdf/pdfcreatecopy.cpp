@@ -2849,16 +2849,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 poResources->Add("ExtGState", poExtGState);
             }
 
-            GDALPDFDictionaryRW* poDictFTimesRoman = NULL;
-            poDictFTimesRoman = new GDALPDFDictionaryRW();
+            GDALPDFDictionaryRW* poDictFTimesRoman = new GDALPDFDictionaryRW();
             poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
             poDictFTimesRoman->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Roman"));
             poDictFTimesRoman->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
             poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
 
             GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
-            if (poDictFTimesRoman)
-                poDictFont->Add("FTimesRoman", poDictFTimesRoman);
+            poDictFont->Add("FTimesRoman", poDictFTimesRoman);
             poResources->Add("Font", poDictFont);
 
             oDict.Add("Resources", poResources);

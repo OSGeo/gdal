@@ -1570,7 +1570,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * feature's IntMBR. Store that value in the ObjHdr for use by
      * PrepareNewObj() to search the best node to insert the feature.
      *----------------------------------------------------------------*/
-    if ( poObjHdr && poObjHdr->m_nType != TAB_GEOM_NONE)
+    if ( poObjHdr->m_nType != TAB_GEOM_NONE)
     {
         poFeature->GetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
                              poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);

@@ -104,7 +104,6 @@ g2int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,g2int **ipdstm
          ierr=6;
          *mappdslen=0;
          *ipdstmpl=0;     //NULL
-         if ( mappds != 0 ) free(mappds);
          return(ierr);
       }
       else {

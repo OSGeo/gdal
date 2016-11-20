@@ -399,23 +399,10 @@ OGRFeature *OGRIDBLayer::GetFeature( GIntBig nFeatureId )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability( const char * pszCap )
+int OGRIDBLayer::TestCapability( const char * /*pszCap*/ )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCTransactions) )
-        return FALSE;
-
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/

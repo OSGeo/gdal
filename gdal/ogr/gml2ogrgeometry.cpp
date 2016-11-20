@@ -1224,6 +1224,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                  "Try setting GML_SKIP_RESOLVE_ELEMS=NONE",
                                  psChild->psChild->psChild->pszValue);
                     }
+                    delete poRing;
+                    delete poCC;
+                    return NULL;
                 }
 
                 // Try to join multiline string to one linestring.
