@@ -795,7 +795,7 @@ static int CompValues(OGRFieldDefn* poFieldDefn,
         case OFTReal:
             if( poValue1->float_value < poValue2->float_value )
                 ret = -1;
-            if( poValue1->float_value == poValue2->float_value )
+            else if( poValue1->float_value == poValue2->float_value )
                 ret = 0;
             else
                 ret = 1;
