@@ -235,6 +235,7 @@ static bool AddPoint( OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return false;
         }
 
         if( !poPoint->IsEmpty() )
@@ -259,6 +260,7 @@ static bool AddPoint( OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRSimpleCurve.");
+            return false;
         }
         if( nDimension == 3 )
             poCurve->addPoint(dfX, dfY, dfZ);
@@ -664,6 +666,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRGeometryCollection.");
+        return NULL;
     }
 
     OGRPolygon *poPolygon = NULL;
@@ -688,6 +691,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRPolygon.");
+                return NULL;
             }
             if( poPg->getNumInteriorRings() > 0 )
                 iExterior++;
@@ -709,12 +713,14 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRPolygon.");
+                return NULL;
             }
             poPolygon = dynamic_cast<OGRPolygon *>(poPg->clone());
             if( poPolygon == NULL )
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRPolygon.");
+                return NULL;
             }
         }
         else
@@ -730,6 +736,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
                     {
                         CPLError(CE_Fatal, CPLE_AppDefined,
                                  "dynamic_cast failed.  Expected OGRPolygon.");
+                        return NULL;
                     }
                     if( poPg->getNumInteriorRings() > 0 )
                     {
@@ -739,6 +746,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
                             CPLError(
                                 CE_Fatal, CPLE_AppDefined,
                                 "dynamic_cast failed.  Expected OGRPolygon.");
+                            return NULL;
                         }
                     }
                 }
@@ -777,6 +785,7 @@ bool GML2OGRGeometry_AddToCompositeCurve( OGRCompoundCurve* poCC,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCompoundCurve.");
+            return false;
         }
         while( poCCChild->getNumCurves() != 0 )
         {
@@ -801,6 +810,7 @@ bool GML2OGRGeometry_AddToCompositeCurve( OGRCompoundCurve* poCC,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurve.");
+            return false;
         }
 
         if( poCC->addCurveDirectly( poCurve ) != OGRERR_NONE )
