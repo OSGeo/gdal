@@ -28,12 +28,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "swq.h"
+#include "cpl_port.h"
 #include "ogr_feature.h"
-#include "ogr_p.h"
-#include "ogr_attrind.h"
+#include "swq.h"
 
+#include <cstddef>
+#include <cstdlib>
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_attrind.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogrsf_frmts.h"
 
 //! @cond Doxygen_Suppress
 

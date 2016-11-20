@@ -27,8 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_p.h"
+#include "cpl_port.h"
 #include "ogr_spatialref.h"
+
+#include <cctype>
+#include <cstddef>
+#include <cstring>
+
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 

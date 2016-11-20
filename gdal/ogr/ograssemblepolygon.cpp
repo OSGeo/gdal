@@ -27,11 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cmath>
-#include <vector>
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "ogr_api.h"
+
+#include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "ogr_core.h"
 #include "ogr_geometry.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
