@@ -112,8 +112,10 @@ CADVector Matrix::multiply( const CADVector& vector ) const
 // CADGeometry
 //------------------------------------------------------------------------------
 
-CADGeometry::CADGeometry() : geometryType( UNDEFINED ),
-    thickness( 0 )
+CADGeometry::CADGeometry() :
+    geometryType( UNDEFINED ),
+    thickness( 0 ),
+    geometry_color{0,0,0}
 {
 
 }
@@ -188,13 +190,15 @@ void CADUnknown::print() const
 // CADPoint3D
 //------------------------------------------------------------------------------
 
-CADPoint3D::CADPoint3D() : xAxisAng( 0.0f )
+CADPoint3D::CADPoint3D() :
+    xAxisAng( 0.0 )
 {
     geometryType = CADGeometry::POINT;
 }
 
 CADPoint3D::CADPoint3D( const CADVector& positionIn, double thicknessIn ) :
-    position( positionIn)
+    position( positionIn),
+    xAxisAng( 0.0 )
 {
     thickness = thicknessIn;
     geometryType = CADGeometry::POINT;
@@ -414,7 +418,10 @@ void CADPolyline3D::transform( const Matrix& matrix )
 // CADLWPolyline
 //------------------------------------------------------------------------------
 
-CADLWPolyline::CADLWPolyline()
+CADLWPolyline::CADLWPolyline() :
+    bClosed( false ),
+    constWidth( 0.0 ),
+    elevation( 0.0 )
 {
     geometryType = CADGeometry::LWPOLYLINE;
 }
@@ -632,7 +639,13 @@ CADHatch::CADHatch()
 // CADSpline
 //------------------------------------------------------------------------------
 
-CADSpline::CADSpline()
+CADSpline::CADSpline() :
+    scenario( 0 ),
+    rational( false ),
+    closed( false ),
+    weight( false ),
+    fitTollerance( 0.0 ),
+    degree( 0 )
 {
     geometryType = CADGeometry::SPLINE;
 }
@@ -767,7 +780,8 @@ vector<double>& CADSpline::getControlPointsWeights()
 // CADSolid
 //------------------------------------------------------------------------------
 
-CADSolid::CADSolid()
+CADSolid::CADSolid() :
+    elevation( 0.0 )
 {
     geometryType = CADGeometry::SOLID;
 }
@@ -815,7 +829,13 @@ vector<CADVector> CADSolid::getCorners()
 // CADImage
 //------------------------------------------------------------------------------
 
-CADImage::CADImage()
+CADImage::CADImage() :
+    bTransparency( false ),
+    bClipping( false ),
+    dBrightness( 0 ),
+    dContrast( 0 ),
+    resolutionUnits( NONE ),
+    clippingBoundaryType( 0 )
 {
     geometryType = CADGeometry::IMAGE;
 }
@@ -933,7 +953,10 @@ void CADImage::addClippingPoint( const CADVector& pt )
 // CADMText
 //------------------------------------------------------------------------------
 
-CADMText::CADMText()
+CADMText::CADMText() :
+    rectWidth( 0.0 ),
+    extents( 0.0 ),
+    extentsWidth( 0.0 )
 {
     geometryType = CADGeometry::MTEXT;
 }
@@ -981,7 +1004,8 @@ void CADMText::print() const
 // CADFace3D
 //------------------------------------------------------------------------------
 
-CADFace3D::CADFace3D()
+CADFace3D::CADFace3D() :
+    invisFlags( 0 )
 {
     geometryType = CADGeometry::FACE3D;
 }
@@ -1083,7 +1107,9 @@ void CADXLine::print() const
 // CADMLine
 //------------------------------------------------------------------------------
 
-CADMLine::CADMLine()
+CADMLine::CADMLine() :
+    scale( 0.0 ),
+    opened( false )
 {
     geometryType = CADGeometry::MLINE;
 }
@@ -1142,7 +1168,9 @@ void CADMLine::addVertex( const CADVector& vertex )
 // CADAttrib
 //------------------------------------------------------------------------------
 
-CADAttrib::CADAttrib()
+CADAttrib::CADAttrib() :
+    dfElevation( 0.0 ),
+    bLockPosition( false )
 {
     geometryType = CADGeometry::ATTRIB;
 }

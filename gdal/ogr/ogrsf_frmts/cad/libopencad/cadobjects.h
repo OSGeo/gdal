@@ -210,8 +210,6 @@ public:
 
     void setSize( long value );
 
-    void setType( const ObjectType& value );
-
     short getCRC() const;
     void  setCRC( short value );
 
@@ -219,6 +217,8 @@ protected:
     long       size;
     ObjectType type;
     short      CRC;
+
+        CADObject(ObjectType typeIn) : size(0), type(typeIn), CRC(0) {}
 };
 
 std::string getNameByType( CADObject::ObjectType eType );
@@ -256,6 +256,26 @@ struct CADCommonED
 
     short         nInvisibility;
     unsigned char nLineWeight;
+
+    CADCommonED() :
+        nObjectSizeInBits(0),
+        bGraphicsPresented(false),
+        bbEntMode(0),
+        nNumReactors(0),
+        bNoXDictionaryHandlePresent(false),
+        bBinaryDataPresent(false),
+        bIsByLayerLT(false),
+        bNoLinks(false),
+        nCMColor(0),
+        dfLTypeScale(0.0),
+        bbLTypeFlags(0),
+        bbPlotStyleFlags(0),
+        bbMaterialFlags(0),
+        nShadowFlags(0),
+        nInvisibility(0),
+        nLineWeight(0)
+    {
+    }
 };
 
 /**
@@ -288,6 +308,8 @@ struct CADCommonEHD
 class CADEntityObject : public CADObject
 {
 public:
+             CADEntityObject(ObjectType typeIn): CADObject(typeIn) {}
+
     virtual ~CADEntityObject(){}
     struct CADCommonED  stCed;
     struct CADCommonEHD stChed;
@@ -325,7 +347,7 @@ public:
 class CADAttribObject : public CADEntityObject
 {
 public:
-    CADAttribObject();
+    CADAttribObject( ObjectType typeIn = ATTRIB );
     virtual ~CADAttribObject(){}
     unsigned char DataFlags;
     double        dfElevation;
@@ -402,7 +424,7 @@ public:
 class CADInsertObject : public CADEntityObject
 {
 public:
-    CADInsertObject();
+    CADInsertObject( ObjectType typeIn = INSERT );
     virtual ~CADInsertObject(){}
     CADVector vertInsertionPoint;
     CADVector vertScales;
@@ -932,7 +954,7 @@ public:
 /**
  * @brief Common Dimensional Data structure
  */
-typedef struct _dimdata
+struct CADCommonDimensionData
 {
     char          dVersion;
     CADVector     vectExtrusion;
@@ -957,7 +979,27 @@ typedef struct _dimdata
     bool bFlipArrow2;
 
     CADVector vert12Pt;
-} CADCommonDimensionData;
+
+    CADCommonDimensionData() :
+        dVersion(0),
+        dfElevation(0.0),
+        dFlags(0),
+        dfTextRotation(0.0),
+        dfHorizDir(0.0),
+        dfInsXScale(0.0),
+        dfInsYScale(0.0),
+        dfInsZScale(0.0),
+        dfInsRotation(0.0),
+        dAttachmentPoint(0),
+        dLineSpacingStyle(0),
+        dfLineSpacingFactor(0.0),
+        dfActualMeasurement(0.0),
+        bUnknown(false),
+        bFlipArrow1(false),
+        bFlipArrow2(false)
+    {
+    }
+};
 
 /**
  * @brief The CADDimensionObject class
@@ -965,7 +1007,8 @@ typedef struct _dimdata
 class CADDimensionObject : public CADEntityObject
 {
 public:
-virtual ~CADDimensionObject(){}
+    CADDimensionObject( ObjectType typeIn ) : CADEntityObject(typeIn) {}
+    virtual ~CADDimensionObject(){}
     CADCommonDimensionData cdd;
     CADVector              vert10pt;
     CADHandle              hDimstyle;
@@ -1017,7 +1060,7 @@ public:
 class CADDimensionAngular3PtObject : public CADDimensionObject
 {
 public:
-    CADDimensionAngular3PtObject();
+    CADDimensionAngular3PtObject(ObjectType typeIn = DIMENSION_ANG_3PT);
     virtual ~CADDimensionAngular3PtObject(){}
     CADVector vert13pt, vert14pt;
     CADVector vert15pt;
@@ -1041,7 +1084,7 @@ public:
 class CADDimensionRadiusObject : public CADDimensionObject
 {
 public:
-    CADDimensionRadiusObject();
+    CADDimensionRadiusObject(ObjectType typeIn = DIMENSION_RADIUS);
     virtual ~CADDimensionRadiusObject(){}
 
     CADVector vert15pt;
@@ -1099,7 +1142,7 @@ public:
 class CADImageDefReactorObject : public CADObject
 {
 public:
-    CADImageDefReactorObject();
+    CADImageDefReactorObject(ObjectType typeIn = IMAGEDEFREACTOR);
     virtual ~CADImageDefReactorObject(){}
 
     long              nObjectSizeInBits;
@@ -1235,6 +1278,7 @@ public:
     CADHandle         hSeqend;
 };
 
+#ifdef TODO
 /**
  * @brief The CADHatchObject class TODO: not completed
  */
@@ -1277,6 +1321,7 @@ public:
         CADVector vectPt1;
     } _path_segment;
 };
+#endif
 
 /**
  * @brief The CADXRecordObject class

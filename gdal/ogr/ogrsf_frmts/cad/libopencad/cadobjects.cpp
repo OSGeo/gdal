@@ -136,234 +136,349 @@ CADVector::CADVector() : X( .0 ), Y( .0 ), Z( .0 ), bHasZ( true )
 // CADText
 //------------------------------------------------------------------------------
 
-CADTextObject::CADTextObject()
+CADTextObject::CADTextObject() :
+    CADEntityObject(TEXT),
+    DataFlags(0),
+    dfElevation(0.0),
+    dfThickness(0.0),
+    dfObliqueAng(0.0),
+    dfRotationAng(0.0),
+    dfHeight(0.0),
+    dfWidthFactor(0.0),
+    dGeneration(0),
+    dHorizAlign(0),
+    dVertAlign(0)
 {
-    type = TEXT;
-}
-
-//------------------------------------------------------------------------------
-// CADAttdef
-//------------------------------------------------------------------------------
-
-CADAttdefObject::CADAttdefObject()
-{
-    type = ATTDEF;
 }
 
 //------------------------------------------------------------------------------
 // CADAttribObject
 //------------------------------------------------------------------------------
 
-CADAttribObject::CADAttribObject() : bLockPosition(false)
+CADAttribObject::CADAttribObject(ObjectType typeIn) :
+    CADEntityObject(typeIn),
+    DataFlags( 0 ),
+    dfElevation(0.0),
+    dfThickness(0.0),
+    dfObliqueAng(0.0),
+    dfRotationAng(0.0),
+    dfHeight(0.0),
+    dfWidthFactor(0.0),
+    dGeneration(0),
+    dHorizAlign(0),
+    dVertAlign(0),
+    dVersion(0),
+    nFieldLength(0),
+    nFlags(0),
+    bLockPosition(false)
 {
-    type = ATTRIB;
 }
+
+//------------------------------------------------------------------------------
+// CADAttdef
+//------------------------------------------------------------------------------
+
+CADAttdefObject::CADAttdefObject() :
+    CADAttribObject(ATTDEF)
+{
+}
+
 
 //------------------------------------------------------------------------------
 // CADBlockObject
 //------------------------------------------------------------------------------
 
-CADBlockObject::CADBlockObject()
+CADBlockObject::CADBlockObject() :
+    CADEntityObject(BLOCK)
 {
-    type = BLOCK;
 }
 
 //------------------------------------------------------------------------------
 // CADEndblkObject
 //------------------------------------------------------------------------------
 
-CADEndblkObject::CADEndblkObject()
+CADEndblkObject::CADEndblkObject() :
+    CADEntityObject(ENDBLK)
 {
-    type = ENDBLK;
 }
 
 //------------------------------------------------------------------------------
 // CADSeqendObject
 //------------------------------------------------------------------------------
 
-CADSeqendObject::CADSeqendObject()
+CADSeqendObject::CADSeqendObject() :
+    CADEntityObject(SEQEND)
 {
-    type = SEQEND;
 }
 
 //------------------------------------------------------------------------------
 // CADInsertObject
 //------------------------------------------------------------------------------
 
-CADInsertObject::CADInsertObject()
+CADInsertObject::CADInsertObject(ObjectType typeIn) :
+    CADEntityObject(typeIn),
+    dfRotation( 0.0 ),
+    bHasAttribs( false ),
+    nObjectsOwned( 0 )
 {
-    type = INSERT;
 }
 
 //------------------------------------------------------------------------------
 // CADMInsertObject
 //------------------------------------------------------------------------------
 
-CADMInsertObject::CADMInsertObject()
+CADMInsertObject::CADMInsertObject() :
+    CADEntityObject(MINSERT1), // TODO: it has 2 type codes?
+    dfRotation( 0.0 ),
+    bHasAttribs( false ),
+    nObjectsOwned( 0 ),
+    nNumCols( 0 ),
+    nNumRows( 0 ),
+    nColSpacing( 0 ),
+    nRowSpacing( 0 )
 {
-    type = MINSERT1; // TODO: it has 2 type codes?
 }
 
 //------------------------------------------------------------------------------
 // CADVertex2DObject
 //------------------------------------------------------------------------------
 
-CADVertex2DObject::CADVertex2DObject()
+CADVertex2DObject::CADVertex2DObject() :
+    CADEntityObject(VERTEX2D),
+    dfStartWidth( 0.0 ),
+    dfEndWidth( 0.0 ),
+    dfBulge( 0.0 ),
+    nVertexID( 0 ),
+    dfTangentDir( 0.0 )
 {
-    type = VERTEX2D;
 }
 
 //------------------------------------------------------------------------------
 // CADVertex3DObject
 //------------------------------------------------------------------------------
 
-CADVertex3DObject::CADVertex3DObject()
+CADVertex3DObject::CADVertex3DObject() :
+    CADEntityObject(VERTEX3D)
 {
-    type = VERTEX3D;
 }
 
 //------------------------------------------------------------------------------
 // CADVertexMeshObject
 //------------------------------------------------------------------------------
 
-CADVertexMeshObject::CADVertexMeshObject()
+CADVertexMeshObject::CADVertexMeshObject() :
+    CADEntityObject(VERTEX_MESH)
 {
-    type = VERTEX_MESH;
 }
 
 //------------------------------------------------------------------------------
 // CADVertexPFaceObject
 //------------------------------------------------------------------------------
 
-CADVertexPFaceObject::CADVertexPFaceObject()
+CADVertexPFaceObject::CADVertexPFaceObject() :
+    CADEntityObject(VERTEX_PFACE)
 {
-    type = VERTEX_PFACE;
 }
 
 //------------------------------------------------------------------------------
 // CADVertexPFaceFaceObject
 //------------------------------------------------------------------------------
 
-CADVertexPFaceFaceObject::CADVertexPFaceFaceObject()
+CADVertexPFaceFaceObject::CADVertexPFaceFaceObject() :
+    CADEntityObject(VERTEX_PFACE_FACE),
+    iVertexIndex1( 0 ),
+    iVertexIndex2( 0 ),
+    iVertexIndex3( 0 ),
+    iVertexIndex4( 0 )
 {
-    type = VERTEX_PFACE_FACE;
 }
 
 //------------------------------------------------------------------------------
 // CADPolyline2DObject
 //------------------------------------------------------------------------------
 
-CADPolyline2DObject::CADPolyline2DObject()
+CADPolyline2DObject::CADPolyline2DObject() :
+    CADEntityObject(POLYLINE2D),
+    dFlags( 0 ),
+    dCurveNSmoothSurfType( 0 ),
+    dfStartWidth( 0.0 ),
+    dfEndWidth( 0.0 ),
+    dfThickness( 0.0 ),
+    dfElevation( 0.0 ),
+    nObjectsOwned( 0 )
 {
-    type = POLYLINE2D;
 }
 
 //------------------------------------------------------------------------------
 // CADPolyline3DObject
 //------------------------------------------------------------------------------
 
-CADPolyline3DObject::CADPolyline3DObject()
+CADPolyline3DObject::CADPolyline3DObject() :
+    CADEntityObject(POLYLINE3D),
+    SplinedFlags( 0 ),
+    ClosedFlags( 0 ),
+    nObjectsOwned( 0 )
 {
-    type = POLYLINE3D;
 }
 
 //------------------------------------------------------------------------------
 // CADArcObject
 //------------------------------------------------------------------------------
 
-CADArcObject::CADArcObject()
+CADArcObject::CADArcObject() :
+    CADEntityObject(ARC),
+    dfRadius( 0.0 ),
+    dfThickness( 0.0 ),
+    dfStartAngle( 0.0 ),
+    dfEndAngle( 0.0 )
 {
-    type = ARC;
 }
 
 //------------------------------------------------------------------------------
 // CADCircleObject
 //------------------------------------------------------------------------------
 
-CADCircleObject::CADCircleObject()
+CADCircleObject::CADCircleObject() :
+    CADEntityObject(CIRCLE),
+    dfRadius( 0.0 ),
+    dfThickness( 0.0 )
 {
-    type = CIRCLE;
 }
 
 //------------------------------------------------------------------------------
 // CADLineObject
 //------------------------------------------------------------------------------
 
-CADLineObject::CADLineObject()
+CADLineObject::CADLineObject() :
+    CADEntityObject(LINE),
+    dfThickness( 0.0 )
 {
-    type = LINE;
 }
 
 //------------------------------------------------------------------------------
 // CADBlockControlObject
 //------------------------------------------------------------------------------
 
-CADBlockControlObject::CADBlockControlObject()
+CADBlockControlObject::CADBlockControlObject() :
+    CADObject(BLOCK_CONTROL_OBJ),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    nNumEntries( 0 )
 {
-    type = BLOCK_CONTROL_OBJ;
 }
 
 //------------------------------------------------------------------------------
 // CADBlockHeaderObject
 //------------------------------------------------------------------------------
 
-CADBlockHeaderObject::CADBlockHeaderObject()
+CADBlockHeaderObject::CADBlockHeaderObject() :
+    CADObject(BLOCK_HEADER),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    b64Flag( false ),
+    dXRefIndex( 0 ),
+    bXDep( false ),
+    bAnonymous( false ),
+    bHasAtts( false ),
+    bBlkisXRef( false ),
+    bXRefOverlaid( false ),
+    bLoadedBit( false ),
+    nOwnedObjectsCount( 0 ),
+    nSizeOfPreviewData( 0 ),
+    nInsertUnits( 0 ),
+    bExplodable( false ),
+    dBlockScaling( 0 )
 {
-    type = BLOCK_HEADER;
 }
 
 //------------------------------------------------------------------------------
 // CADLayerControlObject
 //------------------------------------------------------------------------------
 
-CADLayerControlObject::CADLayerControlObject()
+CADLayerControlObject::CADLayerControlObject() :
+    CADObject(LAYER_CONTROL_OBJ),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    nNumEntries( 0 )
 {
-    type = LAYER_CONTROL_OBJ;
 }
 
 //------------------------------------------------------------------------------
 // CADLayerObject
 //------------------------------------------------------------------------------
 
-CADLayerObject::CADLayerObject()
+CADLayerObject::CADLayerObject() :
+    CADObject(LAYER),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    b64Flag( 0 ),
+    dXRefIndex( 0 ),
+    bXDep( 0 ),
+    bFrozen( false ),
+    bOn( false ),
+    bFrozenInNewVPORT( false ),
+    bLocked( false ),
+    bPlottingFlag( false ),
+    dLineWeight( 0 ),
+    dCMColor( 0 )
 {
-    type = LAYER;
 }
 
 //------------------------------------------------------------------------------
 // CADLineTypeControlObject
 //------------------------------------------------------------------------------
 
-CADLineTypeControlObject::CADLineTypeControlObject()
+CADLineTypeControlObject::CADLineTypeControlObject() :
+    CADObject(LTYPE_CONTROL_OBJ),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    nNumEntries( 0 )
 {
-    type = LTYPE_CONTROL_OBJ;
 }
 
 //------------------------------------------------------------------------------
 // CADLineTypeObject
 //------------------------------------------------------------------------------
 
-CADLineTypeObject::CADLineTypeObject()
+CADLineTypeObject::CADLineTypeObject() :
+    CADObject(LTYPE1),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    b64Flag( false ),
+    dXRefIndex( 0 ),
+    bXDep( false ),
+    dfPatternLen( 0.0 ),
+    dAlignment( 0 ),
+    nNumDashes( 0 )
 {
-    type = LTYPE1;
 }
 
 //------------------------------------------------------------------------------
 // CADPointObject
 //------------------------------------------------------------------------------
 
-CADPointObject::CADPointObject()
+CADPointObject::CADPointObject() :
+    CADEntityObject(POINT),
+    dfThickness( 0.0 ),
+    dfXAxisAng( 0.0 )
 {
-    type = POINT;
 }
 
 //------------------------------------------------------------------------------
 // CADSolidObject
 //------------------------------------------------------------------------------
 
-CADSolidObject::CADSolidObject()
+CADSolidObject::CADSolidObject() :
+    CADEntityObject(SOLID),
+    dfThickness( 0.0 ),
+    dfElevation( 0.0 )
 {
-    type = SOLID;
     avertCorners.reserve( 4 );
 }
 
@@ -371,45 +486,59 @@ CADSolidObject::CADSolidObject()
 // CADEllipseObject
 //------------------------------------------------------------------------------
 
-CADEllipseObject::CADEllipseObject()
+CADEllipseObject::CADEllipseObject() :
+    CADEntityObject(ELLIPSE),
+    dfAxisRatio( 0.0 ),
+    dfBegAngle( 0.0 ),
+    dfEndAngle( 0.0 )
 {
-    type = ELLIPSE;
 }
 
 //------------------------------------------------------------------------------
 // CADRayObject
 //------------------------------------------------------------------------------
 
-CADRayObject::CADRayObject()
+CADRayObject::CADRayObject() :
+    CADEntityObject(RAY)
 {
-    type = RAY;
 }
 
 //------------------------------------------------------------------------------
 // CADXLineObject
 //------------------------------------------------------------------------------
 
-CADXLineObject::CADXLineObject()
+CADXLineObject::CADXLineObject() :
+    CADEntityObject(XLINE)
 {
-    type = XLINE;
 }
 
 //------------------------------------------------------------------------------
 // CADDictionaryObject
 //------------------------------------------------------------------------------
 
-CADDictionaryObject::CADDictionaryObject()
+CADDictionaryObject::CADDictionaryObject() :
+    CADObject(DICTIONARY),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    nNumItems( 0 ),
+    dCloningFlag( 0 ),
+    dHardOwnerFlag( 0 )
+
 {
-    type = DICTIONARY;
 }
 
 //------------------------------------------------------------------------------
 // CADLWPolylineObject
 //------------------------------------------------------------------------------
 
-CADLWPolylineObject::CADLWPolylineObject()
+CADLWPolylineObject::CADLWPolylineObject() :
+    CADEntityObject(LWPOLYLINE),
+    bClosed( false ),
+    dfConstWidth( 0.0 ),
+    dfElevation( 0.0 ),
+    dfThickness( 0.0 )
 {
-    type = LWPOLYLINE;
 }
 
 //------------------------------------------------------------------------------
@@ -417,11 +546,22 @@ CADLWPolylineObject::CADLWPolylineObject()
 //------------------------------------------------------------------------------
 
 CADSplineObject::CADSplineObject() :
+    CADEntityObject( SPLINE ),
+    dScenario( 0 ),
+    dSplineFlags( 0 ),
+    dKnotParameter( 0 ),
+    dDegree( 0 ),
+    dfFitTol( 0.0 ),
     nNumFitPts( 0 ),
+    bRational( false ),
+    bClosed( false ),
+    bPeriodic( false ),
+    dfKnotTol( 0.0 ),
+    dfCtrlTol( 0.0 ),
     nNumKnots( 0 ),
-    nNumCtrlPts( 0 ) // should be zeroed.
+    nNumCtrlPts( 0 ),
+    bWeight( false )
 {
-    type = SPLINE;
 }
 
 //------------------------------------------------------------------------------
@@ -574,11 +714,6 @@ void CADObject::setSize( long value )
     size = value;
 }
 
-void CADObject::setType( const ObjectType& value )
-{
-    type = value;
-}
-
 short CADObject::getCRC() const
 {
     return CRC;
@@ -593,133 +728,188 @@ void CADObject::setCRC( short value )
 // CADDimensionOrdinateObject
 //------------------------------------------------------------------------------
 
-CADDimensionOrdinateObject::CADDimensionOrdinateObject()
+CADDimensionOrdinateObject::CADDimensionOrdinateObject() :
+    CADDimensionObject(DIMENSION_ORDINATE),
+    Flags2( 0 )
 {
-    type = DIMENSION_ORDINATE;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionLinearObject
 //------------------------------------------------------------------------------
 
-CADDimensionLinearObject::CADDimensionLinearObject()
+CADDimensionLinearObject::CADDimensionLinearObject() :
+    CADDimensionObject(DIMENSION_LINEAR),
+    dfExtLnRot( 0.0 ),
+    dfDimRot( 0.0 )
 {
-    type = DIMENSION_LINEAR;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionAlignedObject
 //------------------------------------------------------------------------------
 
-CADDimensionAlignedObject::CADDimensionAlignedObject()
+CADDimensionAlignedObject::CADDimensionAlignedObject() :
+    CADDimensionObject(DIMENSION_ALIGNED),
+    dfExtLnRot( 0.0 )
 {
-    type = DIMENSION_ALIGNED;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionAngular3PtObject
 //------------------------------------------------------------------------------
 
-CADDimensionAngular3PtObject::CADDimensionAngular3PtObject()
+CADDimensionAngular3PtObject::CADDimensionAngular3PtObject(ObjectType typeIn) :
+    CADDimensionObject(typeIn)
 {
-    type = DIMENSION_ANG_3PT;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionAngular2LnObject
 //------------------------------------------------------------------------------
 
-CADDimensionAngular2LnObject::CADDimensionAngular2LnObject()
+CADDimensionAngular2LnObject::CADDimensionAngular2LnObject() :
+    CADDimensionAngular3PtObject(DIMENSION_ANG_2LN)
 {
-    type = DIMENSION_ANG_2LN;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionRadiusObject
 //------------------------------------------------------------------------------
 
-CADDimensionRadiusObject::CADDimensionRadiusObject()
+CADDimensionRadiusObject::CADDimensionRadiusObject(ObjectType typeIn) :
+    CADDimensionObject(typeIn),
+    dfLeaderLen( 0.0 )
 {
-    type = DIMENSION_RADIUS;
 }
 
 //------------------------------------------------------------------------------
 // CADDimensionDiameterObject
 //------------------------------------------------------------------------------
 
-CADDimensionDiameterObject::CADDimensionDiameterObject()
+CADDimensionDiameterObject::CADDimensionDiameterObject() :
+    CADDimensionRadiusObject(DIMENSION_DIAMETER)
 {
-    type = DIMENSION_DIAMETER;
 }
 
 //------------------------------------------------------------------------------
 // CADImageObject
 //------------------------------------------------------------------------------
 
-CADImageObject::CADImageObject()
+CADImageObject::CADImageObject() :
+    CADEntityObject(IMAGE),
+    dClassVersion( 0 ),
+    dfSizeX( 0.0 ),
+    dfSizeY( 0.0 ),
+    dDisplayProps( 0 ),
+    bClipping( false ),
+    dBrightness( 0 ),
+    dContrast( 0 ),
+    dFade( 0 ),
+    bClipMode( false ),
+    dClipBoundaryType( 0 ),
+    nNumberVertexesInClipPolygon( 0 )
 {
-    type = IMAGE;
 }
 
 //------------------------------------------------------------------------------
 // CADImageDefObject
 //------------------------------------------------------------------------------
 
-CADImageDefObject::CADImageDefObject()
+CADImageDefObject::CADImageDefObject() :
+    CADImageDefReactorObject(IMAGEDEF),
+    dfXImageSizeInPx( 0.0 ),
+    dfYImageSizeInPx( 0.0 ),
+    bIsLoaded( false ),
+    dResUnits( 0 ),
+    dfXPixelSize( 0.0 ),
+    dfYPixelSize( 0.0 )
 {
-    type = IMAGEDEF;
 }
 
 //------------------------------------------------------------------------------
 // CADImageDefReactorObject
 //------------------------------------------------------------------------------
 
-CADImageDefReactorObject::CADImageDefReactorObject()
+CADImageDefReactorObject::CADImageDefReactorObject(ObjectType typeIn) :
+    CADObject(typeIn),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    dClassVersion( 0 )
 {
-    type = IMAGEDEFREACTOR;
 }
 
 //------------------------------------------------------------------------------
 // CADMTextObject
 //------------------------------------------------------------------------------
 
-CADMTextObject::CADMTextObject()
+CADMTextObject::CADMTextObject() :
+    CADEntityObject(MTEXT),
+    dfRectWidth( 0.0 ),
+    dfTextHeight( 0.0 ),
+    dAttachment( 0 ),
+    dDrawingDir( 0 ),
+    dfExtents( 0.0 ),
+    dfExtentsWidth( 0.0 ),
+    dLineSpacingStyle( 0 ),
+    dLineSpacingFactor( 0 ),
+    bUnknownBit( false),
+    dBackgroundFlags( 0 ),
+    dBackgroundScaleFactor( 0 ),
+    dBackgroundColor( 0 ),
+    dBackgroundTransparency( 0 )
 {
-    type = MTEXT;
 }
 
 //------------------------------------------------------------------------------
 // CADMLineObject
 //------------------------------------------------------------------------------
 
-CADMLineObject::CADMLineObject()
+CADMLineObject::CADMLineObject() :
+    CADEntityObject(MLINE),
+    dfScale( 0.0 ),
+    dJust( 0 ),
+    dOpenClosed( 0 ),
+    nLinesInStyle( 0 ),
+    nNumVertexes( 0 )
 {
-    type = MLINE;
 }
 
 //------------------------------------------------------------------------------
 // CAD3DFaceObject
 //------------------------------------------------------------------------------
 
-CAD3DFaceObject::CAD3DFaceObject()
+CAD3DFaceObject::CAD3DFaceObject() :
+    CADEntityObject(FACE3D),
+    bHasNoFlagInd( false ),
+    bZZero( false ),
+    dInvisFlags( 0 )
 {
-    type = FACE3D;
 }
 
 //------------------------------------------------------------------------------
 // CADPolylinePFaceObject
 //------------------------------------------------------------------------------
 
-CADPolylinePFaceObject::CADPolylinePFaceObject()
+CADPolylinePFaceObject::CADPolylinePFaceObject() :
+    CADEntityObject(POLYLINE_PFACE),
+    nNumVertexes( 0 ),
+    nNumFaces( 0 ),
+    nObjectsOwned( 0 )
 {
-    type = POLYLINE_PFACE;
 }
 
 //------------------------------------------------------------------------------
 // CADXRecordObject
 //------------------------------------------------------------------------------
 
-CADXRecordObject::CADXRecordObject()
+CADXRecordObject::CADXRecordObject() :
+    CADObject(XRECORD),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false ),
+    nNumDataBytes( 0 ),
+    dCloningFlag( 0 )
 {
-    type = XRECORD;
 }
