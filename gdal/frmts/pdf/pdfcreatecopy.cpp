@@ -1307,10 +1307,10 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(0 / dfUserUnit + psMargins->nLeft, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
+        poNeatLineArray->Add((/*nHeight -nHeight*/ 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
+        poNeatLineArray->Add((/*nHeight -nHeight*/ 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
         poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
