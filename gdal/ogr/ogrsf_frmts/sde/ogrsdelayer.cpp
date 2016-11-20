@@ -388,7 +388,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
         return wkbUnknown;
     }
 
-    int bIsMultipart = ( nShapeTypeMask & SE_MULTIPART_TYPE_MASK ? 1 : 0);
+    int bIsMultipart = (nShapeTypeMask & SE_MULTIPART_TYPE_MASK) ? 1 : 0;
     nShapeTypeMask &= ~SE_MULTIPART_TYPE_MASK;
 
     // Since we assume that all layers can bear a NULL geometry,

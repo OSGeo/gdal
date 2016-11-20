@@ -867,7 +867,7 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
 int OGRGeometry::getCoordinateDimension() const
 
 {
-    return flags & OGR_G_3D ? 3 : 2;
+    return (flags & OGR_G_3D) ? 3 : 2;
 }
 
 /************************************************************************/
