@@ -154,7 +154,7 @@ CADFileIO* GetDefaultFileIO( const char * pszFileName )
  * @brief IdentifyCADFile
  * @param pCADFileIO pointer to file in/out class
  * @return positive number for dwg version, negative for dxf version, 0 if error
- * occured
+ * occurred
  */
 int IdentifyCADFile( CADFileIO * pCADFileIO, bool bOwn )
 {

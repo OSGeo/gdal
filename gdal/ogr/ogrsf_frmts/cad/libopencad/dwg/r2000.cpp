@@ -630,7 +630,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
                          DWGConstants::SentinelLength ) )
     {
         DebugMsg( "File is corrupted (HEADERVARS section ending sentinel "
-                          "doesnt match.)" );
+                          "doesn't match.)" );
 
         returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
@@ -690,7 +690,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
                             DWGConstants::SentinelLength ) )
         {
             std::cerr << "File is corrupted (CLASSES section ending sentinel "
-                    "doesnt match.)\n";
+                    "doesn't match.)\n";
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
     }
@@ -709,7 +709,7 @@ int DWGFileR2000::CreateFileMap()
 
     mapObjects.clear();
 
-    // seek to the begining of the objects map
+    // seek to the beginning of the objects map
     pFileIO->Seek( sectionLocatorRecords[2].dSeeker, CADFileIO::SeekOrigin::BEG );
 
     while( true )
@@ -849,7 +849,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         stCommonEntityData.nInvisibility    = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart );
         stCommonEntityData.nLineWeight      = ReadCHAR( pabySectionContent, nBitOffsetFromStart );
 
-        // Skip entitity-specific data, we dont need it if bHandlesOnly == true
+        // Skip entitity-specific data, we don't need it if bHandlesOnly == true
         if( bHandlesOnly == true )
         {
             return getEntity( dObjectType, dObjectSize, stCommonEntityData, pabySectionContent, nBitOffsetFromStart );
@@ -2518,7 +2518,7 @@ CADDictionaryObject * DWGFileR2000::getDictionary( long dObjectSize, const char 
 {
     /*
      * FIXME: ODA has a lot of mistypes in spec. for this objects,
-     * it doesnt work for now (error begins in handles stream).
+     * it doesn't work for now (error begins in handles stream).
      * Nonetheless, dictionary->sItemNames is 100% array,
      * not a single obj as pointer by their docs.
      */

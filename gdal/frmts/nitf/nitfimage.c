@@ -2262,7 +2262,7 @@ char **NITFReadPIAIMC( NITFImage *psImage )
 static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
                                         int* pbPrecisionLoss )
 {
-    // We need 12 bytes + 2=3-1 bytes for MSVC potentially outputing exponents
+    // We need 12 bytes + 2=3-1 bytes for MSVC potentially outputting exponents
     // with 3 digits + 1 terminating byte
     char szTemp[12+2+1];
 #if defined(DEBUG) || defined(WIN32)

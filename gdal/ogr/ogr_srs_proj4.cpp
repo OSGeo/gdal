@@ -532,7 +532,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
 /* -------------------------------------------------------------------- */
 /*      If we have an EPSG based init string, and no existing +proj     */
 /*      portion then try to normalize into into a PROJ.4 string.        */
-/*      This can happen if the proj.4 epsg dictionnary is missing.      */
+/*      This can happen if the proj.4 epsg dictionary is missing.      */
 /* -------------------------------------------------------------------- */
     const char* pszInitEpsg = strstr(pszNormalized, "init=epsg:");
     if( pszInitEpsg != NULL
@@ -1497,7 +1497,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 
     char szProj4[512] = {};
 
-    // TODO(schwehr): Cleanup CPLsnprintf calls to do less pointer arithmatic.
+    // TODO(schwehr): Cleanup CPLsnprintf calls to do less pointer arithmetic.
     if( pszProjection == NULL && IsGeographic() )
     {
         CPLsnprintf(szProj4 + strlen(szProj4),

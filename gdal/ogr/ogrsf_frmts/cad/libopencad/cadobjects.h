@@ -35,7 +35,7 @@
 #include "cadheader.h"
 
 /*
- * @brief Class which basicly implements implements 3D vertex
+ * @brief Class which basically implements implements 3D vertex
  */
 class CADVector
 {
@@ -168,7 +168,7 @@ public:
         ACDBPLACEHOLDER      = 0x50,         // 80
         VBA_PROJECT          = 0x51,             // 81
         LAYOUT               = 0x52,                  // 82
-        // Codes below arent fixed, libopencad uses it for reading, in writing it will be different!
+        // Codes below aren't fixed, libopencad uses it for reading, in writing it will be different!
         CELLSTYLEMAP         = 0x53,            // 83
         DBCOLOR              = 0x54,                 // 84
         DICTIONARYVAR        = 0x55,           // 85
@@ -609,7 +609,7 @@ public:
     CADEedArray    aEED;
     long           nNumReactors;
     bool           bNoXDictionaryPresent;
-    long           nNumEntries; // doesnt count MODELSPACE and PAPERSPACE
+    long           nNumEntries; // doesn't count MODELSPACE and PAPERSPACE
     CADHandle      hNull;
     CADHandle      hXDictionary;
     CADHandleArray hBlocks; // ends with modelspace and paperspace handles.
@@ -728,7 +728,7 @@ public:
     CADEedArray    aEED;
     long           nNumReactors;
     bool           bNoXDictionaryPresent;
-    long           nNumEntries; // doesnt count BYBLOCK / BYLAYER.
+    long           nNumEntries; // doesn't count BYBLOCK / BYLAYER.
     CADHandle      hNull;
     CADHandle      hXDictionary;
     CADHandleArray hLTypes;

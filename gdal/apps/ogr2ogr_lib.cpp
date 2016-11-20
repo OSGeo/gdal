@@ -3581,8 +3581,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         CPLTestBool(CPLGetConfigOption("PG_COMMIT_WHEN_OVERWRITING", "YES")) )
     {
         CPLDebug("GDALVectorTranslate",
-                 "Forcing transaction commit as table overwriting occured");
-        // Commit when overwriting as this consumes a lot of PG ressources
+                 "Forcing transaction commit as table overwriting occurred");
+        // Commit when overwriting as this consumes a lot of PG resources
         // and could result in """out of shared memory.
         // You might need to increase max_locks_per_transaction."""" errors
         if( m_poDstDS->CommitTransaction() != OGRERR_NONE ||

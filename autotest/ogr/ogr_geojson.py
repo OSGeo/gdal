@@ -3035,7 +3035,7 @@ def ogr_geojson_56():
         return 'fail'
 
 
-    # Test geometries accross the antimeridian
+    # Test geometries across the antimeridian
     gdal.VectorTranslate('/vsimem/out.json', """{
   "type": "FeatureCollection",
   "features": [

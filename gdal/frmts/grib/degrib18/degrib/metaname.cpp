@@ -967,7 +967,7 @@ static const GRIB2ParmTable MeteoAtmoChem[] = {
    /* 2 */  {"MASSMR", "Mass Mixing Ratio (Mass Fraction in Air)", "kg/kg", UC_NONE},
    /* 3 */  {"AEMFLX", "Atmosphere Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 4 */  {"ANPMFLX", "Atmosphere Net Production Mass Flux", "kg/(m^2*s)", UC_NONE},
-   /* 5 */  {"ANPEMFLX", "Atmosphere Net Production and Emision Mass Flux", "kg/(m^2*s)", UC_NONE},
+   /* 5 */  {"ANPEMFLX", "Atmosphere Net Production and Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 6 */  {"SDDMFLX", "Surface Dry Deposition Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 7 */  {"SWDMFLX", "Surface Wet Deposition Mass Flux", "kg/(m^2*s)", UC_NONE},
    /* 8 */  {"AREMFLX", "Atmosphere Re-Emission Mass Flux", "kg/(m^2*s)", UC_NONE},
@@ -1607,7 +1607,7 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
 /* It is important to use 'Wx' instead of 'PWTHER' since the rest of the code
  * uses "Wx" to test if it should be dealing with weather strings.  Since these
  * are the same as the NDFD "Wx" strings, it was simpler to maintain the NDFD
- * convention on abbrevations.  We could use 'Predominant Weather' as the long
+ * convention on abbreviations.  We could use 'Predominant Weather' as the long
  * descriptor, but the NDFD 'Weather String' seems quite reasonable. */
 /*            {0, 1, 226, "PWTHER", "Predominant Weather", "-", UC_NONE},*/
             {0, 1, 226, "Wx", "Weather String", "-", UC_NONE},
@@ -1821,7 +1821,7 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
             {0, 192, 10, "COVQVV", "Covariance between specific humidity and vertical components of the wind", "kg/kg*Pa/s", UC_NONE},
             {0, 192, 11, "COVPSPS", "Covariance between surface pressure and surface pressure", "Pa*Pa", UC_NONE},
             {0, 192, 12, "COVQQ", "Covariance between specific humidity and specific humidity", "kg/kg*kg/kg", UC_NONE},
-            {0, 192, 13, "COVVVVV", "Covariance between veritical and vertical components of the wind", "Pa^2/s^2", UC_NONE},
+            {0, 192, 13, "COVVVVV", "Covariance between vertical and vertical components of the wind", "Pa^2/s^2", UC_NONE},
             {0, 192, 14, "COVTT", "Covariance between temperature and temperature", "K*K", UC_NONE},
 
    /* 50 */ {1, 0, 192, "BGRUN", "Baseflow-Groundwater Runoff", "kg/(m^2)", UC_NONE},

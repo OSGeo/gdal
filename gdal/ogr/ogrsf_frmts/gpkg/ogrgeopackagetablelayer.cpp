@@ -3266,7 +3266,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Defered actions, reset state.                                   */
+/*      Deferred actions, reset state.                                   */
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();
@@ -3399,7 +3399,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     if( !bUseFastMethod )
     {
 /* -------------------------------------------------------------------- */
-/*      If we are withing a transaction, we cannot use the method       */
+/*      If we are within a transaction, we cannot use the method       */
 /*      that consists in altering the database in a raw way.            */
 /* -------------------------------------------------------------------- */
         const CPLString osFieldListForSelect( BuildSelectFieldList(apoFieldsOld) );
@@ -3413,7 +3413,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
     {
 /* -------------------------------------------------------------------- */
 /*      Rewrite schema in a transaction by altering the database        */
-/*      schema in a rather raw way, as discribed at bottom of           */
+/*      schema in a rather raw way, as described at bottom of           */
 /*      https://www.sqlite.org/lang_altertable.html                     */
 /* -------------------------------------------------------------------- */
 
@@ -3611,7 +3611,7 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
         return eErr;
 
 /* -------------------------------------------------------------------- */
-/*      Defered actions, reset state.                                   */
+/*      Deferred actions, reset state.                                   */
 /* -------------------------------------------------------------------- */
     ResetReading();
     RunDeferredCreationIfNecessary();

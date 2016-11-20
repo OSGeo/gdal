@@ -409,7 +409,7 @@ class GMLASXLinkResolver: public GMLASResourceCache
         const GMLASXLinkResolutionConf& GetConf() const { return m_oConf; }
 
         bool      IsRawContentResolutionEnabled() const;
-        int       GetMachingResolutionRule(const CPLString& osURL) const;
+        int       GetMatchingResolutionRule(const CPLString& osURL) const;
         CPLString GetRawContent(const CPLString& osURL);
         CPLString GetRawContentForRule(const CPLString& osURL, int nIdxRule);
 };
@@ -818,16 +818,16 @@ class GMLASSchemaAnalyzer
                             std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
                             bool& bSimpleEnoughOut);
-        void BuildMapCountOccurencesOfSameName(
+        void BuildMapCountOccurrencesOfSameName(
                     XSModelGroup* poModelGroup,
-                    std::map< CPLString, int >& oMapCountOccurencesOfSameName);
+                    std::map< CPLString, int >& oMapCountOccurrencesOfSameName);
         bool ExploreModelGroup( XSModelGroup* psMainModelGroup,
                                 XSAttributeUseList* poMainAttrList,
                                 GMLASFeatureClass& oClass,
                                 int nRecursionCounter,
                                 std::set<XSModelGroup*>& oSetVisitedModelGroups,
                                 XSModel* poModel,
-                                const std::map< CPLString, int >& oMapCountOccurencesOfSameName);
+                                const std::map< CPLString, int >& oMapCountOccurrencesOfSameName);
         void SetFieldTypeAndWidthFromDefinition( XSSimpleTypeDefinition* poST,
                                                  GMLASField& oField );
         CPLString GetPrefix( const CPLString& osNamespaceURI );
@@ -1300,7 +1300,7 @@ class GMLASReader : public DefaultHandler
         std::map<OGRGMLASLayer*, std::map<CPLString, std::set<int> > > m_oMapXLinkFields;
 
         /** Variables that could be local but more efficient to have same
-            persistant, so as to save many memory allocations/deallocations */
+            persistent, so as to save many memory allocations/deallocations */
         CPLString                      m_osLocalname;
         CPLString                      m_osNSUri;
         CPLString                      m_osNSPrefix;
