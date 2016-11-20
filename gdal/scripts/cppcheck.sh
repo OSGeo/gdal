@@ -52,6 +52,12 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "catchExceptionByValue" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "catchExceptionByValue check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 
