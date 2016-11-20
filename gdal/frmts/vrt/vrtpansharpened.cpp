@@ -812,7 +812,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         {
             poBand = reinterpret_cast<GDALRasterBand *>(
                 pahInputSpectralBandsIn[iSpectralBand] );
-            poDataset = p   oBand->GetDataset();
+            poDataset = poBand->GetDataset();
             if( poDataset )
             {
                 poDataset = oMapNamesToDataset[CPLSPrintf("%p", poDataset)];
