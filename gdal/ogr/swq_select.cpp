@@ -27,9 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "swq.h"
-#include "swq_parser.hpp"
+
+#include <cstdio>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
+#include "swq_parser.hpp"
 
 CPL_CVSID("$Id$");
 
@@ -52,7 +62,7 @@ swq_select::swq_select() :
     order_specs(0),
     order_defs(NULL),
     poOtherSelect(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~swq_select()                             */

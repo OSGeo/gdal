@@ -30,11 +30,20 @@
 
 #ifndef DOXYGEN_SKIP
 
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
 #include "swq.h"
-#include "ogr_geometry.h"
+
+#include <cctype>
+#include <cstdio>
+#include <cstring>
+#include <string>
 #include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
 

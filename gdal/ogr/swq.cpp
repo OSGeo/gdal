@@ -19,15 +19,23 @@
  * It is provided "as is" without express or implied warranty.
  ****************************************************************************/
 
-#include <ctype.h>
-
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
-#include "cpl_time.h"
+#include "cpl_port.h"
 #include "swq.h"
-#include "swq_parser.hpp"
+
+#include <cctype>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <string>
 
 #include <algorithm>
+
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_time.h"
+#include "swq_parser.hpp"
 
 CPL_CVSID("$Id$");
 
