@@ -1310,7 +1310,7 @@ bool OGRVRTLayer::ResetSourceReading()
                     if( CPLIsInf(sEnvelope.MinX) && CPLIsInf(sEnvelope.MinY) &&
                         CPLIsInf(sEnvelope.MaxX) && CPLIsInf(sEnvelope.MaxY) &&
                         sEnvelope.MinX < 0 && sEnvelope.MinY < 0 &&
-                        sEnvelope.MaxY > 0 && sEnvelope.MaxY > 0 )
+                        sEnvelope.MaxX > 0 && sEnvelope.MaxY > 0 )
                     {
                         poSpatialGeom = poSrcRegion;
                         bDoIntersection = false;
