@@ -2871,6 +2871,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
         CPLDebug("GMLAS", "Referenced layer %s of %s not found",
                     oRelLayerDesc.osName.c_str(),
                     oLayerDesc.osName.c_str());
+        return true;
     }
     if( poJunctionLayer == NULL )
     {
