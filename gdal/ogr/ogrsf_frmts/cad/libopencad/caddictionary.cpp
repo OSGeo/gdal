@@ -36,7 +36,8 @@ using namespace std;
 // CADDictionaryRecord
 //
 
-CADDictionaryRecord::CADDictionaryRecord()
+CADDictionaryRecord::CADDictionaryRecord() :
+    objType(CADObject::UNUSED)
 {
 }
 

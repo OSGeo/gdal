@@ -2436,9 +2436,9 @@ CADSplineObject * DWGFileR2000::getSpline( long dObjectSize, CADCommonED stCommo
 CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, CADCommonED stCommonEntityData,
                                            const char * pabyInput, size_t& nBitOffsetFromStart )
 {
-    CADEntityObject * entity = new CADEntityObject();
+    CADEntityObject * entity = new CADEntityObject(
+                    static_cast<CADObject::ObjectType>(dObjectType) );
 
-    entity->setType( static_cast<CADObject::ObjectType>(dObjectType) );
     entity->setSize( dObjectSize );
     entity->stCed = stCommonEntityData;
 
@@ -2460,9 +2460,8 @@ CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, CA
 CADInsertObject * DWGFileR2000::getInsert( int dObjectType, long dObjectSize, CADCommonED stCommonEntityData,
                                            const char * pabyInput, size_t& nBitOffsetFromStart )
 {
-    CADInsertObject * insert = new CADInsertObject();
-
-    insert->setType( static_cast<CADObject::ObjectType>(dObjectType) );
+    CADInsertObject * insert = new CADInsertObject(
+                            static_cast<CADObject::ObjectType>(dObjectType) );
     insert->setSize( dObjectSize );
     insert->stCed = stCommonEntityData;
 
@@ -3702,7 +3701,9 @@ void DWGFileR2000::fillCommonEntityHandleData( CADEntityObject * pEnt, const cha
         pEnt->stChed.hPlotStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 }
 
-DWGFileR2000::DWGFileR2000( CADFileIO * poFileIO ) : CADFile( poFileIO )
+DWGFileR2000::DWGFileR2000( CADFileIO * poFileIO ) :
+    CADFile( poFileIO ),
+    imageSeeker(0)
 {
     oHeader.addValue( CADHeader::OPENCADVER, CADVersions::DWG_R2000 );
 }
