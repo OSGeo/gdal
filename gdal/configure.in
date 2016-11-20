@@ -4750,15 +4750,18 @@ if test "x$with_java" = "xyes"; then
 dnl Ubuntu
     JAVA_6_TEST_DIR=
     JAVA_7_TEST_DIR=
+    JAVA_8_TEST_DIR=
     JAVA_MAC_TEST_DIR=
     case "$host_cpu" in
         i*86*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-i386
             JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-i386
+            JAVA_8_TEST_DIR=/usr/lib/jvm/java-8-openjdk-i386
             ;;
         x86_64*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-amd64
             JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-amd64
+            JAVA_8_TEST_DIR=/usr/lib/jvm/java-8-openjdk-amd64
             ;;
         *)
             ;;
@@ -4769,7 +4772,10 @@ dnl Ubuntu
         ;;
     esac
 
-    if test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
+    if test "x$JAVA_8_TEST_DIR" != "x" -a -d "$JAVA_8_TEST_DIR/include"; then
+        with_java="$JAVA_8_TEST_DIR"
+
+    elif test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
         with_java="$JAVA_7_TEST_DIR"
 
     elif test "x$JAVA_6_TEST_DIR" != "x" -a -d "$JAVA_6_TEST_DIR/include"; then
