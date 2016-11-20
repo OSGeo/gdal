@@ -54,6 +54,9 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
     m_nParentIDFieldIdx( -1 )
 
 {
+    m_poFeatureDefn->SetGeomType(wkbNone);
+    m_poFeatureDefn->Reference();
+
     SetDescription( m_poFeatureDefn->GetName() );
 
     // Are we a regular table ?
