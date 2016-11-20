@@ -2033,6 +2033,8 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "mmap() failed : %s", strerror(myerrno));
         VSIFree(ctxt);
+        // cppcheck things we are leaking addr
+        // cppcheck-suppress memleak
         return NULL;
     }
 
