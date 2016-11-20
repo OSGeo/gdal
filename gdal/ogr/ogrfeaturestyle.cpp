@@ -27,11 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_featurestyle.h"
 
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <string>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_feature.h"
 
 CPL_CVSID("$Id$");
