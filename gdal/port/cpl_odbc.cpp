@@ -1187,7 +1187,7 @@ void CPLODBCStatement::Append( const char *pszText )
         }
         else
         {
-            m_pszStatement = (char *) VSIRealloc(m_pszStatement, m_nStatementMax);
+            m_pszStatement = (char *) CPLRealloc(m_pszStatement, m_nStatementMax);
         }
     }
 
