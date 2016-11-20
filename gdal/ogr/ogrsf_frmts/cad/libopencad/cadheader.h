@@ -85,7 +85,7 @@ public:
     double              getZ() const;
     const CADHandle&    getHandle() const;
 protected:
-    DataType       type;
+    DataType            type;
     long                decimalVal;
     double              xVal;
     double              yVal;

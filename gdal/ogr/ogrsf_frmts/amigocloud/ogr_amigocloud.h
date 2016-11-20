@@ -75,11 +75,11 @@ class OGRAmigoCloudFID
         GIntBig iFID;
         std::string osAmigoId;
 
-        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index)
+        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index) :
+            iIndex( index ),
+            iFID( std::abs((long)CPLHashSetHashStr(amigo_id.c_str())) ),
+            osAmigoId( amigo_id )
         {
-            iIndex = index;
-            OGRAmigoCloudFID::osAmigoId = amigo_id.c_str();
-            iFID = std::abs((long)CPLHashSetHashStr(amigo_id.c_str()));
         }
 
         OGRAmigoCloudFID()
@@ -88,11 +88,11 @@ class OGRAmigoCloudFID
             iFID=0;
         }
 
-        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid)
+        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid) :
+            iIndex( fid.iIndex ),
+            iFID( fid.iFID ),
+            osAmigoId( fid.osAmigoId.c_str() )
         {
-            iIndex = fid.iIndex;
-            iFID = fid.iFID;
-            osAmigoId = fid.osAmigoId.c_str();
         }
 };
 

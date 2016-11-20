@@ -1345,14 +1345,14 @@ const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 /****************************************************************************/
 
 /** Constructor */
-OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId )
+OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId ) :
+    m_bModified(FALSE),
+    m_bParsed(FALSE),
+    m_dfScale(1.0),
+    m_eUnit(OGRSTUMM),
+    m_eClassId(eClassId),
+    m_pszStyleString(NULL)
 {
-    m_eClassId = eClassId;
-    m_dfScale = 1.0;
-    m_eUnit = OGRSTUMM;
-    m_pszStyleString = NULL;
-    m_bModified = FALSE;
-    m_bParsed = FALSE;
 }
 
 /************************************************************************/

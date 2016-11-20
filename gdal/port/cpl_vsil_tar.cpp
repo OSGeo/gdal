@@ -63,11 +63,11 @@ public:
         }
 
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName)
+        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName) :
+            m_nOffset(nOffset),
+            m_nFileSize(nFileSize),
+            m_osFileName(osFileName)
         {
-            m_nOffset = nOffset;
-            m_nFileSize = nFileSize;
-            m_osFileName = osFileName;
         }
 #endif
 };
