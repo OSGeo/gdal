@@ -677,12 +677,14 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
 
           for( int i = 0; i < nPointsIn; ++i )
           {
-            // TODO(schwehr): Fix casts.
-            const double x = *(double*)((char*)pabyX + i * nXStride);
-            const double y = *(double*)((char*)pabyY + i * nYStride);
+            const double x = *reinterpret_cast<double *>(
+                reinterpret_cast<char *>(pabyX) + i * nXStride);
+            const double y = *reinterpret_cast<double *>(
+                reinterpret_cast<char *>(pabyY) + i * nYStride);
             if( pabyZ )
             {
-                const double z = *(double*)((char*)pabyZ + i * nZStride);
+                const double z = *reinterpret_cast<double *>(
+                    reinterpret_cast<char *>(pabyZ) + i * nZStride);
                 poSC->setPoint( i, x, y, z );
             }
             else
@@ -788,9 +790,10 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  // TODO(schwehr): Fix casts.
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
                   poSC->setPoint( i, x, y );
               }
           }
@@ -798,10 +801,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  // TODO(schwehr): Fix casts.
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double z = *(double*)((char*)pabyZ + i * nZStride);
+                  double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  double z = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
                   poSC->setPoint( i, x, y, z );
               }
           }
@@ -809,9 +814,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  double m = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyM) + i * nMStride);
                   poSC->setPointM( i, x, y, m );
               }
           }
@@ -819,10 +827,14 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double z = *(double*)((char*)pabyZ + i * nZStride);
-                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  double z = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
+                  double m = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyM) + i * nMStride);
                   poSC->setPoint( i, x, y, z, m );
               }
           }
