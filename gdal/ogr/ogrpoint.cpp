@@ -714,6 +714,7 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRPoint.");
+        return FALSE;
     }
     if( flags != poOPoint->flags )
         return FALSE;
@@ -771,6 +772,7 @@ OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return FALSE;
         }
         return poCurve->Contains(this);
     }
@@ -794,6 +796,7 @@ OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return FALSE;
         }
         return poCurve->Intersects(this);
     }

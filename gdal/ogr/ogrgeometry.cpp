@@ -214,6 +214,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRLineString.");
+                    return;
                 }
                 fprintf( fp, "%d points\n", poLine->getNumPoints() );
                 break;
@@ -233,6 +234,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRCurvePolygon.");
+                    return;
                 }
 
                 OGRCurve *poRing = poPoly->getExteriorRingCurve();
@@ -286,6 +288,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                     CPLError(
                         CE_Fatal, CPLE_AppDefined,
                         "dynamic_cast failed.  Expected OGRCompoundCurve.");
+                    return;
                 }
                 if( poCC->getNumCurves() == 0 )
                 {
@@ -4594,6 +4597,9 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            delete poCentroidGeom;
+            freeGEOSContext( hGEOSCtxt );
+            return OGRERR_FAILURE;
         }
 
         if( !poCentroid->IsEmpty() )

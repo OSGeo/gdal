@@ -571,7 +571,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         if( poCurve == NULL )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRLineString.");
+                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return NULL;
         }
 
         if( !poGeom->hasCurveGeometry(TRUE) )

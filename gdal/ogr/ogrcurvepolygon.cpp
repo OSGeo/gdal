@@ -430,6 +430,7 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return OGRERR_FAILURE;
     }
     return poCP->addRingDirectlyInternal( poCurve, FALSE );
 }
@@ -489,6 +490,7 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return OGRERR_FAILURE;
     }
     return poCP->addRingDirectly(poCurve);
 }
@@ -636,6 +638,7 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return FALSE;
     }
     return oCC.Equals( &(poOPoly->oCC) );
 }
@@ -749,6 +752,7 @@ OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return FALSE;
         }
         return ContainsPoint(poPoint);
     }
@@ -771,6 +775,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return FALSE;
         }
         return ContainsPoint(poPoint);
     }
