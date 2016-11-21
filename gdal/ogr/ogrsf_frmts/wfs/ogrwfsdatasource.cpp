@@ -2025,7 +2025,7 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
     {
         if (osSrc[i]=='%' && i+2 < osSrc.length())
         {
-            int ii = 0;
+            unsigned int ii = 0;
             sscanf(osSrc.substr(i+1,2).c_str(), "%x", &ii);
             char ch = static_cast<char>(ii);
             ret += ch;
