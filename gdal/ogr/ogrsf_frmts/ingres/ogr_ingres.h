@@ -199,9 +199,6 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
     char                *pszRawStatement;
 
-    // Layer srid.
-    int                 nSRSId;
-
     int                 nFeatureCount;
 
   public:

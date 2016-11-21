@@ -196,8 +196,6 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 
 class PALSARJaxaRasterBand : public GDALRasterBand {
     VSILFILE *fp;
-    int nRasterXSize;
-    int nRasterYSize;
     ePolarization nPolarization;
     eFileType nFileType;
     int nBitsPerSample;
@@ -218,8 +216,6 @@ public:
 PALSARJaxaRasterBand::PALSARJaxaRasterBand( PALSARJaxaDataset *poDSIn,
                                             int nBandIn, VSILFILE *fpIn ) :
     fp(fpIn),
-    nRasterXSize(0),
-    nRasterYSize(0),
     nPolarization(hh),
     nBitsPerSample(0),
     nSamplesPerGroup(0),

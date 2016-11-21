@@ -90,8 +90,6 @@ class PAuxDataset : public RawDataset
 
 class PAuxRasterBand : public RawRasterBand
 {
-    GDALColorTable *poCT;
-
   public:
 
                  PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -120,8 +118,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn, int bNativeOrderIn ) :
     RawRasterBand( poDSIn, nBandIn, fpRawIn,
                    nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
-                   eDataTypeIn, bNativeOrderIn, TRUE ),
-    poCT(NULL)
+                   eDataTypeIn, bNativeOrderIn, TRUE )
 {
     PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
 
@@ -183,8 +180,6 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
 PAuxRasterBand::~PAuxRasterBand()
 
 {
-    if( poCT != NULL )
-        delete poCT;
 }
 
 /************************************************************************/
