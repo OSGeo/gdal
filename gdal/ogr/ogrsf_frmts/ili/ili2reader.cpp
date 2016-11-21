@@ -503,7 +503,7 @@ ILI2Reader::~ILI2Reader() {
     while (layerIt != m_listLayer.end()) {
         OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
         delete tmpLayer;
-        layerIt++;
+        ++layerIt;
     }
 }
 

@@ -264,13 +264,13 @@ void GDALSimpleSURF::NormalizeDistances(std::list<MatchedPointPairInfo> *poList)
     double max = 0;
 
     std::list<MatchedPointPairInfo>::iterator i;
-    for (i = poList->begin(); i != poList->end(); i++)
+    for (i = poList->begin(); i != poList->end(); ++i)
         if ((*i).euclideanDist > max)
             max = (*i).euclideanDist;
 
     if (max != 0)
     {
-        for (i = poList->begin(); i != poList->end(); i++)
+        for (i = poList->begin(); i != poList->end(); ++i)
             (*i).euclideanDist /= max;
     }
 }
@@ -489,7 +489,7 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
     NormalizeDistances(poPairInfoList);
 
     std::list<MatchedPointPairInfo>::const_iterator iter;
-    for (iter = poPairInfoList->begin(); iter != poPairInfoList->end(); iter++)
+    for (iter = poPairInfoList->begin(); iter != poPairInfoList->end(); ++iter)
     {
         if ((*iter).euclideanDist <= dfThreshold)
         {

@@ -129,7 +129,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
 
         std::vector<int> endNeighbors( oBoundaries.size(), -1 );
         std::vector<int> startNeighbors( oBoundaries.size(), -1 );
-        for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); it++ )
+        for ( PointMap::const_iterator it = oMap.begin(); it != oMap.end(); ++it )
         {
             if ( it->second.size() != 2 ) continue;
             int i = it->second[0];

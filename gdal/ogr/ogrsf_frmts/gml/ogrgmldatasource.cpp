@@ -989,7 +989,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     GMLFeatureClass* poClass = *oIter;
 
                     delete poClass;
-                    oIter ++;
+                    ++oIter;
                 }
                 aosClasses.resize(0);
                 bHaveSchema = false;
@@ -1009,14 +1009,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                         bHasFeatureProperties = true;
                         break;
                     }
-                    oIter ++;
+                    ++ oIter;
                 }
 
                 oIter = aosClasses.begin();
                 while (oIter != oEndIter)
                 {
                     GMLFeatureClass* poClass = *oIter;
-                    oIter ++;
+                    ++ oIter;
 
                     /* We have no way of knowing if the geometry type is 25D */
                     /* when examining the xsd only, so if there was a hint */

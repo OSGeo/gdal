@@ -102,7 +102,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 
     if( iNextSubFeature >= nSubFeatureCount )
     {
-        oIt++;
+        ++oIt;
 
         iNextSubFeature = 0;
 

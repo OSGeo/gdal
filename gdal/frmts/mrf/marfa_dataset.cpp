@@ -2014,7 +2014,7 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     }
 
     // Mark the empty records as checked, by making the offset non-zero
-    for (vector<ILIdx>::iterator it = buf.begin(); it != buf.end(); it++) {
+    for (vector<ILIdx>::iterator it = buf.begin(); it != buf.end(); ++it) {
         if (it->offset == 0 && it->size == 0)
             it->offset = net64(1);
     }
