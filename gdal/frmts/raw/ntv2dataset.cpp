@@ -981,8 +981,8 @@ GDALDataset *NTv2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write the end record.                                           */
 /* -------------------------------------------------------------------- */
-    memset( achHeader, 0, 16 );
     memcpy( achHeader, "END     ", 8 );
+    memset( achHeader + 8, 0, 8 );
     CPL_IGNORE_RET_VAL(VSIFWriteL( achHeader, 1, 16, fp ));
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 

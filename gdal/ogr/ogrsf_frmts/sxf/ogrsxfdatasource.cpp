@@ -344,6 +344,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
 
         char szName[26] = { 0 };
         memcpy(szName, buff + 8, 24);
+        szName[ sizeof(szName) - 1 ] = '\0';
         char* pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8);// szName + 2
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
@@ -351,8 +352,8 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         memcpy(&passport.nScale, buff + 32, 4);
         CPL_LSBPTR32(&passport.nScale);
 
-        memset(szName, 0, 26);
         memcpy(szName, buff + 36, 26);
+        szName[ sizeof(szName) - 1 ] = '\0';
         pszRecoded = CPLRecode(szName, "CP866", CPL_ENC_UTF8);
         passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
@@ -368,8 +369,8 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         memcpy(date, buff, 4);
         passport.dtCrateDate.nYear = static_cast<GUInt16>(atoi(date));
 
-        memset(date, 0, 5);
         memcpy(date, buff + 4, 2);
+        memset(date+2, 0, 3);
 
         passport.dtCrateDate.nMonth = static_cast<GUInt16>(atoi(date));
 
@@ -379,6 +380,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
 
         char szName[32] = { 0 };
         memcpy(szName, buff + 12, 32);
+        szName[ sizeof(szName) - 1 ] = '\0';
         char* pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8); //szName + 2
         passport.sMapSheet = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);
@@ -386,8 +388,8 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE* fpSXFIn, SXFPassport& pass
         memcpy(&passport.nScale, buff + 44, 4);
         CPL_LSBPTR32(&passport.nScale);
 
-        memset(szName, 0, 32);
         memcpy(szName, buff + 48, 32);
+        szName[ sizeof(szName) - 1 ] = '\0';
         pszRecoded = CPLRecode(szName, "CP1251", CPL_ENC_UTF8);
         passport.sMapSheetName = pszRecoded; //TODO: check the encoding in SXF created in Linux
         CPLFree(pszRecoded);

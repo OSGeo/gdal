@@ -562,6 +562,7 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
 
     for (int i = 0; UNSUPPORTED_PREFIXES[i] != NULL; i++)
     {
+        // cppcheck-suppress stlIfStrFind
         if (newName.find(UNSUPPORTED_PREFIXES[i]) == 0)
         {
             newName = "_" + newName;
