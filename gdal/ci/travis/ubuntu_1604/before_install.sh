@@ -34,4 +34,3 @@ sudo chroot "$chroot" sh -c "cd $PWD && pyflakes3 gdal/swig/python/scripts"
 sudo chroot "$chroot" sh -c "cd $PWD && pyflakes3 gdal/swig/python/samples"
 
 sudo chroot "$chroot" apt-get install -y cppcheck bash
-sudo chroot "$chroot" bash -c "cd $PWD/gdal && scripts/cppcheck.sh"
