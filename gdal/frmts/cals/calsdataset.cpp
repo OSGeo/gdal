@@ -265,7 +265,7 @@ int CALSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 {
-    nVal = CPL_LSBWORD16(nVal);
+    CPL_LSBPTR16(&nVal);
     VSIFWriteL(&nVal, 1, 2, fp);
 }
 
@@ -275,7 +275,7 @@ void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 
 void CALSDataset::WriteLEInt32( VSILFILE* fp, GInt32 nVal )
 {
-    nVal = CPL_LSBWORD32(nVal);
+    CPL_LSBPTR32(&nVal);
     VSIFWriteL(&nVal, 1, 4, fp);
 }
 

@@ -275,7 +275,7 @@ int FGdbLayer::EditATXOrSPX( const CPLString& osIndex )
             int nDepth;
             if( VSIFReadL(&nDepth, 1, 4, fp) == 4 )
             {
-                nDepth = CPL_LSBWORD32(nDepth);
+                CPL_LSBPTR32(&nDepth);
 
                 int bIndexedValueIsValid = FALSE;
                 int nFirstIndexAtThisValue = -1;
@@ -347,7 +347,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
         memcpy(&nNextPageID, abyBuffer, 4);
         int nFeatures;
         memcpy(&nFeatures, abyBuffer + 4, 4);
-        nFeatures = CPL_LSBWORD32(nFeatures);
+        CPL_LSBPTR32(&nFeatures);
 
         //if( nLastPageVisited == 0 )
         //    printf("nFeatures = %d\n", nFeatures);
@@ -365,12 +365,12 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
 
             int nFID;
             memcpy(&nFID, abyBuffer + 12 + 4 * i, 4);
-            nFID = CPL_LSBWORD32(nFID);
+            CPL_LSBPTR32(&nFID);
             int nOGRFID = m_oMapFGDBFIDToOGRFID[nFID];
             if( nOGRFID )
             {
                 nFID = nOGRFID;
-                nOGRFID = CPL_LSBWORD32(nOGRFID);
+                CPL_LSBPTR32(&nOGRFID);
                 memcpy(abyBuffer + 12 + 4 * i, &nOGRFID, 4);
                 bRewritePage = TRUE;
 
@@ -410,7 +410,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
                         int nFeaturesPrevPage;
                         VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 4, SEEK_SET);
                         VSIFReadL(&nFeaturesPrevPage, 1, 4, fp);
-                        nFeaturesPrevPage = CPL_LSBWORD32(nFeaturesPrevPage);
+                        CPL_LSBPTR32(&nFeaturesPrevPage);
                         if( j == 0 )
                         {
                             VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 12 + 4 * nFirstIndexAtThisValue, SEEK_SET);
@@ -439,7 +439,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
                         int nFeaturesPrevPage;
                         VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 4, SEEK_SET);
                         VSIFReadL(&nFeaturesPrevPage, 1, 4, fp);
-                        nFeaturesPrevPage = CPL_LSBWORD32(nFeaturesPrevPage);
+                        CPL_LSBPTR32(&nFeaturesPrevPage);
                         if( j == 0 )
                         {
                             VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 12 + 4 * nFirstIndexAtThisValue, SEEK_SET);
@@ -509,7 +509,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
             return FALSE;
         int nSubPages;
         memcpy(&nSubPages, abyBuffer + 4, 4);
-        nSubPages = CPL_LSBWORD32(nSubPages);
+        CPL_LSBPTR32(&nSubPages);
         nSubPages ++;
         if( nSubPages > (4096 - 8) / 4 )
             return FALSE;
@@ -517,7 +517,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
         {
             int nSubPageID;
             memcpy(&nSubPageID, abyBuffer + 8 + 4 * i, 4);
-            nSubPageID = CPL_LSBWORD32(nSubPageID);
+            CPL_LSBPTR32(&nSubPageID);
             if( nSubPageID < 1 )
                 return FALSE;
             if( !EditATXOrSPX(fp,
