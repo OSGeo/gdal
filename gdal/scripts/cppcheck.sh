@@ -236,6 +236,35 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+# Check any remaining errors
+grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
+    grep -v "memleak," | grep -v "memleakOnRealloc" | \
+    grep -v "frmts/jpeg/libjpeg/jdphuff.c:493,error,shiftNegative,Shifting a negative value is undefined behaviour" | \
+    grep -v "ogr/ogrsf_frmts/avc/avc_bin.c:1866,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds" | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:1890,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:1920,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:1958,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:1994,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2056,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2118,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2159,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2208,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds."
+
+if [[ $? -eq 0 ]] ; then
+    echo "Errors check failed"
+    exit 1
+fi
+
+# Check any remaining warnings
+grep "warning," ${LOG_FILE} | grep -v "ods_formula_parser" | \
+    grep -v "osr_cs_wkt_parser" | grep -v "swq_parser" | \
+    grep -v "frmts/jpeg/libjpeg"
+if [[ $? -eq 0 ]] ; then
+    echo "Warnings check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 

@@ -1195,7 +1195,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                   if ((grp[i].bit == 0) && (grp[i].min != 0)) {
 #ifdef DEBUG
                      printf ("This doesn't happen often.\n");
-                     printf ("%d %d %d\n", (int) i, grp[i].bit, grp[i].min);
+                     printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
 #endif
                      myAssert (1 == 2);
                      f_missing = 0;
@@ -1394,7 +1394,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                   if ((grp[i].bit == 0) && (grp[i].min != 0)) {
 #ifdef DEBUG
                      printf ("This doesn't happen often.\n");
-                     printf ("%d %d %d\n", (int) i, grp[i].bit, grp[i].min);
+                     printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
                      myAssert (1 == 2);
 #endif
                      f_missing = 0;

@@ -511,7 +511,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadataItem("Radiometric parameters format", "offset slope");
     for (i=1; i < band_count; i++) {
-        snprintf(tagname, sizeof(tagname), "ch%02d_cal", band_map[i]);
+        snprintf(tagname, sizeof(tagname), "ch%02u_cal", band_map[i]);
         CPLsnprintf(field, sizeof(field), "%.12e %.12e", cal[band_map[i]-1].cal_offset, cal[band_map[i]-1].cal_slope);
         poDS->SetMetadataItem(tagname, field);
     }
