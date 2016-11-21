@@ -1,3 +1,4 @@
+#!/bin/bash
 # Note: tested with cppcheck 1.72 as shipped with Ubuntu 16.04
 # as well as with cppcheck 1.76.1
 
