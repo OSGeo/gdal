@@ -39,7 +39,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRILI1Layer::OGRILI1Layer( OGRFeatureDefn* poFeatureDefnIn,
-                            GeomFieldInfos oGeomFieldInfosIn,
+                            const GeomFieldInfos& oGeomFieldInfosIn,
                             OGRILI1DataSource *poDSIn ) :
     poFeatureDefn(poFeatureDefnIn),
     oGeomFieldInfos(oGeomFieldInfosIn),

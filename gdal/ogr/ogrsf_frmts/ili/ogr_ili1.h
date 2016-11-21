@@ -58,7 +58,7 @@ private:
 
   public:
                         OGRILI1Layer( OGRFeatureDefn* poFeatureDefn,
-                                      GeomFieldInfos oGeomFieldInfos,
+                                      const GeomFieldInfos& oGeomFieldInfos,
                                       OGRILI1DataSource *poDS );
 
                        ~OGRILI1Layer();

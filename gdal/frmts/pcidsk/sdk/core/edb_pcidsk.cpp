@@ -71,7 +71,7 @@ public:
 /*                           DefaultOpenEDB()                           */
 /************************************************************************/
 
-EDBFile *PCIDSK::DefaultOpenEDB( std::string filename, std::string access )
+EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string& access )
 
 {
     // it would be nice to be able to pass in an appropriate PCIDSKInterface!

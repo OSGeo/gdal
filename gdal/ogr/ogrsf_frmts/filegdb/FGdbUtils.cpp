@@ -209,7 +209,7 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
 // We could make this function far more robust by doing automatic coercion of
 // types, and/or skipping fields we do not know. But, for our purposes. this
 // works fine.
-bool GDBToOGRFieldType(std::string gdbType, OGRFieldType* pOut, OGRFieldSubType* pSubType)
+bool GDBToOGRFieldType(const std::string& gdbType, OGRFieldType* pOut, OGRFieldSubType* pSubType)
 {
     /*
     ESRI types
@@ -526,7 +526,7 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode* node, const char* attrname, const char*
 /*                          FGDBLaunderName()                            */
 /*************************************************************************/
 
-std::string FGDBLaunderName(const std::string name)
+std::string FGDBLaunderName(const std::string& name)
 {
     std::string newName = name;
 
@@ -553,7 +553,7 @@ std::string FGDBLaunderName(const std::string name)
 /*                     FGDBEscapeUnsupportedPrefixes()                   */
 /*************************************************************************/
 
-std::string FGDBEscapeUnsupportedPrefixes(const std::string className)
+std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
 {
     std::string newName = className;
     // From ESRI docs
@@ -576,7 +576,7 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string className)
 /*                        FGDBEscapeReservedKeywords()                   */
 /*************************************************************************/
 
-std::string FGDBEscapeReservedKeywords(const std::string name)
+std::string FGDBEscapeReservedKeywords(const std::string& name)
 {
     std::string newName = name;
     std::string upperName = name;

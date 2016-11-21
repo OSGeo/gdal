@@ -830,7 +830,7 @@ static ContainerPtr MyGetContainerFromRoot(
 
 static StyleSelectorPtr StyleFromStyleURL(
     const StyleMapPtr& stylemap,
-    const string styleurl,
+    const string& styleurl,
     OGRStyleTable * poStyleTable )
 {
     // TODO:: Parse the styleURL.

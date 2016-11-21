@@ -59,8 +59,8 @@ namespace PCIDSK
         virtual int WriteBlock( int channel, int block_index, void *buffer) = 0;
     };
 
-    EDBFile PCIDSK_DLL *DefaultOpenEDB(std::string filename, 
-                                       std::string access);    
+    EDBFile PCIDSK_DLL *DefaultOpenEDB(const std::string& filename, 
+                                       const std::string& access);    
 } // end namespace PCIDSK
 
 #endif // INCLUDE_PCIDSK_EDB_H

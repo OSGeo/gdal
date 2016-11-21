@@ -2138,7 +2138,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
 /************************************************************************/
 
 bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource,
-                                     std::string feature_dataset_name,
+                                     const std::string& feature_dataset_name,
                                      OGRSpatialReference* poSRS,
                                      char** papszOptions )
 {
@@ -2515,7 +2515,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
-                           std::wstring wstrTablePath, std::wstring wstrType)
+                           const std::wstring& wstrTablePath,
+                           const std::wstring wstrType)
 {
     long hr;
 
