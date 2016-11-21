@@ -3501,14 +3501,16 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0 ||
         m_strShapeFieldName.size() == 0)
     {
-        int* pabSaveFieldIgnored = new int[m_pFeatureDefn->GetFieldCount()];
-        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        const int nFieldCount = m_pFeatureDefn->GetFieldCount();
+        int* pabSaveFieldIgnored = new int[nFieldCount];
+        for(int i=0;i<nFieldCount;i++)
         {
+            // cppcheck-suppress uninitdata
             pabSaveFieldIgnored[i] = m_pFeatureDefn->GetFieldDefn(i)->IsIgnored();
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(TRUE);
         }
         OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
-        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        for(int i=0;i<nFieldCount;i++)
         {
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(pabSaveFieldIgnored[i]);
         }
