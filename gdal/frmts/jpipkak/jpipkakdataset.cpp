@@ -677,7 +677,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         else
             eDT = GDT_Byte;
 
-        if( poCodestream->get_bit_depth(0) % 8 != 8
+        if( (poCodestream->get_bit_depth(0) % 8) != 0
             && poCodestream->get_bit_depth(0) < 16 )
             SetMetadataItem(
                 "NBITS",
