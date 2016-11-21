@@ -1182,10 +1182,10 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
     if( pszRGB == NULL )
         return -1;
 
-    int nRed = 0;
-    int nGreen = 0;
-    int nBlue = 0;
-    int nTransparency = 255;
+    unsigned int nRed = 0;
+    unsigned int nGreen = 0;
+    unsigned int nBlue = 0;
+    unsigned int nTransparency = 255;
 
     const int nCount =
         sscanf(pszRGB, "#%2x%2x%2x%2x", &nRed, &nGreen, &nBlue, &nTransparency);
@@ -1203,9 +1203,9 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
     for( int i = 1; i < 256; i++ )
     {
         const int nDist =
-            std::abs(nRed - pabyDXFColors[i*3+0])
-            + std::abs(nGreen - pabyDXFColors[i*3+1])
-            + std::abs(nBlue  - pabyDXFColors[i*3+2]);
+            std::abs(static_cast<int>(nRed) - pabyDXFColors[i*3+0])
+            + std::abs(static_cast<int>(nGreen) - pabyDXFColors[i*3+1])
+            + std::abs(static_cast<int>(nBlue)  - pabyDXFColors[i*3+2]);
 
         if( nDist < nMinDist )
         {
