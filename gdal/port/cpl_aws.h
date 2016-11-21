@@ -33,6 +33,8 @@
 
 #ifndef DOXYGEN_SKIP
 
+#include <cstddef>
+
 #include "cpl_string.h"
 
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
