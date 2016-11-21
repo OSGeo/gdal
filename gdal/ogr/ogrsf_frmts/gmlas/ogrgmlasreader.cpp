@@ -56,7 +56,7 @@ class GMLASBinInputStream : public BinInputStream
 
 public :
 
-             GMLASBinInputStream(VSILFILE* fp);
+    explicit GMLASBinInputStream(VSILFILE* fp);
     virtual ~GMLASBinInputStream();
 
     virtual XMLFilePos curPos() const;

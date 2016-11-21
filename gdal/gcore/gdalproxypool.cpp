@@ -88,7 +88,7 @@ class GDALDatasetPool
 
         /* Caution : to be sure that we don't run out of entries, size must be at */
         /* least greater or equal than the maximum number of threads */
-        GDALDatasetPool(int maxSize);
+        explicit GDALDatasetPool(int maxSize);
         ~GDALDatasetPool();
         GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName,
                                              GDALAccess eAccess,

@@ -62,7 +62,7 @@ class ILI2Handler : public DefaultHandler
     int m_nEntityCounter;
 
 public:
-    ILI2Handler( ILI2Reader *poReader );
+    explicit ILI2Handler( ILI2Reader *poReader );
     ~ILI2Handler();
 
     void startDocument();

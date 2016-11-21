@@ -56,7 +56,7 @@ public:
     };
 
 public:
-    CADFile( CADFileIO * poFileIO );
+    explicit                 CADFile( CADFileIO * poFileIO );
     virtual                 ~CADFile();
 
 public:

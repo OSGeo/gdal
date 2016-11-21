@@ -77,7 +77,7 @@ class GSAGDataset : public GDALPamDataset
     CPLErr UpdateHeader();
 
   public:
-                GSAGDataset( const char *pszEOL = "\x0D\x0A" );
+    explicit     GSAGDataset( const char *pszEOL = "\x0D\x0A" );
                 ~GSAGDataset();
 
     static int          Identify( GDALOpenInfo * );

@@ -102,7 +102,7 @@ class OGRODBCTableLayer : public OGRODBCLayer
     char               *pszSchemaName;
 
   public:
-                        OGRODBCTableLayer( OGRODBCDataSource * );
+    explicit            OGRODBCTableLayer( OGRODBCDataSource * );
                         virtual ~OGRODBCTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,

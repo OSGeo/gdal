@@ -455,7 +455,7 @@ class GDALClientDataset: public GDALPamDataset
                                           GDALDataType eType,
                                           char ** papszOptions );
 
-                                  GDALClientDataset(GDALServerSpawnedProcess* ssp);
+                         explicit GDALClientDataset(GDALServerSpawnedProcess* ssp);
 
         static GDALClientDataset* CreateAndConnect();
 
@@ -470,7 +470,7 @@ class GDALClientDataset: public GDALPamDataset
                                GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
     public:
-                            GDALClientDataset(GDALPipe* p);
+                   explicit GDALClientDataset(GDALPipe* p);
                    virtual ~GDALClientDataset();
 
         int                 Init(const char* pszFilename, GDALAccess eAccess,
@@ -1910,7 +1910,7 @@ public:
     void* pBuffer;
     int nBufferSize;
 
-        GDALServerInstance(GDALPipe* p);
+        explicit GDALServerInstance(GDALPipe* p);
        ~GDALServerInstance();
 };
 

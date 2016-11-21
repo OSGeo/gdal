@@ -70,7 +70,7 @@ protected:
     std::map<CPLString, CPLString> poInfo;
 
 public:
-    VFKReader( const char *pszFilename );
+    explicit VFKReader( const char *pszFilename );
     virtual ~VFKReader();
 
     bool           IsLatin2() const { return m_bLatin2; }
@@ -111,7 +111,7 @@ private:
 
     friend class   VFKFeatureSQLite;
 public:
-    VFKReaderSQLite(const char *);
+    explicit VFKReaderSQLite(const char *);
     virtual ~VFKReaderSQLite();
 
     bool          IsSpatial() const { return m_bSpatial; }

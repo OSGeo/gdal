@@ -7,8 +7,8 @@
 class FileDataSource : public DataSource
 {
 public:
-	FileDataSource(const char * fileName);
-	FileDataSource(VSILFILE* fp);
+	explicit FileDataSource(const char * fileName);
+	explicit FileDataSource(VSILFILE* fp);
 	virtual ~FileDataSource();
 	virtual size_t DataSourceFread(void* lpBuf, size_t size, size_t count);
 	virtual int DataSourceFgetc();

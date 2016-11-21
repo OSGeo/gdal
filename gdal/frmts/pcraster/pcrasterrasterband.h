@@ -72,7 +72,7 @@ protected:
   double           GetMaximum          (int* success);
 
 public:
-                   PCRasterRasterBand  (PCRasterDataset* dataset);
+  explicit          PCRasterRasterBand  (PCRasterDataset* dataset);
   /* virtual */    ~PCRasterRasterBand ();
 
   //----------------------------------------------------------------------------

@@ -41,7 +41,7 @@ class CADFile;
 class OCAD_EXTERN CADLayer
 {
 public:
-           CADLayer( CADFile * file );
+    explicit       CADLayer( CADFile * file );
     std::string getName() const;
     void   setName( const std::string& value );
 

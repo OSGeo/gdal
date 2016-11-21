@@ -66,7 +66,8 @@ class OGROSMComputedAttribute
         std::vector<int> anIndexToBind;
 
         OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL) {}
-        OGROSMComputedAttribute(const char* pszName) : osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL) {}
+        explicit OGROSMComputedAttribute(const char* pszName) :
+                osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL) {}
 };
 
 /************************************************************************/

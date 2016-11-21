@@ -121,7 +121,7 @@ class NTFRecord
     int      ReadPhysicalLine( FILE *fp, char *pszLine );
 
   public:
-             NTFRecord( FILE * );
+    explicit  NTFRecord( FILE * );
              ~NTFRecord();
 
     int      GetType() { return nType; }
@@ -161,7 +161,7 @@ public:
 class NTFCodeList
 {
 public:
-                NTFCodeList( NTFRecord * );
+    explicit     NTFCodeList( NTFRecord * );
                 ~NTFCodeList();
 
     const char  *Lookup( const char * );
@@ -280,7 +280,7 @@ class NTFFileReader
     OGRGeometry     **papoLineCache;
 
   public:
-                      NTFFileReader( OGRNTFDataSource * );
+    explicit           NTFFileReader( OGRNTFDataSource * );
                       ~NTFFileReader();
 
     int               Open( const char * pszFilename = NULL );
@@ -424,7 +424,7 @@ class OGRNTFFeatureClassLayer : public OGRLayer
     int                 iCurrentFC;
 
   public:
-                        OGRNTFFeatureClassLayer( OGRNTFDataSource * poDS );
+    explicit             OGRNTFFeatureClassLayer( OGRNTFDataSource * poDS );
                         ~OGRNTFFeatureClassLayer();
 
     OGRGeometry *       GetSpatialFilter() { return poFilterGeom; }

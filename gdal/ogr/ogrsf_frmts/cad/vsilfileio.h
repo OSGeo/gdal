@@ -38,7 +38,7 @@
 class VSILFileIO : public CADFileIO
 {
 public:
-    VSILFileIO(const char* pszFilePath);
+    explicit VSILFileIO(const char* pszFilePath);
     virtual ~VSILFileIO();
     virtual const char* ReadLine() override;
     virtual bool Eof() const override;

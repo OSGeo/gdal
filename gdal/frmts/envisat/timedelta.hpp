@@ -83,7 +83,7 @@ class TimeDelta
     }
 
     /* construct object from floating point number of seconds */
-    TimeDelta( double secsIn )
+    explicit TimeDelta( double secsIn )
     {
         this->fromSeconds( secsIn ) ;
     }

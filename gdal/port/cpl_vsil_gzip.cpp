@@ -1763,7 +1763,7 @@ class VSIZipEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
 public:
         unz_file_pos m_file_pos;
 
-        VSIZipEntryFileOffset(unz_file_pos file_pos)
+        explicit VSIZipEntryFileOffset(unz_file_pos file_pos)
         {
             m_file_pos.pos_in_zip_directory = file_pos.pos_in_zip_directory;
             m_file_pos.num_of_file = file_pos.num_of_file;
@@ -1788,7 +1788,7 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         void SetInfo();
 
     public:
-        VSIZipReader(const char* pszZipFileName);
+        explicit VSIZipReader(const char* pszZipFileName);
         virtual ~VSIZipReader();
 
         int IsValid() { return unzF != NULL; }

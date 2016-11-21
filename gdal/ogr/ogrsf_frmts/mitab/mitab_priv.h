@@ -1033,7 +1033,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
     TABProjInfo m_sProj;
 
   public:
-    TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPHeaderBlock();
 
     virtual int CommitToFile();
@@ -1145,7 +1145,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
     int         GetMaxEntries() const { return ((m_nBlockSize-4)/20); }
 
   public:
-    TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPIndexBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1252,7 +1252,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     int         m_bLockCenter;
 
   public:
-    TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPObjectBlock();
 
     virtual int CommitToFile();
@@ -1331,7 +1331,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
     GInt32      m_nFeatureYMax;
 
   public:
-    TABMAPCoordBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPCoordBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPCoordBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1397,7 +1397,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     TABBinBlockManager *m_poBlockManagerRef;
 
   public:
-    TABMAPToolBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPToolBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPToolBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1656,7 +1656,7 @@ class TABINDNode
                                       TABINDNode *poCurChild=NULL);
 
    public:
-    TABINDNode(TABAccess eAccessMode = TABRead);
+    explicit TABINDNode(TABAccess eAccessMode = TABRead);
     ~TABINDNode();
 
     int         InitNode(VSILFILE *fp, int nBlockPtr,

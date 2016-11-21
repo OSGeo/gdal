@@ -342,6 +342,8 @@ public:
  */
 class GDALOctaveMap
 {
+    CPL_DISALLOW_COPY_ASSIGN( GDALOctaveMap )
+
 public:
     /**
      * Create octave space. Octave numbers are start with one. (1, 2, 3, 4, ... )
@@ -433,6 +435,8 @@ private:
         int ind_2;
         double euclideanDist;
     };
+
+    CPL_DISALLOW_COPY_ASSIGN( GDALSimpleSURF )
 
 public:
     /**

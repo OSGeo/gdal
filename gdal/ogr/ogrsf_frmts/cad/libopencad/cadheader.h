@@ -39,7 +39,7 @@
 class OCAD_EXTERN CADHandle final
 {
 public:
-    CADHandle( unsigned char codeIn = 0 );
+    explicit CADHandle( unsigned char codeIn = 0 );
     CADHandle( const CADHandle& other );
     CADHandle& operator=( const CADHandle& other );
 
@@ -64,13 +64,20 @@ public:
 
 public:
     CADVariant();
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const char * val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( int val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( short val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( double val );
     CADVariant( double x, double y, double z = 0 );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const CADHandle& val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const std::string& val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( time_t val );
 public:
     CADVariant( const CADVariant& orig );

@@ -61,7 +61,7 @@ public:
     int               nParmLen;
     GByte            *pabyParmData;
 
-    OGRIngresStatement( II_PTR hConn );
+    explicit OGRIngresStatement( II_PTR hConn );
     ~OGRIngresStatement();
 
     void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );

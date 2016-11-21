@@ -38,7 +38,7 @@
 class XRITHeaderParser
 {
 public:
-  XRITHeaderParser(std::ifstream & ifile);
+  explicit XRITHeaderParser(std::ifstream & ifile);
 
   virtual ~XRITHeaderParser();
 

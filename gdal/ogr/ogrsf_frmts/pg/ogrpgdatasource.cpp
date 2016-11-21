@@ -2750,7 +2750,7 @@ class OGRPGMemLayerWrapper : public OGRLayer
       OGRLayer       *poMemLayer;
 
   public:
-                        OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
+                        explicit OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
                         {
                             poMemDS = poMemDSIn;
                             poMemLayer = poMemDS->GetLayer(0);

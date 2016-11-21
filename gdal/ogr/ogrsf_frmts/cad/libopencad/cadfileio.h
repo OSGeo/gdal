@@ -56,7 +56,7 @@ public:
     };
 
 public:
-    CADFileIO( const char * pszFileName );
+    explicit CADFileIO( const char * pszFileName );
     virtual                 ~CADFileIO();
 
     virtual const char * ReadLine() = 0;

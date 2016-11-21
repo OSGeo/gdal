@@ -255,7 +255,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
   public:
                 GDALPamRasterBand();
 //! @cond Doxygen_Suppress
-                GDALPamRasterBand(int bForceCachedIO);
+    explicit    GDALPamRasterBand(int bForceCachedIO);
 //! @endcond
     virtual     ~GDALPamRasterBand();
 

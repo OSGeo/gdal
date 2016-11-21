@@ -148,7 +148,7 @@ class GDALPDFObjectRW : public GDALPDFObject
         int                   m_nGen;
         int                   m_bCanRepresentRealAsString;
 
-                              GDALPDFObjectRW(GDALPDFObjectType eType);
+        explicit              GDALPDFObjectRW(GDALPDFObjectType eType);
 
     protected:
         virtual const char*       GetTypeNameNative();

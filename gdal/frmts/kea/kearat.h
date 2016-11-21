@@ -44,7 +44,7 @@ private:
     CPLString osWorkingResult;
 
 public:
-    KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable);
+    explicit KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable);
     ~KEARasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const;

@@ -633,9 +633,9 @@ public:
     /** Constructor */
     GNMRule();
     /** Constructor */
-    GNMRule(const std::string &oRule );
+    explicit GNMRule(const std::string &oRule );
     /** Constructor */
-    GNMRule(const char* pszRule);
+    explicit GNMRule(const char* pszRule);
     /** Constructor */
     GNMRule(const GNMRule &oRule);
     virtual ~GNMRule();

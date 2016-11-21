@@ -107,7 +107,7 @@ protected:
     virtual bool         LoadGeometryPolygon() = 0;
 
 public:
-    IVFKFeature(IVFKDataBlock *);
+    explicit IVFKFeature(IVFKDataBlock *);
     virtual ~IVFKFeature();
 
     GIntBig              GetFID() const { return m_nFID; }
@@ -175,9 +175,9 @@ private:
     void                 FinalizeSQL();
 
 public:
-    VFKFeatureSQLite(IVFKDataBlock *);
+    explicit VFKFeatureSQLite(IVFKDataBlock *);
     VFKFeatureSQLite(IVFKDataBlock *, int, GIntBig);
-    VFKFeatureSQLite(const VFKFeature *);
+    explicit VFKFeatureSQLite(const VFKFeature *);
 
     OGRErr               LoadProperties(OGRFeature *);
     void                 SetRowId(int);

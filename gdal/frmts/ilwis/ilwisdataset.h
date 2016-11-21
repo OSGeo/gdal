@@ -68,7 +68,7 @@ class ValueRange
 public:
     ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
-    ValueRange(std::string str);
+    explicit ValueRange(std::string str);
     std::string ToString();
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
@@ -194,7 +194,7 @@ typedef std::map<std::string, SectionEntries*> Sections;
 class IniFile
 {
 public:
-    IniFile(const std::string& filename);
+    explicit IniFile(const std::string& filename);
     virtual ~IniFile();
 
     void SetKeyValue(const std::string& section, const std::string& key, const std::string& value);

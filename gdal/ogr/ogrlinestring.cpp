@@ -2574,7 +2574,7 @@ class OGRSimpleCurvePointIterator: public OGRPointIterator
         int                   iCurPoint;
 
     public:
-        OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) :
+        explicit OGRSimpleCurvePointIterator(const OGRSimpleCurve* poSCIn) :
             poSC(poSCIn),
             iCurPoint(0) {}
 

@@ -77,7 +77,7 @@ char CPL_DLL *OGRPGCommonLaunderName( const char *pszSrcName,
 class OGRPGDumpGeomFieldDefn : public OGRGeomFieldDefn
 {
     public:
-        OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
+        explicit OGRPGDumpGeomFieldDefn( OGRGeomFieldDefn *poGeomField ) :
             OGRGeomFieldDefn(poGeomField),
             nSRSId(-1),
             GeometryTypeFlags(0)
