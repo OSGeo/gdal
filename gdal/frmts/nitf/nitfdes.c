@@ -509,8 +509,8 @@ void NITFDESFreeTREData( char* pabyTREData )
 int NITFDESExtractShapefile(NITFDES* psDES, const char* pszRadixFileName)
 {
     NITFSegmentInfo* psSegInfo;
-    const char* apszExt[3];
-    int anOffset[4];
+    const char* apszExt[3] = { NULL };
+    int anOffset[4] = { 0 };
     int iShpFile;
     char* pszFilename;
     size_t nFilenameLen;

@@ -1933,7 +1933,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
 {
     AVCBinFile    *psFile;
     AVCRawBinFile *hFile;
-    AVCTableDef    sTableDef;
+    AVCTableDef    sTableDef = { 0 };
     AVCFieldInfo  *pasFieldDef;
     char          *pszFname;
     GBool          bFound;

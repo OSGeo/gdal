@@ -2176,7 +2176,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
                                                       )
 {
   GCExportFileMetadata* Meta;
-  char **pszFields, delim[2], tdst[kItemSize_GCIO];
+  char **pszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
   int whereClass, whereSubType, i, j, nbstf, nbf, nbtf, buildFeature;
   GCType* theClass;
   GCField* theField;
@@ -3049,7 +3049,10 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                                                  )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   const char* normName;
   long id;
   GCTypeKind knd;
@@ -3243,7 +3246,10 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                                                      )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
   GCField* theField;
@@ -3419,7 +3425,10 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                                                         )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
   GCField* theField;
@@ -3593,7 +3602,8 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO (
                                                        )
 {
   int eost, res;
-  char *k, n[kItemSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = { 0 };
   long id;
   GCTypeKind knd;
   GCDim sys;
@@ -3770,7 +3780,8 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO (
                                                 )
 {
   int eot, res;
-  char *k, n[kItemSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = { 0 };
   long id;
   GCType *theClass;
 

@@ -271,8 +271,8 @@ retry_read_header:
          EQUAL(szTemp, "999999999999"))
     {
         GUIntBig nFileSize;
-        GByte abyDELIM2_L2[12];
-        GByte abyL1_DELIM1[11];
+        GByte abyDELIM2_L2[12] = { 0 };
+        GByte abyL1_DELIM1[11] = { 0 };
         int bOK;
 
         bTriedStreamingFileHeader = TRUE;

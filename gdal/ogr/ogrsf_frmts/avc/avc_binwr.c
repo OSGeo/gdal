@@ -319,14 +319,16 @@ int _AVCBinWriteHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
  **********************************************************************/
 int AVCBinWriteHeader(AVCBinFile *psFile)
 {
-    AVCBinHeader sHeader;
+    AVCBinHeader sHeader = { 0 };
     int          nStatus=0;
     GBool        bHeader = TRUE;
 
     /*-----------------------------------------------------------------
      * Set the appropriate header information for this file type.
      *----------------------------------------------------------------*/
-    sHeader.nPrecision = sHeader.nRecordSize = sHeader.nLength = 0;
+    sHeader.nPrecision = 0;
+    sHeader.nRecordSize = 0;
+    sHeader.nLength = 0;
     sHeader.nSignature = 9994;
     switch(psFile->eFileType)
     {

@@ -1697,8 +1697,8 @@ PNGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             (pszWhitepoint != NULL))
         {
             bool bOk = true;
-            double faColour[8];
-            char** apapszTokenList[4];
+            double faColour[8] = { 0.0 };
+            char** apapszTokenList[4] = { NULL };
 
             apapszTokenList[0] = CSLTokenizeString2( pszWhitepoint, ",",
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );

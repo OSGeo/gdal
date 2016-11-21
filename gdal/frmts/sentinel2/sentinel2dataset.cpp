@@ -1209,7 +1209,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { 0 };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -2694,7 +2694,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { 0 };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -2925,7 +2925,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
         CPLDebug("SENTINEL2", "Invalid EPSG code %d", nSubDSEPSGCode);
     }
 
-    double adfGeoTransform[6];
+    double adfGeoTransform[6] = { 0 };
     adfGeoTransform[0] = dfMinX;
     adfGeoTransform[1] = nSubDSPrecision;
     adfGeoTransform[2] = 0;

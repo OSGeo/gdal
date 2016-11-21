@@ -762,7 +762,7 @@ int TerragenDataset::LoadFromFile()
 
         if( tag_is(szTag, "SCAL") )
         {
-            float sc[3];
+            float sc[3] = { 0.0f };
             get(sc[0]);
             get(sc[1]);
             get(sc[2]);

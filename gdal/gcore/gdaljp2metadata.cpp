@@ -2620,7 +2620,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                         this,
                                                         i,
                                                         CPLGetBasename(aoGMLFiles[i].osFile));
-                        const char* apszOptions[3];
+                        const char* apszOptions[3] = { NULL };
                         apszOptions[0] = "FORMAT=GML3.2";
                         apszOptions[1] = (bCRSURL) ? "SRSNAME_FORMAT=OGC_URL" :
                                                      "SRSNAME_FORMAT=OGC_URN";
@@ -2874,12 +2874,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                      this,
                                                      i,
                                                      CPLGetBasename(aoAnnotations[i].osFile));
-                    char* apszOptions[2];
-                    apszOptions[0] = NULL;
-                    apszOptions[1] = NULL;
                     GDALDatasetH hDS = GDALCreateCopy(hLIBKMLDrv ? hLIBKMLDrv : hKMLDrv,
                                                       osTmpFile, hSrcDS,
-                                                      FALSE, apszOptions, NULL, NULL);
+                                                      FALSE, NULL, NULL, NULL);
                     if( hDS )
                     {
                         GDALClose(hDS);

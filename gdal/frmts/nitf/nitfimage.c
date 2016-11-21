@@ -3774,7 +3774,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
     int     i;
     GUInt32 nVQOffset=0 /*, nVQSize=0 */;
     GByte abyTestChunk[1000];
-    GByte abySignature[6];
+    const GByte abySignature[6] = { 0x00, 0x00, 0x00, 0x06, 0x00, 0x0E };
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have the VQ tables?                               */
@@ -3800,13 +3800,6 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
 /* -------------------------------------------------------------------- */
 /*      Does it look like we have the tables properly identified?       */
 /* -------------------------------------------------------------------- */
-    abySignature[0] = 0x00;
-    abySignature[1] = 0x00;
-    abySignature[2] = 0x00;
-    abySignature[3] = 0x06;
-    abySignature[4] = 0x00;
-    abySignature[5] = 0x0E;
-
     if( VSIFSeekL( psImage->psFile->fp, nVQOffset, SEEK_SET ) != 0 ||
         VSIFReadL( abyTestChunk, sizeof(abyTestChunk), 1, psImage->psFile->fp ) != 1 )
     {
@@ -3882,6 +3875,7 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
     double dfLineNumerator, dfLineDenominator,
         dfPixelNumerator, dfPixelDenominator;
     double dfPolyTerm[20];
+    double* pdfPolyTerm = dfPolyTerm;
     int i;
 
 /* -------------------------------------------------------------------- */
@@ -3895,7 +3889,7 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
 /*      Compute the 20 terms.                                           */
 /* -------------------------------------------------------------------- */
 
-    dfPolyTerm[0] = 1.0;
+    pdfPolyTerm[0] = 1.0; /* workaround cppcheck false positive */
     dfPolyTerm[1] = dfLong;
     dfPolyTerm[2] = dfLat;
     dfPolyTerm[3] = dfHeight;

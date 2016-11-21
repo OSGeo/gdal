@@ -3725,7 +3725,7 @@ int FGdbLayer::CreateRealCopy()
     CPLAssert( m_bSymlinkFlag );
 
     // Find the FID of the layer in the system catalog
-    char* apszDrivers[2];
+    char* apszDrivers[2] = { NULL };
     apszDrivers[0] = (char*) "OpenFileGDB";
     apszDrivers[1] = NULL;
     const char* pszSystemCatalog

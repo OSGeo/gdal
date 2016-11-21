@@ -44,7 +44,7 @@ CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 static int CEOSScanInt( const char * pszString, int nMaxChars )
 
 {
-    char	szWorking[33];
+    char	szWorking[33] = { 0 };
     int		i;
 
     if( nMaxChars > 32 || nMaxChars == 0 )

@@ -179,7 +179,7 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     double *padfGeoX, *padfGeoY, *padfRasterX, *padfRasterY;
     int    *panStatus, iGCP;
     int    nCRSresult;
-    struct Control_Points sPoints;
+    struct Control_Points sPoints = { 0 };
 
     if( nReqOrder == 0 )
     {
@@ -700,7 +700,7 @@ CRS_compute_georef_equations (struct Control_Points *cp,
 static int
 calccoef (struct Control_Points *cp, double E[], double N[], int order)
 {
-    struct MATRIX m;
+    struct MATRIX m = { 0 };
     double *a;
     double *b;
     int numactive;   /* NUMBER OF ACTIVE CONTROL POINTS */
@@ -1083,7 +1083,7 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     int *panStatus;
     int nI, nCRSresult, nGCPCount, nMinimumGcps, nReqOrder;
     double dfTolerance;
-    struct Control_Points sPoints;
+    struct Control_Points sPoints = { 0 };
 
     nGCPCount = psInfo->nGCPCount;
     nMinimumGcps = psInfo->nMinimumGcps;
