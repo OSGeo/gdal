@@ -131,7 +131,7 @@ protected:
     int                nNextFID;
 
   public:
-    explicit            OGRHTFMetadataLayer(std::vector<CPLString> aosMD);
+    explicit            OGRHTFMetadataLayer(const std::vector<CPLString>& aosMD);
                         virtual ~OGRHTFMetadataLayer();
 
     virtual void                ResetReading() { nNextFID = 0; }

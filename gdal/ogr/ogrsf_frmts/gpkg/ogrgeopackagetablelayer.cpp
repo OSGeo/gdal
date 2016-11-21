@@ -2635,7 +2635,7 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
 /*                        GetColumnsOfCreateTable()                     */
 /************************************************************************/
 
-CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields)
+CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*>& apoFields)
 {
     CPLString osSQL;
 
@@ -3057,7 +3057,7 @@ OGRErr OGRGeoPackageTableLayer::RecreateTable(const CPLString& osColumnsForCreat
 /*                          BuildSelectFieldList()                      */
 /************************************************************************/
 
-CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFieldDefn*> apoFields)
+CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFieldDefn*>& apoFields)
 {
     CPLString osFieldListForSelect;
 

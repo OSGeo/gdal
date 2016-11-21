@@ -330,8 +330,8 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                BuildWhere();
     OGRErr              RegisterGeometryColumn();
 
-    CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*> apoFields);
-    CPLString           BuildSelectFieldList(const std::vector<OGRFieldDefn*> apoFields);
+    CPLString           GetColumnsOfCreateTable(const std::vector<OGRFieldDefn*>& apoFields);
+    CPLString           BuildSelectFieldList(const std::vector<OGRFieldDefn*>& apoFields);
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
     bool                IsTable();

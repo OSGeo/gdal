@@ -54,7 +54,7 @@ kmldom::StyleSelectorPtr StyleFromStyleSelector(
     OGRStyleTable * poStyleTable );
 
 kmldom::StyleSelectorPtr StyleFromStyleURL(
-    const std::string styleurl,
+    const std::string& styleurl,
     OGRStyleTable * poStyleTable );
 
 kmldom::StyleSelectorPtr StyleFromStyleMap(

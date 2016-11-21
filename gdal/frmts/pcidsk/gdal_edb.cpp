@@ -43,7 +43,7 @@ using PCIDSK::CHN_32R;
 using PCIDSK::CHN_C16S;
 using PCIDSK::CHN_UNKNOWN;
 
-EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess );
+EDBFile *GDAL_EDBOpen( const std::string& osFilename, const std::string& osAccess );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -78,7 +78,7 @@ public:
 /*                            GDAL_EDBOpen()                            */
 /************************************************************************/
 
-EDBFile *GDAL_EDBOpen( std::string osFilename, std::string osAccess )
+EDBFile *GDAL_EDBOpen( const std::string& osFilename, const std::string& osAccess )
 
 {
     GDALDataset *poDS = NULL;
