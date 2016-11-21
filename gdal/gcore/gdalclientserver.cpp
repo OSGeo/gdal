@@ -2138,6 +2138,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             if( !GDALPipeRead(p, &dfProgress) ||
                 !GDALPipeRead(p, &pszProgressMsg) )
                 break;
+            CPLAssert( pfnProgress );
+            // cppcheck-suppress nullPointer
             nRet = pfnProgress(dfProgress, pszProgressMsg, pProgressData);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, nRet);

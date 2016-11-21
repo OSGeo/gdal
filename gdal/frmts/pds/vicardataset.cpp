@@ -95,6 +95,7 @@ VICARDataset::VICARDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 }
 
 /************************************************************************/

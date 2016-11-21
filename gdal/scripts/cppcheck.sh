@@ -1,15 +1,24 @@
 LOG_FILE=/tmp/cppcheck_gdal.txt
-cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
-    --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
-    -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
-    -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED -DHAVE_SPATIALITE \
-    -DVSIRealloc=realloc \
-    alg port gcore ogr frmts gnm \
-    -j 8 >${LOG_FILE} 2>&1
-if [[ $? -ne 0 ]] ; then
-    echo "cppcheck failed"
-    exit 1
-fi
+echo "" > ${LOG_FILE}
+for dirname in alg port gcore ogr frmts gnm; do
+    echo "Running cppcheck on $dirname... (can be long)"
+    cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
+        --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
+        -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
+        -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED -DHAVE_SPATIALITE \
+        -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
+        -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
+        -Dva_copy \
+        -D__cplusplus \
+        -DVSIRealloc=realloc \
+        -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
+        $dirname \
+        -j 8 >>${LOG_FILE} 2>&1
+    if [[ $? -ne 0 ]] ; then
+        echo "cppcheck failed"
+        exit 1
+    fi
+done
 
 grep "null pointer" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then

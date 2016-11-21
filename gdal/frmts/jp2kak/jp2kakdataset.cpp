@@ -200,11 +200,10 @@ class kdu_cpl_error_message : public kdu_thread_safe_message
 public: // Member classes
     using kdu_thread_safe_message::put_text;
 
-    kdu_cpl_error_message( CPLErr eErrClass )
-    {
-        m_eErrClass = eErrClass;
-        m_pszError = NULL;
-    }
+    kdu_cpl_error_message( CPLErr eErrClass ) :
+        m_eErrClass ( eErrClass ),
+        m_pszError ( NULL )
+    {}
 
     void put_text(const char *string)
     {
@@ -2239,6 +2238,8 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
         delete poROIImage;
 
     return bRet;
+    // For some reason thinkgs that engines and lines are leaking
+    // cppcheck-suppress memleak
 }
 
 /************************************************************************/

@@ -218,11 +218,11 @@ public:
 
 OGRMongoDBLayer::OGRMongoDBLayer(OGRMongoDBDataSource* poDS,
                             const char* pszDatabase,
-                            const char* pszCollection)
+                            const char* pszCollection) :
+    m_osDatabase( pszDatabase),
+    m_osCollection( pszCollection )
 {
     m_poDS = poDS;
-    m_osDatabase = pszDatabase;
-    m_osCollection = pszCollection;
     m_osQualifiedCollection = CPLSPrintf("%s.%s", m_osDatabase.c_str(), m_osCollection.c_str());
     if( m_poDS->GetDatabase().size() )
         m_poFeatureDefn = new OGRFeatureDefn(pszCollection);

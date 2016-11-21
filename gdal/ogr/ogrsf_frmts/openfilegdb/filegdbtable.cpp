@@ -2921,6 +2921,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                         i--;
                     }
                     delete[] papoRings;
+                    // For some reason things that papoRings is leaking
+                    // cppcheck-suppress memleak
                     returnError();
                 }
             }

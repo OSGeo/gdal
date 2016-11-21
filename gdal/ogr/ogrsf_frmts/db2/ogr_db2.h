@@ -403,7 +403,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
     CPLString                   osQuery;
-    OGRBoolean                  m_bExtentChanged;
+    //OGRBoolean                  m_bExtentChanged;
 
     //int                         m_bInsertStatementWithFID;
 

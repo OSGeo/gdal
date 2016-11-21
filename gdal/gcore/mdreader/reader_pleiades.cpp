@@ -35,9 +35,12 @@ CPL_CVSID("$Id$");
  * GDALMDReaderPleiades()
  */
 GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                        char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osBaseFilename( pszPath ),
+    m_osIMDSourceFilename( CPLString() ),
+    m_osRPBSourceFilename( CPLString() )
 {
-    m_osBaseFilename = pszPath;
     const char* pszBaseName = CPLGetBasename(pszPath);
     size_t nBaseNameLen = strlen(pszBaseName);
     if( nBaseNameLen < 4 || nBaseNameLen > 511 )

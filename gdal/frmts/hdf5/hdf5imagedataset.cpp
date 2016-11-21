@@ -176,6 +176,7 @@ HDF5ImageDataset::HDF5ImageDataset() :
     pszGCPProjection(NULL),
     pasGCPList(NULL),
     nGCPCount(0),
+    oSRS( OGRSpatialReference() ),
     dims(NULL),
     maxdims(NULL),
     poH5Objects(NULL),

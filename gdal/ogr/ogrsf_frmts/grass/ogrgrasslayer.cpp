@@ -49,6 +49,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
     pszQuery = NULL;
     paQueryMatch = NULL;
     paSpatialMatch = NULL;
+    iCurrentCat = 0;
 
     iLayer = Vect_cidx_get_field_number ( poMap, iLayerIndex);
     CPLDebug ( "GRASS", "iLayer = %d", iLayer );

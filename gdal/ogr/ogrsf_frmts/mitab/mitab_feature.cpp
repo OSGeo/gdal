@@ -7978,11 +7978,12 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 TABDebugFeature::TABDebugFeature( OGRFeatureDefn *poDefnIn ) :
     TABFeature(poDefnIn),
-    // TODO(schwehr): m_abyBuf
     m_nSize(0),
     m_nCoordDataPtr(0),
     m_nCoordDataSize(0)
-{}
+{
+    memset( m_abyBuf, 0, sizeof(m_abyBuf) );
+}
 
 /**********************************************************************
  *                   TABDebugFeature::~TABDebugFeature()

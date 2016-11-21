@@ -118,11 +118,11 @@ GMLASInputSource::GMLASInputSource(const char* pszFilename,
                                    VSILFILE* fp,
                                    bool bOwnFP,
                                    MemoryManager* const manager)
-    : InputSource(manager)
+    : InputSource(manager),
+      m_osFilename( pszFilename )
 {
     m_fp = fp;
     m_bOwnFP = bOwnFP;
-    m_osFilename = pszFilename;
     XMLCh* pFilename = XMLString::transcode(pszFilename);
     setPublicId(pFilename);
     setSystemId(pFilename);
