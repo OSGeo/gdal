@@ -3527,6 +3527,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     poDstFDefn = poDstLayer->GetLayerDefn();
 
                 /* Sanity check : if it fails, the driver is buggy */
+                // cppcheck-suppress nullPointerRedundantCheck
                 if (poDstFDefn != NULL &&
                     poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                 {
@@ -4343,7 +4344,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bNativeData = true;
 
     int nArgc = CSLCount(papszArgv);
-    for( int i = 0; i < nArgc; i++ )
+    for( int i = 0; papszArgv != NULL && i < nArgc; i++ )
     {
         if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
         {

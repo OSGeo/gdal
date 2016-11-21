@@ -1508,7 +1508,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int iArg = 0; iArg < argc; iArg++ )
+    for( int iArg = 0; papszArgv != NULL && iArg < argc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
         {
