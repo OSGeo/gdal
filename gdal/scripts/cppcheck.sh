@@ -16,6 +16,7 @@ for dirname in alg port gcore ogr frmts gnm; do
         -D__cplusplus \
         -DVSIRealloc=realloc \
         -DCPPCHECK \
+        --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
         $dirname \
@@ -25,6 +26,9 @@ for dirname in alg port gcore ogr frmts gnm; do
         exit 1
     fi
 done
+
+cat ${LOG_FILE} | grep -v "unmatchedSuppression" > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 grep "null pointer" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
@@ -44,7 +48,7 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
-grep "uninitMemberVar" ${LOG_FILE} | grep -v "1080,information,unmatchedSuppression,Unmatched suppression: uninitMemberVar"
+grep "uninitMemberVar" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "uninitMemberVar check failed"
     exit 1
