@@ -31,6 +31,8 @@
 #ifndef CPL_CSV_H_INCLUDED
 #define CPL_CSV_H_INCLUDED
 
+#include <stdio.h>
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
