@@ -191,6 +191,8 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
 
     struct sockaddr_in sockAddrIn;
 
+    memset( &sockAddrIn, 0, sizeof(sockAddrIn) );
+
     if( pnFamily )   *pnFamily = AF_INET;
     if( pnSockType ) *pnSockType = SOCK_STREAM;
     if( pnProtocol ) *pnProtocol = IPPROTO_TCP;
