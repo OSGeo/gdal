@@ -5,7 +5,7 @@ set -e
 export chroot="$PWD"/xenial
 export LC_ALL=en_US
 
-sudo chroot "$chroot" sh -c "cd $PWD/gdal && CC=$PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang CXX=$PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-static-proj4 --with-poppler --with-podofo --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql --with-java --with-mdb"
+sudo chroot "$chroot" sh -c "cd $PWD/gdal && CC=$PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang CXX=$PWD/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang LDFLAGS='-lstdc++' ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon --with-static-proj4 --with-poppler --with-podofo --with-hdf5 --with-dods-root=/usr --with-sosi --with-mysql"
 
 sudo chroot "$chroot" bash -c "cd $PWD/gdal && scripts/cppcheck.sh"
 
