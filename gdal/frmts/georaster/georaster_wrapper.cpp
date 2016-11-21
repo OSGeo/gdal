@@ -41,8 +41,8 @@ CPL_CVSID("$Id$");
 //  ---------------------------------------------------------------------------
 
 GeoRasterWrapper::GeoRasterWrapper() :
-    sCompressionType    ( "NONE" ),
     sPyramidResampling  ( "NN" ),
+    sCompressionType    ( "NONE" ),
     sInterleaving       ( "BSQ" )
 {
     nRasterId           = -1;
