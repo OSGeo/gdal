@@ -46,7 +46,14 @@
 class subfile_source : public kdu_compressed_source {
 
   public:
-    subfile_source() { file = NULL; }
+    subfile_source() :
+        capabilities( 0 ),
+        subfile_offset( 0 ),
+        subfile_size( 0 ),
+        file( NULL )
+    {
+    }
+
     ~subfile_source() { close(); }
 
     bool exists() { return (file != NULL); }
