@@ -778,8 +778,7 @@ GSAGDataset::GSAGDataset( const char *pszEOL ) :
         return;
     }
 
-    strncpy(szEOL, pszEOL, sizeof(szEOL));
-    szEOL[sizeof(this->szEOL) - 1] = '\0';
+    snprintf(szEOL, sizeof(szEOL), "%s", pszEOL);
 }
 
 /************************************************************************/

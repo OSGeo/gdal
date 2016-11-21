@@ -1098,7 +1098,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
             {
                 if( asDatums[i].nEPSGCode == nGCS_EPSG )
                 {
-                    strncpy( szEarthModel, asDatums[i].pszPCIDatum, 5 );
+                    snprintf( szEarthModel, sizeof(szEarthModel), "%s",
+                              asDatums[i].pszPCIDatum );
                     break;
                 }
             }

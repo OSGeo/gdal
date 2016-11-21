@@ -1183,7 +1183,7 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                                         szSearchKey, CC_Integer,
                                         "coord_ref_sys_name" );
                 if( pszValue != NULL && *pszValue != '\0' )
-                    strncpy( citation, pszValue, sizeof(citation) );
+                    snprintf( citation, sizeof(citation), "%s", pszValue );
             }
 
             if( verticalUnits < 1 || verticalUnits == KvUserDefined )

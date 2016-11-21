@@ -5029,8 +5029,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 
 		    /* Fill buffer with "Fill" value (if any) */
 		    /* -------------------------------------- */
-		    strncpy(attrName, "_FV_", 80);
-		    strcat(attrName, fieldname);
+                    snprintf( attrName, sizeof(attrName), "_FV_%s", fieldname);
 
 		    status = SWreadattr(swathID, attrName, (char *) fillbuf);
 		    if (status == 0)
