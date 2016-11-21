@@ -323,9 +323,15 @@ OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
 {
     for( int i = 0; i < poMS->nGeomCount; i++ )
     {
-        poMS->papoGeoms[i] =
-            OGRSurface::CastToPolygon(
-                dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]));
+        OGRSurface* poSurface = dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]);
+        if( poSurface == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRSurface.");
+            delete poMS;
+            return NULL;
+        }
+        poMS->papoGeoms[i] = OGRSurface::CastToPolygon(poSurface);
         if( poMS->papoGeoms[i] == NULL )
         {
             delete poMS;
