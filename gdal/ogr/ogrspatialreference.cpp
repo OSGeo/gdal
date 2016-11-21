@@ -266,6 +266,10 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
     if( &oSource != this )
     {
         Clear();
+#ifdef CPPCHECK
+        // Otherwise cppcheck would protest that nRefCount isn't modified
+        nRefCount = (nRefCount + 1) - 1;
+#endif
 
         if( oSource.poRoot != NULL )
             poRoot = oSource.poRoot->Clone();
