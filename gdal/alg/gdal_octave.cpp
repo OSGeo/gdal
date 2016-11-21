@@ -48,6 +48,13 @@ int GDALIntegralImage::GetWidth() { return nWidth; }
 
 void GDALIntegralImage::Initialize(const double **padfImg, int nHeightIn, int nWidthIn)
 {
+    if( pMatrix )
+    {
+        for (int i = 0; i < nHeight; i++)
+            delete[] pMatrix[i];
+        delete[] pMatrix;
+    }
+
     //Memory allocation
     pMatrix = new double*[nHeightIn];
     for (int i = 0; i < nHeightIn; i++)
