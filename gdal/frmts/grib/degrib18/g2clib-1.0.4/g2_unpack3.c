@@ -124,6 +124,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int *iofst,g2int **igds,g2int **igdstmpl
               ierr=6;
               *mapgridlen=0;
               *igdstmpl=0;    //NULL
+              free(mapgrid);
               return(ierr);
            }
            else {
