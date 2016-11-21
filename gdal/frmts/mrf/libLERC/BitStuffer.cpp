@@ -192,6 +192,7 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
         unsigned int n3 = srcValue << bitPos;
         *dstPtr++ = n3 >> (32 - numBits);
         bitPos += numBits;
+        // cppcheck-suppress shiftTooManyBits
         if (bitPos == 32)    // shift >= 32 is undefined
         {
           bitPos = 0;

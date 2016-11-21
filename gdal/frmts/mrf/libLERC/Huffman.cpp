@@ -485,6 +485,7 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
       if (32 - bitPos >= len)
       {
         bitPos += len;
+        // cppcheck-suppress shiftTooManyBits
         if (bitPos == 32)
         {
           bitPos = 0;
