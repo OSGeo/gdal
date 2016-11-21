@@ -472,6 +472,7 @@ TerragenDataset::~TerragenDataset()
 bool TerragenDataset::write_header()
 {
     char szHeader[16];
+    // cppcheck-suppress bufferNotZeroTerminated
     memcpy(szHeader, "TERRAGENTERRAIN ", sizeof(szHeader));
 
     if(1 != VSIFWriteL( reinterpret_cast<void *>( szHeader ), sizeof(szHeader), 1, m_fp ))

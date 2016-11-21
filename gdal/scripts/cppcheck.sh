@@ -1,3 +1,6 @@
+# Note: tested with cppcheck 1.72 as shipped with Ubuntu 16.04
+# as well as with cppcheck 1.76.1
+
 LOG_FILE=/tmp/cppcheck_gdal.txt
 echo "" > ${LOG_FILE}
 for dirname in alg port gcore ogr frmts gnm; do
@@ -170,6 +173,12 @@ fi
 grep "uselessAssignmentPtrArg" ${LOG_FILE} | grep -v swq_parser.cpp | grep -v osr_cs_wkt_parser.c | grep -v ods_formula_parser.cpp
 if [[ $? -eq 0 ]] ; then
     echo "uselessAssignmentPtrArg check failed"
+    exit 1
+fi
+
+grep "bufferNotZeroTerminated" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "bufferNotZeroTerminated check failed"
     exit 1
 fi
 
