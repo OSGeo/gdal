@@ -2332,6 +2332,12 @@ def jp2openjpeg_45():
   </gmlcov:rangeType>
   <gmljp2:featureMember>
    <gmljp2:GMLJP2RectifiedGridCoverage gml:id="RGC_1_ID_GMLJP2_0">
+     <gml:boundedBy>
+       <gml:Envelope srsDimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+         <gml:lowerCorner>440720 3750120</gml:lowerCorner>
+         <gml:upperCorner>441920 3751320</gml:upperCorner>
+       </gml:Envelope>
+     </gml:boundedBy>
      <gml:domainSet>
       <gml:RectifiedGrid gml:id="RGC_1_GRID_ID_GMLJP2_0" dimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
        <gml:limits>
