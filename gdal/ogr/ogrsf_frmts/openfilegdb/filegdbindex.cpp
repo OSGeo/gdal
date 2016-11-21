@@ -44,15 +44,17 @@ static bool FileGDBOGRDateToDoubleDate( const OGRField* psField,
                                         double *pdfVal )
 {
     struct tm brokendowntime;
+    /* workaround cppcheck false positive */
+    struct tm* pBrokendowntime = &brokendowntime;
 
-    brokendowntime.tm_year = psField->Date.Year - 1900;
-    brokendowntime.tm_mon = psField->Date.Month - 1;
-    brokendowntime.tm_mday = psField->Date.Day;
-    brokendowntime.tm_hour = psField->Date.Hour;
-    brokendowntime.tm_min = psField->Date.Minute;
-    brokendowntime.tm_sec = static_cast<int>(psField->Date.Second);
+    pBrokendowntime->tm_year = psField->Date.Year - 1900;
+    pBrokendowntime->tm_mon = psField->Date.Month - 1;
+    pBrokendowntime->tm_mday = psField->Date.Day;
+    pBrokendowntime->tm_hour = psField->Date.Hour;
+    pBrokendowntime->tm_min = psField->Date.Minute;
+    pBrokendowntime->tm_sec = static_cast<int>(psField->Date.Second);
 
-    const GIntBig nTime = CPLYMDHMSToUnixTime(&brokendowntime);
+    const GIntBig nTime = CPLYMDHMSToUnixTime(pBrokendowntime);
 
     *pdfVal = nTime / 3600. / 24 + 25569;
 

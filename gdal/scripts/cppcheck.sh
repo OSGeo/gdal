@@ -117,6 +117,25 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+# Most if not all of them are false positives
+grep "uninitvar," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "(potential) uninitvar issues in frmts/hdf4/hdf-eos ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "(potential) uninitvar issues in frmts/grib/degrib18 ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libtiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libtiff ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libgeotiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libgeotiff ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/jpeg/libjpeg > /dev/null && echo "(potential) uninitvar issues in frmts/jpeg/libjpeg ignored"
+grep "uninitvar," ${LOG_FILE} | grep ogr/ogrsf_frmts/geojson/libjson > /dev/null && echo "(potential) uninitvar issues in ogr/ogrsf_frmts/geojson/libjson ignored"
+
+grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
+                                grep -v frmts/grib/degrib18 | \
+                                grep -v frmts/gtiff/libtiff | \
+                                grep -v frmts/gtiff/libgeotiff | \
+                                grep -v frmts/jpeg/libjpeg | \
+                                grep -v ogr/ogrsf_frmts/geojson/libjson
+if [[ $? -eq 0 ]] ; then
+    echo "uninitvar check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 

@@ -482,8 +482,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     GInt16 nEPSGCode = 0;
     int bHasRelativePrecision = FALSE;
     float fRelativePrecision = 0.0f;
-    char szApplicationName[256];
-    szApplicationName[0] = 0;
+    char szApplicationName[256] = { 0 };
 
     GUInt32 nExtendedHeaderOff = 0;
     while(nExtendedHeaderOff < nExtendedHeaderLen)
@@ -555,7 +554,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             bHasRelativePrecision = TRUE;
         }
         else if (strcmp(szBlockName, "app-name") == 0 &&
-                 nBlockSize < 256)
+                 nBlockSize < sizeof(szApplicationName))
         {
             VSIFReadL(szApplicationName, nBlockSize, 1, fp);
             szApplicationName[nBlockSize] = 0;
