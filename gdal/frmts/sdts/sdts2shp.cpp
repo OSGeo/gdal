@@ -295,22 +295,22 @@ static void WriteLineShapefile( const char * pszShapefile,
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
                                   poRawLine->oModId.nRecord );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oLeftPoly.szModule,
                  poRawLine->oLeftPoly.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nLeftPolyField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oRightPoly.szModule,
                  poRawLine->oRightPoly.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nRightPolyField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oStartNode.szModule,
                  poRawLine->oStartNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nStartNodeField, szID );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawLine->oEndNode.szModule,
                  poRawLine->oEndNode.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nEndNodeField, szID );
@@ -417,7 +417,7 @@ static void WritePointShapefile( const char * pszShapefile,
         DBFWriteIntegerAttribute( hDBF, iShape, nSDTSRecordField,
                                   poRawPoint->oModId.nRecord );
 
-        sprintf( szID, "%s:%ld",
+        sprintf( szID, "%s:%d",
                  poRawPoint->oAreaId.szModule,
                  poRawPoint->oAreaId.nRecord );
         DBFWriteStringAttribute( hDBF, iShape, nAreaField, szID );

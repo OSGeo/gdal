@@ -1264,7 +1264,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
       bufLoc = 8;
       for (i = 0; i < P2; i++) {
          memBitRead (&uli_temp, sizeof (sInt4), bds, 1, &bufLoc, &numUsed);
-         printf ("(%d %d) ", i, uli_temp);
+         printf ("(%d %u) ", i, uli_temp);
          if (numUsed != 0) {
             printf ("\n");
             bds += numUsed;
@@ -1275,7 +1275,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
          bds++;
          secLen++;
       }
-      printf ("Observed Sec Len %d\n", secLen);
+      printf ("Observed Sec Len %u\n", secLen);
    } else {
       /* Jump over widths and secondary bitmap */
       bds += (N1 - 21);
@@ -1285,7 +1285,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
    bufLoc = 8;
    for (i = 0; i < P1; i++) {
       memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc, &numUsed);
-      printf ("(%d %d) (numUsed %ld numBits %d)", i, uli_temp, 
+      printf ("(%d %u) (numUsed %ld numBits %d)", i, uli_temp, 
               (long) numUsed, numBits);
       if (numUsed != 0) {
          printf ("\n");
@@ -1299,7 +1299,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
       secLen++;
    }
 
-   printf ("Observed Sec Len %d\n", secLen);
+   printf ("Observed Sec Len %u\n", secLen);
    printf ("N2 = %d\n", N2);
 
    errSprintf ("Don't know how to handle Complex GRIB1 packing yet.\n");
