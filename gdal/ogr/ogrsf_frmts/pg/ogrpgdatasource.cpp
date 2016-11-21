@@ -2225,6 +2225,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);

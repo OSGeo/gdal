@@ -119,6 +119,7 @@ int BitMask::RLEcompress(Byte *dst) const {
 	    dst = pCnt + 2; // after the next marker
 	}
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     FLUSH;
     WRITE_COUNT(EOT); // End marker
     // return compressed output size

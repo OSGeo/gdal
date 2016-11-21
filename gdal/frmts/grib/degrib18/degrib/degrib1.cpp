@@ -1294,6 +1294,7 @@ static int UnpackCmplx (uChar *bds, CPL_UNUSED uInt4 gribLen, CPL_UNUSED uInt4 *
       }
    }
    if (bufLoc != 8) {
+      // cppcheck-suppress uselessAssignmentPtrArg
       bds++;
       secLen++;
    }

@@ -352,6 +352,7 @@ int OGRCARTODataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     pszAuthorityName = oSRS.GetAuthorityName(NULL);

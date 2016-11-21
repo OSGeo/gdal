@@ -167,6 +167,11 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "uselessAssignmentPtrArg" ${LOG_FILE} | grep -v swq_parser.cpp | grep -v osr_cs_wkt_parser.c | grep -v ods_formula_parser.cpp
+if [[ $? -eq 0 ]] ; then
+    echo "uselessAssignmentPtrArg check failed"
+    exit 1
+fi
 
 echo "cppcheck succeeded"
 
