@@ -299,7 +299,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
         /* set all headers found in this group - we export everything, just in case */
-        for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); iHeaders++) {
+        for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); ++iHeaders) {
             OGRSOSIDataType *poType = SOSIGetType(iHeaders->first);
             OGRSOSISimpleDataType *poElements = poType->getElements();
 

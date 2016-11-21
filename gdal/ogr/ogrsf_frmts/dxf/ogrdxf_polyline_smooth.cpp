@@ -101,7 +101,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
     std::vector<DXFSmoothPolylineVertex>::const_iterator oIter = m_vertices.begin();
     std::vector<DXFSmoothPolylineVertex>::const_iterator oEndIter = m_vertices.end();
 
-    oEndIter--;
+    --oEndIter;
 
     DXFSmoothPolylineVertex begin = *oIter;
 
@@ -110,7 +110,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
     while(oIter != oEndIter)
     {
-        oIter++;
+        ++oIter;
         DXFSmoothPolylineVertex end = *oIter;
 
         const double len = GetLength(begin,end);

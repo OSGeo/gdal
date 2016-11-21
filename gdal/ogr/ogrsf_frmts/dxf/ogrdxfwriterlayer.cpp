@@ -746,7 +746,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 
             for( it = oNewLineTypes.begin();
                  it != oNewLineTypes.end();
-                 it++ )
+                 ++it )
             {
                 if( (*it).second == osDefinition )
                 {

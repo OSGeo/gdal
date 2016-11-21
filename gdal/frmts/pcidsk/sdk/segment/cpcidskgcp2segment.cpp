@@ -275,8 +275,8 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         pimpl_->seg_data.Put((*iter).GetYErr(), offset + 136, 14, "%14.4e");
         pimpl_->seg_data.Put((*iter).GetIDString(), offset + 192, 64, true );
         
-        id++;
-        iter++;
+        ++id;
+        ++iter;
     }
     
     WriteToFile(pimpl_->seg_data.buffer, 0, pimpl_->seg_data.buffer_size);

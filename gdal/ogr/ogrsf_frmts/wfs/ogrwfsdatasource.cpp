@@ -1800,7 +1800,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
         while (oIter != oEndIter)
         {
             GMLFeatureClass* poClass = *oIter;
-            oIter ++;
+            ++oIter;
 
             OGRWFSLayer* poLayer = NULL;
 
@@ -2154,7 +2154,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             poFeature->SetField(0, osFID);
             CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
             delete poFeature;
-            oIter ++;
+            ++oIter;
         }
 
         OGRLayer* poResLayer = new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);

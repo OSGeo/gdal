@@ -104,7 +104,7 @@ NITFProxyPamRasterBand::~NITFProxyPamRasterBand()
     while(oIter != oMDMap.end())
     {
         CSLDestroy(oIter->second);
-        oIter ++;
+        ++oIter;
     }
 }
 

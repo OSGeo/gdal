@@ -675,7 +675,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
         poLayer->GetNewLineTypeMap();
 
     for( oIt = oNewLineTypes.begin();
-         oIt != oNewLineTypes.end(); oIt++ )
+         oIt != oNewLineTypes.end(); ++oIt )
     {
         WriteValue( fpIn, 0, "LTYPE" );
         WriteEntityID( fpIn );
