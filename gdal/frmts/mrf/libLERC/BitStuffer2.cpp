@@ -328,6 +328,7 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
       unsigned int n2 = srcValue << bitPos;
       *dstPtr++ = n2 >> (32 - numBits);
       bitPos += numBits;
+      // cppcheck-suppress shiftTooManyBits
       if (bitPos == 32)    // shift >= 32 is undefined
       {
         bitPos = 0;
