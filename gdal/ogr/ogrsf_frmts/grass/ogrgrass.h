@@ -74,11 +74,6 @@ class OGRGRASSLayer : public OGRLayer
     virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    // Write access, not supported:
-    virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-    OGRErr              ISetFeature( OGRFeature *poFeature );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-
   private:
     char                *pszName;
     OGRSpatialReference *poSRS;
@@ -145,11 +140,6 @@ class OGRGRASSDataSource : public OGRDataSource
 
     int                 TestCapability( const char * );
 
-    // Not implemented (returns NULL):
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
   private:
     OGRGRASSLayer     **papoLayers;
     char                *pszName;       // Date source name
@@ -178,11 +168,6 @@ class OGRGRASSDriver : public OGRSFDriver
     OGRDataSource       *Open( const char *, int );
 
     int                 TestCapability( const char * );
-
-    // Not implemented (return error/NULL):
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    OGRErr              DeleteDataSource( const char *pszDataSource );
 };
 
 #endif /* ndef OGRGRASS_H_INCLUDED */

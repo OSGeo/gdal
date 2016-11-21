@@ -64,7 +64,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
     else
     {
         char buf[20];
-        sprintf ( buf, "%d", iLayer );
+        snprintf ( buf, sizeof(buf), "%d", iLayer );
         pszName = CPLStrdup( buf );
     }
 
@@ -546,15 +546,15 @@ bool OGRGRASSLayer::OpenSequentialCursor()
     }
 
     char buf[2000];
-    sprintf ( buf, "SELECT * FROM %s ", poLink->table );
+    snprintf ( buf, sizeof(buf), "SELECT * FROM %s ", poLink->table );
     db_set_string ( poDbString, buf);
 
     if ( pszQuery ) {
-        sprintf ( buf, "WHERE %s ", pszQuery );
+        snprintf ( buf, sizeof(buf), "WHERE %s ", pszQuery );
         db_append_string ( poDbString, buf);
     }
 
-    sprintf ( buf, "ORDER BY %s", poLink->key);
+    snprintf ( buf, sizeof(buf), "ORDER BY %s", poLink->key);
     db_append_string ( poDbString, buf);
 
     CPLDebug ( "GRASS", "Query: %s", db_get_string(poDbString) );
@@ -785,7 +785,8 @@ OGRFeature *OGRGRASSLayer::GetNextFeature()
 OGRFeature *OGRGRASSLayer::GetFeature( GIntBig nFeatureId )
 
 {
-    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeature nFeatureId = %ld", nFeatureId );
+    CPLDebug ( "GRASS", "OGRGRASSLayer::GetFeature nFeatureId = " CPL_FRMT_GIB,
+               nFeatureId );
 
     int cat;
     OGRFeature *poFeature = NULL;
@@ -810,7 +811,7 @@ OGRFeature *OGRGRASSLayer::GetFeature( GIntBig nFeatureId )
         }
         CPLDebug ( "GRASS", "Open cursor for key = %d", cat );
         char buf[2000];
-        sprintf ( buf, "SELECT * FROM %s WHERE %s = %d",
+        snprintf ( buf, sizeof(buf), "SELECT * FROM %s WHERE %s = %d",
                        poLink->table, poLink->key, cat );
         db_set_string ( poDbString, buf);
         if ( db_open_select_cursor ( poDriver, poDbString,
@@ -987,22 +988,6 @@ bool OGRGRASSLayer::SetAttributes ( OGRFeature *poFeature, dbTable *table )
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
-/************************************************************************/
-OGRErr OGRGRASSLayer::ISetFeature( OGRFeature *poFeature )
-{
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                           ICreateFeature()                            */
-/************************************************************************/
-OGRErr OGRGRASSLayer::ICreateFeature( OGRFeature *poFeature )
-{
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
 /*      If a spatial filter is in effect, we turn control over to       */
@@ -1027,7 +1012,7 @@ GIntBig OGRGRASSLayer::GetFeatureCount( int bForce )
 /*                                                                      */
 /*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
 /************************************************************************/
-OGRErr OGRGRASSLayer::GetExtent (OGREnvelope *psExtent, int bForce)
+OGRErr OGRGRASSLayer::GetExtent (OGREnvelope *psExtent, int /*bForce*/)
 {
 #if GRASS_VERSION_MAJOR  >= 7
     struct bound_box box;
@@ -1067,17 +1052,6 @@ int OGRGRASSLayer::TestCapability( const char * pszCap )
 
     else
         return FALSE;
-}
-
-/************************************************************************/
-/*                            CreateField()                             */
-/************************************************************************/
-OGRErr OGRGRASSLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
-{
-    CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create fields on a GRASS layer.\n");
-
-    return OGRERR_FAILURE;
 }
 
 /************************************************************************/

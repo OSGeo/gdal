@@ -67,32 +67,9 @@ OGRDataSource *OGRGRASSDriver::Open( const char * pszFilename,
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
-/************************************************************************/
-OGRDataSource *OGRGRASSDriver::CreateDataSource( const char * pszName,
-                                                 char **papszOptions )
-{
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "CreateDataSource is not supported by GRASS driver.\n" );
-
-    return NULL;
-}
-
-/************************************************************************/
-/*                          DeleteDataSource()                          */
-/************************************************************************/
-OGRErr OGRGRASSDriver::DeleteDataSource( const char *pszDataSource )
-{
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "DeleteDataSource is not supported by GRASS driver" );
-
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
-int OGRGRASSDriver::TestCapability( const char * pszCap )
+int OGRGRASSDriver::TestCapability( const char * /*pszCap*/ )
 {
     return FALSE;
 }
