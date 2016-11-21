@@ -2516,7 +2516,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 
 bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
                            const std::wstring& wstrTablePath,
-                           const std::wstring wstrType)
+                           const std::wstring& wstrType)
 {
     long hr;
 
