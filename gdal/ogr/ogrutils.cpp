@@ -1027,7 +1027,7 @@ int OGRParseDate( const char *pszInput,
             ++pszInput;
 
         psField->Date.Month = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Month <= 0 || psField->Date.Month > 12 )
+        if( psField->Date.Month == 0 || psField->Date.Month > 12 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
@@ -1038,7 +1038,7 @@ int OGRParseDate( const char *pszInput,
             ++pszInput;
 
         psField->Date.Day = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Day <= 0 || psField->Date.Day > 31 )
+        if( psField->Date.Day == 0 || psField->Date.Day > 31 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )

@@ -356,7 +356,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 
 {
-    uchar     	abyHeader[100];
+    uchar     	abyHeader[100] = { 0 };
     int		i;
     int32	i32;
     double	dValue;
@@ -371,8 +371,6 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;
@@ -1261,8 +1259,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;

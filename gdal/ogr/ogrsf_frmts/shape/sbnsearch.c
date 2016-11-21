@@ -926,6 +926,7 @@ int* SBNSearchDiskTreeInteger( SBNSearchHandle hSBN,
 /* -------------------------------------------------------------------- */
 /*      Run the search.                                                 */
 /* -------------------------------------------------------------------- */
+    memset( &sSearch, 0, sizeof(sSearch) );
     sSearch.hSBN = hSBN;
     sSearch.bMinX = (coord) (bMinX >= 0 ? bMinX : 0);
     sSearch.bMinY = (coord) (bMinY >= 0 ? bMinY : 0);
