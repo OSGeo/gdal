@@ -319,9 +319,11 @@ int _AVCBinWriteHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
  **********************************************************************/
 int AVCBinWriteHeader(AVCBinFile *psFile)
 {
-    AVCBinHeader sHeader = { 0 };
+    AVCBinHeader sHeader;
     int          nStatus=0;
     GBool        bHeader = TRUE;
+
+    memset(&sHeader, 0, sizeof(sHeader));
 
     /*-----------------------------------------------------------------
      * Set the appropriate header information for this file type.

@@ -1933,13 +1933,14 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
 {
     AVCBinFile    *psFile;
     AVCRawBinFile *hFile;
-    AVCTableDef    sTableDef = { 0 };
+    AVCTableDef    sTableDef;
     AVCFieldInfo  *pasFieldDef;
     char          *pszFname;
     GBool          bFound;
     int            i;
     size_t         nFnameLen;
 
+    memset(&sTableDef, 0, sizeof(sTableDef));
     sTableDef.numFields = 0;
     sTableDef.pasFieldDef = NULL;
 

@@ -549,11 +549,12 @@ int blx_encode_celldata(blxcontext_t *ctx,
     int level, cn, coutsize, zeros;
     blxdata *vdec=NULL, *vdiff=NULL, *c[4] = { NULL }, *tc1, *clut, *indata_scaled;
 
-    struct lutentry_s lut[256] = { 0 };
+    struct lutentry_s lut[256];
     int lutsize=0;
 
     int i, j;
 
+    memset( &lut, 0, sizeof(lut) );
     lut[0].value = 0;
 
     *p++ = (unsigned char)(side/32-4); /* Resolution */
