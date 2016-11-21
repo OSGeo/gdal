@@ -1086,8 +1086,8 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
 #ifdef DEBUG
    printf ("nbit %d, ibit %d, jbit %d, kbit %d\n", nbit, ibit, jbit, kbit);
    if ((t_numBytes + ceil (t_numBits / 8.)) != sectLen) {
-      printf ("Caution: # bytes in groups %d (%d + %d / 8) != "
-              "sectLen %d\n", (sInt4) (t_numBytes + ceil (t_numBits / 8.)),
+      printf ("Caution: # bytes in groups %d (%u + %u / 8) != "
+              "sectLen %u\n", (sInt4) (t_numBytes + ceil (t_numBits / 8.)),
               t_numBytes, t_numBits, sectLen);
    }
 #endif

@@ -218,13 +218,12 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_DataIndices()
 
 {
     std::string report;
-    unsigned int section;
 
     SpaceMap smap;
 
     CPL_IGNORE_RET_VAL(smap.AddChunk( 0, vh.header_blocks ));
 
-    for( section = 0; section < 2; section++ )
+    for( int section = 0; section < 2; section++ )
     {
         const std::vector<uint32> *map = di[section].GetIndex();
         unsigned int i;
@@ -275,7 +274,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
             char msg[100];
 
             snprintf( msg, sizeof(msg),
-                      "ShapeID %d is used for shape %d and %d!\n", 
+                      "ShapeID %d is used for shape %u and %u!\n", 
                      shape_index_ids[toff], 
                      toff, id_map[shape_index_ids[toff]]);
             report += msg;

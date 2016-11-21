@@ -1710,7 +1710,7 @@ static void HFADumpNode( HFAEntry *poEntry, int nIndent, bool bVerbose,
 {
     std::string osSpaces(nIndent * 2, ' ');
 
-    fprintf( fp, "%s%s(%s) @ %d + %d @ %d\n", osSpaces.c_str(),
+    fprintf( fp, "%s%s(%s) @ %u + %u @ %u\n", osSpaces.c_str(),
              poEntry->GetName(), poEntry->GetType(),
              poEntry->GetFilePos(),
              poEntry->GetDataSize(), poEntry->GetDataPos() );

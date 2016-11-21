@@ -212,8 +212,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         }
     }
 #ifdef DEBUG
-    printf("Data: %d %d\n", _f_data_offset, _f_data_size);
-    printf("Header: %d %d\n", _f_header_offset, _f_header_size);
+    printf("Data: %u %u\n", _f_data_offset, _f_data_size);
+    printf("Header: %u %u\n", _f_header_offset, _f_header_size);
 #endif // DEBUG
 
     unsigned int lines;
@@ -229,7 +229,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     _columns -= cols - 1;
 
 #ifdef DEBUG
-    printf("lines = %d, cols = %d\n", _lines, _columns);
+    printf("lines = %u, cols = %u\n", _lines, _columns);
 #endif // DEBUG
 
     int records_per_line = 0;

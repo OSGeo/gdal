@@ -532,7 +532,7 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
             return;
         }
     }
-    printf( "\nDim (x,y) = (%d,%d)", pGrd->nXSide, pGrd->nYSide );
+    printf( "\nDim (x,y) = (%u,%u)", pGrd->nXSide, pGrd->nYSide );
     printf( "\nStep Size = %f", pGrd->dfStepSize );
     printf( "\nBounds = (%f,%f) (%f,%f)", pGrd->dfMinX, pGrd->dfMinY,
             pGrd->dfMaxX, pGrd->dfMaxY );
@@ -572,7 +572,7 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
     }
     else                            // print the classified specific stuff
     {
-        printf( "\nNumber of Classes defined = %d",
+        printf( "\nNumber of Classes defined = %u",
                 pGrd->stClassDict->nNumClassifiedItems );
         for( int i = 0; i < static_cast<int>( pGrd->stClassDict->nNumClassifiedItems ); i++ )
         {
