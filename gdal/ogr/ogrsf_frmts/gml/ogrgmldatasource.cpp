@@ -351,7 +351,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
-    if (nRead <= 0)
+    if (nRead == 0)
     {
         if( fpToClose )
             VSIFCloseL( fpToClose );
@@ -378,7 +378,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             return false;
 
         nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
-        if (nRead <= 0)
+        if (nRead == 0)
         {
             VSIFCloseL( fpToClose );
             return false;

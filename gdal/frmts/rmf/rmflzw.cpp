@@ -153,7 +153,7 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
         if( bBitsleft )
         {
             iCode = ((*pabyIn++ & 0x0F) << 8) & 0xF00; nSizeIn--;
-            if( nSizeIn <= 0 )
+            if( nSizeIn == 0 )
                 break;
             iCode += *pabyIn++; nSizeIn--;
             bBitsleft = FALSE;
@@ -161,7 +161,7 @@ int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
         else
         {
             iCode = (*pabyIn++ << 4) & 0xFF0; nSizeIn--;
-            if( nSizeIn <= 0 )
+            if( nSizeIn == 0 )
                 break;
             iCode += (*pabyIn >> 4) & 0x00F;
             bBitsleft = TRUE;

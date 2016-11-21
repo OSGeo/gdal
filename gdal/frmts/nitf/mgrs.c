@@ -917,7 +917,7 @@ long Convert_UPS_To_MGRS (char   Hemisphere,
   double grid_easting;        /* Easting used to derive 2nd letter of MGRS    */
   double grid_northing;       /* Northing used to derive 3rd letter of MGRS   */
   long ltr2_low_value;        /* 2nd letter range - low number                */
-  int letters[MGRS_LETTERS];  /* Number location of 3 letters in alphabet     */
+  int letters[MGRS_LETTERS] = { 0 };  /* Number location of 3 letters in alphabet     */
   double divisor;
   int l_index = 0;
   long error_code = MGRS_NO_ERROR;

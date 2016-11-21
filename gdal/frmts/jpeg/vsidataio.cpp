@@ -105,7 +105,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
-  if (nbytes <= 0) {
+  if (nbytes == 0) {
     if (src->start_of_file)  /* Treat empty input file as fatal error */
     {
         cinfo->err->msg_code = JERR_INPUT_EMPTY;

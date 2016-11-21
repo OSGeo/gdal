@@ -15,6 +15,7 @@ for dirname in alg port gcore ogr frmts gnm; do
         -D__cplusplus \
         -DVSIRealloc=realloc \
         -DCPPCHECK \
+        --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
         $dirname \
         -j 8 >>${LOG_FILE} 2>&1
@@ -42,7 +43,7 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
-grep "uninitMemberVar" ${LOG_FILE}
+grep "uninitMemberVar" ${LOG_FILE} | grep -v "1080,information,unmatchedSuppression,Unmatched suppression: uninitMemberVar"
 if [[ $? -eq 0 ]] ; then
     echo "uninitMemberVar check failed"
     exit 1
@@ -127,6 +128,9 @@ grep "uninitvar," ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "(p
 grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libtiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libtiff ignored"
 grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libgeotiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libgeotiff ignored"
 grep "uninitvar," ${LOG_FILE} | grep frmts/jpeg/libjpeg > /dev/null && echo "(potential) uninitvar issues in frmts/jpeg/libjpeg ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/gif/giflib > /dev/null && echo "(potential) uninitvar issues in frmts/gif/giflib ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/png/libpng > /dev/null && echo "(potential) uninitvar issues in frmts/png/libpng ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/zlib > /dev/null && echo "(potential) uninitvar issues in frmts/zlib ignored"
 grep "uninitvar," ${LOG_FILE} | grep ogr/ogrsf_frmts/geojson/libjson > /dev/null && echo "(potential) uninitvar issues in ogr/ogrsf_frmts/geojson/libjson ignored"
 
 grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
@@ -134,13 +138,19 @@ grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
                                 grep -v frmts/gtiff/libtiff | \
                                 grep -v frmts/gtiff/libgeotiff | \
                                 grep -v frmts/jpeg/libjpeg | \
-                                grep -v ogr/ogrsf_frmts/geojson/libjson
+                                grep -v frmts/gif/giflib | \
+                                grep -v frmts/png/libpng | \
+                                grep -v frmts/zlib | \
+                                grep -v ogr/ogrsf_frmts/geojson/libjson | \
+                                grep -v osr_cs_wkt_parser.c
 if [[ $? -eq 0 ]] ; then
     echo "uninitvar check failed"
     exit 1
 fi
 
-grep "uninitdata," ${LOG_FILE}
+grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib18/g2clib-1.0.4" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib18/g2clib-1.0.4 ignored"
+
+grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib18/g2clib-1.0.4"
 if [[ $? -eq 0 ]] ; then
     echo "uninitdata check failed"
     exit 1
@@ -249,7 +259,8 @@ grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2118,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2159,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2208,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
-    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds."
+    grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
+    grep -v "frmts/grib/degrib18/g2clib-1.0.4"
 
 if [[ $? -eq 0 ]] ; then
     echo "Errors check failed"
