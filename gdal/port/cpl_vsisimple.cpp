@@ -475,6 +475,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
     ptr[1] = 'S';
     ptr[2] = 'I';
     ptr[3] = 'M';
+    // cppcheck-suppress pointerSize
     memcpy(ptr + sizeof(void*), &nMul, sizeof(void*));
     ptr[2 * sizeof(void*) + nMul + 0] = 'E';
     ptr[2 * sizeof(void*) + nMul + 1] = 'V';
@@ -573,6 +574,7 @@ void *VSIMalloc( size_t nSize )
     ptr[1] = 'S';
     ptr[2] = 'I';
     ptr[3] = 'M';
+    // cppcheck-suppress pointerSize
     memcpy(ptr + sizeof(void*), &nSize, sizeof(void*));
     ptr[2 * sizeof(void*) + nSize + 0] = 'E';
     ptr[2 * sizeof(void*) + nSize + 1] = 'V';
@@ -655,6 +657,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     VSICheckMarkerBegin(ptr);
 
     size_t nOldSize = 0;
+    // cppcheck-suppress pointerSize
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
 
@@ -727,6 +730,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     }
 #endif
     ptr = (char*) newptr;
+    // cppcheck-suppress pointerSize
     memcpy(ptr + sizeof(void*), &nNewSize, sizeof(void*));
     ptr[2 * sizeof(void*) + nNewSize + 0] = 'E';
     ptr[2 * sizeof(void*) + nNewSize + 1] = 'V';
@@ -789,6 +793,7 @@ void VSIFree( void * pData )
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
     VSICheckMarkerBegin(ptr);
     size_t nOldSize = 0;
+    // cppcheck-suppress pointerSize
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
     ptr[0] = 'M';
