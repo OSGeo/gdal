@@ -8,7 +8,7 @@ for dirname in alg port gcore ogr frmts gnm; do
         -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED -DHAVE_SPATIALITE \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
-        -Dva_copy \
+        -Dva_copy=va_start \
         -D__cplusplus \
         -DVSIRealloc=realloc \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
@@ -135,6 +135,20 @@ if [[ $? -eq 0 ]] ; then
     echo "uninitvar check failed"
     exit 1
 fi
+
+grep "uninitdata," ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "uninitdata check failed"
+    exit 1
+fi
+
+grep "va_list_usedBeforeStarted" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "va_list_usedBeforeStarted check failed"
+    exit 1
+fi
+
+
 
 echo "cppcheck succeeded"
 

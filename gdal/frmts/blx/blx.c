@@ -570,9 +570,10 @@ int blx_encode_celldata(blxcontext_t *ctx,
 
     /* Scale indata and process undefined values*/
     for(i=0; i<side*side; i++) {
-	if((indata[i] == BLX_UNDEF) && ctx->fillundef)
+        if((indata[i] == BLX_UNDEF) && ctx->fillundef)
         indata[i] = (blxdata)ctx->fillundefval;
-	    indata_scaled[i] = (blxdata)(indata[i] / ctx->zscale);
+        /* cppcheck-suppress uninitdata */
+        indata_scaled[i] = (blxdata)(indata[i] / ctx->zscale);
     }
 
     indata = indata_scaled;
