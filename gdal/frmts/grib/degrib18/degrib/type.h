@@ -23,13 +23,8 @@
  *    AATaylor 9/20/2006
  */
 
-#if SIZEOF_LONG_INT != 4
   typedef signed int sInt4;
   typedef unsigned int uInt4;
- #else
-  typedef signed long int sInt4;
-  typedef unsigned long int uInt4;
- #endif
  typedef unsigned char uChar;
  typedef signed char sChar;
  typedef unsigned short int uShort2;

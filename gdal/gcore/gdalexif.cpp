@@ -352,7 +352,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
 /* -------------------------------------------------------------------- */
         if( szName[0] == '\0' )
         {
-            snprintf( szName, sizeof(szName), "EXIF_%d", poTIFFDirEntry->tdir_tag );
+            snprintf( szName, sizeof(szName), "EXIF_%u", poTIFFDirEntry->tdir_tag );
             continue;
         }
 
