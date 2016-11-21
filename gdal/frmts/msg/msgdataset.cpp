@@ -36,6 +36,7 @@
 
 #include "PublicDecompWT_headers.h"
 
+#include <memory>
 #include <vector>
 
 #if _MSC_VER > 1000
@@ -555,18 +556,17 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
             // iShift > 0 means upper image moves to the right
           }
 
-          std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
-
-          if (ibuf.get() == 0)
+          unsigned char* ibuf = new (std::nothrow) unsigned char[nb_ibytes];
+          if (ibuf == NULL )
           {
              CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough memory to perform wavelet decompression\n");
             return CE_Failure;
           }
 
-          i_file.read( (char *)(ibuf.get()), nb_ibytes);
+          i_file.read( (char *)ibuf, nb_ibytes);
 
-          Util::CDataFieldCompressedImage  img_compressed(ibuf.release(),
+          Util::CDataFieldCompressedImage  img_compressed(ibuf,
                                   nb_ibytes*8,
                                   (unsigned char)chunk_bpp,
                                   chunk_width,
