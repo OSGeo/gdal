@@ -906,21 +906,23 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( std::find(adfStepX.begin(), adfStepX.end(), dfStepX) == adfStepX.end() )
                 {
                     bool bAddNewValue = true;
-                    // TODO: Danger!  Erase called on the iterator.
                     std::vector<double>::iterator oIter = adfStepX.begin();
+                    std::vector<double> adfStepXNew;
                     while( oIter != adfStepX.end() )
                     {
                         if( fabs(( dfStepX - *oIter ) / dfStepX ) < RELATIVE_ERROR )
                         {
+                            double dfNewVal = *oIter;
                             if( nCountStepX > 0 )
                             {
                                 // Update mean step
                                 /* n * mean(n) = (n-1) * mean(n-1) + val(n)
                                 mean(n) = mean(n-1) + (val(n) - mean(n-1)) / n */
                                 nCountStepX ++;
-                                *oIter += ( dfStepX - *oIter ) / nCountStepX;
+                                dfNewVal += ( dfStepX - *oIter ) / nCountStepX;
                             }
 
+                            adfStepXNew.push_back( dfNewVal );
                             bAddNewValue = false;
                             break;
                         }
@@ -928,20 +930,22 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                                  fabs(*oIter - static_cast<int>(*oIter / dfStepX + 0.5) * dfStepX) / dfStepX < RELATIVE_ERROR )
                         {
                             nCountStepX = -1; // disable update of mean
-                            adfStepX.erase(oIter);
                         }
                         else if( dfStepX > *oIter &&
                                  fabs(dfStepX - static_cast<int>(dfStepX / *oIter + 0.5) * (*oIter)) / dfStepX < RELATIVE_ERROR )
                         {
                             nCountStepX = -1; // disable update of mean
                             bAddNewValue = false;
+                            adfStepXNew.push_back( *oIter );
                             break;
                         }
                         else
                         {
+                            adfStepXNew.push_back( *oIter );
                             ++ oIter;
                         }
                     }
+                    adfStepX = adfStepXNew;
                     if( bAddNewValue )
                     {
                         CPLDebug("XYZ", "New stepX=%.15f", dfStepX);
