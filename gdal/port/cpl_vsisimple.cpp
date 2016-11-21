@@ -516,6 +516,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
 #endif
     }
 #endif
+    // cppcheck-suppress memleak
     return ptr + 2 * sizeof(void*);
 #else
     return calloc( nCount, nSize );
@@ -613,6 +614,7 @@ void *VSIMalloc( size_t nSize )
 #endif  // DEBUG_VSIMALLOC_STATS
     }
 #endif  // DEBUG_VSIMALLOC_STATS || DEBUG_VSIMALLOC_VERBOSE
+    // cppcheck-suppress memleak
     return ptr + 2 * sizeof(void*);
 }
 
