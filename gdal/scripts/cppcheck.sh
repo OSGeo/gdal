@@ -230,6 +230,12 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "charLiteralWithCharPtrCompare" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "charLiteralWithCharPtrCompare check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 
