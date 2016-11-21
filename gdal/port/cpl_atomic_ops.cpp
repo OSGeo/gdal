@@ -29,9 +29,11 @@
 
 #include "cpl_atomic_ops.h"
 
+#include "cpl_config.h"
+
 // TODO: If C++11, use #include <atomic>.
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #if defined(__MACH__) && defined(__APPLE__)
 
@@ -56,13 +58,15 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 #if defined(_MSC_VER) && (_MSC_VER <= 1200)
   return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
 #else
-  return InterlockedExchangeAdd((volatile LONG*)(ptr), (LONG)(increment)) + increment;
+  return InterlockedExchangeAdd((volatile LONG*)(ptr),
+                                (LONG)(increment)) + increment;
 #endif
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return (LONG)InterlockedCompareExchange((volatile LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
+  return (LONG)InterlockedCompareExchange((volatile LONG*)(ptr), (LONG)newval,
+                                          (LONG)oldval) == (LONG)oldval;
 }
 
 #elif defined(__MINGW32__) && defined(__i386__)
@@ -76,7 +80,8 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return (LONG)InterlockedCompareExchange((LONG*)(ptr), (LONG)newval, (LONG)oldval) == (LONG)oldval;
+  return (LONG)InterlockedCompareExchange((LONG*)(ptr), (LONG)newval,
+                                          (LONG)oldval) == (LONG)oldval;
 }
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -105,11 +110,12 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 }
 
 #elif defined(HAVE_GCC_ATOMIC_BUILTINS)
-/* Starting with GCC 4.1.0, built-in functions for atomic memory access are provided. */
-/* see http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html */
-/* We use a ./configure test to determine whether this builtins are available */
-/* as it appears that the GCC 4.1 version used on debian etch is broken when linking */
-/* such instructions... */
+// Starting with GCC 4.1.0, built-in functions for atomic memory access are
+// provided.  See:
+//   http://gcc.gnu.org/onlinedocs/gcc-4.1.0/gcc/Atomic-Builtins.html
+// We use a ./configure test to determine whether this builtins are available.
+// as it appears that the GCC 4.1 version used on debian etch is broken when
+// linking such instructions.
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
   if (increment > 0)
@@ -126,7 +132,7 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 #elif !defined(CPL_MULTIPROC_PTHREAD)
 #warning "Needs real lock API to implement properly atomic increment"
 
-/* Dummy implementation */
+// Dummy implementation.
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
     (*ptr) += increment;
