@@ -2811,7 +2811,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 
 #if !defined(HAVE_LIBZ)
 
-void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
+void *CPLCreateZip( const char *, char ** )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -2819,33 +2819,33 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
     return NULL;
 }
 
-CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
-                           char **papszOptions )
+CPLErr CPLCreateFileInZip( void *, const char *,
+                           char ** )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
+CPLErr CPLWriteFileInZip( void *, const void *, int  )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseFileInZip( void *hZip )
+CPLErr CPLCloseFileInZip( void * )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseZip( void *hZip )
+CPLErr CPLCloseZip( void * )
 
 {
     return CE_Failure;
 }
 
-void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibDeflate( const void* , size_t , int ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )
@@ -2853,8 +2853,8 @@ void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
     return NULL;
 }
 
-void* CPLZLibInflate( const void* ptr, size_t nBytes,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibInflate( const void* , size_t ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )
