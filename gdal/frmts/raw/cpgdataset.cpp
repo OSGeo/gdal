@@ -181,11 +181,10 @@ class CPG_STOKESRasterBand : public GDALRasterBand
 {
     friend class CPGDataset;
 
-    int nBand;
     int bNativeOrder;
 
   public:
-                   CPG_STOKESRasterBand( GDALDataset *poDS, int nBand,
+                   CPG_STOKESRasterBand( GDALDataset *poDS,
                                          GDALDataType eType,
                                          int bNativeOrder );
     virtual ~CPG_STOKESRasterBand() {};
@@ -982,7 +981,7 @@ GDALDataset *CPGDataset::InitializeType3Dataset( const char *pszFilename )
     for( int iBand = 0; iBand < 16; iBand++ )
     {
         CPG_STOKESRasterBand *poBand
-            = new CPG_STOKESRasterBand( poDS, iBand+1, GDT_CFloat32,
+            = new CPG_STOKESRasterBand( poDS, GDT_CFloat32,
                                         !CPL_IS_LSB );
         poDS->SetBand( iBand+1, poBand );
     }
@@ -1330,10 +1329,9 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                        CPG_STOKESRasterBand()                        */
 /************************************************************************/
 
-CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn, int nBandIn,
+CPG_STOKESRasterBand::CPG_STOKESRasterBand( GDALDataset *poDSIn,
                                             GDALDataType eType,
                                             int bNativeOrderIn ) :
-    nBand(nBandIn),
     bNativeOrder(bNativeOrderIn)
 {
     static const char * const apszPolarizations[16] = {
