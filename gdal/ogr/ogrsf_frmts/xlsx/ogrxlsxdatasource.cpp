@@ -1157,7 +1157,6 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE* fpSharedStrings)
     }
 
     VSIFCloseL(fpSharedStrings);
-    fpSharedStrings = NULL;
 }
 
 /************************************************************************/

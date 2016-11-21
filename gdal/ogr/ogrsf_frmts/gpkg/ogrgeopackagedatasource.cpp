@@ -2057,6 +2057,7 @@ void GDALGeoPackageDataset::WriteMetadata(CPLXMLNode* psXMLNode, /* will be dest
         pszXML = CPLSerializeXMLTree(psMasterXMLNode);
         CPLDestroyXMLNode(psMasterXMLNode);
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     psXMLNode = NULL;
 
     char* pszSQL = NULL;

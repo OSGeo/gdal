@@ -568,7 +568,6 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
     }
 
     ResetReading();
-    poSurfaceLineLayer = NULL;
 }
 
 OGRMultiPolygon* OGRILI1Layer::Polygonize( OGRGeometryCollection* poLines,
@@ -739,6 +738,5 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
     CPLFree( ahInGeoms );
     OGRGeometry::freeGEOSContext( hGEOSCtxt );
 #endif
-    poAreaLineLayer = NULL;
     delete polys;
 }

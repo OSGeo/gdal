@@ -249,6 +249,7 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
         pszXML = CPLSerializeXMLTree(psMasterXMLNode);
         CPLDestroyXMLNode(psMasterXMLNode);
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     psXMLNode = NULL;
     CPLDebug("OGRDB2DataSource::WriteMetadata",
              "pszTableName: %s; bIsEmpty: %d", pszTableName, bIsEmpty);
