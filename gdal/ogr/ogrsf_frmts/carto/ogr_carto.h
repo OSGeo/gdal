@@ -93,7 +93,7 @@ protected:
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
   public:
-                         OGRCARTOLayer(OGRCARTODataSource* poDS);
+    explicit OGRCARTOLayer(OGRCARTODataSource* poDS);
     virtual ~OGRCARTOLayer();
 
     virtual void                ResetReading();

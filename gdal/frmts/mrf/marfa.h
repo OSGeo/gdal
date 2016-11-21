@@ -581,7 +581,7 @@ protected:
 
 class PNG_Codec {
 public:
-    PNG_Codec(const ILImage &image) : img(image),
+    explicit PNG_Codec(const ILImage &image) : img(image),
         PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {};
 
     virtual ~PNG_Codec() {
@@ -620,7 +620,7 @@ protected:
 
 class JPEG_Codec {
 public:
-    JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {};
+    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {};
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
@@ -715,7 +715,7 @@ protected:
  */
 class GDALMRFLRasterBand : public GDALPamRasterBand {
 public:
-    GDALMRFLRasterBand(GDALMRFRasterBand *b) {
+    explicit GDALMRFLRasterBand(GDALMRFRasterBand *b) {
         pBand = b;
         eDataType = b->GetRasterDataType();
         b->GetBlockSize(&nBlockXSize, &nBlockYSize);

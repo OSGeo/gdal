@@ -138,7 +138,7 @@ OGRGetOCISession( const char *pszUserid,
 /************************************************************************/
 class CPL_DLL OGROCIStatement {
   public:
-                 OGROCIStatement( OGROCISession * );
+    explicit     OGROCIStatement( OGROCISession * );
     virtual     ~OGROCIStatement();
 
     OCIStmt     *GetStatement() { return hStatement; }

@@ -201,7 +201,7 @@ protected:
     bool       IsGeometryElement( const char *pszElement );
 
 public:
-    GMLHandler( GMLReader *poReader );
+    explicit GMLHandler( GMLReader *poReader );
     virtual ~GMLHandler();
 
     virtual char*       GetAttributeValue(void* attr, const char* pszAttributeName) = 0;
@@ -220,7 +220,7 @@ class GMLBinInputStream : public BinInputStream
 
 public :
 
-             GMLBinInputStream(VSILFILE* fp);
+    explicit GMLBinInputStream(VSILFILE* fp);
     virtual ~GMLBinInputStream();
 
     virtual XMLFilePos curPos() const;
@@ -257,7 +257,7 @@ class GMLXercesHandler : public DefaultHandler, public GMLHandler
     CPLString  m_osAttrValue;
 
   public:
-    GMLXercesHandler( GMLReader *poReader );
+    explicit GMLXercesHandler( GMLReader *poReader );
 
     void startElement(
         const   XMLCh* const    uri,

@@ -2106,7 +2106,7 @@ class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConve
                   GByte*& pabyCur, GByte* pabyEnd );
 
     public:
-                                        FileGDBOGRGeometryConverterImpl(
+       explicit                         FileGDBOGRGeometryConverterImpl(
                                             const FileGDBGeomField* poGeomField);
        virtual                         ~FileGDBOGRGeometryConverterImpl();
 
@@ -2221,7 +2221,8 @@ class XYLineStringSetter
 {
         OGRRawPoint* paoPoints;
     public:
-        XYLineStringSetter(OGRRawPoint* paoPointsIn) : paoPoints(paoPointsIn) {}
+        explicit XYLineStringSetter(OGRRawPoint* paoPointsIn) :
+                                            paoPoints(paoPointsIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2238,7 +2239,8 @@ class XYMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        XYMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
+        explicit XYMultiPointSetter(OGRMultiPoint* poMPointIn) :
+                                                poMPoint(poMPointIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2305,7 +2307,7 @@ class ZLineStringSetter
 {
         OGRLineString* poLS;
     public:
-        ZLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
+        explicit ZLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2321,7 +2323,8 @@ class ZMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        ZMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
+        explicit ZMultiPointSetter(OGRMultiPoint* poMPointIn) :
+                                                    poMPoint(poMPointIn) {}
 
         void set(int i, double dfZ)
         {
@@ -2337,7 +2340,8 @@ class FileGDBArraySetter
 {
         double* padfValues;
     public:
-        FileGDBArraySetter(double* padfValuesIn) : padfValues(padfValuesIn) {}
+        explicit FileGDBArraySetter(double* padfValuesIn) :
+                                                padfValues(padfValuesIn) {}
 
         void set(int i, double dfValue)
         {
@@ -2375,7 +2379,7 @@ class MLineStringSetter
 {
         OGRLineString* poLS;
     public:
-        MLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
+        explicit MLineStringSetter(OGRLineString* poLSIn) : poLS(poLSIn) {}
 
         void set(int i, double dfM)
         {
@@ -2391,7 +2395,8 @@ class MMultiPointSetter
 {
         OGRMultiPoint* poMPoint;
     public:
-        MMultiPointSetter(OGRMultiPoint* poMPointIn) : poMPoint(poMPointIn) {}
+        explicit MMultiPointSetter(OGRMultiPoint* poMPointIn) :
+                                                    poMPoint(poMPointIn) {}
 
         void set(int i, double dfM)
         {
@@ -2429,7 +2434,8 @@ class XYBufferSetter
 {
         GByte* pabyBuffer;
     public:
-        XYBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+        explicit XYBufferSetter(GByte* pabyBufferIn) :
+                                                    pabyBuffer(pabyBufferIn) {}
 
         void set(int i, double dfX, double dfY)
         {
@@ -2444,7 +2450,8 @@ class ZOrMBufferSetter
 {
         GByte* pabyBuffer;
     public:
-        ZOrMBufferSetter(GByte* pabyBufferIn) : pabyBuffer(pabyBufferIn) {}
+        explicit ZOrMBufferSetter(GByte* pabyBufferIn) :
+                                                    pabyBuffer(pabyBufferIn) {}
 
         void set(int i, double dfValue)
         {

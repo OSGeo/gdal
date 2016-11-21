@@ -101,7 +101,7 @@ class OGRGeomediaTableLayer : public OGRGeomediaLayer
     virtual CPLODBCStatement *  GetStatement();
 
   public:
-                        OGRGeomediaTableLayer( OGRGeomediaDataSource * );
+    explicit            OGRGeomediaTableLayer( OGRGeomediaDataSource * );
                         virtual ~OGRGeomediaTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,

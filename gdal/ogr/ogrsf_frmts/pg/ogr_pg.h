@@ -138,7 +138,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
 class OGRPGFeatureDefn : public OGRFeatureDefn
 {
     public:
-        OGRPGFeatureDefn( const char * pszName = NULL ) :
+        explicit OGRPGFeatureDefn( const char * pszName = NULL ) :
             OGRFeatureDefn(pszName)
         {
             SetGeomType(wkbNone);

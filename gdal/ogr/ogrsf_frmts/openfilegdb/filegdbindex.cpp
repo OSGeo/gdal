@@ -72,7 +72,7 @@ class FileGDBTrivialIterator CPL_FINAL : public FileGDBIterator
         int                         iRow;
 
     public:
-                                     FileGDBTrivialIterator(FileGDBIterator *poParentIter);
+        explicit                     FileGDBTrivialIterator(FileGDBIterator *poParentIter);
         virtual                     ~FileGDBTrivialIterator() { delete poParentIter; }
 
         virtual FileGDBTable        *GetTable() { return poTable; }
@@ -106,7 +106,7 @@ class FileGDBNotIterator CPL_FINAL : public FileGDBIterator
         int                         bNoHoles;
 
     public:
-                                     FileGDBNotIterator(FileGDBIterator* poIterBase);
+        explicit                     FileGDBNotIterator(FileGDBIterator* poIterBase);
         virtual                     ~FileGDBNotIterator();
 
         virtual FileGDBTable        *GetTable() { return poTable; }

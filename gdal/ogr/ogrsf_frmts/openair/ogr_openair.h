@@ -64,7 +64,7 @@ class OGROpenAirLayer : public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGROpenAirLayer(VSILFILE* fp);
+    explicit            OGROpenAirLayer(VSILFILE* fp);
                         virtual ~OGROpenAirLayer();
 
     virtual void                ResetReading();
@@ -97,7 +97,7 @@ class OGROpenAirLabelLayer : public OGRLayer
     CPLString          osCEILING;
 
   public:
-                        OGROpenAirLabelLayer(VSILFILE* fp);
+    explicit            OGROpenAirLabelLayer(VSILFILE* fp);
                         virtual ~OGROpenAirLabelLayer();
 
     virtual void                ResetReading();

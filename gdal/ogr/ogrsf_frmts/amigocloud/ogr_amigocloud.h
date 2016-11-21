@@ -127,7 +127,7 @@ class OGRAmigoCloudLayer : public OGRLayer
         virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
     public:
-         OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
+        explicit OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
         virtual ~OGRAmigoCloudLayer();
 
         virtual void                ResetReading();

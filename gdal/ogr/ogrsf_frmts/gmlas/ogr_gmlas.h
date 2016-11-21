@@ -869,7 +869,7 @@ class GMLASSchemaAnalyzer
         CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
 
     public:
-        GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
+        explicit GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
         void SetUseArrays(bool b) { m_bUseArrays = b; }
         void SetInstantiateGMLFeaturesOnly(bool b)
                                     { m_bInstantiateGMLFeaturesOnly = b; }

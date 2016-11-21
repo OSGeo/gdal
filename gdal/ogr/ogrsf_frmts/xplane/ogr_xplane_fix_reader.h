@@ -63,7 +63,7 @@ class OGRXPlaneFixReader : public OGRXPlaneReader
         virtual void             Read();
 
     public:
-                                 OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource );
+        explicit                 OGRXPlaneFixReader( OGRXPlaneDataSource* poDataSource );
         virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
         virtual int              IsRecognizedVersion( const char* pszVersionString);
 };

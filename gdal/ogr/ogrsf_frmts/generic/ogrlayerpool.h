@@ -56,7 +56,7 @@ class OGRAbstractProxiedLayer : public OGRLayer
         virtual void    CloseUnderlyingLayer() = 0;
 
     public:
-                        OGRAbstractProxiedLayer(OGRLayerPool* poPool);
+        explicit        OGRAbstractProxiedLayer(OGRLayerPool* poPool);
         virtual        ~OGRAbstractProxiedLayer();
 };
 
@@ -73,7 +73,7 @@ class OGRLayerPool
         int                     nMaxSimultaneouslyOpened;
 
     public:
-                                OGRLayerPool(int nMaxSimultaneouslyOpened = 100);
+        explicit                OGRLayerPool(int nMaxSimultaneouslyOpened = 100);
                                ~OGRLayerPool();
 
         void                    SetLastUsedLayer(OGRAbstractProxiedLayer* poProxiedLayer);

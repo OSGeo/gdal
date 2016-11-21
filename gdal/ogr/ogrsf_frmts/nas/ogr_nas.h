@@ -88,7 +88,7 @@ class OGRNASRelationLayer : public OGRLayer
     std::vector<CPLString> aoRelationCollection;
 
   public:
-                        OGRNASRelationLayer( OGRNASDataSource *poDS );
+    explicit             OGRNASRelationLayer( OGRNASDataSource *poDS );
                         ~OGRNASRelationLayer();
 
     void                ResetReading();

@@ -349,8 +349,10 @@ public:
     /** Constructor */
     CPLString(void) {}
     /** Constructor */
+    // cppcheck-suppress noExplicitConstructor
     CPLString( const std::string &oStr ) : gdal_std_string( oStr ) {}
     /** Constructor */
+    // cppcheck-suppress noExplicitConstructor
     CPLString( const char *pszStr ) : gdal_std_string( pszStr ) {}
 
     /** Return string as zero terminated character array */

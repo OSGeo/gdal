@@ -54,7 +54,7 @@ public:
         CPLString m_osFileName;
 #endif
 
-        VSITarEntryFileOffset(GUIntBig nOffset)
+        explicit VSITarEntryFileOffset(GUIntBig nOffset)
         {
             m_nOffset = nOffset;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
@@ -95,7 +95,7 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
 #endif
 
     public:
-        VSITarReader(const char* pszTarFileName);
+        explicit VSITarReader(const char* pszTarFileName);
         virtual ~VSITarReader();
 
         int IsValid() { return fp != NULL; }

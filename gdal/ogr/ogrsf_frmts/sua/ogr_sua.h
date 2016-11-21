@@ -51,7 +51,7 @@ class OGRSUALayer : public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGRSUALayer(VSILFILE* fp);
+    explicit            OGRSUALayer(VSILFILE* fp);
                         virtual ~OGRSUALayer();
 
     virtual void                ResetReading();

@@ -133,7 +133,7 @@ class PCIDSK2Band : public GDALPamRasterBand
 
   public:
                 PCIDSK2Band( PCIDSK2Dataset *, PCIDSK::PCIDSKFile *, int );
-                PCIDSK2Band( PCIDSK::PCIDSKChannel * );
+    explicit    PCIDSK2Band( PCIDSK::PCIDSKChannel * );
     virtual ~PCIDSK2Band();
 
     virtual CPLErr IReadBlock( int, int, void * );

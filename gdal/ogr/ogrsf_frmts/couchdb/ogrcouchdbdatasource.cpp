@@ -695,7 +695,7 @@ class PointerAutoFree
 {
         void * m_p;
     public:
-        PointerAutoFree(void* p) { m_p = p; }
+        explicit PointerAutoFree(void* p) { m_p = p; }
         ~PointerAutoFree() { CPLFree(m_p); }
 };
 

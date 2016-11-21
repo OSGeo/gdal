@@ -434,7 +434,7 @@ class HFADictionary
     CPLString   osDictionaryText;
     bool        bDictionaryTextDirty;
 
-                HFADictionary( const char *pszDict );
+    explicit     HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
     HFAType     *FindType( const char * );

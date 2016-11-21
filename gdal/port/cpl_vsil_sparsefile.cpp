@@ -64,7 +64,8 @@ class VSISparseFileHandle : public VSIVirtualHandle
     VSISparseFileFilesystemHandler* m_poFS;
 
   public:
-    VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) : m_poFS(poFS), nOverallLength(0), nCurOffset(0) {}
+    explicit VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) :
+                            m_poFS(poFS), nOverallLength(0), nCurOffset(0) {}
 
     GUIntBig           nOverallLength;
     GUIntBig           nCurOffset;

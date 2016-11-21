@@ -277,7 +277,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
   public:
 
-                        OGRGeoPackageLayer(GDALGeoPackageDataset* poDS);
+    explicit            OGRGeoPackageLayer(GDALGeoPackageDataset* poDS);
                         virtual ~OGRGeoPackageLayer();
     /************************************************************************/
     /* OGR API methods */

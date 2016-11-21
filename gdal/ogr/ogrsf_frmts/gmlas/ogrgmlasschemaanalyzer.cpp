@@ -68,7 +68,7 @@ class GMLASPrefixMappingHander: public DefaultHandler
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
   public:
-        GMLASPrefixMappingHander(
+        explicit GMLASPrefixMappingHander(
                         std::map<CPLString, CPLString>& oMapURIToPrefix) :
             m_oMapURIToPrefix( oMapURIToPrefix )
         {}
@@ -670,7 +670,7 @@ template<class T> class GMLASUniquePtr
         GMLASUniquePtr& operator=(const GMLASUniquePtr&);
 
     public:
-        GMLASUniquePtr(T* p): m_p(p) {}
+        explicit GMLASUniquePtr(T* p): m_p(p) {}
        ~GMLASUniquePtr() { delete m_p; }
 
        T* operator->() const { CPLAssert(m_p); return m_p; }

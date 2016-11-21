@@ -49,7 +49,7 @@ class OGRIDFDataSource : public GDALDataset
     void                Parse();
 
   public:
-                        OGRIDFDataSource(VSILFILE* fpL);
+    explicit            OGRIDFDataSource(VSILFILE* fpL);
                         virtual ~OGRIDFDataSource();
 
     virtual int                 GetLayerCount();

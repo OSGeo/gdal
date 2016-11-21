@@ -219,7 +219,7 @@ protected:
     size_t         m_nStatementMax;
     size_t         m_nStatementLen;
 public:
-    OGRDB2Statement( OGRDB2Session * );
+    explicit OGRDB2Statement( OGRDB2Session * );
     OGRDB2Statement( );
     ~OGRDB2Statement();
     int             DB2Execute(const char *pszCallingFunction);
@@ -428,7 +428,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
                                        int nBindNum, void **papBindBuffer);
 
 public:
-    OGRDB2TableLayer( OGRDB2DataSource * );
+    explicit OGRDB2TableLayer( OGRDB2DataSource * );
     virtual ~OGRDB2TableLayer();
 
     CPLErr              Initialize( const char *pszSchema,

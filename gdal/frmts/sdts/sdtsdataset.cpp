@@ -58,6 +58,7 @@ class SDTSDataset : public GDALPamDataset
     char        *pszProjection;
 
   public:
+                 SDTSDataset();
     virtual     ~SDTSDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -81,6 +82,19 @@ class SDTSRasterBand : public GDALPamRasterBand
     virtual double GetNoDataValue( int *pbSuccess );
     virtual const char *GetUnitType();
 };
+
+
+/************************************************************************/
+/*                             SDTSDataset()                            */
+/************************************************************************/
+
+SDTSDataset::SDTSDataset() :
+    poTransfer( NULL ),
+    poRL( NULL ),
+    pszProjection( NULL )
+
+{
+}
 
 /************************************************************************/
 /*                            ~SDTSDataset()                            */

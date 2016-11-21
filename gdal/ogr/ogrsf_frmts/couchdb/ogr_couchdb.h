@@ -93,7 +93,7 @@ protected:
     virtual int                 GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
 
   public:
-                         OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
+    explicit OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
     virtual ~OGRCouchDBLayer();
 
     virtual void                ResetReading();
@@ -232,7 +232,7 @@ class OGRCouchDBRowsLayer : public OGRCouchDBLayer
     virtual bool              FetchNextRows();
 
     public:
-            OGRCouchDBRowsLayer( OGRCouchDBDataSource* poDS );
+            explicit OGRCouchDBRowsLayer( OGRCouchDBDataSource* poDS );
             virtual ~OGRCouchDBRowsLayer();
 
     virtual void                ResetReading();

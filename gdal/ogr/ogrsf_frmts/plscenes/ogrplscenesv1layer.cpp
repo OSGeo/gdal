@@ -1226,7 +1226,7 @@ struct OGRPLScenesV1LayerExprComparator
 {
     OGRPLScenesV1Layer* m_poLayer;
 
-    OGRPLScenesV1LayerExprComparator(OGRPLScenesV1Layer* poLayer) :
+    explicit OGRPLScenesV1LayerExprComparator(OGRPLScenesV1Layer* poLayer) :
                 m_poLayer(poLayer) {}
 
     bool operator() (const swq_expr_node* poNode1,

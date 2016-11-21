@@ -50,7 +50,7 @@ class PCIDSK_EDBFile : public EDBFile
     
 public:
 
-    PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
+    explicit PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
     ~PCIDSK_EDBFile() { Close(); }
 
     int Close() const;

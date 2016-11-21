@@ -64,7 +64,7 @@ class COASPMetadataReader
         int nMetadataCount;
         int nCurrentItem;
 public:
-        COASPMetadataReader(char *pszFname);
+        explicit COASPMetadataReader(char *pszFname);
         ~COASPMetadataReader();
         COASPMetadataItem *GetNextItem();
         COASPMetadataItem *GetItem(int nItem);
@@ -272,6 +272,16 @@ class COASPDataset : public GDALDataset
         int nGCPCount;
         GDAL_GCP *pasGCP;
 public:
+        COASPDataset():
+            fpHdr(NULL),
+            fpBinHH(NULL),
+            fpBinHV(NULL),
+            fpBinVH(NULL),
+            fpBinVV(NULL),
+            pszFileName(NULL),
+            nGCPCount(0),
+            pasGCP(NULL) {}
+
         static GDALDataset *Open( GDALOpenInfo * );
         static int Identify( GDALOpenInfo * poOpenInfo );
         int GetGCPCount();

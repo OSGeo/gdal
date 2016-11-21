@@ -50,7 +50,7 @@ class GFSTemplateItem
     GFSTemplateItem *pNext;
 
   public:
-                    GFSTemplateItem( const char *pszName );
+    explicit        GFSTemplateItem( const char *pszName );
                     ~GFSTemplateItem();
     const char      *GetName() { return m_pszName; }
     void            Update( int b_has_geom );

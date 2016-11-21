@@ -59,7 +59,7 @@ class LayerDescription
     int iLayer;
 
     LayerDescription(): iLayer(-1) {}
-    LayerDescription( int iLayerIn ): iLayer(iLayerIn) {}
+    explicit LayerDescription( int iLayerIn ): iLayer(iLayerIn) {}
 };
 
 class DatasetDescription
@@ -69,7 +69,7 @@ class DatasetDescription
     std::map<OGRLayerH, LayerDescription> oMapLayer;
 
     DatasetDescription() : iDS(-1) {}
-    DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
+    explicit DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
     ~DatasetDescription();
 };
 
@@ -254,7 +254,7 @@ static CPLString OGRAPISpyGetAndRegisterLayerVar( OGRDataSourceH hDS,
     if( hLayer && dd.oMapLayer.find(hLayer) == dd.oMapLayer.end() )
     {
         const int i = static_cast<int>(dd.oMapLayer.size()) + 1;
-        dd.oMapLayer[hLayer] = i;
+        dd.oMapLayer[hLayer] = LayerDescription(i);
         oGlobalMapLayer[hLayer] =
             OGRAPISpyGetDSVar(hDS) + "_" + CPLSPrintf("lyr%d", i);
     }

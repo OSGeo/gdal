@@ -77,7 +77,7 @@ struct DWG2000Cehd
 class DWGFileR2000 : public CADFile
 {
 public:
-    DWGFileR2000( CADFileIO * poFileIO );
+    explicit             DWGFileR2000( CADFileIO * poFileIO );
     virtual             ~DWGFileR2000();
 
 protected:

@@ -63,7 +63,7 @@ class OGRCSWLayer : public OGRLayer
     void                BuildQuery();
 
   public:
-                        OGRCSWLayer( OGRCSWDataSource* poDS );
+               explicit OGRCSWLayer( OGRCSWDataSource* poDS );
                virtual ~OGRCSWLayer();
 
     virtual void                ResetReading();

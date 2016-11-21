@@ -1047,7 +1047,7 @@ class TABFeature : public OGRFeature
     virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
-             TABFeature(OGRFeatureDefn *poDefnIn );
+    explicit TABFeature(OGRFeatureDefn *poDefnIn );
     virtual ~TABFeature();
 
     static  TABFeature     *CreateFromMapInfoType(int nMapInfoType,
@@ -1131,7 +1131,7 @@ class TABPoint: public TABFeature,
                 public ITABFeatureSymbol
 {
   public:
-             TABPoint(OGRFeatureDefn *poDefnIn);
+    explicit TABPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABPoint();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCPoint; };
@@ -1178,7 +1178,7 @@ class TABFontPoint CPL_FINAL : public TABPoint,
     GInt16      m_nFontStyle;           // Bold/shadow/halo/etc.
 
   public:
-             TABFontPoint(OGRFeatureDefn *poDefnIn);
+    explicit TABFontPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABFontPoint();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCFontPoint; };
@@ -1234,7 +1234,7 @@ class TABCustomPoint CPL_FINAL : public TABPoint,
     GByte       m_nUnknown_;
 
   public:
-             TABCustomPoint(OGRFeatureDefn *poDefnIn);
+    explicit TABCustomPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABCustomPoint();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCCustomPoint; };
@@ -1286,7 +1286,7 @@ class TABPolyline CPL_FINAL : public TABFeature,
     GBool       m_bWriteTwoPointLineAsPolyline;
 
   public:
-             TABPolyline(OGRFeatureDefn *poDefnIn);
+    explicit TABPolyline(OGRFeatureDefn *poDefnIn);
     virtual ~TABPolyline();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCPolyline; };
@@ -1361,7 +1361,7 @@ class TABRegion CPL_FINAL : public TABFeature,
                           int &iLastRing);
 
   public:
-             TABRegion(OGRFeatureDefn *poDefnIn);
+    explicit TABRegion(OGRFeatureDefn *poDefnIn);
     virtual ~TABRegion();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCRegion; };
@@ -1418,7 +1418,7 @@ class TABRectangle CPL_FINAL : public TABFeature,
     virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
-             TABRectangle(OGRFeatureDefn *poDefnIn);
+    explicit TABRectangle(OGRFeatureDefn *poDefnIn);
     virtual ~TABRectangle();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCRectangle; };
@@ -1477,7 +1477,7 @@ class TABEllipse CPL_FINAL : public TABFeature,
     virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
-             TABEllipse(OGRFeatureDefn *poDefnIn);
+    explicit TABEllipse(OGRFeatureDefn *poDefnIn);
     virtual ~TABEllipse();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCEllipse; };
@@ -1537,7 +1537,7 @@ class TABArc CPL_FINAL : public TABFeature,
     virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
-             TABArc(OGRFeatureDefn *poDefnIn);
+    explicit TABArc(OGRFeatureDefn *poDefnIn);
     virtual ~TABArc();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCArc; };
@@ -1615,7 +1615,7 @@ class TABText CPL_FINAL : public TABFeature,
     virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
 
   public:
-             TABText(OGRFeatureDefn *poDefnIn);
+    explicit TABText(OGRFeatureDefn *poDefnIn);
     virtual ~TABText();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCText; };
@@ -1703,7 +1703,7 @@ class TABMultiPoint CPL_FINAL : public TABFeature,
     double      m_dCenterY;
 
   public:
-             TABMultiPoint(OGRFeatureDefn *poDefnIn);
+    explicit TABMultiPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABMultiPoint();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCMultiPoint; };
@@ -1782,7 +1782,7 @@ class TABCollection CPL_FINAL : public TABFeature,
                                       GBool bSyncMpoint);
 
   public:
-             TABCollection(OGRFeatureDefn *poDefnIn);
+    explicit TABCollection(OGRFeatureDefn *poDefnIn);
     virtual ~TABCollection();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCCollection; };
@@ -1829,7 +1829,7 @@ class TABDebugFeature CPL_FINAL : public TABFeature
     int         m_nCoordDataSize;
 
   public:
-             TABDebugFeature(OGRFeatureDefn *poDefnIn);
+    explicit TABDebugFeature(OGRFeatureDefn *poDefnIn);
     virtual ~TABDebugFeature();
 
     virtual TABFeatureClass GetFeatureClass() { return TABFCDebugFeature; };

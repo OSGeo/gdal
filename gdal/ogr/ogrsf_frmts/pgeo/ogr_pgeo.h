@@ -102,7 +102,7 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
     OGREnvelope         sExtent;
 
   public:
-                        OGRPGeoTableLayer( OGRPGeoDataSource * );
+    explicit            OGRPGeoTableLayer( OGRPGeoDataSource * );
                         virtual ~OGRPGeoTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,

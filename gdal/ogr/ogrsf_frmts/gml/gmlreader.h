@@ -169,8 +169,8 @@ class CPL_DLL GMLFeatureClass
     bool        m_bSRSNameConsistent;
 
   public:
-            GMLFeatureClass( const char *pszName = "" );
-           ~GMLFeatureClass();
+    explicit  GMLFeatureClass( const char *pszName = "" );
+             ~GMLFeatureClass();
 
     const char *GetElementName() const;
     size_t      GetElementNameLen() const;
@@ -240,7 +240,7 @@ class CPL_DLL GMLFeature
     char           **m_papszOBProperties;
 
 public:
-                    GMLFeature( GMLFeatureClass * );
+    explicit        GMLFeature( GMLFeatureClass * );
                    ~GMLFeature();
 
     GMLFeatureClass*GetClass() const { return m_poClass; }

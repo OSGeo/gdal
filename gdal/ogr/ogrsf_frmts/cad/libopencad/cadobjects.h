@@ -218,7 +218,7 @@ protected:
     ObjectType type;
     short      CRC;
 
-        CADObject(ObjectType typeIn) : size(0), type(typeIn), CRC(0) {}
+        explicit CADObject(ObjectType typeIn) : size(0), type(typeIn), CRC(0) {}
 };
 
 std::string getNameByType( CADObject::ObjectType eType );
@@ -308,7 +308,7 @@ struct CADCommonEHD
 class CADEntityObject : public CADObject
 {
 public:
-             CADEntityObject(ObjectType typeIn): CADObject(typeIn) {}
+    explicit CADEntityObject(ObjectType typeIn): CADObject(typeIn) {}
 
     virtual ~CADEntityObject(){}
     struct CADCommonED  stCed;
@@ -347,7 +347,7 @@ public:
 class CADAttribObject : public CADEntityObject
 {
 public:
-    CADAttribObject( ObjectType typeIn = ATTRIB );
+    explicit CADAttribObject( ObjectType typeIn = ATTRIB );
     virtual ~CADAttribObject(){}
     unsigned char DataFlags;
     double        dfElevation;
@@ -424,7 +424,7 @@ public:
 class CADInsertObject : public CADEntityObject
 {
 public:
-    CADInsertObject( ObjectType typeIn = INSERT );
+    explicit CADInsertObject( ObjectType typeIn = INSERT );
     virtual ~CADInsertObject(){}
     CADVector vertInsertionPoint;
     CADVector vertScales;
@@ -1007,7 +1007,7 @@ struct CADCommonDimensionData
 class CADDimensionObject : public CADEntityObject
 {
 public:
-    CADDimensionObject( ObjectType typeIn ) : CADEntityObject(typeIn) {}
+    explicit CADDimensionObject( ObjectType typeIn ) : CADEntityObject(typeIn) {}
     virtual ~CADDimensionObject(){}
     CADCommonDimensionData cdd;
     CADVector              vert10pt;
@@ -1060,7 +1060,7 @@ public:
 class CADDimensionAngular3PtObject : public CADDimensionObject
 {
 public:
-    CADDimensionAngular3PtObject(ObjectType typeIn = DIMENSION_ANG_3PT);
+    explicit CADDimensionAngular3PtObject(ObjectType typeIn = DIMENSION_ANG_3PT);
     virtual ~CADDimensionAngular3PtObject(){}
     CADVector vert13pt, vert14pt;
     CADVector vert15pt;
@@ -1084,7 +1084,7 @@ public:
 class CADDimensionRadiusObject : public CADDimensionObject
 {
 public:
-    CADDimensionRadiusObject(ObjectType typeIn = DIMENSION_RADIUS);
+    explicit CADDimensionRadiusObject(ObjectType typeIn = DIMENSION_RADIUS);
     virtual ~CADDimensionRadiusObject(){}
 
     CADVector vert15pt;
@@ -1142,7 +1142,7 @@ public:
 class CADImageDefReactorObject : public CADObject
 {
 public:
-    CADImageDefReactorObject(ObjectType typeIn = IMAGEDEFREACTOR);
+    explicit CADImageDefReactorObject(ObjectType typeIn = IMAGEDEFREACTOR);
     virtual ~CADImageDefReactorObject(){}
 
     long              nObjectSizeInBits;

@@ -200,7 +200,7 @@ class kdu_cpl_error_message : public kdu_thread_safe_message
 public: // Member classes
     using kdu_thread_safe_message::put_text;
 
-    kdu_cpl_error_message( CPLErr eErrClass ) :
+    explicit kdu_cpl_error_message( CPLErr eErrClass ) :
         m_eErrClass ( eErrClass ),
         m_pszError ( NULL )
     {}

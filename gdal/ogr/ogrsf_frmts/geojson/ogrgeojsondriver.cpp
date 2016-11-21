@@ -48,7 +48,7 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
     bool            bUseSequentialFID;
 
   public:
-    OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
+    explicit OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
     virtual ~OGRESRIFeatureServiceLayer();
 
     void ResetReading();

@@ -688,7 +688,7 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
         OGRPointIterator       *poCurveIter;
 
     public:
-        OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
+        explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
             poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
         virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 

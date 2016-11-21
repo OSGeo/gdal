@@ -108,7 +108,7 @@ class OGRWalkTableLayer : public OGRWalkLayer
     OGREnvelope         sExtent;
 
 public:
-                        OGRWalkTableLayer( OGRWalkDataSource * );
+    explicit            OGRWalkTableLayer( OGRWalkDataSource * );
                         virtual ~OGRWalkTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,

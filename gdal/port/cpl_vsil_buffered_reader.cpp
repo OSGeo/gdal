@@ -58,7 +58,7 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     int               SeekBaseTo(vsi_l_offset nTargetOffset);
 
   public:
-    VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
+    explicit VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
     VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
                             const GByte* pabyBeginningContent,
                             vsi_l_offset nCheatFileSizeIn);

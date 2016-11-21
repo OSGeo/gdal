@@ -320,7 +320,7 @@ class L1BDataset : public GDALPamDataset
                               const GByte* pabyHeader, int nHeaderBytes );
 
   public:
-                L1BDataset( L1BFileFormat );
+    explicit L1BDataset( L1BFileFormat );
     virtual ~L1BDataset();
 
     virtual int GetGCPCount();
@@ -363,7 +363,7 @@ class L1BMaskBand: public GDALPamRasterBand
 
   public:
 
-                L1BMaskBand( L1BDataset * );
+    explicit       L1BMaskBand( L1BDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
 };
@@ -2577,7 +2577,7 @@ class L1BSolarZenithAnglesDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BSolarZenithAnglesDataset(L1BDataset* poMainDS);
+       explicit L1BSolarZenithAnglesDataset(L1BDataset* poMainDS);
        virtual ~L1BSolarZenithAnglesDataset();
 
        static GDALDataset* CreateSolarZenithAnglesDS(L1BDataset* poL1BDS);
@@ -2767,7 +2767,7 @@ class L1BNOAA15AnglesDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BNOAA15AnglesDataset(L1BDataset* poMainDS);
+       explicit L1BNOAA15AnglesDataset(L1BDataset* poMainDS);
        virtual ~L1BNOAA15AnglesDataset();
 
        static GDALDataset* CreateAnglesDS(L1BDataset* poL1BDS);
@@ -2896,7 +2896,7 @@ class L1BCloudsDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BCloudsDataset(L1BDataset* poMainDS);
+       explicit L1BCloudsDataset(L1BDataset* poMainDS);
        virtual ~L1BCloudsDataset();
 
        static GDALDataset* CreateCloudsDS(L1BDataset* poL1BDS);

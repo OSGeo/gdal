@@ -170,7 +170,7 @@ class S57ClassContentExplorer
     char      **papszTempResult;
 
     public:
-        S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
+    explicit    S57ClassContentExplorer(S57ClassRegistrar* poRegistrar);
        ~S57ClassContentExplorer();
 
     bool        SelectClassByIndex( int );
@@ -316,7 +316,7 @@ class CPL_DLL S57Reader
     bool                bAttrWarningIssued;
 
   public:
-                        S57Reader( const char * );
+    explicit            S57Reader( const char * );
                        ~S57Reader();
 
     void                SetClassBased( S57ClassRegistrar *, S57ClassContentExplorer* );

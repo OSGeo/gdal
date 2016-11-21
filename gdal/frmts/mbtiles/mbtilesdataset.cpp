@@ -188,7 +188,7 @@ class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
     CPLString               osLocationInfo;
 
   public:
-                            MBTilesBand( MBTilesDataset* poDS );
+    explicit                MBTilesBand( MBTilesDataset* poDS );
 
     virtual int             GetOverviewCount();
     virtual GDALRasterBand* GetOverview(int nLevel);

@@ -120,7 +120,7 @@ class CPL_DLL OGRStyleMgr
     char            *m_pszStyleString;
 
   public:
-    OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
+    explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
     ~OGRStyleMgr();
 
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
@@ -186,7 +186,7 @@ class CPL_DLL OGRStyleTool
         m_eClassId(OGRSTCNone),
         m_pszStyleString(NULL)
         {}
-    OGRStyleTool(OGRSTClassId eClassId);
+    explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
     GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,

@@ -71,7 +71,7 @@ protected:
     void                SetGeomFieldName();
 
   public:
-                         OGRGFTLayer(OGRGFTDataSource* poDS);
+    explicit              OGRGFTLayer(OGRGFTDataSource* poDS);
                          virtual ~OGRGFTLayer();
 
     virtual void                ResetReading();

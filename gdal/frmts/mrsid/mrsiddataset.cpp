@@ -163,7 +163,7 @@ template <class T>
 class LTIDLLNavigator : public T
 {
 public:
-   LTIDLLNavigator(const LTIImage& image ) : T(image) {}
+   explicit LTIDLLNavigator(const LTIImage& image ) : T(image) {}
    virtual ~LTIDLLNavigator() {};
 };
 
@@ -182,7 +182,7 @@ template <class T>
 class LTIDLLCopy : public T
 {
 public:
-   LTIDLLCopy(const T& original) : T(original) {}
+   explicit LTIDLLCopy(const T& original) : T(original) {}
    virtual ~LTIDLLCopy() {};
 };
 
@@ -190,7 +190,7 @@ template <class T>
 class LTIDLLWriter : public T
 {
 public:
-    LTIDLLWriter(LTIImageStage *image) : T(image) {}
+    explicit LTIDLLWriter(LTIImageStage *image) : T(image) {}
     virtual ~LTIDLLWriter() {}
 };
 
@@ -293,7 +293,7 @@ class MrSIDDataset : public GDALJP2AbstractDataset
                                          int, int *, GDALProgressFunc, void * );
 
   public:
-                MrSIDDataset(int bIsJPEG2000);
+    explicit    MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );

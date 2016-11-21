@@ -2575,7 +2575,7 @@ class OGRMongoDBSingleFeatureLayer: public OGRLayer
     CPLString           osVal;
     int                 iNextShapeId;
     public:
-        OGRMongoDBSingleFeatureLayer( const char *pszVal );
+       explicit OGRMongoDBSingleFeatureLayer( const char *pszVal );
        ~OGRMongoDBSingleFeatureLayer() { m_poFeatureDefn->Release(); }
        void             ResetReading() { iNextShapeId = 0; }
        OGRFeature      *GetNextFeature();

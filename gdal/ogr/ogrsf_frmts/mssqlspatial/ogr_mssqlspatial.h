@@ -91,7 +91,7 @@ protected:
     OGRGeometry*    poOriginalGeometry;
 
 public:
-                    OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
+    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
                     ~OGRMSSQLGeometryValidator();
 
     int             ValidatePoint(OGRPoint * poGeom);
@@ -142,7 +142,7 @@ protected:
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
 
 public:
-                        OGRMSSQLGeometryParser( int nGeomColumnType );
+    explicit            OGRMSSQLGeometryParser( int nGeomColumnType );
     OGRErr              ParseSqlGeometry(unsigned char* pszInput, int nLen,
                                                         OGRGeometry **poGeom);
     int                 GetSRSId() { return nSRSId; };
@@ -324,7 +324,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     OGRwkbGeometryType eGeomType;
 
   public:
-                        OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
+    explicit            OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
                         virtual ~OGRMSSQLSpatialTableLayer();
 
     CPLErr              Initialize( const char *pszSchema,
