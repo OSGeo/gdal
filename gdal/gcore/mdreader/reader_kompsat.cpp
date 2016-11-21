@@ -35,17 +35,17 @@ CPL_CVSID("$Id$");
  * GDALMDReaderKompsat()
  */
 GDALMDReaderKompsat::GDALMDReaderKompsat(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                         char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osIMDSourceFilename ( GDALFindAssociatedFile( pszPath, "TXT",
+                                                    papszSiblingFiles, 0 ) ),
+    m_osRPBSourceFilename ( GDALFindAssociatedFile( pszPath, "RPC",
+                                                    papszSiblingFiles, 0 ) )
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "TXT",
-                                                         papszSiblingFiles, 0 );
-    m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPC",
-                                                         papszSiblingFiles, 0 );
-
-    if(m_osIMDSourceFilename.size())
+    if( !m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
-    if(m_osRPBSourceFilename.size())
+    if( !m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "RPB Filename: %s",
               m_osRPBSourceFilename.c_str() );
 }

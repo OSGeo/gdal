@@ -411,12 +411,13 @@ OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 /*                           OGRMDBTable()                              */
 /************************************************************************/
 
-OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn, jobject tableIn, const char* pszTableName )
+OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn,
+                         jobject tableIn, const char* pszTableName ) :
+    osTableName( pszTableName )
 {
     this->env = envIn;
     this->poDB = poDBIn;
     this->table = tableIn;
-    osTableName = pszTableName;
     table_iterator_obj = NULL;
     row = NULL;
 }

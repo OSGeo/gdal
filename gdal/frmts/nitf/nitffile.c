@@ -2860,8 +2860,14 @@ char **NITFGenericMetadataRead( char **papszMD,
         {
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
             const char* pszMDPrefix = CPLGetXMLValue(psIter, "md_prefix", NULL);
-            if (pszName != NULL && ((pszSpecificTREName == NULL && pszMDPrefix != NULL) ||
-                                    (pszSpecificTREName != NULL && strcmp(pszName, pszSpecificTREName) == 0)))
+            int bHasRightPrefix = FALSE;
+            if( pszName == NULL )
+                continue;
+            if( pszSpecificTREName == NULL )
+                bHasRightPrefix = ( pszMDPrefix != NULL );
+            else
+                bHasRightPrefix = ( strcmp(pszName, pszSpecificTREName) == 0 );
+            if ( bHasRightPrefix )
             {
                 if (psFile != NULL)
                 {

@@ -74,7 +74,8 @@ void OGRDB2AppendEscaped( OGRDB2Statement* poStatement,
 /*                          OGRDB2TableLayer()                 */
 /************************************************************************/
 
-OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn )
+OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn ) :
+    eGeomType( wkbNone )
 
 {
     poDS = poDSIn;
@@ -95,7 +96,6 @@ OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn )
     m_pszLayerName = NULL;
     pszSchemaName = NULL;
     pszFIDColumn = NULL;
-    eGeomType = wkbNone;
 
     bLaunderColumnNames = false;
     bPreservePrecision = false;

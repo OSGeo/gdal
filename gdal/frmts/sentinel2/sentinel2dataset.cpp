@@ -2452,8 +2452,9 @@ static bool SENTINEL2GetTileInfo(const char* pszFilename,
                                     memcpy(pnHeight, pabyData, 4);
                                     CPL_MSBPTR32(pnHeight);
                                 }
-                                if( pnWidth )
+                                if( pnWidth != NULL )
                                 {
+                                    //cppcheck-suppress nullPointer
                                     memcpy(pnWidth, pabyData+4, 4);
                                     CPL_MSBPTR32(pnWidth);
                                 }

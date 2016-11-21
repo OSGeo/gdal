@@ -1197,6 +1197,7 @@ facetT *qh_findbestfacet(pointT *point, boolT bestoutside,
     bestfacet= qh_findfacet_all(point, bestdist, isoutside, &numpart);
     totpart += numpart;
     if ((isoutside && bestoutside)
+    /* cppcheck-suppress nullPointerRedundantCheck */
     || (!isoutside && bestfacet->upperdelaunay)) {
       bestfacet= qh_findbest(point, bestfacet,
                             bestoutside, False, bestoutside,

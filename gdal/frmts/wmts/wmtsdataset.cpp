@@ -102,6 +102,7 @@ class WMTSTileMatrixSet
         std::vector<WMTSTileMatrix> aoTM;
 
         WMTSTileMatrixSet() :
+            oSRS( OGRSpatialReference() ),
             bBoundingBoxValid(false)
         {
         }

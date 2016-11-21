@@ -785,6 +785,7 @@ HDF4ImageDataset::HDF4ImageDataset() :
     pszSubdatasetName(NULL),
     pszFieldName(NULL),
     poColorTable(NULL),
+    oSRS( OGRSpatialReference() ),
     bHasGeoTransform(false),
     pszProjection(CPLStrdup( "" )),
     pszGCPProjection(CPLStrdup( "" )),

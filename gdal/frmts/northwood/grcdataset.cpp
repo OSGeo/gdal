@@ -247,7 +247,9 @@ NWT_GRCDataset::NWT_GRCDataset() :
     papszCategories(NULL),
     pszProjection(NULL),
     poColorTable(NULL)
-{}
+{
+    memset(abyHeader, 0, sizeof(abyHeader) );
+}
 
 /************************************************************************/
 /*                            ~NWT_GRCDataset()                         */

@@ -757,6 +757,8 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     nBlockXSize(0),
     nBlockYSize(0),
+    eSampleType(LTI_DATATYPE_UINT8),
+    eDataType(GDT_Byte),
     eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = NULL;
@@ -767,9 +769,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     poLTINav = NULL;
     poMetadata = NULL;
     poNDPixel = NULL;
-    eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
-    eDataType = GDT_Byte;
 
     poBuffer = NULL;
     bPrevBlockRead = FALSE;

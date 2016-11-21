@@ -35,11 +35,12 @@ CPL_CVSID("$Id$");
  * GDALMDReaderResursDK1()
  */
 GDALMDReaderResursDK1::GDALMDReaderResursDK1(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                             char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osXMLSourceFilename( GDALFindAssociatedFile( pszPath, "XML",
+                                                    papszSiblingFiles, 0 ) )
 {
-    m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML",
-                                                         papszSiblingFiles, 0 );
-    if( m_osXMLSourceFilename.size() )
+    if( !m_osXMLSourceFilename.empty() )
         CPLDebug( "MDReaderResursDK1", "XML Filename: %s",
                   m_osXMLSourceFilename.c_str() );
 }
