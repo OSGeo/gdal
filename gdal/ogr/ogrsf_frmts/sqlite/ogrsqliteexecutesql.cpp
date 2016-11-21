@@ -726,7 +726,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 CPL_UNUSED const char *pszDialect )
 {
     char* pszTmpDBName = (char*) CPLMalloc(256);
-    snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);
+    void* ptr = pszTmpDBName;
+    snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", ptr);
 
     OGRSQLiteDataSource* poSQLiteDS = NULL;
     int bSpatialiteDB = FALSE;
@@ -762,8 +763,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);
+            void* ptrCached = pszCachedFilename;
             snprintf(pszCachedFilename, 256, "/vsimem/ogr2sqlite/reference_%p.db",
-                    pszCachedFilename);
+                     ptrCached);
             char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
             OGRSQLiteDataSource* poCachedDS = new OGRSQLiteDataSource();
             const int nRet = poCachedDS->Create( pszCachedFilename, papszOptions );
