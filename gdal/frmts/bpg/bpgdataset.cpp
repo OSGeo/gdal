@@ -93,7 +93,7 @@ class BPGRasterBand : public GDALPamRasterBand
 
 BPGRasterBand::BPGRasterBand( BPGDataset *poDSIn, int nbits )
 {
-    poDS = poDS;
+    poDS = poDSIn;
 
     eDataType = nbits > 8 ? GDT_UInt16 : GDT_Byte;
 

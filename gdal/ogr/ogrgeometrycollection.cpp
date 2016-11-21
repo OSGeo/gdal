@@ -640,10 +640,10 @@ OGRErr OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
             nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
     }
 
-    if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
-    else
-        nGType = CPL_MSBWORD32( nGType );
+    if( OGR_SWAP( eByteOrder ) )
+    {
+        nGType = CPL_SWAP32(nGType);
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 

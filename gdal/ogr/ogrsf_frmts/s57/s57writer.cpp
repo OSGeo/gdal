@@ -1031,7 +1031,7 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
             continue;
 
         GUInt16 nATTL = (GUInt16)nATTLInt;
-        nATTL = CPL_LSBWORD16( nATTL );
+        CPL_LSBPTR16( &nATTL );
         memcpy( achRawData + nRawSize, &nATTL, 2 );
         nRawSize += 2;
 

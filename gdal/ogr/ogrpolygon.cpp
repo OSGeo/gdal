@@ -390,10 +390,10 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     else if( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
-    if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
-    else
-        nGType = CPL_MSBWORD32( nGType );
+    if( OGR_SWAP( eByteOrder ) )
+    {
+        nGType = CPL_SWAP32(nGType);
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 

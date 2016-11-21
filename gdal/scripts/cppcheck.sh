@@ -188,6 +188,12 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "selfAssignment" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "selfAssignment check failed"
+    exit 1
+fi
+
 echo "cppcheck succeeded"
 
 

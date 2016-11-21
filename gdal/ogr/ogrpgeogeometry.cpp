@@ -643,7 +643,7 @@ id,WKT
     nGType = SHPT_GENERALPOLYLINE | 0x20000000;
 #endif
 
-    nGType = CPL_LSBWORD32( nGType );
+    CPL_LSBPTR32( &nGType );
     memcpy( pabyPtr, &nGType, 4 );
     pabyPtr += 4;
 
