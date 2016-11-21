@@ -484,9 +484,11 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
         socklen_t nLen = sizeof(sockAddr);
         pid_t pid;
         int nStatus;
-        struct timeval tv = { 0 };
+        struct timeval tv;
         fd_set read_fds;
         int nMaxSocket;
+
+        memset(&tv, 0, sizeof(tv));
 
         /* Select on the listen socket, and rip zombie children every second */
         do
