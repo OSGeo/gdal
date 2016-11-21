@@ -23,7 +23,7 @@
 #include "cpl_time.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 static const int SECSPERMIN = 60;
 static const int MINSPERHOUR = 60;
