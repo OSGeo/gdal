@@ -26,7 +26,7 @@
 #include "zlib.h"
 #include "cpl_minizip_ioapi.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 static
 voidpf ZCALLBACK fopen_file_func ( voidpf /* opaque */ ,

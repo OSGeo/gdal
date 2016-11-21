@@ -44,7 +44,7 @@
 
 #include <cassert>
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #ifdef NDEBUG
 /* Non NDEBUG: we ignore the result */
