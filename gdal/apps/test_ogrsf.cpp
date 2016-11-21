@@ -3149,11 +3149,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     OGRFeature::DestroyFeature(poSQLFeat);
     poSQLFeat = NULL;
 
-    if( poSQLLyr )
-    {
-        LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-        poSQLLyr = NULL;
-    }
+    LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
 
     /* Return an empty layer */
     osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));
