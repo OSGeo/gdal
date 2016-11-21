@@ -529,6 +529,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     memset(szBuffer, ' ', 2048);
     CPLString osField;
     osField = "srcdocid: NONE";
+    // cppcheck-suppress redundantCopy
     memcpy(szBuffer, osField, osField.size());
 
     osField = "dstdocid: NONE";
