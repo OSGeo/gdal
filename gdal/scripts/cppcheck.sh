@@ -23,6 +23,7 @@ echo "" > ${LOG_FILE}
         -DVSIRealloc=realloc \
         -DCPPCHECK \
         -DDEBUG_MUTEX \
+        -DDEBUG_PROXY_POOL \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
@@ -316,6 +317,12 @@ fi
 grep "arrayIndexThenCheck" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "arrayIndexThenCheck check failed"
+    exit 1
+fi
+
+grep "unusedPrivateFunction" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "unusedPrivateFunction check failed"
     exit 1
 fi
 

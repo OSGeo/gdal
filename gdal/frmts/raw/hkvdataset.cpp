@@ -168,7 +168,7 @@ class HKVDataset : public RawDataset
         // Update stored info.
         MFF2version = version_number;
     }
-    float       GetVersion() const { return MFF2version; }
+
     float       MFF2version;
 
     CPLErr      SetGCPProjection(const char *); // For use in CreateCopy.
