@@ -4437,10 +4437,6 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
     {
         pauFields[iField] = *puValue;
     }
-    else if( poFDefn->GetType() == OFTInteger64 )
-    {
-        pauFields[iField] = *puValue;
-    }
     else if( poFDefn->GetType() == OFTReal )
     {
         pauFields[iField] = *puValue;
