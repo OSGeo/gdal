@@ -5589,9 +5589,11 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
         char szUTMName[128] = {};
 
         if( bNorth )
-            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Northern Hemisphere", nZone );
+            snprintf(szUTMName, sizeof(szUTMName),
+                     "UTM Zone %d, Northern Hemisphere", nZone);
         else
-            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Southern Hemisphere", nZone );
+            snprintf(szUTMName, sizeof(szUTMName),
+                     "UTM Zone %d, Southern Hemisphere", nZone);
 
         SetNode( "PROJCS", szUTMName );
     }
@@ -5921,7 +5923,7 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poNode = pszTargetKey == NULL
         ? poRoot
-        : ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+        : GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
