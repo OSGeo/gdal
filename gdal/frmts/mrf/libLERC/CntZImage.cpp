@@ -1234,6 +1234,7 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes)
 
     // Floating point, read the 4 bytes in LSB first order
     if (4 == numBytes) {
+        // cppcheck-suppress unreadVariable
 	Byte *vp = ((Byte*)&val) + POFFSET(float);
 	*ADJUST(vp) = NEXTBYTE;
 	*ADJUST(vp) = NEXTBYTE;

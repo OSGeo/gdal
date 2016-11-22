@@ -276,7 +276,6 @@ uint64 Win32IOInterface::Write( const void *buffer, uint64 size, uint64 nmemb,
 int Win32IOInterface::Eof( void *io_handle ) const
 
 {
-    FileInfo *fi = (FileInfo *) io_handle;
     uint64       nCur, nEnd;
 
     nCur = Tell( io_handle );

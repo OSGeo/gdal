@@ -15,6 +15,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
         -DHAVE_JASPER_UUID \
+        -D__GNUC__==5 \
         -DODBCVER=0x0300 \
         -DNETCDF_HAS_NC4 \
         -UGDAL_NO_AUTOLOAD \
@@ -29,6 +30,8 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
         -i ogrdissolve.cpp \
+        -i gdalasyncread.cpp \
+        -i gdaltorture.cpp \
         $dirname \
         -j 8 >>${LOG_FILE} 2>&1
     if [[ $? -ne 0 ]] ; then
@@ -420,6 +423,12 @@ fi
 grep "redundantAssignment" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignment check failed"
+    exit 1
+fi
+
+grep "unreadVariable" ${LOG_FILE} | grep -v frmts/gtiff/libtiff | grep -v frmts/jpeg/libjpeg | grep -v frmts/png/libpng
+if [[ $? -eq 0 ]] ; then
+    echo "unreadVariable check failed"
     exit 1
 fi
 

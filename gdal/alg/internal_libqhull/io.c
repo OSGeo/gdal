@@ -3158,7 +3158,7 @@ void qh_printvdiagram(FILE *fp, qh_PRINT format, facetT *facetlist, setT *facets
   vertices= qh_markvoronoi(facetlist, facets, printall, &isLower, &numcenters);
   totcount= qh_printvdiagram2 (NULL, NULL, vertices, innerouter, False);
   qh_fprintf(fp, 9231, "%d\n", totcount);
-  totcount= qh_printvdiagram2 (fp, printvridge, vertices, innerouter, True /* inorder*/);
+  /*totcount=*/ qh_printvdiagram2 (fp, printvridge, vertices, innerouter, True /* inorder*/);
   qh_settempfree(&vertices);
 #if 0  /* for testing qh_eachvoronoi_all */
   qh_fprintf(fp, 9232, "\n");
