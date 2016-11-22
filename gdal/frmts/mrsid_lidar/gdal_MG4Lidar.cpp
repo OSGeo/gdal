@@ -311,14 +311,13 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
 
 bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
-   bool bClassificationOK = true;
    bool bReturnNumOK = true;
 
    // Check if classification code is ok:  it was requested and it does match one of the requested codes
    const int classcode = GetChannelElement<int>(*pointdata.getChannel(CHANNEL_NAME_ClassId), i);
    char bufCode[16];
    snprintf(bufCode, sizeof(bufCode), "%d", classcode);
-   bClassificationOK = (papszFilterClassCodes == NULL ? true :
+   bool bClassificationOK = (papszFilterClassCodes == NULL ? true :
       (CSLFindString(papszFilterClassCodes,bufCode)!=-1));
 
    if (bClassificationOK)

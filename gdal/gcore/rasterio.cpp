@@ -1023,14 +1023,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
                                  nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
-        GDALRasterBand* poMaskBand = NULL;
-        int l_nMaskFlags = 0;
-        bool bUseNoDataMask = false;
+        GDALRasterBand* poMaskBand = GetMaskBand();
+        int l_nMaskFlags = GetMaskFlags();
 
-        poMaskBand = GetMaskBand();
-        l_nMaskFlags = GetMaskFlags();
-
-        bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
+        bool bUseNoDataMask = ((l_nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = static_cast<GByte *>(
@@ -1472,14 +1468,10 @@ CPLErr GDALDataset::RasterIOResampled(
                 nFullResXSizeQueried, nFullResYSizeQueried );
         GByte * pabyChunkNoDataMask = NULL;
 
-        GDALRasterBand* poMaskBand = NULL;
-        int nMaskFlags = 0;
-        bool bUseNoDataMask = false;
+        GDALRasterBand* poMaskBand = poFirstSrcBand->GetMaskBand();
+        int nMaskFlags = poFirstSrcBand->GetMaskFlags();
 
-        poMaskBand = poFirstSrcBand->GetMaskBand();
-        nMaskFlags = poFirstSrcBand->GetMaskFlags();
-
-        bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
+        bool bUseNoDataMask = ((nMaskFlags & GMF_ALL_VALID) == 0);
         if (bUseNoDataMask)
         {
             pabyChunkNoDataMask = (GByte *)

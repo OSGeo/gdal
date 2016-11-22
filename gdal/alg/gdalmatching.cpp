@@ -189,14 +189,13 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /* -------------------------------------------------------------------- */
     int nOctaveStart, nOctaveEnd;
     double dfSURFThreshold;
-    double dfMatchingThreshold = 0.015;
 
     nOctaveStart =atoi(CSLFetchNameValueDef(papszOptions, "OCTAVE_START", "2"));
     nOctaveEnd = atoi(CSLFetchNameValueDef(papszOptions, "OCTAVE_END", "2"));
 
     dfSURFThreshold = CPLAtof(
         CSLFetchNameValueDef(papszOptions, "SURF_THRESHOLD", "0.001"));
-    dfMatchingThreshold = CPLAtof(
+    double dfMatchingThreshold = CPLAtof(
         CSLFetchNameValueDef(papszOptions, "MATCHING_THRESHOLD", "0.015"));
 
 /* -------------------------------------------------------------------- */

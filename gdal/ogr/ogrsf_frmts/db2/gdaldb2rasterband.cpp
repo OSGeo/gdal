@@ -141,6 +141,17 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                                   4,
                                   0);
 
+            if (nRetCode != SQL_SUCCESS)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed fetching tile_data; error: %s",
+                         oSession->GetLastError());
+                CPLDebug("OGRDB2DataSource::ReadTile",
+                         "Failed fetching tile_data; error: %s",
+                         oSession->GetLastError());
+                return NULL;
+            }
+
 // Allocate a buffer to read the tile BLOB into based on the
 // length(tile_data) value
             GByte* pabyBlob = (GByte*) VSIMalloc(nDataLen);
@@ -603,6 +614,17 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
                               (SQLPOINTER) &nDataLen,
                               4,
                               0);
+
+        if (nRetCode != SQL_SUCCESS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed fetching tile_data; error: %s",
+                     GetSession()->GetLastError());
+            CPLDebug("OGRDB2DataSource::ReadTile",
+                     "Failed fetching tile_data; error: %s",
+                     GetSession()->GetLastError());
+            return NULL;
+        }
 
 // Allocate a buffer to read the tile BLOB into based on the
 // length(tile_data) value

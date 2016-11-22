@@ -2871,7 +2871,6 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
         if( oSRS.SetFromUserInput(pszProjection) != OGRERR_NONE )
             return CE_Failure;
         nSRID = FetchSRSId( &oSRS );
-        nSRID = FetchSRSId( &oSRS );
     }
 
     for(size_t iScheme = 0;

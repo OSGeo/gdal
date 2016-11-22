@@ -633,14 +633,12 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
 }
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
-  bool newLayer = true;
-  OGRLayer *curLayer = NULL;
   CPLString osName(transcode(elem->getTagName()));
   //CPLDebug( "OGR_ILI", "Reading layer: %s", osName.c_str() );
 
   // test if this layer exist
-  curLayer = GetLayer(osName);
-  newLayer = (curLayer == NULL);
+  OGRLayer* curLayer = GetLayer(osName);
+  bool newLayer = (curLayer == NULL);
 
   // add a layer
   if (newLayer) {

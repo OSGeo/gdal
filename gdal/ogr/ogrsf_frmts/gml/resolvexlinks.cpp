@@ -569,8 +569,7 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
     papszResourceHREF = CSLAddString( papszResourceHREF, m_pszFilename );
 
     //call resolver
-    CPLErr eReturned = CE_None;
-    eReturned = Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
+    CPLErr eReturned = Resolve( papsSrcTree[0], &papsSrcTree, &papszResourceHREF, papszSkip, bStrict );
 
     bool bReturn = true;
     if( eReturned != CE_Failure )

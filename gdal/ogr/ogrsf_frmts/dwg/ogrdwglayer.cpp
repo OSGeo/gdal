@@ -956,20 +956,16 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 {
     OdDbArcPtr poAE = OdDbArc::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    double dfRadius = 0.0;
-    double dfStartAngle = 0.0;
-    double dfEndAngle = 360.0;
-    OdGePoint3d oCenter;
 
     TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
 /*      Collect parameters.                                             */
 /* -------------------------------------------------------------------- */
-    dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
-    dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
-    dfRadius = poAE->radius();
-    oCenter = poAE->center();
+    double dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
+    double dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
+    double dfRadius = poAE->radius();
+    OdGePoint3d oCenter = poAE->center();
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */

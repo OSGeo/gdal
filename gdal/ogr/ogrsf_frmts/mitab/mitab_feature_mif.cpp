@@ -209,7 +209,7 @@ static char **MIDTokenize( const char *pszLine, const char *pszDelim )
         }
         else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 )
         {
-            pszToken[iTokenChar++] = '\0';
+            pszToken[iTokenChar] = '\0';
             papszResult = CSLAddString( papszResult, pszToken );
 
             iChar += static_cast<int>(strlen(pszDelim)) - 1;

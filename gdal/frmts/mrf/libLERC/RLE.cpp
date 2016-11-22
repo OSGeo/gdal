@@ -49,7 +49,6 @@ size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
       }
       else    // switch to odd mode
       {
-        cntEven++;
         sum += 2 + 1;
         bOdd = true;
         cntOdd = 0;

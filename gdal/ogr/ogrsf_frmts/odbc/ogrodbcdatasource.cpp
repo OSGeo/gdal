@@ -105,8 +105,7 @@ static int CheckDSNStringTemplate(const char* pszStr)
 
 int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 {
-    const char* pszOptionName = "";
-    pszOptionName = "PGEO_DRIVER_TEMPLATE";
+    const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";
     const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
     if( pszDSNStringTemplate == NULL )
     {
