@@ -176,9 +176,12 @@ static const char* const BESSEL_1841_NAMIBIA = "BN";
 
 typedef struct Latitude_Band_Value
 {
+  /* cppcheck-suppress unusedStructMember */
   long letter;            /* letter representing latitude band  */
   double min_northing;    /* minimum northing for latitude band */
+  /* cppcheck-suppress unusedStructMember */
   double north;           /* upper latitude for latitude band   */
+  /* cppcheck-suppress unusedStructMember */
   double south;           /* lower latitude for latitude band   */
 } Latitude_Band;
 
@@ -207,6 +210,7 @@ static const Latitude_Band Latitude_Band_Table[20] =
 
 typedef struct UPS_Constant_Value
 {
+  /* cppcheck-suppress unusedStructMember */
   long letter;            /* letter representing latitude band      */
   long ltr2_low_value;    /* 2nd letter range - high number         */
   long ltr2_high_value;   /* 2nd letter range - low number          */

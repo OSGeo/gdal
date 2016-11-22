@@ -4,7 +4,7 @@
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 echo "" > ${LOG_FILE}
-    for dirname in alg port gcore ogr frmts gnm apps; do
+for dirname in alg port gcore ogr frmts gnm apps; do
     echo "Running cppcheck on $dirname... (can be long)"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
@@ -14,6 +14,7 @@ echo "" > ${LOG_FILE}
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 -DHAVE_SQLITE_VFS \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
+        -DHAVE_JASPER_UUID \
         -DODBCVER=0x0300 \
         -DNETCDF_HAS_NC4 \
         -UGDAL_NO_AUTOLOAD \
@@ -329,6 +330,12 @@ fi
 grep "redundantCondition" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantCondition check failed"
+    exit 1
+fi
+
+grep "unusedStructMember" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg | grep -v frmts/gtiff/libtiff | grep -v frmts/zlib
+if [[ $? -eq 0 ]] ; then
+    echo "unusedStructMember check failed"
     exit 1
 fi
 

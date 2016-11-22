@@ -238,19 +238,25 @@ static int ReadVarUInt(GByte*& pabyIter, GByte* pabyEnd, OutType& nOutVal)
 
 struct ControleTypeVerboseErrorTrue
 {
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL check_bounds = true;
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL verbose_error = true;
 };
 
 struct ControleTypeVerboseErrorFalse
 {
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL check_bounds = true;
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL verbose_error = false;
 };
 
 struct ControleTypeNone
 {
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL check_bounds = false;
+    // cppcheck-suppress unusedStructMember
     static const EMULATED_BOOL verbose_error = false;
 };
 

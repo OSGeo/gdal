@@ -87,8 +87,11 @@ enum BMPLCSType                 // Type of logical color space.
 
 typedef struct
 {
+    // cppcheck-suppress unusedStructMember
     GInt32      iCIEX;
+    // cppcheck-suppress unusedStructMember
     GInt32      iCIEY;
+    // cppcheck-suppress unusedStructMember
     GInt32      iCIEZ;
 } BMPCIEXYZ;
 
@@ -145,16 +148,20 @@ typedef struct
                                 // is set to BI_BITFIELDS.
     GUInt32     iGreenMask;     // The same for green component
     GUInt32     iBlueMask;      // The same for blue component
+    // cppcheck-suppress unusedStructMember
     GUInt32     iAlphaMask;     // Colour mask that specifies the alpha
                                 // component of each pixel.
     BMPLCSType  iCSType;        // Colour space of the DIB.
     BMPCIEXYZTriple sEndpoints; // This member is ignored unless the iCSType member
                                 // specifies BMPLT_CALIBRATED_RGB.
+    // cppcheck-suppress unusedStructMember
     GUInt32     iGammaRed;      // Toned response curve for red. This member
                                 // is ignored unless color values are calibrated
                                 // RGB values and iCSType is set to
                                 // BMPLT_CALIBRATED_RGB. Specified in 16^16 format.
+    // cppcheck-suppress unusedStructMember
     GUInt32     iGammaGreen;    // Toned response curve for green.
+    // cppcheck-suppress unusedStructMember
     GUInt32     iGammaBlue;     // Toned response curve for blue.
 } BMPInfoHeader;
 
@@ -170,9 +177,13 @@ const unsigned int  BIH_OS22SIZE = 64; // for BMPT_OS22
 // provided for reference
 typedef struct
 {
+    // cppcheck-suppress unusedStructMember
     GByte       bBlue;
+    // cppcheck-suppress unusedStructMember
     GByte       bGreen;
+    // cppcheck-suppress unusedStructMember
     GByte       bRed;
+    // cppcheck-suppress unusedStructMember
     GByte       bReserved;      // Must be 0
 } BMPColorEntry;
 

@@ -659,6 +659,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         struct _buff{
             GUInt32 nRes;
             GInt16 anFrame[8];
+            // cppcheck-suppress unusedStructMember
             GUInt32 nFrameCode;
         } buff;
         /* nObjectsRead = */ VSIFReadL(&buff, 20, 1, fpSXFIn);
