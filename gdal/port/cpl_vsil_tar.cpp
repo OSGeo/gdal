@@ -238,7 +238,8 @@ int VSITarReader::GotoNextFile()
                 }
                 m_abyBufferIdx += (int)strlen("***NEWFILE***:");
                 int nFilenameStartIdx = m_abyBufferIdx;
-                for(; m_abyBuffer[m_abyBufferIdx] != '\n' && m_abyBufferIdx < m_abyBufferSize; ++m_abyBufferIdx)
+                for(; m_abyBufferIdx < m_abyBufferSize &&
+                      m_abyBuffer[m_abyBufferIdx] != '\n'; ++m_abyBufferIdx)
                 {
                     /* do nothing */
                 }

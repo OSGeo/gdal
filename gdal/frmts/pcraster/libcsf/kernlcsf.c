@@ -87,7 +87,7 @@ void CsfRegisterMap(
 {
   size_t i=0;
 
-  while (mapList[i] != NULL && i < mapListLen)
+  while (i < mapListLen && mapList[i] != NULL)
     i++;
 
   if(i == mapListLen)

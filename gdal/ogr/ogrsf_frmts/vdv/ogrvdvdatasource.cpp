@@ -262,7 +262,7 @@ void OGRIDFDataSource::Parse()
             char** papszTokens = CSLTokenizeStringComplex(pszLine + 4,";",TRUE,TRUE);
             OGRFeatureDefn* poFDefn = poCurLayer->GetLayerDefn();
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            for(int i=0; papszTokens[i] != NULL && i < poFDefn->GetFieldCount();i++)
+            for(int i=0; i < poFDefn->GetFieldCount() && papszTokens[i] != NULL ;i++)
             {
                 if( papszTokens[i][0] )
                 {
@@ -810,8 +810,8 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
                 CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES| CSLT_STRIPENDSPACES);
         poFeature = new OGRFeature(m_poFeatureDefn);
         poFeature->SetFID( m_nFID ++ );
-        for(int i=0; papszTokens[i] != NULL &&
-                     i < m_poFeatureDefn->GetFieldCount();i++)
+        for(int i=0; i < m_poFeatureDefn->GetFieldCount() &&
+                     papszTokens[i] != NULL ;i++)
         {
             if( papszTokens[i][0] && !EQUAL(papszTokens[i], "NULL") )
             {

@@ -1049,8 +1049,8 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                 break;
             }
 
-            for( int iField = 0; papszTokens[iField] != NULL &&
-                             iField < nFieldCount; iField++ )
+            for( int iField = 0; iField < nFieldCount &&
+                                 papszTokens[iField] != NULL; iField++ )
             {
                 if( papszTokens[iField][0] == 0 )
                     continue;
