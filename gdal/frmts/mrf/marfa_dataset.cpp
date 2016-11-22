@@ -298,6 +298,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             catch (const CPLErr& e) {
                 if (config)
                     CPLDestroyXMLNode(config);
+                // cppcheck-suppress exceptRethrowCopy
                 throw e; // Rethrow
             }
 
