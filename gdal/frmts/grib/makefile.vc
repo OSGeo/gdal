@@ -11,6 +11,11 @@ LINK_PNG	=	$(PNG_LIB)
 LINK_PNG	=	..\png\libpng\*.obj
 !ENDIF
 
+!IFDEF ZLIB_EXTERNAL_LIB
+LINK_ZLIB = $(ZLIB_LIB)
+!ELSE
+LINK_ZLIB = ..\zlib\*.obj
+!ENDIF
 
 default:	$(OBJ)
         cd degrib18 && $(MAKE) /f makefile.vc && cd ..
@@ -29,4 +34,4 @@ plugin:	gdal_GRIB.dll
 gdal_GRIB.dll: default
 	link /dll $(LDEBUG) /out:gdal_GRIB.dll \
 		$(OBJ) degrib18\degrib\*.obj degrib18\g2clib-1.0.4\*.obj \
-		$(GDAL_ROOT)/gdal_i.lib $(LINK_PNG) ..\zlib\*.obj
+		$(GDAL_ROOT)/gdal_i.lib $(LINK_PNG) $(LINK_ZLIB)

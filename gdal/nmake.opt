@@ -568,6 +568,11 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # For OpenJpeg >= 2.1, uncomment
 #OPENJPEG_VERSION = 20100
 
+#if using an external zlib uncomment the following lines
+#ZLIB_EXTERNAL_LIB = 1
+#ZLIB_INC = -IC:\projects\zlib
+#ZLIB_LIB = C:\projects\lib\Release\zlib.lib
+
 # Uncomment for PDF support
 # Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
 # Uncomment POPPLER_0_20_OR_LATER = YES for Poppler >= 0.20.0
