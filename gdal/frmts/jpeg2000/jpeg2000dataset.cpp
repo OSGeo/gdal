@@ -49,6 +49,7 @@ CPL_CVSID("$Id$");
 #define JP2_BOX_PCLR    0x70636c72      /* Palette */
 #define JP2_BOX_UUID    0x75756964      /* UUID */
 extern "C" {
+#ifdef NOT_USED
 typedef struct {
         uint_fast32_t magic;
 } jp2_jp_t;
@@ -58,19 +59,24 @@ typedef struct {
         uint_fast32_t numcompatcodes;
         uint_fast32_t compatcodes[JP2_FTYP_MAXCOMPATCODES];
 } jp2_ftyp_t;
+#endif
 typedef struct {
         uint_fast32_t width;
         uint_fast32_t height;
         uint_fast16_t numcmpts;
         uint_fast8_t bpc;
+        // cppcheck-suppress unusedStructMember
         uint_fast8_t comptype;
+        // cppcheck-suppress unusedStructMember
         uint_fast8_t csunk;
+        // cppcheck-suppress unusedStructMember
         uint_fast8_t ipr;
 } jp2_ihdr_t;
 typedef struct {
         uint_fast16_t numcmpts;
         uint_fast8_t *bpcs;
 } jp2_bpcc_t;
+#ifdef NOT_USED
 typedef struct {
         uint_fast8_t method;
         uint_fast8_t pri;
@@ -79,9 +85,11 @@ typedef struct {
         uint_fast8_t *iccp;
         int iccplen;
 } jp2_colr_t;
+#endif
 typedef struct {
         uint_fast16_t numlutents;
         uint_fast8_t numchans;
+        // cppcheck-suppress unusedStructMember
         int_fast32_t *lutdata;
         uint_fast8_t *bpc;
 } jp2_pclr_t;
@@ -92,6 +100,7 @@ typedef struct {
 } jp2_cdefchan_t;
 typedef struct {
         uint_fast16_t numchans;
+        // cppcheck-suppress unusedStructMember
         jp2_cdefchan_t *ents;
 } jp2_cdef_t;
 typedef struct {
@@ -102,6 +111,7 @@ typedef struct {
 
 typedef struct {
         uint_fast16_t numchans;
+        // cppcheck-suppress unusedStructMember
         jp2_cmapent_t *ents;
 } jp2_cmap_t;
 
@@ -128,11 +138,15 @@ typedef struct {
         uint_fast32_t datalen;
 
         union {
+#ifdef NOT_USED
                 jp2_jp_t jp;
                 jp2_ftyp_t ftyp;
+#endif
                 jp2_ihdr_t ihdr;
                 jp2_bpcc_t bpcc;
+#ifdef NOT_USED
                 jp2_colr_t colr;
+#endif
                 jp2_pclr_t pclr;
                 jp2_cdef_t cdef;
                 jp2_cmap_t cmap;
@@ -143,6 +157,7 @@ typedef struct {
 
 } jp2_box_t;
 
+#ifdef NOT_USED
 typedef struct jp2_boxops_s {
         void (*init)(jp2_box_t *box);
         void (*destroy)(jp2_box_t *box);
@@ -150,6 +165,7 @@ typedef struct jp2_boxops_s {
         int (*putdata)(jp2_box_t *box, jas_stream_t *out);
         void (*dumpdata)(jp2_box_t *box, FILE *out);
 } jp2_boxops_t;
+#endif
 
 extern jp2_box_t *jp2_box_create(int type);
 extern void jp2_box_destroy(jp2_box_t *box);
