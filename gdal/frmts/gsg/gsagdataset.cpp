@@ -1138,7 +1138,6 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
-    CPLErr eErr = CE_None;
     /*if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0
         || padfGeoTransform[1] < 0.0 || padfGeoTransform[5] < 0.0 )
         eErr = GDALPamDataset::SetGeoTransform( padfGeoTransform );*/
@@ -1157,7 +1156,7 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     poGRB->dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    eErr = UpdateHeader();
+    CPLErr eErr = UpdateHeader();
 
     if( eErr != CE_None )
     {

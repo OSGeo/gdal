@@ -1293,7 +1293,7 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         poBox = oJP2MD.CreateGMLJP2(nXSize,nYSize);
 
                     nLBox = (int) poBox->GetDataLength() + 8;
-                    nLBox = CPL_MSBWORD32( nLBox );
+                    CPL_MSBPTR32( &nLBox );
                     memcpy(&nTBox, poBox->GetType(), 4);
 
                     VSIFSeekL(fp, 0, SEEK_END);

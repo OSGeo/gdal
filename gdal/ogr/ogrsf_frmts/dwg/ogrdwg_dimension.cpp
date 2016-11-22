@@ -173,9 +173,7 @@ the approach is as above in all these cases.
 /* -------------------------------------------------------------------- */
 /*      Compute the text angle.                                         */
 /* -------------------------------------------------------------------- */
-    double dfAngle = 0.0;
-
-    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
+    double dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
 
 /* -------------------------------------------------------------------- */
 /*      Rescale the direction vectors so we can use them in             */

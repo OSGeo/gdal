@@ -412,6 +412,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          pData, nBufXSize, nBufYSize, eBufType,
                                          nPixelSpace, nLineSpace, psExtraArg );
 
+    // cppcheck-suppress redundantAssignment
     poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
 }
