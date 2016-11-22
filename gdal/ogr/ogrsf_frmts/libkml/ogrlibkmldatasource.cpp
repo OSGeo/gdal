@@ -1975,9 +1975,12 @@ OGRErr OGRLIBKMLDataSource::DeleteLayerKmz( int iLayer )
                             if( EQUAL( pszLink, poOgrLayer->GetFileName() ) )
                             {
                                 m_poKmlDocKml->DeleteFeatureAt( iKmlFeature );
+                                delete poKmlHref;
                                 break;
                             }
                         }
+
+                        delete poKmlHref;
                     }
                 }
             }

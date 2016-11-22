@@ -2225,6 +2225,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);
@@ -2749,7 +2750,7 @@ class OGRPGMemLayerWrapper : public OGRLayer
       OGRLayer       *poMemLayer;
 
   public:
-                        OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
+                        explicit OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
                         {
                             poMemDS = poMemDSIn;
                             poMemLayer = poMemDS->GetLayer(0);

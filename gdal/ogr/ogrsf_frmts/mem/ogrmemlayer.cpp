@@ -906,7 +906,7 @@ class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
             FeatureIterator      m_oIter;
 
     public:
-        OGRMemLayerIteratorMap(FeatureMap& oMapFeatures):
+        explicit OGRMemLayerIteratorMap(FeatureMap& oMapFeatures):
             m_oMapFeatures(oMapFeatures),
             m_oIter(oMapFeatures.begin())
         {}

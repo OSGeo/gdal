@@ -148,7 +148,7 @@ int dec_png(unsigned char *pngbuf,g2int len,g2int *width,g2int *height,unsigned 
     }
     if( bit_depth != nbits )
     {
-        fprintf(stderr, "inconsistant PNG bit depth\n");
+        fprintf(stderr, "inconsistent PNG bit depth\n");
         png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
         return( -7 );
     }

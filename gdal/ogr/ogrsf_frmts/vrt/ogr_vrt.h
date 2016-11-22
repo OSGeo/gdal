@@ -143,7 +143,7 @@ class OGRVRTLayer : public OGRLayer
                                             OGRVRTGeomFieldProps* poProps );
 
   public:
-                        OGRVRTLayer( OGRVRTDataSource* poDSIn );
+    explicit             OGRVRTLayer( OGRVRTDataSource* poDSIn );
     virtual             ~OGRVRTLayer();
 
     bool               FastInitialize( CPLXMLNode *psLTree,
@@ -242,7 +242,7 @@ class OGRVRTDataSource : public OGRDataSource
     bool                bRecursionDetected;
 
   public:
-                        OGRVRTDataSource( GDALDriver *poDriver );
+    explicit            OGRVRTDataSource( GDALDriver *poDriver );
                         virtual ~OGRVRTDataSource();
 
     virtual int         CloseDependentDatasets();

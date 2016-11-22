@@ -138,7 +138,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
 class OGRPGFeatureDefn : public OGRFeatureDefn
 {
     public:
-        OGRPGFeatureDefn( const char * pszName = NULL ) :
+        explicit OGRPGFeatureDefn( const char * pszName = NULL ) :
             OGRFeatureDefn(pszName)
         {
             SetGeomType(wkbNone);
@@ -475,7 +475,7 @@ class OGRPGDataSource : public OGRDataSource
 
     OGRPGTableLayer     *poLayerInCopyMode;
 
-    void                OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer);
+    static void                OGRPGDecodeVersionString(PGver* psVersion, const char* pszVer);
 
     CPLString           osCurrentSchema;
     CPLString           GetCurrentSchema();
@@ -515,7 +515,7 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference *FetchSRS( int nSRSId );
-    OGRErr              InitializeMetadataTables();
+    static OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *, int bUpdate, int bTestOpen,
                               char** papszOpenOptions );

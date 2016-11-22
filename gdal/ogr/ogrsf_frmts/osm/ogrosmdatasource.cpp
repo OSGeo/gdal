@@ -2937,7 +2937,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
         if( osInterestLayers.size() )
         {
-            ExecuteSQL( osInterestLayers, NULL, NULL );
+            delete ExecuteSQL( osInterestLayers, NULL, NULL );
         }
     }
     return bRet;
@@ -4475,7 +4475,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             bUseWaysIndexBackup = bUseWaysIndex;
 
             /* Update optimization parameters */
-            ExecuteSQL(osInterestLayers, NULL, NULL);
+            delete ExecuteSQL(osInterestLayers, NULL, NULL);
 
             MyResetReading();
 

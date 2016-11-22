@@ -92,7 +92,7 @@ class BSBRasterBand : public GDALPamRasterBand
     GDALColorTable      oCT;
 
   public:
-                BSBRasterBand( BSBDataset * );
+    explicit    BSBRasterBand( BSBDataset * );
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorTable *GetColorTable();

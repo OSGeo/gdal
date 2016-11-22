@@ -4558,7 +4558,7 @@ General :
  * Add Geometry.SimplifyPreserveTopology()
  * Extend SWIG Geometry.ExportToJson() to accept a list of options (#4108)
  * Add (OGR)DataSource.SyncToDisk()
- * Add SpatialReference.SetVertCS(), IsSameVertCS(), IsVertical(), SetCompount(), IsCompound()
+ * Add SpatialReference.SetVertCS(), IsSameVertCS(), IsVertical(), SetCompound(), IsCompound()
  * Add SpatialReference.SetIGH() (#4060)
  * RFC 35: Add OGRLayer.DeleteField(), ReorderField(), ReorderFields(), AlterFieldDefn()
  * Add gdal.VSIFTruncateL()

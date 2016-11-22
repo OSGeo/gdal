@@ -459,7 +459,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         if( psIter->eType != CXT_Element || !EQUAL(psIter->pszValue, "SpectralBand") )
             continue;
 
-        if( nInputSpectralBandsIn  )
+        if( nInputSpectralBandsIn && pahInputSpectralBandsIn != NULL )
         {
             if( iSpectralBand == nInputSpectralBandsIn )
             {
@@ -808,7 +808,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
             }
         }
 
-        if( nInputSpectralBandsIn  )
+        if( nInputSpectralBandsIn && pahInputSpectralBandsIn != NULL )
         {
             poBand = reinterpret_cast<GDALRasterBand *>(
                 pahInputSpectralBandsIn[iSpectralBand] );

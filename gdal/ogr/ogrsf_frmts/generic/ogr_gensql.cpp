@@ -42,7 +42,7 @@ CPL_CVSID("$Id$");
 class OGRGenSQLGeomFieldDefn: public OGRGeomFieldDefn
 {
     public:
-        OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :
+        explicit OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :
             OGRGeomFieldDefn(poGeomFieldDefn->GetNameRef(),
                              poGeomFieldDefn->GetType()), bForceGeomType(FALSE)
         {

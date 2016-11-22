@@ -61,7 +61,7 @@ public:
     int               nParmLen;
     GByte            *pabyParmData;
 
-    OGRIngresStatement( II_PTR hConn );
+    explicit OGRIngresStatement( II_PTR hConn );
     ~OGRIngresStatement();
 
     void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );
@@ -199,9 +199,6 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
     char                *pszRawStatement;
 
-    // Layer srid.
-    int                 nSRSId;
-
     int                 nFeatureCount;
 
   public:
@@ -253,7 +250,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRSpatialReference *FetchSRS( int nSRSId );
 
-    OGRErr              InitializeMetadataTables();
+    static OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *pszFullName,
                               char **papszOptions, int bUpdate );

@@ -153,7 +153,7 @@ private:
     BaseType           *GetFieldValue( OGRDODSFieldDefn *, int,
                                        Sequence * );
 
-    double              BaseTypeToDouble( BaseType * );
+    static double              BaseTypeToDouble( BaseType * );
 
     bool                BuildFields( BaseType *, const char *,
                                      const char * );
@@ -242,7 +242,7 @@ class OGRDODSGridLayer : public OGRDODSLayer
     OGRDODSDim         *paoDimensions;
     int                 nMaxRawIndex;
 
-    bool                ArrayEntryToField( Array *poArray, void *pRawData,
+    static bool                ArrayEntryToField( Array *poArray, void *pRawData,
                                            int iArrayIndex,
                                            OGRFeature *poFeature, int iField );
 

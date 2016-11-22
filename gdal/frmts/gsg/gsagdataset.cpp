@@ -77,7 +77,7 @@ class GSAGDataset : public GDALPamDataset
     CPLErr UpdateHeader();
 
   public:
-                GSAGDataset( const char *pszEOL = "\x0D\x0A" );
+    explicit     GSAGDataset( const char *pszEOL = "\x0D\x0A" );
                 ~GSAGDataset();
 
     static int          Identify( GDALOpenInfo * );
@@ -778,8 +778,7 @@ GSAGDataset::GSAGDataset( const char *pszEOL ) :
         return;
     }
 
-    strncpy(szEOL, pszEOL, sizeof(szEOL));
-    szEOL[sizeof(this->szEOL) - 1] = '\0';
+    snprintf(szEOL, sizeof(szEOL), "%s", pszEOL);
 }
 
 /************************************************************************/

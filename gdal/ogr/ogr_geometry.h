@@ -645,7 +645,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
   public:
                         OGRLinearRing();
                         OGRLinearRing(const OGRLinearRing& other);
-                        OGRLinearRing( OGRLinearRing * );
+               explicit OGRLinearRing( OGRLinearRing * );
     virtual            ~OGRLinearRing();
 
     OGRLinearRing& operator=(const OGRLinearRing& other);

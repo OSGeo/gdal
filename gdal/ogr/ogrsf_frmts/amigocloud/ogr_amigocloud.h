@@ -75,11 +75,11 @@ class OGRAmigoCloudFID
         GIntBig iFID;
         std::string osAmigoId;
 
-        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index)
+        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index) :
+            iIndex( index ),
+            iFID( std::abs((long)CPLHashSetHashStr(amigo_id.c_str())) ),
+            osAmigoId( amigo_id )
         {
-            iIndex = index;
-            OGRAmigoCloudFID::osAmigoId = amigo_id.c_str();
-            iFID = std::abs((long)CPLHashSetHashStr(amigo_id.c_str()));
         }
 
         OGRAmigoCloudFID()
@@ -88,11 +88,11 @@ class OGRAmigoCloudFID
             iFID=0;
         }
 
-        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid)
+        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid) :
+            iIndex( fid.iIndex ),
+            iFID( fid.iFID ),
+            osAmigoId( fid.osAmigoId.c_str() )
         {
-            iIndex = fid.iIndex;
-            iFID = fid.iFID;
-            osAmigoId = fid.osAmigoId.c_str();
         }
 };
 
@@ -127,7 +127,7 @@ class OGRAmigoCloudLayer : public OGRLayer
         virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
     public:
-         OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
+        explicit OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
         virtual ~OGRAmigoCloudLayer();
 
         virtual void                ResetReading();
@@ -141,7 +141,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
         virtual int                 TestCapability( const char * );
 
-        int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
+        static int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
 };
 
 /************************************************************************/
@@ -200,7 +200,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
                                    OGRSpatialReference *poSRS,
                                    int bGeomNullable);
 
-        CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
+        static CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
 
         OGRErr              RunDeferredCreationIfNecessary();
         int                 GetDeferredCreation() const { return bDeferredCreation; }
@@ -290,7 +290,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         json_object*                RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-        int                         FetchSRSId( OGRSpatialReference * poSRS );
+        static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
         int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }

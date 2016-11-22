@@ -151,7 +151,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 /* -------------------------------------------------------------------- */
 /*      Trap pcidsk exceptions.                                         */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK Exception while initializing layer, operation likely impaired.\n%s", ex.what() );
@@ -426,7 +426,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -546,7 +546,7 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 /* -------------------------------------------------------------------- */
 /*      Trap pcidsk exceptions.                                         */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK Exception while initializing layer, operation likely impaired.\n%s", ex.what() );
@@ -576,7 +576,7 @@ OGRErr OGRPCIDSKLayer::DeleteFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -608,7 +608,7 @@ OGRErr OGRPCIDSKLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -739,7 +739,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -813,7 +813,7 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );

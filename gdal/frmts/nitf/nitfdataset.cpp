@@ -30,6 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_csv.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -4466,7 +4467,7 @@ NITFDataset::NITFCreateCopy(
                 osRPC00B += pszRPC;
                 papszFullOptions = CSLAddString( papszFullOptions, osRPC00B ) ;
 
-                // If no precision loss occured during RPC conversion, then
+                // If no precision loss occurred during RPC conversion, then
                 // we can suppress it from PAM
                 if( !bPrecisionLoss )
                     nGCIFFlags &= ~GCIF_METADATA;
@@ -5289,7 +5290,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 
         const char *pszHeaderBuffer = NULL;
-        for( int iOpt2 = 0; papszList != NULL && papszList[iOpt2] != NULL; iOpt2++ ) {
+        for( int iOpt2 = 0; papszList[iOpt2] != NULL; iOpt2++ ) {
             if( !STARTS_WITH_CI(papszList[iOpt2], "HEADER_") )
                 continue;
 

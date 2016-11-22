@@ -275,7 +275,7 @@ int FGdbLayer::EditATXOrSPX( const CPLString& osIndex )
             int nDepth;
             if( VSIFReadL(&nDepth, 1, 4, fp) == 4 )
             {
-                nDepth = CPL_LSBWORD32(nDepth);
+                CPL_LSBPTR32(&nDepth);
 
                 int bIndexedValueIsValid = FALSE;
                 int nFirstIndexAtThisValue = -1;
@@ -347,7 +347,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
         memcpy(&nNextPageID, abyBuffer, 4);
         int nFeatures;
         memcpy(&nFeatures, abyBuffer + 4, 4);
-        nFeatures = CPL_LSBWORD32(nFeatures);
+        CPL_LSBPTR32(&nFeatures);
 
         //if( nLastPageVisited == 0 )
         //    printf("nFeatures = %d\n", nFeatures);
@@ -365,12 +365,12 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
 
             int nFID;
             memcpy(&nFID, abyBuffer + 12 + 4 * i, 4);
-            nFID = CPL_LSBWORD32(nFID);
+            CPL_LSBPTR32(&nFID);
             int nOGRFID = m_oMapFGDBFIDToOGRFID[nFID];
             if( nOGRFID )
             {
                 nFID = nOGRFID;
-                nOGRFID = CPL_LSBWORD32(nOGRFID);
+                CPL_LSBPTR32(&nOGRFID);
                 memcpy(abyBuffer + 12 + 4 * i, &nOGRFID, 4);
                 bRewritePage = TRUE;
 
@@ -410,7 +410,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
                         int nFeaturesPrevPage;
                         VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 4, SEEK_SET);
                         VSIFReadL(&nFeaturesPrevPage, 1, 4, fp);
-                        nFeaturesPrevPage = CPL_LSBWORD32(nFeaturesPrevPage);
+                        CPL_LSBPTR32(&nFeaturesPrevPage);
                         if( j == 0 )
                         {
                             VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 12 + 4 * nFirstIndexAtThisValue, SEEK_SET);
@@ -439,7 +439,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
                         int nFeaturesPrevPage;
                         VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 4, SEEK_SET);
                         VSIFReadL(&nFeaturesPrevPage, 1, 4, fp);
-                        nFeaturesPrevPage = CPL_LSBWORD32(nFeaturesPrevPage);
+                        CPL_LSBPTR32(&nFeaturesPrevPage);
                         if( j == 0 )
                         {
                             VSIFSeekL(fp, (anPagesAtThisValue[j]-1) * 4096 + 12 + 4 * nFirstIndexAtThisValue, SEEK_SET);
@@ -509,7 +509,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
             return FALSE;
         int nSubPages;
         memcpy(&nSubPages, abyBuffer + 4, 4);
-        nSubPages = CPL_LSBWORD32(nSubPages);
+        CPL_LSBPTR32(&nSubPages);
         nSubPages ++;
         if( nSubPages > (4096 - 8) / 4 )
             return FALSE;
@@ -517,7 +517,7 @@ int FGdbLayer::EditATXOrSPX(VSILFILE* fp,
         {
             int nSubPageID;
             memcpy(&nSubPageID, abyBuffer + 8 + 4 * i, 4);
-            nSubPageID = CPL_LSBWORD32(nSubPageID);
+            CPL_LSBPTR32(&nSubPageID);
             if( nSubPageID < 1 )
                 return FALSE;
             if( !EditATXOrSPX(fp,
@@ -2138,7 +2138,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
 /************************************************************************/
 
 bool FGdbLayer::CreateFeatureDataset(FGdbDataSource* pParentDataSource,
-                                     std::string feature_dataset_name,
+                                     const std::string& feature_dataset_name,
                                      OGRSpatialReference* poSRS,
                                      char** papszOptions )
 {
@@ -2515,7 +2515,8 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
-                           std::wstring wstrTablePath, std::wstring wstrType)
+                           const std::wstring& wstrTablePath,
+                           const std::wstring& wstrType)
 {
     long hr;
 
@@ -3035,8 +3036,8 @@ void FGdbLayer::ResetReading()
         //spatial query
         FileGDBAPI::Envelope env(ogrEnv.MinX, ogrEnv.MaxX, ogrEnv.MinY, ogrEnv.MaxY);
 
-        if FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, env, true, *m_pEnumRows))
-        GDBErr(hr, "Failed Searching");
+        if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, env, true, *m_pEnumRows)) )
+            GDBErr(hr, "Failed Searching");
 
         m_bFilterDirty = false;
 
@@ -3045,7 +3046,7 @@ void FGdbLayer::ResetReading()
 
     // Search non-spatial
 
-    if FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows))
+    if( FAILED(hr = m_pTable->Search(m_wstrSubfields, m_wstrWhereClause, true, *m_pEnumRows)) )
         GDBErr(hr, "Failed Searching");
 
     m_bFilterDirty = false;
@@ -3501,14 +3502,16 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0 ||
         m_strShapeFieldName.size() == 0)
     {
-        int* pabSaveFieldIgnored = new int[m_pFeatureDefn->GetFieldCount()];
-        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        const int nFieldCount = m_pFeatureDefn->GetFieldCount();
+        int* pabSaveFieldIgnored = new int[nFieldCount];
+        for(int i=0;i<nFieldCount;i++)
         {
+            // cppcheck-suppress uninitdata
             pabSaveFieldIgnored[i] = m_pFeatureDefn->GetFieldDefn(i)->IsIgnored();
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(TRUE);
         }
         OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
-        for(int i=0;i<m_pFeatureDefn->GetFieldCount();i++)
+        for(int i=0;i<nFieldCount;i++)
         {
             m_pFeatureDefn->GetFieldDefn(i)->SetIgnored(pabSaveFieldIgnored[i]);
         }
@@ -3725,7 +3728,7 @@ int FGdbLayer::CreateRealCopy()
     CPLAssert( m_bSymlinkFlag );
 
     // Find the FID of the layer in the system catalog
-    char* apszDrivers[2];
+    char* apszDrivers[2] = { NULL };
     apszDrivers[0] = (char*) "OpenFileGDB";
     apszDrivers[1] = NULL;
     const char* pszSystemCatalog

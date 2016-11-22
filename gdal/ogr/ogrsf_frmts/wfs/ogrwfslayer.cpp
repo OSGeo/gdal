@@ -292,7 +292,7 @@ OGRFeatureDefn* OGRWFSLayer::ParseSchema(CPLXMLNode* psSchema)
         while (oIter != oEndIter)
         {
             GMLFeatureClass* poClass = *oIter;
-            oIter ++;
+            ++oIter;
             delete poClass;
         }
     }

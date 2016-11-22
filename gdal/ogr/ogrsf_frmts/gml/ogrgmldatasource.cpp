@@ -351,7 +351,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
-    if (nRead <= 0)
+    if (nRead == 0)
     {
         if( fpToClose )
             VSIFCloseL( fpToClose );
@@ -378,7 +378,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             return false;
 
         nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
-        if (nRead <= 0)
+        if (nRead == 0)
         {
             VSIFCloseL( fpToClose );
             return false;
@@ -989,7 +989,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     GMLFeatureClass* poClass = *oIter;
 
                     delete poClass;
-                    oIter ++;
+                    ++oIter;
                 }
                 aosClasses.resize(0);
                 bHaveSchema = false;
@@ -1009,14 +1009,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                         bHasFeatureProperties = true;
                         break;
                     }
-                    oIter ++;
+                    ++ oIter;
                 }
 
                 oIter = aosClasses.begin();
                 while (oIter != oEndIter)
                 {
                     GMLFeatureClass* poClass = *oIter;
-                    oIter ++;
+                    ++ oIter;
 
                     /* We have no way of knowing if the geometry type is 25D */
                     /* when examining the xsd only, so if there was a hint */
@@ -2515,7 +2515,7 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
     int                 iNextShapeId;
 
   public:
-                        OGRGMLSingleFeatureLayer(int nVal );
+    explicit            OGRGMLSingleFeatureLayer(int nVal );
     virtual ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
 
     virtual void        ResetReading() { iNextShapeId = 0; }

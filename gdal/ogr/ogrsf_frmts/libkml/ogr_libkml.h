@@ -221,7 +221,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
         kmldom::DocumentPtr poKmlDocument );
 
   public:
-    OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
+    explicit OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
     ~OGRLIBKMLDataSource      ();
 
     const char               *GetName() { return pszName; };

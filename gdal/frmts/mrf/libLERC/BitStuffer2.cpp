@@ -33,7 +33,7 @@ NAMESPACE_LERC_START
 
 // if you change Encode(...) / Decode(...), don't forget to update ComputeNumBytesNeeded(...)
 
-bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVec) const
+bool BitStuffer2::EncodeSimple(Byte** ppByte, const vector<unsigned int>& dataVec)
 {
   if (!ppByte || dataVec.empty())
     return false;
@@ -198,7 +198,7 @@ bool BitStuffer2::Decode(const Byte** ppByte, vector<unsigned int>& dataVec) con
 // -------------------------------------------------------------------------- ;
 
 unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedDataVec,
-                                                    bool& doLut) const
+                                                    bool& doLut)
 {
   unsigned int maxElem = static_cast<unsigned int>(sortedDataVec.back().first);
   unsigned int numElem = (unsigned int)sortedDataVec.size();
@@ -228,7 +228,7 @@ unsigned int BitStuffer2::ComputeNumBytesNeededLut(const vector<Quant >& sortedD
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
 
-void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, int numBits) const
+void BitStuffer2::BitStuff(Byte** ppByte, const vector<unsigned int>& dataVec, int numBits)
 {
   unsigned int numElements = (unsigned int)dataVec.size();
   unsigned int numUInts = (numElements * numBits + 31) / 32;
@@ -328,6 +328,7 @@ void BitStuffer2::BitUnStuff(const Byte** ppByte, vector<unsigned int>& dataVec,
       unsigned int n2 = srcValue << bitPos;
       *dstPtr++ = n2 >> (32 - numBits);
       bitPos += numBits;
+      // cppcheck-suppress shiftTooManyBits
       if (bitPos == 32)    // shift >= 32 is undefined
       {
         bitPos = 0;

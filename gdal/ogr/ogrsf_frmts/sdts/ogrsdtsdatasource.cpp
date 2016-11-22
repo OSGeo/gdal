@@ -164,11 +164,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     else if( EQUAL(poXREF->pszDatum,"WGC") )
         poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26 );
 
-    else if( EQUAL(poXREF->pszDatum,"WGE") )
-        poSRS->SetGeogCS("WGS 84", "WGS_1984",
-                         "WGS 84", 6378137, 298.257223563 );
-
-    else
+    else /* if( EQUAL(poXREF->pszDatum,"WGE") ) or default case */
         poSRS->SetGeogCS("WGS 84", "WGS_1984",
                          "WGS 84", 6378137, 298.257223563 );
 

@@ -43,10 +43,13 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRDWGDataSource::OGRDWGDataSource() :
-  fp(NULL)
+  fp(NULL),
+  iEntitiesSectionOffset(0),
+  bInlineBlocks(FALSE),
+  poServices(NULL),
+  poDb(NULL)
 
 {
-    poDb = NULL;
 }
 
 /************************************************************************/

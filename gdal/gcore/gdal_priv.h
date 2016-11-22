@@ -357,7 +357,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     bool        bSuppressOnClose;
 
                 GDALDataset(void);
-                GDALDataset(int bForceCachedIO);
+    explicit    GDALDataset(int bForceCachedIO);
 
     void        RasterInitialize( int, int );
     void        SetBand( int, GDALRasterBand * );
@@ -595,7 +595,7 @@ private:
     // Semi-public methods. Only to be used by in-tree drivers.
     GDALSQLParseInfo*   BuildParseInfo(swq_select* psSelectInfo,
                                        swq_select_parse_options* poSelectParseOptions);
-    void                DestroyParseInfo(GDALSQLParseInfo* psParseInfo );
+    static void         DestroyParseInfo(GDALSQLParseInfo* psParseInfo );
     OGRLayer *          ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect,
@@ -751,7 +751,7 @@ class CPL_DLL GDALColorTable
     std::vector<GDALColorEntry> aoEntries;
 
 public:
-                GDALColorTable( GDALPaletteInterp = GPI_RGB );
+    explicit     GDALColorTable( GDALPaletteInterp = GPI_RGB );
                 ~GDALColorTable();
 
     GDALColorTable *Clone() const;
@@ -796,7 +796,7 @@ class CPL_DLL GDALAbstractBandBlockCache
         void              WaitKeepAliveCounter();
 
     public:
-                     GDALAbstractBandBlockCache(GDALRasterBand* poBand);
+            explicit GDALAbstractBandBlockCache(GDALRasterBand* poBand);
             virtual ~GDALAbstractBandBlockCache();
 
             GDALRasterBlock* CreateBlock(int nXBlockOff, int nYBlockOff);
@@ -918,7 +918,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
   public:
                 GDALRasterBand();
-                GDALRasterBand(int bForceCachedIO);
+    explicit    GDALRasterBand(int bForceCachedIO);
 
     virtual     ~GDALRasterBand();
 
@@ -1057,7 +1057,7 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
   public:
-                GDALAllValidMaskBand( GDALRasterBand * );
+    explicit     GDALAllValidMaskBand( GDALRasterBand * );
     virtual     ~GDALAllValidMaskBand();
 
     virtual GDALRasterBand *GetMaskBand();
@@ -1080,7 +1080,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
                               GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
 
   public:
-                GDALNoDataMaskBand( GDALRasterBand * );
+    explicit     GDALNoDataMaskBand( GDALRasterBand * );
     virtual     ~GDALNoDataMaskBand();
 };
 
@@ -1096,7 +1096,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
   public:
-                GDALNoDataValuesMaskBand( GDALDataset * );
+    explicit     GDALNoDataValuesMaskBand( GDALDataset * );
     virtual     ~GDALNoDataValuesMaskBand();
 };
 
@@ -1116,7 +1116,7 @@ class GDALRescaledAlphaBand : public GDALRasterBand
                               GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
 
   public:
-                GDALRescaledAlphaBand( GDALRasterBand * );
+    explicit     GDALRescaledAlphaBand( GDALRasterBand * );
     virtual     ~GDALRescaledAlphaBand();
 };
 //! @endcond
@@ -1245,9 +1245,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr       QuietDelete( const char * pszName );
 
 //! @cond Doxygen_Suppress
-    CPLErr              DefaultRename( const char * pszNewName,
+    static CPLErr       DefaultRename( const char * pszNewName,
                                        const char * pszOldName );
-    CPLErr              DefaultCopyFiles( const char * pszNewName,
+    static CPLErr       DefaultCopyFiles( const char * pszNewName,
                                           const char * pszOldName );
 //! @endcond
 private:
@@ -1290,7 +1290,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        DeregisterDriver( GDALDriver * );
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
-    void        AutoLoadDrivers();
+    static void        AutoLoadDrivers();
     void        AutoSkipDrivers();
 };
 

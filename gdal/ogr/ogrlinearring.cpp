@@ -27,6 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_geometry.h"
+
+#include <climits>
+#include <cmath>
+#include <cstring>
+
+#include "cpl_error.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 

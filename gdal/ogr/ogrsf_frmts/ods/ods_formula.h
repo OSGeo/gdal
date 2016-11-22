@@ -150,8 +150,11 @@ class ods_formula_node {
     ods_formula_node(
         const char *,
         ods_formula_field_type field_type_in = ODS_FIELD_TYPE_STRING );
+    // cppcheck-suppress noExplicitConstructor
     ods_formula_node( int );
+    // cppcheck-suppress noExplicitConstructor
     ods_formula_node( double );
+    // cppcheck-suppress noExplicitConstructor
     ods_formula_node( ods_formula_op );
 
     ods_formula_node( const ods_formula_node& other );

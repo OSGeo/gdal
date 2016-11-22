@@ -120,7 +120,7 @@ class CPL_DLL OGRStyleMgr
     char            *m_pszStyleString;
 
   public:
-    OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
+    explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
     ~OGRStyleMgr();
 
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
@@ -178,13 +178,20 @@ class CPL_DLL OGRStyleTool
 
   public:
 
-    OGRStyleTool(){}
-    OGRStyleTool(OGRSTClassId eClassId);
+    OGRStyleTool() :
+        m_bModified(FALSE),
+        m_bParsed(FALSE),
+        m_dfScale(0.0),
+        m_eUnit(OGRSTUGround),
+        m_eClassId(OGRSTCNone),
+        m_pszStyleString(NULL)
+        {}
+    explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
-    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
+    static GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
                            int &nBlue, int &nTransparence);
-    int   GetSpecificId(const char *pszId, const char *pszWanted);
+    static int   GetSpecificId(const char *pszId, const char *pszWanted);
 
 #ifndef DOXYGEN_SKIP
     GBool IsStyleModified() {return m_bModified;}

@@ -35,11 +35,12 @@ CPL_CVSID("$Id$");
  * GDALMDReaderOrbView()
  */
 GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                         char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osIMDSourceFilename( GDALFindAssociatedFile( pszPath, "PVL",
+                                                    papszSiblingFiles, 0 ) ),
+    m_osRPBSourceFilename( CPLString() )
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "PVL",
-                                                    papszSiblingFiles, 0 );
-
     const char* pszBaseName = CPLGetBasename(pszPath);
     const char* pszDirName = CPLGetDirname(pszPath);
 

@@ -55,7 +55,8 @@ class OGRXPlaneLayer : public OGRLayer
   protected:
     OGRXPlaneReader*   poReader;
     OGRFeatureDefn*    poFeatureDefn;
-                       OGRXPlaneLayer(const char* pszLayerName);
+
+    explicit           OGRXPlaneLayer(const char* pszLayerName);
 
     void               RegisterFeature(OGRFeature* poFeature);
 

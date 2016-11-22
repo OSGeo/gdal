@@ -125,7 +125,7 @@ private:
 
   void clear_array_cache();
 
-  r_Set<r_Ref_Any> execute(const char* string);
+  static r_Set<r_Ref_Any> execute(const char* string);
 
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
   void createBands(const char* queryString);
@@ -398,7 +398,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       }
     }
   }
-  catch (r_Error error) {
+  catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return CPLGetLastErrorType();
   }
@@ -680,7 +680,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     rasDataset->databasename = databasename;
 
     return rasDataset;
-  } catch (r_Error error) {
+  } catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     delete rasDataset;
     return NULL;

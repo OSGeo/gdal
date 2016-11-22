@@ -27,15 +27,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_api.h"
+#include "ogr_feature.h"
+
 #include <cerrno>
+#include <climits>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 #include <new>
 #include <vector>
 
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_time.h"
-#include "ogr_feature.h"
-#include "ogr_api.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
@@ -1874,7 +1887,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         switch( iSpecialField )
         {
           case SPF_FID:
-            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, CPL_FRMT_GIB, GetFID() );
+            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, CPL_FRMT_GIB, GetFID() );
             m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
             if( m_pszTmpFieldValue == NULL )
                 return "";
@@ -1948,7 +1961,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( eType == OFTInteger64 )
     {
-        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+        CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   CPL_FRMT_GIB, pauFields[iField].Integer64 );
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
         if( m_pszTmpFieldValue == NULL )
@@ -2068,7 +2081,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         int i = 0;  // Used after for.
         for( ; i < nCount; i++ )
         {
-            snprintf( szItem, sizeof(szItem), CPL_FRMT_GIB,
+            CPLsnprintf( szItem, sizeof(szItem), CPL_FRMT_GIB,
                       pauFields[iField].Integer64List.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 >= sizeof(szTempBuffer) )
@@ -3150,7 +3163,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     {
         char szTempBuffer[64] = {};
 
-        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
 
         if( IsFieldSet( iField) )
             CPLFree( pauFields[iField].String );
@@ -3166,7 +3179,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
     {
         char szTempBuffer[64] = {};
 
-        snprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
+        CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
         char *apszValues[2] = { szTempBuffer, NULL };
         SetField( iField, apszValues);
     }
@@ -4424,10 +4437,6 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
     {
         pauFields[iField] = *puValue;
     }
-    else if( poFDefn->GetType() == OFTInteger64 )
-    {
-        pauFields[iField] = *puValue;
-    }
     else if( poFDefn->GetType() == OFTReal )
     {
         pauFields[iField] = *puValue;
@@ -4669,8 +4678,10 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
     if( fpOut == NULL )
         fpOut = stdout;
 
+    char szFID[32];
+    CPLsnprintf(szFID, sizeof(szFID), CPL_FRMT_GIB, GetFID());
     fprintf( fpOut,
-             "OGRFeature(%s):" CPL_FRMT_GIB "\n", poDefn->GetName(), GetFID() );
+             "OGRFeature(%s):%s\n", poDefn->GetName(), szFID );
 
     const char* pszDisplayFields =
         CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");

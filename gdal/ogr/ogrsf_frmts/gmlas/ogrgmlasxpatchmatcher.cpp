@@ -169,7 +169,7 @@ void    GMLASXPathMatcher::SetDocumentMapURIToPrefix(
 // in it.
 bool GMLASXPathMatcher::MatchesRefXPath(
                         const CPLString& osXPath,
-                        const std::vector<XPathComponent>& oRefXPath) const
+                        const std::vector<XPathComponent>& oRefXPath)
 {
     size_t iPos = 0;
     size_t iIdxInRef = 0;

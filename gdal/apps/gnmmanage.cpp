@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "commonutils.h"
 #include "cpl_string.h"
+#include "gdal.h"
 #include "gnm.h"
+#include "gnm_priv.h"
 
 //#include "ogr_p.h"
 //#include "gnm.h"
@@ -386,7 +387,11 @@ int main( int nArgc, char ** papszArgv )
             exit(1);
         }
 
-        CPLAssert( poDriver != NULL);
+        if( poDriver == NULL )
+        {
+            CPLAssert( false );
+            exit(1);
+        }
 
         printf( "INFO: Open of `%s'\n      using driver `%s' successful.\n",
                     pszDataSource, poDriver->GetDescription() );

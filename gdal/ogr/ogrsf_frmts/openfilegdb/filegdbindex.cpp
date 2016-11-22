@@ -44,15 +44,17 @@ static bool FileGDBOGRDateToDoubleDate( const OGRField* psField,
                                         double *pdfVal )
 {
     struct tm brokendowntime;
+    /* workaround cppcheck false positive */
+    struct tm* pBrokendowntime = &brokendowntime;
 
-    brokendowntime.tm_year = psField->Date.Year - 1900;
-    brokendowntime.tm_mon = psField->Date.Month - 1;
-    brokendowntime.tm_mday = psField->Date.Day;
-    brokendowntime.tm_hour = psField->Date.Hour;
-    brokendowntime.tm_min = psField->Date.Minute;
-    brokendowntime.tm_sec = static_cast<int>(psField->Date.Second);
+    pBrokendowntime->tm_year = psField->Date.Year - 1900;
+    pBrokendowntime->tm_mon = psField->Date.Month - 1;
+    pBrokendowntime->tm_mday = psField->Date.Day;
+    pBrokendowntime->tm_hour = psField->Date.Hour;
+    pBrokendowntime->tm_min = psField->Date.Minute;
+    pBrokendowntime->tm_sec = static_cast<int>(psField->Date.Second);
 
-    const GIntBig nTime = CPLYMDHMSToUnixTime(&brokendowntime);
+    const GIntBig nTime = CPLYMDHMSToUnixTime(pBrokendowntime);
 
     *pdfVal = nTime / 3600. / 24 + 25569;
 
@@ -70,7 +72,7 @@ class FileGDBTrivialIterator CPL_FINAL : public FileGDBIterator
         int                         iRow;
 
     public:
-                                     FileGDBTrivialIterator(FileGDBIterator *poParentIter);
+        explicit                     FileGDBTrivialIterator(FileGDBIterator *poParentIter);
         virtual                     ~FileGDBTrivialIterator() { delete poParentIter; }
 
         virtual FileGDBTable        *GetTable() { return poTable; }
@@ -104,7 +106,7 @@ class FileGDBNotIterator CPL_FINAL : public FileGDBIterator
         int                         bNoHoles;
 
     public:
-                                     FileGDBNotIterator(FileGDBIterator* poIterBase);
+        explicit                     FileGDBNotIterator(FileGDBIterator* poIterBase);
         virtual                     ~FileGDBNotIterator();
 
         virtual FileGDBTable        *GetTable() { return poTable; }
@@ -920,6 +922,7 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx,
             {
                 returnErrorIf(eOGRFieldType != OFTString);
                 memset(szUUID, 0, UUID_LEN_AS_STRING + 1);
+                // cppcheck-suppress redundantCopy
                 strncpy(szUUID, psValue->String, UUID_LEN_AS_STRING);
                 bEvaluateToFALSE =
                     eOp == FGSO_EQ &&

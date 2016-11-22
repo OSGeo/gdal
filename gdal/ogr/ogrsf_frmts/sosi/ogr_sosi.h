@@ -162,8 +162,15 @@ public:
 class OGRSOSIDataType {
     OGRSOSISimpleDataType* poElements;
     int                    nElementCount;
+
 public:
-    OGRSOSIDataType (int nSize);
+    explicit OGRSOSIDataType (int nSize);
+
+    OGRSOSIDataType( const OGRSOSIDataType& oSrc ) :
+            // cppcheck-suppress copyCtorPointerCopying
+            poElements( oSrc.poElements ),
+            nElementCount( oSrc.nElementCount ) {}
+
     ~OGRSOSIDataType();
 
     void setElement(int nIndex, const char *name, OGRFieldType type);

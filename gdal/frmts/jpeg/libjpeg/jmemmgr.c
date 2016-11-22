@@ -1064,6 +1064,7 @@ jinit_memory_mgr (j_common_ptr cinfo)
   if (mem == NULL) {
     jpeg_mem_term(cinfo);	/* system-dependent cleanup */
     ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 0);
+    return;
   }
 
   /* OK, fill in the method pointers */

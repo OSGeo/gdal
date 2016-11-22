@@ -61,7 +61,7 @@ class OGRFMELayer : public OGRLayer
     IFMEFeature         *poFMEFeature;
 
   public:
-                        OGRFMELayer( OGRFMEDataSource * );
+    explicit            OGRFMELayer( OGRFMEDataSource * );
     virtual             ~OGRFMELayer();
 
     virtual int         Initialize( IFMEFeature *,
@@ -93,7 +93,7 @@ class OGRFMELayerCached : public OGRFMELayer
     int                 bQueryActive;
 
   public:
-                       OGRFMELayerCached( OGRFMEDataSource * );
+    explicit            OGRFMELayerCached( OGRFMEDataSource * );
     virtual            ~OGRFMELayerCached();
 
     virtual void        ResetReading();
@@ -242,7 +242,7 @@ class OGRFMECacheIndex
     void        *hLock;
 
   public:
-                OGRFMECacheIndex( const char *pszPath );
+    explicit     OGRFMECacheIndex( const char *pszPath );
                 ~OGRFMECacheIndex();
 
     const char *GetPath() { return pszPath; }
@@ -257,10 +257,10 @@ class OGRFMECacheIndex
     int         Lock();
     int         Unlock();
 
-    void        Touch( CPLXMLNode * );
+    static void        Touch( CPLXMLNode * );
     void        Add( CPLXMLNode * );
-    void        Reference( CPLXMLNode * );
-    void        Dereference( CPLXMLNode * );
+    static void        Reference( CPLXMLNode * );
+    static void        Dereference( CPLXMLNode * );
 
     int         ExpireOldCaches( IFMESession * );
 };

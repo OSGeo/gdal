@@ -260,7 +260,7 @@ class LevellerDataset : public GDALPamDataset
 
     bool load_from_file(VSILFILE*, const char*);
 
-    bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
+    static bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
     bool get(int&, VSILFILE*, const char*);
     bool get(size_t& n, VSILFILE* fp, const char* psz)
         { return this->get((int&)n, fp, psz); }
@@ -282,7 +282,7 @@ class LevellerDataset : public GDALPamDataset
     const measurement_unit* get_uom(UNITLABEL) const;
     const measurement_unit* get_uom(double) const;
 
-    bool convert_measure(double, double&, const char* pszUnitsFrom);
+    static bool convert_measure(double, double&, const char* pszUnitsFrom);
     bool make_local_coordsys(const char* pszName, const char* pszUnits);
     bool make_local_coordsys(const char* pszName, UNITLABEL);
     const char* code_to_id(UNITLABEL) const;
@@ -311,7 +311,11 @@ public:
 class digital_axis
 {
  public:
-  digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED), m_fixedEnd(0) {}
+    digital_axis() : m_eStyle(LEV_DA_PIXEL_SIZED), m_fixedEnd(0)
+    {
+        m_d[0] = 0.0;
+        m_d[1] = 0.0;
+    }
 
     bool get(LevellerDataset& ds, VSILFILE* fp, int n)
     {
@@ -634,7 +638,11 @@ LevellerDataset::LevellerDataset() :
     m_dElevBase(),
     m_fp(NULL),
     m_nDataOffset()
-{}
+{
+    memset( m_szElevUnits, 0, sizeof(m_szElevUnits) );
+    memset( m_adfTransform, 0, sizeof(m_adfTransform) );
+    memset( m_dLogSpan, 0, sizeof(m_dLogSpan) );
+}
 
 /************************************************************************/
 /*                          ~LevellerDataset()                          */

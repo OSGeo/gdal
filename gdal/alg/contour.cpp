@@ -64,7 +64,7 @@ public:
 
     double dfTailX;
 
-    GDALContourItem( double dfLevel );
+    explicit GDALContourItem( double dfLevel );
     ~GDALContourItem();
 
     int    AddSegment( double dfXStart, double dfYStart,
@@ -89,7 +89,7 @@ class GDALContourLevel
     GDALContourItem **papoEntries;
 
 public:
-    GDALContourLevel( double );
+    explicit GDALContourLevel( double );
     ~GDALContourLevel();
 
     double GetLevel() const { return dfLevel; }

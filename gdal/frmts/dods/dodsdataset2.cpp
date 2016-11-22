@@ -516,6 +516,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
         iXDim = 0;
         iYDim = 1;
     }
+    //FIXME: dimensions should likely be inverted here
     else if( dim1_name == "easting" && dim2_name == "northing" )
     {
         iXDim = 1;
@@ -1130,6 +1131,7 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
         throw InternalErr(
             CPLSPrintf( "Could not find DDS definition for variable %s.",
                         oVarNameIn.c_str() ) );
+        // cppcheck-suppress duplicateBreak
         return;
     }
 

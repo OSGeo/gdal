@@ -343,7 +343,7 @@ typedef union
 
 static int get_short_le(unsigned char **data) {
     /* We assume two's complement representation for this to work */
-    unionshort result;
+    unionshort result = { 0 };
     result.u = (unsigned short)(*(*data) | (*(*data+1)<<8));
     *data+=2;
     return result.s;
@@ -351,7 +351,7 @@ static int get_short_le(unsigned char **data) {
 
 static int get_short_be(unsigned char **data) {
     /* We assume two's complement representation for this to work */
-    unionshort result;
+    unionshort result = { 0 };
     result.u = (unsigned short)(*(*data+1) | (*(*data)<<8));
     *data+=2;
     return result.s;
@@ -359,7 +359,7 @@ static int get_short_be(unsigned char **data) {
 
 static void put_short_le(short data, unsigned char **bufptr) {
     /* We assume two's complement representation for this to work */
-    unionshort us;
+    unionshort us = { 0 };
     us.s = data;
     *(*bufptr)++ = (unsigned char)(us.u & 0xff);
     *(*bufptr)++ = (unsigned char)((us.u>>8) & 0xff);
@@ -367,7 +367,7 @@ static void put_short_le(short data, unsigned char **bufptr) {
 
 static void put_short_be(short data, unsigned char **bufptr) {
     /* We assume two's complement representation for this to work */
-    unionshort us;
+    unionshort us = { 0 };
     us.s = data;
     *(*bufptr)++ = (unsigned char)((us.u>>8) & 0xff);
     *(*bufptr)++ = (unsigned char)(us.u & 0xff);
@@ -438,7 +438,7 @@ typedef union
 
 static int get_int32(blxcontext_t *ctx, unsigned char **data) {
     /* We assume two's complement representation for this to work */
-    unionint result;
+    unionint result = { 0 };
 
     if(ctx->endian == LITTLEENDIAN)
 	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
@@ -450,7 +450,7 @@ static int get_int32(blxcontext_t *ctx, unsigned char **data) {
 
 static void put_int32(blxcontext_t *ctx, int data, unsigned char **bufptr) {
     /* We assume two's complement representation for this to work */
-    unionint ui;
+    unionint ui = { 0 };
     ui.i = data;
     if(ctx->endian == LITTLEENDIAN) {
 	*(*bufptr)++ = (unsigned char)(ui.u & 0xff);
@@ -485,22 +485,8 @@ static int is_big_endian(void)
 }
 static double doubleSWAP(double df)
 {
-	union
-	{
-		double df;
-		unsigned char b[8];
-	} dat1, dat2;
-
-	dat1.df = df;
-	dat2.b[0] = dat1.b[7];
-	dat2.b[1] = dat1.b[6];
-	dat2.b[2] = dat1.b[5];
-	dat2.b[3] = dat1.b[4];
-	dat2.b[4] = dat1.b[3];
-	dat2.b[5] = dat1.b[2];
-	dat2.b[6] = dat1.b[1];
-	dat2.b[7] = dat1.b[0];
-	return dat2.df;
+        CPL_SWAP64PTR(&df);
+        return df;
 }
 
 static double get_double(blxcontext_t *ctx, unsigned char **data) {
@@ -561,13 +547,14 @@ int blx_encode_celldata(blxcontext_t *ctx,
                         CPL_UNUSED int outbufsize) {
     unsigned char *p=outbuf, *tmpdata, *coutstart, *cout=NULL;
     int level, cn, coutsize, zeros;
-    blxdata *vdec=NULL, *vdiff=NULL, *c[4], *tc1, *clut, *indata_scaled;
+    blxdata *vdec=NULL, *vdiff=NULL, *c[4] = { NULL }, *tc1, *clut, *indata_scaled;
 
     struct lutentry_s lut[256];
     int lutsize=0;
 
     int i, j;
 
+    memset( &lut, 0, sizeof(lut) );
     lut[0].value = 0;
 
     *p++ = (unsigned char)(side/32-4); /* Resolution */
@@ -583,9 +570,10 @@ int blx_encode_celldata(blxcontext_t *ctx,
 
     /* Scale indata and process undefined values*/
     for(i=0; i<side*side; i++) {
-	if((indata[i] == BLX_UNDEF) && ctx->fillundef)
+        if((indata[i] == BLX_UNDEF) && ctx->fillundef)
         indata[i] = (blxdata)ctx->fillundefval;
-	    indata_scaled[i] = (blxdata)(indata[i] / ctx->zscale);
+        /* cppcheck-suppress uninitdata */
+        indata_scaled[i] = (blxdata)(indata[i] / ctx->zscale);
     }
 
     indata = indata_scaled;
@@ -702,7 +690,7 @@ int blx_encode_celldata(blxcontext_t *ctx,
 STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
     unsigned char *inptr=inbuf;
     int resolution,l_div,level,c,n,i,j,dpos,v,tmp,a,value,l_index,step,cellsize;
-    int baseside[12];
+    int baseside[12] = { 0 };
     blxdata *base, *diff;
     struct component_s linfo[MAXLEVELS][MAXCOMPONENTS];
 
@@ -1122,7 +1110,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
 
 int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
     unsigned char header[102],*hptr;
-    int signature[2];
+    int signature[2] = { 0 };
     int i,j;
     struct cellindex_s *ci;
 

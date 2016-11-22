@@ -60,7 +60,7 @@ class CPL_DLL GDALJP2Box
     GByte      *pabyData;
 
 public:
-                GDALJP2Box( VSILFILE * = NULL );
+    explicit    GDALJP2Box( VSILFILE * = NULL );
                 ~GDALJP2Box();
 
     int         SetOffset( GIntBig nNewOffset );

@@ -103,7 +103,7 @@ class OGRIDBTableLayer : public OGRIDBLayer
     virtual ITCursor *  GetQuery();
 
   public:
-                        OGRIDBTableLayer( OGRIDBDataSource * );
+    explicit            OGRIDBTableLayer( OGRIDBDataSource * );
                         virtual ~OGRIDBTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,

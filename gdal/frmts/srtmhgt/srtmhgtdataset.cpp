@@ -301,6 +301,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   strncpy(latLonValueString, &fileName[1], 2);
   int southWestLat = atoi(latLonValueString);
   memset(latLonValueString, 0, 4);
+  // cppcheck-suppress redundantCopy
   strncpy(latLonValueString, &fileName[4], 3);
   int southWestLon = atoi(latLonValueString);
 

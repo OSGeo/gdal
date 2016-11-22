@@ -81,9 +81,9 @@ CPLString OGRCARTOEscapeLiteral(const char* pszStr)
 
 OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource* poDSIn,
                                        const char* pszName) :
-    OGRCARTOLayer(poDSIn)
+    OGRCARTOLayer(poDSIn),
+    osName( pszName )
 {
-    osName = pszName;
     SetDescription( osName );
     bLaunderColumnNames = true;
     bInDeferredInsert = poDS->DoBatchInsert();

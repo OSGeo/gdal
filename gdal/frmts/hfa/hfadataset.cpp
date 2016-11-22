@@ -3452,6 +3452,7 @@ HFADataset::HFADataset() :
     nGCPCount(0)
 {
     memset(asGCPList, 0, sizeof(asGCPList));
+    memset(adfGeoTransform, 0, sizeof(adfGeoTransform));
 }
 
 /************************************************************************/
@@ -4709,9 +4710,7 @@ HFAPCSStructToWKT( const Eprj_Datum *psDatum,
               pszUnits = pszUnitsName;
           else
               pszUnits = "meters";
-          int proNu = 0;
-          if( psPro )
-              proNu = psPro->proNumber;
+          int proNu = psPro->proNumber;
           if( oSRS.ImportFromESRIStatePlaneWKT(zoneCode, pszDatum,
                                                pszUnits, proNu) == OGRERR_NONE )
           {
@@ -6035,9 +6034,7 @@ CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
 /* -------------------------------------------------------------------- */
 /*      Rename all the files at the filesystem level.                   */
 /* -------------------------------------------------------------------- */
-    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
-
-    CPLErr eErr = poDriver->DefaultRename( pszNewName, pszOldName );
+    CPLErr eErr = GDALDriver::DefaultRename( pszNewName, pszOldName );
     if( eErr != CE_None )
         return eErr;
 
@@ -6083,9 +6080,7 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
 /* -------------------------------------------------------------------- */
 /*      Rename all the files at the filesystem level.                   */
 /* -------------------------------------------------------------------- */
-    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
-
-    CPLErr eErr = poDriver->DefaultCopyFiles( pszNewName, pszOldName );
+    CPLErr eErr = GDALDriver::DefaultCopyFiles( pszNewName, pszOldName );
 
     if( eErr != CE_None )
         return eErr;

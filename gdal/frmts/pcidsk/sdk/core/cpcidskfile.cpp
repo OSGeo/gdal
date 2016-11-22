@@ -767,8 +767,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
             new_file.file = interfaces.OpenEDB( filename, "r+" );
             new_file.writable = true;
         } 
-        catch( PCIDSK::PCIDSKException ex ) {}
-        catch( std::exception ex ) {}
+        catch( const PCIDSK::PCIDSKException& ) {}
+        catch( const std::exception& ) {}
     }
 
     if( new_file.file == NULL )

@@ -1794,6 +1794,8 @@ KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
     nTileSize = 0;
     bHasBuiltOverviews = FALSE;
     bLockOtherBands = FALSE;
+    memset( adfGlobalExtents, 0, sizeof(adfGlobalExtents) );
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
 /************************************************************************/

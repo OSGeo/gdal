@@ -126,9 +126,9 @@ public:
     void setCoordinateDimension( int n ) { m_dim = n; }
 
 private:
-    void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
+    static void EmitArc(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                  double radius, double len, double saggita,
-                 OGRLineString*, double dfZ = 0.0) const;
+                 OGRLineString*, double dfZ = 0.0);
 
     void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
                   OGRLineString*, bool bConstantZ, double dfZ) const;

@@ -55,7 +55,7 @@ class OGRILI2Layer : public OGRLayer
 
   public:
                         OGRILI2Layer( OGRFeatureDefn* poFeatureDefn,
-                                      GeomFieldInfos oGeomFieldInfos,
+                                      const GeomFieldInfos& oGeomFieldInfos,
                                       OGRILI2DataSource *poDS );
 
                        ~OGRILI2Layer();

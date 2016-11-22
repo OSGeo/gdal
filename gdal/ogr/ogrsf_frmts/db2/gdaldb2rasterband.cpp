@@ -41,12 +41,12 @@ static char* GByteArrayToHexString( const GByte* pabyData, int nLen);
 /*                      GDALDB2RasterBand()                      */
 /************************************************************************/
 
-GDALDB2RasterBand::GDALDB2RasterBand(OGRDB2DataSource* poDS,
-                                     int nBand,
+GDALDB2RasterBand::GDALDB2RasterBand(OGRDB2DataSource* poDSIn,
+                                     int nBandIn,
                                      int nTileWidth, int nTileHeight)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     eDataType = GDT_Byte;
     nBlockXSize = nTileWidth;
     nBlockYSize = nTileHeight;
@@ -645,6 +645,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
     {
         oStatement.Clear();
 
+#ifdef LATER
         if( m_hTempDB && (m_nShiftXPixelsMod || m_nShiftYPixelsMod) )
         {
             oStatement.Appendf(
@@ -727,6 +728,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
             }
         }
         else
+#endif
         {
             memset(pabyData, 0, nBands * nBlockSize );
         }
@@ -1133,8 +1135,8 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         CPLAssert(false);
     }
 
-    GDALDriver* poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
-    if( poDriver != NULL)
+    GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
+    if( l_poDriver != NULL)
     {
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
                                0, GDT_Byte, NULL);
@@ -1349,7 +1351,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         VSIStatBufL sStat;
         CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
 #endif
-        GDALDataset* poOutDS = poDriver->CreateCopy(osMemFileName, poMEMDS,
+        GDALDataset* poOutDS = l_poDriver->CreateCopy(osMemFileName, poMEMDS,
                                FALSE, papszDriverOptions, NULL, NULL);
         CSLDestroy( papszDriverOptions );
         if( poOutDS )
@@ -1637,9 +1639,9 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
 /*                         WriteShiftedTile()                           */
 /************************************************************************/
 
-CPLErr OGRDB2DataSource::WriteShiftedTile(int nRow, int nCol, int nBand,
-        int nDstXOffset, int nDstYOffset,
-        int nDstXSize, int nDstYSize)
+CPLErr OGRDB2DataSource::WriteShiftedTile(int /*nRow*/, int /*nCol*/, int /*nBand*/,
+        int /*nDstXOffset*/, int /*nDstYOffset*/,
+        int /*nDstXSize*/, int /*nDstYSize*/)
 {
 #ifdef LATER
     CPLAssert( m_nShiftXPixelsMod || m_nShiftYPixelsMod );
@@ -2142,8 +2144,9 @@ GDALRasterBand* GDALDB2RasterBand::GetOverview(int nIdx)
 static char* GByteArrayToHexString( const GByte* pabyData, int nLen)
 {
     char* pszTextBuf;
+    const size_t nBufLen = nLen*2+3;
 
-    pszTextBuf = (char *) CPLMalloc(nLen*2+3);
+    pszTextBuf = (char *) CPLMalloc(nBufLen);
 
     int  iSrc, iDst=0;
 
@@ -2151,12 +2154,12 @@ static char* GByteArrayToHexString( const GByte* pabyData, int nLen)
     {
         if( iSrc == 0 )
         {
-            sprintf( pszTextBuf+iDst, "0x%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "0x%02x", pabyData[iSrc] );
             iDst += 4;
         }
         else
         {
-            sprintf( pszTextBuf+iDst, "%02x", pabyData[iSrc] );
+            snprintf( pszTextBuf+iDst, nBufLen - iDst, "%02x", pabyData[iSrc] );
             iDst += 2;
         }
     }

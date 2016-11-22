@@ -169,7 +169,7 @@ local void gen_trees_header OF((void));
 
 #else /* DEBUG */
 #  define send_code(s, c, tree) \
-     { if (z_verbose>2) fprintf(stderr,"\ncd %3d ",(c)); \
+     { if (z_verbose>2) fprintf(stderr,"\ncd %3d ",(int)(c)); \
        send_bits(s, tree[c].Code, tree[c].Len); }
 #endif
 
@@ -824,7 +824,7 @@ local int build_bl_tree(s)
     }
     /* Update opt_len to include the bit length tree and counts */
     s->opt_len += 3*(max_blindex+1) + 5+5+4;
-    Tracev((stderr, "\ndyn trees: dyn %ld, stat %ld",
+    Tracev((stderr, "\ndyn trees: dyn %lu, stat %lu",
             s->opt_len, s->static_len));
 
     return max_blindex;
@@ -849,16 +849,16 @@ local void send_all_trees(s, lcodes, dcodes, blcodes)
     send_bits(s, dcodes-1,   5);
     send_bits(s, blcodes-4,  4); /* not -3 as stated in appnote.txt */
     for (rank = 0; rank < blcodes; rank++) {
-        Tracev((stderr, "\nbl code %2d ", bl_order[rank]));
+        Tracev((stderr, "\nbl code %2u ", bl_order[rank]));
         send_bits(s, s->bl_tree[bl_order[rank]].Len, 3);
     }
-    Tracev((stderr, "\nbl tree: sent %ld", s->bits_sent));
+    Tracev((stderr, "\nbl tree: sent %lu", s->bits_sent));
 
     send_tree(s, (ct_data *)s->dyn_ltree, lcodes-1); /* literal tree */
-    Tracev((stderr, "\nlit tree: sent %ld", s->bits_sent));
+    Tracev((stderr, "\nlit tree: sent %lu", s->bits_sent));
 
     send_tree(s, (ct_data *)s->dyn_dtree, dcodes-1); /* distance tree */
-    Tracev((stderr, "\ndist tree: sent %ld", s->bits_sent));
+    Tracev((stderr, "\ndist tree: sent %lu", s->bits_sent));
 }
 
 /* ===========================================================================
@@ -936,11 +936,11 @@ void _tr_flush_block(s, buf, stored_len, eof)
 
         /* Construct the literal and distance trees */
         build_tree(s, (tree_desc *)(&(s->l_desc)));
-        Tracev((stderr, "\nlit data: dyn %ld, stat %ld", s->opt_len,
+        Tracev((stderr, "\nlit data: dyn %lu, stat %lu", s->opt_len,
                 s->static_len));
 
         build_tree(s, (tree_desc *)(&(s->d_desc)));
-        Tracev((stderr, "\ndist data: dyn %ld, stat %ld", s->opt_len,
+        Tracev((stderr, "\ndist data: dyn %lu, stat %lu", s->opt_len,
                 s->static_len));
         /* At this point, opt_len and static_len are the total bit lengths of
          * the compressed block data, excluding the tree representations.

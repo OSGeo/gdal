@@ -27,11 +27,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
-#include "ogr_api.h"
-#include "ogr_p.h"
-#include "ogr_geos.h"
+
+#include <climits>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_geos.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 
 #ifndef HAVE_GEOS
 #define UNUSED_IF_NO_GEOS CPL_UNUSED
@@ -214,6 +229,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRLineString.");
+                    return;
                 }
                 fprintf( fp, "%d points\n", poLine->getNumPoints() );
                 break;
@@ -233,6 +249,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                 {
                     CPLError(CE_Fatal, CPLE_AppDefined,
                              "dynamic_cast failed.  Expected OGRCurvePolygon.");
+                    return;
                 }
 
                 OGRCurve *poRing = poPoly->getExteriorRingCurve();
@@ -286,6 +303,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
                     CPLError(
                         CE_Fatal, CPLE_AppDefined,
                         "dynamic_cast failed.  Expected OGRCompoundCurve.");
+                    return;
                 }
                 if( poCC->getNumCurves() == 0 )
                 {
@@ -849,7 +867,7 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
 int OGRGeometry::getCoordinateDimension() const
 
 {
-    return flags & OGR_G_3D ? 3 : 2;
+    return (flags & OGR_G_3D) ? 3 : 2;
 }
 
 /************************************************************************/
@@ -4594,6 +4612,9 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            delete poCentroidGeom;
+            freeGEOSContext( hGEOSCtxt );
+            return OGRERR_FAILURE;
         }
 
         if( !poCentroid->IsEmpty() )

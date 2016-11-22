@@ -755,7 +755,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int i = 0; i < argc; i++ )
+    for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
         {

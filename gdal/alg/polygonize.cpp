@@ -49,7 +49,7 @@ CPL_CVSID("$Id$");
 
 class RPolygon {
 public:
-    RPolygon( double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
+    explicit RPolygon( double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
 
     double           dfPolyValue;
     int              nLastLineUpdated;

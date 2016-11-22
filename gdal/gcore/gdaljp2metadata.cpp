@@ -2396,8 +2396,18 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             snprintf( szSRSName, sizeof(szSRSName), "%s",
                     "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
+        const double dfLLX = adfGeoTransform[0];
+        const double dfLLY = adfGeoTransform[3] + adfGeoTransform[5] * nYSize;
+        const double dfURX = adfGeoTransform[0] + adfGeoTransform[1] * nXSize;
+        const double dfURY = adfGeoTransform[3];
         osGridCoverage.Printf(
 "   <gmljp2:GMLJP2RectifiedGridCoverage gml:id=\"RGC_1_%s\">\n"
+"     <gml:boundedBy>\n"
+"       <gml:Envelope srsDimension=\"2\" srsName=\"%s\">\n"
+"         <gml:lowerCorner>%.15g %.15g</gml:lowerCorner>\n"
+"         <gml:upperCorner>%.15g %.15g</gml:upperCorner>\n"
+"       </gml:Envelope>\n"
+"     </gml:boundedBy>\n"
 "     <gml:domainSet>\n"
 "      <gml:RectifiedGrid gml:id=\"RGC_1_GRID_%s\" dimension=\"2\" srsName=\"%s\">\n"
 "       <gml:limits>\n"
@@ -2428,6 +2438,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 "     <gmlcov:rangeType>%s</gmlcov:rangeType>\n"
 "   </gmljp2:GMLJP2RectifiedGridCoverage>\n",
             osRootGMLId.c_str(),
+            szSRSName,
+            dfLLX, dfLLY,
+            dfURX, dfURY,
             osRootGMLId.c_str(),
             szSRSName,
             nXSize-1, nYSize-1, szSRSName, adfOrigin[0], adfOrigin[1],
@@ -2620,11 +2633,15 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                         this,
                                                         i,
                                                         CPLGetBasename(aoGMLFiles[i].osFile));
-                        char* apszOptions[2];
-                        apszOptions[0] = (char*) "FORMAT=GML3.2";
-                        apszOptions[1] = NULL;
-                        GDALDatasetH hDS = GDALCreateCopy(hGMLDrv, osTmpFile, hSrcDS,
-                                                        FALSE, apszOptions, NULL, NULL);
+                        const char* apszOptions[3] = { NULL };
+                        apszOptions[0] = "FORMAT=GML3.2";
+                        apszOptions[1] = (bCRSURL) ? "SRSNAME_FORMAT=OGC_URL" :
+                                                     "SRSNAME_FORMAT=OGC_URN";
+                        apszOptions[2] = NULL;
+                        GDALDatasetH hDS = GDALCreateCopy(
+                                    hGMLDrv, osTmpFile, hSrcDS,
+                                    FALSE,
+                                    const_cast<char**>(apszOptions), NULL, NULL);
                         if( hDS )
                         {
                             GDALClose(hDS);
@@ -2870,12 +2887,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                                      this,
                                                      i,
                                                      CPLGetBasename(aoAnnotations[i].osFile));
-                    char* apszOptions[2];
-                    apszOptions[0] = NULL;
-                    apszOptions[1] = NULL;
                     GDALDatasetH hDS = GDALCreateCopy(hLIBKMLDrv ? hLIBKMLDrv : hKMLDrv,
                                                       osTmpFile, hSrcDS,
-                                                      FALSE, apszOptions, NULL, NULL);
+                                                      FALSE, NULL, NULL, NULL);
                     if( hDS )
                     {
                         GDALClose(hDS);

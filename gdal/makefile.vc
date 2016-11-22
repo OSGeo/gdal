@@ -209,6 +209,8 @@ devinstall: install libinstall
 	copy ogr\ogrsf_frmts\*.h $(INCDIR)
 !ENDIF
 !IFDEF INCLUDE_GNM_FRMTS
-	copy gnm\*.h $(INCDIR)
+	copy gnm\gnm.h $(INCDIR)
+	copy gnm\gnm_api.h $(INCDIR)
+    copy gnm\gnmgraph.h $(INCDIR)
 !ENDIF
 	copy apps\gdal_utils.h $(INCDIR)

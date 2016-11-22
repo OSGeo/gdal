@@ -455,7 +455,7 @@ class GDALClientDataset: public GDALPamDataset
                                           GDALDataType eType,
                                           char ** papszOptions );
 
-                                  GDALClientDataset(GDALServerSpawnedProcess* ssp);
+                         explicit GDALClientDataset(GDALServerSpawnedProcess* ssp);
 
         static GDALClientDataset* CreateAndConnect();
 
@@ -470,7 +470,7 @@ class GDALClientDataset: public GDALPamDataset
                                GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg);
     public:
-                            GDALClientDataset(GDALPipe* p);
+                   explicit GDALClientDataset(GDALPipe* p);
                    virtual ~GDALClientDataset();
 
         int                 Init(const char* pszFilename, GDALAccess eAccess,
@@ -1910,7 +1910,7 @@ public:
     void* pBuffer;
     int nBufferSize;
 
-        GDALServerInstance(GDALPipe* p);
+        explicit GDALServerInstance(GDALPipe* p);
        ~GDALServerInstance();
 };
 
@@ -2138,6 +2138,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             if( !GDALPipeRead(p, &dfProgress) ||
                 !GDALPipeRead(p, &pszProgressMsg) )
                 break;
+            CPLAssert( pfnProgress );
+            // cppcheck-suppress nullPointer
             nRet = pfnProgress(dfProgress, pszProgressMsg, pProgressData);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, nRet);
@@ -6361,6 +6363,7 @@ GDALDriver* GDALGetAPIPROXYDriver()
         CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
+        // cppcheck-suppress duplicateExpression
         CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");

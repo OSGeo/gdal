@@ -228,6 +228,7 @@ int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);

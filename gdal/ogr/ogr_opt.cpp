@@ -27,7 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_srs_api.h"
+
+#include <cstddef>
+
+#include "cpl_conv.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -607,9 +612,10 @@ int OPTGetParameterInfo( CPL_UNUSED const char * pszProjectionMethod,
         if( EQUAL(papszParameterDefinitions[i], pszParameterName) )
         {
             if( ppszUserName != NULL )
-                *ppszUserName = (char *)papszParameterDefinitions[i+1];
+                *ppszUserName =
+                    const_cast<char *>(papszParameterDefinitions[i+1]);
             if( ppszType != NULL )
-                *ppszType = (char *)papszParameterDefinitions[i+2];
+                *ppszType = const_cast<char *>(papszParameterDefinitions[i+2]);
             if( pdfDefaultValue != NULL )
                 *pdfDefaultValue = CPLAtof(papszParameterDefinitions[i+3]);
 

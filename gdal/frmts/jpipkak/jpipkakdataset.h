@@ -133,7 +133,7 @@ private:
     JPIPDataSegment* ReadSegment(GByte* pabyData, int nLen, int& bError);
     int Initialize(const char* url, int bReinitializing );
     void Deinitialize();
-    int KakaduClassId(int nClassId);
+    static int KakaduClassId(int nClassId);
 
     CPLMutex *pGlobalMutex;
 

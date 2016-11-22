@@ -138,12 +138,12 @@ public:
 /*                           MG4LidarRasterBand()                            */
 /************************************************************************/
 
-MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name )
+MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name ) :
+    ChannelName( name )
 {
    this->poDS = pods;
    this->nBand = nband;
    this->poxmlBand = xmlBand;
-   this->ChannelName = name;
    this->Aggregation = NULL;
    nBlockXSize = pods->nBlockXSize;
    nBlockYSize = pods->nBlockYSize;

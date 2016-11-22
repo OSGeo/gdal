@@ -93,7 +93,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
 
-    int         ProcessError( CPLHTTPResult *psResult );
+    static int         ProcessError( CPLHTTPResult *psResult );
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
     void        FlushMemoryResult();
     CPLString   osResultFilename;
@@ -695,7 +695,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLString osBandList;
     int       bSelectingBands = FALSE;
 
-    if( strlen(osBandIdentifier) && nBandCount > 0 )
+    if( strlen(osBandIdentifier) && nBandCount > 0 && panBandList != NULL )
     {
         int iBand;
 

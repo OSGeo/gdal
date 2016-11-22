@@ -1800,7 +1800,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char* pszLayerName,
         while (oIter != oEndIter)
         {
             GMLFeatureClass* poClass = *oIter;
-            oIter ++;
+            ++oIter;
 
             OGRWFSLayer* poLayer = NULL;
 
@@ -2025,7 +2025,7 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
     {
         if (osSrc[i]=='%' && i+2 < osSrc.length())
         {
-            int ii = 0;
+            unsigned int ii = 0;
             sscanf(osSrc.substr(i+1,2).c_str(), "%x", &ii);
             char ch = static_cast<char>(ii);
             ret += ch;
@@ -2154,7 +2154,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             poFeature->SetField(0, osFID);
             CPL_IGNORE_RET_VAL(poMEMLayer->CreateFeature(poFeature));
             delete poFeature;
-            oIter ++;
+            ++oIter;
         }
 
         OGRLayer* poResLayer = new OGRWFSWrappedResultLayer(poMEMDS, poMEMLayer);

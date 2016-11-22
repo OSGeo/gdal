@@ -183,7 +183,7 @@ class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
 {
     public:
-        OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
+        explicit OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
             OGRFeatureDefn(pszName)
         {
             SetGeomType(wkbNone);
@@ -271,10 +271,13 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     int                 bAllowMultipleGeomFields;
 
+    static
     CPLString           FormatSpatialFilterFromRTree(OGRGeometry* poFilterGeom,
                                                        const char* pszRowIDName,
                                                        const char* pszEscapedTable,
                                                        const char* pszEscapedGeomCol);
+
+    static
     CPLString           FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
                                                    const char* pszEscapedGeomColName);
 
@@ -386,7 +389,7 @@ class OGRSQLiteTableLayer : public OGRSQLiteLayer
     int                 iFIDAsRegularColumnIndex;
 
   public:
-                        OGRSQLiteTableLayer( OGRSQLiteDataSource * );
+    explicit            OGRSQLiteTableLayer( OGRSQLiteDataSource * );
                         virtual ~OGRSQLiteTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
@@ -495,7 +498,7 @@ class OGRSQLiteViewLayer : public OGRSQLiteLayer
     CPLErr              EstablishFeatureDefn();
 
   public:
-                        OGRSQLiteViewLayer( OGRSQLiteDataSource * );
+    explicit            OGRSQLiteViewLayer( OGRSQLiteDataSource * );
                         virtual ~OGRSQLiteViewLayer();
 
     virtual const char* GetName() { return pszViewName; }

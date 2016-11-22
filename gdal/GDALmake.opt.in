@@ -408,6 +408,11 @@ HAVE_DWGDIRECT = no
 endif
 
 #
+# CAD Support
+#
+HAVE_CAD	=	@CXX11_SUPPORT@
+
+#
 # Informix DataBlade support
 #
 HAVE_IDB	= @HAVE_IDB@

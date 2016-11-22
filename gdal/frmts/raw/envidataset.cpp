@@ -245,11 +245,11 @@ class ENVIDataset : public RawDataset
     int         ProcessMapinfo( const char * );
     void        ProcessRPCinfo( const char * ,int ,int);
     void        ProcessStatsFile();
-    int         byteSwapInt(int);
-    float       byteSwapFloat(float);
-    double      byteSwapDouble(double);
-    void        SetENVIDatum( OGRSpatialReference *, const char * );
-    void        SetENVIEllipse( OGRSpatialReference *, char ** );
+    static int         byteSwapInt(int);
+    static float       byteSwapFloat(float);
+    static double      byteSwapDouble(double);
+    static void        SetENVIDatum( OGRSpatialReference *, const char * );
+    static void        SetENVIEllipse( OGRSpatialReference *, char ** );
     void        WriteProjectionInfo();
     int         ParseRpcCoeffsMetaDataString( const char *psName,
                                               char *papszVal[], int& idx );

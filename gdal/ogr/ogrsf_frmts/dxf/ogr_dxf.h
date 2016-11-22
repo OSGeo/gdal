@@ -73,7 +73,7 @@ class OGRDXFBlocksLayer : public OGRLayer
     std::map<CPLString,DXFBlockDefinition>::iterator oIt;
 
   public:
-    OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
+    explicit OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
     ~OGRDXFBlocksLayer();
 
     void                ResetReading();
@@ -131,7 +131,7 @@ class OGRDXFLayer : public OGRLayer
     CPLString           TextUnescape( const char * );
 
   public:
-    OGRDXFLayer( OGRDXFDataSource *poDS );
+    explicit OGRDXFLayer( OGRDXFDataSource *poDS );
     ~OGRDXFLayer();
 
     void                ResetReading();
@@ -286,8 +286,8 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteINSERT( OGRFeature* );
 
     static CPLString    TextEscape( const char * );
-    int                 ColorStringToDXFColor( const char * );
-    CPLString           PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static int          ColorStringToDXFColor( const char * );
+    static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
 
     std::map<CPLString,CPLString> oNewLineTypes;
     int                 nNextAutoID;
@@ -321,7 +321,7 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
   public:
-    OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS );
+    explicit OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS );
     ~OGRDXFBlocksWriterLayer();
 
     void                ResetReading() {}

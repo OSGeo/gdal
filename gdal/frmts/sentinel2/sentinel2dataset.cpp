@@ -408,7 +408,7 @@ class SENTINEL2_CPLXMLNodeHolder
 {
     CPLXMLNode* m_psNode;
     public:
-        SENTINEL2_CPLXMLNodeHolder(CPLXMLNode* psNode) : m_psNode(psNode) {}
+        explicit SENTINEL2_CPLXMLNodeHolder(CPLXMLNode* psNode) : m_psNode(psNode) {}
        ~SENTINEL2_CPLXMLNodeHolder() { if(m_psNode) CPLDestroyXMLNode(m_psNode); }
 
        CPLXMLNode* Release() {
@@ -1209,7 +1209,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -2452,8 +2452,9 @@ static bool SENTINEL2GetTileInfo(const char* pszFilename,
                                     memcpy(pnHeight, pabyData, 4);
                                     CPL_MSBPTR32(pnHeight);
                                 }
-                                if( pnWidth )
+                                if( pnWidth != NULL )
                                 {
+                                    //cppcheck-suppress nullPointer
                                     memcpy(pnWidth, pabyData+4, 4);
                                     CPL_MSBPTR32(pnWidth);
                                 }
@@ -2693,7 +2694,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -2924,7 +2925,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
         CPLDebug("SENTINEL2", "Invalid EPSG code %d", nSubDSEPSGCode);
     }
 
-    double adfGeoTransform[6];
+    double adfGeoTransform[6] = { 0 };
     adfGeoTransform[0] = dfMinX;
     adfGeoTransform[1] = nSubDSPrecision;
     adfGeoTransform[2] = 0;

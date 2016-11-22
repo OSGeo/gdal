@@ -63,7 +63,7 @@ void RcomputeExtend(
 	double y_2,      /* second y-coordinate */
 	CSF_PT projection, /* required projection */
 	REAL8 cellSize, /* required cellsize, > 0 */
-	double rounding) /* assure that (xUL/rounding), (yUL/rouding)
+	double rounding) /* assure that (xUL/rounding), (yUL/rounding)
 	                  * (xLL/rounding) and (yLL/rounding) will
 	                 * will all be an integers values > 0 
 	                 */

@@ -66,7 +66,11 @@
 #include <algorithm>
 #include <set>
 
-#if HAVE_CXX11
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+
+#if HAVE_CXX11_MUTEX
 #include <mutex>
 #endif
 
@@ -1338,16 +1342,11 @@ public:
         {
             while( nSeekForward > 0 )
             {
-#if HAVE_CXX11
-                // If size_t is smaller than vsi_l_offset, possible trouble.
-                static_assert(
-                    sizeof(size_t) >= sizeof(vsi_l_offset),
-                    "size_t must be the same size or bigger than vsi_l_offset");
-#endif
-                size_t nToRead = static_cast<size_t>(
-                    std::min(nTempBufferSize,
-                             static_cast<size_t>(nSeekForward)));
-                if( VSIFReadL(pTempBuffer, nToRead, 1, fp) != 1 )
+                vsi_l_offset nToRead = nSeekForward;
+                if( nToRead > nTempBufferSize )
+                    nToRead = nTempBufferSize;
+                if( VSIFReadL(pTempBuffer, static_cast<size_t>(nToRead),
+                              1, fp) != 1 )
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Cannot seek to block %d", nBlockId);
@@ -16691,10 +16690,8 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
              EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
     {
         CPLString osMissing;
-        for( int i = 0;
-             i < static_cast<int>( sizeof(anReachedVirtualMemIO) ) /
-                 sizeof(anReachedVirtualMemIO[0]) );
-             ++i )
+        for( int i = 0; i < static_cast<int>(
+                                CPL_ARRAYSIZE(anReachedVirtualMemIO)); ++i )
         {
             if( !anReachedVirtualMemIO[i] )
             {
@@ -17187,16 +17184,16 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
 #else
 static CPLMutex* hGTiffOneTimeInitMutex = NULL;
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 #else
     CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);

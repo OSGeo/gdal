@@ -330,7 +330,7 @@ static unsigned int WriteSubFieldInt(VSILFILE* fd, int val, unsigned int size)
 {
     char* str = (char*)CPLMalloc(size+1);
     char formatStr[32];
-    snprintf( formatStr, sizeof(formatStr), "%%0%dd", size);
+    snprintf( formatStr, sizeof(formatStr), "%%0%ud", size);
     snprintf( str, size+1, formatStr, val);
     VSIFWriteL(str, 1, size, fd);
     CPLFree(str);
@@ -540,7 +540,9 @@ ADRGDataset::ADRGDataset() :
     fdTHF(NULL),
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                          ~ADRGDataset()                              */

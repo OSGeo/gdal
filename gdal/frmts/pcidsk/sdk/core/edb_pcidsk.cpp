@@ -50,7 +50,7 @@ class PCIDSK_EDBFile : public EDBFile
     
 public:
 
-    PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
+    explicit PCIDSK_EDBFile( PCIDSKFile *file_in ) { file = file_in; }
     ~PCIDSK_EDBFile() { Close(); }
 
     int Close() const;
@@ -71,7 +71,7 @@ public:
 /*                           DefaultOpenEDB()                           */
 /************************************************************************/
 
-EDBFile *PCIDSK::DefaultOpenEDB( std::string filename, std::string access )
+EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string& access )
 
 {
     // it would be nice to be able to pass in an appropriate PCIDSKInterface!

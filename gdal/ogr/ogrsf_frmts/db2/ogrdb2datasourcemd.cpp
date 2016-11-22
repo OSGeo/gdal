@@ -65,7 +65,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -84,7 +84,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -162,12 +162,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set identifier failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -184,12 +184,12 @@ CPLErr OGRDB2DataSource::FlushMetadata()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 CPLDebug("OGRDB2DataSource::FlushMetadata",
                          "Set description failed in gpkg.contents"
-                         "for table %s; ",
+                         "for table %s: %s",
                          m_osRasterTable.c_str(),
                          GetSession()->GetLastError());
                 return CE_Failure;
@@ -249,6 +249,7 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
         pszXML = CPLSerializeXMLTree(psMasterXMLNode);
         CPLDestroyXMLNode(psMasterXMLNode);
     }
+    // cppcheck-suppress uselessAssignmentPtrArg
     psXMLNode = NULL;
     CPLDebug("OGRDB2DataSource::WriteMetadata",
              "pszTableName: %s; bIsEmpty: %d", pszTableName, bIsEmpty);
@@ -365,9 +366,9 @@ void OGRDB2DataSource::WriteMetadata(CPLXMLNode* psXMLNode, /* will be destroyed
             else
             {
                 oStatement.Appendf("INSERT INTO gpkg.metadata_reference "
-                                   "(reference_scope, table_name, md_file_id) "
-                                   "VALUES ('table', '%s', %d)",
-                                   pszTableName, nNewId);
+                                   "(reference_scope, md_file_id) "
+                                   "VALUES ('geopackage', %d)",
+                                   nNewId);
             }
         }
         else

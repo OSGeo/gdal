@@ -68,7 +68,7 @@ class GMLASPrefixMappingHander: public DefaultHandler
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
   public:
-        GMLASPrefixMappingHander(
+        explicit GMLASPrefixMappingHander(
                         std::map<CPLString, CPLString>& oMapURIToPrefix) :
             m_oMapURIToPrefix( oMapURIToPrefix )
         {}
@@ -670,7 +670,7 @@ template<class T> class GMLASUniquePtr
         GMLASUniquePtr& operator=(const GMLASUniquePtr&);
 
     public:
-        GMLASUniquePtr(T* p): m_p(p) {}
+        explicit GMLASUniquePtr(T* p): m_p(p) {}
        ~GMLASUniquePtr() { delete m_p; }
 
        T* operator->() const { CPLAssert(m_p); return m_p; }
@@ -968,7 +968,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     std::vector<XSElementDeclaration*> oVectorEltsForTopClass;
 
     // For some reason, different XSElementDeclaration* can point to the
-    // same element, but we only want to instanciate a single class.
+    // same element, but we only want to instantiate a single class.
     // This is the case for base:SpatialDataSet in
     // inspire/geologicalunit/geologicalunit.gml test dataset.
     std::set<CPLString> aoSetXPathEltsForTopClass;
@@ -1217,10 +1217,10 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
         // might be NULL on swe:values for example
         if( poCT->getParticle() != NULL )
         {
-            std::map< CPLString, int > oMapCountOccurencesOfSameName;
-            BuildMapCountOccurencesOfSameName(
+            std::map< CPLString, int > oMapCountOccurrencesOfSameName;
+            BuildMapCountOccurrencesOfSameName(
                 poCT->getParticle()->getModelGroupTerm(),
-                oMapCountOccurencesOfSameName);
+                oMapCountOccurrencesOfSameName);
             if( !ExploreModelGroup(
                                 poCT->getParticle()->getModelGroupTerm(),
                                 poCT->getAttributeUses(),
@@ -1228,7 +1228,7 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
                                 0,
                                 oSetVisitedModelGroups,
                                 poModel,
-                                oMapCountOccurencesOfSameName) )
+                                oMapCountOccurrencesOfSameName) )
             {
                 bError = true;
                 return false;
@@ -1399,17 +1399,27 @@ XSModelGroupDefinition* GMLASSchemaAnalyzer::GetGroupDefinition( const XSModelGr
 
 static bool IsAnyType(XSComplexTypeDefinition* poType)
 {
-    XSModelGroup* poGroupTerm = NULL;
-    XSParticle* poParticle = NULL;
-    XSParticleList* poParticles = NULL;
-    return XMLString::equals(poType->getBaseType()->getNamespace(),
+    if( XMLString::equals(poType->getBaseType()->getNamespace(),
                              PSVIUni::fgNamespaceXmlSchema) &&
-        transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE &&
-        (poParticle = poType->getParticle()) != NULL &&
-        (poGroupTerm = poParticle->getModelGroupTerm()) != NULL &&
-        (poParticles = poGroupTerm->getParticles()) != NULL &&
-        poParticles->size() == 1 &&
-        poParticles->elementAt(0)->getTermType() == XSParticle::TERM_WILDCARD;
+        transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE )
+    {
+        XSParticle* poParticle = poType->getParticle();
+        if( poParticle != NULL )
+        {
+            XSModelGroup* poGroupTerm = poParticle->getModelGroupTerm();
+            if( poGroupTerm != NULL )
+            {
+                XSParticleList* poParticles =  poGroupTerm->getParticles();
+                if( poParticles != NULL )
+                {
+                    return poParticles->size() == 1 &&
+                           poParticles->elementAt(0)->getTermType() ==
+                                                    XSParticle::TERM_WILDCARD;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -2127,12 +2137,12 @@ bool GMLASSchemaAnalyzer::IsGMLNamespace(const CPLString& osURI)
 }
 
 /************************************************************************/
-/*                    BuildMapCountOccurencesOfSameName()               */
+/*                    BuildMapCountOccurrencesOfSameName()               */
 /************************************************************************/
 
-void GMLASSchemaAnalyzer::BuildMapCountOccurencesOfSameName(
+void GMLASSchemaAnalyzer::BuildMapCountOccurrencesOfSameName(
                     XSModelGroup* poModelGroup,
-                    std::map< CPLString, int >& oMapCountOccurencesOfSameName)
+                    std::map< CPLString, int >& oMapCountOccurrencesOfSameName)
 {
     XSParticleList* poParticles = poModelGroup->getParticles();
     for(size_t i = 0; i < poParticles->size(); ++i )
@@ -2142,13 +2152,13 @@ void GMLASSchemaAnalyzer::BuildMapCountOccurencesOfSameName(
         {
             XSElementDeclaration* poElt = poParticle->getElementTerm();
             const CPLString osEltName(transcode(poElt->getName()));
-            oMapCountOccurencesOfSameName[ osEltName ] ++;
+            oMapCountOccurrencesOfSameName[ osEltName ] ++;
         }
         else if( poParticle->getTermType() == XSParticle::TERM_MODELGROUP )
         {
             XSModelGroup* psSubModelGroup = poParticle->getModelGroupTerm();
-            BuildMapCountOccurencesOfSameName(psSubModelGroup,
-                                              oMapCountOccurencesOfSameName);
+            BuildMapCountOccurrencesOfSameName(psSubModelGroup,
+                                              oMapCountOccurrencesOfSameName);
         }
     }
 }
@@ -2184,7 +2194,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             int nRecursionCounter,
                             std::set<XSModelGroup*>& oSetVisitedModelGroups,
                             XSModel* poModel,
-                            const std::map< CPLString, int >& oMapCountOccurencesOfSameName)
+                            const std::map< CPLString, int >& oMapCountOccurrencesOfSameName)
 {
     if( oSetVisitedModelGroups.find(poModelGroup) !=
                                                 oSetVisitedModelGroups.end() )
@@ -2204,31 +2214,33 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         return false;
     }
 
-    const size_t nMainAttrListSize = (poMainAttrList != NULL) ?
-                                                    poMainAttrList->size(): 0;
-    for(size_t j=0; j < nMainAttrListSize; ++j )
+    if( poMainAttrList != NULL )
     {
-        GMLASField oField;
-        XSAttributeUse* poAttr = poMainAttrList->elementAt(j);
-        SetFieldFromAttribute(oField, poAttr, oClass.GetXPath());
-
-        if( IsIgnoredXPath( oField.GetXPath() ) )
+        const size_t nMainAttrListSize = poMainAttrList->size();
+        for(size_t j=0; j < nMainAttrListSize; ++j )
         {
-#ifdef DEBUG_VERBOSE
-            CPLDebug("GMLAS", "%s is in ignored xpaths",
-                     oField.GetXPath().c_str());
-#endif
-            if( !oField.GetFixedValue().empty() )
-            {
-                oField.SetIgnored();
-            }
-            else
-            {
-                continue;
-            }
-        }
+            GMLASField oField;
+            XSAttributeUse* poAttr = poMainAttrList->elementAt(j);
+            SetFieldFromAttribute(oField, poAttr, oClass.GetXPath());
 
-        oClass.AddField(oField);
+            if( IsIgnoredXPath( oField.GetXPath() ) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GMLAS", "%s is in ignored xpaths",
+                        oField.GetXPath().c_str());
+#endif
+                if( !oField.GetFixedValue().empty() )
+                {
+                    oField.SetIgnored();
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            oClass.AddField(oField);
+        }
     }
 
     XSParticleList* poParticles = poModelGroup->getParticles();
@@ -2280,9 +2292,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             const CPLString osEltName(transcode(poElt->getName()));
 
             std::map< CPLString, int >::const_iterator oIter =
-                oMapCountOccurencesOfSameName.find(osEltName);
+                oMapCountOccurrencesOfSameName.find(osEltName);
             const bool bEltNameWillNeedPrefix =
-                oIter != oMapCountOccurencesOfSameName.end() &&
+                oIter != oMapCountOccurrencesOfSameName.end() &&
                 oIter->second > 1;
             const CPLString osEltNS(transcode(poElt->getNamespace()));
             const CPLString osOnlyElementXPath(MakeXPath(osEltNS, osEltName));
@@ -2726,10 +2738,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         std::set<XSModelGroup*>
                             oSetNewVisitedModelGroups(oSetVisitedModelGroups);
 
-                        std::map< CPLString, int > oMapCountOccurencesOfSameNameSub;
-                        BuildMapCountOccurencesOfSameName(
+                        std::map< CPLString, int > oMapCountOccurrencesOfSameNameSub;
+                        BuildMapCountOccurrencesOfSameName(
                             poEltCT->getParticle()->getModelGroupTerm(),
-                            oMapCountOccurencesOfSameNameSub);
+                            oMapCountOccurrencesOfSameNameSub);
 
                         if( !ExploreModelGroup(
                                            poEltCT->getParticle()->
@@ -2739,7 +2751,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                            nRecursionCounter + 1,
                                            oSetNewVisitedModelGroups,
                                            poModel,
-                                           oMapCountOccurencesOfSameNameSub) )
+                                           oMapCountOccurrencesOfSameNameSub) )
                         {
                             return false;
                         }
@@ -3059,7 +3071,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                         nRecursionCounter + 1,
                                         oSetNewVisitedModelGroups,
                                         poModel,
-                                        oMapCountOccurencesOfSameName) )
+                                        oMapCountOccurrencesOfSameName) )
                 {
                     return false;
                 }
@@ -3100,7 +3112,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                         nRecursionCounter + 1,
                                         oSetNewVisitedModelGroups,
                                         poModel,
-                                        oMapCountOccurencesOfSameName ) )
+                                        oMapCountOccurrencesOfSameName ) )
                 {
                     return false;
                 }

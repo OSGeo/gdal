@@ -111,6 +111,26 @@ AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-opera
 
 AC_LANG_POP([C++])
 
+CXX11_SUPPORT=no
+AC_ARG_WITH([cpp11],
+	    AS_HELP_STRING([--without-cpp11],
+	       [Disable C++11 compiler options]),,)
+
+AC_MSG_CHECKING([if use C++11 compiler options])
+if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
+    dnl Check C++ compiler compatibility with C++11
+    AC_MSG_CHECKING([C++ compiler compatibility with C++11])
+    AX_CXX_COMPILE_STDCXX_11([ext],[optional])
+
+    if [test "$HAVE_CXX11" = "1"]; then
+        CXX11_SUPPORT=yes
+    fi
+    AC_MSG_RESULT([enabled])
+else
+    AC_MSG_RESULT([disabled by user])
+fi
+AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
+
 dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
 SAVED_CXXFLAGS=$CXXFLAGS
@@ -118,7 +138,7 @@ CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
 AC_MSG_CHECKING([if -Wimplicit-fallthrough can be enabled])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
-    #error "not C++11 or clang >= 3.7"
+    #error "not (C++11 and clang >= 3.7)"
     #endif]])],
   [CXX_WFLAGS="$CXX_WFLAGS -Wimplicit-fallthrough"]
   [AC_MSG_RESULT([yes])],
@@ -2998,10 +3018,10 @@ AC_ARG_WITH(gnm,[  --with-gnm            Build GNM into shared library],,)
 
 if test "$with_gnm" = "no" ; then
   GNM_ENABLED=no
-  echo echo checking for GNM ... support disabled
+  AC_MSG_RESULT([disabled by user])
 else
-  echo checking for GNM ... enabled
   GNM_ENABLED=yes
+  AC_MSG_RESULT([enabled])
 fi
 AC_SUBST(GNM_ENABLED,$GNM_ENABLED)
 
@@ -4730,15 +4750,18 @@ if test "x$with_java" = "xyes"; then
 dnl Ubuntu
     JAVA_6_TEST_DIR=
     JAVA_7_TEST_DIR=
+    JAVA_8_TEST_DIR=
     JAVA_MAC_TEST_DIR=
     case "$host_cpu" in
         i*86*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-i386
             JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-i386
+            JAVA_8_TEST_DIR=/usr/lib/jvm/java-8-openjdk-i386
             ;;
         x86_64*)
             JAVA_6_TEST_DIR=/usr/lib/jvm/java-6-openjdk-amd64
             JAVA_7_TEST_DIR=/usr/lib/jvm/java-7-openjdk-amd64
+            JAVA_8_TEST_DIR=/usr/lib/jvm/java-8-openjdk-amd64
             ;;
         *)
             ;;
@@ -4749,7 +4772,10 @@ dnl Ubuntu
         ;;
     esac
 
-    if test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
+    if test "x$JAVA_8_TEST_DIR" != "x" -a -d "$JAVA_8_TEST_DIR/include"; then
+        with_java="$JAVA_8_TEST_DIR"
+
+    elif test "x$JAVA_7_TEST_DIR" != "x" -a -d "$JAVA_7_TEST_DIR/include"; then
         with_java="$JAVA_7_TEST_DIR"
 
     elif test "x$JAVA_6_TEST_DIR" != "x" -a -d "$JAVA_6_TEST_DIR/include"; then
@@ -5227,6 +5253,7 @@ LOC_MSG()
 LOC_MSG([  Installation directory:    ${prefix}])
 LOC_MSG([  C compiler:                ${CC} ${CFLAGS}])
 LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
+LOC_MSG([  C++11 support:             ${CXX11_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()

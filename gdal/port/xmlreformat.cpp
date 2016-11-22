@@ -29,13 +29,13 @@
 #include "cpl_minixml.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 int main( int argc, char **argv )
 
 {
-    static char  szXML[20000000];
-    FILE       *fp;
+    static char szXML[20000000];
+    FILE *fp = NULL;
 
     if( argc == 1 )
         fp = stdin;

@@ -155,6 +155,7 @@ OGRSOSIDataSource::OGRSOSIDataSource() {
     poCurveHeaders = NULL;
 
     pszEncoding = CPL_ENC_UTF8;
+    nNumFeatures = 0;
 
     SOSIInitTypes();
 
@@ -209,7 +210,7 @@ OGRFeatureDefn *defineLayer(const char *szName, OGRwkbGeometryType szType, S2I *
     poFeatureDefn->SetGeomType( szType );
     S2I* poHeadersNew  = *ppoHeadersNew;
 
-    for (S2I::iterator i=poHeaders->begin(); i!=poHeaders->end(); i++) {
+    for (S2I::iterator i=poHeaders->begin(); i!=poHeaders->end(); ++i) {
                 OGRSOSIDataType* poType = SOSIGetType(i->first);
                 OGRSOSISimpleDataType* poElements = poType->getElements();
                 for (int k=0; k<poType->getElementCount(); k++) {

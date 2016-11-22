@@ -827,7 +827,8 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         /* Those drivers are expected not to store a layer geometry type */
         !EQUAL(poDriver->GetDescription(), "KML") &&
         !EQUAL(poDriver->GetDescription(), "LIBKML") &&
-        !EQUAL(poDriver->GetDescription(), "PDF") )
+        !EQUAL(poDriver->GetDescription(), "PDF") &&
+        !EQUAL(poDriver->GetDescription(), "GeoJSON") )
     {
         /* Reopen dataset */
         poDS = LOG_ACTION((GDALDataset*)GDALOpenEx( osFilename,
@@ -3148,11 +3149,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     OGRFeature::DestroyFeature(poSQLFeat);
     poSQLFeat = NULL;
 
-    if( poSQLLyr )
-    {
-        LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-        poSQLLyr = NULL;
-    }
+    LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
 
     /* Return an empty layer */
     osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));

@@ -66,11 +66,10 @@ class jpipkak_kdu_cpl_error_message : public kdu_message
 public: // Member classes
     using kdu_message::put_text;
 
-    jpipkak_kdu_cpl_error_message( CPLErr eErrClass )
-    {
-        m_eErrClass = eErrClass;
-        m_pszError = NULL;
-    }
+    explicit jpipkak_kdu_cpl_error_message( CPLErr eErrClass ) :
+        m_eErrClass ( eErrClass ),
+        m_pszError ( NULL )
+    {}
 
     void put_text(const char *string)
     {
@@ -678,7 +677,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         else
             eDT = GDT_Byte;
 
-        if( poCodestream->get_bit_depth(0) % 8 != 8
+        if( (poCodestream->get_bit_depth(0) % 8) != 0
             && poCodestream->get_bit_depth(0) < 16 )
             SetMetadataItem(
                 "NBITS",
@@ -1495,6 +1494,13 @@ JPIPKAKAsyncReader::JPIPKAKAsyncReader()
     pAppBuf = NULL;
     pBuf = NULL;
     nDataRead = 0;
+    nAppPixelSpace = 0;
+    nAppLineSpace = 0;
+    nAppBandSpace = 0;
+    nLevel = 0;
+    nQualityLayers = 0;
+    bHighPriority = FALSE;
+    bComplete = FALSE;
 }
 
 /************************************************************************/

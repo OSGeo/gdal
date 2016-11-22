@@ -359,7 +359,7 @@ class JPGMaskBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
 
   public:
-                JPGMaskBand( JPGDataset *poDS );
+    explicit JPGMaskBand( JPGDataset *poDS );
     virtual ~JPGMaskBand() {}
 };
 

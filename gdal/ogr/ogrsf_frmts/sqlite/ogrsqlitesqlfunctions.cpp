@@ -56,7 +56,7 @@ class OGRSQLiteExtensionData
     OGRGeocodingSessionH hGeocodingSession;
 
   public:
-                                 OGRSQLiteExtensionData(sqlite3* hDB);
+    explicit                     OGRSQLiteExtensionData(sqlite3* hDB);
                                 ~OGRSQLiteExtensionData();
 
     OGRCoordinateTransformation* GetTransform(int nSrcSRSId, int nDstSRSId);

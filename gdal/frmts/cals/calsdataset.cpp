@@ -78,7 +78,7 @@ class CALSRasterBand: public GDALPamRasterBand
     GDALRasterBand* poUnderlyingBand;
 
   public:
-    CALSRasterBand( CALSDataset* poDSIn )
+    explicit CALSRasterBand( CALSDataset* poDSIn )
     {
         poDS = poDSIn;
         poUnderlyingBand = poDSIn->poUnderlyingDS->GetRasterBand(1);
@@ -139,7 +139,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
         bool bInvertValues;
 
     public:
-        CALSWrapperSrcBand( GDALDataset* poSrcDSIn )
+        explicit CALSWrapperSrcBand( GDALDataset* poSrcDSIn )
         {
             poSrcDS = poSrcDSIn;
             SetMetadataItem("NBITS", "1", "IMAGE_STRUCTURE");
@@ -265,7 +265,7 @@ int CALSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 {
-    nVal = CPL_LSBWORD16(nVal);
+    CPL_LSBPTR16(&nVal);
     VSIFWriteL(&nVal, 1, 2, fp);
 }
 
@@ -275,7 +275,7 @@ void CALSDataset::WriteLEInt16( VSILFILE* fp, GInt16 nVal )
 
 void CALSDataset::WriteLEInt32( VSILFILE* fp, GInt32 nVal )
 {
-    nVal = CPL_LSBWORD32(nVal);
+    CPL_LSBPTR32(&nVal);
     VSIFWriteL(&nVal, 1, 4, fp);
 }
 
@@ -529,6 +529,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     memset(szBuffer, ' ', 2048);
     CPLString osField;
     osField = "srcdocid: NONE";
+    // cppcheck-suppress redundantCopy
     memcpy(szBuffer, osField, osField.size());
 
     osField = "dstdocid: NONE";

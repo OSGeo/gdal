@@ -91,10 +91,12 @@ protected:
     OGRGeometry*    poOriginalGeometry;
 
 public:
-                    OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
+    explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
                     ~OGRMSSQLGeometryValidator();
 
+    // cppcheck-suppress functionStatic
     int             ValidatePoint(OGRPoint * poGeom);
+    // cppcheck-suppress functionStatic
     int             ValidateMultiPoint(OGRMultiPoint * poGeom);
     int             ValidateLineString(OGRLineString * poGeom);
     int             ValidateLinearRing(OGRLinearRing * poGeom);
@@ -142,7 +144,7 @@ protected:
     OGRGeometryCollection* ReadGeometryCollection(int iShape);
 
 public:
-                        OGRMSSQLGeometryParser( int nGeomColumnType );
+    explicit            OGRMSSQLGeometryParser( int nGeomColumnType );
     OGRErr              ParseSqlGeometry(unsigned char* pszInput, int nLen,
                                                         OGRGeometry **poGeom);
     int                 GetSRSId() { return nSRSId; };
@@ -324,7 +326,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
     OGRwkbGeometryType eGeomType;
 
   public:
-                        OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
+    explicit            OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource * );
                         virtual ~OGRMSSQLSpatialTableLayer();
 
     CPLErr              Initialize( const char *pszSchema,
@@ -454,7 +456,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     const char          *GetCatalog() { return pszCatalog; }
 
-    int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
+    static int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
                                   int nStart, int nNext, int nTerm, int bRemove);
 
     int                 Open( const char *, int bUpdate, int bTestOpen );

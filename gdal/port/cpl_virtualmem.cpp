@@ -44,7 +44,7 @@
 
 #include <cassert>
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #ifdef NDEBUG
 /* Non NDEBUG: we ignore the result */
@@ -2033,6 +2033,8 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "mmap() failed : %s", strerror(myerrno));
         VSIFree(ctxt);
+        // cppcheck things we are leaking addr
+        // cppcheck-suppress memleak
         return NULL;
     }
 

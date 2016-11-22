@@ -81,11 +81,13 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
 
     m_osDirName = pszFilename;
     int nInterestTable = -1;
+    unsigned int unInterestTable = 0;
     const char* pszFilenameWithoutPath = CPLGetFilename(pszFilename);
     if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
         pszFilenameWithoutPath[0] == 'a' &&
-        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1 )
     {
+        nInterestTable = static_cast<int>(unInterestTable);
         m_osDirName = CPLGetPath(m_osDirName);
     }
     else
@@ -1180,10 +1182,12 @@ char** OGROpenFileGDBDataSource::GetFileList()
     int nInterestTable = -1;
     const char* pszFilenameWithoutPath = CPLGetFilename(m_pszName);
     CPLString osFilenameRadix;
+    unsigned int unInterestTable = 0;
     if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
         pszFilenameWithoutPath[0] == 'a' &&
-        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1 )
     {
+        nInterestTable = static_cast<int>(unInterestTable);
         osFilenameRadix = CPLSPrintf("a%08x.", nInterestTable);
     }
 

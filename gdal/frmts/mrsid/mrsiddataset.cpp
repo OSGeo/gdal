@@ -163,7 +163,7 @@ template <class T>
 class LTIDLLNavigator : public T
 {
 public:
-   LTIDLLNavigator(const LTIImage& image ) : T(image) {}
+   explicit LTIDLLNavigator(const LTIImage& image ) : T(image) {}
    virtual ~LTIDLLNavigator() {};
 };
 
@@ -182,7 +182,7 @@ template <class T>
 class LTIDLLCopy : public T
 {
 public:
-   LTIDLLCopy(const T& original) : T(original) {}
+   explicit LTIDLLCopy(const T& original) : T(original) {}
    virtual ~LTIDLLCopy() {};
 };
 
@@ -190,7 +190,7 @@ template <class T>
 class LTIDLLWriter : public T
 {
 public:
-    LTIDLLWriter(LTIImageStage *image) : T(image) {}
+    explicit LTIDLLWriter(LTIImageStage *image) : T(image) {}
     virtual ~LTIDLLWriter() {}
 };
 
@@ -293,7 +293,7 @@ class MrSIDDataset : public GDALJP2AbstractDataset
                                          int, int *, GDALProgressFunc, void * );
 
   public:
-                MrSIDDataset(int bIsJPEG2000);
+    explicit    MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
@@ -757,6 +757,8 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     nBlockXSize(0),
     nBlockYSize(0),
+    eSampleType(LTI_DATATYPE_UINT8),
+    eDataType(GDT_Byte),
     eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = NULL;
@@ -767,9 +769,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     poLTINav = NULL;
     poMetadata = NULL;
     poNDPixel = NULL;
-    eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
-    eDataType = GDT_Byte;
 
     poBuffer = NULL;
     bPrevBlockRead = FALSE;
@@ -1141,7 +1141,7 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
     const LTIMetadataRecord *poMetadataRec = NULL;
     poMetadata->get( pszKey, poMetadataRec );
 
-    if ( !poMetadataRec->isScalar() )
+    if ( poMetadataRec == NULL || !poMetadataRec->isScalar() )
         return FALSE;
 
     // XXX: return FALSE if we have more than one element in metadata record

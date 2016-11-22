@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gnm_api.h"
+#include "gnm_priv.h"
 #include "ogrsf_frmts.h"
 
 #include <set>
@@ -1256,7 +1257,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
         }
         else if(EQUALN(pKey, GNM_MD_RULE, nRulePrefixLen))
         {
-            moRules[atoi(pKey + nRulePrefixLen)] = pValue;
+            moRules[atoi(pKey + nRulePrefixLen)] = GNMRule(pValue);
         }
 
         OGRFeature::DestroyFeature(poFeature);

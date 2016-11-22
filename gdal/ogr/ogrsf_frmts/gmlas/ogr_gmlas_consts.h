@@ -43,8 +43,8 @@
 
 namespace GMLASConstants
 {
-    // Note the default values mentionned here should be kept
-    // consistant with what is documented in gmlasconf.xsd
+    // Note the default values mentioned here should be kept
+    // consistent with what is documented in gmlasconf.xsd
     BOOL_CONST(DEFAULT_RESOLUTION_ENABLED_DEFAULT, false);
     BOOL_CONST(ALLOW_REMOTE_DOWNLOAD_DEFAULT, true);
     BOOL_CONST(CACHE_RESULTS_DEFAULT, false);

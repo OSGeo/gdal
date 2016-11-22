@@ -88,6 +88,7 @@ NTFFileReader::NTFFileReader( OGRNTFDataSource * poDataSource ) :
     papoLineCache(NULL)
 {
     apoCGroup[0] = NULL;
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     memset( apoTypeTranslation, 0, sizeof(apoTypeTranslation) );
     for( int i = 0; i < 100; i++ )
     {
@@ -493,9 +494,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         dfScale = 10000;
     else if( nProduct == NPC_BASEDATA )
         dfScale = 625000;
-    else if( nProduct == NPC_BOUNDARYLINE )
-        dfScale = 10000;
-    else
+    else /*if( nProduct == NPC_BOUNDARYLINE ) or default case */
         dfScale = 10000;
 
     if( dfScale != 0.0 )

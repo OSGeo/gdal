@@ -93,7 +93,7 @@ protected:
     virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
   public:
-                         OGRCARTOLayer(OGRCARTODataSource* poDS);
+    explicit OGRCARTOLayer(OGRCARTODataSource* poDS);
     virtual ~OGRCARTOLayer();
 
     virtual void                ResetReading();
@@ -107,7 +107,7 @@ protected:
 
     virtual int                 TestCapability( const char * );
 
-    int                         GetFeaturesToFetch() {
+    static int                         GetFeaturesToFetch() {
         return atoi(CPLGetConfigOption("CARTO_PAGE_SIZE",
                         CPLGetConfigOption("CARTODB_PAGE_SIZE", "500"))); }
 };
@@ -274,7 +274,7 @@ class OGRCARTODataSource : public OGRDataSource
     char**                      AddHTTPOptions();
     json_object*                RunSQL(const char* pszUnescapedSQL);
     const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-    int                         FetchSRSId( OGRSpatialReference * poSRS );
+    static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
     int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
     int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }

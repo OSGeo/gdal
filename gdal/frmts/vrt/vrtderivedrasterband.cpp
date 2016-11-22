@@ -891,7 +891,7 @@ class VRT_GIL_Holder
 
     public:
 
-        VRT_GIL_Holder(bool bExclusiveLock);
+        explicit VRT_GIL_Holder(bool bExclusiveLock);
         virtual ~VRT_GIL_Holder();
 };
 

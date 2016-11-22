@@ -3795,7 +3795,7 @@ class GDALUInt128
 {
         __uint128_t val;
 
-        GDALUInt128(__uint128_t valIn) : val(valIn) {}
+        explicit GDALUInt128(__uint128_t valIn) : val(valIn) {}
 
     public:
         static GDALUInt128 Mul(GUIntBig first, GUIntBig second)

@@ -295,7 +295,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 CPLDestroyXMLNode(config);
                 config = NULL;
             }
-            catch (CPLErr e) {
+            catch (const CPLErr& e) {
                 if (config)
                     CPLDestroyXMLNode(config);
                 throw e; // Rethrow
@@ -400,7 +400,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             }
         }
     }
-    catch (CPLErr e) {
+    catch (const CPLErr& e) {
         eErr = e;
     }
 
@@ -1703,7 +1703,7 @@ GDALMRFDataset::Create(const char * pszName,
         poDS->eAccess = GA_Update;
     }
 
-    catch (CPLString e) {
+    catch (const CPLString& e) {
         CPLError(CE_Failure, CPLE_OpenFailed, "%s", e.c_str());
         delete poDS;
         return NULL;
@@ -1861,11 +1861,18 @@ CPLErr GDALMRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
         VSIFSeekL(l_dfp, 0, SEEK_END);
         GUIntBig offset = VSIFTellL(l_dfp);
 
-        if (spacing != 0) { // This should not be true in MP safe mode
-            // Use the same buffer, MRF doesn't care about the spacing content
-            int pad = (size >= spacing) ? spacing : size;
-            if (pad != spacing)
-                CPLError(CE_Warning, CPLE_FileIO, "MRF spacing failed, check the output");
+        if( spacing != 0 )
+        {
+            // This should not be true in MP safe mode.
+            // Use the same buffer, MRF doesn't care about the spacing content.
+            // TODO(lplesea): Make sure size doesn't overflow.
+            const int pad =
+                static_cast<int>(size) >= spacing
+                ? spacing
+                : static_cast<int>(size);
+            if( pad != spacing )
+                CPLError(CE_Warning, CPLE_FileIO,
+                         "MRF spacing failed, check the output");
             offset += pad;
             VSIFWriteL(buff, 1, spacing, l_dfp);
         }
@@ -2007,7 +2014,7 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
     }
 
     // Mark the empty records as checked, by making the offset non-zero
-    for (vector<ILIdx>::iterator it = buf.begin(); it != buf.end(); it++) {
+    for (vector<ILIdx>::iterator it = buf.begin(); it != buf.end(); ++it) {
         if (it->offset == 0 && it->size == 0)
             it->offset = net64(1);
     }

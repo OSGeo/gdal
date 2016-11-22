@@ -54,7 +54,7 @@ public:
         CPLString m_osFileName;
 #endif
 
-        VSITarEntryFileOffset(GUIntBig nOffset)
+        explicit VSITarEntryFileOffset(GUIntBig nOffset)
         {
             m_nOffset = nOffset;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
@@ -63,11 +63,11 @@ public:
         }
 
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName)
+        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName) :
+            m_nOffset(nOffset),
+            m_nFileSize(nFileSize),
+            m_osFileName(osFileName)
         {
-            m_nOffset = nOffset;
-            m_nFileSize = nFileSize;
-            m_osFileName = osFileName;
         }
 #endif
 };
@@ -95,7 +95,7 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
 #endif
 
     public:
-        VSITarReader(const char* pszTarFileName);
+        explicit VSITarReader(const char* pszTarFileName);
         virtual ~VSITarReader();
 
         int IsValid() { return fp != NULL; }
@@ -134,6 +134,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     fp = VSIFOpenL(pszTarFileName, "rb");
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     m_bIsFuzzerFriendly = false;
+    m_abyBuffer[0] = '\0';
     m_abyBufferIdx = 0;
     m_abyBufferSize = 0;
     m_nCurOffsetOld = 0;

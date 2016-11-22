@@ -1895,7 +1895,9 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
             mapInput[iField] = poDefnResult->GetFieldIndex(osName);
         }
         if (!mapMethod) return ret;
+        // cppcheck-suppress nullPointer
         for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
+            // cppcheck-suppress nullPointer
             CPLString osName(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
             if( pszMethodPrefix != NULL )
                 osName = pszMethodPrefix + osName;

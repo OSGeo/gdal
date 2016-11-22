@@ -93,7 +93,7 @@ class OGRDWGBlocksLayer : public OGRLayer
     std::map<CPLString,DWGBlockDefinition>::iterator oIt;
 
   public:
-    OGRDWGBlocksLayer( OGRDWGDataSource *poDS );
+    explicit OGRDWGBlocksLayer( OGRDWGDataSource *poDS );
     ~OGRDWGBlocksLayer();
 
     void                ResetReading();
@@ -151,7 +151,7 @@ class OGRDWGLayer : public OGRLayer
     OdDbObjectIteratorPtr   poEntIter;
 
   public:
-    OGRDWGLayer( OGRDWGDataSource *poDS );
+    explicit OGRDWGLayer( OGRDWGDataSource *poDS );
     ~OGRDWGLayer();
 
     void                ResetReading();

@@ -55,7 +55,9 @@ HFAField::HFAField() :
     poItemObjectType(NULL),
     papszEnumNames(NULL),
     pszFieldName(NULL)
-{}
+{
+    memset( szNumberString, 0, sizeof(szNumberString) );
+}
 
 /************************************************************************/
 /*                             ~HFAField()                              */

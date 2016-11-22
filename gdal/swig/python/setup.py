@@ -34,7 +34,7 @@ if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
 HAVE_NUMPY=False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
-GNM_ENABLED = False
+GNM_ENABLED = True
 
 # ---------------------------------------------------------------------------
 # Default build options
@@ -268,8 +268,8 @@ py_modules = ['gdal',
 if os.path.exists('setup_vars.ini'):
     with open('setup_vars.ini') as f:
         lines = f.readlines()
-        if 'GNM_ENABLED=yes' in lines or 'GNM_ENABLED=yes\n' in lines:
-            GNM_ENABLED = True
+        if 'GNM_ENABLED=no' in lines or 'GNM_ENABLED=no\n' in lines:
+            GNM_ENABLED = False
 
 if GNM_ENABLED:
     ext_modules.append(gnm_module)

@@ -75,7 +75,9 @@ class CTable2Dataset : public RawDataset
 
 CTable2Dataset::CTable2Dataset() :
     fpImage(NULL)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                            ~CTable2Dataset()                          */

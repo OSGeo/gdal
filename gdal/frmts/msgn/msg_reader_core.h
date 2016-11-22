@@ -60,8 +60,8 @@ typedef enum {
 
 class Msg_reader_core {
 public:
-    Msg_reader_core(const char* fname);
-    Msg_reader_core(FILE* fp);
+    explicit Msg_reader_core(const char* fname);
+    explicit Msg_reader_core(FILE* fp);
     virtual ~Msg_reader_core() {};
 
     bool get_open_success() { return _open_success; }
@@ -108,7 +108,7 @@ private:
 
 protected:
 
-    int _chan_to_idx(Msg_channel_names channel);
+    static int _chan_to_idx(Msg_channel_names channel);
 
     unsigned int    _lines;
     unsigned int    _columns;

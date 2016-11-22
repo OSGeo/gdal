@@ -640,10 +640,10 @@ OGRErr OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
             nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
     }
 
-    if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
-    else
-        nGType = CPL_MSBWORD32( nGType );
+    if( OGR_SWAP( eByteOrder ) )
+    {
+        nGType = CPL_SWAP32(nGType);
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 
@@ -1096,6 +1096,7 @@ void OGRGeometryCollection::closeRings()
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRPolygon.");
+                return;
             }
             poPoly->closeRings();
         }
@@ -1167,6 +1168,7 @@ double OGRGeometryCollection::get_Length() const
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRCurve.");
+                return 0.0;
             }
             dfLength += poCurve->get_Length();
         }
@@ -1180,6 +1182,7 @@ double OGRGeometryCollection::get_Length() const
                 CPLError(
                     CE_Fatal, CPLE_AppDefined,
                     "dynamic_cast failed.  Expected OGRGeometryCollection.");
+                return 0.0;
             }
             dfLength += poColl->get_Length();
         }
@@ -1218,6 +1221,7 @@ double OGRGeometryCollection::get_Area() const
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRSurface.");
+                return 0.0;
             }
             dfArea += poSurface->get_Area();
         }
@@ -1228,6 +1232,7 @@ double OGRGeometryCollection::get_Area() const
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRCurve.");
+                return 0.0;
             }
             dfArea += poCurve->get_Area();
         }

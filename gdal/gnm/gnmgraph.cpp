@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "gnmgraph.h"
+#include "gnm_priv.h"
 #include <algorithm>
 #include <limits>
 #include <set>

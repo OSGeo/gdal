@@ -247,9 +247,11 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /* e.g. 30S120W_5M.ACE2 */
     char pszLatLonValueString[4] = { '\0' };
     memset(pszLatLonValueString, 0, 4);
+    // cppcheck-suppress redundantCopy
     strncpy(pszLatLonValueString, &pszBasename[0], 2);
     int southWestLat = atoi(pszLatLonValueString);
     memset(pszLatLonValueString, 0, 4);
+    // cppcheck-suppress redundantCopy
     strncpy(pszLatLonValueString, &pszBasename[3], 3);
     int southWestLon = atoi(pszLatLonValueString);
 

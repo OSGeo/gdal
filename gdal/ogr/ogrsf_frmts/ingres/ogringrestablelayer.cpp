@@ -51,6 +51,7 @@ OGRIngresTableLayer::OGRIngresTableLayer( OGRIngresDataSource *poDSIn,
 
     poFeatureDefn = NULL;
     bLaunderColumnNames = TRUE;
+    bPreservePrecision = FALSE;
 }
 
 /************************************************************************/

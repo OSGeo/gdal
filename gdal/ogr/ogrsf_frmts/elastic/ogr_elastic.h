@@ -236,8 +236,8 @@ public:
 
     virtual int         TestCapability(const char *);
 
-    bool                 UploadFile(const CPLString &url, const CPLString &data);
-    void                Delete(const CPLString &url);
+    static bool         UploadFile(const CPLString &url, const CPLString &data);
+    static void         Delete(const CPLString &url);
 
     json_object*        RunRequest(const char* pszURL, const char* pszPostContent = NULL);
     const CPLString&    GetFID() const { return m_osFID; }

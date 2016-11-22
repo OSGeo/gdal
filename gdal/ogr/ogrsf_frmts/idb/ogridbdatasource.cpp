@@ -43,6 +43,7 @@ OGRIDBDataSource::OGRIDBDataSource()
     papoLayers = NULL;
     nLayers = 0;
     poConn = 0;
+    bDSUpdate = FALSE;
 }
 
 /************************************************************************/

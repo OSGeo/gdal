@@ -1940,6 +1940,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     int            i;
     size_t         nFnameLen;
 
+    memset(&sTableDef, 0, sizeof(sTableDef));
     sTableDef.numFields = 0;
     sTableDef.pasFieldDef = NULL;
 

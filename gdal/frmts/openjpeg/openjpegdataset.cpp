@@ -1693,37 +1693,44 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
 
-    poDS->bUseSetDecodeArea =
-        (poDS->nRasterXSize == (int)nTileW &&
-         poDS->nRasterYSize == (int)nTileH &&
-         (poDS->nRasterXSize > 1024 ||
-          poDS->nRasterYSize > 1024));
-
-    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-    /* memory to allocate such big blocks */
-    if( poDS->nRasterXSize < (int)nTileW &&
-        poDS->nRasterYSize < (int)nTileH )
+    if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
     {
-        poDS->bUseSetDecodeArea = TRUE;
-        nTileW = poDS->nRasterXSize;
-        nTileH = poDS->nRasterYSize;
-        if (nTileW > 2048) nTileW = 2048;
-        if (nTileH > 2048) nTileH = 2048;
+        poDS->bUseSetDecodeArea = false;
     }
-    else if (poDS->bUseSetDecodeArea)
+    else
     {
-        // Arbitrary threshold... ~4 million at least needed for the GRIB2
-        // images mentionned below.
-        if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+        poDS->bUseSetDecodeArea =
+            (poDS->nRasterXSize == (int)nTileW &&
+            poDS->nRasterYSize == (int)nTileH &&
+            (poDS->nRasterXSize > 1024 ||
+            poDS->nRasterYSize > 1024));
+
+        /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+        /* memory to allocate such big blocks */
+        if( poDS->nRasterXSize < (int)nTileW &&
+            poDS->nRasterYSize < (int)nTileH )
         {
-            // Some GRIB2 JPEG2000 compressed images are a 2D image organized
-            // as a single line image...
+            poDS->bUseSetDecodeArea = TRUE;
+            nTileW = poDS->nRasterXSize;
+            nTileH = poDS->nRasterYSize;
+            if (nTileW > 2048) nTileW = 2048;
+            if (nTileH > 2048) nTileH = 2048;
         }
-        else
+        else if (poDS->bUseSetDecodeArea)
         {
-            if (nTileW > 1024) nTileW = 1024;
-            if (nTileH > 1024) nTileH = 1024;
+            // Arbitrary threshold... ~4 million at least needed for the GRIB2
+            // images mentioned below.
+            if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+            {
+                // Some GRIB2 JPEG2000 compressed images are a 2D image organized
+                // as a single line image...
+            }
+            else
+            {
+                if (nTileW > 1024) nTileW = 1024;
+                if (nTileH > 1024) nTileH = 1024;
+            }
         }
     }
 
@@ -2904,11 +2911,15 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
 
         GDALJP2Box ftypBox(fp);
         ftypBox.SetType("ftyp");
-        ftypBox.AppendWritableData(4, "jp2 "); /* Branding */
+        // http://docs.opengeospatial.org/is/08-085r5/08-085r5.html Req 19
+        const bool bJPXOption = CPLFetchBool( papszOptions, "JPX", true );
+        if( nGMLJP2Version == 2 && bJPXOption )
+            ftypBox.AppendWritableData(4, "jpx "); /* Branding */
+        else
+            ftypBox.AppendWritableData(4, "jp2 "); /* Branding */
         ftypBox.AppendUInt32(0); /* minimum version */
         ftypBox.AppendWritableData(4, "jp2 "); /* Compatibility list: first value */
 
-        const bool bJPXOption = CPLFetchBool( papszOptions, "JPX", true );
         if( bInspireTG && poGMLJP2Box != NULL && !bJPXOption )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -3287,7 +3298,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         /* coverity[tainted_data] */
         while( nRead < nCodeStreamLength )
         {
-            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4049 :
+            int nToRead = ( nCodeStreamLength-nRead > 4096 ) ? 4096 :
                                         (int)(nCodeStreamLength-nRead);
             if( (int)VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead )
             {
@@ -3677,6 +3688,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
+"   <Option name='USE_TILE_AS_BLOCK' type='boolean' description='Whether to always use the JPEG-2000 block size as the GDAL block size' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
@@ -3713,7 +3725,7 @@ void GDALRegister_JP2OpenJPEG()
 "       <Value>PROFILE_1</Value>"
 "   </Option>"
 "   <Option name='INSPIRE_TG' type='boolean' description='Whether to use features that comply with Inspire Orthoimagery Technical Guidelines' default='NO'/>"
-"   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written' default='YES'/>"
+"   <Option name='JPX' type='boolean' description='Whether to advertize JPX features when a GMLJP2 box is written (or use JPX branding if GMLJP2 v2)' default='YES'/>"
 "   <Option name='GEOBOXES_AFTER_JP2C' type='boolean' description='Whether to place GeoJP2/GMLJP2 boxes after the code-stream' default='NO'/>"
 "   <Option name='PRECINCTS' type='string' description='Precincts size as a string of the form {w,h},{w,h},... with power-of-two values'/>"
 "   <Option name='TILEPARTS' type='string-select' description='Whether to generate tile-parts and according to which criterion' default='DISABLED'>"

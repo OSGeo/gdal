@@ -82,7 +82,8 @@ void OGRMSSQLAppendEscaped( CPLODBCStatement* poStatement, const char* pszStrVal
 
 OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource *poDSIn ) :
     bLaunderColumnNames(FALSE),
-    bPreservePrecision(FALSE)
+    bPreservePrecision(FALSE),
+    eGeomType(wkbNone)
 {
     poDS = poDSIn;
 
@@ -99,8 +100,6 @@ OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer( OGRMSSQLSpatialDataSource 
     pszTableName = NULL;
     pszLayerName = NULL;
     pszSchemaName = NULL;
-
-    eGeomType = wkbNone;
 
     bNeedSpatialIndex = FALSE;
 #ifdef SQL_SS_UDT

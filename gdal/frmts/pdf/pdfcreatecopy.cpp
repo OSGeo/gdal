@@ -1307,10 +1307,10 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(0 / dfUserUnit + psMargins->nLeft, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
+        poNeatLineArray->Add((/*nHeight -nHeight*/ 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
-        poNeatLineArray->Add((nHeight -nHeight) / dfUserUnit + psMargins->nBottom, TRUE);
+        poNeatLineArray->Add((/*nHeight -nHeight*/ 0) / dfUserUnit + psMargins->nBottom, TRUE);
 
         poNeatLineArray->Add(nWidth / dfUserUnit + psMargins->nLeft, TRUE);
         poNeatLineArray->Add((nHeight - 0) / dfUserUnit + psMargins->nBottom, TRUE);
@@ -2228,23 +2228,23 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     /* -------------------------------------------------------------- */
     /*  Get style                                                     */
     /* -------------------------------------------------------------- */
-    int nPenR = 0;
-    int nPenG = 0;
-    int nPenB = 0;
-    int nPenA = 255;
-    int nBrushR = 127;
-    int nBrushG = 127;
-    int nBrushB = 127;
-    int nBrushA = 127;
-    int nTextR = 0;
-    int nTextG = 0;
-    int nTextB = 0;
-    int nTextA = 255;
+    unsigned int nPenR = 0;
+    unsigned int nPenG = 0;
+    unsigned int nPenB = 0;
+    unsigned int nPenA = 255;
+    unsigned int nBrushR = 127;
+    unsigned int nBrushG = 127;
+    unsigned int nBrushB = 127;
+    unsigned int nBrushA = 127;
+    unsigned int nTextR = 0;
+    unsigned int nTextG = 0;
+    unsigned int nTextB = 0;
+    unsigned int nTextA = 255;
     int bSymbolColorDefined = FALSE;
-    int nSymbolR = 0;
-    int nSymbolG = 0;
-    int nSymbolB = 0;
-    int nSymbolA = 255;
+    unsigned int nSymbolR = 0;
+    unsigned int nSymbolG = 0;
+    unsigned int nSymbolB = 0;
+    unsigned int nSymbolA = 255;
     double dfTextSize = 12.0;
     double dfTextAngle = 0.0;
     double dfTextDx = 0.0;
@@ -2272,10 +2272,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTPenColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0;
-                    int nGreen = 0;
-                    int nBlue = 0;
-                    int nAlpha = 255;
+                    unsigned int nRed = 0;
+                    unsigned int nGreen = 0;
+                    unsigned int nBlue = 0;
+                    unsigned int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2313,10 +2313,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTBrushFColor, &bIsNull);
                 if (pszColor)
                 {
-                    int nRed = 0;
-                    int nGreen = 0;
-                    int nBlue = 0;
-                    int nAlpha = 255;
+                    unsigned int nRed = 0;
+                    unsigned int nGreen = 0;
+                    unsigned int nBlue = 0;
+                    unsigned int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2355,10 +2355,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTLabelFColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0;
-                    int nGreen = 0;
-                    int nBlue = 0;
-                    int nAlpha = 255;
+                    unsigned int nRed = 0;
+                    unsigned int nGreen = 0;
+                    unsigned int nBlue = 0;
+                    unsigned int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2455,10 +2455,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTSymbolColor, &bIsNull);
                 if (pszColor && !bIsNull)
                 {
-                    int nRed = 0;
-                    int nGreen = 0;
-                    int nBlue = 0;
-                    int nAlpha = 255;
+                    unsigned int nRed = 0;
+                    unsigned int nGreen = 0;
+                    unsigned int nBlue = 0;
+                    unsigned int nAlpha = 255;
                     int nVals = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue,&nAlpha);
                     if (nVals >= 3)
                     {
@@ -2849,16 +2849,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 poResources->Add("ExtGState", poExtGState);
             }
 
-            GDALPDFDictionaryRW* poDictFTimesRoman = NULL;
-            poDictFTimesRoman = new GDALPDFDictionaryRW();
+            GDALPDFDictionaryRW* poDictFTimesRoman = new GDALPDFDictionaryRW();
             poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
             poDictFTimesRoman->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Roman"));
             poDictFTimesRoman->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
             poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
 
             GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
-            if (poDictFTimesRoman)
-                poDictFont->Add("FTimesRoman", poDictFTimesRoman);
+            poDictFont->Add("FTimesRoman", poDictFTimesRoman);
             poResources->Add("Font", poDictFont);
 
             oDict.Add("Resources", poResources);

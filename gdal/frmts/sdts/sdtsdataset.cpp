@@ -58,6 +58,7 @@ class SDTSDataset : public GDALPamDataset
     char        *pszProjection;
 
   public:
+                 SDTSDataset();
     virtual     ~SDTSDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -81,6 +82,19 @@ class SDTSRasterBand : public GDALPamRasterBand
     virtual double GetNoDataValue( int *pbSuccess );
     virtual const char *GetUnitType();
 };
+
+
+/************************************************************************/
+/*                             SDTSDataset()                            */
+/************************************************************************/
+
+SDTSDataset::SDTSDataset() :
+    poTransfer( NULL ),
+    poRL( NULL ),
+    pszProjection( NULL )
+
+{
+}
 
 /************************************************************************/
 /*                            ~SDTSDataset()                            */
@@ -223,9 +237,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRS.SetWellKnownGeogCS( "NAD83" );
     else if( EQUAL(poXREF->pszDatum, "WGC") )
         oSRS.SetWellKnownGeogCS( "WGS72" );
-    else if( EQUAL(poXREF->pszDatum, "WGE") )
-        oSRS.SetWellKnownGeogCS( "WGS84" );
-    else
+    else /* if( EQUAL(poXREF->pszDatum, "WGE") ) or default */
         oSRS.SetWellKnownGeogCS( "WGS84" );
 
     oSRS.Fixup();

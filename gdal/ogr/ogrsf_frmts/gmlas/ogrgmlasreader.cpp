@@ -56,7 +56,7 @@ class GMLASBinInputStream : public BinInputStream
 
 public :
 
-             GMLASBinInputStream(VSILFILE* fp);
+    explicit GMLASBinInputStream(VSILFILE* fp);
     virtual ~GMLASBinInputStream();
 
     virtual XMLFilePos curPos() const;
@@ -118,11 +118,11 @@ GMLASInputSource::GMLASInputSource(const char* pszFilename,
                                    VSILFILE* fp,
                                    bool bOwnFP,
                                    MemoryManager* const manager)
-    : InputSource(manager)
+    : InputSource(manager),
+      m_osFilename( pszFilename )
 {
     m_fp = fp;
     m_bOwnFP = bOwnFP;
-    m_osFilename = pszFilename;
     XMLCh* pFilename = XMLString::transcode(pszFilename);
     setPublicId(pFilename);
     setSystemId(pFilename);
@@ -1342,7 +1342,7 @@ void GMLASReader::startElement(
                                         m_oCurCtxt.m_poFeature->GetDefnRef() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant m_poLayer / m_poFeature state");
+                            "Inconsistent m_poLayer / m_poFeature state");
                 m_bParsingError = true;
                 return; 
             }
@@ -1899,7 +1899,7 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
     else
     {
         const int nRuleIdx =
-                        m_oXLinkResolver.GetMachingResolutionRule(osAttrValue);
+                        m_oXLinkResolver.GetMatchingResolutionRule(osAttrValue);
         if( nRuleIdx >= 0 )
         {
             const GMLASXLinkResolutionConf::URLSpecificResolution& oRule(

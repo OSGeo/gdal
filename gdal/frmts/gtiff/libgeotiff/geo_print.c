@@ -262,6 +262,7 @@ static void DefaultPrint(char *string, void *aux)
 int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
 {
     int status;
+    /* Caution: if you change this size, also change it in DefaultRead */
     char message[1024];
 
     if (!scan) scan = (GTIFReadMethod) &DefaultRead;
@@ -310,7 +311,7 @@ static int ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux)
     scan(message,aux);
     if (!strncmp(message,FMT_TAGEND,8)) return 0;
 
-    num=sscanf(message,"%[^( ] (%d,%d):\n",tagname,&nrows,&ncols);
+    num=sscanf(message,"%99[^( ] (%d,%d):\n",tagname,&nrows,&ncols);
     if (num!=3) return StringError(message);
 
     tag = GTIFTagCode(tagname);
@@ -365,7 +366,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
     scan(message,aux);
     if (!strncmp(message,FMT_KEYEND,8)) return 0;
 
-    num=sscanf(message,"%[^( ] (%[^,],%d):\n",name,type,&count);
+    num=sscanf(message,"%99[^( ] (%19[^,],%d):\n",name,type,&count);
     if (num!=3) return StringError(message);
 
     vptr = message;
@@ -507,7 +508,8 @@ static void DefaultRead(char *string, void *aux)
 {
     /* Pretty boring */
     int num_read;
-    num_read = fscanf((FILE *)aux, "%[^\n]\n", string);
+    /* 1023 comes from char message[1024]; in GTIFFImport */
+    num_read = fscanf((FILE *)aux, "%1023[^\n]\n", string);
     if (num_read != 0) {
       fprintf(stderr, "geo_print.c DefaultRead failed to read anything.\n");
     }

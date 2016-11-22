@@ -227,7 +227,7 @@ class CPL_DLL CPLODBCStatement {
     size_t         m_nStatementLen;
 
   public:
-    CPLODBCStatement( CPLODBCSession * );
+    explicit CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
 
     /** Return statement handle */

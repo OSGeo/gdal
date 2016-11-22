@@ -37,8 +37,10 @@ CPL_CVSID("$Id$");
 OGRGFTResultLayer::OGRGFTResultLayer( OGRGFTDataSource* poDSIn,
                                       const char* pszSQL ) :
     OGRGFTLayer(poDSIn),
+    osSQL( CPLString() ),
     bGotAllRows(FALSE)
 {
+    // cppcheck-suppress useInitializationList
     osSQL = PatchSQL(pszSQL);
 
     poFeatureDefn = new OGRFeatureDefn( "result" );

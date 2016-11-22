@@ -1119,7 +1119,7 @@ bool CntZImage::readZTile(Byte** ppByte, int i0, int i1, int j0, int j1,
 
 // -------------------------------------------------------------------------- ;
 
-int CntZImage::numBytesFlt(float z) const
+int CntZImage::numBytesFlt(float z)
 {
   short s = (short)z;
   signed char c = static_cast<signed char>(s);
@@ -1128,7 +1128,7 @@ int CntZImage::numBytesFlt(float z) const
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::writeFlt(Byte** ppByte, float z, int numBytes) const
+bool CntZImage::writeFlt(Byte** ppByte, float z, int numBytes)
 {
   Byte* ptr = *ppByte;
 
@@ -1157,7 +1157,7 @@ bool CntZImage::writeFlt(Byte** ppByte, float z, int numBytes) const
 
 // -------------------------------------------------------------------------- ;
 
-bool CntZImage::readFlt(Byte** ppByte, float& z, int numBytes) const
+bool CntZImage::readFlt(Byte** ppByte, float& z, int numBytes)
 {
   Byte* ptr = *ppByte;
 
@@ -1198,7 +1198,7 @@ bool CntZImage::readFlt(Byte** ppByte, float& z, int numBytes) const
 
 // endianness and alignment safe
 // returns the number of bytes it wrote, adjusts *ppByte
-int CntZImage::writeVal(Byte **ppByte, float z, int numBytes) const
+int CntZImage::writeVal(Byte **ppByte, float z, int numBytes)
 {
     assert(ppByte && *ppByte);
     assert(0 == numBytes || 1 == numBytes || 2 == numBytes || 4 == numBytes);
@@ -1226,7 +1226,7 @@ int CntZImage::writeVal(Byte **ppByte, float z, int numBytes) const
 }
 
 // endianness and alignment safe, not alliasing safe
-void CntZImage::readVal(Byte **ppByte, float &val, int numBytes) const
+void CntZImage::readVal(Byte **ppByte, float &val, int numBytes)
 {
     assert(numBytes == 4 || numBytes == 2 || numBytes == 1);
     assert(ppByte && *ppByte);

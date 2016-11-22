@@ -26,13 +26,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_geocoding.h"
+
+#include <cstddef>
+#include <cstring>
+#include <string>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_http.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
-#include "ogr_geocoding.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
 #include "ogr_mem.h"
 #include "ogrsf_frmts.h"
+
 
 // Emulation of gettimeofday() for Windows.
 #ifdef WIN32
@@ -391,7 +403,7 @@ void OGRGeocodeDestroySession( OGRGeocodingSessionH hSession )
     CPLFree(hSession->pszQueryTemplate);
     CPLFree(hSession->pszReverseQueryTemplate);
     if( hSession->poDS )
-        OGRReleaseDataSource((OGRDataSourceH) hSession->poDS);
+        OGRReleaseDataSource(reinterpret_cast<OGRDataSourceH>(hSession->poDS));
     CPLFree(hSession);
 }
 
@@ -456,8 +468,9 @@ static OGRLayer* OGRGeocodeGetCacheLayer( OGRGeocodingSessionH hSession,
                                                    "METADATA", "FALSE");
                 }
 
-                poDS = (OGRDataSource*) OGR_Dr_CreateDataSource(
-                            hDriver, hSession->pszCacheFilename, papszOptions);
+                poDS = reinterpret_cast<OGRDataSource *>(
+                    OGR_Dr_CreateDataSource(
+                        hDriver, hSession->pszCacheFilename, papszOptions));
 
                 if( poDS == NULL &&
                     (EQUAL(osExt, "SQLITE") || EQUAL(osExt, "CSV")))
@@ -468,8 +481,9 @@ static OGRLayer* OGRGeocodeGetCacheLayer( OGRGeocodingSessionH hSession,
                                    CACHE_LAYER_NAME, osExt.c_str()));
                     CPLDebug("OGR", "Switch geocode cache file to %s",
                              hSession->pszCacheFilename);
-                    poDS = (OGRDataSource*) OGR_Dr_CreateDataSource(
-                            hDriver, hSession->pszCacheFilename, papszOptions);
+                    poDS = reinterpret_cast<OGRDataSource *>(
+                        OGR_Dr_CreateDataSource(
+                            hDriver, hSession->pszCacheFilename, papszOptions));
                 }
 
                 CSLDestroy(papszOptions);
@@ -1175,7 +1189,8 @@ static OGRLayerH OGRGeocodeBuildLayerBing( CPLXMLNode* psResponse,
         }
         psPlace = psPlace->psNext;
     }
-    return (OGRLayerH) poLayer;
+
+    return reinterpret_cast<OGRLayerH>(poLayer);
 }
 
 /************************************************************************/

@@ -3527,6 +3527,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     poDstFDefn = poDstLayer->GetLayerDefn();
 
                 /* Sanity check : if it fails, the driver is buggy */
+                // cppcheck-suppress nullPointerRedundantCheck
                 if (poDstFDefn != NULL &&
                     poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                 {
@@ -3581,8 +3582,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         CPLTestBool(CPLGetConfigOption("PG_COMMIT_WHEN_OVERWRITING", "YES")) )
     {
         CPLDebug("GDALVectorTranslate",
-                 "Forcing transaction commit as table overwriting occured");
-        // Commit when overwriting as this consumes a lot of PG ressources
+                 "Forcing transaction commit as table overwriting occurred");
+        // Commit when overwriting as this consumes a lot of PG resources
         // and could result in """out of shared memory.
         // You might need to increase max_locks_per_transaction."""" errors
         if( m_poDstDS->CommitTransaction() != OGRERR_NONE ||
@@ -4343,7 +4344,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bNativeData = true;
 
     int nArgc = CSLCount(papszArgv);
-    for( int i = 0; i < nArgc; i++ )
+    for( int i = 0; papszArgv != NULL && i < nArgc; i++ )
     {
         if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
         {

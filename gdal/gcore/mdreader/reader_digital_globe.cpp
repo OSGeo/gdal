@@ -35,22 +35,22 @@ CPL_CVSID("$Id$");
  * GDALMDReaderDigitalGlobe()
  */
 GDALMDReaderDigitalGlobe::GDALMDReaderDigitalGlobe(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                                   char **papszSiblingFiles) :
+    GDALMDReaderBase(pszPath, papszSiblingFiles),
+    m_osXMLSourceFilename ( GDALFindAssociatedFile( pszPath, "XML",
+                                                         papszSiblingFiles, 0 ) ),
+    m_osIMDSourceFilename ( GDALFindAssociatedFile( pszPath, "IMD",
+                                                         papszSiblingFiles, 0 ) ),
+    m_osRPBSourceFilename ( GDALFindAssociatedFile( pszPath, "RPB",
+                                                         papszSiblingFiles, 0 ) )
 {
-    m_osIMDSourceFilename = GDALFindAssociatedFile( pszPath, "IMD",
-                                                         papszSiblingFiles, 0 );
-    m_osRPBSourceFilename = GDALFindAssociatedFile( pszPath, "RPB",
-                                                         papszSiblingFiles, 0 );
-    m_osXMLSourceFilename = GDALFindAssociatedFile( pszPath, "XML",
-                                                         papszSiblingFiles, 0 );
-
-    if( m_osIMDSourceFilename.size() )
+    if( !m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "IMD Filename: %s",
                   m_osIMDSourceFilename.c_str() );
-    if( m_osRPBSourceFilename.size() )
+    if( !m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "RPB Filename: %s",
                   m_osRPBSourceFilename.c_str() );
-    if( m_osXMLSourceFilename.size() )
+    if( !m_osXMLSourceFilename.empty() )
         CPLDebug( "MDReaderDigitalGlobe", "XML Filename: %s",
                   m_osXMLSourceFilename.c_str() );
 }

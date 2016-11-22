@@ -801,7 +801,7 @@ template< class T >
 class DeleteGuard
 {
 public:
-    DeleteGuard( T *p ) : _ptr( p ) { }
+    explicit DeleteGuard( T *p ) : _ptr( p ) { }
     ~DeleteGuard()
     {
         delete _ptr;
@@ -827,7 +827,7 @@ template< class T >
 class FreeGuard
 {
 public:
-    FreeGuard( T *p ) : _ptr( p ) { }
+    explicit FreeGuard( T *p ) : _ptr( p ) { }
     ~FreeGuard()
     {
         if ( _ptr )

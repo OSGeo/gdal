@@ -982,7 +982,7 @@ class TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
-    void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
+    static void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
 
     int         GotoByteRel(int nOffset);
     int         GotoByteInBlock(int nOffset);
@@ -997,16 +997,24 @@ class TABRawBinBlock
 
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
     GByte       ReadByte();
+    // cppcheck-suppress functionStatic
     GInt16      ReadInt16();
+    // cppcheck-suppress functionStatic
     GInt32      ReadInt32();
+    // cppcheck-suppress functionStatic
     float       ReadFloat();
+    // cppcheck-suppress functionStatic
     double      ReadDouble();
 
     virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     int         WriteByte(GByte byValue);
+    // cppcheck-suppress functionStatic
     int         WriteInt16(GInt16 n16Value);
+    // cppcheck-suppress functionStatic
     int         WriteInt32(GInt32 n32Value);
+    // cppcheck-suppress functionStatic
     int         WriteFloat(float fValue);
+    // cppcheck-suppress functionStatic
     int         WriteDouble(double dValue);
     int         WriteZeros(int nBytesToWrite);
     int         WritePaddedString(int nFieldSize, const char *pszString);
@@ -1033,7 +1041,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
     TABProjInfo m_sProj;
 
   public:
-    TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPHeaderBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPHeaderBlock();
 
     virtual int CommitToFile();
@@ -1145,7 +1153,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
     int         GetMaxEntries() const { return ((m_nBlockSize-4)/20); }
 
   public:
-    TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPIndexBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPIndexBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1252,7 +1260,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     int         m_bLockCenter;
 
   public:
-    TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPObjectBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPObjectBlock();
 
     virtual int CommitToFile();
@@ -1331,7 +1339,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
     GInt32      m_nFeatureYMax;
 
   public:
-    TABMAPCoordBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPCoordBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPCoordBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1397,7 +1405,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     TABBinBlockManager *m_poBlockManagerRef;
 
   public:
-    TABMAPToolBlock(TABAccess eAccessMode = TABRead);
+    explicit TABMAPToolBlock(TABAccess eAccessMode = TABRead);
     virtual ~TABMAPToolBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf,
@@ -1560,7 +1568,7 @@ class TABMAPFile
 
     int         Int2Coordsys(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2Int(double dX, double dY, GInt32 &nX, GInt32 &nY,
-                             GBool bIgnoreOveflow=FALSE);
+                             GBool bIgnoreOverflow=FALSE);
     int         Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX, double &dY);
     int         Coordsys2IntDist(double dX, double dY, GInt32 &nX, GInt32 &nY);
     void        SetCoordFilter(TABVertex sMin, TABVertex sMax);
@@ -1656,7 +1664,7 @@ class TABINDNode
                                       TABINDNode *poCurChild=NULL);
 
    public:
-    TABINDNode(TABAccess eAccessMode = TABRead);
+    explicit TABINDNode(TABAccess eAccessMode = TABRead);
     ~TABINDNode();
 
     int         InitNode(VSILFILE *fp, int nBlockPtr,
@@ -1972,7 +1980,7 @@ class MIDDATAFile
      void SaveLine(const char *pszLine);
      const char *GetSavedLine();
      void WriteLine(const char*, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
-     GBool IsValidFeature(const char *pszString);
+     static GBool IsValidFeature(const char *pszString);
 
 //  Translation information
      void SetTranslation(double, double, double, double);

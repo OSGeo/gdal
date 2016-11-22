@@ -181,6 +181,8 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     int    nCRSresult;
     struct Control_Points sPoints;
 
+    memset( &sPoints, 0, sizeof(sPoints) );
+
     if( nReqOrder == 0 )
     {
         if( nGCPCount >= 10 )
@@ -706,6 +708,8 @@ calccoef (struct Control_Points *cp, double E[], double N[], int order)
     int numactive;   /* NUMBER OF ACTIVE CONTROL POINTS */
     int status, i;
 
+    memset( &m, 0, sizeof(m) );
+
     /* CALCULATE THE NUMBER OF VALID CONTROL POINTS */
 
     for(i = numactive = 0 ; i < cp->count ; i++)
@@ -1084,6 +1088,8 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     int nI, nCRSresult, nGCPCount, nMinimumGcps, nReqOrder;
     double dfTolerance;
     struct Control_Points sPoints;
+
+    memset( &sPoints, 0, sizeof(sPoints) );
 
     nGCPCount = psInfo->nGCPCount;
     nMinimumGcps = psInfo->nMinimumGcps;

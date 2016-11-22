@@ -27,8 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gnm.h"
 #include "commonutils.h"
+#include "gnm.h"
+#include "gnm_priv.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");

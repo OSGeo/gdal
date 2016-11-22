@@ -193,7 +193,7 @@ class TerragenDataset : public GDALPamDataset
 
     bool read_next_tag(char*);
     bool write_next_tag(const char*);
-    bool tag_is(const char* szTag, const char*);
+    static bool tag_is(const char* szTag, const char*);
 
     bool write_header(void);
 };
@@ -446,6 +446,11 @@ TerragenDataset::TerragenDataset() :
     m_adfTransform[3] = 0.0;
     m_adfTransform[4] = 0.0;
     m_adfTransform[5] = m_dSCAL;
+    m_span_m[0] = 0.0;
+    m_span_m[1] = 0.0;
+    m_span_px[0] = 0.0;
+    m_span_px[1] = 0.0;
+    memset( m_szUnits, 0, sizeof(m_szUnits) );
 }
 
 /************************************************************************/
@@ -467,6 +472,7 @@ TerragenDataset::~TerragenDataset()
 bool TerragenDataset::write_header()
 {
     char szHeader[16];
+    // cppcheck-suppress bufferNotZeroTerminated
     memcpy(szHeader, "TERRAGENTERRAIN ", sizeof(szHeader));
 
     if(1 != VSIFWriteL( reinterpret_cast<void *>( szHeader ), sizeof(szHeader), 1, m_fp ))
@@ -757,7 +763,7 @@ int TerragenDataset::LoadFromFile()
 
         if( tag_is(szTag, "SCAL") )
         {
-            float sc[3];
+            float sc[3] = { 0.0f };
             get(sc[0]);
             get(sc[1]);
             get(sc[2]);

@@ -27,9 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_geometry.h"
 
+#include <cstring>
+#include <cstddef>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_geos.h"
 #include "ogr_p.h"
 
@@ -382,10 +390,10 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
     else if( eWkbVariant == wkbVariantIso )
         nGType = getIsoGeometryType();
 
-    if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
-    else
-        nGType = CPL_MSBWORD32( nGType );
+    if( OGR_SWAP( eByteOrder ) )
+    {
+        nGType = CPL_SWAP32(nGType);
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 

@@ -79,7 +79,7 @@ class OGRNULLDataSource : public OGRDataSource
     char*               pszName;
 
   public:
-                        OGRNULLDataSource(const char* pszNameIn);
+               explicit OGRNULLDataSource(const char* pszNameIn);
                virtual ~OGRNULLDataSource();
 
     virtual const char *GetName() { return pszName; }

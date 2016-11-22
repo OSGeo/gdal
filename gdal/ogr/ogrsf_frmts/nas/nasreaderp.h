@@ -90,7 +90,7 @@ class NASHandler : public DefaultHandler
     CPLString  m_osCharacters;
 
 public:
-    NASHandler( NASReader *poReader );
+    explicit NASHandler( NASReader *poReader );
     virtual ~NASHandler();
 
     void startElement(

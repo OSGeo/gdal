@@ -840,7 +840,7 @@ CPLErr KEADataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char
         result = CE_Failure;
     }
 
-    for( std::vector<kealib::KEAImageGCP*>::iterator itr = pKEAGCPs->begin(); itr != pKEAGCPs->end(); itr++)
+    for( std::vector<kealib::KEAImageGCP*>::iterator itr = pKEAGCPs->begin(); itr != pKEAGCPs->end(); ++itr)
     {
         kealib::KEAImageGCP *pKEA = (*itr);
         delete pKEA;

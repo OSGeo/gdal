@@ -76,7 +76,7 @@ class CPL_DLL OGRFieldDefn
 
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
-                        OGRFieldDefn( OGRFieldDefn * );
+               explicit OGRFieldDefn( OGRFieldDefn * );
                         ~OGRFieldDefn();
 
     void                SetName( const char * );
@@ -155,7 +155,7 @@ protected:
 public:
                             OGRGeomFieldDefn( const char *pszNameIn,
                                               OGRwkbGeometryType eGeomTypeIn );
-                            OGRGeomFieldDefn( OGRGeomFieldDefn * );
+                  explicit OGRGeomFieldDefn( OGRGeomFieldDefn * );
         virtual            ~OGRGeomFieldDefn();
 
         void                SetName( const char * );
@@ -222,7 +222,7 @@ class CPL_DLL OGRFeatureDefn
 //! @endcond
 
   public:
-                OGRFeatureDefn( const char * pszName = NULL );
+       explicit OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
     virtual const char  *GetName();
@@ -297,7 +297,7 @@ class CPL_DLL OGRFeature
 //! @endcond
 
   public:
-                        OGRFeature( OGRFeatureDefn * );
+    explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }

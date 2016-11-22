@@ -29,7 +29,7 @@
 #include "cpl_worker_thread_pool.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         CPLWorkerThreadPool()                        */

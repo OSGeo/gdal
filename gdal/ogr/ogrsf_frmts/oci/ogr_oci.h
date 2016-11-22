@@ -121,7 +121,7 @@ class CPL_DLL OGROCISession {
     CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
 
-    void     CleanName( char * );
+    static void     CleanName( char * );
 
     OCIType *PinTDO( const char * );
 
@@ -138,7 +138,7 @@ OGRGetOCISession( const char *pszUserid,
 /************************************************************************/
 class CPL_DLL OGROCIStatement {
   public:
-                 OGROCIStatement( OGROCISession * );
+    explicit     OGROCIStatement( OGROCISession * );
     virtual     ~OGROCIStatement();
 
     OCIStmt     *GetStatement() { return hStatement; }
@@ -354,6 +354,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
 
     OGRErr              WriteFeatureStreamMode( OGRFeature * );
     OGRErr              WriteFeatureVariableMode( OGRFeature * );
+    // cppcheck-suppress functionStatic
     OGRErr              WriteFeatureBinaryMode( OGRFeature * );
 
   public:

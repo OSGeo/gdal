@@ -2468,7 +2468,7 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
         padfGT2[4] * padfGT1[0]
         + padfGT2[5] * padfGT1[3]
         + padfGT2[3] * 1.0;
-    memcpy(padfGTOut, gtwrk, sizeof(double) * CPL_ARRAYSIZE(gtwrk));
+    memcpy(padfGTOut, gtwrk, sizeof(gtwrk));
 }
 
 /************************************************************************/

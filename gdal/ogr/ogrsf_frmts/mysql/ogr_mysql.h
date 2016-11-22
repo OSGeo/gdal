@@ -183,10 +183,6 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
     char                *pszRawStatement;
 
-    // Layer srid.
-    // TODO(schwehr): Does this shadow the nSRSId in OGRMySQLLayer?
-    int                 nSRSId;
-
   public:
                         OGRMySQLResultLayer( OGRMySQLDataSource *,
                                              const char * pszRawStatement,
