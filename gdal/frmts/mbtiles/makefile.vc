@@ -1,11 +1,17 @@
 
 OBJ	=	mbtilesdataset.obj
 
-EXTRAFLAGS = -I../../ogr -I../../ogr/ogrsf_frmts/gpkg  -I../../ogr/ogrsf_frmts/sqlite $(SQLITE_INC) -I../../ogr/ogrsf_frmts/geojson -I../../ogr/ogrsf_frmts/geojson/libjson -I../zlib
+EXTRAFLAGS = -I../../ogr -I../../ogr/ogrsf_frmts/gpkg  -I../../ogr/ogrsf_frmts/sqlite $(SQLITE_INC) -I../../ogr/ogrsf_frmts/geojson -I../../ogr/ogrsf_frmts/geojson/libjson $(ZLIB_FLAGS)
 
 GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
+!ELSE
+ZLIB_FLAGS = -I..\zlib
+!ENDIF
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..\o
