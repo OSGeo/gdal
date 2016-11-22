@@ -87,7 +87,7 @@ public:
 
     char *GetItemName();
     char *GetItemValue();
-    int GetType() { return TYPE_GENERIC; }
+    static int GetType() { return TYPE_GENERIC; }
 };
 
 /* Same as MetadataItem class except parses GCP properly and returns
@@ -106,9 +106,9 @@ class COASPMetadataGeorefGridItem : public COASPMetadataItem
 public:
         COASPMetadataGeorefGridItem( int nId, int nPixels, int nLines,
                                      double ndLat, double ndLong );
-        const char *GetItemName() { return "georef_grid"; }
+        static const char *GetItemName() { return "georef_grid"; }
         GDAL_GCP *GetItemValue();
-        int GetType() { return TYPE_GEOREF; }
+        static int GetType() { return TYPE_GEOREF; }
 };
 
 /********************************************************************

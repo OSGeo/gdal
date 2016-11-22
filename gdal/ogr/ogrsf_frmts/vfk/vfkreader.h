@@ -325,7 +325,7 @@ private:
     bool                 LoadGeometryFromDB();
     OGRErr               SaveGeometryToDB(const OGRGeometry *, int);
 
-    bool                 IsRingClosed(const OGRLinearRing *);
+    static bool                 IsRingClosed(const OGRLinearRing *);
     void                 UpdateVfkBlocks(int);
     void                 UpdateFID(GIntBig, std::vector<int>);
 

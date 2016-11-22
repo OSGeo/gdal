@@ -257,10 +257,10 @@ class OGRFMECacheIndex
     int         Lock();
     int         Unlock();
 
-    void        Touch( CPLXMLNode * );
+    static void        Touch( CPLXMLNode * );
     void        Add( CPLXMLNode * );
-    void        Reference( CPLXMLNode * );
-    void        Dereference( CPLXMLNode * );
+    static void        Reference( CPLXMLNode * );
+    static void        Dereference( CPLXMLNode * );
 
     int         ExpireOldCaches( IFMESession * );
 };

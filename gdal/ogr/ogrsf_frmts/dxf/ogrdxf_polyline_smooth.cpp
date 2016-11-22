@@ -171,7 +171,7 @@ void DXFSmoothPolyline::EmitArc(
     const DXFSmoothPolylineVertex& end,
     double radius, double len, double bulge,
     OGRLineString* poLS,
-    double dfZ ) const
+    double dfZ )
 {
     assert(poLS);
 

@@ -379,7 +379,7 @@ public:
      *
      * @return TRUE if candidate was evaluated as feature point or FALSE otherwise.
      */
-    bool PointIsExtremum(int row, int col, GDALOctaveLayer *bot,
+    static bool PointIsExtremum(int row, int col, GDALOctaveLayer *bot,
                          GDALOctaveLayer *mid, GDALOctaveLayer *top, double threshold);
 
     /**
@@ -547,7 +547,7 @@ private:
      * @param poPoint Feature point instance
      * @param poImg image where feature point was found
      */
-    void SetDescriptor(GDALFeaturePoint *poPoint, GDALIntegralImage *poImg);
+    static void SetDescriptor(GDALFeaturePoint *poPoint, GDALIntegralImage *poImg);
 
 private:
     int octaveStart;

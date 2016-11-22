@@ -67,7 +67,7 @@ public:
     OGRILI1Layer *GetLayerByName( const char* );
     int          GetLayerCount();
 
-    const char*  GetLayerNameString(const char* topicname, const char* tablename);
+    static const char*  GetLayerNameString(const char* topicname, const char* tablename);
 };
 
 #endif

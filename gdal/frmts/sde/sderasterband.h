@@ -17,8 +17,8 @@ class SDERasterBand : public GDALRasterBand
     private:
         const SE_RASBANDINFO* poBand;
 
-        double                  MorphESRIRasterDepth( int gtype );
-        GDALDataType            MorphESRIRasterType( int gtype );
+        static double                  MorphESRIRasterDepth( int gtype );
+        static GDALDataType            MorphESRIRasterType( int gtype );
         void                    ComputeColorTable();
         CPLErr                  InitializeBand( int nOverview );
         SE_QUERYINFO&           InitializeQuery();

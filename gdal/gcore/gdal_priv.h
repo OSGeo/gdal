@@ -595,7 +595,7 @@ private:
     // Semi-public methods. Only to be used by in-tree drivers.
     GDALSQLParseInfo*   BuildParseInfo(swq_select* psSelectInfo,
                                        swq_select_parse_options* poSelectParseOptions);
-    void                DestroyParseInfo(GDALSQLParseInfo* psParseInfo );
+    static void         DestroyParseInfo(GDALSQLParseInfo* psParseInfo );
     OGRLayer *          ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect,
@@ -1245,9 +1245,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr       QuietDelete( const char * pszName );
 
 //! @cond Doxygen_Suppress
-    CPLErr              DefaultRename( const char * pszNewName,
+    static CPLErr       DefaultRename( const char * pszNewName,
                                        const char * pszOldName );
-    CPLErr              DefaultCopyFiles( const char * pszNewName,
+    static CPLErr       DefaultCopyFiles( const char * pszNewName,
                                           const char * pszOldName );
 //! @endcond
 private:
@@ -1290,7 +1290,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void        DeregisterDriver( GDALDriver * );
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
-    void        AutoLoadDrivers();
+    static void        AutoLoadDrivers();
     void        AutoSkipDrivers();
 };
 

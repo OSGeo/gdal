@@ -428,7 +428,7 @@ protected:
     void AskMiniDriverForBlock(CPLString *url, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
-    CPLErr ReportWMSException(const char *file_name);
+    static CPLErr ReportWMSException(const char *file_name);
 
 protected:
     GDALWMSDataset *m_parent_dataset;

@@ -250,7 +250,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRSpatialReference *FetchSRS( int nSRSId );
 
-    OGRErr              InitializeMetadataTables();
+    static OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *pszFullName,
                               char **papszOptions, int bUpdate );

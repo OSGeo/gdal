@@ -86,7 +86,7 @@ protected:
 class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
 {
   private:
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
     virtual OGRFeature *       GetNextRawFeature();
@@ -102,7 +102,7 @@ class OGRAeronavFAADOFLayer : public OGRAeronavFAALayer
 class OGRAeronavFAANAVAIDLayer : public OGRAeronavFAALayer
 {
   private:
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
     virtual OGRFeature *       GetNextRawFeature();
@@ -122,7 +122,7 @@ class OGRAeronavFAARouteLayer : public OGRAeronavFAALayer
     CPLString osLastReadLine;
     CPLString osAPTName;
     CPLString osStateName;
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
     virtual OGRFeature *       GetNextRawFeature();
@@ -144,7 +144,7 @@ class OGRAeronavFAAIAPLayer : public OGRAeronavFAALayer
     CPLString osStateName;
     CPLString osAPTName;
     CPLString osAPTId;
-    int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
+    static int GetLatLon(const char* pszLat, const char* pszLon, double& dfLat, double& dfLon);
 
   protected:
     virtual OGRFeature *       GetNextRawFeature();

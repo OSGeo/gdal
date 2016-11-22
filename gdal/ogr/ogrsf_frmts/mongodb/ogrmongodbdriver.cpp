@@ -123,7 +123,7 @@ class OGRMongoDBLayer: public OGRLayer
             void                     SerializeRecursive(BSONObjBuilder& b,
                                          OGRFeature *poFeature,
                                          std::map< CPLString, IntOrMap*>& aoMap );
-            void                     InsertInMap(IntOrMap* rootMap,
+            static void                     InsertInMap(IntOrMap* rootMap,
                                                   std::map< std::vector<CPLString>, IntOrMap*>& aoMap,
                                                   const std::vector<CPLString>& aosFieldPathFull,
                                                   int nField);

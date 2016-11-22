@@ -167,7 +167,7 @@ public:
   // Internal used by FGDB driver */
   bool Initialize(FGdbDataSource* pParentDataSource, Table* pTable, const std::wstring& wstrTablePath, const std::wstring& wstrType);
   bool Create(FGdbDataSource* pParentDataSource, const char * pszLayerName, OGRSpatialReference *poSRS, OGRwkbGeometryType eType, char ** papszOptions);
-  bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, const std::string& feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
+  static bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, const std::string& feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
 
   // virtual const char *GetName();
   virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }

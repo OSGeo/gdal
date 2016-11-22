@@ -571,9 +571,9 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
                               GBool bTestOpenNoError = FALSE);
     int         OpenBaseTable(int nTableId, GBool bTestOpenNoError = FALSE);
     int         OpenNextBaseTable(GBool bTestOpenNoError =FALSE);
-    GIntBig     EncodeFeatureId(int nTableId, int nBaseFeatureId);
-    int         ExtractBaseTableId(GIntBig nEncodedFeatureId);
-    int         ExtractBaseFeatureId(GIntBig nEncodedFeatureId);
+    static GIntBig     EncodeFeatureId(int nTableId, int nBaseFeatureId);
+    static int         ExtractBaseTableId(GIntBig nEncodedFeatureId);
+    static int         ExtractBaseFeatureId(GIntBig nEncodedFeatureId);
 
   public:
     TABSeamless();
@@ -1355,7 +1355,7 @@ class TABRegion CPL_FINAL : public TABFeature,
 
     int     ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
                             TABMAPFile *poMAPFile);
-    int     AppendSecHdrs(OGRPolygon *poPolygon,
+    static int     AppendSecHdrs(OGRPolygon *poPolygon,
                           TABMAPCoordSecHdr * &pasSecHdrs,
                           TABMAPFile *poMAPFile,
                           int &iLastRing);
@@ -1766,13 +1766,13 @@ class TABCollection CPL_FINAL : public TABFeature,
     TABMultiPoint   *m_poMpoint;
 
     void    EmptyCollection();
-    int     ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
+    static int     ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
                             GBool bComprCoord,
                             GInt32 nComprOrgX, GInt32 nComprOrgY,
                             GInt32 &pnMinX, GInt32 &pnMinY,
                             GInt32 &pnMaxX, GInt32 &pnMaxY,
                             GInt32 &pnLabelX, GInt32 &pnLabelY );
-    int     WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
+    static int     WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
                              GBool bComprCoord,
                              GInt32 nMinX, GInt32 nMinY,
                              GInt32 nMaxX, GInt32 nMaxY,

@@ -141,7 +141,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
         virtual int                 TestCapability( const char * );
 
-        int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
+        static int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
 };
 
 /************************************************************************/
@@ -200,7 +200,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
                                    OGRSpatialReference *poSRS,
                                    int bGeomNullable);
 
-        CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
+        static CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
 
         OGRErr              RunDeferredCreationIfNecessary();
         int                 GetDeferredCreation() const { return bDeferredCreation; }
@@ -290,7 +290,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         json_object*                RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-        int                         FetchSRSId( OGRSpatialReference * poSRS );
+        static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
         int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }

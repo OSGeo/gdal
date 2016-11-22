@@ -260,7 +260,7 @@ class LevellerDataset : public GDALPamDataset
 
     bool load_from_file(VSILFILE*, const char*);
 
-    bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
+    static bool locate_data(vsi_l_offset&, size_t&, VSILFILE*, const char*);
     bool get(int&, VSILFILE*, const char*);
     bool get(size_t& n, VSILFILE* fp, const char* psz)
         { return this->get((int&)n, fp, psz); }
@@ -282,7 +282,7 @@ class LevellerDataset : public GDALPamDataset
     const measurement_unit* get_uom(UNITLABEL) const;
     const measurement_unit* get_uom(double) const;
 
-    bool convert_measure(double, double&, const char* pszUnitsFrom);
+    static bool convert_measure(double, double&, const char* pszUnitsFrom);
     bool make_local_coordsys(const char* pszName, const char* pszUnits);
     bool make_local_coordsys(const char* pszName, UNITLABEL);
     const char* code_to_id(UNITLABEL) const;

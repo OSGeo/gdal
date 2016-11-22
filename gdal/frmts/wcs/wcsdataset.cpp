@@ -93,7 +93,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
 
-    int         ProcessError( CPLHTTPResult *psResult );
+    static int         ProcessError( CPLHTTPResult *psResult );
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
     void        FlushMemoryResult();
     CPLString   osResultFilename;

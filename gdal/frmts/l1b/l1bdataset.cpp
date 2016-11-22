@@ -299,7 +299,7 @@ class L1BDataset : public GDALPamDataset
 
     void        ProcessRecordHeaders();
     int         FetchGCPs( GDAL_GCP *, GByte *, int );
-    void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
+    static void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
     void        FetchNOAA15TimeCode(TimeCode *, const GByte *, int *);
     void        FetchTimeCode( TimeCode *psTime, const void *pRecordHeader,
                                int *peLocationIndicator );

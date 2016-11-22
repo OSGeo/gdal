@@ -286,8 +286,8 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteINSERT( OGRFeature* );
 
     static CPLString    TextEscape( const char * );
-    int                 ColorStringToDXFColor( const char * );
-    CPLString           PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static int          ColorStringToDXFColor( const char * );
+    static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
 
     std::map<CPLString,CPLString> oNewLineTypes;
     int                 nNextAutoID;

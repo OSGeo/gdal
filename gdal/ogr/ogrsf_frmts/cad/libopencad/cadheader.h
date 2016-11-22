@@ -48,7 +48,7 @@ public:
     long getAsLong() const;
     long getAsLong( const CADHandle& ref_handle ) const;
 private:
-    long getAsLong(const std::vector<unsigned char>& handle) const;
+    static long getAsLong(const std::vector<unsigned char>& handle);
 protected:
     unsigned char              code;
     std::vector<unsigned char> handleOrOffset;
@@ -695,9 +695,9 @@ public:
     int              addValue( short code, bool val );
     int              addValue( short code, double x, double y, double z = 0 );
     int              addValue( short code, long julianday, long milliseconds );
-    int              getGroupCode( short code ) const;
+    static int              getGroupCode( short code );
     const CADVariant getValue( short code, const CADVariant& val = CADVariant() ) const;
-    const char * getValueName( short code ) const;
+    static const char * getValueName( short code );
     void   print() const;
     size_t getSize() const;
     short  getCode( int index ) const;

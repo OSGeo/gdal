@@ -193,7 +193,7 @@ class TerragenDataset : public GDALPamDataset
 
     bool read_next_tag(char*);
     bool write_next_tag(const char*);
-    bool tag_is(const char* szTag, const char*);
+    static bool tag_is(const char* szTag, const char*);
 
     bool write_header(void);
 };

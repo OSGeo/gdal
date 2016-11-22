@@ -125,7 +125,7 @@ private:
 
   void clear_array_cache();
 
-  r_Set<r_Ref_Any> execute(const char* string);
+  static r_Set<r_Ref_Any> execute(const char* string);
 
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
   void createBands(const char* queryString);

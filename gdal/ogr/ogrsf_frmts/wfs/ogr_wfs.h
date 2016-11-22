@@ -302,7 +302,7 @@ class OGRWFSDataSource : public OGRDataSource
     bool                bUseFeatureId;
     bool                bGmlObjectIdNeedsGMLPrefix;
     bool                bRequiresEnvelopeSpatialFilter;
-    bool                DetectRequiresEnvelopeSpatialFilter( CPLXMLNode* psRoot );
+    static bool                DetectRequiresEnvelopeSpatialFilter( CPLXMLNode* psRoot );
 
     bool                bTransactionSupport;
     char**              papszIdGenMethods;

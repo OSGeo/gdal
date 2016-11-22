@@ -170,11 +170,11 @@ public:
   static void         SetField( OGRFeature *, const char *, const char *,
                                 int, int );
 
-  bool                WriteField( OGRFeature *, const char *, char *,
+  static bool                WriteField( OGRFeature *, const char *, char *,
                                   int, int, char, char );
   bool                WriteRecord( char *pachRecord, int nRecLen,
                                    const char *pszType, VSILFILE *fp = NULL );
-  bool                WritePoint( char *pachRecord, int nStart,
+  static bool                WritePoint( char *pachRecord, int nStart,
                                   double dfX, double dfY );
 
   virtual bool        SetModule( const char * pszModule );
@@ -182,14 +182,14 @@ public:
   virtual OGRErr      CreateFeature( OGRFeature *poFeature );
 
  protected:
-  void                WriteFields(const TigerRecordInfo *psRTInfo,
+  static void                WriteFields(const TigerRecordInfo *psRTInfo,
                                   OGRFeature      *poFeature,
                                   char            *szRecord);
 
-  void                AddFieldDefns(const TigerRecordInfo *psRTInfo,
+  static void                AddFieldDefns(const TigerRecordInfo *psRTInfo,
                                     OGRFeatureDefn  *poFeatureDefn);
 
-  void                SetFields(const TigerRecordInfo *psRTInfo,
+  static void                SetFields(const TigerRecordInfo *psRTInfo,
                                 OGRFeature      *poFeature,
                                 char            *achRecord);
 

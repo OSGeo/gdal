@@ -138,20 +138,20 @@ protected:
   bool readCntTile(Byte** ppByte, int i0, int i1, int j0, int j1);
   bool readZTile(  Byte** ppByte, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
-  int numBytesFlt(float z) const;    // returns 1, 2, or 4
+  static int numBytesFlt(float z);    // returns 1, 2, or 4
   // These are not portable on architectures that enforce alignment
-  bool writeFlt(Byte** ppByte, float z, int numBytes) const;
-  bool readFlt( Byte** ppByte, float& z, int numBytes) const;
+  static bool writeFlt(Byte** ppByte, float z, int numBytes);
+  static bool readFlt( Byte** ppByte, float& z, int numBytes);
 
   // Portable versions of the above, endian independent if BIG_ENDIAN is defined when needed
 
   // Writes a floating point value as 1 or 2 byte LSB int or 4 byte LSB float
   // If numBytes is 0, it figures how many bytes to use
   // returns the number of bytes used
-  int writeVal(Byte** ppByte, float z, int numBytes = 0) const;
+  static int writeVal(Byte** ppByte, float z, int numBytes = 0);
   // Reads from an LSB int for 1, 2 bytes, or LSB float for 4
   // Not safe when alliased, cannot be used to read in place
-  void readVal(Byte** ppByte, float& z, int numBytes = 4) const;
+  static void readVal(Byte** ppByte, float& z, int numBytes = 4);
 
 protected:
 

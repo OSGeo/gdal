@@ -120,7 +120,7 @@ class CPL_DLL S57ClassRegistrar
     std::vector<S57AttrInfo*> aoAttrInfos;
     std::vector<int> anAttrIndex; // sorted by acronym.
 
-    bool        FindFile( const char *pszTarget, const char *pszDirectory,
+    static bool        FindFile( const char *pszTarget, const char *pszDirectory,
                           bool bReportErr, VSILFILE **fp );
 
     const char *ReadLine( VSILFILE * fp );
@@ -295,10 +295,12 @@ class CPL_DLL S57Reader
     OGRFeature         *AssembleFeature( DDFRecord  *, OGRFeatureDefn * );
 
     void                ApplyObjectClassAttributes( DDFRecord *, OGRFeature *);
+    // cppcheck-suppress functionStatic
     void                GenerateLNAMAndRefs( DDFRecord *, OGRFeature * );
     void                GenerateFSPTAttributes( DDFRecord *, OGRFeature * );
 
     void                AssembleSoundingGeometry( DDFRecord *, OGRFeature * );
+    // cppcheck-suppress functionStatic
     void                AssemblePointGeometry( DDFRecord *, OGRFeature * );
     void                AssembleLineGeometry( DDFRecord *, OGRFeature * );
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
@@ -310,6 +312,7 @@ class CPL_DLL S57Reader
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
     int                 ParseName( DDFField *, int = 0, int * = NULL );
 
+    // cppcheck-suppress functionStatic
     bool                ApplyRecordUpdate( DDFRecord *, DDFRecord * );
 
     bool                bMissingWarningIssued;

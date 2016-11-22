@@ -108,7 +108,7 @@ private:
 
 protected:
 
-    int _chan_to_idx(Msg_channel_names channel);
+    static int _chan_to_idx(Msg_channel_names channel);
 
     unsigned int    _lines;
     unsigned int    _columns;

@@ -83,7 +83,7 @@ protected:
 
     virtual OGRErr              SetNextByIndex( GIntBig nIndex );
 
-    const char *        GetDefaultGeometryColumnName() { return "geometry"; }
+    static const char *         GetDefaultGeometryColumnName() { return "geometry"; }
 
     static int                  ParseCSVResponse(char* pszLine,
                                                  std::vector<CPLString>& aosRes);
@@ -93,7 +93,7 @@ protected:
     int                         GetLatitudeFieldIndex() { return iLatitudeField; }
     int                         GetLongitudeFieldIndex() { return iLongitudeField; }
 
-    int                         GetFeaturesToFetch() { return atoi(CPLGetConfigOption("GFT_PAGE_SIZE", "500")); }
+    static int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("GFT_PAGE_SIZE", "500")); }
 };
 
 /************************************************************************/

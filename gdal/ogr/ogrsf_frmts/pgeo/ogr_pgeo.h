@@ -200,7 +200,7 @@ class OGRODBCMDBDriver : public OGRSFDriver
 {
 #ifndef WIN32
     CPLString   osDriverFile;
-    bool        LibraryExists( const char* pszLibPath );
+    static bool        LibraryExists( const char* pszLibPath );
     bool        FindDriverLib();
     CPLString   FindDefaultLib(const char* pszLibName);
 #endif
