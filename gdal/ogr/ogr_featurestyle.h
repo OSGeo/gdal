@@ -189,9 +189,9 @@ class CPL_DLL OGRStyleTool
     explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
-    GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
+    static GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
                            int &nBlue, int &nTransparence);
-    int   GetSpecificId(const char *pszId, const char *pszWanted);
+    static int   GetSpecificId(const char *pszId, const char *pszWanted);
 
 #ifndef DOXYGEN_SKIP
     GBool IsStyleModified() {return m_bModified;}

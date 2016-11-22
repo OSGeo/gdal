@@ -48,7 +48,7 @@ public:
     virtual const char *GetProjectionInWKT();
 
 protected:
-    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
+    static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
 
 protected:
     CPLString m_base_url;

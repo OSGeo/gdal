@@ -590,7 +590,7 @@ public:
     }
 
     CPLErr CompressPNG(buf_mgr &dst, buf_mgr &src);
-    CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
+    static CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
 
     const ILImage img;
 

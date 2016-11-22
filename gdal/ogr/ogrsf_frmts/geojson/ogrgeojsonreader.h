@@ -148,8 +148,8 @@ class OGRGeoJSONReader
     //
     bool GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object* poGJObject );
     bool GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_object* poObj );
-    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeometry );
-    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRFeature* poFeature );
+    static bool AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeometry );
+    static bool AddFeature( OGRGeoJSONLayer* poLayer, OGRFeature* poFeature );
 
     OGRGeometry* ReadGeometry( json_object* poObj );
     OGRFeature* ReadFeature( OGRGeoJSONLayer* poLayer, json_object* poObj );

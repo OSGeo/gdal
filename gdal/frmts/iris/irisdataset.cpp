@@ -70,7 +70,7 @@ class IRISDataset : public GDALPamDataset
     double                adfGeoTransform[6];
     bool                  bHasLoadedProjection;
     void                  LoadProjection();
-    std::pair<double, double> GeodesicCalculation(
+    static std::pair<double, double> GeodesicCalculation(
         float fLat, float fLon, float fAngle, float fDist,
         float fEquatorialRadius, float fPolarRadius, float fFlattening );
 

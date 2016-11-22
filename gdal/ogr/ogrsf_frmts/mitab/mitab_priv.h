@@ -982,7 +982,7 @@ class TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
-    void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
+    static void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
 
     int         GotoByteRel(int nOffset);
     int         GotoByteInBlock(int nOffset);
@@ -997,16 +997,24 @@ class TABRawBinBlock
 
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf);
     GByte       ReadByte();
+    // cppcheck-suppress functionStatic
     GInt16      ReadInt16();
+    // cppcheck-suppress functionStatic
     GInt32      ReadInt32();
+    // cppcheck-suppress functionStatic
     float       ReadFloat();
+    // cppcheck-suppress functionStatic
     double      ReadDouble();
 
     virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf);
     int         WriteByte(GByte byValue);
+    // cppcheck-suppress functionStatic
     int         WriteInt16(GInt16 n16Value);
+    // cppcheck-suppress functionStatic
     int         WriteInt32(GInt32 n32Value);
+    // cppcheck-suppress functionStatic
     int         WriteFloat(float fValue);
+    // cppcheck-suppress functionStatic
     int         WriteDouble(double dValue);
     int         WriteZeros(int nBytesToWrite);
     int         WritePaddedString(int nFieldSize, const char *pszString);
@@ -1972,7 +1980,7 @@ class MIDDATAFile
      void SaveLine(const char *pszLine);
      const char *GetSavedLine();
      void WriteLine(const char*, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
-     GBool IsValidFeature(const char *pszString);
+     static GBool IsValidFeature(const char *pszString);
 
 //  Translation information
      void SetTranslation(double, double, double, double);

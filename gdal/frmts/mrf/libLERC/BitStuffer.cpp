@@ -35,7 +35,7 @@ NAMESPACE_LERC_START
 // see the old stream IO functions below on how to call.
 // if you change write(...) / read(...), don't forget to update computeNumBytesNeeded(...).
 
-bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
+bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 {
   if (!ppByte || dataVec.empty())
     return false;
@@ -128,7 +128,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec) const
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec) const
+bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
 {
   if (!ppByte)
     return false;
@@ -235,7 +235,7 @@ unsigned int BitStuffer::computeNumBytesNeeded(unsigned int numElem, unsigned in
 
 // -------------------------------------------------------------------------- ;
 // -------------------------------------------------------------------------- ;
-unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec) const
+unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec)
 {
   unsigned int maxElem = 0;
   for (size_t i = 0; i < dataVec.size(); i++)
@@ -245,7 +245,7 @@ unsigned int BitStuffer::findMax(const vector<unsigned int>& dataVec) const
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes) const
+bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
 {
   Byte* ptr = *ppByte;
 
@@ -273,7 +273,7 @@ bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes) const
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes) const
+bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes)
 {
   Byte* ptr = *ppByte;
 

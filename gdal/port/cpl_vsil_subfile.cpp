@@ -71,7 +71,7 @@ public:
                      VSISubFileFilesystemHandler();
     virtual          ~VSISubFileFilesystemHandler();
 
-    int              DecomposePath( const char *pszPath,
+    static int              DecomposePath( const char *pszPath,
                                     CPLString &osFilename,
                                     vsi_l_offset &nSubFileOffset,
                                     vsi_l_offset &nSubFileSize );

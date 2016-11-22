@@ -64,7 +64,7 @@ protected:
 
     IVFKDataBlock  *CreateDataBlock(const char *);
     void            AddDataBlock(IVFKDataBlock *, const char *);
-    OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *);
+    virtual OGRErr          AddFeature(IVFKDataBlock *, VFKFeature *);
 
     // Metadata.
     std::map<CPLString, CPLString> poInfo;

@@ -131,7 +131,7 @@ private:
   int m_numBitsToSkipInTree;
   Node* m_root;
 
-  int GetIndexWrapAround(int i, int size) const  { return i - (i < size ? 0 : size); }
+  static int GetIndexWrapAround(int i, int size)  { return i - (i < size ? 0 : size); }
   bool ComputeNumBytesCodeTable(int& numBytes) const;
   bool GetRange(int& i0, int& i1, int& maxCodeLength) const;
   bool BitStuffCodes(Byte** ppByte, int i0, int i1) const;

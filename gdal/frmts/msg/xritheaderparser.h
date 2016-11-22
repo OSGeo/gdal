@@ -71,8 +71,8 @@ public:
   }
 
 private:
-  int parseInt16(unsigned char * num);
-  long parseInt32(unsigned char * num);
+  static int parseInt16(unsigned char * num);
+  static long parseInt32(unsigned char * num);
   void parseHeader(unsigned char * buf, long totalHeaderLength);
 
   bool m_isValid;

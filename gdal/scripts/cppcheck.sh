@@ -4,22 +4,25 @@
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
 echo "" > ${LOG_FILE}
-for dirname in alg port gcore ogr frmts gnm apps; do
+    for dirname in alg port gcore ogr frmts gnm apps; do
     echo "Running cppcheck on $dirname... (can be long)"
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
-        -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED -DHAVE_SPATIALITE \
+        -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
+        -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
         -DODBCVER=0x0300 \
         -DNETCDF_HAS_NC4 \
         -UGDAL_NO_AUTOLOAD \
+        -DHAVE_MITAB \
         -Dva_copy=va_start \
         -D__cplusplus \
         -DVSIRealloc=realloc \
         -DCPPCHECK \
+        -DDEBUG_MUTEX \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
@@ -295,6 +298,12 @@ fi
 grep "stlIfStrFind" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "stlIfStrFind check failed"
+    exit 1
+fi
+
+grep "functionStatic" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "functionStatic check failed"
     exit 1
 fi
 

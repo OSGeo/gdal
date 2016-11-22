@@ -290,7 +290,7 @@ private:
     double dfDeterminant;
     double aadfInverse[4][4];
 
-    double Det2x2( double a, double b, double c, double d )
+    static double Det2x2( double a, double b, double c, double d )
     {
         return a*d - b*c;
     }
@@ -352,20 +352,20 @@ public:
     }
     }
 
-    void CrossProduct(const double *a, const double *b, double *vResult) {
+    static void CrossProduct(const double *a, const double *b, double *vResult) {
         vResult[0] = a[1] * b[2] - a[2] * b[1];
         vResult[1] = a[2] * b[0] - a[0] * b[2];
         vResult[2] = a[0] * b[1] - a[1] * b[0];
     }
 
-    void Scale2Unit(double* adfV) {
-    double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-    if (dfLen != 0)
-    {
-            adfV[0] /= dfLen;
-            adfV[1] /= dfLen;
-            adfV[2] /= dfLen;
-    }
+    static void Scale2Unit(double* adfV) {
+        double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
+        if (dfLen != 0)
+        {
+                adfV[0] /= dfLen;
+                adfV[1] /= dfLen;
+                adfV[2] /= dfLen;
+        }
     }
     OGRSpatialReference *GetSourceCS() { return NULL; }
     OGRSpatialReference *GetTargetCS() { return NULL; }

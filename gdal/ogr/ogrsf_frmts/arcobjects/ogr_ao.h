@@ -180,7 +180,7 @@ public:
   int TestCapability( const char * );
   virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
 
-  void OpenWorkspace(std::string, IWorkspace** ppWorkspace);
+  static void OpenWorkspace(std::string, IWorkspace** ppWorkspace);
 
 private:
   bool m_licensedCheckedOut;

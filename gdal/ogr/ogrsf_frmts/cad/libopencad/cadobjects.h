@@ -59,7 +59,7 @@ public:
     void setBHasZ( bool value );
 
 protected:
-    inline bool fcmp( double x, double y );
+    inline static bool fcmp( double x, double y );
 protected:
     double X;
     double Y;

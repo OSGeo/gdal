@@ -81,8 +81,8 @@ protected:
   char* CreatePath(HDF5GroupObjects *);
   void DestroyH5Objects(HDF5GroupObjects *);
 
-  GDALDataType GetDataType(hid_t);
-  const char * GetDataTypeName(hid_t);
+  static GDALDataType GetDataType(hid_t);
+  static const char * GetDataTypeName(hid_t);
 
   /**
    * Reads an array of double attributes from the HDF5 metadata.

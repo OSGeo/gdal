@@ -94,7 +94,9 @@ public:
     explicit         OGRMSSQLGeometryValidator(OGRGeometry* poGeom);
                     ~OGRMSSQLGeometryValidator();
 
+    // cppcheck-suppress functionStatic
     int             ValidatePoint(OGRPoint * poGeom);
+    // cppcheck-suppress functionStatic
     int             ValidateMultiPoint(OGRMultiPoint * poGeom);
     int             ValidateLineString(OGRLineString * poGeom);
     int             ValidateLinearRing(OGRLinearRing * poGeom);
@@ -454,7 +456,7 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     const char          *GetCatalog() { return pszCatalog; }
 
-    int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
+    static int                 ParseValue(char** pszValue, char* pszSource, const char* pszKey,
                                   int nStart, int nNext, int nTerm, int bRemove);
 
     int                 Open( const char *, int bUpdate, int bTestOpen );

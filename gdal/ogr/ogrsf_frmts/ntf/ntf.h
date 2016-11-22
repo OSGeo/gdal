@@ -118,7 +118,7 @@ class NTFRecord
     int      nLength;
     char    *pszData;
 
-    int      ReadPhysicalLine( FILE *fp, char *pszLine );
+    static int      ReadPhysicalLine( FILE *fp, char *pszLine );
 
   public:
     explicit  NTFRecord( FILE * );
@@ -293,7 +293,7 @@ class NTFFileReader
 
     OGRGeometry      *ProcessGeometry( NTFRecord *, int * = NULL );
     OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = NULL );
-    int               ProcessAttDesc( NTFRecord *, NTFAttDesc * );
+    static int               ProcessAttDesc( NTFRecord *, NTFAttDesc * );
     int               ProcessAttRec( NTFRecord *, int *, char ***, char ***);
     int               ProcessAttRecGroup( NTFRecord **, char ***, char ***);
 

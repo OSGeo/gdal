@@ -78,7 +78,7 @@ protected:
 
     OGRFeature*                 GetNextRawFeature();
     OGRFeature*                 TranslateFeature( json_object* poObj );
-    void                        ParseFieldValue(OGRFeature* poFeature,
+    static void                        ParseFieldValue(OGRFeature* poFeature,
                                                 const char* pszKey,
                                                 json_object* poValue);
 

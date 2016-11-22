@@ -181,7 +181,7 @@ class OGRXPlaneRunwayThresholdLayer : public OGRXPlaneLayer
                                    const char* pszREIL);
 
     /* Set a few computed values */
-    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+    static void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
                                                    double dfLength,
                                                    double dfHeading);
 
@@ -248,7 +248,7 @@ class OGRXPlaneWaterRunwayThresholdLayer : public OGRXPlaneLayer
                                    int bBuoys);
 
     /* Set a few computed values */
-    void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
+    static void                 SetRunwayLengthAndHeading(OGRFeature* poFeature,
                                                    double dfLength,
                                                    double dfHeading);
 };

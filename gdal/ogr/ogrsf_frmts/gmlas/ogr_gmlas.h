@@ -437,9 +437,9 @@ class GMLASXPathMatcher
         /** Reference xpaths "compiled" */
         std::vector< std::vector<XPathComponent> > m_aosReferenceXPaths;
 
-        bool MatchesRefXPath(
+        static bool MatchesRefXPath(
             const CPLString& osXPath,
-            const std::vector<XPathComponent>& oRefXPath) const;
+            const std::vector<XPathComponent>& oRefXPath);
 
     public:
                                 GMLASXPathMatcher();

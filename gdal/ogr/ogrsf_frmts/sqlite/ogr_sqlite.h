@@ -271,10 +271,13 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 
     int                 bAllowMultipleGeomFields;
 
+    static
     CPLString           FormatSpatialFilterFromRTree(OGRGeometry* poFilterGeom,
                                                        const char* pszRowIDName,
                                                        const char* pszEscapedTable,
                                                        const char* pszEscapedGeomCol);
+
+    static
     CPLString           FormatSpatialFilterFromMBR(OGRGeometry* poFilterGeom,
                                                    const char* pszEscapedGeomColName);
 

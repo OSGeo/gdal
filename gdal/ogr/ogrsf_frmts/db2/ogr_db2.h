@@ -385,7 +385,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
 
     void                ClearStatement();
     OGRDB2Statement* BuildStatement(const char* pszColumns);
-    void                FreeBindBuffer(int nBindNum, void **bind_buffer);
+    static void                FreeBindBuffer(int nBindNum, void **bind_buffer);
     CPLString BuildFields();
 
     virtual OGRDB2Statement *  GetStatement();
@@ -438,7 +438,7 @@ public:
                                     int nSRId,
                                     const char *pszSRText,
                                     OGRwkbGeometryType eType);
-    OGRErr              isFieldTypeSupported( OGRFieldType nFieldType );
+    static OGRErr              isFieldTypeSupported( OGRFieldType nFieldType );
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
 
@@ -523,6 +523,7 @@ public:
                 const char* pszIdentifier,
                 const char* pszDescription );
     */
+    // cppcheck-suppress functionStatic
     OGRErr              RunDeferredCreationIfNecessary();
     /************************************************************************/
     /* GPKG methods */
@@ -728,7 +729,9 @@ class OGRDB2DataSource : public GDALPamDataset
     CPLErr                  WriteTile();
 
     CPLErr                  WriteTileInternal();
+    // cppcheck-suppress functionStatic
     CPLErr                  FlushRemainingShiftedTiles();
+    // cppcheck-suppress functionStatic
     CPLErr                  WriteShiftedTile(int nRow, int nCol, int iBand,
             int nDstXOffset, int nDstYOffset,
             int nDstXSize, int nDstYSize);
@@ -778,7 +781,9 @@ public:
     }
     /*
     */
+    // cppcheck-suppress functionStatic
     OGRErr              CreateExtensionsTableIfNecessary();
+    // cppcheck-suppress functionStatic
     int                 HasExtensionsTable();
     virtual void        FlushCache();
     static GDALDataset* CreateCopy( const char *pszFilename,
@@ -794,7 +799,7 @@ public:
         return m_pszCatalog;
     }
 
-    int                 ParseValue(char** pszValue, char* pszSource,
+    static int                 ParseValue(char** pszValue, char* pszSource,
                                    const char* pszKey,
                                    int nStart, int nNext, int nTerm,
                                    int bRemove);
@@ -836,10 +841,12 @@ public:
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect );
+    // cppcheck-suppress functionStatic
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     char                *LaunderName( const char *pszSrcName );
     char                *ToUpper( const char *pszSrcName );
+    // cppcheck-suppress functionStatic
     OGRErr              InitializeMetadataTables();
 
     OGRSpatialReference* FetchSRS( int nId );
