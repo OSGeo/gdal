@@ -193,7 +193,9 @@ const char * OGRCurvePolygon::getGeometryName() const
  * and the pointer is only valid till the polygon is next modified.  Use the
  * OGRGeometry::clone() method to make a separate copy within the application.
  *
- * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ * Relates to the Simple Features for COM (SFCOM) IPolygon::get_ExteriorRing()
+ * method.
+ * TODO(rouault): What does that mean?
  *
  * @return pointer to external ring.  May be NULL if the OGRCurvePolygon is
  * empty.
@@ -419,7 +421,7 @@ int OGRCurvePolygon::WkbSize() const
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                       addCurveDirectlyFromWkb()                      */
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
@@ -618,7 +620,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
@@ -836,7 +838,7 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const
 }
 
 /************************************************************************/
-/*                      OGRSurfaceCasterToCurvePolygon()                */
+/*                      GetCasterToCurvePolygon()                       */
 /************************************************************************/
 
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const
