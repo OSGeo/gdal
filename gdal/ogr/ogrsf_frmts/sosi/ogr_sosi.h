@@ -160,6 +160,8 @@ public:
 };
 
 class OGRSOSIDataType {
+    // cppcheck is right here. The disgn of this class is disputable
+    // cppcheck-suppress unsafeClassCanLeak
     OGRSOSISimpleDataType* poElements;
     int                    nElementCount;
 
