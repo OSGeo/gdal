@@ -96,8 +96,11 @@ class GDALDatasetPool
                                              int bShared);
         void _CloseDataset(const char* pszFileName, GDALAccess eAccess);
 
+#ifdef DEBUG_PROXY_POOL
+        // cppcheck-suppress unusedPrivateFunction
         void ShowContent();
         void CheckLinks();
+#endif
 
     public:
         static void Ref();
@@ -151,6 +154,7 @@ GDALDatasetPool::~GDALDatasetPool()
     GDALSetResponsiblePIDForCurrentThread(responsiblePID);
 }
 
+#ifdef DEBUG_PROXY_POOL
 /************************************************************************/
 /*                            ShowContent()                             */
 /************************************************************************/
@@ -186,6 +190,7 @@ void GDALDatasetPool::CheckLinks()
     }
     CPLAssert(i == currentSize);
 }
+#endif
 
 /************************************************************************/
 /*                            _RefDataset()                             */

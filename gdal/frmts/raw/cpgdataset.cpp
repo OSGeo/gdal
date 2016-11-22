@@ -66,7 +66,9 @@ class CPGDataset : public RawDataset
     static int  AdjustFilename( char **, const char *, const char * );
     static int FindType1( const char *pszWorkname );
     static int FindType2( const char *pszWorkname );
+#ifdef notdef
     static int FindType3( const char *pszWorkname );
+#endif
     static GDALDataset *InitializeType1Or2Dataset( const char *pszWorkname );
 #ifdef notdef
     static GDALDataset *InitializeType3Dataset( const char *pszWorkname );
@@ -297,6 +299,7 @@ int CPGDataset::FindType2( const char *pszFilename )
   return !bNotFound;
 }
 
+#ifdef notdef
 int CPGDataset::FindType3( const char *pszFilename )
 {
   const int nNameLen = static_cast<int>(strlen( pszFilename ));
@@ -317,6 +320,7 @@ int CPGDataset::FindType3( const char *pszFilename )
 
   return !bNotFound;
 }
+#endif
 
 /************************************************************************/
 /*                        LoadStokesLine()                              */
