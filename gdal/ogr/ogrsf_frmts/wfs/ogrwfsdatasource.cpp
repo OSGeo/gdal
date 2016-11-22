@@ -2186,7 +2186,7 @@ OGRLayer * OGRWFSDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         }
 
-        while(*pszIter && *pszIter == ' ')
+        while(*pszIter == ' ')
             pszIter ++;
         if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {

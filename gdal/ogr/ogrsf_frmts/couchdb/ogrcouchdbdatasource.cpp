@@ -632,7 +632,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         OGRCouchDBTableLayer* poTableLayer = (OGRCouchDBTableLayer*)poLayer;
 
-        while(*pszIter && *pszIter == ' ')
+        while( *pszIter == ' ' )
             pszIter ++;
         if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
