@@ -516,6 +516,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
         iXDim = 0;
         iYDim = 1;
     }
+    //FIXME: dimensions should likely be inverted here
     else if( dim1_name == "easting" && dim2_name == "northing" )
     {
         iXDim = 1;
