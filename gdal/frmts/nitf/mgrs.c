@@ -744,7 +744,7 @@ long Convert_UTM_To_MGRS (long Zone,
 { /* Convert_UTM_To_MGRS */
   double latitude;           /* Latitude of UTM point */
   double longitude;          /* Longitude of UTM point */
-  long temp_error = MGRS_NO_ERROR;
+  /*long temp_error = MGRS_NO_ERROR; */
   long error_code = MGRS_NO_ERROR;
 
   if ((Zone < 1) || (Zone > 60))
@@ -760,14 +760,14 @@ long Convert_UTM_To_MGRS (long Zone,
   if (!error_code)
   {
     Set_UTM_Parameters (MGRS_a, MGRS_f, 0);
-    temp_error = Convert_UTM_To_Geodetic (Zone, Hemisphere, Easting, Northing, &latitude, &longitude);
+    /*temp_error =*/ Convert_UTM_To_Geodetic (Zone, Hemisphere, Easting, Northing, &latitude, &longitude);
 
 	  /* Special check for rounding to (truncated) eastern edge of zone 31V */
 	  if ((Zone == 31) && (latitude >= 56.0 * DEG_TO_RAD) && (latitude < 64.0 * DEG_TO_RAD) &&
         (longitude >= 3.0 * DEG_TO_RAD))
 	  { /* Reconvert to UTM zone 32 */
       Set_UTM_Parameters (MGRS_a, MGRS_f, 32);
-      temp_error = Convert_Geodetic_To_UTM (latitude, longitude, &Zone, &Hemisphere, &Easting, &Northing);
+      /*temp_error =*/ Convert_Geodetic_To_UTM (latitude, longitude, &Zone, &Hemisphere, &Easting, &Northing);
 	  }
 
 	  error_code = UTM_To_MGRS (Zone, latitude, Easting, Northing, Precision, MGRS);

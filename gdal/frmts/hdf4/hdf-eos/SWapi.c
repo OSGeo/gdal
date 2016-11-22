@@ -1262,7 +1262,7 @@ SWidxmapinfo(int32 swathID, char *geodim, char *datadim, int32 l_index[])
 	}
 	else
 	{
-	    status = -1;
+	    /*status = -1;*/
 	    HEpush(DFE_GENAPP, "SWidxmapinfo", __FILE__, __LINE__);
 	    HEreport("Index Mapping \"%s\" not found.\n", utlbuf);
 	}

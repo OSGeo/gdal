@@ -2600,6 +2600,7 @@ CPLValueType CPLGetValueType( const char* pszValue )
 
     if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 )
     {
+        // cppcheck-suppress unreadVariable
         const double dfVal = CPLAtof(pszValueInit);
         if( CPLIsInf(dfVal) )
             return CPL_VALUE_STRING;

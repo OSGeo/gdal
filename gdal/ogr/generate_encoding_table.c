@@ -213,7 +213,6 @@ int main(int argc, char* argv[])
             printf("for(i = 0x%02X; i < 0x%02X; i++)\n", nLastIdentical, i);
             printf("    info->map[i] = i;\n");
         }
-        nLastIdentical = -1;
     }
 
     iconv_close( sConv );

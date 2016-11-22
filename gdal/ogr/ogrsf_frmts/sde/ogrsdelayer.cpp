@@ -355,8 +355,15 @@ int OGRSDELayer::NeedLayerInfo()
 
         LFLOAT falsex, falsey, xyunits;
         nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
-        CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
-                  pszDbTableName, falsex, falsey, xyunits );
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_coordref_get_xy" );
+        }
+        else
+        {
+            CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
+                    pszDbTableName, falsex, falsey, xyunits );
+        }
     }
 
     return TRUE;

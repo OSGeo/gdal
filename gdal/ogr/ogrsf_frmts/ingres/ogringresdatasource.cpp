@@ -840,7 +840,7 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
                                    char ** papszOptions )
 
 {
-    int                 nDimension = 3; // Ingres only supports 2d currently
+    //int                 nDimension = 3; // Ingres only supports 2d currently
 
     char *pszLayerName = NULL;
     if( CPLFetchBool(papszOptions, "LAUNDER", true) )
@@ -848,8 +848,8 @@ OGRIngresDataSource::ICreateLayer( const char * pszLayerNameIn,
     else
         pszLayerName = CPLStrdup( pszLayerNameIn );
 
-    if( wkbFlatten(eType) == eType )
-        nDimension = 2;
+    //if( wkbFlatten(eType) == eType )
+    //    nDimension = 2;
 
     CPLDebug("INGRES","Creating layer %s.", pszLayerName);
 
