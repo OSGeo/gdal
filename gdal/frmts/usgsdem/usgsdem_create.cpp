@@ -1321,6 +1321,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
+    // cppcheck-suppress redundantCopy
     CPLPrintPointer( szDataPointer+strlen(szDataPointer),
                      psWInfo->panData,
                      static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );

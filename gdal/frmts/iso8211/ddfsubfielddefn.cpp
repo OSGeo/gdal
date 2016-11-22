@@ -856,11 +856,13 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
         if( GetBinaryFormat() == NotBinary )
         {
             memset( pachData, ' ', nSize );
+            // cppcheck-suppress redundantCopy
             memcpy( pachData, pszValue, std::min(nValueLength, nSize) );
         }
         else
         {
             memset( pachData, 0, nSize );
+            // cppcheck-suppress redundantCopy
             memcpy( pachData, pszValue, std::min(nValueLength, nSize) );
         }
     }
