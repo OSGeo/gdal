@@ -911,6 +911,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
         const int *panMASK =
             poFeature->GetFieldAsIntegerList( "MASK", &nItemCount );
 
+        // cppcheck-suppress duplicateExpression
         CPLAssert( sizeof(int) == sizeof(GInt32) );
 
         const int nRawDataSize = nItemCount * 8;
