@@ -67,11 +67,15 @@ public:
     return other.contains(*this);
   }
 
-  void operator = (const Subset& rhs) {
-    m_x_lo = rhs.m_x_lo;
-    m_x_hi = rhs.m_x_hi;
-    m_y_lo = rhs.m_y_lo;
-    m_y_hi = rhs.m_y_hi;
+  Subset& operator = (const Subset& rhs) {
+    if( &rhs != this )
+    {
+        m_x_lo = rhs.m_x_lo;
+        m_x_hi = rhs.m_x_hi;
+        m_y_lo = rhs.m_y_lo;
+        m_y_hi = rhs.m_y_hi;
+    }
+    return *this;
   }
 
   int x_lo() const { return m_x_lo; }
