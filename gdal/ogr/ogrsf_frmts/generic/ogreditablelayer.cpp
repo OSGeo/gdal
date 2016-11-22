@@ -402,11 +402,13 @@ OGRErr      OGREditableLayer::DeleteFeature( GIntBig nFID )
     {
         eErr = OGRERR_NON_EXISTING_FEATURE;
     }
+    // cppcheck-suppress redundantIfRemove
     else if( m_oSetCreated.find(nFID) != m_oSetCreated.end() )
     {
         m_oSetCreated.erase(nFID);
         eErr = m_poMemLayer->DeleteFeature(nFID);
     }
+    // cppcheck-suppress redundantIfRemove
     else if( m_oSetEdited.find(nFID) != m_oSetEdited.end() )
     {
         m_oSetEdited.erase(nFID);
