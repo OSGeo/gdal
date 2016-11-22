@@ -16690,10 +16690,8 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
              EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
     {
         CPLString osMissing;
-        for( int i = 0;
-             i < static_cast<int>( sizeof(anReachedVirtualMemIO) ) /
-                 sizeof(anReachedVirtualMemIO[0]) );
-             ++i )
+        for( int i = 0; i < static_cast<int>(
+                                CPL_ARRAYSIZE(anReachedVirtualMemIO)); ++i )
         {
             if( !anReachedVirtualMemIO[i] )
             {
