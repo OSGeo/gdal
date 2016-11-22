@@ -1091,7 +1091,7 @@ int ENVIDataset::ParseRpcCoeffsMetaDataString(
         return FALSE;
 
     int x = 0;
-    while ((papszArr[x] != NULL) && (x < 20))
+    while ( (x < 20) && (papszArr[x] != NULL) )
     {
         papszVal[idx++] = CPLStrdup(papszArr[x]);
         x++;
