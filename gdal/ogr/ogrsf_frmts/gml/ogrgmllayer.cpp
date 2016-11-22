@@ -233,7 +233,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 nFID = iNextGMLId++;
             }
         }
-        else if( iNextGMLId != 0 )
+        else /* if( iNextGMLId != 0 ) */
         {
             const char* pszFIDPrefix_notnull = pszFIDPrefix;
             if (pszFIDPrefix_notnull == NULL) pszFIDPrefix_notnull = "";

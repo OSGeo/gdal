@@ -242,7 +242,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      If this is compressed data, we read a goodly chunk of data      */
 /*      and then decode it.                                             */
 /* -------------------------------------------------------------------- */
-    else if( l_poDS->PCB != 0 )
+    else
     {
         const int nBufSize = 128*128*2;
         GByte *pabyCData = (GByte *) CPLCalloc(nBufSize,1);
@@ -1134,7 +1134,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                     CPLString osGENFileName="";
 
                     int bFound=0;
-                    if (bFound ==0)
+
                     {
                         char** papszDirContent = VSIReadDir(osDatasetDir.c_str());
                         char** ptrDir = papszDirContent;
@@ -1154,6 +1154,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             CSLDestroy(papszDirContent);
                         }
                     }
+
                     /* If not found in sub directory then search in the same directory of the THF file */
                     if (bFound ==0)
                     {

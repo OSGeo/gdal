@@ -11,7 +11,7 @@ echo "" > ${LOG_FILE}
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
         -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
         -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
-        -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 \
+        -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 -DHAVE_SQLITE_VFS \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
         -DODBCVER=0x0300 \
@@ -304,6 +304,12 @@ fi
 grep "functionStatic" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "functionStatic check failed"
+    exit 1
+fi
+
+grep "knownConditionTrueFalse" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "knownConditionTrueFalse check failed"
     exit 1
 fi
 

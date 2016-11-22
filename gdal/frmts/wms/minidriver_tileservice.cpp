@@ -39,14 +39,14 @@ WMSMiniDriver_TileService::~WMSMiniDriver_TileService() {}
 CPLErr WMSMiniDriver_TileService::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *version = CPLGetXMLValue(config, "Version", "1");
         if (version[0] != '\0') {
             m_version = version;
         }
     }
 
-    if (ret == CE_None) {
+    {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0') {
             /* Try the old name */

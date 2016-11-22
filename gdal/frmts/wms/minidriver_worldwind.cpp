@@ -39,7 +39,7 @@ WMSMiniDriver_WorldWind::~WMSMiniDriver_WorldWind() {}
 CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0') {
             /* Try the old name */

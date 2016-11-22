@@ -43,7 +43,6 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     CPLErr ret = CE_None;
     int i;
 
-    if (ret == CE_None)
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0')
