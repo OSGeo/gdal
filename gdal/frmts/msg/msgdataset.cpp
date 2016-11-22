@@ -731,6 +731,8 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 
                         double cc2 = rC2 * poGDS->rVc[iIndex];
                         double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+                        // cppcheck suggests using log1p() but not sure how portable this would be
+                        // cppcheck-suppress unpreciseMathCall
                         double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
                         return rTemperature;
                 }
