@@ -161,7 +161,8 @@ CPLErr MFFTiledBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     const int nBlockSize = nWordSize * nBlockXSize * nBlockYSize;
 
-    const long nOffset = nBlockSize * (nBlockXOff + nBlockYOff*nTilesPerRow);
+    const vsi_l_offset nOffset = nBlockSize * (nBlockXOff +
+                        static_cast<vsi_l_offset>(nBlockYOff)*nTilesPerRow);
 
     if( VSIFSeekL( fpRaw, nOffset, SEEK_SET ) == -1
         || VSIFReadL( pImage, 1, nBlockSize, fpRaw ) < 1 )
