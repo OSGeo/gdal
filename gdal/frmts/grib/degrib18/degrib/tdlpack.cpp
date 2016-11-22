@@ -1197,7 +1197,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
                      printf ("This doesn't happen often.\n");
                      printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
 #endif
-                     myAssert (1 == 2);
+                     myAssert (0);
                      f_missing = 0;
                   }
                }
@@ -1395,7 +1395,7 @@ static int ReadTDLPSect4 (uChar *bds, sInt4 tdlpLen, sInt4 *curLoc,
 #ifdef DEBUG
                      printf ("This doesn't happen often.\n");
                      printf ("%d %u %d\n", (int) i, grp[i].bit, grp[i].min);
-                     myAssert (1 == 2);
+                     myAssert (0);
 #endif
                      f_missing = 0;
                   }
@@ -3623,10 +3623,10 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                Data[i] -= OverallMin;
                // Check if we accidentally adjusted to prim or sec, if so add 1.
                if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
-                  myAssert (1 == 2);
+                  myAssert (0);
                   Data[i]++;
                   if ((Data[i] == li_secMiss) || (Data[i] == li_primMiss)) {
-                     myAssert (1 == 2);
+                     myAssert (0);
                      Data[i]++;
                   }
                }
@@ -3638,7 +3638,7 @@ static void GroupIt (sInt4 OverallMin, sInt4 *Data, size_t numData,
                Data[i] -= OverallMin;
                // Check if we accidentally adjusted to prim or sec, if so add 1.
                if (Data[i] == li_primMiss) {
-                  myAssert (1 == 2);
+                  myAssert (0);
                   Data[i]++;
                }
             }

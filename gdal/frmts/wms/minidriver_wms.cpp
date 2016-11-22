@@ -42,7 +42,7 @@ WMSMiniDriver_WMS::~WMSMiniDriver_WMS() {}
 CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *version = CPLGetXMLValue(config, "Version", "1.1.0");
         if (version[0] != '\0') {
             m_version = version;
