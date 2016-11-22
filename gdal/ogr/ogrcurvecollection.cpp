@@ -559,12 +559,12 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
     if( !bExtentSet )
     {
-        psEnvelope->MinX = 0;
-        psEnvelope->MinY = 0;
-        psEnvelope->MinZ = 0;
-        psEnvelope->MaxX = 0;
-        psEnvelope->MaxY = 0;
-        psEnvelope->MaxZ = 0;
+        psEnvelope->MinX = 0.0;
+        psEnvelope->MinY = 0.0;
+        psEnvelope->MinZ = 0.0;
+        psEnvelope->MaxX = 0.0;
+        psEnvelope->MaxY = 0.0;
+        psEnvelope->MaxZ = 0.0;
     }
 }
 
