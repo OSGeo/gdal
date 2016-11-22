@@ -411,6 +411,12 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "unassignedVariable" ${LOG_FILE} | grep -v frmts/png/libpng
+if [[ $? -eq 0 ]] ; then
+    echo "unassignedVariable check failed"
+    exit 1
+fi
+
 # Check any remaining errors
 grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "memleak," | grep -v "memleakOnRealloc" | \

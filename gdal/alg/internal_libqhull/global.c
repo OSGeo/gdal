@@ -1484,7 +1484,7 @@ void qh_initqhull_globals(coordT *points, int numpoints, int dim, boolT ismalloc
   realT randr;
   realT factorial;
 
-  time_t timedata;
+  time_t timedata = 0;
 
   trace0((qh ferr, 13, "qh_initqhull_globals: for %s | %s\n", qh rbox_command,
       qh qhull_command));
@@ -1840,7 +1840,7 @@ void qh_initqhull_start(FILE *infile, FILE *outfile, FILE *errfile) {
     qh_freeqhull2()
 */
 void qh_initqhull_start2(FILE *infile, FILE *outfile, FILE *errfile) {
-  time_t timedata;
+  time_t timedata = 0;
   int seed;
 
   qh_CPUclock; /* start the clock(for qh_clock).  One-shot. */
