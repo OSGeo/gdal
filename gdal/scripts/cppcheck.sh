@@ -393,6 +393,12 @@ if [[ $? -eq 0 ]] ; then
     exit 1
 fi
 
+grep "unreachableCode" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "unreachableCode check failed"
+    exit 1
+fi
+
 # Check any remaining errors
 grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "memleak," | grep -v "memleakOnRealloc" | \
