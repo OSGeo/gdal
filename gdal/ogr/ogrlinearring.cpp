@@ -649,7 +649,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
 
     // If iNumCrossings number is even, given point is outside the ring,
     // when the crossings number is odd, the point is inside the ring.
-    return ( ( iNumCrossings % 2 ) == 1 ? 1 : 0 );
+    return iNumCrossings % 2;  // OGRBoolean
 }
 
 /************************************************************************/
