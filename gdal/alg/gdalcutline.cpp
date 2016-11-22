@@ -332,6 +332,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     char szDataPointer[100] = {};
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
+    // cppcheck-suppress redundantCopy
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer(
         szDataPointer+strlen(szDataPointer),

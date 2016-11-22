@@ -922,6 +922,7 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx,
             {
                 returnErrorIf(eOGRFieldType != OFTString);
                 memset(szUUID, 0, UUID_LEN_AS_STRING + 1);
+                // cppcheck-suppress redundantCopy
                 strncpy(szUUID, psValue->String, UUID_LEN_AS_STRING);
                 bEvaluateToFALSE =
                     eOp == FGSO_EQ &&
