@@ -6034,9 +6034,7 @@ CPLErr HFADataset::Rename( const char *pszNewName, const char *pszOldName )
 /* -------------------------------------------------------------------- */
 /*      Rename all the files at the filesystem level.                   */
 /* -------------------------------------------------------------------- */
-    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
-
-    CPLErr eErr = poDriver->DefaultRename( pszNewName, pszOldName );
+    CPLErr eErr = GDALDriver::DefaultRename( pszNewName, pszOldName );
     if( eErr != CE_None )
         return eErr;
 
@@ -6082,9 +6080,7 @@ CPLErr HFADataset::CopyFiles( const char *pszNewName, const char *pszOldName )
 /* -------------------------------------------------------------------- */
 /*      Rename all the files at the filesystem level.                   */
 /* -------------------------------------------------------------------- */
-    GDALDriver *poDriver = (GDALDriver*) GDALGetDriverByName( "HFA" );
-
-    CPLErr eErr = poDriver->DefaultCopyFiles( pszNewName, pszOldName );
+    CPLErr eErr = GDALDriver::DefaultCopyFiles( pszNewName, pszOldName );
 
     if( eErr != CE_None )
         return eErr;
