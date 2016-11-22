@@ -224,7 +224,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         // trim
-        while( pszLine[j] == ' ' && pszLine[j] != 0) j++;
+        while( pszLine[j] == ' ' ) j++;
 
         if(soGroupName.empty())
         {

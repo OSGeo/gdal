@@ -360,7 +360,7 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
 
     if( wkbFlatten(poNewRing->getGeometryType()) == wkbLineString )
     {
-        if( poNewRing->getNumPoints() == 0 || poNewRing->getNumPoints() < 4 )
+        if( poNewRing->getNumPoints() < 4 )
         {
             return FALSE;
         }

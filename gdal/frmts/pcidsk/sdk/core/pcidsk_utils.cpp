@@ -399,7 +399,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
             next++;
 
         // move past white space.
-        while( *next != '\0' && *next == ' ' )
+        while( *next == ' ' )
             next++;
     }
 
