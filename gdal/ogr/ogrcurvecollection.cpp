@@ -456,6 +456,7 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
             nGType = POSTGIS15_CURVEPOLYGON;
         if( bIs3D )
             // Explicitly set wkb25DBit.
+            // TODO(schwehr): Clean up the casting.
             nGType = (OGRwkbGeometryType)(nGType | wkb25DBitInternalUse);
     }
 
