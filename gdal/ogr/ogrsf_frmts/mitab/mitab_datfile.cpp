@@ -1774,9 +1774,9 @@ const char *TABDATFile::ReadDateField(int nWidth)
     int nDay = 0;
     int nMonth = 0;
     int nYear = 0;
-    int status = 0;
+    int status = ReadDateField(nWidth, &nYear, &nMonth, &nDay);
 
-    if ((status = ReadDateField(nWidth, &nYear, &nMonth, &nDay)) == -1)
+    if ( status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
@@ -1841,9 +1841,9 @@ const char *TABDATFile::ReadTimeField(int nWidth)
     int nMinute = 0;
     int nSecond = 0;
     int nMS = 0;
-    int status = 0;
+    int status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS);
 
-    if ((status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS)) == -1)
+    if (status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMinute, nSecond, nMS);
@@ -1919,10 +1919,10 @@ const char *TABDATFile::ReadDateTimeField(int nWidth)
     int nMinute = 0;
     int nSecond = 0;
     int nMS = 0;
-    int status = 0;
+    int status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
+                                    &nMinute, &nSecond, &nMS);
 
-    if ((status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
-                                    &nMinute, &nSecond, &nMS)) == -1)
+    if ( status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d",

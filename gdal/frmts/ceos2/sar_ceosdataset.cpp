@@ -1957,7 +1957,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         int StartData;
         CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &StartData );
 
-        StartData += psImageDesc->ImageDataStart;
+        /*StartData += psImageDesc->ImageDataStart; */
 
         int nLineSize, nLineSize2;
         CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &nLineSize );

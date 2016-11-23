@@ -3,6 +3,7 @@
 # as well as with cppcheck 1.76.1
 
 LOG_FILE=/tmp/cppcheck_gdal.txt
+
 echo "" > ${LOG_FILE}
 for dirname in alg port gcore ogr frmts gnm apps; do
     echo "Running cppcheck on $dirname... (can be long)"
@@ -40,55 +41,57 @@ for dirname in alg port gcore ogr frmts gnm apps; do
     fi
 done
 
+ret_code=0
+
 cat ${LOG_FILE} | grep -v "unmatchedSuppression" > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 grep "null pointer" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "Null pointer check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "duplicateBreak" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "duplicateBreak check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "duplicateBranch" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "duplicateBranch check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "uninitMemberVar" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "uninitMemberVar check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "useInitializationList" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "uninitMemberVar check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "clarifyCalculation" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "clarifyCalculation check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "invalidPrintfArgType_uint" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "invalidPrintfArgType_uint check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "catchExceptionByValue" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "catchExceptionByValue check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleakOnRealloc issues in frmts/hdf4/hdf-eos ignored"
@@ -96,7 +99,7 @@ grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && ec
 grep "memleakOnRealloc" ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib18
 if [[ $? -eq 0 ]] ; then
     echo "memleakOnRealloc check failed"
-    exit 1
+    ret_code=1
 fi
 
 # Those warnings in libjpeg seems to be false positives
@@ -104,20 +107,20 @@ fi
 grep "arrayIndexOutOfBoundsCond" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg
 if [[ $? -eq 0 ]] ; then
     echo "arrayIndexOutOfBoundsCond check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "arrayIndexOutOfBounds," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "arrayIndexOutOfBounds issues in frmts/hdf4/hdf-eos ignored"
 grep "arrayIndexOutOfBounds," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos
 if [[ $? -eq 0 ]] ; then
     echo "arrayIndexOutOfBounds check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "syntaxError" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "syntaxError check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "memleak," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleak issues in frmts/hdf4/hdf-eos ignored"
@@ -125,19 +128,19 @@ grep "memleak," ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "meml
 grep "memleak," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib18
 if [[ $? -eq 0 ]] ; then
     echo "memleak check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "eraseDereference" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "eraseDereference check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "memsetClass," ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "memsetClass check failed"
-    exit 1
+    ret_code=1
 fi
 
 # Most if not all of them are false positives
@@ -163,7 +166,7 @@ grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
                                 grep -v osr_cs_wkt_parser.c
 if [[ $? -eq 0 ]] ; then
     echo "uninitvar check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib18/g2clib-1.0.4" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib18/g2clib-1.0.4 ignored"
@@ -171,265 +174,272 @@ grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib18/g2clib-1.0.4" > /dev/
 grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib18/g2clib-1.0.4"
 if [[ $? -eq 0 ]] ; then
     echo "uninitdata check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "va_list_usedBeforeStarted" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "va_list_usedBeforeStarted check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "duplInheritedMember" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "duplInheritedMember check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "terminateStrncpy" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "terminateStrncpy check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "operatorEqVarError" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "operatorEqVarError check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "uselessAssignmentPtrArg" ${LOG_FILE} | grep -v swq_parser.cpp | grep -v osr_cs_wkt_parser.c | grep -v ods_formula_parser.cpp
 if [[ $? -eq 0 ]] ; then
     echo "uselessAssignmentPtrArg check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "bufferNotZeroTerminated" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "bufferNotZeroTerminated check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "sizeofDivisionMemfunc" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "sizeofDivisionMemfunc check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "selfAssignment" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "selfAssignment check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "invalidPrintfArgType_sint" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "invalidPrintfArgType_sint check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "redundantAssignInSwitch" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignInSwitch check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "publicAllocationError" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "publicAllocationError check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "invalidScanfArgType_int" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "invalidScanfArgType_int check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "invalidscanf," ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "invalidscanf check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "moduloAlwaysTrueFalse" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "moduloAlwaysTrueFalse check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "charLiteralWithCharPtrCompare" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "charLiteralWithCharPtrCompare check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "noConstructor" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "noConstructor check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "noExplicitConstructor" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "noExplicitConstructor check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "noCopyConstructor" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "noCopyConstructor check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "passedByValue" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "passedByValue check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "postfixOperator" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "postfixOperator check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "redundantCopy" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantCopy check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "stlIfStrFind" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "stlIfStrFind check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "functionStatic" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "functionStatic check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "knownConditionTrueFalse" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "knownConditionTrueFalse check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "arrayIndexThenCheck" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "arrayIndexThenCheck check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unusedPrivateFunction" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "unusedPrivateFunction check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "redundantCondition" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantCondition check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unusedStructMember" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg | grep -v frmts/gtiff/libtiff | grep -v frmts/zlib
 if [[ $? -eq 0 ]] ; then
     echo "unusedStructMember check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "multiCondition" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "multiCondition check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "duplicateExpression" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "duplicateExpression check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "operatorEq" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "operatorEq check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "truncLongCastAssignment" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "truncLongCastAssignment check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "exceptRethrowCopy" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "exceptRethrowCopy check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unusedVariable" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "unusedVariable check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unsafeClassCanLeak" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "unsafeClassCanLeak check failed"
-    exit 1
+    ret_code=1
 fi
 
-grep "unsignedLessThanZero" ${LOG_FILE}
+grep "unsignedLessThanZero" ${LOG_FILE} | grep -v frmts/jpeg/libjpeg
 if [[ $? -eq 0 ]] ; then
     echo "unsignedLessThanZero check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unpreciseMathCall" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "unpreciseMathCall check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unreachableCode" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "unreachableCode check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "clarifyCondition" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "clarifyCondition check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "redundantIfRemove" ${LOG_FILE}
 if [[ $? -eq 0 ]] ; then
     echo "redundantIfRemove check failed"
-    exit 1
+    ret_code=1
 fi
 
 grep "unassignedVariable" ${LOG_FILE} | grep -v frmts/png/libpng
 if [[ $? -eq 0 ]] ; then
     echo "unassignedVariable check failed"
-    exit 1
+    ret_code=1
 fi
 
-grep "redundantAssignment" ${LOG_FILE}
+grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib18/g2clib-1.0.4 | grep -v frmts/hdf4/hdf-eos | grep -v frmts/gtiff/libgeotiff | grep -v frmts/png/libpng
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignment check failed"
-    exit 1
+    ret_code=1
 fi
 
-grep "unreadVariable" ${LOG_FILE} | grep -v frmts/gtiff/libtiff | grep -v frmts/jpeg/libjpeg | grep -v frmts/png/libpng
+grep "unreadVariable" ${LOG_FILE} | grep -v alg/internal_libqhull | \
+                                    grep -v frmts/gtiff/libtiff  | \
+                                    grep -v frmts/jpeg/libjpeg | \
+                                    grep -v frmts/png/libpng | \
+                                    grep -v frmts/grib/degrib18/degrib | \
+                                    grep -v frmts/gtiff/libgeotiff | \
+                                    grep -v frmts/hdf4/hdf-eos | \
+                                    grep -v frmts/zlib
 if [[ $? -eq 0 ]] ; then
     echo "unreadVariable check failed"
-    exit 1
+    ret_code=1
 fi
 
 # Check any remaining errors
@@ -450,7 +460,7 @@ grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
 
 if [[ $? -eq 0 ]] ; then
     echo "Errors check failed"
-    exit 1
+    ret_code=1
 fi
 
 # Check any remaining warnings
@@ -459,9 +469,12 @@ grep "warning," ${LOG_FILE} | grep -v "ods_formula_parser" | \
     grep -v "frmts/jpeg/libjpeg"
 if [[ $? -eq 0 ]] ; then
     echo "Warnings check failed"
-    exit 1
+    ret_code=1
 fi
 
-echo "cppcheck succeeded"
+if [ ${ret_code} = 0 ]; then
+    echo "cppcheck succeeded"
+fi
 
+exit ${ret_code}
 

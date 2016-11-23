@@ -833,6 +833,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     if( true )
     {
 #endif // HAVE_SPATIALITE
+
         // cppcheck-suppress redundantAssignment
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");

@@ -606,7 +606,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
         CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 876, 0));
         char szDateBuffer[5];
         CPL_IGNORE_RET_VAL(VSIFReadL(szDateBuffer, 4, 1, InDem));
-        szDateBuffer[4] = 0;
+        /* szDateBuffer[4] = 0; */
 
         // Horizontal datum
         // 1=North American Datum 1927 (NAD 27)

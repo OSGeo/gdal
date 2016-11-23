@@ -570,6 +570,7 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
     int	 bIndexed = FALSE;
     int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
+    /* cppcheck-suppress unreadVariable */
     char szExt[4] = {0,0,0,0};
     char *pszExt = szExt;
 
@@ -1863,6 +1864,7 @@ char **AVCBinReadListTables(const char *pszInfoPath, const char *pszCoverName,
      * letters extension.
      *----------------------------------------------------------------*/
     if (pszCoverName != NULL)
+        // cppcheck-suppress bufferAccessOutOfBounds
         snprintf(szNameToFind, sizeof(szNameToFind), "%-.28s.", pszCoverName);
     nLen = (int)strlen(szNameToFind);
 

@@ -2898,7 +2898,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             //strcpy(pszNAD, "27");
             bIsOldNAD = true;
 
-        if ( (oSRS.FindProjParm("central_meridian",NULL) != -1) && (oSRS.FindProjParm("central_meridian",NULL) != -1) )
+        if ( (oSRS.FindProjParm("central_meridian",NULL) != -1) &&
+             (oSRS.FindProjParm("latitude_of_origin",NULL) != -1) )
         {
             dfLon = oSRS.GetProjParm("central_meridian");
             dfLat = oSRS.GetProjParm("latitude_of_origin");

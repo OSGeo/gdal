@@ -1839,7 +1839,7 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                     dfX1 -= 0.5;
                     dfY1 -= 0.5;
                     dfX2 -= 0.5;
-                    dfY2 -= 0.5;
+                    /* dfY2 -= 0.5; */
                 }
                 int nXLeft = int(floor(dfX1));
                 int nXRight = int(floor(dfX2));

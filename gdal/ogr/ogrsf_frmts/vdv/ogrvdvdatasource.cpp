@@ -162,7 +162,6 @@ void OGRIDFDataSource::Parse()
     bool bRecodeFromLatin1 = false;
     int iNodeID = -1;
     int iLinkID = -1;
-    int iCount = -1;
     int iFromNode = -1;
     int iToNode = -1;
     IDFLayerType eLayerType = LAYER_OTHER;
@@ -186,7 +185,7 @@ void OGRIDFDataSource::Parse()
             osTablename = pszLine + 4;
             osAtr = "";
             osFrm = "";
-            iX = iY = iNodeID = iLinkID = iCount = iFromNode = iToNode = -1;
+            iX = iY = iNodeID = iLinkID = iFromNode = iToNode = -1;
             eLayerType = LAYER_OTHER;
         }
         else if( STARTS_WITH(pszLine, "atr;") )
@@ -233,7 +232,7 @@ void OGRIDFDataSource::Parse()
                 }
                 else if( EQUAL(osTablename, "LinkCoordinate") &&
                         (iLinkID = CSLFindString(papszAtr, "LINK_ID")) >= 0 &&
-                        (iCount = CSLFindString(papszAtr, "COUNT")) >= 0 &&
+                        CSLFindString(papszAtr, "COUNT") >= 0 &&
                         (iX = CSLFindString(papszAtr, "X")) >= 0 &&
                         (iY = CSLFindString(papszAtr, "Y")) >= 0 )
                 {

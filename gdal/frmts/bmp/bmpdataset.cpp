@@ -151,6 +151,7 @@ typedef struct
     // cppcheck-suppress unusedStructMember
     GUInt32     iAlphaMask;     // Colour mask that specifies the alpha
                                 // component of each pixel.
+    // cppcheck-suppress unusedStructMember
     BMPLCSType  iCSType;        // Colour space of the DIB.
     BMPCIEXYZTriple sEndpoints; // This member is ignored unless the iCSType member
                                 // specifies BMPLT_CALIBRATED_RGB.

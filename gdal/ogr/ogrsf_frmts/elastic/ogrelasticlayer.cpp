@@ -1276,7 +1276,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         else if( json_object_get_type(it.val) == json_type_object &&
                  !m_poDS->m_bFlattenNestedAttributes )
         {
-            if( ( oIter = m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") ) != m_aosMapToGeomFieldIndex.end() )
+            if( m_aosMapToGeomFieldIndex.find(osCurPath + ".coordinates") 
+                                            != m_aosMapToGeomFieldIndex.end() )
             {
                 BuildFeature(poFeature, it.val, osCurPath);
             }

@@ -2632,15 +2632,14 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
                                   int nTRESize,
                                   CPLXMLNode* psTreNode)
 {
-    int nTreLength, nTreMinLength = -1 /*, nTreMaxLength = -1 */;
     int bError = FALSE;
     int nTreOffset = 0;
     const char* pszMDPrefix;
     int nMDSize, nMDAlloc;
 
-    nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
-    nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
-    /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
+    int nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
+    int nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
+    /* int nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
     if( (nTreLength > 0 && nTRESize != nTreLength) ||
         (nTreMinLength > 0 && nTRESize < nTreMinLength) )
