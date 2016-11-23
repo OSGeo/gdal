@@ -131,14 +131,14 @@ else
 fi
 AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
 
-dnl Enable -Wimplicit-fallthrough (clang specific) only if C++11 is enabled since CPL_FALLTHROUGH is only active then
+dnl Enable -Wimplicit-fallthrough only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
 SAVED_CXXFLAGS=$CXXFLAGS
 CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wimplicit-fallthrough"
 AC_MSG_CHECKING([if -Wimplicit-fallthrough can be enabled])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-  [[#if __cplusplus < 201103L || !(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)))
-    #error "not (C++11 and clang >= 3.7)"
+  [[#if !(__cplusplus >= 201103L && ( (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || ((defined(__GNUC__) && __GNUC__ >= 7)) ) )
+    #error "not (C++11 and (clang >= 3.7 or gcc >= 7))"
     #endif]])],
   [CXX_WFLAGS="$CXX_WFLAGS -Wimplicit-fallthrough"]
   [AC_MSG_RESULT([yes])],
