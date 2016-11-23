@@ -337,10 +337,17 @@ bool OGRAVCBinLayer::CheckSetupTable()
 /* -------------------------------------------------------------------- */
     AVCE00ReadPtr psInfo
         = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
-    char szPaddedName[65];
+    const size_t BUFSIZE = 32;
+    char szPaddedName[BUFSIZE+1] = { 0 };
 
-    snprintf( szPaddedName, sizeof(szPaddedName), "%s%32s", szTableName, " " );
-    szPaddedName[32] = '\0';
+    // Fill szPaddedName with szTableName up to 32 chars and fill the remaining
+    // ones with ' '
+    strncpy( szPaddedName, szTableName, BUFSIZE );
+    if( strlen(szTableName) < BUFSIZE )
+    {
+        memset( szPaddedName + strlen(szTableName), ' ',
+                BUFSIZE - strlen(szTableName) );
+    }
 
     AVCE00Section *l_psSection = NULL;
     for( int iSection = 0; iSection < psInfo->numSections; iSection++ )

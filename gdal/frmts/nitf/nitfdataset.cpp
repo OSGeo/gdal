@@ -5407,7 +5407,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
-        snprintf( pachLT + 9*iTextSeg+0, 9+1, "%04d%05d",
+        CPLsnprintf( pachLT + 9*iTextSeg+0, 9+1, "%04d%05d",
                  static_cast<int>( sizeof( achTSH ) ), nTextLength );
 
         iTextSeg++;

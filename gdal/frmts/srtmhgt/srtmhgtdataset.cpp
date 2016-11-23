@@ -474,11 +474,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Check filename.                                                 */
 /* -------------------------------------------------------------------- */
     char expectedFileName[12];
-    snprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
+
+    CPLsnprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
              (nLLOriginLat >= 0) ? 'N' : 'S',
              (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
              (nLLOriginLong >= 0) ? 'E' : 'W',
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
+
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
         CPLError( CE_Warning, CPLE_AppDefined,

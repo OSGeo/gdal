@@ -2602,7 +2602,7 @@ OGRErr OGRSpatialReference::ImportFromESRIWisconsinWKT(
     {
         if( unitsName != NULL && !EQUAL(unitsName, "meters") )
             k += 100;
-        char codeS[10] = { '\0' };
+        char codeS[15] = { '\0' };
         snprintf(codeS, sizeof(codeS), "%d", k);
         return importFromDict( "esri_Wisconsin_extra.wkt", codeS);
     }

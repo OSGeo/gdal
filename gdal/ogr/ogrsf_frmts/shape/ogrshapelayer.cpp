@@ -1682,10 +1682,13 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     int nRenameNum = 1;
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 10 )
-        snprintf( szNewFieldName, sizeof(szNewFieldName),
-                  "%.8s_%.1d", pszTmp, nRenameNum++ );
+    {
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
+                  "%.8s_%.1d", pszTmp, nRenameNum );
+        nRenameNum ++;
+    }
     while( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 && nRenameNum < 100 )
-        snprintf( szNewFieldName, sizeof(szNewFieldName),
+        CPLsnprintf( szNewFieldName, sizeof(szNewFieldName),
                   "%.8s%.2d", pszTmp, nRenameNum++ );
 
     CPLFree( pszTmp );

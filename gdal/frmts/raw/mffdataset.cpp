@@ -1178,15 +1178,15 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         char szExtension[4] = { '\0' };
 
         if( eType == GDT_Byte )
-            snprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "b%02d", iBand );
         else if( eType == GDT_UInt16 )
-            snprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "i%02d", iBand );
         else if( eType == GDT_Float32 )
-            snprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension),  "r%02d", iBand );
         else if( eType == GDT_CInt16 )
-            snprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "j%02d", iBand );
         else if( eType == GDT_CFloat32 )
-            snprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
+            CPLsnprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
 
         pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
         fp = VSIFOpenL( pszFilename, "wb" );

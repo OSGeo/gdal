@@ -284,7 +284,7 @@ CADVariant::CADVariant( double x, double y, double z ) :
     dateTimeVal ( 0 )
 {
     char str_buff[256];
-    snprintf( str_buff, 255, "[%f,%f,%f]", x, y, z );
+    snprintf( str_buff, sizeof(str_buff), "[%.15g,%.15g,%.15g]", x, y, z );
     stringVal = str_buff;
 }
 
