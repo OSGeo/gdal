@@ -675,6 +675,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile( int nRow, int nCol, GByte *pa
     if( nRow < 0 || nCol < 0 || nRow >= m_nTileMatrixHeight ||
         nCol >= m_nTileMatrixWidth )
     {
+        // cppcheck-suppress nullPointer
         memset( pabyData, 0, nBands * nBlockXSize * nBlockYSize );
         return pabyData;
     }

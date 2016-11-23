@@ -559,10 +559,12 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                                                      int nBandValues,
                                                      GUInt16 nMaxValue) const
 {
+    // cppcheck-suppress knownConditionTrueFalse
     CPLAssert( NINPUT == 3 || NINPUT == 4 );
     const double dfw0 = psOptions->padfWeights[0];
     const double dfw1 = psOptions->padfWeights[1];
     const double dfw2 = psOptions->padfWeights[2];
+    // cppcheck-suppress knownConditionTrueFalse
     const double dfw3 = (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
     int j;
     for(j=0;j<nValues-1;j+=2)

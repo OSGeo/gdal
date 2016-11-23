@@ -2173,17 +2173,13 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                   papszDimList[iXDim], papszDimList[iYDim] );
 #endif
 
-        strncpy( szPixel, papszDimList[iXDim], N_BUF_SIZE );
-        szPixel[N_BUF_SIZE - 1] = '\0';
+        snprintf( szPixel, sizeof(szPixel), "%s", papszDimList[iXDim] );
 
-        strncpy( szLine, papszDimList[iYDim], N_BUF_SIZE );
-        szLine[N_BUF_SIZE - 1] = '\0';
+        snprintf( szLine, sizeof(szLine), "%s", papszDimList[iYDim]);
 
-        strncpy( szXGeo, papszDimList[iXDim], N_BUF_SIZE );
-        szXGeo[N_BUF_SIZE - 1] = '\0';
+        snprintf( szXGeo, sizeof(szXGeo), "%s", papszDimList[iXDim]);
 
-        strncpy( szYGeo, papszDimList[iYDim], N_BUF_SIZE );
-        szYGeo[N_BUF_SIZE - 1] = '\0';
+        snprintf( szYGeo, sizeof(szYGeo), "%s", papszDimList[iYDim]);
 
         paiOffset = reinterpret_cast<int32 *>( CPLCalloc( 2, sizeof(int32) ) );
         paiIncrement
@@ -2238,11 +2234,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         {
             if( strstr(papszDimMap[i], papszDimList[iXDim]) )
             {
-                strncpy( szPixel, papszDimList[iXDim], N_BUF_SIZE );
-                szPixel[N_BUF_SIZE - 1] = '\0';
+                snprintf( szPixel, sizeof(szPixel), "%s", papszDimList[iXDim] );
 
-                strncpy( szXGeo, papszDimMap[i], N_BUF_SIZE );
-                szXGeo[N_BUF_SIZE - 1] = '\0';
+                snprintf( szXGeo, sizeof(szXGeo), "%s", papszDimMap[i] );
 
                 char *pszTemp = strchr( szXGeo, '/' );
                 if( pszTemp )
@@ -2250,10 +2244,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             }
             else if( strstr(papszDimMap[i], papszDimList[iYDim]) )
             {
-                strncpy( szLine, papszDimList[iYDim], N_BUF_SIZE );
-                szLine[N_BUF_SIZE - 1] = '\0';
-                strncpy( szYGeo, papszDimMap[i], N_BUF_SIZE );
-                szYGeo[N_BUF_SIZE - 1] = '\0';
+                snprintf( szLine, sizeof(szLine), "%s", papszDimList[iYDim] );
+
+                snprintf( szYGeo, sizeof(szYGeo), "%s", papszDimMap[i] );
+
                 char *pszTemp = strchr( szYGeo, '/' );
                 if( pszTemp )
                     *pszTemp = '\0';

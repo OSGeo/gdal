@@ -110,7 +110,7 @@ size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
   }
   else
   {
-    cntEven++;
+    /* cntEven++; */
     sum += 2 + 1;
   }
 

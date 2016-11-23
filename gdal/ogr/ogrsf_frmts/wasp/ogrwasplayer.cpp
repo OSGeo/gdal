@@ -287,7 +287,6 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
         poLine->StartPoint( &pt );
         newLine->addPoint( &pt );
         const int iNumPoints= poLine->getNumPoints();
-        unsigned rem = 0;
         for (int v=1; v<iNumPoints; v++)
         {
             if ( fabs(poLine->getX(v) - pt.getX()) > dist ||
@@ -295,10 +294,6 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
             {
                 poLine->getPoint( v, &pt );
                 newLine->addPoint( &pt );
-            }
-            else
-            {
-                ++rem;
             }
         }
 

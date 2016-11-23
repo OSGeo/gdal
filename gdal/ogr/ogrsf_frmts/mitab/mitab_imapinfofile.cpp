@@ -183,6 +183,7 @@ IMapInfoFile::~IMapInfoFile()
 int IMapInfoFile::Open(const char *pszFname, const char* pszAccess,
                        GBool bTestOpenNoError)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bTestOpenNoError);
     else if( STARTS_WITH_CI(pszAccess, "w") )

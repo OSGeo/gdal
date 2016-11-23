@@ -1281,6 +1281,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         /*      A wee bit of a warning.                                       */
         /* ------------------------------------------------------------------ */
         static int firstTime = 1;
+        // cppcheck-suppress knownConditionTrueFalse
         if( !haveGEOS() && firstTime )
         {
             CPLDebug(
@@ -1291,6 +1292,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 "results on complex polygons.");
             firstTime = 0;
         }
+        // cppcheck-suppress knownConditionTrueFalse
         bUseFastVersion = !haveGEOS();
     }
 

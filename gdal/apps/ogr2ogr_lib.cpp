@@ -688,6 +688,7 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                         break;
                     }
                     default:
+                        // cppcheck-suppress knownConditionTrueFalse
                         CPLAssert(0);
                         break;
                 }

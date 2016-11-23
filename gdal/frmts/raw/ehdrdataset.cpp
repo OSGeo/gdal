@@ -1197,8 +1197,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"layout") )
         {
-            strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
-            szLayout[sizeof(szLayout)-1] = '\0';
+            snprintf( szLayout, sizeof(szLayout), "%s", papszTokens[1] );
         }
         else if( EQUAL(papszTokens[0],"NODATA_value")
                  || EQUAL(papszTokens[0],"NODATA") )

@@ -1777,7 +1777,7 @@ static void WriteGENFile_DataSetDescriptionRecord(VSILFILE* fd)
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOZ */
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOS */
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1861,7 +1861,7 @@ static void WriteGENFile_OverviewRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1966,7 +1966,7 @@ static void WriteGENFile_GeneralInformationRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -2129,7 +2129,7 @@ void ADRGDataset::WriteTHFFile()
             WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]);  // NEO
         sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NEA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2167,7 +2167,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] +=
             WriteSubFieldStr(fd, "MIL-A-89007", 20); /* SPA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2241,7 +2241,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2298,7 +2298,7 @@ void ADRGDataset::WriteTHFFile()
             strcat(tmp, "02.IMG");
             sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
             sizeOfFields[nFields] += WriteFieldTerminator(fd);
-            nFields++;
+            /* nFields++; */
         }
 
         FinishWriteLeader(fd, pos, 9, 9, 3, nTotalFields,

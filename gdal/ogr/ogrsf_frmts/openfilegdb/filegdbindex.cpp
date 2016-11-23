@@ -1651,7 +1651,7 @@ const OGRField* FileGDBIndexIterator::GetMinMaxValue(OGRField* psField,
 
         case FGFT_STRING:
         {
-            wchar_t awsVal[MAX_CAR_COUNT_STR+1];
+            wchar_t awsVal[MAX_CAR_COUNT_STR+1] = { 0 };
             for(int j=0;j<nStrLen;j++)
             {
                 GUInt16 nCh = GetUInt16(l_abyPage + nOffsetFirstValInPage +

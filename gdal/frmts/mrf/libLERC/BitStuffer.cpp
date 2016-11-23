@@ -117,6 +117,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
     for (unsigned int i = 0; i < numUInts; i++)
     {
       SWAP_4(*dstPtr);
+      // cppcheck-suppress unreadVariable
       dstPtr++;
     }
 

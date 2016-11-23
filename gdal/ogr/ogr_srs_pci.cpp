@@ -1153,8 +1153,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                         && CPLIsEqual(dfSemiMajor, CPLAtof(papszLineItems[2]))
                         && CPLIsEqual(dfSemiMinor, CPLAtof(papszLineItems[3])) )
                     {
-                        strncpy( szEarthModel, papszLineItems[0], 5 );
-                        szEarthModel[4] = '\0';
+                        snprintf( szEarthModel, sizeof(szEarthModel), "%s",
+                                  papszLineItems[0] );
                         break;
                     }
 
@@ -1203,8 +1203,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
                     && EQUAL(papszLineItems[1], pszDatum)
                     && EQUAL(papszLineItems[2], szEarthModel) )
                 {
-                    strncpy( szEarthModel, papszLineItems[0], 5 );
-                    szEarthModel[4] = '\0';
+                    snprintf( szEarthModel, sizeof(szEarthModel), "%s",
+                              papszLineItems[0] );
                     break;
                 }
 
@@ -1250,8 +1250,8 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
                 if( bTOWGS84Match )
                 {
-                    strncpy( szEarthModel, papszLineItems[0], 5 );
-                    szEarthModel[4] = '\0';
+                    snprintf( szEarthModel, sizeof(szEarthModel), "%s",
+                              papszLineItems[0] );
                     break;
                 }
 

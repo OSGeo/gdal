@@ -170,6 +170,7 @@ TABDATFile::~TABDATFile()
 
 int TABDATFile::Open(const char *pszFname, const char* pszAccess, TABTableType eTableType)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, eTableType);
     else if( STARTS_WITH_CI(pszAccess, "w") )

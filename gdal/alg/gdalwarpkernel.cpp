@@ -1521,40 +1521,47 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
 /*      if by chance it is equal to the computed pixel value.           */
 /* -------------------------------------------------------------------- */
 
-#define CLAMP(type,minval,maxval) \
+#define CLAMP(type) \
     do { \
-    if (dfReal < minval) ((type *) pabyDst)[iDstOffset] = (type)minval; \
-    else if (dfReal > maxval) ((type *) pabyDst)[iDstOffset] = (type)maxval; \
-    else ((type *) pabyDst)[iDstOffset] = (minval < 0) ? (type)floor(dfReal + 0.5) : (type)(dfReal + 0.5);  \
-    if (poWK->padfDstNoDataReal != NULL && \
-        poWK->padfDstNoDataReal[iBand] == (double)((type *) pabyDst)[iDstOffset]) \
+    type* _pDst = reinterpret_cast<type*>(pabyDst); \
+    if (dfReal < static_cast<double>(std::numeric_limits<type>::min())) \
+        _pDst[iDstOffset] = static_cast<type>(std::numeric_limits<type>::min()); \
+    else if (dfReal > static_cast<double>(std::numeric_limits<type>::max())) \
+        _pDst[iDstOffset] = static_cast<type>(std::numeric_limits<type>::max()); \
+    else \
+        _pDst[iDstOffset] = \
+            (std::numeric_limits<type>::is_signed) ? \
+                static_cast<type>(floor(dfReal + 0.5)) : \
+                static_cast<type>(dfReal + 0.5);  \
+    if( poWK->padfDstNoDataReal != NULL && \
+        poWK->padfDstNoDataReal[iBand] == static_cast<double>(_pDst[iDstOffset]) ) \
     { \
-        if (((type *) pabyDst)[iDstOffset] == minval)  \
-            ((type *) pabyDst)[iDstOffset] = (type)(minval + 1); \
+        if (_pDst[iDstOffset] == static_cast<type>(std::numeric_limits<type>::min()))  \
+            _pDst[iDstOffset] = static_cast<type>(std::numeric_limits<type>::min() + 1); \
         else \
-            ((type *) pabyDst)[iDstOffset] --; \
+            _pDst[iDstOffset] --; \
     } } while(0)
 
     switch( poWK->eWorkingDataType )
     {
       case GDT_Byte:
-        CLAMP(GByte, 0.0, 255.0);
+        CLAMP(GByte);
         break;
 
       case GDT_Int16:
-        CLAMP(GInt16, -32768.0, 32767.0);
+        CLAMP(GInt16);
         break;
 
       case GDT_UInt16:
-        CLAMP(GUInt16, 0.0, 65535.0);
+        CLAMP(GUInt16);
         break;
 
       case GDT_UInt32:
-        CLAMP(GUInt32, 0.0, 4294967295.0);
+        CLAMP(GUInt32);
         break;
 
       case GDT_Int32:
-        CLAMP(GInt32, -2147483648.0, 2147483647.0);
+        CLAMP(GInt32);
         break;
 
       case GDT_Float32:
@@ -1566,34 +1573,40 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_CInt16:
-        if( dfReal < -32768 )
-            ((GInt16 *) pabyDst)[iDstOffset*2] = -32768;
-        else if( dfReal > 32767 )
-            ((GInt16 *) pabyDst)[iDstOffset*2] = 32767;
+      {
+        typedef GInt16 T;
+        if( dfReal < static_cast<double>(std::numeric_limits<T>::min()) )
+            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
+        else if( dfReal > static_cast<double>(std::numeric_limits<T>::max()) )
+            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
         else
-            ((GInt16 *) pabyDst)[iDstOffset*2] = (GInt16) floor(dfReal+0.5);
-        if( dfImag < -32768 )
-            ((GInt16 *) pabyDst)[iDstOffset*2+1] = -32768;
-        else if( dfImag > 32767 )
-            ((GInt16 *) pabyDst)[iDstOffset*2+1] = 32767;
+            ((T *) pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
+        if( dfImag < static_cast<double>(std::numeric_limits<T>::min()) )
+            ((T *) pabyDst)[iDstOffset*2+1] =  std::numeric_limits<T>::min();
+        else if( dfImag > static_cast<double>(std::numeric_limits<T>::max()) )
+            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
         else
-            ((GInt16 *) pabyDst)[iDstOffset*2+1] = (GInt16) floor(dfImag+0.5);
+            ((T *) pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
         break;
+      }
 
       case GDT_CInt32:
-        if( dfReal < -2147483648.0 )
-            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) -2147483648.0;
-        else if( dfReal > 2147483647.0 )
-            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) 2147483647.0;
+      {
+        typedef GInt32 T;
+        if( dfReal < static_cast<double>(std::numeric_limits<T>::min()) )
+            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
+        else if( dfReal > static_cast<double>(std::numeric_limits<T>::max()) )
+            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
         else
-            ((GInt32 *) pabyDst)[iDstOffset*2] = (GInt32) floor(dfReal+0.5);
-        if( dfImag < -2147483648.0 )
-            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) -2147483648.0;
-        else if( dfImag > 2147483647.0 )
-            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) 2147483647.0;
+            ((T *) pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
+        if( dfImag < static_cast<double>(std::numeric_limits<T>::min()) )
+            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::min();
+        else if( dfImag > static_cast<double>(std::numeric_limits<T>::max()) )
+            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
         else
-            ((GInt32 *) pabyDst)[iDstOffset*2+1] = (GInt32) floor(dfImag+0.5);
+            ((T *) pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
         break;
+      }
 
       case GDT_CFloat32:
         ((float *) pabyDst)[iDstOffset*2] = (float) dfReal;
@@ -1702,23 +1715,23 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
     switch( poWK->eWorkingDataType )
     {
       case GDT_Byte:
-        CLAMP(GByte, 0.0, 255.0);
+        CLAMP(GByte);
         break;
 
       case GDT_Int16:
-        CLAMP(GInt16, -32768.0, 32767.0);
+        CLAMP(GInt16);
         break;
 
       case GDT_UInt16:
-        CLAMP(GUInt16, 0.0, 65535.0);
+        CLAMP(GUInt16);
         break;
 
       case GDT_UInt32:
-        CLAMP(GUInt32, 0.0, 4294967295.0);
+        CLAMP(GUInt32);
         break;
 
       case GDT_Int32:
-        CLAMP(GInt32, -2147483648.0, 2147483647.0);
+        CLAMP(GInt32);
         break;
 
       case GDT_Float32:

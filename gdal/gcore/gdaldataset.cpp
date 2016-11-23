@@ -414,6 +414,7 @@ void GDALDataset::FlushCache()
     }
 
     const int nLayers = GetLayerCount();
+    // cppcheck-suppress knownConditionTrueFalse
     if( nLayers > 0 )
     {
         GDALDatasetPrivate* psPrivate = (GDALDatasetPrivate* )m_hPrivateData;
