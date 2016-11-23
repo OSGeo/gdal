@@ -306,6 +306,7 @@ class JPGDataset : public JPGDatasetCommon
                               VSILFILE* fpImage,
                               GDALDataType eDT,
                               int nQuality,
+                              bool bAppendMask,
                               GDALJPEGErrorStruct& sErrorStruct,
                               struct jpeg_compress_struct& sCInfo,
                               struct jpeg_error_mgr& sJErr,
@@ -3452,10 +3453,21 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     struct jpeg_error_mgr sJErr;
     GByte* pabyScanline;
 
+/* -------------------------------------------------------------------- */
+/*      Does the source have a mask?  If so, we will append it to the   */
+/*      jpeg file after the imagery.                                    */
+/* -------------------------------------------------------------------- */
+    const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    const bool bAppendMask =
+        !(nMaskFlags & GMF_ALL_VALID) &&
+        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
+        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
+
     // Nasty trick to avoid variable clobbering issues with setjmp/longjmp
     return CreateCopyStage2(pszFilename, poSrcDS, papszOptions,
                             pfnProgress, pProgressData,
                             fpImage, eDT, nQuality,
+                            bAppendMask,
                             sErrorStruct, sCInfo, sJErr, pabyScanline);
 }
 
@@ -3466,6 +3478,7 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
                               VSILFILE* fpImage,
                               GDALDataType eDT,
                               int nQuality,
+                              bool bAppendMask,
                               GDALJPEGErrorStruct& sErrorStruct,
                               struct jpeg_compress_struct& sCInfo,
                               struct jpeg_error_mgr& sJErr,
@@ -3606,15 +3619,6 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
                           (my_jpeg_write_m_header)jpeg_write_m_header,
                           (my_jpeg_write_m_byte)jpeg_write_m_byte );
 
-/* -------------------------------------------------------------------- */
-/*      Does the source have a mask?  If so, we will append it to the   */
-/*      jpeg file after the imagery.                                    */
-/* -------------------------------------------------------------------- */
-    const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
-    const bool bAppendMask =
-        !(nMaskFlags & GMF_ALL_VALID) &&
-        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
-        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
