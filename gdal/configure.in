@@ -2161,9 +2161,20 @@ elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
   HDF5_LIBS=""
   PKG_PROG_PKG_CONFIG([0.25]) # check and set $PKG_CONFIG
   PKG_CHECK_MODULES([HDF5], [hdf5], [HAVE_HDF5=yes], [HAVE_HDF5=no])
+
   if test "$HAVE_HDF5" = "yes"; then
-    LIBS="$HDF5_LIBS $LIBS"
-    HDF5_INCLUDE="$HDF5_CFLAGS"
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$HDF5_LIBS"
+    AC_CHECK_LIB(hdf5,H5Fopen, [HAVE_HDF5=yes], [HAVE_HDF5=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_HDF5" = "yes"; then
+        LIBS="$HDF5_LIBS $LIBS"
+        HDF5_INCLUDE="$HDF5_CFLAGS"
+    fi
+
   else
 
     AC_CHECK_LIB(hdf5,H5Fopen,HAVE_HDF5=yes,HAVE_HDF5=no,)
