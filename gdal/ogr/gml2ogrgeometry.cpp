@@ -3233,24 +3233,23 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     return NULL;
                 }
 
+                OGRLineString *poEdgeGeomLS =
+                    dynamic_cast<OGRLineString *>(poEdgeGeom);
+                if( poEdgeGeomLS == NULL )
+                {
+                    CPLError(CE_Fatal, CPLE_AppDefined,
+                                "dynamic_cast failed.  "
+                                "Expected OGRLineString.");
+                    delete poEdgeGeom;
+                    delete poFaceGeom;
+                    delete poTS;
+                    return NULL;
+                }
+
                 if( !bFaceOrientation )
                 {
-                    OGRLineString *poLS =
-                        dynamic_cast<OGRLineString *>(poEdgeGeom);
-                    if( poLS == NULL )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  "
-                                 "Expected OGRLineString.");
-                    }
-                    OGRLineString *poAddLS =
-                        dynamic_cast<OGRLineString *>(poFaceGeom);
-                    if( poAddLS == NULL )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  "
-                                 "Expected OGRLineString.");
-                    }
+                    OGRLineString *poLS = poEdgeGeomLS;
+                    OGRLineString *poAddLS = poFaceGeom;
                     if( poAddLS->getNumPoints() < 2 )
                     {
                         // Skip it.
@@ -3275,19 +3274,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     poFaceGeom->empty();
                 }
                 // TODO(schwehr): Suspicious that poLS overwritten without else.
-                OGRLineString *poLS = dynamic_cast<OGRLineString *>(poFaceGeom);
-                if( poLS == NULL )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRLineString.");
-                }
-                OGRLineString *poAddLS =
-                    dynamic_cast<OGRLineString *>(poEdgeGeom);
-                if( poAddLS == NULL )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRLineString.");
-                }
+                OGRLineString *poLS = poFaceGeom;
+                OGRLineString *poAddLS = poEdgeGeomLS;
                 if( poAddLS->getNumPoints() < 2 )
                 {
                     // Skip it.
