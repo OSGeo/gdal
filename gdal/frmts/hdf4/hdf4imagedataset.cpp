@@ -2389,7 +2389,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     void *pLatticeY = NULL;
     int32 iLatticeType = 0;
     int32 iLatticeDataSize = 0;
-    if( SWfieldinfo(hSW, "LatticePoint", &l_iRank, l_aiDimSizes,
+    char pszLatticePoint[] = "LatticePoint";
+    if( SWfieldinfo(hSW, pszLatticePoint, &l_iRank, l_aiDimSizes,
                     &iLatticeType, szGeoDimList) == 0
         && l_iRank == 3
         && nXPoints == l_aiDimSizes[1]
@@ -2410,7 +2411,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         iEdges[2] = 1;
 
         pLatticeX = CPLMalloc( nLatCount * iLatticeDataSize );
-        if( SWreadfield( hSW, "LatticePoint", iStart, NULL,
+        if( SWreadfield( hSW, pszLatticePoint, iStart, NULL,
                          iEdges, (VOIDP)pLatticeX ) < 0 )
         {
             CPLDebug( "HDF4Image", "Can't read lattice field" );
@@ -2422,7 +2423,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         iEdges[2] = 1;
 
         pLatticeY = CPLMalloc( nLatCount * iLatticeDataSize );
-        if( SWreadfield( hSW, "LatticePoint", iStart, NULL,
+        if( SWreadfield( hSW, pszLatticePoint, iStart, NULL,
                          iEdges, (VOIDP)pLatticeY ) < 0 )
         {
             CPLDebug( "HDF4Image", "Can't read lattice field" );
