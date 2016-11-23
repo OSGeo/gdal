@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_trans.c 2678 2015-10-28 19:06:57Z rouault $
+ * $Id: geo_trans.c 2741 2016-09-04 18:50:49Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to abstract translation between pixel/line and PCS

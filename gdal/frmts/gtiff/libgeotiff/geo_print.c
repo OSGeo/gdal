@@ -27,15 +27,15 @@
 #include <stdio.h>     /* for sprintf             */
 
 #define FMT_GEOTIFF "Geotiff_Information:"
-#define FMT_VERSION "Version: %hd"
-#define FMT_REV     "Key_Revision: %1hd.%hd"
+#define FMT_VERSION "Version: %hu"
+#define FMT_REV     "Key_Revision: %1hu.%hu"
 #define FMT_TAGS    "Tagged_Information:"
 #define FMT_TAGEND  "End_Of_Tags."
 #define FMT_KEYS    "Keyed_Information:"
 #define FMT_KEYEND  "End_Of_Keys."
 #define FMT_GEOEND  "End_Of_Geotiff."
 #define FMT_DOUBLE  "%-17.15g"
-#define FMT_SHORT   "%-11hd"
+#define FMT_SHORT   "%-11hu"
 
 static void DefaultPrint(char *string, void *aux);
 static void PrintKey(GeoKey *key, GTIFPrintMethod print,void *aux);
@@ -67,7 +67,6 @@ void GTIFPrint(GTIF *gtif, GTIFPrintMethod print,void *aux)
 
     sprintf(message,FMT_GEOTIFF "\n");
     print(message,aux);
-    sprintf(message, "Version: %hd" ,gtif->gt_version);
     sprintf(message, FMT_VERSION,gtif->gt_version);
     print("   ",aux); print(message,aux); print("\n",aux);
     sprintf(message, FMT_REV,gtif->gt_rev_major,
@@ -271,10 +270,10 @@ int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
     scan(message,aux);
     if (strncmp(message,FMT_GEOTIFF,8)) return 0;
     scan(message,aux);
-    if (!sscanf(message,FMT_VERSION,(short int*)&gtif->gt_version)) return 0;
+    if (!sscanf(message,FMT_VERSION,(short unsigned*)&gtif->gt_version)) return 0;
     scan(message,aux);
-    if (sscanf(message,FMT_REV,(short int*)&gtif->gt_rev_major,
-               (short int*)&gtif->gt_rev_minor) !=2) return 0;
+    if (sscanf(message,FMT_REV,(short unsigned*)&gtif->gt_rev_major,
+               (short unsigned*)&gtif->gt_rev_minor) !=2) return 0;
 
     scan(message,aux);
     if (strncmp(message,FMT_TAGS,8)) return 0;
