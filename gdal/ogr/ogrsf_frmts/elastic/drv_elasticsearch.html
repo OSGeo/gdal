@@ -73,7 +73,7 @@ Note that this will properly work only if only one single layer is created.
 Starting with GDAL 2.1, the <b>WRITE_MAPPING</b> layer creation option should rather be used.<br>
 <li> <b>ES_META</b>=/path/to/mapfile.txt. Tells the driver to the user-defined
 field mappings. Starting with GDAL 2.1, the <b>MAPPING</b> layer creation option should rather be used.<br>
-<li> <b>ES_BULK</b>=10000. Identifies the maximum size in bytes of the buffer
+<li> <b>ES_BULK</b>=5000000. Identifies the maximum size in bytes of the buffer
 to store documents to be inserted at a time. Lower record counts help with
 memory consumption within ElasticSearch but take longer to insert.
 Starting with GDAL 2.1, the <b>BULK_SIZE</b> layer creation option should rather be used.<br>
@@ -102,7 +102,7 @@ However, in the current state, SQL attribute filters set with SetAttributeFilter
 are evaluated only on client-side. To enable server-side filtering, the string
 passed to SetAttributeFilter() must be a JSon object in the
 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">ElasticSearch filter syntax</a>.
-e.g. <pre>{ "filter": { "term": { "EAS_ID": 169 } } }</pre>
+e.g. <pre>{ "filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
 <p>
 
 Note: if defining an Elastic Search JSon filter, the spatial filter specified
@@ -159,7 +159,7 @@ The following filter can be used to restrict the search to the "poly" index and 
         "filter": {
            "and" : [
              { "type": { "value": "FeatureCollection" } },
-             { "term" : { "EAS_ID" : 158.0 } }
+             { "term" : { "properties.EAS_ID" : 158.0 } }
            ]
         }
       }
@@ -260,13 +260,13 @@ ogrinfo ES:http://example.com:9200
 
 <b>Filtering on a Elastic Search field:</b><br>
 <pre>
-ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "EAS_ID": 168 } } }'
+ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "properties.EAS_ID": 168 } } }'
 </pre>
 
 <b>Using "match" query on Windows:</b><br>
 On Windows the query must be between double quotes and double quotes inside the query must be escaped.
 <pre>
-C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"NAME\": \"Helsinki\" } } }"
+C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
 </pre>
 <b>Load an ElasticSearch index with a shapefile:</b> </br>
 <pre>
@@ -298,14 +298,15 @@ ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "ElasticSearch" http://l
 </pre>
 
 <b>Bulk Uploading (for larger datasets):</b> </br>
-Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collection before being inserted.
+Bulk loading helps when uploading a lot of data. The integer value is the number of bytes that are collected before being inserted.
+<a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk.html#_how_big_is_too_big">Bulk size considerations</a>
 </br>
 <pre>
-ogr2ogr -progress --config ES_BULK 10000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
+ogr2ogr -progress --config ES_BULK 5000000 -f "ElasticSearch" http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 </pre>
 or (GDAL &gt;= 2.1):
 <pre>
-ogr2ogr -progress -lco BULK_SIZE=10000 -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
+ogr2ogr -progress -lco BULK_SIZE=5000000 -f "ElasticSearch" http://localhost:9200 my_shapefile.shp
 </pre>
 
 <b>Overwrite the current Index:</b> </br>
