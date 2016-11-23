@@ -501,8 +501,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
                 // file, and adds ".nnn" based on the band. 
                 std::string band_filename = filename;
                 char ext[5];
-                snprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
-                
+                CPLsnprintf( ext, sizeof(ext), ".%03d", chan_index+1 );
+
                 size_t last_dot = band_filename.find_last_of(".");
                 if( last_dot != std::string::npos 
                     && (band_filename.find_last_of("/\\:") == std::string::npos

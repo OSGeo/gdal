@@ -2606,7 +2606,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
         while( iComponentUrl != -1 )
         {
-            char searchStr[5] = {};
+            char searchStr[15] = {};
             snprintf(searchStr, sizeof(searchStr), "&%d=", iComponentUrl);
 
             const char* pszUrlEnd = strstr(pszCur, searchStr);

@@ -75,6 +75,8 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 ******************************************************************************/
 
 #include "cpl_port.h" /* for M_PI */
+#include "cpl_string.h" /* for CPLsnprintf */
+
 #include "mfhdf.h"
 #include "hcomp.h"
 #include "HdfEosDef.h"
@@ -402,7 +404,7 @@ SWcreate(int32 fid, char *swathname)
 		strcat(utlbuf, "\t\tEND_GROUP=DataField\n");
 		strcat(utlbuf, "\t\tGROUP=MergedFields\n");
 		strcat(utlbuf, "\t\tEND_GROUP=MergedFields\n");
-		snprintf(utlbuf2, sizeof(utlbuf2), "%s%ld%s",
+		CPLsnprintf(utlbuf2, sizeof(utlbuf2), "%s%ld%s",
 			"\tEND_GROUP=SWATH_", (long)nSwath + 1, "\n");
 		strcat(utlbuf, utlbuf2);
 

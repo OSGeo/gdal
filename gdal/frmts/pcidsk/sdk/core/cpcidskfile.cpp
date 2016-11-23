@@ -368,8 +368,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
     //see function BuildChildrenLayer in jtfile.cpp, the call on GDBSegNext
     //in the loop on gasTypeTable can create issue in PCIDSKSegNext 
     //(in pcic/gdbfrtms/pcidskopen.cpp)
-    snprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
-
+    CPLsnprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
     for( i = previous; i < segment_count; i++ )
     {
         if( type != SEG_UNKNOWN 
