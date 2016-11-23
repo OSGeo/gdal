@@ -1172,14 +1172,14 @@ int RemapNamesBasedOnTwo( OGRSpatialReference* pOgr, const char* name1,
     int iIndex = -1;
     for( int i = 0; mappingTable[i] != NULL; i += nTableStepSize )
     {
-        const size_t n = strlen(name1);
-        const size_t n1 = strlen(mappingTable[i]);
-        if( EQUALN(name1, mappingTable[i], n1<=n? n1 : n) )
+        const size_t n = std::min(strlen(name1), strlen(mappingTable[i]));
+        if( EQUALN(name1, mappingTable[i], n) )
         {
             int j = i;
             while( mappingTable[j] != NULL &&
                    EQUAL(mappingTable[i], mappingTable[j]) )
             {
+                // TODO(warmerdam): Explain what is going on here from r15992.
                 if( EQUALN(name2, mappingTable[j+1],
                            strlen(mappingTable[j+1])) )
                 {
@@ -1252,12 +1252,14 @@ int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
 
     const char* pszUnitName = pOgr->GetAttrValue( "GEOGCS|UNIT");
     if( pszUnitName )
+    {
         // TODO(schwehr): Figure out a safer way to rename.
         //   The casting away const here looks dangerous.
         ret = RemapNamesBasedOnTwo(
             pOgr, pszGeogCSName+4, pszUnitName,
             const_cast<char**>(apszGcsNameMappingBasedOnUnit),
             3, const_cast<char**>(keyNamesG), 1);
+    }
 
     if( ret < 0 )
     {
@@ -2467,7 +2469,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(
             if( pcsCode == statePlanePcsCodeToZoneCode[i] )
             {
                 searchCode = statePlanePcsCodeToZoneCode[i+1];
-                int unitIndex = searchCode % 10;
+                const int unitIndex = searchCode % 10;
                 if( (unitCode == 1 && !(unitIndex == 0 || unitIndex == 1))
                     || (unitCode == 2 && !(unitIndex == 2 || unitIndex == 3 ||
                                            unitIndex == 4 ))
