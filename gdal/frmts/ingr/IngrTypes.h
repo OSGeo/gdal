@@ -549,7 +549,7 @@ typedef     struct {
 static inline void BUF2STRC_fct( const GByte* bb, unsigned int& nn, void* pDest, size_t nSize )
 {
     memcpy( pDest, &bb[nn], nSize );
-    nn += nSize;
+    nn += static_cast<unsigned int>(nSize);
 }
 
 #define BUF2STRC(bb, nn, ff)    BUF2STRC_fct(bb, nn, &ff, sizeof(ff))
@@ -557,7 +557,7 @@ static inline void BUF2STRC_fct( const GByte* bb, unsigned int& nn, void* pDest,
 static inline void STRC2BUF_fct( GByte* bb, unsigned int& nn, const void* pSrc, size_t nSize )
 {
     memcpy( &bb[nn], pSrc, nSize );
-    nn += nSize;
+    nn += static_cast<unsigned int>(nSize);
 }
 
 #define STRC2BUF(bb, nn, ff)    STRC2BUF_fct(bb, nn, &ff, sizeof(ff))
