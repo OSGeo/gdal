@@ -1726,14 +1726,15 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       }
       nm= CPLStrdup(e);
       CPLDebug("GEOCONCEPT", "%d e=[%s]\n", __LINE__, e);
-      if( (theField= AddSubTypeField_GCIO(hGXT,GetTypeName_GCIO(theClass),
+      theField= AddSubTypeField_GCIO(hGXT,GetTypeName_GCIO(theClass),
                                                GetSubTypeName_GCIO(theSubType),
                                                -1,
                                                nm,
                                                -1,
                                                vUnknownItemType_GCIO,
                                                NULL,
-                                               NULL))==NULL )
+                                               NULL);
+      if( theField == NULL )
       {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Geoconcept export syntax error at line %ld.\n",
@@ -1751,9 +1752,9 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     return Meta;
   }
   /* end of definitions ... */ /* FIXME */
-  if( (p= strstr(GetGCCache_GCIO(hGXT),k3DOBJECTMONO_GCIO)) ||
-      (p= strstr(GetGCCache_GCIO(hGXT),k3DOBJECT_GCIO))     ||
-      (p= strstr(GetGCCache_GCIO(hGXT),k2DOBJECT_GCIO)) )
+  if( (strstr(GetGCCache_GCIO(hGXT),k3DOBJECTMONO_GCIO)) ||
+      (strstr(GetGCCache_GCIO(hGXT),k3DOBJECT_GCIO))     ||
+      (strstr(GetGCCache_GCIO(hGXT),k2DOBJECT_GCIO)) )
     /* next reading will be in cache ! */
     SetGCStatus_GCIO(hGXT,vMemoStatus_GCIO);
   /* unknown pragma ... */
@@ -5274,7 +5275,8 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
     quotes= "";
   }
   delim= GetMetaDelimiter_GCIO(GetGCMeta_GCIO(H));
-  if( !(theField= GetSubTypeField_GCIO(theSubType,iField)) )
+  theField= GetSubTypeField_GCIO(theSubType,iField);
+  if( !theField )
   {
     CPLError( CE_Failure, CPLE_NotSupported,
               "Attempt to write a field #%d that does not exist on feature %s.%s.\n",

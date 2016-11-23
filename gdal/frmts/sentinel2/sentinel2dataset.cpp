@@ -2581,7 +2581,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
     std::vector<CPLString> aosGranuleList;
-    std::set<int> oSetResolutions;
     std::map<int, std::set<CPLString> > oMapResolutionsToBands;
     if( !SENTINEL2GetGranuleList(psRoot,
                                  eLevel,

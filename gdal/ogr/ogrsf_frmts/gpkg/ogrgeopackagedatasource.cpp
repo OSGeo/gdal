@@ -418,7 +418,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference * cpoSRS)
     }
 
     // Add new row to gpkg_spatial_ref_sys.
-    err = SQLCommand(hDB, pszSQL);
+    CPL_IGNORE_RET_VAL( SQLCommand(hDB, pszSQL) );
 
     // Free everything that was allocated.
     CPLFree(pszWKT);

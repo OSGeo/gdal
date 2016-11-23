@@ -2362,37 +2362,36 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
                        double &dXMax, double &dYMax,
                        GBool /*bForce = TRUE*/)
 {
-    TABMAPHeaderBlock *poHeader = NULL;
-
-    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
+    if (m_poMAPFile)
     {
+        TABMAPHeaderBlock* poHeader =m_poMAPFile->GetHeaderBlock();
+        if( poHeader != NULL)
+        {
         /*-------------------------------------------------------------
          * Projection bounds correspond to the +/- 1e9 integer coord. limits
          *------------------------------------------------------------*/
-        double dX0 = 0.0;
-        double dX1 = 0.0;
-        double dY0 = 0.0;
-        double dY1 = 0.0;
-        m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
-                                  dX0, dY0);
-        m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
-                                  dX1, dY1);
+            double dX0 = 0.0;
+            double dX1 = 0.0;
+            double dY0 = 0.0;
+            double dY1 = 0.0;
+            m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
+                                    dX0, dY0);
+            m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
+                                        dX1, dY1);
         /*-------------------------------------------------------------
          * ... and make sure that Min < Max
-         *------------------------------------------------------------*/
-        dXMin = std::min(dX0, dX1);
-        dXMax = std::max(dX0, dX1);
-        dYMin = std::min(dY0, dY1);
-        dYMax = std::max(dY0, dY1);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-             "GetBounds() can be called only after dataset has been opened.");
-        return -1;
+            *------------------------------------------------------------*/
+            dXMin = std::min(dX0, dX1);
+            dXMax = std::max(dX0, dX1);
+            dYMin = std::min(dY0, dY1);
+            dYMax = std::max(dY0, dY1);
+            return 0;
+        }
     }
 
-    return 0;
+    CPLError(CE_Failure, CPLE_AppDefined,
+            "GetBounds() can be called only after dataset has been opened.");
+    return -1;
 }
 
 /**********************************************************************

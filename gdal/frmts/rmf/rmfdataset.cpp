@@ -1806,13 +1806,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     const char *pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
     if( pszValue != NULL )
         nBlockXSize = atoi( pszValue );
-    if( nBlockXSize <= 0 )
+    if( static_cast<int>(nBlockXSize) <= 0 )
         nBlockXSize = RMF_DEFAULT_BLOCKXSIZE;
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
     if( pszValue != NULL )
         nBlockYSize = atoi( pszValue );
-    if( nBlockYSize <= 0 )
+    if( static_cast<int>(nBlockYSize) <= 0 )
         nBlockYSize = RMF_DEFAULT_BLOCKXSIZE;
 
     poDS->sHeader.nTileWidth = nBlockXSize;

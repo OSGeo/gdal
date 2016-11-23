@@ -684,7 +684,6 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
 /* -------------------------------------------------------------------- */
 /*      Update grid header.                                             */
 /* -------------------------------------------------------------------- */
-    double dfValue = 0.0;
     char achHeader[11*16] = { '\0' };
 
     // read grid header
@@ -692,7 +691,7 @@ CPLErr NTv2Dataset::SetGeoTransform( double * padfTransform )
     CPL_IGNORE_RET_VAL(VSIFReadL( achHeader, 11, 16, fpImage ));
 
     // S_LAT
-    dfValue =
+    double dfValue =
         3600 * (adfGeoTransform[3] + (nRasterYSize-0.5) * adfGeoTransform[5]);
     SwapPtr64IfNecessary( m_bMustSwap, &dfValue );
     memcpy( achHeader +  4*16 + 8, &dfValue, 8 );

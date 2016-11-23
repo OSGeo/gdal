@@ -1003,7 +1003,9 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         char szName[32];
         char szShortName[16];
         GByte nNo;
+        // cppcheck-suppress unusedStructMember
         GByte nPos;
+        // cppcheck-suppress unusedStructMember
         GUInt16 nSemanticCount;
     };
 
@@ -1063,12 +1065,16 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
     struct _object{
         unsigned nLength;
         unsigned nClassifyCode;
+        // cppcheck-suppress unusedStructMember
         unsigned nObjectNumber;
+        // cppcheck-suppress unusedStructMember
         unsigned nObjectCode;
         char szShortName[32];
         char szName[32];
+        // cppcheck-suppress unusedStructMember
         char szGeomType;
         char szLayernNo;
+        // cppcheck-suppress unusedStructMember
         char szUnimportantSeg[14];
     };
 

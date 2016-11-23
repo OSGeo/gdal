@@ -1564,7 +1564,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
                                  std::string& gdbFieldType)
 {
     std::string fieldname = oField.GetNameRef();
-    std::string fidname = std::string(GetFIDColumn());
+    //std::string fidname = std::string(GetFIDColumn());
     std::string nullable = (oField.IsNullable()) ? "true" : "false";
 
     /* Try to map the OGR type to an ESRI type */
@@ -2238,7 +2238,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
 #endif
 
     /* Launder the Layer name */
-    std::string layerName = pszLayerNameIn;
+    std::string layerName;
 
     layerName = FGDBLaunderName(pszLayerNameIn);
     layerName = FGDBEscapeReservedKeywords(layerName);
