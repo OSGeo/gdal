@@ -423,7 +423,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib18/g2clib-1.0.4 | grep -v frmts/hdf4/hdf-eos | grep -v frmts/gtiff/libgeotiff | grep -v frmts/png/libpng
+grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib18/g2clib-1.0.4 | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignment check failed"
     ret_code=1
@@ -434,7 +434,6 @@ grep "unreadVariable" ${LOG_FILE} | grep -v alg/internal_libqhull | \
                                     grep -v frmts/jpeg/libjpeg | \
                                     grep -v frmts/png/libpng | \
                                     grep -v frmts/grib/degrib18/degrib | \
-                                    grep -v frmts/gtiff/libgeotiff | \
                                     grep -v frmts/hdf4/hdf-eos | \
                                     grep -v frmts/zlib
 if [[ $? -eq 0 ]] ; then
