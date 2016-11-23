@@ -1584,6 +1584,12 @@ Fax3PrematureEOF()
  * this is <8 bytes.  We optimize the code here to reflect the
  * machine characteristics.
  */
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 #if SIZEOF_UNSIGNED_LONG == 8
 #define FILL(n, cp)							    \
     switch (n) {							    \
@@ -1715,6 +1721,10 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 }
 #undef	ZERO
 #undef	FILL
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /*                           Fax3DecodeRLE()                            */

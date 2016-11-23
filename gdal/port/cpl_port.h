@@ -1050,7 +1050,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)) && HAVE_CXX11
+#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7) && HAVE_CXX11
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
