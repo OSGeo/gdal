@@ -113,8 +113,16 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
     }
     else switch (type)
     {
-      case TYPE_SHORT:  sval=(pinfo_t) va_arg(ap, int); val=(char *)&sval;     break;
-      case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
+      case TYPE_SHORT:
+        /* cppcheck-suppress unreadVariable */
+        sval=(pinfo_t) va_arg(ap, int);
+        val=(char *)&sval;
+        break;
+      case TYPE_DOUBLE:
+        /* cppcheck-suppress unreadVariable */
+        dval=va_arg(ap, dblparam_t);
+        val=(char *)&dval;
+        break;
       case TYPE_ASCII:
         val=va_arg(ap, char*);
         count = (int)strlen(val) + 1; /* force = string length */
