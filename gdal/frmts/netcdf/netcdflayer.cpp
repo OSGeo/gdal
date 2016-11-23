@@ -1877,6 +1877,7 @@ bool netCDFLayer::AddField(int nVarID)
         if( (eType == OFTInteger || eType == OFTReal) && EQUAL(pszValue, "Date") )
         {
             eType = OFTDate;
+            // cppcheck-suppress knownConditionTrueFalse
             bIsDays = (eType == OFTInteger);
         }
         else if( (eType == OFTInteger || eType == OFTReal) && EQUAL(pszValue, "DateTime") )

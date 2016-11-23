@@ -1302,6 +1302,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Handle stuff specific to derived classes
      *----------------------------------------------------------------*/
+    // cppcheck-suppress knownConditionTrueFalse
     if (GetFeatureClass() == TABFCFontPoint)
     {
         TABFontPoint *poFeature = (TABFontPoint *)this;
@@ -1311,6 +1312,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
 
         poFeature->DumpFontDef(fpOut);
     }
+    // cppcheck-suppress knownConditionTrueFalse
     if (GetFeatureClass() == TABFCCustomPoint)
     {
         TABCustomPoint *poFeature = (TABCustomPoint *)this;

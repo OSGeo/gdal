@@ -2216,6 +2216,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             GDALPipeWrite(p, poDS != NULL);
             if( poDS != NULL )
             {
+                // cppcheck-suppress knownConditionTrueFalse
                 CPLAssert(INSTR_END < 128);
                 GByte abyCaps[16]; /* 16 * 8 = 128 */
                 memset(abyCaps, 0, sizeof(abyCaps));

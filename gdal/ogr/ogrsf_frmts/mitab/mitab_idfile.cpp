@@ -102,6 +102,7 @@ TABIDFile::~TABIDFile()
 
 int TABIDFile::Open(const char *pszFname, const char* pszAccess)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead);
     else if( STARTS_WITH_CI(pszAccess, "w") )

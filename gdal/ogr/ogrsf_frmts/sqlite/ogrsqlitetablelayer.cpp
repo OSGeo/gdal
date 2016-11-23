@@ -1740,9 +1740,6 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
 /*      Build list of old fields, and the list of new fields.           */
 /* -------------------------------------------------------------------- */
 
-     /* _rowid_ is 1, OGC_FID is 2 */
-    int iNextOrdinal = 3 + poFeatureDefn->GetGeomFieldCount();
-
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
         OGRFieldDefn *poFldDefn = poFeatureDefn->GetFieldDefn(iField);
@@ -1755,8 +1752,6 @@ OGRErr OGRSQLiteTableLayer::AddColumnAncientMethod( OGRFieldDefn& oField)
                  ", \"%s\"", OGRSQLiteEscapeName(poFldDefn->GetNameRef()).c_str() );
 
         AddColumnDef(pszNewFieldList, nBufLen, poFldDefn);
-
-        iNextOrdinal++;
     }
 
 /* -------------------------------------------------------------------- */

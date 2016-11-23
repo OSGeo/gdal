@@ -1815,7 +1815,6 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
                                  const int iSqliteCacheMB )
 
 {
-    int iFeatureUID = 0;
     sqlite3 *hDB = NULL;
     CPLString osSQLiteFilename;
     const char *pszSQLiteFilename = NULL;
@@ -1957,7 +1956,6 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
                 psNode = papsGeomList[i];
             }
         }
-        iFeatureUID++;
         delete poFeature;
     }
 

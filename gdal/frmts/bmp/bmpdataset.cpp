@@ -195,7 +195,7 @@ static int countonbits( GUInt32 dw )
     int r = 0;
     for( int x = 0; x < 32; x++ )
     {
-        if( (dw & (1 << x)) != 0 )
+        if( (dw & (1U << x)) != 0 )
             r++;
     }
     return r;
@@ -205,7 +205,7 @@ static int findfirstonbit( GUInt32 n )
 {
     for( int x = 0; x < 32; x++ )
     {
-        if( (n & (1 << x)) != 0 )
+        if( (n & (1U << x)) != 0 )
             return x;
     }
     return -1;
