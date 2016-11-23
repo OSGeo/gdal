@@ -315,7 +315,6 @@ static OGRGeometry* OGRCreateFromMultiPatch( int nParts,
         if( panPartStart == NULL )
         {
             nPartPoints = nPoints;
-            // nPartStart = 0;
         }
         else
         {
@@ -2444,7 +2443,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         const char* papszOptions[] =
                             { "METHOD=ONLY_CCW", NULL  };
                         poOGR = OGRGeometryFactory::organizePolygons(
-                            (OGRGeometry**)tabPolygons, nParts,
+                            reinterpret_cast<OGRGeometry **>(tabPolygons),
+                            nParts,
                             &isValidGeometry, papszOptions );
 
                         if( !isValidGeometry )
@@ -2522,7 +2522,8 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                         const char* papszOptions[] =
                             { "METHOD=ONLY_CCW", NULL };
                         poOGR = OGRGeometryFactory::organizePolygons(
-                            (OGRGeometry**)tabPolygons, nParts,
+                            reinterpret_cast<OGRGeometry **>(tabPolygons),
+                            nParts,
                             &isValidGeometry, papszOptions );
 
                         if( !isValidGeometry )
