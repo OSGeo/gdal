@@ -332,7 +332,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         # The second one is because they are verbose in stderr
                         if 'DCAP_VIRTUALIO' in md and size != 0 and \
                            drv.ShortName not in ['JPEG2000', 'KMLSUPEROVERLAY', 'HF2', 'ZMap', 'DDS'] and \
-                           drv.ShortName not in ['GIF', 'JP2ECW']:
+                           drv.ShortName not in ['GIF', 'JP2ECW', 'JP2Lura']:
 
                             for j in range(10):
                                 truncated_size = (size * j) / 10
