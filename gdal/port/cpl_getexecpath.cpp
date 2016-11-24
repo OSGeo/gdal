@@ -26,8 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+
 
 CPL_CVSID("$Id$");
 

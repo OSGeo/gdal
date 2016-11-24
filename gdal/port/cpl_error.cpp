@@ -30,12 +30,18 @@
 
 #include "cpl_error.h"
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_vsi.h"
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 #define TIMESTAMP_DEBUG
 //#define MEMORY_DEBUG

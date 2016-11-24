@@ -27,16 +27,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <map>
+#include "cpl_port.h"
 #include "cpl_http.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include <map>
+#include <string>
+
+#include "cpl_http.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
+void CPLHTTPSetOptions( CURL *http_handle, char** papszOptions );
 
-/* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
+// CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
+// earlier.
 #if LIBCURL_VERSION_NUM < 0x070a07
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
 #endif
