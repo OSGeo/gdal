@@ -21,6 +21,10 @@
  */
 
 #include "cpl_time.h"
+
+#include <cstring>
+#include <ctime>
+
 #include "cpl_error.h"
 
 CPL_CVSID("$Id$");

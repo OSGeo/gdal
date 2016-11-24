@@ -29,7 +29,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 

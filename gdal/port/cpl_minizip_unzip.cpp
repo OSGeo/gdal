@@ -49,15 +49,15 @@ woven in by Terry Thorsen 1/2003.
   version without encryption capabilities).
  */
 
-#include <cstdio>
+#include "cpl_port.h"
+#include "cpl_minizip_unzip.h"
+
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
-#include "zlib.h"
-#include "cpl_minizip_unzip.h"
+#include "cpl_conv.h"
 #include "cpl_string.h"
-
-#include <cstddef>
 
 #ifdef NO_ERRNO_H
     extern int errno;
@@ -548,8 +548,6 @@ extern unzFile ZEXPORT cpl_unzOpen2 (const char *path,
         uLong64 uL64;
 
         us.isZip64 = 1;
-
-        //printf("ZIP64 file !\n");
 
         if (ZSEEK(us.z_filefunc, us.filestream,
                                       central_pos,ZLIB_FILEFUNC_SEEK_SET)!=0)
