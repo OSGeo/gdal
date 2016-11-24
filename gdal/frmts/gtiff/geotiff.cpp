@@ -194,7 +194,9 @@ typedef enum
     VIRTUAL_MEM_IO_IF_ENOUGH_RAM
 } VirtualMemIOEnum;
 
+#if !defined(__MINGW32__)
 namespace {
+#endif
 typedef struct
 {
     GTiffDataset *poDS;
@@ -210,7 +212,9 @@ typedef struct
     int           nCompressedBufferSize;
     bool          bReady;
 } GTiffCompressionJob;
+#if !defined(__MINGW32__)
 }
+#endif
 
 class GTiffDataset CPL_FINAL : public GDALPamDataset
 {
