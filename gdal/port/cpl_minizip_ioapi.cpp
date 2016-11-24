@@ -17,14 +17,21 @@
    Copyright (C) 1998-2005 Gilles Vollant
 */
 
-#include "cpl_vsi.h"
+#include "cpl_port.h"
+#include "cpl_minizip_ioapi.h"
 
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
-#include "zlib.h"
 #include "cpl_minizip_ioapi.h"
+#include "cpl_vsi.h"
+#include "zconf.h"
+#include "zlib.h"
 
 CPL_CVSID("$Id$");
 

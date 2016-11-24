@@ -27,6 +27,13 @@
  ****************************************************************************/
 
 #include "cpl_http.h"
+#include "cpl_port.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 

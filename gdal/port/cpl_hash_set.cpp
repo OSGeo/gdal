@@ -27,11 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
 #include "cpl_hash_set.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_list.h"
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 struct _CPLHashSet
 {
