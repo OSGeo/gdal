@@ -7267,6 +7267,92 @@ def tiff_write_158():
     return 'success'
 
 ###############################################################################
+# Test that COPY_SRC_OVERVIEWS creation option with JPEG compression
+# result in a https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF
+
+def tiff_write_159():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+    if md['DMD_CREATIONOPTIONLIST'].find('BIGTIFF') == -1:
+        return 'skip'
+
+    prev_table = ''
+    for options in [ [], [ 'JPEG_QUALITY=50' ], [ 'PHOTOMETRIC=YCBCR' ] ]:
+
+        src_ds = gdal.Translate('',  '../gdrivers/data/small_world.tif', format = 'MEM')
+        src_ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_159.tif', src_ds,
+                                        options = ['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG'] + options)
+        ds = None
+        src_ds = None
+
+        ds = gdal.Open('/vsimem/tiff_write_159.tif')
+        cs0 = ds.GetRasterBand(1).Checksum()
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        if cs0 == 0 or cs1 == 0 or cs2 == 0:
+            gdaltest.post_reason('failure')
+            print(options)
+            print(cs0)
+            print(cs1)
+            print(cs2)
+            return 'fail'
+        ifd_main = int(ds.GetRasterBand(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+        ifd_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+        ifd_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('IFD_OFFSET', 'TIFF'))
+        data_ovr_1 = int(ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+        data_ovr_0 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+        data_main = int(ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+        if not(ifd_main < ifd_ovr_0 and ifd_ovr_0 < ifd_ovr_1 and ifd_ovr_1 < data_ovr_1 and data_ovr_1 < data_ovr_0 and data_ovr_0 < data_main):
+            gdaltest.post_reason('failure')
+            print(options)
+            print(ifd_main, ifd_ovr_0, ifd_ovr_1, data_ovr_1, data_ovr_0, data_main)
+            return 'fail'
+        table_main = ds.GetRasterBand(1).GetMetadataItem('JPEGTABLES', 'TIFF')
+        table_ovr_0 = ds.GetRasterBand(1).GetOverview(0).GetMetadataItem('JPEGTABLES', 'TIFF')
+        table_ovr_1 = ds.GetRasterBand(1).GetOverview(1).GetMetadataItem('JPEGTABLES', 'TIFF')
+        if table_main != table_ovr_0 or table_ovr_0 != table_ovr_1:
+            gdaltest.post_reason('failure')
+            print(options)
+            return 'fail'
+        # Check that the JPEG tables are different in the 3 modes
+        if table_main == prev_table:
+            gdaltest.post_reason('failure')
+            print(options)
+            return 'fail'
+        prev_table = table_main
+        ds = None
+
+        gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_159.tif' )
+
+    for value in range(4):
+
+        src_ds = gdal.Translate('',  'data/byte.tif', format = 'MEM')
+        src_ds.BuildOverviews( 'NEAR', overviewlist = [2] )
+        ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_159.tif', src_ds,
+                                        options = ['COPY_SRC_OVERVIEWS=YES', 'COMPRESS=JPEG', 'JPEGTABLESMODE=%d' % value])
+        ds = None
+        src_ds = None
+
+        ds = gdal.Open('/vsimem/tiff_write_159.tif')
+        cs0 = ds.GetRasterBand(1).Checksum()
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs0 != 4743 or cs1 != 1133:
+            gdaltest.post_reason('failure')
+            print(value)
+            print(cs0)
+            print(cs1)
+            return 'fail'
+        ds = None
+
+        gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_159.tif' )
+
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7454,10 +7540,11 @@ gdaltest_list = [
     tiff_write_156,
     tiff_write_157,
     tiff_write_158,
+    tiff_write_159,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_158 ]
+#gdaltest_list = [ tiff_write_1, tiff_write_159 ]
 
 if __name__ == '__main__':
 
