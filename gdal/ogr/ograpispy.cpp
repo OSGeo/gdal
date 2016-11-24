@@ -50,7 +50,7 @@ static CPLString osSpyFile;
 static FILE* fpSpyFile = NULL;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
-namespace OGRAPISpy
+namespace
 {
 
 class LayerDescription
@@ -87,11 +87,7 @@ class FeatureDefnDescription
     void Free();
 };
 
-}  // namespace OGRAPISpy
-
-using OGRAPISpy::LayerDescription;
-using OGRAPISpy::DatasetDescription;
-using OGRAPISpy::FeatureDefnDescription;
+}  // namespace
 
 static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
