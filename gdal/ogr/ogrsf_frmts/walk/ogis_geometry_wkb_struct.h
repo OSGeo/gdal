@@ -56,6 +56,8 @@
 #define CPL_LSBPTRPOINTS(p,n)
 #endif
 
+namespace OGRWALK {
+
 struct Point3D {
     double x;
     double y;
@@ -87,7 +89,7 @@ typedef Point Vector;        //Space Vector    {dx, dy, dz}
 /* is not allowed.                                                        */
 /**************************************************************************/
 
-enum wkLineType {
+typedef enum {
     wkLineTypePoint        =0,   // Point
     wkLineTypeStraight    =1,    // Straightline
     wkLineTypeBezier    =2,      // Bezier
@@ -99,7 +101,7 @@ enum wkLineType {
     wkLineTypeRectCircle=8,      // Rectangular Circle; 2 points
     wkLineTypeBCurve    =9,      // B Curve
     wkLineTypeStrainCurve =10,   // Strain Curve
-};
+} wkLineType;
 
 struct CurveSegment {
     GUInt32 lineType;
@@ -228,5 +230,21 @@ struct WKBGeometry {
 public:
     WKBGeometry () { wkbType=wkbUnknown; }
 };
+
+} /* namespace OGRWALK */
+
+using OGRWALK::wkLineType;
+using OGRWALK::Point;
+using OGRWALK::CurveSegment;
+using OGRWALK::LineString;
+using OGRWALK::WKBSimpleGeometry;
+using OGRWALK::WKBPoint;
+using OGRWALK::WKBLineString;
+using OGRWALK::WKBPolygon;
+using OGRWALK::WKBMultiPoint;
+using OGRWALK::WKBMultiLineString;
+using OGRWALK::WKBMultiPolygon;
+using OGRWALK::WKBGeometryCollection;
+using OGRWALK::WKBGeometry;
 
 #endif /* ndef OGIS_GEOMETRY_WKB_STRUCT_H */

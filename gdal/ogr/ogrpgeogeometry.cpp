@@ -65,6 +65,7 @@ typedef enum
     CURVE_ELLIPSE_BY_CENTER
 } CurveType;
 
+namespace {
 typedef struct
 {
     int       nStartPointIdx;
@@ -107,6 +108,7 @@ typedef struct
         } EllipseByCenter;
     } u;
 } CurveSegment;
+} /* namespace */
 
 static const int EXT_SHAPE_SEGMENT_ARC = 1;
 static const int EXT_SHAPE_SEGMENT_BEZIER = 4;
