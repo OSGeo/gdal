@@ -280,7 +280,7 @@ void OGRIDFDataSource::Parse()
                 }
             }
 
-            if( eLayerType == LAYER_NODE )
+            if( eLayerType == LAYER_NODE && iX >= 0 && iY >= 0 && iNodeID >= 0 )
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
@@ -290,7 +290,8 @@ void OGRIDFDataSource::Parse()
                 poGeom->assignSpatialReference(poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
             }
-            else if( eLayerType == LAYER_LINK )
+            else if( eLayerType == LAYER_LINK && iFromNode >= 0 &&
+                     iToNode >= 0 )
             {
                 GIntBig nFromNode = poFeature->GetFieldAsInteger64(iFromNode);
                 GIntBig nToNode = poFeature->GetFieldAsInteger64(iToNode);
@@ -307,7 +308,8 @@ void OGRIDFDataSource::Parse()
                     poFeature->SetGeometryDirectly(poLS);
                 }
             }
-            else if( eLayerType == LAYER_LINKCOORDINATE )
+            else if( eLayerType == LAYER_LINKCOORDINATE &&
+                     iX >= 0 && iY >= 0 && iLinkID >= 0 )
             {
                 double dfX = poFeature->GetFieldAsDouble(iX);
                 double dfY = poFeature->GetFieldAsDouble(iY);
