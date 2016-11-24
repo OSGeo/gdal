@@ -82,6 +82,8 @@ static bool bGlobalStripIntegerOverflow = false;
 #endif
 static bool bGlobalInExternalOvr = false;
 
+const char* const szJPEGGTiffDatasetTmpPrefix = "/vsimem/gtiffdataset_jpg_tmp_";
+
 typedef enum
 {
     GTIFFTAGTYPE_STRING,
@@ -228,6 +230,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     friend class GTiffSplitBitmapBand;
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
+    friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 
     TIFF       *hTIFF;
     VSILFILE   *fpL;
@@ -996,6 +999,26 @@ void GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality )
 
     for( int i = 0; i < poDS->nOverviewCount; ++i )
         poDS->papoOverviewDS[i]->nJpegQuality = nJpegQuality;
+}
+
+/************************************************************************/
+/*                     GTIFFSetJpegTablesMode()                         */
+/* Called by GTIFFBuildOverviews() to set the jpeg tables mode on the   */
+/* of the .ovr file.                                                    */
+/************************************************************************/
+
+void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
+{
+    CPLAssert(
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+
+    GTiffDataset* const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
+    poDS->nJpegTablesMode = nJpegTablesMode;
+
+    poDS->ScanDirectories();
+
+    for( int i = 0; i < poDS->nOverviewCount; ++i )
+        poDS->papoOverviewDS[i]->nJpegTablesMode = nJpegTablesMode;
 }
 
 /************************************************************************/
@@ -4616,6 +4639,15 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             CPLFree(pszHex);
 
             return pszReturn;
+        }
+
+        if( EQUAL(pszName, "IFD_OFFSET") )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            return CPLSPrintf( CPL_FRMT_GUIB,
+                               static_cast<GUIntBig>(poGDS->nDirOffset) );
         }
 
         if( sscanf( pszName, "BLOCK_OFFSET_%d_%d",
@@ -9102,6 +9134,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
     poODS->nJpegQuality = nJpegQuality;
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
+    poODS->nJpegTablesMode = nJpegTablesMode;
 
     if( nCompression == COMPRESSION_JPEG )
     {
@@ -9280,7 +9313,11 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
-                                    osMetadata );
+                                    osMetadata,
+                                    nJpegQuality >= 0 ?
+                                        CPLSPrintf("%d", nJpegQuality) : NULL,
+                                    CPLSPrintf("%d", nJpegTablesMode)
+                                   );
 
         if( nOverviewOffset == 0 )
             eErr = CE_Failure;
@@ -9342,7 +9379,8 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         nMaskOvrCompression, PHOTOMETRIC_MASK,
                         SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                         NULL, NULL, NULL, 0, NULL,
-                        "" );
+                        "",
+                        NULL, NULL );
 
                 if( nOverviewOffset == 0 )
                 {
@@ -9642,7 +9680,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nPredictor,
                     panRed, panGreen, panBlue,
                     nExtraSamples, panExtraSampleValues,
-                    osMetadata );
+                    osMetadata,
+                    nJpegQuality >= 0 ?
+                                        CPLSPrintf("%d", nJpegQuality) : NULL,
+                    CPLSPrintf("%d", nJpegTablesMode) );
 
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
@@ -13853,7 +13894,8 @@ static int GTiffGetJpegQuality(char** papszOptions)
 static int GTiffGetJpegTablesMode(char** papszOptions)
 {
     return atoi(CSLFetchNameValueDef( papszOptions, "JPEGTABLESMODE",
-                                   "1" /* JPEGTABLESMODE_QUANT */));
+                                      CPLSPrintf("%d",
+                                                knGTIFFJpegTablesModeDefault)));
 }
 
 /************************************************************************/
@@ -14593,89 +14635,134 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     // the directory. This way we avoid a directory rewriting.
 #if defined(BIGTIFF_SUPPORT)
     if( l_nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&
+        !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
             CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
-        CPLString osTmpFilenameIn;
-        osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", l_hTIFF);
-        VSILFILE* fpTmp = NULL;
-        CPLString osTmp;
-        char** papszLocalParameters = NULL;
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "COMPRESS", "JPEG");
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEG_QUALITY",
-                CSLFetchNameValue(papszParmList, "JPEG_QUALITY") );
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "PHOTOMETRIC", CSLFetchNameValue(papszParmList, "PHOTOMETRIC"));
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "BLOCKYSIZE", "16");
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "NBITS", CSLFetchNameValue(papszParmList, "NBITS"));
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEGTABLESMODE",
-                CSLFetchNameValue(papszParmList, "JPEGTABLESMODE") );
-        TIFF* hTIFFTmp =
-            CreateLL( osTmpFilenameIn, 16, 16, (l_nBands <= 4) ? l_nBands : 1,
-                      eType, 0.0, papszLocalParameters, &fpTmp, osTmp );
-        CSLDestroy(papszLocalParameters);
-        if( hTIFFTmp )
-        {
-            uint16 l_nPhotometric = 0;
-            int nJpegTablesModeIn = 0;
-            TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
-            TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                          &nJpegTablesModeIn );
-            TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
-            TIFFWriteDirectory( hTIFFTmp );
-            TIFFSetDirectory( hTIFFTmp, 0 );
-            // Now, reset quality and jpegcolormode.
-            if(l_nJpegQuality > 0)
-                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
-            if( l_nPhotometric == PHOTOMETRIC_YCBCR
-                && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                    "YES") ) )
-            {
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
-                              JPEGCOLORMODE_RGB);
-            }
-            if( nJpegTablesModeIn >= 0 )
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                              nJpegTablesModeIn);
-
-            // TODO(schwehr): Explain all these literals.
-            GByte abyZeroData[(16*16*4*3)/2] = {};
-            int nBlockSize = 16 * 16 * ((l_nBands <= 4) ? l_nBands : 1);
-            if( l_nBitsPerSample == 12 )
-               nBlockSize = (nBlockSize * 3) / 2;
-            TIFFWriteEncodedStrip( hTIFFTmp, 0, abyZeroData, nBlockSize);
-
-            uint32 nJPEGTableSize = 0;
-            void* pJPEGTable = NULL;
-            if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
-                              &pJPEGTable) )
-                TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
-                              pJPEGTable);
-
-            float *ref = NULL;
-            if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
-                TIFFSetField(l_hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
-
-            XTIFFClose(hTIFFTmp);
-            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
-        }
-        VSIUnlink(osTmpFilenameIn);
+        GTiffWriteJPEGTables( l_hTIFF,
+                              CSLFetchNameValue(papszParmList, "PHOTOMETRIC"),
+                              CSLFetchNameValue(papszParmList, "JPEG_QUALITY"),
+                              CSLFetchNameValue(papszParmList,
+                                                "JPEGTABLESMODE") );
     }
 #endif
 
     *pfpL = l_fpL;
 
     return l_hTIFF;
+}
+
+/************************************************************************/
+/*                      GTiffWriteJPEGTables()                          */
+/*                                                                      */
+/*      Sets the TIFFTAG_JPEGTABLES (and TIFFTAG_REFERENCEBLACKWHITE)   */
+/*      tags immediately, instead of relying on the TIFF JPEG codec     */
+/*      to write them when it starts compressing imagery. This avoids   */
+/*      an IFD rewrite at the end of the file.                          */
+/*      Must be used after having set TIFFTAG_SAMPLESPERPIXEL,          */
+/*      TIFFTAG_BITSPERSAMPLE.                                          */
+/************************************************************************/
+
+void GTiffWriteJPEGTables( TIFF* hTIFF,
+                           const char* pszPhotometric,
+                           const char* pszJPEGQuality,
+                           const char* pszJPEGTablesMode )
+{
+    // Would perhaps works with libtiff 3.X but didn't bother trying This trick
+    // creates a temporary in-memory file and fetches its JPEG tables so that
+    // we can directly set them, before tif_jpeg.c compute them at the first
+    // strip/tile writing, which is too late, since we have already crystalized
+    // the directory. This way we avoid a directory rewriting.
+#if defined(BIGTIFF_SUPPORT)
+    uint16 nBands = 0;
+    if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,
+                        &nBands ) )
+        nBands = 1;
+
+    uint16 l_nBitsPerSample = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE,
+                        &(l_nBitsPerSample)) )
+        l_nBitsPerSample = 1;
+
+    CPLString osTmpFilenameIn;
+    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    VSILFILE* fpTmp = NULL;
+    CPLString osTmp;
+    char** papszLocalParameters = NULL;
+    const int nInMemImageWidth = 16;
+    const int nInMemImageHeight = 16;
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "COMPRESS", "JPEG" );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEG_QUALITY",
+                                            pszJPEGQuality );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "PHOTOMETRIC", pszPhotometric );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "BLOCKYSIZE",
+                                            CPLSPrintf("%u", nInMemImageHeight)
+                                          );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "NBITS",
+                                            CPLSPrintf("%u", l_nBitsPerSample));
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEGTABLESMODE",
+                                            pszJPEGTablesMode );
+
+    TIFF* hTIFFTmp = GTiffDataset::CreateLL(
+                    osTmpFilenameIn, nInMemImageWidth, nInMemImageHeight,
+                    (nBands <= 4) ? nBands : 1,
+                    (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16, 0.0,
+                    papszLocalParameters, &fpTmp, osTmp );
+    CSLDestroy(papszLocalParameters);
+    if( hTIFFTmp )
+    {
+        uint16 l_nPhotometric = 0;
+        int nJpegTablesModeIn = 0;
+        TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
+        TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                        &nJpegTablesModeIn );
+        TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
+        TIFFWriteDirectory( hTIFFTmp );
+        TIFFSetDirectory( hTIFFTmp, 0 );
+        // Now, reset quality and jpegcolormode.
+        const int l_nJpegQuality = pszJPEGQuality ? atoi(pszJPEGQuality) : 0;
+        if(l_nJpegQuality > 0)
+            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
+        if( l_nPhotometric == PHOTOMETRIC_YCBCR
+            && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                "YES") ) )
+        {
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
+                            JPEGCOLORMODE_RGB);
+        }
+        if( nJpegTablesModeIn >= 0 )
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                            nJpegTablesModeIn);
+
+        int nBlockSize = nInMemImageWidth * nInMemImageHeight *
+                                        ((nBands <= 4) ? nBands : 1);
+        if( l_nBitsPerSample == 12 )
+            nBlockSize = (nBlockSize * 3) / 2;
+        std::vector<GByte> abyZeroData( nBlockSize, 0 );
+        TIFFWriteEncodedStrip( hTIFFTmp, 0, &abyZeroData[0], nBlockSize);
+
+        uint32 nJPEGTableSize = 0;
+        void* pJPEGTable = NULL;
+        if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
+                            &pJPEGTable) )
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
+                            pJPEGTable);
+
+        float *ref = NULL;
+        if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
+            TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
+
+        XTIFFClose(hTIFFTmp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
+    }
+    VSIUnlink(osTmpFilenameIn);
+#endif
 }
 
 /************************************************************************/
@@ -16999,7 +17086,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 nBlockXSize, nBlockYSize,
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
-                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
+                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "", NULL, NULL);
         if( nOffset == 0 )
             return CE_Failure;
 
