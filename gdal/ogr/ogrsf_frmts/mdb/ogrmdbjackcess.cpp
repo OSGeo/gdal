@@ -148,7 +148,9 @@ OGRMDBJavaEnv::~OGRMDBJavaEnv()
     }
 }
 
-#define CHECK(x, y) do {x = y; if (!x) { CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); return FALSE;} } while(0)
+#define CHECK(x, y) do {x = y; if (!x) { \
+      CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); \
+      return FALSE;} } while( false )
 
 /************************************************************************/
 /*                              Init()                                  */

@@ -2028,7 +2028,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                                  "for layer SRS. SRID is %d",
                                  nSRID);
                         nSRID = oESRI_SRS.auth_srid;
-                        OGRFree(wkt);
+                        CPLFree(wkt);
                         wkt = CPLStrdup(WStringToString(oESRI_SRS.srtext).c_str());
                     }
                 }
@@ -2054,7 +2054,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                 }
 
                 CPLCreateXMLElementAndValue(srs_xml,"WKT", wkt);
-                OGRFree(wkt);
+                CPLFree(wkt);
             }
 
             /* Dispose of our close */

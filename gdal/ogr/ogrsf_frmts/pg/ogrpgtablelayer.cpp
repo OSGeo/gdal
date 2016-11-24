@@ -1325,7 +1325,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                         osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                     else
                         osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
-                    OGRFree( pszHexEWKB );
+                    CPLFree( pszHexEWKB );
                 }
                 else
                     osCommand += "NULL";
@@ -1352,7 +1352,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
                         osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-                    OGRFree( pszWKT );
+                    CPLFree( pszWKT );
                 }
                 else
                     osCommand += "NULL";
@@ -1760,7 +1760,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                     osCommand += CPLString().Printf("'%s'::GEOGRAPHY", pszHexEWKB);
                 else
                     osCommand += CPLString().Printf("'%s'::GEOMETRY", pszHexEWKB);
-                OGRFree( pszHexEWKB );
+                CPLFree( pszHexEWKB );
             }
             else
             {
@@ -1781,7 +1781,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                         osCommand +=
                             CPLString().Printf(
                                 "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
-                    OGRFree( pszWKT );
+                    CPLFree( pszWKT );
                 }
                 else
                     osCommand += "''";

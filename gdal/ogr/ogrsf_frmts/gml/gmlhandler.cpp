@@ -597,8 +597,11 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
     }
 }
 
-#define PUSH_STATE(val) do { nStackDepth ++; CPLAssert(nStackDepth < STACK_SIZE); stateStack[nStackDepth] = val; } while(0)
-#define POP_STATE()     nStackDepth --
+#define PUSH_STATE(val) do { \
+    nStackDepth++; \
+    CPLAssert(nStackDepth < STACK_SIZE); \
+    stateStack[nStackDepth] = val; } while( false )
+#define POP_STATE()     nStackDepth--
 
 /************************************************************************/
 /*                       startElementBoundedBy()                        */
