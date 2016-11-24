@@ -52,16 +52,7 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-
-#include <json.h>
-
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+#include "ogr_json_header.h"
 
 CPL_CVSID("$Id$");
 
