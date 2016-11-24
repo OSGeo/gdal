@@ -2935,6 +2935,50 @@ if test "$HAVE_MRSID_LIDAR" != "no" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if LuraTech library is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(jp2lura,[  --with-j2lura[=ARG]    Include JP2Lua support (ARG=no, lura SDK install path)],,)
+
+AC_MSG_CHECKING([for JP2Lura support])
+
+HAVE_JP2LURA=no
+JP2LURA_INCLUDE=
+
+if test "$with_jp2lura" != "" -a "$with_jp2lura" != "no" ; then
+  AC_MSG_CHECKING([for lwf_jp2.h])
+  if test -f "$with_jp2lura/include/lwf_jp2.h"; then
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([JP2Lura support requested but header not found])
+  fi
+  JP2LURA_INCLUDE="-I$with_jp2lura/include"
+
+  # mingw support
+  if test -f "$with_jp2lura/library/lwf_jp2.lib"; then
+      ln -s "$with_jp2lura/library/lwf_jp2.lib" "$with_jp2lura/library/lib_lwf_jp2.a"
+  fi
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_jp2lura/library"
+
+  AC_CHECK_LIB(_lwf_jp2,JP2_Decompress_SetLicense,HAVE_JP2LURA="yes",,-lm)
+
+  if test "$HAVE_JP2LURA" = "no" ; then
+    AC_MSG_ERROR([JP2Lura support requested but library not found])
+  fi
+
+  LIBS="-L$with_jp2lura/library -l_lwf_jp2 -lm $ORIG_LIBS"
+fi
+
+AC_SUBST([JP2LURA_INCLUDE], [$JP2LURA_INCLUDE])
+
+if test "$HAVE_JP2LURA" != "no" ; then
+  OPT_GDAL_FORMATS="jp2lura $OPT_GDAL_FORMATS"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Enable MSG format if EUMETSAT Wavelet Transform Software
 dnl available in the local tree
 dnl ---------------------------------------------------------------------------
@@ -5301,6 +5345,7 @@ LOC_MSG([  OpenJPEG support:          ${HAVE_OPENJPEG}])
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
 LOC_MSG([  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}])
+LOC_MSG([  JP2Lura support:           ${HAVE_JP2LURA}])
 LOC_MSG([  MSG support:               ${HAVE_MSG}])
 LOC_MSG([  GRIB support:              ${HAVE_GRIB}])
 LOC_MSG([  EPSILON support:           ${EPSILON_SETTING}])
