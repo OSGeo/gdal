@@ -147,6 +147,8 @@ private:
     volatile long nHighThreadByteCount;
     volatile long nLowThreadByteCount;
 
+    static void KakaduInitialize();
+
 public:
     JPIPKAKDataset();
     virtual ~JPIPKAKDataset();
