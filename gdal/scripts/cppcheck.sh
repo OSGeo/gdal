@@ -43,7 +43,7 @@ done
 
 ret_code=0
 
-cat ${LOG_FILE} | grep -v "unmatchedSuppression" | grep -v " yacc.c" > ${LOG_FILE}.tmp
+cat ${LOG_FILE} | grep -v "unmatchedSuppression" | grep -v " yacc.c" | grep -v PublicDecompWT | grep -v "kdu_cache_wrapper.h"  > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 grep "null pointer" ${LOG_FILE}
