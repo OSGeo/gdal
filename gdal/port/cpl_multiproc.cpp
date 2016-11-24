@@ -31,6 +31,10 @@
 #define _GNU_SOURCE
 #endif
 
+// Include cpl_config.h BEFORE cpl_multiproc.h, as the later may undefine
+// CPL_MULTIPROC_PTHREAD for mingw case.
+
+#include "cpl_config.h"
 #include "cpl_multiproc.h"
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
@@ -45,7 +49,6 @@
 #include <ctime>
 #include <algorithm>
 
-#include "cpl_config.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_vsi.h"
