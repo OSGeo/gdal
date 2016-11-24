@@ -47,8 +47,16 @@
 
 #undef WARN_STANDARD_PRINTF
 
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cctype>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_config.h"
+#include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");

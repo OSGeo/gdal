@@ -37,12 +37,16 @@
 #endif
 
 #include "cpl_virtualmem.h"
-#include "cpl_error.h"
-#include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
-#include "cpl_conv.h"
 
 #include <cassert>
+// TODO(schwehr): Should ucontext.h be included?
+// #include <ucontext.h>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
