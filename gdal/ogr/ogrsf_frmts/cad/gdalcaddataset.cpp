@@ -283,7 +283,11 @@ int GDALCADDataset::Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                 if( NULL == papszMetadata )
                     SetMetadata( papszRasterMetadata, *papszDomainList );
                 else
-                    papszMetadata = CSLMerge( papszMetadata, papszRasterMetadata );
+                {
+                    char** papszMD = CSLMerge( CSLDuplicate(papszMetadata), papszRasterMetadata );
+                    SetMetadata( papszMD, *papszDomainList );
+                    CSLDestroy( papszMD );
+                }
                 papszDomainList++;
             }
         }

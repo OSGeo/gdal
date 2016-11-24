@@ -628,7 +628,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         if( poBand == NULL )
                             CPLError( CE_Fatal, CPLE_AppDefined,
                                       "Dynamic cast failed" );
-                        if( poBand->nDiscardLevels == nDiscardLevels )
+                        else if( poBand->nDiscardLevels == nDiscardLevels )
                             break;
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
@@ -885,7 +885,10 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
         JP2KAKRasterBand *poBand =
             dynamic_cast<JP2KAKRasterBand *>( GetRasterBand( iBand+1 ) );
         if( poBand == NULL )
+        {
             CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
+            return CE_Failure;
+        }
         for( int i = 0; i < poBand->nOverviewCount; i++ )
             delete poBand->papoOverviewBand[i];
 
@@ -1916,7 +1919,10 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
     JP2KAKRasterBand *poWrkBand =
         dynamic_cast<JP2KAKRasterBand *>( GetRasterBand(1) );
     if( poWrkBand == NULL )
+    {
         CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
+        return FALSE;
+    }
     if( poWrkBand->HasExternalOverviews() )
     {
         int nXOff2=nXOff;
