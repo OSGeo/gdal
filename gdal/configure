@@ -745,6 +745,7 @@ OPT_GDAL_FORMATS
 ORACLE_OCI_LDFLAGS
 ORACLE_OCI_CFLAGS
 ORACLE_OCI_VERSION
+JP2LURA_INCLUDE
 MRSID_LIDAR_LIBS
 MRSID_LIDAR_INCLUDE
 MRSID_LIBS
@@ -982,6 +983,7 @@ with_kakadu
 with_mrsid
 with_jp2mrsid
 with_mrsid_lidar
+with_jp2lura
 with_msg
 with_bsb
 with_oci
@@ -1753,6 +1755,7 @@ Optional Packages:
   --with-mrsid=ARG      Include MrSID support (ARG=path to MrSID DSDK or no)
   --with-jp2mrsid=ARG   Enable MrSID JPEG2000 support (ARG=yes/no)
   --with-mrsid_lidar=ARG      Include MrSID/MG4 LiDAR support (ARG=path to LizardTech LiDAR SDK or no)
+  --with-j2lura=ARG    Include JP2Lua support (ARG=no, lura SDK install path)
   --with-msg=ARG          Enable MSG driver (ARG=yes or no)
   --without-bsb           Disable BSB driver (legal issues pending
   --with-oci=[ARG]        use Oracle OCI API from given Oracle home
@@ -25705,6 +25708,96 @@ fi
 
 
 
+# Check whether --with-jp2lura was given.
+if test "${with_jp2lura+set}" = set; then :
+  withval=$with_jp2lura;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JP2Lura support" >&5
+$as_echo_n "checking for JP2Lura support... " >&6; }
+
+HAVE_JP2LURA=no
+JP2LURA_INCLUDE=
+
+if test "$with_jp2lura" != "" -a "$with_jp2lura" != "no" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for lwf_jp2.h" >&5
+$as_echo_n "checking for lwf_jp2.h... " >&6; }
+  if test -f "$with_jp2lura/include/lwf_jp2.h"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "JP2Lura support requested but header not found" "$LINENO" 5
+  fi
+  JP2LURA_INCLUDE="-I$with_jp2lura/include"
+
+  # mingw support
+  if test -f "$with_jp2lura/library/lwf_jp2.lib"; then
+      ln -s "$with_jp2lura/library/lwf_jp2.lib" "$with_jp2lura/library/lib_lwf_jp2.a"
+  fi
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$with_jp2lura/library"
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JP2_Decompress_SetLicense in -l_lwf_jp2" >&5
+$as_echo_n "checking for JP2_Decompress_SetLicense in -l_lwf_jp2... " >&6; }
+if ${ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l_lwf_jp2 -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JP2_Decompress_SetLicense ();
+int
+main ()
+{
+return JP2_Decompress_SetLicense ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense=yes
+else
+  ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense" >&5
+$as_echo "$ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense" >&6; }
+if test "x$ac_cv_lib__lwf_jp2_JP2_Decompress_SetLicense" = xyes; then :
+  HAVE_JP2LURA="yes"
+fi
+
+
+  if test "$HAVE_JP2LURA" = "no" ; then
+    as_fn_error $? "JP2Lura support requested but library not found" "$LINENO" 5
+  fi
+
+  LIBS="-L$with_jp2lura/library -l_lwf_jp2 -lm $ORIG_LIBS"
+fi
+
+JP2LURA_INCLUDE=$JP2LURA_INCLUDE
+
+
+if test "$HAVE_JP2LURA" != "no" ; then
+  OPT_GDAL_FORMATS="jp2lura $OPT_GDAL_FORMATS"
+fi
+
+
+
 # Check whether --with-msg was given.
 if test "${with_msg+set}" = set; then :
   withval=$with_msg;
@@ -35801,6 +35894,9 @@ echo "  MrSID support:             ${HAVE_MRSID}"
 
 
 echo "  MrSID/MG4 Lidar support:   ${HAVE_MRSID_LIDAR}"
+
+
+echo "  JP2Lura support:           ${HAVE_JP2LURA}"
 
 
 echo "  MSG support:               ${HAVE_MSG}"

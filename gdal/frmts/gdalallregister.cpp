@@ -258,6 +258,11 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JPIPKAK();
 #endif
 
+#ifdef FRMT_jp2lura
+    // JPEG2000 support using Lurawave library
+    GDALRegister_JP2Lura();
+#endif
+
 #ifdef FRMT_ecw
     GDALRegister_ECW();
     GDALRegister_JP2ECW();

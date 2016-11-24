@@ -316,6 +316,18 @@ JPEG12_SUPPORTED = 1
 # resulting DLLs to an appropriate place.
 #ECW_PLUGIN = YES
 
+
+# Uncomment the following and update to enable JP2Lura driver
+#LURATECH_CFLAGS = -Ic:\jp2_csdk_2.16_win64\include
+#LURATECH_LIB = c:\jp2_csdk_2.16_win64\library\lwf_jp2.lib
+
+# To build JP2Lura support as a plugin uncomment the following, and make sure
+# to do "nmake /f makefile.vc plugin" in gdal/frmts/jp2lura and copy the two
+# resulting DLLs to an appropriate place.
+#JP2LURA_PLUGIN = YES
+
+
+
 # Uncomment the following and update to enable ECW support with the 3.3 SDK.
 # Significant adaption may be needed.
 #ECWDIR  = 	C:\warmerda\libecwj2-3.3
@@ -774,6 +786,14 @@ ECW_LIB_LINK=
 !ENDIF
 !ENDIF
 
+!IFDEF LURATECH_CFLAGS
+!IF "$(JP2LURA_PLUGIN)" != "YES"
+LURATECH_LIB_LINK= $(LURATECH_LIB)
+!ELSE
+LURATECH_LIB_LINK=
+!ENDIF
+!ENDIF
+
 !IFDEF FITS_LIB
 !IF "$(FITS_PLUGIN)" != "YES"
 FITS_LIB_LINK = $(FITS_LIB)
@@ -867,7 +887,7 @@ SYM_PREFIX=_
 !ENDIF
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
-	$(ECW_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
+	$(ECW_LIB_LINK) $(LURATECH_LIB_LINK) $(HDF4_LIB_LINK) $(FME_LIB) $(MRSID_LIB_LINK) \
 	$(FITS_LIB_LINK) $(JPEG_LIB) $(NETCDF_LIB_LINK) $(PROJ4_LIB) \
 	$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB) \
