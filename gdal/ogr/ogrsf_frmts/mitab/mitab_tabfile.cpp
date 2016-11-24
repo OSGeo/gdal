@@ -2842,7 +2842,7 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
 
             GetSpatialRef()->exportToWkt( &pszWKT );
             fprintf( fpOut, "SRS = %s\n", pszWKT );
-            OGRFree( pszWKT );
+            CPLFree( pszWKT );
         }
         fprintf(fpOut, "Associated .MAP file ...\n\n");
         m_poMAPFile->Dump(fpOut);

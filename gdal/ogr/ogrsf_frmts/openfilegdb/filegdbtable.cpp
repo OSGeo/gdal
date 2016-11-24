@@ -964,7 +964,7 @@ int FileGDBTable::Open(const char* pszFilename,
     #define READ_DOUBLE(field) do { \
         field = GetFloat64(pabyIter, 0); \
         pabyIter += sizeof(double); \
-        nRemaining -= sizeof(double); } while(0)
+        nRemaining -= sizeof(double); } while( false )
 
                 READ_DOUBLE(poField->dfXOrigin);
                 READ_DOUBLE(poField->dfYOrigin);
