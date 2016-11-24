@@ -80,6 +80,9 @@ AX_CHECK_COMPILE_FLAG([-Werror=declaration-after-statement], [C_WFLAGS="$C_WFLAG
 dnl -Wclobbered is not reliable on most gcc versions
 dnl AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [C_WFLAGS="$C_WFLAGS -Wno-clobbered" CXX_WFLAGS="$CXX_WFLAGS -Wno-clobbered"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+dnl Warn when macros __TIME__, __DATE__ or __TIMESTAMP__ are encountered as they might prevent bit-wise-identical reproducible compilations. 
+AX_CHECK_COMPILE_FLAG([-Wdate-time], [C_WFLAGS="$C_WFLAGS -Wdate-time" CXX_WFLAGS="$CXX_WFLAGS -Wdate-time"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
 dnl GCC 6 warnings
 AX_CHECK_COMPILE_FLAG([-Wnull-dereference], [C_WFLAGS="$C_WFLAGS -Wnull-dereference" CXX_WFLAGS="$CXX_WFLAGS -Wnull-dereference"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 AX_CHECK_COMPILE_FLAG([-Wduplicated-cond], [C_WFLAGS="$C_WFLAGS -Wduplicated-cond" CXX_WFLAGS="$CXX_WFLAGS -Wduplicated-cond"],,[$ERROR_ON_UNKNOWN_OPTIONS])
