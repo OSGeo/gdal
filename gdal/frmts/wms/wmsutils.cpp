@@ -67,7 +67,7 @@ CPLString ProjToWKT(const CPLString &proj) {
     }
     sr.exportToWkt(&wkt);
     srs = wkt;
-    OGRFree(wkt);
+    CPLFree(wkt);
     return srs;
 }
 
