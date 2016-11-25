@@ -243,7 +243,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
     CPLDebug("GOA2", "Refresh Token : '%s'", osRefreshToken.c_str());
 
-    if( osRefreshToken.size() == 0)
+    if( osRefreshToken.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify a refresh token in the OAuth2 response.");
@@ -342,7 +342,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
 
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
 
-    if (osAccessToken.size() == 0)
+    if( osAccessToken.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify an access token in the OAuth2 response.");

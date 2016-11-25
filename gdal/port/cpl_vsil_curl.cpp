@@ -3425,7 +3425,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
                 CPLDebug("S3", "UploadId: %s", m_osUploadID.c_str());
                 CPLDestroyXMLNode(psNode);
             }
-            if( m_osUploadID.size() == 0 )
+            if( m_osUploadID.empty() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "InitiateMultipartUpload of %s failed: cannot get UploadId",
                          m_osFilename.c_str());
@@ -3798,7 +3798,7 @@ int VSIS3WriteHandle::Close()
     if( !m_bClosed )
     {
         m_bClosed = true;
-        if( m_osUploadID.size() == 0 )
+        if( m_osUploadID.empty() )
         {
             if( !m_bError && !DoSinglePartPUT() )
                 nRet = -1;
@@ -4090,7 +4090,7 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
 
             CPLFree(sWriteFuncData.pBuffer);
 
-            if( osNextMarker.size() == 0 )
+            if( osNextMarker.empty() )
             {
                 delete poS3HandleHelper;
                 return osFileList.StealList();

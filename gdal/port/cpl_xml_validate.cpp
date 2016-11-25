@@ -765,7 +765,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xml.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -783,7 +783,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();

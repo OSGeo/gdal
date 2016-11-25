@@ -127,7 +127,7 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
  */
 bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 {
-    CPLAssert( aWT.size() > 0 );
+    CPLAssert( !aWT.empty() );
 
     CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob));
     if( psJob == NULL )
@@ -191,7 +191,7 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
  */
 bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData)
 {
-    CPLAssert( aWT.size() > 0 );
+    CPLAssert( !aWT.empty() );
 
     CPLAcquireMutex(hMutex, 1000.0);
 
