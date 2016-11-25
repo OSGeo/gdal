@@ -43,6 +43,11 @@
 #include <vector>
 #include <string>
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 /************************************************************************/
 /*                           VSIVirtualHandle                           */
 /************************************************************************/
