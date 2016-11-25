@@ -28,13 +28,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cassert>
+#include <cstring>
+#include <cstdarg>
+#include <cstddef>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 
-#include <cassert>
-#include <algorithm>
-#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -165,10 +182,10 @@ char **VSIReadDirRecursive( const char *pszPathIn )
             i = 0;
         }
 
-        for ( ; i < nCount; i++ )
+        for( ; i < nCount; i++ )
         {
             // Do not recurse up the tree.
-            if (EQUAL(".", papszFiles[i]) || EQUAL("..", papszFiles[i]))
+            if( EQUAL(".", papszFiles[i]) || EQUAL("..", papszFiles[i]) )
               continue;
 
             // build complete file name for stat
@@ -178,7 +195,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
             osTemp1.append( papszFiles[i] );
 
             // if is file, add it
-            if ( VSIStatL( osTemp1.c_str(), &psStatBuf ) != 0 )
+            if( VSIStatL( osTemp1.c_str(), &psStatBuf ) != 0 )
                 continue;
 
             if( VSI_ISREG( psStatBuf.st_mode ) )
@@ -194,7 +211,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 else
                     oFiles.AddString( papszFiles[i] );
             }
-            else if ( VSI_ISDIR( psStatBuf.st_mode ) )
+            else if( VSI_ISDIR( psStatBuf.st_mode ) )
             {
                 // add directory entry
                 osTemp2.clear();
@@ -212,7 +229,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 sTask.nCount = nCount;
                 sTask.i = i;
                 sTask.pszPath = CPLStrdup(pszPath);
-                sTask.pszDisplayedPath = pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : NULL;
+                sTask.pszDisplayedPath =
+                    pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : NULL;
                 aoStack.push_back(sTask);
 
                 CPLFree(pszPath);
@@ -220,9 +238,16 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
                 char* pszDisplayedPathNew = NULL;
                 if( pszDisplayedPath )
-                    pszDisplayedPathNew = CPLStrdup( CPLSPrintf("%s/%s", pszDisplayedPath, papszFiles[i]) );
+                {
+                    pszDisplayedPathNew =
+                        CPLStrdup(
+                            CPLSPrintf("%s/%s",
+                                       pszDisplayedPath, papszFiles[i]));
+                }
                 else
+                {
                     pszDisplayedPathNew = CPLStrdup( papszFiles[i] );
+                }
                 CPLFree(pszDisplayedPath);
                 pszDisplayedPath = pszDisplayedPathNew;
 
@@ -240,7 +265,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
             if( !aoStack.empty() )
             {
-                int iLast = static_cast<int>(aoStack.size()) - 1;
+                const int iLast = static_cast<int>(aoStack.size()) - 1;
                 CPLFree(pszPath);
                 CPLFree(pszDisplayedPath);
                 nCount = aoStack[iLast].nCount;
@@ -416,7 +441,8 @@ int VSIRmdir( const char * pszDirname )
  *
  * Analog of the POSIX stat() function.
  *
- * @param pszFilename the path of the filesystem object to be queried.  UTF-8 encoded.
+ * @param pszFilename the path of the filesystem object to be queried.
+ * UTF-8 encoded.
  * @param psStatBuf the structure to load with information.
  *
  * @return 0 on success or -1 on an error.
@@ -444,14 +470,17 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
- * Analog of the POSIX stat() function, with an extra parameter to specify
- * which information is needed, which offers a potential for speed optimizations
- * on specialized and potentially slow virtual filesystem objects (/vsigzip/, /vsicurl/)
+ * Analog of the POSIX stat() function, with an extra parameter to
+ * specify which information is needed, which offers a potential for
+ * speed optimizations on specialized and potentially slow virtual
+ * filesystem objects (/vsigzip/, /vsicurl/)
  *
- * @param pszFilename the path of the filesystem object to be queried.  UTF-8 encoded.
+ * @param pszFilename the path of the filesystem object to be queried.
+ * UTF-8 encoded.
  * @param psStatBuf the structure to load with information.
- * @param nFlags 0 to get all information, or VSI_STAT_EXISTS_FLAG, VSI_STAT_NATURE_FLAG or
- *                  VSI_STAT_SIZE_FLAG, or a combination of those to get partial info.
+ * @param nFlags 0 to get all information, or VSI_STAT_EXISTS_FLAG,
+ *                  VSI_STAT_NATURE_FLAG or VSI_STAT_SIZE_FLAG, or a
+ *                  combination of those to get partial info.
  *
  * @return 0 on success or -1 on an error.
  *
@@ -462,7 +491,7 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
 
 {
     char    szAltPath[4] = { '\0' };
-    /* enable to work on "C:" as if it were "C:\" */
+    // Enable to work on "C:" as if it were "C:\".
     if( strlen(pszFilename) == 2 && pszFilename[1] == ':' )
     {
         szAltPath[0] = pszFilename[0];
@@ -476,7 +505,7 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
-    if (nFlags == 0)
+    if( nFlags == 0 )
         nFlags = VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG |
             VSI_STAT_SIZE_FLAG;
 
@@ -499,7 +528,8 @@ int VSIStatExL( const char * pszFilename, VSIStatBufL *psStatBuf, int nFlags )
  * This methods avoid ugly \#ifndef WIN32 / \#endif code, that is wrong when
  * dealing with virtual filenames.
  *
- * @param pszFilename the path of the filesystem object to be tested.  UTF-8 encoded.
+ * @param pszFilename the path of the filesystem object to be tested.
+ * UTF-8 encoded.
  *
  * @return TRUE if the filenames of the filesystem are case sensitive.
  *
@@ -520,11 +550,13 @@ int VSIIsCaseSensitiveFS( const char * pszFilename )
 /**
  * \brief Returns if the filesystem supports sparse files.
  *
- * Only supported on Linux (and no other Unix derivatives) and Windows.
- * On Linux, the answer depends on a few hardcoded signatures for common
- * filesystems. Other filesystems will be considered as not supporting sparse files.
+ * Only supported on Linux (and no other Unix derivatives) and
+ * Windows.  On Linux, the answer depends on a few hardcoded
+ * signatures for common filesystems. Other filesystems will be
+ * considered as not supporting sparse files.
  *
- * @param pszPath the path of the filesystem object to be tested.  UTF-8 encoded.
+ * @param pszPath the path of the filesystem object to be tested.
+ * UTF-8 encoded.
  *
  * @return TRUE if the file system is known to support sparse files. FALSE may
  *              be returned both in cases where it is known to not support them,
@@ -616,14 +648,16 @@ VSIVirtualHandle *VSIFilesystemHandler::Open( const char *pszFilename,
  *
  * @param pszFilename the file to open.  UTF-8 encoded.
  * @param pszAccess access requested (i.e. "r", "r+", "w")
- * @param bSetError flag determining whether or not this open call should set VSIErrors on failure.
+ * @param bSetError flag determining whether or not this open call
+ * should set VSIErrors on failure.
  *
  * @return NULL on failure, or the file handle.
  *
  * @since GDAL 2.1
  */
 
-VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, int bSetError )
+VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
+                       int bSetError )
 
 {
     VSIFilesystemHandler *poFSHandler =
@@ -632,7 +666,8 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess, int bSe
     VSILFILE* fp = reinterpret_cast<VSILFILE *>(
         poFSHandler->Open( pszFilename, pszAccess, CPL_TO_BOOL(bSetError) ) );
 
-    VSIDebug4( "VSIFOpenExL(%s,%s,%d) = %p", pszFilename, pszAccess, bSetError, fp );
+    VSIDebug4( "VSIFOpenExL(%s,%s,%d) = %p",
+               pszFilename, pszAccess, bSetError, fp );
 
     return fp;
 }
@@ -726,7 +761,7 @@ int VSIFCloseL( VSILFILE * fp )
 int VSIFSeekL( VSILFILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
 
     return poFileHandle->Seek( nOffset, nWhence );
 }
@@ -894,7 +929,9 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData, const vsi_l_offset* panOffsets, const size_t* panSizes )
+ * \fn VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
+ *                                       const vsi_l_offset* panOffsets,
+ *                                       const size_t* panSizes )
  * \brief Read several ranges of bytes from file.
  *
  * Reads nRanges objects of panSizes[i] bytes from the indicated file at the
@@ -943,9 +980,9 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
                          const vsi_l_offset* panOffsets,
                          const size_t* panSizes, VSILFILE * fp )
 {
-    VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>(fp);
 
-    return poFileHandle->ReadMultiRange( nRanges, ppData, panOffsets, panSizes );
+    return poFileHandle->ReadMultiRange(nRanges, ppData, panOffsets, panSizes);
 }
 
 /************************************************************************/
@@ -953,7 +990,8 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Write( const void *pBuffer, size_t nSize,size_t nCount )
+ * \fn VSIVirtualHandle::Write( const void *pBuffer,
+ *                              size_t nSize,size_t nCount )
  * \brief Write bytes to file.
  *
  * Writess nCount objects of nSize bytes to the indicated file at the
@@ -992,7 +1030,8 @@ int VSIFReadMultiRangeL( int nRanges, void ** ppData,
  * @return number of objects successfully written.
  */
 
-size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp )
+size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount,
+                   VSILFILE *fp )
 
 {
     VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
@@ -1082,7 +1121,7 @@ int VSIFEofL( VSILFILE * fp )
 int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
 
 {
-  VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
+    VSIVirtualHandle *poFileHandle = reinterpret_cast<VSIVirtualHandle *>( fp );
 
     return poFileHandle->Truncate(nNewSize);
 }
@@ -1132,8 +1171,9 @@ int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
  *
  * Writes the character nChar, cast to an unsigned char, to file.
  *
- * Almost an analog of the POSIX fputc() call, except that it returns
- * the number of character written (1 or 0), and not the (cast) character itself or EOF.
+ * Almost an analog of the POSIX  fputc() call, except that it returns
+ * the  number of  character  written (1  or 0),  and  not the  (cast)
+ * character itself or EOF.
  *
  * @param nChar character to write.
  * @param fp file handle opened with VSIFOpenL().
@@ -1153,15 +1193,17 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset, vsi_l_offset nLength )
+ * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset,
+ *                                       vsi_l_offset nLength )
  * \brief Return if a given file range contains data or holes filled with zeroes
  *
- * This uses the filesystem capabilities of querying which regions of a sparse
- * file are allocated or not. This is currently only implemented for Linux (and no
- * other Unix derivatives) and Windows.
+ * This uses the filesystem capabilities of querying which regions of
+ * a sparse file are allocated or not. This is currently only
+ * implemented for Linux (and no other Unix derivatives) and Windows.
  *
- * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the exte,t is filled
- * with zeroes ! It must be interpreted as "may contain non-zero data".
+ * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the
+ * exte,t is filled with zeroes ! It must be interpreted as "may
+ * contain non-zero data".
  *
  * @param nOffset offset of the start of the extent.
  * @param nLength extent length.
@@ -1174,12 +1216,13 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 /**
  * \brief Return if a given file range contains data or holes filled with zeroes
  *
- * This uses the filesystem capabilities of querying which regions of a sparse
- * file are allocated or not. This is currently only implemented for Linux (and no
- * other Unix derivatives) and Windows.
+ * This uses the filesystem capabilities of querying which regions of
+ * a sparse file are allocated or not. This is currently only
+ * implemented for Linux (and no other Unix derivatives) and Windows.
  *
- * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the exte,t is filled
- * with zeroes ! It must be interpreted as "may contain non-zero data".
+ * Note: a return of VSI_RANGE_STATUS_DATA doesn't exclude that the
+ * exte,t is filled with zeroes ! It must be interpreted as "may
+ * contain non-zero data".
  *
  * @param fp file handle opened with VSIFOpenL().
  * @param nOffset offset of the start of the extent.
@@ -1272,7 +1315,7 @@ int VSIIngestFile( VSILFILE* fp,
                 CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
-        while(true)
+        while( true )
         {
             if( nDataLen + 8192 + 1 > nDataAlloc )
             {
@@ -1306,7 +1349,7 @@ int VSIIngestFile( VSILFILE* fp,
                 VSIFReadL( *ppabyRet + nDataLen, 1, 8192, fp ) );
             nDataLen += nRead;
 
-            if ( nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize )
+            if( nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                               "Input file too large to be opened" );
@@ -1338,8 +1381,8 @@ int VSIIngestFile( VSILFILE* fp,
 
         // With "large" VSI I/O API we can read data chunks larger than
         // VSIMalloc could allocate. Catch it here.
-        if ( nDataLen > (vsi_l_offset)(size_t)nDataLen ||
-             (nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize) )
+        if( nDataLen > (vsi_l_offset)(size_t)nDataLen ||
+            (nMaxSize >= 0 && nDataLen > (vsi_l_offset)nMaxSize) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Input file too large to be opened" );
@@ -1510,7 +1553,7 @@ VSIFileManager *VSIFileManager::Get()
                 {
                     CPLMutexHolder oHolder( &hVSIFileManagerMutex );
                 }
-                if ( nConstructerPID != 0 )
+                if( nConstructerPID != 0 )
                 {
                     VSIDebug1( "nConstructerPID != 0: %d", nConstructerPID);
                     assert(false);
@@ -1547,7 +1590,10 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallTarFileHandler();
         VSIInstallCryptFileHandler();
 
-        //printf("Thread %d: VSIFileManager construction finished\n", nConstructerPID);
+#ifdef DEBUG_VERBOSE
+        printf("Thread %d: VSIFileManager construction finished\n",
+               nConstructerPID);
+#endif
         nConstructerPID = 0;
     }
 
@@ -1574,14 +1620,14 @@ VSIFilesystemHandler *VSIFileManager::GetHandler( const char *pszPath )
         if( strncmp(pszPath,pszIterKey,nIterKeyLen) == 0 )
             return iter->second;
 
-        /* "/vsimem\foo" should be handled as "/vsimem/foo" */
-        if (nIterKeyLen && nPathLen > nIterKeyLen &&
+        // "/vsimem\foo" should be handled as "/vsimem/foo".
+        if( nIterKeyLen && nPathLen > nIterKeyLen &&
             pszIterKey[nIterKeyLen-1] == '/' &&
             pszPath[nIterKeyLen-1] == '\\' &&
             strncmp(pszPath,pszIterKey,nIterKeyLen-1) == 0 )
             return iter->second;
 
-        /* /vsimem should be treated as a match for /vsimem/ */
+        // /vsimem should be treated as a match for /vsimem/.
         if( nPathLen + 1 == nIterKeyLen
             && strncmp(pszPath,pszIterKey,nPathLen) == 0 )
             return iter->second;
@@ -1652,7 +1698,9 @@ int VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
         return ( Seek( nOriginalPos, SEEK_SET ) == 0) ? 0 : -1;
     }
 
-    CPLDebug("VSI", "Truncation is not supported in generic implementation of Truncate()");
+    CPLDebug("VSI",
+             "Truncation is not supported in generic implementation "
+             "of Truncate()");
     Seek( nOriginalPos, SEEK_SET );
     return -1;
 }
@@ -1669,14 +1717,14 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
     const vsi_l_offset nCurOffset = Tell();
     for( int i=0; i<nRanges; i++ )
     {
-        if (Seek(panOffsets[i], SEEK_SET) < 0)
+        if( Seek(panOffsets[i], SEEK_SET) < 0 )
         {
             nRet = -1;
             break;
         }
 
         size_t nRead = Read(ppData[i], 1, panSizes[i]);
-        if (panSizes[i] != nRead)
+        if( panSizes[i] != nRead )
         {
             nRet = -1;
             break;
@@ -1688,5 +1736,5 @@ int VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
     return nRet;
 }
 
-#endif /* #ifndef DOXYGEN_SKIP */
+#endif  // #ifndef DOXYGEN_SKIP
 
