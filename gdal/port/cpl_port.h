@@ -981,7 +981,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #  define override
 #endif
 
-#endif /* __cpluscplus */
+#endif /* HAVE_CXX11 || _MSC_VER >= 1500 */
 
 #if HAVE_CXX11
 /** C++11 final qualifier */
