@@ -1970,8 +1970,8 @@ class GDALColorReliefDataset : public GDALDataset
     bool        InitOK() const
         { return pafSourceBuf != NULL || panSourceBuf != NULL; }
 
-    CPLErr      GetGeoTransform( double * padfGeoTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfGeoTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -1987,8 +1987,8 @@ class GDALColorReliefRasterBand : public GDALRasterBand
   public:
                  GDALColorReliefRasterBand( GDALColorReliefDataset *, int );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 GDALColorReliefDataset::GDALColorReliefDataset(
@@ -2672,8 +2672,8 @@ class GDALGeneric3x3Dataset : public GDALDataset
                                                 apafSourceBuf[1] != NULL &&
                                                 apafSourceBuf[2] != NULL; }
 
-    CPLErr      GetGeoTransform( double * padfGeoTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfGeoTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -2697,8 +2697,8 @@ class GDALGeneric3x3RasterBand : public GDALRasterBand
                  GDALGeneric3x3RasterBand( GDALGeneric3x3Dataset<T> *poDS,
                                            GDALDataType eDstDataType );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual double          GetNoDataValue( int* pbHasNoData );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual double          GetNoDataValue( int* pbHasNoData ) override;
 };
 
 template<class T>

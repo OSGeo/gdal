@@ -172,7 +172,7 @@ class SENTINEL2Dataset : public VRTDataset
                     SENTINEL2Dataset(int nXSize, int nYSize);
         virtual ~SENTINEL2Dataset();
 
-        virtual char** GetFileList();
+        virtual char** GetFileList() override;
 
         static GDALDataset *Open( GDALOpenInfo * );
         static GDALDataset *OpenL1BUserProduct( GDALOpenInfo * );
@@ -219,7 +219,7 @@ class SENTINEL2AlphaBand: public VRTSourcedRasterBand
 #else
                               int nPixelSpace, int nLineSpace
 #endif
-                              );
+                              ) override;
 };
 
 /************************************************************************/

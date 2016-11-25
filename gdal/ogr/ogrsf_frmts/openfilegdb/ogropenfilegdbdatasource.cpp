@@ -586,10 +586,10 @@ class OGROpenFileGDBSingleFeatureLayer : public OGRLayer
                                                           const char *pszVal );
                virtual ~OGROpenFileGDBSingleFeatureLayer();
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -653,17 +653,17 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
                                      swq_col_def* pasColDefs);
        virtual ~OGROpenFileGDBSimpleSQLLayer();
 
-       virtual void        ResetReading();
-       virtual OGRFeature* GetNextFeature();
-       virtual OGRFeature* GetFeature( GIntBig nFeatureId );
-       virtual OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
-       virtual int         TestCapability( const char * );
-       virtual const char* GetFIDColumn() { return poBaseLayer->GetFIDColumn(); }
-       virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce )
+       virtual void        ResetReading() override;
+       virtual OGRFeature* GetNextFeature() override;
+       virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
+       virtual OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn; }
+       virtual int         TestCapability( const char * ) override;
+       virtual const char* GetFIDColumn() override { return poBaseLayer->GetFIDColumn(); }
+       virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override
                             { return poBaseLayer->GetExtent(psExtent, bForce); }
-       virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+       virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-       virtual GIntBig     GetFeatureCount(int bForce);
+       virtual GIntBig     GetFeatureCount(int bForce) override;
 };
 
 /***********************************************************************/

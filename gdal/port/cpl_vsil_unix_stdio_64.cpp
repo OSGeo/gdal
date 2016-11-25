@@ -136,16 +136,16 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
-    virtual int SupportsSparseFiles( const char* pszPath );
+                           int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
+    virtual int SupportsSparseFiles( const char* pszPath ) override;
 
 #ifdef VSI_COUNT_BYTES_READ
     void             AddToTotal(vsi_l_offset nBytes);
@@ -179,18 +179,18 @@ class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
                                          FILE* fpIn, bool bReadOnlyIn,
                                          bool bModeAppendReadWriteIn);
 
-    virtual int       Seek( vsi_l_offset nOffsetIn, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
-    virtual int       Truncate( vsi_l_offset nNewSize );
-    virtual void     *GetNativeFileDescriptor() {
+    virtual int       Seek( vsi_l_offset nOffsetIn, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
+    virtual int       Truncate( vsi_l_offset nNewSize ) override;
+    virtual void     *GetNativeFileDescriptor() override {
         return reinterpret_cast<void *>(static_cast<size_t>(fileno(fp))); }
     virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                            vsi_l_offset nLength );
+                                            vsi_l_offset nLength ) override;
 };
 
 /************************************************************************/

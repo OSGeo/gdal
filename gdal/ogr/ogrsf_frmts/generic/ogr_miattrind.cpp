@@ -57,14 +57,14 @@ public:
                ~OGRMIAttrIndex();
 
     GByte      *BuildKey( OGRField *psKey );
-    GIntBig     GetFirstMatch( OGRField *psKey );
-    GIntBig    *GetAllMatches( OGRField *psKey );
-    GIntBig    *GetAllMatches( OGRField *psKey, GIntBig* panFIDList, int* nFIDCount, int* nLength );
+    GIntBig     GetFirstMatch( OGRField *psKey ) override;
+    GIntBig    *GetAllMatches( OGRField *psKey ) override;
+    GIntBig    *GetAllMatches( OGRField *psKey, GIntBig* panFIDList, int* nFIDCount, int* nLength ) override;
 
-    OGRErr      AddEntry( OGRField *psKey, GIntBig nFID );
-    OGRErr      RemoveEntry( OGRField *psKey, GIntBig nFID );
+    OGRErr      AddEntry( OGRField *psKey, GIntBig nFID ) override;
+    OGRErr      RemoveEntry( OGRField *psKey, GIntBig nFID ) override;
 
-    OGRErr      Clear();
+    OGRErr      Clear() override;
 };
 
 /************************************************************************/
@@ -94,15 +94,15 @@ public:
     virtual     ~OGRMILayerAttrIndex();
 
     /* base class virtual methods */
-    OGRErr      Initialize( const char *pszIndexPath, OGRLayer * );
-    OGRErr      CreateIndex( int iField );
-    OGRErr      DropIndex( int iField );
-    OGRErr      IndexAllFeatures( int iField = -1 );
+    OGRErr      Initialize( const char *pszIndexPath, OGRLayer * ) override;
+    OGRErr      CreateIndex( int iField ) override;
+    OGRErr      DropIndex( int iField ) override;
+    OGRErr      IndexAllFeatures( int iField = -1 ) override;
 
-    OGRErr      AddToIndex( OGRFeature *poFeature, int iField = -1 );
-    OGRErr      RemoveFromIndex( OGRFeature *poFeature );
+    OGRErr      AddToIndex( OGRFeature *poFeature, int iField = -1 ) override;
+    OGRErr      RemoveFromIndex( OGRFeature *poFeature ) override;
 
-    OGRAttrIndex *GetFieldIndex( int iField );
+    OGRAttrIndex *GetFieldIndex( int iField ) override;
 
     /* custom to OGRMILayerAttrIndex */
     OGRErr      SaveConfigToXML();

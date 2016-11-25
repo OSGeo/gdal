@@ -69,14 +69,14 @@ class OGRXPlaneLayer : public OGRLayer
     int                       IsEmpty() { return nFeatureArraySize == 0; }
     void                      AutoAdjustColumnsWidth();
 
-    virtual void              ResetReading();
-    virtual OGRFeature *      GetNextFeature();
-    virtual OGRFeature *      GetFeature( GIntBig nFID );
-    virtual OGRErr            SetNextByIndex( GIntBig nIndex );
-    virtual GIntBig           GetFeatureCount( int bForce = TRUE );
+    virtual void              ResetReading() override;
+    virtual OGRFeature *      GetNextFeature() override;
+    virtual OGRFeature *      GetFeature( GIntBig nFID ) override;
+    virtual OGRErr            SetNextByIndex( GIntBig nIndex ) override;
+    virtual GIntBig           GetFeatureCount( int bForce = TRUE ) override;
 
-    virtual OGRFeatureDefn *  GetLayerDefn();
-    virtual int               TestCapability( const char * pszCap );
+    virtual OGRFeatureDefn *  GetLayerDefn() override;
+    virtual int               TestCapability( const char * pszCap ) override;
 };
 
 /************************************************************************/
@@ -104,11 +104,11 @@ class OGRXPlaneDataSource : public OGRDataSource
 
     void                RegisterLayer( OGRXPlaneLayer* poLayer );
 
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer*   GetLayer( int );
-    virtual const char* GetName() { return pszName; }
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*   GetLayer( int ) override;
+    virtual const char* GetName() override { return pszName; }
 
-    virtual int         TestCapability( const char * pszCap );
+    virtual int         TestCapability( const char * pszCap ) override;
 
     void                ReadWholeFileIfNecessary();
 };
@@ -121,10 +121,10 @@ class OGRXPlaneDriver : public OGRSFDriver
 {
   public:
 
-    virtual const char* GetName();
-    OGRDataSource*      Open( const char *, int );
+    virtual const char* GetName() override;
+    OGRDataSource*      Open( const char *, int ) override;
 
-    virtual int         TestCapability( const char * pszCap );
+    virtual int         TestCapability( const char * pszCap ) override;
 };
 
 #endif /* ndef OGR_XPLANE_H_INCLUDED */

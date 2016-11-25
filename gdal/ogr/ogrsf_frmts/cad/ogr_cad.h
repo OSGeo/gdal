@@ -52,14 +52,14 @@ public:
     OGRCADLayer( CADLayer &poCADLayer, OGRSpatialReference *poSR, int nEncoding );
     ~OGRCADLayer();
 
-    void            ResetReading();
-    OGRFeature      *GetNextFeature();
-    OGRFeature      *GetFeature( GIntBig nFID );
-    GIntBig         GetFeatureCount( int /* bForce */ );
-    OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
-    OGRFeatureDefn  *GetLayerDefn() { return poFeatureDefn; }
+    void            ResetReading() override;
+    OGRFeature      *GetNextFeature() override;
+    OGRFeature      *GetFeature( GIntBig nFID ) override;
+    GIntBig         GetFeatureCount( int /* bForce */ ) override;
+    OGRSpatialReference *GetSpatialRef() override { return poSpatialRef; }
+    OGRFeatureDefn  *GetLayerDefn() override { return poFeatureDefn; }
     std::set< CPLString > asFeaturesAttributes;
-    int             TestCapability( const char * ) { return( FALSE ); }
+    int             TestCapability( const char * ) override { return( FALSE ); }
 };
 
 class GDALCADDataset : public GDALDataset
@@ -81,16 +81,16 @@ public:
 
     int            Open( GDALOpenInfo* poOpenInfo, CADFileIO* pFileIO,
                             long nSubRasterLayer = -1, long nSubRasterFID = -1 );
-    int            GetLayerCount() { return nLayers; }
-    OGRLayer      *GetLayer( int );
-    int            TestCapability( const char * );
-    virtual char **GetFileList();
-    virtual const char  *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual int CloseDependentDatasets();
+    int            GetLayerCount() override { return nLayers; }
+    OGRLayer      *GetLayer( int ) override;
+    int            TestCapability( const char * ) override;
+    virtual char **GetFileList() override;
+    virtual const char  *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    virtual int CloseDependentDatasets() override;
 
 protected:
     OGRSpatialReference *GetSpatialReference();

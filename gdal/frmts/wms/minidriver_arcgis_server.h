@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "wmsdriver.h"
+
 class WMSMiniDriver_AGS : public WMSMiniDriver
 {
 public:
@@ -35,17 +37,17 @@ public:
     virtual ~WMSMiniDriver_AGS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri,
-                                   const GDALWMSTiledImageRequestInfo &tiri);
+                                   const GDALWMSTiledImageRequestInfo &tiri) override;
     virtual void GetTiledImageInfo(CPLString *url,
                                    const GDALWMSImageRequestInfo &iri,
                                    const GDALWMSTiledImageRequestInfo &tiri,
                                    int nXInBlock,
-                                   int nYInBlock);
-    virtual const char *GetProjectionInWKT();
+                                   int nYInBlock) override;
+    virtual const char *GetProjectionInWKT() override;
 
 protected:
     static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);

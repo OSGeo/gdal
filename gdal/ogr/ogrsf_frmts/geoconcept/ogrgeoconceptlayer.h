@@ -54,24 +54,24 @@ class OGRGeoconceptLayer : public OGRLayer
 //    void                 SetSpatialFilter( OGRGeometry* poGeomIn );
 //    void                 SetSpatialFilterRect( double dfMinX, double dfMinY, double dfMaxX, double dfMaxY );
 //    OGRErr               SetAttributeFilter( const char* pszQuery );
-    void                 ResetReading();
-    OGRFeature*          GetNextFeature();
+    void                 ResetReading() override;
+    OGRFeature*          GetNextFeature() override;
 //    OGRErr               SetNextByIndex( GIntBig nIndex );
 
 //    OGRFeature*          GetFeature( GIntBig nFID );
 //    OGRErr               ISetFeature( OGRFeature* poFeature );
 //    OGRErr               DeleteFeature( GIntBig nFID );
-    OGRErr               ICreateFeature( OGRFeature* poFeature );
-    OGRFeatureDefn*      GetLayerDefn( ) { return _poFeatureDefn; } // FIXME
-    OGRSpatialReference* GetSpatialRef( );
-    GIntBig              GetFeatureCount( int bForce = TRUE );
-    OGRErr               GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    OGRErr               ICreateFeature( OGRFeature* poFeature ) override;
+    OGRFeatureDefn*      GetLayerDefn( ) override { return _poFeatureDefn; } // FIXME
+    OGRSpatialReference* GetSpatialRef( ) override;
+    GIntBig              GetFeatureCount( int bForce = TRUE ) override;
+    OGRErr               GetExtent( OGREnvelope *psExtent, int bForce = TRUE ) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    int                  TestCapability( const char* pszCap );
+    int                  TestCapability( const char* pszCap ) override;
 //    const char*          GetInfo( const char* pszTag );
-    OGRErr               CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
-    OGRErr               SyncToDisk( );
+    OGRErr               CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE ) override;
+    OGRErr               SyncToDisk( ) override;
 //    OGRStyleTable*       GetStyleTable( );
 //    void                 SetStyleTableDirectly( OGRStyleTable* poStyleTable );
 //    void                 SetStyleTable( OGRStyleTable* poStyleTable );

@@ -324,40 +324,40 @@ class CPL_DLL GDALDefaultRasterAttributeTable : public GDALRasterAttributeTable
     GDALDefaultRasterAttributeTable( const GDALDefaultRasterAttributeTable& );
     virtual ~GDALDefaultRasterAttributeTable();
 
-    GDALDefaultRasterAttributeTable *Clone() const;
+    GDALDefaultRasterAttributeTable *Clone() const CPL_OVERRIDE;
 
-    virtual int           GetColumnCount() const;
+    virtual int           GetColumnCount() const CPL_OVERRIDE;
 
-    virtual const char   *GetNameOfCol( int ) const;
-    virtual GDALRATFieldUsage GetUsageOfCol( int ) const;
-    virtual GDALRATFieldType GetTypeOfCol( int ) const;
+    virtual const char   *GetNameOfCol( int ) const CPL_OVERRIDE;
+    virtual GDALRATFieldUsage GetUsageOfCol( int ) const CPL_OVERRIDE;
+    virtual GDALRATFieldType GetTypeOfCol( int ) const CPL_OVERRIDE;
 
-    virtual int           GetColOfUsage( GDALRATFieldUsage ) const;
+    virtual int           GetColOfUsage( GDALRATFieldUsage ) const CPL_OVERRIDE;
 
-    virtual int           GetRowCount() const;
+    virtual int           GetRowCount() const CPL_OVERRIDE;
 
-    virtual const char   *GetValueAsString( int iRow, int iField ) const;
-    virtual int           GetValueAsInt( int iRow, int iField ) const;
-    virtual double        GetValueAsDouble( int iRow, int iField ) const;
+    virtual const char   *GetValueAsString( int iRow, int iField ) const CPL_OVERRIDE;
+    virtual int           GetValueAsInt( int iRow, int iField ) const CPL_OVERRIDE;
+    virtual double        GetValueAsDouble( int iRow, int iField ) const CPL_OVERRIDE;
 
     virtual void          SetValue( int iRow, int iField,
-                                    const char *pszValue );
-    virtual void          SetValue( int iRow, int iField, double dfValue);
-    virtual void          SetValue( int iRow, int iField, int nValue );
+                                    const char *pszValue ) CPL_OVERRIDE;
+    virtual void          SetValue( int iRow, int iField, double dfValue) CPL_OVERRIDE;
+    virtual void          SetValue( int iRow, int iField, int nValue ) CPL_OVERRIDE;
 
-    virtual int           ChangesAreWrittenToFile();
-    virtual void          SetRowCount( int iCount );
+    virtual int           ChangesAreWrittenToFile() CPL_OVERRIDE;
+    virtual void          SetRowCount( int iCount ) CPL_OVERRIDE;
 
-    virtual int           GetRowOfValue( double dfValue ) const;
-    virtual int           GetRowOfValue( int nValue ) const;
+    virtual int           GetRowOfValue( double dfValue ) const CPL_OVERRIDE;
+    virtual int           GetRowOfValue( int nValue ) const CPL_OVERRIDE;
 
     virtual CPLErr        CreateColumn( const char *pszFieldName,
                                         GDALRATFieldType eFieldType,
-                                        GDALRATFieldUsage eFieldUsage );
+                                        GDALRATFieldUsage eFieldUsage ) CPL_OVERRIDE;
     virtual CPLErr        SetLinearBinning( double dfRow0Min,
-                                            double dfBinSize );
+                                            double dfBinSize ) CPL_OVERRIDE;
     virtual int           GetLinearBinning( double *pdfRow0Min,
-                                            double *pdfBinSize ) const;
+                                            double *pdfBinSize ) const CPL_OVERRIDE;
 };
 
 #endif /* ndef GDAL_RAT_H_INCLUDED */

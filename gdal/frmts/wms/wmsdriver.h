@@ -32,6 +32,7 @@
 #ifndef WMSDRIVER_H_INCLUDED
 #define WMSDRIVER_H_INCLUDED
 
+#include <stdio.h>
 #include <math.h>
 #include <vector>
 #include <algorithm>
@@ -232,15 +233,15 @@ public:
     GDALWMSDataset();
     virtual ~GDALWMSDataset();
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr SetProjection(const char *proj);
-    virtual CPLErr GetGeoTransform(double *gt);
-    virtual CPLErr SetGeoTransform(double *gt);
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection(const char *proj) override;
+    virtual CPLErr GetGeoTransform(double *gt) override;
+    virtual CPLErr SetGeoTransform(double *gt) override;
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
 
     void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
 
@@ -342,7 +343,7 @@ protected:
                              int band_count, int *band_map,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
-                             GDALRasterIOExtraArg* psExtraArg);
+                             GDALRasterIOExtraArg* psExtraArg) override;
     CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
     GDALWMSDataWindow m_data_window;
@@ -402,25 +403,25 @@ public:
     GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band, double scale );
     virtual ~GDALWMSRasterBand();
     void AddOverview(double scale);
-    virtual double GetNoDataValue( int * );
-    virtual double GetMinimum( int * );
-    virtual double GetMaximum( int * );
-    virtual GDALColorTable *GetColorTable();
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
+    virtual double GetNoDataValue( int * ) override;
+    virtual double GetMinimum( int * ) override;
+    virtual double GetMaximum( int * ) override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
-    virtual CPLErr IReadBlock(int x, int y, void *buffer);
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
+    virtual CPLErr IReadBlock(int x, int y, void *buffer) override;
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg* psExtraArg);
-    virtual int HasArbitraryOverviews();
-    virtual int GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int n);
+                             GDALRasterIOExtraArg* psExtraArg) override;
+    virtual int HasArbitraryOverviews() override;
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int n) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
 
 protected:
     CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);

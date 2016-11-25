@@ -51,7 +51,7 @@ class PNMDataset : public RawDataset
                 PNMDataset();
     virtual ~PNMDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );

@@ -60,22 +60,22 @@ class OGRILI2Layer : public OGRLayer
 
                        ~OGRILI2Layer();
 
-    OGRErr              ISetFeature(OGRFeature *poFeature);
+    OGRErr              ISetFeature(OGRFeature *poFeature) override;
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    GIntBig             GetFeatureCount( int bForce = TRUE );
+    GIntBig             GetFeatureCount( int bForce = TRUE ) override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
     CPLString           GetIliGeomType( const char* cFieldName) { return oGeomFieldInfos[cFieldName].iliGeomType; };
 
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -102,17 +102,17 @@ class OGRILI2DataSource : public OGRDataSource
     int         Open( const char *, char** papszOpenOptions, int bTestOpen );
     int         Create( const char *pszFile, char **papszOptions );
 
-    const char *GetName() { return pszName; }
-    int         GetLayerCount() { return static_cast<int>(listLayer.size()); }
-    OGRLayer   *GetLayer( int );
+    const char *GetName() override { return pszName; }
+    int         GetLayerCount() override { return static_cast<int>(listLayer.size()); }
+    OGRLayer   *GetLayer( int ) override;
 
     virtual OGRLayer *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
     VSILFILE *  GetOutputFP() { return fpOutput; }
-    int         TestCapability( const char * );
+    int         TestCapability( const char * ) override;
 };
 
 #endif /* OGR_ILI2_H_INCLUDED */

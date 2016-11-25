@@ -73,7 +73,7 @@ class DIMAPDataset : public GDALPamDataset
     char          **papszXMLDimapMetadata;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     int ReadImageInformation();
     int ReadImageInformation2();  // DIMAP 2.
@@ -85,14 +85,14 @@ class DIMAPDataset : public GDALPamDataset
             DIMAPDataset();
     virtual ~DIMAPDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char *pszDomain );
-    virtual char **GetFileList(void);
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char *pszDomain ) override;
+    virtual char **GetFileList(void) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -272,24 +272,24 @@ class DIMAPRasterBand : public GDALPamRasterBand
                    DIMAPRasterBand( DIMAPDataset *, int, VRTSourcedRasterBand * );
     virtual       ~DIMAPRasterBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
-    virtual int GetOverviewCount();
-    virtual GDALRasterBand *GetOverview( int );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview( int ) override;
     virtual CPLErr ComputeRasterMinMax( int bApproxOK,
-                                        double adfMinMax[2] );
+                                        double adfMinMax[2] ) override;
     virtual CPLErr ComputeStatistics( int bApproxOK,
                                       double *pdfMin, double *pdfMax,
                                       double *pdfMean, double *pdfStdDev,
-                                      GDALProgressFunc, void *pProgressData );
+                                      GDALProgressFunc, void *pProgressData ) override;
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                                   int nBuckets, GUIntBig * panHistogram,
                                   int bIncludeOutOfRange, int bApproxOK,
-                                  GDALProgressFunc, void *pProgressData );
+                                  GDALProgressFunc, void *pProgressData ) override;
 };
 
 /************************************************************************/

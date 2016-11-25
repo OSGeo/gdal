@@ -65,8 +65,8 @@ class GRIBDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
   private:
     void SetGribMetaData(grib_MetaData* meta);
@@ -94,10 +94,10 @@ class GRIBRasterBand : public GDALPamRasterBand
 public:
     GRIBRasterBand( GRIBDataset*, int, inventoryType* );
     virtual ~GRIBRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual const char *GetDescription() const;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual const char *GetDescription() const override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
     void    FindPDSTemplate();
 

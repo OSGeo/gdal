@@ -280,8 +280,8 @@ class USGSDEMDataset : public GDALPamDataset
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    CPLErr GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -297,9 +297,9 @@ class USGSDEMRasterBand : public GDALPamRasterBand
   public:
                 explicit USGSDEMRasterBand( USGSDEMDataset * );
 
-    virtual const char *GetUnitType();
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual const char *GetUnitType() override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

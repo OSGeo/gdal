@@ -1745,19 +1745,19 @@ class KmlSingleDocRasterDataset: public GDALDataset
         int bLockOtherBands;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     public:
                 KmlSingleDocRasterDataset();
         virtual ~KmlSingleDocRasterDataset();
 
-        virtual CPLErr GetGeoTransform( double * padfGeoTransform )
+        virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override
         {
             memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
             return CE_None;
         }
 
-        virtual const char *GetProjectionRef() { return SRS_WKT_WGS84; }
+        virtual const char *GetProjectionRef() override { return SRS_WKT_WGS84; }
 
         void BuildOverviews();
 
@@ -1776,11 +1776,11 @@ class KmlSingleDocRasterRasterBand: public GDALRasterBand
         KmlSingleDocRasterRasterBand(KmlSingleDocRasterDataset* poDS,
                                      int nBand);
 
-        virtual CPLErr IReadBlock( int, int, void * );
-        virtual GDALColorInterp GetColorInterpretation();
+        virtual CPLErr IReadBlock( int, int, void * ) override;
+        virtual GDALColorInterp GetColorInterpretation() override;
 
-        virtual int GetOverviewCount();
-        virtual GDALRasterBand *GetOverview(int);
+        virtual int GetOverviewCount() override;
+        virtual GDALRasterBand *GetOverview(int) override;
 };
 
 /************************************************************************/

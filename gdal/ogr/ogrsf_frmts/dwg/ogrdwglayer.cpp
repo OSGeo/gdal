@@ -1095,15 +1095,15 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             int i;
             for( i = 0; i < nCount; i++ )

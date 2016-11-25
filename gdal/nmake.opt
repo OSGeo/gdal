@@ -155,6 +155,15 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # 4611: interaction between '_setjmp' and C++ object destruction is non-portable
 # 
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
+
+!IF $(MSVC_VER) >= 1500
+!IF $(MSVC_VER) < 1700
+# VS 2008 / MSVC_VER = 1500 and VS 2010 / MSVC_VER = 1600 recognizes override, but as an extension.
+# warning C4481: nonstandard extension used: override specifier 'override'
+WARNFLAGS = $(WARNFLAGS) /wd4481
+!ENDIF
+!ENDIF
+
 !ENDIF
 
 # 

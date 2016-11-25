@@ -146,12 +146,12 @@ class SAR_CEOSDataset : public GDALPamDataset
                 SAR_CEOSDataset();
     virtual ~SAR_CEOSDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char * pszDomain );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -169,7 +169,7 @@ class CCPRasterBand : public GDALPamRasterBand
   public:
                    CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -185,7 +185,7 @@ class PALSARRasterBand : public GDALPamRasterBand
   public:
                    PALSARRasterBand( SAR_CEOSDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -201,7 +201,7 @@ class SAR_CEOSRasterBand : public GDALPamRasterBand
   public:
                    SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

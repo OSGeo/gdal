@@ -66,20 +66,20 @@ public:
   const char* GetFIDFieldName() const { return m_strOIDFieldName.c_str(); }
   const char* GetShapeFieldName() const { return m_strShapeFieldName.c_str(); }
 
-  virtual void        ResetReading();
-  virtual OGRFeature* GetNextFeature();
-  virtual OGRFeature* GetFeature( GIntBig nFeatureId );
+  virtual void        ResetReading() override;
+  virtual OGRFeature* GetNextFeature() override;
+  virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
 
   HRESULT GetTable(ITable** ppTable);
 
-  virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+  virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-  virtual GIntBig     GetFeatureCount( int bForce );
-  virtual OGRErr      SetAttributeFilter( const char *pszQuery );
-  virtual void        SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-  virtual void        SetSpatialFilter( OGRGeometry * );
-  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+  virtual GIntBig     GetFeatureCount( int bForce ) override;
+  virtual OGRErr      SetAttributeFilter( const char *pszQuery ) override;
+  virtual void        SetSpatialFilterRect (double dfMinX, double dfMinY, double dfMaxX, double dfMaxY) override;
+  virtual void        SetSpatialFilter( OGRGeometry * ) override;
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
 /*
@@ -90,11 +90,11 @@ public:
   virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
   virtual OGRErr      DeleteFeature( GIntBig nFID );
 */
-   OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
+   OGRFeatureDefn *    GetLayerDefn() override { return m_pFeatureDefn; }
 
-   virtual OGRSpatialReference *GetSpatialRef() { return m_pSRS; }
+   virtual OGRSpatialReference *GetSpatialRef() override { return m_pSRS; }
 
-  virtual int         TestCapability( const char * );
+  virtual int         TestCapability( const char * ) override;
 
 protected:
     bool OGRFeatureFromAORow(IRow* pRow, OGRFeature** ppFeature);
@@ -132,10 +132,10 @@ public:
 
   int         Open(IWorkspace* pWorkspace, const char *, int );
 
-  const char* GetName() { return m_pszName; }
-  int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
+  const char* GetName() override { return m_pszName; }
+  int         GetLayerCount() override { return static_cast<int>(m_layers.size()); }
 
-  OGRLayer*   GetLayer( int );
+  OGRLayer*   GetLayer( int ) override;
 
   /*
   virtual OGRLayer* ICreateLayer( const char *,
@@ -144,9 +144,9 @@ public:
                                  char** = NULL );
 
  */
-  virtual OGRErr DeleteLayer( int );
+  virtual OGRErr DeleteLayer( int ) override;
 
-  int TestCapability( const char * );
+  int TestCapability( const char * ) override;
 
   /*
 protected:
@@ -175,10 +175,10 @@ public:
 
   bool Init();
 
-  const char *GetName();
-  virtual OGRDataSource *Open( const char *, int );
-  int TestCapability( const char * );
-  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
+  const char *GetName() override;
+  virtual OGRDataSource *Open( const char *, int ) override;
+  int TestCapability( const char * ) override;
+  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL) override;
 
   static void OpenWorkspace(std::string, IWorkspace** ppWorkspace);
 

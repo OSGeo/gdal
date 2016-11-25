@@ -125,12 +125,12 @@ class PLMosaicDataset : public GDALPamDataset
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(void) override;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr      GetGeoTransform(double* padfGeoTransform);
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr      GetGeoTransform(double* padfGeoTransform) override;
 
     GDALDataset        *GetMetaTile(int tile_x, int tile_y);
 };
@@ -150,21 +150,21 @@ class PLMosaicRasterBand : public GDALRasterBand
                 PLMosaicRasterBand( PLMosaicDataset * poDS, int nBand,
                                     GDALDataType eDataType );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg);
+                                  GDALRasterIOExtraArg* psExtraArg) override;
 
     virtual const char     *GetMetadataItem( const char* pszName,
-                                             const char * pszDomain = "" );
+                                             const char * pszDomain = "" ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int iOvrLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
 };
 
 /************************************************************************/

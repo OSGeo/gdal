@@ -81,8 +81,8 @@ public:
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 const char* const IRISDataset::aszProductNames[] = {
@@ -155,10 +155,10 @@ public:
     IRISRasterBand( IRISDataset *, int );
     virtual ~IRISRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
+    virtual double          GetNoDataValue( int * ) override;
+    virtual CPLErr          SetNoDataValue( double ) override;
 };
 
 /************************************************************************/

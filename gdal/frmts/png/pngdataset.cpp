@@ -141,23 +141,23 @@ class PNGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual void FlushCache( void );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual void FlushCache( void ) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
 
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = NULL );
+                                         const char * pszDomain = NULL ) override;
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
                                    int, int *,
                                    GSpacing, GSpacing,
                                    GSpacing,
-                                   GDALRasterIOExtraArg* psExtraArg );
+                                   GDALRasterIOExtraArg* psExtraArg ) override;
 
     // semi-private.
     jmp_buf     sSetJmpContext;
@@ -204,19 +204,19 @@ class PNGRasterBand : public GDALPamRasterBand
                    PNGRasterBand( PNGDataset *, int );
     virtual ~PNGRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    CPLErr SetNoDataValue( double dfNewValue );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    CPLErr SetNoDataValue( double dfNewValue ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
     int         bHaveNoData;
     double      dfNoDataValue;
 
 #ifdef SUPPORT_CREATE
     virtual CPLErr SetColorTable(GDALColorTable*);
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
   protected:
         int m_bBandProvided[5];

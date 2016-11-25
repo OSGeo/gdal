@@ -75,14 +75,14 @@ class ADRGDataset : public GDALPamDataset
                  ADRGDataset();
     virtual     ~ADRGDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform );
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList();
+    virtual char      **GetFileList() override;
 
     void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
 
@@ -110,11 +110,11 @@ class ADRGRasterBand : public GDALPamRasterBand
   public:
                             ADRGRasterBand( ADRGDataset *, int );
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = NULL );
+    virtual double          GetNoDataValue( int *pbSuccess = NULL ) override;
 
 //    virtual int             GetOverviewCount();
 //    virtual GDALRasterBand* GetOverview(int i);

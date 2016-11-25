@@ -28,6 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GDALHTTP_H
+#define GDALHTTP_H
+
+#include "cpl_port.h"
+
 typedef struct {
     /* Input */
     char *pszURL;
@@ -54,3 +59,5 @@ typedef struct {
 void CPL_DLL CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL = NULL, const char *const *papszOptions = NULL);
 void CPL_DLL CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest);
 CPLErr CPL_DLL CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount = 1, const char *const *papszOptions = NULL);
+
+#endif /*  GDALHTTP_H */

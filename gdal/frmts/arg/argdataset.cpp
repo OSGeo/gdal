@@ -54,13 +54,13 @@ class ARGDataset : public RawDataset
         ARGDataset();
         virtual ~ARGDataset();
 
-        CPLErr GetGeoTransform( double * padfTransform );
+        CPLErr GetGeoTransform( double * padfTransform ) override;
 
         static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );
         static GDALDataset *CreateCopy( const char *, GDALDataset *, int,
             char **, GDALProgressFunc, void *);
-        virtual char **GetFileList(void);
+        virtual char **GetFileList(void) override;
 };
 
 /************************************************************************/

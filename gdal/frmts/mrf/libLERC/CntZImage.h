@@ -47,7 +47,7 @@ class CntZImage : public TImage< CntZ >
 {
 public:
   CntZImage();
-  const std::string getTypeString() const { return "CntZImage "; }
+  const std::string getTypeString() const override { return "CntZImage "; }
 
   bool resizeFill0(int width, int height);
   bool hasValidPixel() const;

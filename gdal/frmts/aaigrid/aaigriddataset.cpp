@@ -92,7 +92,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                 AAIGDataset();
        virtual ~AAIGDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *CommonOpen( GDALOpenInfo * poOpenInfo,
                                     GridFormat eFormat );
@@ -107,8 +107,8 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
 };
 
 /************************************************************************/
@@ -119,7 +119,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 
 class GRASSASCIIDataset : public AAIGDataset
 {
-    virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
+    virtual int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
   public:
                 GRASSASCIIDataset() : AAIGDataset() {}
@@ -146,9 +146,9 @@ class AAIGRasterBand : public GDALPamRasterBand
                    AAIGRasterBand( AAIGDataset *, int );
     virtual       ~AAIGRasterBand();
 
-    virtual double GetNoDataValue( int * );
-    virtual CPLErr SetNoDataValue( double );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual double GetNoDataValue( int * ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

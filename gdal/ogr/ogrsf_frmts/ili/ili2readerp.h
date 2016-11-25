@@ -65,26 +65,26 @@ public:
     explicit ILI2Handler( ILI2Reader *poReader );
     ~ILI2Handler();
 
-    void startDocument();
-    void endDocument();
+    void startDocument() override;
+    void endDocument() override;
 
     void startElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
         const   XMLCh* const    qname,
         const   Attributes& attrs
-    );
+    ) override;
     void endElement(
         const   XMLCh* const    uri,
         const   XMLCh* const    localname,
         const   XMLCh* const    qname
-    );
+    ) override;
     void characters( const XMLCh *const chars,
-                     const XMLSize_t length ); // xerces 3
+                     const XMLSize_t length ) override; // xerces 3
 
-    void startEntity (const XMLCh *const name);
+    void startEntity (const XMLCh *const name) override;
 
-    void fatalError(const SAXParseException&);
+    void fatalError(const SAXParseException&) override;
 };
 
 /************************************************************************/
@@ -113,12 +113,12 @@ public:
              ILI2Reader();
             ~ILI2Reader();
 
-    void     SetSourceFile( const char *pszFilename );
-    int      ReadModel( ImdReader *poImdReader, const char *modelFilename );
-    int      SaveClasses( const char *pszFile );
+    void     SetSourceFile( const char *pszFilename ) override;
+    int      ReadModel( ImdReader *poImdReader, const char *modelFilename ) override;
+    int      SaveClasses( const char *pszFile ) override;
 
-    std::list<OGRLayer *> GetLayers();
-    int      GetLayerCount();
+    std::list<OGRLayer *> GetLayers() override;
+    int      GetLayerCount() override;
     OGRLayer* GetLayer(const char* pszName);
 
     int      AddFeature(DOMElement *elem);

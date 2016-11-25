@@ -27,15 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "wmsdriver.h"
+
 class WMSMiniDriver_IIP : public WMSMiniDriver {
 public:
     WMSMiniDriver_IIP();
     virtual ~WMSMiniDriver_IIP();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:
     CPLString m_base_url;

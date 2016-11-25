@@ -55,7 +55,7 @@ class OGRCSVEditableLayerSynchronizer: public IOGREditableLayerSynchronizer
                    virtual ~OGRCSVEditableLayerSynchronizer();
 
             virtual OGRErr EditableSyncToDisk(OGRLayer* poEditableLayer,
-                                              OGRLayer** ppoDecoratedLayer);
+                                              OGRLayer** ppoDecoratedLayer) override;
 };
 
 /************************************************************************/
@@ -260,8 +260,8 @@ class OGRCSVEditableLayer: public OGREditableLayer
                             char** papszOpenOptions);
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
+                                     int bApproxOK = TRUE ) override;
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
 };
 
 /************************************************************************/

@@ -162,38 +162,38 @@ class OGRWFSLayer : public OGRLayer
 
     OGRWFSLayer*                Clone();
 
-    const char                 *GetName() { return pszName; }
+    const char                 *GetName() override { return pszName; }
 
-    virtual void                ResetReading();
-    virtual OGRFeature*         GetNextFeature();
-    virtual OGRFeature*         GetFeature(GIntBig nFID);
+    virtual void                ResetReading() override;
+    virtual OGRFeature*         GetNextFeature() override;
+    virtual OGRFeature*         GetFeature(GIntBig nFID) override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn();
+    virtual OGRFeatureDefn *    GetLayerDefn() override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void        SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
 
     void                SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    virtual OGRErr      StartTransaction();
-    virtual OGRErr      CommitTransaction();
-    virtual OGRErr      RollbackTransaction();
+    virtual OGRErr      StartTransaction() override;
+    virtual OGRErr      CommitTransaction() override;
+    virtual OGRErr      RollbackTransaction() override;
 
-    virtual OGRErr      SetIgnoredFields( const char **papszFields );
+    virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
 
     int                 HasLayerDefn() { return poFeatureDefn != NULL; }
 
@@ -261,20 +261,20 @@ class OGRWFSJoinLayer : public OGRLayer
                                   const swq_select* psSelectInfo);
                        virtual ~OGRWFSJoinLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature*         GetNextFeature();
+    virtual void                ResetReading() override;
+    virtual OGRFeature*         GetNextFeature() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn();
+    virtual OGRFeatureDefn *    GetLayerDefn() override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
-    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void        SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 };
 
 /************************************************************************/
@@ -359,18 +359,18 @@ class OGRWFSDataSource : public OGRDataSource
                               int bUpdate,
                               char** papszOpenOptions );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
-    virtual OGRLayer*           GetLayerByName(const char* pszLayerName);
+    virtual int                 GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*           GetLayer( int ) override;
+    virtual OGRLayer*           GetLayerByName(const char* pszLayerName) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect );
-    virtual void                ReleaseResultSet( OGRLayer * poResultsSet );
+                                        const char *pszDialect ) override;
+    virtual void                ReleaseResultSet( OGRLayer * poResultsSet ) override;
 
     bool                        UpdateMode() const { return bUpdate; }
     bool                        SupportTransactions() const
@@ -420,8 +420,8 @@ class OGRWFSDataSource : public OGRDataSource
 
     bool                        ExposeGMLId() const { return bExposeGMLId; }
 
-    virtual char**              GetMetadataDomainList();
-    virtual char**              GetMetadata( const char * pszDomain = "" );
+    virtual char**              GetMetadataDomainList() override;
+    virtual char**              GetMetadata( const char * pszDomain = "" ) override;
 };
 
 #endif /* ndef OGR_WFS_H_INCLUDED */

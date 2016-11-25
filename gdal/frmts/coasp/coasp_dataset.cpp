@@ -284,8 +284,8 @@ public:
 
         static GDALDataset *Open( GDALOpenInfo * );
         static int Identify( GDALOpenInfo * poOpenInfo );
-        int GetGCPCount();
-        const GDAL_GCP *GetGCPs();
+        int GetGCPCount() override;
+        const GDAL_GCP *GetGCPs() override;
 };
 
 /********************************************************************
@@ -301,7 +301,7 @@ public:
         COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
                          int ePol, VSILFILE *fp );
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void *pImage);
+                                   void *pImage) override;
 };
 
 COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn,

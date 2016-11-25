@@ -718,15 +718,15 @@ class OGRCouchDBOneLineLayer : public OGRLayer
                 poFeatureDefn->Release();
         }
 
-        virtual void        ResetReading() { bEnd = false;}
-        virtual OGRFeature *GetNextFeature()
+        virtual void        ResetReading() override { bEnd = false;}
+        virtual OGRFeature *GetNextFeature() override
         {
             if( bEnd ) return NULL;
             bEnd = true;
             return poFeature->Clone();
         }
-        virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-        virtual int         TestCapability( const char * ) { return FALSE; }
+        virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+        virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )

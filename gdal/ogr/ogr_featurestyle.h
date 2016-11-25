@@ -261,7 +261,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
 
     OGRStyleValue    *m_pasStyleValue;
 
-    GBool Parse();
+    GBool Parse() CPL_OVERRIDE;
 
   public:
 
@@ -297,7 +297,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     void SetParamStr(OGRSTPenParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTPenParam eParam, int nParam);
     void SetParamDbl(OGRSTPenParam eParam, double dfParam);
-    const char *GetStyleString();
+    const char *GetStyleString() CPL_OVERRIDE;
 };
 
 /**
@@ -309,7 +309,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
 
     OGRStyleValue    *m_pasStyleValue;
 
-    GBool Parse();
+    GBool Parse() CPL_OVERRIDE;
 
   public:
 
@@ -343,7 +343,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
      void SetParamStr(OGRSTBrushParam eParam, const char *pszParamString);
      void SetParamNum(OGRSTBrushParam eParam, int nParam);
      void SetParamDbl(OGRSTBrushParam eParam, double dfParam);
-     const char *GetStyleString();
+     const char *GetStyleString() CPL_OVERRIDE;
 };
 
 /**
@@ -355,7 +355,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 
     OGRStyleValue    *m_pasStyleValue;
 
-    GBool Parse();
+    GBool Parse() CPL_OVERRIDE;
 
   public:
 
@@ -401,7 +401,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
      void SetParamStr(OGRSTSymbolParam eParam, const char *pszParamString);
      void SetParamNum(OGRSTSymbolParam eParam, int nParam);
      void SetParamDbl(OGRSTSymbolParam eParam, double dfParam);
-     const char *GetStyleString();
+     const char *GetStyleString() CPL_OVERRIDE;
 };
 
 /**
@@ -413,7 +413,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
 
     OGRStyleValue    *m_pasStyleValue;
 
-    GBool Parse();
+    GBool Parse() CPL_OVERRIDE;
 
   public:
 
@@ -475,7 +475,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
      void SetParamStr(OGRSTLabelParam eParam, const char *pszParamString);
      void SetParamNum(OGRSTLabelParam eParam, int nParam);
      void SetParamDbl(OGRSTLabelParam eParam, double dfParam);
-     const char *GetStyleString();
+     const char *GetStyleString() CPL_OVERRIDE;
 };
 
 //! @endcond

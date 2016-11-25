@@ -75,7 +75,7 @@ public:
             int nBandCount, int *panBandMap,
             GSpacing nPixelSpace, GSpacing nLineSpace,
             GSpacing nBandSpace,
-            GDALRasterIOExtraArg* psExtraArg);
+            GDALRasterIOExtraArg* psExtraArg) override;
 
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);

@@ -81,22 +81,22 @@ class ECRGTOCDataset : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     void                AddSubDataset(const char* pszFilename,
                                       const char* pszProductTitle,
                                       const char* pszDiscId,
                                       const char* pszScale);
 
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform)
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform) override
     {
         memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void)
+    virtual const char *GetProjectionRef(void) override
     {
         return SRS_WKT_WGS84;
     }
@@ -141,7 +141,7 @@ class ECRGTOCSubDataset : public VRTDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     static GDALDataset* Build(  const char* pszProductTitle,
                                 const char* pszDiscId,
@@ -415,7 +415,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
                                    double dfMinX, double dfMaxY,
                                    double dfPixelXSize, double dfPixelYSize );
 
-        GDALDataset* RefUnderlyingDataset()
+        GDALDataset* RefUnderlyingDataset() override
         {
             GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
             if (poSourceDS)
@@ -431,7 +431,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return poSourceDS;
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }

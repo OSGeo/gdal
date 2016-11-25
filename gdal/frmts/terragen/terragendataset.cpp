@@ -177,10 +177,10 @@ class TerragenDataset : public GDALPamDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char** papszOptions );
 
-    virtual CPLErr      GetGeoTransform( double* );
-    virtual const char* GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr      GetGeoTransform( double* ) override;
+    virtual const char* GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
  protected:
     bool get(GInt16&);
@@ -221,13 +221,13 @@ public:
     }
 
     // Geomeasure support.
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual const char* GetUnitType();
-    virtual double GetOffset(int* pbSuccess = NULL);
-    virtual double GetScale(int* pbSuccess = NULL);
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual const char* GetUnitType() override;
+    virtual double GetOffset(int* pbSuccess = NULL) override;
+    virtual double GetScale(int* pbSuccess = NULL) override;
 
-    virtual CPLErr IWriteBlock( int, int, void * );
-    virtual CPLErr SetUnitType( const char* );
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual CPLErr SetUnitType( const char* ) override;
 };
 
 /************************************************************************/

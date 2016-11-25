@@ -92,13 +92,13 @@ class OGRSEGYLayer: public OGRLayer
                                       SEGYBinaryFileHeader* psBFH );
                         virtual ~OGRSEGYLayer();
 
-    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -121,13 +121,13 @@ class OGRSEGYHeaderLayer: public OGRLayer
                                             const char* pszHeaderText );
                         virtual ~OGRSEGYHeaderLayer();
 
-    virtual OGRFeature *        GetNextFeature();
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -147,12 +147,12 @@ class OGRSEGYDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename, const char* pszHeaderText );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_SEGY_H_INCLUDED */

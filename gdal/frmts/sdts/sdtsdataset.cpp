@@ -63,8 +63,8 @@ class SDTSDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 };
 
 class SDTSRasterBand : public GDALPamRasterBand
@@ -77,10 +77,10 @@ class SDTSRasterBand : public GDALPamRasterBand
 
                 SDTSRasterBand( SDTSDataset *, int, SDTSRasterReader * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double GetNoDataValue( int *pbSuccess );
-    virtual const char *GetUnitType();
+    virtual double GetNoDataValue( int *pbSuccess ) override;
+    virtual const char *GetUnitType() override;
 };
 
 

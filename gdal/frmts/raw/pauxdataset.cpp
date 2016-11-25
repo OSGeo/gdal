@@ -68,13 +68,13 @@ class PAuxDataset : public RawDataset
     char        **papszAuxLines;
     int         bAuxUpdated;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -99,13 +99,13 @@ class PAuxRasterBand : public RawRasterBand
 
     virtual ~PAuxRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
 
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual void SetDescription( const char *pszNewDescription );
+    virtual void SetDescription( const char *pszNewDescription ) override;
 };
 
 /************************************************************************/

@@ -525,20 +525,20 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
-    virtual char ** GetMetadata(const char * pszDomain = "");
+    virtual char ** GetMetadata(const char * pszDomain = "") CPL_OVERRIDE;
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain );
+                                     const char * pszDomain ) CPL_OVERRIDE;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain );
+                                         const char * pszDomain ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain );
+                                         const char * pszDomain ) CPL_OVERRIDE;
 #endif
 
-    virtual char ** GetMetadataDomainList();
+    virtual char ** GetMetadataDomainList() CPL_OVERRIDE;
 
 private:
     void           *m_hPrivateData;
@@ -987,14 +987,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain );
+                                     const char * pszDomain ) CPL_OVERRIDE;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain );
+                                         const char * pszDomain ) CPL_OVERRIDE;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain );
+                                         const char * pszDomain ) CPL_OVERRIDE;
 #endif
 
     virtual int HasArbitraryOverviews();
@@ -1054,14 +1054,14 @@ private:
 class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
 
   public:
     explicit     GDALAllValidMaskBand( GDALRasterBand * );
     virtual     ~GDALAllValidMaskBand();
 
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
+    virtual GDALRasterBand *GetMaskBand() CPL_OVERRIDE;
+    virtual int             GetMaskFlags() CPL_OVERRIDE;
 };
 
 /* ******************************************************************** */
@@ -1074,10 +1074,10 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
     GDALRasterBand *poParent;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
+                              GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
 
   public:
     explicit     GDALNoDataMaskBand( GDALRasterBand * );
@@ -1093,7 +1093,7 @@ class CPL_DLL GDALNoDataValuesMaskBand : public GDALRasterBand
     double      *padfNodataValues;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
 
   public:
     explicit     GDALNoDataValuesMaskBand( GDALDataset * );
@@ -1110,10 +1110,10 @@ class GDALRescaledAlphaBand : public GDALRasterBand
     void           *pTemp;
 
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
-                              GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg );
+                              GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
 
   public:
     explicit     GDALRescaledAlphaBand( GDALRasterBand * );
@@ -1163,7 +1163,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) CPL_OVERRIDE;
 
 /* -------------------------------------------------------------------- */
 /*      Public C++ methods.                                             */

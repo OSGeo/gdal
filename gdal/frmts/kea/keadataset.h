@@ -61,36 +61,36 @@ public:
                                 GDALProgressFunc pfnProgress, void *pProgressData );
 
     // virtual methods for dealing with transform and projection
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
-    CPLErr  SetGeoTransform (double *padfTransform );
-    CPLErr SetProjection( const char *pszWKT );
+    CPLErr  SetGeoTransform (double *padfTransform ) override;
+    CPLErr SetProjection( const char *pszWKT ) override;
 
     // method to get a pointer to the imageio class
-    void *GetInternalHandle (const char *);
+    void *GetInternalHandle (const char *) override;
 
     // virtual methods for dealing with metadata
-    CPLErr SetMetadataItem (const char *pszName, const char *pszValue, const char *pszDomain="");
-    const char *GetMetadataItem (const char *pszName, const char *pszDomain="");
+    CPLErr SetMetadataItem (const char *pszName, const char *pszValue, const char *pszDomain="") override;
+    const char *GetMetadataItem (const char *pszName, const char *pszDomain="") override;
 
-    char **GetMetadata(const char *pszDomain="");
-    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain="");
+    char **GetMetadata(const char *pszDomain="") override;
+    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain="") override;
 
     // virtual method for adding new image bands
-    CPLErr AddBand(GDALDataType eType, char **papszOptions = NULL);
+    CPLErr AddBand(GDALDataType eType, char **papszOptions = NULL) override;
 
     // GCPs
-    int GetGCPCount();
-    const char* GetGCPProjection();
-    const GDAL_GCP* GetGCPs();
-    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection);
+    int GetGCPCount() override;
+    const char* GetGCPProjection() override;
+    const GDAL_GCP* GetGCPs() override;
+    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList, const char *pszGCPProjection) override;
 
 protected:
     // this method builds overviews for the specified bands.
     virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList, GDALProgressFunc pfnProgress,
-                                    void *pProgressData);
+                                    void *pProgressData) override;
 
     // internal method to update m_papszMetadataList
     void UpdateMetadataList();

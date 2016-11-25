@@ -62,13 +62,13 @@ class OGRPLScenesDataset: public GDALDataset
                             OGRPLScenesDataset();
                            virtual ~OGRPLScenesDataset();
 
-        virtual int         GetLayerCount() { return nLayers; }
-        virtual OGRLayer   *GetLayer(int idx);
-        virtual OGRLayer   *GetLayerByName(const char* pszName);
+        virtual int         GetLayerCount() override { return nLayers; }
+        virtual OGRLayer   *GetLayer(int idx) override;
+        virtual OGRLayer   *GetLayerByName(const char* pszName) override;
         virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect );
-        virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                        const char *pszDialect ) override;
+        virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
         json_object        *RunRequest(const char* pszURL,
                                        int bQuiet404Error = FALSE);
@@ -115,20 +115,20 @@ class OGRPLScenesLayer: public OGRLayer
                                              json_object* poObjCount10 = NULL);
                            virtual ~OGRPLScenesLayer();
 
-        virtual void            ResetReading();
-        virtual GIntBig         GetFeatureCount(int bForce = FALSE);
-        virtual OGRFeature     *GetNextFeature();
-        virtual int             TestCapability(const char*);
-        virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
+        virtual void            ResetReading() override;
+        virtual GIntBig         GetFeatureCount(int bForce = FALSE) override;
+        virtual OGRFeature     *GetNextFeature() override;
+        virtual int             TestCapability(const char*) override;
+        virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
 
-        virtual void        SetSpatialFilter( OGRGeometry *poGeom );
-        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+        virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override;
+        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-        virtual OGRErr      SetAttributeFilter( const char * );
+        virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
         void                SetMainFilterRect(double dfMinX, double dfMinY,
@@ -166,9 +166,9 @@ class OGRPLScenesV1Dataset: public GDALDataset
                             OGRPLScenesV1Dataset();
                            virtual ~OGRPLScenesV1Dataset();
 
-        virtual int         GetLayerCount();
-        virtual OGRLayer   *GetLayer(int idx);
-        virtual OGRLayer   *GetLayerByName(const char* pszName);
+        virtual int         GetLayerCount() override;
+        virtual OGRLayer   *GetLayer(int idx) override;
+        virtual OGRLayer   *GetLayerByName(const char* pszName) override;
 
         json_object        *RunRequest(const char* pszURL,
                                        int bQuiet404Error = FALSE,
@@ -193,7 +193,7 @@ class OGRPLScenesV1FeatureDefn: public OGRFeatureDefn
                             OGRFeatureDefn(pszName), m_poLayer(poLayer) {}
        ~OGRPLScenesV1FeatureDefn() {}
 
-       virtual int GetFieldCount();
+       virtual int GetFieldCount() override;
 
        void DropRefToLayer() { m_poLayer = NULL; }
 };
@@ -268,23 +268,23 @@ class OGRPLScenesV1Layer: public OGRLayer
                                                GIntBig nCount);
                            virtual ~OGRPLScenesV1Layer();
 
-        virtual void            ResetReading();
-        virtual OGRFeature     *GetNextFeature();
-        virtual int             TestCapability(const char*);
-        virtual OGRFeatureDefn *GetLayerDefn();
-        virtual GIntBig         GetFeatureCount(int bForce = FALSE);
+        virtual void            ResetReading() override;
+        virtual OGRFeature     *GetNextFeature() override;
+        virtual int             TestCapability(const char*) override;
+        virtual OGRFeatureDefn *GetLayerDefn() override;
+        virtual GIntBig         GetFeatureCount(int bForce = FALSE) override;
 
-        virtual char      **GetMetadata( const char * pszDomain = "" );
-        virtual const char *GetMetadataItem( const char * pszName, const char* pszDomain = "" );
+        virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+        virtual const char *GetMetadataItem( const char * pszName, const char* pszDomain = "" ) override;
 
-        virtual void        SetSpatialFilter( OGRGeometry *poGeom );
-        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+        virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override;
+        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-        virtual OGRErr      SetAttributeFilter( const char * );
+        virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+        virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 

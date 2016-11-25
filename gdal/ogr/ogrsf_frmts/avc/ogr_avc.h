@@ -64,11 +64,11 @@ class OGRAVCLayer : public OGRLayer
                                      OGRAVCDataSource *poDS );
     virtual ~OGRAVCLayer();
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -127,11 +127,11 @@ class OGRAVCBinLayer : public OGRAVCLayer
 
                         ~OGRAVCBinLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeature *        GetFeature( GIntBig nFID );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature *        GetFeature( GIntBig nFID ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -153,11 +153,11 @@ class OGRAVCBinDataSource : public OGRAVCDataSource
 
     int                 Open( const char *, int bTestOpen );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     AVCE00ReadPtr       GetInfo() { return psAVC; }
 };
@@ -193,10 +193,10 @@ class OGRAVCE00Layer : public OGRAVCLayer
 
                         ~OGRAVCE00Layer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeature *GetFeature( GIntBig nFID );
-    GIntBig GetFeatureCount(int bForce);
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature *GetFeature( GIntBig nFID ) override;
+    GIntBig GetFeatureCount(int bForce) override;
     bool CheckSetupTable(AVCE00Section *psTblSectionIn);
     bool AppendTableFields( OGRFeature *poFeature );
 };
@@ -222,12 +222,12 @@ class OGRAVCE00DataSource : public OGRAVCDataSource
     int Open(const char *, int bTestOpen);
 
     AVCE00ReadE00Ptr GetInfo() { return psE00; }
-    const char *GetName() { return pszName; }
-    int GetLayerCount() { return nLayers; }
+    const char *GetName() override { return pszName; }
+    int GetLayerCount() override { return nLayers; }
 
-    OGRLayer *GetLayer( int );
-    int TestCapability( const char * );
-    virtual OGRSpatialReference *GetSpatialRef();
+    OGRLayer *GetLayer( int ) override;
+    int TestCapability( const char * ) override;
+    virtual OGRSpatialReference *GetSpatialRef() override;
 };
 
 #endif /* OGR_AVC_H_INCLUDED */

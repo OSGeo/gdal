@@ -2578,7 +2578,7 @@ class OGRSimpleCurvePointIterator: public OGRPointIterator
             poSC(poSCIn),
             iCurPoint(0) {}
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p );
+        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/

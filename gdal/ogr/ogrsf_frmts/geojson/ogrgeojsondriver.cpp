@@ -51,15 +51,15 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
     explicit OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
     virtual ~OGRESRIFeatureServiceLayer();
 
-    void ResetReading();
-    OGRFeature* GetNextFeature();
-    GIntBig GetFeatureCount( int bForce = TRUE );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    void ResetReading() override;
+    OGRFeature* GetNextFeature() override;
+    GIntBig GetFeatureCount( int bForce = TRUE ) override;
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
-                                   int bForce)
+                                   int bForce) override
             { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    int TestCapability( const char* pszCap );
-    OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
+    int TestCapability( const char* pszCap ) override;
+    OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn; }
 };
 
 /************************************************************************/
@@ -81,8 +81,8 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
                                   OGRGeoJSONDataSource* poFirst );
     ~OGRESRIFeatureServiceDataset();
 
-    int GetLayerCount() { return 1; }
-    OGRLayer* GetLayer( int nLayer )
+    int GetLayerCount() override { return 1; }
+    OGRLayer* GetLayer( int nLayer ) override
         { return (nLayer == 0) ? poLayer : NULL; }
 
     OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }

@@ -239,7 +239,7 @@ class BMPDataset : public GDALPamDataset
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg );
+                                   GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
                 BMPDataset();
@@ -251,8 +251,8 @@ class BMPDataset : public GDALPamDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 
-    CPLErr              GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
+    CPLErr              GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double * ) override;
 };
 
 /************************************************************************/
@@ -276,11 +276,11 @@ class BMPRasterBand : public GDALPamRasterBand
                 BMPRasterBand( BMPDataset *, int );
     virtual    ~BMPRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable  *GetColorTable();
-    CPLErr                  SetColorTable( GDALColorTable * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable  *GetColorTable() override;
+    CPLErr                  SetColorTable( GDALColorTable * ) override;
 };
 
 /************************************************************************/
@@ -690,7 +690,7 @@ class BMPComprRasterBand : public BMPRasterBand
                 BMPComprRasterBand( BMPDataset *, int );
     virtual    ~BMPComprRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
 //    virtual CPLErr        IWriteBlock( int, int, void * );
 };
 

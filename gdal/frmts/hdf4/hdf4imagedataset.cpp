@@ -163,14 +163,14 @@ class HDF4ImageDataset : public HDF4Dataset
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszParmList );
-    virtual void        FlushCache( void );
-    CPLErr              GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
-    const char          *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
-    virtual int         GetGCPCount();
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual void        FlushCache( void ) override;
+    CPLErr              GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double * ) override;
+    const char          *GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char * ) override;
+    virtual int         GetGCPCount() override;
+    virtual const char  *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 };
 
 /************************************************************************/
@@ -197,15 +197,15 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
                 HDF4ImageRasterBand( HDF4ImageDataset *, int, GDALDataType );
     virtual ~HDF4ImageRasterBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
-    virtual double          GetOffset( int *pbSuccess );
-    virtual double          GetScale( int *pbSuccess );
-    virtual const char     *GetUnitType();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double          GetNoDataValue( int * ) override;
+    virtual CPLErr          SetNoDataValue( double ) override;
+    virtual double          GetOffset( int *pbSuccess ) override;
+    virtual double          GetScale( int *pbSuccess ) override;
+    virtual const char     *GetUnitType() override;
 };
 
 /************************************************************************/

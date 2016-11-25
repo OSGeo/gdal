@@ -121,8 +121,8 @@ class EpsilonRasterBand : public GDALPamRasterBand
   public:
                             EpsilonRasterBand(EpsilonDataset* poDS, int nBand);
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

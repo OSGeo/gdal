@@ -88,8 +88,8 @@ class GSAGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData );
 
-    CPLErr GetGeoTransform( double *padfGeoTransform );
-    CPLErr SetGeoTransform( double *padfGeoTransform );
+    CPLErr GetGeoTransform( double *padfGeoTransform ) override;
+    CPLErr SetGeoTransform( double *padfGeoTransform ) override;
 };
 
 /* NOTE:  This is not mentioned in the spec, but Surfer 8 uses this value */
@@ -131,12 +131,12 @@ class GSAGRasterBand : public GDALPamRasterBand
                 GSAGRasterBand( GSAGDataset *, int, vsi_l_offset );
                 ~GSAGRasterBand();
 
-    CPLErr IReadBlock( int, int, void * );
-    CPLErr IWriteBlock( int, int, void * );
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    double GetNoDataValue( int *pbSuccess = NULL );
-    double GetMinimum( int *pbSuccess = NULL );
-    double GetMaximum( int *pbSuccess = NULL );
+    double GetNoDataValue( int *pbSuccess = NULL ) override;
+    double GetMinimum( int *pbSuccess = NULL ) override;
+    double GetMaximum( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/

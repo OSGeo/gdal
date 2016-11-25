@@ -169,13 +169,13 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
 
     bool              IsInitOK() const { return inbuf != NULL; }
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 
     VSIGZipHandle*    Duplicate();
     bool              CloseBaseHandle();
@@ -203,16 +203,16 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
     VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename,
                                      const char *pszAccess );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+                           int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
     void  SaveInfo( VSIGZipHandle* poHandle );
     void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
@@ -1156,13 +1156,13 @@ class VSIGZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual ~VSIGZipWriteHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 };
 
 /************************************************************************/
@@ -1795,13 +1795,13 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
 
         unzFile GetUnzFileHandle() { return unzF; }
 
-        virtual int GotoFirstFile();
-        virtual int GotoNextFile();
-        virtual VSIArchiveEntryFileOffset* GetFileOffset() { return new VSIZipEntryFileOffset(file_pos); }
-        virtual GUIntBig GetFileSize() { return nNextFileSize; }
-        virtual CPLString GetFileName() { return osNextFileName; }
-        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
-        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
+        virtual int GotoFirstFile() override;
+        virtual int GotoNextFile() override;
+        virtual VSIArchiveEntryFileOffset* GetFileOffset() override { return new VSIZipEntryFileOffset(file_pos); }
+        virtual GUIntBig GetFileSize() override { return nNextFileSize; }
+        virtual CPLString GetFileName() override { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() override { return nModifiedTime; }
+        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) override;
 };
 
 /************************************************************************/
@@ -1914,22 +1914,22 @@ class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 public:
     virtual ~VSIZipFilesystemHandler();
 
-    virtual const char* GetPrefix() { return "/vsizip"; }
-    virtual std::vector<CPLString> GetExtensions();
-    virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
+    virtual const char* GetPrefix() override { return "/vsizip"; }
+    virtual std::vector<CPLString> GetExtensions() override;
+    virtual VSIArchiveReader* CreateReader(const char* pszZipFileName) override;
 
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 
     virtual VSIVirtualHandle *OpenForWrite( const char *pszFilename,
                                             const char *pszAccess );
 
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
 
     void RemoveFromMap(VSIZipWriteHandle* poHandle);
 };
@@ -1957,13 +1957,13 @@ class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual ~VSIZipWriteHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 
     void  StartNewFile(VSIZipWriteHandle* poSubFile);
     void  StopCurrentFile();

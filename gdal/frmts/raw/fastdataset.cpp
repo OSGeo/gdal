@@ -123,12 +123,12 @@ class FASTDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * );
-    const char  *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * ) override;
+    const char  *GetProjectionRef() override;
     VSILFILE    *FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 
-    virtual  char** GetFileList();
+    virtual  char** GetFileList() override;
 };
 
 /************************************************************************/

@@ -112,11 +112,11 @@ public:
     static GDALDataset  *Open( GDALOpenInfo * );
     static int           Identify( GDALOpenInfo * );
 
-    const char          *GetProjectionRef();
-    virtual int         GetGCPCount( );
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs( );
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    const char          *GetProjectionRef() override;
+    virtual int         GetGCPCount( ) override;
+    virtual const char  *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs( ) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
     Hdf5ProductType GetSubdatasetType() const {return iSubdatasetType;}
     HDF5CSKProductEnum GetCSKProductType() const {return iCSKProductType;}
@@ -250,9 +250,9 @@ public:
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
     virtual ~HDF5ImageRasterBand();
 
-    virtual CPLErr      IReadBlock( int, int, void * );
-    virtual double      GetNoDataValue( int * );
-    virtual CPLErr      SetNoDataValue( double );
+    virtual CPLErr      IReadBlock( int, int, void * ) override;
+    virtual double      GetNoDataValue( int * ) override;
+    virtual CPLErr      SetNoDataValue( double ) override;
     /*  virtual CPLErr          IWriteBlock( int, int, void * ); */
 };
 

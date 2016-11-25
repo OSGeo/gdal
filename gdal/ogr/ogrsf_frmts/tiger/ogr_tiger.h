@@ -230,13 +230,13 @@ public:
                                           const char * );
   virtual            ~TigerCompleteChain();
 
-  virtual bool        SetModule( const char * );
+  virtual bool        SetModule( const char * ) override;
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 
-  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
+  virtual bool        SetWriteModule( const char *, int, OGRFeature * ) override;
 };
 
 /************************************************************************/
@@ -249,9 +249,9 @@ class TigerAltName : public TigerFileBase
                       TigerAltName( OGRTigerDataSource *,
                                     const char * );
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -300,12 +300,12 @@ class TigerPoint : public TigerFileBase
  int                  bRequireGeom;
 
  public:
-  virtual OGRFeature *GetFeature( int nFID) { return TigerFileBase::GetFeature(nFID); } /* to avoid -Woverloaded-virtual warnings */
+  virtual OGRFeature *GetFeature( int nFID) override { return TigerFileBase::GetFeature(nFID); } /* to avoid -Woverloaded-virtual warnings */
   OGRFeature *GetFeature( int              nRecordId,
                                   int nX0, int nX1,
                                   int nY0, int nY1 );
 
-  virtual OGRErr CreateFeature( OGRFeature      *poFeature) { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
+  virtual OGRErr CreateFeature( OGRFeature      *poFeature) override { return TigerFileBase::CreateFeature(poFeature); } /* to avoid -Woverloaded-virtual warnings */
   OGRErr CreateFeature( OGRFeature      *poFeature,
                                 int nIndex );
 };
@@ -319,9 +319,9 @@ class TigerLandmarks : public TigerPoint
  public:
                       TigerLandmarks( OGRTigerDataSource *, const char * );
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -362,12 +362,12 @@ public:
                       TigerPolygon( OGRTigerDataSource *, const char * );
   virtual            ~TigerPolygon();
 
-  virtual bool        SetModule( const char * );
+  virtual bool        SetModule( const char * ) override;
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual bool        SetWriteModule( const char *, int, OGRFeature * );
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual bool        SetWriteModule( const char *, int, OGRFeature * ) override;
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -439,9 +439,9 @@ class TigerPIP : public TigerPoint
 public:
                       TigerPIP( OGRTigerDataSource *, const char * );
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -473,9 +473,9 @@ class TigerOverUnder : public TigerPoint
 public:
                       TigerOverUnder( OGRTigerDataSource *, const char * );
 
-  virtual OGRFeature *GetFeature( int );
+  virtual OGRFeature *GetFeature( int ) override;
 
-  virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+  virtual OGRErr      CreateFeature( OGRFeature *poFeature ) override;
 };
 
 /************************************************************************/
@@ -510,19 +510,19 @@ class OGRTigerLayer : public OGRLayer
                                        TigerFileBase * );
     virtual             ~OGRTigerLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeature         *GetFeature( GIntBig nFeatureId );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
-    OGRFeatureDefn *    GetLayerDefn();
+    OGRFeatureDefn *    GetLayerDefn() override;
 
-    GIntBig             GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 };
 
 /************************************************************************/
@@ -569,13 +569,13 @@ class OGRTigerDataSource : public OGRDataSource
 
     int                 Create( const char *pszName, char **papszOptions );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount();
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override;
+    OGRLayer            *GetLayer( int ) override;
     OGRLayer            *GetLayer( const char *pszLayerName );
 
     void                AddLayer( OGRTigerLayer * );
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRSpatialReference *GetSpatialRef() { return poSpatialRef; }
 
@@ -593,7 +593,7 @@ class OGRTigerDataSource : public OGRDataSource
     virtual OGRLayer    *ICreateLayer( const char *,
                                        OGRSpatialReference * = NULL,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL );
+                                       char ** = NULL ) override;
 };
 
 #endif /* ndef OGR_TIGER_H_INCLUDED */

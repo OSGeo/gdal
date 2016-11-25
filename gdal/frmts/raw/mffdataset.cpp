@@ -75,14 +75,14 @@ class MFFDataset : public RawDataset
 
     VSILFILE        **pafpBandFiles;
 
-    virtual char** GetFileList();
+    virtual char** GetFileList() override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -114,7 +114,7 @@ class MFFTiledBand : public GDALRasterBand
                                  GDALDataType, int );
     virtual ~MFFTiledBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

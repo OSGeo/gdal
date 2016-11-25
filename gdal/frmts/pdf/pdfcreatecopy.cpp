@@ -4266,13 +4266,13 @@ class GDALPDFClippingDataset: public GDALDataset
             nRasterYSize = (int)((adfClippingExtent[3] - adfClippingExtent[1]) / fabs(adfSrcGeoTransform[5]));
         }
 
-        virtual CPLErr GetGeoTransform( double * padfGeoTransform )
+        virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override
         {
             memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
             return CE_None;
         }
 
-        virtual const char* GetProjectionRef()
+        virtual const char* GetProjectionRef() override
         {
             return poSrcDS->GetProjectionRef();
         }

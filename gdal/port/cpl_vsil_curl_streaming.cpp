@@ -192,8 +192,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
 
     void                AcquireMutex();
     void                ReleaseMutex();
@@ -271,13 +271,13 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
     virtual ~VSICurlStreamingHandle();
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int          Eof();
-    virtual int          Flush();
-    virtual int          Close();
+    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int          Eof() override;
+    virtual int          Flush() override;
+    virtual int          Close() override;
 
     void                 DownloadInThread();
     size_t               ReceivedBytes(GByte *buffer, size_t count, size_t nmemb);
@@ -1556,8 +1556,8 @@ class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
 protected:
-    virtual CPLString GetFSPrefix() { return "/vsis3_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL);
+    virtual CPLString GetFSPrefix() override { return "/vsis3_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL) override;
 
 public:
         VSIS3StreamingFSHandler() {}
@@ -1607,10 +1607,10 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
-        virtual bool StopReceivingBytesOnError() { return false; }
-        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError);
-        virtual bool InterpretRedirect() { return false; }
+        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb) override;
+        virtual bool StopReceivingBytesOnError() override { return false; }
+        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError) override;
+        virtual bool InterpretRedirect() override { return false; }
 
     public:
         VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,

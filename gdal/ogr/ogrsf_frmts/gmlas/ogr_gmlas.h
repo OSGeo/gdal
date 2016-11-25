@@ -139,9 +139,9 @@ class GMLASBaseEntityResolver: public EntityResolver,
         const std::set<CPLString>& GetSchemaURLS() const
                                         { return m_oSetSchemaURLs; }
 
-        virtual void notifyClosing(const CPLString& osFilename );
+        virtual void notifyClosing(const CPLString& osFilename ) override;
         virtual InputSource* resolveEntity( const XMLCh* const publicId,
-                                            const XMLCh* const systemId);
+                                            const XMLCh* const systemId) override;
 
         virtual void DoExtraSchemaProcessing(const CPLString& osFilename,
                                              VSILFILE* fp);
@@ -168,7 +168,7 @@ public:
                                             XMLPlatformUtils::fgMemoryManager);
     virtual ~GMLASInputSource();
 
-    virtual BinInputStream* makeStream() const;
+    virtual BinInputStream* makeStream() const override;
 
     void    SetClosingCallback( IGMLASInputSourceClosing* cbk );
 };
@@ -184,11 +184,11 @@ class GMLASErrorHandler: public ErrorHandler
 
         bool hasFailed () const { return m_bFailed; }
 
-        virtual void warning (const SAXParseException& e);
-        virtual void error (const SAXParseException& e);
-        virtual void fatalError (const SAXParseException& e);
+        virtual void warning (const SAXParseException& e) override;
+        virtual void error (const SAXParseException& e) override;
+        virtual void fatalError (const SAXParseException& e) override;
 
-        virtual void resetErrors () { m_bFailed = false; }
+        virtual void resetErrors () override { m_bFailed = false; }
 
     private:
         bool m_bFailed;
@@ -975,16 +975,16 @@ class OGRGMLASDataSource: public GDALDataset
         OGRGMLASDataSource();
         virtual ~OGRGMLASDataSource();
 
-        virtual int         GetLayerCount();
-        virtual OGRLayer    *GetLayer(int);
-        virtual OGRLayer    *GetLayerByName(const char* pszName);
+        virtual int         GetLayerCount() override;
+        virtual OGRLayer    *GetLayer(int) override;
+        virtual OGRLayer    *GetLayerByName(const char* pszName) override;
 
-        virtual void        ResetReading();
+        virtual void        ResetReading() override;
         virtual OGRFeature* GetNextFeature( OGRLayer** ppoBelongingLayer,
                                             double* pdfProgressPct,
                                             GDALProgressFunc pfnProgress,
-                                            void* pProgressData );
-        virtual int TestCapability( const char* );
+                                            void* pProgressData ) override;
+        virtual int TestCapability( const char* ) override;
 
         bool Open(GDALOpenInfo* poOpenInfo);
 
@@ -1083,11 +1083,11 @@ class OGRGMLASLayer: public OGRLayer
                       bool bAlwaysGenerateOGRPKId);
         virtual ~OGRGMLASLayer();
 
-        virtual const char* GetName() { return GetDescription(); }
-        virtual OGRFeatureDefn* GetLayerDefn();
-        virtual void ResetReading();
-        virtual OGRFeature* GetNextFeature();
-        virtual int TestCapability( const char* ) { return FALSE; }
+        virtual const char* GetName() override { return GetDescription(); }
+        virtual OGRFeatureDefn* GetLayerDefn() override;
+        virtual void ResetReading() override;
+        virtual OGRFeature* GetNextFeature() override;
+        virtual int TestCapability( const char* ) override { return FALSE; }
 
         void PostInit(bool bIncludeGeometryXML);
         void CreateCompoundFoldedMappings();
@@ -1399,15 +1399,15 @@ class GMLASReader : public DefaultHandler
             const   XMLCh* const    localname,
             const   XMLCh* const    qname,
             const   Attributes& attrs
-        );
+        ) override;
         virtual  void endElement(
             const   XMLCh* const    uri,
             const   XMLCh* const    localname,
             const   XMLCh* const    qname
-        );
+        ) override;
 
         virtual  void characters( const XMLCh *const chars,
-                        const XMLSize_t length );
+                        const XMLSize_t length ) override;
 
         bool RunFirstPass(GDALProgressFunc pfnProgress,
                           void* pProgressData,

@@ -52,13 +52,13 @@ class RRASTERDataset : public RawDataset
                 RRASTERDataset();
        virtual ~RRASTERDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
 };
 
 /************************************************************************/
@@ -80,8 +80,8 @@ class RRASTERRasterBand: public RawRasterBand
                     GDALDataType eDataType, int bNativeOrder );
 
       void SetMinMax( double dfMin, double dfMax );
-      virtual double GetMinimum( int *pbSuccess = NULL );
-      virtual double GetMaximum(int *pbSuccess = NULL );
+      virtual double GetMinimum( int *pbSuccess = NULL ) override;
+      virtual double GetMaximum(int *pbSuccess = NULL ) override;
 
 #ifdef UPDATE_SUPPORTED
   protected:

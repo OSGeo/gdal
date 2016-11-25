@@ -139,30 +139,30 @@ public:
                                          const char* pszESSearch = NULL);
                         virtual ~OGRElasticLayer();
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
-    virtual OGRErr      ISetFeature(OGRFeature *poFeature);
-    virtual OGRErr      CreateField(OGRFieldDefn *poField, int bApproxOK);
-    virtual OGRErr      CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK);
+    virtual OGRErr      ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr      ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr      CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr      CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK) override;
 
-    virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
-    virtual OGRFeatureDefn *GetLayerDefn();
-    virtual const char *GetFIDColumn();
+    virtual const char* GetName() override { return m_poFeatureDefn->GetName(); }
+    virtual OGRFeatureDefn *GetLayerDefn() override;
+    virtual const char *GetFIDColumn() override;
 
-    virtual int         TestCapability(const char *);
+    virtual int         TestCapability(const char *) override;
 
-    virtual GIntBig     GetFeatureCount(int bForce);
+    virtual GIntBig     GetFeatureCount(int bForce) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-    virtual OGRErr      SetAttributeFilter(const char* pszFilter);
+    virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+    virtual OGRErr      SetAttributeFilter(const char* pszFilter) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) { return GetExtent(0, psExtent, bForce); }
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override { return GetExtent(0, psExtent, bForce); }
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual OGRErr      SyncToDisk();
+    virtual OGRErr      SyncToDisk() override;
 
     void                FinalizeFeatureDefn(bool bReadFeatures = true);
     void                InitFeatureDefnFromMapping(json_object* poSchema,
@@ -213,21 +213,21 @@ public:
 
     virtual const char *GetName() { return m_pszName; }
 
-    virtual int         GetLayerCount() { return m_nLayers; }
-    virtual OGRLayer   *GetLayer(int);
+    virtual int         GetLayerCount() override { return m_nLayers; }
+    virtual OGRLayer   *GetLayer(int) override;
 
     virtual OGRLayer   *ICreateLayer(const char * pszLayerName,
                                     OGRSpatialReference *poSRS,
                                     OGRwkbGeometryType eType,
-                                    char ** papszOptions);
-    virtual OGRErr      DeleteLayer( int iLayer );
+                                    char ** papszOptions) override;
+    virtual OGRErr      DeleteLayer( int iLayer ) override;
 
     virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
-                                            const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                            const char *pszDialect ) override;
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
-    virtual int         TestCapability(const char *);
+    virtual int         TestCapability(const char *) override;
 
     static bool         UploadFile(const CPLString &url, const CPLString &data);
     static void         Delete(const CPLString &url);

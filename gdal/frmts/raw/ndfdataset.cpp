@@ -54,9 +54,9 @@ class NDFDataset : public RawDataset
                 NDFDataset();
     virtual ~NDFDataset();
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual char **GetFileList(void);
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

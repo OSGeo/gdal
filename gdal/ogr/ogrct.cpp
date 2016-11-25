@@ -168,17 +168,17 @@ public:
     int         Initialize( OGRSpatialReference *poSource,
                             OGRSpatialReference *poTarget );
 
-    virtual OGRSpatialReference *GetSourceCS();
-    virtual OGRSpatialReference *GetTargetCS();
+    virtual OGRSpatialReference *GetSourceCS() override;
+    virtual OGRSpatialReference *GetTargetCS() override;
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL );
+                           double *x, double *y, double *z = NULL ) override;
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *panSuccess = NULL );
+                             int *panSuccess = NULL ) override;
 
     // TODO(schwehr): Make GetEmitErrors const.
-    virtual bool GetEmitErrors() { return m_bEmitErrors; }
-    virtual void SetEmitErrors( bool bEmitErrors )
+    virtual bool GetEmitErrors() override { return m_bEmitErrors; }
+    virtual void SetEmitErrors( bool bEmitErrors ) override
         { m_bEmitErrors = bEmitErrors; }
 };
 

@@ -51,13 +51,13 @@ class OGRGPSBabelDataSource : public OGRDataSource
                         OGRGPSBabelDataSource();
                         virtual ~OGRGPSBabelDataSource();
 
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
-    virtual const char  *GetName() { return pszName; }
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer   *GetLayer( int );
+    virtual const char  *GetName() override { return pszName; }
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer   *GetLayer( int ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     int                 Open ( const char* pszFilename,
                                const char* pszGPSBabelDriverNameIn,
@@ -85,16 +85,16 @@ class OGRGPSBabelWriteDataSource : public OGRDataSource
                         OGRGPSBabelWriteDataSource();
                         virtual ~OGRGPSBabelWriteDataSource();
 
-    virtual const char  *GetName() { return pszName; }
-    virtual int         GetLayerCount();
-    virtual OGRLayer   *GetLayer( int );
+    virtual const char  *GetName() override { return pszName; }
+    virtual int         GetLayerCount() override;
+    virtual OGRLayer   *GetLayer( int ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char * pszLayerName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eType,
-                                     char ** papszOptions );
+                                     char ** papszOptions ) override;
 
     int                 Create ( const char* pszFilename, char **papszOptions );
 };

@@ -525,57 +525,57 @@ class OGRSplitListFieldLayer : public OGRLayer
     bool                        BuildLayerDefn(GDALProgressFunc pfnProgress,
                                                 void *pProgressArg);
 
-    virtual OGRFeature          *GetNextFeature();
-    virtual OGRFeature          *GetFeature(GIntBig nFID);
-    virtual OGRFeatureDefn      *GetLayerDefn();
+    virtual OGRFeature          *GetNextFeature() override;
+    virtual OGRFeature          *GetFeature(GIntBig nFID) override;
+    virtual OGRFeatureDefn      *GetLayerDefn() override;
 
-    virtual void                 ResetReading() { poSrcLayer->ResetReading(); }
-    virtual int                  TestCapability(const char*) { return FALSE; }
+    virtual void                 ResetReading() override { poSrcLayer->ResetReading(); }
+    virtual int                  TestCapability(const char*) override { return FALSE; }
 
-    virtual GIntBig              GetFeatureCount( int bForce = TRUE )
+    virtual GIntBig              GetFeatureCount( int bForce = TRUE ) override
     {
         return poSrcLayer->GetFeatureCount(bForce);
     }
 
-    virtual OGRSpatialReference *GetSpatialRef()
+    virtual OGRSpatialReference *GetSpatialRef() override
     {
         return poSrcLayer->GetSpatialRef();
     }
 
-    virtual OGRGeometry         *GetSpatialFilter()
+    virtual OGRGeometry         *GetSpatialFilter() override
     {
         return poSrcLayer->GetSpatialFilter();
     }
 
-    virtual OGRStyleTable       *GetStyleTable()
+    virtual OGRStyleTable       *GetStyleTable() override
     {
         return poSrcLayer->GetStyleTable();
     }
 
-    virtual void                 SetSpatialFilter( OGRGeometry *poGeom )
+    virtual void                 SetSpatialFilter( OGRGeometry *poGeom ) override
     {
         poSrcLayer->SetSpatialFilter(poGeom);
     }
 
-    virtual void                 SetSpatialFilter( int iGeom, OGRGeometry *poGeom )
+    virtual void                 SetSpatialFilter( int iGeom, OGRGeometry *poGeom ) override
     {
         poSrcLayer->SetSpatialFilter(iGeom, poGeom);
     }
 
     virtual void                 SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                                       double dfMaxX, double dfMaxY )
+                                                       double dfMaxX, double dfMaxY ) override
     {
         poSrcLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
     }
 
     virtual void                 SetSpatialFilterRect( int iGeom,
                                                        double dfMinX, double dfMinY,
-                                                       double dfMaxX, double dfMaxY )
+                                                       double dfMaxX, double dfMaxY ) override
     {
         poSrcLayer->SetSpatialFilterRect(iGeom, dfMinX, dfMinY, dfMaxX, dfMaxY);
     }
 
-    virtual OGRErr               SetAttributeFilter( const char *pszFilter )
+    virtual OGRErr               SetAttributeFilter( const char *pszFilter ) override
     {
         return poSrcLayer->SetAttributeFilter(pszFilter);
     }
@@ -937,11 +937,11 @@ public:
             poSRS->Dereference();
     }
 
-    virtual OGRSpatialReference *GetSourceCS() { return poSRS; }
-    virtual OGRSpatialReference *GetTargetCS() { return poSRS; }
+    virtual OGRSpatialReference *GetSourceCS() override { return poSRS; }
+    virtual OGRSpatialReference *GetTargetCS() override { return poSRS; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL )
+                           double *x, double *y, double *z = NULL ) override
     {
         int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
 
@@ -963,7 +963,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL )
+                             int *pabSuccess = NULL ) override
     {
         if( bUseTPS )
             return GDALTPSTransform( hTransformArg, FALSE,
@@ -997,20 +997,20 @@ public:
         OGRCoordinateTransformation::DestroyCT(poCT2);
     }
 
-    virtual OGRSpatialReference *GetSourceCS()
+    virtual OGRSpatialReference *GetSourceCS() override
     {
         return poCT1 ? poCT1->GetSourceCS() :
                poCT2 ? poCT2->GetSourceCS() : NULL;
     }
 
-    virtual OGRSpatialReference *GetTargetCS()
+    virtual OGRSpatialReference *GetTargetCS() override
     {
         return poCT2 ? poCT2->GetTargetCS() :
                poCT1 ? poCT1->GetTargetCS() : NULL;
     }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL )
+                           double *x, double *y, double *z = NULL ) override
     {
         int nResult = TRUE;
         if( poCT1 )
@@ -1022,7 +1022,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL )
+                             int *pabSuccess = NULL ) override
     {
         int nResult = TRUE;
         if( poCT1 )

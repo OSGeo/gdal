@@ -230,7 +230,7 @@ public:
     SGIDataset();
     virtual ~SGIDataset();
 
-    virtual CPLErr GetGeoTransform(double*);
+    virtual CPLErr GetGeoTransform(double*) override;
     static GDALDataset* Open(GDALOpenInfo*);
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -250,9 +250,9 @@ class SGIRasterBand : public GDALPamRasterBand
 public:
     SGIRasterBand(SGIDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int, int, void*);
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock(int, int, void*) override;
+    virtual CPLErr IWriteBlock(int, int, void*) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

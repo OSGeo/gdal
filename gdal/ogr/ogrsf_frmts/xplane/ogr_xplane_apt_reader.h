@@ -662,13 +662,13 @@ class OGRXPlaneAptReader : public OGRXPlaneReader
                                 double dfLatB, double dfLonB);
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
         explicit                 OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
-        virtual void             Rewind();
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
+        virtual void             Rewind() override;
 };
 
 #endif

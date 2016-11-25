@@ -118,7 +118,7 @@ protected:
                             int, int *,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
-                            GDALRasterIOExtraArg* psExtraArg);
+                            GDALRasterIOExtraArg* psExtraArg) override;
 
 private:
 
@@ -307,7 +307,7 @@ public:
   RasdamanRasterBand( RasdamanDataset *, int, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize );
   ~RasdamanRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
+  virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

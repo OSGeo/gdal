@@ -73,7 +73,7 @@ public: // Member classes
         m_pszError ( NULL )
     {}
 
-    void put_text(const char *string)
+    void put_text(const char *string) override
     {
         if( m_pszError == NULL )
             m_pszError = CPLStrdup( string );
@@ -89,7 +89,7 @@ public: // Member classes
     {
     };
 
-    void flush(bool end_of_message=false)
+    void flush(bool end_of_message=false) override
     {
         if( m_pszError == NULL )
             return;

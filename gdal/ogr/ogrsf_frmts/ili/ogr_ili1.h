@@ -65,23 +65,23 @@ private:
 
     OGRErr              AddFeature(OGRFeature *poFeature);
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
     OGRFeature *        GetNextFeatureRef();
     OGRFeature *        GetFeatureRef( GIntBig nFid );
     OGRFeature *        GetFeatureRef( const char* );
 
-    GIntBig             GetFeatureCount( int bForce = TRUE );
+    GIntBig             GetFeatureCount( int bForce = TRUE ) override;
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     int                 GeometryAppend( OGRGeometry *poGeometry );
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
     GeomFieldInfos      GetGeomFieldInfos() { return oGeomFieldInfos; }
 
-    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
+    OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
   private:
     void                JoinGeomLayers();
@@ -112,19 +112,19 @@ class OGRILI1DataSource : public OGRDataSource
     int         Open( const char *, char** papszOpenOptions, int bTestOpen );
     int         Create( const char *pszFile, char **papszOptions );
 
-    const char *GetName() { return pszName; }
-    int         GetLayerCount() { return poReader ? poReader->GetLayerCount() : 0; }
-    OGRLayer   *GetLayer( int );
-    OGRILI1Layer *GetLayerByName( const char* );
+    const char *GetName() override { return pszName; }
+    int         GetLayerCount() override { return poReader ? poReader->GetLayerCount() : 0; }
+    OGRLayer   *GetLayer( int ) override;
+    OGRILI1Layer *GetLayerByName( const char* ) override;
 
     FILE       *GetTransferFile() { return fpTransfer; }
 
     virtual OGRLayer *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
-    int         TestCapability( const char * );
+    int         TestCapability( const char * ) override;
 };
 
 #endif /* OGR_ILI1_H_INCLUDED */

@@ -77,12 +77,12 @@ class EHdrDataset : public RawDataset
     EHdrDataset();
     virtual ~EHdrDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -124,7 +124,7 @@ class EHdrRasterBand : public RawRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace,
                               GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -134,18 +134,18 @@ class EHdrRasterBand : public RawRasterBand
                     int nBits);
     virtual ~EHdrRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *pdfStdDev );
+                                  double *pdfMean, double *pdfStdDev ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev );
-    virtual CPLErr SetColorTable( GDALColorTable *poNewCT );
+                                  double dfMean, double dfStdDev ) override;
+    virtual CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
 };
 
 /************************************************************************/

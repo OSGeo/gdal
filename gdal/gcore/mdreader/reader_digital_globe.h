@@ -59,10 +59,10 @@ class GDALMDReaderDigitalGlobe: public GDALMDReaderBase
 public:
     GDALMDReaderDigitalGlobe(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderDigitalGlobe();
-    virtual bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    virtual bool HasRequiredFiles() const override;
+    virtual char** GetMetadataFiles() const override;
 protected:
-    virtual void LoadMetadata();
+    virtual void LoadMetadata() override;
     char** LoadRPBXmlNode(CPLXMLNode* psNode);
     char** LoadIMDXmlNode(CPLXMLNode* psNode);
 protected:

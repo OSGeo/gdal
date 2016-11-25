@@ -113,18 +113,18 @@ class OGRDODSLayer : public OGRLayer
                                       AttrTable *poAttrInfo );
     virtual             ~OGRDODSLayer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
@@ -161,7 +161,7 @@ private:
     Sequence           *FindSuperSequence( BaseType * );
 
 protected:
-    virtual bool        ProvideDataDDS();
+    virtual bool        ProvideDataDDS() override;
 
 public:
                         OGRDODSSequenceLayer( OGRDODSDataSource *poDS,
@@ -169,9 +169,9 @@ public:
                                               AttrTable *poAttrInfo );
     virtual             ~OGRDODSSequenceLayer();
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual GIntBig     GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int ) override;
 };
 
 /************************************************************************/
@@ -247,7 +247,7 @@ class OGRDODSGridLayer : public OGRDODSLayer
                                            OGRFeature *poFeature, int iField );
 
 protected:
-    virtual bool        ProvideDataDDS();
+    virtual bool        ProvideDataDDS() override;
 
 public:
                         OGRDODSGridLayer( OGRDODSDataSource *poDS,
@@ -255,9 +255,9 @@ public:
                                          AttrTable *poAttrInfo );
     virtual             ~OGRDODSGridLayer();
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual GIntBig     GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int ) override;
 };
 
 /************************************************************************/
@@ -291,11 +291,11 @@ class OGRDODSDataSource : public OGRDataSource
 
     int                 Open( const char * );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -306,9 +306,9 @@ class OGRDODSDriver : public OGRSFDriver
 {
   public:
                 ~OGRDODSDriver();
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
-    int                 TestCapability( const char * );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
+    int                 TestCapability( const char * ) override;
 };
 
 string OGRDODSGetVarPath( BaseType * );

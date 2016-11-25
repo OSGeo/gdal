@@ -212,7 +212,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         bHasGeoreferencingAtOpening;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
                 JP2OpenJPEGDataset();
@@ -226,15 +226,15 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
 
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr SetGeoTransform( double* );
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr SetGeoTransform( double* ) override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" );
+                             const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
-                                 const char * pszDomain = "" );
+                                 const char * pszDomain = "" ) override;
 
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -243,7 +243,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
@@ -286,21 +286,21 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                        int nBlockXSize, int nBlockYSize );
     virtual ~JP2OpenJPEGRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg);
+                                  GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable* GetColorTable() { return poCT; }
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable* GetColorTable() override { return poCT; }
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int iOvrLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
 
-    virtual int HasArbitraryOverviews() { return poCT == NULL; }
+    virtual int HasArbitraryOverviews() override { return poCT == NULL; }
 };
 
 /************************************************************************/
