@@ -50,6 +50,11 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
+// To avoid aliasing to GetDiskFreeSpace to GetDiskFreeSpaceA on Windows
+#ifdef GetDiskFreeSpace
+#undef GetDiskFreeSpace
+#endif
+
 class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
