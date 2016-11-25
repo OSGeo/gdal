@@ -29,12 +29,18 @@
  ****************************************************************************/
 
 #include "cpl_vsi_error.h"
+
+#include <cstdarg>
+#include <cstdio>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
 
+// TODO(rouault): Why is this here?
 #if !defined(WIN32)
 #include <string.h>
 #endif
@@ -56,7 +62,8 @@ typedef struct {
     VSIErrorNum nLastErrNo;
     int     nLastErrMsgMax;
     char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
-    /* Do not add anything here. szLastErrMsg must be the last field. See CPLRealloc() below */
+    // Do not add anything here. szLastErrMsg must be the last field. See
+    // CPLRealloc() below.
 } VSIErrorContext;
 
 static void VSIErrorV(VSIErrorNum, const char *, va_list );
@@ -68,7 +75,7 @@ static void VSIErrorV(VSIErrorNum, const char *, va_list );
 static VSIErrorContext *VSIGetErrorContext()
 
 {
-    int bError;
+    int bError = FALSE;
     VSIErrorContext *psCtx =
         reinterpret_cast<VSIErrorContext *>(
             CPLGetTLSEx( CTLS_VSIERRORCONTEXT, &bError ) );
@@ -80,7 +87,8 @@ static VSIErrorContext *VSIGetErrorContext()
       psCtx = reinterpret_cast<VSIErrorContext *>(
           VSICalloc( sizeof(VSIErrorContext), 1) );
         if (psCtx == NULL) {
-            fprintf(stderr, "Out of memory attempting to record a VSI error.\n");
+            fprintf(stderr,
+                    "Out of memory attempting to record a VSI error.\n");
             return NULL;
         }
         psCtx->nLastErrNo = VSIE_None;
