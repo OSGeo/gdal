@@ -235,7 +235,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
 /*      Handle a constant region.                                       */
 /* -------------------------------------------------------------------- */
-    if( aoRegions[iRegion].osFilename.size() == 0 )
+    if( aoRegions[iRegion].osFilename.empty() )
     {
         memset( pBuffer, aoRegions[iRegion].byValue,
                 (size_t) nBytesRequested );

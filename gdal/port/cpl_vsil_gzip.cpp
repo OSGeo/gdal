@@ -2155,7 +2155,7 @@ int VSIZipFilesystemHandler::Mkdir( const char *pszDirname,
                                     long /* nMode */ )
 {
     CPLString osDirname = pszDirname;
-    if( osDirname.size() != 0 && osDirname[osDirname.size() - 1] != '/' )
+    if( !osDirname.empty() && osDirname[osDirname.size() - 1] != '/' )
         osDirname += "/";
     VSIVirtualHandle* poZIPHandle = OpenForWrite(osDirname, "wb");
     if( poZIPHandle == NULL )
@@ -2319,8 +2319,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
     else
     {
         char** papszOptions = NULL;
-        if( (strchr(pszAccess, '+') && osZipInFileName.size() == 0) ||
-             osZipInFileName.size() != 0 )
+        if( (strchr(pszAccess, '+') && osZipInFileName.empty()) ||
+             !osZipInFileName.empty() )
         {
             VSIStatBufL sBuf;
             if( VSIStatExL(osZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0 )
@@ -2336,7 +2336,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
         oMapZipWriteHandles[osZipFilename] =
             new VSIZipWriteHandle(this, hZIP, NULL);
 
-        if( osZipInFileName.size() != 0 )
+        if( !osZipInFileName.empty() )
         {
             VSIZipWriteHandle* poRes = (VSIZipWriteHandle*)
                 OpenForWrite_unlocked(pszFilename, pszAccess);

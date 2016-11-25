@@ -542,7 +542,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         if( fp->Read((void*)osKeyCheck.c_str(), 1, nKeyCheckSize) != nKeyCheckSize )
             return VSICryptReadError();
 
-        if( osKey.size() == 0 && pabyGlobalKey == NULL )
+        if( osKey.empty() && pabyGlobalKey == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Encryption key not defined as key/key_b64 parameter, "
@@ -1402,7 +1402,7 @@ static CPLString GetArgument(const char* pszFilename, const char* pszParamName,
 static CPLString GetKey(const char* pszFilename)
 {
     CPLString osKey = GetArgument(pszFilename, "key");
-    if( osKey.size() == 0 )
+    if( osKey.empty() )
     {
         const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY", "");
         // Do some form of validation to please Coverity
@@ -1410,10 +1410,10 @@ static CPLString GetKey(const char* pszFilename)
         // coverity [tainted_data_transitive]
         osKey = pszKey;
     }
-    if( osKey.size() == 0 || EQUAL(osKey, "GENERATE_IT") )
+    if( osKey.empty() || EQUAL(osKey, "GENERATE_IT") )
     {
         CPLString osKeyB64(GetArgument(pszFilename, "key_b64"));
-        if( osKeyB64.size() == 0 )
+        if( osKeyB64.empty() )
         {
             const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY_B64", "");
             // Do some form of validation to please Coverity
@@ -1448,7 +1448,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     CPLString osFilename(GetFilename(pszFilename));
 
     CPLString osKey(GetKey(pszFilename));
-    if( osKey.size() == 0 && pabyGlobalKey == NULL )
+    if( osKey.empty() && pabyGlobalKey == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Encryption key not defined as key/key_b64 parameter, "
@@ -1529,7 +1529,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         int nBlockSize = static_cast<int>(poBlock->BlockSize());
         delete poBlock;
 
-        if( osIV.size() != 0 )
+        if( !osIV.empty() )
         {
             if( (int)osIV.size() != nBlockSize )
             {

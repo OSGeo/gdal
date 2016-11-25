@@ -295,7 +295,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             {
                 curl_easy_cleanup(oIter->second);
                 poSessionMap->erase(oIter);
-                if( poSessionMap->size() == 0 )
+                if( poSessionMap->empty() )
                 {
                     delete poSessionMap;
                     poSessionMap = NULL;

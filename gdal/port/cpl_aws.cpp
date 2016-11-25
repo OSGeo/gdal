@@ -318,7 +318,7 @@ VSIS3HandleHelper::VSIS3HandleHelper(   const CPLString& osSecretAccessKey,
 
 VSIS3HandleHelper::~VSIS3HandleHelper()
 {
-    for(size_t i=0;i<m_osSecretAccessKey.size();i++)
+    for( size_t i = 0; i < m_osSecretAccessKey.size(); i++ )
         m_osSecretAccessKey[i] = 0;
 }
 
@@ -375,7 +375,7 @@ bool VSIS3HandleHelper::GetBucketAndObjectKey(const char* pszURI, const char* ps
                                               CPLString &osBucket, CPLString &osObjectKey)
 {
     osBucket = pszURI;
-    if( osBucket.size() == 0 )
+    if( osBucket.empty() )
     {
         return false;
     }
@@ -405,14 +405,14 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI(const char* pszURI,
                                                    bool bAllowNoObject)
 {
     CPLString osSecretAccessKey = CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
-    if( osSecretAccessKey.size() == 0 )
+    if( osSecretAccessKey.empty() )
     {
         VSIError(VSIE_AWSInvalidCredentials,
                  "AWS_SECRET_ACCESS_KEY configuration option not defined");
         return NULL;
     }
     CPLString osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
-    if( osAccessKeyId.size() == 0 )
+    if( osAccessKeyId.empty() )
     {
         VSIError(VSIE_AWSInvalidCredentials,
                  "AWS_ACCESS_KEY_ID configuration option not defined");
@@ -465,7 +465,7 @@ struct curl_slist* VSIS3HandleHelper::GetCurlHeaders(const CPLString& osVerb,
                                                      size_t nBytesContent)
 {
     CPLString osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
-    if( osXAMZDate.size() == 0 )
+    if( osXAMZDate.empty() )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
 
     CPLString osXAMZContentSHA256 = CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
