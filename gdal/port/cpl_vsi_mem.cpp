@@ -27,12 +27,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
-#include <time.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
+#include <ctime>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include <map>
+#include <string>
+#include <utility>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
 
 //! @cond Doxygen_Suppress
 
