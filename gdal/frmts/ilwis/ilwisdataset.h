@@ -123,9 +123,9 @@ public:
     CPLErr GetILWISInfo(std::string pszFileName);
     void ILWISOpen( std::string pszFilename);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-    virtual double GetNoDataValue( int *pbSuccess );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual double GetNoDataValue( int *pbSuccess ) override;
 
 private:
     void FillWithNoData(void * pImage);
@@ -169,13 +169,13 @@ public:
                                int nBands, GDALDataType eType,
                                char** papszParmList);
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform );
-    virtual CPLErr  SetGeoTransform( double * );
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr  SetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr SetProjection( const char * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual void   FlushCache();
+    virtual void   FlushCache() override;
 };
 
 // IniFile.h: interface for the IniFile class.

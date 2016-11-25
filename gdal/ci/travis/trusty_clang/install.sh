@@ -23,7 +23,12 @@ make generate
 make
 cd ../..
 sudo rm -f /usr/lib/libgdal.so*
+sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 
 sudo make install
+
+# Check that override is not used in public headers
+if grep override /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h | grep -v "One can override" | grep -v cpl_²port | grep -v "Use this file to override"; then echo "Error: override keyword found in public headers instead of CPL_OVERRIDE" && /bin/false; fi 
+
 sudo ldconfig
 cd ../autotest/cpp
 make -j3

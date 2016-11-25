@@ -2163,11 +2163,11 @@ public:
 
     void         *hSrcImageTransformer;
 
-    virtual OGRSpatialReference *GetSourceCS() { return NULL; }
-    virtual OGRSpatialReference *GetTargetCS() { return NULL; }
+    virtual OGRSpatialReference *GetSourceCS() override { return NULL; }
+    virtual OGRSpatialReference *GetTargetCS() override { return NULL; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL ) {
+                           double *x, double *y, double *z = NULL ) override {
         int nResult;
 
         int *pabSuccess = (int *) CPLCalloc(sizeof(int),nCount);
@@ -2179,7 +2179,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL ) {
+                             int *pabSuccess = NULL ) override {
         return GDALGenImgProjTransform( hSrcImageTransformer, TRUE,
                                         nCount, x, y, z, pabSuccess );
     }

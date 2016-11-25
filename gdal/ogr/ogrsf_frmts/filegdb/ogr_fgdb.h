@@ -94,7 +94,7 @@ protected:
   virtual void       CloseGDBObjects();
 
 public:
-          virtual OGRFeature* GetNextFeature();
+          virtual OGRFeature* GetNextFeature() override;
 };
 
 /************************************************************************/
@@ -110,7 +110,7 @@ class FGdbLayer : public FGdbBaseLayer
   int                 m_bBulkLoadAllowed;
   int                 m_bBulkLoadInProgress;
 
-  virtual void        CloseGDBObjects();
+  virtual void        CloseGDBObjects() override;
   int                 EditIndexesForFIDHack(const char* pszRadixTablename);
   int                 EditGDBTablX(const CPLString& osGDBTablX,
                                    const CPLString& osNewGDBTablX);
@@ -170,45 +170,45 @@ public:
   static bool CreateFeatureDataset(FGdbDataSource* pParentDataSource, const std::string& feature_dataset_name, OGRSpatialReference* poSRS, char** papszOptions );
 
   // virtual const char *GetName();
-  virtual const char* GetFIDColumn() { return m_strOIDFieldName.c_str(); }
+  virtual const char* GetFIDColumn() override { return m_strOIDFieldName.c_str(); }
 
-  virtual void        ResetReading();
-  virtual OGRFeature* GetNextFeature();
-  virtual OGRFeature* GetFeature( GIntBig nFeatureId );
+  virtual void        ResetReading() override;
+  virtual OGRFeature* GetNextFeature() override;
+  virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
 
   Table* GetTable() { return m_pTable; }
 
   std::wstring GetTablePath() const { return m_wstrTablePath; }
   std::wstring GetType() const { return m_wstrType; }
 
-  virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK );
-  virtual OGRErr      DeleteField( int iFieldToDelete );
+  virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
+  virtual OGRErr      DeleteField( int iFieldToDelete ) override;
 #ifdef AlterFieldDefn_implemented_but_not_working
   virtual OGRErr      AlterFieldDefn( int iFieldToAlter, OGRFieldDefn* poNewFieldDefn, int nFlags );
 #endif
 
-  virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-  virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-  virtual OGRErr      DeleteFeature( GIntBig nFID );
+  virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+  virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+  virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-  virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+  virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+  virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-  virtual GIntBig     GetFeatureCount( int bForce );
-  virtual OGRErr      SetAttributeFilter( const char *pszQuery );
+  virtual GIntBig     GetFeatureCount( int bForce ) override;
+  virtual OGRErr      SetAttributeFilter( const char *pszQuery ) override;
 
-  virtual void        SetSpatialFilter( OGRGeometry * );
-  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+  virtual void        SetSpatialFilter( OGRGeometry * ) override;
+  virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
 //  virtual OGRErr        StartTransaction( );
 //  virtual OGRErr        CommitTransaction( );
 //  virtual OGRErr        RollbackTransaction( );
 
-  OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
+  OGRFeatureDefn *    GetLayerDefn() override { return m_pFeatureDefn; }
 
-  virtual int         TestCapability( const char * );
+  virtual int         TestCapability( const char * ) override;
 
   // Access the XML directly. The 2 following methods are not currently used by the driver, but
   // can be used by external code for specific purposes.
@@ -217,7 +217,7 @@ public:
 
   void                SetSymlinkFlag() { m_bSymlinkFlag = TRUE; }
 
-  virtual const char* GetMetadataItem(const char* pszName, const char* pszDomain);
+  virtual const char* GetMetadataItem(const char* pszName, const char* pszDomain) override;
 
 protected:
 
@@ -257,11 +257,11 @@ public:
   FGdbResultLayer(FGdbDataSource* pParentDataSource, const char* pszStatement, EnumRows* pEnumRows);
   virtual ~FGdbResultLayer();
 
-  virtual void        ResetReading();
+  virtual void        ResetReading() override;
 
-  OGRFeatureDefn *    GetLayerDefn() { return m_pFeatureDefn; }
+  OGRFeatureDefn *    GetLayerDefn() override { return m_pFeatureDefn; }
 
-  virtual int         TestCapability( const char * );
+  virtual int         TestCapability( const char * ) override;
 
 protected:
 
@@ -291,23 +291,23 @@ public:
   int         Open(const char* pszFSName, int bUpdate,
                    const char* pszPublicName);
 
-  const char* GetName() { return m_osPublicName.c_str(); }
+  const char* GetName() override { return m_osPublicName.c_str(); }
   const char* GetFSName() { return m_osFSName.c_str(); }
 
-  int         GetLayerCount() { return static_cast<int>(m_layers.size()); }
+  int         GetLayerCount() override { return static_cast<int>(m_layers.size()); }
 
-  OGRLayer*   GetLayer( int );
+  OGRLayer*   GetLayer( int ) override;
 
-  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL );
+  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL ) override;
 
-  virtual OGRErr DeleteLayer( int );
+  virtual OGRErr DeleteLayer( int ) override;
 
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
-                                  const char *pszDialect );
-  virtual void        ReleaseResultSet( OGRLayer * poResultsSet );
+                                  const char *pszDialect ) override;
+  virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
 
-  int TestCapability( const char * );
+  int TestCapability( const char * ) override;
 
   Geodatabase* GetGDB() { return m_pGeodatabase; }
   bool         GetUpdate() { return m_bUpdate; }
@@ -379,16 +379,16 @@ public:
   FGdbDriver();
   virtual ~FGdbDriver();
 
-  virtual const char *GetName();
-  virtual OGRDataSource *Open( const char *, int );
-  virtual int TestCapability( const char * );
-  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL);
-  virtual OGRErr DeleteDataSource( const char *pszDataSource );
+  virtual const char *GetName() override;
+  virtual OGRDataSource *Open( const char *, int ) override;
+  virtual int TestCapability( const char * ) override;
+  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL) override;
+  virtual OGRErr DeleteDataSource( const char *pszDataSource ) override;
 
   /* From IOGRTransactionBehaviour */
-  virtual OGRErr StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
-  virtual OGRErr CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
-  virtual OGRErr RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS);
+  virtual OGRErr StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
+  virtual OGRErr CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
+  virtual OGRErr RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasReopenedDS) override;
 
   void Release(const char* pszName);
   CPLMutex* GetMutex() { return hMutex; }

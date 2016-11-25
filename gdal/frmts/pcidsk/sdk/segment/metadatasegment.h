@@ -58,7 +58,7 @@ namespace PCIDSK
         void         SetGroupMetadataValue( const char *group, int id,
                                             const std::string& key, const std::string& value );
 
-        void         Synchronize();
+        void         Synchronize() override;
                                    
     private:
        bool         loaded;

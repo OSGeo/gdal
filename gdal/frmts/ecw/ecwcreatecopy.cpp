@@ -85,14 +85,14 @@ class GDALECWCompressor : public CNCSFile {
 public:
     GDALECWCompressor();
     virtual ~GDALECWCompressor();
-    virtual CNCSError WriteReadLine(UINT32 nNextLine, void **ppInputArray);
+    virtual CNCSError WriteReadLine(UINT32 nNextLine, void **ppInputArray) override;
 #if ECWSDK_VERSION>=50
     virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters);
 #else
-    virtual void WriteStatus(UINT32 nCurrentLine);
+    virtual void WriteStatus(UINT32 nCurrentLine) override;
 #endif
 
-    virtual bool WriteCancel();
+    virtual bool WriteCancel() override;
 
     CPLErr  Initialize( const char *pszFilename, char **papszOptions,
                         int nXSize, int nYSize, int nBands, const char * const * papszBandDescriptions, int bRGBColorSpace,
@@ -1615,12 +1615,12 @@ class ECWWriteDataset : public GDALDataset
                                  int );
             ~ECWWriteDataset();
 
-    virtual void   FlushCache( void );
+    virtual void   FlushCache( void ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
-    virtual CPLErr SetGeoTransform( double * );
-    virtual CPLErr SetProjection( const char *pszWKT );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr SetGeoTransform( double * ) override;
+    virtual CPLErr SetProjection( const char *pszWKT ) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -1630,7 +1630,7 @@ class ECWWriteDataset : public GDALDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 #endif
 };
 
@@ -1658,17 +1658,17 @@ class ECWWriteRasterBand : public GDALRasterBand
                    ECWWriteRasterBand( ECWWriteDataset *, int );
                   ~ECWWriteRasterBand();
 
-    virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn )
+    virtual CPLErr SetColorInterpretation( GDALColorInterp eInterpIn ) override
         { eInterp = eInterpIn;
           if( strlen(GetDescription()) == 0 )
               SetDescription(ECWGetColorInterpretationName(eInterp, nBand-1));
           return CE_None;
         }
-    virtual GDALColorInterp GetColorInterpretation()
+    virtual GDALColorInterp GetColorInterpretation() override
         { return eInterp; }
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
 #ifdef OPTIMIZED_FOR_GDALWARP
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
@@ -1676,7 +1676,7 @@ class ECWWriteRasterBand : public GDALRasterBand
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 #endif
 };
 

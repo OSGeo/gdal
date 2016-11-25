@@ -224,10 +224,10 @@ protected:
     void   LoadWorldFileOrTab();
     CPLString osWldFilename;
 
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+                                    int, int *, GDALProgressFunc, void * ) override;
 
   public:
                  JPGDatasetCommon();
@@ -238,22 +238,22 @@ protected:
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg );
+                                   GDALRasterIOExtraArg* psExtraArg ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(void) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -276,10 +276,10 @@ class JPGDataset : public JPGDatasetCommon
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
 
-    virtual CPLErr LoadScanline(int);
-    virtual CPLErr Restart();
-    virtual int GetDataPrecision() { return sDInfo.data_precision; }
-    virtual int GetOutColorSpace() { return sDInfo.out_color_space; }
+    virtual CPLErr LoadScanline(int) override;
+    virtual CPLErr Restart() override;
+    virtual int GetDataPrecision() override { return sDInfo.data_precision; }
+    virtual int GetOutColorSpace() override { return sDInfo.out_color_space; }
 
     int    nQLevel;
 #if !defined(JPGDataset)
@@ -336,14 +336,14 @@ class JPGRasterBand : public GDALPamRasterBand
                    JPGRasterBand( JPGDatasetCommon *, int );
     virtual ~JPGRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
+    virtual GDALRasterBand *GetMaskBand() override;
+    virtual int             GetMaskFlags() override;
 
-    virtual GDALRasterBand *GetOverview(int i);
-    virtual int             GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int i) override;
+    virtual int             GetOverviewCount() override;
 };
 
 #if !defined(JPGDataset)
@@ -357,7 +357,7 @@ class JPGRasterBand : public GDALPamRasterBand
 class JPGMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
   public:
     explicit JPGMaskBand( JPGDataset *poDS );
@@ -3785,9 +3785,9 @@ class GDALJPGDriver: public GDALDriver
     public:
         GDALJPGDriver() {}
 
-        char      **GetMetadata( const char * pszDomain = "" );
+        char      **GetMetadata( const char * pszDomain = "" ) override;
         const char *GetMetadataItem( const char * pszName,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
 };
 
 char** GDALJPGDriver::GetMetadata( const char * pszDomain )

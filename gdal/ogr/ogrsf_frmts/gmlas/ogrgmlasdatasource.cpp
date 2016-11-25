@@ -309,7 +309,7 @@ class GMLASGuessXSDFilename : public DefaultHandler
             const   XMLCh* const    localname,
             const   XMLCh* const    qname,
             const   Attributes& attrs
-        );
+        ) override;
 };
 
 /************************************************************************/

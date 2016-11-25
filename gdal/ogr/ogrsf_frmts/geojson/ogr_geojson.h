@@ -63,10 +63,10 @@ class OGRGeoJSONLayer : public OGRMemLayer
     //
     // OGRLayer Interface
     //
-    virtual const char* GetFIDColumn();
-    virtual int         TestCapability( const char * pszCap );
+    virtual const char* GetFIDColumn() override;
+    virtual int         TestCapability( const char * pszCap ) override;
 
-    virtual OGRErr      SyncToDisk();
+    virtual OGRErr      SyncToDisk() override;
     //
     // OGRGeoJSONLayer Interface
     //
@@ -99,14 +99,14 @@ class OGRGeoJSONWriteLayer : public OGRLayer
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn_; }
-    OGRSpatialReference* GetSpatialRef() { return NULL; }
+    OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn_; }
+    OGRSpatialReference* GetSpatialRef() override { return NULL; }
 
-    void ResetReading() { }
-    OGRFeature* GetNextFeature() { return NULL; }
-    OGRErr ICreateFeature( OGRFeature* poFeature );
-    OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK );
-    int TestCapability( const char* pszCap );
+    void ResetReading() override { }
+    OGRFeature* GetNextFeature() override { return NULL; }
+    OGRErr ICreateFeature( OGRFeature* poFeature ) override;
+    OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK ) override;
+    int TestCapability( const char* pszCap ) override;
 
   private:
     OGRGeoJSONDataSource* poDS_;
@@ -141,14 +141,14 @@ class OGRGeoJSONDataSource : public OGRDataSource
     //
     int Open( GDALOpenInfo* poOpenInfo,
                GeoJSONSourceType nSrcType );
-    const char* GetName();
-    int GetLayerCount();
-    OGRLayer* GetLayer( int nLayer );
+    const char* GetName() override;
+    int GetLayerCount() override;
+    OGRLayer* GetLayer( int nLayer ) override;
     OGRLayer* ICreateLayer( const char* pszName,
                             OGRSpatialReference* poSRS = NULL,
                             OGRwkbGeometryType eGType = wkbUnknown,
-                            char** papszOptions = NULL );
-    int TestCapability( const char* pszCap );
+                            char** papszOptions = NULL ) override;
+    int TestCapability( const char* pszCap ) override;
 
     void AddLayer( OGRGeoJSONLayer* poLayer );
 
@@ -179,7 +179,7 @@ class OGRGeoJSONDataSource : public OGRDataSource
     int  HasOtherPages() const { return bOtherPages_; }
     bool IsUpdatable() const { return bUpdatable_; }
 
-    virtual void        FlushCache();
+    virtual void        FlushCache() override;
 
     static const size_t SPACE_FOR_BBOX = 130;
 

@@ -69,16 +69,16 @@ class GIFAbstractDataset : public GDALPamDataset
                  GIFAbstractDataset();
     virtual      ~GIFAbstractDataset();
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr GetGeoTransform( double * );
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
 
@@ -114,9 +114,9 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
                                          int bAdvertizeInterlacedMDI );
     virtual       ~GIFAbstractRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 #endif

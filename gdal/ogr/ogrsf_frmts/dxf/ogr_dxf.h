@@ -76,12 +76,12 @@ class OGRDXFBlocksLayer : public OGRLayer
     explicit OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
     ~OGRDXFBlocksLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRFeature *        GetNextUnfilteredFeature();
 };
@@ -134,12 +134,12 @@ class OGRDXFLayer : public OGRLayer
     explicit OGRDXFLayer( OGRDXFDataSource *poDS );
     ~OGRDXFLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRFeature *        GetNextUnfilteredFeature();
 };
@@ -216,12 +216,12 @@ class OGRDXFDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename, int bHeaderOnly=FALSE );
 
-    const char          *GetName() { return osName; }
+    const char          *GetName() override { return osName; }
 
-    int                 GetLayerCount() { return static_cast<int>(apoLayers.size()); }
-    OGRLayer            *GetLayer( int );
+    int                 GetLayerCount() override { return static_cast<int>(apoLayers.size()); }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     // The following is only used by OGRDXFLayer
 
@@ -297,15 +297,15 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRDXFWriterLayer( OGRDXFWriterDS *poDS, VSILFILE *fp );
     ~OGRDXFWriterLayer();
 
-    void                ResetReading() {}
-    OGRFeature         *GetNextFeature() { return NULL; }
+    void                ResetReading() override {}
+    OGRFeature         *GetNextFeature() override { return NULL; }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    int                 TestCapability( const char * ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     void                ResetFP( VSILFILE * );
 
@@ -324,15 +324,15 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
     explicit OGRDXFBlocksWriterLayer( OGRDXFWriterDS *poDS );
     ~OGRDXFBlocksWriterLayer();
 
-    void                ResetReading() {}
-    OGRFeature         *GetNextFeature() { return NULL; }
+    void                ResetReading() override {}
+    OGRFeature         *GetNextFeature() override { return NULL; }
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
+    int                 TestCapability( const char * ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     std::vector<OGRFeature*> apoBlocks;
     OGRFeature          *FindBlock( const char * );
@@ -387,17 +387,17 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 Open( const char * pszFilename,
                               char **papszOptions );
 
-    const char          *GetName() { return osName; }
+    const char          *GetName() override { return osName; }
 
-    int                 GetLayerCount();
-    OGRLayer            *GetLayer( int );
+    int                 GetLayerCount() override;
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRLayer           *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
+                                     char ** papszOptions = NULL ) override;
 
     bool                CheckEntityID( const char *pszEntityID );
     long                WriteEntityID( VSILFILE * fp,

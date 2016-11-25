@@ -136,24 +136,24 @@ public:
                             const char* pszCollection);
           virtual ~OGRMongoDBLayer();
 
-            virtual OGRFeatureDefn* GetLayerDefn();
-            virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
-            virtual void        ResetReading();
-            virtual OGRFeature* GetNextFeature();
-            virtual OGRFeature* GetFeature(GIntBig nFID);
-            virtual OGRErr      DeleteFeature(GIntBig nFID);
-            virtual int         TestCapability(const char* pszCap);
-            virtual GIntBig     GetFeatureCount(int bForce);
-            virtual OGRErr      SetAttributeFilter(const char* pszFilter);
-            virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-            virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-            virtual const char* GetFIDColumn();
-            virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn, int bApproxOK );
-            virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poFieldIn, int bApproxOK );
-            virtual OGRErr      ICreateFeature(OGRFeature* poFeature);
-            virtual OGRErr      ISetFeature(OGRFeature* poFeature);
+            virtual OGRFeatureDefn* GetLayerDefn() override;
+            virtual const char* GetName() override { return m_poFeatureDefn->GetName(); }
+            virtual void        ResetReading() override;
+            virtual OGRFeature* GetNextFeature() override;
+            virtual OGRFeature* GetFeature(GIntBig nFID) override;
+            virtual OGRErr      DeleteFeature(GIntBig nFID) override;
+            virtual int         TestCapability(const char* pszCap) override;
+            virtual GIntBig     GetFeatureCount(int bForce) override;
+            virtual OGRErr      SetAttributeFilter(const char* pszFilter) override;
+            virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+            virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+            virtual const char* GetFIDColumn() override;
+            virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn, int bApproxOK ) override;
+            virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poFieldIn, int bApproxOK ) override;
+            virtual OGRErr      ICreateFeature(OGRFeature* poFeature) override;
+            virtual OGRErr      ISetFeature(OGRFeature* poFeature) override;
 
-            virtual OGRErr      SyncToDisk();
+            virtual OGRErr      SyncToDisk() override;
 
             const CPLString&    GetDatabase() const { return m_osDatabase; }
             const CPLString&    GetCollection() const { return m_osCollection; }
@@ -186,20 +186,20 @@ public:
             virtual ~OGRMongoDBDataSource();
 
             int Open(const char* pszFilename, GDALAccess eAccess, char** papszOpenOptions);
-            virtual int GetLayerCount() { return (int)m_apoLayers.size(); }
-            virtual OGRLayer* GetLayer(int nIdx);
-            virtual int         TestCapability(const char* pszCap);
+            virtual int GetLayerCount() override { return (int)m_apoLayers.size(); }
+            virtual OGRLayer* GetLayer(int nIdx) override;
+            virtual int         TestCapability(const char* pszCap) override;
             virtual OGRLayer   *ICreateLayer( const char *pszName,
                                              OGRSpatialReference *poSpatialRef = NULL,
                                              OGRwkbGeometryType eGType = wkbUnknown,
-                                             char ** papszOptions = NULL );
-            virtual OGRErr      DeleteLayer( int iLayer );
-            virtual OGRLayer   *GetLayerByName(const char* pszLayerName);
+                                             char ** papszOptions = NULL ) override;
+            virtual OGRErr      DeleteLayer( int iLayer ) override;
+            virtual OGRLayer   *GetLayerByName(const char* pszLayerName) override;
 
             virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
-                                            const char *pszDialect );
-            virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                            const char *pszDialect ) override;
+            virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
             const CPLString& GetDatabase() const { return m_osDatabase; }
             DBClientBase    *GetConn() const { return m_poConn; }
@@ -2577,10 +2577,10 @@ class OGRMongoDBSingleFeatureLayer: public OGRLayer
     public:
        explicit OGRMongoDBSingleFeatureLayer( const char *pszVal );
        ~OGRMongoDBSingleFeatureLayer() { m_poFeatureDefn->Release(); }
-       void             ResetReading() { iNextShapeId = 0; }
-       OGRFeature      *GetNextFeature();
-       OGRFeatureDefn  *GetLayerDefn() { return m_poFeatureDefn; }
-       int              TestCapability( const char * ) { return FALSE; }
+       void             ResetReading() override { iNextShapeId = 0; }
+       OGRFeature      *GetNextFeature() override;
+       OGRFeatureDefn  *GetLayerDefn() override { return m_poFeatureDefn; }
+       int              TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/

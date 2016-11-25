@@ -470,11 +470,11 @@ public:
         char **papszOptions,
         GDALProgressFunc pfnProgress,
         void * pProgressData );
-    virtual char **GetFileList(void);
-    virtual CPLErr GetGeoTransform( double *padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual const char *GetProjectionRef( void );
-    virtual CPLErr SetProjection( const char *pszProjString );
+    virtual char **GetFileList(void) override;
+    virtual CPLErr GetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual const char *GetProjectionRef( void ) override;
+    virtual CPLErr SetProjection( const char *pszProjString ) override;
 };
 
 //  ----------------------------------------------------------------------------
@@ -497,25 +497,25 @@ public:
         GDALDataType eDataType );
     virtual ~IdrisiRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual char **GetCategoryNames();
-    virtual const char *GetUnitType();
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual char **GetCategoryNames() override;
+    virtual const char *GetUnitType() override;
 
-    virtual CPLErr SetCategoryNames( char **papszCategoryNames );
-    virtual CPLErr SetNoDataValue( double dfNoDataValue );
-    virtual CPLErr SetColorTable( GDALColorTable *poColorTable );
-    virtual CPLErr SetUnitType( const char *pszUnitType );
+    virtual CPLErr SetCategoryNames( char **papszCategoryNames ) override;
+    virtual CPLErr SetNoDataValue( double dfNoDataValue ) override;
+    virtual CPLErr SetColorTable( GDALColorTable *poColorTable ) override;
+    virtual CPLErr SetUnitType( const char *pszUnitType ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev );
+                                  double dfMean, double dfStdDev ) override;
     CPLErr SetMinMax( double dfMin, double dfMax );
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) override;
 
     float  fMaximum;
     float  fMinimum;

@@ -282,14 +282,14 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
 
@@ -360,15 +360,15 @@ class VSICurlHandle : public VSIVirtualHandle
     VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL);
     virtual ~VSICurlHandle();
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
     virtual int          ReadMultiRange( int nRanges, void ** ppData,
-                                         const vsi_l_offset* panOffsets, const size_t* panSizes );
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int          Eof();
-    virtual int          Flush();
-    virtual int          Close();
+                                         const vsi_l_offset* panOffsets, const size_t* panSizes ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int          Eof() override;
+    virtual int          Flush() override;
+    virtual int          Close() override;
 
     bool                 IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize() { return GetFileSize(false); }
@@ -3195,21 +3195,21 @@ class VSIS3FSHandler CPL_FINAL : public VSICurlFilesystemHandler
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
 protected:
-    virtual CPLString GetFSPrefix() { return "/vsis3/"; }
-    virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
+    virtual CPLString GetFSPrefix() override { return "/vsis3/"; }
+    virtual VSICurlHandle* CreateFileHandle(const char* pszURL) override;
     virtual char** GetFileList(const char *pszFilename,
                                int nMaxFiles,
-                               bool* pbGotFileList);
-    virtual CPLString GetURLFromDirname( const CPLString& osDirname );
+                               bool* pbGotFileList) override;
+    virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
 public:
         VSIS3FSHandler() {}
 
         virtual VSIVirtualHandle *Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError );
-        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-        virtual int      Unlink( const char *pszFilename );
+                                        bool bSetError ) override;
+        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+        virtual int      Unlink( const char *pszFilename ) override;
 
         void UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper);
         void UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper);
@@ -3224,10 +3224,10 @@ class VSIS3Handle CPL_FINAL : public VSICurlHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
-        virtual bool CanRestartOnError(const char*, bool);
-        virtual bool UseLimitRangeGetInsteadOfHead() { return true; }
-        virtual void ProcessGetFileSizeResult(const char* pszContent);
+        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb) override;
+        virtual bool CanRestartOnError(const char*, bool) override;
+        virtual bool UseLimitRangeGetInsteadOfHead() override { return true; }
+        virtual void ProcessGetFileSizeResult(const char* pszContent) override;
 
     public:
         VSIS3Handle(VSIS3FSHandler* poFS,
@@ -3273,13 +3273,13 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
                          VSIS3HandleHelper* poS3HandleHelper);
         virtual ~VSIS3WriteHandle();
 
-        virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-        virtual vsi_l_offset Tell();
-        virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
+        virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+        virtual vsi_l_offset Tell() override;
+        virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
         virtual size_t    Write( const void *pBuffer, size_t nSize
-                                 ,size_t nMemb );
-        virtual int       Eof();
-        virtual int       Close();
+                                 ,size_t nMemb ) override;
+        virtual int       Eof() override;
+        virtual int       Close() override;
 
         bool              IsOK() { return m_pabyBuffer != NULL; }
 };

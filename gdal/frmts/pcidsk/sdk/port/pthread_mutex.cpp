@@ -45,8 +45,8 @@ public:
     PThreadMutex();
     ~PThreadMutex();
 
-    int Acquire(void);
-    int Release(void);
+    int Acquire(void) override;
+    int Release(void) override;
 };
 
 /************************************************************************/

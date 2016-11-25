@@ -59,16 +59,16 @@ class OGRGeoconceptDataSource : public OGRDataSource
     int            Open( const char* pszName, bool bTestOpen, bool bUpdate );
     int            Create( const char* pszName, char** papszOptions );
 
-    const char*    GetName() { return _pszName; }
-    int            GetLayerCount() { return _nLayers; }
-    OGRLayer*      GetLayer( int iLayer );
+    const char*    GetName() override { return _pszName; }
+    int            GetLayerCount() override { return _nLayers; }
+    OGRLayer*      GetLayer( int iLayer ) override;
 //    OGRErr         DeleteLayer( int iLayer );
-    int            TestCapability( const char* pszCap );
+    int            TestCapability( const char* pszCap ) override;
 
     OGRLayer*      ICreateLayer( const char* pszName,
                                 OGRSpatialReference* poSpatialRef = NULL,
                                 OGRwkbGeometryType eGType = wkbUnknown,
-                                char** papszOptions = NULL );
+                                char** papszOptions = NULL ) override;
   private:
     int            LoadFile( const char * );
 };

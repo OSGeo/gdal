@@ -835,12 +835,12 @@ class netCDFDataset : public GDALPamDataset
 
   protected:
 
-    CPLXMLNode *SerializeToXML( const char *pszVRTPath );
+    CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef,
                                      OGRwkbGeometryType eGType,
-                                     char ** papszOptions );
+                                     char ** papszOptions ) override;
 
   public:
 
@@ -848,18 +848,18 @@ class netCDFDataset : public GDALPamDataset
     virtual ~netCDFDataset();
 
     /* Projection/GT */
-    CPLErr      GetGeoTransform( double * );
-    CPLErr      SetGeoTransform (double *);
-    const char * GetProjectionRef();
-    CPLErr      SetProjection (const char *);
+    CPLErr      GetGeoTransform( double * ) override;
+    CPLErr      SetGeoTransform (double *) override;
+    const char * GetProjectionRef() override;
+    CPLErr      SetProjection (const char *) override;
 
-    virtual char      **GetMetadataDomainList();
-    char ** GetMetadata( const char * );
+    virtual char      **GetMetadataDomainList() override;
+    char ** GetMetadata( const char * ) override;
 
-    virtual int  TestCapability(const char* pszCap);
+    virtual int  TestCapability(const char* pszCap) override;
 
-    virtual int  GetLayerCount() { return nLayers; }
-    virtual OGRLayer* GetLayer(int nIdx);
+    virtual int  GetLayerCount() override { return nLayers; }
+    virtual OGRLayer* GetLayer(int nIdx) override;
 
     int GetCDFID() { return cdfid; }
 
@@ -979,17 +979,17 @@ class netCDFLayer: public OGRLayer
         int             GetCDFID() const { return m_nLayerCDFId; }
         void            SetCDFID(int nId) { m_nLayerCDFId = nId; }
 
-        virtual void ResetReading();
-        virtual OGRFeature* GetNextFeature();
+        virtual void ResetReading() override;
+        virtual OGRFeature* GetNextFeature() override;
 
-        virtual GIntBig GetFeatureCount(int bForce);
+        virtual GIntBig GetFeatureCount(int bForce) override;
 
-        virtual int  TestCapability(const char* pszCap);
+        virtual int  TestCapability(const char* pszCap) override;
 
-        virtual OGRFeatureDefn* GetLayerDefn();
+        virtual OGRFeatureDefn* GetLayerDefn() override;
 
-        virtual OGRErr ICreateFeature(OGRFeature* poFeature);
-        virtual OGRErr CreateField(OGRFieldDefn* poFieldDefn, int bApproxOK);
+        virtual OGRErr ICreateFeature(OGRFeature* poFeature) override;
+        virtual OGRErr CreateField(OGRFieldDefn* poFieldDefn, int bApproxOK) override;
 };
 
 void NCDFWriteLonLatVarsAttributes(int cdfid, int nVarLonID, int nVarLatID);

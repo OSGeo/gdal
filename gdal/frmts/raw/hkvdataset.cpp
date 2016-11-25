@@ -60,7 +60,7 @@ class HKVRasterBand : public RawRasterBand
                                GDALDataType eDataType, int bNativeOrder );
     virtual     ~HKVRasterBand() {};
 
-    virtual CPLErr SetNoDataValue( double );
+    virtual CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/
@@ -199,15 +199,15 @@ class HKVDataset : public RawDataset
                 HKVDataset();
     virtual     ~HKVDataset();
 
-    virtual int GetGCPCount() /* const */ { return nGCPCount; };
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int GetGCPCount() override /* const */ { return nGCPCount; };
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual CPLErr SetGeoTransform( double * );
-    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetGeoTransform( double * ) override;
+    virtual CPLErr SetProjection( const char * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,

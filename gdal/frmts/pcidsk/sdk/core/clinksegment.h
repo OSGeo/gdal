@@ -45,7 +45,7 @@ namespace PCIDSK {
         void SetPath(const std::string& oPath);
 
         //synchronize the segment on disk.
-        void Synchronize();
+        void Synchronize() override;
     private:
         // Helper housekeeping functions
         void Load();

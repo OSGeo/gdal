@@ -16,7 +16,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
         -DHAVE_JASPER_UUID \
-        -D__GNUC__==5 \
+        -D__GNUC__==5 -DGDAL_COMPILATION \
         -DODBCVER=0x0300 \
         -DNETCDF_HAS_NC4 \
         -UGDAL_NO_AUTOLOAD \
@@ -27,6 +27,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DCPPCHECK \
         -DDEBUG_MUTEX \
         -DDEBUG_PROXY_POOL \
+        -Doverride= \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \

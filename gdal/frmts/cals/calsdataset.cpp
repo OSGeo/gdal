@@ -87,7 +87,7 @@ class CALSRasterBand: public GDALPamRasterBand
         eDataType = GDT_Byte;
     }
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData )
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) override
     {
         return poUnderlyingBand->ReadBlock(nBlockXOff, nBlockYOff, pData);
     }
@@ -98,7 +98,7 @@ class CALSRasterBand: public GDALPamRasterBand
                               GDALDataType eBufType,
                               GSpacing nPixelSpace,
                               GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg )
+                              GDALRasterIOExtraArg* psExtraArg ) override
     {
         return poUnderlyingBand->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -106,22 +106,22 @@ class CALSRasterBand: public GDALPamRasterBand
             nPixelSpace, nLineSpace, psExtraArg ) ;
     }
 
-    virtual GDALColorTable* GetColorTable()
+    virtual GDALColorTable* GetColorTable() override
     {
         return poUnderlyingBand->GetColorTable();
     }
 
-    virtual GDALColorInterp GetColorInterpretation()
+    virtual GDALColorInterp GetColorInterpretation() override
     {
         return GCI_PaletteIndex;
     }
 
-    virtual char** GetMetadata(const char* pszDomain)
+    virtual char** GetMetadata(const char* pszDomain) override
     {
         return poUnderlyingBand->GetMetadata(pszDomain);
     }
 
-    virtual const char* GetMetadataItem(const char* pszKey, const char* pszDomain)
+    virtual const char* GetMetadataItem(const char* pszKey, const char* pszDomain) override
     {
         return poUnderlyingBand->GetMetadataItem(pszKey, pszDomain);
     }
@@ -165,7 +165,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
 
         virtual CPLErr IReadBlock( int /* nBlockXOff */,
                                    int /* nBlockYOff */,
-                                   void * /* pData */ )
+                                   void * /* pData */ ) override
         {
             // Should not be called.
             return CE_Failure;
@@ -177,7 +177,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace,
                                   GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg )
+                                  GDALRasterIOExtraArg* psExtraArg ) override
         {
             const CPLErr eErr =
                 poSrcDS->GetRasterBand(1)->RasterIO(

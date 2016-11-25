@@ -51,7 +51,7 @@ public:
         explicit ODSCellEvaluator(OGRODSLayer* poLayerIn) : poLayer(poLayerIn) {}
 
         int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
-                          std::vector<ods_formula_node>& aoOutValues);
+                          std::vector<ods_formula_node>& aoOutValues) override;
 
         int Evaluate(int nRow, int nCol);
 };

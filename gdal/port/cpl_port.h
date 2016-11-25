@@ -964,9 +964,29 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #ifdef __cplusplus
 
+#if HAVE_CXX11 || _MSC_VER >= 1500
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE override
+
+#else
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE
+
+/* For GDAL source compilation only, ignore override if non C++11 compiler */
+#ifdef GDAL_COMPILATION
+#  define override
+#endif
+
+#endif /* __cpluscplus */
+
 #if HAVE_CXX11
 /** C++11 final qualifier */
 #  define CPL_FINAL final
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
@@ -978,6 +998,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #else
 /** C++11 final qualifier */
 #  define CPL_FINAL
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 

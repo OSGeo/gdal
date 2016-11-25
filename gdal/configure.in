@@ -134,6 +134,13 @@ else
 fi
 AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
 
+if [test "$CXX11_SUPPORT" = "yes"]; then
+    dnl Available in GCC 5.1
+    AC_LANG_PUSH([C++])
+        AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [CXX_WFLAGS="$CXX_WFLAGS -Wsuggest-override"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+    AC_LANG_POP([C++])
+fi
+
 dnl Enable -Wimplicit-fallthrough only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
 SAVED_CXXFLAGS=$CXXFLAGS

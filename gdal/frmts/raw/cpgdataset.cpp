@@ -79,12 +79,12 @@ class CPGDataset : public RawDataset
                 CPGDataset();
     virtual ~CPGDataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -153,7 +153,7 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
                    SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
     virtual ~SIRC_QSLCRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 static const int M11 = 0;
@@ -191,7 +191,7 @@ class CPG_STOKESRasterBand : public GDALRasterBand
                                          int bNativeOrder );
     virtual ~CPG_STOKESRasterBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

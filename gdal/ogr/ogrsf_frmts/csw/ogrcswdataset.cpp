@@ -66,18 +66,18 @@ class OGRCSWLayer : public OGRLayer
                explicit OGRCSWLayer( OGRCSWDataSource* poDS );
                virtual ~OGRCSWLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature*         GetNextFeature();
-    virtual GIntBig             GetFeatureCount( int bForce = FALSE );
+    virtual void                ResetReading() override;
+    virtual OGRFeature*         GetNextFeature() override;
+    virtual GIntBig             GetFeatureCount( int bForce = FALSE ) override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 
-    virtual void                SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void                SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-    virtual OGRErr              SetAttributeFilter( const char * );
+    virtual OGRErr              SetAttributeFilter( const char * ) override;
 };
 
 /************************************************************************/
@@ -105,12 +105,12 @@ class OGRCSWDataSource : public OGRDataSource
     int                 Open( const char * pszFilename,
                               char** papszOpenOptions );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return poLayer != NULL; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return poLayer != NULL; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * ) { return FALSE; }
+    virtual int                 TestCapability( const char * ) override { return FALSE; }
 
     CPLHTTPResult*              HTTPFetch( const char* pszURL, const char* pszPost );
 

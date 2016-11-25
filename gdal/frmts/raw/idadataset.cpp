@@ -149,12 +149,12 @@ class IDADataset : public RawDataset
                 IDADataset();
     virtual ~IDADataset();
 
-    virtual void FlushCache();
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual void FlushCache() override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -180,14 +180,14 @@ class IDARasterBand : public RawRasterBand
                  IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual CPLErr SetOffset( double dfNewValue );
-    virtual double GetScale( int *pbSuccess = NULL );
-    virtual CPLErr SetScale( double dfNewValue );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double GetOffset( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetOffset( double dfNewValue ) override;
+    virtual double GetScale( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetScale( double dfNewValue ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/

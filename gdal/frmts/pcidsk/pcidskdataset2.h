@@ -79,30 +79,30 @@ class PCIDSK2Dataset : public GDALPamDataset
                                  GDALDataType eType,
                                  char **papszParmList );
 
-    char              **GetFileList();
-    CPLErr              GetGeoTransform( double * padfTransform );
-    CPLErr              SetGeoTransform( double * );
-    const char         *GetProjectionRef();
-    CPLErr              SetProjection( const char * );
+    char              **GetFileList() override;
+    CPLErr              GetGeoTransform( double * padfTransform ) override;
+    CPLErr              SetGeoTransform( double * ) override;
+    const char         *GetProjectionRef() override;
+    CPLErr              SetProjection( const char * ) override;
 
-    virtual char      **GetMetadataDomainList();
-    CPLErr              SetMetadata( char **, const char * );
-    char              **GetMetadata( const char* );
-    CPLErr              SetMetadataItem(const char*,const char*,const char*);
-    const char         *GetMetadataItem( const char*, const char*);
+    virtual char      **GetMetadataDomainList() override;
+    CPLErr              SetMetadata( char **, const char * ) override;
+    char              **GetMetadata( const char* ) override;
+    CPLErr              SetMetadataItem(const char*,const char*,const char*) override;
+    const char         *GetMetadataItem( const char*, const char*) override;
 
-    virtual void FlushCache();
+    virtual void FlushCache() override;
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+                                    int, int *, GDALProgressFunc, void * ) override;
 
-    virtual int                 GetLayerCount() { return (int) apoLayers.size(); }
-    virtual OGRLayer            *GetLayer( int );
+    virtual int                 GetLayerCount() override { return (int) apoLayers.size(); }
+    virtual OGRLayer            *GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     virtual OGRLayer           *ICreateLayer( const char *, OGRSpatialReference *,
-                                     OGRwkbGeometryType, char ** );
+                                     OGRwkbGeometryType, char ** ) override;
 };
 
 /************************************************************************/
@@ -136,25 +136,25 @@ class PCIDSK2Band : public GDALPamRasterBand
     explicit    PCIDSK2Band( PCIDSK::PCIDSKChannel * );
     virtual ~PCIDSK2Band();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual int        GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int);
+    virtual int        GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual CPLErr SetColorTable( GDALColorTable * );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual CPLErr SetColorTable( GDALColorTable * ) override;
 
-    virtual void        SetDescription( const char * );
+    virtual void        SetDescription( const char * ) override;
 
-    virtual char      **GetMetadataDomainList();
-    CPLErr              SetMetadata( char **, const char * );
-    char              **GetMetadata( const char* );
-    CPLErr              SetMetadataItem(const char*,const char*,const char*);
-    const char         *GetMetadataItem( const char*, const char*);
+    virtual char      **GetMetadataDomainList() override;
+    CPLErr              SetMetadata( char **, const char * ) override;
+    char              **GetMetadata( const char* ) override;
+    CPLErr              SetMetadataItem(const char*,const char*,const char*) override;
+    const char         *GetMetadataItem( const char*, const char*) override;
 
-    virtual char      **GetCategoryNames();
+    virtual char      **GetCategoryNames() override;
 };
 
 /************************************************************************/
@@ -181,23 +181,23 @@ class OGRPCIDSKLayer : public OGRLayer
     OGRPCIDSKLayer( PCIDSK::PCIDSKSegment*, PCIDSK::PCIDSKVectorSegment *, bool bUpdate );
     virtual ~OGRPCIDSKLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeature         *GetFeature( GIntBig nFeatureId );
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    OGRErr              DeleteFeature( GIntBig nFID );
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    OGRErr              DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
-    GIntBig             GetFeatureCount( int );
-    OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    GIntBig             GetFeatureCount( int ) override;
+    OGRErr              GetExtent( OGREnvelope *psExtent, int bForce ) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 

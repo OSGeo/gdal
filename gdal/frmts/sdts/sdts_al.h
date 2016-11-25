@@ -296,7 +296,7 @@ class SDTSRawLine : public SDTSFeature
         subfield. */
     SDTSModId   oEndNode;               /* ENID */
 
-    void        Dump( FILE * );
+    void        Dump( FILE * ) override;
 };
 
 /************************************************************************/
@@ -325,7 +325,7 @@ class SDTSLineReader : public SDTSIndexedReader
     SDTSRawLine *GetNextLine();
     void        Close();
 
-    SDTSFeature *GetNextRawFeature() { return GetNextLine(); }
+    SDTSFeature *GetNextRawFeature() override { return GetNextLine(); }
 
     void        AttachToPolygons( SDTSTransfer *, int iPolyLayer  );
 };
@@ -357,7 +357,7 @@ class SDTSAttrRecord : public SDTSFeature
 
     DDFField    *poATTR;
 
-    virtual void Dump( FILE * );
+    virtual void Dump( FILE * ) override;
 };
 
 /************************************************************************/
@@ -390,7 +390,7 @@ class SDTSAttrReader : public SDTSIndexedReader
       */
     int         IsSecondary() { return bIsSecondary; }
 
-    SDTSFeature *GetNextRawFeature() { return GetNextAttrRecord(); }
+    SDTSFeature *GetNextRawFeature() override { return GetNextAttrRecord(); }
 };
 
 /************************************************************************/
@@ -418,7 +418,7 @@ class SDTSRawPoint : public SDTSFeature
     /** Optional identifier of area marked by this point (i.e. PC01:27). */
     SDTSModId   oAreaId;                /* ARID */
 
-    virtual void Dump( FILE * );
+    virtual void Dump( FILE * ) override;
 };
 
 /************************************************************************/
@@ -442,7 +442,7 @@ class SDTSPointReader : public SDTSIndexedReader
     SDTSRawPoint *GetNextPoint();
     void        Close();
 
-    SDTSFeature *GetNextRawFeature() { return GetNextPoint(); }
+    SDTSFeature *GetNextRawFeature() override { return GetNextPoint(); }
 };
 
 /************************************************************************/
@@ -503,7 +503,7 @@ class SDTSRawPolygon : public SDTSFeature
       rings via panRingStart.  The values are almost always zero. */
     double      *padfZ;
 
-    virtual void Dump( FILE * );
+    virtual void Dump( FILE * ) override;
 };
 
 /************************************************************************/
@@ -524,7 +524,7 @@ class SDTSPolygonReader : public SDTSIndexedReader
     SDTSRawPolygon *GetNextPolygon();
     void        Close();
 
-    SDTSFeature *GetNextRawFeature() { return GetNextPolygon(); }
+    SDTSFeature *GetNextRawFeature() override { return GetNextPolygon(); }
 
     void        AssembleRings( SDTSTransfer *, int iPolyLayer );
 };

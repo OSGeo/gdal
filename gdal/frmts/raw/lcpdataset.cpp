@@ -64,9 +64,9 @@ class LCPDataset : public RawDataset
                 LCPDataset();
     virtual ~LCPDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -75,7 +75,7 @@ class LCPDataset : public RawDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual const char *GetProjectionRef(void);
+    virtual const char *GetProjectionRef(void) override;
 
     int bHaveProjection;
 };

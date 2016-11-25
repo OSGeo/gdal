@@ -51,7 +51,7 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
 
         void UnsetLayer() { m_poLayer = NULL; }
 
-        virtual OGRSpatialReference* GetSpatialRef()
+        virtual OGRSpatialReference* GetSpatialRef() override
         {
             if( poSRS )
                 return poSRS;
@@ -87,7 +87,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             m_poLayer = NULL;
         }
 
-        virtual int GetFieldCount()
+        virtual int GetFieldCount() override
         {
             if( nFieldCount )
                 return nFieldCount;
@@ -99,7 +99,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             return nFieldCount;
         }
 
-        virtual int GetGeomFieldCount()
+        virtual int GetGeomFieldCount() override
         {
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&
@@ -112,7 +112,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             return nGeomFieldCount;
         }
 
-        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i )
+        virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i ) override
         {
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&

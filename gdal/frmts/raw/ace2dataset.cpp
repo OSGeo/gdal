@@ -101,8 +101,8 @@ class ACE2Dataset : public GDALPamDataset
                 ACE2Dataset();
     virtual ~ACE2Dataset() {}
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -122,8 +122,8 @@ class ACE2RasterBand : public RawRasterBand
                            int nXSize, int nYSize);
     virtual ~ACE2RasterBand() {}
 
-    virtual const char *GetUnitType();
-    virtual char **GetCategoryNames();
+    virtual const char *GetUnitType() override;
+    virtual char **GetCategoryNames() override;
 };
 
 /************************************************************************/

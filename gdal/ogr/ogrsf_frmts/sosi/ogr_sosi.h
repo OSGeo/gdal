@@ -70,14 +70,14 @@ public:
     OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn, LC_FILADM *poFil, S2I *poHeadDefn);
     ~OGRSOSILayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    OGRFeatureDefn *    GetLayerDefn();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeatureDefn *    GetLayerDefn() override;
 #ifdef WRITE_SUPPORT
     OGRErr              CreateField(OGRFieldDefn *poField, int bApproxOK=TRUE);
     OGRErr              ICreateFeature(OGRFeature *poFeature);
 #endif
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************
@@ -122,17 +122,17 @@ public:
 #ifdef WRITE_SUPPORT
     int                 Create( const char * pszFilename );
 #endif
-    const char          *GetName() {
+    const char          *GetName() override {
         return pszName;
     }
-    int                 GetLayerCount() {
+    int                 GetLayerCount() override {
         return nLayers;
     }
-    OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayer( int ) override;
 #ifdef WRITE_SUPPORT
     OGRLayer            *ICreateLayer( const char *pszName, OGRSpatialReference  *poSpatialRef=NULL, OGRwkbGeometryType eGType=wkbUnknown, char **papszOptions=NULL);
 #endif
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************

@@ -86,12 +86,12 @@ class OZIRasterBand : public GDALPamRasterBand
                                GDALColorTable* poColorTable);
     virtual    ~OZIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 
-    virtual int         GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nLevel);
+    virtual int         GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nLevel) override;
 };
 
 /************************************************************************/

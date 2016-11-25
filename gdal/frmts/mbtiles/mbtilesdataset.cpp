@@ -83,20 +83,20 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
 
     virtual     ~MBTilesDataset();
 
-    virtual CPLErr GetGeoTransform(double* padfGeoTransform);
-    virtual CPLErr SetGeoTransform( double* padfGeoTransform );
-    virtual const char* GetProjectionRef();
-    virtual CPLErr SetProjection( const char* pszProjection );
+    virtual CPLErr GetGeoTransform(double* padfGeoTransform) override;
+    virtual CPLErr SetGeoTransform( double* padfGeoTransform ) override;
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char* pszProjection ) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char* pszName, const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    virtual const char *GetMetadataItem( const char* pszName, const char * pszDomain = "" ) override;
 
     virtual CPLErr    IBuildOverviews(
                         const char * pszResampling,
                         int nOverviews, int * panOverviewList,
                         int nBandsIn, CPL_UNUSED int * panBandList,
-                        GDALProgressFunc pfnProgress, void * pProgressData );
+                        GDALProgressFunc pfnProgress, void * pProgressData ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -163,16 +163,16 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     protected:
         // Coming from GDALGPKGMBTilesLikePseudoDataset
 
-        virtual CPLErr                  IFlushCacheWithErrCode();
-        virtual int                     IGetRasterCount() { return nBands; }
-        virtual GDALRasterBand*         IGetRasterBand(int nBand) { return GetRasterBand(nBand); }
-        virtual sqlite3                *IGetDB() { return hDB; }
-        virtual bool                    IGetUpdate() { return eAccess == GA_Update; }
-        virtual bool                    ICanIWriteBlock();
-        virtual OGRErr                  IStartTransaction();
-        virtual OGRErr                  ICommitTransaction();
-        virtual const char             *IGetFilename() { return GetDescription(); }
-        virtual int                     GetRowFromIntoTopConvention(int nRow);
+        virtual CPLErr                  IFlushCacheWithErrCode() override;
+        virtual int                     IGetRasterCount() override { return nBands; }
+        virtual GDALRasterBand*         IGetRasterBand(int nBand) override { return GetRasterBand(nBand); }
+        virtual sqlite3                *IGetDB() override { return hDB; }
+        virtual bool                    IGetUpdate() override { return eAccess == GA_Update; }
+        virtual bool                    ICanIWriteBlock() override;
+        virtual OGRErr                  IStartTransaction() override;
+        virtual OGRErr                  ICommitTransaction() override;
+        virtual const char             *IGetFilename() override { return GetDescription(); }
+        virtual int                     GetRowFromIntoTopConvention(int nRow) override;
 };
 
 /************************************************************************/
@@ -190,12 +190,12 @@ class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
   public:
     explicit                MBTilesBand( MBTilesDataset* poDS );
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nLevel) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
 };
 
 /************************************************************************/

@@ -134,7 +134,7 @@ class netCDFRasterBand : public GDALPamRasterBand
                                         bool bCheckIsNan=false ) ;
 
   protected:
-    CPLXMLNode *SerializeToXML( const char *pszVRTPath );
+    CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
   public:
     netCDFRasterBand( netCDFDataset *poDS,
@@ -159,17 +159,17 @@ class netCDFRasterBand : public GDALPamRasterBand
                       const int *paDimIds=NULL );
     virtual ~netCDFRasterBand();
 
-    virtual double GetNoDataValue( int * );
-    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int * ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
     // virtual CPLErr DeleteNoDataValue();
-    virtual double GetOffset( int * );
-    virtual CPLErr SetOffset( double );
-    virtual double GetScale( int * );
-    virtual CPLErr SetScale( double );
-    virtual const char *GetUnitType();
-    virtual CPLErr SetUnitType( const char * );
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual double GetOffset( int * ) override;
+    virtual CPLErr SetOffset( double ) override;
+    virtual double GetScale( int * ) override;
+    virtual CPLErr SetScale( double ) override;
+    virtual const char *GetUnitType() override;
+    virtual CPLErr SetUnitType( const char * ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

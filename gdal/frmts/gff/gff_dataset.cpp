@@ -108,7 +108,7 @@ class GFFRasterBand : public GDALPamRasterBand {
     int nSampleSize;
 public:
     GFFRasterBand( GFFDataset *, int, GDALDataType );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 static unsigned long GFFSampleSize( GDALDataType eDataType )

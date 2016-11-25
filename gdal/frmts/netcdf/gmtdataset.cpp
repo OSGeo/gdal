@@ -64,7 +64,7 @@ class GMTDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
 };
 
 /************************************************************************/
@@ -83,7 +83,7 @@ class GMTRasterBand : public GDALPamRasterBand
     GMTRasterBand( GMTDataset *poDS, int nZId, int nBand );
     virtual ~GMTRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

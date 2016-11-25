@@ -880,7 +880,7 @@ class OGRMemLayerIteratorArray: public IOGRMemLayerFeatureIterator
 
         virtual ~OGRMemLayerIteratorArray() {}
 
-       virtual OGRFeature* Next()
+       virtual OGRFeature* Next() override
        {
            while( m_iCurIdx < m_nMaxFeatureCount )
            {
@@ -913,7 +913,7 @@ class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
 
        virtual ~OGRMemLayerIteratorMap() {}
 
-       virtual OGRFeature* Next()
+       virtual OGRFeature* Next() override
        {
            if( m_oIter != m_oMapFeatures.end() )
            {

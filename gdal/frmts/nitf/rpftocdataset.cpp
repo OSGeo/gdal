@@ -85,9 +85,9 @@ class RPFTOCDataset : public GDALPamDataset
         CSLDestroy( papszFileList );
     }
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     void                AddSubDataset(const char* pszFilename, RPFTocEntry* tocEntry );
 
@@ -97,7 +97,7 @@ class RPFTOCDataset : public GDALPamDataset
         nRasterYSize = rasterYSize;
     }
 
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform)
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform) override
     {
         if (bGotGeoTransform)
         {
@@ -107,21 +107,21 @@ class RPFTOCDataset : public GDALPamDataset
         return CE_Failure;
     }
 
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform)
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform) override
     {
         bGotGeoTransform = TRUE;
         memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
 
-    virtual CPLErr SetProjection( const char * projectionRef )
+    virtual CPLErr SetProjection( const char * projectionRef ) override
     {
         CPLFree(pszProjection);
         pszProjection = CPLStrdup(projectionRef);
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void)
+    virtual const char *GetProjectionRef(void) override
     {
         return (pszProjection) ? pszProjection : "";
     }
@@ -178,7 +178,7 @@ class RPFTOCSubDataset : public VRTDataset
         CPLFree(cachedTileData);
     }
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     void* GetCachedTile(const char* tileFileName, int nBlockXOff, int nBlockYOff)
     {
@@ -250,12 +250,12 @@ class RPFTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return noDataValue;
         }
 
-        GDALDataset* RefUnderlyingDataset()
+        GDALDataset* RefUnderlyingDataset() override
         {
             return GDALProxyPoolDataset::RefUnderlyingDataset();
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }
@@ -301,14 +301,14 @@ class RPFTOCProxyRasterBandRGBA : public GDALPamRasterBand
         }
         virtual ~RPFTOCProxyRasterBandRGBA() {}
 
-        virtual GDALColorInterp GetColorInterpretation()
+        virtual GDALColorInterp GetColorInterpretation() override
         {
             return (GDALColorInterp)(GCI_RedBand + nBand - 1);
         }
 
     protected:
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage );
+                                   void * pImage ) override;
 };
 
 /************************************************************************/
@@ -470,17 +470,17 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
             memset( remapLUT, 0, sizeof(remapLUT) );
         }
 
-        virtual GDALColorInterp GetColorInterpretation()
+        virtual GDALColorInterp GetColorInterpretation() override
         {
             return GCI_PaletteIndex;
         }
 
-        virtual double GetNoDataValue(int* bHasNoDataValue)
+        virtual double GetNoDataValue(int* bHasNoDataValue) override
         {
             return ( reinterpret_cast<RPFTOCProxyRasterDataSet *>( poDS ) )->GetNoDataValue(bHasNoDataValue);
         }
 
-        virtual GDALColorTable *GetColorTable()
+        virtual GDALColorTable *GetColorTable() override
         {
             // TODO: This casting is a bit scary.
             return const_cast<GDALColorTable *>(
@@ -489,7 +489,7 @@ class RPFTOCProxyRasterBandPalette : public GDALPamRasterBand
 
     protected:
         virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pImage );
+                                   void * pImage ) override;
 };
 
 /************************************************************************/

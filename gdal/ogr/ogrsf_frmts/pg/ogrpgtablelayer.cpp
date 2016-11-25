@@ -60,28 +60,28 @@ class OGRPGTableFeatureDefn : public OGRPGFeatureDefn
         {
         }
 
-        virtual void UnsetLayer()
+        virtual void UnsetLayer() override
         {
             poLayer = NULL;
             OGRPGFeatureDefn::UnsetLayer();
         }
 
-        virtual int         GetFieldCount()
+        virtual int         GetFieldCount() override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldCount(); }
-        virtual OGRFieldDefn *GetFieldDefn( int i )
+        virtual OGRFieldDefn *GetFieldDefn( int i ) override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldDefn(i); }
-        virtual int         GetFieldIndex( const char * pszName )
+        virtual int         GetFieldIndex( const char * pszName ) override
             { SolveFields(); return OGRPGFeatureDefn::GetFieldIndex(pszName); }
 
-        virtual int         GetGeomFieldCount()
+        virtual int         GetGeomFieldCount() override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldCount(); }
-        virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i )
+        virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i ) override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldDefn(i); }
-        virtual int         GetGeomFieldIndex( const char * pszName)
+        virtual int         GetGeomFieldIndex( const char * pszName) override
             { if (poLayer != NULL && !poLayer->HasGeometryInformation())
                   SolveFields();
               return OGRPGFeatureDefn::GetGeomFieldIndex(pszName); }

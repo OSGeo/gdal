@@ -72,7 +72,7 @@ class OGRXPlaneAirwayIntersectionLayer : public OGRXPlaneLayer
                                    double dfLat,
                                    double dfLon);
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 };
 
 /************************************************************************/
@@ -90,12 +90,12 @@ class OGRXPlaneAwyReader : public OGRXPlaneReader
         void                     ParseRecord();
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
         explicit                 OGRXPlaneAwyReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
 };
 
 #endif

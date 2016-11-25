@@ -3053,6 +3053,12 @@ namespace swig {
 // since we do not pass -DDEBUG_BOOL when building the bindings
 #define DO_NOT_USE_DEBUG_BOOL
 
+// So that override is properly defined
+#ifndef GDAL_COMPILATION
+#define GDAL_COMPILATION
+#endif
+
+
 
 #include "gdal.h"
 
@@ -3416,16 +3422,16 @@ class NUMPYDataset : public GDALDataset
                  NUMPYDataset();
                  ~NUMPYDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( PyArrayObject *psArray );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -3994,7 +4000,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALRegister_NUMPY();
 
     /* I wish I had a safe way of checking the type */
-    sprintf( szString, "NUMPY:::%p", psArray );
+    snprintf( szString, sizeof(szString), "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
 

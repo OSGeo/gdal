@@ -227,8 +227,8 @@ class JPEG2000RasterBand : public GDALPamRasterBand
                 JPEG2000RasterBand( JPEG2000Dataset *, int, int, int );
     virtual ~JPEG2000RasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

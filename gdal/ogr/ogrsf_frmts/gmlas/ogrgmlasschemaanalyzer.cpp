@@ -74,7 +74,7 @@ class GMLASPrefixMappingHander: public DefaultHandler
         {}
 
         virtual void startPrefixMapping(const XMLCh* const prefix,
-                                        const XMLCh* const uri);
+                                        const XMLCh* const uri) override;
 };
 
 /************************************************************************/
@@ -148,7 +148,7 @@ class GMLASAnalyzerEntityResolver: public GMLASBaseEntityResolver
         }
 
         virtual void DoExtraSchemaProcessing(const CPLString& osFilename,
-                                             VSILFILE* fp);
+                                             VSILFILE* fp) override;
 };
 
 /************************************************************************/

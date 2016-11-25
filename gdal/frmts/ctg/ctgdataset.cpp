@@ -129,8 +129,8 @@ class CTGDataset : public GDALPamDataset
                  CTGDataset();
     virtual     ~CTGDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -153,9 +153,9 @@ class CTGRasterBand : public GDALPamRasterBand
                 CTGRasterBand( CTGDataset *, int );
     virtual ~CTGRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual char **GetCategoryNames();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual char **GetCategoryNames() override;
 };
 
 /************************************************************************/

@@ -692,7 +692,7 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
             poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
         virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
-        virtual OGRBoolean getNextPoint( OGRPoint* p );
+        virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
 };
 
 /************************************************************************/

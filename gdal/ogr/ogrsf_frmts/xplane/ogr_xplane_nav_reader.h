@@ -199,12 +199,12 @@ class OGRXPlaneNavReader : public OGRXPlaneReader
         void                     ParseRecord(int nType);
 
     protected:
-        virtual void             Read();
+        virtual void             Read() override;
 
     public:
         explicit                 OGRXPlaneNavReader( OGRXPlaneDataSource* poDataSource );
-        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer);
-        virtual int              IsRecognizedVersion( const char* pszVersionString);
+        virtual OGRXPlaneReader* CloneForLayer(OGRXPlaneLayer* poLayer) override;
+        virtual int              IsRecognizedVersion( const char* pszVersionString) override;
 };
 
 #endif

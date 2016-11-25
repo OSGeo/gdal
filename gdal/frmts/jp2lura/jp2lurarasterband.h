@@ -47,18 +47,18 @@ public:
                           int nBlockXSize, int nBlockYSize);
         ~JP2LuraRasterBand();
 
-        virtual CPLErr          IReadBlock(int, int, void *);
+        virtual CPLErr          IReadBlock(int, int, void *) override;
         virtual CPLErr          IRasterIO(GDALRWFlag eRWFlag,	
                 int nXOff, int nYOff, int nXSize, int nYSize,
                 void * pData, int nBufXSize, int nBufYSize,	GDALDataType eBufType,
                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                GDALRasterIOExtraArg* psExtraArg);
+                GDALRasterIOExtraArg* psExtraArg) override;
 
-        virtual int             GetOverviewCount();
-        virtual GDALRasterBand* GetOverview(int iOvrLevel);
+        virtual int             GetOverviewCount() override;
+        virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
 
-        virtual GDALColorInterp GetColorInterpretation();
-        virtual GDALColorTable* GetColorTable();
+        virtual GDALColorInterp GetColorInterpretation() override;
+        virtual GDALColorTable* GetColorTable() override;
 };
 
 #endif

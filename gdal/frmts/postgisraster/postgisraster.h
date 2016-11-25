@@ -265,7 +265,7 @@ private:
     PostGISRasterTileDataset * GetMatchingSourceRef(double dfUpperLeftX, double dfUpperLeftY);
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
 public:
     PostGISRasterDataset();
@@ -277,13 +277,13 @@ public:
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *,
         const char *, const char *, const char *);
     static CPLErr Delete(const char*);
-    virtual char      **GetMetadataDomainList();
-    char ** GetMetadata(const char *);
-    const char* GetProjectionRef();
-    CPLErr SetProjection(const char*);
-    CPLErr SetGeoTransform(double *);
-    CPLErr GetGeoTransform(double *);
-    char **GetFileList();
+    virtual char      **GetMetadataDomainList() override;
+    char ** GetMetadata(const char *) override;
+    const char* GetProjectionRef() override;
+    CPLErr SetProjection(const char*) override;
+    CPLErr SetGeoTransform(double *) override;
+    CPLErr GetGeoTransform(double *) override;
+    char **GetFileList() override;
 
     int    GetOverviewCount();
     PostGISRasterDataset* GetOverviewDS(int iOvr);
@@ -328,22 +328,22 @@ public:
 
     virtual ~PostGISRasterRasterBand();
 
-    virtual double GetNoDataValue(int *pbSuccess = NULL);
-    virtual CPLErr SetNoDataValue(double);
+    virtual double GetNoDataValue(int *pbSuccess = NULL) override;
+    virtual CPLErr SetNoDataValue(double) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *,
                              int, int, GDALDataType,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg* psExtraArg);
+                             GDALRasterIOExtraArg* psExtraArg) override;
 #ifdef notdef
     virtual CPLErr IReadBlock(int, int, void *);
 #endif
-    virtual int GetOverviewCount();
-    virtual GDALRasterBand * GetOverview(int);
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand * GetOverview(int) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual double GetMinimum( int *pbSuccess );
-    virtual double GetMaximum( int *pbSuccess );
-    virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax );
+    virtual double GetMinimum( int *pbSuccess ) override;
+    virtual double GetMaximum( int *pbSuccess ) override;
+    virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax ) override;
 };
 
 /***********************************************************************
@@ -365,7 +365,7 @@ public:
                              int nXSize,
                              int nYSize);
     ~PostGISRasterTileDataset();
-    CPLErr GetGeoTransform(double *);
+    CPLErr GetGeoTransform(double *) override;
     void   GetExtent(double* pdfMinX, double* pdfMinY, double* pdfMaxX, double* pdfMaxY);
     const char* GetPKID() const { return pszPKID; }
 };
@@ -390,7 +390,7 @@ public:
         GDALDataType eDataType,
         GBool bIsOffline = false);
     virtual ~PostGISRasterTileRasterBand();
-    virtual CPLErr IReadBlock(int, int, void *);
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };
 
 #endif // POSTGISRASTER_H_INCLUDED

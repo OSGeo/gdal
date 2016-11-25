@@ -299,19 +299,19 @@ class CPL_DLL OGRPoint : public OGRGeometry
     OGRPoint& operator=( const OGRPoint& other );
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry
-    virtual int getDimension() const;
-    virtual OGRGeometry *clone() const;
-    virtual void empty();
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
-    virtual OGRBoolean  IsEmpty() const { return !(flags & OGR_G_NOT_EMPTY_POINT); }
+    virtual int getDimension() const CPL_OVERRIDE;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
+    virtual void empty() CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
+    virtual OGRBoolean  IsEmpty() const CPL_OVERRIDE { return !(flags & OGR_G_NOT_EMPTY_POINT); }
 
     // IPoint
     /** Return x */
@@ -324,7 +324,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     double      getM() const { return m; }
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension );
+    virtual void setCoordinateDimension( int nDimension ) CPL_OVERRIDE;
     /** Set x
      * @param xIn x
      */
@@ -343,17 +343,17 @@ class CPL_DLL OGRPoint : public OGRGeometry
     void        setM( double mIn ) { m = mIn; flags |= (OGR_G_NOT_EMPTY_POINT | OGR_G_MEASURED); }
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const;
-    virtual OGRBoolean  Intersects( const OGRGeometry * ) const;
-    virtual OGRBoolean  Within( const OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
+    virtual OGRBoolean  Intersects( const OGRGeometry * ) const CPL_OVERRIDE;
+    virtual OGRBoolean  Within( const OGRGeometry * ) const CPL_OVERRIDE;
 
     // Non standard from OGRGeometry
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
-    virtual void flattenTo2D();
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
+    virtual void flattenTo2D() CPL_OVERRIDE;
 
-    virtual void        swapXY();
+    virtual void        swapXY() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -415,7 +415,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual void Value( double, OGRPoint * ) const = 0;
     virtual OGRLineString* CurveToLine(double dfMaxAngleStepSizeDegrees = 0,
                                        const char* const* papszOptions = NULL) const = 0;
-    virtual int getDimension() const;
+    virtual int getDimension() const CPL_OVERRIDE;
 
     // non standard
     virtual int getNumPoints() const = 0;
@@ -474,29 +474,29 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     OGRSimpleCurve& operator=( const OGRSimpleCurve& other );
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry interface
-    virtual OGRGeometry *clone() const;
-    virtual void empty();
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
-    virtual OGRBoolean  IsEmpty() const;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
+    virtual void empty() CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
+    virtual OGRBoolean  IsEmpty() const CPL_OVERRIDE;
 
     // ICurve methods
-    virtual double get_Length() const;
-    virtual void StartPoint(OGRPoint *) const;
-    virtual void EndPoint(OGRPoint *) const;
-    virtual void Value( double, OGRPoint * ) const;
+    virtual double get_Length() const CPL_OVERRIDE;
+    virtual void StartPoint(OGRPoint *) const CPL_OVERRIDE;
+    virtual void EndPoint(OGRPoint *) const CPL_OVERRIDE;
+    virtual void Value( double, OGRPoint * ) const CPL_OVERRIDE;
     virtual double Project(const OGRPoint *) const;
     virtual OGRLineString* getSubLine(double, double, int) const;
 
     // ILineString methods
-    virtual int getNumPoints() const { return nPointCount; }
+    virtual int getNumPoints() const CPL_OVERRIDE { return nPointCount; }
     void        getPoint( int, OGRPoint * ) const;
     double      getX( int i ) const { return paoPoints[i].x; }
     double      getY( int i ) const { return paoPoints[i].y; }
@@ -504,12 +504,12 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     double      getM( int i ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
 
     // non standard.
-    virtual void setCoordinateDimension( int nDimension );
-    virtual void set3D( OGRBoolean bIs3D );
-    virtual void setMeasured( OGRBoolean bIsMeasured );
+    virtual void setCoordinateDimension( int nDimension ) CPL_OVERRIDE;
+    virtual void set3D( OGRBoolean bIs3D ) CPL_OVERRIDE;
+    virtual void setMeasured( OGRBoolean bIsMeasured ) CPL_OVERRIDE;
     void        setNumPoints( int nNewPointCount, int bZeroizeNewContent = TRUE );
     void        setPoint( int, OGRPoint * );
     void        setPoint( int, double, double );
@@ -545,14 +545,14 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        addSubLineString( const OGRLineString *,
                                   int nStartVertex = 0, int nEndVertex = -1 );
     void        reversePoints( void );
-    virtual OGRPointIterator* getPointIterator() const;
+    virtual OGRPointIterator* getPointIterator() const CPL_OVERRIDE;
 
     // non-standard from OGRGeometry
-    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
-    virtual void flattenTo2D();
-    virtual void segmentize(double dfMaxLength);
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
+    virtual void flattenTo2D() CPL_OVERRIDE;
+    virtual void segmentize(double dfMaxLength) CPL_OVERRIDE;
 
-    virtual void        swapXY();
+    virtual void        swapXY() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -574,10 +574,10 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
                                             OGRLineString* poSrc,
                                             OGRLineString* poDst);
 
-    virtual OGRCurveCasterToLineString GetCasterToLineString() const;
-    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
+    virtual OGRCurveCasterToLineString GetCasterToLineString() const CPL_OVERRIDE;
+    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const CPL_OVERRIDE;
 
-    virtual double get_AreaOfCurveSegments() const;
+    virtual double get_AreaOfCurveSegments() const CPL_OVERRIDE;
 //! @endcond
 
     static OGRLinearRing* CastToLinearRing(OGRLineString* poLS);
@@ -590,13 +590,13 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     OGRLineString& operator=(const OGRLineString& other);
 
     virtual OGRLineString* CurveToLine(double dfMaxAngleStepSizeDegrees = 0,
-                                       const char* const* papszOptions = NULL) const;
-    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const;
-    virtual double get_Area() const;
+                                       const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+    virtual double get_Area() const CPL_OVERRIDE;
 
     // non-standard from OGRGeometry
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual const char *getGeometryName() const;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -636,8 +636,8 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr _exportToWkb( OGRwkbByteOrder, int _flags,
                                  unsigned char * ) const;
 
-    virtual OGRCurveCasterToLineString GetCasterToLineString() const;
-    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
+    virtual OGRCurveCasterToLineString GetCasterToLineString() const CPL_OVERRIDE;
+    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const CPL_OVERRIDE;
 //! @endcond
 
     static OGRLineString* CastToLineString(OGRLinearRing* poLR);
@@ -651,20 +651,20 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     OGRLinearRing& operator=(const OGRLinearRing& other);
 
     // Non standard.
-    virtual const char *getGeometryName() const;
-    virtual OGRGeometry *clone() const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
     virtual int isClockwise() const;
     virtual void reverseWindingOrder();
-    virtual void closeRings();
+    virtual void closeRings() CPL_OVERRIDE;
     OGRBoolean isPointInRing(const OGRPoint* pt, int bTestEnvelope = TRUE) const;
     OGRBoolean isPointOnRingBoundary(const OGRPoint* pt, int bTestEnvelope = TRUE) const;
 
     // IWks Interface - Note this isn't really a first class object
     // for the purposes of WKB form.  These methods always fail since this
     // object can't be serialized on its own.
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int=-1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -692,10 +692,10 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 
   protected:
 //! @cond Doxygen_Suppress
-    virtual OGRCurveCasterToLineString GetCasterToLineString() const;
-    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
-    virtual int    ContainsPoint( const OGRPoint* p ) const;
-    virtual double get_AreaOfCurveSegments() const;
+    virtual OGRCurveCasterToLineString GetCasterToLineString() const CPL_OVERRIDE;
+    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const CPL_OVERRIDE;
+    virtual int    ContainsPoint( const OGRPoint* p ) const CPL_OVERRIDE;
+    virtual double get_AreaOfCurveSegments() const CPL_OVERRIDE;
 //! @endcond
 
   public:
@@ -706,30 +706,30 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     OGRCircularString& operator=(const OGRCircularString& other);
 
     // IWks Interface
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry interface
-    virtual OGRBoolean  IsValid() const;
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
+    virtual OGRBoolean  IsValid() const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
 
     // ICurve methods
-    virtual double get_Length() const;
+    virtual double get_Length() const CPL_OVERRIDE;
     virtual OGRLineString* CurveToLine(double dfMaxAngleStepSizeDegrees = 0,
-                                       const char* const* papszOptions = NULL) const;
-    virtual void Value( double, OGRPoint * ) const;
-    virtual double get_Area() const;
+                                       const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+    virtual void Value( double, OGRPoint * ) const CPL_OVERRIDE;
+    virtual double get_Area() const CPL_OVERRIDE;
 
     // non-standard from OGRGeometry
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual const char *getGeometryName() const;
-    virtual void segmentize(double dfMaxLength);
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual void segmentize(double dfMaxLength) CPL_OVERRIDE;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
-                                             const char* const* papszOptions = NULL) const;
+                                             const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -839,8 +839,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     static OGRLineString* CastToLineString(OGRCompoundCurve* poCC);
     static OGRLinearRing* CastToLinearRing(OGRCompoundCurve* poCC);
 
-    virtual OGRCurveCasterToLineString GetCasterToLineString() const;
-    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const;
+    virtual OGRCurveCasterToLineString GetCasterToLineString() const CPL_OVERRIDE;
+    virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const CPL_OVERRIDE;
 //! @endcond
 
   public:
@@ -851,33 +851,33 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     OGRCompoundCurve& operator=(const OGRCompoundCurve& other);
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry interface
-    virtual OGRGeometry *clone() const;
-    virtual void empty();
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
-    virtual OGRBoolean  IsEmpty() const;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
+    virtual void empty() CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
+    virtual OGRBoolean  IsEmpty() const CPL_OVERRIDE;
 
     // ICurve methods
-    virtual double get_Length() const;
-    virtual void StartPoint(OGRPoint *) const;
-    virtual void EndPoint(OGRPoint *) const;
-    virtual void Value( double, OGRPoint * ) const;
+    virtual double get_Length() const CPL_OVERRIDE;
+    virtual void StartPoint(OGRPoint *) const CPL_OVERRIDE;
+    virtual void EndPoint(OGRPoint *) const CPL_OVERRIDE;
+    virtual void Value( double, OGRPoint * ) const CPL_OVERRIDE;
     virtual OGRLineString* CurveToLine(double dfMaxAngleStepSizeDegrees = 0,
-                                       const char* const* papszOptions = NULL) const;
+                                       const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
-    virtual int getNumPoints() const;
-    virtual double get_AreaOfCurveSegments() const;
-    virtual double get_Area() const;
+    virtual int getNumPoints() const CPL_OVERRIDE;
+    virtual double get_AreaOfCurveSegments() const CPL_OVERRIDE;
+    virtual double get_Area() const CPL_OVERRIDE;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
 
     // ICompoundCurve method
     int             getNumCurves() const;
@@ -885,26 +885,26 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     const OGRCurve *getCurve( int ) const;
 
     // non standard.
-    virtual void setCoordinateDimension( int nDimension );
-    virtual void set3D( OGRBoolean bIs3D );
-    virtual void setMeasured( OGRBoolean bIsMeasured );
+    virtual void setCoordinateDimension( int nDimension ) CPL_OVERRIDE;
+    virtual void set3D( OGRBoolean bIs3D ) CPL_OVERRIDE;
+    virtual void setMeasured( OGRBoolean bIsMeasured ) CPL_OVERRIDE;
 
     OGRErr         addCurve( OGRCurve*, double dfToleranceEps = 1e-14  );
     OGRErr         addCurveDirectly( OGRCurve*, double dfToleranceEps = 1e-14 );
     OGRCurve      *stealCurve( int );
-    virtual OGRPointIterator* getPointIterator() const;
+    virtual OGRPointIterator* getPointIterator() const CPL_OVERRIDE;
 
     // non-standard from OGRGeometry
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual const char *getGeometryName() const;
-    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
-    virtual void flattenTo2D();
-    virtual void segmentize(double dfMaxLength);
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
+    virtual void flattenTo2D() CPL_OVERRIDE;
+    virtual void segmentize(double dfMaxLength) CPL_OVERRIDE;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
-                                             const char* const* papszOptions = NULL) const;
+                                             const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
-    virtual void        swapXY();
+    virtual void        swapXY() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -963,8 +963,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     friend class OGRPolygon;
     OGRCurveCollection oCC;
 
-    virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
-    virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
+    virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const CPL_OVERRIDE;
+    virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const CPL_OVERRIDE;
 //! @endcond
 
     static OGRPolygon* CastToPolygon(OGRCurvePolygon* poCP);
@@ -977,47 +977,47 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     OGRCurvePolygon& operator=(const OGRCurvePolygon& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRGeometry *clone() const;
-    virtual void empty();
-    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
-    virtual void flattenTo2D();
-    virtual OGRBoolean  IsEmpty() const;
-    virtual void segmentize(double dfMaxLength);
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
+    virtual void empty() CPL_OVERRIDE;
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
+    virtual void flattenTo2D() CPL_OVERRIDE;
+    virtual OGRBoolean  IsEmpty() const CPL_OVERRIDE;
+    virtual void segmentize(double dfMaxLength) CPL_OVERRIDE;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
-                                             const char* const* papszOptions = NULL) const;
+                                             const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
     // ISurface Interface
-    virtual double      get_Area() const;
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const;
+    virtual double      get_Area() const CPL_OVERRIDE;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const CPL_OVERRIDE;
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant eWkbVariant = wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant eWkbVariant = wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry
-    virtual int getDimension() const;
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
+    virtual int getDimension() const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
 
     // ICurvePolygon
     virtual OGRPolygon* CurvePolyToPoly(double dfMaxAngleStepSizeDegrees = 0,
                                         const char* const* papszOptions = NULL) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const;
-    virtual OGRBoolean  Intersects( const OGRGeometry * ) const;
-    virtual OGRBoolean  Contains( const OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
+    virtual OGRBoolean  Intersects( const OGRGeometry * ) const CPL_OVERRIDE;
+    virtual OGRBoolean  Contains( const OGRGeometry * ) const CPL_OVERRIDE;
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension );
-    virtual void set3D( OGRBoolean bIs3D );
-    virtual void setMeasured( OGRBoolean bIsMeasured );
+    virtual void setCoordinateDimension( int nDimension ) CPL_OVERRIDE;
+    virtual void set3D( OGRBoolean bIs3D ) CPL_OVERRIDE;
+    virtual void setMeasured( OGRBoolean bIsMeasured ) CPL_OVERRIDE;
 
     OGRErr        addRing( OGRCurve * );
     OGRErr        addRingDirectly( OGRCurve * );
@@ -1030,7 +1030,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     OGRCurve *stealExteriorRingCurve();
 
-    virtual void        swapXY();
+    virtual void        swapXY() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -1052,15 +1052,15 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 //! @cond Doxygen_Suppress
     friend class OGRMultiSurface;
 
-    virtual int checkRing( OGRCurve * poNewRing ) const;
+    virtual int checkRing( OGRCurve * poNewRing ) const CPL_OVERRIDE;
     OGRErr      importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
                                        OGRRawPoint*& paoPoints, int& nMaxPoints,
                                        double*& padfZ );
 
     static OGRCurvePolygon* CastToCurvePolygon(OGRPolygon* poPoly);
 
-    virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const;
-    virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const;
+    virtual OGRSurfaceCasterToPolygon      GetCasterToPolygon() const CPL_OVERRIDE;
+    virtual OGRSurfaceCasterToCurvePolygon GetCasterToCurvePolygon() const CPL_OVERRIDE;
 //! @endcond
 
   public:
@@ -1071,26 +1071,26 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     OGRPolygon& operator=(const OGRPolygon& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
-    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
+    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
-                                             const char* const* papszOptions = NULL) const;
+                                             const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
     // ISurface Interface
-    virtual OGRErr        PointOnSurface( OGRPoint * poPoint ) const;
+    virtual OGRErr        PointOnSurface( OGRPoint * poPoint ) const CPL_OVERRIDE;
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // ICurvePolygon
     virtual OGRPolygon* CurvePolyToPoly(double dfMaxAngleStepSizeDegrees = 0,
-                                        const char* const* papszOptions = NULL) const;
+                                        const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
     OGRLinearRing *getExteriorRing();
     const OGRLinearRing *getExteriorRing() const;
@@ -1102,7 +1102,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
-    virtual void closeRings();
+    virtual void closeRings() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -1143,32 +1143,32 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     OGRGeometryCollection& operator=(const OGRGeometryCollection& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRGeometry *clone() const;
-    virtual void empty();
-    virtual OGRErr  transform( OGRCoordinateTransformation *poCT );
-    virtual void flattenTo2D();
-    virtual OGRBoolean  IsEmpty() const;
-    virtual void segmentize(double dfMaxLength);
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
-    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const;
-    virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0, const char* const* papszOptions = NULL) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRGeometry *clone() const CPL_OVERRIDE;
+    virtual void empty() CPL_OVERRIDE;
+    virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) CPL_OVERRIDE;
+    virtual void flattenTo2D() CPL_OVERRIDE;
+    virtual OGRBoolean  IsEmpty() const CPL_OVERRIDE;
+    virtual void segmentize(double dfMaxLength) CPL_OVERRIDE;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
+    virtual OGRGeometry* getCurveGeometry(const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+    virtual OGRGeometry* getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0, const char* const* papszOptions = NULL) const CPL_OVERRIDE;
 
     // IWks Interface
-    virtual int WkbSize() const;
-    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc );
-    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual int WkbSize() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkb( unsigned char *, int = -1, OGRwkbVariant=wkbVariantOldOgc ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char ** ppszDstText, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     virtual double get_Length() const;
     virtual double get_Area() const;
 
     // IGeometry methods
-    virtual int getDimension() const;
-    virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
-    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const;
+    virtual int getDimension() const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope * psEnvelope ) const CPL_OVERRIDE;
+    virtual void getEnvelope( OGREnvelope3D * psEnvelope ) const CPL_OVERRIDE;
 
     // IGeometryCollection
     int         getNumGeometries() const;
@@ -1176,19 +1176,19 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     const OGRGeometry *getGeometryRef( int ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const;
+    virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
 
     // Non standard
-    virtual void setCoordinateDimension( int nDimension );
-    virtual void set3D( OGRBoolean bIs3D );
-    virtual void setMeasured( OGRBoolean bIsMeasured );
+    virtual void setCoordinateDimension( int nDimension ) CPL_OVERRIDE;
+    virtual void set3D( OGRBoolean bIs3D ) CPL_OVERRIDE;
+    virtual void setMeasured( OGRBoolean bIsMeasured ) CPL_OVERRIDE;
     virtual OGRErr addGeometry( const OGRGeometry * );
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
     virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
 
-    void closeRings();
+    void closeRings() CPL_OVERRIDE;
 
-    virtual void        swapXY();
+    virtual void        swapXY() CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -1204,7 +1204,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
 {
   protected:
-    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const CPL_OVERRIDE;
 
   public:
             OGRMultiSurface();
@@ -1214,19 +1214,19 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     OGRMultiSurface& operator=(const OGRMultiSurface& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IMultiSurface methods
     virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const;
 
     // IGeometry methods
-    virtual int getDimension() const;
+    virtual int getDimension() const CPL_OVERRIDE;
 
     // Non standard
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
 
     static OGRMultiPolygon* CastToMultiPolygon(OGRMultiSurface* poMS);
 };
@@ -1242,7 +1242,7 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
 class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 {
   protected:
-    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const CPL_OVERRIDE;
 
   public:
             OGRMultiPolygon();
@@ -1252,15 +1252,15 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     OGRMultiPolygon& operator=(const OGRMultiPolygon& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IMultiSurface methods
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const CPL_OVERRIDE;
 
     // Non standard
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
 
     static OGRMultiSurface* CastToMultiSurface(OGRMultiPolygon* poMP);
 };
@@ -1279,7 +1279,7 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     OGRErr  importFromWkt_Bracketed( char **, int bHasM, int bHasZ );
 
   protected:
-    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const CPL_OVERRIDE;
 
   public:
             OGRMultiPoint();
@@ -1289,16 +1289,16 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     OGRMultiPoint& operator=(const OGRMultiPoint& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry methods
-    virtual int getDimension() const;
+    virtual int getDimension() const CPL_OVERRIDE;
 
     // Non standard
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -1317,7 +1317,7 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
 //! @cond Doxygen_Suppress
     static OGRErr addCurveDirectlyFromWkt( OGRGeometry* poSelf, OGRCurve* poCurve );
 //! @endcond
-    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const CPL_OVERRIDE;
 
   public:
             OGRMultiCurve();
@@ -1327,16 +1327,16 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     OGRMultiCurve& operator=(const OGRMultiCurve& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr importFromWkt( char ** );
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr importFromWkt( char ** ) CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // IGeometry methods
-    virtual int getDimension() const;
+    virtual int getDimension() const CPL_OVERRIDE;
 
     // Non standard
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
 
     static OGRMultiLineString* CastToMultiLineString(OGRMultiCurve* poMC);
 };
@@ -1352,7 +1352,7 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
 class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 {
   protected:
-    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const;
+    virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType ) const CPL_OVERRIDE;
 
   public:
             OGRMultiLineString();
@@ -1362,12 +1362,12 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     OGRMultiLineString& operator=(const OGRMultiLineString& other);
 
     // Non standard (OGRGeometry).
-    virtual const char *getGeometryName() const;
-    virtual OGRwkbGeometryType getGeometryType() const;
-    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const;
+    virtual const char *getGeometryName() const CPL_OVERRIDE;
+    virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
+    virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc ) const CPL_OVERRIDE;
 
     // Non standard
-    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
+    virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const CPL_OVERRIDE;
 
     static OGRMultiCurve* CastToMultiCurve(OGRMultiLineString* poMLS);
 };

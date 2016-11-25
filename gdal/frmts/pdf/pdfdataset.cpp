@@ -176,7 +176,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 #ifdef POPPLER_0_23_OR_LATER
                                ,XRef* xrefIn
 #endif
-        )
+        ) override
         {
             SplashOutputDev::startPage(pageNum, state
 #ifdef POPPLER_0_23_OR_LATER
@@ -187,19 +187,19 @@ class GDALPDFOutputDev : public SplashOutputDev
             memset(poBitmap->getDataPtr(), 255, poBitmap->getRowSize() * poBitmap->getHeight());
         }
 
-        virtual void stroke(GfxState * state)
+        virtual void stroke(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::stroke(state);
         }
 
-        virtual void fill(GfxState * state)
+        virtual void fill(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::fill(state);
         }
 
-        virtual void eoFill(GfxState * state)
+        virtual void eoFill(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::eoFill(state);
@@ -208,7 +208,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         virtual void drawChar(GfxState *state, double x, double y,
                               double dx, double dy,
                               double originX, double originY,
-                              CharCode code, int nBytes, Unicode *u, int uLen)
+                              CharCode code, int nBytes, Unicode *u, int uLen) override
         {
             if (bEnableText)
                 SplashOutputDev::drawChar(state, x, y, dx, dy,
@@ -216,14 +216,14 @@ class GDALPDFOutputDev : public SplashOutputDev
                                           code, nBytes, u, uLen);
         }
 
-        virtual void beginTextObject(GfxState *state)
+        virtual void beginTextObject(GfxState *state) override
         {
             if (bEnableText)
                 SplashOutputDev::beginTextObject(state);
         }
 
 #ifndef POPPLER_0_23_OR_LATER
-        virtual GBool deviceHasTextClip(GfxState *state)
+        virtual GBool deviceHasTextClip(GfxState *state) override
         {
             if (bEnableText)
                 return SplashOutputDev::deviceHasTextClip(state);
@@ -231,7 +231,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         }
 #endif
 
-        virtual void endTextObject(GfxState *state)
+        virtual void endTextObject(GfxState *state) override
         {
             if (bEnableText)
                 SplashOutputDev::endTextObject(state);
@@ -239,7 +239,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
                                    int width, int height, GBool invert,
-                                   GBool interpolate, GBool inlineImg)
+                                   GBool interpolate, GBool inlineImg) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawImageMask(state, ref, str,
@@ -260,7 +260,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         virtual void setSoftMaskFromImageMask(GfxState *state,
                             Object *ref, Stream *str,
                             int width, int height, GBool invert,
-                            GBool inlineImg, double *baseMatrix)
+                            GBool inlineImg, double *baseMatrix) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::setSoftMaskFromImageMask(state, ref, str,
@@ -270,7 +270,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                 str->close();
         }
 
-        virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix)
+        virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::unsetSoftMaskFromImageMask(state, baseMatrix);
@@ -279,7 +279,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void drawImage(GfxState *state, Object *ref, Stream *str,
                                int width, int height, GfxImageColorMap *colorMap,
-                               GBool interpolate, int *maskColors, GBool inlineImg)
+                               GBool interpolate, int *maskColors, GBool inlineImg) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawImage(state, ref, str,
@@ -303,7 +303,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                      GfxImageColorMap *colorMap,
                                      GBool interpolate,
                                      Stream *maskStr, int maskWidth, int maskHeight,
-                                     GBool maskInvert, GBool maskInterpolate)
+                                     GBool maskInvert, GBool maskInterpolate) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawMaskedImage(state, ref, str,
@@ -322,7 +322,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                          Stream *maskStr,
                                          int maskWidth, int maskHeight,
                                          GfxImageColorMap *maskColorMap,
-                                         GBool maskInterpolate)
+                                         GBool maskInterpolate) override
         {
             if (bEnableBitmap)
             {
@@ -2082,7 +2082,7 @@ class PDFImageRasterBand : public PDFRasterBand
 
                 PDFImageRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

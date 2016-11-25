@@ -58,9 +58,9 @@ class EIRDataset : public RawDataset
     EIRDataset();
     virtual ~EIRDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );

@@ -136,28 +136,28 @@ class OGRPGDumpLayer : public OGRLayer
                                        int         bCreateTable);
     virtual             ~OGRPGDumpLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual const char* GetFIDColumn() { return pszFIDColumn; }
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual const char* GetFIDColumn() override { return pszFIDColumn; }
 
-    virtual void        ResetReading() {}
-    virtual int         TestCapability( const char * );
+    virtual void        ResetReading() override {}
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      CreateFeatureViaInsert( OGRFeature *poFeature );
     virtual OGRErr      CreateFeatureViaCopy( OGRFeature *poFeature );
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
-                                         int bApproxOK = TRUE );
+                                         int bApproxOK = TRUE ) override;
 
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
     virtual CPLErr      SetMetadata( char** papszMD,
-                                     const char* pszDomain = "" );
+                                     const char* pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char* pszName,
                                          const char* pszValue,
-                                         const char* pszDomain = "" );
+                                         const char* pszDomain = "" ) override;
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( bool bFlag )
@@ -205,16 +205,16 @@ class OGRPGDumpDataSource : public OGRDataSource
 
     bool                Log( const char* pszStr, bool bAddSemiColumn = true );
 
-    virtual const char  *GetName() { return pszName; }
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer   *GetLayer( int );
+    virtual const char  *GetName() override { return pszName; }
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer   *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     void                LogStartTransaction();
     void                LogCommit();

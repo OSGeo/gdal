@@ -91,16 +91,16 @@ public:
 
 #if ECWSDK_VERSION >= 40
     virtual CNCSError Parse(NCS::SDK::CFileBase &JP2File,
-                             NCS::CIOStream &Stream);
+                             NCS::CIOStream &Stream) override;
     virtual CNCSError UnParse(NCS::SDK::CFileBase &JP2File,
-                                NCS::CIOStream &Stream);
+                                NCS::CIOStream &Stream) override;
 #else
     virtual CNCSError Parse(class CNCSJP2File &JP2File,
-                            CNCSJPCIOStream &Stream);
+                            CNCSJPCIOStream &Stream) override;
     virtual CNCSError UnParse(class CNCSJP2File &JP2File,
-                              CNCSJPCIOStream &Stream);
+                              CNCSJPCIOStream &Stream) override;
 #endif
-    virtual void UpdateXLBox();
+    virtual void UpdateXLBox() override;
 
     void    SetData( int nDataLength, const unsigned char *pabyDataIn );
 
@@ -158,7 +158,7 @@ class VSIIOStream : public CNCSJPCIOStream
         }
     }
 
-    virtual CNCSError Close() {
+    virtual CNCSError Close() override {
         CNCSError oErr = CNCSJPCIOStream::Close();
         if( fpVSIL != NULL )
         {
@@ -169,7 +169,7 @@ class VSIIOStream : public CNCSJPCIOStream
     }
 
 #if ECWSDK_VERSION >= 40
-    virtual VSIIOStream *Clone() {
+    virtual VSIIOStream *Clone() override {
         CPLDebug( "ECW", "VSIIOStream::Clone()" );
         VSILFILE *fpNewVSIL = VSIFOpenL( m_Filename, "rb" );
         if (fpNewVSIL == NULL)
@@ -229,11 +229,11 @@ class VSIIOStream : public CNCSJPCIOStream
         }
     }
 
-    virtual bool NCS_FASTCALL Seek() {
+    virtual bool NCS_FASTCALL Seek() override {
         return bSeekable;
     }
 
-    virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) {
+    virtual bool NCS_FASTCALL Seek(INT64 offset, Origin origin = CURRENT) override {
 #ifdef DEBUG_VERBOSE
         CPLDebug( "ECW", "VSIIOStream::Seek(" CPL_FRMT_GIB ",%d)",
                   static_cast<GIntBig>(offset), (int) origin );
@@ -258,11 +258,11 @@ class VSIIOStream : public CNCSJPCIOStream
         return(success);
     }
 
-    virtual INT64 NCS_FASTCALL Tell() {
+    virtual INT64 NCS_FASTCALL Tell() override {
         return VSIFTellL( fpVSIL ) - startOfJPData;
     }
 
-    virtual INT64 NCS_FASTCALL Size() {
+    virtual INT64 NCS_FASTCALL Size() override {
         if( lengthOfJPData != -1 )
             return lengthOfJPData;
         else
@@ -281,7 +281,7 @@ class VSIIOStream : public CNCSJPCIOStream
 
 #if ECWSDK_VERSION >= 40
     /* New, and needed, in ECW SDK 4 */
-    virtual bool Read(INT64 offset, void* buffer, UINT32 count)
+    virtual bool Read(INT64 offset, void* buffer, UINT32 count) override
     {
 #ifdef DEBUG_VERBOSE
       CPLDebug( "ECW", "VSIIOStream::Read(" CPL_FRMT_GIB ",%u)", static_cast<GIntBig>(offset), count );
@@ -296,7 +296,7 @@ class VSIIOStream : public CNCSJPCIOStream
     }
 #endif
 
-    virtual bool NCS_FASTCALL Read(void* buffer, UINT32 count) {
+    virtual bool NCS_FASTCALL Read(void* buffer, UINT32 count) override {
 #ifdef DEBUG_VERBOSE
         CPLDebug( "ECW", "VSIIOStream::Read(%u)", count );
 #endif
@@ -316,7 +316,7 @@ class VSIIOStream : public CNCSJPCIOStream
         return true;
     }
 
-    virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) {
+    virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) override {
         if( count == 0 )
             return true;
 
@@ -415,7 +415,7 @@ public:
                                                      int* pnXBufOff,
                                                      int* pnYBufOff,
                                                      int* pnXBufSize,
-                                                     int* pnYBufSize);
+                                                     int* pnYBufSize) override;
 
     friend class ECWDataset;
 };
@@ -548,26 +548,26 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
                               int, int *,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                     const char * pszDomain = "" );
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
-    virtual CPLErr SetProjection( const char* pszProjection );
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
+    virtual CPLErr SetProjection( const char* pszProjection ) override;
     virtual CPLErr SetMetadataItem( const char * pszName,
                                  const char * pszValue,
-                                 const char * pszDomain = "" );
+                                 const char * pszDomain = "" ) override;
     virtual CPLErr SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" );
+                             const char * pszDomain = "" ) override;
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eDT,
                                int nBandCount, int *panBandList,
-                               char **papszOptions );
+                               char **papszOptions ) override;
 
     // progressive methods
 #if ECWSDK_VERSION >= 40
@@ -628,39 +628,39 @@ class ECWRasterBand : public GDALPamRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
   public:
 
                    ECWRasterBand( ECWDataset *, int, int iOverview, char** papszOpenOptions );
                    ~ECWRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual int    HasArbitraryOverviews() { return apoOverviews.size() == 0; }
-    virtual int    GetOverviewCount() { return (int)apoOverviews.size(); }
-    virtual GDALRasterBand *GetOverview(int);
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual int    HasArbitraryOverviews() override { return apoOverviews.size() == 0; }
+    virtual int    GetOverviewCount() override { return (int)apoOverviews.size(); }
+    virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
 
     virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eDT, char **papszOptions );
+                               GDALDataType eDT, char **papszOptions ) override;
 #if ECWSDK_VERSION >= 50
     void GetBandIndexAndCountForStatistics(int &bandIndex, int &bandCount);
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                     int *pnBuckets, GUIntBig ** ppanHistogram,
                                     int bForce,
-                                    GDALProgressFunc, void *pProgressData);
+                                    GDALProgressFunc, void *pProgressData) override;
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, GUIntBig *panHistogram );
-    virtual double GetMinimum( int* pbSuccess );
-    virtual double GetMaximum( int* pbSuccess );
+                                        int nBuckets, GUIntBig *panHistogram ) override;
+    virtual double GetMinimum( int* pbSuccess ) override;
+    virtual double GetMaximum( int* pbSuccess ) override;
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *padfStdDev );
+                                  double *pdfMean, double *padfStdDev ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev );
+                                  double dfMean, double dfStdDev ) override;
 #endif
 
 };

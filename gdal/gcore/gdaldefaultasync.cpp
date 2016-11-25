@@ -292,7 +292,7 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
                                                      int* pnBufXOff,
                                                      int* pnBufYOff,
                                                      int* pnBufXSize,
-                                                     int* pnBufYSize);
+                                                     int* pnBufYSize) override;
 };
 
 /************************************************************************/

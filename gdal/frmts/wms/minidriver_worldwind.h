@@ -28,17 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "wmsdriver.h"
+
 class WMSMiniDriver_WorldWind : public WMSMiniDriver {
 public:
     WMSMiniDriver_WorldWind();
     virtual ~WMSMiniDriver_WorldWind();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual const char *GetProjectionInWKT();
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) override;
+    virtual const char *GetProjectionInWKT() override;
 
 protected:
     CPLString m_base_url;

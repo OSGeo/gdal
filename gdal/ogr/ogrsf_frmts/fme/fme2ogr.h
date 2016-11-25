@@ -67,11 +67,11 @@ class OGRFMELayer : public OGRLayer
     virtual int         Initialize( IFMEFeature *,
                                     OGRSpatialReference * );
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    OGRSpatialReference *GetSpatialRef();
+    OGRSpatialReference *GetSpatialRef() override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 };
 
 /************************************************************************/
@@ -96,13 +96,13 @@ class OGRFMELayerCached : public OGRFMELayer
     explicit            OGRFMELayerCached( OGRFMEDataSource * );
     virtual            ~OGRFMELayerCached();
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
-    virtual GIntBig     GetFeatureCount( int bForce );
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual GIntBig     GetFeatureCount( int bForce ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     int                 AssignIndex( const char *pszBase, const OGREnvelope*,
                                      OGRSpatialReference *poSRS );
@@ -134,13 +134,13 @@ class OGRFMELayerDB : public OGRFMELayer
                                       IFMEStringArray *poUserDirectives );
     virtual            ~OGRFMELayerDB();
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
-    virtual GIntBig     GetFeatureCount( int bForce );
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual GIntBig     GetFeatureCount( int bForce ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     void                AssignIndex( const char *pszBase );
 };
@@ -190,18 +190,18 @@ class OGRFMEDataSource : public OGRDataSource
     IFMESession *       AcquireSession();
     void                ReleaseSession();
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     OGRGeometry        *ProcessGeometry( OGRFMELayer *, IFMEFeature *,
                                          OGRwkbGeometryType );
     OGRFeature         *ProcessFeature( OGRFMELayer *, IFMEFeature * );
-    void                ResetReading();
+    void                ResetReading() override;
 
     int                 Open( const char * );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     IFMESession         *GetFMESession() { return poSession; }
     IFMEUniversalReader *GetFMEReader() { return poReader; }
@@ -224,10 +224,10 @@ class OGRFMEDriver : public OGRSFDriver
   public:
                 ~OGRFMEDriver();
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 };
 
 /************************************************************************/

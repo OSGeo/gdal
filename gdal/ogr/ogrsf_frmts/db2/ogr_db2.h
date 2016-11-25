@@ -335,26 +335,26 @@ public:
     OGRDB2Layer();
     virtual             ~OGRDB2Layer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() {
+    virtual OGRFeatureDefn *GetLayerDefn() override {
         return poFeatureDefn;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual OGRErr     StartTransaction();
-    virtual OGRErr     CommitTransaction();
-    virtual OGRErr     RollbackTransaction();
+    virtual OGRErr     StartTransaction() override;
+    virtual OGRErr     CommitTransaction() override;
+    virtual OGRErr     RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
     char*               GByteArrayToHexString( const GByte* pabyData,
             int nLen);
 
@@ -388,7 +388,7 @@ class OGRDB2TableLayer : public OGRDB2Layer
     static void                FreeBindBuffer(int nBindNum, void **bind_buffer);
     CPLString BuildFields();
 
-    virtual OGRDB2Statement *  GetStatement();
+    virtual OGRDB2Statement *  GetStatement() override;
 
     char               *pszTableName;
     char               *m_pszLayerName;
@@ -442,18 +442,18 @@ public:
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
 
-    virtual void        ResetReading();
-    virtual GIntBig         GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig         GetFeatureCount( int ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual const char* GetName();
+    virtual const char* GetName() override;
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      PrepareFeature( OGRFeature *poFeature, char cType );
 
     const char*         GetTableName() {
@@ -467,11 +467,11 @@ public:
     }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     void                SetLaunderFlag( int bFlag )
     {
@@ -550,23 +550,23 @@ class OGRDB2SelectLayer : public OGRDB2Layer
     void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual OGRDB2Statement *  GetStatement();
+    virtual OGRDB2Statement *  GetStatement() override;
 
 public:
     OGRDB2SelectLayer( OGRDB2DataSource *,
                        OGRDB2Statement * );
     virtual ~OGRDB2SelectLayer();
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
             { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -754,26 +754,26 @@ public:
     virtual ~OGRDB2DataSource();
 //***************** For raster support
 
-    virtual char **     GetMetadata( const char *pszDomain = NULL );
+    virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual char **     GetMetadataDomainList();
+                                         const char * pszDomain = "" ) override;
+    virtual char **     GetMetadataDomainList() override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
     CPLErr              FlushCacheWithErrCode();
 
-    virtual const char* GetProjectionRef();
-    virtual CPLErr      SetProjection( const char* pszProjection );
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char* pszProjection ) override;
 
-    virtual CPLErr      GetGeoTransform( double* padfGeoTransform );
-    virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
+    virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
+    virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;
 
     virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                          int, int *,
-                                         GDALProgressFunc, void * );
+                                         GDALProgressFunc, void * ) override;
 
     OGRErr              CreateGDALAspatialExtension();
     void                SetMetadataDirty() {
@@ -785,7 +785,7 @@ public:
     OGRErr              CreateExtensionsTableIfNecessary();
     // cppcheck-suppress functionStatic
     int                 HasExtensionsTable();
-    virtual void        FlushCache();
+    virtual void        FlushCache() override;
     static GDALDataset* CreateCopy( const char *pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict,
@@ -822,27 +822,27 @@ public:
     const char          *GetName() {
         return m_pszName;
     }
-    int                 GetLayerCount();
-    OGRLayer            *GetLayer( int );
-    OGRLayer            *GetLayerByName( const char* pszLayerName );
+    int                 GetLayerCount() override;
+    OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* pszLayerName ) override;
 
     int                 UseGeometryColumns() {
         return bUseGeometryColumns;
     }
 
-    virtual int         DeleteLayer( int iLayer );
+    virtual int         DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,
                                        OGRSpatialReference * = NULL,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL );
+                                       char ** = NULL ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
+                                    const char *pszDialect ) override;
     // cppcheck-suppress functionStatic
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     char                *LaunderName( const char *pszSrcName );
     char                *ToUpper( const char *pszSrcName );
@@ -852,9 +852,9 @@ public:
     OGRSpatialReference* FetchSRS( int nId );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
-    OGRErr              StartTransaction(CPL_UNUSED int bForce);
-    OGRErr              CommitTransaction();
-    OGRErr              RollbackTransaction();
+    OGRErr              StartTransaction(CPL_UNUSED int bForce) override;
+    OGRErr              CommitTransaction() override;
+    OGRErr              RollbackTransaction() override;
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
     OGRErr              SoftRollbackTransaction();
@@ -889,19 +889,19 @@ public:
                       int nTileWidth, int nTileHeight);
 
     virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
-                                       void* pData);
+                                       void* pData) override;
     virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                        void* pData);
-    virtual CPLErr          FlushCache();
+                                        void* pData) override;
+    virtual CPLErr          FlushCache() override;
 
-    virtual GDALColorTable* GetColorTable();
-    virtual CPLErr          SetColorTable(GDALColorTable* poCT);
+    virtual GDALColorTable* GetColorTable() override;
+    virtual CPLErr          SetColorTable(GDALColorTable* poCT) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr          SetColorInterpretation( GDALColorInterp ) override;
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nIdx);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nIdx) override;
     char*           GByteArrayToHexString( const GByte* pabyData, int nLen);
 };
 #endif /* ndef OGR_DB2_H_INCLUDED */

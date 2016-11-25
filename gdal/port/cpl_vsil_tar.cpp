@@ -100,13 +100,13 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
 
         int IsValid() { return fp != NULL; }
 
-        virtual int GotoFirstFile();
-        virtual int GotoNextFile();
-        virtual VSIArchiveEntryFileOffset* GetFileOffset();
-        virtual GUIntBig GetFileSize() { return nNextFileSize; }
-        virtual CPLString GetFileName() { return osNextFileName; }
-        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
-        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
+        virtual int GotoFirstFile() override;
+        virtual int GotoNextFile() override;
+        virtual VSIArchiveEntryFileOffset* GetFileOffset() override;
+        virtual GUIntBig GetFileSize() override { return nNextFileSize; }
+        virtual CPLString GetFileName() override { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() override { return nModifiedTime; }
+        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) override;
 };
 
 /************************************************************************/
@@ -350,15 +350,15 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 {
 public:
-    virtual const char* GetPrefix() { return "/vsitar"; }
-    virtual std::vector<CPLString> GetExtensions();
-    virtual VSIArchiveReader* CreateReader(const char* pszTarFileName);
+    virtual const char* GetPrefix() override { return "/vsitar"; }
+    virtual std::vector<CPLString> GetExtensions() override;
+    virtual VSIArchiveReader* CreateReader(const char* pszTarFileName) override;
 
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 };
 
 /************************************************************************/

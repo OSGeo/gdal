@@ -50,9 +50,9 @@ public :
     explicit GMLASBinInputStream(VSILFILE* fp);
     virtual ~GMLASBinInputStream();
 
-    virtual XMLFilePos curPos() const;
-    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead);
-    virtual const XMLCh* getContentType() const ;
+    virtual XMLFilePos curPos() const override;
+    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead) override;
+    virtual const XMLCh* getContentType() const override ;
 };
 
 /************************************************************************/

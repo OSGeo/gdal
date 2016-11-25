@@ -85,8 +85,8 @@ public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
-   CPLErr         GetGeoTransform( double * padfTransform );
-   const char *GetProjectionRef();
+   CPLErr         GetGeoTransform( double * padfTransform ) override;
+   const char *GetProjectionRef() override;
 
 protected:
    MG4PointReader *reader;
@@ -115,11 +115,11 @@ public:
    MG4LidarRasterBand( MG4LidarDataset *, int, CPLXMLNode *, const char * );
    ~MG4LidarRasterBand();
 
-   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
-   virtual int GetOverviewCount();
-   virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void * );
-   virtual double GetNoDataValue( int *pbSuccess = NULL );
+   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev ) override;
+   virtual int GetOverviewCount() override;
+   virtual GDALRasterBand * GetOverview( int i ) override;
+   virtual CPLErr IReadBlock( int, int, void * ) override;
+   virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
    protected:
    double getMaxValue();

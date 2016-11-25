@@ -166,12 +166,12 @@ class RMFDataset : public GDALDataset
     static GDALDataset  *Open( GDALOpenInfo * );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
-    virtual void        FlushCache();
+    virtual void        FlushCache() override;
 
-    virtual CPLErr      GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
-    virtual const char  *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
+    virtual CPLErr      GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double * ) override;
+    virtual const char  *GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char * ) override;
 
     vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
     GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
@@ -201,12 +201,12 @@ class RMFRasterBand : public GDALRasterBand
                 RMFRasterBand( RMFDataset *, int, GDALDataType );
         virtual ~RMFRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
-    virtual double          GetNoDataValue(int *pbSuccess = NULL);
-    virtual const char      *GetUnitType();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable  *GetColorTable();
-    virtual CPLErr          SetUnitType( const char * );
-    virtual CPLErr          SetColorTable( GDALColorTable * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual double          GetNoDataValue(int *pbSuccess = NULL) override;
+    virtual const char      *GetUnitType() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable  *GetColorTable() override;
+    virtual CPLErr          SetUnitType( const char * ) override;
+    virtual CPLErr          SetColorTable( GDALColorTable * ) override;
 };

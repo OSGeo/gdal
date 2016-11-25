@@ -54,18 +54,18 @@ class OGRNULLLayer : public OGRLayer
                                       OGRwkbGeometryType eType );
     virtual             ~OGRNULLLayer();
 
-    virtual OGRFeatureDefn *GetLayerDefn() {return poFeatureDefn;}
-    virtual OGRSpatialReference * GetSpatialRef() { return poSRS; }
+    virtual OGRFeatureDefn *GetLayerDefn() override {return poFeatureDefn;}
+    virtual OGRSpatialReference * GetSpatialRef() override { return poSRS; }
 
-    virtual void        ResetReading() {}
-    virtual int         TestCapability( const char * );
+    virtual void        ResetReading() override {}
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRFeature *GetNextFeature() { return NULL; }
+    virtual OGRFeature *GetNextFeature() override { return NULL; }
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) { return OGRERR_NONE; }
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override { return OGRERR_NONE; }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 };
 
 /************************************************************************/
@@ -82,16 +82,16 @@ class OGRNULLDataSource : public OGRDataSource
                explicit OGRNULLDataSource(const char* pszNameIn);
                virtual ~OGRNULLDataSource();
 
-    virtual const char *GetName() { return pszName; }
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer   *GetLayer( int );
+    virtual const char *GetName() override { return pszName; }
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer   *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *pszLayerName,
                                       OGRSpatialReference *poSRS,
                                       OGRwkbGeometryType eType,
-                                      char **papszOptions );
+                                      char **papszOptions ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -103,12 +103,12 @@ class OGRNULLDriver : public OGRSFDriver
   public:
     virtual ~OGRNULLDriver() {};
 
-    virtual const char    *GetName() { return "NULL"; }
-    virtual OGRDataSource *Open( const char *, int ) { return NULL; }
+    virtual const char    *GetName() override { return "NULL"; }
+    virtual OGRDataSource *Open( const char *, int ) override { return NULL; }
     virtual OGRDataSource *CreateDataSource( const char * pszName,
-                                             char **papszOptions );
+                                             char **papszOptions ) override;
 
-    virtual int            TestCapability( const char * );
+    virtual int            TestCapability( const char * ) override;
 };
 
 /************************************************************************/

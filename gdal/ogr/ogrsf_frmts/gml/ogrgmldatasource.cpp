@@ -2518,10 +2518,10 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
     explicit            OGRGMLSingleFeatureLayer(int nVal );
     virtual ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/

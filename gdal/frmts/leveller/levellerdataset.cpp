@@ -301,11 +301,11 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char** papszOptions );
 
-    virtual CPLErr      GetGeoTransform( double* );
-    virtual const char* GetProjectionRef(void);
+    virtual CPLErr      GetGeoTransform( double* ) override;
+    virtual const char* GetProjectionRef(void) override;
 
-    virtual CPLErr      SetGeoTransform( double* );
-    virtual CPLErr      SetProjection(const char*);
+    virtual CPLErr      SetGeoTransform( double* ) override;
+    virtual CPLErr      SetProjection(const char*) override;
 };
 
 class digital_axis
@@ -406,13 +406,13 @@ public:
     bool        Init();
 
     // Geomeasure support.
-    virtual const char* GetUnitType();
-    virtual double GetScale(int* pbSuccess = NULL);
-    virtual double GetOffset(int* pbSuccess = NULL);
+    virtual const char* GetUnitType() override;
+    virtual double GetScale(int* pbSuccess = NULL) override;
+    virtual double GetOffset(int* pbSuccess = NULL) override;
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-    virtual CPLErr SetUnitType( const char* );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual CPLErr SetUnitType( const char* ) override;
 };
 
 /************************************************************************/

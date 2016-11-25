@@ -69,8 +69,8 @@ class MSGNDataset : public GDALDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr     GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr     GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -90,7 +90,7 @@ class MSGNRasterBand : public GDALRasterBand
     unsigned int band_in_file;      // The effective index of the band in the file
     open_mode_type open_mode;
 
-    double  GetNoDataValue (int *pbSuccess=NULL) {
+    double  GetNoDataValue (int *pbSuccess=NULL) override {
         if (pbSuccess) {
             *pbSuccess = 1;
         }
@@ -105,10 +105,10 @@ class MSGNRasterBand : public GDALRasterBand
 
         MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
-    virtual const char* GetDescription() const { return band_description; }
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
+    virtual const char* GetDescription() const override { return band_description; }
 };
 
 /************************************************************************/

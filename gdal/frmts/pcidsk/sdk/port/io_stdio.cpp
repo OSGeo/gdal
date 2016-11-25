@@ -36,14 +36,14 @@ using namespace PCIDSK;
 
 class StdioIOInterface : public IOInterfaces
 {
-    virtual void   *Open( std::string filename, std::string access ) const;
-    virtual uint64  Seek( void *io_handle, uint64 offset, int whence ) const;
-    virtual uint64  Tell( void *io_handle ) const;
-    virtual uint64  Read( void *buffer, uint64 size, uint64 nmemb, void *io_hanle ) const;
-    virtual uint64  Write( const void *buffer, uint64 size, uint64 nmemb, void *io_handle ) const;
-    virtual int     Eof( void *io_handle ) const;
-    virtual int     Flush( void *io_handle ) const;
-    virtual int     Close( void *io_handle ) const;
+    virtual void   *Open( std::string filename, std::string access ) const override;
+    virtual uint64  Seek( void *io_handle, uint64 offset, int whence ) const override;
+    virtual uint64  Tell( void *io_handle ) const override;
+    virtual uint64  Read( void *buffer, uint64 size, uint64 nmemb, void *io_hanle ) const override;
+    virtual uint64  Write( const void *buffer, uint64 size, uint64 nmemb, void *io_handle ) const override;
+    virtual int     Eof( void *io_handle ) const override;
+    virtual int     Flush( void *io_handle ) const override;
+    virtual int     Close( void *io_handle ) const override;
 
     const char     *LastError() const;
 };

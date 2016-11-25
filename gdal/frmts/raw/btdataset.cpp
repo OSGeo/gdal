@@ -64,12 +64,12 @@ class BTDataset : public GDALPamDataset
              BTDataset();
     virtual ~BTDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual void   FlushCache();
+    virtual void   FlushCache() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -92,13 +92,13 @@ class BTRasterBand : public GDALPamRasterBand
                                  GDALDataType eType );
     virtual ~BTRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual const char* GetUnitType();
-    virtual CPLErr SetUnitType(const char*);
-    virtual double GetNoDataValue( int* = NULL );
-    virtual CPLErr SetNoDataValue( double );
+    virtual const char* GetUnitType() override;
+    virtual CPLErr SetUnitType(const char*) override;
+    virtual double GetNoDataValue( int* = NULL ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/

@@ -323,9 +323,9 @@ class L1BDataset : public GDALPamDataset
     explicit L1BDataset( L1BFileFormat );
     virtual ~L1BDataset();
 
-    virtual int GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -346,9 +346,9 @@ class L1BRasterBand : public GDALPamRasterBand
                 L1BRasterBand( L1BDataset *, int );
 
 //    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALRasterBand *GetMaskBand() override;
+    virtual int             GetMaskFlags() override;
 };
 
 /************************************************************************/
@@ -365,7 +365,7 @@ class L1BMaskBand: public GDALPamRasterBand
 
     explicit       L1BMaskBand( L1BDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -2295,8 +2295,8 @@ class L1BGeolocRasterBand: public GDALRasterBand
     public:
             L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
-            virtual double GetNoDataValue( int *pbSuccess = NULL );
+            virtual CPLErr IReadBlock(int, int, void*) override;
+            virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -2593,8 +2593,8 @@ class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
         L1BSolarZenithAnglesRasterBand( L1BSolarZenithAnglesDataset* poDS,
                                         int nBand );
 
-        virtual CPLErr IReadBlock(int, int, void*);
-        virtual double GetNoDataValue( int *pbSuccess = NULL );
+        virtual CPLErr IReadBlock(int, int, void*) override;
+        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -2782,7 +2782,7 @@ class L1BNOAA15AnglesRasterBand: public GDALRasterBand
     public:
             L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
+            virtual CPLErr IReadBlock(int, int, void*) override;
 };
 
 /************************************************************************/
@@ -2911,7 +2911,7 @@ class L1BCloudsRasterBand: public GDALRasterBand
     public:
             L1BCloudsRasterBand(L1BCloudsDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
+            virtual CPLErr IReadBlock(int, int, void*) override;
 };
 
 /************************************************************************/

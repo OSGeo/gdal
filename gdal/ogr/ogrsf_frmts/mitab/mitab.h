@@ -193,14 +193,14 @@ class IMapInfoFile : public OGRLayer
 
     ///////////////
     //  OGR methods for read support
-    virtual void        ResetReading() = 0;
-    virtual GIntBig     GetFeatureCount (int bForce) = 0;
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId);
-    virtual OGRErr      ICreateFeature(OGRFeature *poFeature);
-    virtual int         TestCapability( const char * pszCap ) =0;
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) =0;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual void        ResetReading() override = 0;
+    virtual GIntBig     GetFeatureCount (int bForce) override = 0;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRErr      ICreateFeature(OGRFeature *poFeature) override;
+    virtual int         TestCapability( const char * pszCap ) override =0;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override =0;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
@@ -208,7 +208,7 @@ class IMapInfoFile : public OGRLayer
     //
     virtual GIntBig GetNextFeatureId(GIntBig nPrevId) = 0;
     virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) = 0;
-    virtual OGRFeatureDefn *GetLayerDefn() = 0;
+    virtual OGRFeatureDefn *GetLayerDefn() override = 0;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) = 0;
 
@@ -216,7 +216,7 @@ class IMapInfoFile : public OGRLayer
                           double &dXMax, double &dYMax,
                           GBool bForce = TRUE ) = 0;
 
-    virtual OGRSpatialReference *GetSpatialRef() = 0;
+    virtual OGRSpatialReference *GetSpatialRef() override = 0;
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
@@ -237,7 +237,7 @@ class IMapInfoFile : public OGRLayer
                                int nWidth=0, int nPrecision=0,
                                GBool bIndexed=FALSE, GBool bUnique=FALSE,
                                int bApproxOK = TRUE) = 0;
-    virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
+    virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
 
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) = 0;
 
@@ -310,42 +310,42 @@ class TABFile CPL_FINAL : public IMapInfoFile
     TABFile();
     virtual ~TABFile();
 
-    virtual TABFileClass GetFileClass() {return TABFC_TABFile;}
+    virtual TABFileClass GetFileClass() override {return TABFC_TABFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE )
+                     GBool bTestOpenNoError = FALSE ) override
             { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE )
+                     GBool bTestOpenNoError = FALSE ) override
             { return Open(pszFname, eAccess, bTestOpenNoError, 512); }
 
     virtual int Open(const char *pszFname, TABAccess eAccess,
                      GBool bTestOpenNoError,
                      int nBlockSizeForCreate );
 
-    virtual int Close();
+    virtual int Close() override;
 
-    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE);
+    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE) override;
 
-    virtual const char *GetTableName()
+    virtual const char *GetTableName() override
                             {return m_poDefn?m_poDefn->GetName():"";};
 
-    virtual void        ResetReading();
-    virtual int         TestCapability( const char * pszCap );
-    virtual GIntBig     GetFeatureCount (int bForce);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual void        ResetReading() override;
+    virtual int         TestCapability( const char * pszCap ) override;
+    virtual GIntBig     GetFeatureCount (int bForce) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
-    virtual OGRErr      ISetFeature( OGRFeature * );
-    virtual OGRErr      DeleteFeature(GIntBig nFeatureId);
+    virtual OGRErr      ISetFeature( OGRFeature * ) override;
+    virtual OGRErr      DeleteFeature(GIntBig nFeatureId) override;
 
-    virtual OGRErr      DeleteField( int iField );
-    virtual OGRErr      ReorderFields( int* panMap );
-    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags );
+    virtual OGRErr      DeleteField( int iField ) override;
+    virtual OGRErr      ReorderFields( int* panMap ) override;
+    virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nFlags ) override;
 
-    virtual OGRErr      SyncToDisk();
+    virtual OGRErr      SyncToDisk() override;
 
     ///////////////
     // Read access specific stuff
@@ -353,17 +353,17 @@ class TABFile CPL_FINAL : public IMapInfoFile
 
     int         GetNextFeatureId_Spatial( int nPrevId );
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual TABFieldType GetNativeFieldType(int nFieldId);
+    virtual TABFieldType GetNativeFieldType(int nFieldId) override;
 
     virtual int GetBounds(double &dXMin, double &dYMin,
                           double &dXMax, double &dYMax,
-                          GBool bForce = TRUE );
+                          GBool bForce = TRUE ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
     static OGRSpatialReference* GetSpatialRefFromTABProj(const TABProjInfo& sTABProj);
     static int                  GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
@@ -371,10 +371,10 @@ class TABFile CPL_FINAL : public IMapInfoFile
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
-                                      GBool bForce = TRUE);
+                                      GBool bForce = TRUE) override;
 
-    virtual GBool IsFieldIndexed(int nFieldId);
-    virtual GBool IsFieldUnique(int /*nFieldId*/)   {return FALSE;};
+    virtual GBool IsFieldIndexed(int nFieldId) override;
+    virtual GBool IsFieldUnique(int /*nFieldId*/) override   {return FALSE;};
 
     virtual int GetVersion() { return m_nVersion; };
 
@@ -382,25 +382,25 @@ class TABFile CPL_FINAL : public IMapInfoFile
     // Write access specific stuff
     //
     virtual int SetBounds(double dXMin, double dYMin,
-                          double dXMax, double dYMax);
+                          double dXMax, double dYMax) override;
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                            TABFieldType *paeMapInfoNativeFieldTypes = NULL);
+                            TABFieldType *paeMapInfoNativeFieldTypes = NULL) override;
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth=0, int nPrecision=0,
                                GBool bIndexed=FALSE, GBool bUnique=FALSE,
-                               int bApproxOK = TRUE);
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
+                               int bApproxOK = TRUE) override;
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) override;
 
-    virtual OGRErr CreateFeature(TABFeature *poFeature);
+    virtual OGRErr CreateFeature(TABFeature *poFeature) override;
 
-    virtual int SetFieldIndexed(int nFieldId);
+    virtual int SetFieldIndexed(int nFieldId) override;
 
     ///////////////
     // semi-private.
-    virtual int  GetProjInfo(TABProjInfo *poPI)
+    virtual int  GetProjInfo(TABProjInfo *poPI) override
             { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }
-    virtual int  SetProjInfo(TABProjInfo *poPI);
-    virtual int  SetMIFCoordSys(const char *pszMIFCoordSys);
+    virtual int  SetProjInfo(TABProjInfo *poPI) override;
+    virtual int  SetMIFCoordSys(const char *pszMIFCoordSys) override;
 
     int         GetFieldIndexNumber(int nFieldId);
     TABINDFile  *GetINDFileRef();
@@ -410,7 +410,7 @@ class TABFile CPL_FINAL : public IMapInfoFile
     int         WriteFeature(TABFeature *poFeature);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL);
+    virtual void Dump(FILE *fpOut = NULL) override;
 #endif
 };
 
@@ -463,79 +463,79 @@ class TABView CPL_FINAL : public IMapInfoFile
     TABView();
     virtual ~TABView();
 
-    virtual TABFileClass GetFileClass() {return TABFC_TABView;}
+    virtual TABFileClass GetFileClass() override {return TABFC_TABView;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE );
-    virtual int Close();
+                     GBool bTestOpenNoError = FALSE ) override;
+    virtual int Close() override;
 
-    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE);
+    virtual int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode=TRUE) override;
 
-    virtual const char *GetTableName()
+    virtual const char *GetTableName() override
            {return m_poRelation?m_poRelation->GetFeatureDefn()->GetName():"";};
 
-    virtual void        ResetReading();
-    virtual int         TestCapability( const char * pszCap );
-    virtual GIntBig     GetFeatureCount (int bForce);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual void        ResetReading() override;
+    virtual int         TestCapability( const char * pszCap ) override;
+    virtual GIntBig     GetFeatureCount (int bForce) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual TABFieldType GetNativeFieldType(int nFieldId);
+    virtual TABFieldType GetNativeFieldType(int nFieldId) override;
 
     virtual int GetBounds(double &dXMin, double &dYMin,
                           double &dXMax, double &dYMax,
-                          GBool bForce = TRUE );
+                          GBool bForce = TRUE ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
-                                      GBool bForce = TRUE);
+                                      GBool bForce = TRUE) override;
 
-    virtual GBool IsFieldIndexed(int nFieldId);
-    virtual GBool IsFieldUnique(int nFieldId);
+    virtual GBool IsFieldIndexed(int nFieldId) override;
+    virtual GBool IsFieldUnique(int nFieldId) override;
 
     ///////////////
     // Write access specific stuff
     //
     virtual int SetBounds(double dXMin, double dYMin,
-                          double dXMax, double dYMax);
+                          double dXMax, double dYMax) override;
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                           TABFieldType *paeMapInfoNativeFieldTypes=NULL);
+                           TABFieldType *paeMapInfoNativeFieldTypes=NULL) override;
     virtual int AddFieldNative(const char *pszName,
                                TABFieldType eMapInfoType,
                                int nWidth=0, int nPrecision=0,
                                GBool bIndexed=FALSE, GBool bUnique=FALSE,
-                               int bApproxOK = TRUE);
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
+                               int bApproxOK = TRUE) override;
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) override;
 
-    virtual OGRErr CreateFeature(TABFeature *poFeature);
+    virtual OGRErr CreateFeature(TABFeature *poFeature) override;
 
-    virtual int SetFieldIndexed(int nFieldId);
+    virtual int SetFieldIndexed(int nFieldId) override;
 
     ///////////////
     // semi-private.
-    virtual int  GetProjInfo(TABProjInfo *poPI)
+    virtual int  GetProjInfo(TABProjInfo *poPI) override
             { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->GetProjInfo(poPI):-1; }
-    virtual int  SetProjInfo(TABProjInfo *poPI)
+    virtual int  SetProjInfo(TABProjInfo *poPI) override
             { return m_nMainTableIndex!=-1?
                      m_papoTABFiles[m_nMainTableIndex]->SetProjInfo(poPI):-1; }
-    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+    virtual int  SetMIFCoordSys(const char * /*pszMIFCoordSys*/) override {return -1;};
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL);
+    virtual void Dump(FILE *fpOut = NULL) override;
 #endif
 };
 
@@ -579,58 +579,58 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
     TABSeamless();
     virtual ~TABSeamless();
 
-    virtual TABFileClass GetFileClass() {return TABFC_TABSeamless;}
+    virtual TABFileClass GetFileClass() override {return TABFC_TABSeamless;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE );
-    virtual int Close();
+                     GBool bTestOpenNoError = FALSE ) override;
+    virtual int Close() override;
 
-    virtual const char *GetTableName()
+    virtual const char *GetTableName() override
            {return m_poFeatureDefnRef?m_poFeatureDefnRef->GetName():"";};
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void        SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    virtual void        ResetReading();
-    virtual int         TestCapability( const char * pszCap );
-    virtual GIntBig     GetFeatureCount (int bForce);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual void        ResetReading() override;
+    virtual int         TestCapability( const char * pszCap ) override;
+    virtual GIntBig     GetFeatureCount (int bForce) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual TABFieldType GetNativeFieldType(int nFieldId);
+    virtual TABFieldType GetNativeFieldType(int nFieldId) override;
 
     virtual int GetBounds(double &dXMin, double &dYMin,
                           double &dXMax, double &dYMax,
-                          GBool bForce = TRUE );
+                          GBool bForce = TRUE ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
-                                      GBool bForce = TRUE);
+                                      GBool bForce = TRUE) override;
 
-    virtual GBool IsFieldIndexed(int nFieldId);
-    virtual GBool IsFieldUnique(int nFieldId);
+    virtual GBool IsFieldIndexed(int nFieldId) override;
+    virtual GBool IsFieldUnique(int nFieldId) override;
 
     ///////////////
     // Write access specific stuff
     //
     virtual int SetBounds(CPL_UNUSED double dXMin, CPL_UNUSED double dYMin,
-                          CPL_UNUSED double dXMax, CPL_UNUSED double dYMax)   {return -1;}
+                          CPL_UNUSED double dXMax, CPL_UNUSED double dYMax) override   {return -1;}
     virtual int SetFeatureDefn(CPL_UNUSED OGRFeatureDefn *poFeatureDefn,
-                               CPL_UNUSED TABFieldType *paeMapInfoNativeFieldTypes=NULL)
+                               CPL_UNUSED TABFieldType *paeMapInfoNativeFieldTypes=NULL) override
                                                         {return -1;}
     virtual int AddFieldNative(CPL_UNUSED const char *pszName,
                                CPL_UNUSED TABFieldType eMapInfoType,
@@ -638,24 +638,24 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
                                CPL_UNUSED int nPrecision=0,
                                CPL_UNUSED GBool bIndexed=FALSE,
                                CPL_UNUSED GBool bUnique=FALSE,
-                               CPL_UNUSED int bApproxOK = TRUE) {return -1;}
+                               CPL_UNUSED int bApproxOK = TRUE) override {return -1;}
 
-    virtual int SetSpatialRef(CPL_UNUSED OGRSpatialReference *poSpatialRef) {return -1;}
+    virtual int SetSpatialRef(CPL_UNUSED OGRSpatialReference *poSpatialRef) override {return -1;}
 
-    virtual OGRErr CreateFeature(CPL_UNUSED TABFeature *poFeature)
+    virtual OGRErr CreateFeature(CPL_UNUSED TABFeature *poFeature) override
                                         {return OGRERR_UNSUPPORTED_OPERATION;}
 
-    virtual int SetFieldIndexed(CPL_UNUSED int nFieldId) {return -1;}
+    virtual int SetFieldIndexed(CPL_UNUSED int nFieldId) override {return -1;}
 
     ///////////////
     // semi-private.
-    virtual int  GetProjInfo(TABProjInfo *poPI)
+    virtual int  GetProjInfo(TABProjInfo *poPI) override
             { return m_poIndexTable?m_poIndexTable->GetProjInfo(poPI):-1; }
-    virtual int SetProjInfo(CPL_UNUSED TABProjInfo *poPI)         { return -1; }
-    virtual int SetMIFCoordSys(const char * /*pszMIFCoordSys*/) {return -1;};
+    virtual int SetProjInfo(CPL_UNUSED TABProjInfo *poPI) override         { return -1; }
+    virtual int SetMIFCoordSys(const char * /*pszMIFCoordSys*/) override {return -1;};
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL);
+    virtual void Dump(FILE *fpOut = NULL) override;
 #endif
 };
 
@@ -735,46 +735,46 @@ class MIFFile CPL_FINAL : public IMapInfoFile
     MIFFile();
     virtual ~MIFFile();
 
-    virtual TABFileClass GetFileClass() {return TABFC_MIFFile;}
+    virtual TABFileClass GetFileClass() override {return TABFC_MIFFile;}
 
     virtual int Open(const char *pszFname, const char* pszAccess,
-                     GBool bTestOpenNoError = FALSE ) { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
+                     GBool bTestOpenNoError = FALSE ) override { return IMapInfoFile::Open(pszFname, pszAccess, bTestOpenNoError); }
     virtual int Open(const char *pszFname, TABAccess eAccess,
-                     GBool bTestOpenNoError = FALSE );
-    virtual int Close();
+                     GBool bTestOpenNoError = FALSE ) override;
+    virtual int Close() override;
 
-    virtual const char *GetTableName()
+    virtual const char *GetTableName() override
                            {return m_poDefn?m_poDefn->GetName():"";};
 
-    virtual int         TestCapability( const char * pszCap ) ;
-    virtual GIntBig     GetFeatureCount (int bForce);
-    virtual void        ResetReading();
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual int         TestCapability( const char * pszCap ) override ;
+    virtual GIntBig     GetFeatureCount (int bForce) override;
+    virtual void        ResetReading() override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
     ///////////////
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId);
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId);
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
+    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual TABFieldType GetNativeFieldType(int nFieldId);
+    virtual TABFieldType GetNativeFieldType(int nFieldId) override;
 
     virtual int GetBounds(double &dXMin, double &dYMin,
                           double &dXMax, double &dYMax,
-                          GBool bForce = TRUE );
+                          GBool bForce = TRUE ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual int GetFeatureCountByType(int &numPoints, int &numLines,
                                       int &numRegions, int &numTexts,
-                                      GBool bForce = TRUE);
+                                      GBool bForce = TRUE) override;
 
-    virtual GBool IsFieldIndexed(int nFieldId);
-    virtual GBool IsFieldUnique(int nFieldId);
+    virtual GBool IsFieldIndexed(int nFieldId) override;
+    virtual GBool IsFieldUnique(int nFieldId) override;
 
     virtual int GetVersion() { return m_nVersion; };
 
@@ -782,30 +782,30 @@ class MIFFile CPL_FINAL : public IMapInfoFile
     // Write access specific stuff
     //
     virtual int SetBounds(double dXMin, double dYMin,
-                          double dXMax, double dYMax);
+                          double dXMax, double dYMax) override;
     virtual int SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                            TABFieldType *paeMapInfoNativeFieldTypes = NULL);
+                            TABFieldType *paeMapInfoNativeFieldTypes = NULL) override;
     virtual int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth=0, int nPrecision=0,
                                GBool bIndexed=FALSE, GBool bUnique=FALSE,
-                               int bApproxOK = TRUE);
+                               int bApproxOK = TRUE) override;
     /* TODO */
-    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef);
+    virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) override;
 
-    virtual OGRErr CreateFeature(TABFeature *poFeature);
+    virtual OGRErr CreateFeature(TABFeature *poFeature) override;
 
-    virtual int SetFieldIndexed(int nFieldId);
+    virtual int SetFieldIndexed(int nFieldId) override;
 
     ///////////////
     // semi-private.
-    virtual int  GetProjInfo(TABProjInfo * /*poPI*/){return -1;}
+    virtual int  GetProjInfo(TABProjInfo * /*poPI*/) override{return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->GetProjInfo( poPI ); }*/
-    virtual int  SetProjInfo(TABProjInfo * /*poPI*/){return -1;}
+    virtual int  SetProjInfo(TABProjInfo * /*poPI*/) override{return -1;}
     /*  { return m_poMAPFile->GetHeaderBlock()->SetProjInfo( poPI ); }*/
-    virtual int  SetMIFCoordSys(const char * pszMIFCoordSys);
+    virtual int  SetMIFCoordSys(const char * pszMIFCoordSys) override;
 
 #ifdef DEBUG
-    virtual void Dump(FILE * /*fpOut*/ = NULL) {};
+    virtual void Dump(FILE * /*fpOut*/ = NULL) override {};
 #endif
 };
 
@@ -1134,27 +1134,27 @@ class TABPoint: public TABFeature,
     explicit TABPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABPoint();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCPoint; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCPoint; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     double      GetX();
     double      GetY();
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 };
 
 /*---------------------------------------------------------------------
@@ -1181,21 +1181,21 @@ class TABFontPoint CPL_FINAL : public TABPoint,
     explicit TABFontPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABFontPoint();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCFontPoint; };
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCFontPoint; };
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
     GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
     void        ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStatus);
@@ -1237,21 +1237,21 @@ class TABCustomPoint CPL_FINAL : public TABPoint,
     explicit TABCustomPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABCustomPoint();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCCustomPoint; };
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCCustomPoint; };
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
     const char *GetSymbolNameRef()      { return GetFontNameRef(); };
     void        SetSymbolName(const char *pszName) {SetFontName(pszName);};
@@ -1289,10 +1289,10 @@ class TABPolyline CPL_FINAL : public TABFeature,
     explicit TABPolyline(OGRFeatureDefn *poDefnIn);
     virtual ~TABPolyline();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCPolyline; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCPolyline; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     /* 2 methods to simplify access to rings in a multiple polyline
      */
@@ -1304,17 +1304,17 @@ class TABPolyline CPL_FINAL : public TABFeature,
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     int         GetCenter(double &dX, double &dY);
     void        SetCenter(double dX, double dY);
@@ -1364,10 +1364,10 @@ class TABRegion CPL_FINAL : public TABFeature,
     explicit TABRegion(OGRFeatureDefn *poDefnIn);
     virtual ~TABRegion();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCRegion; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCRegion; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     /* 2 methods to make the REGION's geometry look like a single collection
      * of OGRLinearRings
@@ -1378,17 +1378,17 @@ class TABRegion CPL_FINAL : public TABFeature,
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     int         GetCenter(double &dX, double &dY);
     void        SetCenter(double dX, double dY);
@@ -1415,30 +1415,30 @@ class TABRectangle CPL_FINAL : public TABFeature,
                     public ITABFeatureBrush
 {
   private:
-    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL) override;
 
   public:
     explicit TABRectangle(OGRFeatureDefn *poDefnIn);
     virtual ~TABRectangle();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCRectangle; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCRectangle; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     // MapInfo-specific attributes... made available through public vars
     // for now.
@@ -1474,30 +1474,30 @@ class TABEllipse CPL_FINAL : public TABFeature,
                   public ITABFeatureBrush
 {
   private:
-    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL) override;
 
   public:
     explicit TABEllipse(OGRFeatureDefn *poDefnIn);
     virtual ~TABEllipse();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCEllipse; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCEllipse; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     // MapInfo-specific attributes... made available through public vars
     // for now.
@@ -1534,30 +1534,30 @@ class TABArc CPL_FINAL : public TABFeature,
     double      m_dStartAngle;  // In degrees, counterclockwise,
     double      m_dEndAngle;    // starting at 3 o'clock
 
-    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL) override;
 
   public:
     explicit TABArc(OGRFeatureDefn *poDefnIn);
     virtual ~TABArc();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCArc; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCArc; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     double      GetStartAngle() { return m_dStartAngle; };
     double      GetEndAngle()   { return m_dEndAngle; };
@@ -1612,30 +1612,30 @@ class TABText CPL_FINAL : public TABFeature,
 
     const char *GetLabelStyleString();
 
-    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL);
+    virtual int UpdateMBR(TABMAPFile *poMapFile = NULL) override;
 
   public:
     explicit TABText(OGRFeatureDefn *poDefnIn);
     virtual ~TABText();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCText; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCText; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     const char *GetTextString();
     double      GetTextAngle();
@@ -1706,10 +1706,10 @@ class TABMultiPoint CPL_FINAL : public TABFeature,
     explicit TABMultiPoint(OGRFeatureDefn *poDefnIn);
     virtual ~TABMultiPoint();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCMultiPoint; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCMultiPoint; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     int         GetXY(int i, double &dX, double &dY);
     int         GetNumPoints();
@@ -1719,17 +1719,17 @@ class TABMultiPoint CPL_FINAL : public TABFeature,
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 };
 
 /*---------------------------------------------------------------------
@@ -1785,24 +1785,24 @@ class TABCollection CPL_FINAL : public TABFeature,
     explicit TABCollection(OGRFeatureDefn *poDefnIn);
     virtual ~TABCollection();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCCollection; };
-    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCCollection; };
+    virtual TABGeomType     ValidateMapInfoType(TABMAPFile *poMapFile = NULL) override;
 
-    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL ) override;
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 
     TABRegion           *GetRegionRef()         {return m_poRegion; };
     TABPolyline         *GetPolylineRef()       {return m_poPline; };
@@ -1832,19 +1832,19 @@ class TABDebugFeature CPL_FINAL : public TABFeature
     explicit TABDebugFeature(OGRFeatureDefn *poDefnIn);
     virtual ~TABDebugFeature();
 
-    virtual TABFeatureClass GetFeatureClass() { return TABFCDebugFeature; };
+    virtual TABFeatureClass GetFeatureClass() override { return TABFCDebugFeature; };
 
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                         GBool bCoordDataOnly=FALSE,
-                                        TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                        TABMAPCoordBlock **ppoCoordBlock=NULL) override;
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
                                        GBool bCoordDataOnly=FALSE,
-                                       TABMAPCoordBlock **ppoCoordBlock=NULL);
+                                       TABMAPCoordBlock **ppoCoordBlock=NULL) override;
 
-    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
-    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual void DumpMIF(FILE *fpOut = NULL);
+    virtual void DumpMIF(FILE *fpOut = NULL) override;
 };
 
 /* -------------------------------------------------------------------- */

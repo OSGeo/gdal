@@ -120,7 +120,7 @@ class GIFRasterBand : public GIFAbstractRasterBand
   public:
 
                    GIFRasterBand( GIFDataset *, int, SavedImage *, int );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

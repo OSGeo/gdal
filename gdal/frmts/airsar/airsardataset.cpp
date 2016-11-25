@@ -80,7 +80,7 @@ class AirSARRasterBand : public GDALPamRasterBand
                 AirSARRasterBand( AirSARDataset *, int );
     virtual     ~AirSARRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /* locations of stokes matrix values within padfMatrix ... same order as they
