@@ -32,6 +32,9 @@
 #include "ogr_geos.h"
 #include "ogr_ili1.h"
 
+#include <map>
+#include <vector>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -126,7 +129,7 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef() {
 /*                             GetFeatureRef()                          */
 /************************************************************************/
 
-OGRFeature *OGRILI1Layer::GetFeatureRef( long nFID )
+OGRFeature *OGRILI1Layer::GetFeatureRef( GIntBig nFID )
 
 {
     ResetReading();
@@ -493,8 +496,12 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
               GetLayerDefn()->GetName());
     OGRwkbGeometryType geomType
         = GetLayerDefn()->GetGeomFieldDefn(nSurfaceFieldIndex)->GetType();
-    OGRCompoundCurve *surface_lines = NULL; // collected lines of SURFACE polygon ring
+
+    std::map<OGRFeature*, std::vector<OGRCurve*> > oMapFeatureToGeomSet;
+
     poSurfaceLineLayer->ResetReading();
+
+    // First map: for each target curvepolygon, find all belonging curves
     while (OGRFeature *linefeature = poSurfaceLineLayer->GetNextFeatureRef()) {
         //OBJE entries with same _RefTID are polygon rings of same feature
         OGRFeature *feature = NULL;
@@ -505,66 +512,211 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
         else
         {
           GIntBig reftid = linefeature->GetFieldAsInteger64(1);
-          feature = GetFeatureRef((int)reftid);
+          feature = GetFeatureRef(reftid);
         }
-        if (feature) {
-            if (!feature->GetGeomFieldRef(nSurfaceFieldIndex)) {
-                OGRCurvePolygon *newpoly = (geomType == wkbPolygon) ?
-                    new OGRPolygon() : new OGRCurvePolygon();
-                feature->SetGeomFieldDirectly(nSurfaceFieldIndex, newpoly);
-            }
-            OGRCurvePolygon *poly = reinterpret_cast<OGRCurvePolygon *>(
-                        feature->GetGeomFieldRef(nSurfaceFieldIndex) );
-            OGRMultiCurve *lines = reinterpret_cast<OGRMultiCurve *>(
-                linefeature->GetGeomFieldRef(0) );
-            for( int i = 0; lines != NULL && i < lines->getNumGeometries(); i++ ) {
-                OGRCurve *line = reinterpret_cast<OGRCurve*>(lines->getGeometryRef(i));
-                OGRCurve *ring = NULL;
-                if (surface_lines) {
-                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
-                    if (line->getGeometryType() == wkbCompoundCurve) {
-                        OGRCompoundCurve* ccurve = reinterpret_cast<OGRCompoundCurve *>(line);
-                        for (int j=0; j<ccurve->getNumCurves(); j++) {
-                            surface_lines->addCurve(ccurve->getCurve(j));
-                        }
-                    } else { // wkbLineString (linearized)
-                        surface_lines->addCurve(line);
-                    }
-                    line = surface_lines;
-                }
-                if (line->get_IsClosed()) {
-                    if (geomType == wkbPolygon) {
-                        ring = OGRCurve::CastToLinearRing(reinterpret_cast<OGRCurve*>(
-                                 line->clone()));
-                    } else { // wkbMultiCurve
-                        ring = reinterpret_cast<OGRCurve*>(line->clone());
-                    }
-                    if( line == surface_lines ) {
-                        delete surface_lines;
-                        surface_lines = NULL;
-                        line = NULL; /* to make CLang Static Analyzer happy */
-                    }
-                }
-                if (ring == NULL && surface_lines == NULL && line != NULL) {
-                    //SURFACE polygon lines spread over multiple OBJECTs, so we collect curves
-                    if (line->getGeometryType() == wkbCompoundCurve) {
-                        surface_lines = reinterpret_cast<OGRCompoundCurve *>(line->clone());
-                    } else { // wkbLineString (linearized)
-                        surface_lines = new OGRCompoundCurve();
-                        surface_lines->addCurve(line);
-                    }
-                }
-                if (ring) {
-                    OGRErr error = poly->addRingDirectly(ring);
-                    if (error != OGRERR_NONE) {
-                        CPLError(CE_Warning, CPLE_AppDefined, "Added geometry: %s", ring->exportToJson() );
-                    }
+        if (feature)
+        {
+            OGRGeometry* poGeom = linefeature->GetGeomFieldRef(0);
+            OGRMultiCurve *curves = dynamic_cast<OGRMultiCurve *>(poGeom);
+            if( curves )
+            {
+                for (int i=0; i<curves->getNumGeometries(); i++)
+                {
+                    OGRCurve* curve = reinterpret_cast<OGRCurve*>(
+                                                    curves->getGeometryRef(i));
+                    if( !curve->IsEmpty() )
+                        oMapFeatureToGeomSet[feature].push_back(curve);
                 }
             }
-        } else {
+        }
+        else
+        {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Couldn't join feature FID " CPL_FRMT_GIB, linefeature->GetFieldAsInteger64(1) );
+                      "Couldn't join feature FID " CPL_FRMT_GIB,
+                      linefeature->GetFieldAsInteger64(1) );
         }
+    }
+
+    // Now for each target polygon, assemble the curves together.
+    std::map<OGRFeature*, std::vector<OGRCurve*> >::const_iterator oIter =
+                                                oMapFeatureToGeomSet.begin();
+    for( ; oIter != oMapFeatureToGeomSet.end(); ++oIter )
+    {
+        OGRFeature* feature = oIter->first;
+        std::vector<OGRCurve*> oCurves = oIter->second;
+
+        std::vector<OGRCurve*> oSetDestCurves;
+        double dfLargestArea = 0.0;
+        OGRCurve* poLargestCurve = NULL;
+        while( true )
+        {
+            std::vector<OGRCurve*>::iterator oIterCurves = oCurves.begin();
+            if( oIterCurves == oCurves.end() )
+                break;
+
+            OGRPoint endPointCC;
+            OGRCompoundCurve* poCC = new OGRCompoundCurve();
+ 
+            bool bFirst = true;
+            while( true )
+            {
+                bool bNewCurveAdded = false;
+                const double dfEps = 1e-14;
+                for(oIterCurves = oCurves.begin();
+                                oIterCurves != oCurves.end(); ++oIterCurves )
+                {
+                    OGRCurve* curve = *oIterCurves;
+                    OGRPoint startPoint;
+                    OGRPoint endPoint;
+                    curve->StartPoint(&startPoint);
+                    curve->EndPoint(&endPoint);
+                    if( bFirst ||
+                        (fabs(startPoint.getX() - endPointCC.getX()) < dfEps &&
+                         fabs(startPoint.getY() - endPointCC.getY()) < dfEps) )
+                    {
+                        bFirst = false;
+
+                        curve->EndPoint(&endPointCC);
+
+                        const OGRwkbGeometryType eCurveType =
+                                        wkbFlatten(curve->getGeometryType());
+                        if( eCurveType == wkbCompoundCurve )
+                        {
+                            OGRCompoundCurve* poCCSub =
+                                    reinterpret_cast<OGRCompoundCurve*>(curve);
+                            for( int i=0; i < poCCSub->getNumCurves(); ++i )
+                            {
+                                poCC->addCurve(poCCSub->getCurve(i));
+                            }
+                        }
+                        else
+                        {
+                            poCC->addCurve( curve );
+                        }
+                        oCurves.erase( oIterCurves );
+                        bNewCurveAdded = true;
+                        break;
+                    }
+                    else
+                    if( fabs(endPoint.getX() - endPointCC.getX()) < dfEps &&
+                        fabs(endPoint.getY() - endPointCC.getY()) < dfEps )
+                    {
+                        curve->StartPoint(&endPointCC);
+
+                        const OGRwkbGeometryType eCurveType =
+                                        wkbFlatten(curve->getGeometryType());
+                        if( eCurveType == wkbLineString ||
+                            eCurveType == wkbCircularString )
+                        {
+                            OGRSimpleCurve* poSC =
+                              reinterpret_cast<OGRSimpleCurve*>(
+                                  (reinterpret_cast<OGRSimpleCurve*>(curve))
+                                                                    ->clone());
+                            poSC->reversePoints();
+                            poCC->addCurveDirectly( poSC );
+                        }
+                        else if( eCurveType == wkbCompoundCurve )
+                        {
+                            // Reverse the order of the elements of the
+                            // compound curve
+                            OGRCompoundCurve* poCCSub =
+                                    reinterpret_cast<OGRCompoundCurve*>(curve);
+                            for( int i=poCCSub->getNumCurves()-1; i >= 0; --i )
+                            {
+                                OGRSimpleCurve* poSC =
+                                    reinterpret_cast<OGRSimpleCurve*>(
+                                        (reinterpret_cast<OGRSimpleCurve*>(
+                                            poCCSub->getCurve(i)))->clone());
+                                poSC->reversePoints();
+                                poCC->addCurveDirectly(poSC);
+                            }
+                        }
+
+                        oCurves.erase( oIterCurves );
+                        bNewCurveAdded = true;
+                        break;
+                    }
+                }
+                if( !bNewCurveAdded || oCurves.empty() || poCC->get_IsClosed() )
+                    break;
+            }
+
+            if( !poCC->get_IsClosed() )
+            {
+                char* pszJSon = poCC->exportToJson();
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "A ring %s for feature " CPL_FRMT_GIB " in layer %s "
+                         "was not closed. Dropping it",
+                         pszJSon, feature->GetFID(), GetName());
+                delete poCC;
+                CPLFree(pszJSon);
+            }
+            else
+            {
+                double dfArea = poCC->get_Area();
+                if( dfArea >= dfLargestArea )
+                {
+                    dfLargestArea = dfArea;
+                    poLargestCurve = poCC;
+                }
+                oSetDestCurves.push_back(poCC);
+            }
+        }
+
+        // Now build the final polygon by first inserting the largest ring.
+        OGRCurvePolygon *poPoly = (geomType == wkbPolygon) ?
+                                new OGRPolygon() : new OGRCurvePolygon();
+        if( poLargestCurve )
+        {
+            std::vector<OGRCurve*>::iterator oIterCurves =
+                                                    oSetDestCurves.begin();
+            for( ; oIterCurves != oSetDestCurves.end(); ++oIterCurves )
+            {
+                OGRCurve* poCurve = *oIterCurves;
+                if( poCurve == poLargestCurve )
+                {
+                    oSetDestCurves.erase( oIterCurves );
+                    break;
+                }
+            }
+
+            if (geomType == wkbPolygon)
+            {
+                poLargestCurve = OGRCurve::CastToLinearRing(poLargestCurve);
+            }
+            OGRErr error = poPoly->addRingDirectly(poLargestCurve);
+            if (error != OGRERR_NONE)
+            {
+                char* pszJSon = poLargestCurve->exportToJson();
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot add ring %s to feature " CPL_FRMT_GIB
+                         " in layer %s",
+                         pszJSon, feature->GetFID(), GetName() );
+                CPLFree(pszJSon);
+            }
+
+            oIterCurves = oSetDestCurves.begin();
+            for( ; oIterCurves != oSetDestCurves.end(); ++oIterCurves )
+            {
+                OGRCurve* poCurve = *oIterCurves;
+                if (geomType == wkbPolygon)
+                {
+                    poCurve = OGRCurve::CastToLinearRing(poCurve);
+                }
+                error = poPoly->addRingDirectly(poCurve);
+                if (error != OGRERR_NONE)
+                {
+                    char* pszJSon = poCurve->exportToJson();
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Cannot add ring %s to feature " CPL_FRMT_GIB
+                            " in layer %s",
+                            pszJSon, feature->GetFID(), GetName() );
+                    CPLFree(pszJSon);
+                }
+            }
+        }
+
+        feature->SetGeomFieldDirectly(nSurfaceFieldIndex, poPoly);
     }
 
     ResetReading();
