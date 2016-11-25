@@ -5537,7 +5537,7 @@ class Geometry(_object):
 
         ppszSrcText:  a text buffer is allocated by the program, and assigned
         to the passed pointer. After use, *ppszDstText should be freed with
-        OGRFree().
+        CPLFree().
 
         Currently OGRERR_NONE is always returned. 
         """
@@ -5567,7 +5567,7 @@ class Geometry(_object):
 
         ppszSrcText:  a text buffer is allocated by the program, and assigned
         to the passed pointer. After use, *ppszDstText should be freed with
-        OGRFree().
+        CPLFree().
 
         Currently OGRERR_NONE is always returned.
 

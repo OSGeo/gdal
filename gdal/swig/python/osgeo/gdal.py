@@ -554,7 +554,8 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
-         SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
+         SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
+         spatFilter = None, spatSRS = None,
          datasetCreationOptions = None,
          layerCreationOptions = None,
          layers = None,
@@ -578,6 +579,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           where --- WHERE clause to apply to source layer(s)
           selectFields --- list of fields to select
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
           layerCreationOptions --- list of layer creation options
           layers --- list of layers to convert
@@ -639,6 +641,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             new_options += ['-segmentize', str(segmentizeMaxDist) ]
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+        if spatSRS is not None:
+            new_options += ['-spat_srs', str(spatSRS) ]
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:

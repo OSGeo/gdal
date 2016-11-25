@@ -31670,7 +31670,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"ppszSrcText:  a text buffer is allocated by the program, and assigned\n"
 		"to the passed pointer. After use, *ppszDstText should be freed with\n"
-		"OGRFree().\n"
+		"CPLFree().\n"
 		"\n"
 		"Currently OGRERR_NONE is always returned. \n"
 		""},
@@ -31697,7 +31697,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"ppszSrcText:  a text buffer is allocated by the program, and assigned\n"
 		"to the passed pointer. After use, *ppszDstText should be freed with\n"
-		"OGRFree().\n"
+		"CPLFree().\n"
 		"\n"
 		"Currently OGRERR_NONE is always returned.\n"
 		"\n"
