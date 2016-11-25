@@ -68,7 +68,7 @@ private:
     void                ResetReading();
     OGRFeature *        GetNextFeature();
     OGRFeature *        GetNextFeatureRef();
-    OGRFeature *        GetFeatureRef( long nFid );
+    OGRFeature *        GetFeatureRef( GIntBig nFid );
     OGRFeature *        GetFeatureRef( const char* );
 
     GIntBig             GetFeatureCount( int bForce = TRUE );
