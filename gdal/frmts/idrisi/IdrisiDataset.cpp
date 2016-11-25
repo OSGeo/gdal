@@ -1177,11 +1177,13 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     // --------------------------------------------------------------------
 
     double adfGeoTransform[6];
+    if(  poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
+    {
+        poDS->SetGeoTransform(adfGeoTransform);
+    }
 
     if (!EQUAL(poSrcDS->GetProjectionRef(),""))
     {
-        poSrcDS->GetGeoTransform(adfGeoTransform);
-        poDS->SetGeoTransform(adfGeoTransform);
         poDS->SetProjection( poSrcDS->GetProjectionRef() );
     }
 
