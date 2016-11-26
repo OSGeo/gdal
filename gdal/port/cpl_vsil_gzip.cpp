@@ -73,16 +73,40 @@
    at a time (read-only or write-only).
 */
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include <map>
+#include "cpl_port.h"
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include <zlib.h>
-#include "cpl_minizip_unzip.h"
-#include "cpl_time.h"
 
 #include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_error.h"
+#include "cpl_minizip_ioapi.h"
+#include "cpl_minizip_unzip.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi_virtual.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -101,7 +125,8 @@ static const int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
 #define TRYFREE(p) {if (p) free(p);}
 
 #define CPL_VSIL_GZ_RETURN(ret)   \
-        CPLError(CE_Failure, CPLE_AppDefined, "In file %s, at line %d, return %d", __FILE__, __LINE__, ret)
+        CPLError(CE_Failure, CPLE_AppDefined, \
+                 "In file %s, at line %d, return %d", __FILE__, __LINE__, ret)
 
 // #define ENABLE_DEBUG 1
 
