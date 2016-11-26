@@ -30,9 +30,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "cplkeywordparser.h"
+#include "cpl_port.h"
 #include "gdal_mdreader.h"
+
+#include <cctype>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cplkeywordparser.h"
+#include "gdal_priv.h"
 
 //readers
 #include "mdreader/reader_alos.h"
@@ -89,7 +103,7 @@ GDALMDReaderManager::GDALMDReaderManager() :
  */
 GDALMDReaderManager::~GDALMDReaderManager()
 {
-   if(NULL != m_pReader)
+   if( NULL != m_pReader )
    {
        delete m_pReader;
    }

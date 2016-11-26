@@ -61,12 +61,36 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "gdal_pam.h"
-#include "gdal_rat.h"
-#include "cpl_spawn.h"
-#include "cpl_multiproc.h"
-
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_spawn.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "gdal_rat.h"
+#include "gdal_version.h"
 
 /*!
 \page gdal_api_proxy GDAL API Proxy
@@ -75,57 +99,67 @@
 
 (GDAL >= 1.10.0)
 
-When dealing with some file formats, particularly the drivers relying on third-party
-(potentially closed-source) libraries, it is difficult to ensure that those third-party
-libraries will be robust to hostile/corrupted datasource.
+When dealing with some file formats, particularly the drivers relying on
+third-party (potentially closed-source) libraries, it is difficult to ensure
+that those third-party libraries will be robust to hostile/corrupted datasource.
 
-The implemented solution is to have a (private) API_PROXY driver that will expose a GDALClientDataset
-object, which will forward all the GDAL API calls to another process ("server"), where the real driver
-will be effectively run. This way, if the server aborts due to a fatal error, the calling process will
-be unaffected and will report a clean error instead of aborting itself.
+The implemented solution is to have a (private) API_PROXY driver that will
+expose a GDALClientDataset object, which will forward all the GDAL API calls to
+another process ("server"), where the real driver will be effectively run. This
+way, if the server aborts due to a fatal error, the calling process will be
+unaffected and will report a clean error instead of aborting itself.
 
 \section gdal_api_proxy_enabling How to enable ?
 
-The API_PROXY mechanism can be enabled by setting the GDAL_API_PROXY config option to YES.
-The option can also be set to a list of file extensions that must be the only ones to trigger
-this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
+The API_PROXY mechanism can be enabled by setting the GDAL_API_PROXY config
+option to YES.  The option can also be set to a list of file extensions that
+must be the only ones to trigger this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
 
-When enabled, datasets can be handled with GDALOpen(), GDALCreate() or GDALCreateCopy() with
-their nominal filename (or connection string).
+When enabled, datasets can be handled with GDALOpen(), GDALCreate() or
+GDALCreateCopy() with their nominal filename (or connection string).
 
-Alternatively, the API_PROXY mechanism can be used selectively on a datasource by prefixing its
-name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif", GA_ReadOnly).
+Alternatively, the API_PROXY mechanism can be used selectively on a datasource
+by prefixing its name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif",
+GA_ReadOnly).
 
 \section gdal_api_proxy_options Advanced options
 
-For now, the server launched is the gdalserver executable on Windows. On Unix, the default behaviour is
-to just fork() the current process. It is also possible to launch the gdalserver executable
-by forcing GDAL_API_PROXY_SERVER=YES.
-The full filename of the gdalserver executable can also be specified in the GDAL_API_PROXY_SERVER.
+For now, the server launched is the gdalserver executable on Windows. On Unix,
+the default behaviour is to just fork() the current process. It is also possible
+to launch the gdalserver executable by forcing GDAL_API_PROXY_SERVER=YES.  The
+full filename of the gdalserver executable can also be specified in the
+GDAL_API_PROXY_SERVER.
 
-It is also possible to connect to a gdalserver in TCP, possibly on a remote host. In that case,
-gdalserver must be launched on a host with "gdalserver -tcpserver the_tcp_port". And the client
-must set GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a IP address.
+It is also possible to connect to a gdalserver in TCP, possibly on a remote
+host. In that case, gdalserver must be launched on a host with "gdalserver
+-tcpserver the_tcp_port". And the client must set
+GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a
+IP address.
 
-On Unix, gdalserver can also be launched on a Unix socket, which "gdalserver -unixserver /a/filename".
-Clients should then set GDAL_API_PROXY_SERVER to "/a/filename".
+On Unix, gdalserver can also be launched on a Unix socket, which "gdalserver
+-unixserver /a/filename".  Clients should then set GDAL_API_PROXY_SERVER to
+"/a/filename".
 
-In case of many dataset opening or creation, to avoid the cost of repeated process forking,
-a pool of unused connections is established. Each time a dataset is closed, the associated connection
-is pushed in the pool (if there's an empty bucket). When a following dataset is to be opened, one of those
-connections will be reused. This behaviour is controlled with the GDAL_API_PROXY_CONN_POOL config option
-that is set to YES by default, and will keep a maximum of 4 unused connections.
-GDAL_API_PROXY_CONN_POOL can be set to a integer value to specify the maximum number of unused connections.
+In case of many dataset opening or creation, to avoid the cost of repeated
+process forking, a pool of unused connections is established. Each time a
+dataset is closed, the associated connection is pushed in the pool (if there's
+an empty bucket). When a following dataset is to be opened, one of those
+connections will be reused. This behaviour is controlled with the
+GDAL_API_PROXY_CONN_POOL config option that is set to YES by default, and will
+keep a maximum of 4 unused connections.  GDAL_API_PROXY_CONN_POOL can be set to
+a integer value to specify the maximum number of unused connections.
 
 \section gdal_api_proxy_limitations Limitations
 
-Datasets stored in the memory virtual file system (/vsimem) or handled by the MEM driver are excluded from
-the API Proxy mechanism.
+Datasets stored in the memory virtual file system (/vsimem) or handled by the
+MEM driver are excluded from the API Proxy mechanism.
 
-Additionnaly, for GDALCreate() or GDALCreateCopy(), the VRT driver is also excluded from that mechanism.
+Additionnaly, for GDALCreate() or GDALCreateCopy(), the VRT driver is also
+excluded from that mechanism.
 
-Currently, the client dataset returned is not protected by a mutex, so it is unsafe to use it concurrently
-from multiple threads. However, it is safe to use several client datasets from multiple threads.
+Currently, the client dataset returned is not protected by a mutex, so it is
+unsafe to use it concurrently from multiple threads. However, it is safe to use
+several client datasets from multiple threads.
 
 \section gdal_api_proxy_concurrent Concurrent use of a dataset
 
@@ -146,9 +180,6 @@ would deadlock the server.
 /* Note: please at least keep the version exchange protocol unchanged ! */
 #define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 3
 #define GDAL_CLIENT_SERVER_PROTOCOL_MINOR 0
-
-#include <map>
-#include <vector>
 
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
@@ -393,7 +424,7 @@ class EnterObject
 
 #define CLIENT_ENTER() EnterObject o(__FUNCTION__)
 #else
-#define CLIENT_ENTER() while(0)
+#define CLIENT_ENTER() while( false )
 #endif
 
 /************************************************************************/
