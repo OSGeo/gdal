@@ -34,11 +34,20 @@
 // This enable us to improve dramatically the performance of CPLReadLine2L() on
 // a gzip file.
 
+#include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
-#include "cpl_port.h"
+#include <cstddef>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 static const int MAX_BUFFER_SIZE = 65536;
 
@@ -66,8 +75,10 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Read( void *pBuffer, size_t nSize,
+                            size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize,
+                             size_t nMemb ) override;
     virtual int       Eof() override;
     virtual int       Flush() override;
     virtual int       Close() override;
@@ -79,7 +90,8 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
 /*                    VSICreateBufferedReaderHandle()                   */
 /************************************************************************/
 
-VSIVirtualHandle* VSICreateBufferedReaderHandle( VSIVirtualHandle* poBaseHandle )
+VSIVirtualHandle *
+VSICreateBufferedReaderHandle( VSIVirtualHandle* poBaseHandle )
 {
     return new VSIBufferedReaderHandle(poBaseHandle);
 }
@@ -155,7 +167,7 @@ int VSIBufferedReaderHandle::Seek( vsi_l_offset nOffset, int nWhence )
     {
         nCurOffset += nOffset;
     }
-    else if (nWhence == SEEK_END)
+    else if( nWhence == SEEK_END )
     {
         if( nCheatFileSize )
         {
@@ -302,11 +314,14 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize,
         if( !SeekBaseTo(nCurOffset) )
             return 0;
         bNeedBaseHandleSeek = false;
-        const size_t nReadInFile = m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
+        const size_t nReadInFile =
+            m_poBaseHandle->Read(pBuffer, 1, nTotalToRead);
         nBufferSize = static_cast<int>(
             std::min(nReadInFile, static_cast<size_t>(MAX_BUFFER_SIZE)));
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
-        memcpy(pabyBuffer, (GByte*)pBuffer + nReadInFile - nBufferSize, nBufferSize);
+        memcpy(pabyBuffer,
+               (GByte*)pBuffer + nReadInFile - nBufferSize,
+               nBufferSize);
 
         nCurOffset += nReadInFile;
 #ifdef DEBUG_VERBOSE
