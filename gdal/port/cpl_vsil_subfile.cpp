@@ -27,10 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
 #include "cpl_multiproc.h"
-#include <map>
+#include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 
