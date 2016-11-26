@@ -26,8 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_worker_thread_pool.h"
+
+#include <cstddef>
+#include <memory>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+
 
 CPL_CVSID("$Id$");
 
