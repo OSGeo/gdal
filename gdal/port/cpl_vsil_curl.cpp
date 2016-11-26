@@ -26,29 +26,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_hash_set.h"
-#include "cpl_time.h"
+#include "cpl_port.h"
 #include "cpl_vsil_curl_priv.h"
-#include "cpl_aws.h"
-#include "cpl_minixml.h"
 
 #include <algorithm>
+
+#include "cpl_aws.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 
 #ifndef HAVE_CURL
 
-void VSIInstallCurlFileHandler(void)
+void VSIInstallCurlFileHandler( void )
 {
-    /* not supported */
+    // Not supported.
 }
 
-void VSIInstallS3FileHandler(void)
+void VSIInstallS3FileHandler( void )
 {
-    /* not supported */
+    // Not supported.
 }
 
 /************************************************************************/
@@ -4071,7 +4074,9 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
             }
             else
             {
-                CPLDebug("S3", "%s", sWriteFuncData.pBuffer ? (const char*)sWriteFuncData.pBuffer : "(null)");
+                CPLDebug("S3", "%s",
+                         sWriteFuncData.pBuffer
+                         ? (const char*)sWriteFuncData.pBuffer : "(null)");
                 CPLFree(sWriteFuncData.pBuffer);
                 delete poS3HandleHelper;
                 return NULL;
