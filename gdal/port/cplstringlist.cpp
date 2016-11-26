@@ -27,10 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 

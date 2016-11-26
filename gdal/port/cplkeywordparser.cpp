@@ -32,8 +32,15 @@
 
 //! @cond Doxygen_Suppress
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "cplkeywordparser.h"
+
+#include <cctype>
+#include <cstring>
+#include <string>
+
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
