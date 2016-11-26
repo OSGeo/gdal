@@ -28,6 +28,21 @@
 
 //! @cond Doxygen_Suppress
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cstring>
+
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");

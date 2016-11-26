@@ -27,10 +27,18 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-#include <stdio.h>
 #ifdef WIN32
 #include <io.h>
 #include <fcntl.h>
