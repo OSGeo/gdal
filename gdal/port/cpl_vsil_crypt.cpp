@@ -33,7 +33,11 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cstddef>
 #include <algorithm>
+
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_C_START
 void CPL_DLL VSIInstallCryptFileHandler();
@@ -1452,7 +1456,8 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Encryption key not defined as key/key_b64 parameter, "
-                "VSICRYPT_KEY/VSICRYPT_KEY_B64 configuration option or VSISetCryptKey() API");
+                "VSICRYPT_KEY/VSICRYPT_KEY_B64 configuration option or "
+                 "VSISetCryptKey() API");
         return NULL;
     }
 
