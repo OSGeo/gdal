@@ -932,7 +932,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT8(name) \
         READ_MARKER_FIELD_UINT8_COMMENT(name, NULL)
@@ -951,7 +951,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT16(name) \
         READ_MARKER_FIELD_UINT16_COMMENT(name, NULL)
@@ -970,7 +970,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
                 AddError(psMarker, CPLSPrintf("Cannot read field %s", name)); \
                 nLastVal = 0; \
             } \
-        } while(0)
+        } while( false )
 
 #define READ_MARKER_FIELD_UINT32(name) \
         READ_MARKER_FIELD_UINT32_COMMENT(name, NULL)
