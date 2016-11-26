@@ -52,20 +52,33 @@
 
 #if !defined(WIN32)
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_vsi_error.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-
-#include <unistd.h>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <dirent.h>
+#include <errno.h>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <sys/stat.h>
 #ifdef HAVE_STATVFS
 #include <sys/statvfs.h>
 #endif
 #include <sys/types.h>
-#include <dirent.h>
-#include <errno.h>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <new>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_error.h"
+#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 
