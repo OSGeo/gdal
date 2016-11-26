@@ -27,13 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_minixml.h"
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cerrno>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include <algorithm>
 #include <map>
+#include <memory>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,8 +90,10 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Read( void *pBuffer, size_t nSize,
+                            size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize,
+                             size_t nMemb ) override;
     virtual int       Eof() override;
     virtual int       Close() override;
 };
@@ -104,7 +122,8 @@ public:
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
     virtual int      Unlink( const char *pszFilename ) override;
     virtual int      Mkdir( const char *pszDirname, long nMode ) override;
     virtual int      Rmdir( const char *pszDirname ) override;
@@ -184,12 +203,13 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*      Find what region we are in, searching linearly from the         */
 /*      start.                                                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iRegion;
+    unsigned int iRegion = 0;  // Used after for.
 
-    for( iRegion = 0; iRegion < aoRegions.size(); iRegion++ )
+    for( ; iRegion < aoRegions.size(); iRegion++ )
     {
-        if( nCurOffset >= aoRegions[iRegion].nDstOffset
-            && nCurOffset < aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength )
+        if( nCurOffset >= aoRegions[iRegion].nDstOffset &&
+            nCurOffset <
+                aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength )
             break;
     }
 
@@ -210,16 +230,16 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
     size_t nReturnCount = nCount;
     GUIntBig nBytesRequested = nSize * nCount;
-    GUIntBig nBytesAvailable =
+    const GUIntBig nBytesAvailable =
         aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength;
 
     if( nCurOffset + nBytesRequested > nBytesAvailable )
     {
-        size_t nExtraBytes =
+        const size_t nExtraBytes =
             (size_t) (nCurOffset + nBytesRequested - nBytesAvailable);
         // Recurse to get the rest of the request.
 
-        GUIntBig nCurOffsetSave = nCurOffset;
+        const GUIntBig nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
         size_t nBytesRead =
             this->Read( ((char *) pBuffer) + nBytesRequested - nExtraBytes,
@@ -238,7 +258,7 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( aoRegions[iRegion].osFilename.empty() )
     {
         memset( pBuffer, aoRegions[iRegion].byValue,
-                (size_t) nBytesRequested );
+                static_cast<size_t>(nBytesRequested) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -273,8 +293,9 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
             return 0;
 
         m_poFS->IncRecCounter();
-        size_t nBytesRead = VSIFReadL( pBuffer, 1, (size_t) nBytesRequested,
-                                       aoRegions[iRegion].fp );
+        const size_t nBytesRead =
+            VSIFReadL( pBuffer, 1, static_cast<size_t>(nBytesRequested),
+                       aoRegions[iRegion].fp );
         m_poFS->DecRecCounter();
 
         if( nBytesAvailable < nBytesRequested )
@@ -318,19 +339,13 @@ int VSISparseFileHandle::Eof()
 /*                      VSISparseFileFilesystemHandler()                */
 /************************************************************************/
 
-VSISparseFileFilesystemHandler::VSISparseFileFilesystemHandler()
-
-{
-}
+VSISparseFileFilesystemHandler::VSISparseFileFilesystemHandler() {}
 
 /************************************************************************/
 /*                      ~VSISparseFileFilesystemHandler()               */
 /************************************************************************/
 
-VSISparseFileFilesystemHandler::~VSISparseFileFilesystemHandler()
-
-{
-}
+VSISparseFileFilesystemHandler::~VSISparseFileFilesystemHandler() {}
 
 /************************************************************************/
 /*                                Open()                                */
@@ -339,7 +354,7 @@ VSISparseFileFilesystemHandler::~VSISparseFileFilesystemHandler()
 VSIVirtualHandle *
 VSISparseFileFilesystemHandler::Open( const char *pszFilename,
                                       const char *pszAccess,
-                                      bool /* bSetError */)
+                                      bool /* bSetError */ )
 
 {
     CPLAssert( STARTS_WITH_CI(pszFilename, "/vsisparse/") );
@@ -380,9 +395,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Translate the desired fields out of the XML tree.               */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRegion;
-
-    for( psRegion = psXMLRoot->psChild;
+    for( CPLXMLNode *psRegion = psXMLRoot->psChild;
          psRegion != NULL;
          psRegion = psRegion->psNext )
     {
@@ -398,22 +411,23 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         oRegion.osFilename = CPLGetXMLValue( psRegion, "Filename", "" );
         if( atoi(CPLGetXMLValue( psRegion, "Filename.relative", "0" )) != 0 )
         {
-            CPLString osSFPath = CPLGetPath(osSparseFilePath);
+            const CPLString osSFPath = CPLGetPath(osSparseFilePath);
             oRegion.osFilename = CPLFormFilename( osSFPath,
                                                   oRegion.osFilename, NULL );
         }
 
         oRegion.nDstOffset =
-            CPLScanUIntBig( CPLGetXMLValue(psRegion,"DestinationOffset","0" ),
+            CPLScanUIntBig( CPLGetXMLValue(psRegion, "DestinationOffset", "0"),
                             32 );
 
         oRegion.nSrcOffset =
-            CPLScanUIntBig( CPLGetXMLValue(psRegion,"SourceOffset","0" ), 32);
+            CPLScanUIntBig( CPLGetXMLValue(psRegion, "SourceOffset", "0"), 32);
 
         oRegion.nLength =
-            CPLScanUIntBig( CPLGetXMLValue(psRegion,"RegionLength","0" ), 32);
+            CPLScanUIntBig( CPLGetXMLValue(psRegion, "RegionLength", "0"), 32);
 
-        oRegion.byValue = (GByte) atoi(CPLGetXMLValue(psRegion,"Value","0" ));
+        oRegion.byValue = static_cast<GByte>(
+            atoi(CPLGetXMLValue(psRegion,"Value", "0")));
 
         poHandle->aoRegions.push_back( oRegion );
     }
@@ -457,11 +471,11 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
         return -1;
 
     poFile->Seek( 0, SEEK_END );
-    size_t nLength = (size_t) poFile->Tell();
+    const size_t nLength = static_cast<size_t>(poFile->Tell());
     delete poFile;
 
-    int nResult = VSIStatExL( pszFilename + strlen("/vsisparse/"),
-                            psStatBuf, nFlags );
+    const int nResult =
+        VSIStatExL( pszFilename + strlen("/vsisparse/"), psStatBuf, nFlags );
 
     psStatBuf->st_size = nLength;
 
