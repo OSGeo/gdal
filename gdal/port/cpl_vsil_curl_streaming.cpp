@@ -26,14 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_hash_set.h"
-#include "cpl_time.h"
-#include "cpl_aws.h"
 
 #include <algorithm>
+#include <map>
+
+#include "cpl_aws.h"
+#include "cpl_hash_set.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,12 +45,12 @@ CPL_CVSID("$Id$");
 
 void VSIInstallCurlStreamingFileHandler(void)
 {
-    /* not supported */
+    // Not supported.
 }
 
 void VSIInstallS3StreamingFileHandler(void)
 {
-    /* not supported */
+    // Not supported.
 }
 
 #else
@@ -56,8 +60,6 @@ void VSIInstallS3StreamingFileHandler(void)
 #include <curl/curl.h>
 
 void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
-
-#include <map>
 
 #define ENABLE_DEBUG        0
 
@@ -193,7 +195,8 @@ public:
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
 
     void                AcquireMutex();
     void                ReleaseMutex();
@@ -396,8 +399,10 @@ int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     if( curOffset >= BKGND_BUFFER_SIZE )
     {
-        if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Invalidating cache and file size due to Seek() beyond caching zone");
+        if( ENABLE_DEBUG )
+            CPLDebug("VSICURL",
+                     "Invalidating cache and file size due to Seek() "
+                     "beyond caching zone");
         CPLFree(pCachedData);
         pCachedData = NULL;
         nCachedSize = 0;
