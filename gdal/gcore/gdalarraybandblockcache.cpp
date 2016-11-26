@@ -27,9 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
-#include "cpl_multiproc.h"
+
+#include <climits>
+#include <cstddef>
 #include <new>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_vsi.h"
 
 //! @cond Doxygen_Suppress
 

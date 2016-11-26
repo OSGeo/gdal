@@ -27,20 +27,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_minixml.h"
-#include "cpl_multiproc.h"
-#include "cpl_string.h"
-#include "gdal_mdreader.h"
-#include "gdal_priv.h"
-#include "ogr_spatialref.h"
+#include "cpl_port.h"
+#include "gdal.h"
 
 #include <cctype>
+#include <cerrno>
+#include <clocale>
 #include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
 
 #include <algorithm>
 #include <iostream>
 #include <limits>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
+#include "gdal_version.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
