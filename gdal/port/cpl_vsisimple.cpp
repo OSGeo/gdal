@@ -34,11 +34,23 @@
  *
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cerrno>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include "cpl_config.h"
 #include "cpl_error.h"
-#include "cpl_port.h"
 #include "cpl_string.h"
-#include "cpl_vsi.h"
 
 #ifdef _WIN32
 #include <malloc.h> // For _aligned_malloc
