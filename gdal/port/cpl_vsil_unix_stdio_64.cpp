@@ -52,6 +52,9 @@
 
 #if !defined(WIN32)
 
+#include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
+
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -76,9 +79,7 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
-#include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
-#include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
 
