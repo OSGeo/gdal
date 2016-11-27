@@ -28,18 +28,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "gdal_priv.h"
-#include "ogr_spatialref.h"
-#include "vrtdataset.h"
-#include "commonutils.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cmath>
 #include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdal_vrt.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+#include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
 

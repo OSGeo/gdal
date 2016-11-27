@@ -27,6 +27,13 @@
  ****************************************************************************/
 
 #include "commonutils.h"
+
+#include <cstdio>
+#include <cstring>
+
+#include <string>
+
+#include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal.h"
 
