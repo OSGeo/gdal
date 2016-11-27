@@ -30,18 +30,34 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "cpl_minixml.h"
-#include "gt_wkt_srs_for_gdal.h"
+#include "cpl_port.h"
 #include "gdaljp2metadata.h"
 #include "gdaljp2metadatagenerator.h"
-#include "ogrgeojsonreader.h"
-#include "ogr_api.h"
-#include "ogr_geometry.h"
-#include "ogr_spatialref.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include <algorithm>
+#include <memory>
 #include <set>
+#include <string>
+#include <vector>
+
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_minixml.h"
+#include "gdaljp2metadatagenerator.h"
+#include "gt_wkt_srs_for_gdal.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogrgeojsonreader.h"
 
 /*! @cond Doxygen_Suppress */
 
@@ -152,7 +168,8 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
     }
 
     int nIndexUsed = -1;
-    bool bRet = CPL_TO_BOOL(ReadAndParse( fpLL, nGEOJP2Index, nGMLJP2Index, nMSIGIndex, &nIndexUsed ));
+    bool bRet = CPL_TO_BOOL(ReadAndParse( fpLL, nGEOJP2Index, nGMLJP2Index,
+                                          nMSIGIndex, &nIndexUsed ));
     CPL_IGNORE_RET_VAL(VSIFCloseL( fpLL ));
 
 /* -------------------------------------------------------------------- */
@@ -160,7 +177,8 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
     if( nWorldFileIndex >= 0 &&
-        ((bHaveGeoTransform && nWorldFileIndex < nIndexUsed) || !bHaveGeoTransform) )
+        ((bHaveGeoTransform && nWorldFileIndex < nIndexUsed) ||
+         !bHaveGeoTransform) )
     {
         bHaveGeoTransform = CPL_TO_BOOL(
             GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
@@ -175,7 +193,8 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
 }
 
 int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL, int nGEOJP2Index,
-                                   int nGMLJP2Index, int nMSIGIndex, int *pnIndexUsed )
+                                   int nGMLJP2Index, int nMSIGIndex,
+                                   int *pnIndexUsed )
 
 {
     ReadBoxes( fpLL );
