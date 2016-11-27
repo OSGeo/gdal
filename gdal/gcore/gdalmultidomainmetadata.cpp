@@ -28,9 +28,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdal_pam.h"
-#include <map>
 
 CPL_CVSID("$Id$");
 

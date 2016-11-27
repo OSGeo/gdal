@@ -26,7 +26,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdaljp2metadata.h"
+
+#include <cmath>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
                      int nFieldSize, const char* pszValue,
@@ -36,7 +53,7 @@ static void AddField(CPLXMLNode* psParent, const char* pszFieldName,
                                     psParent, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "string" );
-    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
 }
@@ -49,7 +66,7 @@ static void AddHexField(CPLXMLNode* psParent, const char* pszFieldName,
                                     psParent, "Field", pszValue );
     CPLAddXMLAttributeAndValue(psField, "name", pszFieldName );
     CPLAddXMLAttributeAndValue(psField, "type", "hexint" );
-    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize )  );
+    CPLAddXMLAttributeAndValue(psField, "size", CPLSPrintf("%d", nFieldSize ) );
     if( pszDescription )
         CPLAddXMLAttributeAndValue(psField, "description", pszDescription );
 }

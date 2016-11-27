@@ -26,8 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
+#include "cpl_port.h"
 #include "gdaljp2metadatagenerator.h"
+
+#include <cstddef>
 
 CPL_CVSID("$Id$");
 
