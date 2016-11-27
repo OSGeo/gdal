@@ -27,14 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+#include <map>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include "gdal.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "ogr_xerces.h"
 #include "ogr_srs_api.h"
+#include "ogr_xerces.h"
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
@@ -43,7 +53,7 @@
 #  endif
 #endif
 
-// FIXME: Disale following code as it crashed on OSX CI test.
+// FIXME: Disabled following code as it crashed on OSX CI test.
 //#if HAVE_CXX11
 //#include <mutex>
 //#endif

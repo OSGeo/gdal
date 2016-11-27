@@ -26,10 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "cpl_minixml.h"
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
 
