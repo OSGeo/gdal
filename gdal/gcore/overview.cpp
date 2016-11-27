@@ -43,7 +43,8 @@
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
-#include "gdalsse_priv.h"
+// TODO(schwehr): Fix warning: Software emulation of SSE2.
+// #include "gdalsse_priv.h"
 #include "gdalwarper.h"
 
 CPL_CVSID("$Id$");
