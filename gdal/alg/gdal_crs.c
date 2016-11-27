@@ -58,6 +58,10 @@
 #include "cpl_string.h"
 #include "cpl_atomic_ops.h"
 
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
 CPL_CVSID("$Id$");
 
 /* Hum, we cannot include gdal_priv.h from a .c file... */
