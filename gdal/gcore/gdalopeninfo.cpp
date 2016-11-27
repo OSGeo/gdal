@@ -28,15 +28,23 @@
  ****************************************************************************/
 
 #include "gdal_priv.h"  // Must be included first for mingw VSIStatBufL.
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 
+#include <cstdlib>
+#include <cstring>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <algorithm>
 #include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
