@@ -27,8 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
@@ -175,7 +189,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         GDALDriver* poAPIPROXYDriver = GDALGetAPIPROXYDriver();
         if( poAPIPROXYDriver != this )
         {
-            if( poAPIPROXYDriver == NULL || poAPIPROXYDriver->pfnCreate == NULL )
+            if( poAPIPROXYDriver == NULL ||
+                poAPIPROXYDriver->pfnCreate == NULL )
                 return NULL;
             char** papszOptionsDup = CSLDuplicate(papszOptions);
             papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",

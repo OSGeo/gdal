@@ -28,8 +28,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_mdreader.h"
+#include "cpl_port.h"
 #include "gdaljp2abstractdataset.h"
+
+#include <cstring>
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
 

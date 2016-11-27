@@ -27,11 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal.h"
-#include "ogr_api.h"
-#include "cpl_multiproc.h"
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
+
 
 static bool bInGDALGlobalDestructor = false;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
