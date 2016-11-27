@@ -27,7 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_pleiades.h"
+
+#include <cstddef>
+#include <cstring>
+#include <ctime>
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 

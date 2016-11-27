@@ -29,6 +29,16 @@
 
 #include "reader_alos.h"
 
+#include <cstdio>
+#include <cstdlib>
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_mdreader.h"
+
 CPL_CVSID("$Id$");
 
 /**

@@ -27,7 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_orb_view.h"
+
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 

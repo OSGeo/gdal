@@ -27,7 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_kompsat.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
