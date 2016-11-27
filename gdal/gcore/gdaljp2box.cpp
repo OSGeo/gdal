@@ -27,10 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <algorithm>
 #include "cpl_port.h"
-#include "cpl_string.h"
 #include "gdaljp2metadata.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
