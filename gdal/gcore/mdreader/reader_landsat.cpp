@@ -27,7 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_landsat.h"
+
+#include <cstddef>
+#include <cstring>
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 

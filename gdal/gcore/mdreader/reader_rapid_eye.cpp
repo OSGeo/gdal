@@ -29,6 +29,13 @@
 
 #include "reader_rapid_eye.h"
 
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+
 CPL_CVSID("$Id$");
 
 /**
