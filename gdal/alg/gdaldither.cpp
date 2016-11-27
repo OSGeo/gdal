@@ -46,13 +46,20 @@
  *                                          Lou Steinberg
  */
 
+#include "cpl_port.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
-#include "gdal_priv.h"
 
 #include <cstdlib>
-
+#include <cstring>
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 #if defined(__x86_64) || defined(_M_X64)
 #define USE_SSE2

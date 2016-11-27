@@ -33,13 +33,22 @@
 /*! @cond Doxygen_Suppress */
 
 #ifdef HAVE_ARMADILLO
-/* Include before #define A(r,c) because armadillo uses A in its include files */
+// Include before #define A(r,c) because armadillo uses A in its include files.
 #include "armadillo"
 #endif
 
+#include "cpl_port.h"
 #include "thinplatespline.h"
 
+#include <climits>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+
 #include <algorithm>
+
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 

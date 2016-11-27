@@ -27,10 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_alg_priv.h"
-#include "cpl_conv.h"
-#include <vector>
+#include "cpl_port.h"
+#include "gdal_alg.h"
+
+#include <cstring>
+
 #include <set>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_alg_priv.h"
 
 CPL_CVSID("$Id$");
 
