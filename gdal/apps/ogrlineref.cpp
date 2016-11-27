@@ -1186,7 +1186,8 @@ static OGRErr GetCoordinates(OGRLayer* const poPkLayer,
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         papszArgv[iArg], nExtraArg)); } while( false )
 
 int main( int nArgc, char ** papszArgv )
 

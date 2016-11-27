@@ -362,7 +362,7 @@ static void ReportOnLayer( OGRLayer * poLayer, int bVerbose )
     do { if (iArg + nExtraArg >= nArgc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], \
                 nExtraArg)); \
-        } while(0)
+        } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
