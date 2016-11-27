@@ -27,8 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_proxy.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 //! @cond Doxygen_Suppress
 
