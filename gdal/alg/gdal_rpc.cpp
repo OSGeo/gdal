@@ -27,18 +27,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "gdal_alg.h"
-#include "ogr_spatialref.h"
-#include "cpl_minixml.h"
-#include "gdal_mdreader.h"
-#include <cmath>
-#include <algorithm>
 
-#if (defined(__x86_64) || defined(_M_X64))
-#define USE_SSE2_OPTIM
-#include "gdalsse_priv.h"
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
+#if defined(__x86_64) || defined(_M_X64)
+#  define USE_SSE2_OPTIM
+#  include "gdalsse_priv.h"
 #endif
+#include "ogr_api.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
+
 
 CPL_CVSID("$Id$");
 

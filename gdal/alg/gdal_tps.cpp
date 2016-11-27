@@ -27,15 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "thinplatespline.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <map>
+#include <utility>
+
 #include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
-#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -77,7 +86,7 @@ void* GDALCreateSimilarTPSTransformer( void *hTransformArg,
     if( dfRatioX == 1.0 && dfRatioY == 1.0 )
     {
         // We can just use a ref count, since using the source transformation
-        /// is thread-safe.
+        // is thread-safe.
         CPLAtomicInc(&(psInfo->nRefCount));
     }
     else

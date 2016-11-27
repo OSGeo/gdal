@@ -29,21 +29,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <cfloat>
+#include "cpl_port.h"
 #include "gdalwarper.h"
-#include "gdal_alg_priv.h"
-#include "cpl_string.h"
-#include "gdalwarpkernel_opencl.h"
-#include "cpl_atomic_ops.h"
-#include "cpl_worker_thread_pool.h"
+
+#include <cfloat>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+
+#include <algorithm>
 #include <limits>
 #include <new>
+#include <vector>
 
-/* We restrict to 64bit processors because they are guaranteed to have SSE2 */
-/* Could possibly be used too on 32bit, but we would need to check at runtime */
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "gdal_alg_priv.h"
+#include "gdalwarpkernel_opencl.h"
+
+// We restrict to 64bit processors because they are guaranteed to have SSE2.
+// Could possibly be used too on 32bit, but we would need to check at runtime.
 #if defined(__x86_64) || defined(_M_X64)
 #include <gdalsse_priv.h>
 
@@ -1540,7 +1555,7 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
             _pDst[iDstOffset] = static_cast<type>(std::numeric_limits<type>::min() + 1); \
         else \
             _pDst[iDstOffset] --; \
-    } } while(0)
+    } } while( false )
 
     switch( poWK->eWorkingDataType )
     {
