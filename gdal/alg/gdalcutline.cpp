@@ -27,14 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "gdal_alg.h"
+#include "cpl_port.h"
 #include "gdalwarper.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_alg.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_geos.h"
-
-#include <algorithm>
 
 CPL_CVSID("$Id$");
 
