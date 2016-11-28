@@ -148,6 +148,11 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
  *                 Default is 30. (GDAL >= 2.0)
+ * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
+ *     bundle file. By default, it will be looked in a system location. If
+ *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
+ *     environment variable is defined to use it as the CAINFO value, and as a
+ *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the TIMEOUT,
@@ -622,6 +627,20 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     {
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
+
+    // Custom path to SSL certificates.
+    const char* pszCAInfo = CSLFetchNameValue( papszOptions, "CAINFO" );
+    if (pszCAInfo == NULL)
+        // Name of environment variable used by the curl binary
+        pszCAInfo = CPLGetConfigOption("CURL_CA_BUNDLE", NULL);
+    if (pszCAInfo == NULL)
+        // Name of environment variable used by the curl binary (tested
+        // after CURL_CA_BUNDLE
+        pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", NULL);
+    if( pszCAInfo != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
     }
 
     /* Set Referer */
