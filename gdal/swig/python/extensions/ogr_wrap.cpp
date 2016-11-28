@@ -7317,6 +7317,10 @@ SWIGINTERN PyObject *_wrap_DataSource_DeleteLayer(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -7369,6 +7373,10 @@ SWIGINTERN PyObject *_wrap_DataSource_SyncToDisk(PyObject *SWIGUNUSEDPARM(self),
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8124,6 +8132,10 @@ SWIGINTERN PyObject *_wrap_DataSource_StartTransaction(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8176,6 +8188,10 @@ SWIGINTERN PyObject *_wrap_DataSource_CommitTransaction(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8228,6 +8244,10 @@ SWIGINTERN PyObject *_wrap_DataSource_RollbackTransaction(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -8787,6 +8807,10 @@ SWIGINTERN PyObject *_wrap_Layer_SetAttributeFilter(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9140,6 +9164,10 @@ SWIGINTERN PyObject *_wrap_Layer_SetNextByIndex(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9206,6 +9234,10 @@ SWIGINTERN PyObject *_wrap_Layer_SetFeature(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9272,6 +9304,10 @@ SWIGINTERN PyObject *_wrap_Layer_CreateFeature(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9334,6 +9370,10 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9386,6 +9426,10 @@ SWIGINTERN PyObject *_wrap_Layer_SyncToDisk(PyObject *SWIGUNUSEDPARM(self), PyOb
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9721,6 +9765,10 @@ SWIGINTERN PyObject *_wrap_Layer_CreateField(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9782,6 +9830,10 @@ SWIGINTERN PyObject *_wrap_Layer_DeleteField(PyObject *SWIGUNUSEDPARM(self), PyO
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9852,6 +9904,10 @@ SWIGINTERN PyObject *_wrap_Layer_ReorderField(PyObject *SWIGUNUSEDPARM(self), Py
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -9931,6 +9987,10 @@ SWIGINTERN PyObject *_wrap_Layer_ReorderFields(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10027,6 +10087,10 @@ SWIGINTERN PyObject *_wrap_Layer_AlterFieldDefn(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10107,6 +10171,10 @@ SWIGINTERN PyObject *_wrap_Layer_CreateGeomField(PyObject *SWIGUNUSEDPARM(self),
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10159,6 +10227,10 @@ SWIGINTERN PyObject *_wrap_Layer_StartTransaction(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10211,6 +10283,10 @@ SWIGINTERN PyObject *_wrap_Layer_CommitTransaction(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10263,6 +10339,10 @@ SWIGINTERN PyObject *_wrap_Layer_RollbackTransaction(PyObject *SWIGUNUSEDPARM(se
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10514,6 +10594,10 @@ SWIGINTERN PyObject *_wrap_Layer_SetIgnoredFields(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10691,6 +10775,10 @@ SWIGINTERN PyObject *_wrap_Layer_Intersection(PyObject *SWIGUNUSEDPARM(self), Py
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -10880,6 +10968,10 @@ SWIGINTERN PyObject *_wrap_Layer_Union(PyObject *SWIGUNUSEDPARM(self), PyObject 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -11069,6 +11161,10 @@ SWIGINTERN PyObject *_wrap_Layer_SymDifference(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -11258,6 +11354,10 @@ SWIGINTERN PyObject *_wrap_Layer_Identity(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -11447,6 +11547,10 @@ SWIGINTERN PyObject *_wrap_Layer_Update(PyObject *SWIGUNUSEDPARM(self), PyObject
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -11636,6 +11740,10 @@ SWIGINTERN PyObject *_wrap_Layer_Clip(PyObject *SWIGUNUSEDPARM(self), PyObject *
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -11825,6 +11933,10 @@ SWIGINTERN PyObject *_wrap_Layer_Erase(PyObject *SWIGUNUSEDPARM(self), PyObject 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12128,6 +12240,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometry(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12187,6 +12303,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeometryDirectly(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12297,6 +12417,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomField__SWIG_0(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12373,6 +12497,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomField__SWIG_1(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12501,6 +12629,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomFieldDirectly__SWIG_0(PyObject *SWIGUN
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -12575,6 +12707,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetGeomFieldDirectly__SWIG_1(PyObject *SWIGUN
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -14783,6 +14919,10 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -14880,6 +15020,10 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -15329,6 +15473,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetFID(PyObject *SWIGUNUSEDPARM(self), PyObje
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -16939,6 +17087,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetFrom(PyObject *SWIGUNUSEDPARM(self), PyObj
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -17041,6 +17193,10 @@ SWIGINTERN PyObject *_wrap_Feature_SetFromWithMap(PyObject *SWIGUNUSEDPARM(self)
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -18309,6 +18465,10 @@ SWIGINTERN PyObject *_wrap_FeatureDefn_DeleteGeomFieldDefn(PyObject *SWIGUNUSEDP
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -21313,6 +21473,10 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkt(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -21393,6 +21557,10 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkt(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -21490,6 +21658,10 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -21586,6 +21758,10 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -22227,6 +22403,10 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *SWIGUNUSEDPARM
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -22293,6 +22473,10 @@ SWIGINTERN PyObject *_wrap_Geometry_AddGeometry(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -24991,6 +25175,10 @@ SWIGINTERN PyObject *_wrap_Geometry_TransformTo(PyObject *SWIGUNUSEDPARM(self), 
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -25057,6 +25245,10 @@ SWIGINTERN PyObject *_wrap_Geometry_Transform(PyObject *SWIGUNUSEDPARM(self), Py
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -26275,6 +26467,10 @@ SWIGINTERN PyObject *_wrap_SetGenerate_DB2_V72_BYTE_ORDER(PyObject *SWIGUNUSEDPA
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
