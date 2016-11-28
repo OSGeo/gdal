@@ -9485,8 +9485,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( nBandsIn != GetRasterCount() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Generation of overviews in TIFF currently only"
-                  " supported when operating on all bands.  "
+                  "Generation of overviews in TIFF currently only "
+                  "supported when operating on all bands.  "
                   "Operation failed." );
         return CE_Failure;
     }
