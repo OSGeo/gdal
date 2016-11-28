@@ -3026,15 +3026,12 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    // GEOSGeom is a pointer
-    GEOSGeom hThis = NULL;
-    GEOSGeom hOther = NULL;
-
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    hThis = exportToGEOS(hGEOSCtxt);
+    // GEOSGeom is a pointer.
+    GEOSGeom hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThis = exportToGEOS(hGEOSCtxt);
 
-    bool bIsErr = false;
+    bool bIsErr = true;
     double dfDistance = 0.0;
 
     if( hThis != NULL && hOther != NULL )
