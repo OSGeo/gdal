@@ -4283,7 +4283,11 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
  * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs to Amazon S3
  * signed URLs during their validity period, so as to minimize round-trips. This behaviour
  * can be disabled by setting the configuration option CPL_VSIL_CURL_USE_S3_REDIRECT to NO.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * VSIStatL() will return the size in st_size member and file
  * nature- file or directory - in st_mode member (the later only reliable with FTP
  * resources for now).
@@ -4334,6 +4338,10 @@ void VSIInstallCurlFileHandler(void)
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
  *
  * On reading, the file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
