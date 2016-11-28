@@ -500,7 +500,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
     osTmpFileName = osTmpDirName + "/file.gml";
 
     VSILFILE *fp = VSIFileFromMemBuffer( osTmpFileName, pabyData,
-                                    nDataLen, TRUE);
+                                         nDataLen, TRUE);
     VSIFCloseL(fp);
     psResult->pabyData = NULL;
 
