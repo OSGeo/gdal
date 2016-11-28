@@ -1677,7 +1677,8 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr      eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    const OGRErr eErr =
+        importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -1796,8 +1797,7 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
                                    OGRwkbVariant eWkbVariant ) const
 
 {
-    size_t nMaxString = static_cast<size_t>(nPointCount) * 40 * 4 + 26;
-    size_t nRetLen = 0;
+    const size_t nMaxString = static_cast<size_t>(nPointCount) * 40 * 4 + 26;
 
 /* -------------------------------------------------------------------- */
 /*      Handle special empty case.                                      */
@@ -1847,6 +1847,8 @@ OGRErr OGRSimpleCurve::exportToWkt( char ** ppszDstText,
     OGRBoolean hasM = IsMeasured();
     if( eWkbVariant != wkbVariantIso )
         hasM = FALSE;
+
+    size_t nRetLen = 0;
 
     for( int i = 0; i < nPointCount; i++ )
     {
@@ -2066,13 +2068,12 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
     OGRLineString *poNewLineString = new OGRLineString();
 
     poNewLineString->assignSpatialReference(getSpatialReference());
-    // poNewLineString->setPoints(nPointCount, paoPoints, padfZ);
     poNewLineString->setCoordinateDimension(getCoordinateDimension());
 
-    double dfLen = get_Length();
+    const double dfLen = get_Length();
     if( bAsRatio == TRUE )
     {
-        //convert to real distance
+        // Convert to real distance.
         dfDistanceFrom *= dfLen;
         dfDistanceTo *= dfLen;
     }
@@ -2089,7 +2090,7 @@ OGRLineString* OGRSimpleCurve::getSubLine(double dfDistanceFrom,
         return NULL;
     }
 
-    double dfLength = 0;
+    double dfLength = 0.0;
 
     // Get first point.
 
