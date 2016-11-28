@@ -28,9 +28,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <string>
 
 #include <algorithm>
+#include <string>
 
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
