@@ -348,7 +348,16 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbMultiSurfaceZM:
             case wkbGeometryCollectionZM:
             {
-                OGRGeometryCollection *poColl = (OGRGeometryCollection*)this;
+                OGRGeometryCollection *poColl =
+                    dynamic_cast<OGRGeometryCollection *>(
+                        const_cast<OGRGeometry *>(this));
+                if( poColl == NULL )
+                {
+                    CPLError(CE_Fatal, CPLE_AppDefined,
+                             "dynamic_cast failed.  "
+                             "Expected OGRGeometryCollection.");
+                    return;
+                }
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
                 for( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
