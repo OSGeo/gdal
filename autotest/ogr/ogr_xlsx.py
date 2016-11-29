@@ -448,6 +448,25 @@ def ogr_xlsx_11():
 
     return 'success'
 
+###############################################################################
+# Test reading a sheet whose file is stored as "absolute" in 
+# workbook.xml.rels (#6733)
+
+def ogr_xlsx_12():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/absolute_sheet_filename.xlsx')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -459,7 +478,8 @@ gdaltest_list = [
     ogr_xlsx_8,
     ogr_xlsx_9,
     ogr_xlsx_10,
-    ogr_xlsx_11
+    ogr_xlsx_11,
+    ogr_xlsx_12
 ]
 
 if __name__ == '__main__':
