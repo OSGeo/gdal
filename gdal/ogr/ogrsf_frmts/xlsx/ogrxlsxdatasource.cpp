@@ -946,7 +946,11 @@ void OGRXLSXDataSource::BuildLayer( OGRXLSXLayer* poLayer )
     const char* pszSheetFilename = poLayer->GetFilename().c_str();
     VSILFILE* fp = VSIFOpenL(pszSheetFilename, "rb");
     if (fp == NULL)
+    {
+        CPLDebug("XLSX", "Cannot open file %s for sheet %s",
+                 pszSheetFilename, poLayer->GetName());
         return;
+    }
 
     const bool bUpdatedBackup = bUpdated;
 
@@ -1262,8 +1266,21 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
             oMapRelsIdToTarget.find(pszId) != oMapRelsIdToTarget.end() )
         {
             papoLayers = (OGRLayer**)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
-            papoLayers[nLayers++] = new OGRXLSXLayer(this,
-                CPLSPrintf("/vsizip/%s/xl/%s", pszName, oMapRelsIdToTarget[pszId].c_str()),
+            CPLString osFilename;
+            if( !oMapRelsIdToTarget[pszId].empty() &&
+                oMapRelsIdToTarget[pszId][0] == '/' )
+            {
+                // Is it an "absolute" path ? 
+                osFilename = "/vsizip/" + CPLString(pszName) +
+                             oMapRelsIdToTarget[pszId];
+            }
+            else
+            {
+                // or relative to the /xl subdirectory
+                osFilename = "/vsizip/" + CPLString(pszName) +
+                             CPLString("/xl/") + oMapRelsIdToTarget[pszId];
+            }
+            papoLayers[nLayers++] = new OGRXLSXLayer(this, osFilename,
                 pszSheetName);
         }
     }
