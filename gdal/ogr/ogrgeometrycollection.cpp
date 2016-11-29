@@ -260,7 +260,7 @@ int OGRGeometryCollection::getNumGeometries() const
 /**
  * \brief Fetch geometry from container.
  *
- * This method returns a pointer to an geometry within the container.  The
+ * This method returns a pointer to a geometry within the container.  The
  * returned geometry remains owned by the container, and should not be
  * modified.  The pointer is only valid until the next change to the
  * geometry container.  Use IGeometry::clone() to make a copy.
@@ -284,7 +284,7 @@ OGRGeometry * OGRGeometryCollection::getGeometryRef( int i )
 /**
  * \brief Fetch geometry from container.
  *
- * This method returns a pointer to an geometry within the container.  The
+ * This method returns a pointer to a geometry within the container.  The
  * returned geometry remains owned by the container, and should not be
  * modified.  The pointer is only valid until the next change to the
  * geometry container.  Use IGeometry::clone() to make a copy.
