@@ -61,6 +61,26 @@
 
 using namespace std;
 
+static unsigned short validateEntityCRC( const char * pabyInput,
+        unsigned int dObjectSize, size_t & nBitOffsetFromStart,
+        const char * entityName = "ENTITY" )
+{
+    const int size = dObjectSize - 2;
+
+    nBitOffsetFromStart = size * 8;
+    const unsigned short nCRC = ReadRAWSHORT( pabyInput, nBitOffsetFromStart );
+
+    const unsigned short initial = 0xC0C1;
+    const unsigned short nCalculated = CalculateCRC8( initial, pabyInput, size );
+
+    if( nCRC != nCalculated )
+    {
+        DebugMsg( "Invalid CRC for %s object\n", entityName );
+        DebugMsg( "CRC read:0x%X calculated:0x%X\n", nCRC, nCalculated );
+    }
+    return nCRC;
+}
+
 int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 {
     char buffer[255];
@@ -82,9 +102,13 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         DebugMsg( "Header variables section length: %d\n",
                   static_cast<int>(dHeaderVarsSectionLength) );
 
-    size_t nBitOffsetFromStart = 0;
-    pabyBuf = new char[dHeaderVarsSectionLength + 4];
-    pFileIO->Read( pabyBuf, dHeaderVarsSectionLength + 2 );
+    // crc is calculated on (long+data) buffer
+    // buffer size: long (4 bytes) + data (variable) + crc (2 bytes)
+    pabyBuf = new char[4 + dHeaderVarsSectionLength + 2];
+    pFileIO->Seek( -4L, CADFileIO::SeekOrigin::CUR );
+    pFileIO->Read( pabyBuf, 4 + dHeaderVarsSectionLength + 2 );
+
+    size_t nBitOffsetFromStart = 32;
 
     if( eOptions == OpenOptions::READ_ALL )
     {
@@ -618,21 +642,29 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         SkipBITSHORT( pabyBuf, nBitOffsetFromStart );
     }
 
-    /*short nCRC =*/ ReadRAWSHORT( pabyBuf, nBitOffsetFromStart );
-    unsigned short initial = 0xC0C1;
-    /*short calculated_crc = */ CalculateCRC8( initial, pabyBuf,
-                                               static_cast<int>(dHeaderVarsSectionLength) ); // TODO: CRC is calculated wrong every time.
-
-
     int returnCode = CADErrorCodes::SUCCESS;
-    pFileIO->Read( pabyBuf, DWGConstants::SentinelLength );
-    if( memcmp( pabyBuf, DWGConstants::HeaderVariablesEnd,
-                         DWGConstants::SentinelLength ) )
-    {
-        DebugMsg( "File is corrupted (HEADERVARS section ending sentinel "
-                          "doesn't match.)" );
 
+    // byte align data
+    nBitOffsetFromStart = (4 + dHeaderVarsSectionLength) * 8;
+
+    unsigned short nCRC = ReadRAWSHORT( pabyBuf, nBitOffsetFromStart );
+    unsigned short initial = 0xC0C1;
+    unsigned short nCalculated = CalculateCRC8(
+            initial, pabyBuf, static_cast<int>(4 + dHeaderVarsSectionLength) );
+
+    if( nCRC != nCalculated )
+    {
+        DebugMsg( "File is corrupted (HEADERVARS section CRC doesn't match)\n" );
         returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
+    } else
+    {
+        pFileIO->Read( pabyBuf, DWGConstants::SentinelLength );
+        if( memcmp( pabyBuf, DWGConstants::HeaderVariablesEnd,
+                             DWGConstants::SentinelLength ) )
+        {
+            DebugMsg( "File is corrupted (HEADERVARS section ending sentinel doesn't match)\n" );
+            returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
+        }
     }
 
     delete[] pabyBuf;
@@ -646,7 +678,6 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         char * pabySectionContent;
         char   buffer[255];
         size_t dSectionSize        = 0;
-        size_t nBitOffsetFromStart = 0;
 
         pFileIO->Seek( sectionLocatorRecords[1].dSeeker, CADFileIO::SeekOrigin::BEG );
 
@@ -654,8 +685,8 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         if( memcmp( buffer, DWGConstants::DSClassesStart,
                             DWGConstants::SentinelLength ) )
         {
-            std::cerr << "File is corrupted (wrong pointer to CLASSES section,"
-                    "or CLASSES starting sentinel corrupted.)\n";
+            DebugMsg( "File is corrupted (wrong pointer to CLASSES section,"
+                      " or CLASSES starting sentinel corrupted.)\n" );
 
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
@@ -664,8 +695,11 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         DebugMsg( "Classes section length: %d\n",
                   static_cast<int>(dSectionSize) );
 
-        pabySectionContent = new char[dSectionSize + 4];
-        pFileIO->Read( pabySectionContent, dSectionSize );
+        pabySectionContent = new char[4 + dSectionSize + 2];
+        pFileIO->Seek( -4L, CADFileIO::SeekOrigin::CUR );
+        pFileIO->Read( pabySectionContent, 4 + dSectionSize + 2 );
+
+        size_t nBitOffsetFromStart = 32;
 
         while( ( nBitOffsetFromStart / 8 + 1 ) < dSectionSize )
         {
@@ -681,16 +715,26 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             oClasses.addClass( stClass );
         }
 
+        nBitOffsetFromStart = (4 + dSectionSize) * 8;
+
+        unsigned short nCRC = ReadRAWSHORT( pabySectionContent, nBitOffsetFromStart );
+        unsigned short initial = 0xC0C1;
+        unsigned short nCalculated = CalculateCRC8(
+                initial, pabySectionContent, static_cast<int>(4 + dSectionSize) );
+
         delete[] pabySectionContent;
 
-        pFileIO->Read( buffer, 2 ); // CLASSES CRC!. TODO: add CRC computing & checking feature.
+        if( nCRC != nCalculated )
+        {
+            DebugMsg( "File is corrupted (CLASSES section CRC doesn't match)\n" );
+            return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
+        }
 
         pFileIO->Read( buffer, DWGConstants::SentinelLength );
         if( memcmp( buffer, DWGConstants::DSClassesEnd,
                             DWGConstants::SentinelLength ) )
         {
-            std::cerr << "File is corrupted (CLASSES section ending sentinel "
-                    "doesn't match.)\n";
+            DebugMsg( "File is corrupted (CLASSES section ending sentinel doesn't match)\n" );
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
     }
@@ -726,13 +770,15 @@ int DWGFileR2000::CreateFileMap()
         if( dSectionSize == 2 )
             break; // last section is empty.
 
-        char * pabySectionContent  = new char[dSectionSize + 4];
-        size_t nBitOffsetFromStart = 0;
+        char * pabySectionContent  = new char[2 + dSectionSize];
         size_t nRecordsInSection   = 0;
 
         // read section data
-        pFileIO->Read( pabySectionContent, dSectionSize );
-        unsigned int dSectionBitSize = (dSectionSize * 8) - 128; // 8 + 8*7
+        pFileIO->Seek( -2L, CADFileIO::SeekOrigin::CUR );
+        pFileIO->Read( pabySectionContent, 2 + dSectionSize );
+        unsigned int dSectionBitSize = (2 + dSectionSize - 2) * 8;
+
+        size_t nBitOffsetFromStart = 16;
 
         while( nBitOffsetFromStart < dSectionBitSize )
         {
@@ -756,12 +802,23 @@ int DWGFileR2000::CreateFileMap()
             ++nRecordsInSection;
         }
 
-        /* Unused
-        dSectionCRC = */ReadRAWSHORT( pabySectionContent, nBitOffsetFromStart );/*
+        // byte align data
+        nBitOffsetFromStart = (2 + dSectionSize - 2) * 8;
+
+        unsigned short dSectionCRC = ReadRAWSHORT( pabySectionContent, nBitOffsetFromStart );
         SwapEndianness (dSectionCRC, sizeof (dSectionCRC));
-        */
+
+        unsigned short initial = 0xC0C1;
+        unsigned short nCalculated = CalculateCRC8(
+                initial, pabySectionContent, static_cast<int>(2 + dSectionSize - 2) );
 
         delete[] pabySectionContent;
+
+        if( dSectionCRC != nCalculated )
+        {
+            DebugMsg( "File is corrupted (OBJECTMAP section CRC doesn't match)\n" );
+            return CADErrorCodes::OBJECTS_SECTION_READ_FAILED;
+        }
     }
 
     return CADErrorCodes::SUCCESS;
@@ -775,6 +832,10 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
     pFileIO->Read( pabyObjectSize, 8 );
     unsigned int dObjectSize = ReadMSHORT( pabyObjectSize, nBitOffsetFromStart );
 
+    // FIXME: limit object size to 64kB
+    if( dObjectSize > 65536 )
+        return nullptr;
+
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
     size_t nSectionSize = dObjectSize + nBitOffsetFromStart / 8 + 2;
@@ -786,6 +847,9 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
     nBitOffsetFromStart = 0;
     dObjectSize = ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
     short dObjectType = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart );
+
+    // FIXME: needed for CRC validation
+    dObjectSize = (unsigned int) nSectionSize;
 
     if( dObjectType >= 500 )
     {
@@ -1411,7 +1475,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         case CADObject::VERTEX_MESH:
         case CADObject::VERTEX_PFACE_FACE:
         default:
-            std::cerr << "Asked geometry has unsupported type." << endl;
+            DebugMsg( "Asked geometry has unsupported type." );
             poGeometry = new CADUnknown();
             break;
     }
@@ -1617,14 +1681,7 @@ CADBlockObject * DWGFileR2000::getBlock( long dObjectSize, struct CADCommonED st
 
     fillCommonEntityHandleData( pBlock, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    pBlock->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    pBlock->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart, "BLOCK" ) );
 
     return pBlock;
 }
@@ -1655,14 +1712,7 @@ CADEllipseObject * DWGFileR2000::getEllipse( long dObjectSize, CADCommonED stCom
 
     fillCommonEntityHandleData( ellipse, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    ellipse->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    ellipse->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart, "ELLIPSE" ) );
 
     return ellipse;
 }
@@ -1700,14 +1750,7 @@ CADSolidObject * DWGFileR2000::getSolid( long dObjectSize, CADCommonED stCommonE
 
     fillCommonEntityHandleData( solid, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    solid->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    solid->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart, "SOLID" ) );
 
     return solid;
 }
@@ -1740,14 +1783,7 @@ CADPointObject * DWGFileR2000::getPoint( long dObjectSize, CADCommonED stCommonE
 
     fillCommonEntityHandleData( point, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    point->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    point->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return point;
 }
@@ -1770,14 +1806,7 @@ CADPolyline3DObject * DWGFileR2000::getPolyLine3D( long dObjectSize, CADCommonED
 
     polyline->hSeqend = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    polyline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return polyline;
 }
@@ -1799,14 +1828,7 @@ CADRayObject * DWGFileR2000::getRay( long dObjectSize, CADCommonED stCommonEntit
 
     fillCommonEntityHandleData( ray, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    ray->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    ray->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return ray;
 }
@@ -1828,14 +1850,7 @@ CADXLineObject * DWGFileR2000::getXLine( long dObjectSize, CADCommonED stCommonE
 
     fillCommonEntityHandleData( xline, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    xline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    xline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return xline;
 }
@@ -1879,14 +1894,7 @@ CADLineObject * DWGFileR2000::getLine( long dObjectSize, CADCommonED stCommonEnt
 
     fillCommonEntityHandleData( line, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    line->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    line->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return line;
 }
 
@@ -1951,14 +1959,7 @@ CADTextObject * DWGFileR2000::getText( long dObjectSize, CADCommonED stCommonEnt
 
     text->hStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    text->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    text->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return text;
 }
@@ -1978,14 +1979,7 @@ CADVertex3DObject * DWGFileR2000::getVertex3D( long dObjectSize, CADCommonED stC
 
     fillCommonEntityHandleData( vertex, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    vertex->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return vertex;
 }
 
@@ -2014,14 +2008,7 @@ CADCircleObject * DWGFileR2000::getCircle( long dObjectSize, CADCommonED stCommo
 
     fillCommonEntityHandleData( circle, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    circle->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    circle->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return circle;
 }
 
@@ -2035,14 +2022,7 @@ CADEndblkObject * DWGFileR2000::getEndBlock( long dObjectSize, CADCommonED stCom
 
     fillCommonEntityHandleData( endblk, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    endblk->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    endblk->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return endblk;
 }
 
@@ -2082,14 +2062,7 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D( long dObjectSize, CADCommonED
 
     polyline->hSeqend = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    polyline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return polyline;
 }
 
@@ -2153,14 +2126,7 @@ CADAttribObject * DWGFileR2000::getAttributes( long dObjectSize, CADCommonED stC
 
     attrib->hStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    attrib->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    attrib->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return attrib;
 }
 
@@ -2227,14 +2193,7 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, CADCommonED
 
     attdef->hStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    attdef->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    attdef->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return attdef;
 }
 
@@ -2314,14 +2273,7 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine( long dObjectSize, CADCommonED
 
     fillCommonEntityHandleData( polyline, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    polyline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return polyline;
 }
 
@@ -2353,13 +2305,7 @@ CADArcObject * DWGFileR2000::getArc( long dObjectSize, CADCommonED stCommonEntit
 
     fillCommonEntityHandleData( arc, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    arc->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    arc->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return arc;
 }
 
@@ -2422,14 +2368,7 @@ CADSplineObject * DWGFileR2000::getSpline( long dObjectSize, CADCommonED stCommo
 
     fillCommonEntityHandleData( spline, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    spline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    spline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return spline;
 }
 
@@ -2447,13 +2386,7 @@ CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, CA
 
     fillCommonEntityHandleData( entity, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    entity->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    entity->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return entity;
 }
 
@@ -2501,13 +2434,7 @@ CADInsertObject * DWGFileR2000::getInsert( int dObjectType, long dObjectSize, CA
         insert->hSeqend = ReadHANDLE( pabyInput, nBitOffsetFromStart );
     }
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    insert->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    insert->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return insert;
 }
@@ -2558,14 +2485,7 @@ CADDictionaryObject * DWGFileR2000::getDictionary( long dObjectSize, const char 
     for( long i = 0; i < dictionary->nNumItems; ++i )
         dictionary->hItemHandles.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    dictionary->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif // _DEBUG
+    dictionary->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return dictionary;
 }
@@ -2623,14 +2543,7 @@ CADLayerObject * DWGFileR2000::getLayerObject( long dObjectSize, const char * pa
      */
 // layer->hUnknownHandle = ReadHANDLE (pabySectionContent, nBitOffsetFromStart);
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    layer->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    layer->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return layer;
 }
 
@@ -2666,13 +2579,7 @@ CADLayerControlObject * DWGFileR2000::getLayerControl( long dObjectSize, const c
     for( long i = 0; i < layerControl->nNumEntries; ++i )
         layerControl->hLayers.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    layerControl->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    layerControl->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return layerControl;
 }
 
@@ -2711,13 +2618,7 @@ CADBlockControlObject * DWGFileR2000::getBlockControl( long dObjectSize, const c
         blockControl->hBlocks.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
     }
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    blockControl->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    blockControl->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return blockControl;
 }
 
@@ -2788,13 +2689,7 @@ CADBlockHeaderObject * DWGFileR2000::getBlockHeader( long dObjectSize, const cha
         blockHeader->hInsertHandles.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
     blockHeader->hLayout = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    blockHeader->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    blockHeader->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return blockHeader;
 }
 
@@ -2831,14 +2726,7 @@ CADLineTypeControlObject * DWGFileR2000::getLineTypeControl( long dObjectSize, c
     for( long i = 0; i < ltypeControl->nNumEntries + 2; ++i )
         ltypeControl->hLTypes.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    ltypeControl->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    ltypeControl->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return ltypeControl;
 }
 
@@ -2901,14 +2789,7 @@ CADLineTypeObject * DWGFileR2000::getLineType1( long dObjectSize, const char * p
 
     // TODO: shapefile for dash/shape (1 each). Does it mean that we have nNumDashes * 2 handles, or what?
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    ltype->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "[NOT IMPORTANT, CAUSE NOT IMPLEMENTATION NOT COMPLETED] "
-                          "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    ltype->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return ltype;
 }
 
@@ -2980,14 +2861,7 @@ CADMLineObject * DWGFileR2000::getMLine( long dObjectSize, CADCommonED stCommonE
     if( mline->stCed.bbPlotStyleFlags == 0x03 )
         mline->stChed.hPlotStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    mline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    mline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return mline;
 }
 
@@ -3009,14 +2883,7 @@ CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace( long dObjectSize, CADCo
 
     polyline->hSeqend = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    polyline->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return polyline;
 }
 
@@ -3072,14 +2939,7 @@ CADImageObject * DWGFileR2000::getImage( long dObjectSize, CADCommonED stCommonE
     image->hImageDef        = ReadHANDLE( pabyInput, nBitOffsetFromStart );
     image->hImageDefReactor = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    image->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    image->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return image;
 }
@@ -3119,14 +2979,7 @@ CAD3DFaceObject * DWGFileR2000::get3DFace( long dObjectSize, CADCommonED stCommo
 
     fillCommonEntityHandleData( face, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    face->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif //_DEBUG
+    face->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return face;
 }
 
@@ -3144,14 +2997,7 @@ CADVertexMeshObject * DWGFileR2000::getVertexMesh( long dObjectSize, CADCommonED
 
     fillCommonEntityHandleData( vertex, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    vertex->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return vertex;
 }
 
@@ -3169,13 +3015,7 @@ CADVertexPFaceObject * DWGFileR2000::getVertexPFace( long dObjectSize, CADCommon
 
     fillCommonEntityHandleData( vertex, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 ); // padding bits to next byte boundary
-    vertex->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return vertex;
 }
 
@@ -3209,13 +3049,7 @@ CADMTextObject * DWGFileR2000::getMText( long dObjectSize, CADCommonED stCommonE
 
     fillCommonEntityHandleData( text, pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    text->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    text->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
     return text;
 }
 
@@ -3276,13 +3110,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3311,13 +3139,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3345,13 +3167,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3380,13 +3196,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3418,13 +3228,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3449,13 +3253,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
 
@@ -3480,13 +3278,7 @@ CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObject
             dimension->hDimstyle       = ReadHANDLE( pabyInput, nBitOffsetFromStart );
             dimension->hAnonymousBlock = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-            nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-            dimension->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-            if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-                DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                          ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
             return dimension;
         }
     }
@@ -3537,13 +3329,7 @@ CADImageDefObject * DWGFileR2000::getImageDef( long dObjectSize, const char * pa
 
     imagedef->hXDictionary = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    imagedef->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    imagedef->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return imagedef;
 }
@@ -3582,13 +3368,7 @@ CADImageDefReactorObject * DWGFileR2000::getImageDefReactor( long dObjectSize, c
 
     imagedefreactor->hXDictionary = ReadHANDLE( pabyInput, nBitOffsetFromStart );
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    imagedefreactor->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( ( nBitOffsetFromStart / 8 ) != ( dObjectSize + 4 ) )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart / 8 - dObjectSize - 4 ) );
-#endif
+    imagedefreactor->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return imagedefreactor;
 }
@@ -3664,13 +3444,7 @@ CADXRecordObject * DWGFileR2000::getXRecord( long dObjectSize, const char * paby
         xrecord->hObjIdHandles.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
     }
 
-    nBitOffsetFromStart += 8 - ( nBitOffsetFromStart % 8 );
-    xrecord->setCRC( ReadRAWSHORT( pabyInput, nBitOffsetFromStart ) );
-#ifdef _DEBUG
-    if( nBitOffsetFromStart != dObjectSizeBit )
-        DebugMsg( "Assertion failed at %d in %s\nSize difference: %d\n", __LINE__, __FILE__,
-                  ( nBitOffsetFromStart - dObjectSizeBit ) / 8 );
-#endif
+    xrecord->setCRC( validateEntityCRC( pabyInput, dObjectSize, nBitOffsetFromStart ) );
 
     return xrecord;
 }
