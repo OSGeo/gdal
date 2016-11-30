@@ -151,8 +151,8 @@ void OGRGeometryCollection::empty()
 OGRGeometry *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection *poNewGC = (OGRGeometryCollection*)
-            OGRGeometryFactory::createGeometry(getGeometryType());
+    OGRGeometryCollection *poNewGC = dynamic_cast<OGRGeometryCollection *>(
+        OGRGeometryFactory::createGeometry(getGeometryType()));
     if( poNewGC == NULL )
         return NULL;
     poNewGC->assignSpatialReference( getSpatialReference() );
@@ -522,7 +522,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( unsigned char * pabyData,
         if( nSize < 9 && nSize != -1 )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        OGRwkbGeometryType eSubGeomType;
+        OGRwkbGeometryType eSubGeomType = wkbUnknown;
         eErr = OGRReadWKBGeometryType( pabySubData, eWkbVariant,
                                        &eSubGeomType );
         if( eErr != OGRERR_NONE )
@@ -856,10 +856,11 @@ OGRGeometryCollection::exportToWktInternal( char ** ppszDstText,
         else if( eWkbVariant != wkbVariantIso )
         {
             char *substr = NULL;
+            // TODO(schwehr): Looks dangerous.  Cleanup.
             if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
                 memmove(substr,
-                        substr+strlen(" Z"),
-                        1 + strlen(substr+strlen(" Z")));
+                        substr + strlen(" Z"),
+                        1 + strlen(substr + strlen(" Z")));
         }
 
         nCumulativeLength += strlen(papszGeoms[iGeom] + nSkip);
