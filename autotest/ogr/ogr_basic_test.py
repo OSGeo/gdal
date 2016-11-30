@@ -700,6 +700,8 @@ def ogr_basic_15():
 
     ds = ogr.Open('data/poly.shp')
     lyr = ds.GetLayer(0)
+
+    used_exceptions_before = ogr.GetUseExceptions()
     ogr.UseExceptions()
     try:
         lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
@@ -709,6 +711,9 @@ def ogr_basic_15():
             print('Got: %s' + str(e))
             return 'fail'
         return 'success'
+    finally:
+        if used_exceptions_before == 0:
+            ogr.DontUseExceptions()
 
     print('Expected exception')
     return 'fail'
