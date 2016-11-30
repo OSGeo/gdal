@@ -611,7 +611,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
                 bGotOne = true;
                 break;
             }
-        } while(0);
+        } while( false );
     }
 
     for( int iFile = 0;
