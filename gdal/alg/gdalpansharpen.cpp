@@ -27,13 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdalpansharpen.h"
-#include "gdal_priv.h"
-#include "cpl_conv.h"
-#include "gdal_priv_templates.hpp"
-#include "../frmts/vrt/vrtdataset.h"
-#include "../frmts/mem/memdataset.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
 #include <new>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_vsi.h"
+#include "../frmts/mem/memdataset.h"
+#include "../frmts/vrt/vrtdataset.h"
+#include "gdal_priv.h"
+#include "gdal_priv_templates.hpp"
+// #include "gdalsse_priv.h"
 
 // Limit types to practical use cases
 #define LIMIT_TYPES 1

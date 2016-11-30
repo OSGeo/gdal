@@ -1177,7 +1177,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
 
         // Fall through. We have a valid scanline header... probably.
-    } while(0);
+    } while( false );
 
     if( bHeader )
         iInput+=4; // 0x5900 tag, line id, line data size, skip offset

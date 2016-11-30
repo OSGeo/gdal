@@ -924,20 +924,20 @@ CPLErr RMFDataset::WriteHeader()
 do {                                                    \
     GInt32  iLong = CPL_LSBWORD32( value );             \
     memcpy( (ptr) + (offset), &iLong, 4 );              \
-} while(0);
+} while( false );
 
 #define RMF_WRITE_ULONG( ptr,value, offset )            \
 do {                                                    \
     GUInt32 iULong = CPL_LSBWORD32( value );            \
     memcpy( (ptr) + (offset), &iULong, 4 );             \
-} while(0);
+} while( false );
 
 #define RMF_WRITE_DOUBLE( ptr,value, offset )           \
 do {                                                    \
     double  dfDouble = (value);                         \
     CPL_LSBPTR64( &dfDouble );                          \
     memcpy( (ptr) + (offset), &dfDouble, 8 );           \
-} while(0);
+} while( false );
 
 /* -------------------------------------------------------------------- */
 /*  Write out the main header.                                          */
@@ -1141,7 +1141,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
@@ -1153,7 +1153,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_LONG(ptr, value, offset)                               \
 do {                                                                    \
@@ -1165,7 +1165,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 do {                                                                    \
@@ -1178,7 +1178,7 @@ do {                                                                    \
     {                                                                   \
         CPL_LSBPTR64(&(value));                                         \
     }                                                                   \
-} while(0);
+} while( false );
 
 /* -------------------------------------------------------------------- */
 /*  Read the main header.                                               */

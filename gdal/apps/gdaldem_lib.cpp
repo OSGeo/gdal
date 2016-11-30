@@ -86,17 +86,28 @@
 // Include before others for mingw for VSIStatBufL
 #include "cpl_conv.h"
 
-#include <float.h>
+#include "cpl_port.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+
+#include <cfloat>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 #include <algorithm>
 #include <limits>
 
+#include "cpl_error.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_priv.h"
-#include "gdal_utils_priv.h"
 
 #if defined(__SSE2__) || defined(_M_X64)
 #define HAVE_16_SSE_REG

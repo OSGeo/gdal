@@ -33,6 +33,8 @@
 #ifndef TIFVSI_H_INCLUDED
 #define TIFVSI_H_INCLUDED
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "tiffio.h"
 
 TIFF* VSI_TIFFOpen( const char* name, const char* mode, VSILFILE* fp );

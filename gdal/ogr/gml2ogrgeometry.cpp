@@ -699,7 +699,9 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
                 iInterior++;
         }
         else
+        {
             bError = true;
+        }
     }
 
     if( !bError && iCount > 0 )
@@ -1227,6 +1229,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     }
                     delete poRing;
                     delete poCC;
+                    delete poGeom;
                     return NULL;
                 }
 
@@ -1451,6 +1454,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     {
                         delete poGeom;
                         delete poCC;
+                        delete poRing;
                         return NULL;
                     }
                 }
@@ -3250,17 +3254,20 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 {
                     OGRLineString *poLS = poEdgeGeomLS;
                     OGRLineString *poAddLS = poFaceGeom;
+
+                    // TODO(schwehr): Use AlmostEqual.
+                    const double epsilon = 1.0e-14;
                     if( poAddLS->getNumPoints() < 2 )
                     {
                         // Skip it.
                     }
                     else if( poLS->getNumPoints() > 0
                              && fabs(poLS->getX(poLS->getNumPoints() - 1)
-                                     - poAddLS->getX(0)) < 1.0e-14
+                                     - poAddLS->getX(0)) < epsilon
                              && fabs(poLS->getY(poLS->getNumPoints() - 1)
-                                     - poAddLS->getY(0)) < 1.0e-14
+                                     - poAddLS->getY(0)) < epsilon
                              && fabs(poLS->getZ(poLS->getNumPoints() - 1)
-                                     - poAddLS->getZ(0)) < 1.0e-14 )
+                                     - poAddLS->getZ(0)) < epsilon )
                     {
                         // Skip the first point of the new linestring to avoid
                         // invalidate duplicate points.

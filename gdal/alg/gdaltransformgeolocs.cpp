@@ -26,7 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_alg.h"
+
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "gdal.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 

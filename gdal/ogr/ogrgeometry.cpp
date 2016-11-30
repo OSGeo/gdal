@@ -348,7 +348,16 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbMultiSurfaceZM:
             case wkbGeometryCollectionZM:
             {
-                OGRGeometryCollection *poColl = (OGRGeometryCollection*)this;
+                OGRGeometryCollection *poColl =
+                    dynamic_cast<OGRGeometryCollection *>(
+                        const_cast<OGRGeometry *>(this));
+                if( poColl == NULL )
+                {
+                    CPLError(CE_Fatal, CPLE_AppDefined,
+                             "dynamic_cast failed.  "
+                             "Expected OGRGeometryCollection.");
+                    return;
+                }
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
                 for( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
@@ -3026,15 +3035,12 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    // GEOSGeom is a pointer
-    GEOSGeom hThis = NULL;
-    GEOSGeom hOther = NULL;
-
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    hThis = exportToGEOS(hGEOSCtxt);
+    // GEOSGeom is a pointer.
+    GEOSGeom hOther = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThis = exportToGEOS(hGEOSCtxt);
 
-    bool bIsErr = false;
+    bool bIsErr = true;
     double dfDistance = 0.0;
 
     if( hThis != NULL && hOther != NULL )

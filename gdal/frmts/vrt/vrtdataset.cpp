@@ -31,6 +31,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>

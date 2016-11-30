@@ -73,32 +73,41 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (i + nExtraArg >= argc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         argv[i], nExtraArg)); } while( false )
 
 int main( int argc, char ** argv )
 
 {
     GDALDatasetH hSrcDS;
-    int i, b3D = FALSE, bNoDataSet = FALSE, bIgnoreNoData = FALSE;
+    int i;
+    int b3D = FALSE;
+    int bNoDataSet = FALSE;
+    int bIgnoreNoData = FALSE;
     int nBandIn = 1;
-    double dfInterval = 0.0, dfNoData = 0.0, dfOffset = 0.0;
+    double dfInterval = 0.0;
+    double dfNoData = 0.0;
+    double dfOffset = 0.0;
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
     const char *pszFormat = "ESRI Shapefile";
-    char        **papszDSCO = NULL, **papszLCO = NULL;
+    char **papszDSCO = NULL;
+    char **papszLCO = NULL;
     double adfFixedLevels[1000];
-    int    nFixedLevelCount = 0;
+    int nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
     int bQuiet = FALSE;
     GDALProgressFunc pfnProgress = NULL;
 
-    /* Check that we are running against at least GDAL 1.4 */
-    /* Note to developers : if we use newer API, please change the requirement */
+    // Check that we are running against at least GDAL 1.4.
+    // Note to developers: if we use newer API, please change the requirement.
     if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
     {
-        fprintf(stderr, "At least, GDAL >= 1.4.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
+        fprintf(stderr,
+                "At least, GDAL >= 1.4.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n",
+                argv[0], GDAL_RELEASE_NAME);
         exit(1);
     }
 
@@ -114,7 +123,8 @@ int main( int argc, char ** argv )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and "
+                   "is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             CSLDestroy( argv );
             return 0;
@@ -139,7 +149,8 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-fl") )
         {
             if( i >= argc-1 )
-                Usage(CPLSPrintf("%s option requires at least 1 argument", argv[i]));
+                Usage(CPLSPrintf("%s option requires at least 1 argument",
+                                 argv[i]));
             while( i < argc-1
                    && nFixedLevelCount
                              < (int)(sizeof(adfFixedLevels)/sizeof(double))

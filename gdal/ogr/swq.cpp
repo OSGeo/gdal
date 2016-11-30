@@ -28,9 +28,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <string>
 
 #include <algorithm>
+#include <string>
 
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
@@ -121,9 +121,11 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         {
             if( chQuote == '"' && *pszInput == '\\' && pszInput[1] == '"' )
                 pszInput++;
-            else if( chQuote == '\'' && *pszInput == '\\' && pszInput[1] == '\'' )
+            else if( chQuote == '\'' && *pszInput == '\\' &&
+                     pszInput[1] == '\'' )
                 pszInput++;
-            else if( chQuote == '\'' && *pszInput == '\'' && pszInput[1] == '\'' )
+            else if( chQuote == '\'' && *pszInput == '\'' &&
+                     pszInput[1] == '\'' )
                 pszInput++;
             else if( *pszInput == chQuote )
             {
@@ -531,7 +533,8 @@ static int FORCE_CDECL swq_compare_real( const void *item1, const void *item2 )
         return 1;
 }
 
-static int FORCE_CDECL swq_compare_string( const void *item1, const void *item2 )
+static int FORCE_CDECL swq_compare_string( const void *item1,
+                                           const void *item2 )
 {
     const char* pszStr1 = *((const char **) item1);
     const char* pszStr2 = *((const char **) item2);
@@ -603,7 +606,8 @@ const char *swq_select_finish_summarize( swq_select *select_info )
 /************************************************************************/
 /*                         swq_identify_field()                         */
 /************************************************************************/
-int swq_identify_field_internal( const char* table_name, const char *field_token,
+int swq_identify_field_internal( const char* table_name,
+                                 const char *field_token,
                                  swq_field_list *field_list,
                                  swq_field_type *this_type, int *table_id,
                                  int bOneMoreTimeOK );
@@ -617,7 +621,8 @@ int swq_identify_field( const char* table_name, const char *field_token,
                                        this_type, table_id, TRUE);
 }
 
-int swq_identify_field_internal( const char* table_name, const char *field_token,
+int swq_identify_field_internal( const char* table_name,
+                                 const char *field_token,
                                  swq_field_list *field_list,
                                  swq_field_type *this_type, int *table_id,
                                  int bOneMoreTimeOK )
@@ -683,10 +688,11 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
     {
         if( table_name[0] )
         {
-            CPLString osAggregatedName(CPLSPrintf("%s.%s", table_name, field_token));
+            CPLString osAggregatedName(
+                CPLSPrintf("%s.%s", table_name, field_token));
 
             // Check there's no table called table_name, or a field called with
-            // the aggregated name
+            // the aggregated name.
             int i = 0;  // Used after for.
             for( ; i < field_list->count; i++ )
             {
@@ -707,9 +713,10 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
                 if( ret >= 0 )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Passed field name %s.%s should have been surrounded by double quotes. "
-                            "Accepted since there is no ambiguity...",
-                            table_name, field_token);
+                             "Passed field name %s.%s should have been "
+                             "surrounded by double quotes. "
+                             "Accepted since there is no ambiguity...",
+                             table_name, field_token);
                 }
                 return ret;
             }
@@ -717,8 +724,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
         else
         {
             // If the fieldname is a.b (and there's no . in b), then
-            // it might be an error in providing it as being quoted where it should
-            // not have been quoted.
+            // it might be an error in providing it as being quoted where it
+            // should not have been quoted.
             const char* pszDot = strchr(field_token, '.');
             if( pszDot && strchr(pszDot+1, '.') == NULL )
             {
@@ -733,7 +740,8 @@ int swq_identify_field_internal( const char* table_name, const char *field_token
                 if( ret >= 0 )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Passed field name %s should NOT have been surrounded by double quotes. "
+                            "Passed field name %s should NOT have been "
+                             "surrounded by double quotes. "
                             "Accepted since there is no ambiguity...",
                             field_token);
                 }
@@ -801,8 +809,10 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.nStartToken = SWQT_VALUE_START;
     context.bAcceptCustomFuncs = poCustomFuncRegistrar != NULL;
 
-    if( swqparse( &context ) == 0
-        && bCheck && context.poRoot->Check( field_list, FALSE, FALSE, poCustomFuncRegistrar ) != SWQ_ERROR )
+    if( swqparse( &context ) == 0 &&
+        bCheck &&
+        context.poRoot->Check( field_list, FALSE, FALSE,
+                               poCustomFuncRegistrar ) != SWQ_ERROR )
     {
         *expr_out = context.poRoot;
 

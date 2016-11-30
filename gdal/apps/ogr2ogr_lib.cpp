@@ -28,18 +28,37 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_error.h"
-#include "ogr_api.h"
-#include "gdal.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
-#include "gdal_alg.h"
-#include "commonutils.h"
+
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <map>
+#include <string>
+#include <utility>
 #include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -689,7 +708,7 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                     }
                     default:
                         // cppcheck-suppress knownConditionTrueFalse
-                        CPLAssert(0);
+                        CPLAssert(false);
                         break;
                 }
                 if (nCount > pasListFields[i].nMaxOccurrences)

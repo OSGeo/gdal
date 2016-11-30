@@ -1412,7 +1412,8 @@ class GMLASReader : public DefaultHandler
         bool RunFirstPass(GDALProgressFunc pfnProgress,
                           void* pProgressData,
                           bool bRemoveUnusedLayers,
-                          bool bRemoveUnusedFields);
+                          bool bRemoveUnusedFields,
+                          std::set<CPLString>& aoSetRemovedLayerNames);
 
         static bool LoadXSDInParser( SAX2XMLReader* poParser,
                                      GMLASXSDCache& oCache,

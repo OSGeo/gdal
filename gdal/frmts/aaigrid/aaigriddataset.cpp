@@ -31,17 +31,34 @@
 // We need cpl_port as first include to avoid VSIStatBufL being not
 // defined on i586-mingw32msvc.
 #include "cpl_port.h"
-
-#include "cpl_string.h"
-#include "gdal_pam.h"
 #include "gdal_frmts.h"
-#include "ogr_spatialref.h"
 
-#include <cmath>
-#include <ctype.h>
+#include <cctype>
 #include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include <algorithm>
 #include <limits>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+
 
 CPL_CVSID("$Id$");
 

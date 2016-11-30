@@ -27,17 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
-#include "gdal_alg.h"
-#include "cpl_conv.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
-#include "cpl_string.h"
-#include "commonutils.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -585,7 +595,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         bCreateOutput = TRUE;
 
     GDALDriverH hDriver = NULL;
-    if (psOptions->bCreateOutput)
+    if (bCreateOutput)
     {
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -650,7 +660,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     int nLayerCount = (psOptions->pszSQL == NULL && psOptions->papszLayers == NULL) ? 1 : CSLCount(psOptions->papszLayers);
 
-    if (psOptions->bCreateOutput && hDstDS == NULL)
+    if (bCreateOutput && hDstDS == NULL)
     {
         std::vector<OGRLayerH> ahLayers;
 
@@ -772,7 +782,6 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->papszRasterizeOptions = NULL;
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
-    psOptions->bCreateOutput = FALSE;
     psOptions->eOutputType = GDT_Float64;
     psOptions->bNoDataSet = FALSE;
     psOptions->dfNoData = 0;

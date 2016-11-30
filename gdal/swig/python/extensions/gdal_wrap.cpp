@@ -15697,6 +15697,10 @@ SWIGINTERN PyObject *_wrap_Dataset_DeleteLayer(PyObject *SWIGUNUSEDPARM(self), P
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -16383,6 +16387,10 @@ SWIGINTERN PyObject *_wrap_Dataset_StartTransaction(PyObject *SWIGUNUSEDPARM(sel
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -16435,6 +16443,10 @@ SWIGINTERN PyObject *_wrap_Dataset_CommitTransaction(PyObject *SWIGUNUSEDPARM(se
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }
@@ -16487,6 +16499,10 @@ SWIGINTERN PyObject *_wrap_Dataset_RollbackTransaction(PyObject *SWIGUNUSEDPARM(
   {
     /* %typemap(out) OGRErr */
     if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
       PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
       SWIG_fail;
     }

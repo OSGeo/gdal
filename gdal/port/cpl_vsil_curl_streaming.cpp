@@ -1710,7 +1710,11 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetE
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * The file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
  * the configuration option VSI_CACHE_SIZE (in bytes).
@@ -1752,7 +1756,11 @@ void VSIInstallCurlStreamingFileHandler(void)
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * The file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
  * the configuration option VSI_CACHE_SIZE (in bytes).

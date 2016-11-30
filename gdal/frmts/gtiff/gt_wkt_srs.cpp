@@ -28,32 +28,43 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_error.h"
-#include "cpl_conv.h"
-#include "cpl_csv.h"
-#include "cpl_multiproc.h"
-#include "gdal.h"
-#include "gdal_csv.h"
-#include "geovalues.h"
-#include "gt_citation.h"
+#include "cpl_port.h"
 #include "gt_wkt_srs.h"
-#include "gt_wkt_srs_for_gdal.h"
-#include "gt_wkt_srs_priv.h"
-#include "gtiff.h"
-#include "ogr_spatialref.h"
-#include "tifvsi.h"
-#include "xtiffio.h"
 
 #include <cmath>
-#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
+#include <algorithm>
 #if HAVE_CXX11 && !defined(__MINGW32__)
 #define HAVE_CXX11_MUTEX 1
 #endif
-
 #if HAVE_CXX11_MUTEX
 #include <mutex>
 #endif
+
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_csv.h"
+#include "gt_citation.h"
+#include "gt_wkt_srs_for_gdal.h"
+#include "gt_wkt_srs_priv.h"
+#include "gtiff.h"
+#include "gdal.h"
+#include "geokeys.h"
+#include "geovalues.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
+#include "tiff.h"
+#include "tiffio.h"
+#include "tifvsi.h"
+#include "xtiffio.h"
 
 CPL_CVSID("$Id$")
 

@@ -29,18 +29,39 @@
  *
  */
 
-#include "cpl_multiproc.h"
-#include "gdal_frmts.h"
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
+#include "cpl_port.h"
 
-#include "degrib18/degrib/degrib2.h"
-#include "degrib18/degrib/inventory.h"
-#include "degrib18/degrib/myerror.h"
-#include "degrib18/degrib/filedatasource.h"
-#include "degrib18/degrib/memorydatasource.h"
+#include <cerrno>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
 #include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "degrib18/degrib/datasource.h"
+#include "degrib18/degrib/degrib2.h"
+#include "degrib18/degrib/filedatasource.h"
+#include "degrib18/degrib/inventory.h"
+#include "degrib18/degrib/memorydatasource.h"
+#include "degrib18/degrib/meta.h"
+#include "degrib18/degrib/myerror.h"
+#include "degrib18/degrib/type.h"
+#include "gdal.h"
+#include "gdal_frmts.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 

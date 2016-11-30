@@ -573,10 +573,11 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
             memcpy(aszTokenStack[nTokenStackSize ++], str, strlen + 1); \
         else \
         { \
-            CPLError(CE_Failure, CPLE_AppDefined, "Max token stack size reached");\
+            CPLError(CE_Failure, CPLE_AppDefined, \
+                     "Max token stack size reached"); \
             return NULL; \
         }; \
-    } while(0)
+    } while( false )
 
 #define ADD_CHAR(szToken, c) \
     do \
@@ -591,7 +592,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
             CPLError(CE_Failure, CPLE_AppDefined, "Max token size reached");\
             return NULL; \
         }; \
-    } while(0)
+    } while( false )
 
     char szToken[MAX_TOKEN_SIZE];
     int nTokenSize = 0;

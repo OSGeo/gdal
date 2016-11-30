@@ -27,17 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cstdlib>
-#include <float.h>
-#include <limits.h>
-#include <map>
-
-#include "cpl_cpu_features.h"
-#include "cpl_vsi.h"
-#include "cpl_string.h"
-#include "cpl_worker_thread_pool.h"
+#include "cpl_port.h"
 #include "gdalgrid.h"
 #include "gdalgrid_priv.h"
+
+#include <cfloat>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+
+#include <map>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_cpu_features.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_quad_tree.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -147,7 +159,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
     const double dfPowerDiv2 = poOptions->dfPower / 2;
     const double dfSmoothing = poOptions->dfSmoothing;
     const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    double  dfNominator = 0.0;
+    double dfNominator = 0.0;
     double dfDenominator = 0.0;
     GUInt32 n = 0;
 
