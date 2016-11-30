@@ -27,15 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "kmlsuperoverlaydataset.h"
 
-#include <cmath>   /* fabs */
-#include <cstring> /* strdup */
-#include <iostream>
-#include <sstream>
-#include <math.h>
+#include <cmath>
+#include <cstring>
 #include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"

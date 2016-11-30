@@ -31,14 +31,11 @@
 #ifndef KMLSUPEROVERLAYDATASET_H_INCLUDED
 #define KMLSUPEROVERLAYDATASET_H_INCLUDED
 
-#include "gdal_pam.h"
-#include "gdal_priv.h"
-#include "cpl_minixml.h"
 #include <map>
 
-CPL_C_START
-void CPL_DLL GDALRegister_KMLSUPEROVERLAY();
-CPL_C_END
+#include "cpl_minixml.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                    KmlSuperOverlayReadDataset                        */
