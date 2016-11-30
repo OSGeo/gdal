@@ -2042,10 +2042,6 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     poSRS->SetAuthority( "DATUM", "EPSG", nDatumCode );
     poSRS->SetAuthority( "SPHEROID", "EPSG", nEllipsoidCode );
     poSRS->SetAuthority( "PRIMEM", "EPSG", nPMCode );
-
-    // if( nUOMAngle > 0 )
-    //     poSRS->SetAuthority( "GEOGCS|UNIT", "EPSG", nUOMAngle );
-
     poSRS->SetAuthority( "GEOCCS", "EPSG", nGCSCode );
 
     return OGRERR_NONE;
