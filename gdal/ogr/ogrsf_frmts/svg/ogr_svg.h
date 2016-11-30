@@ -53,14 +53,16 @@ class OGRSVGLayer : public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
+#ifdef HAVE_EXPAT
     OGRSVGDataSource*  poDS;
+#endif
     CPLString          osLayerName;
 
     SVGGeometryType    svgGeomType;
 
     int                nTotalFeatures;
     int                nNextFID;
-    VSILFILE*          fpSVG; /* Large file API */
+    VSILFILE*          fpSVG;  // Large file API.
 
 #ifdef HAVE_EXPAT
     XML_Parser         oParser;
