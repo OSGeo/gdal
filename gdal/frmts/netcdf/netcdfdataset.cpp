@@ -2091,7 +2091,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 /* -------------------------------------------------------------------- */
 
     // Temp variables to use in SetGeoTransform() and SetProjection().
-    double adfTempGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    double adfTempGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
     char *pszTempProjection = NULL;
 
@@ -3617,14 +3617,15 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName,
     if( papszValues == NULL )
         return NULL;
 
-    /* initialize and fill array */
+    // Initialize and fill array.
     nVarLen = CSLCount(papszValues);
-    double *pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof( double ) );
+    double *pdfVarValues =
+        static_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
 
     for( int i = 0, j = 0; i < nVarLen; i++ )
     {
         if( !bBottomUp ) j = nVarLen - 1 - i;
-        else j = i; /* invert latitude values */
+        else j = i;  // Invert latitude values.
         char *pszTemp = NULL;
         pdfVarValues[j] = CPLStrtod( papszValues[i], &pszTemp );
     }
@@ -3640,7 +3641,7 @@ CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
 {
     CPLMutexHolderD(&hNCMutex);
 
-/* TODO look if proj. already defined, like in geotiff */
+    // TODO: Look if proj. already defined, like in geotiff.
     if( pszNewProjection == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "NULL projection." );
