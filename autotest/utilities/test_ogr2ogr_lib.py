@@ -219,6 +219,11 @@ def test_ogr2ogr_lib_8():
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
 
+    # Test also with just a string and not an array
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', layers='poly')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
