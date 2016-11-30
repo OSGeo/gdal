@@ -600,16 +600,25 @@ RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet(
 /*                    SanityCheckOK()                                   */
 /************************************************************************/
 
-#define WARN_ON_FAIL(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined, "For %s, assert '" #x "' failed", GetDescription()); } } while(0)
-#define ERROR_ON_FAIL(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined, "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
+#define WARN_ON_FAIL(x) do { if (!(x)) { \
+    CPLError(CE_Warning, CPLE_AppDefined, \
+             "For %s, assert '" #x "' failed", \
+             GetDescription()); } } while( false )
+#define ERROR_ON_FAIL(x) do { if (!(x)) { \
+    CPLError(CE_Warning, CPLE_AppDefined, \
+             "For %s, assert '" #x "' failed", \
+             GetDescription()); checkOK = FALSE; } } while( false )
 
 int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* sourceDS)
 {
-    int src_nBlockXSize, src_nBlockYSize;
-    int nBlockXSize, nBlockYSize;
-    double l_adfGeoTransform[6];
     if (checkDone)
         return checkOK;
+
+    int src_nBlockXSize;
+    int src_nBlockYSize;
+    int nBlockXSize;
+    int nBlockYSize;
+    double l_adfGeoTransform[6] = {};
 
     checkOK = TRUE;
     checkDone = TRUE;
@@ -702,13 +711,21 @@ char **RPFTOCDataset::GetMetadata( const char *pszDomain )
 /*                  NITFCreateVRTDataSetFromTocEntry()                  */
 /************************************************************************/
 
-#define ASSERT_CREATE_VRT(x) do { if (!(x)) { CPLError(CE_Failure, CPLE_AppDefined, "For %s, assert '" #x "' failed", entry->frameEntries[i].fullFilePath); if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); return NULL;} } while(0)
+#define ASSERT_CREATE_VRT(x) do { if (!(x)) { \
+    CPLError(CE_Failure, CPLE_AppDefined, \
+             "For %s, assert '" #x "' failed", \
+             entry->frameEntries[i].fullFilePath); \
+    if (poSrcDS) GDALClose(poSrcDS); CPLFree(projectionRef); \
+    return NULL;} } while( false )
 
 /* Builds a RPFTOCSubDataset from the set of files of the toc entry */
-GDALDataset* RPFTOCSubDataset::CreateDataSetFromTocEntry(const char* openInformationName,
-                                                         const char* pszTOCFileName, int nEntry,
-                                                         const RPFTocEntry* entry, int isRGBA,
-                                                         char** papszMetadataRPFTOCFile)
+GDALDataset *
+RPFTOCSubDataset::CreateDataSetFromTocEntry( const char* openInformationName,
+                                             const char* pszTOCFileName,
+                                             int nEntry,
+                                             const RPFTocEntry* entry,
+                                             int isRGBA,
+                                             char** papszMetadataRPFTOCFile)
 {
     GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName("VRT");
     if( poDriver == NULL )
