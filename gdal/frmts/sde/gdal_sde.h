@@ -3,10 +3,6 @@
 
 #include "gdal_pam.h"
 
-CPL_C_START
-void GDALRegister_SDE();
-CPL_C_END
-
 #include <sdetype.h>
 #include <sdeerno.h>
 #include <sderaster.h>
