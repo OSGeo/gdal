@@ -349,9 +349,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     CPLHTTPSetOptions(http_handle, papszOptions);
 
-    // turn off SSL verification, accept all servers with ssl
-    curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
-
     /* Set Headers.*/
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
     if( pszHeaders != NULL ) {
