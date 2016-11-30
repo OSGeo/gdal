@@ -56,6 +56,12 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <p>Starting with GDAL 2.2, the "DROP TABLE layer_name" and "ALTER TABLE layer_name RENAME TO new_layer"
 statements can be used. They will update GeoPackage system tables.</p>
 
+<p>When dropping a table, or removing records from tables, the space they
+occupied is not immediately released and kept in the pool of file pages that
+SQLite may reuse later. If you need to shrink the file to its minimum size,
+you need to issue an explicit "VACUUM" SQL request. Note that this will
+result in a full rewrite of the file.</p>
+
 <h3>SQL functions</h3>
 
 Starting with GDAL 2.0, the following SQL functions, from the GeoPackage specification, are available :
