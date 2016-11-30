@@ -118,6 +118,12 @@ def test_gdal_rasterize_lib_3():
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_contour_path() + ' ../gdrivers/data/n43.dt0 tmp/n43dt0.shp -i 10 -3d')
 
+    with gdaltest.error_handler():
+        ds = gdal.Rasterize('/vsimem/bogus.tif', 'tmp/n43dt0.shp')
+    if ds is not None:
+        gdaltest.post_reason('did not expected success')
+        return 'fail'
+
     ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format = 'MEM', outputType = gdal.GDT_Byte, useZ = True, layers = ['n43dt0'], width = 121, height = 121, noData = 0)
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
@@ -149,9 +155,48 @@ def test_gdal_rasterize_lib_3():
 
     return 'success'
 
+###############################################################################
+# Rasterization without georeferencing
+
+def test_gdal_rasterize_lib_100():
+
+    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
+
+    # Create a layer to rasterize from.
+
+    vector_ds = \
+              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
+    rast_lyr = vector_ds.CreateLayer( 'rast1' )
+
+    wkt_geom = 'POLYGON((20 20,20 80,80 80,80 20,20 20))'
+
+    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
+    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+
+    rast_lyr.CreateFeature( feat )
+
+    ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [255])
+    if ret != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Check results.
+    expected = 44190
+    checksum = target_ds.GetRasterBand(1).Checksum()
+    if checksum != expected:
+        print(checksum)
+        gdaltest.post_reason( 'Did not get expected image checksum' )
+
+        return 'fail'
+
+    target_ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_gdal_rasterize_lib_1,
     test_gdal_rasterize_lib_3,
+    test_gdal_rasterize_lib_100
     ]
 
 if __name__ == '__main__':

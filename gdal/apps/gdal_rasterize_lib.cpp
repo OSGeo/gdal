@@ -595,7 +595,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         bCreateOutput = TRUE;
 
     GDALDriverH hDriver = NULL;
-    if (psOptions->bCreateOutput)
+    if (bCreateOutput)
     {
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -660,7 +660,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     int nLayerCount = (psOptions->pszSQL == NULL && psOptions->papszLayers == NULL) ? 1 : CSLCount(psOptions->papszLayers);
 
-    if (psOptions->bCreateOutput && hDstDS == NULL)
+    if (bCreateOutput && hDstDS == NULL)
     {
         std::vector<OGRLayerH> ahLayers;
 
@@ -782,7 +782,6 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->papszRasterizeOptions = NULL;
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
-    psOptions->bCreateOutput = FALSE;
     psOptions->eOutputType = GDT_Float64;
     psOptions->bNoDataSet = FALSE;
     psOptions->dfNoData = 0;

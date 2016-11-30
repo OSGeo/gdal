@@ -1465,7 +1465,9 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to compute a transformation between pixel/line\n"
                   "and georeferenced coordinates for %s.\n"
-                  "There is no affine transformation and no GCPs.",
+                  "There is no affine transformation and no GCPs.\n"
+                  "Specify transformation option DST_METHOD=NO_GEOTRANSFORM "
+                  "to bypass this check.",
                   GDALGetDescription( hDstDS ) );
 
         GDALDestroyGenImgProjTransformer( psInfo );

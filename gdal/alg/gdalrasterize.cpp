@@ -581,6 +581,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                                 void *pProgressArg )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALRasterizeGeometries", CE_Failure);
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -629,10 +631,26 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     {
         bNeedToFreeTransformer = true;
 
-        pTransformArg =
-            GDALCreateGenImgProjTransformer( NULL, NULL, hDS, NULL,
-                                             FALSE, 0.0, 0);
+        char** papszTransformerOptions = NULL;
+        double adfGeoTransform[6] = { 0 };
+        if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
+            poDS->GetGCPCount() == 0 &&
+            poDS->GetMetadata("RPC") == NULL )
+        {
+            papszTransformerOptions = CSLSetNameValue(
+                papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
+        }
+
+        pTransformArg = 
+            GDALCreateGenImgProjTransformer2( NULL, hDS,
+                                                papszTransformerOptions );
+        CSLDestroy( papszTransformerOptions );
+
         pfnTransformer = GDALGenImgProjTransform;
+        if( pTransformArg == NULL )
+        {
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -802,6 +820,8 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                             void *pProgressArg )
 
 {
+    VALIDATE_POINTER1( hDS, "GDALRasterizeLayers", CE_Failure);
+
     GDALDataset *poDS = (GDALDataset *) hDS;
 
     if( pfnProgress == NULL )
@@ -962,12 +982,31 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 poSRS->exportToWkt( &pszProjection );
             }
 
-            pTransformArg =
-                GDALCreateGenImgProjTransformer( NULL, pszProjection,
-                                                 hDS, NULL, FALSE, 0.0, 0 );
+            char** papszTransformerOptions = NULL;
+            if( pszProjection != NULL )
+                papszTransformerOptions = CSLSetNameValue(
+                        papszTransformerOptions, "SRC_SRS", pszProjection );
+            double adfGeoTransform[6] = { 0 };
+            if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
+                poDS->GetGCPCount() == 0 &&
+                poDS->GetMetadata("RPC") == NULL )
+            {
+                papszTransformerOptions = CSLSetNameValue(
+                    papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
+            }
+
+            pTransformArg = 
+                GDALCreateGenImgProjTransformer2( NULL, hDS,
+                                                  papszTransformerOptions );
             pfnTransformer = GDALGenImgProjTransform;
 
             CPLFree( pszProjection );
+            CSLDestroy( papszTransformerOptions );
+            if( pTransformArg == NULL )
+            {
+                CPLFree( pabyChunkBuf );
+                return CE_Failure;
+            }
         }
 
         poLayer->ResetReading();
