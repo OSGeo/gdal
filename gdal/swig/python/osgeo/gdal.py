@@ -635,8 +635,11 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             for opt in layerCreationOptions:
                 new_options += ['-lco', opt ]
         if layers is not None:
-            for lyr in layers:
-                new_options += [ lyr ]
+            if _is_str_or_unicode(layers):
+                new_options += [ layers ]
+            else:
+                for lyr in layers:
+                    new_options += [ lyr ]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist) ]
         if spatFilter is not None:
