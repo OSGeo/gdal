@@ -2710,7 +2710,8 @@ OGRFeature* GMLASReader::GetNextFeature( OGRGMLASLayer** ppoBelongingLayer,
 bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
                                void* pProgressData,
                                bool bRemoveUnusedLayers,
-                               bool bRemoveUnusedFields)
+                               bool bRemoveUnusedFields,
+                               std::set<CPLString>& aoSetRemovedLayerNames)
 {
     m_bInitialPass = true;
 
@@ -2782,6 +2783,7 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
             }
             else
             {
+                aoSetRemovedLayerNames.insert( poLayer->GetName() );
                 delete poLayer;
             }
         }

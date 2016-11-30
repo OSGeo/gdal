@@ -1226,10 +1226,76 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         // No need to warn afterwards
         m_oConf.m_oMapIgnoredXPathToWarn.clear();
 
+        std::set<CPLString> aoSetRemovedLayerNames;
         m_bFirstPassDone = poReaderFirstPass->RunFirstPass(pfnProgress,
                                                            pProgressData,
                                                            m_bRemoveUnusedLayers,
-                                                           m_bRemoveUnusedFields);
+                                                           m_bRemoveUnusedFields,
+                                                           aoSetRemovedLayerNames);
+
+        // If we have removed layers, we also need to cleanup our special
+        // metadata layers
+        if( !aoSetRemovedLayerNames.empty() )
+        {
+            // Removing features while iterating works here given the layers
+            // are MEM layers
+            OGRFeature* poFeature;
+            m_poLayersMetadataLayer->ResetReading();
+            while( (poFeature = m_poLayersMetadataLayer->GetNextFeature() )
+                                                                    != NULL )
+            {
+                const char* pszLayerName =
+                                    poFeature->GetFieldAsString(szLAYER_NAME);
+                if( aoSetRemovedLayerNames.find(pszLayerName) !=
+                                                aoSetRemovedLayerNames.end() )
+                {
+                    CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->
+                                        DeleteFeature(poFeature->GetFID()));
+                }
+                delete poFeature;
+            }
+            m_poLayersMetadataLayer->ResetReading();
+
+            m_poFieldsMetadataLayer->ResetReading();
+            while( (poFeature = m_poFieldsMetadataLayer->GetNextFeature() )
+                                                                    != NULL )
+            {
+                const char* pszLayerName =
+                                    poFeature->GetFieldAsString(szLAYER_NAME);
+                const char* pszRelatedLayerName =
+                            poFeature->GetFieldAsString(szFIELD_RELATED_LAYER);
+                if( aoSetRemovedLayerNames.find(pszLayerName) !=
+                                            aoSetRemovedLayerNames.end() ||
+                    aoSetRemovedLayerNames.find(pszRelatedLayerName) !=
+                                                aoSetRemovedLayerNames.end() )
+                {
+                    CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->
+                                        DeleteFeature(poFeature->GetFID()));
+                }
+                delete poFeature;
+            }
+            m_poFieldsMetadataLayer->ResetReading();
+
+            m_poRelationshipsLayer->ResetReading();
+            while( (poFeature = m_poRelationshipsLayer->GetNextFeature() )
+                                                                    != NULL )
+            {
+                const char* pszParentLayerName =
+                                    poFeature->GetFieldAsString(szPARENT_LAYER);
+                const char* pszChildLayerName =
+                                    poFeature->GetFieldAsString(szCHILD_LAYER);
+                if( aoSetRemovedLayerNames.find(pszParentLayerName) !=
+                                                aoSetRemovedLayerNames.end() ||
+                    aoSetRemovedLayerNames.find(pszChildLayerName) !=
+                                                aoSetRemovedLayerNames.end() )
+                {
+                    CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->
+                                        DeleteFeature(poFeature->GetFID()));
+                }
+                delete poFeature;
+            }
+            m_poRelationshipsLayer->ResetReading();
+        }
 
         // Store 2 maps to reinject them in real readers
         m_oMapSRSNameToInvertedAxis =
