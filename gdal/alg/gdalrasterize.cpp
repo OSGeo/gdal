@@ -198,12 +198,13 @@ static void GDALCollectRingsFromGeometry(
     if( poShape == NULL )
         return;
 
-    OGRwkbGeometryType eFlatType = wkbFlatten(poShape->getGeometryType());
+    const OGRwkbGeometryType eFlatType = wkbFlatten(poShape->getGeometryType());
 
     if ( eFlatType == wkbPoint )
     {
-        OGRPoint    *poPoint = (OGRPoint *) poShape;
-        size_t nNewCount = aPointX.size() + 1;
+        OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poShape);
+        CPLAssert(poPoint != NULL);
+        const size_t nNewCount = aPointX.size() + 1;
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -226,9 +227,10 @@ static void GDALCollectRingsFromGeometry(
     }
     else if ( eFlatType == wkbLineString )
     {
-        OGRLineString   *poLine = (OGRLineString *) poShape;
-        int nCount = poLine->getNumPoints();
-        size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
+        OGRLineString *poLine = dynamic_cast<OGRLineString *>(poShape);
+        CPLAssert(poLine != NULL);
+        const int nCount = poLine->getNumPoints();
+        const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -254,9 +256,10 @@ static void GDALCollectRingsFromGeometry(
     }
     else if ( EQUAL(poShape->getGeometryName(),"LINEARRING") )
     {
-        OGRLinearRing *poRing = (OGRLinearRing *) poShape;
-        int nCount = poRing->getNumPoints();
-        size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
+        OGRLinearRing *poRing = dynamic_cast<OGRLinearRing *>(poShape);
+        CPLAssert(poRing != NULL);
+        const int nCount = poRing->getNumPoints();
+        const size_t nNewCount = aPointX.size() + static_cast<size_t>(nCount);
 
         aPointX.reserve( nNewCount );
         aPointY.reserve( nNewCount );
@@ -283,7 +286,8 @@ static void GDALCollectRingsFromGeometry(
     }
     else if( eFlatType == wkbPolygon )
     {
-        OGRPolygon *poPolygon = (OGRPolygon *) poShape;
+        OGRPolygon *poPolygon = dynamic_cast<OGRPolygon *>(poShape);
+        CPLAssert(poPolygon != NULL);
 
         GDALCollectRingsFromGeometry( poPolygon->getExteriorRing(),
                                       aPointX, aPointY, aPointVariant,
@@ -356,7 +360,8 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 /* -------------------------------------------------------------------- */
     if( pfnTransformer != NULL )
     {
-        int *panSuccess = (int *) CPLCalloc(sizeof(int),aPointX.size());
+        int *panSuccess =
+            static_cast<int *>(CPLCalloc(sizeof(int), aPointX.size()));
 
         // TODO: We need to add all appropriate error checking at some point.
         pfnTransformer( pTransformArg, FALSE, static_cast<int>(aPointX.size()),
@@ -398,14 +403,16 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
       {
           if( bAllTouched )
               GDALdllImageLineAllTouched( sInfo.nXSize, nYSize,
-                                          static_cast<int>(aPartSize.size()), &(aPartSize[0]),
+                                          static_cast<int>(aPartSize.size()),
+                                          &(aPartSize[0]),
                                           &(aPointX[0]), &(aPointY[0]),
                                           (eBurnValueSrc == GBV_UserBurnValue)?
                                           NULL : &(aPointVariant[0]),
                                           gvBurnPoint, &sInfo );
           else
               GDALdllImageLine( sInfo.nXSize, nYSize,
-                                static_cast<int>(aPartSize.size()), &(aPartSize[0]),
+                                static_cast<int>(aPartSize.size()),
+                                &(aPartSize[0]),
                                 &(aPointX[0]), &(aPointY[0]),
                                 (eBurnValueSrc == GBV_UserBurnValue)?
                                 NULL : &(aPointVariant[0]),
@@ -443,8 +450,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
                         i < static_cast<unsigned int>(aPartSize.size());
                         i++ )
                   {
-                      int j;
-                      for ( j = 0; j < aPartSize[i]; j++ )
+                      for ( int j = 0; j < aPartSize[i]; j++ )
                           aPointVariant[n++] = aPointVariant[0];
                   }
 
@@ -468,10 +474,10 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 /*      points.                                                         */
 /************************************************************************/
 
-static CPLErr GDALRasterizeOptions(char **papszOptions,
-                                   int *pbAllTouched,
-                                   GDALBurnValueSrc *peBurnValueSource,
-                                   GDALRasterMergeAlg *peMergeAlg)
+static CPLErr GDALRasterizeOptions( char **papszOptions,
+                                    int *pbAllTouched,
+                                    GDALBurnValueSrc *peBurnValueSource,
+                                    GDALRasterMergeAlg *peMergeAlg )
 {
     *pbAllTouched = CPLFetchBool( papszOptions, "ALL_TOUCHED", false );
 
@@ -480,7 +486,9 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
     if( pszOpt )
     {
         if( EQUAL(pszOpt, "Z"))
+        {
             *peBurnValueSource = GBV_Z;
+        }
         // else if( EQUAL(pszOpt, "M"))
         //     eBurnValueSource = GBV_M;
         else
@@ -500,9 +508,13 @@ static CPLErr GDALRasterizeOptions(char **papszOptions,
     if( pszOpt )
     {
         if( EQUAL(pszOpt, "ADD"))
+        {
             *peMergeAlg = GRMA_Add;
+        }
         else if( EQUAL(pszOpt, "REPLACE"))
+        {
             *peMergeAlg = GRMA_Replace;
+        }
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -586,10 +598,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-    int            nYChunkSize, nScanlineBytes;
-    unsigned char *pabyChunkBuf;
-    int            iY;
-    GDALDataset *poDS = (GDALDataset *) hDS;
+    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(hDS);
 
 /* -------------------------------------------------------------------- */
 /*      Do some rudimentary arg checking.                               */
@@ -600,7 +609,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         return CE_None;
     }
 
-    // prototype band.
+    // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
     if (poBand == NULL)
         return CE_Failure;
@@ -641,7 +650,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                 papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
         }
 
-        pTransformArg = 
+        pTransformArg =
             GDALCreateGenImgProjTransformer2( NULL, hDS,
                                                 papszTransformerOptions );
         CSLDestroy( papszTransformerOptions );
@@ -661,9 +670,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     const GDALDataType eType =
         poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
 
-    nScanlineBytes = nBandCount * poDS->GetRasterXSize()
-        * GDALGetDataTypeSizeBytes(eType);
+    const int nScanlineBytes =
+        nBandCount * poDS->GetRasterXSize() * GDALGetDataTypeSizeBytes(eType);
 
+    int nYChunkSize = 0;
     const char *pszYChunkSize = CSLFetchNameValue(papszOptions, "CHUNKYSIZE");
     if( pszYChunkSize == NULL || ((nYChunkSize = atoi(pszYChunkSize))) == 0)
     {
@@ -677,7 +687,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
               (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
               nYChunkSize );
 
-    pabyChunkBuf = static_cast<unsigned char *>(
+    unsigned char *pabyChunkBuf = static_cast<unsigned char *>(
         VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes));
     if( pabyChunkBuf == NULL )
     {
@@ -691,7 +701,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
     pfnProgress( 0.0, NULL, pProgressArg );
 
-    for( iY = 0;
+    for( int iY = 0;
          iY < poDS->GetRasterYSize() && eErr == CE_None;
          iY += nYChunkSize )
     {
@@ -822,8 +832,6 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1( hDS, "GDALRasterizeLayers", CE_Failure);
 
-    GDALDataset *poDS = (GDALDataset *) hDS;
-
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
@@ -833,7 +841,9 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     if( nBandCount == 0 || nLayerCount == 0 )
         return CE_None;
 
-    // prototype band.
+    GDALDataset *poDS = reinterpret_cast<GDALDataset *>(hDS);
+
+    // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
     if (poBand == NULL)
         return CE_Failure;
@@ -861,14 +871,14 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     const GDALDataType eType =
         poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
 
-    int nScanlineBytes =
+    const int nScanlineBytes =
         nBandCount * poDS->GetRasterXSize()
         * GDALGetDataTypeSizeBytes(eType);
 
     int nYChunkSize = 0;
     if( !(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0) )
     {
-        GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+        const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
         if (nYChunkSize64 > INT_MAX)
             nYChunkSize = INT_MAX;
         else
@@ -995,7 +1005,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                     papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
             }
 
-            pTransformArg = 
+            pTransformArg =
                 GDALCreateGenImgProjTransformer2( NULL, hDS,
                                                   papszTransformerOptions );
             pfnTransformer = GDALGenImgProjTransform;
@@ -1275,9 +1285,9 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 
     for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
     {
-        OGRLayer *poLayer = (OGRLayer *) pahLayers[iLayer];
+        OGRLayer *poLayer = reinterpret_cast<OGRLayer *>(pahLayers[iLayer]);
 
-        if ( !poLayer )
+        if( !poLayer )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Layer element number %d is NULL, skipping.", iLayer );
@@ -1342,24 +1352,26 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             CPLFree( pszProjection );
         }
 
-        OGRFeature *poFeat = NULL;
-
         poLayer->ResetReading();
 
-        while( (poFeat = poLayer->GetNextFeature()) != NULL )
         {
-            OGRGeometry *poGeom = poFeat->GetGeometryRef();
+            OGRFeature *poFeat = NULL;
+            while( (poFeat = poLayer->GetNextFeature()) != NULL )
+            {
+                OGRGeometry *poGeom = poFeat->GetGeometryRef();
 
-            if ( pszBurnAttribute )
-                dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
+                if ( pszBurnAttribute )
+                    dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
 
-            gv_rasterize_one_shape( (unsigned char *) pData, 0,
-                                    nBufXSize, nBufYSize,
-                                    1, eBufType, bAllTouched, poGeom,
-                                    &dfBurnValue, eBurnValueSource, eMergeAlg,
-                                    pfnTransformer, pTransformArg );
+                gv_rasterize_one_shape( static_cast<unsigned char *>(pData), 0,
+                                        nBufXSize, nBufYSize,
+                                        1, eBufType, bAllTouched, poGeom,
+                                        &dfBurnValue, eBurnValueSource,
+                                        eMergeAlg,
+                                        pfnTransformer, pTransformArg );
 
-            delete poFeat;
+                delete poFeat;
+            }
         }
 
         poLayer->ResetReading();
