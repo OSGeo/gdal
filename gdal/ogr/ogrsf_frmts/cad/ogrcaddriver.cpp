@@ -150,7 +150,7 @@ void RegisterOGRCAD()
 
 CPLString CADRecode( const CPLString& sString, int CADEncoding )
 {
-    const char* pszSource[45] = {
+    const char* pszSource[] = {
         /* 0 UNDEFINED */ "",
         /* 1 ASCII */ "US-ASCII",
         /* 2 8859_1 */ "ISO-8859-1",
