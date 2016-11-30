@@ -930,7 +930,7 @@ void OGRFree( void * pMemory )
  */
 
 int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
-                                int /* nOptions */ )
+                                CPL_UNUSED int nOptions )
 
 {
     return GDALGeneralCmdLineProcessor( nArgc, ppapszArgv, GDAL_OF_VECTOR );
@@ -1615,8 +1615,7 @@ double OGRFastAtof(const char* pszStr)
             return OGRCallAtofOnShortString(pszStr);
         else
         {
-            if( countFractionnal < sizeof(adfTenPower) /
-                sizeof(adfTenPower[0]) )
+            if( countFractionnal < CPL_ARRAYSIZE(adfTenPower) )
                 return dfSign * (dfVal / adfTenPower[countFractionnal]);
             else
                 return OGRCallAtofOnShortString(pszStr);
