@@ -929,9 +929,6 @@ void OGRFree( void * pMemory )
  * without error, return of -1 requests exit with error code.
  */
 
-/**/
-/**/
-
 int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
                                 int /* nOptions */ )
 
