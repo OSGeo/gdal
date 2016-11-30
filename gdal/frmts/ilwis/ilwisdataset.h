@@ -45,10 +45,6 @@
 #include <map>
 #include <string>
 
-CPL_C_START
-void GDALRegister_ILWIS();
-CPL_C_END
-
 #define shUNDEF -32767
 #define iUNDEF  -2147483647
 #define flUNDEF ((float)-1e38)
