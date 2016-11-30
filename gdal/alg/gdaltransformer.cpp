@@ -2513,10 +2513,10 @@ typedef struct
     GDALTransformerInfo sTI;
 
     GDALTransformerFunc pfnBaseTransformer;
-    void             *pBaseCBData;
+    void *pBaseCBData;
     double dfMaxError;
 
-    int               bOwnSubtransformer;
+    int bOwnSubtransformer;
 } ApproxTransformInfo;
 
 /************************************************************************/
@@ -2635,13 +2635,16 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 {
     ApproxTransformInfo *psATInfo;
 
-    psATInfo = (ApproxTransformInfo*) CPLMalloc(sizeof(ApproxTransformInfo));
+    psATInfo = static_cast<ApproxTransformInfo *>(
+        CPLMalloc(sizeof(ApproxTransformInfo)));
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseTransformArg;
     psATInfo->dfMaxError = dfMaxError;
     psATInfo->bOwnSubtransformer = FALSE;
 
-    memcpy( psATInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE) );
+    memcpy(psATInfo->sTI.abySignature,
+           GDAL_GTI2_SIGNATURE,
+           strlen(GDAL_GTI2_SIGNATURE));
     psATInfo->sTI.pszClassName = "GDALApproxTransformer";
     psATInfo->sTI.pfnTransform = GDALApproxTransform;
     psATInfo->sTI.pfnCleanup = GDALDestroyApproxTransformer;
@@ -2659,7 +2662,7 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 
 {
-    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
+    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
 
     psATInfo->bOwnSubtransformer = bOwnFlag;
 }
@@ -2683,7 +2686,7 @@ void GDALDestroyApproxTransformer( void * pCBData )
     if( pCBData == NULL)
         return;
 
-    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
+    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
 
     if( psATInfo->bOwnSubtransformer )
         GDALDestroyTransformer( psATInfo->pBaseCBData );
@@ -2695,11 +2698,14 @@ void GDALDestroyApproxTransformer( void * pCBData )
 /*                      GDALApproxTransformInternal()                   */
 /************************************************************************/
 
-static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoints,
-                                        double *x, double *y, double *z, int *panSuccess,
-                                        const double xSMETransformed[3], /* SME = Start, Middle, End */
+static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
+                                        int nPoints,
+                                        double *x, double *y, double *z,
+                                        int *panSuccess,
+                                        // SME = Start, Middle, End
+                                        const double xSMETransformed[3],
                                         const double ySMETransformed[3],
-                                        const double zSMETransformed[3])
+                                        const double zSMETransformed[3] )
 {
     ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
     double dfDeltaX, dfDeltaY, dfError, dfDist, dfDeltaZ;
@@ -2709,17 +2715,11 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
 
 #ifdef notdef_sanify_check
     {
-        double x2[3], y2[3], z2[3];
-        int anSuccess2[3];
-        x2[0] = x[0];
-        y2[0] = y[0];
-        z2[0] = z[0];
-        x2[1] = x[nMiddle];
-        y2[1] = y[nMiddle];
-        z2[1] = z[nMiddle];
-        x2[2] = x[nPoints-1];
-        y2[2] = y[nPoints-1];
-        z2[2] = z[nPoints-1];
+        // TODO(schwehr): Combine with initialization.
+        double x2[3] = { x[0], x[nMiddle], x[nPoints-1] };
+        double y2[3] = { y[0], y[nMiddle], y[nPoints-1] };
+        double z2[3] = { z[0], z[nMiddle], z[nPoints-1] };
+        int anSuccess2[3] = {};
 
         bSuccess =
             psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3,
@@ -2753,12 +2753,18 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
 /*      Is the error at the middle acceptable relative to an            */
 /*      interpolation of the middle position?                           */
 /* -------------------------------------------------------------------- */
-    dfDeltaX = (xSMETransformed[2] - xSMETransformed[0]) / (x[nPoints-1] - x[0]);
-    dfDeltaY = (ySMETransformed[2] - ySMETransformed[0]) / (x[nPoints-1] - x[0]);
-    dfDeltaZ = (zSMETransformed[2] - zSMETransformed[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaX =
+        (xSMETransformed[2] - xSMETransformed[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaY =
+        (ySMETransformed[2] - ySMETransformed[0]) / (x[nPoints-1] - x[0]);
+    dfDeltaZ =
+        (zSMETransformed[2] - zSMETransformed[0]) / (x[nPoints-1] - x[0]);
 
-    dfError = fabs((xSMETransformed[0] + dfDeltaX * (x[nMiddle] - x[0])) - xSMETransformed[1])
-            + fabs((ySMETransformed[0] + dfDeltaY * (x[nMiddle] - x[0])) - ySMETransformed[1]);
+    dfError =
+        fabs((xSMETransformed[0] + dfDeltaX * (x[nMiddle] - x[0])) -
+             xSMETransformed[1]) +
+        fabs((ySMETransformed[0] + dfDeltaY * (x[nMiddle] - x[0])) -
+             ySMETransformed[1]);
 
     if( dfError > psATInfo->dfMaxError )
     {
@@ -2780,51 +2786,65 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
         yMiddle[2] = y[ nMiddle + (nPoints - nMiddle - 1) / 2 ];
         zMiddle[2] = z[ nMiddle + (nPoints - nMiddle - 1) / 2 ];
 
-        int bUseBaseTransformForHalf1 = ( nMiddle <= 5 ||
-                                y[0] != y[nMiddle-1] ||
-                                y[0] != y[(nMiddle - 1) / 2] ||
-                                x[0] == x[nMiddle-1] ||
-                                x[0] == x[(nMiddle - 1) / 2]  );
-        int bUseBaseTransformForHalf2 = ( nPoints - nMiddle <= 5 ||
-                                 y[nMiddle] != y[nPoints-1] ||
-                                 y[nMiddle] != y[nMiddle + (nPoints - nMiddle - 1) / 2] ||
-                                 x[nMiddle] == x[nPoints-1] ||
-                                 x[nMiddle] == x[nMiddle + (nPoints - nMiddle - 1) / 2] );
+        const bool bUseBaseTransformForHalf1 =
+            nMiddle <= 5 ||
+            y[0] != y[nMiddle-1] ||
+            y[0] != y[(nMiddle - 1) / 2] ||
+            x[0] == x[nMiddle-1] ||
+            x[0] == x[(nMiddle - 1) / 2];
+        const bool bUseBaseTransformForHalf2 =
+            nPoints - nMiddle <= 5 ||
+            y[nMiddle] != y[nPoints-1] ||
+            y[nMiddle] != y[nMiddle + (nPoints - nMiddle - 1) / 2] ||
+            x[nMiddle] == x[nPoints-1] ||
+            x[nMiddle] == x[nMiddle + (nPoints - nMiddle - 1) / 2];
 
         if( !bUseBaseTransformForHalf1 && !bUseBaseTransformForHalf2 )
             bSuccess =
-                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 3,
-                                             xMiddle, yMiddle, zMiddle, anSuccess2 );
+                psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                             bDstToSrc, 3,
+                                             xMiddle, yMiddle, zMiddle,
+                                             anSuccess2 );
         else if( !bUseBaseTransformForHalf1 )
         {
             bSuccess =
-                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 2,
-                                             xMiddle, yMiddle, zMiddle, anSuccess2 );
+                psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                             bDstToSrc, 2,
+                                             xMiddle, yMiddle, zMiddle,
+                                             anSuccess2 );
             anSuccess2[2] = TRUE;
         }
         else if( !bUseBaseTransformForHalf2 )
         {
             bSuccess =
-                psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc, 1,
-                                              xMiddle + 2, yMiddle + 2, zMiddle + 2,
-                                              anSuccess2 + 2 );
+                psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                             bDstToSrc, 1,
+                                             xMiddle + 2,
+                                             yMiddle + 2,
+                                             zMiddle + 2,
+                                             anSuccess2 + 2 );
             anSuccess2[0] = TRUE;
             anSuccess2[1] = TRUE;
         }
         else
+        {
             bSuccess = FALSE;
+        }
+
         if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )
         {
-            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
-                                                     nMiddle - 1,
-                                                     x + 1, y + 1, z + 1,
-                                                     panSuccess + 1 );
-            bSuccess &= psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
-                                                      nPoints - nMiddle - 2,
-                                                      x + nMiddle + 1,
-                                                      y + nMiddle + 1,
-                                                      z + nMiddle + 1,
-                                                      panSuccess + nMiddle + 1 );
+            bSuccess = psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                                    bDstToSrc,
+                                                    nMiddle - 1,
+                                                    x + 1, y + 1, z + 1,
+                                                    panSuccess + 1);
+            bSuccess &= psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                                     bDstToSrc,
+                                                     nPoints - nMiddle - 2,
+                                                     x + nMiddle + 1,
+                                                     y + nMiddle + 1,
+                                                     z + nMiddle + 1,
+                                                     panSuccess + nMiddle + 1);
 
             x[0] = xSMETransformed[0];
             y[0] = ySMETransformed[0];
@@ -2861,9 +2881,11 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
         }
         else
         {
-            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
-                                                     nMiddle - 1, x + 1, y + 1, z + 1,
-                                                     panSuccess + 1 );
+            bSuccess = psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                                    bDstToSrc,
+                                                    nMiddle - 1,
+                                                    x + 1, y + 1, z + 1,
+                                                    panSuccess + 1 );
             x[0] = xSMETransformed[0];
             y[0] = ySMETransformed[0];
             z[0] = zSMETransformed[0];
@@ -2886,17 +2908,21 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
             z2[2] = zSMETransformed[2];
 
             bSuccess =
-                GDALApproxTransformInternal( psATInfo, bDstToSrc, nPoints - nMiddle,
+                GDALApproxTransformInternal(psATInfo, bDstToSrc,
+                                            nPoints - nMiddle,
                                             x+nMiddle, y+nMiddle, z+nMiddle,
                                             panSuccess+nMiddle,
                                             x2, y2, z2);
         }
         else
         {
-            bSuccess = psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
-                                                     nPoints - nMiddle - 2,
-                                                     x+nMiddle + 1, y+nMiddle+1, z+nMiddle+1,
-                                                     panSuccess+nMiddle+1 );
+            bSuccess = psATInfo->pfnBaseTransformer(psATInfo->pBaseCBData,
+                                                    bDstToSrc,
+                                                    nPoints - nMiddle - 2,
+                                                    x + nMiddle + 1,
+                                                    y + nMiddle + 1,
+                                                    z + nMiddle + 1,
+                                                    panSuccess+nMiddle+1 );
 
             x[nMiddle] = xSMETransformed[1];
             y[nMiddle] = ySMETransformed[1];
@@ -2926,9 +2952,12 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc, int nPoint
     for( i = nPoints-1; i >= 0; i-- )
     {
 #ifdef check_error
-        double xtemp = x[i], ytemp = y[i], ztemp = z[i];
-        double x_ori = xtemp, y_ori = ytemp;
-        int btemp;
+        double xtemp = x[i];
+        double ytemp = y[i];
+        double ztemp = z[i];
+        double x_ori = xtemp;
+        double y_ori = ytemp;
+        int btemp = FALSE;
         psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, bDstToSrc,
                                       1, &xtemp, &ytemp, &ztemp, &btemp);
 #endif
@@ -2966,11 +2995,14 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
                          double *x, double *y, double *z, int *panSuccess )
 
 {
-    ApproxTransformInfo *psATInfo = (ApproxTransformInfo *) pCBData;
-    double x2[3], y2[3], z2[3];
-    int anSuccess2[3], bSuccess;
+    ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
+    double x2[3] = {};
+    double y2[3] = {};
+    double z2[3] = {};
+    int anSuccess2[3] = {};
+    int bSuccess;
 
-    int nMiddle = (nPoints-1)/2;
+    const int nMiddle = (nPoints - 1) / 2;
 
 /* -------------------------------------------------------------------- */
 /*      Bail if our preconditions are not met, or if error is not       */
@@ -3017,8 +3049,9 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 
 end:
 #ifdef DEBUG_APPROX_TRANSFORMER
-    for(int i=0;i<nPoints;i++ )
-        fprintf(stderr, "[%d] (%.10f,%.10f) %d\n", i, x[i], y[i], panSuccess[i]);
+    for( int i = 0; i < nPoints; i++ )
+        fprintf(stderr, "[%d] (%.10f,%.10f) %d\n",
+                i, x[i], y[i], panSuccess[i]);
 #endif
 
     return bRet;
@@ -3051,15 +3084,13 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
                   "Cannot get base transform for approx transformer." );
         return NULL;
     }
-    else
-    {
-        void *pApproxCBData = GDALCreateApproxTransformer( pfnBaseTransform,
-                                                           pBaseCBData,
-                                                           dfMaxError );
-        GDALApproxTransformerOwnsSubtransformer( pApproxCBData, TRUE );
 
-        return pApproxCBData;
-    }
+    void *pApproxCBData = GDALCreateApproxTransformer( pfnBaseTransform,
+                                                       pBaseCBData,
+                                                       dfMaxError );
+    GDALApproxTransformerOwnsSubtransformer( pApproxCBData, TRUE );
+
+    return pApproxCBData;
 }
 
 /************************************************************************/
@@ -3080,8 +3111,10 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
  * @param padfGeoTransform Six coefficient GeoTransform to apply.
  * @param dfPixel Input pixel position.
  * @param dfLine Input line position.
- * @param pdfGeoX output location where geo_x (easting/longitude) location is placed.
- * @param pdfGeoY output location where geo_y (northing/latitude) location is placed.
+ * @param pdfGeoX output location where geo_x (easting/longitude)
+ * location is placed.
+ * @param pdfGeoY output location where geo_y (northing/latitude)
+ * location is placed.
  */
 
 void CPL_STDCALL GDALApplyGeoTransform( double *padfGeoTransform,
@@ -3167,10 +3200,13 @@ CPLXMLNode *GDALSerializeTransformer( CPL_UNUSED GDALTransformerFunc pfnFunc,
 {
     VALIDATE_POINTER1( pTransformArg, "GDALSerializeTransformer", NULL );
 
-    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL ||
-        memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+        memcmp(psInfo->abySignature,
+               GDAL_GTI2_SIGNATURE,
+               strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to serialize non-GTI2 transformer." );
@@ -3202,12 +3238,15 @@ typedef struct
     GDALTransformDeserializeFunc pfnDeserializeFunc;
 } TransformDeserializerInfo;
 
-void* GDALRegisterTransformDeserializer(const char* pszTransformName,
-                                       GDALTransformerFunc pfnTransformerFunc,
-                                       GDALTransformDeserializeFunc pfnDeserializeFunc)
+void *
+GDALRegisterTransformDeserializer(
+    const char* pszTransformName,
+    GDALTransformerFunc pfnTransformerFunc,
+    GDALTransformDeserializeFunc pfnDeserializeFunc )
 {
     TransformDeserializerInfo* psInfo =
-        (TransformDeserializerInfo*)CPLMalloc(sizeof(TransformDeserializerInfo));
+        static_cast<TransformDeserializerInfo *>(
+            CPLMalloc(sizeof(TransformDeserializerInfo)));
     psInfo->pszTransformName = CPLStrdup(pszTransformName);
     psInfo->pfnTransformerFunc = pfnTransformerFunc;
     psInfo->pfnDeserializeFunc = pfnDeserializeFunc;
@@ -3227,15 +3266,15 @@ void GDALUnregisterTransformDeserializer(void* pData)
     CPLMutexHolderD(&hDeserializerMutex);
     CPLList* psList = psListDeserializer;
     CPLList* psLast = NULL;
-    while(psList)
+    while( psList )
     {
-        if (psList->pData == pData)
+        if( psList->pData == pData )
         {
             TransformDeserializerInfo* psInfo =
                     (TransformDeserializerInfo*)pData;
             CPLFree(psInfo->pszTransformName);
             CPLFree(pData);
-            if (psLast)
+            if( psLast )
                 psLast->psNext = psList->psNext;
             else
                 psListDeserializer = NULL;
@@ -3318,7 +3357,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
         {
             CPLMutexHolderD(&hDeserializerMutex);
             CPLList* psList = psListDeserializer;
-            while(psList)
+            while( psList )
             {
                 TransformDeserializerInfo* psInfo =
                             (TransformDeserializerInfo*)psList->pData;
@@ -3357,7 +3396,8 @@ void GDALDestroyTransformer( void *pTransformArg )
     if( pTransformArg == NULL )
         return;
 
-    GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE,
         strlen(GDAL_GTI2_SIGNATURE)) != 0 )
@@ -3366,7 +3406,9 @@ void GDALDestroyTransformer( void *pTransformArg )
                   "Attempt to destroy non-GTI2 transformer." );
     }
     else
+    {
         psInfo->pfnCleanup( pTransformArg );
+    }
 }
 
 /************************************************************************/
@@ -3378,10 +3420,13 @@ int GDALUseTransformer( void *pTransformArg,
                         double *x, double *y, double *z,
                         int *panSuccess )
 {
-    GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL ||
-        memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+        memcmp(psInfo->abySignature,
+               GDAL_GTI2_SIGNATURE,
+               strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to use non-GTI2 transformer." );
@@ -3400,10 +3445,13 @@ void *GDALCloneTransformer( void *pTransformArg )
 {
     VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", NULL );
 
-    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL ||
-        memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+        memcmp(psInfo->abySignature,
+               GDAL_GTI2_SIGNATURE,
+               strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to clone non-GTI2 transformer." );
@@ -3428,7 +3476,8 @@ void *GDALCloneTransformer( void *pTransformArg )
             return NULL;
         GDALTransformerFunc pfnTransformer = NULL;
         void *pClonedTransformArg = NULL;
-        if( GDALDeserializeTransformer( pSerialized, &pfnTransformer, &pClonedTransformArg ) !=
+        if( GDALDeserializeTransformer( pSerialized, &pfnTransformer,
+                                        &pClonedTransformArg ) !=
             CE_None )
         {
             CPLDestroyXMLNode(pSerialized);
@@ -3444,14 +3493,18 @@ void *GDALCloneTransformer( void *pTransformArg )
 /*                   GDALCreateSimilarTransformer()                     */
 /************************************************************************/
 
-void* GDALCreateSimilarTransformer( void* pTransformArg, double dfRatioX, double dfRatioY )
+void* GDALCreateSimilarTransformer( void* pTransformArg,
+                                    double dfRatioX, double dfRatioY )
 {
     VALIDATE_POINTER1( pTransformArg, "GDALCreateSimilarTransformer", NULL );
 
-    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL ||
-        memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+        memcmp(psInfo->abySignature,
+               GDAL_GTI2_SIGNATURE,
+               strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to call CreateSimilar on a non-GTI2 transformer." );
@@ -3491,31 +3544,39 @@ void* GDALCreateSimilarTransformer( void* pTransformArg, double dfRatioX, double
  * @param padfGeoTransform the destination geotransform to apply (six doubles).
  */
 
-void GDALSetTransformerDstGeoTransform(void *pTransformArg,
-                                       const double *padfGeoTransform )
+void GDALSetTransformerDstGeoTransform( void *pTransformArg,
+                                        const double *padfGeoTransform )
 {
     VALIDATE_POINTER0( pTransformArg, "GDALSetTransformerDstGeoTransform" );
 
-    GDALTransformerInfo *psInfo = static_cast<GDALTransformerInfo *>(pTransformArg);
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(pTransformArg);
 
     if( psInfo == NULL ||
-        memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+        memcmp(psInfo->abySignature,
+               GDAL_GTI2_SIGNATURE,
+               strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to call GDALSetTransformerDstGeoTransform on a non-GTI2 transformer." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt to call GDALSetTransformerDstGeoTransform on "
+                 "a non-GTI2 transformer.");
         return;
     }
 
     if( EQUAL(psInfo->pszClassName, "GDALApproxTransformer") )
     {
-        ApproxTransformInfo   *psATInfo = (ApproxTransformInfo*)pTransformArg;
-        psInfo = (GDALTransformerInfo *)psATInfo->pBaseCBData;
+        ApproxTransformInfo *psATInfo =
+            static_cast<ApproxTransformInfo *>(pTransformArg);
+        psInfo = static_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
 
         if( psInfo == NULL ||
-            memcmp(psInfo->abySignature,GDAL_GTI2_SIGNATURE, strlen(GDAL_GTI2_SIGNATURE)) != 0 )
+            memcmp(psInfo->abySignature,
+                   GDAL_GTI2_SIGNATURE,
+                   strlen(GDAL_GTI2_SIGNATURE)) != 0 )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Attempt to call GDALSetTransformerDstGeoTransform on a non-GTI2 transformer." );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Attempt to call GDALSetTransformerDstGeoTransform on "
+                     "a non-GTI2 transformer.");
             return;
         }
     }
