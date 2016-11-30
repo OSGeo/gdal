@@ -472,15 +472,19 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
 /*                    SanityCheckOK()                                   */
 /************************************************************************/
 
-#define WARN_CHECK_DS(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined,\
-    "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
+#define WARN_CHECK_DS(x) do { if (!(x)) { \
+    CPLError(CE_Warning, CPLE_AppDefined,                             \
+             "For %s, assert '" #x "' failed",                        \
+             GetDescription()); checkOK = FALSE; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
+int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
 {
-    /*int nSrcBlockXSize, nSrcBlockYSize;
-    int nBlockXSize, nBlockYSize;*/
-    double l_adfGeoTransform[6];
-    if (checkDone)
+    // int nSrcBlockXSize;
+    // int nSrcBlockYSize;
+    // int nBlockXSize;
+    // int nBlockYSize;
+    double l_adfGeoTransform[6] = {};
+    if( checkDone )
         return checkOK;
 
     checkOK = TRUE;
@@ -492,16 +496,18 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
     WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - dfPixelXSize) < 1e-10);
     WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
     WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
-                  l_adfGeoTransform[4] == 0); /* No rotation */
+                  l_adfGeoTransform[4] == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
     WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84));
-    /*poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
-    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
-    WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);*/
-    WARN_CHECK_DS(poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
+    // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
+    //                                            &nSrcBlockYSize);
+    // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    // WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
+    // WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);
+    WARN_CHECK_DS(
+        poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
 
     return checkOK;
 }
