@@ -950,43 +950,43 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
 /************************************************************************/
 
 GDALWarpKernel::GDALWarpKernel() :
-    papszWarpOptions( NULL ),
-    eResample( GRA_NearestNeighbour ),
-    eWorkingDataType( GDT_Unknown ),
-    nBands( 0 ),
-    nSrcXSize( 0 ),
-    nSrcYSize( 0 ),
-    nSrcXExtraSize( 0 ),
-    nSrcYExtraSize( 0 ),
-    papabySrcImage( NULL ),
-    papanBandSrcValid( NULL ),
-    panUnifiedSrcValid( NULL ),
-    pafUnifiedSrcDensity( NULL ),
-    nDstXSize( 0 ),
-    nDstYSize( 0 ),
-    papabyDstImage( NULL ),
-    panDstValid( NULL ),
-    pafDstDensity( NULL ),
-    dfXScale( 1.0 ),
-    dfYScale( 1.0 ),
-    dfXFilter( 0.0 ),
-    dfYFilter( 0.0 ),
-    nXRadius( 0 ),
-    nYRadius( 0 ),
-    nFiltInitX( 0 ),
-    nFiltInitY( 0 ),
-    nSrcXOff( 0 ),
-    nSrcYOff( 0 ),
-    nDstXOff( 0 ),
-    nDstYOff( 0 ),
-    pfnTransformer( NULL ),
-    pTransformerArg( NULL ),
-    pfnProgress( GDALDummyProgress ),
-    pProgress( NULL ),
-    dfProgressBase( 0.0 ),
-    dfProgressScale( 1.0 ),
-    padfDstNoDataReal( NULL ),
-    psThreadData( NULL )
+    papszWarpOptions(NULL),
+    eResample(GRA_NearestNeighbour),
+    eWorkingDataType(GDT_Unknown),
+    nBands(0),
+    nSrcXSize(0),
+    nSrcYSize(0),
+    nSrcXExtraSize(0),
+    nSrcYExtraSize(0),
+    papabySrcImage(NULL),
+    papanBandSrcValid(NULL),
+    panUnifiedSrcValid(NULL),
+    pafUnifiedSrcDensity(NULL),
+    nDstXSize(0),
+    nDstYSize(0),
+    papabyDstImage(NULL),
+    panDstValid(NULL),
+    pafDstDensity(NULL),
+    dfXScale(1.0),
+    dfYScale(1.0),
+    dfXFilter(0.0),
+    dfYFilter(0.0),
+    nXRadius(0),
+    nYRadius(0),
+    nFiltInitX(0),
+    nFiltInitY(0),
+    nSrcXOff(0),
+    nSrcYOff(0),
+    nDstXOff(0),
+    nDstYOff(0),
+    pfnTransformer(NULL),
+    pTransformerArg(NULL),
+    pfnProgress(GDALDummyProgress),
+    pProgress(NULL),
+    dfProgressBase(0.0),
+    dfProgressScale(1.0),
+    padfDstNoDataReal(NULL),
+    psThreadData(NULL)
 
 {
 }
@@ -1389,11 +1389,11 @@ static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
 
         dfDstReal = pDst[iDstOffset];
 
-        // the destination density is really only relative to the portion
+        // The destination density is really only relative to the portion
         // not occluded by the overlay.
-        double dfDstInfluence = (1.0 - dfDensity) * dfDstDensity;
+        const double dfDstInfluence = (1.0 - dfDensity) * dfDstDensity;
 
-        double dfReal = (value * dfDensity + dfDstReal * dfDstInfluence)
+        const double dfReal = (value * dfDensity + dfDstReal * dfDstInfluence)
                             / (dfDensity + dfDstInfluence);
 
 /* -------------------------------------------------------------------- */
@@ -1407,13 +1407,14 @@ static bool GWKSetPixelValueRealT( GDALWarpKernel *poWK, int iBand,
     else
         pDst[iDstOffset] = value;
 
-    if (poWK->padfDstNoDataReal != NULL &&
-        poWK->padfDstNoDataReal[iBand] == (double)pDst[iDstOffset])
+    if( poWK->padfDstNoDataReal != NULL &&
+        poWK->padfDstNoDataReal[iBand] ==
+        static_cast<double>(pDst[iDstOffset]) )
     {
         if (pDst[iDstOffset] == std::numeric_limits<T>::min())
             pDst[iDstOffset] = std::numeric_limits<T>::min() + 1;
         else
-            pDst[iDstOffset] --;
+            pDst[iDstOffset]--;
     }
 
     return true;
@@ -1662,10 +1663,11 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 /* -------------------------------------------------------------------- */
     if( dfDensity < 0.9999 )
     {
-        double dfDstReal, dfDstDensity = 1.0;
-
         if( dfDensity < 0.0001 )
             return true;
+
+        double dfDstReal = 0.0;
+        double dfDstDensity = 1.0;
 
         if( poWK->pafDstDensity != NULL )
             dfDstDensity = poWK->pafDstDensity[iDstOffset];
@@ -1714,7 +1716,7 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
         // the destination density is really only relative to the portion
         // not occluded by the overlay.
-        double dfDstInfluence = (1.0 - dfDensity) * dfDstDensity;
+        const double dfDstInfluence = (1.0 - dfDensity) * dfDstDensity;
 
         dfReal = (dfReal * dfDensity + dfDstReal * dfDstInfluence)
             / (dfDensity + dfDstInfluence);
@@ -2458,7 +2460,7 @@ static bool GWKBilinearResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 /* -------------------------------------------------------------------- */
 /*      Return result.                                                  */
 /* -------------------------------------------------------------------- */
-    double      dfValue;
+    double dfValue = 0.0;
 
     if( dfAccumulatorDivisor < 0.00001 )
     {
@@ -2517,7 +2519,8 @@ or http://en.wikipedia.org/wiki/Bicubic_interpolation: matrix notation */
                          (v1)[2] * (v2)[2] + (v1)[3] * (v2)[3])
 
 #if 0
-// Optimal (in theory...) for max 2 convolutions: 14 multiplications instead of 17
+// Optimal (in theory...) for max 2 convolutions: 14 multiplications
+// instead of 17.
 #define GWKCubicComputeWeights_Optim2MAX(dfX_, adfCoeffs, dfHalfX) \
 { \
     const double dfX = dfX_; \
@@ -2544,14 +2547,18 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
                              double *pdfReal, double *pdfImag )
 
 {
-    const int     iSrcX = (int) (dfSrcX - 0.5);
-    const int     iSrcY = (int) (dfSrcY - 0.5);
-    const int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
-    const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
-    const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
-    double  adfValueDens[4], adfValueReal[4], adfValueImag[4];
-    double  adfDensity[4], adfReal[4], adfImag[4] = {0, 0, 0, 0};
-    int     i;
+    const int iSrcX = static_cast<int>(dfSrcX - 0.5);
+    const int iSrcY = static_cast<int>(dfSrcY - 0.5);
+    const int  iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const double dfDeltaX = dfSrcX - 0.5 - iSrcX;
+    const double dfDeltaY = dfSrcY - 0.5 - iSrcY;
+    double adfValueDens[4] = {};
+    double adfValueReal[4] = {};
+    double adfValueImag[4] = {};
+    double adfDensity[4] = {};
+    double adfReal[4] = {};
+    double adfImag[4] = {};
+    int i;
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
@@ -2559,7 +2566,7 @@ static bool GWKCubicResample4Sample( GDALWarpKernel *poWK, int iBand,
         return GWKBilinearResample4Sample( poWK, iBand, dfSrcX, dfSrcY,
                                     pdfDensity, pdfReal, pdfImag );
 
-    double adfCoeffsX[4];
+    double adfCoeffsX[4] = {};
     GWKCubicComputeWeights(dfDeltaX, adfCoeffsX);
 
     for ( i = -1; i < 3; i++ )
@@ -2618,7 +2625,8 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte* ptr)
 #else
     __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned int*)(ptr));
 #endif
-    /* Zero extend 4 packed unsigned 8-bit integers in a to packed 32-bit integers */
+    // Zero extend 4 packed unsigned 8-bit integers in a to packed
+    // 32-bit integers.
 #if __SSE4_1__
     xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
@@ -2637,7 +2645,8 @@ static CPL_INLINE __m128 XMMLoad4Values(const GUInt16* ptr)
 #else
     __m128i xmm_i =  _mm_cvtsi64_si128(*(GUIntBig*)(ptr));
 #endif
-    /* Zero extend 4 packed unsigned 16-bit integers in a to packed 32-bit integers */
+    // Zero extend 4 packed unsigned 16-bit integers in a to packed
+    // 32-bit integers.
 #if __SSE4_1__
     xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
@@ -2688,9 +2697,9 @@ static CPL_INLINE bool GWKCubicResampleSrcMaskIsDensity4SampleRealT(
                              double *pdfDensity,
                              double *pdfReal )
 {
-    const int     iSrcX = (int) (dfSrcX - 0.5);
-    const int     iSrcY = (int) (dfSrcY - 0.5);
-    const int     iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
+    const int iSrcX = static_cast<int>(dfSrcX - 0.5);
+    const int iSrcY = static_cast<int>(dfSrcY - 0.5);
+    const int iSrcOffset = iSrcX + iSrcY * poWK->nSrcXSize;
 
     // Get the bilinear interpolation at the image borders
     if ( iSrcX - 1 < 0 || iSrcX + 2 >= poWK->nSrcXSize
