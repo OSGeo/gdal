@@ -55,11 +55,11 @@ public:
         osOverview.push_back( ov );
     }
 
-    int GetOverviewCount()
+    int GetOverviewCount() CPL_OVERRIDE
     {
         if( osOverview.size() > 0 )
         {
-            return (int)osOverview.size();
+            return static_cast<int>( osOverview.size() );
         }
         else
         {
@@ -67,9 +67,9 @@ public:
         }
     }
 
-    GDALRasterBand* GetOverview( int i )
+    GDALRasterBand* GetOverview( int i ) CPL_OVERRIDE
     {
-        size_t	n = (size_t)i;
+        size_t	n = static_cast<size_t>( i );
         if( n < osOverview.size() )
         {
             return osOverview[ n ];
@@ -86,7 +86,7 @@ class PhPrfDataset : public VRTDataset
 public:
     PhPrfDataset( GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount, GDALDataType eType, const char* pszName );
     ~PhPrfDataset();
-    int AddTile( const char* pszPartName, GDALAccess eAccess, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale );
+    bool AddTile( const char* pszPartName, GDALAccess eAccess, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale );
     static int Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );
 };
@@ -109,7 +109,7 @@ PhPrfDataset::~PhPrfDataset()
 {
 }
 
-int PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale )
+bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale )
 {
     GDALProxyPoolDataset*   poTileDataset;
     poTileDataset = new GDALProxyPoolDataset( pszPartName, nWidth, nHeight,
@@ -117,7 +117,7 @@ int PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int 
 
     if( poTileDataset == NULL )
     {
-        return -1;
+        return false;
     }
 
     for( int nBand = 1; nBand != GetRasterCount() + 1; ++nBand )
@@ -128,7 +128,7 @@ int PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int 
         if( poBand == NULL )
         {
             delete poTileDataset;
-            return -1;
+            return false;
         }
 
         //! \todo What reason for nBlockXSize&nBlockYSize passed to AddSrcBandDescription
@@ -145,11 +145,22 @@ int PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int 
             poBand->AddOverview( poTileBand );
         }
     }
-    return 0;
+    return true;
 }
 
 int PhPrfDataset::Identify( GDALOpenInfo* poOpenInfo )
 {
+    if( poOpenInfo->pabyHeader == NULL ||
+        poOpenInfo->nHeaderBytes < 20 )
+    {
+        return FALSE;
+    }
+
+    if( strstr( reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "phini" ) == NULL )
+    {
+        return FALSE;
+    }
+
     if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), PH_PRF_EXT ) )
     {
         return TRUE;
@@ -209,9 +220,9 @@ static CPLString GetXmlAttribute( const CPLXMLNode* psElt, const CPLString& osAt
 
 static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
 {
-    bool                pabOk[6] = {false,false,false,false,false,false};
-    static const char*  papszGeoKeys[6] = { "A_0", "A_1", "A_2",
-                                            "B_0", "B_1", "B_2" };
+    bool                     abOk[6] = {false,false,false,false,false,false};
+    static const char* const apszGeoKeys[6] = { "A_0", "A_1", "A_2",
+                                                "B_0", "B_1", "B_2" };
     for( const CPLXMLNode* elt = psGeorefElt->psChild; elt != NULL;	elt = elt->psNext )
     {
         CPLString   osName;
@@ -219,17 +230,17 @@ static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
         GetXmlNameValuePair( elt, osName, osValue );
         for( int k = 0; k != 6; ++k )
         {
-            if( EQUAL( osName, papszGeoKeys[k] ) )
+            if( EQUAL( osName, apszGeoKeys[k] ) )
             {
                 padfGeoTrans[k] = CPLAtof( osValue );
-                pabOk[k] = true;
+                abOk[k] = true;
             }
         }
     }
 
     for( int k = 0; k != 6; ++k )
     {
-        if( !pabOk[k] )
+        if( !abOk[k] )
         {
             break;
         }
@@ -349,7 +360,7 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
     CPLString       osPartsBasePath( CPLGetPath( poOpenInfo->pszFilename ) );
     CPLString       osPartsPath( osPartsBasePath + "/" + CPLGetBasename( poOpenInfo->pszFilename ) );
     CPLString       osPartsExt;
-    double          padfGeoTrans[6] = {0,0,0,0,0,0};
+    double          adfGeoTrans[6] = {0,0,0,0,0,0};
     bool            bGeoTransOk = false;
 
     if( eFormat == ph_megatiff )
@@ -410,7 +421,7 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         else
         if( EQUAL( osName, "GeoRef" ) )
         {
-            bGeoTransOk = ParseGeoref( psElt, padfGeoTrans );
+            bGeoTransOk = ParseGeoref( psElt, adfGeoTrans );
         }
     }
 
@@ -420,7 +431,7 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 
-    if( nSizeX == 0 || nSizeY == 0 || nBandCount == 0 )
+    if( nSizeX <= 0 || nSizeY <= 0 || nBandCount <= 0 )
     {
         return NULL;
     }
@@ -483,7 +494,7 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
                                 GetXmlAttribute( psElt, "n" ) +
                                 osPartsExt );
 
-        if( 0 != poDataset->AddTile( osPartName, GA_ReadOnly, nWidth, nHeight, nOffsetX, nOffsetY, nScale ) )
+        if( !poDataset->AddTile( osPartName, GA_ReadOnly, nWidth, nHeight, nOffsetX, nOffsetY, nScale ) )
         {
             delete poDataset;
             return NULL;
@@ -492,7 +503,7 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( eFormat == ph_megatiff && bGeoTransOk )
     {
-        poDataset->SetGeoTransform( padfGeoTrans );
+        poDataset->SetGeoTransform( adfGeoTrans );
     }
 
     return poDataset;
