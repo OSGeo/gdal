@@ -520,6 +520,7 @@ void GDALRegister_PRF()
         poDriver->SetDescription( PH_PRF_DRIVER );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Racurs PHOTOMOD PRF" );
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "prf" );
         poDriver->pfnIdentify = PhPrfDataset::Identify;
         poDriver->pfnOpen = PhPrfDataset::Open;
