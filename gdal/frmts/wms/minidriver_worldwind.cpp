@@ -39,49 +39,32 @@ WMSMiniDriver_WorldWind::~WMSMiniDriver_WorldWind() {}
 CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    {
-        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
-            /* Try the old name */
-            base_url = CPLGetXMLValue(config, "ServerUrl", "");
-        }
-        if (base_url[0] != '\0') {
-            m_base_url = base_url;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, WorldWind mini-driver: ServerURL missing.");
-            ret = CE_Failure;
-        }
+    // Try both spellings
+    m_base_url = CPLGetXMLValue(config, "ServerURL",
+        CPLGetXMLValue(config, "ServerUrl", ""));
+
+    if (m_base_url.size() == 0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TileService mini-driver: ServerURL missing.");
+        ret = CE_Failure;
+    }
+    else { // Prepare the url, leave it ready for extra arguments
+        const char *dataset = CPLGetXMLValue(config, "Layer", "");
+        URLPrepare(m_base_url);
+        m_base_url += CPLOPrintf("T=%s", dataset);
     }
 
-    m_dataset = CPLGetXMLValue(config, "Layer", "");
     m_projection_wkt = ProjToWKT("EPSG:4326");
-
     return ret;
 }
 
-void WMSMiniDriver_WorldWind::GetCapabilities(WMSMiniDriverCapabilities *caps) {
-    caps->m_capabilities_version = 1;
-    caps->m_has_arb_overviews = 0;
-    caps->m_has_image_request = 0;
-    caps->m_has_tiled_image_requeset = 1;
-    caps->m_max_overview_count = 32;
-}
-
-void WMSMiniDriver_WorldWind::ImageRequest(CPL_UNUSED CPLString *url,
-                                               CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
-}
-
-void WMSMiniDriver_WorldWind::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+CPLErr WMSMiniDriver_WorldWind::TiledImageRequest(WMSHTTPRequest &request, 
+                                                    const GDALWMSImageRequestInfo &iri, 
+                                                    const GDALWMSTiledImageRequestInfo &tiri)
+{
+    CPLString &url = request.URL;
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
     int worldwind_y = static_cast<int>(floor(((data_window->m_y1 - data_window->m_y0) / (iri.m_y1 - iri.m_y0)) + 0.5)) - tiri.m_y - 1;
     // http://worldwind25.arc.nasa.gov/tile/tile.aspx?T=geocover2000&L=0&X=86&Y=39
-    *url = m_base_url;
-    URLAppendF(url, "&T=%s", m_dataset.c_str());
-    URLAppendF(url, "&L=%d", tiri.m_level);
-    URLAppendF(url, "&X=%d", tiri.m_x);
-    URLAppendF(url, "&Y=%d", worldwind_y);
-}
-
-const char *WMSMiniDriver_WorldWind::GetProjectionInWKT() {
-    return m_projection_wkt.c_str();
+    url = m_base_url + CPLOPrintf("L=%d&X=%d&Y=%d", tiri.m_level, tiri.m_x, worldwind_y);
+    return CE_None;
 }

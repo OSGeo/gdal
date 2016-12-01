@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Adam Nowacki
  * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2016, Lucian Plesea
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +30,6 @@
  ****************************************************************************/
 
 #include "wmsdriver.h"
-
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -42,7 +42,7 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 #endif
 
 static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *req) {
-    CPLHTTPRequest *psRequest = reinterpret_cast<CPLHTTPRequest *>(req);
+    WMSHTTPRequest *psRequest = reinterpret_cast<WMSHTTPRequest *>(req);
     size_t size = count * nmemb;
 
     if (size == 0) return 0;
@@ -56,7 +56,8 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
         if (pabyNewData == NULL) {
             VSIFree(psRequest->pabyData);
             psRequest->pabyData = NULL;
-            psRequest->pszError = CPLStrdup(CPLString().Printf("Out of memory allocating %u bytes for HTTP data buffer.", static_cast<int>(new_size)));
+            psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.", 
+                static_cast<unsigned int>(new_size));
             psRequest->nDataAlloc = 0;
             psRequest->nDataLen = 0;
             return 0;
@@ -69,131 +70,83 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
     return nmemb;
 }
 
-void CPLHTTPInitializeRequest(CPLHTTPRequest *psRequest, const char *pszURL, const char *const *papszOptions) {
-    psRequest->pszURL = CPLStrdup(pszURL);
-    psRequest->papszOptions = CSLDuplicate(const_cast<char **>(papszOptions));
+// Builds a curl request
+void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     psRequest->nStatus = 0;
-    psRequest->pszContentType = NULL;
-    psRequest->pszError = NULL;
     psRequest->pabyData = NULL;
     psRequest->nDataLen = 0;
     psRequest->nDataAlloc = 0;
-    psRequest->m_curl_handle = NULL;
-    psRequest->m_headers = NULL;
-    psRequest->m_curl_error = NULL;
 
     psRequest->m_curl_handle = curl_easy_init();
     if (psRequest->m_curl_handle == NULL) {
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
+        // This should return somehow?
     }
 
-    char** papszOptionsDup = CSLDuplicate(const_cast<char **>(psRequest->papszOptions));
+    if (psRequest->Range.size() != 0)
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
 
-    /* Set User-Agent */
-    const char *pszUserAgent = CSLFetchNameValue(papszOptionsDup, "USERAGENT");
-    if (pszUserAgent == NULL)
-        papszOptionsDup = CSLAddNameValue(papszOptionsDup, "USERAGENT",
-                                          "GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
-
-    /* Set URL */
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->pszURL);
-
-    /* Set Headers (copied&pasted from cpl_http.cpp, but unused by callers of CPLHTTPInitializeRequest) .*/
-    const char *headers = CSLFetchNameValue(const_cast<char **>(psRequest->papszOptions), "HEADERS");
-    if (headers != NULL) {
-        psRequest->m_headers = curl_slist_append(psRequest->m_headers, headers);
-        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER, psRequest->m_headers);
-    }
-
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str()); 
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, CPLHTTPWriteFunc);
 
-    psRequest->m_curl_error = reinterpret_cast<char *>(CPLMalloc(CURL_ERROR_SIZE + 1));
-    psRequest->m_curl_error[0] = '\0';
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error);
+    psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error.data());
 
-    CPLHTTPSetOptions(psRequest->m_curl_handle, papszOptionsDup);
-
-    CSLDestroy(papszOptionsDup);
+    // CPLHTTPSetOptions does not change the option list
+    CPLHTTPSetOptions(psRequest->m_curl_handle, const_cast<char **>(psRequest->options));
 }
 
-void CPLHTTPCleanupRequest(CPLHTTPRequest *psRequest) {
-    if (psRequest->m_curl_handle) {
-        curl_easy_cleanup(psRequest->m_curl_handle);
-        psRequest->m_curl_handle = NULL;
-    }
-    if (psRequest->m_headers) {
-        curl_slist_free_all(psRequest->m_headers);
-        psRequest->m_headers = NULL;
-    }
-    if (psRequest->m_curl_error) {
-        CPLFree(psRequest->m_curl_error);
-        psRequest->m_curl_error = NULL;
-    }
-
-    if (psRequest->pszContentType) {
-        CPLFree(psRequest->pszContentType);
-        psRequest->pszContentType = NULL;
-    }
-    if (psRequest->pszError) {
-        CPLFree(psRequest->pszError);
-        psRequest->pszError = NULL;
-    }
-    if (psRequest->pabyData) {
-        CPLFree(psRequest->pabyData);
-        psRequest->pabyData = NULL;
-        psRequest->nDataLen = 0;
-        psRequest->nDataAlloc = 0;
-    }
-    if (psRequest->papszOptions) {
-        CSLDestroy(psRequest->papszOptions);
-        psRequest->papszOptions = NULL;
-    }
-    if (psRequest->pszURL) {
-        CPLFree(psRequest->pszURL);
-        psRequest->pszURL = NULL;
-    }
+WMSHTTPRequest::~WMSHTTPRequest() {
+    if (m_curl_handle != NULL)
+        curl_easy_cleanup(m_curl_handle);
+    if (pabyData != NULL)
+        CPLFree(pabyData);
 }
 
-CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const char *const *papszOptions) {
+//
+// Like CPLHTTPFetch, but multiple requests in parallel
+// By default it uses 5 connections
+//
+CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     CPLErr ret = CE_None;
     CURLM *curl_multi = NULL;
     int still_running;
     int max_conn;
     int i, conn_i;
 
-    if( nRequestCount > 0 &&
-        STARTS_WITH(pasRequest[0].pszURL, "/vsimem/") &&
+    CPLAssert(nRequestCount >= 0);
+    if (nRequestCount == 0)
+        return CE_None;
+
+    const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(pasRequest->options), "MAXCONN");
+    max_conn = (max_conn_opt == NULL) ? 5 : MAX(1, MIN(atoi(max_conn_opt), 1000));
+
+    // If the first url starts with vsimem, assume all do and defer to CPLHTTPFetch
+    if( STARTS_WITH(pasRequest[0].URL.c_str(), "/vsimem/") &&
         /* Disabled by default for potential security issues */
         CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         for(i = 0; i< nRequestCount;i++)
         {
-            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].pszURL, (char**)papszOptions);
+            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].URL.c_str(), 
+                                                    const_cast<char**>(pasRequest[i].options));
             pasRequest[i].pabyData = psResult->pabyData;
             pasRequest[i].nDataLen = psResult->nDataLen;
-            pasRequest[i].pszError = psResult->pszErrBuf;
-            // Conventions a bit different between this module and cpl_http...
+            pasRequest[i].Error = psResult->pszErrBuf;
+            // Conventions are different between this module and cpl_http...
             if( psResult->pszErrBuf != NULL &&
                 strcmp(psResult->pszErrBuf, "HTTP error code : 404") == 0 )
                 pasRequest[i].nStatus = 404;
             else
                 pasRequest[i].nStatus = 200;
-            pasRequest[i].pszContentType = psResult->pszContentType;
+            pasRequest[i].ContentType = psResult->pszContentType;
+            // took ownership of content, we're done with the rest
             psResult->pabyData = NULL;
             psResult->nDataLen = 0;
-            psResult->pszErrBuf = NULL;
-            psResult->pszContentType = NULL;
             CPLHTTPDestroyResult(psResult);
         }
         return CE_None;
-    }
-
-    const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(papszOptions), "MAXCONN");
-    if (max_conn_opt && (max_conn_opt[0] != '\0')) {
-        max_conn = std::max(1, std::min(atoi(max_conn_opt), 1000));
-    } else {
-        max_conn = 5;
     }
 
     curl_multi = curl_multi_init();
@@ -203,12 +156,14 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
 
     // add at most max_conn requests
     for (conn_i = 0; conn_i < std::min(nRequestCount, max_conn); ++conn_i) {
-        CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
-        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, pasRequest[conn_i].pszURL);
+        WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
+        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, 
+            pasRequest[conn_i].URL.c_str());
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
 
     while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
+
     while (still_running || (conn_i != nRequestCount)) {
         struct timeval timeout;
         fd_set fdread, fdwrite, fdexcep;
@@ -219,16 +174,19 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
         do {
             msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
             if (msg != NULL) {
-                if (msg->msg == CURLMSG_DONE) { // transfer completed, check if we have more waiting and add them
+                if (msg->msg == CURLMSG_DONE) { 
+                    // transfer completed, add more handles if available
                     if (conn_i < nRequestCount) {
-                        CPLHTTPRequest *const psRequest = &pasRequest[conn_i];
-                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, pasRequest[conn_i].pszURL);
+                        WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
+                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, 
+                                    nRequestCount, pasRequest[conn_i].URL.c_str());
                         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
                         ++conn_i;
                     }
                 }
             }
         } while (msg != NULL);
+
         FD_ZERO(&fdread);
         FD_ZERO(&fdwrite);
         FD_ZERO(&fdexcep);
@@ -243,42 +201,41 @@ CPLErr CPLHTTPFetchMulti(CPLHTTPRequest *pasRequest, int nRequestCount, const ch
                 break;
             }
         }
+
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
 
     if (conn_i != nRequestCount) { // something gone really really wrong
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
     }
-    for (i = 0; i < nRequestCount; ++i) {
-        CPLHTTPRequest *const psRequest = &pasRequest[i];
 
-        long response_code = 0;
+    for (i = 0; i < nRequestCount; ++i) {
+        WMSHTTPRequest *const psRequest = &pasRequest[i];
+
+        long response_code;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
         psRequest->nStatus = static_cast<int>(response_code);
 
-        char *content_type = NULL;
+        char *content_type;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
-        if (content_type) psRequest->pszContentType = CPLStrdup(content_type);
+        psRequest->ContentType = content_type;
 
-        if ((psRequest->pszError == NULL) && (psRequest->m_curl_error != NULL) && (psRequest->m_curl_error[0] != '\0')) {
-            psRequest->pszError = CPLStrdup(psRequest->m_curl_error);
-        }
+        if (psRequest->Error.size() == 0)
+            psRequest->Error = psRequest->m_curl_error.data();
 
         /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
         /* error returned, patch the status code to be 200, as it would be for http:// */
-        if (STARTS_WITH(psRequest->pszURL, "file://") && psRequest->nStatus == 0 &&
-            psRequest->pszError == NULL)
-        {
+        if (psRequest->nStatus == 0 && psRequest->Error.size() == 0 && STARTS_WITH(psRequest->URL.c_str(), "file://"))
             psRequest->nStatus = 200;
-        }
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
-                 i, psRequest->pszURL, psRequest->nStatus,
-                 (psRequest->pszContentType) ? psRequest->pszContentType : "(null)",
-                 (psRequest->pszError) ? psRequest->pszError : "(null)");
+                 i, psRequest->URL.c_str(), psRequest->nStatus,
+                 psRequest->ContentType.size() ? psRequest->ContentType.c_str() : "(null)",
+                 psRequest->Error.size() ? psRequest->Error.c_str() : "(null)");
 
-        curl_multi_remove_handle(curl_multi, pasRequest[i].m_curl_handle);
+        curl_multi_remove_handle(curl_multi, pasRequest->m_curl_handle);
     }
+
     curl_multi_cleanup(curl_multi);
 
     return ret;

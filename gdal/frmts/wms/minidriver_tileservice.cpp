@@ -39,53 +39,30 @@ WMSMiniDriver_TileService::~WMSMiniDriver_TileService() {}
 CPLErr WMSMiniDriver_TileService::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    {
+    // Try both spellings
+    m_base_url = CPLGetXMLValue(config, "ServerURL",
+                                CPLGetXMLValue(config, "ServerUrl", ""));
+
+    if (m_base_url.size() == 0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TileService mini-driver: ServerURL missing.");
+        ret = CE_Failure;
+    }
+    else { // Prepare the url, leave it ready for extra arguments
+        URLPrepare(m_base_url);
+        const char *dataset = CPLGetXMLValue(config, "Dataset", "");
         const char *version = CPLGetXMLValue(config, "Version", "1");
-        if (version[0] != '\0') {
-            m_version = version;
-        }
+        m_base_url += CPLOPrintf("interface=map&version=%s&dataset=%s&", version, dataset);
     }
-
-    {
-        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
-            /* Try the old name */
-            base_url = CPLGetXMLValue(config, "ServerUrl", "");
-        }
-        if (base_url[0] != '\0') {
-            m_base_url = base_url;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TileService mini-driver: ServerURL missing.");
-            ret = CE_Failure;
-        }
-    }
-
-    m_dataset = CPLGetXMLValue(config, "Dataset", "");
 
     return ret;
 }
 
-void WMSMiniDriver_TileService::GetCapabilities(WMSMiniDriverCapabilities *caps) {
-    caps->m_capabilities_version = 1;
-    caps->m_has_arb_overviews = 0;
-    caps->m_has_image_request = 0;
-    caps->m_has_tiled_image_requeset = 1;
-    caps->m_max_overview_count = 32;
-}
-
-void WMSMiniDriver_TileService::ImageRequest(CPL_UNUSED CPLString *url,
-                                                 CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
-}
-
-void WMSMiniDriver_TileService::TiledImageRequest(CPLString *url,
+CPLErr WMSMiniDriver_TileService::TiledImageRequest(WMSHTTPRequest &request,
                                                       CPL_UNUSED const GDALWMSImageRequestInfo &iri,
                                                       const GDALWMSTiledImageRequestInfo &tiri) {
     // http://s0.tileservice.worldwindcentral.com/getTile?interface=map&version=1&dataset=bmng.topo.bathy.200401&level=5&x=18&y=6
-    *url = m_base_url;
-    URLAppend(url, "&interface=map");
-    URLAppendF(url, "&version=%s", m_version.c_str());
-    URLAppendF(url, "&dataset=%s", m_dataset.c_str());
-    URLAppendF(url, "&level=%d", tiri.m_level);
-    URLAppendF(url, "&x=%d", tiri.m_x);
-    URLAppendF(url, "&y=%d", tiri.m_y);
+    CPLString &url = request.URL;
+    url = m_base_url;
+    url += CPLOPrintf("level=%d&x=%d&y=%d", tiri.m_level, tiri.m_x, tiri.m_y);
+    return CE_None;
 }
