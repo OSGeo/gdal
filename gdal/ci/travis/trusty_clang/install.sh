@@ -18,7 +18,7 @@ cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-8-openjdk-
 mv java.opt.tmp java.opt
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 export PATH=$JAVA_HOME/jre/bin:$PATH
-java --version
+java -version
 make
 cd ../..
 cd swig/perl
