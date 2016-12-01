@@ -266,7 +266,9 @@ typedef int              GPtrDiff_t;
 
 #ifdef GDAL_COMPILATION
 #if HAVE_UINTPTR_T
+#if !defined(_MSC_VER) || _MSC_VER > 1500
 #include <stdint.h>
+#endif
 typedef uintptr_t GUIntptr_t;
 #elif SIZEOF_VOIDP == 8
 typedef GUIntBig GUIntptr_t;
