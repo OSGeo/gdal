@@ -343,7 +343,7 @@ GDALContourGenerator::ProcessPixel( int iPixel )
     if( bNoDataActive
         && (IsNoData<bNoDataIsNan>(dfUpLeft) ||
             IsNoData<bNoDataIsNan>(dfLoLeft) ||
-            IsNoData<bNoDataIsNan>(dfLoRight)||
+            IsNoData<bNoDataIsNan>(dfLoRight) ||
             IsNoData<bNoDataIsNan>(dfUpRight)) )
     {
         bSubdivide = true;
@@ -498,9 +498,9 @@ CPLErr GDALContourGenerator::ProcessRect(
     int iEndLevel = 0;
 
     const double dfMin =
-        std::min(std::min(dfUpLeft,dfUpRight),std::min(dfLoLeft,dfLoRight));
+        std::min(std::min(dfUpLeft, dfUpRight), std::min(dfLoLeft, dfLoRight));
     const double dfMax =
-        std::max(std::max(dfUpLeft,dfUpRight),std::max(dfLoLeft,dfLoRight));
+        std::max(std::max(dfUpLeft, dfUpRight), std::max(dfLoLeft, dfLoRight));
 
 /* -------------------------------------------------------------------- */
 /*      Compute the set of levels to compute contours for.              */
