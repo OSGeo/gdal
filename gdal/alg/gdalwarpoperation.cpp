@@ -1798,11 +1798,11 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.papabyDstImage = reinterpret_cast<GByte **>(
         CPLCalloc(sizeof(GByte*), psOptions->nBandCount));
 
-    int i = 0;  // Used after for.
-    for( ; i < psOptions->nBandCount && eErr == CE_None; i++ )
+    int i1 = 0;  // Used after for.
+    for( ; i1 < psOptions->nBandCount && eErr == CE_None; i1++ )
     {
-        oWK.papabyDstImage[i] = static_cast<GByte *>(pDataBuf)
-            + i * nDstXSize * nDstYSize * nWordSize;
+        oWK.papabyDstImage[i1] = static_cast<GByte *>(pDataBuf)
+            + i1 * nDstXSize * nDstYSize * nWordSize;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1883,7 +1883,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert( oWK.pafDstDensity == NULL );
 
-        eErr = CreateKernelMask( &oWK, i, "DstDensity" );
+        eErr = CreateKernelMask( &oWK, i1, "DstDensity" );
 
         if( eErr == CE_None )
             eErr =
@@ -1905,15 +1905,16 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         CPLAssert( oWK.papanBandSrcValid == NULL );
 
         bool bAllBandsAllValid = true;
-        for( i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
+        int i2 = 0;  // Used after for.
+        for( ; i2 < psOptions->nBandCount && eErr == CE_None; i2++ )
         {
-            eErr = CreateKernelMask( &oWK, i, "BandSrcValid" );
+            eErr = CreateKernelMask( &oWK, i2, "BandSrcValid" );
             if( eErr == CE_None )
             {
                 double adfNoData[2] =
                 {
-                    psOptions->padfSrcNoDataReal[i],
-                    psOptions->padfSrcNoDataImag[i]
+                    psOptions->padfSrcNoDataReal[i2],
+                    psOptions->padfSrcNoDataImag[i2]
                 };
 
                 int bAllValid = FALSE;
@@ -1922,8 +1923,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                           psOptions->eWorkingDataType,
                                           oWK.nSrcXOff, oWK.nSrcYOff,
                                           oWK.nSrcXSize, oWK.nSrcYSize,
-                                          &(oWK.papabySrcImage[i]),
-                                          FALSE, oWK.papanBandSrcValid[i],
+                                          &(oWK.papabySrcImage[i2]),
+                                          FALSE, oWK.papanBandSrcValid[i2],
                                           &bAllValid );
                 if( !bAllValid )
                     bAllBandsAllValid = false;
@@ -1958,7 +1959,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         {
             const int nBytesInMask = (oWK.nSrcXSize * oWK.nSrcYSize + 31) / 8;
 
-            eErr = CreateKernelMask( &oWK, i, "UnifiedSrcValid" );
+            eErr = CreateKernelMask( &oWK, i2, "UnifiedSrcValid" );
 
             if( eErr == CE_None )
             {
@@ -1970,7 +1971,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                         oWK.panUnifiedSrcValid[iWord] |=
                             oWK.papanBandSrcValid[k][iWord];
                     CPLFree( oWK.papanBandSrcValid[k] );
-                    oWK.papanBandSrcValid[i] = NULL;
+                    oWK.papanBandSrcValid[i2] = NULL;
                 }
 
                 CPLFree( oWK.papanBandSrcValid );
@@ -2151,7 +2152,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
     if( oWK.papanBandSrcValid != NULL )
     {
-        for( i = 0; i < oWK.nBands; i++ )
+        for( int i = 0; i < oWK.nBands; i++ )
             CPLFree( oWK.papanBandSrcValid[i] );
         CPLFree( oWK.papanBandSrcValid );
     }
