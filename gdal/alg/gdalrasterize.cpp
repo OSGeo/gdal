@@ -691,6 +691,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes));
     if( pabyChunkBuf == NULL )
     {
+        if( bNeedToFreeTransformer )
+            GDALDestroyTransformer( pTransformArg );
         return CE_Failure;
     }
 
