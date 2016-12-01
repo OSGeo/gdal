@@ -416,24 +416,27 @@ static void SetAlphaMax( GDALWarpOptions* psOptions,
                          GDALRasterBandH hBand,
                          const char* pszKey )
 {
-    const char* pszNBits = GDALGetMetadataItem(
-                            hBand, "NBITS", "IMAGE_STRUCTURE" );
+    const char* pszNBits =
+        GDALGetMetadataItem(hBand, "NBITS", "IMAGE_STRUCTURE");
+    const char *pszAlphaMax = NULL;
     if( pszNBits )
     {
-        psOptions->papszWarpOptions = CSLSetNameValue(
-            psOptions->papszWarpOptions, pszKey,
-            CPLSPrintf("%u", (1U << atoi(pszNBits)) - 1U) );
+        pszAlphaMax = CPLSPrintf("%u", (1U << atoi(pszNBits)) - 1U);
     }
     else if( GDALGetRasterDataType( hBand ) == GDT_Int16 )
     {
-        psOptions->papszWarpOptions = CSLSetNameValue(
-            psOptions->papszWarpOptions, pszKey, "32767" );
+        pszAlphaMax = "32767";
     }
     else if( GDALGetRasterDataType( hBand ) == GDT_UInt16 )
     {
-        psOptions->papszWarpOptions = CSLSetNameValue(
-            psOptions->papszWarpOptions,pszKey, "65535" );
+        pszAlphaMax = "65535";
+    } else {
+        CPLDebug("WARP", "SetAlphaMax: AlphaMax not set.");
     }
+
+    if( pszAlphaMax != NULL )
+        psOptions->papszWarpOptions = CSLSetNameValue(
+            psOptions->papszWarpOptions, pszKey, pszAlphaMax);
 }
 
 /************************************************************************/
@@ -620,9 +623,10 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     if( psOptions->hSrcDS != NULL &&
         psOptions->nSrcAlphaBand > 0 &&
         psOptions->nSrcAlphaBand <= GDALGetRasterCount(psOptions->hSrcDS) &&
-        CSLFetchNameValue( psOptions->papszWarpOptions, "SRC_ALPHA_MAX" ) == NULL )
+        CSLFetchNameValue( psOptions->papszWarpOptions,
+                           "SRC_ALPHA_MAX" ) == NULL )
     {
-        GDALRasterBandH hSrcAlphaBand =  GDALGetRasterBand(
+        GDALRasterBandH hSrcAlphaBand = GDALGetRasterBand(
                           psOptions->hSrcDS, psOptions->nSrcAlphaBand);
         SetAlphaMax( psOptions, hSrcAlphaBand, "SRC_ALPHA_MAX" );
     }
@@ -633,10 +637,11 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     if( psOptions->hDstDS != NULL &&
         psOptions->nDstAlphaBand > 0 &&
         psOptions->nDstAlphaBand <= GDALGetRasterCount(psOptions->hDstDS) &&
-        CSLFetchNameValue( psOptions->papszWarpOptions, "DST_ALPHA_MAX" ) == NULL )
+        CSLFetchNameValue( psOptions->papszWarpOptions,
+                           "DST_ALPHA_MAX" ) == NULL )
     {
-        GDALRasterBandH hDstAlphaBand =  GDALGetRasterBand(
-                          psOptions->hDstDS, psOptions->nDstAlphaBand);
+        GDALRasterBandH hDstAlphaBand = GDALGetRasterBand(
+            psOptions->hDstDS, psOptions->nDstAlphaBand);
         SetAlphaMax( psOptions, hDstAlphaBand, "DST_ALPHA_MAX" );
     }
 
@@ -647,7 +652,9 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
         eErr = CE_Failure;
 
     if( eErr != CE_None )
+    {
         WipeOptions();
+    }
     else
     {
         psThreadData = GWKThreadsCreate(psOptions->papszWarpOptions,
@@ -671,9 +678,7 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
 GDALWarpOperationH GDALCreateWarpOperation(
     const GDALWarpOptions *psNewOptions )
 {
-    GDALWarpOperation *poOperation;
-
-    poOperation = new GDALWarpOperation;
+    GDALWarpOperation *poOperation = new GDALWarpOperation;
     if ( poOperation->Initialize( psNewOptions ) != CE_None )
     {
         delete poOperation;
@@ -750,9 +755,11 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 
-    /* Sort chucks from top to bottom, and for equal y, from left to right */
+    // Sort chucks from top to bottom, and for equal y, from left to right.
+    // TODO(schwehr): Use std::sort.
     if( pasChunkList )
-        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk);
+        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
+              OrderWarpChunk);
 
 /* -------------------------------------------------------------------- */
 /*      Total up output pixels to process.                              */
@@ -925,9 +932,11 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
     WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 
-    /* Sort chucks from top to bottom, and for equal y, from left to right */
+    // Sort chucks from top to bottom, and for equal y, from left to right.
+    // TODO(schwehr): Use std::sort.
     if( pasChunkList )
-        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk), OrderWarpChunk);
+        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
+              OrderWarpChunk);
 
 /* -------------------------------------------------------------------- */
 /*      Process them one at a time, updating the progress               */
@@ -1341,8 +1350,10 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
  * @param nSrcYOff source window Y offset (computed if window all zero)
  * @param nSrcXSize source window X size (computed if window all zero)
  * @param nSrcYSize source window Y size (computed if window all zero)
- * @param nSrcXExtraSize  Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation
- * @param nSrcYExtraSize  Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation
+ * @param nSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
+ * for filter window. Should be ignored in scale computation
+ * @param nSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
+ * for filter window. Should be ignored in scale computation
  * @param dfProgressBase minimum progress value reported
  * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
  *                        maximum progress value reported
@@ -1436,7 +1447,8 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
             {
                 memset( pBandData, 0, nBandSize );
             }
-            else if( !CPLIsNan(adfInitRealImag[1]) && adfInitRealImag[1] == 0.0 )
+            else if( !CPLIsNan(adfInitRealImag[1]) &&
+                     adfInitRealImag[1] == 0.0 )
             {
                 GDALCopyWords( &adfInitRealImag, GDT_Float64, 0,
                                pBandData,psOptions->eWorkingDataType,nWordSize,
@@ -1462,23 +1474,25 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
     {
         if( psOptions->nBandCount == 1 )
         {
-            // Particular case to simplify the stack a bit...
+            // Particular case to simplify the stack a bit.
+            // TODO(rouault): Need an explanation of what and why r34502 helps.
             eErr = poDstDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
-                  GF_Read,
-                  nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                  pDstBuffer, nDstXSize, nDstYSize,
-                  psOptions->eWorkingDataType,
-                  0, 0, NULL );
+                GF_Read,
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                pDstBuffer, nDstXSize, nDstYSize,
+                psOptions->eWorkingDataType,
+                0, 0, NULL);
         }
         else
         {
-            eErr = poDstDS->RasterIO( GF_Read,
-                                    nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                                    pDstBuffer, nDstXSize, nDstYSize,
-                                    psOptions->eWorkingDataType,
-                                    psOptions->nBandCount,
-                                    psOptions->panDstBands,
-                                    0, 0, 0, NULL );
+            eErr = poDstDS->RasterIO(
+                GF_Read,
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize,
+                pDstBuffer, nDstXSize, nDstYSize,
+                psOptions->eWorkingDataType,
+                psOptions->nBandCount,
+                psOptions->panDstBands,
+                0, 0, 0, NULL);
         }
 
         if( eErr != CE_None )
@@ -1633,8 +1647,10 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
  * @param nSrcYOff source window Y offset (computed if window all zero)
  * @param nSrcXSize source window X size (computed if window all zero)
  * @param nSrcYSize source window Y size (computed if window all zero)
- * @param nSrcXExtraSize  Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation
- * @param nSrcYExtraSize  Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation
+ * @param nSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
+ * for filter window. Should be ignored in scale computation
+ * @param nSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
+ * for filter window. Should be ignored in scale computation
  * @param dfProgressBase minimum progress value reported
  * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
  *                        maximum progress value reported
