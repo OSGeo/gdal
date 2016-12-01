@@ -405,7 +405,6 @@ typedef struct {
 
 } DGNElemCone;
 
-
 /**
  * Text Node Header.
  *
@@ -419,22 +418,21 @@ typedef struct {
 typedef struct {
   DGNElemCore core;   /* must be at first position ! */
 
-  int       totlength; 	 	/*!<  Total length of the node
-				      (bytes = totlength * 2 + 38) */
-  int       numelems;    	/*!<  Number of text strings */
-  int       node_number; 	/*!<  text node number */
-  short     max_length;  	/*!<  maximum length allowed, characters */
-  short     max_used;    	/*!<  maximum length used */
-  short	    font_id;     	/*!<  text font used */
-  short     justification; 	/*!<  justification type, see DGNJ_ */
-  long      line_spacing; 	/*!<  spacing between text strings */
-  double    length_mult; 	/*!<  length multiplier */
-  double    height_mult; 	/*!<  height multiplier */
-  double    rotation;    	/*!<  rotation angle (2d)*/
-  DGNPoint  origin;       	/*!<  Snap origin (as defined by user) */
+  int       totlength;          /*!<  Total length of the node
+                                      (bytes = totlength * 2 + 38) */
+  int       numelems;           /*!<  Number of text strings */
+  int       node_number;        /*!<  text node number */
+  short     max_length;         /*!<  maximum length allowed, characters */
+  short     max_used;           /*!<  maximum length used */
+  short     font_id;            /*!<  text font used */
+  short     justification;      /*!<  justification type, see DGNJ_ */
+  long      line_spacing;       /*!<  spacing between text strings */
+  double    length_mult;        /*!<  length multiplier */
+  double    height_mult;        /*!<  height multiplier */
+  double    rotation;           /*!<  rotation angle (2d)*/
+  DGNPoint  origin;             /*!<  Snap origin (as defined by user) */
 
 } DGNElemTextNode;
-
 
 /**
  * B-Spline Surface Header element
@@ -518,7 +516,6 @@ typedef struct {
                              header. */
 } DGNElemKnotWeight;
 
-
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -576,7 +573,6 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemSharedCellDefn structure */
 #define DGNST_SHARED_CELL_DEFN         18
-
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
@@ -644,7 +640,6 @@ typedef struct {
 #define DGNSOT_VOLUME_OF_PROJECTION     0
 #define DGNSOT_VOLUME_OF_REVOLUTION     1
 #define DGNSOT_BOUNDED_VOLUME           2
-
 
 /* -------------------------------------------------------------------- */
 /*      Class                                                           */

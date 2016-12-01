@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implement importFromDict() method to read a WKT SRS from a
@@ -28,9 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "ogr_spatialref.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -95,10 +101,10 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             continue;
         }
 
-        if( strstr(pszLine,",") == NULL )
+        if( strstr(pszLine, ",") == NULL )
             continue;
 
-        if( EQUALN(pszLine,pszCode,strlen(pszCode))
+        if( EQUALN(pszLine, pszCode, strlen(pszCode))
             && pszLine[strlen(pszCode)] == ',' )
         {
             char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
@@ -119,6 +125,31 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /************************************************************************/
 /*                         OSRImportFromDict()                          */
 /************************************************************************/
+
+/**
+ * Read SRS from WKT dictionary.
+ *
+ * This method will attempt to find the indicated coordinate system identity
+ * in the indicated dictionary file.  If found, the WKT representation is
+ * imported and used to initialize this OGRSpatialReference.
+ *
+ * More complete information on the format of the dictionary files can
+ * be found in the epsg.wkt file in the GDAL data tree.  The dictionary
+ * files are searched for in the "GDAL" domain using CPLFindFile().  Normally
+ * this results in searching /usr/local/share/gdal or somewhere similar.
+ *
+ * This method is the same as the C++ method
+ * OGRSpatialReference::importFromDict().
+ *
+ * @param hSRS spatial reference system handle.
+ *
+ * @param pszDictFile the name of the dictionary file to load.
+ *
+ * @param pszCode the code to lookup in the dictionary.
+ *
+ * @return OGRERR_NONE on success, or OGRERR_SRS_UNSUPPORTED if the code isn't
+ * found, and OGRERR_SRS_FAILURE if something more dramatic goes wrong.
+ */
 
 OGRErr OSRImportFromDict( OGRSpatialReferenceH hSRS,
                           const char *pszDictFile,

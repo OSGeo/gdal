@@ -60,19 +60,19 @@ typedef enum {
 
 class Msg_reader_core {
 public:
-    Msg_reader_core(const char* fname);
-    Msg_reader_core(FILE* fp);
-    virtual ~Msg_reader_core(void) {};
+    explicit Msg_reader_core(const char* fname);
+    explicit Msg_reader_core(FILE* fp);
+    virtual ~Msg_reader_core() {};
 
-    bool get_open_success(void) { return _open_success; }
+    bool get_open_success() { return _open_success; }
 
     #ifndef GDAL_SUPPORT
     virtual void radiance_to_blackbody(int using_chan_no = 0) = 0;   // can override which channel's parameters to use
     virtual double* get_data(int chan_no=0) = 0;
     #endif
 
-    unsigned int get_lines(void) { return _lines; }
-    unsigned int get_columns(void) { return _columns; }
+    unsigned int get_lines() { return _lines; }
+    unsigned int get_columns() { return _columns; }
 
     void get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude); // x and y relative to this image, not full disc image
     void get_pixel_geo_coordinates(double line, double column, double& longitude, double& latitude); // x and y relative to this image, not full disc image
@@ -80,35 +80,35 @@ public:
 
     static const Blackbody_lut_type Blackbody_LUT[MSG_NUM_CHANNELS+1];
 
-    unsigned int get_year(void) { return _year; }
-    unsigned int get_month(void) { return _month; }
-    unsigned int get_day(void) { return _day; }
-    unsigned int get_hour(void) { return _hour; }
-    unsigned int get_minute(void) { return _minute; }
+    unsigned int get_year() { return _year; }
+    unsigned int get_month() { return _month; }
+    unsigned int get_day() { return _day; }
+    unsigned int get_hour() { return _hour; }
+    unsigned int get_minute() { return _minute; }
 
-    unsigned int get_line_start(void) { return _line_start; }
-    unsigned int get_col_start(void) { return _col_start; }
+    unsigned int get_line_start() { return _line_start; }
+    unsigned int get_col_start() { return _col_start; }
 
-    float get_col_dir_step(void) { return _col_dir_step; }
-    float get_line_dir_step(void) { return _line_dir_step; }
+    float get_col_dir_step() { return _col_dir_step; }
+    float get_line_dir_step() { return _line_dir_step; }
 
-    unsigned int get_f_data_offset(void) { return _f_data_offset; }
-    unsigned int get_visir_bytes_per_line(void) { return _visir_bytes_per_line; }
-    unsigned int get_visir_packet_size(void) { return _visir_packet_size; }
-    unsigned int get_hrv_bytes_per_line(void) { return _hrv_bytes_per_line; }
-    unsigned int get_hrv_packet_size(void) { return _hrv_packet_size; }
-    unsigned int get_interline_spacing(void) { return _interline_spacing; }
+    unsigned int get_f_data_offset() { return _f_data_offset; }
+    unsigned int get_visir_bytes_per_line() { return _visir_bytes_per_line; }
+    unsigned int get_visir_packet_size() { return _visir_packet_size; }
+    unsigned int get_hrv_bytes_per_line() { return _hrv_bytes_per_line; }
+    unsigned int get_hrv_packet_size() { return _hrv_packet_size; }
+    unsigned int get_interline_spacing() { return _interline_spacing; }
 
-    unsigned char* get_band_map(void) { return _bands; }
+    unsigned char* get_band_map() { return _bands; }
 
-    CALIBRATION*  get_calibration_parameters(void) { return _calibration; }
+    CALIBRATION*  get_calibration_parameters() { return _calibration; }
 
 private:
     void read_metadata_block(FILE* fp);
 
 protected:
 
-    int _chan_to_idx(Msg_channel_names channel);
+    static int _chan_to_idx(Msg_channel_names channel);
 
     unsigned int    _lines;
     unsigned int    _columns;

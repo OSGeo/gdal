@@ -32,7 +32,7 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
-CPP_GDALWMSMiniDriverFactory(TiledWMS)
+CPL_CVSID("$Id$");
 
 static const char SIG[]="GDAL_WMS TiledWMS: ";
 
@@ -59,7 +59,6 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
     ce.c4= static_cast<short>(getXMLNum(p,"c4","255"));
     return ce;
 }
-
 
 /************************************************************************/
 /*                           SearchXMLSiblings()                        */
@@ -163,12 +162,12 @@ static CPLXMLNode *SearchLeafGroupName( CPLXMLNode *psRoot, const char *name )
 static GDALColorInterp BandInterp(int nbands, int band) {
     switch (nbands) {
       case 1: return GCI_GrayIndex;
-      case 2: return ((band==1)?GCI_GrayIndex:GCI_AlphaBand);
+      case 2: return band == 1 ? GCI_GrayIndex : GCI_AlphaBand;
       case 3: // RGB
       case 4: // RBGA
         if (band<3)
-            return ((band==1)?GCI_RedBand:GCI_GreenBand);
-        return ((band==3)?GCI_BlueBand:GCI_AlphaBand);
+            return band == 1 ? GCI_RedBand : GCI_GreenBand;
+        return band == 3 ? GCI_BlueBand : GCI_AlphaBand;
       default:
         return GCI_Undefined;
     }
@@ -270,19 +269,18 @@ static void FindChangePattern( char *cdata,char **substs, char **keys, CPLString
     CSLDestroy(papszTokens);
 }
 
-GDALWMSMiniDriver_TiledWMS::GDALWMSMiniDriver_TiledWMS() :
+WMSMiniDriver_TiledWMS::WMSMiniDriver_TiledWMS() :
     m_requests(NULL),
     m_bsx(0),
     m_bsy(0)
-{ }
+{}
 
-GDALWMSMiniDriver_TiledWMS::~GDALWMSMiniDriver_TiledWMS() {
+WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS() {
     CSLDestroy(m_requests);
 }
 
-
 // Returns the scale of a WMS request as compared to the base resolution
-double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
+double WMSMiniDriver_TiledWMS::Scale(const char *request) {
     int bbox=FindBbox(request);
     if (bbox<0) return 0;
     double x,y,X,Y;
@@ -290,9 +288,8 @@ double GDALWMSMiniDriver_TiledWMS::Scale(const char *request) {
     return (m_data_window.m_x1-m_data_window.m_x0)/(X-x)*m_bsx/m_data_window.m_sx;
 }
 
-
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
-CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
+CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
 {
     CPLString req;
     double scale=-1;
@@ -319,7 +316,7 @@ CPLString GDALWMSMiniDriver_TiledWMS::GetLowestScale(char **& list,int i)
  *\Brief Initialize minidriver with info from the server
  */
 
-CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
+CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
     CPLXMLNode *tileServiceConfig=NULL;
@@ -496,8 +493,10 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
             }
 
             if ((entries>0)&&(entries<257)) {
-                int start_idx, end_idx;
-                GDALColorEntry ce_start={0,0,0,255},ce_end={0,0,0,255};
+                int start_idx;
+                int end_idx;
+                GDALColorEntry ce_start = { 0, 0, 0, 255 };
+                GDALColorEntry ce_end = { 0, 0, 0, 255 };
 
                 // Create it and initialize it to nothing
                 poColorTable = new GDALColorTable(eInterp);
@@ -541,8 +540,10 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
         int overview_count=0;
         CPLXMLNode *Pattern=TG->psChild;
 
-        m_bsx=m_bsy=-1;
-        m_data_window.m_sx=m_data_window.m_sy=0;
+        m_bsx = -1;
+        m_bsy = -1;
+        m_data_window.m_sx = 0;
+        m_data_window.m_sy = 0;
 
         for (int once2=1;once2;once2--) { // Something to break out of
             while ((NULL!=Pattern)&&(NULL!=(Pattern=SearchXMLSiblings(Pattern,"=TilePattern")))) {
@@ -608,7 +609,6 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
                     "%s Overlay size %dX%d can't be used due to alignment",SIG,sx,sy);
 
                 Pattern=Pattern->psNext;
-
             }
 
             // The tlevel is needed, the tx and ty are not used by this minidriver
@@ -674,7 +674,7 @@ CPLErr GDALWMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config)
     return ret;
 }
 
-void GDALWMSMiniDriver_TiledWMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_TiledWMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 1;
@@ -682,13 +682,12 @@ void GDALWMSMiniDriver_TiledWMS::GetCapabilities(GDALWMSMiniDriverCapabilities *
     caps->m_max_overview_count = 32;
 }
 
-
 // not called
-void GDALWMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_TiledWMS::ImageRequest(CPL_UNUSED CPLString *url,
                                               CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void WMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     *url = m_base_url;
     URLAppend(url,CSLGetField(m_requests,-tiri.m_level));
     URLSearchAndReplace(url,"${GDAL_BBOX}","%013.8f,%013.8f,%013.8f,%013.8f",
@@ -696,6 +695,6 @@ void GDALWMSMiniDriver_TiledWMS::TiledImageRequest(CPLString *url, const GDALWMS
     URLAppend(url,m_end_url);
 }
 
-const char *GDALWMSMiniDriver_TiledWMS::GetProjectionInWKT() {
+const char *WMSMiniDriver_TiledWMS::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }

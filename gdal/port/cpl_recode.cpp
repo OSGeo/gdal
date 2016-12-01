@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode.cpp
  * Project:  CPL - Common Portability Library
@@ -24,7 +23,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -336,7 +340,6 @@ void CPLClearRecodeWarningFlags()
 #endif
     CPLClearRecodeStubWarningFlags();
 }
-
 
 /************************************************************************/
 /*                         CPLStrlenUTF8()                              */

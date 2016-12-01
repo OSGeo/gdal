@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogrwalk.h
+ * $Id: ogrwalk.h$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definition of classes for OGR Walk driver.
@@ -64,7 +64,7 @@ protected:
 
     OGRWalkDataSource    *poDS;
 
-    int                bGeomColumnWKB;
+    bool               bGeomColumnWKB;
     char               *pszGeomColumn;
     char               *pszFIDColumn;
 
@@ -78,18 +78,18 @@ protected:
 
 public:
                         OGRWalkLayer();
-                        ~OGRWalkLayer();
+                        virtual ~OGRWalkLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
     OGRFeature *        GetNextRawFeature();
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int         TestCapability( const char * ) { return FALSE; }
+    int         TestCapability( const char * ) override { return FALSE; }
 
-    virtual const char * GetFIDColumn ();
-    virtual const char * GetGeometryColumn ();
+    virtual const char * GetFIDColumn () override;
+    virtual const char * GetGeometryColumn () override;
 };
 
 /************************************************************************/
@@ -103,13 +103,13 @@ class OGRWalkTableLayer : public OGRWalkLayer
     void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *  GetStatement() override;
 
     OGREnvelope         sExtent;
 
 public:
-                        OGRWalkTableLayer( OGRWalkDataSource * );
-                        ~OGRWalkTableLayer();
+    explicit            OGRWalkTableLayer( OGRWalkDataSource * );
+                        virtual ~OGRWalkTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -119,16 +119,16 @@ public:
                                     double maxN,
                                     const char *pszMemo );
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * );
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
@@ -143,16 +143,16 @@ class OGRWalkSelectLayer : public OGRWalkLayer
     void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *  GetStatement() override;
 
   public:
                         OGRWalkSelectLayer( OGRWalkDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRWalkSelectLayer();
+                        virtual ~OGRWalkSelectLayer();
 
-    virtual void        ResetReading();
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual void        ResetReading() override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
@@ -166,30 +166,28 @@ class OGRWalkDataSource : public OGRDataSource
     OGRWalkLayer        **papoLayers;
     int                 nLayers;
 
-    int                 bDSUpdate;
     CPLODBCSession      oSession;
 
 public:
                         OGRWalkDataSource();
-                        ~OGRWalkDataSource();
+                        virtual ~OGRWalkDataSource();
 
     int                 Open( const char * , int );
 
-    const char            *GetName() { return pszName; }
-    int                    GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char            *GetName() override { return pszName; }
+    int                    GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                    TestCapability( const char * ) { return FALSE; }
+    int                    TestCapability( const char * ) override { return FALSE; }
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
+                                    const char *pszDialect ) override;
 
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     // For Internal Use
     CPLODBCSession     *GetSession() { return &oSession; }
-
 };
 
 /************************************************************************/
@@ -201,12 +199,12 @@ class OGRWalkDriver : public OGRODBCMDBDriver
 public:
                 ~OGRWalkDriver();
 
-    const char    *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char    *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
-    OGRDataSource *CreateDataSource( const char *, char ** );
+    OGRDataSource *CreateDataSource( const char *, char ** ) override;
 
-    int            TestCapability( const char * );
+    int            TestCapability( const char * ) override;
 };
 
 void RegisterOGRWalk();

@@ -60,7 +60,7 @@ class OGRVRTGeomFieldProps
         OGRwkbGeometryType  eGeomType;
         OGRSpatialReference *poSRS;
 
-        int                 bSrcClip;
+        bool                bSrcClip;
         OGRGeometry         *poSrcRegion;
 
         // Geometry interpretation related.
@@ -75,12 +75,11 @@ class OGRVRTGeomFieldProps
         int                 iGeomYField;
         int                 iGeomZField;
         int                 iGeomMField;
-        int                 bReportSrcColumn;
-        int                 bUseSpatialSubquery;
+        bool                bReportSrcColumn;
+        bool                bUseSpatialSubquery;
+        bool                bNullable;
 
         OGREnvelope         sStaticEnvelope;
-
-        int                 bNullable;
 
                         OGRVRTGeomFieldProps();
                        ~OGRVRTGeomFieldProps();
@@ -98,7 +97,7 @@ class OGRVRTLayer : public OGRLayer
     OGRVRTDataSource*   poDS;
     std::vector<OGRVRTGeomFieldProps*> apoGeomFieldProps;
 
-    int                 bHasFullInitialized;
+    bool                bHasFullInitialized;
     CPLString           osName;
     CPLXMLNode         *psLTree;
     CPLString           osVRTDirectory;
@@ -108,10 +107,10 @@ class OGRVRTLayer : public OGRLayer
     GDALDataset         *poSrcDS;
     OGRLayer            *poSrcLayer;
     OGRFeatureDefn      *poSrcFeatureDefn;
-    int                 bNeedReset;
-    int                 bSrcLayerFromSQL;
-    int                 bSrcDSShared;
-    int                 bAttrFilterPassThrough;
+    bool                bNeedReset;
+    bool                bSrcLayerFromSQL;
+    bool                bSrcDSShared;
+    bool                bAttrFilterPassThrough;
 
     char                *pszAttrFilter;
 
@@ -123,82 +122,82 @@ class OGRVRTLayer : public OGRLayer
     std::vector<int>    anSrcField;
     std::vector<int>    abDirectCopy;
 
-    int                 bUpdate;
+    bool                bUpdate;
 
     OGRFeature         *TranslateFeature( OGRFeature*& , int bUseSrcRegion );
     OGRFeature         *TranslateVRTFeatureToSrcFeature( OGRFeature* poVRTFeature);
 
-    int                 ResetSourceReading();
+    bool                ResetSourceReading();
 
-    int                 FullInitialize();
+    bool                FullInitialize();
 
     OGRFeatureDefn     *GetSrcLayerDefn();
     void                ClipAndAssignSRS(OGRFeature* poFeature);
 
     GIntBig             nFeatureCount;
 
-    int                 bError;
+    bool                bError;
 
-    int                 ParseGeometryField( CPLXMLNode* psNode,
+    bool                ParseGeometryField( CPLXMLNode* psNode,
                                             CPLXMLNode* psNodeParent,
                                             OGRVRTGeomFieldProps* poProps );
 
   public:
-                        OGRVRTLayer( OGRVRTDataSource* poDSIn );
+    explicit             OGRVRTLayer( OGRVRTDataSource* poDSIn );
     virtual             ~OGRVRTLayer();
 
-    int                FastInitialize( CPLXMLNode *psLTree,
+    bool               FastInitialize( CPLXMLNode *psLTree,
                                        const char *pszVRTDirectory,
                                        int bUpdate );
 
-    virtual const char  *GetName() { return osName.c_str(); }
-    virtual OGRwkbGeometryType GetGeomType();
+    virtual const char  *GetName() override { return osName.c_str(); }
+    virtual OGRwkbGeometryType GetGeomType() override;
 
 /* -------------------------------------------------------------------- */
 /*      Caution : all the below methods should care of calling          */
 /*      FullInitialize() if not already done                            */
 /* -------------------------------------------------------------------- */
 
-    virtual void        ResetReading();
-    virtual OGRFeature *GetNextFeature();
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig     GetFeatureCount( int );
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce = TRUE );
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce = TRUE ) override;
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
-                                   int bForce = TRUE );
+                                   int bForce = TRUE ) override;
 
-    virtual void        SetSpatialFilter( OGRGeometry *poGeomIn );
+    virtual void        SetSpatialFilter( OGRGeometry *poGeomIn ) override;
     virtual void        SetSpatialFilter( int iGeomField,
-                                          OGRGeometry *poGeomIn );
+                                          OGRGeometry *poGeomIn ) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
 
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    virtual OGRErr      SyncToDisk();
+    virtual OGRErr      SyncToDisk() override;
 
-    virtual const char *GetFIDColumn();
+    virtual const char *GetFIDColumn() override;
 
-    virtual OGRErr      StartTransaction();
-    virtual OGRErr      CommitTransaction();
-    virtual OGRErr      RollbackTransaction();
+    virtual OGRErr      StartTransaction() override;
+    virtual OGRErr      CommitTransaction() override;
+    virtual OGRErr      RollbackTransaction() override;
 
-    virtual OGRErr      SetIgnoredFields( const char **papszFields );
+    virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
 
     GDALDataset*        GetSrcDataset();
 };
@@ -240,13 +239,13 @@ class OGRVRTDataSource : public OGRDataSource
     OGRLayerPool*       poLayerPool;
 
     OGRVRTDataSource   *poParentDS;
-    int                 bRecursionDetected;
+    bool                bRecursionDetected;
 
   public:
-                        OGRVRTDataSource( GDALDriver *poDriver );
-                        ~OGRVRTDataSource();
+    explicit            OGRVRTDataSource( GDALDriver *poDriver );
+                        virtual ~OGRVRTDataSource();
 
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     OGRLayer*           InstantiateLayer( CPLXMLNode *psLTree,
                                           const char *pszVRTDirectory,
@@ -258,16 +257,16 @@ class OGRVRTDataSource : public OGRDataSource
                                                   int bUpdate,
                                                   int nRecLevel );
 
-    int                 Initialize( CPLXMLNode *psXML, const char *pszName,
+    bool                Initialize( CPLXMLNode *psXML, const char *pszName,
                                     int bUpdate );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    virtual char      **GetFileList();
+    virtual char      **GetFileList() override;
 
     // Anti-recursion mechanism for standard Open.
     void                SetCallLevel(int nCallLevelIn)
@@ -278,12 +277,13 @@ class OGRVRTDataSource : public OGRDataSource
         { poParentDS = poParentDSIn; }
     OGRVRTDataSource*   GetParentDS() { return poParentDS; }
 
-    void                SetRecursionDetected() { bRecursionDetected = TRUE; }
-    int                 GetRecursionDetected() { return bRecursionDetected; }
+    void                SetRecursionDetected() { bRecursionDetected = true; }
+    bool                GetRecursionDetected() const
+        { return bRecursionDetected; }
 
     // Anti-recursion mechanism for shared Open.
     void                AddForbiddenNames( const char* pszOtherDSName );
-    int                 IsInForbiddenNames( const char* pszOtherDSName );
+    bool                IsInForbiddenNames( const char* pszOtherDSName ) const;
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char* pszGType, int* pbError);

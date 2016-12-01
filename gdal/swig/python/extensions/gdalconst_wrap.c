@@ -10,6 +10,7 @@
 
 #define SWIGPYTHON
 #define SED_HACKS
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 /* -----------------------------------------------------------------------------
@@ -3834,6 +3835,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GMF_PER_DATASET",SWIG_From_int((int)(0x02)));
   SWIG_Python_SetConstant(d, "GMF_ALPHA",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GMF_NODATA",SWIG_From_int((int)(0x08)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED",SWIG_From_int((int)(0x01)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_DATA",SWIG_From_int((int)(0x02)));
+  SWIG_Python_SetConstant(d, "GDAL_DATA_COVERAGE_STATUS_EMPTY",SWIG_From_int((int)(0x04)));
   SWIG_Python_SetConstant(d, "GARIO_PENDING",SWIG_From_int((int)(GARIO_PENDING)));
   SWIG_Python_SetConstant(d, "GARIO_UPDATE",SWIG_From_int((int)(GARIO_UPDATE)));
   SWIG_Python_SetConstant(d, "GARIO_ERROR",SWIG_From_int((int)(GARIO_ERROR)));
@@ -3841,6 +3845,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "GTO_TIP",SWIG_From_int((int)(GTO_TIP)));
   SWIG_Python_SetConstant(d, "GTO_BIT",SWIG_From_int((int)(GTO_BIT)));
   SWIG_Python_SetConstant(d, "GTO_BSQ",SWIG_From_int((int)(GTO_BSQ)));
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

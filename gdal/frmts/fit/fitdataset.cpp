@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FIT Driver
  * Purpose:  Implement FIT Support - not using the SGI iflFIT library.
@@ -34,17 +33,17 @@
 #include "gdal_pam.h"
 #include "gstEndian.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
-#define FIT_WRITE
-
-#define FIT_PAGE_SIZE 128
+static const size_t FIT_PAGE_SIZE = 128;
 
 using namespace gstEndian;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				FITDataset				*/
+/*                              FITDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -54,8 +53,8 @@ class FITDataset : public GDALPamDataset
 {
     friend class FITRasterBand;
 
-    VSILFILE	*fp;
-    FITinfo	*info;
+    VSILFILE    *fp;
+    FITinfo     *info;
     double      adfGeoTransform[6];
 
   public:
@@ -65,13 +64,11 @@ class FITDataset : public GDALPamDataset
 //     virtual CPLErr GetGeoTransform( double * );
 };
 
-#ifdef FIT_WRITE
 static GDALDataset *FITCreateCopy(const char * pszFilename,
                                   GDALDataset *poSrcDS,
                                   int bStrict, char ** papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void * pProgressData );
-#endif // FIT_WRITE
 
 /************************************************************************/
 /* ==================================================================== */
@@ -93,33 +90,31 @@ class FITRasterBand : public GDALPamRasterBand
 public:
 
     FITRasterBand( FITDataset *, int nBandIn, int nBandsIn );
-    ~FITRasterBand();
+    virtual ~FITRasterBand();
 
     // should override RasterIO eventually.
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 //     virtual CPLErr WriteBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess );
-    virtual double GetMaximum( int *pbSuccess );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual double GetMinimum( int *pbSuccess ) override;
+    virtual double GetMaximum( int *pbSuccess ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
-
 
 /************************************************************************/
 /*                           FITRasterBand()                            */
 /************************************************************************/
 
 FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
-        recordSize(0),
-        numXBlocks(0),
-        numYBlocks(0),
-        bytesPerComponent(0),
-        bytesPerPixel(0),
-        tmpImage( NULL )
-
+    recordSize(0),
+    numXBlocks(0),
+    numYBlocks(0),
+    bytesPerComponent(0),
+    bytesPerPixel(0),
+    tmpImage( NULL )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
 /* -------------------------------------------------------------------- */
 /*      Get the GDAL data type.                                         */
@@ -133,9 +128,9 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     nBlockYSize = poDSIn->info->yPageSize;
 
 /* -------------------------------------------------------------------- */
-/*      Caculate the values for record offset calculations.             */
+/*      Calculate the values for record offset calculations.             */
 /* -------------------------------------------------------------------- */
-    bytesPerComponent = (GDALGetDataTypeSize(eDataType) / 8);
+    bytesPerComponent = GDALGetDataTypeSizeBytes(eDataType);
     if( bytesPerComponent == 0 )
         return;
     bytesPerPixel = nBandsIn * bytesPerComponent;
@@ -158,12 +153,10 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     /* ... */
 }
 
-
 FITRasterBand::~FITRasterBand()
 {
     VSIFree ( tmpImage );
 }
-
 
 /************************************************************************/
 /*                            IReadBlock()                              */
@@ -181,7 +174,6 @@ FITRasterBand::~FITRasterBand()
                     } \
     }
 
-
 #define COPY_YFIRST(t) { \
                 t *dstp = (t *) pImage; \
                 t *srcp = (t *) tmpImage; \
@@ -198,7 +190,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     uint64 tilenum = 0;
 
@@ -260,18 +252,18 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFSeekL( poFIT_DS->fp, offset, SEEK_SET ) == -1 ) {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FIT - 64bit file seek failure, handle=%p", poFIT_DS->fp );
-	    return CE_Failure;
+            return CE_Failure;
     }
 
     // XXX - should handle status
     // fast path is single component (ll?) - no copy needed
-    char *p;
     int fastpath = FALSE;
 
     if ((poFIT_DS->nBands == 1) && (poFIT_DS->info->space == 1)) // upper left
         fastpath = TRUE;
 
-    size_t nRead;
+    size_t nRead = 0;
+    char *p = NULL;
     if (! fastpath) {
         nRead = VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp );
         // offset to correct component to swap
@@ -286,7 +278,6 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         CPLError(CE_Failure, CPLE_FileIO, "Cannot read record");
         return CE_Failure;
     }
-
 
 #ifdef swapping
     unsigned long i = 0;
@@ -354,7 +345,6 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 yinc = 1;
             } // switch
 
-
             if (xinc == 1) {
                 xstart = 0;
                 xstop = nBlockXSize;
@@ -395,12 +385,12 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                          "FITRasterBand::IReadBlock unsupported "
                          "bytesPerComponent %lu", bytesPerComponent);
             } // switch
-
-        } // scan left/right first
-        else {
-            // scan up/down first
-
-            switch (poFIT_DS->info->space) {
+        } // Scan left/right first.
+        else
+        {
+            // Scan up/down first.
+            switch (poFIT_DS->info->space)
+            {
             case 5:
                 // iflLeftUpperOrigin -* from upper left corner
                 // scan down then right
@@ -473,10 +463,8 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                          "FITRasterBand::IReadBlock unsupported "
                          "bytesPerComponent %lu", bytesPerComponent);
             } // switch
-
-        } // scan up/down first
-
-    } // ! fastpath
+        } // Scan up/down first.
+    } // !fastpath
     return CE_None;
 }
 
@@ -489,7 +477,7 @@ CPLErr FITRasterBand::ReadBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     return CE_None;
 }
@@ -502,7 +490,7 @@ CPLErr FITRasterBand::WriteBlock( int nBlockXOff, int nBlockYOff,
                                  void * pImage )
 
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     return CE_None;
 }
@@ -557,7 +545,7 @@ double FITRasterBand::GetMaximum( int *pbSuccess )
 
 GDALColorInterp FITRasterBand::GetColorInterpretation()
 {
-    FITDataset	*poFIT_DS = (FITDataset *) poDS;
+    FITDataset *poFIT_DS = (FITDataset *) poDS;
 
     if ((! poFIT_DS) || (! poFIT_DS->info))
         return GCI_Undefined;
@@ -777,12 +765,13 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 /*                             FITDataset()                             */
 /************************************************************************/
 
-FITDataset::FITDataset() : fp( NULL ), info( NULL )
+FITDataset::FITDataset() :
+    fp( NULL ),
+    info( NULL )
 {
     adfGeoTransform[0] = 0.0; // x origin (top left corner)
     adfGeoTransform[1] = 1.0; // x pixel size
     adfGeoTransform[2] = 0.0;
-
     adfGeoTransform[3] = 0.0; // y origin (top left corner)
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0; // y pixel size
@@ -795,9 +784,9 @@ FITDataset::FITDataset() : fp( NULL ), info( NULL )
 FITDataset::~FITDataset()
 {
     FlushCache();
-    if (info)
+    if( info )
         delete(info);
-    if(fp)
+    if( fp )
     {
         if( VSIFCloseL(fp) != 0 )
         {
@@ -812,22 +801,22 @@ template< class T >
 class DeleteGuard
 {
 public:
-    DeleteGuard( T *p ) : _ptr( p ) { }
+    explicit DeleteGuard( T *p ) : _ptr( p ) { }
     ~DeleteGuard()
     {
-	    delete _ptr;
+        delete _ptr;
     }
 
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = NULL;
-	    return tmp;
+        _ptr = NULL;
+        return tmp;
     }
 
 private:
     T *_ptr;
-	// prevent default copy constructor and assignment operator
+    // prevent default copy constructor and assignment operator
     DeleteGuard( const DeleteGuard & );
     DeleteGuard &operator=( const DeleteGuard & );
 };
@@ -838,23 +827,23 @@ template< class T >
 class FreeGuard
 {
 public:
-    FreeGuard( T *p ) : _ptr( p ) { }
+    explicit FreeGuard( T *p ) : _ptr( p ) { }
     ~FreeGuard()
     {
-	    if ( _ptr )
-			free( _ptr );
+        if ( _ptr )
+            free( _ptr );
     }
 
     T *take()
     {
         T *tmp = _ptr;
-	    _ptr = NULL;
-	    return tmp;
+        _ptr = NULL;
+        return tmp;
     }
 
 private:
     T *_ptr;
-	// prevent default copy constructor and assignment operator
+    // prevent default copy constructor and assignment operator
     FreeGuard( const FreeGuard & );
     FreeGuard &operator=( const FreeGuard & );
 };
@@ -866,13 +855,12 @@ private:
 GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*	First we check to see if the file has the expected header	*/
-/*	bytes.								*/
+/*      First we check to see if the file has the expected header       */
+/*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
 
     if( poOpenInfo->nHeaderBytes < 5 )
         return NULL;
-
 
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT01") &&
         !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT02") )
@@ -889,23 +877,23 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    FITDataset 	*poDS = new FITDataset();
+    FITDataset *poDS = new FITDataset();
     DeleteGuard<FITDataset> guard( poDS );
 
-	// re-open file for large file (64bit) access
+    // Re-open file for large file (64bit) access.
     if ( poOpenInfo->eAccess == GA_ReadOnly )
-	poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     else
-	poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
 
-    if ( !poDS->fp ) {
-	    CPLError( CE_Failure, CPLE_OpenFailed,
-		"Failed to re-open %s with FIT driver.\n",
-		poOpenInfo->pszFilename );
-	    return NULL;
+    if ( !poDS->fp )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to re-open %s with FIT driver.\n",
+                  poOpenInfo->pszFilename );
+        return NULL;
     }
     poDS->eAccess = poOpenInfo->eAccess;
-
 
     poDS->info = new FITinfo;
     FITinfo *info = poDS->info;
@@ -924,11 +912,11 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("FIT", "Loading file with header version 02");
 
         gst_swapb(head->minValue);
-	info->minValue = head->minValue;
+        info->minValue = head->minValue;
         gst_swapb(head->maxValue);
-	info->maxValue = head->maxValue;
+        info->maxValue = head->maxValue;
         gst_swapb(head->dataOffset);
-	info->dataOffset = head->dataOffset;
+        info->dataOffset = head->dataOffset;
 
         info->userOffset = sizeof(FIThead02);
     }
@@ -940,9 +928,9 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug("FIT", "Loading file with header version 01");
 
         // map old style header into new header structure
-	FIThead01* head01 = (FIThead01*)head;
+        FIThead01* head01 = (FIThead01*)head;
         gst_swapb(head->dataOffset);
-	info->dataOffset = head01->dataOffset;
+        info->dataOffset = head01->dataOffset;
 
         info->userOffset = sizeof(FIThead01);
     }
@@ -1008,7 +996,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check if 64 bit seek is needed.                                 */
 /* -------------------------------------------------------------------- */
     uint64 bytesPerComponent =
-        (GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8);
+        GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8;
     uint64 bytesPerPixel = head->cSize * bytesPerComponent;
     uint64 recordSize = bytesPerPixel * head->xPageSize *
         head->yPageSize;
@@ -1091,7 +1079,6 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                           FITCreateCopy()                            */
 /************************************************************************/
 
-#ifdef FIT_WRITE
 static GDALDataset *FITCreateCopy(const char * pszFilename,
                                   GDALDataset *poSrcDS,
                                   int bStrict, char ** papszOptions,
@@ -1130,7 +1117,8 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /*      Generate header.                                                */
 /* -------------------------------------------------------------------- */
     // XXX - should FIT_PAGE_SIZE be based on file page size ??
-    int size = MAX(sizeof(FIThead02), FIT_PAGE_SIZE);
+
+    const size_t size = std::max(sizeof(FIThead02), FIT_PAGE_SIZE);
     FIThead02 *head = (FIThead02 *) malloc(size);
     FreeGuard<FIThead02> guardHead( head );
 
@@ -1215,7 +1203,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     // XXX - need to check all bands
     head->maxValue = firstBand->GetMaximum();
     gst_swapb(head->maxValue);
-    head->dataOffset = size;
+    head->dataOffset = static_cast<unsigned int>(size);
     gst_swapb(head->dataOffset);
 
     CPL_IGNORE_RET_VAL(VSIFWriteL(head, size, 1, fpImage));
@@ -1340,7 +1328,6 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     return poDS;
 }
-#endif // FIT_WRITE
 
 /************************************************************************/
 /*                           GetGeoTransform()                          */
@@ -1350,7 +1337,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 // {
 //     CPLDebug("FIT", "FITDataset::GetGeoTransform");
 //     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-//     return( CE_None );
+//     return CE_None;
 // }
 
 /************************************************************************/
@@ -1373,12 +1360,10 @@ void GDALRegister_FIT()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = FITDataset::Open;
-#ifdef FIT_WRITE
     poDriver->pfnCreateCopy = FITCreateCopy;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 "
                                "Float32 Float64" );
-#endif // FIT_WRITE
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

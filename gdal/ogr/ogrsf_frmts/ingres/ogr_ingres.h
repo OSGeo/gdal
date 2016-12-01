@@ -46,9 +46,9 @@ public:
     II_PTR            hStmt;
     II_PTR            hTransaction;
 
-    IIAPI_GETDESCRPARM	getDescrParm;
-    IIAPI_GETCOLPARM	getColParm;
-    IIAPI_DATAVALUE	*pasDataBuffer;
+    IIAPI_GETDESCRPARM  getDescrParm;
+    IIAPI_GETCOLPARM    getColParm;
+    IIAPI_DATAVALUE     *pasDataBuffer;
     IIAPI_GETQINFOPARM  queryInfo;
 
     GByte             *pabyWrkBuffer;
@@ -61,7 +61,7 @@ public:
     int               nParmLen;
     GByte            *pabyParmData;
 
-    OGRIngresStatement( II_PTR hConn );
+    explicit OGRIngresStatement( II_PTR hConn );
     ~OGRIngresStatement();
 
     void addInputParameter( IIAPI_DT_ID eDType, int nLength, GByte *pabyData );
@@ -113,20 +113,20 @@ class OGRIngresLayer : public OGRLayer
                         OGRIngresLayer();
     virtual             ~OGRIngresLayer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature( char **papszRow );
@@ -143,9 +143,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadTableDefinition(const char *);
 
-    void                BuildWhere(void);
-    char               *BuildFields(void);
-    void                BuildFullQueryStatement(void);
+    void                BuildWhere();
+    char               *BuildFields();
+    void                BuildFullQueryStatement();
 
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -160,33 +160,33 @@ class OGRIngresTableLayer : public OGRIngresLayer
                         OGRIngresTableLayer( OGRIngresDataSource *,
                                          const char * pszName,
                                          int bUpdate, int nSRSId = -2 );
-                        ~OGRIngresTableLayer();
+                        virtual ~OGRIngresTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
 
 //    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 //    virtual GIntBig     GetFeatureCount( int );
 
-    void                SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    void                SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -195,12 +195,9 @@ class OGRIngresTableLayer : public OGRIngresLayer
 
 class OGRIngresResultLayer : public OGRIngresLayer
 {
-    void                BuildFullQueryStatement(void);
+    void                BuildFullQueryStatement();
 
     char                *pszRawStatement;
-
-    // Layer srid.
-    int                 nSRSId;
 
     int                 nFeatureCount;
 
@@ -212,9 +209,8 @@ class OGRIngresResultLayer : public OGRIngresLayer
 
     OGRFeatureDefn     *ReadResultDefinition();
 
-
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 };
 
 /************************************************************************/
@@ -232,7 +228,7 @@ class OGRIngresDataSource : public OGRDataSource
 
     II_PTR              hConn;
 
-    int                 DeleteLayer( int iLayer );
+    int                 DeleteLayer( int iLayer ) override;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
@@ -242,48 +238,46 @@ class OGRIngresDataSource : public OGRDataSource
 
     OGRIngresLayer     *poActiveLayer; /* this layer has active transaction */
 
-    int					bNewIngres; /* TRUE if new spatial library */
+    int                 bNewIngres; /* TRUE if new spatial library */
 
   public:
                         OGRIngresDataSource();
-                        ~OGRIngresDataSource();
+                        virtual ~OGRIngresDataSource();
 
     II_PTR              GetConn() { return hConn; }
-
 
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
     OGRSpatialReference *FetchSRS( int nSRSId );
 
-    OGRErr              InitializeMetadataTables();
+    static OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *pszFullName,
                               char **papszOptions, int bUpdate );
     int                 OpenTable( const char *, int bUpdate );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                        OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
-
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                    const char *pszDialect ) override;
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     // nonstandard
 
     char               *LaunderName( const char * );
 
     void                EstablishActiveLayer( OGRIngresLayer * );
-    int					IsNewIngres();
+    int                 IsNewIngres();
 };
 
 /************************************************************************/
@@ -295,14 +289,13 @@ class OGRIngresDriver : public OGRSFDriver
     char         **ParseWrappedName( const char * );
 
   public:
-                ~OGRIngresDriver();
+    virtual ~OGRIngresDriver();
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    int                 TestCapability( const char * );
+                                             char ** = NULL ) override;
+    int                 TestCapability( const char * ) override;
 };
-
 
 #endif /* ndef OGR_PG_H_INCLUDED */

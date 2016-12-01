@@ -42,7 +42,7 @@ def run_func(func):
         result = func()
         print(result)
         return result
-    except SystemExit, x:
+    except SystemExit as x:
         import traceback
         traceback.print_exc()
 
@@ -88,11 +88,11 @@ def gdalurlopen(url, timeout = 10):
         handle = urllib2.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
         return handle
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         print('HTTP service for %s is down (HTTP Error: %d)' % (url, e.code))
         socket.setdefaulttimeout(old_timeout)
         return None
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         print('HTTP service for %s is down (HTTP Error: %s)' % (url, e.reason))
         socket.setdefaulttimeout(old_timeout)
         return None
@@ -174,11 +174,8 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     return ret
 
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False):
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
-    else:
-        val = ''
-    if val.find('mingw') < 0:
+    from gdaltest import is_travis_branch
+    if not is_travis_branch('mingw'):
         has_subprocess = False
         try:
             import subprocess
@@ -256,11 +253,8 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     return (ret_stdout, ret_stderr)
 
 def runexternal_out_and_err(cmd, check_memleak = True):
-    if 'TRAVIS_BRANCH' in os.environ:
-        val = os.environ['TRAVIS_BRANCH']
-    else:
-        val = ''
-    if val.find('mingw') < 0:
+    from gdaltest import is_travis_branch
+    if not is_travis_branch('mingw'):
         has_subprocess = False
         try:
             import subprocess

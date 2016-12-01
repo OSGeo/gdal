@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Native Reader
  * Purpose:  All code for EUMETSAT Archive format reader
@@ -33,6 +32,9 @@
 #include "ogr_spatialref.h"
 
 #include "msg_reader_core.h"
+
+#include <algorithm>
+
 using namespace msg_native_format;
 
 CPL_CVSID("$Id$");
@@ -67,9 +69,8 @@ class MSGNDataset : public GDALDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    CPLErr     GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
-
+    CPLErr     GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -89,7 +90,7 @@ class MSGNRasterBand : public GDALRasterBand
     unsigned int band_in_file;      // The effective index of the band in the file
     open_mode_type open_mode;
 
-    double  GetNoDataValue (int *pbSuccess=NULL) {
+    double  GetNoDataValue (int *pbSuccess=NULL) override {
         if (pbSuccess) {
             *pbSuccess = 1;
         }
@@ -104,32 +105,39 @@ class MSGNRasterBand : public GDALRasterBand
 
         MSGNRasterBand( MSGNDataset *, int , open_mode_type mode, int orig_band_no, int band_in_file);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
-    virtual const char* GetDescription() const { return band_description; }
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
+    virtual const char* GetDescription() const override { return band_description; }
 };
-
 
 /************************************************************************/
 /*                           MSGNRasterBand()                            */
 /************************************************************************/
 
-MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_type mode, int orig_band_noIn, int band_in_fileIn)
-
+MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn,
+                                open_mode_type mode, int orig_band_noIn,
+                                int band_in_fileIn ) :
+    packet_size(0),
+    bytes_per_line(0),
+    interline_spacing(poDSIn->msg_reader_core->get_interline_spacing()),
+    orig_band_no(orig_band_noIn),
+    band_in_file(band_in_fileIn),
+    open_mode(mode)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;                // GDAL's band number, i.e. always starts at 1
-    this->open_mode = mode;
-    this->orig_band_no = orig_band_noIn;
-    this->band_in_file = band_in_fileIn;
+    poDS = poDSIn;
+    nBand = nBandIn;  // GDAL's band number, i.e. always starts at 1.
 
-    snprintf(band_description, sizeof(band_description), "band %02d", orig_band_no);
+    snprintf(band_description, sizeof(band_description),
+             "band %02u", orig_band_no);
 
-    if (mode != MODE_RAD) {
+    if( mode != MODE_RAD )
+    {
         eDataType = GDT_UInt16;
         MSGN_NODATA_VALUE = 0;
-    } else {
+    }
+    else
+    {
         eDataType = GDT_Float64;
         MSGN_NODATA_VALUE = -1000;
     }
@@ -137,15 +145,16 @@ MSGNRasterBand::MSGNRasterBand( MSGNDataset *poDSIn, int nBandIn , open_mode_typ
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    if (mode != MODE_HRV) {
+    if( mode != MODE_HRV )
+    {
         packet_size = poDSIn->msg_reader_core->get_visir_packet_size();
         bytes_per_line = poDSIn->msg_reader_core->get_visir_bytes_per_line();
-    } else {
+    }
+    else
+    {
         packet_size = poDSIn->msg_reader_core->get_hrv_packet_size();
         bytes_per_line = poDSIn->msg_reader_core->get_hrv_bytes_per_line();
     }
-
-    interline_spacing = poDSIn->msg_reader_core->get_interline_spacing();
 }
 
 /************************************************************************/
@@ -161,8 +170,6 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     // invert y position
     int i_nBlockYOff = poDS->GetRasterYSize() - 1 - nBlockYOff;
-
-    char       *pszRecord;
 
     unsigned int data_length =  bytes_per_line + (unsigned int)sizeof(SUB_VISIRLINE);
     unsigned int data_offset = 0;
@@ -180,7 +187,7 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
     if( VSIFSeek( poGDS->fp, data_offset, SEEK_SET ) != 0 )
         return CE_Failure;
 
-    pszRecord = (char *) CPLMalloc(data_length);
+    char *pszRecord = (char *) CPLMalloc(data_length);
     size_t nread = VSIFRead( pszRecord, 1, data_length, poGDS->fp );
 
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
@@ -283,10 +290,11 @@ double MSGNRasterBand::GetMaximum(int *pbSuccess ) {
 /************************************************************************/
 
 MSGNDataset::MSGNDataset() :
-    fp(NULL)
+    fp(NULL),
+    msg_reader_core(NULL),
+    pszProjection(CPLStrdup(""))
 {
-    pszProjection = CPLStrdup("");
-    msg_reader_core = NULL;
+    std::fill_n(adfGeoTransform, CPL_ARRAYSIZE(adfGeoTransform), 0);
 }
 
 /************************************************************************/
@@ -328,7 +336,7 @@ CPLErr MSGNDataset::GetGeoTransform( double * padfTransform )
 const char *MSGNDataset::GetProjectionRef()
 
 {
-    return ( pszProjection );
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -390,7 +398,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    MSGNDataset        *poDS;
     FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
     if( fp == NULL ) {
         if (open_info != poOpenInfo) {
@@ -399,7 +406,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    poDS = new MSGNDataset();
+    MSGNDataset *poDS = new MSGNDataset();
 
     poDS->fp = fp;
 
@@ -426,7 +433,6 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nRasterXSize *= 3;
         poDS->nRasterYSize *= 3;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -505,12 +511,12 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadataItem("Radiometric parameters format", "offset slope");
     for (i=1; i < band_count; i++) {
-        snprintf(tagname, sizeof(tagname), "ch%02d_cal", band_map[i]);
+        snprintf(tagname, sizeof(tagname), "ch%02u_cal", band_map[i]);
         CPLsnprintf(field, sizeof(field), "%.12e %.12e", cal[band_map[i]-1].cal_offset, cal[band_map[i]-1].cal_slope);
         poDS->SetMetadataItem(tagname, field);
     }
 
-    snprintf(field, sizeof(field), "%04d%02d%02d/%02d:%02d",
+    snprintf(field, sizeof(field), "%04u%02u%02u/%02u:%02u",
         poDS->msg_reader_core->get_year(),
         poDS->msg_reader_core->get_month(),
         poDS->msg_reader_core->get_day(),
@@ -519,7 +525,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     );
     poDS->SetMetadataItem("Date/Time", field);
 
-    snprintf(field, sizeof(field), "%d %d",
+    snprintf(field, sizeof(field), "%u %u",
          poDS->msg_reader_core->get_line_start(),
          poDS->msg_reader_core->get_col_start()
     );
@@ -529,7 +535,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         delete open_info;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

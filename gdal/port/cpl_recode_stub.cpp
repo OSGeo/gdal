@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_recode_stub.cpp
  * Project:  CPL - Common Portability Library
@@ -30,7 +29,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,7 +79,7 @@ extern int CPLIsUTF8Stub( const char *, int );
 
 /************************************************************************/
 /* ==================================================================== */
-/*	Stub Implementation not depending on iconv() or WIN32 API.	*/
+/*      Stub Implementation not depending on iconv() or WIN32 API.      */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -447,7 +452,6 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
     return pwszResult;
 }
 
-
 /************************************************************************/
 /*                                 CPLIsUTF8()                          */
 /************************************************************************/
@@ -471,7 +475,7 @@ int CPLIsUTF8Stub(const char* pabyData, int nLen)
 
 /************************************************************************/
 /* ==================================================================== */
-/*	UTF.C code from FLTK with some modifications.                   */
+/*      UTF.C code from FLTK with some modifications.                   */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -579,7 +583,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   } else if (c == 0xef) {
     // 0xfffe and 0xffff are also illegal characters
     if (((unsigned char*)p)[1]==0xbf &&
-	((unsigned char*)p)[2]>=0xbe) goto FAIL;
+        ((unsigned char*)p)[2]>=0xbe) goto FAIL;
     goto UTF8_3;
 #endif
   } else if (c < 0xf0) {
@@ -600,8 +604,8 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
 #if STRICT_RFC3629
     // RFC 3629 says all codes ending in fffe or ffff are illegal:
     if ((p[1]&0xf)==0xf &&
-	((unsigned char*)p)[2] == 0xbf &&
-	((unsigned char*)p)[3] >= 0xbe) goto FAIL;
+        ((unsigned char*)p)[2] == 0xbf &&
+        ((unsigned char*)p)[3] >= 0xbe) goto FAIL;
 #endif
     return
       ((p[0] & 0x07) << 18) +
@@ -829,8 +833,8 @@ static unsigned utf8towc(const char* src, unsigned srclen,
       if (ucs < 0x10000) {
           dst[count] = (wchar_t)ucs;
       } else {
-	// make a surrogate pair:
-	if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
+        // make a surrogate pair:
+        if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
         dst[count] = (wchar_t)((((ucs-0x10000u)>>10)&0x3ff) | 0xd800);
         dst[++count] = (wchar_t)((ucs&0x3ff) | 0xdc00);
       }
@@ -974,7 +978,7 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
       dst[count++] = 0x80 | (char)(ucs & 0x3F);
 #ifdef _WIN32
     } else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
-	       src[i] >= 0xdc00 && src[i] <= 0xdfff) {
+               src[i] >= 0xdc00 && src[i] <= 0xdfff) {
       // surrogate pair
       unsigned ucs2 = src[i++];
       ucs = 0x10000U + ((ucs&0x3ff)<<10) + (ucs2&0x3ff);
@@ -982,8 +986,8 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
 #else
     } else if (ucs >= 0x10000) {
       if (ucs > 0x10ffff) {
-	ucs = 0xfffd;
-	goto J1;
+          ucs = 0xfffd;
+          goto J1;
       }
 #endif
       if (count+4 >= dstlen) {dst[count] = 0; count += 4; break;}
@@ -1011,7 +1015,7 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
       count += 2;
 #ifdef _WIN32
     } else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen-1 &&
-	       src[i+1] >= 0xdc00 && src[i+1] <= 0xdfff) {
+               src[i+1] >= 0xdc00 && src[i+1] <= 0xdfff) {
       // surrogate pair
       ++i;
 #else
@@ -1024,7 +1028,6 @@ static unsigned utf8fromwc(char* dst, unsigned dstlen,
   }
   return count;
 }
-
 
 /************************************************************************/
 /*                             utf8froma()                              */
@@ -1194,8 +1197,6 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page, unsigned dst_code
 
 #endif
 
-
-
 /*
 ** For now we disable the rest which is locale() related.  We may need
 ** parts of it later.
@@ -1228,8 +1229,8 @@ int utf8locale(void) {
     char* s;
     ret = 1; // assumme UTF-8 if no locale
     if (((s = getenv("LC_CTYPE")) && *s) ||
-	((s = getenv("LC_ALL"))   && *s) ||
-	((s = getenv("LANG"))     && *s)) {
+        ((s = getenv("LC_ALL"))   && *s) ||
+        ((s = getenv("LANG"))     && *s)) {
       ret = (strstr(s,"utf") || strstr(s,"UTF"));
     }
 #endif
@@ -1254,7 +1255,7 @@ int utf8locale(void) {
     It is copied and truncated as necessary to
     the destination buffer and \a srclen is always returned.  */
 unsigned utf8tomb(const char* src, unsigned srclen,
-		  char* dst, unsigned dstlen)
+                  char* dst, unsigned dstlen)
 {
   if (!utf8locale()) {
 #ifdef _WIN32
@@ -1275,8 +1276,7 @@ unsigned utf8tomb(const char* src, unsigned srclen,
     }
     // if it overflows or measuring length, get the actual length:
     if (dstlen==0 || ret >= dstlen-1)
-      ret =
-	WideCharToMultiByte(GetACP(), 0, buf, length, 0, 0, 0, 0);
+        ret = WideCharToMultiByte(GetACP(), 0, buf, length, 0, 0, 0, 0);
     if (buf != lbuf) free((void*)buf);
     return ret;
 #else
@@ -1329,7 +1329,7 @@ unsigned utf8tomb(const char* src, unsigned srclen,
     the locale.
 */
 unsigned utf8frommb(char* dst, unsigned dstlen,
-		    const char* src, unsigned srclen)
+                    const char* src, unsigned srclen)
 {
   if (!utf8locale()) {
 #ifdef _WIN32

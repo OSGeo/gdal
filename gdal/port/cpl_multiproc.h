@@ -101,7 +101,6 @@ const char CPL_DLL *CPLGetThreadingModel( void );
 
 int CPL_DLL CPLGetNumCPUs( void );
 
-
 typedef struct _CPLLock CPLLock;
 
 /* Currently LOCK_ADAPTIVE_MUTEX is Linux-only and LOCK_SPIN only available */
@@ -121,7 +120,6 @@ void  CPL_DLL  CPLReleaseLock( CPLLock* );
 void  CPL_DLL  CPLDestroyLock( CPLLock* );
 void  CPL_DLL  CPLLockSetDebugPerf( CPLLock*, int bEnableIn ); /* only available on x86/x86_64 with GCC for now */
 
-
 CPL_C_END
 
 #ifdef __cplusplus
@@ -137,23 +135,25 @@ CPL_C_END
 /* be a no-op. The parameter x should be a (void*) */
 #define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
 
+/** Object to hold a mutex */
 class CPL_DLL CPLMutexHolder
 {
   private:
     CPLMutex   *hMutex;
+    // Only used for debugging.
     const char *pszFile;
     int         nLine;
 
   public:
 
-    /* Instantiates the mutex if not already done. */
+    /** Instantiates the mutex if not already done. */
     CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__,
                     int nOptions = CPL_MUTEX_RECURSIVE);
 
-    /* This variant assumes the mutex has already been created. If not, it will */
-    /* be a no-op */
+    /** This variant assumes the mutex has already been created. If not, it will
+     * be a no-op */
     CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
@@ -168,6 +168,7 @@ class CPL_DLL CPLMutexHolder
 /* be a no-op. The parameter should be (CPLLock*) */
 #define CPLLockHolderOptionalLockD(x)  CPLLockHolder oHolder(x,__FILE__,__LINE__);
 
+/** Object to hold a lock */
 class CPL_DLL CPLLockHolder
 {
   private:
@@ -177,20 +178,19 @@ class CPL_DLL CPLLockHolder
 
   public:
 
-    /* Instantiates the lock if not already done. */
+    /** Instantiates the lock if not already done. */
     CPLLockHolder( CPLLock **phSpin, CPLLockType eType,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__);
 
-    /* This variant assumes the lock has already been created. If not, it will */
-    /* be a no-op */
+    /** This variant assumes the lock has already been created. If not, it will
+     * be a no-op */
     CPLLockHolder( CPLLock* hSpin,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
     ~CPLLockHolder();
 };
-
 
 #endif /* def __cplusplus */
 

@@ -39,21 +39,21 @@
 class ReflectanceCalculator
 {
 public:
-	ReflectanceCalculator(std::string sTimeStamp, double rRTOA);
-	virtual ~ReflectanceCalculator();
-	double rGetReflectance(double rRadiance, double rLat, double rLon) const;
+    ReflectanceCalculator(std::string sTimeStamp, double rRTOA);
+    virtual ~ReflectanceCalculator();
+    double rGetReflectance(double rRadiance, double rLat, double rLon) const;
 private:
-  double rZenithAngle(double phi, double rDeclin, double rHourAngle) const;
-	const double rDeclination() const;
+  static double rZenithAngle(double phi, double rDeclin, double rHourAngle);
+  double rDeclination() const;
   double rHourAngle(double lam) const;
-  const double rSunDistance() const;
-  int iDaysInYear(int iYear) const;
-	int iDaysInMonth(int iMonth, int iYear) const;
+  double rSunDistance() const;
+  static int iDaysInYear(int iYear);
+  static int iDaysInMonth(int iMonth, int iYear);
 
-	const double m_rRTOA; // solar irradiance on Top of Atmosphere
-	int m_iYear; // e.g. 2005
-	int m_iDay; // 1-365/366
-	double m_rHours; // 0-24
+    const double m_rRTOA; // solar irradiance on Top of Atmosphere
+    int m_iYear; // e.g. 2005
+    int m_iDay; // 1-365/366
+    double m_rHours; // 0-24
 };
 
 #endif // !defined(AFX_REFLECTANCECALCULATOR_H__C9960E01_2A1B_41F0_B903_7957F11618D2__INCLUDED_)

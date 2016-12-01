@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEG JFIF Driver
  * Purpose:  Implement JPEG read/write io indirection through VSI.
@@ -36,15 +35,14 @@ CPL_C_START
 #include "jerror.h"
 CPL_C_END
 
-
 /* Expanded data source object for stdio input */
 
 typedef struct {
-  struct jpeg_source_mgr pub;	/* public fields */
+  struct jpeg_source_mgr pub;   /* public fields */
 
-  VSILFILE * infile;		/* source stream */
-  JOCTET * buffer;		/* start of buffer */
-  boolean start_of_file;	/* have we gotten any data yet? */
+  VSILFILE * infile;            /* source stream */
+  JOCTET * buffer;              /* start of buffer */
+  boolean start_of_file;        /* have we gotten any data yet? */
 } my_source_mgr;
 
 typedef my_source_mgr * my_src_ptr;
@@ -67,7 +65,6 @@ init_source (j_decompress_ptr cinfo)
    */
   src->start_of_file = TRUE;
 }
-
 
 /*
  * Fill the input buffer --- called whenever buffer is emptied.
@@ -108,9 +105,12 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
-  if (nbytes <= 0) {
-    if (src->start_of_file)	/* Treat empty input file as fatal error */
-      ERREXIT(cinfo, JERR_INPUT_EMPTY);
+  if (nbytes == 0) {
+    if (src->start_of_file)  /* Treat empty input file as fatal error */
+    {
+        cinfo->err->msg_code = JERR_INPUT_EMPTY;
+        cinfo->err->error_exit((j_common_ptr) (cinfo));
+    }
     WARNMS(cinfo, JWRN_JPEG_EOF);
     /* Insert a fake EOI marker */
     src->buffer[0] = (JOCTET) 0xFF;
@@ -256,14 +256,14 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
    * This makes it unsafe to use this manager and a different source
    * manager serially with the same JPEG object.  Caveat programmer.
    */
-  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+  if (cinfo->src == NULL) {  /* first time for this JPEG object? */
     cinfo->src = (struct jpeg_source_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  sizeof(my_source_mgr));
+                                  sizeof(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
     src->buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  INPUT_BUF_SIZE * sizeof(JOCTET));
+                                  INPUT_BUF_SIZE * sizeof(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -281,7 +281,6 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
   src->pub.next_input_byte = NULL; /* until buffer loaded */
 }
 
-
 /* ==================================================================== */
 /*      The rest was derived from jdatadst.c                            */
 /* ==================================================================== */
@@ -291,8 +290,8 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, VSILFILE * infile)
 typedef struct {
   struct jpeg_destination_mgr pub; /* public fields */
 
-  VSILFILE * outfile;		/* target stream */
-  JOCTET * buffer;		/* start of buffer */
+  VSILFILE * outfile;           /* target stream */
+  JOCTET * buffer;              /* start of buffer */
 } my_destination_mgr;
 
 typedef my_destination_mgr * my_dest_ptr;
@@ -313,12 +312,11 @@ init_destination (j_compress_ptr cinfo)
   /* Allocate the output buffer --- it will be released when done with image */
   dest->buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
+                                  OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 }
-
 
 /*
  * Empty the output buffer --- called whenever buffer fills up.
@@ -361,7 +359,10 @@ empty_output_buffer (j_compress_ptr cinfo)
 #endif
 
   if (VSIFWriteL(dest->buffer, 1, bytes_to_write, dest->outfile) != bytes_to_write)
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+  {
+      cinfo->err->msg_code = JERR_FILE_WRITE;
+      cinfo->err->error_exit((j_common_ptr) (cinfo));
+  }
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -387,12 +388,17 @@ term_destination (j_compress_ptr cinfo)
   /* Write any data remaining in the buffer */
   if (datacount > 0) {
     if (VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
-      ERREXIT(cinfo, JERR_FILE_WRITE);
+    {
+        cinfo->err->msg_code = JERR_FILE_WRITE;
+        cinfo->err->error_exit((j_common_ptr) (cinfo));
+    }
   }
   if( VSIFFlushL(dest->outfile) != 0 )
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+  {
+      cinfo->err->msg_code = JERR_FILE_WRITE;
+      cinfo->err->error_exit((j_common_ptr) (cinfo));
+  }
 }
-
 
 /*
  * Prepare for output to a stdio stream.
@@ -411,10 +417,10 @@ jpeg_vsiio_dest (j_compress_ptr cinfo, VSILFILE * outfile)
    * manager serially with the same JPEG object, because their private object
    * sizes may be different.  Caveat programmer.
    */
-  if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
+  if (cinfo->dest == NULL) {  /* first time for this JPEG object? */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  sizeof(my_destination_mgr));
+                                  sizeof(my_destination_mgr));
   }
 
   dest = (my_dest_ptr) cinfo->dest;

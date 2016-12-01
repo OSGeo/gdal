@@ -45,14 +45,10 @@
 #include <map>
 #include <string>
 
-CPL_C_START
-void GDALRegister_ILWIS();
-CPL_C_END
-
-#define shUNDEF	-32767
+#define shUNDEF -32767
 #define iUNDEF  -2147483647
 #define flUNDEF ((float)-1e38)
-#define	rUNDEF  ((double)-1e308)
+#define rUNDEF  ((double)-1e308)
 
 enum ilwisStoreType
 {
@@ -66,9 +62,9 @@ enum ilwisStoreType
 class ValueRange
 {
 public:
-    ValueRange(double min, double max);	// step = 1
+    ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
-    ValueRange(std::string str);
+    explicit ValueRange(std::string str);
     std::string ToString();
     ilwisStoreType get_NeededStoreType() { return st; }
     double get_rLo() { return _rLo; }
@@ -119,13 +115,13 @@ public:
     int nSizePerPixel;
 
     ILWISRasterBand( ILWISDataset *, int );
-    ~ILWISRasterBand();
+    virtual ~ILWISRasterBand();
     CPLErr GetILWISInfo(std::string pszFileName);
     void ILWISOpen( std::string pszFilename);
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
-    virtual double GetNoDataValue( int *pbSuccess );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual double GetNoDataValue( int *pbSuccess ) override;
 
 private:
     void FillWithNoData(void * pImage);
@@ -135,17 +131,17 @@ private:
 };
 
 /************************************************************************/
-/*	                   ILWISDataset					*/
+/*                         ILWISDataset                                 */
 /************************************************************************/
 class ILWISDataset : public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;
     std::string pszIlwFileName;
-    char	 *pszProjection;
+    char         *pszProjection;
     double adfGeoTransform[6];
     int    bGeoDirty;
-    int		 bNewDataset;            /* product of Create() */
+    int    bNewDataset;            /* product of Create() */
     std::string pszFileType; //indicating the input dataset: Map/MapList
     CPLErr ReadProjection( std::string csyFileName);
     CPLErr WriteProjection();
@@ -154,7 +150,7 @@ class ILWISDataset : public GDALPamDataset
 
 public:
     ILWISDataset();
-    ~ILWISDataset();
+    virtual ~ILWISDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -169,13 +165,13 @@ public:
                                int nBands, GDALDataType eType,
                                char** papszParmList);
 
-    virtual CPLErr 	GetGeoTransform( double * padfTransform );
-    virtual CPLErr  SetGeoTransform( double * );
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr  SetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual void   FlushCache( void );
+    virtual void   FlushCache() override;
 };
 
 // IniFile.h: interface for the IniFile class.
@@ -194,7 +190,7 @@ typedef std::map<std::string, SectionEntries*> Sections;
 class IniFile
 {
 public:
-    IniFile(const std::string& filename);
+    explicit IniFile(const std::string& filename);
     virtual ~IniFile();
 
     void SetKeyValue(const std::string& section, const std::string& key, const std::string& value);

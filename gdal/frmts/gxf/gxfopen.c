@@ -29,6 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+
 #include <ctype.h>
 #include "gxfopen.h"
 
@@ -44,7 +46,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 /*                         GXFReadHeaderValue()                         */
 /*                                                                      */
-/*      Read one entry from the file header, and return it and it's     */
+/*      Read one entry from the file header, and return it and its      */
 /*      value in clean form.                                            */
 /************************************************************************/
 
@@ -72,7 +74,7 @@ static char **GXFReadHeaderValue( FILE * fp, char * pszHTitle )
 /*      Extract the title.  It should be terminated by some sort of     */
 /*      white space.                                                    */
 /* -------------------------------------------------------------------- */
-    for( i = 0; !isspace((unsigned char)pszLine[i]) && pszLine[i] != '\0' && i < 70; i++ ) {}
+    for( i = 0; i < 70 && !isspace((unsigned char)pszLine[i]) && pszLine[i] != '\0'; i++ ) {}
 
     strncpy( pszHTitle, pszLine, i );
     pszHTitle[i] = '\0';

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Generate Translator
  * Purpose:  Implements OGRARCGENDriver.
@@ -34,7 +33,6 @@ CPL_CVSID("$Id$");
 
 extern "C" void RegisterOGRARCGEN();
 
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -53,7 +51,7 @@ static GDALDataset *OGRARCGENDriverOpen( GDALOpenInfo* poOpenInfo )
     bool bFoundEOL = false;
     char* szFirstLine
         = CPLStrdup(reinterpret_cast<char *>( poOpenInfo->pabyHeader ) );
-    for(int i=0;szFirstLine[i] != '\0';i++)
+    for( int i = 0; szFirstLine[i] != '\0'; i++ )
     {
         if (szFirstLine[i] == '\n' || szFirstLine[i] == '\r')
         {
@@ -126,4 +124,3 @@ void RegisterOGRARCGEN()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

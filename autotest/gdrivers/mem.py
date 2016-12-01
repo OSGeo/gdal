@@ -499,6 +499,122 @@ def mem_9():
     return 'success'
 
 ###############################################################################
+# Test BuildOverviews()
+
+def mem_10():
+
+    # Error case: building overview on a 0 band dataset
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0 )
+    with gdaltest.error_handler():
+        ds.BuildOverviews('NEAR', [2])
+
+    # Requesting overviews when they are not
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1 )
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(-1) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(0) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Single band case
+    ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/byte.tif'))
+    for i in range(2):
+        ret = ds.BuildOverviews('NEAR', [2])
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ds.GetRasterBand(1).GetOverviewCount() != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs != 1087:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+    ret = ds.BuildOverviews('NEAR', [4])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 328:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ret = ds.BuildOverviews('NEAR', [2, 4])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 1087:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    if cs != 328:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = None
+
+    # Multiple band case
+    ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/rgbsmall.tif'))
+    ret = ds.BuildOverviews('NEAR', [2])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 5057:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
+    if cs != 5304:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    cs = ds.GetRasterBand(3).GetOverview(0).Checksum()
+    if cs != 5304:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    # Clean overviews
+    ds = gdal.GetDriverByName('MEM').CreateCopy('', gdal.Open('data/byte.tif'))
+    ret = ds.BuildOverviews('NEAR', [2])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = ds.BuildOverviews('NONE', [])
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverviewCount() != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -516,6 +632,7 @@ gdaltest_list = [
     mem_7,
     mem_8,
     mem_9,
+    mem_10,
     mem_cleanup ]
 
 if __name__ == '__main__':

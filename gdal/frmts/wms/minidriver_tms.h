@@ -28,18 +28,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(TMS)
+#include "wmsdriver.h"
 
-class GDALWMSMiniDriver_TMS : public GDALWMSMiniDriver {
+class WMSMiniDriver_TMS : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_TMS();
-    virtual ~GDALWMSMiniDriver_TMS();
+    WMSMiniDriver_TMS();
+    virtual ~WMSMiniDriver_TMS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:
     CPLString m_base_url;

@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "commonutils.h"
 #include "cpl_string.h"
+#include "gdal.h"
 #include "gnm.h"
+#include "gnm_priv.h"
 
 //#include "ogr_p.h"
 //#include "gnm.h"
@@ -93,27 +94,27 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
         const char *pszRFlag = "", *pszWFlag, *pszVirtualIO, *pszSubdatasets;
         char** papszMD = GDALGetMetadata( hDriver, NULL );
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_RASTER, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_RASTER, false ) )
             continue;
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_VECTOR, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_VECTOR, false ) )
             continue;
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_OPEN, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_OPEN, false ) )
             pszRFlag = "r";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATE, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_CREATE, false ) )
             pszWFlag = "w+";
-        else if( CSLFetchBoolean( papszMD, GDAL_DCAP_CREATECOPY, FALSE ) )
+        else if( CPLFetchBool( papszMD, GDAL_DCAP_CREATECOPY, false ) )
             pszWFlag = "w";
         else
             pszWFlag = "o";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DCAP_VIRTUALIO, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DCAP_VIRTUALIO, false ) )
             pszVirtualIO = "v";
         else
             pszVirtualIO = "";
 
-        if( CSLFetchBoolean( papszMD, GDAL_DMD_SUBDATASETS, FALSE ) )
+        if( CPLFetchBool( papszMD, GDAL_DMD_SUBDATASETS, false ) )
             pszSubdatasets = "s";
         else
             pszSubdatasets = "";
@@ -153,14 +154,14 @@ static void Usage(int bShort = TRUE)
     Usage(NULL, bShort);
 }
 
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         papszArgv[iArg], nExtraArg)); } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
@@ -387,7 +388,11 @@ int main( int nArgc, char ** papszArgv )
             exit(1);
         }
 
-        CPLAssert( poDriver != NULL);
+        if( poDriver == NULL )
+        {
+            CPLAssert( false );
+            exit(1);
+        }
 
         printf( "INFO: Open of `%s'\n      using driver `%s' successful.\n",
                     pszDataSource, poDriver->GetDescription() );
@@ -469,7 +474,6 @@ int main( int nArgc, char ** papszArgv )
                 }
             }
         }
-
     }
     else if(stOper == op_create)
     {
@@ -514,7 +518,7 @@ int main( int nArgc, char ** papszArgv )
 
         char** papszMD = poDriver->GetMetadata();
 
-        if( !CSLFetchBoolean( papszMD, GDAL_DCAP_GNM, FALSE ) )
+        if( !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
             Usage("not a GNM driver");
 
         poDS = (GNMNetwork*) poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
@@ -534,7 +538,6 @@ int main( int nArgc, char ** papszArgv )
                    "new dataset at %s\n", CPLFormFilename(pszPath,
                     pszNetworkName, NULL));
         }
-
     }
     else if(stOper == op_import)
     {
@@ -543,7 +546,6 @@ int main( int nArgc, char ** papszArgv )
 
         if(pszInputDataset == NULL)
             Usage("No input dataset name provided");
-
 
         // open
         poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
@@ -786,7 +788,6 @@ int main( int nArgc, char ** papszArgv )
         {
             printf("Features connected successfully\n");
         }
-
     }
     else if(stOper == op_delete)
     {

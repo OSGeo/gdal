@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the GDALDataset class.
@@ -38,20 +37,19 @@ CPL_CVSID("$Id$");
 /*                           ~OGRDataSource()                           */
 /************************************************************************/
 
-OGRDataSource::OGRDataSource()
-
-{
-}
+OGRDataSource::OGRDataSource() {}
 
 /************************************************************************/
 /*                         DestroyDataSource()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRDataSource::DestroyDataSource( OGRDataSource *poDS )
 
 {
     delete poDS;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           OGR_DS_Destroy()                           */

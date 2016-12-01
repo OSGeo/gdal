@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $
  *
  * Project:  DWG Translator
  * Purpose:  Implements OGRDWGLayer class.
@@ -49,7 +48,7 @@
 #include "DbFiler.h"
 #include "Ge/GeScale3d.h"
 
-CPL_CVSID("$Id: ogrdwglayer.cpp 22008 2011-03-22 19:45:20Z warmerdam $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
@@ -142,7 +141,6 @@ void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
     ResetReading();
 }
 
-
 /************************************************************************/
 /*                        ClearPendingFeatures()                        */
 /************************************************************************/
@@ -191,7 +189,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     OdDbHandle oHandle = poEntity->getDbHandle();
     poFeature->SetField( "EntityHandle", (const char *) oHandle.ascii() );
-
 
     if( poEntity->colorIndex() != 256 )
     {
@@ -299,7 +296,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     poFeature->SetField( "ExtendedEntity", osFullXData );
 
-
 #ifdef notdef
       // OCS vector.
       case 210:
@@ -313,7 +309,6 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
       case 230:
         oStyleProperties["230_N.dZ"] = pszValue;
         break;
-
 
       default:
         break;
@@ -487,7 +482,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma;
+    char* pszComma = NULL;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
@@ -619,7 +614,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma;
+    char* pszComma = NULL;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
@@ -961,19 +956,16 @@ OGRFeature *OGRDWGLayer::TranslateARC( OdDbEntityPtr poEntity )
 {
     OdDbArcPtr poAE = OdDbArc::cast( poEntity );
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    double dfRadius = 0.0;
-    double dfStartAngle = 0.0, dfEndAngle = 360.0;
-    OdGePoint3d oCenter;
 
     TranslateGenericProperties( poFeature, poEntity );
 
 /* -------------------------------------------------------------------- */
 /*      Collect parameters.                                             */
 /* -------------------------------------------------------------------- */
-    dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
-    dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
-    dfRadius = poAE->radius();
-    oCenter = poAE->center();
+    double dfEndAngle = -1 * poAE->startAngle() * 180 / M_PI;
+    double dfStartAngle = -1 * poAE->endAngle() * 180 / M_PI;
+    double dfRadius = poAE->radius();
+    OdGePoint3d oCenter = poAE->center();
 
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
@@ -1087,7 +1079,6 @@ OGRFeature *OGRDWGLayer::TranslateSPLINE( OdDbEntityPtr poEntity )
 /*                      GeometryInsertTransformer                       */
 /************************************************************************/
 
-
 class GeometryInsertTransformer : public OGRCoordinateTransformation
 {
 public:
@@ -1104,15 +1095,15 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             int i;
             for( i = 0; i < nCount; i++ )
@@ -1121,7 +1112,8 @@ public:
 
                 x[i] *= dfXScale;
                 y[i] *= dfYScale;
-                z[i] *= dfZScale;
+                if( z )
+                    z[i] *= dfZScale;
 
                 dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
                 dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
@@ -1131,7 +1123,8 @@ public:
 
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
-                z[i] += dfZOffset;
+                if( z )
+                    z[i] += dfZOffset;
 
                 if( pabSuccess )
                     pabSuccess[i] = TRUE;
@@ -1390,7 +1383,6 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
                 poFeature = apoPendingFeatures.front();
                 apoPendingFeatures.pop();
             }
-
         }
         else
         {

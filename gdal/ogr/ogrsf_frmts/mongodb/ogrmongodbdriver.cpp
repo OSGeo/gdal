@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MongoDB Translator
  * Purpose:  Implements OGRMongoDBDriver.
@@ -124,7 +123,7 @@ class OGRMongoDBLayer: public OGRLayer
             void                     SerializeRecursive(BSONObjBuilder& b,
                                          OGRFeature *poFeature,
                                          std::map< CPLString, IntOrMap*>& aoMap );
-            void                     InsertInMap(IntOrMap* rootMap,
+            static void                     InsertInMap(IntOrMap* rootMap,
                                                   std::map< std::vector<CPLString>, IntOrMap*>& aoMap,
                                                   const std::vector<CPLString>& aosFieldPathFull,
                                                   int nField);
@@ -135,26 +134,26 @@ public:
             OGRMongoDBLayer(OGRMongoDBDataSource* m_poDS,
                             const char* pszDatabase,
                             const char* pszCollection);
-           ~OGRMongoDBLayer();
+          virtual ~OGRMongoDBLayer();
 
-            virtual OGRFeatureDefn* GetLayerDefn();
-            virtual const char* GetName() { return m_poFeatureDefn->GetName(); }
-            virtual void        ResetReading();
-            virtual OGRFeature* GetNextFeature();
-            virtual OGRFeature* GetFeature(GIntBig nFID);
-            virtual OGRErr      DeleteFeature(GIntBig nFID);
-            virtual int         TestCapability(const char* pszCap);
-            virtual GIntBig     GetFeatureCount(int bForce);
-            virtual OGRErr      SetAttributeFilter(const char* pszFilter);
-            virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-            virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-            virtual const char* GetFIDColumn();
-            virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn, int bApproxOK );
-            virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poFieldIn, int bApproxOK );
-            virtual OGRErr      ICreateFeature(OGRFeature* poFeature);
-            virtual OGRErr      ISetFeature(OGRFeature* poFeature);
+            virtual OGRFeatureDefn* GetLayerDefn() override;
+            virtual const char* GetName() override { return m_poFeatureDefn->GetName(); }
+            virtual void        ResetReading() override;
+            virtual OGRFeature* GetNextFeature() override;
+            virtual OGRFeature* GetFeature(GIntBig nFID) override;
+            virtual OGRErr      DeleteFeature(GIntBig nFID) override;
+            virtual int         TestCapability(const char* pszCap) override;
+            virtual GIntBig     GetFeatureCount(int bForce) override;
+            virtual OGRErr      SetAttributeFilter(const char* pszFilter) override;
+            virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+            virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+            virtual const char* GetFIDColumn() override;
+            virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn, int bApproxOK ) override;
+            virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poFieldIn, int bApproxOK ) override;
+            virtual OGRErr      ICreateFeature(OGRFeature* poFeature) override;
+            virtual OGRErr      ISetFeature(OGRFeature* poFeature) override;
 
-            virtual OGRErr      SyncToDisk();
+            virtual OGRErr      SyncToDisk() override;
 
             const CPLString&    GetDatabase() const { return m_osDatabase; }
             const CPLString&    GetCollection() const { return m_osCollection; }
@@ -165,7 +164,6 @@ public:
             void                SetIgnoreSourceID(int bFlag) { m_bIgnoreSourceID = bFlag; }
             void                SetCreateSpatialIndex(int bFlag) { m_bCreateSpatialIndex = bFlag; }
 };
-
 
 class OGRMongoDBDataSource: public GDALDataset
 {
@@ -185,23 +183,23 @@ class OGRMongoDBDataSource: public GDALDataset
 
 public:
             OGRMongoDBDataSource();
-            ~OGRMongoDBDataSource();
+            virtual ~OGRMongoDBDataSource();
 
             int Open(const char* pszFilename, GDALAccess eAccess, char** papszOpenOptions);
-            virtual int GetLayerCount() { return (int)m_apoLayers.size(); }
-            virtual OGRLayer* GetLayer(int nIdx);
-            virtual int         TestCapability(const char* pszCap);
+            virtual int GetLayerCount() override { return (int)m_apoLayers.size(); }
+            virtual OGRLayer* GetLayer(int nIdx) override;
+            virtual int         TestCapability(const char* pszCap) override;
             virtual OGRLayer   *ICreateLayer( const char *pszName,
                                              OGRSpatialReference *poSpatialRef = NULL,
                                              OGRwkbGeometryType eGType = wkbUnknown,
-                                             char ** papszOptions = NULL );
-            virtual OGRErr      DeleteLayer( int iLayer );
-            virtual OGRLayer   *GetLayerByName(const char* pszLayerName);
+                                             char ** papszOptions = NULL ) override;
+            virtual OGRErr      DeleteLayer( int iLayer ) override;
+            virtual OGRLayer   *GetLayerByName(const char* pszLayerName) override;
 
             virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,
-                                            const char *pszDialect );
-            virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                            const char *pszDialect ) override;
+            virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
             const CPLString& GetDatabase() const { return m_osDatabase; }
             DBClientBase    *GetConn() const { return m_poConn; }
@@ -220,11 +218,11 @@ public:
 
 OGRMongoDBLayer::OGRMongoDBLayer(OGRMongoDBDataSource* poDS,
                             const char* pszDatabase,
-                            const char* pszCollection)
+                            const char* pszCollection) :
+    m_osDatabase( pszDatabase),
+    m_osCollection( pszCollection )
 {
     m_poDS = poDS;
-    m_osDatabase = pszDatabase;
-    m_osCollection = pszCollection;
     m_osQualifiedCollection = CPLSPrintf("%s.%s", m_osDatabase.c_str(), m_osCollection.c_str());
     if( m_poDS->GetDatabase().size() )
         m_poFeatureDefn = new OGRFeatureDefn(pszCollection);
@@ -2043,7 +2041,7 @@ OGRLayer *OGRMongoDBDataSource::GetLayerByName(const char* pszLayerName)
         try
         {
             std::list<std::string> l = m_poConn->getCollectionNames( osDatabase );
-            for ( std::list<std::string>::iterator oIter = l.begin(); oIter != l.end(); oIter++ )
+            for ( std::list<std::string>::iterator oIter = l.begin(); oIter != l.end(); ++oIter )
             {
                 const std::string& osCollection(*oIter);
                 if( EQUAL(osCollection.c_str(),pszLayerName) )
@@ -2086,9 +2084,11 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
     CPLString osPEMKeyPassword = CSLFetchNameValueDef(papszOpenOptions, "SSL_PEM_KEY_PASSWORD", "");
     CPLString osCAFile = CSLFetchNameValueDef(papszOpenOptions, "SSL_CA_FILE", "");
     CPLString osCRLFile = CSLFetchNameValueDef(papszOpenOptions, "SSL_CRL_FILE", "");
-    int bAllowInvalidCertificates = CSLFetchBoolean(papszOpenOptions, "SSL_ALLOW_INVALID_CERTIFICATES", FALSE);
-    int bAllowInvalidHostnames = CSLFetchBoolean(papszOpenOptions, "SSL_ALLOW_INVALID_HOSTNAMES", FALSE);
-    int bFIPSMode = CSLFetchBoolean(papszOpenOptions, "FIPS_MODE", FALSE);
+    int bAllowInvalidCertificates =
+        CPLFetchBool(papszOpenOptions, "SSL_ALLOW_INVALID_CERTIFICATES", false);
+    int bAllowInvalidHostnames =
+        CPLFetchBool(papszOpenOptions, "SSL_ALLOW_INVALID_HOSTNAMES", false);
+    int bFIPSMode = CPLFetchBool(papszOpenOptions, "FIPS_MODE", false);
     if( bMongoInitialized < 0 )
     {
         Options options;
@@ -2353,13 +2353,13 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     m_nBatchSize = atoi(CSLFetchNameValueDef(papszOpenOptionsIn, "BATCH_SIZE", "0"));
     m_nFeatureCountToEstablishFeatureDefn = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "100"));
-    m_bJSonField = CSLFetchBoolean(papszOpenOptionsIn, "JSON_FIELD", FALSE);
-    m_bFlattenNestedAttributes = CPL_TO_BOOL(CSLFetchBoolean(
-            papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", TRUE));
+    m_bJSonField = CPLFetchBool(papszOpenOptionsIn, "JSON_FIELD", false);
+    m_bFlattenNestedAttributes =
+        CPLFetchBool(papszOpenOptionsIn, "FLATTEN_NESTED_ATTRIBUTES", true);
     m_osFID = CSLFetchNameValueDef(papszOpenOptionsIn, "FID", "ogc_fid");
-    m_bUseOGRMetadata = CSLFetchBoolean(
-            papszOpenOptionsIn, "USE_OGR_METADATA", TRUE);
-    m_bBulkInsert = CSLFetchBoolean(papszOpenOptionsIn, "BULK_INSERT", TRUE);
+    m_bUseOGRMetadata =
+        CPLFetchBool( papszOpenOptionsIn, "USE_OGR_METADATA", true);
+    m_bBulkInsert = CPLFetchBool(papszOpenOptionsIn, "BULK_INSERT", true);
 
     int bRet = TRUE;
     if( m_osDatabase.size() == 0 )
@@ -2367,7 +2367,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
         try
         {
             std::list<std::string> l = m_poConn->getDatabaseNames();
-            for ( std::list<std::string>::iterator i = l.begin(); i != l.end(); i++ )
+            for ( std::list<std::string>::iterator i = l.begin(); i != l.end(); ++i )
             {
                 bRet &= ListLayers((*i).c_str());
             }
@@ -2482,10 +2482,14 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
     OGRMongoDBLayer* poLayer = new OGRMongoDBLayer(this, m_osDatabase, pszName);
 
     poLayer->SetFID(CSLFetchNameValueDef(papszOptions, "FID", "ogc_fid"));
-    poLayer->SetCreateLayerMetadata(CSLFetchBoolean(papszOptions, "WRITE_OGR_METADATA", TRUE));
-    poLayer->SetDotAsNestedField(CSLFetchBoolean(papszOptions, "DOT_AS_NESTED_FIELD", TRUE));
-    poLayer->SetIgnoreSourceID(CSLFetchBoolean(papszOptions, "IGNORE_SOURCE_ID", FALSE));
-    poLayer->SetCreateSpatialIndex(CSLFetchBoolean(papszOptions, "SPATIAL_INDEX", TRUE));
+    poLayer->SetCreateLayerMetadata(
+        CPLFetchBool(papszOptions, "WRITE_OGR_METADATA", true));
+    poLayer->SetDotAsNestedField(
+        CPLFetchBool(papszOptions, "DOT_AS_NESTED_FIELD", true));
+    poLayer->SetIgnoreSourceID(
+        CPLFetchBool(papszOptions, "IGNORE_SOURCE_ID", false));
+    poLayer->SetCreateSpatialIndex(
+        CPLFetchBool(papszOptions, "SPATIAL_INDEX", true));
 
     if( eGType != wkbNone )
     {
@@ -2571,12 +2575,12 @@ class OGRMongoDBSingleFeatureLayer: public OGRLayer
     CPLString           osVal;
     int                 iNextShapeId;
     public:
-        OGRMongoDBSingleFeatureLayer( const char *pszVal );
+       explicit OGRMongoDBSingleFeatureLayer( const char *pszVal );
        ~OGRMongoDBSingleFeatureLayer() { m_poFeatureDefn->Release(); }
-       void             ResetReading() { iNextShapeId = 0; }
-       OGRFeature      *GetNextFeature();
-       OGRFeatureDefn  *GetLayerDefn() { return m_poFeatureDefn; }
-       int              TestCapability( const char * ) { return FALSE; }
+       void             ResetReading() override { iNextShapeId = 0; }
+       OGRFeature      *GetNextFeature() override;
+       OGRFeatureDefn  *GetLayerDefn() override { return m_poFeatureDefn; }
+       int              TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/

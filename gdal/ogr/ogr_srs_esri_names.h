@@ -120,8 +120,6 @@ static const char * const apszGcsNameMappingBasedOnProjCS[] = {
 "MONREF_1997_UTM_Zone_47N", "GCS_ITRF_2000", "GCS_MONREF_1997",
 NULL, NULL, NULL};
 
-
-
 static const char * const apszGcsNameMappingBasedOnUnit[] = {
 "Voirol_Unifie_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
 "Voirol_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
@@ -202,7 +200,7 @@ static const char * const apszParamValueMapping[] = {
 "Lambert_Conformal_Conic", "central_meridian", "-76.83333333333334", "-76.83333333333333",
 "Krovak", "longitude_of_center", "24.83333333333334", "24.83333333333333",
 "Hotine_Oblique_Mercator_Azimuth_Center", "longitude_of_center", "7.439583333333334", "7.439583333333333",
-"Hotine_Oblique_Mercator_Azimuth_Center", "latitude_of_center",	"46.95240555555557", "46.95240555555556",
+"Hotine_Oblique_Mercator_Azimuth_Center", "latitude_of_center", "46.95240555555557", "46.95240555555556",
 NULL, NULL, NULL, NULL};
 
 static const char * const apszParamNameMapping[] = {
@@ -291,7 +289,7 @@ static const int statePlaneZoneMapping[] = {
  4451, -1,    2403,
  4476, 32100, 2500,
  4476, -1,    2501,
- 4701, 32111,	2900,
+ 4701, 32111, 2900,
  4801, 2260,  3101,
  4801, 32115, 3101,
  4526, -1,    2503,

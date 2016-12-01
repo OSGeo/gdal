@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Gridding API.
  * Purpose:  Implementation of GDAL scattered data gridder.
@@ -173,6 +172,5 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
 
     return CE_None;
 }
-
 
 #endif /* HAVE_SSE_AT_COMPILE_TIME */

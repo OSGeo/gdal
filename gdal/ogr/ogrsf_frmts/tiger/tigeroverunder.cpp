@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerOverUnder, providing access to .RTU files.
@@ -32,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE       "U"
+static const char FILE_CODE[] = "U";
 
 static const TigerFieldInfo rtU_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -54,7 +53,6 @@ static const TigerRecordInfo rtU_info =
     80
   };
 
-
 /************************************************************************/
 /*                           TigerOverUnder()                           */
 /************************************************************************/
@@ -69,7 +67,6 @@ TigerOverUnder::TigerOverUnder( OGRTigerDataSource * poDSIn,
     poFeatureDefn->SetGeomType( wkbNone );
 
     AddFieldDefns( psRTInfo, poFeatureDefn );
-
 }
 
 OGRFeature *TigerOverUnder::GetFeature( int nRecordId )

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Purpose:  Implementation of XRITHeaderParser class. Parse the header
  *           of the combined XRIT header/data files.
@@ -27,9 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
+ #include "cpl_port.h"  // Must be first.
+
 #include "xritheaderparser.h"
 #include <cstdlib> // malloc, free
 #include <cstring> // memcpy
+
+CPL_CVSID("$Id$");
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -77,10 +80,7 @@ XRITHeaderParser::XRITHeaderParser(std::ifstream & ifile)
   }
 }
 
-XRITHeaderParser::~XRITHeaderParser()
-{
-
-}
+XRITHeaderParser::~XRITHeaderParser() {}
 
 int XRITHeaderParser::parseInt16(unsigned char * num)
 {
@@ -94,7 +94,7 @@ long XRITHeaderParser::parseInt32(unsigned char * num)
 
 void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
 {
-  int remainingHeaderLength = totalHeaderLength;
+  int remainingHeaderLength = static_cast<int>(totalHeaderLength);
 
   while (remainingHeaderLength > 0)
   {
@@ -123,10 +123,10 @@ void XRITHeaderParser::parseHeader(unsigned char * buf, long totalHeaderLength)
         break;
       case 2: // image navigation
         {
-          long cfac = parseInt32(&buf[35]); // column scaling factor
+          /*long cfac =*/ parseInt32(&buf[35]); // column scaling factor
           long lfac = parseInt32(&buf[39]); // line scaling factor
-          long coff = parseInt32(&buf[43]); // column offset
-          long loff = parseInt32(&buf[47]); // line offset
+          /*long coff =*/ parseInt32(&buf[43]); // column offset
+          /*long loff =*/ parseInt32(&buf[47]); // line offset
           if (lfac >= 0)
             m_scanNorth = true;
           else

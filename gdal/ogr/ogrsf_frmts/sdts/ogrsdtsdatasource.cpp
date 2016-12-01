@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implements OGRSDTSDataSource class
@@ -37,17 +36,13 @@ CPL_CVSID("$Id$");
 /*                          OGRSDTSDataSource()                          */
 /************************************************************************/
 
-OGRSDTSDataSource::OGRSDTSDataSource()
-
-{
-    nLayers = 0;
-    papoLayers = NULL;
-
-    pszName = NULL;
-    poSRS = NULL;
-
-    poTransfer = NULL;
-}
+OGRSDTSDataSource::OGRSDTSDataSource() :
+    poTransfer(NULL),
+    pszName(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    poSRS(NULL)
+{}
 
 /************************************************************************/
 /*                         ~OGRSDTSDataSource()                          */
@@ -56,9 +51,7 @@ OGRSDTSDataSource::OGRSDTSDataSource()
 OGRSDTSDataSource::~OGRSDTSDataSource()
 
 {
-    int         i;
-
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
     CPLFree( papoLayers );
@@ -117,13 +110,11 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE    *fp;
-        char    pachLeader[10];
-
-        fp = VSIFOpen( pszFilename, "rb" );
+        FILE *fp = VSIFOpen( pszFilename, "rb" );
         if( fp == NULL )
             return FALSE;
 
+        char pachLeader[10] = {};
         if( VSIFRead( pachLeader, 1, 10, fp ) != 10
             || (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
@@ -173,11 +164,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     else if( EQUAL(poXREF->pszDatum,"WGC") )
         poSRS->SetGeogCS("WGS 72", "WGS_1972", "NWL 10D", 6378135, 298.26 );
 
-    else if( EQUAL(poXREF->pszDatum,"WGE") )
-        poSRS->SetGeogCS("WGS 84", "WGS_1984",
-                         "WGS 84", 6378137, 298.257223563 );
-
-    else
+    else /* if( EQUAL(poXREF->pszDatum,"WGE") ) or default case */
         poSRS->SetGeogCS("WGS 84", "WGS_1984",
                          "WGS 84", 6378137, 298.257223563 );
 
@@ -188,12 +175,11 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     for( int iLayer = 0; iLayer < poTransfer->GetLayerCount(); iLayer++ )
     {
-        SDTSIndexedReader       *poReader;
-
         if( poTransfer->GetLayerType( iLayer ) == SLTRaster )
             continue;
 
-        poReader = poTransfer->GetLayerIndexedReader( iLayer );
+        SDTSIndexedReader *poReader =
+            poTransfer->GetLayerIndexedReader( iLayer );
         if( poReader == NULL )
             continue;
 
@@ -204,4 +190,3 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 
     return TRUE;
 }
-

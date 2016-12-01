@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFField class.
@@ -27,7 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "iso8211.h"
+
+#include <cstdio>
+#include <cstdlib>
+
+#include <algorithm>
+
 #include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
@@ -56,7 +62,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 /**
  * Write out field contents to debugging file.
  *
- * A variety of information about this field, and all it's
+ * A variety of information about this field, and all its
  * subfields is written to the given debugging file handle.  Note that
  * field definition information (ala DDFFieldDefn) isn't written.
  *
@@ -66,7 +72,7 @@ void DDFField::Initialize( DDFFieldDefn *poDefnIn, const char * pachDataIn,
 void DDFField::Dump( FILE * fp )
 
 {
-    int         nMaxRepeat = 8;
+    int nMaxRepeat = 8;
 
     if( getenv("DDF_MAXDUMP") != NULL )
         nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
@@ -76,7 +82,7 @@ void DDFField::Dump( FILE * fp )
     fprintf( fp, "      DataSize = %d\n", nDataSize );
 
     fprintf( fp, "      Data = `" );
-    for( int i = 0; i < MIN(nDataSize,40); i++ )
+    for( int i = 0; i < std::min(nDataSize, 40); i++ )
     {
         if( pachData[i] < 32 || pachData[i] > 126 )
             fprintf( fp, "\\%02X", ((unsigned char *) pachData)[i] );
@@ -91,9 +97,9 @@ void DDFField::Dump( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      dump the data of the subfields.                                 */
 /* -------------------------------------------------------------------- */
-    int         iOffset = 0, nLoopCount;
+    int iOffset = 0;
 
-    for( nLoopCount = 0; nLoopCount < GetRepeatCount(); nLoopCount++ )
+    for( int nLoopCount = 0; nLoopCount < GetRepeatCount(); nLoopCount++ )
     {
         if( nLoopCount > nMaxRepeat )
         {
@@ -103,11 +109,10 @@ void DDFField::Dump( FILE * fp )
 
         for( int i = 0; i < poDefn->GetSubfieldCount(); i++ )
         {
-            int         nBytesConsumed;
-
             poDefn->GetSubfield(i)->DumpData( pachData + iOffset,
                                               nDataSize - iOffset, fp );
 
+            int nBytesConsumed = 0;
             poDefn->GetSubfield(i)->GetDataLength( pachData + iOffset,
                                                    nDataSize - iOffset,
                                                    &nBytesConsumed );
@@ -148,11 +153,10 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
                                        int *pnMaxBytes, int iSubfieldIndex )
 
 {
-    int         iOffset = 0;
-
     if( poSFDefn == NULL )
         return NULL;
 
+    int iOffset = 0;
     if( iSubfieldIndex > 0 && poDefn->GetFixedWidth() > 0 )
     {
         iOffset = poDefn->GetFixedWidth() * iSubfieldIndex;
@@ -163,7 +167,6 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
-            int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
             if( nDataSize < iOffset )
@@ -182,6 +185,7 @@ const char *DDFField::GetSubfieldData( DDFSubfieldDefn *poSFDefn,
                 return pachData + iOffset;
             }
 
+            int nBytesConsumed = 0;
             poThisSFDefn->GetDataLength( pachData+iOffset, nDataSize - iOffset,
                                          &nBytesConsumed);
             iOffset += nBytesConsumed;
@@ -233,15 +237,16 @@ int DDFField::GetRepeatCount()
 /*      variable length field, but the count is one, so it isn't        */
 /*      much value for testing.                                         */
 /* -------------------------------------------------------------------- */
-    int         iOffset = 0, iRepeatCount = 1;
+    int iOffset = 0;
+    int iRepeatCount = 1;
 
     while( true )
     {
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
-            int nBytesConsumed;
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
 
+            int nBytesConsumed = 0;
             if( poThisSFDefn->GetWidth() > nDataSize - iOffset )
                 nBytesConsumed = poThisSFDefn->GetWidth();
             else
@@ -285,7 +290,6 @@ const char *DDFField::GetInstanceData( int nInstance,
 
 {
     int nRepeatCount = GetRepeatCount();
-    const char *pachWrkData;
 
     if( nInstance < 0 || nInstance >= nRepeatCount )
         return NULL;
@@ -296,7 +300,7 @@ const char *DDFField::GetInstanceData( int nInstance,
 /* -------------------------------------------------------------------- */
     if( poDefn->GetSubfieldCount() == 0 )
     {
-        pachWrkData = GetData();
+        const char *pachWrkData = GetData();
         if( pnInstanceSize != NULL )
             *pnInstanceSize = GetDataSize();
         return pachWrkData;
@@ -306,13 +310,12 @@ const char *DDFField::GetInstanceData( int nInstance,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    int         nBytesRemaining1 = 0, nBytesRemaining2 = 0;
-    DDFSubfieldDefn *poFirstSubfield;
+    int nBytesRemaining1 = 0;
+    int nBytesRemaining2 = 0;
+    DDFSubfieldDefn *poFirstSubfield = poDefn->GetSubfield(0);
 
-    poFirstSubfield = poDefn->GetSubfield(0);
-
-    pachWrkData = GetSubfieldData(poFirstSubfield, &nBytesRemaining1,
-                               nInstance);
+    const char *pachWrkData =
+        GetSubfieldData(poFirstSubfield, &nBytesRemaining1, nInstance);
     if( pachWrkData == NULL )
         return NULL;
 
@@ -322,17 +325,15 @@ const char *DDFField::GetInstanceData( int nInstance,
 /* -------------------------------------------------------------------- */
     if( pnInstanceSize != NULL )
     {
-        DDFSubfieldDefn *poLastSubfield;
-        int              nLastSubfieldWidth = 0;
-        const char          *pachLastData;
+        DDFSubfieldDefn *poLastSubfield =
+            poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
 
-        poLastSubfield = poDefn->GetSubfield(poDefn->GetSubfieldCount()-1);
-
-        pachLastData = GetSubfieldData( poLastSubfield, &nBytesRemaining2,
-                                        nInstance );
+        const char *pachLastData =
+            GetSubfieldData( poLastSubfield, &nBytesRemaining2, nInstance );
         if( pachLastData == NULL )
             return NULL;
 
+        int nLastSubfieldWidth = 0;
         poLastSubfield->GetDataLength( pachLastData, nBytesRemaining2,
                                        &nLastSubfieldWidth );
 

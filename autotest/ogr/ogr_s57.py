@@ -290,6 +290,30 @@ def ogr_s57_9():
     except:
         pass
 
+    gdal.SetConfigOption('OGR_S57_OPTIONS', 'RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON')
+    gdal.VectorTranslate('tmp/ogr_s57_9.000', 'data/1B5X02NE.000', options = "-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL")
+    gdal.SetConfigOption('OGR_S57_OPTIONS', None)
+
+    ds = gdal.OpenEx( 'tmp/ogr_s57_9.000', open_options = ['RETURN_PRIMITIVES=ON'] )
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if ds.GetLayerByName('IsolatedNode') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdaltest.s57_ds = ds
+    if ogr_s57_4() != 'success':
+        return 'fail'
+
+    gdaltest.s57_ds = None
+
+    try:
+        os.unlink('tmp/ogr_s57_9.000')
+    except:
+        pass
+
     return 'success'
 
 ###############################################################################

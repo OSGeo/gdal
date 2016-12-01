@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Rasterlite driver
  * Purpose:  Implement GDAL Rasterlite support using OGR SQLite driver
@@ -37,7 +36,6 @@
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
 
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */
@@ -95,15 +93,15 @@ CPLString RasterliteGetSpatialFilterCond(double minx, double miny,
 /*                            RasterliteBand()                          */
 /************************************************************************/
 
-RasterliteBand::RasterliteBand(RasterliteDataset* poDSIn, int nBandIn,
+RasterliteBand::RasterliteBand( RasterliteDataset* poDSIn, int nBandIn,
                                 GDALDataType eDataTypeIn,
-                                int nBlockXSizeIn, int nBlockYSizeIn)
+                                int nBlockXSizeIn, int nBlockYSizeIn )
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = eDataTypeIn;
-    this->nBlockXSize = nBlockXSizeIn;
-    this->nBlockYSize = nBlockYSizeIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = eDataTypeIn;
+    nBlockXSize = nBlockXSizeIn;
+    nBlockYSize = nBlockYSizeIn;
 }
 
 /************************************************************************/
@@ -266,7 +264,7 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
             }
             if (hDSTile == NULL)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
+                CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d",
                          nTileId);
             }
 
@@ -280,13 +278,13 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
                 GDALClose(hDSTile);
                 hDSTile = NULL;
             }
-            
+
             if( hDSTile )
             {
                 if( GDALGetRasterXSize(hDSTile) != nTileXSize ||
                     GDALGetRasterYSize(hDSTile) != nTileYSize )
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d", 
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid dimensions for tile %d",
                              nTileId);
                     GDALClose(hDSTile);
                     hDSTile = NULL;
@@ -465,7 +463,6 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
 
                         poBlock->DropLock();
                     }
-
                 }
                 GDALClose(hDSTile);
             }
@@ -591,6 +588,7 @@ RasterliteDataset::RasterliteDataset() :
     poMainDS(NULL),
     nLevel(0),
     papszMetadata(NULL),
+    papszImageStructure(CSLAddString(NULL, "INTERLEAVE=PIXEL")),
     papszSubDatasets(NULL),
     nResolutions(0),
     padfXResolutions(NULL),
@@ -603,15 +601,15 @@ RasterliteDataset::RasterliteDataset() :
     bCheckForExistingOverview(TRUE),
     hDS(NULL)
 {
-    papszImageStructure =
-        CSLAddString(NULL, "INTERLEAVE=PIXEL");
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
 
 /************************************************************************/
 /*                         RasterliteDataset()                          */
 /************************************************************************/
 
-RasterliteDataset::RasterliteDataset(RasterliteDataset* poMainDSIn, int nLevelIn) :
+RasterliteDataset::RasterliteDataset( RasterliteDataset* poMainDSIn,
+                                      int nLevelIn ) :
     bMustFree(FALSE),
     poMainDS(poMainDSIn),
     nLevel(nLevelIn),
@@ -693,7 +691,8 @@ int RasterliteDataset::CloseDependentDatasets()
 
         CPLFree(padfXResolutions);
         CPLFree(padfYResolutions);
-        padfXResolutions = padfYResolutions = NULL;
+        padfXResolutions = NULL;
+        padfYResolutions = NULL;
 
         delete poCT;
         poCT = NULL;
@@ -715,15 +714,15 @@ int RasterliteDataset::CloseDependentDatasets()
 
 void RasterliteDataset::AddSubDataset( const char* pszDSName)
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_DESC", nCount+1 );
-    papszSubDatasets = 
+    papszSubDatasets =
         CSLSetNameValue( papszSubDatasets, szName, pszDSName);
 }
 
@@ -762,7 +761,7 @@ char **RasterliteDataset::GetMetadata( const char *pszDomain )
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *RasterliteDataset::GetMetadataItem( const char *pszName, 
+const char *RasterliteDataset::GetMetadataItem( const char *pszName,
                                                 const char *pszDomain )
 {
     if (pszDomain != NULL &&EQUAL(pszDomain,"OVERVIEWS") )
@@ -883,7 +882,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
     }
     else
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d", 
+        CPLError(CE_Failure, CPLE_AppDefined, "Can't open tile %d",
                  OGR_F_GetFieldAsInteger(hFeat, 1));
     }
 
@@ -978,10 +977,15 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     CPLString osTableName;
     char **papszTokens = NULL;
     int nLevel = 0;
-    double minx = 0, miny = 0, maxx = 0, maxy = 0;
-    int bMinXSet = FALSE, bMinYSet = FALSE, bMaxXSet = FALSE, bMaxYSet = FALSE;
+    double minx = 0.0;
+    double miny = 0.0;
+    double maxx = 0.0;
+    double maxy = 0.0;
+    int bMinXSet = FALSE;
+    int bMinYSet = FALSE;
+    int bMaxXSet = FALSE;
+    int bMaxYSet = FALSE;
     int nReqBands = 0;
-
 
 /* -------------------------------------------------------------------- */
 /*      Parse "file name"                                               */
@@ -993,7 +997,7 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     else
     {
-        papszTokens = CSLTokenizeStringComplex( 
+        papszTokens = CSLTokenizeStringComplex(
                 poOpenInfo->pszFilename + 11, ",", FALSE, FALSE );
         int nTokens = CSLCount(papszTokens);
         if (nTokens == 0)
@@ -1379,7 +1383,6 @@ GDALDataset* RasterliteDataset::Open(GDALOpenInfo* poOpenInfo)
             delete poDS;
             poDS = NULL;
         }
-
     }
 
     if (poDS)

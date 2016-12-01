@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Implementation of the OGROCITableLayer class.  This class provides
@@ -133,7 +132,6 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree( papsWriteGeomMap );
     CPLFree( pasWriteGeoms );
-
 
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
@@ -903,9 +901,35 @@ OGRErr OGROCITableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Get the first id value from open options                        */
+/* -------------------------------------------------------------------- */
+
+    this->nFirstId = -1;
+
+    if (CSLFetchNameValue( papszOptions, "FIRST_ID" ) != NULL)
+    {
+        this->nFirstId = atoi( CSLFetchNameValue( papszOptions, "FIRST_ID" ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Get the multi load count value from open options                */
+/* -------------------------------------------------------------------- */
+
+    this->bMultiLoad = CPLFetchBool( papszOptions, "MULTI_LOAD", true );
+
+    this->nMultiLoadCount = 100;
+
+    if (CSLFetchNameValue( papszOptions, "MULTI_LOAD_COUNT" ) != NULL)
+    {
+        this->nMultiLoadCount = atoi( CSLFetchNameValue( papszOptions,
+                                                         "MULTI_LOAD_COUNT" ) );
+        this->bMultiLoad = true; // overwrites MULTI_LOAD=NO
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do the actual creation.                                         */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchBoolean( papszOptions, "MULTI_LOAD", true ) )
+    if( bMultiLoad )
         return BoundCreateFeature( poFeature );
     else
         return UnboundCreateFeature( poFeature );
@@ -948,7 +972,6 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         strcat( pszCommand, pszFIDName );
         bNeedComma = TRUE;
     }
-
 
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
@@ -1287,7 +1310,6 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
         return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                           GetExtent()                                */
 /************************************************************************/
@@ -1570,7 +1592,6 @@ void OGROCITableLayer::UpdateLayerExtents()
 
         sDimUpdate.Appendf(static_cast<int>(strlen(poFeatureDefn->GetName()) + 100),
                            ") WHERE TABLE_NAME = '%s'", poFeatureDefn->GetName());
-
     }
     else
     {
@@ -1628,14 +1649,14 @@ int OGROCITableLayer::AllocAndBindForWrite()
 /*      Decide on the number of rows we want to be able to cache at     */
 /*      a time.                                                         */
 /* -------------------------------------------------------------------- */
-    nWriteCacheMax = 100;
+    nWriteCacheMax = nMultiLoadCount;
 
 /* -------------------------------------------------------------------- */
 /*      Collect the INSERT statement.                                   */
 /* -------------------------------------------------------------------- */
     OGROCIStringBuf oCmdBuf;
 
-    oCmdBuf.Append( "INSERT INTO \"" );
+    oCmdBuf.Append( "INSERT /*+ APPEND */ INTO \"" );
     oCmdBuf.Append( poFeatureDefn->GetName() );
     oCmdBuf.Append( "\"(\"" );
     oCmdBuf.Append( pszFIDName );
@@ -2118,8 +2139,8 @@ void OGROCITableLayer::CreateSpatialIndex()
 /*      If the user has disabled INDEX support then don't create the    */
 /*      index.                                                          */
 /* -------------------------------------------------------------------- */
-        if( !CSLFetchBoolean( papszOptions, "SPATIAL_INDEX", TRUE ) ||
-            !CSLFetchBoolean( papszOptions, "INDEX", TRUE ) )
+        if( !CPLFetchBool( papszOptions, "SPATIAL_INDEX", true ) ||
+            !CPLFetchBool( papszOptions, "INDEX", true ) )
             return;
 
 /* -------------------------------------------------------------------- */
@@ -2152,7 +2173,6 @@ void OGROCITableLayer::CreateSpatialIndex()
 /* -------------------------------------------------------------------- */
         OGROCIStringBuf  sIndexCmd;
         OGROCIStatement oExecStatement( poDS->GetSession() );
-
 
         sIndexCmd.Appendf( 10000, "CREATE INDEX \"%s\" ON %s(\"%s\") "
                            "INDEXTYPE IS MDSYS.SPATIAL_INDEX ",
@@ -2205,6 +2225,9 @@ void OGROCITableLayer::CreateSpatialIndex()
 
 int OGROCITableLayer::GetMaxFID()
 {
+    if( nFirstId > 0 )
+        return nFirstId - 1;
+
     if( pszFIDName == NULL )
         return 0;
 

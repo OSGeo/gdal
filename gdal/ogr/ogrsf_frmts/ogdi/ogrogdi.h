@@ -38,7 +38,6 @@ extern "C" {
 }
 #include "ogrsf_frmts.h"
 
-
 /************************************************************************/
 /*                             OGROGDILayer                             */
 /************************************************************************/
@@ -64,23 +63,23 @@ class OGROGDILayer : public OGRLayer
   public:
                         OGROGDILayer(OGROGDIDataSource *, const char *,
                                      ecs_Family);
-                        ~OGROGDILayer();
+                        virtual ~OGROGDILayer();
 
-    virtual void        SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void        SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-    virtual OGRErr      SetAttributeFilter( const char *pszQuery );
+    virtual OGRErr      SetAttributeFilter( const char *pszQuery ) override;
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
 
-    OGRFeature         *GetFeature( GIntBig nFeatureId );
+    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return m_poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return m_poFeatureDefn; }
 
-    GIntBig             GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
   private:
     void                BuildFeatureDefn();
@@ -113,13 +112,13 @@ class OGROGDIDataSource : public OGRDataSource
                         OGROGDIDataSource();
                         ~OGROGDIDataSource();
 
-    int                 Open( const char *, int bTestOpen );
+    int                 Open( const char * );
 
-    const char          *GetName() { return m_pszFullName; }
-    int                 GetLayerCount() { return m_nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return m_pszFullName; }
+    int                 GetLayerCount() override { return m_nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     ecs_Region         *GetGlobalBounds() { return &m_sGlobalBounds; }
     OGRSpatialReference*GetSpatialRef() { return m_poSpatialRef; }
@@ -140,11 +139,10 @@ class OGROGDIDriver : public OGRSFDriver
   public:
                 ~OGROGDIDriver();
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
-    int         TestCapability( const char * );
+    int         TestCapability( const char * ) override;
 };
-
 
 #endif /* OGDOGDI_H_INCLUDED */

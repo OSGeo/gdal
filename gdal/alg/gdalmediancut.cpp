@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CIETMap Phase 2
  * Purpose:  Use median cut algorithm to generate an near-optimal PCT for a
@@ -37,10 +36,22 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+
+#include <climits>
+#include <cstring>
+
+#include <algorithm>
 #include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
@@ -60,12 +71,12 @@ typedef struct
     int     nCount3;
 } HashHistogram;
 
-typedef	struct colorbox {
-	struct	colorbox *next, *prev;
-	int	rmin, rmax;
-	int	gmin, gmax;
-	int	bmin, bmax;
-	GUIntBig	total;
+typedef struct colorbox {
+    struct colorbox *next, *prev;
+    int rmin, rmax;
+    int gmin, gmax;
+    int bmin, bmax;
+    GUIntBig total;
 } Colorbox;
 
 template<class T>
@@ -298,7 +309,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     VALIDATE_POINTER1( hGreen, "GDALComputeMedianCutPCT", CE_Failure );
     VALIDATE_POINTER1( hBlue, "GDALComputeMedianCutPCT", CE_Failure );
 
-    int		nXSize, nYSize;
+    int nXSize, nYSize;
     CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
@@ -349,7 +360,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      STEP 1: create empty boxes.                                     */
 /* ==================================================================== */
-    int	     i;
+    int i;
     Colorbox *box_list, *ptr;
     T* histogram;
     Colorbox *freeboxes;
@@ -412,8 +423,11 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
 /*      Build histogram.                                                */
 /* ==================================================================== */
-    GByte	*pabyRedLine, *pabyGreenLine, *pabyBlueLine;
-    int		iLine, iPixel;
+    GByte *pabyRedLine;
+    GByte *pabyGreenLine;
+    GByte *pabyBlueLine;
+    int iLine;
+    int iPixel;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
@@ -427,8 +441,12 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
     if (ptr->next)
         ptr->next->prev = ptr;
 
-    ptr->rmin = ptr->gmin = ptr->bmin = 999;
-    ptr->rmax = ptr->gmax = ptr->bmax = -1;
+    ptr->rmin = 999;
+    ptr->gmin = 999;
+    ptr->bmin = 999;
+    ptr->rmax = -1;
+    ptr->gmax = -1;
+    ptr->bmax = -1;
     ptr->total = (GUIntBig)nXSize * (GUIntBig)nYSize;
 
 /* -------------------------------------------------------------------- */
@@ -469,18 +487,16 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 
         for( iPixel = 0; iPixel < nXSize; iPixel++ )
         {
-            int	nRed, nGreen, nBlue;
+            const int nRed = pabyRedLine[iPixel] >> nColorShift;
+            const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
+            const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            nRed = pabyRedLine[iPixel] >> nColorShift;
-            nGreen = pabyGreenLine[iPixel] >> nColorShift;
-            nBlue = pabyBlueLine[iPixel] >> nColorShift;
-
-            ptr->rmin = MIN(ptr->rmin, nRed);
-            ptr->gmin = MIN(ptr->gmin, nGreen);
-            ptr->bmin = MIN(ptr->bmin, nBlue);
-            ptr->rmax = MAX(ptr->rmax, nRed);
-            ptr->gmax = MAX(ptr->gmax, nGreen);
-            ptr->bmax = MAX(ptr->bmax, nBlue);
+            ptr->rmin = std::min(ptr->rmin, nRed);
+            ptr->gmin = std::min(ptr->gmin, nGreen);
+            ptr->bmin = std::min(ptr->bmin, nBlue);
+            ptr->rmax = std::max(ptr->rmax, nRed);
+            ptr->gmax = std::max(ptr->gmax, nGreen);
+            ptr->bmax = std::max(ptr->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )
@@ -549,7 +565,7 @@ GDALComputeMedianCutPCTInternal( GDALRasterBandH hRed,
 /* ==================================================================== */
     for (i = 0, ptr = usedboxes; ptr != NULL; ++i, ptr = ptr->next)
     {
-        GDALColorEntry	sEntry;
+        GDALColorEntry sEntry;
 
         sEntry.c1 = (GByte) (((ptr->rmin + ptr->rmax) << nColorShift) / 2);
         sEntry.c2 = (GByte) (((ptr->gmin + ptr->gmax) << nColorShift) / 2);
@@ -565,7 +581,8 @@ end_and_cleanup:
 
     /* We're done with the boxes now */
     CPLFree(box_list);
-    freeboxes = usedboxes = NULL;
+    freeboxes = NULL;
+    usedboxes = NULL;
 
     if( panHistogram == NULL )
         CPLFree( histogram );
@@ -598,9 +615,12 @@ static void shrinkboxFromBand(Colorbox* ptr,
                               const GByte* pabyGreenBand,
                               const GByte* pabyBlueBand, GUIntBig nPixels)
 {
-    int rmin_new = 255, rmax_new = 0,
-        gmin_new = 255, gmax_new = 0,
-        bmin_new = 255, bmax_new = 0;
+    int rmin_new = 255;
+    int rmax_new = 0;
+    int gmin_new = 255;
+    int gmax_new = 0;
+    int bmin_new = 255;
+    int bmax_new = 0;
     for(GUIntBig i=0;i<nPixels;i++)
     {
         int iR = pabyRedBand[i];
@@ -761,13 +781,14 @@ splitbox(Colorbox* ptr, const T* histogram,
          GByte* pabyGreenBand,
          GByte* pabyBlueBand, T nPixels)
 {
-    T		hist2[256];
-    int		first=0, last=0;
-    Colorbox	*new_cb;
-    const T	*iptr;
+    T hist2[256];
+    int first = 0;
+    int last = 0;
+    Colorbox *new_cb;
+    const T *iptr;
     T *histp;
-    int	i, j;
-    int	ir,ig,ib;
+    int i, j;
+    int ir,ig,ib;
     T sum, sum1, sum2;
     enum { RED, GREEN, BLUE } axis;
 

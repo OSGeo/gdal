@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implmementation of SDTSIndexedReader class.  This base class for
@@ -139,7 +138,7 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 /************************************************************************/
 
 /**
- Fetch a feature based on it's record number.
+ Fetch a feature based on its record number.
 
  This method will forcibly fill the feature cache, reading all the
  features in the file into memory, if they haven't already been loaded.
@@ -179,13 +178,12 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
 void SDTSIndexedReader::FillIndex()
 
 {
-
     if( nIndexSize != 0 )
         return;
 
     Rewind();
 
-    SDTSFeature *poFeature;
+    SDTSFeature *poFeature = NULL;
     while( (poFeature = GetNextRawFeature()) != NULL )
     {
         const int iRecordId = poFeature->oModId.nRecord;

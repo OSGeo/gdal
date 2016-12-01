@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -31,8 +30,14 @@
  ******************************************************************************
  */
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "cpl_quad_tree.h"
+
+#include <cstdio>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -65,7 +70,6 @@ struct _CPLQuadTree
   int                       nBucketCapacity;
   double                    dfSplitRatio;
 };
-
 
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
                                           void* hFeature,
@@ -213,7 +217,6 @@ int CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures)
                   "Falling back to max number of allowed index tree "
                   "levels (%d).",
                   MAX_DEFAULT_TREE_DEPTH );
-
     }
 
     return nMaxDepth;
@@ -320,7 +323,6 @@ static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode)
     CPLFree(psNode);
 }
 
-
 /************************************************************************/
 /*                       CPLQuadTreeDestroy()                           */
 /************************************************************************/
@@ -337,8 +339,6 @@ void CPLQuadTreeDestroy(CPLQuadTree *hQuadTree)
     CPLQuadTreeNodeDestroy(hQuadTree->psRoot);
     CPLFree(hQuadTree);
 }
-
-
 
 /************************************************************************/
 /*                     CPLQuadTreeSplitBounds()                         */
@@ -498,7 +498,6 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
     return ;
 }
 
-
 /************************************************************************/
 /*                  CPLQuadTreeNodeAddFeatureAlg2()                     */
 /************************************************************************/
@@ -561,7 +560,6 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
         }
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      If none of that worked, just add it to this psNodes list.         */
 /* -------------------------------------------------------------------- */
@@ -583,7 +581,6 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
         psNode->pasBounds[psNode->nFeatures-1] = *pRect;
     }
 }
-
 
 /************************************************************************/
 /*                  CPLQuadTreeAddFeatureInternal()                     */
@@ -799,6 +796,7 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
 /*                         CPLQuadTreeDump()                            */
 /************************************************************************/
 
+/** Dump quad tree */
 void CPLQuadTreeDump(const CPLQuadTree *hQuadTree,
                      CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
                      void* pUserData)
@@ -830,11 +828,11 @@ void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode,
     }
 }
 
-
 /************************************************************************/
 /*                    CPLQuadTreeGetStats()                             */
 /************************************************************************/
 
+/** Get stats */
 void CPLQuadTreeGetStats(const CPLQuadTree *hQuadTree,
                          int* pnFeatureCount,
                          int* pnNodeCount,

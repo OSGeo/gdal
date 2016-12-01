@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  USGS DEM Driver
  * Purpose:  CreateCopy() implementation.
@@ -41,7 +40,6 @@
 
 #include <algorithm>
 
-
 CPL_CVSID("$Id$");
 
 /* used by usgsdemdataset.cpp */
@@ -69,7 +67,7 @@ typedef struct
     double      dfVertStepSize;
     double      dfElevStepSize;
 
-    char 	**papszOptions;
+    char        **papszOptions;
     int         bStrict;
 
     VSILFILE  *fp;
@@ -295,9 +293,7 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         CSLFetchNameValue( psWInfo->papszOptions, "TEMPLATE" );
     if( pszTemplate != NULL )
     {
-        VSILFILE *fpTemplate;
-
-        fpTemplate = VSIFOpenL( pszTemplate, "rb" );
+        VSILFILE *fpTemplate = VSIFOpenL( pszTemplate, "rb" );
         if( fpTemplate == NULL )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -530,7 +526,8 @@ static int USGSDEMWriteARecord( USGSDEMWriteInfo *psWInfo )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[i];
+                nMin = psWInfo->panData[i];
+                nMax = nMin;
             }
             else
             {
@@ -769,7 +766,6 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         USGSDEMPrintDouble( achBuffer +  48, psWInfo->dfLLY );
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Local vertical datum offset.                                    */
 /* -------------------------------------------------------------------- */
@@ -789,7 +785,8 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
         {
             if( nMin == DEM_NODATA )
             {
-                nMin = nMax = psWInfo->panData[iData];
+                nMin = psWInfo->panData[iData];
+                nMax = nMin;
             }
             else
             {
@@ -854,7 +851,7 @@ static int USGSDEMWriteProfile( USGSDEMWriteInfo *psWInfo, int iProfile )
 /*                      USGSDEM_LookupNTSByLoc()                        */
 /************************************************************************/
 
-static int
+static bool
 USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
                         char *pszTile, char *pszName )
 
@@ -869,7 +866,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -880,8 +877,8 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /* -------------------------------------------------------------------- */
 /*      Find desired sheet.                                             */
 /* -------------------------------------------------------------------- */
-    int  bGotHit = FALSE;
-    char **papszTokens;
+    bool bGotHit = false;
+    char **papszTokens = NULL;
 
     while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
@@ -892,10 +889,10 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
             continue;
         }
 
-        if( ABS(dfULLong - CPLAtof(papszTokens[2])) < 0.01
-            && ABS(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
+        if( std::abs(dfULLong - CPLAtof(papszTokens[2])) < 0.01
+            && std::abs(dfULLat - CPLAtof(papszTokens[3])) < 0.01 )
         {
-            bGotHit = TRUE;
+            bGotHit = true;
             strncpy( pszTile, papszTokens[0], 7 );
             if( pszName != NULL )
                 strncpy( pszName, papszTokens[1], 100 );
@@ -913,7 +910,7 @@ USGSDEM_LookupNTSByLoc( double dfULLong, double dfULLat,
 /*                      USGSDEM_LookupNTSByTile()                       */
 /************************************************************************/
 
-static int
+static bool
 USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
                          double *pdfULLong, double *pdfULLat )
 
@@ -922,14 +919,12 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
 /*      Access NTS 1:50k sheet CSV file.                                */
 /* -------------------------------------------------------------------- */
     const char *pszNTSFilename = CSVFilename( "NTS-50kindex.csv" );
-    FILE *fpNTS;
-
-    fpNTS = VSIFOpen( pszNTSFilename, "rb" );
+    FILE *fpNTS = VSIFOpen( pszNTSFilename, "rb" );
     if( fpNTS == NULL )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to find NTS mapsheet lookup file: %s",
                   pszNTSFilename );
-        return FALSE;
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -941,7 +936,7 @@ USGSDEM_LookupNTSByTile( const char *pszTile, char *pszName,
 /*      Find desired sheet.                                             */
 /* -------------------------------------------------------------------- */
     bool bGotHit = false;
-    char **papszTokens;
+    char **papszTokens = NULL;
 
     while( !bGotHit
            && (papszTokens = CSVReadParseLine( fpNTS )) != NULL )
@@ -1034,8 +1029,8 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
         dfULY = CPLDMSToDec( papszTokens[1] );
         CSLDestroy( papszTokens );
 
-        if( ABS(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
-            || ABS(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
+        if( std::abs(dfULX*4-floor(dfULX*4+0.00005)) > 0.0001
+            || std::abs(dfULY*4-floor(dfULY*4+0.00005)) > 0.0001 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "TOPLEFT must be on a 15\" boundary for CDED50K, but is not." );
@@ -1325,6 +1320,7 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     char *apszOptions[] = { szDataPointer, NULL };
 
     memset( szDataPointer, 0, sizeof(szDataPointer) );
+    // cppcheck-suppress redundantCopy
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer( szDataPointer+strlen(szDataPointer),
                      psWInfo->panData,
@@ -1396,7 +1392,6 @@ static int USGSDEMLoadRaster( CPL_UNUSED USGSDEMWriteInfo *psWInfo,
 
     return eErr == CE_None;
 }
-
 
 /************************************************************************/
 /*                             CreateCopy()                             */
@@ -1519,7 +1514,6 @@ USGSDEMCreateCopy( const char *pszFilename,
         USGSDEMWriteCleanup( &sWInfo );
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Read the whole area of interest into memory.                    */

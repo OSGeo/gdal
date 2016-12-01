@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: ogrgeoconceptdriver.h
+ * $Id: ogrgeoconceptdriver.h$
  *
  * Name:     ogrgeoconceptdriver.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -42,11 +42,11 @@ class OGRGeoconceptDriver : public OGRSFDriver
 public:
                    ~OGRGeoconceptDriver();
 
-    const char*    GetName( );
-    OGRDataSource* Open( const char* pszName, int bUpdate = FALSE );
-    int            TestCapability( const char* pszCap );
-    OGRDataSource* CreateDataSource( const char* pszName, char** papszOptions = NULL );
-    OGRErr         DeleteDataSource( const char* pszName );
+    const char*    GetName( ) override;
+    OGRDataSource* Open( const char* pszName, int bUpdate = FALSE ) override;
+    int            TestCapability( const char* pszCap ) override;
+    OGRDataSource* CreateDataSource( const char* pszName, char** papszOptions = NULL ) override;
+    OGRErr         DeleteDataSource( const char* pszName ) override;
 };
 
 #endif /* GEOCONCEPT_OGR_DRIVER_H_INCLUDED_ */

@@ -49,7 +49,6 @@ class OGRMDBJavaEnv
 
         int Init();
 
-
     JavaVM *jvm;
     JNIEnv *env;
     int bCalledFromJava;
@@ -185,7 +184,6 @@ public:
     int GetColumnAsInt(int iCol);
     double GetColumnAsDouble(int iCol);
     GByte* GetColumnAsBinary(int iCol, int* pnBytes);
-
 };
 
 typedef enum
@@ -268,21 +266,21 @@ class OGRMDBLayer : public OGRLayer
                                     const char *pszGeomCol,
                                     OGRSpatialReference* poSRS );
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int bForce );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int bForce ) override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual const char *GetFIDColumn();
+    virtual const char *GetFIDColumn() override;
 
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
@@ -318,12 +316,12 @@ class OGRMDBDataSource : public OGRDataSource
                                    const char *pszGeomCol,
                                    int bUpdate );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
-    OGRLayer            *GetLayerByName( const char* pszLayerName );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* pszLayerName ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -335,10 +333,10 @@ class OGRMDBDriver : public OGRSFDriver
   public:
                 ~OGRMDBDriver();
 
-    const char  *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char  *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
-    int          TestCapability( const char * );
+    int          TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_MDB_H_INCLUDED */

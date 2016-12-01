@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALDriver class (and C wrappers)
@@ -28,8 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
@@ -176,7 +189,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
         GDALDriver* poAPIPROXYDriver = GDALGetAPIPROXYDriver();
         if( poAPIPROXYDriver != this )
         {
-            if( poAPIPROXYDriver == NULL || poAPIPROXYDriver->pfnCreate == NULL )
+            if( poAPIPROXYDriver == NULL ||
+                poAPIPROXYDriver->pfnCreate == NULL )
                 return NULL;
             char** papszOptionsDup = CSLDuplicate(papszOptions);
             papszOptionsDup = CSLAddNameValue(papszOptionsDup, "SERVER_DRIVER",
@@ -207,7 +221,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /*      name.  But even if that seems to fail we will continue since    */
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
         QuietDelete( pszFilename );
 
 /* -------------------------------------------------------------------- */
@@ -279,6 +293,7 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 /*                          DefaultCopyMasks()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultCopyMasks( GDALDataset *poSrcDS,
                                      GDALDataset *poDstDS,
                                      int bStrict )
@@ -659,6 +674,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
 
     return poDstDS;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             CreateCopy()                             */
@@ -1047,6 +1063,7 @@ CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver,
 /*      there is no format specific implementation.                     */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultRename( const char * pszNewName,
                                   const char *pszOldName )
 
@@ -1107,6 +1124,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                               Rename()                               */
@@ -1174,6 +1192,7 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
 /*      there is no format specific implementation.                     */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLErr GDALDriver::DefaultCopyFiles( const char *pszNewName,
                                      const char *pszOldName )
 
@@ -1235,6 +1254,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char *pszNewName,
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             CopyFiles()                              */
@@ -1571,7 +1591,8 @@ int GDALValidateOptions( const char* pszOptionList,
         {
             if( bWarnIfMissingKey &&
                 (!EQUAL(pszErrorMessageOptionType, "open option") ||
-                 CSLFetchBoolean((char**)papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS", TRUE)) )
+                 CPLFetchBool((char**)papszOptionsToValidate,
+                              "VALIDATE_OPEN_OPTIONS", true)) )
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
                         "%s does not support %s %s",
@@ -1638,21 +1659,21 @@ int GDALValidateOptions( const char* pszOptionList,
                     }
                     ++pszValueIter;
                 }
-                if( *pszValueIter == '0' )
+                if( *pszValueIter == '\0' )
                 {
                     if( pszMin && atoi(pszValue) < atoi(pszMin) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be >= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                        break;
+                        bRet = false;
                     }
                     if( pszMax && atoi(pszValue) > atoi(pszMax) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be <= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                        break;
+                        bRet = false;
                     }
                 }
             }
@@ -1671,22 +1692,22 @@ int GDALValidateOptions( const char* pszOptionList,
                         break;
                     }
                     ++pszValueIter;
-                    if( *pszValueIter == '0' )
+                }
+                if( *pszValueIter == '\0' )
+                {
+                    if( pszMin && atoi(pszValue) < atoi(pszMin) )
                     {
-                        if( pszMin && atoi(pszValue) < atoi(pszMin) )
-                        {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "'%s' is an unexpected value for %s %s that should be >= %s.",
-                                pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                            break;
-                        }
-                        if( pszMax && atoi(pszValue) > atoi(pszMax) )
-                        {
-                            CPLError(CE_Warning, CPLE_NotSupported,
-                                "'%s' is an unexpected value for %s %s that should be <= %s.",
-                                pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                            break;
-                        }
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "'%s' is an unexpected value for %s %s that should be >= %s.",
+                            pszValue, pszKey, pszErrorMessageOptionType, pszMin);
+                        bRet = false;
+                    }
+                    if( pszMax && atoi(pszValue) > atoi(pszMax) )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "'%s' is an unexpected value for %s %s that should be <= %s.",
+                            pszValue, pszKey, pszErrorMessageOptionType, pszMax);
+                        bRet = false;
                     }
                 }
             }
@@ -1708,16 +1729,14 @@ int GDALValidateOptions( const char* pszOptionList,
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be >= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMin);
-                        CPLFree(pszKey);
-                        break;
+                        bRet = false;
                     }
                     if( pszMax && dfVal > CPLAtof(pszMax) )
                     {
                         CPLError(CE_Warning, CPLE_NotSupported,
                              "'%s' is an unexpected value for %s %s that should be <= %s.",
                              pszValue, pszKey, pszErrorMessageOptionType, pszMax);
-                        CPLFree(pszKey);
-                        break;
+                        bRet = false;
                     }
                 }
             }
@@ -1746,6 +1765,14 @@ int GDALValidateOptions( const char* pszOptionList,
                         {
                             if (psOptionNode->eType == CXT_Text &&
                                 EQUAL(psOptionNode->pszValue, pszValue))
+                            {
+                                bMatchFound = true;
+                                break;
+                            }
+                            if( psOptionNode->eType == CXT_Attribute &&
+                                (EQUAL(psOptionNode->pszValue, "alias") ||
+                                 EQUAL(psOptionNode->pszValue, "deprecated_alias") ) &&
+                                 EQUAL(psOptionNode->psChild->pszValue, pszValue) )
                             {
                                 bMatchFound = true;
                                 break;
@@ -1840,15 +1867,64 @@ int GDALValidateOptions( const char* pszOptionList,
  * this handle can be cast to a GDALDriver *.
  */
 
-
 GDALDriverH CPL_STDCALL
 GDALIdentifyDriver( const char * pszFilename,
                     char **papszFileList )
 
 {
+    return GDALIdentifyDriverEx( pszFilename, 0, NULL, papszFileList );
+}
+
+/************************************************************************/
+/*                         GDALIdentifyDriverEx()                       */
+/************************************************************************/
+
+/**
+ * \brief Identify the driver that can open a raster file.
+ *
+ * This function will try to identify the driver that can open the passed file
+ * name by invoking the Identify method of each registered GDALDriver in turn.
+ * The first driver that successful identifies the file name will be returned.
+ * If all drivers fail then NULL is returned.
+ *
+ * In order to reduce the need for such searches touch the operating system
+ * file system machinery, it is possible to give an optional list of files.
+ * This is the list of all files at the same level in the file system as the
+ * target file, including the target file. The filenames will not include any
+ * path components, are essentially just the output of VSIReadDir() on the
+ * parent directory. If the target object does not have filesystem semantics
+ * then the file list should be NULL.
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param nIdentifyFlags a combination of GDAL_OF_RASTER for raster drivers
+ * or GDAL_OF_VECTOR for vector drivers. If none of the value is specified,
+ * both kinds are implied.
+ *
+ * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
+ * terminated list of strings with the driver short names that must be considered.
+ *
+ * @param papszFileList an array of strings, whose last element is the NULL
+ * pointer.  These strings are filenames that are auxiliary to the main
+ * filename. The passed value may be NULL.
+ *
+ * @return A GDALDriverH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDriver *.
+ *
+ * @since GDAL 2.2
+ */
+
+GDALDriverH CPL_STDCALL
+GDALIdentifyDriverEx( const char* pszFilename,
+                      unsigned int nIdentifyFlags,
+                      const char* const* papszAllowedDrivers,
+                      const char* const* papszFileList )
+{
     GDALDriverManager  *poDM = GetGDALDriverManager();
     CPLAssert( NULL != poDM );
-    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, papszFileList );
+    GDALOpenInfo oOpenInfo( pszFilename, GA_ReadOnly, (char**)papszFileList );
 
     CPLErrorReset();
 
@@ -1857,25 +1933,69 @@ GDALIdentifyDriver( const char * pszFilename,
     // First pass: only use drivers that have a pfnIdentify implementation.
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver * const poDriver =
-            iDriver < 0 ? GDALGetAPIPROXYDriver() : poDM->GetDriver( iDriver );
+        GDALDriver* poDriver;
+
+        if( iDriver < 0 )
+            poDriver = GDALGetAPIPROXYDriver();
+        else
+        {
+            poDriver = poDM->GetDriver( iDriver );
+            if (papszAllowedDrivers != NULL &&
+                CSLFindString((char**)papszAllowedDrivers,
+                              GDALGetDriverShortName(poDriver)) == -1)
+                continue;
+        }
 
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
 
-        if( poDriver->pfnIdentify != NULL )
+        if( poDriver->pfnIdentify == NULL )
         {
-            if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
-                return poDriver;
+            continue;
         }
+
+        if (papszAllowedDrivers != NULL &&
+            CSLFindString((char**)papszAllowedDrivers,
+                          GDALGetDriverShortName(poDriver)) == -1)
+            continue;
+        if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
+            (nIdentifyFlags & GDAL_OF_VECTOR) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
+            continue;
+        if( (nIdentifyFlags & GDAL_OF_VECTOR) != 0 &&
+            (nIdentifyFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
+            continue;
+
+        if( poDriver->pfnIdentify( &oOpenInfo ) > 0 )
+            return poDriver;
     }
 
     // Second pass: slow method.
     for( int iDriver = -1; iDriver < nDriverCount; ++iDriver )
     {
-        GDALDriver * const poDriver =
-            iDriver < 0 ? GDALGetAPIPROXYDriver() : poDM->GetDriver( iDriver );
+        GDALDriver* poDriver;
+
+        if( iDriver < 0 )
+            poDriver = GDALGetAPIPROXYDriver();
+        else
+        {
+            poDriver = poDM->GetDriver( iDriver );
+            if (papszAllowedDrivers != NULL &&
+                CSLFindString((char**)papszAllowedDrivers,
+                              GDALGetDriverShortName(poDriver)) == -1)
+                continue;
+        }
 
         VALIDATE_POINTER1( poDriver, "GDALIdentifyDriver", NULL );
+
+        if( (nIdentifyFlags & GDAL_OF_RASTER) != 0 &&
+            (nIdentifyFlags & GDAL_OF_VECTOR) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == NULL )
+            continue;
+        if( (nIdentifyFlags & GDAL_OF_VECTOR) != 0 &&
+            (nIdentifyFlags & GDAL_OF_RASTER) == 0 &&
+            poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
+            continue;
 
         if( poDriver->pfnIdentify != NULL )
         {

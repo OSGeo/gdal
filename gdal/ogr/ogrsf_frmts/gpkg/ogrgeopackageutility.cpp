@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoPackage Translator
  * Purpose:  Utility functions for OGR GeoPackage driver.
@@ -30,6 +29,8 @@
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
 
+CPL_CVSID("$Id$");
+
 /* Runs a SQL command and ignores the result (good for INSERT/UPDATE/CREATE) */
 OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
 {
@@ -52,7 +53,6 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
     return OGRERR_NONE;
 }
 
-
 OGRErr SQLResultInit(SQLResult * poResult)
 {
     poResult->papszResult = NULL;
@@ -62,7 +62,6 @@ OGRErr SQLResultInit(SQLResult * poResult)
     poResult->rc = 0;
     return OGRERR_NONE;
 }
-
 
 OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 {
@@ -88,7 +87,6 @@ OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 
     return OGRERR_NONE;
 }
-
 
 OGRErr SQLResultFree(SQLResult * poResult)
 {
@@ -155,12 +153,10 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
     CPLAssert( poDb != NULL );
 
-    sqlite3_stmt *poStmt;
-    int rc;
-    GIntBig i;
+    sqlite3_stmt *poStmt = NULL;
 
     /* Prepare the SQL */
-    rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
+    int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
@@ -179,7 +175,7 @@ GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
     }
 
     /* Read the integer from the row */
-    i = sqlite3_column_int64(poStmt, 0);
+    GIntBig i = sqlite3_column_int64(poStmt, 0);
     sqlite3_finalize(poStmt);
 
     if ( err ) *err = OGRERR_NONE;
@@ -331,7 +327,6 @@ const char* GPkgFieldFromOGR(OGRFieldType nType, OGRFieldSubType eSubType,
     }
 }
 
-
 int SQLiteFieldFromOGR(OGRFieldType nType)
 {
     switch(nType)
@@ -352,9 +347,6 @@ int SQLiteFieldFromOGR(OGRFieldType nType)
             return 0;
     }
 }
-
-
-
 
 /* Requirement 19: A GeoPackage SHALL store feature table geometries
 *  with or without optional elevation (Z) and/or measure (M) values in SQL
@@ -390,7 +382,6 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 {
     CPLAssert( poGeometry != NULL );
 
-    GByte *pabyPtr;
     GByte byFlags = 0;
     GByte byEnv = 1;
     OGRwkbByteOrder eByteOrder = (OGRwkbByteOrder)CPL_IS_LSB;
@@ -483,7 +474,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
         }
     }
 
-    pabyPtr = pabyWkb + szHeader;
+    GByte *pabyPtr = pabyWkb + szHeader;
 
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
     err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
@@ -495,7 +486,6 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId, size_t *ps
 
     return pabyWkb;
 }
-
 
 OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHeader)
 {
@@ -556,7 +546,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t szGpkg, GPkgHeader *poHea
     }
 
     /* SrsId */
-    int iSrsId;
+    int iSrsId = 0;
     memcpy(&iSrsId, pabyGpkg+4, 4);
     if ( bSwap )
     {
@@ -620,7 +610,6 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     CPLAssert( pabyGpkg != NULL );
 
     GPkgHeader oHeader;
-    OGRGeometry *poGeom;
 
     /* Read header */
     OGRErr err = GPkgHeaderFromWKB(pabyGpkg, szGpkg, &oHeader);
@@ -632,6 +621,7 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
     size_t szWkb = szGpkg - oHeader.szHeader;
 
     /* Parse WKB */
+    OGRGeometry *poGeom = NULL;
     err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
                                             static_cast<int>(szWkb));
     if ( err != OGRERR_NONE )
@@ -639,7 +629,6 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t szGpkg, OGRSpatialR
 
     return poGeom;
 }
-
 
 OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
                          size_t szGpkg,
@@ -666,4 +655,122 @@ OGRErr GPkgEnvelopeToOGR(GByte *pabyGpkg,
     poEnv->MaxY = oHeader.MaxY;
 
     return OGRERR_NONE;
+}
+
+CPLString SQLEscapeDoubleQuote(const char* pszStr)
+{
+    CPLString osRet;
+    while( *pszStr != '\0' )
+    {
+        if( *pszStr == '"' )
+            osRet += "\"\"";
+        else
+            osRet += *pszStr;
+        pszStr ++;
+    }
+    return osRet;
+}
+
+CPLString SQLUnescapeDoubleQuote(const char* pszStr)
+{
+    CPLString osRet;
+    const bool bStartsWithDoubleQuote = (pszStr[0] == '"');
+    if( bStartsWithDoubleQuote )
+        pszStr ++;
+    while( *pszStr != '\0' )
+    {
+        if( bStartsWithDoubleQuote && *pszStr == '"' && pszStr[1] == '"' )
+        {
+            osRet += "\"";
+            pszStr ++;
+        }
+        else if( bStartsWithDoubleQuote && *pszStr == '"' )
+        {
+            break;
+        }
+        else
+            osRet += *pszStr;
+        pszStr ++;
+    }
+    return osRet;
+}
+
+/************************************************************************/
+/*                             SQLTokenize()                            */
+/************************************************************************/
+
+char** SQLTokenize( const char* pszStr )
+{
+    char** papszTokens = NULL;
+    bool bInQuote = false;
+    char chQuoteChar = '\0';
+    bool bInSpace = true;
+    CPLString osCurrentToken;
+    while( *pszStr != '\0' )
+    {
+        if( *pszStr == ' ' && !bInQuote )
+        {
+            if( !bInSpace )
+            {
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+            }
+            bInSpace = true;
+        }
+        else if( (*pszStr == '(' || *pszStr == ')' || *pszStr == ',')  && !bInQuote )
+        {
+            if( !bInSpace )
+            {
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+            }
+            osCurrentToken.clear();
+            osCurrentToken += *pszStr;
+            papszTokens = CSLAddString(papszTokens, osCurrentToken);
+            osCurrentToken.clear();
+            bInSpace = true;
+        }
+        else if( *pszStr == '"' || *pszStr == '\'' )
+        {
+            if( bInQuote && *pszStr == chQuoteChar && pszStr[1] == chQuoteChar )
+            {
+                osCurrentToken += *pszStr;
+                osCurrentToken += *pszStr;
+                pszStr += 2;
+                continue;
+            }
+            else if( bInQuote && *pszStr == chQuoteChar )
+            {
+                osCurrentToken += *pszStr;
+                papszTokens = CSLAddString(papszTokens, osCurrentToken);
+                osCurrentToken.clear();
+                bInSpace = true;
+                bInQuote = false;
+                chQuoteChar = '\0';
+            }
+            else if( bInQuote )
+            {
+                osCurrentToken += *pszStr;
+            }
+            else
+            {
+                chQuoteChar = *pszStr;
+                osCurrentToken.clear();
+                osCurrentToken += chQuoteChar;
+                bInQuote = true;
+                bInSpace = false;
+            }
+        }
+        else
+        {
+            osCurrentToken += *pszStr;
+            bInSpace = false;
+        }
+        pszStr ++;
+    }
+
+    if( !osCurrentToken.empty() )
+        papszTokens = CSLAddString(papszTokens, osCurrentToken);
+
+    return papszTokens;
 }

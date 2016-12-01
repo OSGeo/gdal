@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL/OGR Geography Network support (Geographic Network Model)
  * Purpose:  GNM generic driver.
@@ -29,8 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gnm_frmts.h"
 #include "gnmfile.h"
+#include "gnm_frmts.h"
+#include "gnm_priv.h"
+
+CPL_CVSID("$Id$");
 
 static int GNMFileDriverIdentify( GDALOpenInfo* poOpenInfo )
 
@@ -86,7 +88,6 @@ static GDALDataset *GNMFileDriverOpen( GDALOpenInfo* poOpenInfo )
 
     return poFN;
 }
-
 
 static GDALDataset *GNMFileDriverCreate( const char * pszName,
                                         CPL_UNUSED int nBands,

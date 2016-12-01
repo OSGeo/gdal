@@ -117,6 +117,28 @@ def misc_4():
 
     return 'success'
 
+
+###############################################################################
+def get_filename(drv, dirname):
+
+    filename = '%s/foo' % dirname
+    if drv.ShortName == 'GTX':
+        filename = filename + '.gtx'
+    elif drv.ShortName == 'RST':
+        filename = filename + '.rst'
+    elif drv.ShortName == 'SAGA':
+        filename = filename + '.sdat'
+    elif drv.ShortName == 'ADRG':
+        filename = '%s/ABCDEF01.GEN' % dirname
+    elif drv.ShortName == 'SRTMHGT':
+        filename = '%s/N48E002.HGT' % dirname
+    elif drv.ShortName == 'ECW':
+        filename = filename + '.ecw'
+    elif drv.ShortName == 'KMLSUPEROVERLAY':
+        filename = filename + '.kmz'
+
+    return filename
+
 ###############################################################################
 # Test Create() with various band numbers (including 0) and datatype
 
@@ -135,21 +157,7 @@ def misc_5_internal(drv, datatype, nBands):
             gdaltest.post_reason(reason)
             return 0
 
-    filename = '%s/foo' % dirname
-    if drv.ShortName == 'GTX':
-        filename = filename + '.gtx'
-    elif drv.ShortName == 'RST':
-        filename = filename + '.rst'
-    elif drv.ShortName == 'SAGA':
-        filename = filename + '.sdat'
-    elif drv.ShortName == 'ADRG':
-        filename = '%s/ABCDEF01.GEN' % dirname
-    elif drv.ShortName == 'SRTMHGT':
-        filename = '%s/N48E002.HGT' % dirname
-    elif drv.ShortName == 'ECW':
-        filename = filename + '.ecw'
-    elif drv.ShortName == 'KMLSUPEROVERLAY':
-        filename = filename + '.kmz'
+    filename = get_filename(drv, dirname)
     ds = drv.Create(filename, 100, 100, nBands, datatype)
     if ds is not None and not (drv.ShortName == 'GPKG' and nBands == 0):
         set_gt = (2,1.0/10,0,49,0,-1.0/10)
@@ -263,7 +271,7 @@ class misc_6_interrupt_callback_class:
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
 
-def misc_6_internal(datatype, nBands):
+def misc_6_internal(datatype, nBands, setDriversDone):
     if nBands == 0:
         ds = gdal.GetDriverByName('ILWIS').Create('tmp/tmp.mpl', 100, 100, nBands, datatype)
     else:
@@ -276,7 +284,7 @@ def misc_6_internal(datatype, nBands):
         for i in range(gdal.GetDriverCount()):
             drv = gdal.GetDriver(i)
             md = drv.GetMetadata()
-            if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
+            if ('DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md) and 'DCAP_RASTER' in md:
                 #print ('drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
 
                 skip = False
@@ -285,8 +293,6 @@ def misc_6_internal(datatype, nBands):
                     if (nBands == 2 or nBands >= 5) or \
                         not (datatype == gdal.GDT_Byte or datatype == gdal.GDT_Int16 or datatype == gdal.GDT_UInt16):
                             skip = True
-                if drv.ShortName == 'JP2ECW' and datatype == gdal.GDT_Float64:
-                    skip = True
 
                 if skip is False:
                     dirname = 'tmp/tmp/tmp_%s_%d_%s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
@@ -301,25 +307,16 @@ def misc_6_internal(datatype, nBands):
                             gdaltest.post_reason(reason)
                             return 'fail'
 
-                    filename = '%s/foo' % dirname
-                    if drv.ShortName == 'GTX':
-                        filename = filename + '.gtx'
-                    elif drv.ShortName == 'RST':
-                        filename = filename + '.rst'
-                    elif drv.ShortName == 'SAGA':
-                        filename = filename + '.sdat'
-                    elif drv.ShortName == 'ADRG':
-                        filename = '%s/ABCDEF01.GEN' % dirname
-                    elif drv.ShortName == 'SRTMHGT':
-                        filename = '%s/N48E002.HGT' % dirname
-                    elif drv.ShortName == 'ECW':
-                        filename = filename + '.ecw'
-                    elif drv.ShortName == 'KMLSUPEROVERLAY':
-                        filename = filename + '.kmz'
+                    filename = get_filename(drv, dirname)
 
                     dst_ds = drv.CreateCopy(filename, ds)
                     has_succeeded = dst_ds is not None
                     dst_ds = None
+
+                    size = 0
+                    stat = gdal.VSIStatL(filename)
+                    if stat is not None:
+                        size = stat.size
 
                     try:
                         shutil.rmtree(dirname)
@@ -328,31 +325,66 @@ def misc_6_internal(datatype, nBands):
                         gdaltest.post_reason(reason)
                         return 'fail'
 
-                    if has_succeeded and not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
-                        dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback_class().cbk)
-                        if dst_ds is not None:
-                            gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                    if has_succeeded and not drv.ShortName in setDriversDone and nBands > 0:
+                        setDriversDone.add(drv.ShortName)
+
+                        # The first list of drivers fail to detect short writing
+                        # The second one is because they are verbose in stderr
+                        if 'DCAP_VIRTUALIO' in md and size != 0 and \
+                           drv.ShortName not in ['JPEG2000', 'KMLSUPEROVERLAY', 'HF2', 'ZMap', 'DDS'] and \
+                           drv.ShortName not in ['GIF', 'JP2ECW', 'JP2Lura']:
+
+                            for j in range(10):
+                                truncated_size = (size * j) / 10
+                                vsimem_filename = ('/vsimem/test_truncate/||maxlength=%d||' % truncated_size) + get_filename(drv, '')[1:]
+                                #print('drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size))
+                                dst_ds = drv.CreateCopy(vsimem_filename, ds)
+                                error_detected = False
+                                if dst_ds is None:
+                                    error_detected = True
+                                else:
+                                    gdal.ErrorReset()
+                                    dst_ds = None
+                                    if gdal.GetLastErrorMsg() != '':
+                                        error_detected = True
+                                if not error_detected:
+                                    msg = 'write error not decteded with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype), truncated_size)
+                                    print(msg)
+                                    gdaltest.post_reason(msg)
+
+                                fl = gdal.ReadDirRecursive('/vsimem/test_truncate')
+                                if fl is not None:
+                                    for myf in fl:
+                                        gdal.Unlink('/vsimem/test_truncate/' + myf)
+                                    fl = gdal.ReadDirRecursive('/vsimem/test_truncate')
+                                    if fl is not None:
+                                        print(fl)
+
+                        if not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
+                            dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback_class().cbk)
+                            if dst_ds is not None:
+                                gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))
+                                dst_ds = None
+
+                                try:
+                                    shutil.rmtree(dirname)
+                                except:
+                                    pass
+
+                                return 'fail'
+
                             dst_ds = None
 
                             try:
                                 shutil.rmtree(dirname)
                             except:
                                 pass
-
-                            return 'fail'
-
-                        dst_ds = None
-
-                        try:
-                            shutil.rmtree(dirname)
-                        except:
-                            pass
-                        try:
-                            os.mkdir(dirname)
-                        except:
-                            reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
-                            gdaltest.post_reason(reason)
-                            return 'fail'
+                            try:
+                                os.mkdir(dirname)
+                            except:
+                                reason = 'Cannot create %s before drv = %s, nBands = %d, datatype = %s' % (dirname, drv.ShortName, nBands, gdal.GetDataTypeName(datatype))
+                                gdaltest.post_reason(reason)
+                                return 'fail'
         ds = None
         if nBands == 0:
             gdal.GetDriverByName('ILWIS').Delete('tmp/tmp.mpl')
@@ -383,9 +415,11 @@ def misc_6():
     gdal.SetConfigOption('OGR_SQLITE_SYNCHRONOUS', 'OFF')
 
     datatype = gdal.GDT_Byte
+    setDriversDone = set()
     for nBands in range(6):
-        ret = misc_6_internal(datatype, nBands)
+        ret = misc_6_internal(datatype, nBands, setDriversDone)
         if ret != 'success':
+            gdal.PopErrorHandler()
             return ret
 
     nBands = 1
@@ -399,8 +433,9 @@ def misc_6():
                      gdal.GDT_CInt32,
                      gdal.GDT_CFloat32,
                      gdal.GDT_CFloat64):
-        ret = misc_6_internal(datatype, nBands)
+        ret = misc_6_internal(datatype, nBands, setDriversDone)
         if ret != 'success':
+            gdal.PopErrorHandler()
             return ret
 
     gdal.PopErrorHandler()
@@ -537,26 +572,8 @@ def misc_12():
 
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
-        #if drv.ShortName == 'ECW' or drv.ShortName == 'JP2ECW':
-        #    continue
         md = drv.GetMetadata()
-        if 'DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md and 'DCAP_RASTER' in md:
-
-            ext = ''
-            if drv.ShortName == 'GTX':
-                ext = '.gtx'
-            elif drv.ShortName == 'RST':
-                ext = '.rst'
-            elif drv.ShortName == 'SAGA':
-                ext = '.sdat'
-            elif drv.ShortName == 'ECW':
-                ext = '.ecw'
-            elif drv.ShortName == 'KMLSUPEROVERLAY':
-                ext = '.kmz'
-            elif drv.ShortName == 'ADRG':
-                ext = '/ABCDEF01.GEN'
-            elif drv.ShortName == 'SRTMHGT':
-                ext = '/N48E002.HGT'
+        if ('DCAP_CREATECOPY' in md or 'DCAP_CREATE' in md) and 'DCAP_RASTER' in md:
 
             nbands = 1
             if drv.ShortName == 'WEBP' or drv.ShortName == 'ADRG':
@@ -579,7 +596,7 @@ def misc_12():
 
             # Test to detect crashes
             gdal.PushErrorHandler('CPLQuietErrorHandler')
-            ds = drv.CreateCopy('/nonexistingpath/nonexistingfile' + ext, src_ds)
+            ds = drv.CreateCopy('/nonexistingpath' + get_filename(drv, ''), src_ds)
             gdal.PopErrorHandler()
             if ds is None and gdal.GetLastErrorMsg() == '':
                 gdaltest.post_reason('failure')
@@ -590,7 +607,7 @@ def misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/misc_12.vrt', src_ds)
-                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/nonexistingfile' + ext, check_memleak = False)
+                (out, err) = gdaltest.runexternal_out_and_err(gdal_translate_path + ' -of ' + drv.ShortName + ' tmp/misc_12.vrt /nonexistingpath/' + get_filename(drv, ''), check_memleak = False)
                 del ds
                 gdal.Unlink('tmp/misc_12.vrt')
 
@@ -658,6 +675,8 @@ gdaltest_list = [ misc_1,
                   misc_12,
                   misc_13,
                   misc_cleanup ]
+
+#gdaltest_list = [ misc_6 ]
 
 if __name__ == '__main__':
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerPoint class.
@@ -36,10 +35,10 @@ CPL_CVSID("$Id$");
 /*                             TigerPoint()                             */
 /************************************************************************/
 TigerPoint::TigerPoint( int bRequireGeomIn, const TigerRecordInfo *psRTInfoIn,
-                        const char            *m_pszFileCodeIn ) : TigerFileBase(psRTInfoIn, m_pszFileCodeIn)
-{
-    this->bRequireGeom = bRequireGeomIn;
-}
+                        const char *m_pszFileCodeIn ) :
+    TigerFileBase(psRTInfoIn, m_pszFileCodeIn),
+    bRequireGeom(bRequireGeomIn)
+{}
 
 /************************************************************************/
 /*                             GetFeature()                             */
@@ -82,7 +81,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     /*      Set fields.                                                     */
     /* -------------------------------------------------------------------- */
 
-    OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
+    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     SetFields( psRTInfo, poFeature, achRecord);
 
@@ -90,10 +89,8 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     /*      Set geometry                                                    */
     /* -------------------------------------------------------------------- */
 
-    double      dfX, dfY;
-
-    dfX = atoi(GetField(achRecord, nX0, nX1)) / 1000000.0;
-    dfY = atoi(GetField(achRecord, nY0, nY1)) / 1000000.0;
+    const double dfX = atoi(GetField(achRecord, nX0, nX1)) / 1000000.0;
+    const double dfY = atoi(GetField(achRecord, nY0, nY1)) / 1000000.0;
 
     if( dfX != 0.0 || dfY != 0.0 ) {
         poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );

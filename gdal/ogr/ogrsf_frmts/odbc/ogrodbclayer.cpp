@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRODBCLayer class, code shared between
@@ -38,24 +37,18 @@ CPL_CVSID("$Id$");
 /*                            OGRODBCLayer()                            */
 /************************************************************************/
 
-OGRODBCLayer::OGRODBCLayer()
-
-{
-    poDS = NULL;
-
-    bGeomColumnWKB = FALSE;
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
-    panFieldOrdinals = NULL;
-
-    poStmt = NULL;
-
-    iNextShapeId = 0;
-
-    poSRS = NULL;
-    nSRSId = -2; // we haven't even queried the database for it yet.
-    poFeatureDefn = NULL;
-}
+OGRODBCLayer::OGRODBCLayer() :
+    poFeatureDefn(NULL),
+    poStmt(NULL),
+    poSRS(NULL),
+    nSRSId(-2),  // Have not queried the database for it yet.
+    iNextShapeId(0),
+    poDS(NULL),
+    bGeomColumnWKB(FALSE),
+    pszGeomColumn(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL)
+{}
 
 /************************************************************************/
 /*                            ~OGRODBCLayer()                             */
@@ -192,7 +185,6 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -212,9 +204,7 @@ OGRFeature *OGRODBCLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -307,7 +297,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 
         if ( eErr != OGRERR_NONE )
         {
-            const char *pszMessage;
+            const char *pszMessage = NULL;
 
             switch ( eErr )
             {

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALDriverManager class.
@@ -28,13 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+#include <map>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_alg.h"
 #include "gdal_alg_priv.h"
+#include "gdal.h"
 #include "gdal_pam.h"
-#include "gdal_priv.h"
 #include "ogr_srs_api.h"
+#include "ogr_xerces.h"
 
 #ifdef _MSC_VER
 #  ifdef MSVC_USE_VLD
@@ -43,9 +53,10 @@
 #  endif
 #endif
 
-#if HAVE_CXX11
-#include <mutex>
-#endif
+// FIXME: Disabled following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//#include <mutex>
+//#endif
 
 CPL_CVSID("$Id$");
 
@@ -58,9 +69,10 @@ CPL_CVSID("$Id$");
 static volatile GDALDriverManager *poDM = NULL;
 static CPLMutex *hDMMutex = NULL;
 
-#if HAVE_CXX11
-static std::mutex oDeleteMutex;
-#endif
+// FIXME: Disale following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//static std::mutex oDeleteMutex;
+//#endif
 
 CPLMutex** GDALGetphDMMutex() { return &hDMMutex; }
 
@@ -115,11 +127,11 @@ GDALDriverManager::GDALDriverManager() :
 /*      and we hope other mechanisms such as environment variables will */
 /*      have been employed.                                             */
 /* -------------------------------------------------------------------- */
+#ifdef INST_DATA
     if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
     {
         // This one is picked up automatically by finder initialization.
     }
-#ifdef INST_DATA
     else
     {
         CPLPushFinderLocation( INST_DATA );
@@ -235,6 +247,8 @@ GDALDriverManager::~GDALDriverManager()
 /*      related subsystem.                                              */
 /* -------------------------------------------------------------------- */
     OSRCleanup();
+
+    OGRCleanupXercesMutex();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup VSIFileManager.                                         */
@@ -417,7 +431,7 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
             }
         }
 
-        CPLAssert( FALSE );
+        CPLAssert( false );
     }
 
 /* -------------------------------------------------------------------- */
@@ -492,7 +506,6 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
         RegisterDriver( static_cast<GDALDriver *>( hDriver ) );
 }
 
-
 /************************************************************************/
 /*                          DeregisterDriver()                          */
 /************************************************************************/
@@ -550,7 +563,6 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
     GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
 }
 
-
 /************************************************************************/
 /*                          GetDriverByName()                           */
 /************************************************************************/
@@ -569,6 +581,10 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
 {
     CPLMutexHolderD( &hDMMutex );
+
+    // Alias old name to new name
+    if( EQUAL(pszName, "CartoDB") )
+        pszName = "Carto";
 
     return oMapNameToDrivers[CPLString(pszName).toupper()];
 }
@@ -675,7 +691,7 @@ void GDALDriverManager::AutoSkipDrivers()
  * search separated by colons on UNIX, or semi-colons on Windows.  Otherwise
  * the /usr/local/lib/gdalplugins directory, and (if known) the
  * lib/gdalplugins subdirectory of the gdal home directory are searched on
- * UNIX and $(BINDIR)\gdalplugins on Windows.
+ * UNIX and $(BINDIR)\\gdalplugins on Windows.
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".
@@ -751,7 +767,6 @@ void GDALDriverManager::AutoLoadDrivers()
                                      num2str(GDAL_VERSION_MAJOR) "."
                                      num2str(GDAL_VERSION_MINOR) "/PlugIns" );
    #endif
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -842,7 +857,6 @@ void GDALDriverManager::AutoLoadDrivers()
     CSLDestroy( papszSearchPath );
 
 #endif  // GDAL_NO_AUTOLOAD
-
 }
 
 /************************************************************************/
@@ -865,9 +879,10 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
     // needs to be reacquired within the destructor during driver
     // deregistration.
 
-#if HAVE_CXX11
-    std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#endif
+// FIXME: Disale following code as it crashed on OSX CI test.
+//#if HAVE_CXX11
+//    std::lock_guard<std::mutex> oLock(oDeleteMutex);
+//#endif
 
     if( poDM != NULL )
     {

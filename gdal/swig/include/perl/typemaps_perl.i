@@ -18,7 +18,7 @@
 %typemap(out) GIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -31,7 +31,7 @@
 %typemap(out) GUIntBig
 {
     char temp[256];
-    sprintf(temp, ""CPL_FRMT_GUIB"", $1);
+    sprintf(temp, "" CPL_FRMT_GUIB "", $1);
     $result = sv_2mortal(newSVpv(temp, 0));
     argvi++;
 }
@@ -512,6 +512,8 @@
         do_confess(NEED_ARRAY_REF, 1);
     $1 = argin;
     AV *av = (AV*)(SvRV($input));
+    if (av_len(av)+1 < $dim0)
+      do_confess(NOT_ENOUGH_ELEMENTS, 1);
     for (unsigned int i=0; i<$dim0; i++) {
         SV *sv = *av_fetch(av, i, 0);
         if (!SvOK(sv))
@@ -1185,9 +1187,9 @@
     if ( !$1 ) {
         switch (err) {
         case 1:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_DEF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_DEF, 1);
         case 2:
-            do_confess(ARRAY_TO_XML_FAILED" "NEED_ARRAY_REF, 1);
+            do_confess(ARRAY_TO_XML_FAILED " " NEED_ARRAY_REF, 1);
         }
     }
 }

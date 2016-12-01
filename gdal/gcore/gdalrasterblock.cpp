@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALRasterBlock class and related global
@@ -29,13 +28,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+
+#include <climits>
+#include <cstring>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
 static bool bCacheMaxInitialized = false;
-// Will later be overriden by the default 5% if GDAL_CACHEMAX not defined.
+// Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
 static GIntBig nCacheMax = 40 * 1024 * 1024;
 static volatile GIntBig nCacheUsed = 0;
 
@@ -110,7 +120,6 @@ void CPL_STDCALL GDALSetCacheMax( int nNewSizeInBytes )
     GDALSetCacheMax64(nNewSizeInBytes);
 }
 
-
 /************************************************************************/
 /*                        GDALSetCacheMax64()                           */
 /************************************************************************/
@@ -142,6 +151,9 @@ void CPL_STDCALL GDALSetCacheMax64( GIntBig nNewSizeInBytes )
     }
 #endif
 
+    {
+        INITIALIZE_LOCK;
+    }
     bCacheMaxInitialized = true;
     nCacheMax = nNewSizeInBytes;
 
@@ -236,20 +248,29 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
         GIntBig nNewCacheMax;
         if( strchr(pszCacheMax, '%') != NULL )
         {
-            GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-            // For some reason, coverity pretends that this will overflow.
-            // "Multiply operation overflows on operands static_cast<double>(
-            // nUsagePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
-            // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
-            // static_cast<double>(nUsagePhysicalRAM) = -9223372036854775808."
-            // coverity[overflow]
-            double dfCacheMax =
-                static_cast<double>(nUsagePhysicalRAM) *
-                CPLAtof(pszCacheMax) / 100.0;
-            if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
-                nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+            GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+            if( nUsablePhysicalRAM > 0 )
+            {
+                // For some reason, coverity pretends that this will overflow.
+                // "Multiply operation overflows on operands static_cast<double>(
+                // nUsablePhysicalRAM ) and CPLAtof(pszCacheMax). Example values for
+                // operands: CPLAtof( pszCacheMax ) = 2251799813685248,
+                // static_cast<double>(nUsablePhysicalRAM) = -9223372036854775808."
+                // coverity[overflow]
+                double dfCacheMax =
+                    static_cast<double>(nUsablePhysicalRAM) *
+                    CPLAtof(pszCacheMax) / 100.0;
+                if( dfCacheMax >= 0 && dfCacheMax < 1e15 )
+                    nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                else
+                    nNewCacheMax = nCacheMax;
+            }
             else
+            {
+                CPLDebug("GDAL",
+                         "Cannot determine usable physical RAM.");
                 nNewCacheMax = nCacheMax;
+            }
         }
         else
         {
@@ -262,11 +283,15 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                         CE_Failure, CPLE_NotSupported,
                         "Invalid value for GDAL_CACHEMAX. "
                         "Using default value.");
-                    GIntBig nUsagePhysicalRAM = CPLGetUsablePhysicalRAM();
-                    if( nUsagePhysicalRAM )
-                        nNewCacheMax = nUsagePhysicalRAM / 20;
+                    GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                    if( nUsablePhysicalRAM )
+                        nNewCacheMax = nUsablePhysicalRAM / 20;
                     else
+                    {
+                        CPLDebug("GDAL",
+                                 "Cannot determine usable physical RAM.");
                         nNewCacheMax = nCacheMax;
+                    }
                 }
                 else
                 {
@@ -380,7 +405,7 @@ int CPL_STDCALL GDALFlushCacheBlock()
 /************************************************************************/
 /*                          FlushCacheBlock()                           */
 /*                                                                      */
-/*      Note, if we have alot of blocks locked for a long time, this    */
+/*      Note, if we have a lot of blocks locked for a long time, this    */
 /*      method is going to get slow because it will have to traverse    */
 /*      the linked list a long ways looking for a flushing              */
 /*      candidate.   It might help to re-touch locked blocks to push    */
@@ -445,7 +470,7 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
         }
     }
 
-    VSIFree(poTarget->pData);
+    VSIFreeAligned(poTarget->pData);
     poTarget->pData = NULL;
     poTarget->GetBand()->AddBlockToFreeList(poTarget);
 
@@ -463,7 +488,7 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
  * useful when doing multi-threaded code that can trigger the block cache.
  *
  * Due to the current design of the block cache, dirty blocks belonging to a
- * same dataset could be pushed simultanously to the IWriteBlock() method of
+ * same dataset could be pushed simultaneously to the IWriteBlock() method of
  * that dataset from different threads, causing races.
  *
  * Calling this method before that code can help workarounding that issue,
@@ -569,7 +594,8 @@ void GDALRasterBlock::RecycleFor( int nXOffIn, int nYOffIn )
     bDirty = false;
     nLockCount = 0;
 
-    poNext = poPrevious = NULL;
+    poNext = NULL;
+    poPrevious = NULL;
 
     nXOff = nXOffIn;
     nYOff = nYOffIn;
@@ -593,7 +619,7 @@ GDALRasterBlock::~GDALRasterBlock()
 
     if( pData != NULL )
     {
-        VSIFree( pData );
+        VSIFreeAligned( pData );
     }
 
     CPLAssert( nLockCount <= 0 );
@@ -729,7 +755,7 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
 /**
  * Force writing of the current block, if dirty.
  *
- * The block is written using GDALRasterBand::IWriteBlock() on it's
+ * The block is written using GDALRasterBand::IWriteBlock() on its
  * corresponding band object.  Even if the write fails the block will
  * be marked clean.
  *
@@ -772,14 +798,23 @@ CPLErr GDALRasterBlock::Write()
 void GDALRasterBlock::Touch()
 
 {
+    // Can be safely tested outside the lock
+    if( poNewest == this )
+        return;
+
     TAKE_LOCK;
     Touch_unlocked();
 }
 
-
 void GDALRasterBlock::Touch_unlocked()
 
 {
+    // Could happen even if tested in Touch() before taking the lock
+    // Scenario would be :
+    // 0. this is the second block (the one pointed by poNewest->poNext)
+    // 1. Thread 1 calls Touch() and poNewest != this at that point
+    // 2. Thread 2 detaches poNewest
+    // 3. Thread 1 arrives here
     if( poNewest == this )
         return;
 
@@ -946,7 +981,7 @@ CPLErr GDALRasterBlock::Internalize()
             }
             else
             {
-                VSIFree(poBlock->pData);
+                VSIFreeAligned(poBlock->pData);
             }
             poBlock->pData = NULL;
 
@@ -957,7 +992,7 @@ CPLErr GDALRasterBlock::Internalize()
 
     if( pNewData == NULL )
     {
-        pNewData = VSI_MALLOC_VERBOSE( nSizeInBytes );
+        pNewData = VSI_MALLOC_ALIGNED_AUTO_VERBOSE( nSizeInBytes );
         if( pNewData == NULL )
         {
             return( CE_Failure );
@@ -980,7 +1015,12 @@ CPLErr GDALRasterBlock::Internalize()
  * to disk before it can be flushed.
  */
 
-void GDALRasterBlock::MarkDirty() { bDirty = true; }
+void GDALRasterBlock::MarkDirty()
+{
+    bDirty = true;
+    if( poBand )
+        poBand->InitRWLock();
+}
 
 /************************************************************************/
 /*                             MarkClean()                              */
@@ -999,12 +1039,14 @@ void GDALRasterBlock::MarkClean() { bDirty = false; }
 /*                          DestroyRBMutex()                           */
 /************************************************************************/
 
+/*! @cond Doxygen_Suppress */
 void GDALRasterBlock::DestroyRBMutex()
 {
     if( hRBLock != NULL )
         DESTROY_LOCK;
     hRBLock = NULL;
 }
+/*! @endcond */
 
 /************************************************************************/
 /*                              TakeLock()                              */

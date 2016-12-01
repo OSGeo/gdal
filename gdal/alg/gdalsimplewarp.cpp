@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Mapinfo Image Warper
  * Purpose:  Simple (source in memory) warp algorithm.
@@ -27,8 +26,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "gdal_alg.h"
+
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 #include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
@@ -157,7 +168,8 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             break;
         }
     }
-    if( !ok ) {
+    if( !ok )
+    {
         for( int i=0; i <= nBandCount; i++ )
         {
             VSIFree(papabySrcData[i]);
@@ -219,7 +231,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                 panBandInit[iBand] = 0;
             else
                 panBandInit[iBand] =
-                    atoi(papszTokens[MIN(iBand,nTokenCount-1)]);
+                    atoi(papszTokens[std::min(iBand, nTokenCount- 1)]);
         }
 
         CSLDestroy(papszTokens);

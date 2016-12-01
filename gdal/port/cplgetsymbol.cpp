@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Fetch a function pointer from a shared library / DLL.
@@ -28,10 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+#include <cstddef>
 
+#include "cpl_config.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+
+CPL_CVSID("$Id$");
 
 /* ==================================================================== */
 /*                  Unix Implementation                                 */
@@ -148,7 +153,19 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     /* Avoid error boxes to pop up (#5211, #5525) */
     uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
-    pLibrary = LoadLibrary(pszLibrary);
+#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        wchar_t *pwszFilename =
+            CPLRecodeToWChar( pszLibrary, CPL_ENC_UTF8, CPL_ENC_UCS2 );
+        pLibrary = LoadLibraryW(pwszFilename);
+        CPLFree( pwszFilename );
+    }
+    else
+#endif
+    {
+        pLibrary = LoadLibrary(pszLibrary);
+    }
 
     if( pLibrary <= (void*)HINSTANCE_ERROR )
     {

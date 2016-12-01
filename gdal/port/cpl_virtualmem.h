@@ -31,6 +31,8 @@
 #ifndef CPL_VIRTUAL_MEM_INCLUDED
 #define CPL_VIRTUAL_MEM_INCLUDED
 
+#include <stddef.h>
+
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
@@ -110,7 +112,6 @@ typedef enum
     VIRTUALMEM_READWRITE
 } CPLVirtualMemAccessMode;
 
-
 /** Return the size of a page of virtual memory.
  *
  * @return the page size.
@@ -172,7 +173,6 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemNew(size_t nSize,
                                         CPLVirtualMemUnCachePageCbk pfnUnCachePage,
                                         CPLVirtualMemFreeUserData pfnFreeUserData,
                                         void *pCbkUserData);
-
 
 /** Return if virtual memory mapping of a file is available.
  *
@@ -383,7 +383,6 @@ void CPL_DLL CPLVirtualMemPin(CPLVirtualMem* ctxt,
  * @since GDAL 2.0
  */
 void CPL_DLL CPLVirtualMemManagerTerminate(void);
-
 
 CPL_C_END
 

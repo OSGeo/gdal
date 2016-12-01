@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTLayer class.
@@ -36,26 +35,19 @@ CPL_CVSID("$Id$");
 /*                            OGRGFTLayer()                             */
 /************************************************************************/
 
-OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn)
-
-{
-    this->poDS = poDSIn;
-
-    nNextInSeq = 0;
-
-    poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
-
-    poFeatureDefn = NULL;
-
-    nOffset = 0;
-    bEOF = FALSE;
-
-    iLatitudeField = iLongitudeField = -1;
-    iGeometryField = -1;
-    bHiddenGeometryField = FALSE;
-
-    bFirstTokenIsFID = FALSE;
-}
+OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
+    poDS(poDSIn),
+    poFeatureDefn(NULL),
+    poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    nNextInSeq(0),
+    iGeometryField(-1),
+    iLatitudeField(-1),
+    iLongitudeField(-1),
+    bHiddenGeometryField(FALSE),
+    nOffset(0),
+    bEOF(FALSE),
+    bFirstTokenIsFID(FALSE)
+{}
 
 /************************************************************************/
 /*                            ~OGRGFTLayer()                            */
@@ -99,8 +91,6 @@ OGRFeatureDefn * OGRGFTLayer::GetLayerDefn()
 
 OGRFeature *OGRGFTLayer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     GetLayerDefn();
 
     while( true )
@@ -116,7 +106,7 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
                 return NULL;
         }
 
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -144,18 +134,15 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
 
 {
-    char        **papszRetList = NULL;
-    char        *pszToken;
-    int         nTokenMax, nTokenLen;
-
-    pszToken = (char *) CPLCalloc(10,1);
-    nTokenMax = 10;
+    char **papszRetList = NULL;
+    char *pszToken = (char *) CPLCalloc(10,1);
+    int nTokenMax = 10;
 
     while( pszString != NULL && *pszString != '\0' )
     {
         int     bInString = FALSE;
 
-        nTokenLen = 0;
+        int nTokenLen = 0;
 
         /* Try to find the next delimiter, marking end of token */
         for( ; *pszString != '\0'; pszString++ )
@@ -304,7 +291,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
     }
     else if (strcmp(pszGeomType, "MultiGeometry") == 0)
     {
-        CPLXMLNode* psIter;
+        CPLXMLNode* psIter = NULL;
         OGRwkbGeometryType eType = wkbUnknown;
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
         {
@@ -341,7 +328,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
         else if (eType == wkbPolygon)
             poColl = new OGRMultiPolygon();
         else {
-            CPLAssert(0);
+            CPLAssert(false);
         }
 
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
@@ -377,7 +364,6 @@ static OGRGeometry* ParseKMLGeometry(const char* pszKML)
     CPLDestroyXMLNode(psXML);
     return poGeom;
 }
-
 
 /************************************************************************/
 /*                         BuildFeatureFromSQL()                        */
@@ -654,14 +640,17 @@ void OGRGFTLayer::SetGeomFieldName()
 {
     if (iGeometryField >= 0 && poFeatureDefn->GetGeomFieldCount() > 0)
     {
-        const char* pszGeomColName;
+        const char* pszGeomColName = NULL;
         if (iGeometryField == poFeatureDefn->GetFieldCount())
         {
             CPLAssert(bHiddenGeometryField);
             pszGeomColName = GetDefaultGeometryColumnName();
         }
         else
-            pszGeomColName = poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
+        {
+            pszGeomColName =
+                poFeatureDefn->GetFieldDefn(iGeometryField)->GetNameRef();
+        }
         poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColName);
     }
 }

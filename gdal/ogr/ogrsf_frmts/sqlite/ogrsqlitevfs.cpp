@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements SQLite VFS
@@ -295,7 +294,7 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
     CPLDebug("SQLITE", "OGRSQLiteVFSAccess(%s, %d)", zName, flags);
 #endif
     VSIStatBufL sStatBufL;
-    int nRet;
+    int nRet;  // TODO(schwehr): Cleanup nRet and pResOut.  bools?
     if (flags == SQLITE_ACCESS_EXISTS)
     {
         /* Do not try to check the presence of a journal or a wal on /vsicurl ! */
@@ -308,7 +307,9 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
             nRet = -1;
         }
         else
+        {
             nRet = VSIStatExL(zName, &sStatBufL, VSI_STAT_EXISTS_FLAG);
+        }
     }
     else if (flags == SQLITE_ACCESS_READ)
     {
@@ -325,7 +326,9 @@ static int OGRSQLiteVFSAccess (DEBUG_ONLY sqlite3_vfs* pVFS,
             VSIFCloseL(fp);
     }
     else
+    {
         nRet = -1;
+    }
     *pResOut = (nRet == 0);
     return SQLITE_OK;
 }

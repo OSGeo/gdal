@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Functions to convert ASCII string to floating point number.
@@ -28,13 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <locale.h>
+#include "cpl_port.h"
+#include "cpl_conv.h"
 
 #include <cerrno>
+#include <clocale>
+#include <cstring>
 #include <cstdlib>
 #include <limits>
 
-#include "cpl_conv.h"
+#include "cpl_config.h"
 
 CPL_CVSID("$Id$");
 
@@ -360,7 +362,7 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
         CPLFree( pszNumber );
 
     errno = nError;
-    return dfValue;
+    return static_cast<float>(dfValue);
 
 #else
 

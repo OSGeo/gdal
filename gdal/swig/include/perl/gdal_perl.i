@@ -251,6 +251,10 @@ for my $string (@NODE_TYPES) {
     $NODE_TYPE_INT2STRING{$int} = $string;
 }
 
+our $HAVE_PDL;
+eval 'require PDL';
+$HAVE_PDL = 1 unless $@;
+
 sub error {
     if (@_) {
         my $error;
@@ -621,7 +625,20 @@ sub TestCapability {
 sub Extension {
     my $self = shift;
     my $h = $self->GetMetadata;
-    return $h->{DMD_EXTENSION};
+    if (wantarray) {
+        my $e = $h->{DMD_EXTENSIONS};
+        my @e = split / /, $e;
+        @e = split /\//, $e if $e =~ /\//; # ILWIS returns mpr/mpl
+        for my $i (0..$#e) {
+            $e[$i] =~ s/^\.//; # CALS returns extensions with a dot prefix
+        }
+        return @e;
+    } else {
+        my $e = $h->{DMD_EXTENSION};
+        return '' if $e =~ /\//; # ILWIS returns mpr/mpl
+        $e =~ s/^\.//;
+        return $e;
+    }
 }
 
 sub MIMEType {
@@ -945,10 +962,10 @@ sub GCPs {
 }
 
 sub ReadTile {
-    my ($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
+    my ($self, $xoff, $yoff, $xsize, $ysize) = @_;
     my @data;
     for my $i (0..$self->Bands-1) {
-        $data[$i] = $self->Band($i+1)->ReadTile($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg);
+        $data[$i] = $self->Band($i+1)->ReadTile($xoff, $yoff, $xsize, $ysize);
     }
     return \@data;
 }
@@ -1256,7 +1273,7 @@ use Scalar::Util 'blessed';
 use vars qw/ %RATS
     @COLOR_INTERPRETATIONS
     %COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
-    %MASK_FLAGS
+    %MASK_FLAGS %DATATYPE2PDL %PDL2DATATYPE
     /;
 for (keys %Geo::GDAL::Const::) {
     next if /TypeCount/;
@@ -1269,6 +1286,35 @@ for my $string (@COLOR_INTERPRETATIONS) {
 }
 @DOMAINS = qw/IMAGE_STRUCTURE RESAMPLING/;
 %MASK_FLAGS = (AllValid => 1, PerDataset => 2, Alpha => 4, NoData => 8);
+if ($Geo::GDAL::HAVE_PDL) {
+    require PDL;
+    require PDL::Types;
+    %DATATYPE2PDL = (
+        $Geo::GDAL::Const::GDT_Byte => $PDL::Types::PDL_B,
+        $Geo::GDAL::Const::GDT_Int16 => $PDL::Types::PDL_S,
+        $Geo::GDAL::Const::GDT_UInt16 => $PDL::Types::PDL_US,
+        $Geo::GDAL::Const::GDT_Int32 => $PDL::Types::PDL_L,
+        $Geo::GDAL::Const::GDT_UInt32 => -1,
+        #$PDL_IND,
+        #$PDL_LL,
+        $Geo::GDAL::Const::GDT_Float32 => $PDL::Types::PDL_F,
+        $Geo::GDAL::Const::GDT_Float64 => $PDL::Types::PDL_D,
+        $Geo::GDAL::Const::GDT_CInt16 => -1,
+        $Geo::GDAL::Const::GDT_CInt32 => -1,
+        $Geo::GDAL::Const::GDT_CFloat32 => -1,
+        $Geo::GDAL::Const::GDT_CFloat64 => -1
+        );
+    %PDL2DATATYPE = (
+        $PDL::Types::PDL_B => $Geo::GDAL::Const::GDT_Byte,
+        $PDL::Types::PDL_S => $Geo::GDAL::Const::GDT_Int16,
+        $PDL::Types::PDL_US => $Geo::GDAL::Const::GDT_UInt16,
+        $PDL::Types::PDL_L  => $Geo::GDAL::Const::GDT_Int32,
+        $PDL::Types::PDL_IND  => -1,
+        $PDL::Types::PDL_LL  => -1,
+        $PDL::Types::PDL_F  => $Geo::GDAL::Const::GDT_Float32,
+        $PDL::Types::PDL_D => $Geo::GDAL::Const::GDT_Float64
+        );
+}
 
 sub Domains {
     return @DOMAINS;
@@ -1356,23 +1402,19 @@ sub ScaleAndOffset {
 }
 
 sub ReadTile {
-    my($self, $xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $alg) = @_;
+    my($self, $xoff, $yoff, $xsize, $ysize) = @_;
     $xoff //= 0;
     $yoff //= 0;
     $xsize //= $self->{XSize} - $xoff;
     $ysize //= $self->{YSize} - $yoff;
-    $w_tile //= $xsize;
-    $h_tile //= $ysize;
-    $alg //= 'NearestNeighbour';
     my $t = $self->{DataType};
-    $alg = Geo::GDAL::string2int($alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
-    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $w_tile, $h_tile, $t, 0, 0, $alg);
+    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xsize, $ysize, $t, 0, 0, $Geo::GDAL::Const::GRIORA_NearestNeighbour);
     my $pc = Geo::GDAL::PackCharacter($t);
-    my $w = $w_tile * Geo::GDAL::GetDataTypeSize($t)/8;
+    my $w = $xsize * Geo::GDAL::GetDataTypeSize($t)/8;
     my $offset = 0;
     my @data;
-    for my $y (0..$h_tile-1) {
-        my @d = unpack($pc."[$w_tile]", substr($buf, $offset, $w));
+    for my $y (0..$ysize-1) {
+        my @d = unpack($pc."[$xsize]", substr($buf, $offset, $w));
         push @data, \@d;
         $offset += $w;
     }
@@ -1568,31 +1610,53 @@ sub CreateMaskBand {
 }
 
 sub Piddle {
-    my $self = shift; # should use named parameters for read raster and band
-    # add Piddle sub to dataset too to make N x M x n piddles
-    my ($w, $h) = $self->Size;
-    my $data = $self->ReadRaster;
+    # TODO: add Piddle sub to dataset too to make Width x Height x Bands piddles
+    Geo::GDAL::error("PDL is not available.") unless $Geo::GDAL::HAVE_PDL;
+    my $self = shift;
+    my $t = $self->{DataType};
+    unless (defined wantarray) {
+        my $pdl = shift;
+        Geo::GDAL::error("The datatype of the Piddle and the band do not match.") 
+          unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
+        my ($xoff, $yoff, $xsize, $ysize) = @_;
+        $xoff //= 0;
+        $yoff //= 0;
+        my $data = $pdl->get_dataref();
+        my ($xdim, $ydim) = $pdl->dims();
+        if ($xdim > $self->{XSize} - $xoff) {
+            warn "Piddle XSize too large ($xdim) for this raster band (width = $self->{XSize}, offset = $xoff).";
+            $xdim = $self->{XSize} - $xoff;
+        }
+        if ($ydim > $self->{YSize} - $yoff) {
+            $ydim = $self->{YSize} - $yoff;
+            warn "Piddle YSize too large ($ydim) for this raster band (height = $self->{YSize}, offset = $yoff).";
+        }
+        $xsize //= $xdim;
+        $ysize //= $ydim;
+        $self->_WriteRaster($xoff, $yoff, $xsize, $ysize, $data, $xdim, $ydim, $t, 0, 0);
+        return;
+    }
+    my ($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $alg) = @_;
+    $xoff //= 0;
+    $yoff //= 0;
+    $xsize //= $self->{XSize} - $xoff;
+    $ysize //= $self->{YSize} - $yoff;
+    $xdim //= $xsize;
+    $ydim //= $ysize;
+    $alg //= 'NearestNeighbour';
+    $alg = Geo::GDAL::string2int($alg, \%Geo::GDAL::RIO_RESAMPLING_STRING2INT);
+    my $buf = $self->_ReadRaster($xoff, $yoff, $xsize, $ysize, $xdim, $ydim, $t, 0, 0, $alg);
     my $pdl = PDL->new;
-    my %map = (
-        Byte => 0,
-        UInt16 => 2,
-        Int16 => 1,
-        UInt32 => -1,
-        Int32 => 3,
-        Float32 => 5,
-        Float64 => 6,
-        CInt16 => -1,
-        CInt32 => -1,
-        CFloat32 => -1,
-        CFloat64 => -1
-        );
-    my $datatype = $map{$self->DataType};
-    croak "there is no direct mapping between the band datatype and PDL" if $datatype < 0;
+    my $datatype = $DATATYPE2PDL{$t};
+    Geo::GDAL::error("The band datatype is not supported by PDL.") if $datatype < 0;
     $pdl->set_datatype($datatype);
-    $pdl->setdims([1,$w,$h]);
-    my $dref = $pdl->get_dataref();
-    $$dref = $data;
+    $pdl->setdims([$xdim, $ydim]);
+    my $data = $pdl->get_dataref();
+    $$data = $buf;
     $pdl->upd_data;
+    # FIXME: we want approximate equality since no data value can be very large floating point value
+    my $bad = GetNoDataValue($self);
+    return $pdl->setbadif($pdl == $bad) if defined $bad;
     return $pdl;
 }
 
@@ -2027,6 +2091,7 @@ sub FromGCPs {
 
 sub Apply {
     my ($self, $columns, $rows) = @_;
+    return Geo::GDAL::ApplyGeoTransform($self, $columns, $rows) unless ref($columns) eq 'ARRAY';
     my (@x, @y);
     for my $i (0..$#$columns) {
         ($x[$i], $y[$i]) =
@@ -2038,7 +2103,7 @@ sub Apply {
 sub Inv {
     my $self = shift;
     my @inv = Geo::GDAL::InvGeoTransform($self);
-    return new(@inv) if defined wantarray;
+    return Geo::GDAL::GeoTransform->new(@inv) if defined wantarray;
     @$self = @inv;
 }
 

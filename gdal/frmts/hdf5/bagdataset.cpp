@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Hierarchical Data Format Release 5 (HDF5)
  * Purpose:  Read BAG datasets.
@@ -36,6 +35,8 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$");
 
 OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
@@ -62,12 +63,12 @@ class BAGDataset : public GDALPamDataset
 
 public:
     BAGDataset();
-    ~BAGDataset();
+    virtual ~BAGDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset  *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -94,23 +95,27 @@ class BAGRasterBand : public GDALPamRasterBand
 
 public:
     BAGRasterBand( BAGDataset *, int );
-    ~BAGRasterBand();
+    virtual ~BAGRasterBand();
 
     bool                    Initialize( hid_t hDataset, const char *pszName );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual double	    GetNoDataValue( int * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual double          GetNoDataValue( int * ) override;
 
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
 /*                           BAGRasterBand()                            */
 /************************************************************************/
 BAGRasterBand::BAGRasterBand( BAGDataset *poDS_, int nBand_ ) :
-    hDatasetID(-1), native(-1), dataspace(-1), bMinMaxSet(false),
-    dfMinimum(0.0), dfMaximum(0.0)
+    hDatasetID(-1),
+    native(-1),
+    dataspace(-1),
+    bMinMaxSet(false),
+    dfMinimum(0.0),
+    dfMaximum(0.0)
 {
     poDS = poDS_;
     nBand = nBand_;
@@ -198,20 +203,23 @@ bool BAGRasterBand::Initialize( hid_t hDatasetIDIn, const char *pszName )
 
         int nfilters = H5Pget_nfilters( listid );
 
-        char name[120];
-        size_t       cd_nelmts = 20;
-        unsigned int cd_values[20];
-        unsigned int flags;
-        for (int i = 0; i < nfilters; i++)
+        char name[120] = {};
+        size_t cd_nelmts = 20;
+        unsigned int cd_values[20] = {};
+        unsigned int flags = 0;
+        for( int i = 0; i < nfilters; i++ )
         {
           const H5Z_filter_t filter =
-              H5Pget_filter(listid, i, &flags, &cd_nelmts, cd_values, 120, name);
+              H5Pget_filter(listid, i, &flags, &cd_nelmts,
+                            cd_values, 120, name);
           if (filter == H5Z_FILTER_DEFLATE)
-            poDS->SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+            poDS->SetMetadataItem( "COMPRESSION", "DEFLATE",
+                                   "IMAGE_STRUCTURE" );
           else if (filter == H5Z_FILTER_NBIT)
             poDS->SetMetadataItem( "COMPRESSION", "NBIT", "IMAGE_STRUCTURE" );
           else if (filter == H5Z_FILTER_SCALEOFFSET)
-            poDS->SetMetadataItem( "COMPRESSION", "SCALEOFFSET", "IMAGE_STRUCTURE" );
+            poDS->SetMetadataItem( "COMPRESSION", "SCALEOFFSET",
+                                   "IMAGE_STRUCTURE" );
           else if (filter == H5Z_FILTER_SZIP)
             poDS->SetMetadataItem( "COMPRESSION", "SZIP", "IMAGE_STRUCTURE" );
         }
@@ -227,15 +235,17 @@ bool BAGRasterBand::Initialize( hid_t hDatasetIDIn, const char *pszName )
                             dfMaximum )
         && GH5_FetchAttribute( hDatasetIDIn, "Minimum Elevation Value",
                                dfMinimum ) )
+    {
         bMinMaxSet = true;
+    }
     else if( EQUAL(pszName,"uncertainty")
              && GH5_FetchAttribute( hDatasetIDIn, "Maximum Uncertainty Value",
                                     dfMaximum )
              && GH5_FetchAttribute( hDatasetIDIn, "Minimum Uncertainty Value",
                                     dfMinimum ) )
     {
-        /* Some products where uncertainty band is completely set to nodata */
-        /* wrongly declare minimum and maximum to 0.0 */
+        // Some products where uncertainty band is completely set to nodata
+        // wrongly declare minimum and maximum to 0.0.
         if( dfMinimum != 0.0 && dfMaximum != 0.0 )
             bMinMaxSet = true;
     }
@@ -244,7 +254,9 @@ bool BAGRasterBand::Initialize( hid_t hDatasetIDIn, const char *pszName )
                                     dfMaximum )
              && GH5_FetchAttribute( hDatasetIDIn, "min_value",
                                     dfMinimum ) )
+    {
         bMinMaxSet = true;
+    }
 
     return true;
 }
@@ -308,23 +320,23 @@ double BAGRasterBand::GetNoDataValue( int * pbSuccess )
 CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 {
+    const int nXOff = nBlockXOff * nBlockXSize;
     H5OFFSET_TYPE offset[3] = {
-      static_cast<H5OFFSET_TYPE>(MAX(0, nRasterYSize - (nBlockYOff+1)*nBlockYSize)),
-      static_cast<H5OFFSET_TYPE>(nBlockXOff * nBlockXSize),
+      static_cast<H5OFFSET_TYPE>(
+          std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
+      static_cast<H5OFFSET_TYPE>(nXOff),
       static_cast<H5OFFSET_TYPE>(0)
-    };
-    hsize_t count[3] = {
-      static_cast<hsize_t>(nBlockYSize),
-      static_cast<hsize_t>(nBlockXSize),
-      static_cast<hsize_t>(0)
     };
 
     const int nSizeOfData = static_cast<int>(H5Tget_size( native ));
-    memset( pImage,0,nBlockXSize*nBlockYSize*nSizeOfData );
+    memset( pImage, 0, nBlockXSize * nBlockYSize * nSizeOfData );
 
-/*  blocksize may not be a multiple of imagesize */
-    count[0] = MIN( size_t(nBlockYSize), GetYSize() - offset[0] );
-    count[1] = MIN( size_t(nBlockXSize), GetXSize() - offset[1] );
+    //  Blocksize may not be a multiple of imagesize.
+    hsize_t count[3] = {
+        std::min(static_cast<hsize_t>(nBlockYSize), GetYSize() - offset[0]),
+        std::min(static_cast<hsize_t>(nBlockXSize), GetXSize() - offset[1]),
+        static_cast<hsize_t>(0)
+    };
 
     if( nRasterYSize - (nBlockYOff+1)*nBlockYSize < 0 )
     {
@@ -334,12 +346,13 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Select block from file space                                    */
 /* -------------------------------------------------------------------- */
-    herr_t status =  H5Sselect_hyperslab( dataspace,
-                                          H5S_SELECT_SET,
-                                          offset, NULL,
-                                          count, NULL );
-    if( status < 0 )
-        return CE_Failure;
+    {
+        const herr_t status =
+            H5Sselect_hyperslab( dataspace, H5S_SELECT_SET,
+                                 offset, NULL, count, NULL );
+        if( status < 0 )
+            return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
@@ -349,23 +362,18 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       static_cast<hsize_t>(nBlockXSize),
       static_cast<hsize_t>(0)
     };
-    hsize_t rank = 2;
+    const int rank = 2;
     const hid_t memspace =
-        H5Screate_simple( static_cast<int>(rank), col_dims, NULL );
-    H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
-    status =  H5Sselect_hyperslab(memspace,
-                                  H5S_SELECT_SET,
-                                  mem_offset, NULL,
-                                  count, NULL);
+        H5Screate_simple( rank, col_dims, NULL );
+    H5OFFSET_TYPE mem_offset[3] = { 0, 0, 0 };
+    const herr_t status =
+        H5Sselect_hyperslab(memspace, H5S_SELECT_SET,
+                            mem_offset, NULL, count, NULL);
     if( status < 0 )
         return CE_Failure;
 
-    status = H5Dread ( hDatasetID,
-                       native,
-                       memspace,
-                       dataspace,
-                       H5P_DEFAULT,
-                       pImage );
+    const herr_t status_read =
+        H5Dread( hDatasetID, native, memspace, dataspace, H5P_DEFAULT, pImage );
 
     H5Sclose( memspace );
 
@@ -374,21 +382,16 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const int nLinesToFlip = static_cast<int>(count[0]);
     const int nLineSize = nSizeOfData * nBlockXSize;
-    GByte *pabyTemp = static_cast<GByte *>(CPLMalloc(nLineSize));
+    GByte * const pabyTemp = static_cast<GByte *>(CPLMalloc(nLineSize));
+    GByte * const pbyImage = static_cast<GByte *>(pImage);
 
     for( int iY = 0; iY < nLinesToFlip/2; iY++ )
     {
-        memcpy( pabyTemp,
-                reinterpret_cast<GByte *>(pImage) + iY * nLineSize,
-                nLineSize );
-        memcpy( reinterpret_cast<GByte *>(pImage) + iY * nLineSize,
-                (reinterpret_cast<GByte *>(pImage) + (nLinesToFlip-iY-1) *
-                 nLineSize),
-                nLineSize );
-        memcpy( (reinterpret_cast<GByte *>(pImage) + (nLinesToFlip-iY-1) *
-                 nLineSize),
-                pabyTemp,
-                nLineSize );
+        memcpy(pabyTemp, pbyImage + iY * nLineSize, nLineSize);
+        memcpy(pbyImage + iY * nLineSize,
+               pbyImage + (nLinesToFlip-iY-1) * nLineSize,
+               nLineSize);
+        memcpy(pbyImage + (nLinesToFlip-iY-1) * nLineSize, pabyTemp, nLineSize);
     }
 
     CPLFree( pabyTemp );
@@ -396,7 +399,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Return success or failure.                                      */
 /* -------------------------------------------------------------------- */
-    if( status < 0 )
+    if( status_read < 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "H5Dread() failed for block." );
@@ -459,13 +462,13 @@ int BAGDataset::Identify( GDALOpenInfo * poOpenInfo )
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
     if( poOpenInfo->pabyHeader == NULL
-        || memcmp(poOpenInfo->pabyHeader,achSignature,8) != 0 )
+        || memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Does it have the extension .bag?                                */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"bag") )
+    if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "bag") )
         return FALSE;
 
     return TRUE;
@@ -573,7 +576,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( nNextBand++, poUBand );
     }
     else
+    {
         delete poUBand;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to do the same for the nominal_elevation band.              */
@@ -591,7 +596,9 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( nNextBand++, poNBand );
     }
     else
+    {
         delete poNBand;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Load the XML metadata.                                          */
@@ -609,7 +616,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -640,7 +647,7 @@ void BAGDataset::LoadMetadata()
     H5Sget_simple_extent_dims( dataspace, dims, maxdims );
 
     pszXMLMetadata = static_cast<char *>(
-        CPLCalloc(static_cast<int>(dims[0]+1),1));
+        CPLCalloc(static_cast<int>(dims[0]+1), 1));
 
     H5Dread( hMDDS, native, H5S_ALL, dataspace, H5P_DEFAULT, pszXMLMetadata );
 
@@ -694,8 +701,7 @@ void BAGDataset::LoadMetadata()
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
 
-    if( OGR_SRS_ImportFromISO19115( &oSRS, pszXMLMetadata )
-        == OGRERR_NONE )
+    if( OGR_SRS_ImportFromISO19115( &oSRS, pszXMLMetadata ) == OGRERR_NONE )
     {
         oSRS.exportToWkt( &pszProjection );
     }
@@ -724,10 +730,9 @@ void BAGDataset::LoadMetadata()
 OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 {
     CPLXMLNode * const psRoot = CPLParseXMLString( pszISOXML );
-    OGRErr eOGRErr = OGRERR_FAILURE;
 
     if( psRoot == NULL )
-        return eOGRErr;
+        return OGRERR_FAILURE;
 
     CPLStripXMLNamespace( psRoot, NULL, TRUE );
 
@@ -737,7 +742,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLError( CE_Failure, CPLE_AppDefined,
           "Unable to find <referenceSystemInfo> in metadata." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_FAILURE;
     }
 
     OGRSpatialReference oSRS;
@@ -753,7 +758,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
                  "MD_ReferenceSystem[1]/referenceSystemIdentifier[1]/"
                  "RS_Identifier[1]/code[1]/CharacterString[1] in metadata." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_FAILURE;
     }
 
     const char *pszSRCodeSpace =
@@ -764,7 +769,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLError( CE_Failure, CPLE_AppDefined,
             "Spatial reference string is not in WKT." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_FAILURE;
     }
 
     char* pszWKT = const_cast<char *>( pszSRCodeString );
@@ -773,11 +778,10 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLError( CE_Failure, CPLE_AppDefined,
           "Failed parsing WKT string \"%s\".", pszSRCodeString );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_FAILURE;
     }
 
     oSRS.exportToWkt( &pszProjection );
-    eOGRErr = OGRERR_NONE;
 
     psRSI = CPLSearchXMLNode( psRSI->psNext, "=referenceSystemInfo" );
     if( psRSI == NULL )
@@ -786,7 +790,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
                   "Unable to find second instance of <referenceSystemInfo> "
                   "in metadata." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_NONE;
     }
 
     pszSRCodeString =
@@ -799,7 +803,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
                   "MD_ReferenceSystem[1]/referenceSystemIdentifier[1]/"
                   "RS_Identifier[1]/code[1]/CharacterString[1] in metadata." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_NONE;
     }
 
     pszSRCodeSpace =
@@ -810,7 +814,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         CPLError( CE_Failure, CPLE_AppDefined,
             "Spatial reference string is not in WKT." );
         CPLDestroyXMLNode( psRoot );
-        return eOGRErr;
+        return OGRERR_NONE;
     }
 
     if( STARTS_WITH_CI(pszSRCodeString, "VERTCS") )
@@ -824,7 +828,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 
     CPLDestroyXMLNode( psRoot );
 
-    return eOGRErr;
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

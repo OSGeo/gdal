@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Vertical Datum Transformation
  * Purpose:  Implementation of NOAA .gtx vertical datum shift file format.
@@ -84,9 +83,9 @@ class GTXDataset : public RawDataset
                 }
     virtual ~GTXDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -385,7 +384,6 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
     return reinterpret_cast<GDALDataset *>(
         GDALOpen( pszFilename, GA_Update ) );
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_GTX()                          */

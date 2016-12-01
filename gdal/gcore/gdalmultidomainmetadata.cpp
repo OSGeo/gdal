@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALMultiDomainMetadata class.  This class
@@ -29,22 +28,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_string.h"
-#include <map>
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                      GDALMultiDomainMetadata()                       */
 /************************************************************************/
 
-GDALMultiDomainMetadata::GDALMultiDomainMetadata()
-
-{
-    papszDomainList = NULL;
-    papoMetadataLists = NULL;
-}
+GDALMultiDomainMetadata::GDALMultiDomainMetadata() :
+    papszDomainList(NULL),
+    papoMetadataLists(NULL)
+{}
 
 /************************************************************************/
 /*                      ~GDALMultiDomainMetadata()                      */
@@ -63,20 +68,17 @@ GDALMultiDomainMetadata::~GDALMultiDomainMetadata()
 void GDALMultiDomainMetadata::Clear()
 
 {
-    int i, nDomainCount;
-
-    nDomainCount = CSLCount( papszDomainList );
+    const int nDomainCount = CSLCount( papszDomainList );
     CSLDestroy( papszDomainList );
     papszDomainList = NULL;
 
-    for( i = 0; i < nDomainCount; i++ )
+    for( int i = 0; i < nDomainCount; i++ )
     {
         delete papoMetadataLists[i];
     }
     CPLFree( papoMetadataLists );
     papoMetadataLists = NULL;
 }
-
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -88,12 +90,12 @@ char **GDALMultiDomainMetadata::GetMetadata( const char *pszDomain )
     if( pszDomain == NULL )
         pszDomain = "";
 
-    int iDomain = CSLFindString( papszDomainList, pszDomain );
+    const int iDomain = CSLFindString( papszDomainList, pszDomain );
 
     if( iDomain == -1 )
         return NULL;
-    else
-        return papoMetadataLists[iDomain]->List();
+
+    return papoMetadataLists[iDomain]->List();
 }
 
 /************************************************************************/
@@ -111,10 +113,8 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
 
     if( iDomain == -1 )
     {
-        int nDomainCount;
-
         papszDomainList = CSLAddString( papszDomainList, pszDomain );
-        nDomainCount = CSLCount( papszDomainList );
+        const int nDomainCount = CSLCount( papszDomainList );
 
         papoMetadataLists = (CPLStringList **)
             CPLRealloc( papoMetadataLists, sizeof(void*)*(nDomainCount+1) );
@@ -144,12 +144,12 @@ const char *GDALMultiDomainMetadata::GetMetadataItem( const char *pszName,
     if( pszDomain == NULL )
         pszDomain = "";
 
-    int iDomain = CSLFindString( papszDomainList, pszDomain );
+    const int iDomain = CSLFindString( papszDomainList, pszDomain );
 
     if( iDomain == -1 )
         return NULL;
-    else
-        return papoMetadataLists[iDomain]->FetchNameValue( pszName );
+
+    return papoMetadataLists[iDomain]->FetchNameValue( pszName );
 }
 
 /************************************************************************/
@@ -190,32 +190,30 @@ CPLErr GDALMultiDomainMetadata::SetMetadataItem( const char *pszName,
 /*      <Metadata> elements.                                            */
 /************************************************************************/
 
-int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge )
+int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int /* bMerge */ )
 {
-    CPLXMLNode *psMetadata;
+    CPLXMLNode *psMetadata = NULL;
 
 /* ==================================================================== */
 /*      Process all <Metadata> elements, each for one domain.           */
 /* ==================================================================== */
     for( psMetadata = psTree->psChild;
-         psMetadata != NULL; psMetadata = psMetadata->psNext )
+         psMetadata != NULL;
+         psMetadata = psMetadata->psNext )
     {
-        CPLXMLNode *psMDI;
-        const char *pszDomain, *pszFormat;
-
         if( psMetadata->eType != CXT_Element
             || !EQUAL(psMetadata->pszValue,"Metadata") )
             continue;
 
-        pszDomain = CPLGetXMLValue( psMetadata, "domain", "" );
-        pszFormat = CPLGetXMLValue( psMetadata, "format", "" );
+        const char *pszDomain = CPLGetXMLValue( psMetadata, "domain", "" );
+        const char *pszFormat = CPLGetXMLValue( psMetadata, "format", "" );
 
         // Make sure we have a CPLStringList for this domain,
         // without wiping out an existing one.
         if( GetMetadata( pszDomain ) == NULL )
             SetMetadata( NULL, pszDomain );
 
-        int iDomain = CSLFindString( papszDomainList, pszDomain );
+        const int iDomain = CSLFindString( papszDomainList, pszDomain );
         CPLAssert( iDomain != -1 );
 
         CPLStringList *poMDList = papoMetadataLists[iDomain];
@@ -225,10 +223,8 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
 /* -------------------------------------------------------------------- */
         if( EQUAL(pszFormat,"xml") )
         {
-            CPLXMLNode *psSubDoc;
-
-            /* find first non-attribute child of current element */
-            psSubDoc = psMetadata->psChild;
+            // Find first non-attribute child of current element.
+            CPLXMLNode *psSubDoc = psMetadata->psChild;
             while( psSubDoc != NULL && psSubDoc->eType == CXT_Attribute )
                 psSubDoc = psSubDoc->psNext;
 
@@ -244,7 +240,8 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, CPL_UNUSED int bMerge 
 /* -------------------------------------------------------------------- */
         else
         {
-            for( psMDI = psMetadata->psChild; psMDI != NULL;
+            for( CPLXMLNode *psMDI = psMetadata->psChild;
+                 psMDI != NULL;
                  psMDI = psMDI->psNext )
             {
                 if( !EQUAL(psMDI->pszValue,"MDI")
@@ -277,22 +274,21 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
 
     for( int iDomain = 0;
          papszDomainList != NULL && papszDomainList[iDomain] != NULL;
-         iDomain++)
+         iDomain++ )
     {
         char **papszMD = papoMetadataLists[iDomain]->List();
-        // Do not serialize empty domains
+        // Do not serialize empty domains.
         if( papszMD == NULL || papszMD[0] == NULL )
             continue;
 
-        CPLXMLNode *psMD;
-        bool bFormatXML = false;
-
-        psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
+        CPLXMLNode *psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
 
         if( strlen( papszDomainList[iDomain] ) > 0 )
             CPLCreateXMLNode(
                 CPLCreateXMLNode( psMD, CXT_Attribute, "domain" ),
                 CXT_Text, papszDomainList[iDomain] );
+
+        bool bFormatXML = false;
 
         if( STARTS_WITH_CI(papszDomainList[iDomain], "xml:")
             && CSLCount(papszMD) == 1 )
@@ -313,7 +309,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
         if( !bFormatXML )
         {
             CPLXMLNode* psLastChild = NULL;
-            // To go after domain attribute
+            // To go after domain attribute.
             if( psMD->psChild != NULL )
             {
                 psLastChild = psMD->psChild;
@@ -322,13 +318,13 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
             }
             for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
             {
-                const char *pszRawValue;
                 char *pszKey = NULL;
-                CPLXMLNode *psMDI;
 
-                pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
+                const char *pszRawValue =
+                    CPLParseNameValue( papszMD[i], &pszKey );
 
-                psMDI = CPLCreateXMLNode( NULL, CXT_Element, "MDI" );
+                CPLXMLNode *psMDI =
+                    CPLCreateXMLNode( NULL, CXT_Element, "MDI" );
                 if( psLastChild == NULL )
                     psMD->psChild = psMDI;
                 else
@@ -350,3 +346,4 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
 
     return psFirst;
 }
+//! @endcond

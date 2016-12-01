@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Azavea Raster Grid format driver.
  * Purpose:  Implements support for reading and writing Azavea Raster Grid
@@ -34,7 +33,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-#include <json.h>
+#include "ogrgeojsonreader.h"
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -53,15 +52,15 @@ class ARGDataset : public RawDataset
 
     public:
         ARGDataset();
-        ~ARGDataset();
+        virtual ~ARGDataset();
 
-        CPLErr GetGeoTransform( double * padfTransform );
+        CPLErr GetGeoTransform( double * padfTransform ) override;
 
         static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );
         static GDALDataset *CreateCopy( const char *, GDALDataset *, int,
             char **, GDALProgressFunc, void *);
-        virtual char **GetFileList(void);
+        virtual char **GetFileList(void) override;
 };
 
 /************************************************************************/
@@ -111,7 +110,8 @@ CPLErr ARGDataset::GetGeoTransform( double * padfTransform )
 /************************************************************************/
 static CPLString GetJsonFilename(CPLString pszFilename)
 {
-    return CPLSPrintf( "%s/%s.json", CPLGetDirname(pszFilename), CPLGetBasename(pszFilename) );
+    return CPLSPrintf( "%s/%s.json", CPLGetDirname(pszFilename),
+                       CPLGetBasename(pszFilename) );
 }
 
 /************************************************************************/
@@ -121,8 +121,8 @@ static json_object * GetJsonObject(CPLString pszFilename)
 {
     CPLString osJSONFilename = GetJsonFilename(pszFilename);
 
-    json_object *pJSONObject
-        = json_object_from_file(const_cast<char *>(osJSONFilename.c_str()));
+    json_object *pJSONObject =
+        json_object_from_file(const_cast<char *>(osJSONFilename.c_str()));
     if (pJSONObject == NULL) {
         CPLDebug("ARGDataset", "GetJsonObject(): Could not parse JSON file.");
         return NULL;
@@ -134,12 +134,15 @@ static json_object * GetJsonObject(CPLString pszFilename)
 /************************************************************************/
 /*                          GetJsonValueStr()                           */
 /************************************************************************/
-static const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
+static const char *GetJsonValueStr( json_object * pJSONObject,
+                                    CPLString pszKey )
 {
-    json_object *pJSONItem = json_object_object_get(pJSONObject, pszKey.c_str());
-    if (pJSONItem == NULL) {
+    json_object *pJSONItem =
+        CPL_json_object_object_get(pJSONObject, pszKey.c_str());
+    if( pJSONItem == NULL )
+    {
         CPLDebug("ARGDataset", "GetJsonValueStr(): "
-            "Could not find '%s' in JSON.", pszKey.c_str());
+                 "Could not find '%s' in JSON.", pszKey.c_str());
         return NULL;
     }
 
@@ -149,7 +152,7 @@ static const char *GetJsonValueStr(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                          GetJsonValueDbl()                           */
 /************************************************************************/
-static double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
+static double GetJsonValueDbl( json_object * pJSONObject, CPLString pszKey )
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
     if (pszJSONStr == NULL) {
@@ -159,7 +162,8 @@ static double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
     double dfTmp = CPLStrtod(pszJSONStr, &pszTmp);
     if (pszTmp == pszJSONStr) {
         CPLDebug("ARGDataset", "GetJsonValueDbl(): "
-            "Key value is not a numeric value: %s:%s", pszKey.c_str(), pszTmp);
+                 "Key value is not a numeric value: %s:%s",
+                 pszKey.c_str(), pszTmp);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
@@ -169,9 +173,9 @@ static double GetJsonValueDbl(json_object * pJSONObject, CPLString pszKey)
 /************************************************************************/
 /*                           GetJsonValueInt()                          */
 /************************************************************************/
-static int GetJsonValueInt(json_object *pJSONObject, CPLString pszKey)
+static int GetJsonValueInt( json_object *pJSONObject, CPLString pszKey )
 {
-    double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
+    const double dfTmp = GetJsonValueDbl(pJSONObject, pszKey.c_str());
     if (CPLIsNan(dfTmp)) {
         return -1;
     }
@@ -424,7 +428,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 
         if (nErr == OGRERR_NONE) {
             CPLDebug("ARGDataset", "Open(): "
-                "The EPSG provided did not import cleanly. Defaulting to EPSG:3857");
+                     "The EPSG provided did not import cleanly. "
+                     "Defaulting to EPSG:3857");
         }
         else {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -507,9 +512,9 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
-    int bNative = FALSE;
+    bool bNative = false;
 #else
-    int bNative = TRUE;
+    bool bNative = true;
 #endif
 
     RawRasterBand *poBand
@@ -531,7 +536,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -706,13 +711,14 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
 
 #ifdef CPL_LSB
-    int bNative = FALSE;
+    bool bNative = false;
 #else
-    int bNative = TRUE;
+    bool bNative = true;
 #endif
 
     RawRasterBand *poDstBand = new RawRasterBand( fpImage, 0, nPixelOffset,
-                                                  nPixelOffset * nXSize, eType, bNative,
+                                                  nPixelOffset * nXSize, eType,
+                                                  bNative,
                                                   nXSize, nYSize, TRUE, FALSE);
 
     int nXBlockSize, nYBlockSize;
@@ -723,7 +729,8 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     // convert any blocks into scanlines
     for (int nYBlock = 0; nYBlock * nYBlockSize < nYSize; nYBlock++) {
         for (int nYScanline = 0; nYScanline < nYBlockSize; nYScanline++) {
-            if ((nYScanline+1) + nYBlock * nYBlockSize > poSrcBand->GetYSize() ) {
+            if ((nYScanline+1) + nYBlock * nYBlockSize > poSrcBand->GetYSize() )
+            {
                 continue;
             }
 

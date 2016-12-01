@@ -48,9 +48,11 @@ LT_USE_LIDAR_NAMESPACE
 #include "gdal_pam.h"
 // #include "gdal_alg.h" // 1.6 and later have gridding algorithms
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /* ==================================================================== */
-/*				MG4LidarDataset				*/
+/*                              MG4LidarDataset                         */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -83,8 +85,8 @@ public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
-   CPLErr 	GetGeoTransform( double * padfTransform );
-   const char *GetProjectionRef();
+   CPLErr         GetGeoTransform( double * padfTransform ) override;
+   const char *GetProjectionRef() override;
 
 protected:
    MG4PointReader *reader;
@@ -113,11 +115,11 @@ public:
    MG4LidarRasterBand( MG4LidarDataset *, int, CPLXMLNode *, const char * );
    ~MG4LidarRasterBand();
 
-   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
-   virtual int GetOverviewCount();
-   virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void * );
-   virtual double GetNoDataValue( int *pbSuccess = NULL );
+   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev ) override;
+   virtual int GetOverviewCount() override;
+   virtual GDALRasterBand * GetOverview( int i ) override;
+   virtual CPLErr IReadBlock( int, int, void * ) override;
+   virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
    protected:
    double getMaxValue();
@@ -132,17 +134,16 @@ public:
    CPLString ChannelName;
 };
 
-
 /************************************************************************/
 /*                           MG4LidarRasterBand()                            */
 /************************************************************************/
 
-MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name )
+MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name ) :
+    ChannelName( name )
 {
    this->poDS = pods;
    this->nBand = nband;
    this->poxmlBand = xmlBand;
-   this->ChannelName = name;
    this->Aggregation = NULL;
    nBlockXSize = pods->nBlockXSize;
    nBlockYSize = pods->nBlockYSize;
@@ -308,17 +309,15 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
    return retval;
 }
 
-
 bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
-   bool bClassificationOK = true;
    bool bReturnNumOK = true;
 
    // Check if classification code is ok:  it was requested and it does match one of the requested codes
    const int classcode = GetChannelElement<int>(*pointdata.getChannel(CHANNEL_NAME_ClassId), i);
    char bufCode[16];
    snprintf(bufCode, sizeof(bufCode), "%d", classcode);
-   bClassificationOK = (papszFilterClassCodes == NULL ? true :
+   bool bClassificationOK = (papszFilterClassCodes == NULL ? true :
       (CSLFindString(papszFilterClassCodes,bufCode)!=-1));
 
    if (bClassificationOK)
@@ -336,9 +335,7 @@ bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t 
    }
 
    return bReturnNumOK && bClassificationOK;
-
 }
-
 
 template<typename DTYPE>
 CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * pImage)
@@ -488,7 +485,6 @@ CPLErr MG4LidarRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       default:
            return CE_Failure;
            break;
-
    }
    return CE_None;
 }
@@ -508,7 +504,6 @@ CPLErr MG4LidarRasterBand::GetStatistics( int bApproxOK, int bForce,
    return GDALPamRasterBand::GetStatistics( bApproxOK, bForce,
       pdfMin, pdfMax,
       pdfMean, pdfStdDev );
-
 }
 /************************************************************************/
 /*                           GetNoDataValue()                           */
@@ -588,7 +583,7 @@ const char *MG4LidarDataset::GetProjectionRef()
    const char * wkt = CPLGetXMLValue(poXMLPCView, "GeoReference", NULL);
    if (wkt == NULL)
       wkt = reader->getWKT();
-   return(wkt);
+   return wkt;
 }
 
 /************************************************************************/
@@ -620,8 +615,6 @@ CPLErr MG4LidarDataset::OpenZoomLevel( int iZoom )
 
    CPLDebug( "MG4Lidar", "Opened zoom level %d with size %dx%d.\n",
       iZoom, nRasterXSize, nRasterYSize );
-
-
 
    /* -------------------------------------------------------------------- */
    /*  Handle sample type and color space.                                 */
@@ -702,7 +695,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 32 )
       return NULL;
 
-   CPLXMLNode *pxmlPCView;
+   CPLXMLNode *pxmlPCView = NULL;
 
    // do something sensible for .sid files without a .view
    if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "msid") )
@@ -769,7 +762,7 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
    /* -------------------------------------------------------------------- */
    /*      Create a corresponding GDALDataset.                             */
    /* -------------------------------------------------------------------- */
-   MG4LidarDataset 	*poDS;
+   MG4LidarDataset *poDS;
 
    poDS = new MG4LidarDataset();
    poDS->poXMLPCView = pxmlPCView;
@@ -906,10 +899,10 @@ GDALDataset *MG4LidarDataset::Open( GDALOpenInfo * poOpenInfo )
       CPLDebug( "MG4Lidar",
          "Inappropriate number of bands (%d)", poDS->nBands );
       delete poDS;
-      return(NULL);
+      return NULL;
    }
 
-   return( poDS );
+   return poDS;
 }
 
 /************************************************************************/

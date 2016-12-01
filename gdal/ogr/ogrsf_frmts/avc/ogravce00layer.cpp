@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRAVCE00Layer class.
@@ -34,6 +33,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -41,20 +42,20 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRAVCE00Layer::OGRAVCE00Layer( OGRAVCDataSource *poDSIn,
-                                AVCE00Section *psSectionIn )
-        : OGRAVCLayer( psSectionIn->eType, poDSIn ),
-          psSection(psSectionIn),
-          psRead(NULL),
-          poArcLayer(NULL),
-          nFeatureCount(-1),
-          bNeedReset(0),
-          nNextFID(1),
-          psTableSection(NULL),
-          psTableRead(NULL),
-          pszTableFilename(NULL),
-          nTablePos(0),
-          nTableBaseField(0),
-          nTableAttrIndex(-1)
+                                AVCE00Section *psSectionIn ) :
+    OGRAVCLayer( psSectionIn->eType, poDSIn ),
+    psSection(psSectionIn),
+    psRead(NULL),
+    poArcLayer(NULL),
+    nFeatureCount(-1),
+    bNeedReset(false),
+    nNextFID(1),
+    psTableSection(NULL),
+    psTableRead(NULL),
+    pszTableFilename(NULL),
+    nTablePos(0),
+    nTableBaseField(0),
+    nTableAttrIndex(-1)
 {
     SetupFeatureDefinition( psSection->pszName );
     /* psRead = AVCE00ReadOpenE00(psSection->pszFilename); */
@@ -127,7 +128,7 @@ void OGRAVCE00Layer::ResetReading()
         AVCE00ReadGotoSectionE00(psTableRead, psTableSection, 0);
     }
 
-    bNeedReset = FALSE;
+    bNeedReset = false;
     nNextFID = 1;
 }
 
@@ -169,7 +170,7 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
     }
     else
     {
-        bNeedReset = TRUE;
+        bNeedReset = true;
 
         if (nNextFID > nFID)
         {
@@ -283,8 +284,8 @@ int OGRAVCE00Layer::TestCapability( const char * pszCap )
 /*      them into the appropriate OGR geometry on the target feature.   */
 /************************************************************************/
 
-int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
-                                         AVCPal *psPAL )
+bool OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
+                                          AVCPal *psPAL )
 {
 /* -------------------------------------------------------------------- */
 /*      Try to find the corresponding ARC layer if not already          */
@@ -302,7 +303,7 @@ int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
         }
 
         if( poArcLayer == NULL )
-            return FALSE;
+            return false;
     }
 
 /* -------------------------------------------------------------------- */
@@ -325,13 +326,13 @@ int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
             continue;
 
         OGRFeature *poArc
-            = poArcLayer->GetFeature( ABS(psPAL->pasArcs[iArc].nArcId) );
+            = poArcLayer->GetFeature( std::abs(psPAL->pasArcs[iArc].nArcId) );
 
         if( poArc == NULL )
-            return FALSE;
+            return false;
 
         if( poArc->GetGeometryRef() == NULL )
-            return FALSE;
+            return false;
 
         oArcs.addGeometry( poArc->GetGeometryRef() );
         OGRFeature::DestroyFeature( poArc );
@@ -355,10 +356,10 @@ int OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
 /*      definition.                                                     */
 /************************************************************************/
 
-int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
+bool OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
 {
     if (psTableRead)
-        return FALSE;
+        return false;
 
     const char *pszTableType = NULL;
     switch (eSectionType)
@@ -381,7 +382,7 @@ int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
 /*      a case insensitive check.                                       */
 /* -------------------------------------------------------------------- */
     if( pszTableType == NULL )
-        return FALSE;
+        return false;
 
     int iCheckOff = 0;
     for( ;
@@ -394,7 +395,7 @@ int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
     }
 
     if( psTblSectionIn->pszName[iCheckOff] == '\0' )
-        return FALSE;
+        return false;
 
     psTableSection = psTblSectionIn;
 
@@ -403,18 +404,18 @@ int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
 /* -------------------------------------------------------------------- */
     psTableRead = AVCE00ReadOpenE00(psTblSectionIn->pszFilename);
     if (psTableRead == NULL)
-        return FALSE;
+        return false;
 
     /* advance to the specified line number */
     if (AVCE00ReadGotoSectionE00(psTableRead, psTableSection, 0) != 0)
     {
         AVCE00ReadCloseE00(psTableRead);
         psTableRead = NULL;
-        return FALSE;
+        return false;
     }
 
     AVCE00ReadNextObjectE00(psTableRead);
-    bNeedReset = 1;
+    bNeedReset = true;
 
     pszTableFilename = CPLStrdup(psTblSectionIn->pszFilename);
     nTableBaseField = poFeatureDefn->GetFieldCount();
@@ -440,18 +441,18 @@ int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
 /* -------------------------------------------------------------------- */
     /* AVCE00ReadCloseE00( psTableRead ); */
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                         AppendTableFields()                          */
 /************************************************************************/
 
-int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
+bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 
 {
     if (psTableRead == NULL)
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Open the table if it is currently closed.                       */
@@ -460,14 +461,14 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
     {
         psTableRead = AVCE00ReadOpenE00(pszTableFilename);
         if (psTableRead == NULL)
-            return FALSE;
+            return false;
 
         /* Advance to the specified line number */
         if (AVCE00ReadGotoSectionE00(psTableRead, psTableSection, 0) != 0)
         {
             AVCE00ReadCloseE00(psTableRead);
             psTableRead = NULL;
-            return FALSE;
+            return false;
         }
         nTablePos = 0;
     }
@@ -481,17 +482,14 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 /*      nTableAttrIndex will already be setup to refer to the           */
 /*      PolyId field.                                                   */
 /* -------------------------------------------------------------------- */
-    int nRecordId;
-
-    if( nTableAttrIndex == -1 )
-        nRecordId = static_cast<int>( poFeature->GetFID() );
-    else
-        nRecordId = poFeature->GetFieldAsInteger( nTableAttrIndex );
+    const int nRecordId = nTableAttrIndex == -1
+        ? static_cast<int>( poFeature->GetFID() )
+        : poFeature->GetFieldAsInteger( nTableAttrIndex );
 
     if (nRecordId <= nTablePos)
     {
         if( AVCE00ReadGotoSectionE00(psTableRead, psTableSection, 0) != 0 )
-            return FALSE;
+            return false;
         nTablePos = 0;
     }
 
@@ -504,7 +502,7 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
     while (NULL != hRecord && nTablePos < nRecordId);
 
     if( hRecord == NULL )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Translate it.                                                   */
@@ -513,7 +511,6 @@ int OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
                                  psTableRead->hParseInfo->hdr.psTableDef,
                                  static_cast<AVCField *>( hRecord ) );
 }
-
 
 GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
 {

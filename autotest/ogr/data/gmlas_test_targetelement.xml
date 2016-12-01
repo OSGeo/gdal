@@ -1,0 +1,15 @@
+<gml:FeatureCollection
+           xmlns:myns="http://myns" 
+           xmlns:gml="http://fake_gml"
+           xmlns:xlink="http://fake_xlink"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://myns gmlas_test_targetelement.xsd
+                               http://fake_gml gmlas_test_targetelement_fake_gml.xsd">
+    <myns:main_elt>
+        <myns:reference_missing_target_elt xlink:href="#FOO"/>
+        <myns:reference_inexisting_target_elt xlink:href="#BAR"/>
+        <myns:reference_existing_target_elt xlink:href="#BAZ"/>
+        <myns:reference_existing_abstract_target_elt xlink:href="#BAW"/>
+        <myns:reference_existing_abstract_target_elt_nillable xsi:nil="true"/>
+    </myns:main_elt>
+</gml:FeatureCollection>

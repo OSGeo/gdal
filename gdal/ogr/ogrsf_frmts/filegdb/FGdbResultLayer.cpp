@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "FGdbUtils.h"
 
+CPL_CVSID("$Id$");
+
 using std::string;
 using std::wstring;
 
@@ -116,7 +118,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource* pParentDataSource,
                 break;
 
             default:
-                CPLAssert(FALSE);
+                CPLAssert(false);
                 break;
         }
 

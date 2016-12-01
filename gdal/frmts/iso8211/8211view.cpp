@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Example program dumping data in 8211 data to stdout.
@@ -29,6 +28,8 @@
 
 #include <stdio.h>
 #include "iso8211.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -85,8 +86,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord   *poRecord;
-    int         iRecord = 0;
+    DDFRecord *poRecord = NULL;
+    int iRecord = 0;
 
     while( (poRecord = oModule.ReadRecord()) != NULL )
     {
@@ -114,8 +115,6 @@ int main( int nArgc, char ** papszArgv )
 static void ViewRecordField( DDFField * poField )
 
 {
-    int         nBytesRemaining;
-    const char  *pachFieldData;
     DDFFieldDefn *poFieldDefn = poField->GetFieldDefn();
 
     // Report general information about the field.
@@ -125,32 +124,26 @@ static void ViewRecordField( DDFField * poField )
     // Get pointer to this fields raw data.  We will move through
     // it consuming data as we report subfield values.
 
-    pachFieldData = poField->GetData();
-    nBytesRemaining = poField->GetDataSize();
+    const char  *pachFieldData = poField->GetData();
+    int nBytesRemaining = poField->GetDataSize();
 
     /* -------------------------------------------------------- */
     /*      Loop over the repeat count for this fields          */
     /*      subfields.  The repeat count will almost            */
     /*      always be one.                                      */
     /* -------------------------------------------------------- */
-    int         iRepeat;
-
-    for( iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
+    for( int iRepeat = 0; iRepeat < poField->GetRepeatCount(); iRepeat++ )
     {
 
         /* -------------------------------------------------------- */
         /*   Loop over all the subfields of this field, advancing   */
         /*   the data pointer as we consume data.                   */
         /* -------------------------------------------------------- */
-        int     iSF;
-
-        for( iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
+        for( int iSF = 0; iSF < poFieldDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn *poSFDefn = poFieldDefn->GetSubfield( iSF );
-            int         nBytesConsumed;
-
-            nBytesConsumed = ViewSubfield( poSFDefn, pachFieldData,
-                                           nBytesRemaining );
+            int nBytesConsumed =
+                ViewSubfield( poSFDefn, pachFieldData, nBytesRemaining );
 
             nBytesRemaining -= nBytesConsumed;
             pachFieldData += nBytesConsumed;
@@ -175,8 +168,9 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
         if( poSFDefn->GetBinaryFormat() == DDFSubfieldDefn::UInt )
             printf( "        %s = %u\n",
                     poSFDefn->GetName(),
-                    poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
-                                              &nBytesConsumed ) );
+                    static_cast<unsigned int>(
+                        poSFDefn->ExtractIntData( pachFieldData, nBytesRemaining,
+                                              &nBytesConsumed )) );
         else
             printf( "        %s = %d\n",
                     poSFDefn->GetName(),
@@ -213,7 +207,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
                                            &nBytesConsumed );
 
           printf( "        %s = 0x", poSFDefn->GetName() );
-          for( i = 0; i < MIN(nBytesConsumed,24); i++ )
+          for( i = 0; i < std::min(nBytesConsumed, 24); i++ )
               printf( "%02X", pabyBString[i] );
 
           if( nBytesConsumed > 24 )
@@ -225,7 +219,7 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
               vrid_rcnm=pabyBString[0];
               vrid_rcid=pabyBString[1] + (pabyBString[2]*256)+
                   (pabyBString[3]*65536)+ (pabyBString[4]*16777216);
-              printf("\tVRID RCNM = %d,RCID = %u",vrid_rcnm,vrid_rcid);
+              printf("\tVRID RCNM = %d,RCID = %d",vrid_rcnm,vrid_rcid);
           }
           else if ( EQUAL(poSFDefn->GetName(),"LNAM") )
           {
@@ -233,14 +227,13 @@ static int ViewSubfield( DDFSubfieldDefn *poSFDefn,
               foid_find=pabyBString[2] + (pabyBString[3]*256)+
                   (pabyBString[4]*65536)+ (pabyBString[5]*16777216);
               foid_fids=pabyBString[6] + (pabyBString[7]*256);
-              printf("\tFOID AGEN = %u,FIDN = %u,FIDS = %u",
+              printf("\tFOID AGEN = %d,FIDN = %d,FIDS = %d",
                      foid_agen,foid_find,foid_fids);
           }
 
           printf( "\n" );
       }
       break;
-
     }
 
     return nBytesConsumed;

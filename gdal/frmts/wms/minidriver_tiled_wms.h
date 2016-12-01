@@ -28,19 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(TiledWMS)
+#include "wmsdriver.h"
 
-class GDALWMSMiniDriver_TiledWMS : public GDALWMSMiniDriver {
+class WMSMiniDriver_TiledWMS : public WMSMiniDriver {
 public:
-    GDALWMSMiniDriver_TiledWMS();
-    virtual ~GDALWMSMiniDriver_TiledWMS();
+    WMSMiniDriver_TiledWMS();
+    virtual ~WMSMiniDriver_TiledWMS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual const char *GetProjectionInWKT();
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) override;
+    virtual const char *GetProjectionInWKT() override;
 
 protected:
     double Scale(const char *request);

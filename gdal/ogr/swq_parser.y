@@ -28,13 +28,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_geometry.h"
+#include "cpl_port.h"
 #include "swq.h"
 
-#define YYSTYPE  swq_expr_node*
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+
+CPL_CVSID("$Id$");
+
+#define YYSTYPE swq_expr_node *
 
 /* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
 /* See http://www.gnu.org/s/bison/manual/html_node/Memory-Management.html that suggests */
@@ -42,7 +50,6 @@
 /* Setting YYSTYPE_IS_TRIVIAL overcomes this limitation, but might be fragile because */
 /* it appears to be a non documented feature of Bison */
 #define YYSTYPE_IS_TRIVIAL 1
-
 %}
 
 %define api.pure
@@ -93,7 +100,7 @@
 %left SWQT_AND
 %left SWQT_NOT
 
-%left '=' '<' '>' '!'  SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
+%left '=' '<' '>' '!' SWQT_BETWEEN SWQT_IN SWQT_LIKE SWQT_IS
 %left SWQT_ESCAPE
 
 %left '+' '-'
@@ -102,7 +109,7 @@
 
 %token SWQT_RESERVED_KEYWORD    "reserved keyword"
 
-/* Any grammar rule that does $$ =  must be listed afterwards */
+/* Any grammar rule that does $$ = must be listed afterwards */
 /* as well as SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER that are allocated by swqlex() */
 %destructor { delete $$; } SWQT_INTEGER_NUMBER SWQT_FLOAT_NUMBER SWQT_STRING SWQT_IDENTIFIER
 %destructor { delete $$; } value_expr_list field_value value_expr value_expr_non_logical type_def table_def
@@ -231,8 +238,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_LIKE value_expr
         {
-            swq_expr_node *like;
-            like = new swq_expr_node( SWQ_LIKE );
+            swq_expr_node *like = new swq_expr_node( SWQ_LIKE );
             like->field_type = SWQ_BOOLEAN;
             like->PushSubExpression( $1 );
             like->PushSubExpression( $4 );
@@ -253,8 +259,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_LIKE value_expr SWQT_ESCAPE value_expr
         {
-            swq_expr_node *like;
-            like = new swq_expr_node( SWQ_LIKE );
+            swq_expr_node *like = new swq_expr_node( SWQ_LIKE );
             like->field_type = SWQ_BOOLEAN;
             like->PushSubExpression( $1 );
             like->PushSubExpression( $4 );
@@ -276,9 +281,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_IN '(' value_expr_list ')'
         {
-            swq_expr_node *in;
-
-            in = $5;
+            swq_expr_node *in = $5;
             in->field_type = SWQ_BOOLEAN;
             in->nOperation = SWQ_IN;
             in->PushSubExpression( $1 );
@@ -300,8 +303,7 @@ value_expr:
 
     | value_expr SWQT_NOT SWQT_BETWEEN value_expr_non_logical SWQT_AND value_expr_non_logical
         {
-            swq_expr_node *between;
-            between = new swq_expr_node( SWQ_BETWEEN );
+            swq_expr_node *between = new swq_expr_node( SWQ_BETWEEN );
             between->field_type = SWQ_BOOLEAN;
             between->PushSubExpression( $1 );
             between->PushSubExpression( $4 );
@@ -321,9 +323,7 @@ value_expr:
 
     | value_expr SWQT_IS SWQT_NOT SWQT_NULL
         {
-        swq_expr_node *isnull;
-
-            isnull = new swq_expr_node( SWQ_ISNULL );
+            swq_expr_node *isnull = new swq_expr_node( SWQ_ISNULL );
             isnull->field_type = SWQ_BOOLEAN;
             isnull->PushSubExpression( $1 );
 
@@ -350,14 +350,16 @@ field_value:
         {
             $$ = $1;  // validation deferred.
             $$->eNodeType = SNT_COLUMN;
-            $$->field_index = $$->table_index = -1;
+            $$->field_index = -1;
+            $$->table_index = -1;
         }
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
         {
             $$ = $1;  // validation deferred.
             $$->eNodeType = SNT_COLUMN;
-            $$->field_index = $$->table_index = -1;
+            $$->field_index = -1;
+            $$->table_index = -1;
             $$->table_name = $$->string_value;
             $$->string_value = CPLStrdup($3->string_value);
             delete $3;
@@ -514,7 +516,7 @@ type_def:
     | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") ||
+        if( !EQUAL($1->string_value, "GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -532,7 +534,7 @@ type_def:
     | SWQT_IDENTIFIER '(' SWQT_IDENTIFIER ',' SWQT_INTEGER_NUMBER ')'
     {
         OGRwkbGeometryType eType = OGRFromOGCGeomType($3->string_value);
-        if( !EQUAL($1->string_value,"GEOMETRY") ||
+        if( !EQUAL($1->string_value, "GEOMETRY") ||
             (wkbFlatten(eType) == wkbUnknown &&
             !STARTS_WITH_CI($3->string_value, "GEOMETRY")) )
         {
@@ -604,7 +606,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             if( !context->poCurSelect->PushField( poNode ) )
             {
@@ -615,9 +618,7 @@ column_spec:
 
     | SWQT_IDENTIFIER '.' '*'
         {
-            CPLString osTableName;
-
-            osTableName = $1->string_value;
+            CPLString osTableName = $1->string_value;
 
             delete $1;
             $1 = NULL;
@@ -626,7 +627,8 @@ column_spec:
             poNode->eNodeType = SNT_COLUMN;
             poNode->table_name = CPLStrdup(osTableName );
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             if( !context->poCurSelect->PushField( poNode ) )
             {
@@ -638,7 +640,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' '*' ')'
         {
                 // special case for COUNT(*), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).",
@@ -653,7 +655,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
             count->PushSubExpression( poNode );
@@ -668,7 +671,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' '*' ')' as_clause
         {
                 // special case for COUNT(*), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "Syntax Error with %s(*).",
@@ -684,7 +687,8 @@ column_spec:
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
             poNode->string_value = CPLStrdup( "*" );
-            poNode->table_index = poNode->field_index = -1;
+            poNode->table_index = -1;
+            poNode->field_index = -1;
 
             swq_expr_node *count = new swq_expr_node( (swq_op)SWQ_COUNT );
             count->PushSubExpression( poNode );
@@ -702,10 +706,11 @@ column_spec:
     | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')'
         {
                 // special case for COUNT(DISTINCT x), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                        "DISTINCT keyword can only be used in COUNT() operator." );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "DISTINCT keyword can only be used in COUNT() operator." );
                 delete $1;
                 delete $4;
                     YYERROR;
@@ -726,7 +731,7 @@ column_spec:
     | SWQT_IDENTIFIER '(' SWQT_DISTINCT field_value ')' as_clause
         {
             // special case for COUNT(DISTINCT x), confirm it.
-            if( !EQUAL($1->string_value,"COUNT") )
+            if( !EQUAL($1->string_value, "COUNT") )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                         "DISTINCT keyword can only be used in COUNT() operator." );
@@ -760,7 +765,6 @@ as_clause:
 
     | SWQT_IDENTIFIER
 
-
 opt_where:
     | SWQT_WHERE value_expr
         {
@@ -779,7 +783,7 @@ opt_joins:
             context->poCurSelect->PushJoin( static_cast<int>($3->int_value),
                                             $5 );
             delete $3;
-	    }
+        }
 
 opt_order_by:
     | SWQT_ORDER SWQT_BY sort_spec_list
@@ -811,9 +815,9 @@ sort_spec:
 table_def:
     SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable =context->poCurSelect->PushTableDef( NULL, $1->string_value,
-                                                    NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( NULL, $1->string_value,
+                                                NULL );
         delete $1;
 
         $$ = new swq_expr_node( iTable );
@@ -821,9 +825,9 @@ table_def:
 
     | SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( NULL, $1->string_value,
-                                                     $2->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( NULL, $1->string_value,
+                                                $2->string_value );
         delete $1;
         delete $2;
 
@@ -832,9 +836,9 @@ table_def:
 
     | SWQT_STRING '.' SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value, NULL );
         delete $1;
         delete $3;
 
@@ -843,10 +847,10 @@ table_def:
 
     | SWQT_STRING '.' SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value,
-                                                     $4->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value,
+                                                $4->string_value );
         delete $1;
         delete $3;
         delete $4;
@@ -856,9 +860,9 @@ table_def:
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value, NULL );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value, NULL );
         delete $1;
         delete $3;
 
@@ -867,10 +871,10 @@ table_def:
 
     | SWQT_IDENTIFIER '.' SWQT_IDENTIFIER as_clause
     {
-        int iTable;
-        iTable = context->poCurSelect->PushTableDef( $1->string_value,
-                                                     $3->string_value,
-                                                     $4->string_value );
+        const int iTable =
+            context->poCurSelect->PushTableDef( $1->string_value,
+                                                $3->string_value,
+                                                $4->string_value );
         delete $1;
         delete $3;
         delete $4;

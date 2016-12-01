@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  RIK Reader
  * Purpose:  All code for RIK Reader
@@ -109,7 +108,7 @@ typedef struct
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RIKDataset				*/
+/*                              RIKDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -121,7 +120,7 @@ class RIKDataset : public GDALPamDataset
 
     VSILFILE        *fp;
 
-    double      fTransform[6];
+    double      adfTransform[6];
 
     GUInt32     nBlockXSize;
     GUInt32     nBlockYSize;
@@ -134,13 +133,14 @@ class RIKDataset : public GDALPamDataset
     GDALColorTable *poColorTable;
 
   public:
+     RIKDataset();
     ~RIKDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    CPLErr 	GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -157,9 +157,9 @@ class RIKRasterBand : public GDALPamRasterBand
 
     RIKRasterBand( RIKDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/
@@ -469,7 +469,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     *stack = lastOutput;
                     stackPtr = 1;
                     decodeCode = lastCode;
-       	        }
+                }
                 else if( code > lastAdded + 1 )
                 {
                     throw "Too high code";
@@ -479,8 +479,8 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 int i = 0;
                 while( ++i < LZW_CODES &&
-       	               decodeCode >= LZW_CLEAR &&
-       	               decodeCode < LZW_NO_SUCH_CODE )
+                       decodeCode >= LZW_CLEAR &&
+                       decodeCode < LZW_NO_SUCH_CODE )
                 {
                     stack[stackPtr++] = character[decodeCode];
                     decodeCode = prefix[decodeCode];
@@ -596,9 +596,28 @@ GDALColorTable *RIKRasterBand::GetColorTable()
 
 /************************************************************************/
 /* ==================================================================== */
-/*				RIKDataset				*/
+/*                              RIKDataset                              */
 /* ==================================================================== */
 /************************************************************************/
+
+/************************************************************************/
+/*                             RIKDataset()                             */
+/************************************************************************/
+
+RIKDataset::RIKDataset() :
+    fp( NULL ),
+    nBlockXSize( 0 ),
+    nBlockYSize( 0 ),
+    nHorBlocks( 0 ),
+    nVertBlocks( 0 ),
+    nFileSize( 0 ),
+    pOffsets( NULL ),
+    options( 0 ),
+    poColorTable( NULL )
+
+{
+    memset( adfTransform, 0, sizeof(adfTransform) );
+}
 
 /************************************************************************/
 /*                            ~RIKDataset()                             */
@@ -621,7 +640,7 @@ RIKDataset::~RIKDataset()
 CPLErr RIKDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, &fTransform, sizeof(double) * 6 );
+    memcpy( padfTransform, &adfTransform, sizeof(double) * 6 );
 
     return CE_None;
 }
@@ -1169,17 +1188,17 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
 
-    RIKDataset 	*poDS = new RIKDataset();
+    RIKDataset *poDS = new RIKDataset();
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
 
-    poDS->fTransform[0] = header.fWest - metersPerPixel / 2.0;
-    poDS->fTransform[1] = metersPerPixel;
-    poDS->fTransform[2] = 0.0;
-    poDS->fTransform[3] = header.fNorth + metersPerPixel / 2.0;
-    poDS->fTransform[4] = 0.0;
-    poDS->fTransform[5] = -metersPerPixel;
+    poDS->adfTransform[0] = header.fWest - metersPerPixel / 2.0;
+    poDS->adfTransform[1] = metersPerPixel;
+    poDS->adfTransform[2] = 0.0;
+    poDS->adfTransform[3] = header.fNorth + metersPerPixel / 2.0;
+    poDS->adfTransform[4] = 0.0;
+    poDS->adfTransform[5] = -metersPerPixel;
 
     poDS->nBlockXSize = header.iBlockWidth;
     poDS->nBlockYSize = header.iBlockHeight;
@@ -1236,7 +1255,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

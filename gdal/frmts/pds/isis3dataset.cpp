@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: isis3dataset.cpp 10646 2007-01-18 02:38:10Z warmerdam $
  *
  * Project:  ISIS Version 3 Driver
  * Purpose:  Implementation of ISIS3Dataset
@@ -46,13 +45,13 @@ static const double NULL3 = -3.4028226550889044521e+38;
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id: isis3dataset.cpp 10646 2007-09-18 02:38:10Z xxxx $");
+CPL_CVSID("$Id$");
 
 class ISIS3Dataset;
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       ISISTiledBand		                */
+/*                             ISISTiledBand                            */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -75,7 +74,7 @@ class ISISTiledBand : public GDALPamRasterBand
                                int bNativeOrder );
     virtual     ~ISISTiledBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -88,18 +87,18 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
                               GIntBig nFirstTileOffsetIn,
                               GIntBig nXTileOffsetIn,
                               GIntBig nYTileOffsetIn,
-                              int bNativeOrderIn )
-
+                              int bNativeOrderIn ) :
+    fpVSIL(fpVSILIn),
+    nFirstTileOffset(0),
+    nXTileOffset(nXTileOffsetIn),
+    nYTileOffset(nYTileOffsetIn),
+    bNativeOrder(bNativeOrderIn)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->fpVSIL = fpVSILIn;
-    this->bNativeOrder = bNativeOrderIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
     eDataType = eDT;
     nBlockXSize = nTileXSize;
     nBlockYSize = nTileYSize;
-    this->nXTileOffset = nXTileOffsetIn;
-    this->nYTileOffset = nYTileOffsetIn;
 
     const int l_nBlocksPerRow =
             (poDS->GetRasterXSize() + nTileXSize - 1) / nTileXSize;
@@ -108,13 +107,14 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
 
     if( nXTileOffset == 0 && nYTileOffset == 0 )
     {
-        nXTileOffset = static_cast<GIntBig>(GDALGetDataTypeSize(eDT)/8) * nTileXSize * nTileYSize;
+        nXTileOffset =
+            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) *
+            nTileXSize * nTileYSize;
         nYTileOffset = nXTileOffset * l_nBlocksPerRow;
     }
 
-    this->nFirstTileOffset = nFirstTileOffsetIn
+    nFirstTileOffset = nFirstTileOffsetIn
         + (nBand-1) * nYTileOffset * l_nBlocksPerColumn;
-
 }
 
 /************************************************************************/
@@ -155,13 +155,13 @@ CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       ISISDataset		                */
+/*                             ISISDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 class ISIS3Dataset : public RawDataset
 {
-    VSILFILE	*fpImage;	// image data file.
+    VSILFILE    *fpImage;  // image data file.
 
     CPLString   osExternalCube;
 
@@ -185,12 +185,12 @@ class ISIS3Dataset : public RawDataset
 
 public:
     ISIS3Dataset();
-    ~ISIS3Dataset();
+    virtual ~ISIS3Dataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -198,7 +198,6 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 };
-
 
 /************************************************************************/
 /*                            ISIS3Dataset()                            */
@@ -585,7 +584,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
         //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
         if ( ( (EQUAL( map_proj_name, "Stereographic" ) && (fabs(center_lat) == 90)) ) ||
-	           (EQUAL( map_proj_name, "PolarStereographic" )) )
+             (EQUAL( map_proj_name, "PolarStereographic" )) )
          {
             if (bIsGeographic) {
                 //Geograpraphic, so set an ellipse
@@ -601,9 +600,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
         else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) ||
-  	               (EQUAL( map_proj_name, "Orthographic" )) ||
-	               (EQUAL( map_proj_name, "Stereographic" )) ||
-	               (EQUAL( map_proj_name, "Sinusoidal" )) ) {
+                  (EQUAL( map_proj_name, "Orthographic" )) ||
+                  (EQUAL( map_proj_name, "Stereographic" )) ||
+                  (EQUAL( map_proj_name, "Sinusoidal" )) ) {
             // ISIS uses the spherical equation for these projections
             // so force a sphere.
             oSRS.SetGeogCS( geog_name, datum_name, sphere_name,
@@ -702,7 +701,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset=0, nPixelOffset=0, nBandOffset=0;
+    int nLineOffset = 0;
+    int nPixelOffset = 0;
+    int nBandOffset = 0;
 
     if( EQUAL(szLayout,"BSQ") )
     {
@@ -716,15 +717,14 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
-    int bNativeOrder = !(chByteOrder == 'M');
+    const bool bNativeOrder = chByteOrder != 'M';
 #else
-    int bNativeOrder = (chByteOrder == 'M');
+    const bool bNativeOrder = chByteOrder == 'M';
 #endif
-
 
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand;
+        GDALRasterBand *poBand = NULL;
 
         if( EQUAL(szLayout,"Tiled") )
         {
@@ -818,7 +818,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -862,7 +862,6 @@ const char *ISIS3Dataset::GetKeywordSub( const char *pszPath,
     CSLDestroy( papszTokens );
     return pszDefault;
 }
-
 
 /************************************************************************/
 /*                         GDALRegister_ISIS3()                         */

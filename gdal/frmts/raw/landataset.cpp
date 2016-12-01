@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  eCognition
  * Purpose:  Implementation of Erdas .LAN / .GIS format.
@@ -38,7 +37,6 @@
 #include <algorithm>
 
 CPL_CVSID("$Id$");
-
 
 /**
 
@@ -118,12 +116,12 @@ class LAN4BitRasterBand : public GDALPamRasterBand
                    LAN4BitRasterBand( LANDataset *, int );
     virtual ~LAN4BitRasterBand();
 
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorTable( GDALColorTable * );
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr SetColorTable( GDALColorTable * ) override;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -146,16 +144,16 @@ class LANDataset : public RawDataset
     CPLString   osSTAFilename;
     void        CheckForStatistics(void);
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
   public:
                 LANDataset();
     virtual ~LANDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef();
-    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -181,7 +179,7 @@ LAN4BitRasterBand::LAN4BitRasterBand( LANDataset *poDSIn, int nBandIn ) :
     nBand = nBandIn;
     eDataType = GDT_Byte;
 
-    nBlockXSize = poDSIn->GetRasterXSize();;
+    nBlockXSize = poDSIn->GetRasterXSize();
     nBlockYSize = 1;
 }
 
@@ -428,26 +426,21 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         float fTmp = 0.0;
         memcpy(&fTmp, poDS->pachHeader + 16, 4);
-        CPL_LSBPTR32(&fTmp);
         poDS->nRasterXSize = (int) fTmp;
         memcpy(&fTmp, poDS->pachHeader + 20, 4);
-        CPL_LSBPTR32(&fTmp);
         poDS->nRasterYSize = (int) fTmp;
     }
     else
     {
         GInt32 nTmp = 0;
         memcpy(&nTmp, poDS->pachHeader + 16, 4);
-        CPL_LSBPTR32(&nTmp);
         poDS->nRasterXSize = nTmp;
         memcpy(&nTmp, poDS->pachHeader + 20, 4);
-        CPL_LSBPTR32(&nTmp);
         poDS->nRasterYSize = nTmp;
     }
 
     GInt16 nTmp16 = 0;
     memcpy(&nTmp16, poDS->pachHeader + 6, 2);
-    CPL_LSBPTR16(&nTmp16);
 
     int nPixelOffset = 0;
     GDALDataType eDataType = GDT_Unknown;
@@ -477,7 +470,6 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     memcpy(&nTmp16, poDS->pachHeader + 8, 2);
-    CPL_LSBPTR16(&nTmp16);
     const int nBandCount = nTmp16;
 
     if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
@@ -539,18 +531,14 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     float fTmp = 0.0;
 
     memcpy(&fTmp, poDS->pachHeader + 112, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[0] = fTmp;
     memcpy(&fTmp, poDS->pachHeader + 120, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[1] = fTmp;
     poDS->adfGeoTransform[2] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 116, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[3] = fTmp;
     poDS->adfGeoTransform[4] = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 124, 4);
-    CPL_LSBPTR32(&fTmp);
     poDS->adfGeoTransform[5] = - fTmp;
 
     // adjust for center of pixel vs. top left corner of pixel.
@@ -573,7 +561,6 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try to come up with something for the coordinate system.        */
 /* -------------------------------------------------------------------- */
     memcpy(&nTmp16, poDS->pachHeader + 88, 2);
-    CPL_LSBPTR16(&nTmp16);
     int nCoordSys = nTmp16;
 
     if( nCoordSys == 0 )

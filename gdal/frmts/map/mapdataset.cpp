@@ -46,10 +46,10 @@ class CPL_DLL MAPDataset : public GDALDataset
     GDALDataset *poImageDS;
 
     char        *pszWKT;
-    int	        bGeoTransformValid;
+    int         bGeoTransformValid;
     double      adfGeoTransform[6];
     int         nGCPCount;
-    GDAL_GCP	*pasGCPList;
+    GDAL_GCP    *pasGCPList;
     OGRPolygon  *poNeatLine;
     CPLString   osImgFilename;
 
@@ -57,14 +57,14 @@ class CPL_DLL MAPDataset : public GDALDataset
     MAPDataset();
     virtual ~MAPDataset();
 
-    virtual const char* GetProjectionRef();
-    virtual CPLErr      GetGeoTransform( double * );
-    virtual int GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual char **GetFileList();
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr      GetGeoTransform( double * ) override;
+    virtual int GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    virtual char **GetFileList() override;
 
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -80,7 +80,7 @@ class MAPWrapperRasterBand : public GDALProxyRasterBand
   GDALRasterBand* poBaseBand;
 
   protected:
-    virtual GDALRasterBand* RefUnderlyingRasterBand() { return poBaseBand; }
+    virtual GDALRasterBand* RefUnderlyingRasterBand() override { return poBaseBand; }
 
   public:
     explicit MAPWrapperRasterBand( GDALRasterBand* poBaseBandIn )
@@ -318,7 +318,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
     /* Create and fill the neatline polygon */
     if (bNeatLine)
     {
-        poDS->poNeatLine = new OGRPolygon();	/* Create a polygon to store the neatline */
+        poDS->poNeatLine = new OGRPolygon();   /* Create a polygon to store the neatline */
         OGRLinearRing* poRing = new OGRLinearRing();
 
         if ( poDS->bGeoTransformValid )        /* Compute the projected coordinates of the corners */
@@ -410,7 +410,7 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CSLDestroy(papszLines);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -433,7 +433,6 @@ CPLErr MAPDataset::GetGeoTransform( double * padfTransform )
 
     return (nGCPCount == 0) ? CE_None : CE_Failure;
 }
-
 
 /************************************************************************/
 /*                           GetGCPCount()                              */

@@ -1,4 +1,4 @@
-/* $Id: avc_binwr.c,v 1.18 2008/07/23 20:51:38 dmorissette Exp $
+/* $Id$
  *
  * Name:     avc_binwr.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
@@ -323,10 +323,14 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
     int          nStatus=0;
     GBool        bHeader = TRUE;
 
+    memset(&sHeader, 0, sizeof(sHeader));
+
     /*-----------------------------------------------------------------
      * Set the appropriate header information for this file type.
      *----------------------------------------------------------------*/
-    sHeader.nPrecision = sHeader.nRecordSize = sHeader.nLength = 0;
+    sHeader.nPrecision = 0;
+    sHeader.nRecordSize = 0;
+    sHeader.nLength = 0;
     sHeader.nSignature = 9994;
     switch(psFile->eFileType)
     {

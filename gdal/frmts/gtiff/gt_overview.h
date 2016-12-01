@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: gt_overview.h 13297 2007-12-09 19:03:50Z rouault $
+ * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Code to build overviews of external databases as a TIFF file.
@@ -47,7 +47,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panBlue,
                             int nExtraSamples,
                             unsigned short *panExtraSampleValues,
-                            const char *pszMetadata );
+                            const char *pszMetadata,
+                            const char* pszJPEGQuality,
+                            const char* pszJPEGTablesMode );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,

@@ -1,0 +1,55 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:other_ns="http://other_ns"
+           xmlns:myns="http://myns" 
+           xmlns:gml="http://fake_gml"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml" schemaLocation="gmlas_test_targetelement_fake_gml.xsd"/>
+<xs:import namespace="http://other_ns" schemaLocation="gmlas_test_targetelement_other_ns.xsd"/>
+
+<xs:element name="existing_abstract_target_elt" abstract="true"/>
+
+<xs:element name="main_elt" substitutionGroup="gml:_Feature">
+  <xs:complexType>
+    <xs:sequence>
+
+        <xs:element name="reference_missing_target_elt" type="gml:ReferenceType" minOccurs="0"/>
+
+        <xs:element name="reference_inexisting_target_elt" type="gml:ReferenceType" minOccurs="0">
+            <xs:annotation>
+                <xs:appinfo>
+                    <targetElement xmlns="http://fake_gml">other_ns:inexisting_target_elt</targetElement>
+                </xs:appinfo>
+            </xs:annotation>
+        </xs:element>
+
+        <xs:element name="reference_existing_target_elt" type="gml:ReferenceType" minOccurs="0">
+            <xs:annotation>
+                <xs:appinfo>
+                    <targetElement xmlns="http://fake_gml">other_ns:existing_target_elt</targetElement>
+                </xs:appinfo>
+            </xs:annotation>
+        </xs:element>
+
+        <xs:element name="reference_existing_abstract_target_elt" type="gml:ReferenceType" minOccurs="0">
+            <xs:annotation>
+                <xs:appinfo>
+                    <targetElement xmlns="http://fake_gml">myns:existing_abstract_target_elt</targetElement>
+                </xs:appinfo>
+            </xs:annotation>
+        </xs:element>
+
+        <xs:element name="reference_existing_abstract_target_elt_nillable" type="gml:ReferenceType" nillable="true">
+            <xs:annotation>
+                <xs:appinfo>
+                    <targetElement xmlns="http://fake_gml">myns:existing_abstract_target_elt</targetElement>
+                </xs:appinfo>
+            </xs:annotation>
+        </xs:element>
+
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

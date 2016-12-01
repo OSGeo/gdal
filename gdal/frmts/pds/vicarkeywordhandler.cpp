@@ -29,9 +29,12 @@
 * DEALINGS IN THE SOFTWARE.
 ****************************************************************************/
 
-
 #include "cpl_string.h"
 #include "vicarkeywordhandler.h"
+
+#include <algorithm>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -47,7 +50,7 @@ VICARKeywordHandler::VICARKeywordHandler() :
     papszKeywordList(NULL),
     pszHeaderNext(NULL),
     LabelSize(0)
-{ }
+{}
 
 /************************************************************************/
 /*                        ~VICARKeywordHandler()                        */
@@ -67,7 +70,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     if( VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return FALSE;
@@ -89,8 +92,10 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
 
     char keyval[100];
-    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
-    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
+                                    sizeof(keyval) - 1) );
+    keyval[std::min(static_cast<size_t>(pch2 - pch1),
+                    sizeof(keyval) - 1)] = '\0';
     LabelSize = atoi( keyval );
     if( LabelSize <= 0 || LabelSize > 10 * 1024 * 124 )
         return FALSE;
@@ -114,9 +119,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
 /*      Now check for the Vicar End-of-Dataset Label...                 */
 /* -------------------------------------------------------------------- */
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
+    const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
 
     if( pszResult == NULL )
     {
@@ -183,8 +186,9 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         return FALSE;
     }
-    strncpy( keyval, pch1, MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 ) );
-    keyval[MIN( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
+                                    sizeof(keyval) - 1 ) );
+    keyval[std::min( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
 
     int EOLabelSize = atoi( keyval );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
@@ -228,7 +232,6 @@ int VICARKeywordHandler::ReadGroup( CPL_UNUSED const char *pszPathPrefix ) {
         }
     }
 }
-
 
 /************************************************************************/
 /*                              ReadPair()                              */
@@ -281,12 +284,10 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
             if( osWord.size() && osWord[osWord.size()-1] == ')'  ) break;
         }
     }
-
     else
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();

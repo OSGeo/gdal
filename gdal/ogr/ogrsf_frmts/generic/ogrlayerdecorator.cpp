@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRLayerDecorator class
@@ -27,14 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrlayerdecorator.h"
 
 CPL_CVSID("$Id$");
 
-OGRLayerDecorator::OGRLayerDecorator(OGRLayer* poDecoratedLayer,
-                                     int bTakeOwnership) :
-                                        m_poDecoratedLayer(poDecoratedLayer),
-                                        m_bHasOwnership(bTakeOwnership)
+OGRLayerDecorator::OGRLayerDecorator( OGRLayer* poDecoratedLayer,
+                                      int bTakeOwnership ) :
+    m_poDecoratedLayer(poDecoratedLayer),
+    m_bHasOwnership(bTakeOwnership)
 {
     CPLAssert(poDecoratedLayer != NULL);
     SetDescription( poDecoratedLayer->GetDescription() );
@@ -45,7 +46,6 @@ OGRLayerDecorator::~OGRLayerDecorator()
     if( m_bHasOwnership )
         delete m_poDecoratedLayer;
 }
-
 
 OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
 {
@@ -294,3 +294,5 @@ CPLErr      OGRLayerDecorator::SetMetadataItem( const char * pszName,
     if( !m_poDecoratedLayer ) return CE_Failure;
     return m_poDecoratedLayer->SetMetadataItem(pszName, pszValue, pszDomain);
 }
+
+#endif /* #ifndef DOXYGEN_SKIP */

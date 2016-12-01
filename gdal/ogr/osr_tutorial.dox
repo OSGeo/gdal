@@ -4,18 +4,18 @@
 
 The OGRSpatialReference, and OGRCoordinateTransformation classes provide
 services to represent coordinate systems (projections and datums) and to
-transform between them.  These services are loosely modeled on the 
-OpenGIS Coordinate Transformations specification, and use the same 
-Well Known Text format for describing coordinate systems. 
+transform between them.  These services are loosely modeled on the
+OpenGIS Coordinate Transformations specification, and use the same
+Well Known Text format for describing coordinate systems.
 
 Some background on OpenGIS coordinate systems and services can be found
 in the Simple Features for COM, and Spatial Reference Systems Abstract Model
 documents available from the <a href="http://www.opengeospatial.org">Open Geospatial Consortium</a>.
 The <a href="http://www.remotesensing.org/geotiff/proj_list">GeoTIFF Projections Transform List</a>
-may also be of assistance in 
-understanding formulations of projections in WKT.  The 
-<a href="http://www.epsg.org">EPSG</a> 
-Geodesy web page is also a useful resource. 
+may also be of assistance in
+understanding formulations of projections in WKT.  The
+<a href="http://www.epsg.org">EPSG</a>
+Geodesy web page is also a useful resource.
 
 \section osr_tutorial_cs Defining a Geographic Coordinate System
 
@@ -23,42 +23,42 @@ Coordinate systems are encapsulated in the OGRSpatialReference class.  There
 are a number of ways of initializing an OGRSpatialReference object to a
 valid coordinate system.  There are two primary kinds of coordinate systems.
 The first is geographic (positions are measured in long/lat) and the second
-is projected (such as UTM - positions are measured in meters or feet).  
+is projected (such as UTM - positions are measured in meters or feet).
 
 A Geographic coordinate system contains information on the datum (which implies
-an spheroid described by a semi-major axis, and inverse flattening), prime 
-meridian (normally Greenwich), and an angular units type which is normally 
-degrees.  The following code initializes a geographic coordinate system 
+an spheroid described by a semi-major axis, and inverse flattening), prime
+meridian (normally Greenwich), and an angular units type which is normally
+degrees.  The following code initializes a geographic coordinate system
 on supplying all this information along with a user visible name for the
-geographic coordinate system. 
+geographic coordinate system.
 
 \code
 	OGRSpatialReference oSRS;
 
 	oSRS.SetGeogCS( "My geographic coordinate system",
-	                "WGS_1984", 
-			"My WGS84 Spheroid", 
-			SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING, 
-			"Greenwich", 0.0, 
+	                "WGS_1984",
+			"My WGS84 Spheroid",
+			SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING,
+			"Greenwich", 0.0,
 			"degree", SRS_UA_DEGREE_CONV );
 \endcode
 
-Of these values, the names "My geographic coordinate system", "My WGS84 
+Of these values, the names "My geographic coordinate system", "My WGS84
 Spheroid", "Greenwich" and "degree" are not keys, but are used for display
 to the user.  However, the datum name "WGS_1984" is used as a key to identify
 the datum, and there are rules on what values can be used.  NOTE: Prepare
-writeup somewhere on valid datums! 
+writeup somewhere on valid datums!
 
 The OGRSpatialReference has built in support for a few well known coordinate
 systems, which include "NAD27", "NAD83", "WGS72" and "WGS84" which can be
-defined in a single call to SetWellKnownGeogCS(). 
+defined in a single call to SetWellKnownGeogCS().
 
 \code
 	oSRS.SetWellKnownGeogCS( "WGS84" );
 \endcode
 
 Furthermore, any geographic coordinate system in the EPSG database can
-be set by it's GCS code number if the EPSG database is available. 
+be set by it's GCS code number if the EPSG database is available.
 
 \code
 	oSRS.SetWellKnownGeogCS( "EPSG:4326" );
@@ -103,16 +103,16 @@ GEOGCS["WGS 84",
     AUTHORITY["EPSG",4326]]
 </pre>
 
-The OGRSpatialReference::importFromWkt() method can be used to set an 
+The OGRSpatialReference::importFromWkt() method can be used to set an
 OGRSpatialReference from a WKT coordinate system definition.
 
 \section osr_tutorial_proj Defining a Projected Coordinate System
 
-A projected coordinate system (such as UTM, Lambert Conformal Conic, etc) 
+A projected coordinate system (such as UTM, Lambert Conformal Conic, etc)
 requires and underlying geographic coordinate system as well as a definition
 for the projection transform used to translate between linear positions
 (in meters or feet) and angular long/lat positions.  The following code
-defines a UTM zone 17 projected coordinate system with an underlying 
+defines a UTM zone 17 projected coordinate system with an underlying
 geographic coordinate system (datum) of WGS84.
 
 \code
@@ -126,15 +126,15 @@ geographic coordinate system (datum) of WGS84.
 Calling SetProjCS() sets a user
 name for the projected coordinate system and establishes that the system
 is projected.  The SetWellKnownGeogCS() associates a geographic coordinate
-system, and the SetUTM() call sets detailed projection transformation 
-parameters.  At this time the above order is important in order to 
+system, and the SetUTM() call sets detailed projection transformation
+parameters.  At this time the above order is important in order to
 create a valid definition, but in the future the object will automatically
 reorder the internal representation as needed to remain valid.  For now
 <b>be careful of the order of steps defining an OGRSpatialReference!</b>
 
 The above definition would give a WKT version that looks something like
-the following.  Note that the UTM 17 was expanded into the details 
-transverse mercator definition of the UTM zone.  
+the following.  Note that the UTM 17 was expanded into the details
+transverse mercator definition of the UTM zone.
 
 <pre>
 PROJCS["UTM 17 (WGS84) in northern hemisphere.",
@@ -163,26 +163,26 @@ Mercator), SetLCC() (Lambert Conformal Conic), and SetMercator().
 \section osr_tutorial_query Querying Coordinate System
 
 Once an OGRSpatialReference has been established, various information about
-it can be queried.  It can be established if it is a projected or 
-geographic coordinate system using the OGRSpatialReference::IsProjected() and 
-OGRSpatialReference::IsGeographic() methods.  The 
-OGRSpatialReference::GetSemiMajor(), OGRSpatialReference::GetSemiMinor() and 
-OGRSpatialReference::GetInvFlattening() methods can be used to get 
+it can be queried.  It can be established if it is a projected or
+geographic coordinate system using the OGRSpatialReference::IsProjected() and
+OGRSpatialReference::IsGeographic() methods.  The
+OGRSpatialReference::GetSemiMajor(), OGRSpatialReference::GetSemiMinor() and
+OGRSpatialReference::GetInvFlattening() methods can be used to get
 information about the spheroid.  The OGRSpatialReference::GetAttrValue()
 method can be used to get the PROJCS, GEOGCS, DATUM, SPHEROID, and PROJECTION
-names strings.  The OGRSpatialReference::GetProjParm() method can be used to 
-get the projection parameters.  The OGRSpatialReference::GetLinearUnits() 
+names strings.  The OGRSpatialReference::GetProjParm() method can be used to
+get the projection parameters.  The OGRSpatialReference::GetLinearUnits()
 method can be used to fetch the linear units type, and translation to meters.
 
 The following code (from ogr_srs_proj4.cpp) demonstrates use
 of GetAttrValue() to get the projection, and GetProjParm() to get projection
-parameters.  The GetAttrValue() method searches for the first "value" 
-node associated with the named entry in the WKT text representation.  
-The #define'ed constants for projection parameters (such as 
+parameters.  The GetAttrValue() method searches for the first "value"
+node associated with the named entry in the WKT text representation.
+The \#define'ed constants for projection parameters (such as
 SRS_PP_CENTRAL_MERIDIAN) should be used when fetching projection parameter
 with GetProjParm().   The code for the Set methods of the various projections
-in ogrspatialreference.cpp can be consulted to find which parameters apply to 
-which projections.  
+in ogrspatialreference.cpp can be consulted to find which parameters apply to
+which projections.
 
 \code
     const char *pszProjection = poSRS->GetAttrValue("PROJECTION");
@@ -218,52 +218,52 @@ points between coordinate systems.
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
         double			x, y;
-            
+
         oSourceSRS.importFromEPSG( atoi(papszArgv[i+1]) );
         oTargetSRS.importFromEPSG( atoi(papszArgv[i+2]) );
-            
+
         poCT = OGRCreateCoordinateTransformation( &oSourceSRS,
                                                   &oTargetSRS );
         x = atof( papszArgv[i+3] );
         y = atof( papszArgv[i+4] );
-            
+
         if( poCT == NULL || !poCT->Transform( 1, &x, &y ) )
             printf( "Transformation failed.\n" );
         else
-            printf( "(%f,%f) -> (%f,%f)\n", 
+            printf( "(%f,%f) -> (%f,%f)\n",
                     atof( papszArgv[i+3] ),
                     atof( papszArgv[i+4] ),
                     x, y );
 \endcode
 
 There are a couple of points at which transformations can
-fail.  First, OGRCreateCoordinateTransformation() may fail, 
+fail.  First, OGRCreateCoordinateTransformation() may fail,
 generally because the internals recognise that no transformation
 between the indicated systems can be established.  This might
-be due to use of a projection not supported by the internal 
+be due to use of a projection not supported by the internal
 PROJ.4 library, differing datums for which no relationship
 is known, or one of the coordinate systems being inadequately
 defined.  If OGRCreateCoordinateTransformation() fails it will
-return a NULL. 
+return a NULL.
 
 The OGRCoordinateTransformation::Transform() method itself can
 also fail.  This may be as a delayed result of one of the above
-problems, or as a result of an operation being numerically 
-undefined for one or more of the passed in points.  The 
-Transform() function will return TRUE on success, or FALSE 
-if any of the points fail to transform.  The point array is 
+problems, or as a result of an operation being numerically
+undefined for one or more of the passed in points.  The
+Transform() function will return TRUE on success, or FALSE
+if any of the points fail to transform.  The point array is
 left in an indeterminate state on error.
 
 Though not shown above, the coordinate transformation service can
 take 3D points, and will adjust elevations for elevation differences
-in spheroids, and datums.  At some point in the future shifts 
+in spheroids, and datums.  At some point in the future shifts
 between different vertical datums may also be applied.  If no Z is
-passed, it is assume that the point is on the geoid. 
+passed, it is assume that the point is on the geoid.
 
 The following example shows how to conveniently create a lat/long coordinate
 system using the same geographic coordinate system as a projected coordinate
 system, and using that to transform between projected coordinates and
-lat/long. 
+lat/long.
 
 \code
     OGRSpatialReference    oUTM, *poLatLong;
@@ -274,13 +274,13 @@ lat/long.
     oUTM.SetUTM( 17 );
 
     poLatLong = oUTM.CloneGeogCS();
-    
+
     poTransform = OGRCreateCoordinateTransformation( &oUTM, poLatLong );
     if( poTransform == NULL )
     {
         ...
     }
-    
+
     ...
 
     if( !poTransform->Transform( nPoints, x, y, z ) )
@@ -289,15 +289,15 @@ lat/long.
 
 \section osr_tutorial_apis Alternate Interfaces
 
-A C interface to the coordinate system services is defined in 
-ogr_srs_api.h, and Python bindings are available via the osr.py module. 
+A C interface to the coordinate system services is defined in
+ogr_srs_api.h, and Python bindings are available via the osr.py module.
 Methods are close analogs of the C++ methods but C and Python bindings
-are missing for some C++ methods. 
+are missing for some C++ methods.
 
 <h3>C Bindings</h3>
 
 \code
-typedef void *OGRSpatialReferenceH;                               
+typedef void *OGRSpatialReferenceH;
 typedef void *OGRCoordinateTransformationH;
 
 OGRSpatialReferenceH OSRNewSpatialReference( const char * );
@@ -347,7 +347,7 @@ OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          int nCode );
 OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
-                        const char * pszParmName, 
+                        const char * pszParmName,
                         double dfDefault,
                         OGRErr * );
 
@@ -392,6 +392,6 @@ class CoordinateTransformation:
 
 The OGRCoordinateTransformation service is implemented on top of the
 <a href="http://www.remotesensing.org/proj">PROJ.4</a> library originally
-written by Gerald Evenden of the USGS.  
+written by Gerald Evenden of the USGS.
 
 */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Command line application to list info about a file.
@@ -53,7 +52,6 @@ static void Usage(const char* pszErrorMsg = NULL)
 
     exit( 1 );
 }
-
 
 /************************************************************************/
 /*                         GDALInfoOptionsForBinary()                   */
@@ -207,7 +205,6 @@ int main( int argc, char ** argv )
                      "gdalinfo warning: subdataset %d of %d requested. "
                      "Reading the main dataset.\n",
                      psOptionsForBinary->nSubdataset, nSubdatasets );
-
         }
     }
 
@@ -237,5 +234,4 @@ int main( int argc, char ** argv )
     CPLCleanupTLS();
 
     exit( 0 );
-
 }

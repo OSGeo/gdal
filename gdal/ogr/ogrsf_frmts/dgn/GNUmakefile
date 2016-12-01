@@ -15,7 +15,7 @@ DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
 		dgnstroke.cpp dgnwrite.cpp dgnhelp.cpp \
-		dgnwritetest.c dgndump.c \
+		dgnwritetest.cpp dgndump.cpp \
 		\
 		dist/Makefile dist/Makefile.vc dist/cpl_config.h \
 		dist/README \

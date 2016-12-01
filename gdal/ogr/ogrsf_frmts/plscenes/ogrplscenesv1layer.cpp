@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PlanetLabs scene driver
  * Purpose:  Implements OGRPLScenesV1Layer
@@ -28,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_plscenes.h"
+#include "ogrgeojsonreader.h"
 #include <algorithm>
 
 CPL_CVSID("$Id$");
@@ -47,32 +47,34 @@ int OGRPLScenesV1FeatureDefn::GetFieldCount()
 /*                          OGRPLScenesV1Layer()                        */
 /************************************************************************/
 
-OGRPLScenesV1Layer::OGRPLScenesV1Layer(OGRPLScenesV1Dataset* poDS,
-                                       const char* pszName,
-                                       const char* pszSpecURL,
-                                       const char* pszItemsURL,
-                                       GIntBig nCount)
+OGRPLScenesV1Layer::OGRPLScenesV1Layer( OGRPLScenesV1Dataset* poDS,
+                                        const char* pszName,
+                                        const char* pszSpecURL,
+                                        const char* pszItemsURL,
+                                        GIntBig nCount ) :
+    m_poDS(poDS),
+    m_bFeatureDefnEstablished(false),
+    m_poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
+    m_osSpecURL(pszSpecURL),
+    m_osItemsURL(pszItemsURL),
+    m_nTotalFeatures(nCount),
+    m_nNextFID(1),
+    m_bEOF(false),
+    m_bStillInFirstPage(true),
+    m_nPageSize(atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"))),
+    m_bInFeatureCountOrGetExtent(false),
+    m_poPageObj(NULL),
+    m_poFeatures(NULL),
+    m_nFeatureIdx(0),
+    m_bFilterMustBeClientSideEvaluated(false)
 {
-    m_poDS = poDS;
-    SetDescription(pszName);
-    m_bFeatureDefnEstablished = false;
+    // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
     m_poFeatureDefn = new OGRPLScenesV1FeatureDefn(this, pszName);
+
+    SetDescription(pszName);
     m_poFeatureDefn->SetGeomType(wkbMultiPolygon);
     m_poFeatureDefn->Reference();
-    m_poSRS = new OGRSpatialReference(SRS_WKT_WGS84);
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
-    m_osSpecURL = pszSpecURL;
-    m_osItemsURL = pszItemsURL;
-    m_nTotalFeatures = nCount;
-    m_nNextFID = 1;
-    m_bEOF = false;
-    m_bStillInFirstPage = true;
-    m_poPageObj = NULL;
-    m_poFeatures = NULL;
-    m_nFeatureIdx = 0;
-    m_nPageSize = atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"));
-    m_bFilterMustBeClientSideEvaluated = false;
-    m_bInFeatureCountOrGetExtent = false;
     ResetReading();
 }
 
@@ -105,7 +107,7 @@ OGRFeatureDefn* OGRPLScenesV1Layer::GetLayerDefn()
 json_object* OGRPLScenesV1Layer::ResolveRefIfNecessary(json_object* poObj,
                                                       json_object* poMain)
 {
-    json_object* poRef = json_object_object_get(poObj, "$ref");
+    json_object* poRef = CPL_json_object_object_get(poObj, "$ref");
     if( poRef == NULL )
         return poObj;
     if( json_object_get_type(poRef) != json_type_string )
@@ -121,7 +123,7 @@ json_object* OGRPLScenesV1Layer::ResolveRefIfNecessary(json_object* poObj,
     json_object* poCurNode = poMain;
     for(int i=0; papszPath != NULL && papszPath[i] != NULL; i++)
     {
-        poCurNode = json_object_object_get(poCurNode, papszPath[i]);
+        poCurNode = CPL_json_object_object_get(poCurNode, papszPath[i]);
         if( poCurNode == NULL || json_object_get_type(poCurNode) != json_type_object )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find object '%s' of '%s'",
@@ -179,7 +181,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         }
     }
 
-    json_object* poPaths = json_object_object_get(poSpec, "paths");
+    json_object* poPaths = CPL_json_object_object_get(poSpec, "paths");
     if( poPaths == NULL || json_object_get_type(poPaths) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find paths");
@@ -269,10 +271,10 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
       ]
     }
 */
-    json_object* poProperties = json_object_object_get(poSchema, "properties");
+    json_object* poProperties = CPL_json_object_object_get(poSchema, "properties");
     if( poProperties == NULL )
     {
-        json_object* poAllOf = json_object_object_get(poSchema, "allOf");
+        json_object* poAllOf = CPL_json_object_object_get(poSchema, "allOf");
         if( poAllOf == NULL || json_object_get_type(poAllOf) != json_type_array )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -287,7 +289,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             json_object* poAllOfItem = json_object_array_get_idx(poAllOf, i);
             if( poAllOfItem != NULL && json_object_get_type(poAllOfItem) == json_type_object )
             {
-                poProperties = json_object_object_get(poAllOfItem, "properties");
+                poProperties = CPL_json_object_object_get(poAllOfItem, "properties");
                 if( poProperties != NULL )
                     break;
             }
@@ -317,7 +319,6 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         return;
     }
 
-
     // Look for parameters (fields that can be queried)
     json_object* poParameters = json_ex_get_object_by_path(poItemsDef, "get.parameters");
     if( poParameters == NULL || json_object_get_type(poParameters) != json_type_array )
@@ -335,11 +336,11 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             poParameter = ResolveRefIfNecessary(poParameter, poSpec);
             if( poParameter == NULL )
                 continue;
-            json_object* poName = json_object_object_get(poParameter, "name");
+            json_object* poName = CPL_json_object_object_get(poParameter, "name");
             if( poName == NULL || json_object_get_type(poName) != json_type_string )
                 continue;
             const char* pszName = json_object_get_string(poName);
-            json_object* poIn = json_object_object_get(poParameter, "in");
+            json_object* poIn = CPL_json_object_object_get(poParameter, "in");
             if( poIn == NULL || json_object_get_type(poIn) != json_type_string )
                 continue;
             const char* pszIn = json_object_get_string(poIn);
@@ -355,7 +356,6 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             }
         }
     }
-
 
 /* Parse:
     "Item": {
@@ -391,10 +391,10 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
     },
 */
 
-    poProperties = json_object_object_get(poItems, "properties");
+    poProperties = CPL_json_object_object_get(poItems, "properties");
     if( poProperties == NULL )
     {
-        json_object* poAllOf = json_object_object_get(poItems, "allOf");
+        json_object* poAllOf = CPL_json_object_object_get(poItems, "allOf");
         if( poAllOf == NULL || json_object_get_type(poAllOf) != json_type_array )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -409,7 +409,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             json_object* poAllOfItem = json_object_array_get_idx(poAllOf, i);
             if( poAllOfItem != NULL && json_object_get_type(poAllOfItem) == json_type_object )
             {
-                poProperties = json_object_object_get(poAllOfItem, "properties");
+                poProperties = CPL_json_object_object_get(poAllOfItem, "properties");
                 if( poProperties != NULL )
                     break;
             }
@@ -426,7 +426,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
 
     CPLString osPropertiesDesc = "{";
 
-    json_object* poId = json_object_object_get(poProperties, "id");
+    json_object* poId = CPL_json_object_object_get(poProperties, "id");
     if( poId != NULL )
     {
         json_object_object_add(poId, "src_field", json_object_new_string("id") );
@@ -440,7 +440,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         RegisterField(&oFieldDefn, NULL, "id");
     }
 
-    json_object* poLinks = json_object_object_get(poProperties, "_links");
+    json_object* poLinks = CPL_json_object_object_get(poProperties, "_links");
     if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
         poLinks = ResolveRefIfNecessary(poLinks, poSpec);
     else
@@ -450,7 +450,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
         ParseProperties(poLinks, poSpec, osPropertiesDesc, "_links");
     }
 
-    poProperties = json_object_object_get(poProperties, "properties");
+    poProperties = CPL_json_object_object_get(poProperties, "properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -507,7 +507,7 @@ void OGRPLScenesV1Layer::EstablishLayerDefn()
             json_object* poAllOfItem = json_object_array_get_idx(poPermissionFilterAllOf, i);
             if( poAllOfItem != NULL && json_object_get_type(poAllOfItem) == json_type_object )
             {
-                poProperties = json_object_object_get(poAllOfItem, "properties");
+                poProperties = CPL_json_object_object_get(poAllOfItem, "properties");
                 if( poProperties != NULL )
                     break;
             }
@@ -592,7 +592,7 @@ const char *OGRPLScenesV1Layer::GetMetadataItem( const char * pszName, const cha
 static OGRFieldType OGRPLScenesV1LayerGetFieldType(json_object* poObj,
                                                    const char* pszJSonFieldName )
 {
-    json_object* poType = json_object_object_get(poObj, "type");
+    json_object* poType = CPL_json_object_object_get(poObj, "type");
     OGRFieldType eType = OFTString;
     if( poType != NULL && json_object_get_type(poType) == json_type_string )
     {
@@ -610,7 +610,7 @@ static OGRFieldType OGRPLScenesV1LayerGetFieldType(json_object* poObj,
             CPLDebug("PLSCENES", "Unknown type '%s' for '%s'",
                       pszType, pszJSonFieldName);
         }
-        json_object* poFormat = json_object_object_get(poObj, "format");
+        json_object* poFormat = CPL_json_object_object_get(poObj, "format");
         if( poFormat != NULL && json_object_get_type(poFormat) == json_type_string )
         {
             const char* pszFormat = json_object_get_string(poFormat);
@@ -641,7 +641,7 @@ void OGRPLScenesV1Layer::ParseProperties(json_object* poProperties,
                                          CPLString& osPropertiesDesc,
                                          const char* pszCategory)
 {
-    json_object* poAllOf = json_object_object_get(poProperties, "allOf");
+    json_object* poAllOf = CPL_json_object_object_get(poProperties, "allOf");
     if( poAllOf != NULL && json_object_get_type(poAllOf) == json_type_array )
     {
         const int nAllOfSize = json_object_array_length(poAllOf);
@@ -658,7 +658,7 @@ void OGRPLScenesV1Layer::ParseProperties(json_object* poProperties,
         return;
     }
 
-    poProperties = json_object_object_get(poProperties, "properties");
+    poProperties = CPL_json_object_object_get(poProperties, "properties");
     if( poProperties == NULL || json_object_get_type(poProperties) != json_type_object )
         return;
 
@@ -792,12 +792,12 @@ void OGRPLScenesV1Layer::ParseAssetProperties(json_object* poSpec,
                     continue;
                 }
 
-                const char* pszOGRFieldName;
+                const char* pszOGRFieldName = NULL;
                 CPLString osSrcField(CPLString("/assets.") + m_aoAssetCategories[i] + CPLString("."));
                 json_object* poLinksRef = NULL;
                 if( EQUAL(pszJSonFieldName, "_links") &&
                     (bFoundLinks ||
-                     ((poLinksRef = json_object_object_get( it.val, "$ref" )) != NULL &&
+                     ((poLinksRef = CPL_json_object_object_get( it.val, "$ref" )) != NULL &&
                      json_object_get_type(poLinksRef) == json_type_string &&
                      strcmp(json_object_get_string(poLinksRef), "#/definitions/SelfLink") == 0)) )
                 {
@@ -916,7 +916,7 @@ void OGRPLScenesV1Layer::ProcessAssetFileProperties( json_object* poPropertiesAs
             if( strcmp(pszJSonFieldName, "type") == 0 )
                 continue; // "http" not really interesting
 
-            const char* pszOGRFieldName;
+            const char* pszOGRFieldName = NULL;
             CPLString osSrcField(CPLString("/assets.") + osAssetCategory + CPLString(".files."));
             if( EQUAL(pszJSonFieldName, "_links") )
             {
@@ -980,24 +980,24 @@ bool OGRPLScenesV1Layer::GetNextPage()
         return false;
     }
 
-    json_object* poObj;
-    if( m_osRequestURL == m_poDS->GetBaseURL() + GetName() + "/quick-search" )
-        poObj = m_poDS->RunRequest(m_osRequestURL, FALSE, "POST", true, m_poDS->GetFilter());
-    else
-        poObj = m_poDS->RunRequest(m_osRequestURL);
+    json_object* poObj =
+        m_osRequestURL == m_poDS->GetBaseURL() + GetName() + "/quick-search"
+        ? m_poDS->RunRequest(m_osRequestURL, FALSE, "POST", true,
+                             m_poDS->GetFilter())
+        : m_poDS->RunRequest(m_osRequestURL);
     if( poObj == NULL )
     {
         m_bEOF = true;
         return false;
     }
 
-    json_object* poFeatures = json_object_object_get(poObj, "features");
+    json_object* poFeatures = CPL_json_object_object_get(poObj, "features");
     if( poFeatures == NULL ||
         json_object_get_type(poFeatures) != json_type_array ||
         json_object_array_length(poFeatures) == 0 )
     {
         // If this is a single item, then wrap it in a features array
-        json_object* poProperties = json_object_object_get(poObj, "properties");
+        json_object* poProperties = CPL_json_object_object_get(poObj, "properties");
         if( poProperties != NULL )
         {
             m_poPageObj = json_object_new_object();
@@ -1019,10 +1019,10 @@ bool OGRPLScenesV1Layer::GetNextPage()
 
     // Get URL of next page
     m_osNextURL = "";
-    json_object* poLinks = json_object_object_get(poObj, "_links");
+    json_object* poLinks = CPL_json_object_object_get(poObj, "_links");
     if( poLinks && json_object_get_type(poLinks) == json_type_object )
     {
-        json_object* poNext = json_object_object_get(poLinks, "_next");
+        json_object* poNext = CPL_json_object_object_get(poLinks, "_next");
         if( poNext && json_object_get_type(poNext) == json_type_string )
         {
             m_osNextURL = json_object_get_string(poNext);
@@ -1226,7 +1226,7 @@ struct OGRPLScenesV1LayerExprComparator
 {
     OGRPLScenesV1Layer* m_poLayer;
 
-    OGRPLScenesV1LayerExprComparator(OGRPLScenesV1Layer* poLayer) :
+    explicit OGRPLScenesV1LayerExprComparator(OGRPLScenesV1Layer* poLayer) :
                 m_poLayer(poLayer) {}
 
     bool operator() (const swq_expr_node* poNode1,
@@ -1434,11 +1434,9 @@ OGRErr OGRPLScenesV1Layer::SetAttributeFilter( const char *pszQuery )
 
 OGRFeature *OGRPLScenesV1Layer::GetNextFeature()
 {
-    OGRFeature  *poFeature;
-
     while( true )
     {
-        poFeature = GetNextRawFeature();
+        OGRFeature  *poFeature = GetNextRawFeature();
         if (poFeature == NULL)
             return NULL;
 
@@ -1488,7 +1486,7 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
     poFeature->SetFID(m_nNextFID++);
 
-    json_object* poJSonGeom = json_object_object_get(poJSonFeature, "geometry");
+    json_object* poJSonGeom = CPL_json_object_object_get(poJSonFeature, "geometry");
     if( poJSonGeom != NULL && json_object_get_type(poJSonGeom) == json_type_object )
     {
         OGRGeometry* poGeom = OGRGeoJSONReadGeometry(poJSonGeom);
@@ -1505,7 +1503,7 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
         }
     }
 
-    json_object* poId = json_object_object_get(poJSonFeature, "id");
+    json_object* poId = CPL_json_object_object_get(poJSonFeature, "id");
     if( poId != NULL && json_object_get_type(poId) == json_type_string )
     {
         std::map<CPLString, int>::iterator oIter = m_oMapPrefixedJSonFieldNameToFieldIdx.find("id");
@@ -1519,7 +1517,7 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
     for(int i=0;i<2;i++)
     {
         const char* pszFeaturePart = (i == 0) ? "properties": "_links";
-        json_object* poProperties = json_object_object_get(poJSonFeature, pszFeaturePart);
+        json_object* poProperties = CPL_json_object_object_get(poJSonFeature, pszFeaturePart);
         if( poProperties != NULL && json_object_get_type(poProperties) == json_type_object )
         {
             json_object_iter it;
@@ -1573,15 +1571,15 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
                     json_object* poHTTP = NULL;
                     if( strcmp(it.key, "_links") == 0 &&
                         json_object_get_type(it.val) == json_type_object &&
-                        json_object_object_get(it.val, "_self") != NULL )
+                        CPL_json_object_object_get(it.val, "_self") != NULL )
                     {
                         osPrefixedJSonFieldName += "._self";
                         SetFieldFromPrefixedJSonFieldName(
-                            poFeature, osPrefixedJSonFieldName, json_object_object_get(it.val, "_self"));
+                            poFeature, osPrefixedJSonFieldName, CPL_json_object_object_get(it.val, "_self"));
                     }
                     else if( strcmp(it.key, "files") == 0 &&
                              json_object_get_type(it.val) == json_type_object &&
-                             (poHTTP = json_object_object_get(it.val, "http")) != NULL &&
+                             (poHTTP = CPL_json_object_object_get(it.val, "http")) != NULL &&
                              json_object_get_type(poHTTP) == json_type_object )
                     {
                         json_object_iter itFiles;
@@ -1593,7 +1591,7 @@ OGRFeature* OGRPLScenesV1Layer::GetNextRawFeature()
                             json_object* poActivate = NULL;
                             if( strcmp(itFiles.key, "_links") == 0 &&
                                 json_object_get_type(itFiles.val) == json_type_object &&
-                                (poActivate = json_object_object_get(itFiles.val, "activate")) != NULL )
+                                (poActivate = CPL_json_object_object_get(itFiles.val, "activate")) != NULL )
                             {
                                 SetFieldFromPrefixedJSonFieldName(
                                   poFeature, osPrefixedJSonFieldName + "._links.activate", poActivate);

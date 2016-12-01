@@ -47,7 +47,7 @@ def srtmhgt_1():
 
     bandSrc = ds.GetRasterBand(1)
 
-    driver = gdal.GetDriverByName( "GTiff" );
+    driver = gdal.GetDriverByName( "GTiff" )
     dsDst = driver.Create( 'tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16 )
     dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     dsDst.SetGeoTransform((-80.0004166666666663, 0.0008333333333333, 0, 44.0004166666666670, 0, -0.0008333333333333))
@@ -64,7 +64,7 @@ def srtmhgt_1():
     dsDst = None
 
     ds = gdal.Open( 'tmp/n43.dt1.tif' )
-    driver = gdal.GetDriverByName( "SRTMHGT" );
+    driver = gdal.GetDriverByName( "SRTMHGT" )
     dsDst = driver.CreateCopy( 'tmp/n43w080.hgt', ds)
 
     band = dsDst.GetRasterBand(1)
@@ -82,12 +82,41 @@ def srtmhgt_1():
 
 def srtmhgt_2():
 
-    ds = None
+    ds = gdal.Open( 'tmp/n43w080.hgt' )
+    driver = gdal.GetDriverByName( "SRTMHGT" )
+    dsDst = driver.CreateCopy( '/vsimem/n43w080.hgt', ds)
+
+    band = dsDst.GetRasterBand(1)
+    chksum = band.Checksum()
+
+    if chksum != 60918:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
     dsDst = None
 
+    # Test update support
+    dsDst = gdal.Open( '/vsimem/n43w080.hgt', gdal.GA_Update )
+    dsDst.WriteRaster(0, 0, dsDst.RasterXSize, dsDst.RasterYSize,
+                      dsDst.ReadRaster())
+    dsDst.FlushCache()
+
+    if chksum != 60918:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % chksum)
+        return 'fail'
+    dsDst = None
+
+    return 'success'
+
+###############################################################################
+# Test reading from a .hgt.zip file
+
+def srtmhgt_3():
+
     ds = gdal.Open( 'tmp/n43w080.hgt' )
-    driver = gdal.GetDriverByName( "SRTMHGT" );
-    dsDst = driver.CreateCopy( '/vsimem/n43w080.hgt', ds)
+    driver = gdal.GetDriverByName( "SRTMHGT" )
+    driver.CreateCopy( '/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
+
+    dsDst = gdal.Open('/vsimem/N43W080.SRTMGL1.hgt.zip')
 
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
@@ -105,6 +134,7 @@ def srtmhgt_cleanup():
     try:
         gdal.GetDriverByName( "SRTMHGT" ).Delete('tmp/n43w080.hgt')
         gdal.GetDriverByName( "SRTMHGT" ).Delete('/vsimem/n43w080.hgt')
+        gdal.Unlink('/vsimem/N43W080.SRTMGL1.hgt.zip')
         os.remove( 'tmp/n43.dt1.tif' )
     except:
         pass
@@ -113,6 +143,7 @@ def srtmhgt_cleanup():
 gdaltest_list = [
     srtmhgt_1,
     srtmhgt_2,
+    srtmhgt_3,
     srtmhgt_cleanup
     ]
 

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: geoconcept.h
+ * $Id: geoconcept.h$
  *
  * Name:     geoconcept.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -495,6 +495,5 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO ( GCSubType* theSubType );
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* ndef GEOCONCEPT_H_INCLUDED */

@@ -46,17 +46,17 @@ public:
     ~KEAOverview();
 
     // virtual methods for RATs - not implemented for overviews
-    GDALRasterAttributeTable *GetDefaultRAT();
+    GDALRasterAttributeTable *GetDefaultRAT() override;
 
-    CPLErr SetDefaultRAT(const GDALRasterAttributeTable *poRAT);
+    CPLErr SetDefaultRAT(const GDALRasterAttributeTable *poRAT) override;
 
     // note that Color Table stuff implemented in base class
     // so could be some duplication if overview asked for color table
 
 protected:
     // we just override these functions from KEARasterBand
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 #endif //KEAOVERVIEW_H

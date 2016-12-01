@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  GDALWMSRasterBand implementation.
@@ -30,26 +29,40 @@
 
 #include "wmsdriver.h"
 
-GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band, double scale) {
-    //	printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n", this, parent_dataset, band, scale);
-    m_parent_dataset = parent_dataset;
-    m_scale = scale;
-    m_overview = -1;
-    m_color_interp = GCI_Undefined;
+#include <algorithm>
+
+CPL_CVSID("$Id$");
+
+GDALWMSRasterBand::GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band,
+                                      double scale ) :
+    m_parent_dataset(parent_dataset),
+    m_scale(scale),
+    m_overview(-1),
+    m_color_interp(GCI_Undefined)
+{
+#ifdef DEBUG_VERBOSE
+    printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n",
+           this, parent_dataset, band, scale);
+#endif
 
     if( scale == 1.0 )
         poDS = parent_dataset;
     else
         poDS = NULL;
-    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method == OVERVIEW_ROUNDED )
+    if( parent_dataset->m_mini_driver_caps.m_overview_dim_computation_method ==
+        OVERVIEW_ROUNDED )
     {
-        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale + 0.5);
-        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale + 0.5);
+        nRasterXSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sx * scale + 0.5);
+        nRasterYSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sy * scale + 0.5);
     }
     else
     {
-        nRasterXSize = static_cast<int>(m_parent_dataset->m_data_window.m_sx * scale);
-        nRasterYSize = static_cast<int>(m_parent_dataset->m_data_window.m_sy * scale);
+        nRasterXSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sx * scale);
+        nRasterYSize = static_cast<int>(
+            m_parent_dataset->m_data_window.m_sy * scale);
     }
     nBand = band;
     eDataType = m_parent_dataset->m_data_type;
@@ -230,7 +243,6 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                          } else {
                              ret = CE_None;
                          }
-
                     }
                     VSIUnlink(file_name.c_str());
                 }
@@ -252,7 +264,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                     CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to download block %d, %d.\n  URL: %s\n  HTTP status code: %d, error: %s.\n"
                         "Add the HTTP status code to <ZeroBlockHttpCodes> to ignore that error (see http://www.gdal.org/frmt_wms.html).",
                         download_blocks[i].x, download_blocks[i].y, download_requests[i].pszURL, download_requests[i].nStatus,
-		    download_requests[i].pszError ? download_requests[i].pszError : "(null)");
+                             download_requests[i].pszError ? download_requests[i].pszError : "(null)");
                     ret = CE_Failure;
                 }
             }
@@ -372,15 +384,15 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
                                            GDALWMSTiledImageRequestInfo &tiri,
                                            int x, int y)
 {
-    int x0 = MAX(0, x * nBlockXSize);
-    int y0 = MAX(0, y * nBlockYSize);
-    int x1 = MAX(0, (x + 1) * nBlockXSize);
-    int y1 = MAX(0, (y + 1) * nBlockYSize);
+    int x0 = std::max(0, x * nBlockXSize);
+    int y0 = std::max(0, y * nBlockYSize);
+    int x1 = std::max(0, (x + 1) * nBlockXSize);
+    int y1 = std::max(0, (y + 1) * nBlockYSize);
     if (m_parent_dataset->m_clamp_requests) {
-	x0 = MIN(x0, nRasterXSize);
-	y0 = MIN(y0, nRasterYSize);
-	x1 = MIN(x1, nRasterXSize);
-	y1 = MIN(y1, nRasterYSize);
+        x0 = std::min(x0, nRasterXSize);
+        y0 = std::min(y0, nRasterYSize);
+        x1 = std::min(x1, nRasterXSize);
+        y1 = std::min(y1, nRasterYSize);
     }
 
     const double rx = (m_parent_dataset->m_data_window.m_x1 - m_parent_dataset->m_data_window.m_x0) / static_cast<double>(nRasterXSize);
@@ -398,7 +410,6 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
     tiri.m_y = (m_parent_dataset->m_data_window.m_ty >> level) + y;
     tiri.m_level = m_parent_dataset->m_data_window.m_tlevel - level;
 }
-
 
 /************************************************************************/
 /*                      GetMetadataDomainList()                         */
@@ -496,7 +507,6 @@ const char *GDALWMSRasterBand::GetMetadataItem( const char * pszName,
                                                            iPixel % nBlockXSize,
                                                            iLine % nBlockXSize);
 
-
         char* pszRes = NULL;
 
         if (url.size() != 0)
@@ -569,8 +579,14 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
     //CPLDebug("WMS", "ReadBlockFromFile: to_buffer_band=%d, (x,y)=(%d, %d)", to_buffer_band, x, y);
 
     /* expected size */
-    const int esx = MIN(MAX(0, (x + 1) * nBlockXSize), nRasterXSize) - MIN(MAX(0, x * nBlockXSize), nRasterXSize);
-    const int esy = MIN(MAX(0, (y + 1) * nBlockYSize), nRasterYSize) - MIN(MAX(0, y * nBlockYSize), nRasterYSize);
+    const int esx =
+        std::min(std::max(0, (x + 1) * nBlockXSize),
+                 nRasterXSize) - std::min(std::max(0, x * nBlockXSize),
+                                          nRasterXSize);
+    const int esy =
+        std::min(std::max(0, (y + 1) * nBlockYSize),
+                 nRasterYSize) - std::min(std::max(0, y * nBlockYSize),
+                                          nRasterYSize);
     ds = reinterpret_cast<GDALDataset*>(GDALOpen(file_name, GA_ReadOnly));
     if (ds != NULL) {
         int sx = ds->GetRasterXSize();
@@ -595,7 +611,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                             accepted_as_ct = true;
                             if (!advise_read) {
                                 color_table = new GByte[256 * 4];
-                                const int count = MIN(256, ct->GetColorEntryCount());
+                                const int count =
+                                    std::min(256, ct->GetColorEntryCount());
                                 for (i = 0; i < count; ++i) {
                                     GDALColorEntry ce;
                                     ct->GetColorEntryAsRGB(i, &ce);
@@ -663,15 +680,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                         int line_space = pixel_space * nBlockXSize;
                         if (color_table == NULL) {
                             if( ib <= ds->GetRasterCount()) {
-				GDALDataType dt=eDataType;
-				// Get the data from the PNG as stored instead of converting, if the server asks for that
+                                GDALDataType dt=eDataType;
+                                // Get the data from the PNG as stored instead of converting, if the server asks for that
                                 // TODO: This hack is from #3493 - not sure it really belongs here.
-				if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
-				    dt=GDT_UInt16;
-				if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, NULL) != CE_None) {
-				    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
-				    ret = CE_Failure;
-				}
+                                if ((GDT_Int16==dt)&&(GDT_UInt16==ds->GetRasterBand(ib)->GetRasterDataType()))
+                                    dt=GDT_UInt16;
+                                if (ds->RasterIO(GF_Read, 0, 0, sx, sy, p, sx, sy, dt, 1, &ib, pixel_space, line_space, 0, NULL) != CE_None) {
+                                    CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                                    ret = CE_Failure;
+                                }
                             }
                             else
                             {  // parent expects 4 bands but file only has 3 so generate a all "opaque" 4th band
@@ -814,7 +831,6 @@ CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name) {
 
     return ret;
 }
-
 
 CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0,
                                      int sx, int sy,

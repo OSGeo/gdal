@@ -360,6 +360,10 @@ class SpatialReference(_object):
         """SetLinearUnitsAndUpdateParameters(SpatialReference self, char const * name, double to_meters) -> OGRErr"""
         return _osr.SpatialReference_SetLinearUnitsAndUpdateParameters(self, *args)
 
+    def GetTargetLinearUnits(self, *args):
+        """GetTargetLinearUnits(SpatialReference self, char const * target_key) -> double"""
+        return _osr.SpatialReference_GetTargetLinearUnits(self, *args)
+
     def GetLinearUnits(self, *args):
         """GetLinearUnits(SpatialReference self) -> double"""
         return _osr.SpatialReference_GetLinearUnits(self, *args)

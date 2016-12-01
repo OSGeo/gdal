@@ -31,7 +31,6 @@
 #ifndef GDAL_MDREADER_H_INCLUDED
 #define GDAL_MDREADER_H_INCLUDED
 
-
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
@@ -87,7 +86,6 @@ typedef enum {
     MDR_ANY  = MDR_DG | MDR_GE | MDR_OV | MDR_PLEIADES | MDR_SPOT | MDR_RDK1 |
                MDR_LS | MDR_RE | MDR_KOMPSAT | MDR_EROS | MDR_ALOS /**< any reader */
 } MDReaders;
-
 
 /**
  * The base class for all metadata readers
@@ -156,11 +154,13 @@ protected:
     virtual char** AddXMLNameValueToList(char** papszList, const char *pszName,
                                          const char *pszValue);
 protected:
+//! @cond Doxygen_Suppress
     char **m_papszIMDMD;
     char **m_papszRPCMD;
     char **m_papszIMAGERYMD;
     char **m_papszDEFAULTMD;
     bool m_bIsMetadataLoad;
+//! @endcond
 };
 
 /**
@@ -187,7 +187,9 @@ public:
                                         char **papszSiblingFiles,
                                         GUInt32 nType = MDR_ANY);
 protected:
+//! @cond Doxygen_Suppress
     GDALMDReaderBase *m_pReader;
+//! @endcond
 };
 
 // misc

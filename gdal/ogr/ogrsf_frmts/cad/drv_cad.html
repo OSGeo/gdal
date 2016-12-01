@@ -1,0 +1,49 @@
+<html>
+<head>
+    <title>AutoCAD DWG</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>AutoCAD DWG</h1>
+
+OGR DWG support is based on libopencad, so the list of supported DWG (DXF)
+versions can be seen in libopencad documentation. All drawing entities are
+separated into layers as they are in DWG file, not in 1 layer as DXF Driver does.
+<p>
+
+DWG files are considered to have no georeferencing information through OGR.
+Features will all have the following generic attributes:
+
+<ul>
+    <li> CADGeometry: CAD Type of the presented geometry.
+    <li> Thickness: Thickness of the object drawing units (if it's not supported
+        by this type, it is set to 0.0).
+    <li> Color (RGB): IntegerList contains R,G,B components of the color.
+    <li> ExtendedEntity: Where available, extended entity attributes all appended
+        to form a single text attribute.
+</ul>
+
+<h2>Supported Elements</h2>
+
+The following element types are supported:<p>
+
+<ul>
+    <li> POINT: Produces a simple point geometry feature.
+    <li> LINE: Translated as a LINESTRING. Rounded polylines (those with their
+        vertices' budge attributes set) will be tessellated. Single-vertex
+        polylines are translated to POINT.
+    <li> CIRCLE, ARC: Translated as a CIRCULARSTRING.
+    <li> 3DFACE: Translated as POLYGON.
+</ul>
+
+The driver is read-only.
+
+<h3>See also:</h2>
+<ul>
+    <li><a href="https://www.opendesign.com/files/guestdownloads/OpenDesign_Specification_for_.dwg_files.pdf">
+    ODA DWG Reference</a>
+    <li><a href="https://github.com/sandyre/libopencad">Libopencad repository</a>
+</ul>
+</body>
+</html>

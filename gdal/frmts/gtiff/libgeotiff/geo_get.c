@@ -68,12 +68,12 @@ that pointer's to <i>int</i> should never be passed to GTIFKeyGet() for
 integer values as they will be shorts, and the int's may not be properly
 initialized (and will be grossly wrong on MSB systems).
 
-@param index Indicates how far into the list of values
+@param nIndex Indicates how far into the list of values
 for this geokey to offset. Should normally be zero.
 
 @param count Indicates how many values
 to read.  At this time all keys except for strings have only one value,
-so <b>index</b> should be zero, and <b>count</b> should be one.
+so <b>nIndex</b> should be zero, and <b>count</b> should be one.
 
 @return The GTIFKeyGet() function returns the number of values read.  Normally
 this would be one if successful or zero if the key doesn't exist for this

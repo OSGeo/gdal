@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.11 2005-05-21 03:15:18 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -74,6 +73,7 @@
 
 #include "mitab_ogr_driver.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                  OGRTABDriverIdentify()                              */
@@ -125,8 +125,6 @@ static int OGRTABDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    OGRTABDataSource    *poDS;
-
     if( OGRTABDriverIdentify(poOpenInfo) == FALSE )
     {
         return NULL;
@@ -152,7 +150,7 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
     }
 #endif
 
-    poDS = new OGRTABDataSource();
+    OGRTABDataSource *poDS = new OGRTABDataSource();
     if( poDS->Open( poOpenInfo, TRUE ) )
         return poDS;
     else
@@ -161,7 +159,6 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 }
-
 
 /************************************************************************/
 /*                              Create()                                */
@@ -174,12 +171,10 @@ static GDALDataset *OGRTABDriverCreate( const char * pszName,
                                         CPL_UNUSED GDALDataType eDT,
                                         char **papszOptions )
 {
-    OGRTABDataSource *poDS;
-
 /* -------------------------------------------------------------------- */
 /*      Try to create the data source.                                  */
 /* -------------------------------------------------------------------- */
-    poDS = new OGRTABDataSource();
+    OGRTABDataSource *poDS = new OGRTABDataSource();
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
@@ -196,7 +191,7 @@ static GDALDataset *OGRTABDriverCreate( const char * pszName,
 static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
-    GDALDataset* poDS;
+    GDALDataset* poDS = NULL;
     {
         // Make sure that the file opened by GDALOpenInfo is closed
         // when the object goes out of scope

@@ -71,15 +71,21 @@ typedef char retStringAndCPLFree;
 
 #ifdef SWIGPYTHON
 
+%nothread;
+
 %{
 void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
 {
     void* user_data = CPLGetErrorHandlerUserData();
     PyObject *psArgs;
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     psArgs = Py_BuildValue("(iis)", eErrClass, err_no, pszErrorMsg );
     PyEval_CallObject( (PyObject*)user_data, psArgs);
     Py_XDECREF(psArgs);
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 %}
 
@@ -103,6 +109,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
      CPLPopErrorHandler();
   }
 %}
+
+%thread;
 
 #else
 %inline %{
@@ -509,6 +517,14 @@ VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
 GIntBig    VSIFTellL( VSILFILE* fp );
 int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
+
+int     VSISupportsSparseFiles( const char* utf8_path );
+
+#define VSI_RANGE_STATUS_UNKNOWN    0
+#define VSI_RANGE_STATUS_DATA       1
+#define VSI_RANGE_STATUS_HOLE       2
+
+int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
 #else
 VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
 long    VSIFTellL( VSILFILE* fp );

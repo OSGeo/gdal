@@ -8,7 +8,8 @@
 <h1>GeoPackage vector</h1>
 
 <p>This driver implements support for access to spatial tables in the
-<a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a>.
+<a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage format standard</a>
+(targeting 1.0/1.0.1)
 The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
 </p>
 <ul>
@@ -28,7 +29,11 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <ul>
 <li>GeoPackage only supports one geometry column per table.</li>
 <li>Before GDAL 2.0, the driver did not implement the GeoPackage spatial index extension.</li>
-<li>The core GeoPackage specification does not currently support non-spatial tables, but starting with GDAL 2.0, the driver allows creating and reading such tables via the <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.</li>
+<li>The core GeoPackage specification does not currently support non-spatial tables, but
+    starting with GDAL 2.0, the driver allows creating and reading such tables via the
+    <a href="geopackage_aspatial.html">Aspatial Support</a> (<code>gdal_aspatial</code>) extension.
+    Note: starting with GDAL 2.2, the driver will also, by default, list non spatial tables
+    that are not registered through the gdal_aspatial extension.</li>
 </ul>
 
 <h2>SQL</h2>
@@ -47,6 +52,15 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
   a slower way, by specifying the "INDIRECT_SQLITE" dialect. In which case,
   GeoPackage geometries automatically appear as Spatialite geometries after translation by OGR.
 </p>
+
+<p>Starting with GDAL 2.2, the "DROP TABLE layer_name" and "ALTER TABLE layer_name RENAME TO new_layer"
+statements can be used. They will update GeoPackage system tables.</p>
+
+<p>When dropping a table, or removing records from tables, the space they
+occupied is not immediately released and kept in the pool of file pages that
+SQLite may reuse later. If you need to shrink the file to its minimum size,
+you need to issue an explicit "VACUUM" SQL request. Note that this will
+result in a full rewrite of the file.</p>
 
 <h3>SQL functions</h3>
 
@@ -93,6 +107,17 @@ The driver implements transactions at the database level, per
 <a href="http://trac.osgeo.org/gdal/wiki/rfc54_dataset_transactions">RFC 54</a>
 </p>
 
+<h2>Opening options</h2>
+
+The following open options are available:
+<ul>
+<li><b>LIST_ALL_TABLES</b>=YES/NO: (GDAL &gt;=2.2) Whether all tables, including
+those non listed in gpkg_contents, should be listed. Defaults to YES.</li>
+</ul>
+
+Note: open options are typically specified with "-oo name=value" syntax in
+most OGR utilities, or with the GDALOpenEx() API call.
+
 <h2>Creation Issues</h2>
 
 <p>When creating a new GeoPackage file, the driver will attempt to
@@ -120,6 +145,7 @@ that exceed the maximum allowed width of text fields, and also to "fix" the pass
 to make it a valid UTF-8 string. If "NO" then the value is not truncated nor modified. The default is "NO".<p>
 <li><b>IDENTIFIER</b>=string: (GDAL &gt;=2.0) Identifier of the layer, as put in the contents table.<p>
 <li><b>DESCRIPTION</b>=string: (GDAL &gt;=2.0) Description of the layer, as put in the contents table.<p>
+<li><b>REGISTER_AS_ASPATIAL</b>=YES/NO: (GDAL &gt;=2.2) Whether non spatial tables should be registered as aspatial in gpkg_contents. Defaults to YES<p>
 </ul>
 
 <h3>Metadata</h3>
@@ -184,7 +210,9 @@ The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as 
 
 <ul>
 <li> <a href="http://sqlite.org/">SQLite</a><p>
-<li> <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</li>
+<li> <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</li><p>
+<li> <a href="http://www.geopackage.org/spec/">OGC GeoPackage format standard</a> specification, HTML format (current/development version of the standard)</li><p>
+<li> <a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage Encoding Standard</a> page</li><p>
 </ul>
 
 </body>

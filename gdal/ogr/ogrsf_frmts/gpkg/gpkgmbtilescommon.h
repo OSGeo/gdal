@@ -59,6 +59,7 @@ class GDALGPKGMBTilesLikePseudoDataset
 
   protected:
     bool                m_bNew;
+    bool                m_bHasModifiedTiles;
 
     CPLString           m_osRasterTable;
     int                 m_nZoomLevel;
@@ -126,8 +127,8 @@ class GDALGPKGMBTilesLikePseudoDataset
         virtual sqlite3                *IGetDB() = 0;
         virtual bool                    IGetUpdate() = 0;
         virtual bool                    ICanIWriteBlock() = 0;
-        virtual void                    IStartTransaction() = 0;
-        virtual void                    ICommitTransaction() = 0;
+        virtual OGRErr                  IStartTransaction() = 0;
+        virtual OGRErr                  ICommitTransaction() = 0;
         virtual const char             *IGetFilename() = 0;
         virtual int                     GetRowFromIntoTopConvention(int nRow) = 0;
 };
@@ -141,22 +142,21 @@ class GDALGPKGMBTilesLikeRasterBand: public GDALPamRasterBand
                                                               int nTileWidth, int nTileHeight);
 
         virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
-                                           void* pData);
+                                           void* pData) override;
         virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                           void* pData);
-        virtual CPLErr          FlushCache();
+                                           void* pData) override;
+        virtual CPLErr          FlushCache() override;
 
-        virtual GDALColorTable* GetColorTable();
-        virtual CPLErr          SetColorTable(GDALColorTable* poCT);
+        virtual GDALColorTable* GetColorTable() override;
+        virtual CPLErr          SetColorTable(GDALColorTable* poCT) override;
 
-        virtual GDALColorInterp GetColorInterpretation();
-        virtual CPLErr          SetColorInterpretation( GDALColorInterp );
+        virtual GDALColorInterp GetColorInterpretation() override;
+        virtual CPLErr          SetColorInterpretation( GDALColorInterp ) override;
 
     protected:
         friend class GDALGPKGMBTilesLikePseudoDataset;
 
         GDALRasterBlock*        AccessibleTryGetLockedBlockRef(int nBlockXOff, int nBlockYOff) { return TryGetLockedBlockRef(nBlockXOff, nBlockYOff); }
-
 };
 
 #endif // GPKGMBTILESCOMMON_H_INCLUDED

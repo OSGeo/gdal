@@ -28,30 +28,36 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(WMS)
+#include "wmsdriver.h"
 
-class GDALWMSMiniDriver_WMS : public GDALWMSMiniDriver {
+/*
+ * Base class for a WMS minidriver.
+ * At least Initialize() and one of the ImageRequest() or TiledImageRequest() has to be provided
+ * All minidrivers are instantiated in wmsdriver.cpp, in GDALRegister_WMS()
+ */
+
+class WMSMiniDriver_WMS : public WMSMiniDriver {
 
     void    BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
 
 public:
-    GDALWMSMiniDriver_WMS();
-    virtual ~GDALWMSMiniDriver_WMS();
+    WMSMiniDriver_WMS();
+    virtual ~WMSMiniDriver_WMS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
+    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) override;
     virtual void GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
-                                              int nYInBlock);
-    virtual const char *GetProjectionInWKT();
+                                              int nYInBlock) override;
+    virtual const char *GetProjectionInWKT() override;
 
 protected:
-    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
+    static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
 
 protected:
     CPLString m_base_url;

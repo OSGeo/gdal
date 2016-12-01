@@ -35,7 +35,9 @@
 
 #include <vector>
 #include <string>
-#include <json.h>
+
+#include "ogr_json_header.h"
+
 #include <cpl_hash_set.h>
 #include <cstdlib>
 
@@ -65,11 +67,11 @@ class OGRAmigoCloudFID
         GIntBig iFID;
         std::string osAmigoId;
 
-        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index)
+        OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index) :
+            iIndex( index ),
+            iFID( std::abs((long)CPLHashSetHashStr(amigo_id.c_str())) ),
+            osAmigoId( amigo_id )
         {
-            iIndex = index;
-            OGRAmigoCloudFID::osAmigoId = amigo_id.c_str();
-            iFID = std::abs((long)CPLHashSetHashStr(amigo_id.c_str()));
         }
 
         OGRAmigoCloudFID()
@@ -78,11 +80,11 @@ class OGRAmigoCloudFID
             iFID=0;
         }
 
-        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid)
+        OGRAmigoCloudFID(const OGRAmigoCloudFID& fid) :
+            iIndex( fid.iIndex ),
+            iFID( fid.iFID ),
+            osAmigoId( fid.osAmigoId.c_str() )
         {
-            iIndex = fid.iIndex;
-            iFID = fid.iFID;
-            osAmigoId = fid.osAmigoId.c_str();
         }
 };
 
@@ -117,23 +119,22 @@ class OGRAmigoCloudLayer : public OGRLayer
         virtual CPLString    GetSRS_SQL(const char* pszGeomCol) = 0;
 
     public:
-         OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
-        ~OGRAmigoCloudLayer();
+        explicit OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDS);
+        virtual ~OGRAmigoCloudLayer();
 
-        virtual void                ResetReading();
-        virtual OGRFeature *        GetNextFeature();
+        virtual void                ResetReading() override;
+        virtual OGRFeature *        GetNextFeature() override;
 
-        virtual OGRFeatureDefn *    GetLayerDefn();
+        virtual OGRFeatureDefn *    GetLayerDefn() override;
         virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
         virtual json_object*        FetchNewFeatures(GIntBig iNext);
 
-        virtual const char*         GetFIDColumn() { return osFIDColName.c_str(); }
+        virtual const char*         GetFIDColumn() override { return osFIDColName.c_str(); }
 
-        virtual int                 TestCapability( const char * );
+        virtual int                 TestCapability( const char * ) override;
 
         int                         GetFeaturesToFetch() { return 100; }
 };
-
 
 /************************************************************************/
 /*                        OGRAmigoCloudTableLayer                          */
@@ -155,43 +156,43 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
 
     void                BuildWhere();
 
-    virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
+    virtual CPLString    GetSRS_SQL(const char* pszGeomCol) override;
 
     public:
          OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDS, const char* pszName);
-        ~OGRAmigoCloudTableLayer();
+        virtual ~OGRAmigoCloudTableLayer();
 
-        virtual const char        *GetName() { return osTableName.c_str(); }
+        virtual const char        *GetName() override { return osTableName.c_str(); }
                 const char        *GetDatasetId() { return osDatasetId.c_str(); }
-        virtual OGRFeatureDefn    *GetLayerDefnInternal(json_object* poObjIn);
-        virtual json_object       *FetchNewFeatures(GIntBig iNext);
+        virtual OGRFeatureDefn    *GetLayerDefnInternal(json_object* poObjIn) override;
+        virtual json_object       *FetchNewFeatures(GIntBig iNext) override;
 
-        virtual GIntBig             GetFeatureCount( int bForce = TRUE );
-        virtual OGRFeature         *GetFeature( GIntBig nFeatureId );
+        virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;
+        virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
-        virtual int                 TestCapability( const char * );
+        virtual int                 TestCapability( const char * ) override;
 
         virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                         int bApproxOK = TRUE );
+                                         int bApproxOK = TRUE ) override;
 
-        virtual OGRFeature  *GetNextRawFeature();
+        virtual OGRFeature  *GetNextRawFeature() override;
 
-        virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-        virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-        virtual OGRErr      DeleteFeature( GIntBig nFID );
+        virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+        virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+        virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-        virtual void        SetSpatialFilter( OGRGeometry *poGeom ) { SetSpatialFilter(0, poGeom); }
-        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom );
-        virtual OGRErr      SetAttributeFilter( const char * );
+        virtual void        SetSpatialFilter( OGRGeometry *poGeom ) override { SetSpatialFilter(0, poGeom); }
+        virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override;
+        virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) { return GetExtent(0, psExtent, bForce); }
-        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce );
+        virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override { return GetExtent(0, psExtent, bForce); }
+        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce ) override;
 
         void                SetDeferredCreation(OGRwkbGeometryType eGType,
                                    OGRSpatialReference *poSRS,
                                    int bGeomNullable);
 
-        CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
+        static CPLString           GetAmigoCloudType(OGRFieldDefn& oField);
 
         OGRErr              RunDeferredCreationIfNecessary();
         int                 GetDeferredCreation() const { return bDeferredCreation; }
@@ -209,15 +210,15 @@ class OGRAmigoCloudResultLayer : public OGRAmigoCloudLayer
 {
         OGRFeature          *poFirstFeature;
 
-        virtual CPLString    GetSRS_SQL(const char* pszGeomCol);
+        virtual CPLString    GetSRS_SQL(const char* pszGeomCol) override;
 
     public:
         OGRAmigoCloudResultLayer( OGRAmigoCloudDataSource* poDS,
                                                const char * pszRawStatement );
         virtual             ~OGRAmigoCloudResultLayer();
 
-        virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn);
-        virtual OGRFeature  *GetNextRawFeature();
+        virtual OGRFeatureDefn *GetLayerDefnInternal(json_object* poObjIn) override;
+        virtual OGRFeature  *GetNextRawFeature() override;
 
         int                 IsOK();
 };
@@ -233,47 +234,47 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         OGRAmigoCloudTableLayer**  papoLayers;
         int                 nLayers;
-        int                 bReadWrite;
+        bool                bReadWrite;
 
-        int                 bUseHTTPS;
+        bool                bUseHTTPS;
 
         CPLString           osAPIKey;
 
-        int                 bMustCleanPersistent;
+        bool                bMustCleanPersistent;
 
         CPLString           osCurrentSchema;
-
+        // TODO(schwehr): Can bHasOGRMetadataFunction be a bool?
         int                 bHasOGRMetadataFunction;
 
     public:
         OGRAmigoCloudDataSource();
-        ~OGRAmigoCloudDataSource();
+        virtual ~OGRAmigoCloudDataSource();
 
         int                 Open( const char * pszFilename,
                                   char** papszOpenOptions,
                                   int bUpdate );
 
-        virtual const char* GetName() { return pszName; }
+        virtual const char* GetName() override { return pszName; }
 
-        virtual int         GetLayerCount() { return nLayers; }
-        virtual OGRLayer   *GetLayer( int );
-        virtual OGRLayer   *GetLayerByName(const char *);
+        virtual int         GetLayerCount() override { return nLayers; }
+        virtual OGRLayer   *GetLayer( int ) override;
+        virtual OGRLayer   *GetLayerByName(const char *) override;
 
-        virtual int         TestCapability( const char * );
+        virtual int         TestCapability( const char * ) override;
 
         virtual OGRLayer   *ICreateLayer( const char *pszName,
                                          OGRSpatialReference *poSpatialRef = NULL,
                                          OGRwkbGeometryType eGType = wkbUnknown,
-                                         char ** papszOptions = NULL );
-        virtual OGRErr      DeleteLayer(int);
+                                         char ** papszOptions = NULL ) override;
+        virtual OGRErr      DeleteLayer(int) override;
 
         virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
                                         OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect );
-        virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                        const char *pszDialect ) override;
+        virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
         const char*                 GetAPIURL() const;
-        int                         IsReadWrite() const { return bReadWrite; }
+        bool                        IsReadWrite() const { return bReadWrite; }
         const char*                 GetProjetcId() { return pszProjetctId;}
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
@@ -281,16 +282,17 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         json_object*                RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-        int                         FetchSRSId( OGRSpatialReference * poSRS );
+        static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
         int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
         void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
 
-        OGRLayer *                  ExecuteSQLInternal( const char *pszSQLCommand,
-                                                        OGRGeometry *poSpatialFilter = NULL,
-                                                        const char *pszDialect = NULL,
-                                                        int bRunDeferredActions = FALSE );
+        OGRLayer *                  ExecuteSQLInternal(
+            const char *pszSQLCommand,
+            OGRGeometry *poSpatialFilter = NULL,
+            const char *pszDialect = NULL,
+            bool bRunDeferredActions = false );
 };
 
 #endif /* ndef OGR_AMIGOCLOUD_H_INCLUDED */

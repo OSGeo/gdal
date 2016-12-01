@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:   OZF2 and OZFx3 binary files driver
  * Purpose:  GDALDataset driver for OZF2 and OZFx3 binary files.
@@ -87,14 +86,13 @@ class OZIRasterBand : public GDALPamRasterBand
                                GDALColorTable* poColorTable);
     virtual    ~OZIRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 
-    virtual int         GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nLevel);
+    virtual int         GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nLevel) override;
 };
-
 
 /************************************************************************/
 /*                             I/O functions                            */
@@ -135,7 +133,7 @@ static short ReadShort(GByte**pptr)
     return nVal;
 }
 
-static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static int ReadInt( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     int nVal;
     VSIFReadL(&nVal, 1, 4, fp);
@@ -145,7 +143,7 @@ static int ReadInt(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
     return nVal;
 }
 
-static short ReadShort(VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0)
+static short ReadShort( VSILFILE* fp, int bOzi3 = FALSE, int nKeyInit = 0 )
 {
     short nVal;
     VSIFReadL(&nVal, 1, 2, fp);
@@ -163,21 +161,21 @@ OZIRasterBand::OZIRasterBand( OZIDataset *poDSIn, int nZoomLevelIn,
                               int nRasterXSizeIn, int nRasterYSizeIn,
                               int nXBlocksIn,
                               GDALColorTable* poColorTableIn ) :
+    nXBlocks(nXBlocksIn),
+    nZoomLevel(nZoomLevelIn),
+    poColorTable(poColorTableIn),
     pabyTranslationTable(NULL)
 {
-    this->poDS = poDSIn;
-    this->nBand = 1;
+    poDS = poDSIn;
+    nBand = 1;
 
     eDataType = GDT_Byte;
 
     nBlockXSize = 64;
     nBlockYSize = 64;
 
-    this->nZoomLevel = nZoomLevelIn;
-    this->nRasterXSize = nRasterXSizeIn;
-    this->nRasterYSize = nRasterYSizeIn;
-    this->poColorTable = poColorTableIn;
-    this->nXBlocks = nXBlocksIn;
+    nRasterXSize = nRasterXSizeIn;
+    nRasterYSize = nRasterYSizeIn;
 }
 
 /************************************************************************/
@@ -189,7 +187,6 @@ OZIRasterBand::~OZIRasterBand()
     delete poColorTable;
     CPLFree(pabyTranslationTable);
 }
-
 
 /************************************************************************/
 /*                        GetColorInterpretation()                      */
@@ -648,7 +645,6 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->papoOvrBands[i]->poColorTable = poDS->papoOvrBands[0]->poColorTable->Clone();
             poDS->papoOvrBands[i]->pabyTranslationTable = pabyTranslationTable;
         }
-
     }
 
     poDS->SetBand(1, poDS->papoOvrBands[0]);
@@ -663,7 +659,7 @@ GDALDataset *OZIDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

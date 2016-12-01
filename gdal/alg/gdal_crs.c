@@ -58,6 +58,10 @@
 #include "cpl_string.h"
 #include "cpl_atomic_ops.h"
 
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
 CPL_CVSID("$Id$");
 
 /* Hum, we cannot include gdal_priv.h from a .c file... */
@@ -181,6 +185,8 @@ void *GDALCreateGCPTransformerEx( int nGCPCount, const GDAL_GCP *pasGCPList,
     int    nCRSresult;
     struct Control_Points sPoints;
 
+    memset( &sPoints, 0, sizeof(sPoints) );
+
     if( nReqOrder == 0 )
     {
         if( nGCPCount >= 10 )
@@ -300,6 +306,9 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder, bReversed, FALSE, -1, -1);
 }
 
+/** Create GCP based polynomial transformer, with a tolerance threshold to
+ * discard GCPs that transform badly.
+ */
 void *GDALCreateGCPRefineTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int nReqOrder, int bReversed, double dfTolerance, int nMinimumGcps)
 
@@ -450,7 +459,7 @@ CPLXMLNode *GDALSerializeGCPTransformer( void *pTransformArg )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Attach GCP List. 						*/
+/*     Attach GCP List.                                                 */
 /* -------------------------------------------------------------------- */
     if( psInfo->nGCPCount > 0 )
     {
@@ -702,6 +711,8 @@ calccoef (struct Control_Points *cp, double E[], double N[], int order)
     double *b;
     int numactive;   /* NUMBER OF ACTIVE CONTROL POINTS */
     int status, i;
+
+    memset( &m, 0, sizeof(m) );
 
     /* CALCULATE THE NUMBER OF VALID CONTROL POINTS */
 
@@ -1081,6 +1092,8 @@ static int remove_outliers( GCPTransformInfo *psInfo )
     int nI, nCRSresult, nGCPCount, nMinimumGcps, nReqOrder;
     double dfTolerance;
     struct Control_Points sPoints;
+
+    memset( &sPoints, 0, sizeof(sPoints) );
 
     nGCPCount = psInfo->nGCPCount;
     nMinimumGcps = psInfo->nMinimumGcps;

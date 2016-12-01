@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Standalone shared library that can be LD_PRELOAD'ed as an overload of
@@ -1044,6 +1043,7 @@ int close(int fd)
         CPLLockHolderD(&hLock, LOCK_RECURSIVE_MUTEX);
         assert( oMapfdToVSIDIR.find(fd) == oMapfdToVSIDIR.end() );
 
+        // cppcheck-suppress redundantIfRemove
         if( oMapDirFdToName.find(fd) != oMapDirFdToName.end())
         {
             oMapDirFdToName.erase(fd);

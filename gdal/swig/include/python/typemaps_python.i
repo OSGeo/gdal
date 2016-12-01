@@ -161,7 +161,11 @@
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 && bUseExceptions) {
-    PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+    const char* pszMessage = CPLGetLastErrorMsg();
+    if( pszMessage[0] != '\0' )
+        PyErr_SetString( PyExc_RuntimeError, pszMessage );
+    else
+        PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
   }
 }
@@ -1904,4 +1908,78 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
 %#else
   PyErr_SetString( PyExc_RuntimeError, "needs Python 2.7 or later" );
 %#endif
+}
+
+
+
+%typemap(in,numinputs=0) (int *pnxvalid, int *pnyvalid, int* pisvalid) ( int nxvalid = 0, int nyvalid = 0, int isvalid = 0  )
+{
+  /* %typemap(in) (int *pnxvalid, int *pnyvalid, int* pisvalid) */
+  $1 = &nxvalid;
+  $2 = &nyvalid;
+  $3 = &isvalid;
+}
+
+%typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)
+{
+   /* %typemap(argout) (int *pnxvalid, int *pnyvalid, int* pisvalid)  */
+  PyObject *r;
+  if ( !*$3 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+  }
+  else {
+    r = PyTuple_New( 2 );
+    PyTuple_SetItem( r, 0, PyLong_FromLong(*$1) );
+    PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
+  }
+  $result = t_output_helper($result,r);
+}
+
+%typemap(in,numinputs=0) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct) ( OGRLayerShadow* poBelongingLayer = NULL, double dfProgressPct = 0 )
+{
+  /* %typemap(in) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  $1 = &poBelongingLayer;
+  $2 = &dfProgressPct;
+}
+
+%typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(check) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+  if( !arg3 )
+    $2 = NULL;
+}
+
+%typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)
+{
+   /* %typemap(argout) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct)  */
+
+  if( arg2 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+
+    if ( !*$1 ) {
+        Py_INCREF(Py_None);
+        $result = SWIG_Python_AppendOutput($result, Py_None);
+    }
+    else {
+        $result = SWIG_Python_AppendOutput($result,
+            SWIG_NewPointerObj(SWIG_as_voidptr( *$1), SWIGTYPE_p_OGRLayerShadow, 0 ));
+    }
+  }
+
+  if( arg3 )
+  {
+    if( $result == Py_None )
+    {
+        $result = PyList_New(1);
+        PyList_SetItem($result, 0, Py_None);
+    }
+    $result = SWIG_Python_AppendOutput($result, PyFloat_FromDouble( *$2));
+  }
+
 }

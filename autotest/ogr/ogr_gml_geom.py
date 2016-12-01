@@ -64,7 +64,7 @@ class gml_geom_unit:
         geom_gml = ogr.CreateGeometryFromGML( gml )
 
         if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
-            clean_wkt = geom_wkt.ExportToWkt();
+            clean_wkt = geom_wkt.ExportToWkt()
             gml_wkt = geom_gml.ExportToWkt()
             gdaltest.post_reason( 'WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)' % (gml_wkt, clean_wkt, gml) )
             return 'fail'
@@ -1147,6 +1147,33 @@ def gml_write_gml3_srs():
     geom.AssignSpatialReference(srlonglat)
     gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'GML3_LONGSRS=NO'] )
     expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Test SRSNAME_FORMAT=SHORT
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=SHORT'] )
+    expected_gml = '<gml:Point srsName="EPSG:4326"><gml:pos>2 49</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Test SRSNAME_FORMAT=SRSNAME_FORMAT
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URN'] )
+    expected_gml = '<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point>'
+    if gml3 != expected_gml:
+        gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
+        return 'fail'
+
+    # Test SRSNAME_FORMAT=OGC_URL
+    geom = ogr.CreateGeometryFromWkt('POINT(2 49)')
+    geom.AssignSpatialReference(srlonglat)
+    gml3 = geom.ExportToGML( options = ['FORMAT=GML3', 'SRSNAME_FORMAT=OGC_URL'] )
+    expected_gml = '<gml:Point srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>49 2</gml:pos></gml:Point>'
     if gml3 != expected_gml:
         gdaltest.post_reason('got %s, instead of %s' % (gml3, expected_gml))
         return 'fail'

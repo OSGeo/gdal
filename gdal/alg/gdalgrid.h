@@ -57,11 +57,14 @@ static const char szAlgNameLinear[] = "linear";
 
 CPL_C_START
 
+/*! @cond Doxygen_Suppress */
 typedef CPLErr (*GDALGridFunction)( const void *, GUInt32,
                                     const double *, const double *,
                                     const double *,
                                     double, double, double *,
                                     void* );
+/*! @endcond */
+
 CPLErr
 GDALGridInverseDistanceToAPower( const void *, GUInt32,
                                  const double *, const double *,

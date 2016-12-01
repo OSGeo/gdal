@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  CPL worker thread pool
@@ -27,8 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_worker_thread_pool.h"
+
+#include <cstddef>
+#include <memory>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                         CPLWorkerThreadPool()                        */
@@ -65,7 +74,9 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
     {
         WaitCompletion();
 
+        CPLAcquireMutex(hMutex, 1000.0);
         eState = CPLWTS_STOP;
+        CPLReleaseMutex(hMutex);
 
         for(size_t i=0;i<aWT.size();i++)
         {
@@ -124,7 +135,7 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
  */
 bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 {
-    CPLAssert( aWT.size() > 0 );
+    CPLAssert( !aWT.empty() );
 
     CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob));
     if( psJob == NULL )
@@ -188,7 +199,7 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
  */
 bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData)
 {
-    CPLAssert( aWT.size() > 0 );
+    CPLAssert( !aWT.empty() );
 
     CPLAcquireMutex(hMutex, 1000.0);
 

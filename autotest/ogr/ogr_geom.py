@@ -99,13 +99,13 @@ def ogr_geom_area_geometrycollection():
     return 'success'
 
 ###############################################################################
-# Test Area calculation for a LinearRing whose coordinates are shifted by a huge value
-# With algorithm prior to #3556, this would return 0.
+# Test Area calculation for a LinearRing whose coordinates are shifted by a
+# huge value With algorithm prior to #3556, this would return 0.
 
 def ogr_geom_area_linearring_big_offset():
 
     geom = ogr.Geometry( type = ogr.wkbLinearRing )
-    BIGOFFSET = 100000000000.;
+    BIGOFFSET = 1.0e11
     geom.AddPoint_2D( BIGOFFSET + 0, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 0)
     geom.AddPoint_2D( BIGOFFSET + 10, BIGOFFSET + 10)
@@ -125,18 +125,17 @@ def ogr_geom_is_empty():
     geom_wkt = 'LINESTRING EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    if (geom.IsEmpty() == False):
+    if not geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
         return 'fail'
 
     geom_wkt = 'POINT( 1 2 )'
-
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
         gdaltest.post_reason ("A geometry could not be created from wkt: %s"%geom_wkt)
         return 'fail'
 
-    if (geom.IsEmpty() == True):
+    if geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
         return 'fail'
     return 'success'
@@ -166,12 +165,12 @@ def ogr_geom_boundary_point():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'GetBoundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
     bnd = geom.Boundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
@@ -189,7 +188,7 @@ def ogr_geom_boundary_multipoint():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbGeometryCollection:
+    if bnd.GetGeometryType() != ogr.wkbGeometryCollection:
         gdaltest.post_reason( 'Boundary not reported as GEOMETRYCOLLECTION EMPTY' )
         return 'fail'
 
@@ -207,7 +206,7 @@ def ogr_geom_boundary_linestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+    if bnd.GetGeometryType() != ogr.wkbMultiPoint:
         gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
         print(bnd)
         return 'fail'
@@ -220,7 +219,7 @@ def ogr_geom_boundary_linestring():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbMultiPoint:
+    if bnd.GetGeometryType() != ogr.wkbMultiPoint:
         gdaltest.post_reason( 'Boundary not reported as MULTIPOINT' )
         return 'fail'
 
@@ -242,7 +241,7 @@ def ogr_geom_boundary_polygon():
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
     bnd = geom.GetBoundary()
-    if bnd.GetGeometryType() is not ogr.wkbLineString:
+    if bnd.GetGeometryType() != ogr.wkbLineString:
         gdaltest.post_reason( 'Boundary not reported as non-empty LINESTRING' )
         print(bnd)
         return 'fail'
@@ -2332,6 +2331,21 @@ def ogr_geom_curvepolygon():
             print(out_wkt)
             return 'fail'
 
+    # Empty CircularString
+    g = ogr.Geometry(ogr.wkbCurvePolygon)
+    g.AddGeometry(ogr.Geometry(ogr.wkbCircularString))
+    if g.Area() != 0:
+        gdaltest.post_reason('fail')
+        print(g.Area())
+        return 'fail'
+
+    # Non-convex CircularString
+    g = ogr.CreateGeometryFromWkt('CURVEPOLYGON( COMPOUNDCURVE( CIRCULARSTRING(0 0,0.5 -0.5,1 0,1.5 0.5,2 0), (2 0,2 1,0 1,0 0) ) )')
+    if abs(g.Area() - 2.0) > 1e-10:
+        gdaltest.post_reason('fail')
+        print(g.Area())
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -3449,6 +3463,15 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
                  [ 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))', 'GEOMETRYCOLLECTION (POINT (1 2))', 'GEOMETRYCOLLECTION Z (POINT Z (1 2 3))' ],
                ]
     for (before, after_2D, after_3D) in list_wkt:
+
+        geom = ogr.CreateGeometryFromWkt(before)
+        wkb = geom.ExportToIsoWkb()
+        geom2 = ogr.CreateGeometryFromWkb(wkb)
+        if not geom.Equals(geom2):
+            print(before)
+            print(geom2.ExportToIsoWkt())
+            return 'fail'
+
         geom = ogr.CreateGeometryFromWkt(before)
         geom.FlattenTo2D()
         if geom.ExportToIsoWkt() != after_2D:
@@ -3502,6 +3525,13 @@ def ogr_geom_measured_geometries_to_2D_or_3D():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Unrelated test. Test old-style unqualified non-bracketted ZM import
+    g = ogr.CreateGeometryFromWkt('MULTIPOINT (1 2 3 4)')
+    if g.ExportToIsoWkt() != 'MULTIPOINT ZM ((1 2 3 4))':
+        gdaltest.post_reason('fail')
+        print(g.ExportToIsoWkt())
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -3544,6 +3574,67 @@ def ogr_geom_curve_surface():
             print(name)
             print(ogr.GeometryTypeToName(wkb_type))
             return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test importing corrupted WKB
+
+def ogr_geom_import_corrupted_wkb():
+
+    list_wkt = [ 'POINT ZM (1 2 3 4)'
+                 'LINESTRING ZM (1 2 3 4)'
+                 'POLYGON ZM ((1 2 3 4))'
+                 'CIRCULARSTRING ZM (1 2 3 0,4 5 6 0,7 8 9 0)',
+                 'COMPOUNDCURVE ZM ((1 2 3 4,5 6 7 8))',
+                 'MULTIPOINT ZM ((1 2 3 4))',
+                 'MULTILINESTRING ZM ((1 2 3 4))',
+                 'MULTICURVE ZM ((1 2 3 4))',
+                 'MULTIPOLYGON ZM (((1 2 3 4)))',
+                 'MULTISURFACE ZM (((1 2 3 4)))',
+                 'GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4))'
+               ]
+
+    for wkt in list_wkt:
+        g = ogr.CreateGeometryFromWkt(wkt)
+        wkb = bytearray(g.ExportToWkb())
+
+        # Test altering the WKB
+        for i in range(len(wkb)):
+            for method in range(4 + 4 + 4 + 1):
+                init_val = wkb[i]
+                if method < 4:
+                    wkb[i] = method
+                elif method < 8:
+                    wkb[i] = 255 - (method - 4)
+                elif method < 12:
+                    wkb[i] = 127 + 2 - (method - 8)
+                else:
+                    wkb[i] = 255 - wkb[i]
+                with gdaltest.error_handler():
+                    if sys.version_info >= (3,0,0):
+                        g = ogr.CreateGeometryFromWkb(bytes(wkb))
+                    else:
+                        g = ogr.CreateGeometryFromWkb(str(wkb))
+                if g:
+                    g2 = ogr.CreateGeometryFromWkb(g.ExportToIsoWkb())
+                    if not g.Equals(g2):
+                        gdaltest.post_reason('fail')
+                        print(wkt, i, method)
+                        return 'fail'
+                wkb[i] = init_val
+
+        # Test truncation of the WKB
+        for i in range(len(wkb)):
+            with gdaltest.error_handler():
+                if sys.version_info >= (3,0,0):
+                    g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
+                else:
+                    g = ogr.CreateGeometryFromWkb(str(wkb[0:i]))
+            if g is not None:
+                gdaltest.post_reason('fail')
+                print(wkt, i)
+                return 'fail'
 
     return 'success'
 
@@ -3601,6 +3692,7 @@ gdaltest_list = [
     ogr_geom_measured_geometries_to_2D_or_3D,
     ogr_geom_postgis_ewkt_xym,
     ogr_geom_curve_surface,
+    ogr_geom_import_corrupted_wkb,
     ogr_geom_cleanup ]
 
 if __name__ == '__main__':

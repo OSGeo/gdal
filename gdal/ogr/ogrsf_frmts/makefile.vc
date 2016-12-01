@@ -15,8 +15,8 @@ DIRLIST		=	generic geojson shape ntf sdts tiger s57 dgn mitab gml \
 			$(SDE_DIR) $(IDB_DIR) $(NAS_DIR) $(DODSDIR) \
 			$(LIBKMLDIR) $(WFSDIR) $(SOSIDIR) $(GFTDIR) \
 			$(COUCHDBDIR) $(CLOUDANTDIR) $(FGDB_DIR) $(XLSDIR) $(ODSDIR) $(XLSXDIR) \
-			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODBDIR) $(AMIGOCLOUD_DIR) \
-			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR)
+			$(INGRESDIR) $(ELASTICDIR) $(OSMDIR) $(VFKDIR) $(CARTODIR) $(AMIGOCLOUD_DIR) \
+			$(PLSCENESDIR) $(CSWDIR) $(MONGODBDIR) $(GMLAS_DIR) $(CAD_DIR)
 
 PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_DWG_DIR) \
@@ -28,7 +28,8 @@ PLUGINDIRLIST	=	$(PLUGIN_ARCOBJECTS_DIR) \
 			$(PLUGIN_SDE_DIR) \
 			$(PLUGIN_INGRESDIR) \
 			$(PLUGIN_LIBKMLDIR) \
-            $(PLUGIN_MONGODBDIR)
+			$(PLUGIN_MONGODBDIR) \
+			$(PLUGIN_MSSPATIALDIR)
 
 !IFDEF OGDIDIR
 OGDIDIR	=	ogdi
@@ -38,6 +39,10 @@ OGDIOBJ =	ogdi\*.obj
 !IFDEF ODBC_SUPPORTED
 ODBCDIR	=	odbc pgeo mssqlspatial geomedia db2 walk
 ODBCOBJ =	odbc\*.obj pgeo\*.obj mssqlspatial\*.obj geomedia\*.obj db2\*.obj walk\*.obj
+!ENDIF
+
+!IFDEF SQLNCLI_LIB
+PLUGIN_MSSPATIALDIR = mssqlspatial
 !ENDIF
 
 !IFDEF SQLITE_LIB
@@ -129,6 +134,11 @@ NAS_DIR = nas
 NAS_OBJ = nas\*.obj
 !ENDIF
 
+!IFDEF XERCES_INCLUDE
+GMLAS_DIR = gmlas
+GMLAS_OBJ = gmlas\*.obj
+!ENDIF
+
 !IFDEF INFORMIXDIR
 IDB_DIR = idb
 IDB_OBJ = idb\*.obj
@@ -204,8 +214,8 @@ VFK_OBJ =	vfk\*.obj
 !ENDIF
 
 !IFDEF CURL_LIB
-CARTODBDIR = cartodb
-CARTODB_OBJ = cartodb\*.obj
+CARTODIR = carto
+CARTO_OBJ = carto\*.obj
 !ENDIF
 
 !IFDEF CURL_LIB
@@ -229,6 +239,11 @@ MONGODBOBJ = mongodb\*.obj
 !ELSE
 PLUGIN_MONGODBDIR = mongodb
 !ENDIF
+!ENDIF
+
+!IF $(MSVC_VER) >= 1800
+CAD_DIR = cad
+CAD_OBJ = cad\*.obj cad\libopencad\*.obj cad\libopencad\dwg\*.obj
 !ENDIF
 
 !ELSE
@@ -262,8 +277,8 @@ default:
 				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(FGDB_OBJ) $(ARCDRIVER_OBJ) $(IDB_OBJ) \
 				$(DODS_OBJ) $(NAS_OBJ) $(LIBKMLOBJ) $(WFS_OBJ) \
 				$(SOSI_OBJ) $(GFT_OBJ) $(COUCHDB_OBJ) $(CLOUDANT_OBJ) $(XLS_OBJ) $(ODS_OBJ) $(XLSX_OBJ)  \
-				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTODB_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
-				$(CSW_OBJ) $(MONGODBOBJ)
+				$(INGRESOBJ) $(ELASTIC_OBJ) $(OSM_OBJ) $(VFK_OBJ) $(CARTO_OBJ) $(AMIGOCLOUD_OBJ) $(PLSCENES_OBJ) \
+				$(CSW_OBJ) $(MONGODBOBJ) $(GMLAS_OBJ) $(CAD_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \

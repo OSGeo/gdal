@@ -35,10 +35,6 @@
 #include <string>
 #include <fstream>
 
-CPL_C_START
-void GDALRegister_MSG();
-CPL_C_END
-
 /************************************************************************/
 /*                            MSGRasterBand                             */
 /************************************************************************/
@@ -53,7 +49,7 @@ class MSGRasterBand : public GDALRasterBand
   public:
     MSGRasterBand( MSGDataset *, int );
     virtual ~MSGRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
   private:
     double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS);
@@ -75,12 +71,12 @@ class MSGDataset : public GDALDataset
 
   public:
     MSGDataset();
-    ~MSGDataset();
+    virtual ~MSGDataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
 
   private:
     MSGCommand command;
@@ -98,5 +94,5 @@ class MSGDataset : public GDALDataset
     static const double rB[12];
     static const int iCentralPixelVIS_IR;
     static const int iCentralPixelHRV;
+    static const char *metadataDomain;
 };
-

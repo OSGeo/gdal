@@ -644,7 +644,7 @@ def ogr_sqlite_13():
     gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer( 'wgs84layer_approx', srs = srs )
 
     # Must still be 1
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys");
+    sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     if  feat.GetFieldAsInteger('count') != 1:
         return 'fail'
@@ -950,7 +950,7 @@ def ogr_sqlite_18():
         print(wkt)
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1");
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM spatial_ref_sys ORDER BY srid DESC LIMIT 1")
     feat = sql_lyr.GetNextFeature()
     if feat.GetField('auth_name') != 'OGR' or \
        feat.GetField('proj4text').find('+proj=vandg') != 0:
@@ -2109,9 +2109,19 @@ def ogr_spatialite_8():
     lyr.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('foo', 'bar')
+    f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 -1)'))
+    f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 -1,2 3)'))
+    lyr.CreateFeature(f)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if f.GetGeomFieldRef('geom1').ExportToWkt() != 'POINT (0 -1)' or \
+       f.GetGeomFieldRef('geom2').ExportToWkt() != 'LINESTRING (0 -1,2 3)':
+        gdaltest.post_reason('failed')
+        f.DumpReadable()
+        return 'fail'
     f.SetGeomFieldDirectly(0, ogr.CreateGeometryFromWkt('POINT(0 1)'))
     f.SetGeomFieldDirectly(1, ogr.CreateGeometryFromWkt('LINESTRING(0 1,2 3)'))
-    lyr.CreateFeature(f)
+    lyr.SetFeature(f)
     f = None
     ds.ExecuteSQL('CREATE VIEW view_test_geom1 AS SELECT OGC_FID AS pk_id, foo, geom1 AS renamed_geom1 FROM test')
 
@@ -3387,6 +3397,81 @@ def ogr_sqlite_43():
     return 'success'
 
 ###############################################################################
+# Test reading/writing StringList, etc..
+
+def ogr_sqlite_44():
+
+    if gdaltest.sl_ds is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT\n')
+    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csv',
+"""stringlist,intlist,int64list,reallist,WKT
+"[""a"",null]","[1]","[1234567890123]","[0.125]",
+""")
+
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44.sqlite', '/vsimem/ogr_sqlite_44.csv', format = 'SQLite' )
+    gdal.VectorTranslate('/vsimem/ogr_sqlite_44_out.csv', '/vsimem/ogr_sqlite_44.sqlite', format = 'CSV', layerCreationOptions = ['CREATE_CSVT=YES', 'LINEFORMAT=LF'])
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csv', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('stringlist,intlist,int64list,reallist,wkt\n"[ ""a"", """" ]",[ 1 ],[ 1234567890123 ],[ 0.125') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_sqlite_44_out.csvt', 'rb')
+    data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+    gdal.VSIFCloseL(f)
+
+    if data.find('JSonStringList,JSonIntegerList,JSonInteger64List,JSonRealList') != 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_sqlite_44.csv')
+    gdal.Unlink('/vsimem/ogr_sqlite_44.csvt')
+    gdal.Unlink('/vsimem/ogr_sqlite_44.sqlite')
+    gdal.Unlink('/vsimem/ogr_sqlite_44_out.csv')
+    gdal.Unlink('/vsimem/ogr_sqlite_44_out.csvt')
+
+    return 'success'
+
+###############################################################################
+# Test creating unsupported geometry types
+
+def ogr_spatialite_11():
+
+    if gdaltest.has_spatialite == False:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_11.sqlite', options = ['SPATIALITE=YES'])
+
+    # Will be converted to LineString
+    lyr = ds.CreateLayer('test', geom_type = ogr.wkbCurve)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = None
+
+    lyr = ds.CreateLayer('test2', geom_type = ogr.wkbNone)
+    with gdaltest.error_handler():
+        res = lyr.CreateGeomField( ogr.GeomFieldDefn('foo', ogr.wkbCurvePolygon) )
+    if res == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_spatialite_11.sqlite')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_sqlite_cleanup():
@@ -3570,6 +3655,8 @@ gdaltest_list = [
     ogr_sqlite_41,
     ogr_sqlite_42,
     ogr_sqlite_43,
+    ogr_sqlite_44,
+    ogr_spatialite_11,
     ogr_sqlite_cleanup,
     ogr_sqlite_without_spatialite,
 ]

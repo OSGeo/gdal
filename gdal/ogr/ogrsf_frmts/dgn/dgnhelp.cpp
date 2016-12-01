@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Microstation DGN Access Library
  * Purpose:  Application visible helper functions for parsing DGN information.
@@ -291,7 +290,6 @@ static const unsigned char abyDefaultPCT[256][3] =
   {28,0,100}
 };
 
-
 /************************************************************************/
 /*                           DGNLookupColor()                           */
 /************************************************************************/
@@ -318,10 +316,10 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
                     int * red, int * green, int * blue )
 
 {
-    DGNInfo     *psDGN = (DGNInfo *) hDGN;
-
     if( color_index < 0 || color_index > 255  )
         return FALSE;
+
+    DGNInfo *psDGN = (DGNInfo *) hDGN;
 
     if( !psDGN->got_color_table )
     {
@@ -361,15 +359,13 @@ int DGNLookupColor( DGNHandle hDGN, int color_index,
 int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
 
 {
-    int iLink;
-
-    for( iLink = 0; true; iLink++ )
+    for( int iLink = 0; true; iLink++ )
     {
-        int nLinkType, nLinkSize;
-        unsigned char *pabyData;
-
-        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                                  NULL, NULL, &nLinkSize );
+        int nLinkType = 0;
+        int nLinkSize = 0;
+        unsigned char *pabyData =
+            DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
+                           NULL, NULL, &nLinkSize );
         if( pabyData == NULL )
             return FALSE;
 
@@ -401,15 +397,13 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
 int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
 
 {
-    int iLink;
-
-    for( iLink = 0; true; iLink++ )
+    for( int iLink = 0; true; iLink++ )
     {
-        int nLinkType, nLinkSize;
-        unsigned char *pabyData;
-
-        pabyData = DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                                  NULL, NULL, &nLinkSize );
+        int nLinkType = 0;
+        int nLinkSize = 0;
+        unsigned char *pabyData =
+            DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
+                           NULL, NULL, &nLinkSize );
         if( pabyData == NULL )
             return -1;
 
@@ -431,14 +425,12 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
 
 void DGNRad50ToAscii(unsigned short sRad50, char *str )
 {
-    unsigned short sValue;
     char           ch = '\0';
-    unsigned short saQuots[3] = {1600,40,1};
-    int i;
+    unsigned short saQuots[3] = { 1600, 40,1 };
 
-    for ( i=0; i<3; i++)
+    for( int i = 0; i < 3; i++ )
     {
-        sValue = sRad50;
+        unsigned short sValue = sRad50;
         sValue /= saQuots[i];
         /* Map 0..39 to ASCII */
         if (sValue==0)
@@ -471,17 +463,16 @@ void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
 
 {
     unsigned short rad50 = 0;
-    int  i;
 
-    for( i = 0; i < 3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
-        unsigned short value;
-
         if( i >= (int) strlen(str) )
         {
             rad50 = rad50 * 40;
             continue;
         }
+
+        unsigned short value = 0;
 
         if( str[i] == '$' )
             value = 27;
@@ -503,7 +494,6 @@ void DGNAsciiToRad50( const char *str, unsigned short *pRad50 )
 
     *pRad50 = rad50;
 }
-
 
 /************************************************************************/
 /*                        DGNGetLineStyleName()                         */
@@ -592,8 +582,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->properties != 0 )
     {
-        int     nClass;
-
         fprintf( fp, "  properties=%d", psElement->properties );
         if( psElement->properties & DGNPF_HOLE )
             fprintf( fp, ",HOLE" );
@@ -612,7 +600,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
         if( psElement->properties & DGNPF_LOCKED )
             fprintf( fp, ",LOCKED" );
 
-        nClass = psElement->properties & DGNPF_CLASS;
+        int nClass = psElement->properties & DGNPF_CLASS;
         if( nClass == DGNC_PATTERN_COMPONENT )
             fprintf( fp, ",PATTERN_COMPONENT" );
         else if( nClass == DGNC_CONSTRUCTION_ELEMENT )
@@ -634,9 +622,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_MULTIPOINT:
       {
           DGNElemMultiPoint     *psLine = (DGNElemMultiPoint *) psElement;
-          int                   i;
 
-          for( i=0; i < psLine->num_vertices; i++ )
+          for( int i = 0; i < psLine->num_vertices; i++ )
               fprintf( fp, "  (%.6f,%.6f,%.6f)\n",
                        psLine->vertices[i].x,
                        psLine->vertices[i].y,
@@ -762,12 +749,12 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psNode->length_mult,
                    psNode->height_mult );
           fprintf( fp,
-		   "  max_length=%d, used=%d,",
-		   psNode->max_length,
-		   psNode->max_used );
+                   "  max_length=%d, used=%d,",
+                   psNode->max_length,
+                   psNode->max_used );
           fprintf( fp,
-		   "  node_number=%d\n",
-		   psNode->node_number );
+                   "  node_number=%d\n",
+                   psNode->node_number );
       }
       break;
 
@@ -791,12 +778,11 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_COLORTABLE:
       {
           DGNElemColorTable *psCT = (DGNElemColorTable *) psElement;
-          int                   i;
 
           fprintf( fp, "  screen_flag: %d\n", psCT->screen_flag );
-          for( i = 0; i < 256; i++ )
+          for( int i = 0; i < 256; i++ )
           {
-              fprintf( fp, "  %3d: (%3d,%3d,%3d)\n",
+              fprintf( fp, "  %3d: (%3u,%3u,%3u)\n",
                        i,
                        psCT->color_info[i][0],
                        psCT->color_info[i][1],
@@ -808,7 +794,6 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_TCB:
       {
           DGNElemTCB *psTCB = (DGNElemTCB *) psElement;
-          int iView;
 
           fprintf( fp, "  dimension = %d\n", psTCB->dimension );
           fprintf( fp, "  uor_per_subunit = %ld, subunits = `%s'\n",
@@ -820,7 +805,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psTCB->origin_y,
                    psTCB->origin_z );
 
-          for( iView = 0; iView < 8; iView++ )
+          for( int iView = 0; iView < 8; iView++ )
           {
               DGNViewInfo *psView = psTCB->views + iView;
 
@@ -858,12 +843,11 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       case DGNST_TAG_SET:
       {
           DGNElemTagSet *psTagSet = (DGNElemTagSet*) psElement;
-          int            iTag;
 
           fprintf( fp, "  tagSetName=%s, tagSet=%d, tagCount=%d, flags=%d\n",
                    psTagSet->tagSetName, psTagSet->tagSet,
                    psTagSet->tagCount, psTagSet->flags );
-          for( iTag = 0; iTag < psTagSet->tagCount; iTag++ )
+          for( int iTag = 0; iTag < psTagSet->tagCount; iTag++ )
           {
               DGNTagDef *psTagDef = psTagSet->tagList + iTag;
 
@@ -924,7 +908,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           DGNElemBSplineSurfaceHeader *psSpline =
             (DGNElemBSplineSurfaceHeader *) psElement;
 
-          fprintf( fp, "  desc_words=%ld, curve type=%d\n",
+          fprintf( fp, "  desc_words=%ld, curve type=%u\n",
                    psSpline->desc_words, psSpline->curve_type);
 
           fprintf( fp, "  U: properties=%02x",
@@ -944,7 +928,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+          fprintf( fp, "     order=%u\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->u_order, psSpline->num_poles_u,
                    psSpline->num_knots_u, psSpline->rule_lines_u);
 
@@ -959,7 +943,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+          fprintf( fp, "     order=%u\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->v_order, psSpline->num_poles_v,
                    psSpline->num_knots_v, psSpline->rule_lines_v);
       }
@@ -971,7 +955,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             (DGNElemBSplineCurveHeader *) psElement;
 
           fprintf( fp,
-                   "  desc_words=%ld, curve type=%d\n"
+                   "  desc_words=%ld, curve type=%u\n"
                    "  properties=%02x",
                    psSpline->desc_words, psSpline->curve_type,
                    psSpline->properties);
@@ -990,7 +974,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
           }
           fprintf(fp, "\n");
-          fprintf( fp, "  order=%d\n  %d poles, %d knots\n",
+          fprintf( fp, "  order=%u\n  %d poles, %d knots\n",
                    psSpline->order, psSpline->num_poles, psSpline->num_knots);
       }
       break;
@@ -1026,18 +1010,17 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 
     if( psElement->attr_bytes > 0 )
     {
-        int iLink;
-
         fprintf( fp, "Attributes (%d bytes):\n", psElement->attr_bytes );
 
-        for( iLink = 0; true; iLink++ )
-
+        for( int iLink = 0; true; iLink++ )
         {
-            int nLinkType, nEntityNum=0, nMSLink=0, nLinkSize, i;
-            unsigned char *pabyData;
-
-            pabyData = DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
-                                      &nEntityNum, &nMSLink, &nLinkSize );
+            int nLinkType = 0;
+            int nEntityNum = 0;
+            int nMSLink = 0;
+            int nLinkSize = 0;
+            unsigned char *pabyData =
+                DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
+                               &nEntityNum, &nMSLink, &nLinkSize );
             if( pabyData == NULL )
                 break;
 
@@ -1058,14 +1041,12 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             }
             fprintf( fp, "\n  0x" );
 
-            for( i = 0; i < nLinkSize; i++ )
+            for( int i = 0; i < nLinkSize; i++ )
                 fprintf( fp, "%02x", pabyData[i] );
             fprintf( fp, "\n" );
-
         }
     }
 }
-
 
 /************************************************************************/
 /*                           DGNTypeToName()                            */
@@ -1085,7 +1066,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
 const char *DGNTypeToName( int nType )
 
 {
-    static char szNumericResult[16];
+    static char szNumericResult[16] = {};
 
     switch( nType )
     {
@@ -1264,22 +1245,23 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                               int *pnEntityNum, int *pnMSLink, int *pnLength )
 
 {
-    int nAttrOffset;
-    int iLinkage, nLinkSize;
+    int nLinkSize = 0;
 
-    for( iLinkage=0, nAttrOffset=0;
+    for( int iLinkage=0, nAttrOffset=0;
          (nLinkSize = DGNGetAttrLinkSize( hDGN, psElement, nAttrOffset)) != 0;
          iLinkage++, nAttrOffset += nLinkSize )
     {
         if( iLinkage == iIndex )
         {
-            int  nLinkageType=0, nEntityNum=0, nMSLink = 0;
             if( nLinkSize <= 4 )
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed, "nLinkSize <= 4");
                 return NULL;
             }
 
+            int nLinkageType = 0;
+            int nEntityNum = 0;
+            int nMSLink = 0;
             if( psElement->attr_data[nAttrOffset+0] == 0x00
                 && (psElement->attr_data[nAttrOffset+1] == 0x00
                     || psElement->attr_data[nAttrOffset+1] == 0x80) )
@@ -1304,7 +1286,6 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     + psElement->attr_data[nAttrOffset+9] * 256
                     + psElement->attr_data[nAttrOffset+10] * 65536
                     + psElement->attr_data[nAttrOffset+11] * 65536 * 256;
-
             }
 
             if( pnLinkageType != NULL )
@@ -1332,7 +1313,7 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
 void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 
 {
-    double dfRadianRot = (dfRotation / 180.0)  * M_PI;
+    const double dfRadianRot = (dfRotation / 180.0)  * M_PI;
 
     panQuaternion[0] = (int) (cos(-dfRadianRot/2.0) * 2147483647);
     panQuaternion[1] = 0;
@@ -1351,22 +1332,22 @@ void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 
 void DGNQuaternionToMatrix( int *quat, float *mat )
 {
-  double q[4];
+    const double q[4] = {
+        1.0 * quat[1] / (1<<31),
+        1.0 * quat[2] / (1<<31),
+        1.0 * quat[3] / (1<<31),
+        1.0 * quat[0] / (1<<31)
+    };
 
-  q[0] = 1.0 * quat[1] / (1<<31);
-  q[1] = 1.0 * quat[2] / (1<<31);
-  q[2] = 1.0 * quat[3] / (1<<31);
-  q[3] = 1.0 * quat[0] / (1<<31);
-
-  mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
-  mat[0*3+1] = (float) (2 * (q[2]*q[3] + q[0]*q[1]));
-  mat[0*3+2] = (float) (2 * (q[0]*q[2] - q[1]*q[3]));
-  mat[1*3+0] = (float) (2 * (q[0]*q[1] - q[2]*q[3]));
-  mat[1*3+1] = (float) (-q[0]*q[0] + q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
-  mat[1*3+2] = (float) (2 * (q[0]*q[3] + q[1]*q[2]));
-  mat[2*3+0] = (float) (2 * (q[0]*q[2] + q[1]*q[3]));
-  mat[2*3+1] = (float) (2 * (q[1]*q[2] - q[0]*q[3]));
-  mat[2*3+2] = (float) (-q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+    mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
+    mat[0*3+1] = (float) (2 * (q[2]*q[3] + q[0]*q[1]));
+    mat[0*3+2] = (float) (2 * (q[0]*q[2] - q[1]*q[3]));
+    mat[1*3+0] = (float) (2 * (q[0]*q[1] - q[2]*q[3]));
+    mat[1*3+1] = (float) (-q[0]*q[0] + q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
+    mat[1*3+2] = (float) (2 * (q[0]*q[3] + q[1]*q[2]));
+    mat[2*3+0] = (float) (2 * (q[0]*q[2] + q[1]*q[3]));
+    mat[2*3+1] = (float) (2 * (q[1]*q[2] - q[0]*q[3]));
+    mat[2*3+2] = (float) (-q[0]*q[0] - q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
 }
 
 /************************************************************************/

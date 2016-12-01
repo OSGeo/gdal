@@ -554,7 +554,8 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
-         SQLStatement = None, SQLDialect = None, where = None, selectFields = None, spatFilter = None,
+         SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
+         spatFilter = None, spatSRS = None,
          datasetCreationOptions = None,
          layerCreationOptions = None,
          layers = None,
@@ -578,6 +579,7 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           where --- WHERE clause to apply to source layer(s)
           selectFields --- list of fields to select
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
+          spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
           layerCreationOptions --- list of layer creation options
           layers --- list of layers to convert
@@ -633,12 +635,17 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
             for opt in layerCreationOptions:
                 new_options += ['-lco', opt ]
         if layers is not None:
-            for lyr in layers:
-                new_options += [ lyr ]
+            if _is_str_or_unicode(layers):
+                new_options += [ layers ]
+            else:
+                for lyr in layers:
+                    new_options += [ lyr ]
         if segmentizeMaxDist is not None:
             new_options += ['-segmentize', str(segmentizeMaxDist) ]
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3]) ]
+        if spatSRS is not None:
+            new_options += ['-spat_srs', str(spatSRS) ]
         if layerName is not None:
             new_options += ['-nln', layerName]
         if geometryType is not None:
@@ -679,7 +686,8 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
 def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
-              zFactor = None, scale = None, azimuth = None, altitude = None, combined = False,
+              zFactor = None, scale = None, azimuth = None, altitude = None,
+              combined = False, multiDirectional = False,
               slopeFormat = None, trigonometric = False, zeroForFlat = False,
               callback = None, callback_data = None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
@@ -696,6 +704,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
           azimuth --- (hillshade only) azimuth of the light, in degrees. 0 if it comes from the top of the raster, 90 from the east, ... The default value, 315, should rarely be changed as it is the value generally used to generate shaded maps.
           altitude ---(hillshade only) altitude of the light, in degrees. 90 if the light comes from above the DEM, 0 if it is raking light.
           combined --- (hillshade only) whether to compute combined shading, a combination of slope and oblique shading.
+          multiDirectional --- (hillshade only) whether to compute multi-directional shading
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
@@ -727,6 +736,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
             new_options += ['-alt', str(altitude) ]
         if combined:
             new_options += ['-combined' ]
+        if multiDirectional:
+            new_options += ['-multidirectional' ]
         if slopeFormat == 'percent':
             new_options += ['-p' ]
         if trigonometric:
@@ -928,6 +939,7 @@ def Grid(destName, srcDS, **kwargs):
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 def RasterizeOptions(options = [], format = None,
+         outputType = GDT_Unknown, 
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
          width = None, height = None,
@@ -940,6 +952,7 @@ def RasterizeOptions(options = [], format = None,
         Keyword arguments are :
           options --- can be be an array of strings, a string or let empty and filled from other keywords.
           format --- output format ("GTiff", etc...)
+          outputType --- output type (gdal.GDT_Byte, etc...)
           creationOptions --- list of creation options
           outputBounds --- assigned output bounds: [minx, miny, maxx, maxy]
           outputSRS --- assigned output SRS
@@ -970,6 +983,8 @@ def RasterizeOptions(options = [], format = None,
         new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
+        if outputType != GDT_Unknown:
+            new_options += ['-ot', GetDataTypeName(outputType) ]
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -1353,6 +1368,17 @@ def VSIFTellL(*args):
 def VSIFTruncateL(*args):
   """VSIFTruncateL(VSILFILE * fp, GIntBig length) -> int"""
   return _gdal.VSIFTruncateL(*args)
+
+def VSISupportsSparseFiles(*args):
+  """VSISupportsSparseFiles(char const * utf8_path) -> int"""
+  return _gdal.VSISupportsSparseFiles(*args)
+VSI_RANGE_STATUS_UNKNOWN = _gdal.VSI_RANGE_STATUS_UNKNOWN
+VSI_RANGE_STATUS_DATA = _gdal.VSI_RANGE_STATUS_DATA
+VSI_RANGE_STATUS_HOLE = _gdal.VSI_RANGE_STATUS_HOLE
+
+def VSIFGetRangeStatusL(*args):
+  """VSIFGetRangeStatusL(VSILFILE * fp, GIntBig offset, GIntBig length) -> int"""
+  return _gdal.VSIFGetRangeStatusL(*args)
 
 def VSIFWriteL(*args):
   """VSIFWriteL(int nLen, int size, int memb, VSILFILE * fp) -> int"""
@@ -1811,6 +1837,14 @@ class Dataset(MajorObject):
         """GetLayerByName(Dataset self, char const * layer_name) -> Layer"""
         return _gdal.Dataset_GetLayerByName(self, *args)
 
+    def ResetReading(self, *args):
+        """ResetReading(Dataset self)"""
+        return _gdal.Dataset_ResetReading(self, *args)
+
+    def GetNextFeature(self, *args, **kwargs):
+        """GetNextFeature(Dataset self, bool include_layer=True, bool include_pct=False, GDALProgressFunc callback=0, void * callback_data=None) -> Feature"""
+        return _gdal.Dataset_GetNextFeature(self, *args, **kwargs)
+
     def TestCapability(self, *args):
         """TestCapability(Dataset self, char const * cap) -> bool"""
         return _gdal.Dataset_TestCapability(self, *args)
@@ -2072,6 +2106,10 @@ class Band(MajorObject):
         """GetBlockSize(Band self)"""
         return _gdal.Band_GetBlockSize(self, *args)
 
+    def GetActualBlockSize(self, *args):
+        """GetActualBlockSize(Band self, int nXBlockOff, int nYBlockOff)"""
+        return _gdal.Band_GetActualBlockSize(self, *args)
+
     def GetColorInterpretation(self, *args):
         """GetColorInterpretation(Band self) -> GDALColorInterp"""
         return _gdal.Band_GetColorInterpretation(self, *args)
@@ -2272,6 +2310,10 @@ class Band(MajorObject):
             int nTileYSize, GDALDataType eBufType, size_t nCacheSize, char ** options=None) -> VirtualMem
         """
         return _gdal.Band_GetTiledVirtualMem(self, *args, **kwargs)
+
+    def GetDataCoverageStatus(self, *args):
+        """GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
+        return _gdal.Band_GetDataCoverageStatus(self, *args)
 
     def ReadRaster1(self, *args, **kwargs):
         """
@@ -2849,6 +2891,14 @@ def IdentifyDriver(*args):
   """IdentifyDriver(char const * utf8_path, char ** papszSiblings=None) -> Driver"""
   return _gdal.IdentifyDriver(*args)
 IdentifyDriver = _gdal.IdentifyDriver
+
+def IdentifyDriverEx(*args, **kwargs):
+  """
+    IdentifyDriverEx(char const * utf8_path, unsigned int nIdentifyFlags=0, char ** allowed_drivers=None, 
+        char ** sibling_files=None) -> Driver
+    """
+  return _gdal.IdentifyDriverEx(*args, **kwargs)
+IdentifyDriverEx = _gdal.IdentifyDriverEx
 
 def GeneralCmdLineProcessor(*args):
   """GeneralCmdLineProcessor(char ** papszArgv, int nOptions=0) -> char **"""

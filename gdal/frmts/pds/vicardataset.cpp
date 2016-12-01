@@ -44,15 +44,15 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*			       VICARDataset		                */
+/*                             VICARDataset                             */
 /* ==================================================================== */
 /************************************************************************/
 
 class VICARDataset : public RawDataset
 {
-    VSILFILE	*fpImage;
+    VSILFILE    *fpImage;
 
-    GByte	abyHeader[10000];
+    GByte       abyHeader[10000];
     CPLString   osExternalCube;
 
     VICARKeywordHandler  oKeywords;
@@ -67,19 +67,18 @@ class VICARDataset : public RawDataset
 
 public:
     VICARDataset();
-    ~VICARDataset();
+    virtual ~VICARDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-
 };
 
 /************************************************************************/
@@ -96,6 +95,7 @@ VICARDataset::VICARDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 }
 
 /************************************************************************/
@@ -593,7 +593,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < nBands; i++ )
     {
-        GDALRasterBand	*poBand
+        GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
                                  static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
 #ifdef CPL_LSB
@@ -636,7 +636,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         if (pszMin != NULL && pszMax != NULL && pszMean != NULL && pszStdDev != NULL )
                 poBand->SetStatistics(CPLAtofM(pszMin),CPLAtofM(pszMax),CPLAtofM(pszMean),CPLAtofM(pszStdDev));
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Instrument-specific keywords as metadata.                       */
@@ -700,7 +699,6 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-
 /******************   DAWN   ******************************/
     else if (EQUAL( poDS->GetKeyword( "INSTRUMENT_ID"), "FC2" )) {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
@@ -725,9 +723,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             if( pszKeywordValue != NULL )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
-
     }
-    else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" )) {
+    else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" ))
+    {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");
         static const char * const apszKeywords[] = {
@@ -737,13 +735,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
             "POSITIVE_LONGITUDE_DIRECTION", "MAP_SCALE",
             "CENTER_LONGITUDE", "LINE_PROJECTION_OFFSET", "SAMPLE_PROJECTION_OFFSET",
             NULL };
-        for( int i = 0; apszKeywords[i] != NULL; i++ ) {
+        for( int i = 0; apszKeywords[i] != NULL; i++ )
+        {
             const char *pszKeywordValue = poDS->GetKeyword( apszKeywords[i] );
             if( pszKeywordValue != NULL )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      END Instrument-specific keywords as metadata.                   */
@@ -764,7 +762,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

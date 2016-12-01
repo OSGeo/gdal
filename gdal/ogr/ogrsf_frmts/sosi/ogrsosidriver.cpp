@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SOSI Translator
  * Purpose:  Implements OGRSOSIDriver.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "ogr_sosi.h"
+
+CPL_CVSID("$Id$");
 
 static int bFYBAInit = FALSE;
 

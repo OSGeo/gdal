@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayerDB class.  This is the
@@ -120,8 +119,8 @@ OGRFeature *OGRFMELayerDB::GetNextFeature()
     {
         if( !CreateReader() )
         {
-            return NULL;
             poDS->ReleaseSession();
+            return NULL;
         }
     }
 

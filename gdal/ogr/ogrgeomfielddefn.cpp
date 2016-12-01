@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRGeomFieldDefn class implementation.
@@ -27,9 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_feature.h"
+#include "cpl_port.h"
 #include "ogr_api.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 #include "ograpispy.h"
 
 CPL_CVSID("$Id$");
@@ -82,7 +90,8 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( OGRGeomFieldDefn *poPrototype )
 /**
  * \brief Create a new field geometry definition.
  *
- * This function is the same as the CPP method OGRGeomFieldDefn::OGRGeomFieldDefn().
+ * This function is the same as the CPP method
+ * OGRGeomFieldDefn::OGRGeomFieldDefn().
  *
  * @param pszName the name of the new field definition.
  * @param eType the type of the new field definition.
@@ -95,13 +104,15 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
                                    OGRwkbGeometryType eType )
 
 {
-    return (OGRGeomFieldDefnH) (new OGRGeomFieldDefn(pszName,eType));
+  return
+      reinterpret_cast<OGRGeomFieldDefnH>(new OGRGeomFieldDefn(pszName, eType));
 }
 
 /************************************************************************/
 /*                             Initialize()                             */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
                                    OGRwkbGeometryType eTypeIn )
 
@@ -112,6 +123,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
     bIgnore = FALSE;
     bNullable = TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~OGRGeomFieldDefn()                          */
@@ -141,7 +153,8 @@ void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
 
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_Destroy" );
-    delete (OGRGeomFieldDefn *) hDefn;
+
+    delete reinterpret_cast<OGRGeomFieldDefn *>(hDefn);
 }
 
 /************************************************************************/
@@ -173,7 +186,8 @@ void OGRGeomFieldDefn::SetName( const char * pszNameIn )
  *
  * This function is the same as the CPP method OGRGeomFieldDefn::SetName().
  *
- * @param hDefn handle to the geometry field definition to apply the new name to.
+ * @param hDefn handle to the geometry field definition to apply the
+ * new name to.
  * @param pszName the new name to apply.
  *
  * @since GDAL 1.11
@@ -183,7 +197,8 @@ void OGR_GFld_SetName( OGRGeomFieldDefnH hDefn, const char *pszName )
 
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetName" );
-    ((OGRGeomFieldDefn *) hDefn)->SetName( pszName );
+
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetName(pszName);
 }
 
 /************************************************************************/
@@ -227,7 +242,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetNameRef");
 #endif
 
-    return ((OGRGeomFieldDefn *) hDefn)->GetNameRef();
+    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetNameRef();
 }
 
 /************************************************************************/
@@ -235,7 +250,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType();
+ * \fn OGRwkbGeometryType OGRGeomFieldDefn::GetType() const;
  *
  * \brief Fetch geometry type of this field.
  *
@@ -270,7 +285,8 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetType");
 #endif
 
-    OGRwkbGeometryType eType = ((OGRGeomFieldDefn *) hDefn)->GetType();
+    OGRwkbGeometryType eType =
+        reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetType();
     if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
     {
         eType = OGR_GT_GetLinear(eType);
@@ -283,15 +299,13 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 /************************************************************************/
 
 /**
- * \fn void OGRGeomFieldDefn::SetType( OGRwkbGeometryType eType );
- *
  * \brief Set the geometry type of this field.
  * This should never be done to an OGRGeomFieldDefn
  * that is already part of an OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_GFld_SetType().
  *
- * @param eType the new field geometry type.
+ * @param eTypeIn the new field geometry type.
  *
  * @since GDAL 1.11
  */
@@ -322,7 +336,8 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetType" );
-    ((OGRGeomFieldDefn *) hDefn)->SetType( eType );
+
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetType(eType);
 }
 
 /************************************************************************/
@@ -330,7 +345,7 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 /************************************************************************/
 
 /**
- * \fn int OGRGeomFieldDefn::IsIgnored();
+ * \fn int OGRGeomFieldDefn::IsIgnored() const;
  *
  * \brief Return whether this field should be omitted when fetching features
  *
@@ -359,7 +374,8 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 int OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn )
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_IsIgnored", FALSE );
-    return ((OGRGeomFieldDefn *) hDefn)->IsIgnored();
+
+    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->IsIgnored();
 }
 
 /************************************************************************/
@@ -396,7 +412,8 @@ int OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn )
 void OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int ignore )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetIgnored" );
-    ((OGRGeomFieldDefn *) hDefn)->SetIgnored( ignore );
+
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetIgnored(ignore);
 }
 
 /************************************************************************/
@@ -424,7 +441,8 @@ OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef()
 /**
  * \brief Fetch spatial reference system of this field.
  *
- * This function is the same as the C++ method OGRGeomFieldDefn::GetSpatialRef().
+ * This function is the same as the C++ method
+ * OGRGeomFieldDefn::GetSpatialRef().
  *
  * @param hDefn handle to the geometry field definition
  *
@@ -442,7 +460,8 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetSpatialRef");
 #endif
 
-    return (OGRSpatialReferenceH) ((OGRGeomFieldDefn *) hDefn)->GetSpatialRef();
+    return reinterpret_cast<OGRSpatialReferenceH>(
+        reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetSpatialRef());
 }
 
 /************************************************************************/
@@ -477,7 +496,8 @@ void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference* poSRSIn)
 /**
  * \brief Set the spatial reference of this field.
  *
- * This function is the same as the C++ method OGRGeomFieldDefn::SetSpatialRef().
+ * This function is the same as the C++ method
+ * OGRGeomFieldDefn::SetSpatialRef().
  *
  * This function drops the reference of the previously set SRS object and
  * acquires a new reference on the passed object (if non-NULL).
@@ -488,10 +508,13 @@ void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference* poSRSIn)
  * @since GDAL 1.11
  */
 
-void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS )
+void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn,
+                             OGRSpatialReferenceH hSRS )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetSpatialRef" );
-    ((OGRGeomFieldDefn *) hDefn)->SetSpatialRef( (OGRSpatialReference*) hSRS );
+
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->
+        SetSpatialRef(reinterpret_cast<OGRSpatialReference *>(hSRS));
 }
 
 /************************************************************************/
@@ -569,7 +592,7 @@ int OGRGeomFieldDefn::IsSame( OGRGeomFieldDefn * poOtherFieldDefn )
 
 int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 {
-    return ((OGRGeomFieldDefn *) hDefn)->IsNullable();
+    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->IsNullable();
 }
 
 /************************************************************************/
@@ -581,8 +604,8 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
  *
  * \brief Set whether this geometry field can receive null values.
  *
- * By default, fields are nullable, so this method is generally called with FALSE
- * to set a not-null constraint.
+ * By default, fields are nullable, so this method is generally called with
+ * FALSE to set a not-null constraint.
  *
  * Drivers that support writing not-null constraint will advertize the
  * GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata item.
@@ -600,8 +623,8 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 /**
  * \brief Set whether this geometry field can receive null values.
  *
- * By default, fields are nullable, so this method is generally called with FALSE
- * to set a not-null constraint.
+ * By default, fields are nullable, so this method is generally called with
+ * FALSE to set a not-null constraint.
  *
  * Drivers that support writing not-null constraint will advertize the
  * GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata item.
@@ -615,5 +638,5 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 
 void OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int bNullableIn )
 {
-    ((OGRGeomFieldDefn *) hDefn)->SetNullable( bNullableIn );
+    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetNullable(bNullableIn);
 }

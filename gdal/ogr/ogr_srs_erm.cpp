@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implement ERMapper projection conversions.
@@ -28,7 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -49,9 +58,8 @@ OGRErr OSRImportFromERM( OGRSpatialReferenceH hSRS, const char *pszProj,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromERM", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromERM( pszProj,
-                                                          pszDatum,
-                                                          pszUnits );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        importFromERM(pszProj, pszDatum, pszUnits);
 }
 
 /************************************************************************/
@@ -82,7 +90,7 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      do we have projection and datum?                                */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszProj,"RAW") )
+    if( EQUAL(pszProj, "RAW") )
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
@@ -92,20 +100,19 @@ OGRErr OGRSpatialReference::importFromERM( const char *pszProj,
     if( STARTS_WITH_CI(pszProj, "EPSG:") )
         return importFromEPSG( atoi(pszProj+5) );
 
-
     if( STARTS_WITH_CI(pszDatum, "EPSG:") )
         return importFromEPSG( atoi(pszDatum+5) );
 
 /* -------------------------------------------------------------------- */
 /*      Set projection if we have it.                                   */
 /* -------------------------------------------------------------------- */
-    if( !EQUAL(pszProj,"GEODETIC") )
+    if( !EQUAL(pszProj, "GEODETIC") )
     {
         const OGRErr eErr = importFromDict( "ecw_cs.wkt", pszProj );
         if( eErr != OGRERR_NONE )
             return eErr;
 
-        if( EQUAL(pszUnits,"FEET") )
+        if( EQUAL(pszUnits, "FEET") )
             SetLinearUnits( SRS_UL_US_FOOT, CPLAtof(SRS_UL_US_FOOT_CONV));
         else
             SetLinearUnits( SRS_UL_METER, 1.0 );
@@ -143,8 +150,8 @@ OGRErr OSRExportToERM( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToERM", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->exportToERM( pszProj, pszDatum,
-                                                        pszUnits );
+    return reinterpret_cast<OGRSpatialReference *>(hSRS)->
+        exportToERM(pszProj, pszDatum, pszUnits);
 }
 
 /************************************************************************/
@@ -182,7 +189,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszAuthName = GetAuthorityName( "PROJCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
         {
             nEPSGCode = atoi(GetAuthorityCode( "PROJCS" ));
         }
@@ -191,7 +198,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszAuthName = GetAuthorityName( "GEOGCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
         {
             nEPSGCode = atoi(GetAuthorityCode( "GEOGCS" ));
         }
@@ -213,7 +220,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
 /*      Is this a "well known" geographic coordinate system?            */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszDatum,"RAW") )
+    if( EQUAL(pszDatum, "RAW") )
     {
         int nEPSGGCSCode = GetEPSGGeogCS();
 
@@ -266,7 +273,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 
     if( IsGeographic() )
     {
-        if( EQUAL(pszDatum,"RAW") )
+        if( EQUAL(pszDatum, "RAW") )
             return OGRERR_UNSUPPORTED_SRS;
         else
         {
@@ -284,7 +291,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     nZone = GetUTMZone( &bNorth );
     if( nZone > 0 )
     {
-        if( EQUAL(pszDatum,"GDA94") && !bNorth && nZone >= 48 && nZone <= 58)
+        if( EQUAL(pszDatum, "GDA94") && !bNorth && nZone >= 48 && nZone <= 58)
         {
             snprintf( pszProj, 32, "MGA%02d", nZone );
         }
@@ -317,7 +324,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /*      If we have not translated it yet, but we have an EPSG code      */
 /*      then use EPSG:n notation.                                       */
 /* -------------------------------------------------------------------- */
-    if( (EQUAL(pszDatum,"RAW") || EQUAL(pszProj,"RAW")) && nEPSGCode != 0 )
+    if( (EQUAL(pszDatum, "RAW") || EQUAL(pszProj, "RAW")) && nEPSGCode != 0 )
     {
         snprintf( pszProj, 32, "EPSG:%d", nEPSGCode );
         snprintf( pszDatum, 32, "EPSG:%d", nEPSGCode );
@@ -333,7 +340,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     else
         strcpy( pszUnits, "METERS" );
 
-    if( EQUAL(pszProj,"RAW") )
+    if( EQUAL(pszProj, "RAW") )
         return OGRERR_UNSUPPORTED_SRS;
 
     return OGRERR_NONE;

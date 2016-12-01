@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GSC Geogrid format driver.
  * Purpose:  Implements support for reading and writing GSC Geogrid format.
@@ -50,7 +49,7 @@ class GSCDataset : public RawDataset
                 GSCDataset();
                 ~GSCDataset();
 
-    CPLErr      GetGeoTransform( double * padfTransform );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

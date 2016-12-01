@@ -1,7 +1,7 @@
 require 'test/unit'
 require 'gdal/ogr'
 
-RUBY_OGR_DIRECTORY = File.expand_path(File.dirname(__FILE__)) 
+RUBY_OGR_DIRECTORY = File.expand_path(File.dirname(__FILE__))
 
 def data_directory
   return File.join(RUBY_OGR_DIRECTORY, "..", "..", "ogr", "data")
@@ -28,7 +28,7 @@ def populate_poly_layer(layer)
   # Create a feature to hold data
   dst_feat = Gdal::Ogr::Feature.new(feature_def = layer.get_layer_defn())
 
-  # Copy features over    
+  # Copy features over
   poly_feat = []
 
   poly_lyr.each do |feat|
@@ -46,11 +46,11 @@ end
 def check_poly_layer(layer, poly_feat)
   # Verify that stuff we just wrote is still OK.
   expect = [168, 169, 166, 158, 165]
-    
+
   layer.set_attribute_filter( 'eas_id < 170' )
   assert_equal(expect.size, layer.get_feature_count)
   layer.reset_reading()
-    
+
   tr = check_features_against_list(layer,
                                    'eas_id', expect )
 
@@ -66,7 +66,7 @@ def check_poly_layer(layer, poly_feat)
       assert_equal(orig_feat.get_field(i),
                    read_feat.get_field(i),
                    "Attribute #{i} does not match")
-    end        
+    end
   end
 end
 
@@ -86,10 +86,10 @@ def check_features_against_list( layer, field_name, value_list )
 
     # Get the value for the field
     actual_value = feat.get_field(field_index)
-    
+
     assert_equal(expected_value, actual_value,
                  "Field #{field_name} feature #{i} did not match expected value #{expected_value}, got #{actual_value}")
-      
+
     i += 1
   end
 
@@ -110,7 +110,7 @@ def check_feature_geometry(feat, geom, max_error = 0.0001)
   else
     geom = geom.clone()
   end
-  
+
   if not f_geom.nil? and geom.nil?
     flunk('expected NULL geometry but got one.')
   elsif f_geom.nil? and not geom.nil?
@@ -120,7 +120,7 @@ def check_feature_geometry(feat, geom, max_error = 0.0001)
   assert_equal(f_geom.get_geometry_name,
                geom.get_geometry_name,
                'geometry names do not match')
-  
+
   assert_equal(f_geom.get_geometry_count,
                geom.get_geometry_count,
                'sub-geometry counts do not match')
@@ -161,15 +161,15 @@ def quick_create_layer_def( lyr, field_list)
 
   field_list.each do |field_array|
     name = field_array[0]
-      
+
     if field_array.size > 1
       type = field_array[1]
     else
       type = Gdal::Ogr.OFTString
     end
-      
+
     field_defn = Gdal::Ogr::FieldDefn.new( name, type )
-        
+
     field_defn.set_width(field_array[2].to_int) if field_array.size > 2
     field_defn.set_precision(field_array[3].to_int) if field_array.size > 3
 
@@ -192,7 +192,7 @@ end
     #result = layer.CreateFeature( feature )
 
     #feature.Destroy()
-    
+
     #if result != 0:
     #raise ValueError, 'CreateFeature() failed in ogrtest.quick_create_feature()'
-    
+

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,19 +30,16 @@
 #include "wmsdriver.h"
 #include "minidriver_tms.h"
 
+CPL_CVSID("$Id$");
 
-CPP_GDALWMSMiniDriverFactory(TMS)
+WMSMiniDriver_TMS::WMSMiniDriver_TMS() {}
 
-GDALWMSMiniDriver_TMS::GDALWMSMiniDriver_TMS() {
-}
+WMSMiniDriver_TMS::~WMSMiniDriver_TMS() {}
 
-GDALWMSMiniDriver_TMS::~GDALWMSMiniDriver_TMS() {
-}
-
-CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config) {
+CPLErr WMSMiniDriver_TMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0') {
             m_base_url = base_url;
@@ -66,7 +62,7 @@ CPLErr GDALWMSMiniDriver_TMS::Initialize(CPLXMLNode *config) {
     return ret;
 }
 
-void GDALWMSMiniDriver_TMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_TMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
@@ -74,11 +70,11 @@ void GDALWMSMiniDriver_TMS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_TMS::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_TMS::ImageRequest(CPL_UNUSED CPLString *url,
                                          CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
+void WMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri) {
     const GDALWMSDataWindow *data_window = m_parent_dataset->WMSGetDataWindow();
     int tms_y;
 
@@ -102,5 +98,4 @@ void GDALWMSMiniDriver_TMS::TiledImageRequest(CPLString *url, const GDALWMSImage
     /* 3 digits, like http://tile8.geo.admin.ch/geoadmin/ch.swisstopo.pixelkarte-farbe */
     URLSearchAndReplace(url, "${xxx}", "%03d/%03d/%03d", tiri.m_x / 1000000, (tiri.m_x / 1000) % 1000, tiri.m_x % 1000);
     URLSearchAndReplace(url, "${yyy}", "%03d/%03d/%03d", tms_y / 1000000, (tms_y / 1000) % 1000, tms_y % 1000);
-
 }

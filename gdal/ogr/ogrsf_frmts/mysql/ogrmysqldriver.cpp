@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMySQLDriver class.
@@ -101,7 +100,6 @@ static GDALDataset *OGRMySQLDriverOpen( GDALOpenInfo* poOpenInfo )
         return poDS;
 }
 
-
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -116,7 +114,6 @@ static GDALDataset *OGRMySQLDriverCreate( const char * pszName,
     OGRMySQLDataSource     *poDS;
 
     poDS = new OGRMySQLDataSource();
-
 
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {

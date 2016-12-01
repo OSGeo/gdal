@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements decoder of geomedia geometry blobs
@@ -32,14 +31,14 @@
 
 CPL_CVSID("$Id$");
 
-#define GEOMEDIA_POINT          0xC0
-#define GEOMEDIA_ORIENTED_POINT 0xC8
-#define GEOMEDIA_POLYLINE       0xC2
-#define GEOMEDIA_POLYGON        0xC3
-#define GEOMEDIA_BOUNDARY       0xC5
-#define GEOMEDIA_COLLECTION     0xC6
-#define GEOMEDIA_MULTILINE      0xCB
-#define GEOMEDIA_MULTIPOLYGON   0xCC
+static const int GEOMEDIA_POINT          = 0xC0;
+static const int GEOMEDIA_ORIENTED_POINT = 0xC8;
+static const int GEOMEDIA_POLYLINE       = 0xC2;
+static const int GEOMEDIA_POLYGON        = 0xC3;
+static const int GEOMEDIA_BOUNDARY       = 0xC5;
+static const int GEOMEDIA_COLLECTION     = 0xC6;
+static const int GEOMEDIA_MULTILINE      = 0xCB;
+static const int GEOMEDIA_MULTIPOLYGON   = 0xCC;
 
 /************************************************************************/
 /*                       OGRCreateFromGeomedia()                        */
@@ -65,14 +64,16 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
     if( nGeomType == GEOMEDIA_POINT ||
         nGeomType == GEOMEDIA_ORIENTED_POINT )
     {
-        if (nBytes < 3 * 8)
+        if( nBytes < 3 * 8 )
             return OGRERR_FAILURE;
 
-        double dfX, dfY, dfZ;
+        double dfX = 0.0;
         memcpy(&dfX, pabyGeom, 8);
         CPL_LSBPTR64(&dfX);
+        double dfY = 0.0;
         memcpy(&dfY, pabyGeom + 8, 8);
         CPL_LSBPTR64(&dfY);
+        double dfZ = 0.0;
         memcpy(&dfZ, pabyGeom + 16, 8);
         CPL_LSBPTR64(&dfZ);
 
@@ -80,30 +81,32 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
          return OGRERR_NONE;
     }
-    else if ( nGeomType == GEOMEDIA_POLYLINE )
+    else if( nGeomType == GEOMEDIA_POLYLINE )
     {
-        if (nBytes < 4)
+        if( nBytes < 4 )
             return OGRERR_FAILURE;
 
-        int nPoints;
+        int nPoints = 0;
         memcpy(&nPoints, pabyGeom, 4);
         CPL_LSBPTR32(&nPoints);
 
         pabyGeom += 4;
         nBytes -= 4;
 
-        if (nPoints < 0 || nPoints > INT_MAX / 24 || nBytes < nPoints * 24)
+        if( nPoints < 0 || nPoints > INT_MAX / 24 || nBytes < nPoints * 24 )
             return OGRERR_FAILURE;
 
         OGRLineString* poLS = new OGRLineString();
         poLS->setNumPoints(nPoints);
-        for(int i=0;i<nPoints;i++)
+        for( int i = 0; i < nPoints; i++ )
         {
-            double dfX, dfY, dfZ;
+            double dfX = 0.0;
             memcpy(&dfX, pabyGeom, 8);
             CPL_LSBPTR64(&dfX);
+            double dfY = 0.0;
             memcpy(&dfY, pabyGeom + 8, 8);
             CPL_LSBPTR64(&dfY);
+            double dfZ = 0.0;
             memcpy(&dfZ, pabyGeom + 16, 8);
             CPL_LSBPTR64(&dfZ);
 
@@ -116,24 +119,24 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
         return OGRERR_NONE;
     }
-    else if ( nGeomType == GEOMEDIA_POLYGON )
+    else if( nGeomType == GEOMEDIA_POLYGON )
     {
-        if (nBytes < 4)
+        if( nBytes < 4 )
             return OGRERR_FAILURE;
 
-        int nPoints;
+        int nPoints = 0;
         memcpy(&nPoints, pabyGeom, 4);
         CPL_LSBPTR32(&nPoints);
 
         pabyGeom += 4;
         nBytes -= 4;
 
-        if (nPoints < 0 || nPoints > INT_MAX / 24 || nBytes < nPoints * 24)
+        if( nPoints < 0 || nPoints > INT_MAX / 24 || nBytes < nPoints * 24 )
             return OGRERR_FAILURE;
 
         OGRLinearRing* poRing = new OGRLinearRing();
         poRing->setNumPoints(nPoints);
-        for(int i=0;i<nPoints;i++)
+        for( int i = 0; i < nPoints; i++ )
         {
             double dfX, dfY, dfZ;
             memcpy(&dfX, pabyGeom, 8);
@@ -154,9 +157,9 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
         return OGRERR_NONE;
     }
-    else if ( nGeomType == GEOMEDIA_BOUNDARY )
+    else if( nGeomType == GEOMEDIA_BOUNDARY )
     {
-        if (nBytes < 4)
+        if( nBytes < 4 )
             return OGRERR_FAILURE;
 
         int nExteriorSize;
@@ -166,14 +169,15 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         pabyGeom += 4;
         nBytes -= 4;
 
-        if (nBytes < nExteriorSize)
+        if( nBytes < nExteriorSize )
             return OGRERR_FAILURE;
 
         OGRGeometry* poExteriorGeom = NULL;
-        if (OGRCreateFromGeomedia( pabyGeom, &poExteriorGeom, nExteriorSize ) != OGRERR_NONE)
+        if( OGRCreateFromGeomedia( pabyGeom, &poExteriorGeom,
+                                   nExteriorSize ) != OGRERR_NONE )
             return OGRERR_FAILURE;
 
-        if ( wkbFlatten( poExteriorGeom->getGeometryType() ) != wkbPolygon )
+        if( wkbFlatten( poExteriorGeom->getGeometryType() ) != wkbPolygon )
         {
             delete poExteriorGeom;
             return OGRERR_FAILURE;
@@ -182,7 +186,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         pabyGeom += nExteriorSize;
         nBytes -= nExteriorSize;
 
-        if (nBytes < 4)
+        if( nBytes < 4 )
         {
             delete poExteriorGeom;
             return OGRERR_FAILURE;
@@ -195,28 +199,31 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         pabyGeom += 4;
         nBytes -= 4;
 
-        if (nBytes < nInteriorSize)
+        if( nBytes < nInteriorSize )
         {
             delete poExteriorGeom;
             return OGRERR_FAILURE;
         }
 
         OGRGeometry* poInteriorGeom = NULL;
-        if (OGRCreateFromGeomedia( pabyGeom, &poInteriorGeom, nInteriorSize ) != OGRERR_NONE)
+        if( OGRCreateFromGeomedia( pabyGeom, &poInteriorGeom,
+                                   nInteriorSize ) != OGRERR_NONE )
         {
             delete poExteriorGeom;
             return OGRERR_FAILURE;
         }
 
-        OGRwkbGeometryType interiorGeomType = wkbFlatten( poInteriorGeom->getGeometryType() );
-        if ( interiorGeomType == wkbPolygon )
+        const OGRwkbGeometryType interiorGeomType =
+            wkbFlatten( poInteriorGeom->getGeometryType() );
+        if( interiorGeomType == wkbPolygon )
         {
-            ((OGRPolygon*)poExteriorGeom)->addRing(((OGRPolygon*)poInteriorGeom)->getExteriorRing());
+            ((OGRPolygon*)poExteriorGeom)->
+                addRing(((OGRPolygon*)poInteriorGeom)->getExteriorRing());
         }
-        else if ( interiorGeomType == wkbMultiPolygon )
+        else if( interiorGeomType == wkbMultiPolygon )
         {
             const int numGeom = ((OGRMultiPolygon*)poInteriorGeom)->getNumGeometries();
-            for ( int i = 0; i < numGeom; ++i )
+            for( int i = 0; i < numGeom; ++i )
             {
                 OGRPolygon* poInteriorPolygon =
                     (OGRPolygon*)((OGRMultiPolygon*)poInteriorGeom)->getGeometryRef(i);
@@ -235,11 +242,11 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
         return OGRERR_NONE;
     }
-    else if ( nGeomType == GEOMEDIA_COLLECTION ||
-              nGeomType == GEOMEDIA_MULTILINE ||
-              nGeomType == GEOMEDIA_MULTIPOLYGON )
+    else if( nGeomType == GEOMEDIA_COLLECTION ||
+             nGeomType == GEOMEDIA_MULTILINE ||
+             nGeomType == GEOMEDIA_MULTIPOLYGON )
     {
-        if (nBytes < 4)
+        if( nBytes < 4 )
             return OGRERR_FAILURE;
 
         int nParts;
@@ -249,11 +256,12 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         pabyGeom += 4;
         nBytes -= 4;
 
-        if (nParts < 0 || nParts > INT_MAX / (4 + 16) || nBytes < nParts * (4 + 16))
+        if( nParts < 0 || nParts > INT_MAX / (4 + 16) ||
+            nBytes < nParts * (4 + 16) )
             return OGRERR_FAILURE;
 
-        /* Can this collection be considered as a multipolyline or multipolygon ? */
-        if ( nGeomType == GEOMEDIA_COLLECTION )
+        // Can this collection be considered as a multipolyline or multipolygon?
+        if( nGeomType == GEOMEDIA_COLLECTION )
         {
             GByte* pabyGeomBackup = pabyGeom;
             int nBytesBackup = nBytes;
@@ -261,15 +269,15 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             bool bAllPolyline = true;
             bool bAllPolygon = true;
 
-            for(int i=0;i<nParts;i++)
+            for( int i = 0; i < nParts; i++ )
             {
-                if (nBytes < 4)
+                if( nBytes < 4 )
                     return OGRERR_FAILURE;
-                int nSubBytes;
+                int nSubBytes = 0;
                 memcpy(&nSubBytes, pabyGeom, 4);
                 CPL_LSBPTR32(&nSubBytes);
 
-                if (nSubBytes < 0)
+                if( nSubBytes < 0 )
                 {
                     return OGRERR_FAILURE;
                 }
@@ -277,7 +285,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                 pabyGeom += 4;
                 nBytes -= 4;
 
-                if (nBytes < nSubBytes)
+                if( nBytes < nSubBytes )
                 {
                     return OGRERR_FAILURE;
                 }
@@ -285,13 +293,14 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                 if( nSubBytes < 16 )
                     return OGRERR_FAILURE;
 
-                if( !(pabyGeom[1] == 0xFF && pabyGeom[2] == 0xD2 && pabyGeom[3] == 0x0F) )
+                if( !(pabyGeom[1] == 0xFF && pabyGeom[2] ==
+                      0xD2 && pabyGeom[3] == 0x0F) )
                     return OGRERR_FAILURE;
 
                 int nSubGeomType = pabyGeom[0];
-                if ( nSubGeomType != GEOMEDIA_POLYLINE )
+                if( nSubGeomType != GEOMEDIA_POLYLINE )
                     bAllPolyline = false;
-                if ( nSubGeomType != GEOMEDIA_POLYGON )
+                if( nSubGeomType != GEOMEDIA_POLYGON )
                     bAllPolygon = false;
 
                 pabyGeom += nSubBytes;
@@ -301,19 +310,20 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             pabyGeom = pabyGeomBackup;
             nBytes = nBytesBackup;
 
-            if (bAllPolyline)
+            if( bAllPolyline )
                 nGeomType = GEOMEDIA_MULTILINE;
-            else if (bAllPolygon)
+            else if( bAllPolygon )
                 nGeomType = GEOMEDIA_MULTIPOLYGON;
         }
 
-        OGRGeometryCollection* poColl = (nGeomType == GEOMEDIA_MULTILINE) ? new OGRMultiLineString() :
-                                        (nGeomType == GEOMEDIA_MULTIPOLYGON) ? new OGRMultiPolygon() :
-                                                              new OGRGeometryCollection();
+        OGRGeometryCollection* poColl =
+            nGeomType == GEOMEDIA_MULTILINE ? new OGRMultiLineString() :
+            nGeomType == GEOMEDIA_MULTIPOLYGON ? new OGRMultiPolygon() :
+            new OGRGeometryCollection();
 
-        for(int i=0;i<nParts;i++)
+        for( int i = 0; i < nParts; i++ )
         {
-            if (nBytes < 4)
+            if( nBytes < 4 )
             {
                 delete poColl;
                 return OGRERR_FAILURE;
@@ -322,7 +332,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             memcpy(&nSubBytes, pabyGeom, 4);
             CPL_LSBPTR32(&nSubBytes);
 
-            if (nSubBytes < 0)
+            if( nSubBytes < 0 )
             {
                 delete poColl;
                 return OGRERR_FAILURE;
@@ -331,17 +341,18 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             pabyGeom += 4;
             nBytes -= 4;
 
-            if (nBytes < nSubBytes)
+            if( nBytes < nSubBytes )
             {
                 delete poColl;
                 return OGRERR_FAILURE;
             }
 
             OGRGeometry* poSubGeom = NULL;
-            if (OGRCreateFromGeomedia( pabyGeom, &poSubGeom, nSubBytes ) == OGRERR_NONE)
+            if( OGRCreateFromGeomedia( pabyGeom, &poSubGeom,
+                                       nSubBytes ) == OGRERR_NONE )
             {
-                if (wkbFlatten(poColl->getGeometryType()) == wkbMultiPolygon &&
-                    wkbFlatten(poSubGeom->getGeometryType()) == wkbLineString)
+                if( wkbFlatten(poColl->getGeometryType()) == wkbMultiPolygon &&
+                    wkbFlatten(poSubGeom->getGeometryType()) == wkbLineString )
                 {
                     OGRPolygon* poPoly = new OGRPolygon();
                     OGRLinearRing* poRing = new OGRLinearRing();
@@ -351,7 +362,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                     poSubGeom = poPoly;
                 }
 
-                if (poColl->addGeometryDirectly(poSubGeom) != OGRERR_NONE)
+                if( poColl->addGeometryDirectly(poSubGeom) != OGRERR_NONE )
                 {
                     delete poSubGeom;
                 }
@@ -373,43 +384,41 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
     return OGRERR_FAILURE;
 }
 
-
 /************************************************************************/
 /*                         OGRGetGeomediaSRS()                          */
 /************************************************************************/
 
 OGRSpatialReference* OGRGetGeomediaSRS(OGRFeature* poFeature)
 {
-    if (poFeature == NULL)
+    if( poFeature == NULL )
         return NULL;
 
-    int nGeodeticDatum = poFeature->GetFieldAsInteger("GeodeticDatum");
-    int nEllipsoid = poFeature->GetFieldAsInteger("Ellipsoid");
-    int nProjAlgorithm = poFeature->GetFieldAsInteger("ProjAlgorithm");
+    const int nGeodeticDatum = poFeature->GetFieldAsInteger("GeodeticDatum");
+    const int nEllipsoid = poFeature->GetFieldAsInteger("Ellipsoid");
+    const int nProjAlgorithm = poFeature->GetFieldAsInteger("ProjAlgorithm");
 
-    if (nGeodeticDatum == 17 && nEllipsoid == 22)
-    {
-        if (nProjAlgorithm == 12)
-        {
-            OGRSpatialReference* poSRS = new OGRSpatialReference();
+    if( !(nGeodeticDatum == 17 && nEllipsoid == 22) )
+        return NULL;
 
-            const char* pszDescription = poFeature->GetFieldAsString("Description");
-            if (pszDescription && pszDescription[0] != 0)
-                poSRS->SetNode( "PROJCS", pszDescription );
-            poSRS->SetWellKnownGeogCS("WGS84");
+    if( nProjAlgorithm != 12 )
+        return NULL;
 
-            double dfStdP1 = poFeature->GetFieldAsDouble("StandPar1");
-            double dfStdP2 = poFeature->GetFieldAsDouble("StandPar2");
-            double dfCenterLat = poFeature->GetFieldAsDouble("LatOfOrigin");
-            double dfCenterLong = poFeature->GetFieldAsDouble("LonOfOrigin");
-            double dfFalseEasting = poFeature->GetFieldAsDouble("FalseX");
-            double dfFalseNorthing = poFeature->GetFieldAsDouble("FalseY");
-            poSRS->SetACEA( dfStdP1, dfStdP2,
-                            dfCenterLat, dfCenterLong,
-                            dfFalseEasting, dfFalseNorthing );
-            return poSRS;
-        }
-    }
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
 
-    return NULL;
+    const char* pszDescription =
+        poFeature->GetFieldAsString("Description");
+    if( pszDescription && pszDescription[0] != 0 )
+        poSRS->SetNode( "PROJCS", pszDescription );
+    poSRS->SetWellKnownGeogCS("WGS84");
+
+    const double dfStdP1 = poFeature->GetFieldAsDouble("StandPar1");
+    const double dfStdP2 = poFeature->GetFieldAsDouble("StandPar2");
+    const double dfCenterLat = poFeature->GetFieldAsDouble("LatOfOrigin");
+    const double dfCenterLong = poFeature->GetFieldAsDouble("LonOfOrigin");
+    const double dfFalseEasting = poFeature->GetFieldAsDouble("FalseX");
+    const double dfFalseNorthing = poFeature->GetFieldAsDouble("FalseY");
+    poSRS->SetACEA( dfStdP1, dfStdP2,
+                    dfCenterLat, dfCenterLong,
+                    dfFalseEasting, dfFalseNorthing );
+    return poSRS;
 }

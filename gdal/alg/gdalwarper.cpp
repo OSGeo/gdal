@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Implementation of high level convenience APIs for warper.
@@ -28,11 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdalwarper.h"
-#include "cpl_string.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+#include <algorithm>
+#include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_minixml.h"
-#include "ogr_api.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 #include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+
+#if (defined(__x86_64) || defined(_M_X64))
+#include <emmintrin.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -86,14 +103,10 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                     GDALWarpOptions *psOptions )
 
 {
-    GDALWarpOptions *psWOptions;
-
 /* -------------------------------------------------------------------- */
 /*      Setup a reprojection based transformer.                         */
 /* -------------------------------------------------------------------- */
-    void *hTransformArg;
-
-    hTransformArg =
+    void *hTransformArg =
         GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
                                          TRUE, 1000.0, 0 );
 
@@ -104,10 +117,10 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*      Create a copy of the user provided options, or a defaulted      */
 /*      options structure.                                              */
 /* -------------------------------------------------------------------- */
-    if( psOptions == NULL )
-        psWOptions = GDALCreateWarpOptions();
-    else
-        psWOptions = GDALCloneWarpOptions( psOptions );
+    GDALWarpOptions *psWOptions =
+        psOptions == NULL
+        ? GDALCreateWarpOptions()
+        : GDALCloneWarpOptions( psOptions );
 
     psWOptions->eResampleAlg = eResampleAlg;
 
@@ -131,22 +144,20 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Set file and band mapping.                                      */
 /* -------------------------------------------------------------------- */
-    int  iBand;
-
     psWOptions->hSrcDS = hSrcDS;
     psWOptions->hDstDS = hDstDS;
 
     if( psWOptions->nBandCount == 0 )
     {
-        psWOptions->nBandCount = MIN(GDALGetRasterCount(hSrcDS),
+        psWOptions->nBandCount = std::min(GDALGetRasterCount(hSrcDS),
                                      GDALGetRasterCount(hDstDS));
 
-        psWOptions->panSrcBands = (int *)
-            CPLMalloc(sizeof(int) * psWOptions->nBandCount);
-        psWOptions->panDstBands = (int *)
-            CPLMalloc(sizeof(int) * psWOptions->nBandCount);
+        psWOptions->panSrcBands = static_cast<int *>(
+            CPLMalloc(sizeof(int) * psWOptions->nBandCount));
+        psWOptions->panDstBands = static_cast<int *>(
+            CPLMalloc(sizeof(int) * psWOptions->nBandCount));
 
-        for( iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
+        for( int iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
         {
             psWOptions->panSrcBands[iBand] = iBand+1;
             psWOptions->panDstBands[iBand] = iBand+1;
@@ -157,30 +168,27 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*      Set source nodata values if the source dataset seems to have    */
 /*      any. Same for target nodata values                              */
 /* -------------------------------------------------------------------- */
-    for( iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
+    for( int iBand = 0; iBand < psWOptions->nBandCount; iBand++ )
     {
         GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, iBand+1 );
-        int             bGotNoData = FALSE;
-        double          dfNoDataValue;
 
         if (GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
         {
             psWOptions->nSrcAlphaBand = iBand + 1;
         }
 
-        dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
+        int bGotNoData = FALSE;
+        double dfNoDataValue = GDALGetRasterNoDataValue( hBand, &bGotNoData );
         if( bGotNoData )
         {
             if( psWOptions->padfSrcNoDataReal == NULL )
             {
-                int  ii;
+                psWOptions->padfSrcNoDataReal = static_cast<double *>(
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
+                psWOptions->padfSrcNoDataImag = static_cast<double *>(
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
 
-                psWOptions->padfSrcNoDataReal = (double *)
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
-                psWOptions->padfSrcNoDataImag = (double *)
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
-
-                for( ii = 0; ii < psWOptions->nBandCount; ii++ )
+                for( int ii = 0; ii < psWOptions->nBandCount; ii++ )
                 {
                     psWOptions->padfSrcNoDataReal[ii] = -1.1e20;
                     psWOptions->padfSrcNoDataImag[ii] = 0.0;
@@ -190,7 +198,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
             psWOptions->padfSrcNoDataReal[iBand] = dfNoDataValue;
         }
 
-        // Deal with target band
+        // Deal with target band.
         hBand = GDALGetRasterBand( hDstDS, iBand+1 );
         if (hBand && GDALGetRasterColorInterpretation(hBand) == GCI_AlphaBand)
         {
@@ -202,14 +210,12 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
         {
             if( psWOptions->padfDstNoDataReal == NULL )
             {
-                int  ii;
+                psWOptions->padfDstNoDataReal = static_cast<double *>(
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
+                psWOptions->padfDstNoDataImag = static_cast<double *>(
+                    CPLMalloc(sizeof(double) * psWOptions->nBandCount));
 
-                psWOptions->padfDstNoDataReal = (double *)
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
-                psWOptions->padfDstNoDataImag = (double *)
-                    CPLMalloc(sizeof(double) * psWOptions->nBandCount);
-
-                for( ii = 0; ii < psWOptions->nBandCount; ii++ )
+                for( int ii = 0; ii < psWOptions->nBandCount; ii++ )
                 {
                     psWOptions->padfDstNoDataReal[ii] = -1.1e20;
                     psWOptions->padfDstNoDataImag[ii] = 0.0;
@@ -232,10 +238,8 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Create a warp options based on the options.                     */
 /* -------------------------------------------------------------------- */
-    GDALWarpOperation  oWarper;
-    CPLErr eErr;
-
-    eErr = oWarper.Initialize( psWOptions );
+    GDALWarpOperation oWarper;
+    CPLErr eErr = oWarper.Initialize( psWOptions );
 
     if( eErr == CE_None )
         eErr = oWarper.ChunkAndWarpImage( 0, 0,
@@ -261,6 +265,7 @@ GDALReprojectImage( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /*      This is a "quicky" reprojection API.                            */
 /************************************************************************/
 
+/** Reproject an image and create the target reprojected image */
 CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     GDALDatasetH hSrcDS, const char *pszSrcWKT,
     const char *pszDstFilename, const char *pszDstWKT,
@@ -296,9 +301,7 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    void *hTransformArg;
-
-    hTransformArg =
+    void *hTransformArg =
         GDALCreateGenImgProjTransformer( hSrcDS, pszSrcWKT, NULL, pszDstWKT,
                                          TRUE, 1000.0, 0 );
 
@@ -308,8 +311,9 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
 /* -------------------------------------------------------------------- */
-    double adfDstGeoTransform[6];
-    int    nPixels, nLines;
+    double adfDstGeoTransform[6] = {};
+    int nPixels = 0;
+    int nLines = 0;
 
     if( GDALSuggestedWarpOutput( hSrcDS,
                                  GDALGenImgProjTransform, hTransformArg,
@@ -322,12 +326,11 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS;
-
-    hDstDS = GDALCreate( hDstDriver, pszDstFilename, nPixels, nLines,
-                         GDALGetRasterCount(hSrcDS),
-                         GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
-                         papszCreateOptions );
+    GDALDatasetH hDstDS =
+        GDALCreate( hDstDriver, pszDstFilename, nPixels, nLines,
+                    GDALGetRasterCount(hSrcDS),
+                    GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1)),
+                    papszCreateOptions );
 
     if( hDstDS == NULL )
         return CE_Failure;
@@ -341,9 +344,7 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 /* -------------------------------------------------------------------- */
 /*      Perform the reprojection.                                       */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr ;
-
-    eErr =
+    CPLErr eErr =
         GDALReprojectImage( hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
                             eResampleAlg, dfWarpMemoryLimit, dfMaxError,
                             pfnProgress, pProgressArg, psOptions );
@@ -351,6 +352,40 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     GDALClose( hDstDS );
 
     return eErr;
+}
+
+/************************************************************************/
+/*                       GDALWarpNoDataMaskerT()                        */
+/************************************************************************/
+
+template<class T> static CPLErr GDALWarpNoDataMaskerT( const double *padfNoData,
+                                                       size_t nPixels,
+                                                       const T *pData ,
+                                                       GUInt32 *panValidityMask,
+                                                       int* pbOutAllValid )
+{
+    // Nothing to do if value is out of range.
+    if( padfNoData[0] < std::numeric_limits<T>::min() ||
+        padfNoData[0] > std::numeric_limits<T>::max() + 0.000001
+        || padfNoData[1] != 0.0 )
+    {
+        *pbOutAllValid = TRUE;
+        return CE_None;
+    }
+
+    const int nNoData = static_cast<int>(floor(padfNoData[0] + 0.000001));
+    int bAllValid = TRUE;
+    for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
+    {
+        if( pData[iOffset] == nNoData )
+        {
+            bAllValid = FALSE;
+            panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
+        }
+    }
+    *pbOutAllValid = bAllValid;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -364,112 +399,53 @@ CPLErr
 GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                       int /* nXOff */, int /* nYOff */, int nXSize, int nYSize,
                       GByte **ppImageData,
-                      int bMaskIsFloat, void *pValidityMask, int* pbOutAllValid )
+                      int bMaskIsFloat, void *pValidityMask,
+                      int* pbOutAllValid )
 
 {
-    double *padfNoData = (double *) pMaskFuncArg;
-    GUInt32 *panValidityMask = (GUInt32 *) pValidityMask;
+    const double *padfNoData = reinterpret_cast<const double*>(pMaskFuncArg);
+    GUInt32 *panValidityMask = reinterpret_cast<GUInt32 *>(pValidityMask);
+    const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     *pbOutAllValid = FALSE;
 
     if( nBandCount != 1 || bMaskIsFloat )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid nBandCount or bMaskIsFloat argument in SourceNoDataMask" );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Invalid nBandCount or bMaskIsFloat argument in SourceNoDataMask");
         return CE_Failure;
     }
 
     switch( eType )
     {
       case GDT_Byte:
-      {
-          int nNoData = (int) padfNoData[0];
-          GByte *pabyData = (GByte *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < 0.0 || padfNoData[0] > 255.000001
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( pabyData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return
+              GDALWarpNoDataMaskerT(
+                  padfNoData, nPixels,
+                  reinterpret_cast<const GByte*>(*ppImageData),
+                  panValidityMask, pbOutAllValid );
 
       case GDT_Int16:
-      {
-          int nNoData = (int) padfNoData[0];
-          GInt16 *panData = (GInt16 *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < -32768 || padfNoData[0] > 32767
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( panData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return
+              GDALWarpNoDataMaskerT(
+                   padfNoData, nPixels,
+                   reinterpret_cast<const GInt16*>(*ppImageData),
+                   panValidityMask, pbOutAllValid );
 
       case GDT_UInt16:
-      {
-          int nNoData = (int) padfNoData[0];
-          GUInt16 *panData = (GUInt16 *) *ppImageData;
-          int iOffset;
-
-          // nothing to do if value is out of range.
-          if( padfNoData[0] < 0 || padfNoData[0] > 65535
-              || padfNoData[1] != 0.0 )
-          {
-              *pbOutAllValid = TRUE;
-              return CE_None;
-          }
-
-          int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
-          {
-              if( panData[iOffset] == nNoData )
-              {
-                  bAllValid = FALSE;
-                  panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
-              }
-          }
-          *pbOutAllValid = bAllValid;
-      }
-      break;
+          return GDALWarpNoDataMaskerT(
+                      padfNoData, nPixels,
+                      reinterpret_cast<const GUInt16*>(*ppImageData),
+                      panValidityMask, pbOutAllValid );
 
       case GDT_Float32:
       {
-          float fNoData = (float) padfNoData[0];
-          float *pafData = (float *) *ppImageData;
-          int iOffset;
-          int bIsNoDataNan = CPLIsNan(fNoData);
+          const float fNoData = static_cast<float>(padfNoData[0]);
+          const float *pafData = reinterpret_cast<const float*>(*ppImageData);
+          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
 
-          // nothing to do if value is out of range.
+          // Nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
           {
               *pbOutAllValid = TRUE;
@@ -477,10 +453,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           }
 
           int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
           {
               float fVal = pafData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(fVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
+              if( (bIsNoDataNan && CPLIsNan(fVal)) ||
+                  (!bIsNoDataNan && ARE_REAL_EQUAL(fVal, fNoData)) )
               {
                   bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
@@ -492,12 +469,12 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
       case GDT_Float64:
       {
-          double dfNoData = padfNoData[0];
-          double *padfData = (double *) *ppImageData;
-          int iOffset;
-          int bIsNoDataNan = CPLIsNan(dfNoData);
+          const double dfNoData = padfNoData[0];
+          const double *padfData =
+              reinterpret_cast<const double*>(*ppImageData);
+          const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
 
-          // nothing to do if value is out of range.
+          // Nothing to do if value is out of range.
           if( padfNoData[1] != 0.0 )
           {
               *pbOutAllValid = TRUE;
@@ -505,10 +482,11 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           }
 
           int bAllValid = TRUE;
-          for( iOffset = nXSize*nYSize-1; iOffset >= 0; iOffset-- )
+          for( size_t iOffset = 0; iOffset < nPixels; ++iOffset )
           {
               double dfVal = padfData[iOffset];
-              if( (bIsNoDataNan && CPLIsNan(dfVal)) || (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
+              if( (bIsNoDataNan && CPLIsNan(dfVal)) ||
+                  (!bIsNoDataNan && ARE_REAL_EQUAL(dfVal, dfNoData)) )
               {
                   bAllValid = FALSE;
                   panValidityMask[iOffset>>5] &= ~(0x01 << (iOffset & 0x1f));
@@ -520,36 +498,38 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
       default:
       {
-          double  *padfWrk;
-          int     iLine, iPixel;
           const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-          int bIsNoDataRealNan = CPLIsNan(padfNoData[0]);
-          int bIsNoDataImagNan = CPLIsNan(padfNoData[1]);
+          const bool bIsNoDataRealNan = CPL_TO_BOOL(CPLIsNan(padfNoData[0]));
+          const bool bIsNoDataImagNan = CPL_TO_BOOL(CPLIsNan(padfNoData[1]));
 
-          padfWrk = (double *) CPLMalloc(nXSize * sizeof(double) * 2);
+          double *padfWrk = static_cast<double *>(
+              CPLMalloc(nXSize * sizeof(double) * 2));
           int bAllValid = TRUE;
-          for( iLine = 0; iLine < nYSize; iLine++ )
+          for( int iLine = 0; iLine < nYSize; iLine++ )
           {
-              GDALCopyWords( ((GByte *) *ppImageData)+nWordSize*iLine*nXSize,
+              GDALCopyWords( (*ppImageData)+nWordSize*iLine*nXSize,
                              eType, nWordSize,
                              padfWrk, GDT_CFloat64, 16, nXSize );
 
-              for( iPixel = 0; iPixel < nXSize; iPixel++ )
+              for( int iPixel = 0; iPixel < nXSize; ++iPixel )
               {
                   if( ((bIsNoDataRealNan && CPLIsNan(padfWrk[iPixel*2])) ||
-                       (!bIsNoDataRealNan && ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0])))
+                       (!bIsNoDataRealNan &&
+                         ARE_REAL_EQUAL(padfWrk[iPixel*2], padfNoData[0])))
                       && ((bIsNoDataImagNan && CPLIsNan(padfWrk[iPixel*2+1])) ||
-                          (!bIsNoDataImagNan && ARE_REAL_EQUAL(padfWrk[iPixel*2+1], padfNoData[1]))) )
+                          (!bIsNoDataImagNan &&
+                           ARE_REAL_EQUAL(padfWrk[iPixel*2+1],
+                                          padfNoData[1]))) )
                   {
-                      int iOffset = iPixel + iLine * nXSize;
+                      size_t iOffset =
+                          iPixel + static_cast<size_t>(iLine) * nXSize;
 
                       bAllValid = FALSE;
                       panValidityMask[iOffset>>5] &=
                           ~(0x01 << (iOffset & 0x1f));
                   }
               }
-
           }
           *pbOutAllValid = bAllValid;
 
@@ -571,60 +551,193 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
 
 CPLErr
 GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
-                        CPL_UNUSED int nBandCount,
-                        CPL_UNUSED GDALDataType eType,
+                        int /* nBandCount */,
+                        GDALDataType /* eType */,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
                         int bMaskIsFloat, void *pValidityMask,
                         int* pbOutAllOpaque )
 
 {
-    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
-    float *pafMask = (float *) pValidityMask;
+    GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
+    float *pafMask = static_cast<float *>(pValidityMask);
     *pbOutAllOpaque = FALSE;
+    const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL || psWO->nSrcAlphaBand < 1 )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the alpha band.                                            */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
     GDALRasterBandH hAlphaBand = GDALGetRasterBand( psWO->hSrcDS,
                                                     psWO->nSrcAlphaBand );
     if (hAlphaBand == NULL)
         return CE_Failure;
 
-    eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                         pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+    // Rescale.
+    const float inv_alpha_max = static_cast<float>(1.0 / CPLAtof(
+      CSLFetchNameValueDef( psWO->papszWarpOptions, "SRC_ALPHA_MAX", "255" )));
+    bool bOutAllOpaque = true;
 
-    if( eErr != CE_None )
-        return eErr;
+    size_t iPixel = 0;
+    CPLErr eErr;
 
-/* -------------------------------------------------------------------- */
-/*      Rescale from 0-255 to 0.0-1.0.                                  */
-/* -------------------------------------------------------------------- */
-    int bOutAllOpaque = TRUE;
-    for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-    {                                    //  (1/255)
-        pafMask[iPixel] = (float)( pafMask[iPixel] * 0.00392157 );
-        if( pafMask[iPixel] >= 1.0F )
-            pafMask[iPixel] = 1.0F;
-        else
-            bOutAllOpaque = FALSE;
+
+#if (defined(__x86_64) || defined(_M_X64))
+    GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
+    // Make sure that pafMask is at least 8-byte aligned, which should
+    // normally be always the case if being a ptr returned by malloc().
+    if( (eDT == GDT_Byte || eDT == GDT_UInt16) && CPL_IS_ALIGNED(pafMask, 8) )
+    {
+        // Read data.
+        eErr = GDALRasterIOEx( hAlphaBand, GF_Read,
+                               nXOff, nYOff, nXSize, nYSize,
+                               pafMask, nXSize, nYSize, eDT,
+                               static_cast<GSpacing>(sizeof(int)),
+                               static_cast<GSpacing>(sizeof(int)) * nXSize,
+                               NULL );
+
+        if( eErr != CE_None )
+            return eErr;
+
+        // Make sure we have the correct alignment before doing SSE
+        // On Linux x86_64, the alignment should be always correct due
+        // the alignment of malloc() being 16 byte
+        const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+        if( !CPL_IS_ALIGNED(pafMask, 16) )
+        {
+            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                    inv_alpha_max;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
+            else
+                bOutAllOpaque = false;
+            iPixel ++;
+        }
+        CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
+        const __m128 xmm_inverse_alpha_max = _mm_load1_ps(&inv_alpha_max);
+        const float one_single = 1.0f;
+        const __m128 xmm_one = _mm_load1_ps(&one_single);
+        const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
+        __m128 xmmMaskNonOpaque0 = _mm_setzero_ps();
+        __m128 xmmMaskNonOpaque1 = _mm_setzero_ps();
+        __m128 xmmMaskNonOpaque2 = _mm_setzero_ps();
+        for( ; iPixel + 6*4-1 < nPixels; iPixel+=6*4 )
+        {
+            __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 0) )) );
+            __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 1) )) );
+            __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 2) )) );
+            __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 3) )) );
+            __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 4) )) );
+            __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 5) )) );
+            xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
+            xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
+            xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
+            xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_alpha_max);
+            xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_alpha_max);
+            xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_alpha_max);
+            xmmMaskNonOpaque0 =
+                _mm_or_ps(xmmMaskNonOpaque0, _mm_cmplt_ps(xmm_mask0, xmm_one));
+            xmmMaskNonOpaque1 =
+                _mm_or_ps(xmmMaskNonOpaque1, _mm_cmplt_ps(xmm_mask1, xmm_one));
+            xmmMaskNonOpaque2 =
+                _mm_or_ps(xmmMaskNonOpaque2, _mm_cmplt_ps(xmm_mask2, xmm_one));
+            xmmMaskNonOpaque0 =
+                _mm_or_ps(xmmMaskNonOpaque0, _mm_cmplt_ps(xmm_mask3, xmm_one));
+            xmmMaskNonOpaque1 =
+                _mm_or_ps(xmmMaskNonOpaque1, _mm_cmplt_ps(xmm_mask4, xmm_one));
+            xmmMaskNonOpaque2 =
+                _mm_or_ps(xmmMaskNonOpaque2, _mm_cmplt_ps(xmm_mask5, xmm_one));
+            xmm_mask0 = _mm_min_ps(xmm_mask0, xmm_one);
+            xmm_mask1 = _mm_min_ps(xmm_mask1, xmm_one);
+            xmm_mask2 = _mm_min_ps(xmm_mask2, xmm_one);
+            xmm_mask3 = _mm_min_ps(xmm_mask3, xmm_one);
+            xmm_mask4 = _mm_min_ps(xmm_mask4, xmm_one);
+            xmm_mask5 = _mm_min_ps(xmm_mask5, xmm_one);
+            _mm_store_ps(pafMask + iPixel + 4 * 0, xmm_mask0);
+            _mm_store_ps(pafMask + iPixel + 4 * 1, xmm_mask1);
+            _mm_store_ps(pafMask + iPixel + 4 * 2, xmm_mask2);
+            _mm_store_ps(pafMask + iPixel + 4 * 3, xmm_mask3);
+            _mm_store_ps(pafMask + iPixel + 4 * 4, xmm_mask4);
+            _mm_store_ps(pafMask + iPixel + 4 * 5, xmm_mask5);
+        }
+        if( _mm_movemask_ps(_mm_or_ps(_mm_or_ps(
+                  xmmMaskNonOpaque0, xmmMaskNonOpaque1), xmmMaskNonOpaque2))  )
+        {
+            bOutAllOpaque = false;
+        }
+        for(; iPixel < nPixels; iPixel++ )
+        {
+            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                      inv_alpha_max;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
+            else
+                bOutAllOpaque = false;
+        }
     }
+    else
+#endif
+    {
+        // Read data.
+        eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+
+        if( eErr != CE_None )
+            return eErr;
+
+        for( ; iPixel + 3 < nPixels; iPixel += 4 )
+        {
+            pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
+            else
+                bOutAllOpaque = false;
+            pafMask[iPixel+1] = pafMask[iPixel+1] * inv_alpha_max;
+            if( pafMask[iPixel+1] >= 1.0f )
+                pafMask[iPixel+1] = 1.0f;
+            else
+                bOutAllOpaque = false;
+            pafMask[iPixel+2] = pafMask[iPixel+2] * inv_alpha_max;
+            if( pafMask[iPixel+2] >= 1.0f )
+                pafMask[iPixel+2] = 1.0f;
+            else
+                bOutAllOpaque = false;
+            pafMask[iPixel+3] = pafMask[iPixel+3] * inv_alpha_max;
+            if( pafMask[iPixel+3] >= 1.0f )
+                pafMask[iPixel+3] = 1.0f;
+            else
+                bOutAllOpaque = false;
+        }
+        for( ; iPixel < nPixels; iPixel++ )
+        {
+            pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
+            if( pafMask[iPixel] >= 1.0f )
+                pafMask[iPixel] = 1.0f;
+            else
+                bOutAllOpaque = false;
+        }
+    }
+
     *pbOutAllOpaque = bOutAllOpaque;
 
     return CE_None;
@@ -639,37 +752,36 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 
 CPLErr
 GDALWarpSrcMaskMasker( void *pMaskFuncArg,
-                       CPL_UNUSED int nBandCount,
-                       CPL_UNUSED GDALDataType eType,
+                       int /* nBandCount */,
+                       GDALDataType /* eType */,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        GByte ** /*ppImageData */,
                        int bMaskIsFloat, void *pValidityMask )
 
 {
-    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
-    GUInt32  *panMask = (GUInt32 *) pValidityMask;
+    GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
+    GUInt32  *panMask = static_cast<GUInt32 *>(pValidityMask);
 
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
 /* -------------------------------------------------------------------- */
     if( bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
     if( psWO == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer to read mask byte data into.        */
 /* -------------------------------------------------------------------- */
-    GByte *pabySrcMask;
-
-    pabySrcMask = (GByte *) VSI_MALLOC2_VERBOSE(nXSize,nYSize);
+    GByte *pabySrcMask = static_cast<GByte *>(
+        VSI_MALLOC2_VERBOSE(nXSize,nYSize));
     if( pabySrcMask == NULL )
     {
         return CE_Failure;
@@ -678,25 +790,24 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
 /*      Fetch our mask band.                                            */
 /* -------------------------------------------------------------------- */
-    GDALRasterBandH hSrcBand, hMaskBand = NULL;
-
-    hSrcBand = GDALGetRasterBand( psWO->hSrcDS, psWO->panSrcBands[0] );
+    GDALRasterBandH hMaskBand = NULL;
+    GDALRasterBandH hSrcBand =
+        GDALGetRasterBand( psWO->hSrcDS, psWO->panSrcBands[0] );
     if( hSrcBand != NULL )
         hMaskBand = GDALGetMaskBand( hSrcBand );
 
     if( hMaskBand == NULL )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the mask band.                                             */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
-
-    eErr = GDALRasterIO( hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                         pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0 );
+    CPLErr eErr =
+        GDALRasterIO( hMaskBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                      pabySrcMask, nXSize, nYSize, GDT_Byte, 0, 0 );
 
     if( eErr != CE_None )
     {
@@ -707,7 +818,8 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
 /*      Pack into 1 bit per pixel for validity.                         */
 /* -------------------------------------------------------------------- */
-    for( int iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+    const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
+    for( size_t iPixel = 0; iPixel < nPixels; iPixel++ )
     {
         if( pabySrcMask[iPixel] == 0 )
             panMask[iPixel>>5] &= ~(0x01 << (iPixel & 0x1f));
@@ -729,38 +841,39 @@ GDALWarpSrcMaskMasker( void *pMaskFuncArg,
 
 CPLErr
 GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
-                        CPL_UNUSED GDALDataType eType,
+                        CPL_UNUSED GDALDataType /* eType */,
                         int nXOff, int nYOff, int nXSize, int nYSize,
                         GByte ** /*ppImageData */,
                         int bMaskIsFloat, void *pValidityMask )
 {
-    GDALWarpOptions *psWO = (GDALWarpOptions *) pMaskFuncArg;
-    float *pafMask = (float *) pValidityMask;
-    int iPixel;
-    CPLErr eErr;
-
 /* -------------------------------------------------------------------- */
 /*      Do some minimal checking.                                       */
 /* -------------------------------------------------------------------- */
     if( !bMaskIsFloat )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
 
+    GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
     if( psWO == NULL || psWO->nDstAlphaBand < 1 )
     {
-        CPLAssert( FALSE );
+        CPLAssert( false );
         return CE_Failure;
     }
+
+    float *pafMask = static_cast<float *>(pValidityMask);
+    const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     GDALRasterBandH hAlphaBand =
         GDALGetRasterBand( psWO->hDstDS, psWO->nDstAlphaBand );
     if (hAlphaBand == NULL)
         return CE_Failure;
 
+    size_t iPixel = 0;
+
 /* -------------------------------------------------------------------- */
-/*      Read alpha case.						*/
+/*      Read alpha case.                                                */
 /* -------------------------------------------------------------------- */
     if( nBandCount >= 0 )
     {
@@ -770,23 +883,117 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         // Special logic for destinations being initialized on the fly.
         if( pszInitDest != NULL )
         {
-            for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-                pafMask[iPixel] = 0.0;
+            memset( pafMask, 0, nPixels * sizeof(float) );
             return CE_None;
         }
 
-        // Read data.
-        eErr = GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                             pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+        // Rescale.
+        const float inv_alpha_max =  static_cast<float>(1.0 / CPLAtof(
+            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
+                                  "255" ) ));
 
-        if( eErr != CE_None )
-            return eErr;
-
-        // rescale.
-        for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
+#if (defined(__x86_64) || defined(_M_X64))
+        GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
+        // Make sure that pafMask is at least 8-byte aligned, which should
+        // normally be always the case if being a ptr returned by malloc()
+        if( (eDT == GDT_Byte || eDT == GDT_UInt16) &&
+            CPL_IS_ALIGNED(pafMask, 8) )
         {
-            pafMask[iPixel] = (float) (pafMask[iPixel] * 0.00392157);
-            pafMask[iPixel] = MIN( 1.0F, pafMask[iPixel] );
+            // Read data.
+            const CPLErr eErr =
+                GDALRasterIOEx( hAlphaBand, GF_Read,
+                                nXOff, nYOff, nXSize, nYSize,
+                                pafMask, nXSize, nYSize, eDT,
+                                static_cast<GSpacing>(sizeof(int)),
+                                static_cast<GSpacing>(sizeof(int)) * nXSize,
+                                NULL );
+
+            if( eErr != CE_None )
+                return eErr;
+
+            // Make sure we have the correct alignment before doing SSE
+            // On Linux x86_64, the alignment should be always correct due
+            // the alignment of malloc() being 16 byte.
+            const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+            if( !CPL_IS_ALIGNED(pafMask, 16) )
+            {
+                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                          inv_alpha_max;
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
+                iPixel ++;
+            }
+            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
+            const __m128 xmm_inverse_alpha_max =
+                                        _mm_load1_ps(&inv_alpha_max);
+            const float one_single = 1.0f;
+            const __m128 xmm_one = _mm_load1_ps(&one_single);
+            const __m128i xmm_i_mask = _mm_set1_epi32 (mask);
+            for( ; iPixel + 31 < nPixels; iPixel+=32 )
+            {
+                __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 0) )) );
+                __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 1) )) );
+                __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 2) )) );
+                __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 3) )) );
+                __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 4) )) );
+                __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 5) )) );
+                __m128 xmm_mask6 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 6) )) );
+                __m128 xmm_mask7 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
+                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 7) )) );
+                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
+                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
+                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
+                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_inverse_alpha_max);
+                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_inverse_alpha_max);
+                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_inverse_alpha_max);
+                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_inverse_alpha_max);
+                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_inverse_alpha_max);
+                xmm_mask0 = _mm_min_ps(xmm_mask0, xmm_one);
+                xmm_mask1 = _mm_min_ps(xmm_mask1, xmm_one);
+                xmm_mask2 = _mm_min_ps(xmm_mask2, xmm_one);
+                xmm_mask3 = _mm_min_ps(xmm_mask3, xmm_one);
+                xmm_mask4 = _mm_min_ps(xmm_mask4, xmm_one);
+                xmm_mask5 = _mm_min_ps(xmm_mask5, xmm_one);
+                xmm_mask6 = _mm_min_ps(xmm_mask6, xmm_one);
+                xmm_mask7 = _mm_min_ps(xmm_mask7, xmm_one);
+                _mm_store_ps(pafMask + iPixel + 4 * 0, xmm_mask0);
+                _mm_store_ps(pafMask + iPixel + 4 * 1, xmm_mask1);
+                _mm_store_ps(pafMask + iPixel + 4 * 2, xmm_mask2);
+                _mm_store_ps(pafMask + iPixel + 4 * 3, xmm_mask3);
+                _mm_store_ps(pafMask + iPixel + 4 * 4, xmm_mask4);
+                _mm_store_ps(pafMask + iPixel + 4 * 5, xmm_mask5);
+                _mm_store_ps(pafMask + iPixel + 4 * 6, xmm_mask6);
+                _mm_store_ps(pafMask + iPixel + 4 * 7, xmm_mask7);
+            }
+            for(; iPixel < nPixels; iPixel++ )
+            {
+                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                                                        inv_alpha_max;
+                pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
+            }
+        }
+        else
+#endif
+        {
+            // Read data.
+            const CPLErr eErr =
+                GDALRasterIO( hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize,
+                              pafMask, nXSize, nYSize, GDT_Float32, 0, 0 );
+
+            if( eErr != CE_None )
+                return eErr;
+
+            for(; iPixel < nPixels; iPixel++ )
+            {
+                pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
+                pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
+            }
         }
 
         return CE_None;
@@ -797,25 +1004,107 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
 /* -------------------------------------------------------------------- */
     else
     {
-        for( iPixel = nXSize * nYSize - 1; iPixel >= 0; iPixel-- )
-            pafMask[iPixel] = (float)(int) ( pafMask[iPixel] * 255.1 );
+        GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
+        const float cst_alpha_max = static_cast<float>(CPLAtof(
+            CSLFetchNameValueDef( psWO->papszWarpOptions, "DST_ALPHA_MAX",
+                                  "255" ) )) +
+            (( eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16 ||
+               eDT == GDT_Int32 || eDT == GDT_UInt32 ) ?
+                0.1f : 0.0f);
 
-        // Write data.
+        CPLErr eErr = CE_None;
 
-        /* The VRT warper will pass destination sizes that may exceed */
-        /* the size of the raster for the partial blocks at the right */
-        /* and bottom of the band. So let's adjust the size */
-        int nDstXSize = nXSize;
-        if (nXOff + nXSize > GDALGetRasterBandXSize(hAlphaBand))
-            nDstXSize = GDALGetRasterBandXSize(hAlphaBand) - nXOff;
-        int nDstYSize = nYSize;
-        if (nYOff + nYSize > GDALGetRasterBandYSize(hAlphaBand))
-            nDstYSize = GDALGetRasterBandYSize(hAlphaBand) - nYOff;
+#if (defined(__x86_64) || defined(_M_X64))
+        // Make sure that pafMask is at least 8-byte aligned, which should
+        // normally be always the case if being a ptr returned by malloc()
+        if( (eDT == GDT_Byte || eDT == GDT_Int16 || eDT == GDT_UInt16) &&
+            CPL_IS_ALIGNED(pafMask, 8) )
+        {
+            // Make sure we have the correct alignment before doing SSE
+            // On Linux x86_64, the alignment should be always correct due
+            // the alignment of malloc() being 16 byte
+            if( !CPL_IS_ALIGNED(pafMask, 16) )
+            {
+                ((int*)pafMask)[iPixel] =
+                    static_cast<int>(pafMask[iPixel] * cst_alpha_max);
+                iPixel++;
+            }
+            CPLAssert( CPL_IS_ALIGNED(pafMask + iPixel, 16) );
+            const __m128 xmm_alpha_max = _mm_load1_ps(&cst_alpha_max);
+            for( ; iPixel + 31 < nPixels; iPixel += 32 )
+            {
+                __m128 xmm_mask0 = _mm_load_ps(pafMask + iPixel + 4 * 0);
+                __m128 xmm_mask1 = _mm_load_ps(pafMask + iPixel + 4 * 1);
+                __m128 xmm_mask2 = _mm_load_ps(pafMask + iPixel + 4 * 2);
+                __m128 xmm_mask3 = _mm_load_ps(pafMask + iPixel + 4 * 3);
+                __m128 xmm_mask4 = _mm_load_ps(pafMask + iPixel + 4 * 4);
+                __m128 xmm_mask5 = _mm_load_ps(pafMask + iPixel + 4 * 5);
+                __m128 xmm_mask6 = _mm_load_ps(pafMask + iPixel + 4 * 6);
+                __m128 xmm_mask7 = _mm_load_ps(pafMask + iPixel + 4 * 7);
+                xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_alpha_max);
+                xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_alpha_max);
+                xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_alpha_max);
+                xmm_mask3 = _mm_mul_ps(xmm_mask3, xmm_alpha_max);
+                xmm_mask4 = _mm_mul_ps(xmm_mask4, xmm_alpha_max);
+                xmm_mask5 = _mm_mul_ps(xmm_mask5, xmm_alpha_max);
+                xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_alpha_max);
+                xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_alpha_max);
+                 // Truncate to int.
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 0),
+                                _mm_cvttps_epi32(xmm_mask0));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 1),
+                                _mm_cvttps_epi32(xmm_mask1));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 2),
+                                _mm_cvttps_epi32(xmm_mask2));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 3),
+                                _mm_cvttps_epi32(xmm_mask3));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 4),
+                                _mm_cvttps_epi32(xmm_mask4));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 5),
+                                _mm_cvttps_epi32(xmm_mask5));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 6),
+                                _mm_cvttps_epi32(xmm_mask6));
+                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 7),
+                                _mm_cvttps_epi32(xmm_mask7));
+            }
+            for( ; iPixel < nPixels; iPixel++ )
+                ((int*)pafMask)[iPixel] =
+                  static_cast<int>(pafMask[iPixel] * cst_alpha_max);
 
-        eErr = GDALRasterIO( hAlphaBand, GF_Write,
-                             nXOff, nYOff, nDstXSize, nDstYSize,
-                             pafMask, nDstXSize, nDstYSize, GDT_Float32,
-                             0, (int)sizeof(float) * nXSize );
+            // Write data.
+            // Assumes little endianness here.
+            eErr = GDALRasterIOEx( hAlphaBand, GF_Write,
+                                   nXOff, nYOff, nXSize, nYSize,
+                                   pafMask, nXSize, nYSize, eDT,
+                                   static_cast<GSpacing>(sizeof(int)),
+                                   static_cast<GSpacing>(sizeof(int)) * nXSize,
+                                   NULL );
+        }
+        else
+#endif
+        {
+            for( ; iPixel + 3 < nPixels; iPixel+=4 )
+            {
+                pafMask[iPixel+0] = static_cast<float>(
+                    static_cast<int>( pafMask[iPixel+0] * cst_alpha_max ));
+                pafMask[iPixel+1] = static_cast<float>(
+                    static_cast<int>( pafMask[iPixel+1] * cst_alpha_max ));
+                pafMask[iPixel+2] = static_cast<float>(
+                    static_cast<int>( pafMask[iPixel+2] * cst_alpha_max ));
+                pafMask[iPixel+3] = static_cast<float>(
+                    static_cast<int>( pafMask[iPixel+3] * cst_alpha_max ));
+            }
+            for( ; iPixel < nPixels; iPixel++ )
+                pafMask[iPixel] = static_cast<float>(
+                    static_cast<int>(pafMask[iPixel] * cst_alpha_max ));
+
+            // Write data.
+
+            eErr = GDALRasterIO( hAlphaBand, GF_Write,
+                                nXOff, nYOff, nXSize, nYSize,
+                                pafMask, nXSize, nYSize, GDT_Float32,
+                                0, 0 );
+        }
         return eErr;
     }
 }
@@ -834,30 +1123,95 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * CSLSetNameValue().
  *
  * The following values are currently supported:
- *
- *  - INIT_DEST=[value] or INIT_DEST=NO_DATA: This option forces the
+ * <ul>
+ * <li>INIT_DEST=[value] or INIT_DEST=NO_DATA: This option forces the
  * destination image to be initialized to the indicated value (for all bands)
  * or indicates that it should be initialized to the NO_DATA value in
  * padfDstNoDataReal/padfDstNoDataImag.  If this value isn't set the
- * destination image will be read and overlaid.
+ * destination image will be read and overlaid.</li>
  *
- * - WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
+ * <li>WRITE_FLUSH=YES/NO: This option forces a flush to disk of data after
  * each chunk is processed.  In some cases this helps ensure a serial
  * writing of the output data otherwise a block of data may be written to disk
  * each time a block of data is read for the input buffer resulting in a lot
  * of extra seeking around the disk, and reduced IO throughput.  The default
- * at this time is NO.
+ * at this time is NO.</li>
  *
- * - SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
+ * <li>SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
  * is no corresponding input data.  This will disable initializing the
  * destination (INIT_DEST) and all other processing, and so should be used
  * carefully.  Mostly useful to short circuit a lot of extra work in mosaicing
- * situations.
+ * situations.</li>
  *
- * - UNIFIED_SRC_NODATA=YES/[NO]: By default nodata masking values considered
+ * <li>UNIFIED_SRC_NODATA=YES/NO: By default nodata masking values considered
  * independently for each band.  However, sometimes it is desired to treat all
  * bands as nodata if and only if, all bands match the corresponding nodata
- * values.  To get this behavior set this option to YES.
+ * values. To get this behavior set this option to YES.
+ * Note: UNIFIED_SRC_NODATA=YES is set by default, when called from gdalwarp /
+ * GDALWarp()</li>
+ *
+ * <li>CUTLINE: This may contain the WKT geometry for a cutline.  It will
+ * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
+ * to the GDALWarpOptions hCutline field. The coordinates must be expressed
+ * in source pixel/line coordinates. Note: this is different from the assumptions
+ * made for the -cutline option of the gdalwarp utility !</li>
+ *
+ * <li>CUTLINE_BLEND_DIST: This may be set with a distance in pixels which
+ * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.</li>
+ *
+ * <li>CUTLINE_ALL_TOUCHED: This defaults to FALSE, but may be set to TRUE
+ * to enable ALL_TOUCHEd mode when rasterizing cutline polygons.  This is
+ * useful to ensure that that all pixels overlapping the cutline polygon
+ * will be selected, not just those whose center point falls within the
+ * polygon.</li>
+ *
+ * <li>OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
+ * typically when writing to a compressed dataset (GeoTIFF with
+ * COMPRESSED creation option set for example) for achieving a smaller
+ * file size. This is achieved by writing at once data aligned on full
+ * blocks of the target dataset, which avoids partial writes of
+ * compressed blocks and lost space when they are rewritten at the end
+ * of the file. However sticking to target block size may cause major
+ * processing slowdown for some particular reprojections.</li>
+ *
+ * <li>NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
+ * set the number of threads to use to parallelize the computation part of the
+ * warping. If not set, computation will be done in a single thread.</li>
+ *
+ * <li>STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may
+ * be set to TRUE typically when writing to a streamed file. The
+ * gdalwarp utility automatically sets this option when writing to
+ * /vsistdout/ or a named pipe (on Unix).  This option has performance
+ * impacts for some reprojections.  Note: band interleaved output is
+ * not currently supported by the warping algorithm in a streamable
+ * compatible way.</li>
+ *
+ * <li>SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This
+ * defaults to 0, to indicate that no rounding of computing source
+ * image coordinates corresponding to the target image must be
+ * done. If greater than 0 (and typically below 1), this value,
+ * expressed in pixel, will be used to round computed source image
+ * coordinates. The purpose of this option is to make the results of
+ * warping with the approximated transformer more reproducible and not
+ * sensitive to changes in warping memory size. To achieve that,
+ * SRC_COORD_PRECISION must be at least 10 times greater than the
+ * error threshold. The higher the SRC_COORD_PRECISION/error_threshold
+ * ratio, the higher the performance will be, since exact
+ * reprojections must statistically be done with a frequency of
+ * 4*error_threshold/SRC_COORD_PRECISION.</li>
+ *
+ * <li>SRC_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * source dataset. If the value is not set and the alpha band has a NBITS
+ * metadata item, it is used to set SRC_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
+ * value is not set and the alpha band is of type UInt16 (resp Int16), 65535
+ * (resp 32767) is used. Otherwise, 255 is used.</li>
+ *
+ * <li>DST_ALPHA_MAX: (GDAL >= 2.2). Maximum value for the alpha band of the
+ * destination dataset. If the value is not set and the alpha band has a NBITS
+ * metadata item, it is used to set DST_ALPHA_MAX = 2^NBITS-1. Otherwise, if the
+ * value is not set and the alpha band is of type UInt16 (resp Int16), 65535
+ * (resp 32767) is used. Otherwise, 255 is used.</li>
+ * </ul>
  *
  * Normally when computing the source raster data to
  * load to generate a particular output area, the warper samples transforms
@@ -870,82 +1224,37 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
  * for areas around the pole, or transformations where some of the image is
  * untransformable.  The following options provide some additional control
  * to deal with errors in computing the source window:
+ * <ul>
  *
- * - SAMPLE_GRID=YES/NO: Setting this option to YES will force the sampling to
+ * <li>SAMPLE_GRID=YES/NO: Setting this option to YES will force the sampling to
  * include internal points as well as edge points which can be important if
  * the transformation is esoteric inside out, or if large sections of the
- * destination image are not transformable into the source coordinate system.
+ * destination image are not transformable into the source coordinate system.</li>
  *
- * - SAMPLE_STEPS: Modifies the density of the sampling grid.  The default
+ * <li>SAMPLE_STEPS: Modifies the density of the sampling grid.  The default
  * number of steps is 21.   Increasing this can increase the computational
- * cost, but improves the accuracy with which the source region is computed.
+ * cost, but improves the accuracy with which the source region is computed.</li>
  *
- * - SOURCE_EXTRA: This is a number of extra pixels added around the source
+ * <li>SOURCE_EXTRA: This is a number of extra pixels added around the source
  * window for a given request, and by default it is 1 to take care of rounding
  * error.  Setting this larger will increase the amount of data that needs to
- * be read, but can avoid missing source data.
- *
- * - CUTLINE: This may contain the WKT geometry for a cutline.  It will
- * be converted into a geometry by GDALWarpOperation::Initialize() and assigned
- * to the GDALWarpOptions hCutline field. The coordinates must be expressed
- * in source pixel/line coordinates. Note: this is different from the assumptions
- * made for the -cutline option of the gdalwarp utility !
- *
- * - CUTLINE_BLEND_DIST: This may be set with a distance in pixels which
- * will be assigned to the dfCutlineBlendDist field in the GDALWarpOptions.
- *
- * - CUTLINE_ALL_TOUCHED: This defaults to FALSE, but may be set to TRUE
- * to enable ALL_TOUCHEd mode when rasterizing cutline polygons.  This is
- * useful to ensure that that all pixels overlapping the cutline polygon
- * will be selected, not just those whose center point falls within the
- * polygon.
- *
- * - OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
- * typically when writing to a compressed dataset (GeoTIFF with
- * COMPRESSED creation option set for example) for achieving a smaller
- * file size. This is achieved by writing at once data aligned on full
- * blocks of the target dataset, which avoids partial writes of
- * compressed blocks and lost space when they are rewritten at the end
- * of the file. However sticking to target block size may cause major
- * processing slowdown for some particular reprojections.
- *
- * - NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
- * set the number of threads to use to parallelize the computation part of the
- * warping. If not set, computation will be done in a single thread.
- *
- * - STREAMABLE_OUTPUT: (GDAL >= 2.0) This defaults to FALSE, but may
- * be set to TRUE typically when writing to a streamed file. The
- * gdalwarp utility automatically sets this option when writing to
- * /vsistdout/ or a named pipe (on Unix).  This option has performance
- * impacts for some reprojections.  Note: band interleaved output is
- * not currently supported by the warping algorithm in a streamable
- * compatible way.
- *
- * - SRC_COORD_PRECISION: (GDAL >= 2.0). Advanced setting. This
- * defaults to 0, to indicate that no rounding of computing source
- * image coordinates corresponding to the target image must be
- * done. If greater than 0 (and typically below 1), this value,
- * expressed in pixel, will be used to round computed source image
- * coordinates. The purpose of this option is to make the results of
- * warping with the approximated transformer more reproducible and not
- * sensitive to changes in warping memory size. To achieve that,
- * SRC_COORD_PRECISION must be at least 10 times greater than the
- * error threshold. The higher the SRC_COORD_PRECISION/error_threshold
- * ratio, the higher the performance will be, since exact
- * reprojections must statistically be done with a frequency of
- * 4*error_threshold/SRC_COORD_PRECISION.
+ * be read, but can avoid missing source data.</li>
+ * </ul>
  */
 
 /************************************************************************/
 /*                       GDALCreateWarpOptions()                        */
 /************************************************************************/
 
+/** Create a warp options structure.
+ *
+ * Must be deallocated with GDALDestroyWarpOptions()
+ */
 GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 
 {
-    GDALWarpOptions *psOptions;
-
-    psOptions = (GDALWarpOptions *) CPLCalloc(sizeof(GDALWarpOptions),1);
+    GDALWarpOptions *psOptions = static_cast<GDALWarpOptions *>(
+        CPLCalloc(sizeof(GDALWarpOptions), 1));
 
     psOptions->nBandCount = 0;
     psOptions->eResampleAlg = GRA_NearestNeighbour;
@@ -959,6 +1268,7 @@ GDALWarpOptions * CPL_STDCALL GDALCreateWarpOptions()
 /*                       GDALDestroyWarpOptions()                       */
 /************************************************************************/
 
+/** Destroy a warp options structure. */
 void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 
 {
@@ -981,21 +1291,24 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
     CPLFree( psOptions );
 }
 
-
-#define COPY_MEM(target,type,count)					\
-   do { if( (psSrcOptions->target) != NULL && (count) != 0 ) 		\
-   { 									\
+#define COPY_MEM(target,type,count)                                     \
+   do { if( (psSrcOptions->target) != NULL && (count) != 0 )            \
+   {                                                                    \
        (psDstOptions->target) = (type *) CPLMalloc(sizeof(type)*(count)); \
-       memcpy( (psDstOptions->target), (psSrcOptions->target),		\
- 	       sizeof(type) * (count) ); 	        			\
+       memcpy( (psDstOptions->target), (psSrcOptions->target),          \
+               sizeof(type) * (count) );                                \
    } \
    else \
-       (psDstOptions->target) = NULL; } while(0)
+       (psDstOptions->target) = NULL; } while( false )
 
 /************************************************************************/
 /*                        GDALCloneWarpOptions()                        */
 /************************************************************************/
 
+/** Clone a warp options structure.
+ *
+ * Must be deallocated with GDALDestroyWarpOptions()
+ */
 GDALWarpOptions * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 
@@ -1034,12 +1347,11 @@ CPLXMLNode * CPL_STDCALL
 GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 
 {
-    CPLXMLNode *psTree;
-
 /* -------------------------------------------------------------------- */
 /*      Create root.                                                    */
 /* -------------------------------------------------------------------- */
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "GDALWarpOptions" );
+    CPLXMLNode *psTree =
+        CPLCreateXMLNode( NULL, CXT_Element, "GDALWarpOptions" );
 
 /* -------------------------------------------------------------------- */
 /*      WarpMemoryLimit                                                 */
@@ -1051,7 +1363,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
 /*      ResampleAlg                                                     */
 /* -------------------------------------------------------------------- */
-    const char *pszAlgName;
+    const char *pszAlgName = NULL;
 
     if( psWO->eResampleAlg == GRA_NearestNeighbour )
         pszAlgName = "NearestNeighbour";
@@ -1086,7 +1398,6 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
 /*      Working Data Type                                               */
 /* -------------------------------------------------------------------- */
-
     CPLCreateXMLElementAndValue(
         psTree, "WorkingDataType",
         GDALGetDataTypeName( psWO->eWorkingDataType ) );
@@ -1094,17 +1405,15 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
 /*      Name/value warp options.                                        */
 /* -------------------------------------------------------------------- */
-    int iWO;
-
-    for( iWO = 0; psWO->papszWarpOptions != NULL
+    for( int iWO = 0; psWO->papszWarpOptions != NULL
              && psWO->papszWarpOptions[iWO] != NULL; iWO++ )
     {
         char *pszName = NULL;
         const char *pszValue =
             CPLParseNameValue( psWO->papszWarpOptions[iWO], &pszName );
 
-        /* EXTRA_ELTS is an internal detail that we will recover */
-        /* no need to serialize it */
+        // EXTRA_ELTS is an internal detail that we will recover
+        // no need to serialize it.
         if( !EQUAL(pszName, "EXTRA_ELTS") )
         {
             CPLXMLNode *psOption =
@@ -1128,7 +1437,8 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
             psTree, "SourceDataset",
             GDALGetDescription( psWO->hSrcDS ) );
 
-        char** papszOpenOptions = ((GDALDataset*)psWO->hSrcDS)->GetOpenOptions();
+        char** papszOpenOptions =
+            ((GDALDataset*)psWO->hSrcDS)->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 
@@ -1144,13 +1454,10 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /* -------------------------------------------------------------------- */
     if( psWO->pfnTransformer != NULL )
     {
-        CPLXMLNode *psTransformerContainer;
-        CPLXMLNode *psTransformerTree;
-
-        psTransformerContainer =
+        CPLXMLNode *psTransformerContainer =
             CPLCreateXMLNode( psTree, CXT_Element, "Transformer" );
 
-        psTransformerTree =
+        CPLXMLNode *psTransformerTree =
             GDALSerializeTransformer( psWO->pfnTransformer,
                                       psWO->pTransformerArg );
 
@@ -1162,12 +1469,11 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
 /*      Band count and lists.                                           */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psBandList = NULL;
-    int i;
 
     if( psWO->nBandCount != 0 )
         psBandList = CPLCreateXMLNode( psTree, CXT_Element, "BandList" );
 
-    for( i = 0; i < psWO->nBandCount; i++ )
+    for( int i = 0; i < psWO->nBandCount; i++ )
     {
         CPLXMLNode *psBand;
 
@@ -1270,7 +1576,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /*      Verify this is the right kind of object.                        */
 /* -------------------------------------------------------------------- */
     if( psTree == NULL || psTree->eType != CXT_Element
-        || !EQUAL(psTree->pszValue,"GDALWarpOptions") )
+        || !EQUAL(psTree->pszValue, "GDALWarpOptions") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Wrong node, unable to deserialize GDALWarpOptions." );
@@ -1286,7 +1592,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /*      Warp memory limit.                                              */
 /* -------------------------------------------------------------------- */
     psWO->dfWarpMemoryLimit =
-        CPLAtof(CPLGetXMLValue(psTree,"WarpMemoryLimit","0.0"));
+        CPLAtof(CPLGetXMLValue(psTree,"WarpMemoryLimit", "0.0"));
 
 /* -------------------------------------------------------------------- */
 /*      resample algorithm                                              */
@@ -1296,29 +1602,29 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 
     if( EQUAL(pszValue,"NearestNeighbour") )
         psWO->eResampleAlg = GRA_NearestNeighbour;
-    else if( EQUAL(pszValue,"Bilinear") )
+    else if( EQUAL(pszValue, "Bilinear") )
         psWO->eResampleAlg = GRA_Bilinear;
-    else if( EQUAL(pszValue,"Cubic") )
+    else if( EQUAL(pszValue, "Cubic") )
         psWO->eResampleAlg = GRA_Cubic;
-    else if( EQUAL(pszValue,"CubicSpline") )
+    else if( EQUAL(pszValue, "CubicSpline") )
         psWO->eResampleAlg = GRA_CubicSpline;
-    else if( EQUAL(pszValue,"Lanczos") )
+    else if( EQUAL(pszValue, "Lanczos") )
         psWO->eResampleAlg = GRA_Lanczos;
-    else if( EQUAL(pszValue,"Average") )
+    else if( EQUAL(pszValue, "Average") )
         psWO->eResampleAlg = GRA_Average;
-    else if( EQUAL(pszValue,"Mode") )
+    else if( EQUAL(pszValue, "Mode") )
         psWO->eResampleAlg = GRA_Mode;
-    else if( EQUAL(pszValue,"Maximum") )
+    else if( EQUAL(pszValue, "Maximum") )
         psWO->eResampleAlg = GRA_Max;
-    else if( EQUAL(pszValue,"Minimum") )
+    else if( EQUAL(pszValue, "Minimum") )
         psWO->eResampleAlg = GRA_Min;
-    else if( EQUAL(pszValue,"Median") )
+    else if( EQUAL(pszValue, "Median") )
         psWO->eResampleAlg = GRA_Med;
-    else if( EQUAL(pszValue,"Quartile1") )
+    else if( EQUAL(pszValue, "Quartile1") )
         psWO->eResampleAlg = GRA_Q1;
-    else if( EQUAL(pszValue,"Quartile3") )
+    else if( EQUAL(pszValue, "Quartile3") )
         psWO->eResampleAlg = GRA_Q3;
-    else if( EQUAL(pszValue,"Default") )
+    else if( EQUAL(pszValue, "Default") )
         /* leave as is */;
     else
     {
@@ -1337,12 +1643,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      Name/value warp options.                                        */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psItem;
-
-    for( psItem = psTree->psChild; psItem != NULL; psItem = psItem->psNext )
+    for( CPLXMLNode *psItem = psTree->psChild;
+         psItem != NULL;
+         psItem = psItem->psNext )
     {
         if( psItem->eType == CXT_Element
-            && EQUAL(psItem->pszValue,"Option") )
+            && EQUAL(psItem->pszValue, "Option") )
         {
             const char *pszName = CPLGetXMLValue(psItem, "Name", NULL );
             pszValue = CPLGetXMLValue(psItem, "", NULL );
@@ -1365,15 +1671,16 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     {
         char** papszOpenOptions = GDALDeserializeOpenOptionsFromXML(psTree);
         psWO->hSrcDS = GDALOpenEx(
-                    pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
-                    (const char* const* )papszOpenOptions, NULL );
+            pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+            NULL,
+            (const char* const* )papszOpenOptions, NULL );
         CSLDestroy(papszOpenOptions);
     }
 
 /* -------------------------------------------------------------------- */
 /*      Destination Dataset.                                            */
 /* -------------------------------------------------------------------- */
-    pszValue = CPLGetXMLValue(psTree,"DestinationDataset",NULL);
+    pszValue = CPLGetXMLValue(psTree, "DestinationDataset",NULL);
 
     if( pszValue != NULL )
         psWO->hDstDS = GDALOpenShared( pszValue, GA_Update );
@@ -1382,14 +1689,10 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /*      First, count band mappings so we can establish the bandcount.   */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psBandTree = CPLGetXMLNode( psTree, "BandList" );
-    CPLXMLNode *psBand = NULL;
 
     psWO->nBandCount = 0;
 
-    if (psBandTree)
-        psBand = psBandTree->psChild;
-    else
-        psBand = NULL;
+    CPLXMLNode *psBand = psBandTree ? psBandTree->psChild : NULL;
 
     for( ; psBand != NULL; psBand = psBand->psNext )
     {
@@ -1405,10 +1708,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /* ==================================================================== */
     int iBand = 0;
 
-    if (psBandTree)
-        psBand = psBandTree->psChild;
-    else
-        psBand = NULL;
+    psBand = psBandTree ? psBandTree->psChild : NULL;
 
     for( ; psBand != NULL; psBand = psBand->psNext )
     {
@@ -1420,11 +1720,12 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
 /*      Source band                                                     */
 /* -------------------------------------------------------------------- */
         if( psWO->panSrcBands == NULL )
-            psWO->panSrcBands = (int *)CPLMalloc(sizeof(int)*psWO->nBandCount);
+          psWO->panSrcBands = static_cast<int *>(
+              CPLMalloc(sizeof(int)*psWO->nBandCount));
 
         pszValue = CPLGetXMLValue(psBand,"src",NULL);
         if( pszValue == NULL )
-            psWO->panSrcBands[iBand] = iBand+1;
+            psWO->panSrcBands[iBand] = iBand + 1;
         else
             psWO->panSrcBands[iBand] = atoi(pszValue);
 
@@ -1435,8 +1736,8 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         if( pszValue != NULL )
         {
             if( psWO->panDstBands == NULL )
-                psWO->panDstBands =
-                    (int *) CPLMalloc(sizeof(int)*psWO->nBandCount);
+                psWO->panDstBands = static_cast<int *>(
+                    CPLMalloc(sizeof(int)*psWO->nBandCount));
 
             psWO->panDstBands[iBand] = atoi(pszValue);
         }
@@ -1481,8 +1782,8 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         if( pszValue != NULL )
         {
             if( psWO->padfDstNoDataImag == NULL )
-                psWO->padfDstNoDataImag =
-                    (double *) CPLCalloc(sizeof(double),psWO->nBandCount);
+              psWO->padfDstNoDataImag = static_cast<double *>(
+                  CPLCalloc(sizeof(double),psWO->nBandCount));
 
             psWO->padfDstNoDataImag[iBand] = CPLAtof(pszValue);
         }
@@ -1546,6 +1847,6 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         GDALDestroyWarpOptions( psWO );
         return NULL;
     }
-    else
-        return psWO;
+
+    return psWO;
 }

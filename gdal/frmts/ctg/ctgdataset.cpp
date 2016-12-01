@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CTG driver
  * Purpose:  GDALDataset driver for CTG dataset.
@@ -130,8 +129,8 @@ class CTGDataset : public GDALPamDataset
                  CTGDataset();
     virtual     ~CTGDataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -152,13 +151,12 @@ class CTGRasterBand : public GDALPamRasterBand
   public:
 
                 CTGRasterBand( CTGDataset *, int );
-               ~CTGRasterBand();
+    virtual ~CTGRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual char **GetCategoryNames();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual char **GetCategoryNames() override;
 };
-
 
 /************************************************************************/
 /*                           CTGRasterBand()                            */
@@ -167,8 +165,8 @@ class CTGRasterBand : public GDALPamRasterBand
 CTGRasterBand::CTGRasterBand( CTGDataset *poDSIn, int nBandIn ) :
     papszCategories(NULL)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = GDT_Int32;
 
@@ -257,7 +255,7 @@ CTGDataset::CTGDataset() :
     pszProjection(NULL),
     bHasReadImagery(FALSE),
     pabyImage(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~CTGDataset()                            */
@@ -268,7 +266,7 @@ CTGDataset::~CTGDataset()
 {
     CPLFree(pszProjection);
     CPLFree(pabyImage);
-    if (fp != NULL)
+    if( fp != NULL )
         VSIFCloseL(fp);
 }
 
@@ -410,7 +408,6 @@ int CTGDataset::Identify( GDALOpenInfo * poOpenInfo )
     delete poOpenInfoToDelete;
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                                Open()                                */

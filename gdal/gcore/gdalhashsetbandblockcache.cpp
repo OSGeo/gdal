@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Store cached blocks in a hash set
@@ -28,12 +27,21 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cstddef>
+#include <algorithm>
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_error.h"
 #include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
-#include "gdal_priv.h"
-#include <algorithm>
 
 CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 
 /* ******************************************************************** */
 /*                        GDALHashSetBandBlockCache                     */
@@ -45,18 +53,18 @@ class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     CPLLock        *hLock;
 
     public:
-           GDALHashSetBandBlockCache( GDALRasterBand* poBand );
+           explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
            virtual ~GDALHashSetBandBlockCache();
 
-           virtual bool             Init();
-           virtual bool             IsInitOK();
-           virtual CPLErr           FlushCache();
-           virtual CPLErr           AdoptBlock( GDALRasterBlock * );
+           virtual bool             Init() override;
+           virtual bool             IsInitOK() override;
+           virtual CPLErr           FlushCache() override;
+           virtual CPLErr           AdoptBlock( GDALRasterBlock * ) override;
            virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
-                                                          int nYBlockYOff );
-           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock );
+                                                          int nYBlockYOff ) override;
+           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock ) override;
            virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff,
-                                                int bWriteDirtyBlock );
+                                                int bWriteDirtyBlock ) override;
 };
 
 /************************************************************************/
@@ -77,7 +85,7 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(
 static unsigned long GDALRasterBlockHashFunc( const void * const elt )
 {
     const GDALRasterBlock * const poBlock =
-        static_cast<const GDALRasterBlock * const>(elt);
+        static_cast<const GDALRasterBlock *>(elt);
 #if SIZEOF_UNSIGNED_LONG == 8
     return static_cast<unsigned long>(
         poBlock->GetXOff() |
@@ -99,9 +107,9 @@ static int GDALRasterBlockEqualFunc( const void * const elt1,
                                      const void * const elt2 )
 {
     const GDALRasterBlock * const poBlock1 =
-        static_cast<const GDALRasterBlock * const>(elt1);
+        static_cast<const GDALRasterBlock *>(elt1);
     const GDALRasterBlock * const poBlock2 =
-        static_cast<const GDALRasterBlock * const >(elt2);
+        static_cast<const GDALRasterBlock *>(elt2);
     return poBlock1->GetXOff() == poBlock2->GetXOff() &&
            poBlock1->GetYOff() == poBlock2->GetYOff();
 }
@@ -310,3 +318,5 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
     poBlock->Touch();
     return poBlock;
 }
+
+//! @endcond

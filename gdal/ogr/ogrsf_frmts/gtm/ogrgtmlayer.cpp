@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GTM Driver
  * Purpose:  Implementation of OGRGTMLayer class.
@@ -28,6 +27,8 @@
  ****************************************************************************/
 
 #include "ogr_gtm.h"
+
+CPL_CVSID("$Id$");
 
 OGRGTMLayer::OGRGTMLayer() :
     poDS(NULL),
@@ -91,7 +92,6 @@ int OGRGTMLayer::TestCapability( const char * pszCap )
     return FALSE;
 }
 
-
 /************************************************************************/
 /*                CheckAndFixCoordinatesValidity()                      */
 /************************************************************************/
@@ -100,26 +100,26 @@ OGRErr OGRGTMLayer::CheckAndFixCoordinatesValidity( double& pdfLatitude, double&
 {
     if (pdfLatitude < -90 || pdfLatitude > 90)
     {
-        static int bFirstWarning = TRUE;
+        static bool bFirstWarning = true;
         if (bFirstWarning)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Latitude %f is invalid. Valid range is [-90,90]. This warning will not be issued any more",
                      pdfLatitude);
-            bFirstWarning = FALSE;
+            bFirstWarning = false;
         }
         return OGRERR_FAILURE;
     }
 
     if (pdfLongitude < -180 || pdfLongitude > 180)
     {
-        static int bFirstWarning = TRUE;
+        static bool bFirstWarning = true;
         if (bFirstWarning)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Longitude %f has been modified to fit into range [-180,180]. This warning will not be issued any more",
                      pdfLongitude);
-            bFirstWarning = FALSE;
+            bFirstWarning = false;
         }
 
         if (pdfLongitude > 180)

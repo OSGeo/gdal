@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALJP2Box Implementation - Low level JP2 box reader.
@@ -28,12 +27,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <algorithm>
 #include "cpl_port.h"
-#include "cpl_string.h"
 #include "gdaljp2metadata.h"
 
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                             GDALJP2Box()                             */
@@ -286,11 +299,13 @@ int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
     for( int i=0; i < nIndentLevel; ++i)
         fprintf( fpOut, "  " );
 
-    fprintf( fpOut,
+    char szBuffer[128];
+    CPLsnprintf( szBuffer, sizeof(szBuffer),
              "  Type=%s, Offset=" CPL_FRMT_GIB "/" CPL_FRMT_GIB
              ", Data Size=" CPL_FRMT_GIB,
              szBoxType, nBoxOffset, nDataOffset,
              GetDataLength() );
+    fprintf( fpOut, "%s", szBuffer );
 
     if( IsSuperBox() )
     {
@@ -439,7 +454,6 @@ GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
     return CreateSuperBox("asoc", nCount, papoBoxes);
 }
 
-
 /************************************************************************/
 /*                           CreateAsocBox()                            */
 /************************************************************************/
@@ -526,3 +540,5 @@ GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
 
     return CreateAsocBox( 2, aoList );
 }
+
+/*! @endcond */

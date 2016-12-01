@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement CPLGetExecPath().
@@ -27,8 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -44,8 +51,7 @@ CPL_CVSID("$Id$");
 
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
-    if( CSLTestBoolean(
-            CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszPathBuf = (wchar_t*)
             CPLCalloc(nMaxLength+1,sizeof(wchar_t));
@@ -123,7 +129,7 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 
 #ifndef HAVE_IMPLEMENTATION
 
-int CPLGetExecPath( CPL_UNUSED char *pszPathBuf, CPL_UNUSED int nMaxLength )
+int CPLGetExecPath( CPL_UNUSED char * pszPathBuf, CPL_UNUSED int nMaxLength )
 {
     return FALSE;
 }

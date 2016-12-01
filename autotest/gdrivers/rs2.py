@@ -41,19 +41,16 @@ import gdaltest
 # evolves, this might break the test legitimately !
 
 def rs2_1():
-
     tst = gdaltest.GDALTest( 'RS2', 'product.xml', 1, 4672 )
     return tst.testOpen()
 
 
 def rs2_2():
-
     tst = gdaltest.GDALTest( 'RS2', 'RADARSAT_2_CALIB:BETA0:data/product.xml', 1, 4848, filename_absolute=1 )
     return tst.testOpen()
 
 # Test reading our dummy RPC
 def rs2_3():
-  
     ds = gdal.Open('data/product.xml')
     got_rpc = ds.GetMetadata('RPC')
     expected_rpc = {'ERR_BIAS' : 'biasError',
@@ -90,4 +87,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

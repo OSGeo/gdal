@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_hash_set.cpp
  * Project:  CPL - Common Portability Library
@@ -28,9 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
 #include "cpl_hash_set.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_list.h"
+
+CPL_CVSID("$Id$");
 
 struct _CPLHashSet
 {
@@ -43,7 +48,7 @@ struct _CPLHashSet
     int                   nAllocatedSize;
     CPLList              *psRecyclingList;
     int                   nRecyclingListSize;
-    int                   bRehash;
+    bool                  bRehash;
 #ifdef HASH_DEBUG
     int                   nCollisions;
 #endif
@@ -80,27 +85,26 @@ static const int anPrimes[] =
  * @return a new hash set
  */
 
-CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
-                          CPLHashSetEqualFunc fnEqualFunc,
-                          CPLHashSetFreeEltFunc fnFreeEltFunc)
+CPLHashSet* CPLHashSetNew( CPLHashSetHashFunc fnHashFunc,
+                           CPLHashSetEqualFunc fnEqualFunc,
+                           CPLHashSetFreeEltFunc fnFreeEltFunc )
 {
-    CPLHashSet* set = (CPLHashSet*) CPLMalloc(sizeof(CPLHashSet));
+    CPLHashSet* set = static_cast<CPLHashSet *>(CPLMalloc(sizeof(CPLHashSet)));
     set->fnHashFunc = (fnHashFunc) ? fnHashFunc : CPLHashSetHashPointer;
     set->fnEqualFunc = (fnEqualFunc) ? fnEqualFunc : CPLHashSetEqualPointer;
     set->fnFreeEltFunc = fnFreeEltFunc;
     set->nSize = 0;
-    set->tabList = (CPLList**) CPLCalloc(sizeof(CPLList*), 53);
+    set->tabList = static_cast<CPLList**>(CPLCalloc(sizeof(CPLList*), 53));
     set->nIndiceAllocatedSize = 0;
     set->nAllocatedSize = 53;
     set->psRecyclingList = NULL;
     set->nRecyclingListSize = 0;
-    set->bRehash = FALSE;
+    set->bRehash = false;
 #ifdef HASH_DEBUG
     set->nCollisions = 0;
 #endif
     return set;
 }
-
 
 /************************************************************************/
 /*                          CPLHashSetSize()                            */
@@ -116,7 +120,7 @@ CPLHashSet* CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
  * @return the number of elements in the hash set
  */
 
-int CPLHashSetSize(const CPLHashSet* set)
+int CPLHashSetSize( const CPLHashSet* set )
 {
     CPLAssert(set != NULL);
     return set->nSize;
@@ -126,25 +130,25 @@ int CPLHashSetSize(const CPLHashSet* set)
 /*                       CPLHashSetGetNewListElt()                      */
 /************************************************************************/
 
-static CPLList* CPLHashSetGetNewListElt(CPLHashSet* set)
+static CPLList* CPLHashSetGetNewListElt( CPLHashSet* set )
 {
     if( set->psRecyclingList )
     {
         CPLList* psRet = set->psRecyclingList;
         psRet->pData = NULL;
-        set->nRecyclingListSize --;
+        set->nRecyclingListSize--;
         set->psRecyclingList = psRet->psNext;
         return psRet;
     }
-    else
-        return (CPLList*) CPLMalloc(sizeof(CPLList));
+
+    return static_cast<CPLList *>(CPLMalloc(sizeof(CPLList)));
 }
 
 /************************************************************************/
 /*                       CPLHashSetReturnListElt()                      */
 /************************************************************************/
 
-static void CPLHashSetReturnListElt(CPLHashSet* set, CPLList* psList)
+static void CPLHashSetReturnListElt( CPLHashSet* set, CPLList* psList )
 {
     if( set->nRecyclingListSize < 128 )
     {
@@ -162,13 +166,13 @@ static void CPLHashSetReturnListElt(CPLHashSet* set, CPLList* psList)
 /*                   CPLHashSetClearInternal()                          */
 /************************************************************************/
 
-static void CPLHashSetClearInternal(CPLHashSet* set, int bFinalize)
+static void CPLHashSetClearInternal( CPLHashSet* set, bool bFinalize )
 {
     CPLAssert(set != NULL);
-    for(int i=0;i<set->nAllocatedSize;i++)
+    for( int i = 0; i < set->nAllocatedSize; i++ )
     {
         CPLList* cur = set->tabList[i];
-        while(cur)
+        while( cur )
         {
             if (set->fnFreeEltFunc)
                 set->fnFreeEltFunc(cur->pData);
@@ -181,7 +185,7 @@ static void CPLHashSetClearInternal(CPLHashSet* set, int bFinalize)
         }
         set->tabList[i] = NULL;
     }
-    set->bRehash = FALSE;
+    set->bRehash = false;
 }
 
 /************************************************************************/
@@ -197,9 +201,9 @@ static void CPLHashSetClearInternal(CPLHashSet* set, int bFinalize)
  * @param set the hash set
  */
 
-void CPLHashSetDestroy(CPLHashSet* set)
+void CPLHashSetDestroy( CPLHashSet* set )
 {
-    CPLHashSetClearInternal(set, TRUE);
+    CPLHashSetClearInternal(set, true);
     CPLFree(set->tabList);
     CPLListDestroy(set->psRecyclingList);
     CPLFree(set);
@@ -219,10 +223,11 @@ void CPLHashSetDestroy(CPLHashSet* set)
  * @since GDAL 2.1
  */
 
-void CPLHashSetClear(CPLHashSet* set)
+void CPLHashSetClear( CPLHashSet* set )
 {
-    CPLHashSetClearInternal(set, FALSE);
-    set->tabList = (CPLList**) CPLRealloc(set->tabList, sizeof(CPLList*) * 53);
+    CPLHashSetClearInternal(set, false);
+    set->tabList = static_cast<CPLList**>(
+        CPLRealloc(set->tabList, sizeof(CPLList*) * 53));
     set->nIndiceAllocatedSize = 0;
     set->nAllocatedSize = 53;
 #ifdef HASH_DEBUG
@@ -234,7 +239,6 @@ void CPLHashSetClear(CPLHashSet* set)
 /************************************************************************/
 /*                       CPLHashSetForeach()                            */
 /************************************************************************/
-
 
 /**
  * Walk through the hash set and runs the provided function on all the
@@ -252,19 +256,19 @@ void CPLHashSetClear(CPLHashSet* set)
  * @param user_data the user data provided to the function.
  */
 
-void  CPLHashSetForeach(CPLHashSet* set,
+void CPLHashSetForeach( CPLHashSet* set,
                         CPLHashSetIterEltFunc fnIterFunc,
-                        void* user_data)
+                        void* user_data )
 {
     CPLAssert(set != NULL);
     if (!fnIterFunc) return;
 
-    for(int i=0;i<set->nAllocatedSize;i++)
+    for( int i = 0; i < set->nAllocatedSize; i++ )
     {
         CPLList* cur = set->tabList[i];
         while(cur)
         {
-            if (fnIterFunc(cur->pData, user_data) == FALSE)
+            if( !fnIterFunc(cur->pData, user_data) )
                 return;
 
             cur = cur->psNext;
@@ -276,23 +280,27 @@ void  CPLHashSetForeach(CPLHashSet* set,
 /*                        CPLHashSetRehash()                            */
 /************************************************************************/
 
-static void CPLHashSetRehash(CPLHashSet* set)
+static void CPLHashSetRehash( CPLHashSet* set )
 {
     int nNewAllocatedSize = anPrimes[set->nIndiceAllocatedSize];
-    CPLList** newTabList = (CPLList**) CPLCalloc(sizeof(CPLList*), nNewAllocatedSize);
+    CPLList** newTabList = static_cast<CPLList **>(
+        CPLCalloc(sizeof(CPLList*), nNewAllocatedSize));
 #ifdef HASH_DEBUG
-    CPLDebug("CPLHASH", "hashSet=%p, nSize=%d, nCollisions=%d, fCollisionRate=%.02f",
-             set, set->nSize, set->nCollisions, set->nCollisions * 100.0 / set->nSize);
+    CPLDebug("CPLHASH", "hashSet=%p, nSize=%d, nCollisions=%d, "
+             "fCollisionRate=%.02f",
+             set, set->nSize, set->nCollisions,
+             set->nCollisions * 100.0 / set->nSize);
     set->nCollisions = 0;
 #endif
-    for(int i=0;i<set->nAllocatedSize;i++)
+    for( int i = 0; i < set->nAllocatedSize; i++ )
     {
         CPLList* cur = set->tabList[i];
-        while(cur)
+        while( cur )
         {
-            unsigned long nNewHashVal = set->fnHashFunc(cur->pData) % nNewAllocatedSize;
+            const unsigned long nNewHashVal =
+                set->fnHashFunc(cur->pData) % nNewAllocatedSize;
 #ifdef HASH_DEBUG
-            if (newTabList[nNewHashVal])
+            if( newTabList[nNewHashVal] )
                 set->nCollisions ++;
 #endif
             CPLList* psNext = cur->psNext;
@@ -304,21 +312,20 @@ static void CPLHashSetRehash(CPLHashSet* set)
     CPLFree(set->tabList);
     set->tabList = newTabList;
     set->nAllocatedSize = nNewAllocatedSize;
-    set->bRehash = FALSE;
+    set->bRehash = false;
 }
-
 
 /************************************************************************/
 /*                        CPLHashSetFindPtr()                           */
 /************************************************************************/
 
-static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
+static void** CPLHashSetFindPtr( CPLHashSet* set, const void* elt )
 {
-    unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    const unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
     CPLList* cur = set->tabList[nHashVal];
-    while(cur)
+    while( cur )
     {
-        if (set->fnEqualFunc(cur->pData, elt))
+        if( set->fnEqualFunc(cur->pData, elt) )
             return &cur->pData;
         cur = cur->psNext;
     }
@@ -342,13 +349,13 @@ static void** CPLHashSetFindPtr(CPLHashSet* set, const void* elt)
  * @return TRUE if the element was not already in the hash set
  */
 
-int CPLHashSetInsert(CPLHashSet* set, void* elt)
+int CPLHashSetInsert( CPLHashSet* set, void* elt )
 {
     CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
     if (pElt)
     {
-        if (set->fnFreeEltFunc)
+        if( set->fnFreeEltFunc )
             set->fnFreeEltFunc(*pElt);
 
         *pElt = elt;
@@ -356,20 +363,21 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
     }
 
     if( set->nSize >= 2 * set->nAllocatedSize / 3 ||
-        (set->bRehash && set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2) )
+        (set->bRehash && set->nIndiceAllocatedSize > 0 &&
+         set->nSize <= set->nAllocatedSize / 2) )
     {
         set->nIndiceAllocatedSize++;
         CPLHashSetRehash(set);
     }
 
-    unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    const unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
 #ifdef HASH_DEBUG
     if (set->tabList[nHashVal])
-        set->nCollisions ++;
+        set->nCollisions++;
 #endif
 
     CPLList* new_elt = CPLHashSetGetNewListElt(set);
-    new_elt->pData = (void*) elt;
+    new_elt->pData = elt;
     new_elt->psNext = set->tabList[nHashVal];
     set->tabList[nHashVal] = new_elt;
     set->nSize++;
@@ -391,14 +399,14 @@ int CPLHashSetInsert(CPLHashSet* set, void* elt)
  * @return the element found in the hash set or NULL
  */
 
-void* CPLHashSetLookup(CPLHashSet* set, const void* elt)
+void* CPLHashSetLookup( CPLHashSet* set, const void* elt )
 {
     CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
-    if (pElt)
+    if( pElt )
         return *pElt;
-    else
-        return NULL;
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -406,14 +414,15 @@ void* CPLHashSetLookup(CPLHashSet* set, const void* elt)
 /************************************************************************/
 
 static
-int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
+bool CPLHashSetRemoveInternal( CPLHashSet* set, const void* elt,
+                               bool bDeferRehash )
 {
     CPLAssert(set != NULL);
-    if (set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2)
+    if( set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2 )
     {
         set->nIndiceAllocatedSize--;
         if( bDeferRehash )
-            set->bRehash = TRUE;
+            set->bRehash = true;
         else
             CPLHashSetRehash(set);
     }
@@ -421,31 +430,30 @@ int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
     int nHashVal = static_cast<int>(set->fnHashFunc(elt) % set->nAllocatedSize);
     CPLList* cur = set->tabList[nHashVal];
     CPLList* prev = NULL;
-    while(cur)
+    while( cur )
     {
-        if (set->fnEqualFunc(cur->pData, elt))
+        if( set->fnEqualFunc(cur->pData, elt) )
         {
             if (prev)
                 prev->psNext = cur->psNext;
             else
                 set->tabList[nHashVal] = cur->psNext;
 
-            if (set->fnFreeEltFunc)
+            if( set->fnFreeEltFunc )
                 set->fnFreeEltFunc(cur->pData);
 
             CPLHashSetReturnListElt(set, cur);
 #ifdef HASH_DEBUG
-            if (set->tabList[nHashVal])
+            if( set->tabList[nHashVal] )
                 set->nCollisions --;
 #endif
-
             set->nSize--;
-            return TRUE;
+            return true;
         }
         prev = cur;
         cur = cur->psNext;
     }
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -461,9 +469,9 @@ int CPLHashSetRemoveInternal(CPLHashSet* set, const void* elt, int bDeferRehash)
  * @return TRUE if the element was in the hash set
  */
 
-int CPLHashSetRemove(CPLHashSet* set, const void* elt)
+int CPLHashSetRemove( CPLHashSet* set, const void* elt )
 {
-    return CPLHashSetRemoveInternal(set, elt, FALSE);
+    return CPLHashSetRemoveInternal(set, elt, false);
 }
 
 /************************************************************************/
@@ -483,9 +491,9 @@ int CPLHashSetRemove(CPLHashSet* set, const void* elt)
  * @since GDAL 2.1
  */
 
-int CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt)
+int CPLHashSetRemoveDeferRehash( CPLHashSet* set, const void* elt )
 {
-    return CPLHashSetRemoveInternal(set, elt, TRUE);
+    return CPLHashSetRemoveInternal(set, elt, true);
 }
 
 /************************************************************************/
@@ -500,9 +508,10 @@ int CPLHashSetRemoveDeferRehash(CPLHashSet* set, const void* elt)
  * @return the hash value of the pointer
  */
 
-unsigned long CPLHashSetHashPointer(const void* elt)
+unsigned long CPLHashSetHashPointer( const void* elt )
 {
-    return (unsigned long)(GUIntBig) elt;
+    return static_cast<unsigned long>(
+        (GUIntptr_t)(elt));
 }
 
 /************************************************************************/
@@ -518,7 +527,7 @@ unsigned long CPLHashSetHashPointer(const void* elt)
  * @return TRUE if the pointers are equal
  */
 
-int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
+int CPLHashSetEqualPointer( const void* elt1, const void* elt2 )
 {
     return elt1 == elt2;
 }
@@ -535,13 +544,13 @@ int CPLHashSetEqualPointer(const void* elt1, const void* elt2)
  * @return the hash value of the string
  */
 
-unsigned long CPLHashSetHashStr(const void *elt)
+unsigned long CPLHashSetHashStr( const void *elt )
 {
-    unsigned char* pszStr = (unsigned char*)elt;
-    unsigned long hash = 0;
-
-    if (pszStr == NULL)
+    if (elt == NULL)
         return 0;
+
+    const unsigned char* pszStr = static_cast<const unsigned char *>(elt);
+    unsigned long hash = 0;
 
     int c = 0;
     while ((c = *pszStr++) != '\0')
@@ -563,16 +572,19 @@ unsigned long CPLHashSetHashStr(const void *elt)
  * @return TRUE if the strings are equal
  */
 
-int CPLHashSetEqualStr(const void* elt1, const void* elt2)
+int CPLHashSetEqualStr( const void* elt1, const void* elt2 )
 {
-    const char* pszStr1 = (const char*)elt1;
-    const char* pszStr2 = (const char*)elt2;
-    if (pszStr1 == NULL && pszStr2 != NULL)
+    const char* pszStr1 = static_cast<const char *>(elt1);
+    const char* pszStr2 = static_cast<const char *>(elt2);
+
+    if( pszStr1 == NULL && pszStr2 != NULL )
         return FALSE;
-    else if (pszStr1 != NULL && pszStr2 == NULL)
+
+    if( pszStr1 != NULL && pszStr2 == NULL )
         return FALSE;
-    else if (pszStr1 == NULL && pszStr2 == NULL)
+
+    if( pszStr1 == NULL && pszStr2 == NULL )
         return TRUE;
-    else
-        return strcmp(pszStr1, pszStr2) == 0;
+
+    return strcmp(pszStr1, pszStr2) == 0;
 }

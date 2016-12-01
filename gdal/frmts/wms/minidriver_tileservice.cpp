@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,25 +30,23 @@
 #include "wmsdriver.h"
 #include "minidriver_tileservice.h"
 
-CPP_GDALWMSMiniDriverFactory(TileService)
+CPL_CVSID("$Id$");
 
-GDALWMSMiniDriver_TileService::GDALWMSMiniDriver_TileService() {
-}
+WMSMiniDriver_TileService::WMSMiniDriver_TileService() {}
 
-GDALWMSMiniDriver_TileService::~GDALWMSMiniDriver_TileService() {
-}
+WMSMiniDriver_TileService::~WMSMiniDriver_TileService() {}
 
-CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config) {
+CPLErr WMSMiniDriver_TileService::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *version = CPLGetXMLValue(config, "Version", "1");
         if (version[0] != '\0') {
             m_version = version;
         }
     }
 
-    if (ret == CE_None) {
+    {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0') {
             /* Try the old name */
@@ -68,7 +65,7 @@ CPLErr GDALWMSMiniDriver_TileService::Initialize(CPLXMLNode *config) {
     return ret;
 }
 
-void GDALWMSMiniDriver_TileService::GetCapabilities(GDALWMSMiniDriverCapabilities *caps) {
+void WMSMiniDriver_TileService::GetCapabilities(WMSMiniDriverCapabilities *caps) {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
     caps->m_has_image_request = 0;
@@ -76,11 +73,11 @@ void GDALWMSMiniDriver_TileService::GetCapabilities(GDALWMSMiniDriverCapabilitie
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_TileService::ImageRequest(CPL_UNUSED CPLString *url,
+void WMSMiniDriver_TileService::ImageRequest(CPL_UNUSED CPLString *url,
                                                  CPL_UNUSED const GDALWMSImageRequestInfo &iri) {
 }
 
-void GDALWMSMiniDriver_TileService::TiledImageRequest(CPLString *url,
+void WMSMiniDriver_TileService::TiledImageRequest(CPLString *url,
                                                       CPL_UNUSED const GDALWMSImageRequestInfo &iri,
                                                       const GDALWMSTiledImageRequestInfo &tiri) {
     // http://s0.tileservice.worldwindcentral.com/getTile?interface=map&version=1&dataset=bmng.topo.bathy.200401&level=5&x=18&y=6

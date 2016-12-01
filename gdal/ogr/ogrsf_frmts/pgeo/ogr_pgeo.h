@@ -72,18 +72,18 @@ class OGRPGeoLayer : public OGRLayer
                         OGRPGeoLayer();
     virtual             ~OGRPGeoLayer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
 };
 
 /************************************************************************/
@@ -92,20 +92,18 @@ class OGRPGeoLayer : public OGRLayer
 
 class OGRPGeoTableLayer : public OGRPGeoLayer
 {
-    int                 bUpdateAccess;
-
     char                *pszQuery;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *  GetStatement() override;
 
     OGREnvelope         sExtent;
 
   public:
-                        OGRPGeoTableLayer( OGRPGeoDataSource * );
-                        ~OGRPGeoTableLayer();
+    explicit            OGRPGeoTableLayer( OGRPGeoDataSource * );
+                        virtual ~OGRPGeoTableLayer();
 
     CPLErr              Initialize( const char *pszTableName,
                                     const char *pszGeomCol,
@@ -117,16 +115,16 @@ class OGRPGeoTableLayer : public OGRPGeoLayer
                                     int nSRID,
                                     int bHasZ );
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * );
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 };
 
@@ -138,22 +136,22 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
 {
     char                *pszBaseStatement;
 
-    void		ClearStatement();
+    void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual CPLODBCStatement *  GetStatement();
+    virtual CPLODBCStatement *  GetStatement() override;
 
   public:
                         OGRPGeoSelectLayer( OGRPGeoDataSource *,
                                            CPLODBCStatement * );
-                        ~OGRPGeoSelectLayer();
+                        virtual ~OGRPGeoSelectLayer();
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -172,23 +170,23 @@ class OGRPGeoDataSource : public OGRDataSource
 
   public:
                         OGRPGeoDataSource();
-                        ~OGRPGeoDataSource();
+                        virtual ~OGRPGeoDataSource();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *pszTableName,
                                    const char *pszGeomCol,
                                    int bUpdate );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                    const char *pszDialect ) override;
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     // Internal use
     CPLODBCSession     *GetSession() { return &oSession; }
@@ -202,7 +200,7 @@ class OGRODBCMDBDriver : public OGRSFDriver
 {
 #ifndef WIN32
     CPLString   osDriverFile;
-    bool        LibraryExists( const char* pszLibPath );
+    static bool        LibraryExists( const char* pszLibPath );
     bool        FindDriverLib();
     CPLString   FindDefaultLib(const char* pszLibName);
 #endif
@@ -222,10 +220,10 @@ class OGRPGeoDriver : public OGRODBCMDBDriver
   public:
                 ~OGRPGeoDriver();
 
-    const char  *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char  *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
-    int          TestCapability( const char * );
+    int          TestCapability( const char * ) override;
 };
 
 #endif /* ndef _OGR_PGeo_H_INCLUDED */

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implement the OGRFMECacheIndex class, a mechanism to manage a
@@ -322,13 +321,18 @@ void OGRFMECacheIndex::Dereference( CPLXMLNode *psDSNode )
 void OGRFMECacheIndex::Add( CPLXMLNode *psDSNode )
 
 {
-    CPLAssert( psTree != NULL );
+    if( psTree == NULL )
+    {
+        CPLAssert( false );
+        return;
+    }
+
+    if( psDSNode == NULL || !EQUAL(psDSNode->pszValue,"DataSource") )
+        return;
 
     psDSNode->psNext = psTree->psChild;
     psTree->psChild = psDSNode;
 
-    if( psDSNode == NULL || !EQUAL(psDSNode->pszValue,"DataSource") )
-        return;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the creation time value to use.                         */

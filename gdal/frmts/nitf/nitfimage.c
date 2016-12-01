@@ -733,15 +733,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->nLineOffset = psImage->nBandOffset * psImage->nBands;
         psImage->nBlockOffset = psImage->nLineOffset * psImage->nBlockHeight;
     }
-    else if( psImage->chIMODE == 'B' )
-    {
-        psImage->nPixelOffset = psImage->nWordSize;
-        psImage->nLineOffset =
-            ((GIntBig) psImage->nBlockWidth * psImage->nBitsPerSample) / 8;
-        psImage->nBandOffset = psImage->nBlockHeight * psImage->nLineOffset;
-        psImage->nBlockOffset = psImage->nBandOffset * psImage->nBands;
-    }
-    else
+    else /* if( psImage->chIMODE == 'B' ) */
     {
         psImage->nPixelOffset = psImage->nWordSize;
         psImage->nLineOffset =
@@ -2261,6 +2253,368 @@ char **NITFReadPIAIMC( NITFImage *psImage )
     return NITFGenericMetadataRead(NULL, NULL, psImage, "PIAIMC");
 }
 
+
+/************************************************************************/
+/*                    NITFFormatRPC00BCoefficient()                     */
+/*                                                                      */
+/*      Format coefficients like +X.XXXXXXE+X (12 bytes)                */
+/************************************************************************/
+static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
+                                        int* pbPrecisionLoss )
+{
+    // We need 12 bytes + 2=3-1 bytes for MSVC potentially outputting exponents
+    // with 3 digits + 1 terminating byte
+    char szTemp[12+2+1];
+#if defined(DEBUG) || defined(WIN32)
+    size_t nLen;
+#endif
+
+    if( fabs(dfVal) > 9.999999e9 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Coefficient out of range: %g",
+                 dfVal);
+        return FALSE;
+    }
+
+    CPLsnprintf( szTemp, sizeof(szTemp), "%+.6E", dfVal);
+#if defined(DEBUG) || defined(WIN32)
+    nLen = strlen(szTemp);
+#endif
+    CPLAssert( szTemp[9] == 'E' );
+#ifdef WIN32
+    if( nLen == 14 ) // Old MSVC versions: 3 digits for the exponent
+    {
+        if( szTemp[11] != '0' || szTemp[12] != '0' )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
+            snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
+            if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+            return TRUE;
+        }
+        szTemp[11] = szTemp[13];
+    }
+    else // behaviour of the standard: 2 digits for the exponent
+#endif
+    {
+        CPLAssert( nLen == 13 );
+        if( szTemp[11] != '0')
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "%g rounded to 0", dfVal);
+            snprintf(pszBuffer, 12 + 1, "%s", "+0.000000E+0");
+            if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+            return TRUE;
+        }
+        szTemp[11] = szTemp[12];
+    }
+    szTemp[12] = '\0';
+    snprintf(pszBuffer, 12 + 1, "%s", szTemp);
+    return TRUE;
+}
+
+
+/************************************************************************/
+/*                   NITFFormatRPC00BFromMetadata()                     */
+/*                                                                      */
+/*      Format the content of a RPC00B TRE from RPC metadata            */
+/************************************************************************/
+
+char* NITFFormatRPC00BFromMetadata( char** papszRPC, int* pbPrecisionLoss )
+{
+    GDALRPCInfo sRPC;
+    char* pszRPC00B;
+    double dfErrBIAS;
+    double dfErrRAND;
+    int nOffset;
+    int nLength;
+    int nRounded;
+    int i;
+    char szTemp[24];
+
+    if( pbPrecisionLoss ) *pbPrecisionLoss = FALSE;
+
+    if( !GDALExtractRPCInfo( papszRPC, &sRPC ) )
+        return NULL;
+
+    pszRPC00B = (char*) CPLMalloc(1041 + 1);
+    pszRPC00B[0] = '1'; /* success flag */
+    nOffset = 1;
+
+    dfErrBIAS = CPLAtof(CSLFetchNameValueDef(papszRPC, "ERR_BIAS", "0"));
+    if( dfErrBIAS < 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Correcting ERR_BIAS from %f to 0", dfErrBIAS);
+    }
+    else if( dfErrBIAS > 9999.99 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ERR_BIAS out of range. Clamping to 9999.99");
+        dfErrBIAS = 9999.99;
+    }
+    nLength = 7;
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%07.2f", dfErrBIAS);
+    nOffset += nLength;
+
+    dfErrRAND = CPLAtof(CSLFetchNameValueDef(papszRPC, "ERR_RAND", "0"));
+    if( dfErrRAND < 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Correcting ERR_RAND from %f to 0", dfErrRAND);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    else if( dfErrRAND > 9999.99 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ERR_RAND out of range. Clamping to 9999.99");
+        dfErrRAND = 9999.99;
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    nLength = 7;
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%07.2f", dfErrRAND);
+    nOffset += nLength;
+
+    nLength = 6;
+    if( sRPC.dfLINE_OFF < 0 || sRPC.dfLINE_OFF >= 1e6 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LINE_OFF out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfLINE_OFF + 0.5 );
+    if( fabs(nRounded - sRPC.dfLINE_OFF) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LINE_OFF was rounded from %f to %d",
+                 sRPC.dfLINE_OFF, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%06d", nRounded);
+    nOffset += nLength;
+
+    nLength = 5;
+    if( sRPC.dfSAMP_OFF < 0 || sRPC.dfSAMP_OFF >= 1e5 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SAMP_OFF out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfSAMP_OFF + 0.5 );
+    if( fabs(nRounded - sRPC.dfSAMP_OFF) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "SAMP_OFF was rounded from %f to %d",
+                 sRPC.dfSAMP_OFF, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%05d", nRounded);
+    nOffset += nLength;
+
+    nLength = 8;
+    if( fabs(sRPC.dfLAT_OFF) > 90 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LAT_OFF out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+08.4f", sRPC.dfLAT_OFF);
+    if( fabs(sRPC.dfLAT_OFF - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LAT_OFF was rounded from %f to %s",
+                 sRPC.dfLAT_OFF, szTemp);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    nOffset += nLength;
+
+    nLength = 9;
+    if( fabs(sRPC.dfLONG_OFF) > 180 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LONG_OFF out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+09.4f", sRPC.dfLONG_OFF);
+    if( fabs(sRPC.dfLONG_OFF - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LONG_OFF was rounded from %f to %s",
+                 sRPC.dfLONG_OFF, szTemp);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    nOffset += nLength;
+
+    nLength = 5;
+    if( fabs(sRPC.dfHEIGHT_OFF) > 9999 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HEIGHT_OFF out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfHEIGHT_OFF + 0.5 );
+    if( fabs(nRounded - sRPC.dfHEIGHT_OFF) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "HEIGHT_OFF was rounded from %f to %d",
+                 sRPC.dfHEIGHT_OFF, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+05d", nRounded);
+    nOffset += nLength;
+
+    nLength = 6;
+    if( sRPC.dfLINE_SCALE < 1 || sRPC.dfLINE_SCALE >= 999999 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LINE_SCALE out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfLINE_SCALE + 0.5 );
+    if( fabs(nRounded - sRPC.dfLINE_SCALE) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LINE_SCALE was rounded from %f to %d",
+                 sRPC.dfLINE_SCALE, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%06d", nRounded);
+    nOffset += nLength;
+
+    nLength = 5;
+    if( sRPC.dfSAMP_SCALE < 1 || sRPC.dfSAMP_SCALE >= 99999 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SAMP_SCALE out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfSAMP_SCALE + 0.5 );
+    if( fabs(nRounded - sRPC.dfSAMP_SCALE) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "SAMP_SCALE was rounded from %f to %d",
+                 sRPC.dfSAMP_SCALE, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%05d", nRounded);
+    nOffset += nLength;
+
+    nLength = 8;
+    if( fabs(sRPC.dfLAT_SCALE) > 90 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LAT_SCALE out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+08.4f", sRPC.dfLAT_SCALE);
+    if( fabs(sRPC.dfLAT_SCALE - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LAT_SCALE was rounded from %f to %s",
+                 sRPC.dfLAT_SCALE, szTemp);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    nOffset += nLength;
+
+    nLength = 9;
+    if( fabs(sRPC.dfLONG_SCALE) > 180 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "LONG_SCALE out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+09.4f", sRPC.dfLONG_SCALE);
+    if( fabs(sRPC.dfLONG_SCALE - CPLAtof(NITFGetField(szTemp, pszRPC00B, nOffset, nLength ))) > 1e-8 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LONG_SCALE was rounded from %f to %s",
+                 sRPC.dfLONG_SCALE, szTemp);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    nOffset += nLength;
+
+    nLength = 5;
+    if( fabs(sRPC.dfHEIGHT_SCALE) > 9999 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "HEIGHT_SCALE out of range.");
+        CPLFree(pszRPC00B);
+        return NULL;
+    }
+    nRounded = (int)floor( sRPC.dfHEIGHT_SCALE + 0.5 );
+    if( fabs(nRounded - sRPC.dfHEIGHT_SCALE) > 1e-2 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "HEIGHT_SCALE was rounded from %f to %d",
+                 sRPC.dfHEIGHT_SCALE, nRounded);
+        if( pbPrecisionLoss ) *pbPrecisionLoss = TRUE;
+    }
+    CPLsnprintf(pszRPC00B + nOffset, nLength + 1, "%+05d", nRounded);
+    nOffset += nLength;
+
+/* -------------------------------------------------------------------- */
+/*      Write coefficients.                                             */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < 20; i++ )
+    {
+        if( !NITFFormatRPC00BCoefficient(pszRPC00B + nOffset,
+                                         sRPC.adfLINE_NUM_COEFF[i],
+                                         pbPrecisionLoss) )
+        {
+            CPLFree(pszRPC00B);
+            return NULL;
+        }
+        nOffset += 12;
+    }
+    for( i = 0; i < 20; i++ )
+    {
+        if( !NITFFormatRPC00BCoefficient(pszRPC00B + nOffset,
+                                         sRPC.adfLINE_DEN_COEFF[i],
+                                         pbPrecisionLoss ) )
+        {
+            CPLFree(pszRPC00B);
+            return NULL;
+        }
+        nOffset += 12;
+    }
+    for( i = 0; i < 20; i++ )
+    {
+        if( !NITFFormatRPC00BCoefficient(pszRPC00B + nOffset,
+                                         sRPC.adfSAMP_NUM_COEFF[i],
+                                         pbPrecisionLoss ) )
+        {
+            CPLFree(pszRPC00B);
+            return NULL;
+        }
+        nOffset += 12;
+    }
+    for( i = 0; i < 20; i++ )
+    {
+        if( !NITFFormatRPC00BCoefficient(pszRPC00B + nOffset,
+                                         sRPC.adfSAMP_DEN_COEFF[i],
+                                         pbPrecisionLoss ) )
+        {
+            CPLFree(pszRPC00B);
+            return NULL;
+        }
+        nOffset += 12;
+    }
+
+    CPLAssert( nOffset == 1041 );
+    pszRPC00B[nOffset] = '\0';
+    CPLAssert( strlen(pszRPC00B) == 1041 );
+    CPLAssert( strchr(pszRPC00B, ' ') == NULL );
+
+    return pszRPC00B;
+}
+
 /************************************************************************/
 /*                           NITFReadRPC00B()                           */
 /*                                                                      */
@@ -2271,13 +2625,8 @@ char **NITFReadPIAIMC( NITFImage *psImage )
 int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 
 {
-    static const int anRPC00AMap[] = /* See ticket #2040 */
-    {0, 1, 2, 3, 4, 5, 6 , 10, 7, 8, 9, 11, 14, 17, 12, 15, 18, 13, 16, 19};
-
-    const char *pachTRE;
-    char szTemp[100];
-    int  i;
-    int  bRPC00A = FALSE;
+    const char* pachTRE;
+    int  bIsRPC00A = FALSE;
     int  nTRESize;
 
     psRPC->SUCCESS = 0;
@@ -2293,7 +2642,7 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes,
                                "RPC00A", &nTRESize );
         if( pachTRE )
-            bRPC00A = TRUE;
+            bIsRPC00A = TRUE;
     }
 
     if( pachTRE == NULL )
@@ -2310,13 +2659,32 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
         return FALSE;
     }
 
+    return NITFDeserializeRPC00B( (const GByte*)pachTRE, psRPC, bIsRPC00A );
+}
+
+/************************************************************************/
+/*                          NITFDeserializeRPC00B()                     */
+/************************************************************************/
+
+int NITFDeserializeRPC00B( const GByte* pabyTRE, NITFRPC00BInfo *psRPC,
+                           int bIsRPC00A )
+{
+    const char* pachTRE = (const char*)pabyTRE;
+    char szTemp[100];
+    int i;
+    static const int anRPC00AMap[] = /* See ticket #2040 */
+    {0, 1, 2, 3, 4, 5, 6 , 10, 7, 8, 9, 11, 14, 17, 12, 15, 18, 13, 16, 19};
+
 /* -------------------------------------------------------------------- */
 /*      Parse out field values.                                         */
 /* -------------------------------------------------------------------- */
     psRPC->SUCCESS = atoi(NITFGetField(szTemp, pachTRE, 0, 1 ));
 
     if ( !psRPC->SUCCESS )
-	fprintf( stdout, "RPC Extension not Populated!\n");
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "RPC Extension not Populated!");
+    }
 
     psRPC->ERR_BIAS = CPLAtof(NITFGetField(szTemp, pachTRE, 1, 7 ));
     psRPC->ERR_RAND = CPLAtof(NITFGetField(szTemp, pachTRE, 8, 7 ));
@@ -2340,7 +2708,7 @@ int NITFReadRPC00B( NITFImage *psImage, NITFRPC00BInfo *psRPC )
     {
         int iSrcCoef = i;
 
-        if( bRPC00A )
+        if( bIsRPC00A )
             iSrcCoef = anRPC00AMap[i];
 
         psRPC->LINE_NUM_COEFF[i] =
@@ -3406,7 +3774,7 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
     int     i;
     GUInt32 nVQOffset=0 /*, nVQSize=0 */;
     GByte abyTestChunk[1000];
-    GByte abySignature[6];
+    const GByte abySignature[6] = { 0x00, 0x00, 0x00, 0x06, 0x00, 0x0E };
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have the VQ tables?                               */
@@ -3432,13 +3800,6 @@ static int NITFLoadVQTables( NITFImage *psImage, int bTryGuessingOffset )
 /* -------------------------------------------------------------------- */
 /*      Does it look like we have the tables properly identified?       */
 /* -------------------------------------------------------------------- */
-    abySignature[0] = 0x00;
-    abySignature[1] = 0x00;
-    abySignature[2] = 0x00;
-    abySignature[3] = 0x06;
-    abySignature[4] = 0x00;
-    abySignature[5] = 0x0E;
-
     if( VSIFSeekL( psImage->psFile->fp, nVQOffset, SEEK_SET ) != 0 ||
         VSIFReadL( abyTestChunk, sizeof(abyTestChunk), 1, psImage->psFile->fp ) != 1 )
     {
@@ -3514,6 +3875,7 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
     double dfLineNumerator, dfLineDenominator,
         dfPixelNumerator, dfPixelDenominator;
     double dfPolyTerm[20];
+    double* pdfPolyTerm = dfPolyTerm;
     int i;
 
 /* -------------------------------------------------------------------- */
@@ -3527,7 +3889,7 @@ int NITFRPCGeoToImage( NITFRPC00BInfo *psRPC,
 /*      Compute the 20 terms.                                           */
 /* -------------------------------------------------------------------- */
 
-    dfPolyTerm[0] = 1.0;
+    pdfPolyTerm[0] = 1.0; /* workaround cppcheck false positive */
     dfPolyTerm[1] = dfLong;
     dfPolyTerm[2] = dfLat;
     dfPolyTerm[3] = dfHeight;
@@ -3865,6 +4227,8 @@ static void NITFPossibleIGEOLOReorientation( NITFImage *psImage )
 /*      Read DPPDB IMRFCA TRE (and the associated IMASDA TRE) if it is  */
 /*      available. IMRFCA RPC coefficients are remapped into RPC00B     */
 /*      organization.                                                   */
+/*      See table 68 for IMASDA and table 69 for IMRFCA in              */
+/*      http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf */
 /************************************************************************/
 int NITFReadIMRFCA( NITFImage *psImage, NITFRPC00BInfo *psRPC )
 {

@@ -9,6 +9,7 @@
  * ----------------------------------------------------------------------------- */
 
 #define SWIGPYTHON
+#define SWIG_PYTHON_THREADS
 #define SWIG_PYTHON_DIRECTOR_NO_VTABLE
 
 
@@ -3048,6 +3049,17 @@ namespace swig {
 }
 
 
+// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// since we do not pass -DDEBUG_BOOL when building the bindings
+#define DO_NOT_USE_DEBUG_BOOL
+
+// So that override is properly defined
+#ifndef GDAL_COMPILATION
+#define GDAL_COMPILATION
+#endif
+
+
+
 #include "gdal.h"
 
 typedef struct
@@ -3410,16 +3422,16 @@ class NUMPYDataset : public GDALDataset
                  NUMPYDataset();
                  ~NUMPYDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( PyArrayObject *psArray );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -3491,7 +3503,13 @@ NUMPYDataset::~NUMPYDataset()
     }
 
     FlushCache();
+
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 
 /************************************************************************/
@@ -3624,7 +3642,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
     {
         if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
         {
@@ -3922,6 +3941,8 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( pszMessage == NULL )
         pszMessage = "";
 
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     if( psInfo->psPyCallbackData == NULL )
         psArgs = Py_BuildValue("(dsO)", dfComplete, pszMessage, Py_None );
     else
@@ -3934,16 +3955,19 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     if( PyErr_Occurred() != NULL )
     {
         PyErr_Clear();
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return FALSE;
     }
 
     if( psResult == NULL )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
     if( psResult == Py_None )
     {
+        SWIG_PYTHON_THREAD_END_BLOCK;
         return TRUE;
     }
 
@@ -3952,10 +3976,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
         PyErr_Clear();
         CPLError(CE_Failure, CPLE_AppDefined, "bad progress return value");
         Py_XDECREF(psResult);
-	return FALSE;
+        SWIG_PYTHON_THREAD_END_BLOCK;
+        return FALSE;
     }
 
     Py_XDECREF(psResult);
+    SWIG_PYTHON_THREAD_END_BLOCK;
 
     return bContinue;
 }
@@ -3974,7 +4000,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALRegister_NUMPY();
 
     /* I wish I had a safe way of checking the type */
-    sprintf( szString, "NUMPY:::%p", psArray );
+    snprintf( szString, sizeof(szString), "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
 
@@ -4267,7 +4293,11 @@ SWIGINTERN PyObject *_wrap_delete_VirtualMem(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_VirtualMem" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  delete_CPLVirtualMemShadow(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    delete_CPLVirtualMemShadow(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4303,7 +4333,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_GetAddr(PyObject *SWIGUNUSEDPARM(self), Py
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_GetAddr" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  CPLVirtualMemShadow_GetAddr(arg1,arg2,arg3,arg4,arg5);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_GetAddr(arg1,arg2,arg3,arg4,arg5);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   {
 #if PY_VERSION_HEX >= 0x02070000
@@ -4404,7 +4438,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_0(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "VirtualMem_Pin" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast< int >(val4);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3,arg4);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3,arg4);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4443,7 +4481,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_1(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VirtualMem_Pin" "', argument " "3"" of type '" "size_t""'");
   } 
   arg3 = static_cast< size_t >(val3);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2,arg3);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4473,7 +4515,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_2(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VirtualMem_Pin" "', argument " "2"" of type '" "size_t""'");
   } 
   arg2 = static_cast< size_t >(val2);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1,arg2);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4494,7 +4540,11 @@ SWIGINTERN PyObject *_wrap_VirtualMem_Pin__SWIG_3(PyObject *SWIGUNUSEDPARM(self)
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VirtualMem_Pin" "', argument " "1"" of type '" "CPLVirtualMemShadow *""'"); 
   }
   arg1 = reinterpret_cast< CPLVirtualMemShadow * >(argp1);
-  CPLVirtualMemShadow_Pin__SWIG_0(arg1);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    CPLVirtualMemShadow_Pin__SWIG_0(arg1);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -4850,7 +4900,11 @@ SWIGINTERN PyObject *_wrap_BandRasterIONumPy(PyObject *SWIGUNUSEDPARM(self), PyO
       psProgressInfo->psPyCallbackData = obj10 ;
     }
   }
-  result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)BandRasterIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -5008,7 +5062,11 @@ SWIGINTERN PyObject *_wrap_DatasetIONumPy(PyObject *SWIGUNUSEDPARM(self), PyObje
       psProgressInfo->psPyCallbackData = obj10 ;
     }
   }
-  result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+  {
+    SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+    result = (CPLErr)DatasetIONumPy(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+    SWIG_PYTHON_THREAD_END_ALLOW;
+  }
   resultobj = SWIG_From_int(static_cast< int >(result));
   {
     /* %typemap(freearg) ( void* callback_data=NULL)  */
@@ -6119,6 +6177,9 @@ SWIG_init(void) {
   GDALRegister_NUMPY();
   
   
+  
+  /* Initialize threading */
+  SWIG_PYTHON_INITIALIZE_THREADS;
 #if PY_VERSION_HEX >= 0x03000000
   return m;
 #else

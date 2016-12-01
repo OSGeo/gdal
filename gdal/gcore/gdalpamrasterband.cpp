@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALPamRasterBand, a raster band base class
@@ -30,8 +29,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "gdal_pam.h"
+
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 #include "gdal_rat.h"
 
 CPL_CVSID("$Id$");
@@ -51,12 +66,14 @@ GDALPamRasterBand::GDALPamRasterBand()
 /*                         GDALPamRasterBand()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GDALPamRasterBand::GDALPamRasterBand( int bForceCachedIOIn ) :
     GDALRasterBand(bForceCachedIOIn)
 {
     psPam = NULL;
     SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
+//! @endcond
 
 /************************************************************************/
 /*                         ~GDALPamRasterBand()                         */
@@ -72,6 +89,7 @@ GDALPamRasterBand::~GDALPamRasterBand()
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char * /* pszUnused */ )
 {
     if( psPam == NULL )
@@ -418,6 +436,12 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree,
              psEntry != NULL;
              psEntry = psEntry->psNext )
         {
+            if( !(psEntry->eType == CXT_Element &&
+                  EQUAL(psEntry->pszValue, "Entry")) )
+            {
+                continue;
+            }
+
             GDALColorEntry sCEntry = {
                 static_cast<short>(atoi(CPLGetXMLValue( psEntry, "c1", "0" ))),
                 static_cast<short>(atoi(CPLGetXMLValue( psEntry, "c2", "0" ))),
@@ -655,6 +679,7 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 
     return CE_None;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            SetMetadata()                             */
@@ -892,7 +917,6 @@ CPLErr GDALPamRasterBand::SetCategoryNames( char ** papszNewNames )
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                           GetColorTable()                            */
 /************************************************************************/
@@ -991,6 +1015,7 @@ void GDALPamRasterBand::SetDescription( const char *pszDescription )
 /*                         PamParseHistogram()                          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int
 PamParseHistogram( CPLXMLNode *psHistItem,
                    double *pdfMin, double *pdfMax,
@@ -1060,7 +1085,8 @@ PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
         return NULL;
 
     for( CPLXMLNode *psXMLHist = psSavedHistograms->psChild;
-         psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+         psXMLHist != NULL;
+         psXMLHist = psXMLHist->psNext )
     {
         if( psXMLHist->eType != CXT_Element
             || !EQUAL(psXMLHist->pszValue,"HistItem") )
@@ -1138,6 +1164,7 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
 
     return psXMLHist;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            GetHistogram()                            */

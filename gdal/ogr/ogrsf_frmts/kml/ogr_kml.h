@@ -47,8 +47,7 @@ class OGRKMLDataSource;
 
 class OGRKMLLayer : public OGRLayer
 {
-public:
-
+  public:
     OGRKMLLayer( const char* pszName_,
                  OGRSpatialReference* poSRS,
                  bool bWriter,
@@ -59,13 +58,13 @@ public:
     //
     // OGRLayer Interface
     //
-    OGRFeatureDefn* GetLayerDefn();
-    OGRErr ICreateFeature( OGRFeature* poFeature );
-    OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE );
-    void ResetReading();
-    OGRFeature* GetNextFeature();
-    GIntBig GetFeatureCount( int bForce = TRUE );
-    int TestCapability( const char* pszCap );
+    OGRFeatureDefn* GetLayerDefn() override;
+    OGRErr ICreateFeature( OGRFeature* poFeature ) override;
+    OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK = TRUE ) override;
+    void ResetReading() override;
+    OGRFeature* GetNextFeature() override;
+    GIntBig GetFeatureCount( int bForce = TRUE ) override;
+    int TestCapability( const char* pszCap ) override;
 
     //
     // OGRKMLLayer Interface
@@ -76,12 +75,12 @@ public:
 
     CPLString WriteSchema();
 
-private:
+  private:
     friend class OGRKMLDataSource;
 
     OGRKMLDataSource* poDS_;
     OGRSpatialReference* poSRS_;
-	OGRCoordinateTransformation *poCT_;
+    OGRCoordinateTransformation *poCT_;
 
     OGRFeatureDefn* poFeatureDefn_;
 
@@ -104,7 +103,7 @@ private:
 
 class OGRKMLDataSource : public OGRDataSource
 {
-public:
+  public:
     OGRKMLDataSource();
     ~OGRKMLDataSource();
 
@@ -112,14 +111,14 @@ public:
     // OGRDataSource Interface
     //
     int Open( const char* pszName, int bTestOpen );
-    const char* GetName() { return pszName_; }
-    int GetLayerCount() { return nLayers_; }
-    OGRLayer* GetLayer( int nLayer );
+    const char* GetName() override { return pszName_; }
+    int GetLayerCount() override { return nLayers_; }
+    OGRLayer* GetLayer( int nLayer ) override;
     OGRLayer* ICreateLayer( const char* pszName,
                            OGRSpatialReference* poSRS = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
-                           char** papszOptions = NULL );
-    int TestCapability( const char* pszCap );
+                           char** papszOptions = NULL ) override;
+    int TestCapability( const char* pszCap ) override;
 
     //
     // OGRKMLDataSource Interface
@@ -134,11 +133,10 @@ public:
     KML* GetKMLFile() { return poKMLFile_; };
 #endif
 
-	bool IsFirstCTError() const { return !bIssuedCTError_; }
-	void IssuedFirstCTError() { bIssuedCTError_ = true; }
+    bool IsFirstCTError() const { return !bIssuedCTError_; }
+    void IssuedFirstCTError() { bIssuedCTError_ = true; }
 
-private:
-
+  private:
 #ifdef HAVE_EXPAT
     KML* poKMLFile_;
 #endif
@@ -148,22 +146,22 @@ private:
     OGRKMLLayer** papoLayers_;
     int nLayers_;
 
-    //The name of the field to use for the KML name element
+    // The name of the field to use for the KML name element.
     char* pszNameField_;
     char* pszDescriptionField_;
 
-    //The KML altitude mode to use
- 	char* pszAltitudeMode_;
+    // The KML altitude mode to use.
+    char* pszAltitudeMode_;
 
     char** papszCreateOptions_;
 
-    // output related parameters
+    // Output related parameters.
     VSILFILE* fpOutput_;
 
     OGREnvelope oEnvelope_;
 
-	//Have we issued a coordinate transformation already for this datasource
-	bool bIssuedCTError_;
+    // Have we issued a coordinate transformation already for this datasource.
+    bool bIssuedCTError_;
 };
 
 #endif /* OGR_KML_H_INCLUDED */

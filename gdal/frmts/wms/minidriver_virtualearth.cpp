@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,22 +30,19 @@
 #include "wmsdriver.h"
 #include "minidriver_virtualearth.h"
 
+#include <algorithm>
 
-CPP_GDALWMSMiniDriverFactory(VirtualEarth)
+CPL_CVSID("$Id$");
 
-GDALWMSMiniDriver_VirtualEarth::GDALWMSMiniDriver_VirtualEarth()
-{
-}
+WMSMiniDriver_VirtualEarth::WMSMiniDriver_VirtualEarth() {}
 
-GDALWMSMiniDriver_VirtualEarth::~GDALWMSMiniDriver_VirtualEarth()
-{
-}
+WMSMiniDriver_VirtualEarth::~WMSMiniDriver_VirtualEarth() {}
 
-CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
+CPLErr WMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     CPLErr ret = CE_None;
 
-    if (ret == CE_None) {
+    {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0') {
             m_base_url = base_url;
@@ -73,7 +69,7 @@ CPLErr GDALWMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config)
     return ret;
 }
 
-void GDALWMSMiniDriver_VirtualEarth::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
+void WMSMiniDriver_VirtualEarth::GetCapabilities(WMSMiniDriverCapabilities *caps)
 {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 0;
@@ -82,7 +78,7 @@ void GDALWMSMiniDriver_VirtualEarth::GetCapabilities(GDALWMSMiniDriverCapabiliti
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
+void WMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
                                                        CPL_UNUSED const GDALWMSImageRequestInfo &iri,
                                                        const GDALWMSTiledImageRequestInfo &tiri)
 {
@@ -92,7 +88,7 @@ void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
     char szTileNumber[64];
     int x = tiri.m_x;
     int y = tiri.m_y;
-    int z = MIN(32,tiri.m_level);
+    int z = std::min(32, tiri.m_level);
 
     for(int i = 0; i < z; i ++)
     {
@@ -111,6 +107,6 @@ void GDALWMSMiniDriver_VirtualEarth::TiledImageRequest(CPLString *url,
                         (tiri.m_x + tiri.m_y + z) % 4);
 }
 
-const char *GDALWMSMiniDriver_VirtualEarth::GetProjectionInWKT() {
+const char *WMSMiniDriver_VirtualEarth::GetProjectionInWKT() {
     return m_projection_wkt.c_str();
 }

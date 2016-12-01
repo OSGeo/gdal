@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.8 2008-01-29 20:53:10 dmorissette Exp $
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -58,6 +57,8 @@
  **********************************************************************/
 
 #include "mitab.h"
+
+CPL_CVSID("$Id$");
 
 typedef struct
 {
@@ -1052,8 +1053,10 @@ static const MapInfoBoundsInfo gasBoundsList[] = {
 {{0xff, 0, 0, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}, 0,0,0,0,0,0,0,0},  0, 0, 0, 0}
 };
 
-
-#define TAB_EQUAL(a, b, eps) (fabs((a)-(b)) < eps)
+static bool TAB_EQUAL( double a, double b, double eps )
+{
+    return fabs(a - b) < eps;
+}
 
 static char szPreviousMitabBoundsFile[2048] = { 0 };
 static VSIStatBufL sStatBoundsFile;
@@ -1066,15 +1069,14 @@ static VSIStatBufL sStatBoundsFile;
  * This can modify that passed TABProjInfo struct if a match is found
  * in an external bound file with proj remapping.
  *
- * Returns TRUE if valid bounds were found, FALSE otherwise.
+ * Returns true if valid bounds were found, false otherwise.
  **********************************************************************/
-GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
+bool MITABLookupCoordSysBounds( TABProjInfo *psCS,
                                 double &dXMin, double &dYMin,
                                 double &dXMax, double &dYMax,
-                                int bOnlyUserTable)
+                                bool bOnlyUserTable )
 {
-    GBool bFound = FALSE;
-    const MapInfoBoundsInfo *psList;
+    bool bFound = false;
 
     /*-----------------------------------------------------------------
     * Try to load the user defined table if not loaded yet .
@@ -1112,7 +1114,7 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
         strcpy(szPreviousMitabBoundsFile, "");
     }
 
-    for(int iLoop=0; !bFound && iLoop < 2; iLoop++)
+    for( int iLoop=0; !bFound && iLoop < 2; iLoop++ )
     {
         /* MapInfo uses a hack to differentiate some SRS that have the same */
         /* definition, but different bounds, e.g. Lambet 93 France with French */
@@ -1159,11 +1161,11 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                 dYMin = gpasExtBoundsList[i].sBoundsInfo.dYMin;
                 dXMax = gpasExtBoundsList[i].sBoundsInfo.dXMax;
                 dYMax = gpasExtBoundsList[i].sBoundsInfo.dYMax;
-                bFound = TRUE;
+                bFound = true;
             }
         }
 
-        psList = gasBoundsList;
+        const MapInfoBoundsInfo *psList = gasBoundsList;
         for( ; !bOnlyUserTable && !bFound && psList->sProj.nProjId!=0xff; psList++)
         {
             const TABProjInfo *p = &(psList->sProj);
@@ -1193,14 +1195,13 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
                 dYMin = psList->dYMin;
                 dXMax = psList->dXMax;
                 dYMax = psList->dYMax;
-                bFound = TRUE;
+                bFound = true;
             }
         }
     }
 
     return bFound;
 }
-
 
 /**********************************************************************
  *                     MITABLoadCoordSysTable()
@@ -1225,23 +1226,24 @@ GBool MITABLookupCoordSysBounds(TABProjInfo *psCS,
  **********************************************************************/
 int MITABLoadCoordSysTable(const char *pszFname)
 {
-    VSILFILE *fp;
-    int nStatus = 0, iLine = 0;
+    int nStatus = 0;
+    int iLine = 0;
 
     MITABFreeCoordSysTable();
 
-    if ((fp = VSIFOpenL(pszFname, "rt")) != NULL)
+    VSILFILE *fp = VSIFOpenL(pszFname, "rt");
+    if( fp != NULL )
     {
-        const char *pszLine;
-        int         iEntry=0, numEntries=100;
+        int iEntry=0;
+        int numEntries=100;
 
         gpasExtBoundsList = (MapInfoRemapProjInfo *)CPLMalloc(numEntries*
                                                   sizeof(MapInfoRemapProjInfo));
 
+        const char *pszLine = NULL;
         while( (pszLine = CPLReadLineL(fp)) != NULL)
         {
-            double dXMin, dYMin, dXMax, dYMax;
-            int bHasProjIn = FALSE;
+            bool bHasProjIn = false;
             TABProjInfo sProjIn;
             TABProjInfo sProj;
 
@@ -1268,7 +1270,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                     CPLError(CE_Warning, CPLE_IllegalArg, "Unexpected Bounds parameter at line %d",
                              iLine);
                 }
-                bHasProjIn = TRUE;
+                bHasProjIn = true;
 
                 iLine++;
                 pszLine = CPLReadLineL(fp);
@@ -1287,7 +1289,13 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 break;  // Abort and return
             }
 
-            if (!MITABExtractCoordSysBounds(pszLine, dXMin,dYMin,dXMax,dYMax))
+            double dXMin = 0.0;
+            double dYMin = 0.0;
+            double dXMax = 0.0;
+            double dYMax = 0.0;
+            if( !MITABExtractCoordSysBounds(pszLine,
+                                            dXMin, dYMin,
+                                            dXMax, dYMax) )
             {
                 CPLError(CE_Warning, CPLE_IllegalArg,
                          "Missing Bounds parameters in line %d of %s",
@@ -1303,7 +1311,8 @@ int MITABLoadCoordSysTable(const char *pszFname)
                                         numEntries* sizeof(MapInfoRemapProjInfo));
             }
 
-            gpasExtBoundsList[iEntry].sProjIn = (bHasProjIn) ? sProjIn : sProj;
+            gpasExtBoundsList[iEntry].sProjIn =
+                bHasProjIn ? sProjIn : sProj;
             gpasExtBoundsList[iEntry].sBoundsInfo.sProj = sProj;
             gpasExtBoundsList[iEntry].sBoundsInfo.dXMin = dXMin;
             gpasExtBoundsList[iEntry].sBoundsInfo.dYMin = dYMin;
@@ -1323,7 +1332,6 @@ int MITABLoadCoordSysTable(const char *pszFname)
     return nStatus;
 }
 
-
 /**********************************************************************
  *                     MITABFreeCoordSysTable()
  *
@@ -1341,7 +1349,7 @@ void MITABFreeCoordSysTable()
  *
  * Returns TRUE if a coordsys table was loaded, FALSE otherwise.
  **********************************************************************/
-GBool MITABCoordSysTableLoaded()
+bool MITABCoordSysTableLoaded()
 {
-    return (nExtBoundsListCount >= 0);
+    return nExtBoundsListCount >= 0;
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * $Id$
  *
  * Name:     oci_wrapper.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -329,7 +329,6 @@ public:
     bool                Commit(); // OCITransCommit()
     bool                StartTransaction(); //  //OCITransStart()
     bool                EndTransaction() {return Commit(); }
-
 };
 
 /***************************************************************************/

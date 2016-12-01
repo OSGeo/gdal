@@ -198,6 +198,8 @@ ODsCCurveGeometries = _ogr.ODsCCurveGeometries
 ODsCTransactions = _ogr.ODsCTransactions
 ODsCEmulatedTransactions = _ogr.ODsCEmulatedTransactions
 ODsCMeasuredGeometries = _ogr.ODsCMeasuredGeometries
+ODsCRandomLayerRead = _ogr.ODsCRandomLayerRead
+ODsCRandomLayerWrite = _ogr.ODsCRandomLayerWrite
 ODrCCreateDataSource = _ogr.ODrCCreateDataSource
 ODrCDeleteDataSource = _ogr.ODrCDeleteDataSource
 OLMD_FID64 = _ogr.OLMD_FID64
@@ -5535,7 +5537,7 @@ class Geometry(_object):
 
         ppszSrcText:  a text buffer is allocated by the program, and assigned
         to the passed pointer. After use, *ppszDstText should be freed with
-        OGRFree().
+        CPLFree().
 
         Currently OGRERR_NONE is always returned. 
         """
@@ -5565,7 +5567,7 @@ class Geometry(_object):
 
         ppszSrcText:  a text buffer is allocated by the program, and assigned
         to the passed pointer. After use, *ppszDstText should be freed with
-        OGRFree().
+        CPLFree().
 
         Currently OGRERR_NONE is always returned.
 

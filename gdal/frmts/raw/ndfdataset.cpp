@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  NDF Driver
  * Purpose:  Implementation of NLAPS Data Format read support.
@@ -55,9 +54,9 @@ class NDFDataset : public RawDataset
                 NDFDataset();
     virtual ~NDFDataset();
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual char **GetFileList(void);
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -181,10 +180,10 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (fp == NULL)
         return NULL;
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     const int nHeaderMax = 1000;
     int nHeaderLines = 0;
-    char **papszHeader = reinterpret_cast<char **>(
+    char **papszHeader = static_cast<char **>(
         CPLMalloc( sizeof(char *) * (nHeaderMax+1) ) );
 
     while( nHeaderLines < nHeaderMax

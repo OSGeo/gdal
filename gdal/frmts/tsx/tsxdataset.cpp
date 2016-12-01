@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:     TerraSAR-X XML Product Support
  * Purpose:     Support for TerraSAR-X XML Metadata files
@@ -92,14 +91,14 @@ class TSXDataset : public GDALPamDataset {
     eProductType nProduct;
 public:
     TSXDataset();
-    ~TSXDataset();
+    virtual ~TSXDataset();
 
-    virtual int GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    CPLErr GetGeoTransform( double* padfTransform);
-    const char* GetProjectionRef();
+    CPLErr GetGeoTransform( double* padfTransform) override;
+    const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int Identify( GDALOpenInfo *poOpenInfo );
@@ -121,7 +120,7 @@ public:
         ePolarization ePol, GDALDataset *poBand );
     virtual ~TSXRasterBand();
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
 };
@@ -333,12 +332,12 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
     nGCPCount
         = atoi(CPLGetXMLValue( psGeolocationGrid, "numberOfGridPoints.total", "0" ));
     //count the gcps if the given count value is invalid
-    CPLXMLNode *psNode;
-    if (nGCPCount<=0)
+    CPLXMLNode *psNode = NULL;
+    if( nGCPCount<=0 )
     {
         for( psNode = psGeolocationGrid->psChild; psNode != NULL; psNode = psNode->psNext )
             if( EQUAL(psNode->pszValue,"gridPoint") )
-                nGCPCount++ ;
+                nGCPCount++;
     }
     //if there are no gcps, fail
     if(nGCPCount<=0)
@@ -710,9 +709,9 @@ GDALDataset *TSXDataset::Open( GDALOpenInfo *poOpenInfo ) {
             poDS->adfGeoTransform[4] = 0.0;
             poDS->adfGeoTransform[5] = 1.0;
         }
-
     }
-    else {
+    else
+    {
         CPLError(CE_Warning, CPLE_AppDefined,
             "Unable to find sceneInfo tag in XML document. "
             "Proceeding with caution.");
@@ -776,9 +775,9 @@ CPLErr TSXDataset::GetGeoTransform(double* padfTransform)
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
 
     if (bHaveGeoTransform)
-        return( CE_None );
+        return CE_None;
 
-    return( CE_Failure );
+    return CE_Failure;
 }
 
 /************************************************************************/

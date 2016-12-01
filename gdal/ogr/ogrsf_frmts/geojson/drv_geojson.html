@@ -56,6 +56,14 @@ ogrinfo -ro http://featureserver/data/.geojson OGRGeoJSON
 It's also valid to assume that OGRDataSource::GetLayerCount() for GeoJSON datasource always returns 1.
 </p>
 
+<p>Starting with GDAL 2.2, the layer name is built with the following logic:</p>
+<ol>
+<li>If a "name" member is found at the FeatureCollection level, it is used.</li>
+<li>Otherwise if the filename is regular (ie not a URL with query parameters), then
+the filename without extension and path is used as the layer name.</li>
+<li>Otherwise OGRGeoJSON is used.</li>
+</ol>
+
 <p>Accessing Web Service as a datasource (i.e. FeatureServer), each request will produce new layer.
 This behavior conforms to stateless nature of HTTP transaction and is similar to how Web browsers operate:
 single request == single page.</p>
@@ -176,11 +184,20 @@ OGRFeature(OGRGeoJSON):0
 <li><b>WRITE_BBOX</b> = YES/NO: (OGR &gt;= 1.9.0) Set to YES to write a bbox property with the bounding box of the geometries at the feature and feature
 collection level. Defaults to NO.</li>
 <li><b>COORDINATE_PRECISION</b> = int_number: (OGR &gt;= 1.9.0) Maximum number of figures after decimal separator to write in coordinates.
-Default to 15. "Smart" truncation will occur to remove trailing zeros.</li>
+Default to 15 for GeoJSON 2008, and 7 for RFC 7946. "Smart" truncation will occur to remove trailing zeros.</li>
 <li><b>SIGNIFICANT_FIGURES</b> = int_number: (OGR &gt;= 2.1) Maximum number of significant figures when writing floating-point numbers.
 Default to 17. If explicitly specified, and COORDINATE_PRECISION is not, this will also apply to coordinates.</li>
 <li><b>NATIVE_DATA</b>=string. (OGR &gt;= 2.1) Serialized JSon object that contains extra properties to store at FeatureCollection level.</li>
 <li><b>NATIVE_MEDIA_TYPE</b>=string. (OGR &gt;= 2.1) Format of NATIVE_DATA. Must be "application/vnd.geo+json", otherwise NATIVE_DATA will be ignored.</li>
+<li><b>RFC7946</b>=YES/NO. (OGR &gt;= 2.2) Whether to use
+<a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard.
+Otherwise <a href="http://geojson.org/geojson-spec.html">GeoJSON 2008</a> initial version will be used.
+Default is NO (thus GeoJSON 2008)</li>
+<li><b>WRITE_NAME</b>=YES/NO. (OGR &gt;= 2.2) Whether to write a "name" property
+at feature collection level with layer name. Defaults to YES.</li>
+<li><b>DESCRIPTION</b>=string. (OGR &gt;= 2.2) (Long) description to write in a
+"description" property at feature collection level. On reading, this will be
+reported in the DESCRIPTION metadata item of the layer.</li>
 </ul>
 
 <h2>VSI Virtual File System API support</h2>
@@ -230,6 +247,27 @@ change in the number of coordinates).</p>
 <p>This behaviour can be turned off by specifying the <b>-noNativeData</b> switch
 of the ogr2ogr utility.</p>
 
+<h2>RFC 7946 write support</h2>
+
+<p>By default, the driver will write GeoJSON files following GeoJSON 2008 specification.
+When specifying the RFC7946=YES creation option, the RFC 7946 standard will be
+used instead.</p>
+
+<p>The differences between the 2 versions are mentioned in <a href="https://tools.ietf.org/html/rfc7946#appendix-B">
+Appendix B of RFC 7946</a> and recalled here for what matters to the driver:</p>
+<ul>
+<li>Coordinates must be in longitude/latitude over the WGS 84 ellipsoid, hence
+if the spatial reference system specified at layer creation time is not EPSG:4326,
+on-the-fly reprojection will be done by the driver.</li>
+<li>Polygons will be written such as to follow the right-hand rule for orientation
+(counterclockwise external rings, clockwise internal rings).</li>
+<li>The values of a "bbox" array are "[west, south, east, north]", not
+"[minx, miny, maxx, maxy]"</li>
+<li>Some extension member names (see previous section about round/tripping) are
+forbidden in the FeatureCollection, Feature and Geometry objects.</li>
+<li>The default coordinate precision is 7 decimal digits after decimal separator.</li>
+</ul>
+
 <h2>Example</h2>
 
 <p>How to dump content of .geojson file:
@@ -250,6 +288,12 @@ ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRG
 </pre>
 </p>
 
+<p>How to translate a ESRI Shapefile into a RFC 7946 GeoJSON file:
+<pre>
+ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
+</pre>
+</p>
+
 <p>Read the result of a FeatureService request against a GeoServices REST server:
 <pre>
 ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&amp;outfields=*&amp;f=json"
@@ -261,6 +305,8 @@ ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydr
 <p>
 <ul>
 <li><a href="http://geojson.org/">GeoJSON</a> - encoding geographic content in JSON</li>
+<li><a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard.</li>
+<li><a href="http://geojson.org/geojson-spec.html">GeoJSON 2008</a> specification (obsoleted by RFC 7946).</li>
 <li><a href="http://json.org/">JSON</a> - JavaScript Object Notation</li>
 <li><a href="http://oss.metaparadigm.com/json-c/">JSON-C</a> - A JSON implementation in C</li>
 <li><a href="http://lists.osgeo.org/pipermail/gdal-dev/2007-November/014746.html">[Gdal-dev] OGR GeoJSON Driver</a> - driver announcement</li>

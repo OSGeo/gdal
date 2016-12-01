@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: ogr_xplane_geo_utils.h $
+ * $Id$
  *
  * Project:  X-Plane aeronautical data reader
  * Purpose:  Definition of geo-computation functions
@@ -39,6 +39,5 @@ double OGRXPlane_Track(double dfLatA_deg, double dfLonA_deg,
 int OGRXPlane_ExtendPosition(double dfLatA_deg, double dfLonA_deg,
                              double dfDistance, double dfHeading,
                              double* pdfLatB_deg, double* pdfLonB_deg);
-
 
 #endif /* ndef OGR_XPLANE_GEO_UTILS_H_INCLUDED */

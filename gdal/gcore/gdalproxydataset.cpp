@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  A dataset and raster band classes that act as proxy for underlying
@@ -28,15 +27,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_proxy.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_virtualmem.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
 /* ******************************************************************** */
 /*                        GDALProxyDataset                              */
 /* ******************************************************************** */
 
-#define D_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
+#define D_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, \
+                                argList, argParams) \
 retType GDALProxyDataset::methodName argList \
 { \
     retType ret; \
@@ -184,14 +194,13 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (n
 /*                    UnrefUnderlyingDataset()                        */
 /************************************************************************/
 
-void GDALProxyDataset::UnrefUnderlyingDataset(CPL_UNUSED GDALDataset* poUnderlyingDataset)
-{
-}
+void GDALProxyDataset::UnrefUnderlyingDataset(
+    GDALDataset* /* poUnderlyingDataset */)
+{}
 
 /* ******************************************************************** */
 /*                        GDALProxyRasterBand                           */
 /* ******************************************************************** */
-
 
 #define RB_PROXY_METHOD_WITH_RET(retType, retErrValue, methodName, argList, argParams) \
 retType GDALProxyRasterBand::methodName argList \
@@ -209,7 +218,6 @@ retType GDALProxyRasterBand::methodName argList \
     } \
     return ret; \
 }
-
 
 #define RB_PROXY_METHOD_WITH_RET_WITH_INIT_BLOCK(retType, retErrValue, methodName, argList, argParams) \
 retType GDALProxyRasterBand::methodName argList \
@@ -402,6 +410,8 @@ RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
 /*                 UnrefUnderlyingRasterBand()                        */
 /************************************************************************/
 
-void GDALProxyRasterBand::UnrefUnderlyingRasterBand(CPL_UNUSED GDALRasterBand* poUnderlyingRasterBand)
-{
-}
+void GDALProxyRasterBand::UnrefUnderlyingRasterBand(
+    GDALRasterBand* /* poUnderlyingRasterBand */ )
+{}
+
+/*! @endcond */

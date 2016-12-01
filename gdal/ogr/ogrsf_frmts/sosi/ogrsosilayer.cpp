@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SOSI Translator
  * Purpose:  Implements OGRSOSILayer.
@@ -31,6 +30,8 @@
 #include "ogr_sosi.h"
 #include <map>
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                           OGRSOSILayer()                             */
 /************************************************************************/
@@ -54,7 +55,7 @@ OGRSOSILayer::OGRSOSILayer( OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn
 /*                           ~OGRSOSILayer()                            */
 /************************************************************************/
 OGRSOSILayer::~OGRSOSILayer() {
-	poFeatureDefn->Release();
+    poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -104,14 +105,14 @@ OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature) {
     /* PutGI for all headers */
     char pszGi[255];
     for (int i=0;i<poFeature->GetFieldCount();i++) {
-		int n = snprintf (pszGi, 255, "%s", poFeature->GetFieldDefnRef(i)->GetNameRef());
-		if (n<255) {
-			/*int m = */snprintf (pszGi + (n-1), 255-n, "%s", poFeature->GetFieldAsString(i));
-			/* check overflow */
-		}
-		LC_PutGi(i+2, pszGi); /* should add headers too */
-	}
-	//LC_OppdaterEndret(0);
+        int n = snprintf (pszGi, 255, "%s", poFeature->GetFieldDefnRef(i)->GetNameRef());
+        if (n<255) {
+            /*int m = */snprintf (pszGi + (n-1), 255-n, "%s", poFeature->GetFieldAsString(i));
+          /* check overflow */
+        }
+        LC_PutGi(i+2, pszGi); /* should add headers too */
+    }
+    // LC_OppdaterEndret(0);
     /* PutTK for all coords */
     /* ... */
     /* === /WIP - Work in progress === */
@@ -267,6 +268,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_SYMBOL: {
             //CPLError( CE_Warning, CPLE_OpenFailed, "Geometry of type SYMBOL treated as point (PUNKT).");
+            CPL_FALLTHROUGH
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
@@ -297,7 +299,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
         /* set all headers found in this group - we export everything, just in case */
-        for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); iHeaders++) {
+        for (iHeaders = oHeaders.begin(); iHeaders != oHeaders.end(); ++iHeaders) {
             OGRSOSIDataType *poType = SOSIGetType(iHeaders->first);
             OGRSOSISimpleDataType *poElements = poType->getElements();
 
@@ -310,9 +312,9 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 if (strcmp(poElements[k].GetName(),"")==0) continue;
                 int iHNr = poHeaderDefn->find(poElements[k].GetName())->second;
                 if (iHNr == -1) {
-	    			CPLError( CE_Warning, CPLE_AppDefined, "Could not find field definition for %s.", poElements[k].GetName());
+                    CPLError( CE_Warning, CPLE_AppDefined, "Could not find field definition for %s.", poElements[k].GetName());
                     continue;
-    			}
+                }
                 OGRFieldType nType = poElements[k].GetType();
                 switch (nType) {
                   case OFTInteger: {
@@ -328,17 +330,17 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                   case OFTDateTime: {
                     int date[6];
                     SOSITypeToDateTime(tokens[k], date);
-                    if (date[0]>0) 
-                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], date[5], 1);
+                    if (date[0]>0)
+                      poFeature->SetField( iHNr, date[0], date[1], date[2], date[3], date[4], static_cast<float>(date[5]), 1);
                     break;
                   }
                   case OFTReal: {
                     poFeature->SetField( iHNr, SOSITypeToReal(tokens[k]));
                     break;
                   }
-                  default: { 
+                  default: {
                     if ((k==0)&&((pszLine[0] == '\'')||(pszLine[0] == '\"'))) { /* If the value is quoted, ignore these */
-                        int nLen = strlen(pszLine);
+                        int nLen = static_cast<int>(strlen(pszLine));
                         char *pszNline = (char*)CPLMalloc(nLen-1);
                         strncpy(pszNline, pszLine+1, nLen-2);
                         pszNline[nLen-2] = '\0';

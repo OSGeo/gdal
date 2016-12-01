@@ -274,9 +274,9 @@
     <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Table E-12 -->
     <tre name="EXPLTB" length="101" location="image">
         <field name="ANGLE_TO_NORTH" length="7" type="real" minval="0.0" maxval="359.999"/>
-        <field name="ANGLE_TO_NORTH_ACCY" length="6" type="real" min="0.0" maxval="44.999"/>
-        <field name="SQUINT_ANGLE" length="7" type="real" min="-60.0" maxval="85.0"/>
-        <field name="SQUINT_ANGLE_ACCY" length="6" type="real" min="0.0" maxval="44.999"/>
+        <field name="ANGLE_TO_NORTH_ACCY" length="6" type="real" minval="0.0" maxval="44.999"/>
+        <field name="SQUINT_ANGLE" length="7" type="real" minval="-60.0" maxval="85.0"/>
+        <field name="SQUINT_ANGLE_ACCY" length="6" type="real" minval="0.0" maxval="44.999"/>
         <field name="MODE" length="3" type="string"/>
         <field length="16" fixed_value="                "/>
         <field name="GRAZE_ANG" length="5" type="real" unit="degrees" minval="0.0" maxval="90.00"/>
@@ -467,43 +467,43 @@
         <field name="NO_VALID_TARGETS" length="3" minval="1" maxval="999" type="integer"/>
         <loop counter="NO_VALID_TARGETS" md_prefix="TGT_%03d_" name="TARGETS">
             <field name="TGT_LOC" length="23" type="string"/>
-            <field name="TGT_LOC_ACCY" length="6" min_val="0" max_val="999.99" type="real"/>
-            <field name="TGT_VEL_R" length="4" min_val="-200" max_val="200" type="string"/>
-            <field name="TGT_SPEED" length="3" min_val="0" max_val="200" type="string"/>
-            <field name="TGT_HEADING" length="3" min_val="0" maxval="359" type="string"/>
-            <field name="TGT_AMPLITUDE" length="2" min_val="0" maxval="15" type="string"/>
+            <field name="TGT_LOC_ACCY" length="6" minval="0" maxval="999.99" type="real"/>
+            <field name="TGT_VEL_R" length="4" minval="-200" maxval="200" type="string"/>
+            <field name="TGT_SPEED" length="3" minval="0" maxval="200" type="string"/>
+            <field name="TGT_HEADING" length="3" minval="0" maxval="359" type="string"/>
+            <field name="TGT_AMPLITUDE" length="2" minval="0" maxval="15" type="string"/>
             <field name="TGT_CAT" length="1" type="string"/>
         </loop>
     </tre>
 
     <!-- STDI-0002 Appendix E (ASDE 2.1/CN1), Table E-21 -->
-    <tre name="PATCHB" size="121" location="image">
+    <tre name="PATCHB" length="121" location="image">
         <field name="PAT_NO" length="4" type="integer" minval="1" maxval="999"/>
         <!-- LAST_PAT_LEVEL is a string because it is <R>, so it may contain only a space -->
         <field name="LAST_PAT_FLAG" length="1" type="integer" minval="0" maxval="1"/>
         <field name="LNSTRT" length="7" type="integer" minval="1" maxval="9999999"/>
         <field name="LNSTOP" length="7" type="integer" minval="20" maxval="9999999"/>
-        <field name="AZL" length="5" type="integer" units="lines" minval="20" maxval="99999"/>
+        <field name="AZL" length="5" type="integer" unit="lines" minval="20" maxval="99999"/>
         <!-- NVL is a string because it is <R> -->
-        <field name="NVL" length="5" type="string" units="lines"/>
+        <field name="NVL" length="5" type="string" unit="lines"/>
         <!-- FVL is a string because it is <R> -->
         <field name="FVL" length="3" type="string" minval="1" maxval="681"/>
-        <field name="NPIXEL" length="5" type="integer" units="pixels" minval="1" maxval="99999"/>
-        <field name="FVPIX" length="5" type="integer" units="pixels" minval="1" maxval="99999"/>
+        <field name="NPIXEL" length="5" type="integer" unit="pixels" minval="1" maxval="99999"/>
+        <field name="FVPIX" length="5" type="integer" unit="pixels" minval="1" maxval="99999"/>
         <!-- FRAME is a string because it is <R> -->
         <field name="FRAME" length="3" type="string" minval="1" maxval="512"/>
-        <field name="UTC" length="8" type="real" units="seconds" minval="0.0" maxval="86399.99"/>
-        <field name="SHEAD" length="7" type="real" units="degrees" minval="0.0" maxval="359.999"/>
+        <field name="UTC" length="8" type="real" unit="seconds" minval="0.0" maxval="86399.99"/>
+        <field name="SHEAD" length="7" type="real" unit="degrees" minval="0.0" maxval="359.999"/>
         <!-- GRAVITY is a string because it is <R> -->
-        <field name="GRAVITY" length="7" type="string" units="feet/sec^2"/>
-        <field name="INS_V_NC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
-        <field name="INS_V_EC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
-        <field name="INS_V_DC" length="5" type="integer" units="feet/sec" minval="-9999" maxval="9999"/>
+        <field name="GRAVITY" length="7" type="string" unit="feet/sec^2"/>
+        <field name="INS_V_NC" length="5" type="integer" unit="feet/sec" minval="-9999" maxval="9999"/>
+        <field name="INS_V_EC" length="5" type="integer" unit="feet/sec" minval="-9999" maxval="9999"/>
+        <field name="INS_V_DC" length="5" type="integer" unit="feet/sec" minval="-9999" maxval="9999"/>
         <!-- OFFLAT and OFFLONG are string because they are <R> -->
-        <field name="OFFLAT" length="8" type="string" units="seconds"/>
-        <field name="OFFLONG" length="8" type="string" units="seconds"/>
-        <field name="TRACK" length="3" type="integer" units="degrees" minval="0" maxval="359"/>
-        <field name="GSWEEP" length="6" type="real" units="degrees" minval="0.0" maxval="120.0"/>
+        <field name="OFFLAT" length="8" type="string" unit="seconds"/>
+        <field name="OFFLONG" length="8" type="string" unit="seconds"/>
+        <field name="TRACK" length="3" type="integer" unit="degrees" minval="0" maxval="359"/>
+        <field name="GSWEEP" length="6" type="real" unit="degrees" minval="0.0" maxval="120.0"/>
         <!-- SHEAR is a string because it is <R> -->
         <field name="SHEAR" length="8" type="string"/>
         <!-- BATCH_NO is a string because it is <R> -->
@@ -691,6 +691,37 @@
         </loop>
         <loop iterations="20" md_prefix="SAMP_DEN_COEFF_%02d" name="SAMP_DEN_COEFF">
             <field name="" longname="SAMP_DEN_COEFF" length="12" type="real"/>
+        </loop>
+    </tre>
+
+    <!-- Table 68 of http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf -->
+    <tre name="IMASDA" length="242" location="image">
+        <field name="LONTR" length="22" type="real" unit="degrees" minval="-180.0" maxval="180.0"/>
+        <field name="LATTR" length="22" type="real" unit="degrees" minval="-90.0" maxval="90.0"/>
+        <field name="ELVTR" length="22" type="real" unit="meters" minval="-1000.0" maxval="10000.0"/>
+        <field name="LONSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="LATSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="ELVSC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="XITR" length="22" type="real" unit="pixels" minval="-10000.0" maxval="10000.0"/>
+        <field name="YITR" length="22" type="real" unit="pixels" minval="-10000.0" maxval="10000.0"/>
+        <field name="XISC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="YISC" length="22" type="real" minval="0.0" maxval="100.0"/>
+        <field name="DELEV" length="22" type="real" unit="meters" minval="-1000.0" maxval="10000.0"/>
+    </tre>
+
+    <!-- Table 69 of http://earth-info.nga.mil/publications/specs/printed/89034/89034DPPDB.pdf -->
+    <tre name="IMRFCA" length="1760" location="image">
+        <loop iterations="20" name="XINC">
+            <field name="" longname="XINC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="XIDC">
+            <field name="" longname="XIDC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="YINC">
+            <field name="" longname="YINC" length="22" type="real"/>
+        </loop>
+        <loop iterations="20" name="YIDC">
+            <field name="" longname="YIDC" length="22" type="real"/>
         </loop>
     </tre>
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ODS Translator
  * Purpose:  Implements OGRODSDataSource class
@@ -49,10 +48,10 @@ private:
         std::set<std::pair<int,int> > oVisisitedCells;
 
 public:
-        ODSCellEvaluator(OGRODSLayer* poLayerIn) : poLayer(poLayerIn) {}
+        explicit ODSCellEvaluator(OGRODSLayer* poLayerIn) : poLayer(poLayerIn) {}
 
         int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
-                          std::vector<ods_formula_node>& aoOutValues);
+                          std::vector<ods_formula_node>& aoOutValues) override;
 
         int Evaluate(int nRow, int nCol);
 };
@@ -155,40 +154,34 @@ OGRErr OGRODSLayer::DeleteFeature( GIntBig nFID )
 /************************************************************************/
 
 OGRODSDataSource::OGRODSDataSource() :
-    nFlags(0)
+    pszName(NULL),
+    bUpdatable(false),
+    bUpdated(false),
+    bAnalysedFile(false),
+    nLayers(0),
+    papoLayers(NULL),
+    fpSettings(NULL),
+    nFlags(0),
+    fpContent(NULL),
+    bFirstLineIsHeaders(false),
+    bAutodetectTypes(
+        !EQUAL(CPLGetConfigOption("OGR_ODS_FIELD_TYPES", ""), "STRING")),
+    oParser(NULL),
+    bStopParsing(false),
+    nWithoutEventCounter(0),
+    nDataHandlerCounter(0),
+    nCurLine(0),
+    nEmptyRowsAccumulated(0),
+    nRowsRepeated(0),
+    nCurCol(0),
+    nCellsRepeated(0),
+    bEndTableParsing(false),
+    poCurLayer(NULL),
+    nStackDepth(0),
+    nDepth(0)
 {
-    pszName = NULL;
-    fpContent = NULL;
-    fpSettings = NULL;
-    bUpdatable = false;
-    bUpdated = false;
-    bAnalysedFile = false;
-
-    nLayers = 0;
-    papoLayers = NULL;
-
-    bFirstLineIsHeaders = false;
-
-    oParser = NULL;
-    bStopParsing = false;
-    nWithoutEventCounter = 0;
-    nDataHandlerCounter = 0;
-    nStackDepth = 0;
-    nDepth = 0;
-    nCurLine = 0;
-    nEmptyRowsAccumulated = 0;
-    nCurCol = 0;
-    nRowsRepeated = 0;
-    nCellsRepeated = 0;
     stateStack[0].eVal = STATE_DEFAULT;
     stateStack[0].nBeginDepth = 0;
-    bEndTableParsing = FALSE;
-
-    poCurLayer = NULL;
-
-    const char* pszODSFieldTypes =
-                CPLGetConfigOption("OGR_ODS_FIELD_TYPES", "");
-    bAutodetectTypes = !EQUAL(pszODSFieldTypes, "STRING");
 }
 
 /************************************************************************/
@@ -223,10 +216,11 @@ int OGRODSDataSource::TestCapability( const char * pszCap )
         return bUpdatable;
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return bUpdatable;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bUpdatable;
     else
         return FALSE;
 }
-
 
 /************************************************************************/
 /*                              GetLayer()                              */
@@ -477,7 +471,7 @@ static void SetField(OGRFeature* poFeature,
     if (eType == OFTTime)
     {
         int nHour, nHourRepeated, nMinute, nSecond;
-        char c;
+        char c = '\0';
         if (STARTS_WITH(pszValue, "PT") &&
             sscanf(pszValue + 2, "%02d%c%02d%c%02d%c",
                    &nHour, &c, &nMinute, &c, &nSecond, &c) == 6)
@@ -513,22 +507,22 @@ static void SetField(OGRFeature* poFeature,
 void OGRODSDataSource::DetectHeaderLine()
 
 {
-    int bHeaderLineCandidate = TRUE;
-    size_t i;
-    for(i = 0; i < apoFirstLineTypes.size(); i++)
+    bool bHeaderLineCandidate = true;
+
+    for( size_t i = 0; i < apoFirstLineTypes.size(); i++ )
     {
         if (apoFirstLineTypes[i] != "string")
         {
             /* If the values in the first line are not text, then it is */
             /* not a header line */
-            bHeaderLineCandidate = FALSE;
+            bHeaderLineCandidate = false;
             break;
         }
     }
 
     size_t nCountTextOnCurLine = 0;
     size_t nCountNonEmptyOnCurLine = 0;
-    for(i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++)
+    for( size_t i = 0; bHeaderLineCandidate && i < apoCurLineTypes.size(); i++ )
     {
         if (apoCurLineTypes[i] == "string")
         {
@@ -553,11 +547,11 @@ void OGRODSDataSource::DetectHeaderLine()
     {
         bFirstLineIsHeaders = true;
     }
-    else if (bHeaderLineCandidate &&
+    else if( bHeaderLineCandidate &&
              apoFirstLineTypes.size() != 0 &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
-             nCountNonEmptyOnCurLine != 0)
+             nCountNonEmptyOnCurLine != 0 )
     {
         bFirstLineIsHeaders = true;
     }
@@ -587,7 +581,7 @@ void OGRODSDataSource::startElementDefault(const char *pszNameIn,
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         PushState(STATE_TABLE);
-        bEndTableParsing = FALSE;
+        bEndTableParsing = false;
     }
 }
 
@@ -598,13 +592,13 @@ void OGRODSDataSource::startElementDefault(const char *pszNameIn,
 void OGRODSDataSource::startElementTable(const char *pszNameIn,
                                          const char **ppszAttr)
 {
-    if (strcmp(pszNameIn, "table:table-row") == 0 && !bEndTableParsing)
+    if( strcmp(pszNameIn, "table:table-row") == 0 && !bEndTableParsing )
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
         if (nRowsRepeated > 65536)
         {
-            bEndTableParsing = TRUE;
+            bEndTableParsing = true;
             return;
         }
 
@@ -639,8 +633,8 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
         else if (nCurLine == 1)
         {
             /* If we have only one single line in the sheet */
-            size_t i;
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
@@ -650,7 +644,7 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
             }
 
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-            for(i = 0; i < apoFirstLineValues.size(); i++)
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str());
             }
@@ -660,17 +654,15 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
 
         if (poCurLayer)
         {
-            OGRFeature* poFeature;
-
             if( CPLTestBool(CPLGetConfigOption("ODS_RESOLVE_FORMULAS", "YES")) )
             {
                 poCurLayer->ResetReading();
 
                 int nRow = 0;
-                poFeature = poCurLayer->GetNextFeature();
+                OGRFeature* poFeature = poCurLayer->GetNextFeature();
                 while (poFeature)
                 {
-                    for(int i=0;i<poFeature->GetFieldCount();i++)
+                    for( int i = 0; i < poFeature->GetFieldCount(); i++ )
                     {
                         if (poFeature->IsFieldSet(i) &&
                             poFeature->GetFieldDefnRef(i)->GetType() == OFTString)
@@ -761,12 +753,9 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
     {
         CPLAssert(strcmp(pszNameIn, "table:table-row") == 0);
 
-        OGRFeature* poFeature;
-        size_t i;
-
         /* Remove blank columns at the right to defer type evaluation */
         /* until necessary */
-        i = apoCurLineTypes.size();
+        size_t i = apoCurLineTypes.size();
         while(i > 0)
         {
             i --;
@@ -776,11 +765,15 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 apoCurLineTypes.resize(i);
             }
             else
+            {
                 break;
+            }
         }
 
         /* Do not add immediately empty rows. Wait until there is another non */
         /* empty row */
+        OGRFeature* poFeature = NULL;
+
         if (nCurLine >= 2 && apoCurLineTypes.size() == 0)
         {
             nEmptyRowsAccumulated += nRowsRepeated;
@@ -1029,7 +1022,7 @@ void OGRODSDataSource::AnalyseFile()
     VSIFSeekL( fpContent, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1212,7 +1205,7 @@ void OGRODSDataSource::AnalyseSettings()
     VSIFSeekL( fpSettings, 0, SEEK_SET );
 
     char aBuf[BUFSIZ];
-    int nDone;
+    int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
@@ -1479,13 +1472,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTDateTime)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nTZFlag;
-                    float fSecond;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nTZFlag = 0;
+                    float fSecond = 0.0f;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &fSecond, &nTZFlag );
@@ -1526,13 +1519,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTDate)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nSecond;
-                    int  nTZFlag;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nSecond = 0;
+                    int nTZFlag = 0;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &nSecond, &nTZFlag );
@@ -1547,13 +1540,13 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTTime)
                 {
-                    int nYear;
-                    int  nMonth;
-                    int  nDay;
-                    int  nHour;
-                    int  nMinute;
-                    int  nSecond;
-                    int  nTZFlag;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nSecond = 0;
+                    int nTZFlag = 0;
                     poFeature->GetFieldAsDateTime(
                         j, &nYear, &nMonth, &nDay,
                         &nHour, &nMinute, &nSecond, &nTZFlag );

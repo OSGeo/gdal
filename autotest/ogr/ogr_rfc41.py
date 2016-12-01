@@ -795,7 +795,7 @@ def ogr_rfc41_6():
         ( 'SELECT MAX(geomfield) FROM poly', 'Use of field function MAX() on geometry field' ),
         ( 'SELECT CAST(5 AS GEOMETRY) FROM poly', 'Cannot cast integer to geometry'),
         ( 'SELECT CAST(geomfield AS integer) FROM poly', 'Cannot cast geometry to integer' ),
-        ( 'SELECT CAST(geomfield AS GEOMETRY(2)) FROM poly', 'First argument of CAST operator should be an geometry type identifier'),
+        ( 'SELECT CAST(geomfield AS GEOMETRY(2)) FROM poly', 'First argument of CAST operator should be a geometry type identifier'),
         ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
         ( 'SELECT CAST(geomfield AS GEOMETRY(UNSUPPORTED_TYPE,5)) FROM poly', 'SQL Expression Parsing Error: syntax error' ),
     ]

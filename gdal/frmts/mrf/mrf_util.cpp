@@ -4,18 +4,18 @@
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-*   2. Redistributions in binary form must reproduce the above copyright notice, 
+*   2. Redistributions in binary form must reproduce the above copyright notice,
 *      this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL), 
-*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to 
+*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL),
+*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to
 *      endorse or promote products derived from this software without specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 * Copyright 2014-2015 Esri
@@ -33,7 +33,6 @@
 * limitations under the License.
 */
 
-
 /**
  *
  *  Functions used by the driver, should have prototypes in the header file
@@ -44,6 +43,8 @@
 #include "marfa.h"
 #include <zlib.h>
 #include <algorithm>
+
+CPL_CVSID("$Id$");
 
 // LERC is not ready for big endian hosts for now
 #if defined(LERC) && defined(WORDS_BIGENDIAN)
@@ -59,15 +60,15 @@ NAMESPACE_MRF_START
 // These have to be positionally in sync with the enums in marfa.h
 static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DEFLATE", "TIF",
 #if defined(LERC)
-	"LERC", 
+        "LERC",
 #endif
-	"Unknown" };
+        "Unknown" };
 
-static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".pjp", ".til", ".pzp", ".ptf", 
+static const char * const ILC_E[]={ ".ppg", ".ppg", ".pjg", ".pjp", ".til", ".pzp", ".ptf",
 #if defined(LERC)
-	".lrc" ,
+        ".lrc" ,
 #endif
-	"" };
+        "" };
 
 static const char * const ILO_N[]={ "PIXEL", "BAND", "LINE", "Unknown" };
 
@@ -78,7 +79,7 @@ char const * const * ILOrder_Name=ILO_N;
 /**
  *  Get the string for a compression type
  */
-const char *CompName(ILCompression comp) 
+const char *CompName(ILCompression comp)
 {
     if (comp>=IL_ERR_COMP) return ILComp_Name[IL_ERR_COMP];
     return ILComp_Name[comp];
@@ -87,36 +88,36 @@ const char *CompName(ILCompression comp)
 /**
  *  Get the string for an order type
  */
-const char *OrderName(ILOrder val) 
+const char *OrderName(ILOrder val)
 {
     if (val>=IL_ERR_ORD) return ILOrder_Name[IL_ERR_ORD];
     return ILOrder_Name[val];
 }
 
-ILCompression CompToken(const char *opt, ILCompression def) 
+ILCompression CompToken(const char *opt, ILCompression def)
 {
     int i;
     if (NULL==opt) return def;
     for (i=0; ILCompression(i) < IL_ERR_COMP; i++)
-	if (EQUAL(opt,ILComp_Name[i]))
-	    break;
-    if (IL_ERR_COMP == ILCompression(i)) 
-	return def;
+        if (EQUAL(opt,ILComp_Name[i]))
+            break;
+    if (IL_ERR_COMP == ILCompression(i))
+        return def;
     return ILCompression(i);
 }
 
 /**
  *  Find a compression token
  */
-ILOrder OrderToken(const char *opt, ILOrder def) 
+ILOrder OrderToken(const char *opt, ILOrder def)
 {
     int i;
     if (NULL==opt) return def;
     for (i=0; ILOrder(i)<IL_ERR_ORD; i++)
-	if (EQUAL(opt,ILOrder_Name[i]))  
-	    break;
-    if (IL_ERR_ORD==ILOrder(i)) 
-	return def;
+        if (EQUAL(opt,ILOrder_Name[i]))
+            break;
+    if (IL_ERR_ORD==ILOrder(i))
+        return def;
     return ILOrder(i);
 }
 
@@ -125,8 +126,8 @@ ILOrder OrderToken(const char *opt, ILOrder def)
 //
 std::ostream& operator<<(std::ostream &out, const ILSize& sz)
 {
-    out << "X=" << sz.x << ",Y=" << sz.y << ",Z=" << sz.z 
-	<< ",C=" << sz.c << ",L=" << sz.l;
+    out << "X=" << sz.x << ",Y=" << sz.y << ",Z=" << sz.z
+        << ",C=" << sz.c << ",L=" << sz.l;
     return out;
 }
 
@@ -173,30 +174,30 @@ GIntBig IdxSize(const ILImage &full, const int scale) {
     GIntBig sz = img.pagecount.l;
     while (scale != 0 && 1 != img.pagecount.x * img.pagecount.y)
     {
-	img.size.x = pcount(img.size.x, scale);
-	img.size.y = pcount(img.size.y, scale);
-	img.pagecount = pcount(img.size, img.pagesize);
-	sz += img.pagecount.l;
+        img.size.x = pcount(img.size.x, scale);
+        img.size.y = pcount(img.size.y, scale);
+        img.pagecount = pcount(img.size, img.pagesize);
+        sz += img.pagecount.l;
     }
     return sz*sizeof(ILIdx);
 }
 
-ILImage::ILImage()
-{
-    dataoffset = idxoffset = 0;
-    quality = 85;
-    size = ILSize(1, 1, 1, 1, 0);
-    pagesize = ILSize(384, 384, 1, 1, 0);
-    pagecount = pcount(size, pagesize);
-    comp = IL_PNG;
-    order = IL_Interleaved;
-    ci = GCI_Undefined;
-    pageSizeBytes = 0;
-    nbo = 0;
-    hasNoData = FALSE;
-    NoDataValue = 0.0;
-    dt = GDT_Unknown;
-}
+ILImage::ILImage() :
+    dataoffset(0),
+    idxoffset(0),
+    quality(85),
+    pageSizeBytes(0),
+    size(ILSize(1, 1, 1, 1, 0)),
+    pagesize(ILSize(384, 384, 1, 1, 0)),
+    pagecount(pcount(size, pagesize)),
+    comp(IL_PNG),
+    order(IL_Interleaved),
+    nbo(0),
+    hasNoData(FALSE),
+    NoDataValue(0.0),
+    dt(GDT_Unknown),
+    ci(GCI_Undefined)
+{}
 
 /**
  *\brief Get a file name by replacing the extension.
@@ -206,56 +207,56 @@ ILImage::ILImage()
  * parameters are preserved.
  */
 
-CPLString getFname(const CPLString &in, const char *ext) 
+CPLString getFname(const CPLString &in, const char *ext)
 {
     if (strlen(in) < strlen(ext))
-	return CPLString(ext);
+        return CPLString(ext);
 
     CPLString ret(in);
     // Is it a web file with parameters?
     size_t extlen = strlen(ext);
     size_t qmark = ret.find_first_of('?');
     if (!(qmark != std::string::npos && 0 == in.find("/vsicurl/http") && qmark >= extlen))
-	qmark = ret.size();
+        qmark = ret.size();
     return ret.replace(qmark - extlen, extlen, ext);
 }
 
 /**
  *\brief Get a file name, either from the configuration or from the default file name
- * If the token is not defined by CPLGetXMLValue, if the extension of the in name is .xml, 
- * it returns the token with the extension changed to defext.  
+ * If the token is not defined by CPLGetXMLValue, if the extension of the in name is .xml,
+ * it returns the token with the extension changed to defext.
  * Otherwise it returns the token itself
  * It is pretty hard to separate local vs remote due to the gdal file name ornaments
  * Absolute file names start with: ?:/ or /
- * 
+ *
  */
 
-CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def) 
+CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def)
 {
     CPLString fn = CPLGetXMLValue(node, token, "");
     if (fn.size() == 0) // Not provided
-	return getFname(in, def);
+        return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 
     // Does it look like an absolute path or we wont't find the basename of in
-    if (slashPos == 0				    // Starts with slash
-	|| (slashPos == 2 && fn[1] == ':')	    // Starts with disk letter column
-	|| !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
-	|| in.find_first_of("\\/") == in.npos)      // We con't get a basename from in
-	return fn;
+    if (slashPos == 0                               // Starts with slash
+        || (slashPos == 2 && fn[1] == ':')          // Starts with disk letter column
+        || !(slashPos == fn.find_first_not_of('.')) // Does not start with dots and then slash
+        || EQUALN(in,"<MRF_META>",10)               // XML string input
+        || in.find_first_of("\\/") == in.npos)      // We can't get a basename from in
+        return fn;
 
     // Relative path, prepand the path from the in file name
     return in.substr(0, in.find_last_of("\\/")+1) + fn;
 }
 
-
 /**
- *\Brief Extracts a numerical value from a XML node
+ *\brief Extracts a numerical value from a XML node
  * It works like CPLGetXMLValue except for the default value being
  * a number instead of a string
  */
 
-double getXMLNum(CPLXMLNode *node, const char *pszPath, double def) 
+double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 {
     const char *textval=CPLGetXMLValue(node,pszPath,NULL);
     if (textval) return atof(textval);
@@ -266,12 +267,12 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 // Calculate offset of index, pos is in pages
 //
 
-GIntBig IdxOffset(const ILSize &pos, const ILImage &img) 
+GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 {
     return img.idxoffset + sizeof(ILIdx) *
-	(pos.c + img.pagecount.c * (
+        (pos.c + img.pagecount.c * (
          pos.x+img.pagecount.x * (
-         pos.y+img.pagecount.y * 
+         pos.y+img.pagecount.y *
          static_cast<GIntBig>(pos.z)
         )));
 }
@@ -280,15 +281,15 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
     // Add here all endianness dependent compressions
     if (IL_ZLIB == comp || IL_NONE == comp)
-	if (GDALGetDataTypeSize( dt ) > 8)
-	    return true;
+        if (GDALGetDataTypeSize( dt ) > 8)
+            return true;
     return false;
 }
 
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, int b, int level)
 
 {
-    GDALMRFRasterBand *bnd;
+    GDALMRFRasterBand *bnd = NULL;
     switch(pDS->current.comp)
     {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
@@ -303,13 +304,13 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
     default:
-	return NULL; 
+        return NULL;
     }
 
     // If something was flagged during band creation
     if (CPLGetLastErrorNo() != CE_None) {
-	delete bnd;
-	return NULL;
+        delete bnd;
+        return NULL;
     }
 
     // Copy the RW mode from the dataset
@@ -318,20 +319,20 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
 }
 
 /**
- *\Brief log in a given base 
+ *\brief log in a given base
  */
-double logb(double val, double base) {
-    return log(val)/log(base);
+double logbase(double val, double base) {
+    return log(val) / log(base);
 }
 
 /**
- *\Brief Is logb(val) an integer?
+ *\brief Is logbase(val, base) an integer?
  *
  */
 
 int IsPower(double value, double base) {
-    double v=logb(value, base);
-    return CPLIsEqual(v, int(v+0.5));
+    double v = logbase(value, base);
+    return CPLIsEqual(v, int(v + 0.5));
 }
 
 /************************************************************************/
@@ -339,25 +340,25 @@ int IsPower(double value, double base) {
 /************************************************************************/
 
 /**
- *\Brief Search for a sibling of the root node with a given name.
+ *\brief Search for a sibling of the root node with a given name.
  *
  * Searches only the next siblings of the node passed in for the named element or attribute.
  * If the first character of the pszElement is '=', the search includes the psRoot node
- * 
+ *
  * @param psRoot the root node to search.  This should be a node of type
  * CXT_Element.  NULL is safe.
  *
  * @param pszElement the name of the element or attribute to search for.
  *
  *
- * @return The first matching node or NULL on failure. 
+ * @return The first matching node or NULL on failure.
  */
 
 CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
 
 {
     if( psRoot == NULL || pszElement == NULL )
-	return NULL;
+        return NULL;
 
     // If the strings starts with '=', skip it and test the root
     // If not, start testing with the next sibling
@@ -365,10 +366,10 @@ CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
     else psRoot=psRoot->psNext;
 
     for (;psRoot!=NULL;psRoot=psRoot->psNext)
-	if ((psRoot->eType == CXT_Element ||
-	     psRoot->eType == CXT_Attribute)
-	     && EQUAL(pszElement,psRoot->pszValue))
-	    return psRoot;
+        if ((psRoot->eType == CXT_Element ||
+             psRoot->eType == CXT_Attribute)
+             && EQUAL(pszElement,psRoot->pszValue))
+            return psRoot;
 
     return NULL;
 }
@@ -380,10 +381,10 @@ char **CSLAddIfMissing(char **papszList,
     const char *pszName, const char *pszValue)
 {
     if (CSLFetchNameValue(papszList, pszName))
-	return papszList;
+        return papszList;
     return CSLSetNameValue(papszList, pszName, pszValue);
 }
-    
+
 //
 // Print a double so it can be read with strod while preserving precision
 // Unfortunately this is not quite possible or portable enough at this time
@@ -415,7 +416,7 @@ void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
 
     //  Unfortunately the %a doesn't work in VisualStudio scanf or strtod
     //    if (strtod(sVal.c_str(),0) != val)
-    //	sVal.Printf("%a",val);
+    //  sVal.Printf("%a",val);
 }
 
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
@@ -425,7 +426,7 @@ CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
     XMLSetAttributeVal(node, "x", sz.x, frmt);
     XMLSetAttributeVal(node, "y", sz.y, frmt);
     if (sz.z != 1)
-	XMLSetAttributeVal(node, "z", sz.z, frmt);
+        XMLSetAttributeVal(node, "z", sz.z, frmt);
     XMLSetAttributeVal(node, "c", sz.c, frmt);
     return node;
 }
@@ -438,19 +439,19 @@ void XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, std::vector<double> const &values)
 {
     if (values.empty())
-	return;
+        return;
 
     CPLString value;
     double val = values[0];
     int single_val = true;
     for (int i = 0; i < int(values.size()); i++) {
-	if (val != values[i])
-	    single_val = false;
-	value.append(PrintDouble(values[i]) + " ");
-	value.resize(value.size() - 1); // Cut the last space
+        if (val != values[i])
+            single_val = false;
+        value.append(PrintDouble(values[i]) + " ");
+        value.resize(value.size() - 1); // Cut the last space
     }
     if (single_val)
-	value = PrintDouble(values[0]);
+        value = PrintDouble(values[0]);
     CPLCreateXMLNode(parent, CXT_Attribute, pszName);
     CPLSetXMLValue(parent, pszName, value);
 }
@@ -470,7 +471,7 @@ GDALColorEntry GetXMLColorEntry(CPLXMLNode *p) {
 }
 
 /**
- *\Brief Verify or make a file that big
+ *\brief Verify or make a file that big
  *
  * @return true if size is OK or if extend succeeded
  */
@@ -479,13 +480,13 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 
     VSIStatBufL statb;
     if (VSIStatL(fname, &statb))
-	return false;
+        return false;
     if (statb.st_size >= sz)
-	return true;
+        return true;
 
     // Don't change anything unless updating
     if (eAccess != GA_Update)
-	return false;
+        return false;
 
     // There is no ftruncate in VSI, only truncate()
     VSILFILE *ifp = VSIFOpenL(fname, "r+b");
@@ -530,8 +531,8 @@ int ZPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 
     err = deflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END) {
-	deflateEnd(&stream);
-	return false;
+        deflateEnd(&stream);
+        return false;
     }
     dst.size = stream.total_out;
     err = deflateEnd(&stream);
@@ -558,8 +559,8 @@ int ZUnPack(const buf_mgr &src, buf_mgr &dst, int flags) {
 
     err = inflate(&stream, Z_FINISH);
     if (err != Z_STREAM_END) {
-	inflateEnd(&stream);
-	return false;
+        inflateEnd(&stream);
+        return false;
     }
     dst.size = stream.total_out;
     err = inflateEnd(&stream);
@@ -574,62 +575,68 @@ NAMESPACE_MRF_END
 
 USING_NAMESPACE_MRF
 
-void GDALRegister_mrf(void)
+void GDALRegister_mrf()
 
 {
-    GDALDriver *driver;
+    if( GDALGetDriverByName("MRF") != NULL )
+        return;
 
-    if (GDALGetDriverByName("MRF") == NULL) {
-        driver = new GDALDriver();
-        driver->SetDescription("MRF");
-        driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
-        driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
-        driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    GDALDriver *driver = new GDALDriver();
+    driver->SetDescription("MRF");
+    driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
+    driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
+    driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
 #if GDAL_VERSION_MAJOR >= 2
-        driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
 #endif
 
-        // These will need to be revisited, do we support complex data types too?
-        driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-            "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
+    // These will need to be revisited, do we support complex data types too?
+    driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                            "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
 
-        driver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
-            "<CreationOptionList>"
-            "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
-            "	    <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
-            "	    <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
+    driver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "   <Option name='COMPRESS' type='string-select' default='PNG' description='PPNG = Palette PNG; DEFLATE = zlib '>"
+        "       <Value>JPEG</Value><Value>PNG</Value><Value>PPNG</Value><Value>JPNG</Value>"
+        "       <Value>TIF</Value><Value>DEFLATE</Value><Value>NONE</Value>"
 #if defined(LERC)
-            "	    <Value>LERC</Value>"
+        "       <Value>LERC</Value>"
 #endif
-            "   </Option>"
-            "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
-            "       <Value>PIXEL</Value>"
-            "       <Value>BAND</Value>"
-            "   </Option>\n"
-            "	<Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
-            "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
-            "	<Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
-            "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
-            "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
-            "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
-            "   <Option name='NETBYTEORDER' type='boolean' description='Force endian for certain compress options, default is host order'/>\n"
-            "	<Option name='CACHEDSOURCE' type='string' description='The source raster, if this is a cache'/>\n"
-            "	<Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
-            "	<Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
-            "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' description='Band interpretation, may affect block encoding'>\n"
-            "	    <Value>MULTISPECTRAL</Value>"
-            "	    <Value>RGB</Value>"
-            "	    <Value>YCC</Value>"
-            "   </Option>\n"
-            "</CreationOptionList>\n"
-            );
+        "   </Option>"
+        "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
+        "       <Value>PIXEL</Value>"
+        "       <Value>BAND</Value>"
+        "   </Option>\n"
+        "   <Option name='ZSIZE' type='int' description='Third dimension size' default='1'/>"
+        "   <Option name='QUALITY' type='int' description='best=99, bad=0, default=85'/>\n"
+        "   <Option name='OPTIONS' type='string' description='Freeform dataset parameters'/>\n"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size, both x and y, default 512'/>\n"
+        "   <Option name='BLOCKXSIZE' type='int' description='Block x size, default=512'/>\n"
+        "   <Option name='BLOCKYSIZE' type='int' description='Block y size, default=512'/>\n"
+        "   <Option name='NETBYTEORDER' type='boolean' "
+                    "description='Force endian for certain compress options, default is host order'/>\n"
+        "   <Option name='CACHEDSOURCE' type='string' "
+                    "description='The source raster, if this is a cache'/>\n"
+        "   <Option name='UNIFORM_SCALE' type='int' description='Scale of overlays in MRF, usually 2'/>\n"
+        "   <Option name='NOCOPY' type='boolean' description='Leave created MRF empty, default=no'/>\n"
+        "   <Option name='DATANAME' type='string' description='Data file name'/>\n"
+        "   <Option name='INDEXNAME' type='string' description='Index file name'/>\n"
+        "   <Option name='SPACING' type='int' "
+                    "description='Leave this many unused bytes before each tile, default=0'/>\n"
+        "   <Option name='PHOTOMETRIC' type='string-select' default='DEFAULT' "
+                    "description='Band interpretation, may affect block encoding'>\n"
+        "       <Value>MULTISPECTRAL</Value>"
+        "       <Value>RGB</Value>"
+        "       <Value>YCC</Value>"
+        "   </Option>\n"
+        "</CreationOptionList>\n");
 
-        driver->pfnOpen = GDALMRFDataset::Open;
-        driver->pfnIdentify = GDALMRFDataset::Identify;
-        driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
-        driver->pfnCreate = GDALMRFDataset::Create;
-        driver->pfnDelete = GDALMRFDataset::Delete;
-        GetGDALDriverManager()->RegisterDriver(driver);
-    }
+    driver->pfnOpen = GDALMRFDataset::Open;
+    driver->pfnIdentify = GDALMRFDataset::Identify;
+    driver->pfnCreateCopy = GDALMRFDataset::CreateCopy;
+    driver->pfnCreate = GDALMRFDataset::Create;
+    driver->pfnDelete = GDALMRFDataset::Delete;
+    GetGDALDriverManager()->RegisterDriver(driver);
 }

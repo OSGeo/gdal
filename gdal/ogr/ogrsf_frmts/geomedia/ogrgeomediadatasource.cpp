@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRGeomediaDataSource class.
@@ -40,16 +39,14 @@ CPL_CVSID("$Id$");
 /*                       OGRGeomediaDataSource()                        */
 /************************************************************************/
 
-OGRGeomediaDataSource::OGRGeomediaDataSource()
-
-{
-    pszName = NULL;
-    papoLayers = NULL;
-    papoLayersInvisible = NULL;
-    nLayers = 0;
-    nLayersWithInvisible = 0;
-    bDSUpdate = FALSE;
-}
+OGRGeomediaDataSource::OGRGeomediaDataSource() :
+    papoLayers(NULL),
+    nLayers(0),
+    papoLayersInvisible(NULL),
+    nLayersWithInvisible(0),
+    pszName(NULL),
+    bDSUpdate(FALSE)
+{}
 
 /************************************************************************/
 /*                       ~OGRGeomediaDataSource()                       */
@@ -58,15 +55,13 @@ OGRGeomediaDataSource::OGRGeomediaDataSource()
 OGRGeomediaDataSource::~OGRGeomediaDataSource()
 
 {
-    int         i;
-
     CPLFree( pszName );
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    for( i = 0; i < nLayersWithInvisible; i++ )
+    for( int i = 0; i < nLayersWithInvisible; i++ )
         delete papoLayersInvisible[i];
     CPLFree( papoLayersInvisible );
 }
@@ -116,7 +111,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*      get the DSN.                                                    */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-    char *pszDSN;
+    char *pszDSN = NULL;
     if( STARTS_WITH_CI(pszNewName, "GEOMEDIA:") )
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
@@ -223,8 +218,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
             }
         }
 
-        int i;
-        for(i=0; i<(int)aosGUID.size();i++)
+        for( size_t i = 0; i < aosGUID.size(); i++ )
         {
             apoSRS.push_back(GetGeomediaSRS(osGCoordSystemTable, aosGUID[i]));
         }
@@ -233,17 +227,14 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
-    unsigned int iTable;
 
     papoLayers = (OGRGeomediaLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
-    for( iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for( unsigned int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
-        OGRGeomediaTableLayer  *poLayer;
-
-        poLayer = new OGRGeomediaTableLayer( this );
+        OGRGeomediaTableLayer *poLayer = new OGRGeomediaTableLayer( this );
 
         if( poLayer->Initialize( papszRecord[0], papszRecord[1], (apoSRS.size()) ? apoSRS[iTable] : NULL )
             != CE_None )
@@ -259,7 +250,6 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                     GetTableNameFromType()                           */
@@ -288,7 +278,6 @@ CPLString OGRGeomediaDataSource::GetTableNameFromType(const char* pszTableType)
     return "";
 }
 
-
 /************************************************************************/
 /*                          GetGeomediaSRS()                            */
 /************************************************************************/
@@ -305,7 +294,7 @@ OGRSpatialReference* OGRGeomediaDataSource::GetGeomediaSRS(const char* pszGCoord
 
     poGCoordSystemTable->ResetReading();
 
-    OGRFeature* poFeature;
+    OGRFeature* poFeature = NULL;
     while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
     {
         const char* pszCSGUID = poFeature->GetFieldAsString("CSGUID");
@@ -344,7 +333,6 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-
 /************************************************************************/
 /*                          GetLayerByName()                            */
 /************************************************************************/
@@ -366,9 +354,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszNameIn )
             return poLayer;
     }
 
-    OGRGeomediaTableLayer  *poGeomediaLayer;
-
-    poGeomediaLayer = new OGRGeomediaTableLayer( this );
+    OGRGeomediaTableLayer *poGeomediaLayer = new OGRGeomediaTableLayer( this );
 
     if( poGeomediaLayer->Initialize(pszNameIn, NULL, NULL) != CE_None )
     {

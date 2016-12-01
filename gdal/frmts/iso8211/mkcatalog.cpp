@@ -1,5 +1,4 @@
 /* ****************************************************************************
- * $Id$
  *
  * Project:  ISO8211 Library
  * Purpose:  Test ISO8211 writing capability.
@@ -31,23 +30,21 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                               mk_s57()                               */
 /************************************************************************/
 
-void mk_s57()
+static void mk_s57()
 
 {
     DDFModule  oModule;
-    DDFFieldDefn *poFDefn;
 
     oModule.Initialize();
 
 /* -------------------------------------------------------------------- */
 /*      Create the '0000' definition.                                   */
 /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    DDFFieldDefn *poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0000", "", "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT", dsc_elementary, dtc_char_string );
 
@@ -211,12 +208,10 @@ void mk_s57()
 /*      Create a record.                                                */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = new DDFRecord( &oModule );
-    DDFField *poField;
-
-    poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
+    DDFField *poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\1\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSID" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSID" ) );
 
     poRec->SetIntSubfield   ( "DSID", 0, "RCNM", 0, 10 );
     poRec->SetIntSubfield   ( "DSID", 0, "RCID", 0, 1 );
@@ -235,7 +230,7 @@ void mk_s57()
     poRec->SetIntSubfield   ( "DSID", 0, "AGEN", 0, 540 );
     poRec->SetStringSubfield( "DSID", 0, "COMT", 0, "" );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSSI" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSSI" ) );
 
     poRec->SetIntSubfield   ( "DSSI", 0, "DSTR", 0, 2 );
     poRec->SetIntSubfield   ( "DSSI", 0, "AALL", 0, 1 );
@@ -260,7 +255,7 @@ void mk_s57()
     poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\2\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "DSPM" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "DSPM" ) );
 
     poRec->SetIntSubfield   ( "DSPM", 0, "RCNM", 0, 20 );
     poRec->SetIntSubfield   ( "DSPM", 0, "RCID", 0, 1 );
@@ -286,14 +281,14 @@ void mk_s57()
     poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\3\0\036", 3 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "VRID" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "VRID" ) );
 
     poRec->SetIntSubfield   ( "VRID", 0, "RCNM", 0, 110 );
     poRec->SetIntSubfield   ( "VRID", 0, "RCID", 0, 518 );
     poRec->SetIntSubfield   ( "VRID", 0, "RVER", 0, 1 );
     poRec->SetIntSubfield   ( "VRID", 0, "RUIN", 0, 1 );
 
-    poField = poRec->AddField( oModule.FindFieldDefn( "SG3D" ) );
+    /*poField = */ poRec->AddField( oModule.FindFieldDefn( "SG3D" ) );
 
     poRec->SetIntSubfield   ( "SG3D", 0, "YCOO", 0, -325998702 );
     poRec->SetIntSubfield   ( "SG3D", 0, "XCOO", 0, 612175350 );
@@ -312,18 +307,18 @@ void mk_s57()
 /*                             mk_catalog()                             */
 /************************************************************************/
 
+#if 0
 void mk_catalog()
 
 {
     DDFModule  oModule;
-    DDFFieldDefn *poFDefn;
 
     oModule.Initialize();
 
 /* -------------------------------------------------------------------- */
 /*      Create the '0000' definition.                                   */
 /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    DDFFieldDefn *poFDefn = new DDFFieldDefn();
 
     poFDefn->Create( "0000", "", "0001CATD",
                      dsc_elementary,
@@ -373,9 +368,7 @@ void mk_catalog()
 /*      Create a record.                                                */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRec = new DDFRecord( &oModule );
-    DDFField *poField;
-
-    poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
+    DDFField *poField = poRec->AddField( oModule.FindFieldDefn( "0001" ) );
     poRec->SetFieldRaw( poField, 0, "\0\0\036", 3 );
 
     poField = poRec->AddField( oModule.FindFieldDefn( "CATD" ) );
@@ -411,12 +404,13 @@ void mk_catalog()
     poRec->Write();
     delete poRec;
 }
+#endif // mk_catalog not used.
 
 /* **********************************************************************/
 /*                                main()                                */
 /* **********************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+int main( int /* nArgc */, char ** /* papszArgv */ )
 
 {
     mk_s57();

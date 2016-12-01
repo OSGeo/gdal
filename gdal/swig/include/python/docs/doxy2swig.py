@@ -160,7 +160,7 @@ class Doxy2SWIG:
         if pad:
             npiece = len(self.pieces)
             if pad == 2:
-                self.add_text('\n')                
+                self.add_text('\n')
         for n in node.childNodes:
             self.parse(n)
         if pad:
@@ -235,7 +235,7 @@ class Doxy2SWIG:
         tmp = node.parentNode.parentNode.parentNode
         compdef = tmp.getElementsByTagName('compounddef')[0]
         cdef_kind = compdef.attributes['kind'].value
-        
+
         if prot == 'public':
             first = self.get_specific_nodes(node, ('definition', 'name'))
             name = first['name'].firstChild.data
@@ -246,7 +246,7 @@ class Doxy2SWIG:
             defn = first['definition'].firstChild.data
             self.add_text('\n')
             self.add_text('%feature("docstring") ')
-            
+
             anc = node.parentNode.parentNode
             if cdef_kind in ('file', 'namespace'):
                 ns_node = anc.getElementsByTagName('innernamespace')
@@ -267,7 +267,7 @@ class Doxy2SWIG:
                 if n not in first.values():
                     self.parse(n)
             self.add_text(['";', '\n'])
-        
+
     def do_definition(self, node):
         data = node.firstChild.data
         self.add_text('%s "\n%s'%(data, data))
@@ -327,7 +327,7 @@ class Doxy2SWIG:
         """Cleans the list of strings given as `pieces`.  It replaces
         multiple newlines by a maximum of 2 and returns a new list.
         It also wraps the paragraphs nicely.
-        
+
         """
         ret = []
         count = 0

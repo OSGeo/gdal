@@ -1,22 +1,27 @@
 
 LINKFLAGS =	/Zi /MTd
-EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -I..\frmts\gtiff\libgeotiff -I..\frmts\zlib \
+EXTRAFLAGS =	-DWIN32 -I. -Iogrsf_frmts -Iogrsf_frmts\mem -Iogrsf_frmts\geojson -Iogrsf_frmts\geojson\libjson -I..\frmts\gtiff\libgeotiff $(ZLIB_FLAGS) \
 		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 
 GDAL_ROOT = 	..
 
 !INCLUDE ..\nmake.opt
 
-!IFDEF INCLUDE_OGR_FRMTS
-EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED -DHAVE_MITAB
+!IFDEF ZLIB_EXTERNAL_LIB
+ZLIB_FLAGS = $(ZLIB_INC)
 !ELSE
-EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_MITAB
+ZLIB_FLAGS = -I..\frmts\zlib
 !ENDIF
+
+EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_MITAB
 
 !IFDEF EXPAT_DIR
 EXTRAFLAGS = $(EXTRAFLAGS) $(EXPAT_INCLUDE) -DHAVE_EXPAT
 !ENDIF
 
+!IFDEF XERCES_DIR
+EXTRAFLAGS = $(EXTRAFLAGS) $(XERCES_INCLUDE) -DHAVE_XERCES
+!ENDIF
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_api.obj \
@@ -36,7 +41,8 @@ OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_ap
 		swq.obj swq_parser.obj swq_select.obj swq_op_registrar.obj \
 		swq_op_general.obj swq_expr_node.obj ogrpgeogeometry.obj \
 		ogrgeomediageometry.obj ogr_geocoding.obj osr_cs_wkt.obj \
-		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj
+		osr_cs_wkt_parser.obj ogrgeomfielddefn.obj ograpispy.obj \
+		ogr_xerces.obj
 
 default:        ogr.lib 
 

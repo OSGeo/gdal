@@ -99,7 +99,7 @@
 ## @method Geo::GDAL::Dataset Create($name, hashref options = undef )
 # Create a new vector data source using this driver.
 # @param name The data source name.
-# @param options Driver specific dataset creation options. 
+# @param options Driver specific dataset creation options.
 
 ## @method Geo::GDAL::Dataset Copy(Geo::GDAL::Dataset source, $name, arrayref options = undef)
 # Copy a vector data source into a new data source with this driver.
@@ -737,7 +737,7 @@
 #
 # Example usage:
 # \code
-# $fd = Geo::OGR::FeatureDefn->new( 
+# $fd = Geo::OGR::FeatureDefn->new(
 #     Name => "name",
 #     Fields => [{ Name => 'field1', Type => 'String' },
 #                { Name => 'geom', GeometryType => 'Point' }] );
@@ -746,7 +746,7 @@
 ## @ignore Schema
 
 ## @method \%GetSchema()
-# @brief Get the schema of this feature or layer definition. 
+# @brief Get the schema of this feature or layer definition.
 #
 # @return the schema as a hash whose keywords are Name, StyleIgnored
 # and Fields. Fields is an anonymous array of first non-spatial and
@@ -845,7 +845,7 @@
 
 ## @class Geo::OGR::FieldDefn
 # @brief A definition of a non-spatial attribute.
-# @details 
+# @details
 # @isa (Geo::OGR)
 
 ## @sub list Types
@@ -865,10 +865,10 @@
 # - \a Type Field type, one of Geo::OGR::FieldDefn::Types (default is 'String').
 # - \a SubType Field sub type, one of Geo::OGR::FieldDefn::SubTypes.
 # - \a Justify Justify value, one of Geo::OGR::FieldDefn::JustifyValues
-# - \a Width 
+# - \a Width
 # - \a Precision
 # - \a Nullable (default is true)
-# - \a Default 
+# - \a Default
 # - \a Ignored (default is false)
 # @return a new Geo::OGR::FieldDefn object
 
@@ -967,7 +967,7 @@
 
 ## @class Geo::OGR::GeomFieldDefn
 # @brief A definition of a spatial attribute.
-# @details 
+# @details
 # @isa (Geo::OGR)
 
 ## @cmethod Geo::OGR::GeomFieldDefn new(%params)
@@ -1068,7 +1068,7 @@
 # @return a new Geo::OGR::Geometry object.
 
 ## @sub Geo::OGR::Geometry ApproximateArcAngles(%params)
-# Create a line string, which approximates an arc. 
+# Create a line string, which approximates an arc.
 # @note All angles are in degrees.
 #
 # @param %params Named parameters:
@@ -1078,7 +1078,7 @@
 # - \a Rotation default is 0.
 # - \a StartAngle default is 0.
 # - \a EndAngle default is 360.
-# - \a MaxAngleStepSizeDegrees default is 4. 
+# - \a MaxAngleStepSizeDegrees default is 4.
 # @return a new Geo::OGR::Geometry object.
 
 ## @method FlattenTo2D()
@@ -1115,7 +1115,7 @@
 # Export the geometry into a known format.
 #
 # @param params Named parameters:
-# - \a Format One of 
+# - \a Format One of
 #     - \a WKT Well Known Text.
 #     - <em>ISO WKT</em>
 #     - \a Text Same as WKT.
@@ -1224,7 +1224,7 @@
 #
 # @param points [optional] A reference to an array. A point is a reference to an
 # array of numbers, a linestring or a ring is a reference to an array of points,
-# a polygon is a reference to an array of rings, etc. 
+# a polygon is a reference to an array of rings, etc.
 #
 # @return A reference to an array.
 
@@ -1364,7 +1364,7 @@
 ## @ignore SymmetricDifference
 
 ## @method Geo::OGR::Geometry SymDifference($other)
-# Compute symmetric difference. 
+# Compute symmetric difference.
 # @note a.k.a. SymmetricDifference
 # @param other a Geo::OGR::Geometry object
 # @return a new Geo::OGR::Geometry object

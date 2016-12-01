@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTRawRasterBand
@@ -34,6 +33,8 @@
 #include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -98,7 +99,7 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                   "Attempt to write to read only dataset in"
                   "VRTRawRasterBand::IRasterIO()." );
 
-        return( CE_Failure );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -462,7 +463,14 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
 /* -------------------------------------------------------------------- */
 /*      Is it already in the list ?                                     */
 /* -------------------------------------------------------------------- */
-    if( CPLHashSetLookup(hSetFiles, m_pszSourceFilename) != NULL )
+    CPLString osSourceFilename;
+    if( m_bRelativeToVRT && strlen(poDS->GetDescription()) > 0 )
+        osSourceFilename = CPLFormFilename(
+              CPLGetDirname(poDS->GetDescription()), m_pszSourceFilename, NULL );
+    else
+        osSourceFilename = m_pszSourceFilename;
+
+    if( CPLHashSetLookup(hSetFiles, osSourceFilename) != NULL )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -478,7 +486,7 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
 /* -------------------------------------------------------------------- */
 /*      Add the string to the list                                      */
 /* -------------------------------------------------------------------- */
-    (*ppapszFileList)[*pnSize] = CPLStrdup(m_pszSourceFilename);
+    (*ppapszFileList)[*pnSize] = CPLStrdup(osSourceFilename);
     (*ppapszFileList)[(*pnSize + 1)] = NULL;
     CPLHashSetInsert(hSetFiles, (*ppapszFileList)[*pnSize]);
 
@@ -487,3 +495,5 @@ void VRTRawRasterBand::GetFileList( char*** ppapszFileList, int *pnSize,
     VRTRasterBand::GetFileList( ppapszFileList, pnSize,
                                 pnMaxSize, hSetFiles);
 }
+
+/*! @endcond */

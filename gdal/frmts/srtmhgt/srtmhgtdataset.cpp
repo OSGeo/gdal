@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SRTM HGT Driver
  * Purpose:  SRTM HGT File Read Support.
@@ -45,7 +44,7 @@ CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
-/*				SRTMHGTDataset				*/
+/*                              SRTMHGTDataset                          */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -61,17 +60,16 @@ class SRTMHGTDataset : public GDALPamDataset
 
   public:
     SRTMHGTDataset();
-    ~SRTMHGTDataset();
+    virtual ~SRTMHGTDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform(double*);
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform(double*) override;
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo*);
     static GDALDataset* CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress, void * pProgressData );
-
 };
 
 /************************************************************************/
@@ -84,27 +82,27 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 {
     friend class SRTMHGTDataset;
 
-    int	        bNoDataSet;
-    double	dfNoDataValue;
+    int         bNoDataSet;
+    double      dfNoDataValue;
 
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+    virtual CPLErr IReadBlock(int, int, void*) override;
+    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual const char* GetUnitType() { return "m"; }
+    virtual const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/
 /*                           SRTMHGTRasterBand()                            */
 /************************************************************************/
 
-SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDSIn, int nBandIn) :
+SRTMHGTRasterBand::SRTMHGTRasterBand( SRTMHGTDataset* poDSIn, int nBandIn ) :
     bNoDataSet(TRUE),
     dfNoDataValue(SRTMHG_NODATA_VALUE)
 {
@@ -119,21 +117,10 @@ SRTMHGTRasterBand::SRTMHGTRasterBand(SRTMHGTDataset* poDSIn, int nBandIn) :
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                                      void* pImage)
 {
   SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
-
-  CPLAssert(nBlockXOff == 0);
-  if(nBlockXOff != 0)
-  {
-      CPLError(CE_Failure, CPLE_NotSupported,
-               "unhandled nBlockXOff value : %d", nBlockXOff);
-      return CE_Failure;
-  }
-
-  if((poGDS == NULL) || (poGDS->fpImage == NULL))
-    return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
@@ -151,18 +138,11 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IWriteBlock()                            */
 /************************************************************************/
 
-CPLErr SRTMHGTRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage)
+CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff, void* pImage)
 {
     SRTMHGTDataset* poGDS = reinterpret_cast<SRTMHGTDataset *>( poDS );
 
-    CPLAssert(nBlockXOff == 0);
-    if(nBlockXOff != 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "unhandled nBlockXOff value : %d", nBlockXOff);
-        return CE_Failure;
-    }
-
-    if((poGDS == NULL) || (poGDS->fpImage == NULL) || (poGDS->eAccess != GA_Update))
+    if( poGDS->eAccess != GA_Update )
         return CE_Failure;
 
     VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
@@ -206,7 +186,6 @@ GDALColorInterp SRTMHGTRasterBand::GetColorInterpretation()
 /*                             SRTMHGTDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            SRTMHGTDataset()                              */
@@ -253,7 +232,7 @@ CPLErr SRTMHGTDataset::GetGeoTransform(double * padfTransform)
 const char *SRTMHGTDataset::GetProjectionRef()
 
 {
-    return( SRS_WKT_WGS84 );
+    return SRS_WKT_WGS84;
 }
 
 /************************************************************************/
@@ -264,12 +243,26 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
-  if( strlen(fileName) < 11 || !STARTS_WITH_CI(&fileName[7], ".hgt") )
+  if( strlen(fileName) < 11 || fileName[7] != '.' )
+    return FALSE;
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+    CPLString osNewName("/vsizip/");
+    osNewName += poOpenInfo->pszFilename;
+    osNewName += "/";
+    osNewName += CPLString(fileName).substr(0, 7);
+    osNewName += ".hgt";
+    GDALOpenInfo oOpenInfo(osNewName, GA_ReadOnly);
+    return Identify(&oOpenInfo);
+  }
+
+  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*	We check the file size to see if it is 25,934,402 bytes	        */
-/*	(SRTM 1) or 2,884,802 bytes (SRTM 3)				*/
+/*      We check the file size to see if it is 25,934,402 bytes         */
+/*      (SRTM 1) or 2,884,802 bytes (SRTM 3)                            */
 /* -------------------------------------------------------------------- */
   VSIStatBufL fileStat;
 
@@ -291,12 +284,24 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       return NULL;
 
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+  {
+      CPLString osFilename ("/vsizip/");
+      osFilename += poOpenInfo->pszFilename;
+      osFilename += "/";
+      osFilename += CPLString(fileName).substr(0, 7);
+      osFilename += ".hgt";
+      GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
+      return Open(&oOpenInfo);
+  }
 
   char latLonValueString[4];
   memset(latLonValueString, 0, 4);
   strncpy(latLonValueString, &fileName[1], 2);
   int southWestLat = atoi(latLonValueString);
   memset(latLonValueString, 0, 4);
+  // cppcheck-suppress redundantCopy
   strncpy(latLonValueString, &fileName[4], 3);
   int southWestLon = atoi(latLonValueString);
 
@@ -319,20 +324,8 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
 
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file api.                         */
-/* -------------------------------------------------------------------- */
-  poDS->fpImage = VSIFOpenL(
-      poOpenInfo->pszFilename,
-      (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb" );
-  if(poDS->fpImage == NULL)
-  {
-      CPLError( CE_Failure, CPLE_OpenFailed,
-                "VSIFOpenL(%s) failed unexpectedly in srtmhgtdataset.cpp",
-                poOpenInfo->pszFilename );
-      delete poDS;
-      return NULL;
-  }
+  poDS->fpImage = poOpenInfo->fpL;
+  poOpenInfo->fpL = NULL;
 
   VSIStatBufL fileStat;
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
@@ -360,9 +353,9 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 
   poDS->adfGeoTransform[0] = southWestLon - 0.5 / (numPixels - 1);
   poDS->adfGeoTransform[1] = 1.0 / (numPixels-1);
-  poDS->adfGeoTransform[2] = 0.0000000000;
+  poDS->adfGeoTransform[2] = 0.0;
   poDS->adfGeoTransform[3] = southWestLat + 1 + 0.5 / (numPixels - 1);
-  poDS->adfGeoTransform[4] = 0.0000000000;
+  poDS->adfGeoTransform[4] = 0.0;
   poDS->adfGeoTransform[5] = -1.0 / (numPixels-1);
 
   poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
@@ -394,13 +387,10 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
                                           GDALDataset *poSrcDS,
                                           int bStrict,
-                                          CPL_UNUSED char ** papszOptions,
+                                          char ** /* papszOptions*/,
                                           GDALProgressFunc pfnProgress,
                                           void * pProgressData )
 {
-    if( pfnProgress && !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
@@ -484,11 +474,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Check filename.                                                 */
 /* -------------------------------------------------------------------- */
     char expectedFileName[12];
-    snprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
+
+    CPLsnprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
              (nLLOriginLat >= 0) ? 'N' : 'S',
              (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
              (nLLOriginLong >= 0) ? 'E' : 'W',
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
+
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
         CPLError( CE_Warning, CPLE_AppDefined,

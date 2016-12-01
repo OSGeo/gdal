@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Definition of GDALWMSMetaDataset class
@@ -29,15 +28,15 @@
 
 #include "wmsmetadataset.h"
 
+CPL_CVSID("$Id$");
+
 int VersionStringToInt(const char *version);
 
 /************************************************************************/
 /*                          GDALWMSMetaDataset()                        */
 /************************************************************************/
 
-GDALWMSMetaDataset::GDALWMSMetaDataset() : papszSubDatasets(NULL)
-{
-}
+GDALWMSMetaDataset::GDALWMSMetaDataset() : papszSubDatasets(NULL) {}
 
 /************************************************************************/
 /*                         ~GDALWMSMetaDataset()                        */
@@ -140,7 +139,6 @@ GDALDataset *GDALWMSMetaDataset::DownloadGetCapabilities(GDALOpenInfo *poOpenInf
 
     return poRet;
 }
-
 
 /************************************************************************/
 /*                         DownloadGetTileService()                     */
@@ -296,7 +294,6 @@ void GDALWMSMetaDataset::AddSubDataset( const char* pszLayerName,
     }
 }
 
-
 /************************************************************************/
 /*                         AddWMSCSubDataset()                          */
 /************************************************************************/
@@ -417,7 +414,6 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode* psXML,
         if (pszSRSLocal == NULL)
             pszSRSLocal = "EPSG:4326";
     }
-
 
     if (pszSRSLocal != NULL && psSRS != NULL)
     {

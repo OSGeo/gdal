@@ -1584,6 +1584,12 @@ Fax3PrematureEOF()
  * this is <8 bytes.  We optimize the code here to reflect the
  * machine characteristics.
  */
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 #if SIZEOF_UNSIGNED_LONG == 8
 #define FILL(n, cp)							    \
     switch (n) {							    \
@@ -1658,13 +1664,13 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			     */
 			    for (; n && !isAligned(cp, long); n--)
 				    *cp++ = 0x00;
-			    lp = (long*) cp;
+			    lp = (long*) (void*) cp;
 			    nw = (GInt32)(n / sizeof (long));
 			    n -= nw * sizeof (long);
 			    do {
 				    *lp++ = 0L;
 			    } while (--nw);
-			    cp = (unsigned char*) lp;
+			    cp = (unsigned char*) (void*) lp;
 			}
 			ZERO(n, cp);
 			run &= 7;
@@ -1693,13 +1699,13 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 			     */
 			    for (; n && !isAligned(cp, long); n--)
 				*cp++ = 0xff;
-			    lp = (long*) cp;
+			    lp = (long*) (void*) cp;
 			    nw = (GInt32)(n / sizeof (long));
 			    n -= nw * sizeof (long);
 			    do {
 				*lp++ = -1L;
 			    } while (--nw);
-			    cp = (unsigned char*) lp;
+			    cp = (unsigned char*) (void*) lp;
 			}
 			FILL(n, cp);
 			run &= 7;
@@ -1715,6 +1721,10 @@ aig_TIFFFax3fillruns(unsigned char* buf, GUInt32* runs, GUInt32* erun,
 }
 #undef	ZERO
 #undef	FILL
+
+#if __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
 
 /************************************************************************/
 /*                           Fax3DecodeRLE()                            */

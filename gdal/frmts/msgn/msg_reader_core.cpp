@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MSG Native Reader
  * Purpose:  Base class for reading in the headers of MSG native images
@@ -95,7 +94,7 @@ void SecondaryProdHeaderInit(SECONDARY_PROD_HEADER *header)
   PhDataInit(&header->westColumnSelectedRectangle);
 }
 
-Msg_reader_core::Msg_reader_core(const char* fname) :
+Msg_reader_core::Msg_reader_core( const char* fname ) :
     _lines(0),
     _columns(0),
     _line_start(0),
@@ -126,7 +125,8 @@ Msg_reader_core::Msg_reader_core(const char* fname) :
     }
 
     FILE* fin = fopen(fname, "rb");
-    if (!fin) {
+    if( !fin )
+    {
         fprintf(stderr, "Could not open file %s\n", fname);
         return;
     }
@@ -134,7 +134,7 @@ Msg_reader_core::Msg_reader_core(const char* fname) :
     fclose(fin);
 }
 
-Msg_reader_core::Msg_reader_core(FILE* fp) :
+Msg_reader_core::Msg_reader_core( FILE* fp ) :
     _lines(0),
     _columns(0),
     _line_start(0),
@@ -167,7 +167,6 @@ Msg_reader_core::Msg_reader_core(FILE* fp) :
 
     read_metadata_block(fp);
 }
-
 
 void Msg_reader_core::read_metadata_block(FILE* fin) {
     _open_success = true;
@@ -213,8 +212,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         }
     }
 #ifdef DEBUG
-    printf("Data: %d %d\n", _f_data_offset, _f_data_size);
-    printf("Header: %d %d\n", _f_header_offset, _f_header_size);
+    printf("Data: %u %u\n", _f_data_offset, _f_data_size);
+    printf("Header: %u %u\n", _f_header_offset, _f_header_size);
 #endif // DEBUG
 
     unsigned int lines;
@@ -230,7 +229,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     _columns -= cols - 1;
 
 #ifdef DEBUG
-    printf("lines = %d, cols = %d\n", _lines, _columns);
+    printf("lines = %u, cols = %u\n", _lines, _columns);
 #endif // DEBUG
 
     int records_per_line = 0;
@@ -264,9 +263,9 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
 #ifdef DEBUG
     for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
-        if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4) {
+        if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4)
+        {
             printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
-
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20) {
             printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
@@ -282,7 +281,6 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     to_native(idr);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
-
 
     // Rather convoluted, but this code is required to compute the real data block sizes
     // It does this by reading in the first line of every band, to get to the packet size field

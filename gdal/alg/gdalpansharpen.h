@@ -100,11 +100,13 @@ typedef struct
       * unless the GDAL_NUM_THREADS configuration option is set to an integer or ALL_CPUS. */
     int                  nThreads;
 
+    /** Shift in pixels of multispectral bands w.r.t panchromatic band, in X direction */
     double               dfMSShiftX;
+
+    /** Shift in pixels of multispectral bands w.r.t panchromatic band, in Y direction */
     double               dfMSShiftY;
 
 } GDALPansharpenOptions;
-
 
 GDALPansharpenOptions CPL_DLL * GDALCreatePansharpenOptions(void);
 void CPL_DLL GDALDestroyPansharpenOptions( GDALPansharpenOptions * );
@@ -136,6 +138,7 @@ CPL_C_END
 
 class GDALPansharpenOperation;
 
+//! @cond Doxygen_Suppress
 typedef struct
 {
     GDALPansharpenOperation* poPansharpenOperation;
@@ -178,6 +181,7 @@ typedef struct
     struct timeval* ptv;
 #endif
 } GDALPansharpenResampleJob;
+//! @endcond
 
 /** Pansharpening operation class.
  */
@@ -208,6 +212,8 @@ class GDALPansharpenOperation
                                                      int nValues,
                                                      int nBandValues,
                                                      WorkDataType nMaxValue) const;
+
+        // cppcheck-suppress functionStatic
         template<class WorkDataType, class OutDataType> void WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,
@@ -223,6 +229,8 @@ class GDALPansharpenOperation
                                                      int nValues,
                                                      int nBandValues,
                                                      WorkDataType nMaxValue) const;
+
+        // cppcheck-suppress functionStatic
         template<class WorkDataType> CPLErr WeightedBrovey(
                                                      const WorkDataType* pPanBuffer,
                                                      const WorkDataType* pUpsampledSpectralBuffer,

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSFDriverRegistrar class implementation.
@@ -52,15 +51,12 @@ OGRSFDriverRegistrar::OGRSFDriverRegistrar() {}
 /*                       ~OGRSFDriverRegistrar()                        */
 /************************************************************************/
 
-OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
+OGRSFDriverRegistrar::~OGRSFDriverRegistrar() {}
 
-{
-}
-
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                           GetRegistrar()                             */
 /************************************************************************/
-
 
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
 {
@@ -175,7 +171,6 @@ int OGRSFDriverRegistrar::GetOpenDSCount()
     CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
     return 0;
 }
-
 
 /************************************************************************/
 /*                         OGRGetOpenDSCount()                          */
@@ -411,3 +406,4 @@ OGRSFDriverH OGRGetDriverByName( const char *pszName )
     return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );
 }
+//! @endcond

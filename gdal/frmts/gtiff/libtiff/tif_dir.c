@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.125 2016-01-23 21:20:34 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.127 2016-10-25 21:35:15 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -43,8 +43,10 @@
 static void
 setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 {
-	if (*vpp)
-		_TIFFfree(*vpp), *vpp = 0;
+	if (*vpp) {
+		_TIFFfree(*vpp);
+		*vpp = 0;
+	}
 	if (vp) {
 		tmsize_t bytes = (tmsize_t)(nmemb * elem_size);
 		if (elem_size && bytes / elem_size == nmemb)
@@ -254,6 +256,28 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		v = (uint16) va_arg(ap, uint16_vap);
 		if (v == 0)
 			goto badvalue;
+        if( v != td->td_samplesperpixel )
+        {
+            /* See http://bugzilla.maptools.org/show_bug.cgi?id=2500 */
+            if( td->td_sminsamplevalue != NULL )
+            {
+                TIFFWarningExt(tif->tif_clientdata,module,
+                    "SamplesPerPixel tag value is changing, "
+                    "but SMinSampleValue tag was read with a different value. Cancelling it");
+                TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
+                _TIFFfree(td->td_sminsamplevalue);
+                td->td_sminsamplevalue = NULL;
+            }
+            if( td->td_smaxsamplevalue != NULL )
+            {
+                TIFFWarningExt(tif->tif_clientdata,module,
+                    "SamplesPerPixel tag value is changing, "
+                    "but SMaxSampleValue tag was read with a different value. Cancelling it");
+                TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
+                _TIFFfree(td->td_smaxsamplevalue);
+                td->td_smaxsamplevalue = NULL;
+            }
+        }
 		td->td_samplesperpixel = (uint16) v;
 		break;
 	case TIFFTAG_ROWSPERSTRIP:

@@ -1034,6 +1034,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /*      Update it, padding with spaces.                                 */
 /* -------------------------------------------------------------------- */
     memset( pszFieldSrc, ' ', nFieldLen );
+    /* cppcheck-suppress redundantCopy */
     strncpy( pszFieldSrc, pszNewValue,
              MIN((size_t)nFieldLen,strlen(pszNewValue)) );
 

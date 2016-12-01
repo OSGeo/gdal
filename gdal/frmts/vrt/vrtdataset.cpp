@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTDataset
@@ -32,9 +31,13 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <typeinfo>
+
+/*! @cond Doxygen_Suppress */
 
 CPL_CVSID("$Id$");
 
@@ -69,6 +72,8 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
     poDriver = reinterpret_cast<GDALDriver *>( GDALGetDriverByName( "VRT" ) );
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                              VRTCreate()                             */
 /************************************************************************/
@@ -80,8 +85,10 @@ VRTDataset::VRTDataset( int nXSize, int nYSize ) :
 VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 
 {
-    return ( new VRTDataset(nXSize, nYSize) );
+    return new VRTDataset(nXSize, nYSize);
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                            ~VRTDataset()                            */
@@ -191,6 +198,8 @@ char** VRTDataset::GetMetadata( const char *pszDomain )
     return GDALDataset::GetMetadata(pszDomain);
 }
 
+/*! @endcond */
+
 /************************************************************************/
 /*                            VRTFlushCache()                           */
 /************************************************************************/
@@ -205,6 +214,8 @@ void CPL_STDCALL VRTFlushCache( VRTDatasetH hDataset )
 
     reinterpret_cast<VRTDataset *>( hDataset )->FlushCache();
 }
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                           SerializeToXML()                           */
@@ -299,6 +310,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPathIn )
     return psDSTree;
 }
 
+/*! @endcond */
 /************************************************************************/
 /*                          VRTSerializeToXML()                         */
 /************************************************************************/
@@ -315,7 +327,7 @@ CPLXMLNode * CPL_STDCALL VRTSerializeToXML( VRTDatasetH hDataset,
     return reinterpret_cast<VRTDataset *>(
         hDataset )->SerializeToXML(pszVRTPath);
 }
-
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                              XMLInit()                               */
 /************************************************************************/
@@ -720,6 +732,7 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         char* pszCurDir = CPLGetCurrentDir();
         const char *currentVrtFilename
             = CPLProjectRelativeFilename(pszCurDir, poOpenInfo->pszFilename);
+        CPLString osInitialCurrentVrtFilename(currentVrtFilename);
         CPLFree(pszCurDir);
 
 #if defined(HAVE_READLINK) && defined(HAVE_LSTAT)
@@ -776,7 +789,10 @@ GDALDataset *VRTDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 #endif  // HAVE_READLINK && HAVE_LSTAT
 
-        pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
+        if( osInitialCurrentVrtFilename == currentVrtFilename )
+            pszVRTPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
+        else
+            pszVRTPath = CPLStrdup(CPLGetPath(currentVrtFilename));
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
@@ -939,7 +955,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         if( CSLFetchNameValue(papszOptions, "ByteOrder") != NULL )
             pszByteOrder = CSLFetchNameValue(papszOptions, "ByteOrder");
 
-        const char *pszFilename;
+        const char *pszFilename = NULL;
         if( CSLFetchNameValue(papszOptions, "SourceFilename") != NULL )
             pszFilename = CSLFetchNameValue(papszOptions, "SourceFilename");
         else
@@ -951,8 +967,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         }
 
         const bool bRelativeToVRT =
-            CPL_TO_BOOL(
-                CSLFetchBoolean( papszOptions, "relativeToVRT", FALSE ));
+            CPLFetchBool( papszOptions, "relativeToVRT", false );
 
 /* -------------------------------------------------------------------- */
 /*      Create and initialize the band.                                 */
@@ -962,7 +977,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        if EQUAL(l_pszVRTPath, "")
+        if( EQUAL(l_pszVRTPath, "") )
         {
             CPLFree(l_pszVRTPath);
             l_pszVRTPath = NULL;
@@ -1071,7 +1086,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         return CE_None;
     }
 }
-
+/*! @endcond */
 /************************************************************************/
 /*                              VRTAddBand()                            */
 /************************************************************************/
@@ -1089,7 +1104,7 @@ int CPL_STDCALL VRTAddBand( VRTDatasetH hDataset, GDALDataType eType,
     return reinterpret_cast<VRTDataset *>(
         hDataset )->AddBand( eType, papszOptions );
 }
-
+/*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
@@ -1269,6 +1284,10 @@ int VRTDataset::CheckCompatibleForDatasetIO()
 
         VRTSourcedRasterBand* poBand
             = reinterpret_cast<VRTSourcedRasterBand*>( papoBands[iBand] );
+
+        // Do not allow VRTDerivedRasterBand for example
+        if( typeid(*poBand) != typeid(VRTSourcedRasterBand) )
+            return FALSE;
 
         if( iBand == 0 )
         {
@@ -1683,7 +1702,7 @@ void VRTDataset::BuildVirtualOverviews()
             }
             else
             {
-                CPLAssert(FALSE);
+                CPLAssert(false);
             }
             if( poNewSource->GetBand()->GetDataset() )
                 poNewSource->GetBand()->GetDataset()->Reference();
@@ -1728,3 +1747,5 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
                                          pfnProgress,
                                          pProgressData );
 }
+
+/*! @endcond */

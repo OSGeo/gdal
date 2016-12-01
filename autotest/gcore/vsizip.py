@@ -110,11 +110,89 @@ def vsizip_1():
     data = gdal.VSIFReadL(1, 4, f)
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink("/vsimem/test.zip")
-
     if data.decode('ASCII') != 'abcd':
+        gdaltest.post_reason('fail')
         print(data)
         return 'fail'
+
+    # Test alternate uri syntax
+    gdal.Rename("/vsimem/test.zip", "/vsimem/test.xxx")
+    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd", "rb")
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    if data.decode('ASCII') != 'abcd':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # With a trailing slash
+    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/subdir3/abcd/", "rb")
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+    # Test ReadDir()
+    if len(gdal.ReadDir("/vsizip/{/vsimem/test.xxx}")) != 3:
+        gdaltest.post_reason('fail')
+        print(gdal.ReadDir("/vsizip/{/vsimem/test.xxx}"))
+        return 'fail'
+
+    # Unbalanced curls
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx", "rb")
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Non existing mainfile
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}/bla", "rb")
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Non existing subfile
+    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.zzz}/bla", "rb")
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Wrong syntax
+    f= gdal.VSIFOpenL("/vsizip/{/vsimem/test.xxx}.aux.xml", "rb")
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test nested { { } }
+    hZIP = gdal.VSIFOpenL("/vsizip/{/vsimem/zipinzip.yyy}", "wb")
+    if hZIP is None:
+        gdaltest.post_reason('fail 1')
+        return 'fail'
+    f = gdal.VSIFOpenL("/vsizip/{/vsimem/zipinzip.yyy}/test.xxx", "wb")
+    f_src = gdal.VSIFOpenL("/vsimem/test.xxx", "rb")
+    data = gdal.VSIFReadL(1, 10000, f_src)
+    gdal.VSIFCloseL(f_src)
+    gdal.VSIFWriteL(data, 1, len(data), f)
+    gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(hZIP)
+
+    f= gdal.VSIFOpenL("/vsizip/{/vsizip/{/vsimem/zipinzip.yyy}/test.xxx}/subdir3/abcd/", "rb")
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = gdal.VSIFReadL(1, 4, f)
+    gdal.VSIFCloseL(f)
+
+    if data.decode('ASCII') != 'abcd':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink("/vsimem/test.xxx")
+    gdal.Unlink("/vsimem/zipinzip.yyy")
 
     return 'success'
 
@@ -514,6 +592,38 @@ def vsizip_13():
 
     return 'success'
 
+###############################################################################
+# Test that we can recode filenames in ZIP when writing (#6631)
+
+def vsizip_14():
+
+    fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
+    try:
+        exec("cp866_filename = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
+    except:
+        cp866_filename = '\u0430\u0431\u0432\u0433\u0434\u0435'
+
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip/' + cp866_filename, 'wb')
+    if f is None:
+        gdal.VSIFCloseL(fmain)
+        gdal.Unlink('/vsimem/vsizip_14.zip')
+        return 'skip'
+
+    gdal.VSIFWriteL('hello', 1, 5, f)
+    gdal.VSIFCloseL(f)
+    gdal.VSIFCloseL(fmain)
+
+    content = gdal.ReadDir("/vsizip//vsimem/vsizip_14.zip")
+    if content != [cp866_filename]:
+        gdaltest.post_reason('bad content')
+        print(content)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/vsizip_14.zip')
+
+    return 'success'
+
 
 gdaltest_list = [ vsizip_1,
                   vsizip_2,
@@ -528,6 +638,7 @@ gdaltest_list = [ vsizip_1,
                   vsizip_11,
                   vsizip_12,
                   vsizip_13,
+                  vsizip_14
                   ]
 
 

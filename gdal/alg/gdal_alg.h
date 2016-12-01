@@ -115,6 +115,7 @@ typedef int
                         int bDstToSrc, int nPointCount,
                         double *x, double *y, double *z, int *panSuccess );
 
+/*! @cond Doxygen_Suppress */
 #define GDAL_GTI2_SIGNATURE     "GTI2"
 
 typedef struct {
@@ -125,14 +126,16 @@ typedef struct {
     CPLXMLNode *(*pfnSerialize)( void * pTransformerArg );
     void* (*pfnCreateSimilar)( void* pTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
 } GDALTransformerInfo;
+/*! @endcond */
 
+/*! @cond Doxygen_Suppress */
 void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
 int  CPL_DLL GDALUseTransformer( void *pTransformerArg,
                                  int bDstToSrc, int nPointCount,
                                  double *x, double *y, double *z,
                                  int *panSuccess );
 void* GDALCreateSimilarTransformer( void* psTransformerArg, double dfSrcRatioX, double dfSrcRatioY );
-
+/*! @endcond */
 
 /* High level transformer for going from image coordinates on one file
    to image coordinates on another, potentially doing reprojection,
@@ -194,7 +197,9 @@ int CPL_DLL GDALTPSTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
+/*! @cond Doxygen_Suppress */
 char CPL_DLL ** RPCInfoToMD( GDALRPCInfo *psRPCInfo );
+/*! @endcond */
 
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
@@ -229,7 +234,6 @@ int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 
-
 int CPL_DLL CPL_STDCALL
 GDALSimpleImageWarp( GDALDatasetH hSrcDS,
                      GDALDatasetH hDstDS,
@@ -255,11 +259,13 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                           double *padfExtents,
                           int nOptions );
 
+/*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL *
 GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );
 CPLErr CPL_DLL GDALDeserializeTransformer( CPLXMLNode *psTree,
                                            GDALTransformerFunc *ppfnFunc,
                                            void **ppTransformArg );
+/*! @endcond */
 
 CPLErr CPL_DLL
 GDALTransformGeolocations( GDALRasterBandH hXBand,
@@ -275,9 +281,11 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
 /*      Contour Line Generation                                         */
 /* -------------------------------------------------------------------- */
 
+/** Contour writer callback type */
 typedef CPLErr (*GDALContourWriter)( double dfLevel, int nPoints,
                                      double *padfX, double *padfY, void * );
 
+/** Contour generator opaque type */
 typedef void *GDALContourGeneratorH;
 
 GDALContourGeneratorH CPL_DLL
@@ -289,6 +297,7 @@ CPLErr CPL_DLL GDAL_CG_FeedLine( GDALContourGeneratorH hCG,
                                  double *padfScanline );
 void CPL_DLL GDAL_CG_Destroy( GDALContourGeneratorH hCG );
 
+/*! @cond Doxygen_Suppress */
 typedef struct
 {
     void   *hLayer;
@@ -302,6 +311,7 @@ typedef struct
 
 CPLErr CPL_DLL
 OGRContourWriter( double, int, double *, double *, void *pInfo );
+/*! @endcond */
 
 CPLErr CPL_DLL
 GDALContourGenerate( GDALRasterBandH hBand,
@@ -346,7 +356,6 @@ GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
                         void *pTransformArg, double dfBurnValue,
                         char **papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg );
-
 
 /************************************************************************/
 /*  Gridding interface.                                                 */
@@ -407,6 +416,7 @@ typedef struct
     double  dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
 
+/** Inverse distance to a power, with nearest neighbour search, control options */
 typedef struct
 {
     /*! Weighting power. */
@@ -504,7 +514,6 @@ typedef struct
     double  dfNoDataValue;
 } GDALGridLinearOptions;
 
-
 CPLErr CPL_DLL
 GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 const double *, const double *, const double *,
@@ -512,6 +521,7 @@ GDALGridCreate( GDALGridAlgorithm, const void *, GUInt32,
                 GUInt32, GUInt32, GDALDataType, void *,
                 GDALProgressFunc, void *);
 
+/** Grid context opaque type */
 typedef struct GDALGridContext GDALGridContext;
 
 GDALGridContext CPL_DLL*
@@ -537,34 +547,38 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /*  Delaunay triangulation interface.                                   */
 /************************************************************************/
 
+/** Triangle fact */
 typedef struct
 {
-    int anVertexIdx[3];   /* index to the padfX/padfY arrays */
-    int anNeighborIdx[3]; /* index to GDALDelaunayTriangulation.pasFacets, or -1 */
+    int anVertexIdx[3];   /**< index to the padfX/padfY arrays */
+    int anNeighborIdx[3]; /**< index to GDALDelaunayTriangulation.pasFacets, or -1 */
                           /* anNeighborIdx[k] is the triangle to the opposite side */
                           /* of the opposite segment of anVertexIdx[k] */
 } GDALTriFacet;
 
-/* Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
-   l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
-   l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
-   l3 = 1 - l1 - l2
-*/
+/** Triangle barycentric coefficients.
+ *
+ * Conversion from cartesian (x,y) to barycentric (l1,l2,l3) with :
+ *  l1 = dfMul1X * (x - dfCxtX) + dfMul1Y * (y - dfCstY)
+ *  l2 = dfMul2X * (x - dfCxtX) + dfMul2Y * (y - dfCstY)
+ *  l3 = 1 - l1 - l2
+ */
 typedef struct
 {
-    double      dfMul1X;
-    double      dfMul1Y;
-    double      dfMul2X;
-    double      dfMul2Y;
-    double      dfCstX;
-    double      dfCstY;
+    double      dfMul1X; /**< dfMul1X */
+    double      dfMul1Y; /**< dfMul1Y */
+    double      dfMul2X; /**< dfMul2X */
+    double      dfMul2Y; /**< dfMul2Y */
+    double      dfCstX;  /**< dfCstX */
+    double      dfCstY;  /**< dfCstY */
 } GDALTriBarycentricCoefficients;
 
+/** Triangulation structure */
 typedef struct
 {
-    int                             nFacets;
-    GDALTriFacet                   *pasFacets;     /* nFacets elements */
-    GDALTriBarycentricCoefficients *pasFacetCoefficients; /* nFacets elements */
+    int                             nFacets;       /**< number of facets */
+    GDALTriFacet                   *pasFacets;     /**< array of nFacets facets */
+    GDALTriBarycentricCoefficients *pasFacetCoefficients; /**< arra of nFacets barycentric coefficients */
 } GDALTriangulation;
 
 int CPL_DLL GDALHasTriangulation(void);
@@ -595,8 +609,10 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
                                                 int* panOutputFacetIdx );
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
+/*! @cond Doxygen_Suppress */
 // GDAL internal use only
 void GDALTriangulationTerminate(void);
+/*! @endcond */
 
 CPL_C_END
 

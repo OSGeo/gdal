@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTDriver.
@@ -76,7 +75,6 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                          CreateDataSource()                          */

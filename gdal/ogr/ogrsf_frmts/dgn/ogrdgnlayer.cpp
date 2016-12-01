@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRDGNLayer class.
@@ -31,6 +30,9 @@
 #include "cpl_conv.h"
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
+
+#include <algorithm>
+#include <cmath>
 #include <list>
 
 CPL_CVSID("$Id$");
@@ -45,8 +47,6 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGNIn,
     iNextShapeId(0),
     hDGN(hDGNIn),
     bUpdate(bUpdateIn)
-    // Unused:
-    // bHaveSimpleQuery(FALSE)
 {
 
 /* -------------------------------------------------------------------- */
@@ -333,7 +333,6 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     int iLink = 0;
     int nLinkCount = 0;
 
-
     pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
                               anEntityNum + iLink, anMSLink + iLink, NULL );
     while( pabyData && nLinkCount < MAX_LINK )
@@ -402,11 +401,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Lookup color.                                                   */
 /* -------------------------------------------------------------------- */
-    int gv_red;
-    int gv_green;
-    int gv_blue;
+    int gv_red = 0;
+    int gv_green = 0;
+    int gv_blue = 0;
 
-    char szFSColor[128];
+    char szFSColor[128] = {};
     szFSColor[0] = '\0';
     if( DGNLookupColor( hDGN, psElement->color,
                         &gv_red, &gv_green, &gv_blue ) )
@@ -529,15 +528,16 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
       case DGNST_ARC:
       {
-          OGRLineString *poLine = new OGRLineString();
           DGNElemArc    *psArc = (DGNElemArc *) psElement;
-          DGNPoint      asPoints[90];
-          // TODO: std::abs abd std::max
-          int nPoints = static_cast<int>(MAX(1,ABS(psArc->sweepang) / 5) + 1);
+          int nPoints = static_cast<int>(
+              std::max(1.0, std::abs(psArc->sweepang) / 5.0) + 1.0);
           if( nPoints > 90 )
               nPoints = 90;
+
+          DGNPoint asPoints[90] = {};
           DGNStrokeArc( hDGN, psArc, nPoints, asPoints );
 
+          OGRLineString *poLine = new OGRLineString();
           poLine->setNumPoints( nPoints );
           for( int i = 0; i < nPoints; i++ )
           {
@@ -576,11 +576,11 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           // Add the size info in ground units.
           // TODO: std::abs
-          if( ABS(psText->height_mult) >= 6.0 )
+          if( std::abs(psText->height_mult) >= 6.0 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                            nOgrFSLen-strlen(pszOgrFS), ",s:%dg",
                            static_cast<int>( psText->height_mult ) );
-          else if( ABS(psText->height_mult) > 0.1 )
+          else if( std::abs(psText->height_mult) > 0.1 )
               CPLsnprintf( pszOgrFS+strlen(pszOgrFS),
                           nOgrFSLen-strlen(pszOgrFS), ",s:%.3fg",
                            psText->height_mult );
@@ -655,9 +655,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           for( int iChild = 0; iChild < psHdr->numelems; iChild++ )
           {
               OGRFeature *poChildFeature = NULL;
-              DGNElemCore *psChildElement;
-
-              psChildElement = DGNReadElement( hDGN );
+              DGNElemCore *psChildElement = DGNReadElement( hDGN );
               // should verify complex bit set, not another header.
 
               if( psChildElement != NULL )
@@ -669,9 +667,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
               if( poChildFeature != NULL
                   && poChildFeature->GetGeometryRef() != NULL )
               {
-                  OGRGeometry *poGeom;
-
-                  poGeom = poChildFeature->GetGeometryRef();
+                  OGRGeometry *poGeom = poChildFeature->GetGeometryRef();
                   if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
                       oChildren.addGeometry( poGeom );
               }
@@ -681,7 +677,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
           }
 
           // Try to assemble into polygon geometry.
-          OGRGeometry *poGeom = NULL;;
+          OGRGeometry *poGeom = NULL;
 
           if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
               poGeom = reinterpret_cast<OGRPolygon *>(
@@ -797,8 +793,8 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
 /*      Otherwise scan the index.                                       */
 /* -------------------------------------------------------------------- */
-    int nElementCount;
-    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
+    int nElementCount = 0;
+    const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN, &nElementCount);
 
     int nFeatureCount = 0;
     bool bInComplexShape = false;
@@ -816,13 +812,13 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
             if( !(pasIndex[i].flags & DGNEIF_COMPLEX) || !bInComplexShape )
             {
                 nFeatureCount++;
-                bInComplexShape = FALSE;
+                bInComplexShape = false;
             }
             break;
 
           case DGNST_COMPLEX_HEADER:
             nFeatureCount++;
-            bInComplexShape = TRUE;
+            bInComplexShape = true;
             break;
 
           default:
@@ -871,15 +867,14 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
                                                      int nGroupType )
 
 {
-    int nTotalPoints = poLS->getNumPoints();
-    int iNextPoint = 0;
+    const int nTotalPoints = poLS->getNumPoints();
     int iGeom = 0;
     DGNElemCore **papsGroup = static_cast<DGNElemCore **>(
         CPLCalloc( sizeof(void*), (nTotalPoints/(MAX_ELEM_POINTS-1))+3 ) );
 
-    for( iNextPoint = 0; iNextPoint < nTotalPoints;  )
+    for( int iNextPoint = 0; iNextPoint < nTotalPoints;  )
     {
-        DGNPoint asPoints[MAX_ELEM_POINTS];
+        DGNPoint asPoints[MAX_ELEM_POINTS] = {};
         int nThisCount = 0;
 
         // we need to repeat end points of elements.
@@ -1064,7 +1059,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             && (pszStyle == NULL || strstr(pszStyle,"LABEL") == NULL) )
         {
             // Treat a non text point as a degenerate line.
-            DGNPoint asPoints[2];
+            DGNPoint asPoints[2] = {};
             asPoints[0].x = poPoint->getX();
             asPoints[0].y = poPoint->getY();
             asPoints[0].z = poPoint->getZ();
@@ -1128,10 +1123,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             // papsGroup[0] = DGNCreateComplexHeaderFromGroup(
             //     hDGN, DGNT_COMPLEX_SHAPE_HEADER, dgnElements.size(),
             //     papsGroup+1 );
-            DGNPoint asPoints[1];
-            asPoints[0].x = 0;
-            asPoints[0].y = 0;
-            asPoints[0].z = 0;
+            DGNPoint asPoints[1] = {};
             papsGroup[0] = DGNCreateCellHeaderFromGroup(
                 hDGN, "", 1, NULL,
                 static_cast<int>(dgnElements.size()), papsGroup + 1,
@@ -1177,11 +1169,11 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     int nMSLink = poFeature->GetFieldAsInteger( "MSLink" );
 
     // TODO: Use std::max and std::min.
-    nLevel = MAX(0,MIN(63,nLevel));
-    nColor = MAX(0,MIN(255,nColor));
-    nWeight = MAX(0,MIN(31,nWeight));
-    nStyle = MAX(0,MIN(7,nStyle));
-    nMSLink = MAX(0,nMSLink);
+    nLevel = std::max(0, std::min(63, nLevel));
+    nColor = std::max(0, std::min(255, nColor));
+    nWeight = std::max(0, std::min(31, nWeight));
+    nStyle = std::max(0, std::min(7, nStyle));
+    nMSLink = std::max(0, nMSLink);
 
     DGNUpdateElemCore( hDGN, papsGroup[0], nLevel, nGraphicGroup, nColor,
                        nWeight, nStyle );

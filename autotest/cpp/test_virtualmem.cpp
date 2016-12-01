@@ -119,19 +119,19 @@ static int test_two_pages()
     return TRUE;
 }
 
-static void test_raw_auto(int bFileMapping)
+static void test_raw_auto(const char* pszFormat, int bFileMapping)
 {
-    printf("test_raw_auto(bFileMapping=%d)\n", bFileMapping);
+    printf("test_raw_auto(format=%s, bFileMapping=%d)\n", pszFormat, bFileMapping);
 
     GDALAllRegister();
 
     CPLString osTmpFile;
 
     if( bFileMapping )
-        osTmpFile = CPLResetExtension(CPLGenerateTempFilename("ehdr"), "img");
+        osTmpFile = CPLResetExtension(CPLGenerateTempFilename(pszFormat), "img");
     else
         osTmpFile = "/vsimem/tmp.img";
-    GDALDatasetH hDS = GDALCreate(GDALGetDriverByName("EHdr"),
+    GDALDatasetH hDS = GDALCreate(GDALGetDriverByName(pszFormat),
                                   osTmpFile.c_str(),
                                   400, 300, 2, GDT_Byte, NULL );
     assert(hDS);
@@ -140,24 +140,37 @@ static void test_raw_auto(int bFileMapping)
     GIntBig nLineSpace1;
     int nPixelSpace2;
     GIntBig nLineSpace2;
+    if( !bFileMapping )
+    {
+        char** papszOptions = CSLSetNameValue(NULL, "USE_DEFAULT_IMPLEMENTATION", "NO" );
+        assert( GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
+                                                    GF_Write,
+                                                    &nPixelSpace1,
+                                                    &nLineSpace1,
+                                                    papszOptions) == NULL );
+        CSLDestroy(papszOptions);
+    }
     CPLVirtualMem* pVMem1 = GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 1),
                                                   GF_Write,
                                                   &nPixelSpace1,
                                                   &nLineSpace1,
                                                   NULL);
+    char** papszOptions = CSLSetNameValue(NULL, "USE_DEFAULT_IMPLEMENTATION",
+                                          (bFileMapping) ? "NO" : "YES");
     CPLVirtualMem* pVMem2 = GDALGetVirtualMemAuto(GDALGetRasterBand(hDS, 2),
                                                   GF_Write,
                                                   &nPixelSpace2,
                                                   &nLineSpace2,
-                                                  NULL);
+                                                  papszOptions);
+    CSLDestroy(papszOptions);
     assert(pVMem1 != NULL);
     assert(pVMem2 != NULL);
     assert(CPLVirtualMemIsFileMapping(pVMem1) == bFileMapping);
-    assert(nPixelSpace1 == 1);
+    assert(nPixelSpace1 == ((EQUAL(pszFormat, "GTIFF") && bFileMapping) ? 2 : 1));
     if( bFileMapping )
         assert(nLineSpace1 == 400 * 2);
     else
-        assert(nLineSpace1 == 400);
+        assert(nLineSpace1 == 400 * nPixelSpace1);
 
     GByte* pBase1 = (GByte*) CPLVirtualMemGetAddr(pVMem1);
     GByte* pBase2 = (GByte*) CPLVirtualMemGetAddr(pVMem2);
@@ -214,8 +227,10 @@ int main(int /* argc */, char* /* argv */[])
     if( !test_two_pages() )
         return 0;
 
-    test_raw_auto(TRUE);
-    test_raw_auto(FALSE);
+    test_raw_auto("EHDR", TRUE);
+    test_raw_auto("EHDR", FALSE);
+    test_raw_auto("GTIFF", TRUE);
+    test_raw_auto("GTIFF", FALSE);
 
     CPLVirtualMemManagerTerminate();
     GDALDestroyDriverManager();

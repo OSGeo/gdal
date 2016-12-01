@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ogr_gmlas:FeatureCollection
+    xmlns:ogr_gmlas="http://gdal.org/ogr/gmlas"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:myns="http://myns"
+    xmlns:otherns="http://other_ns"
+    xsi:schemaLocation="http://gdal.org/ogr/gmlas gmlas_test1_generated.xsd http://myns gmlas_test1.xsd" >
+  <ogr_gmlas:featureMember>
+    <myns:main_elt fixedValUnset="fixed_value" fixedValSet="fixed_value" defaultValSet="mydefaultValSet" otherns:id="otherns_id" myAttributeGroupAttr2="3" id="attr_id">
+      <myns:base_int>12</myns:base_int>
+      <myns:id>element_id</myns:id>
+      <myns:string>element_string</myns:string>
+      <myns:string_array>element_string_array</myns:string_array>
+      <myns:string_array>2nd element_string_array</myns:string_array>
+      <myns:int>3</myns:int>
+      <myns:int_array>3</myns:int_array>
+      <myns:int_array>4</myns:int_array>
+      <myns:long>123456789012</myns:long>
+      <myns:long_array>123456789012</myns:long_array>
+      <myns:long_array>123456789013</myns:long_array>
+      <myns:float>1.23</myns:float>
+      <myns:float_array>2.34</myns:float_array>
+      <myns:float_array>3.45</myns:float_array>
+      <myns:double>1.23456789012</myns:double>
+      <myns:double_array>2.3456</myns:double_array>
+      <myns:double_array>3.4578</myns:double_array>
+      <myns:decimal>1.23456789012</myns:decimal>
+      <myns:byte>-128</myns:byte>
+      <myns:short>-32768</myns:short>
+      <myns:positiveInteger>1</myns:positiveInteger>
+      <myns:dt>2012-01-01T12:34:56Z</myns:dt>
+      <myns:dt_array>2012-01-01T12:34:56Z</myns:dt_array>
+      <myns:dt_array>2012-01-02T12:34:56Z</myns:dt_array>
+      <myns:date>2012-01-01</myns:date>
+      <myns:time>12:34:56Z</myns:time>
+      <myns:boolean>true</myns:boolean>
+      <myns:boolean_array>true</myns:boolean_array>
+      <myns:boolean_array>false</myns:boolean_array>
+      <myns:base64Binary>YmFzZTY0QmluYXJ5</myns:base64Binary>
+      <myns:hexBinary>68657842696E617279</myns:hexBinary>
+      <myns:myint myAttr="12345678">10</myns:myint>
+      <myns:myint_repeated myAttr="12345678">1</myns:myint_repeated>
+      <myns:myint_repeated>2</myns:myint_repeated>
+      <myns:required_elt_with_only_optional_attr attr="attr_value" />
+      <myns:int_nillable xsi:nil="true"></myns:int_nillable>
+      <myns:int_min_occurs_0_nillable_bis xsi:nil="true" />
+      <myns:simpleContent_extension_min_occurs_0_nillable nilReason="unknown" xsi:nil="true" />
+      <myns:anonymous_type>3</myns:anonymous_type>
+      <myns:union>42</myns:union>
+      <myns:list_of_string>a b c</myns:list_of_string>
+      <myns:list_of_boolean>true false</myns:list_of_boolean>
+      <myns:list_of_integer>1 2 3</myns:list_of_integer>
+      <myns:list_of_integer64>123456789012 2 3</myns:list_of_integer64>
+      <myns:list_of_real>1.25 2.5 5</myns:list_of_real>
+      <myns:list_of_datetime>2012-01-01T12:34:56Z 2012-01-02T12:34:56Z</myns:list_of_datetime>
+      <myns:elt_with_list_of_integer_attr attr="1 2 3" />
+      <myns:compound_simplifiable>
+        <myns:subelement2>element_compound_simplifiable_subelement2</myns:subelement2>
+      </myns:compound_simplifiable>
+      <myns:sequence_1_string_unbounded>
+        <myns:subelement>sequence_1_string_unbounded_1</myns:subelement>
+        <myns:subelement>sequence_1_string_unbounded_2</myns:subelement>
+      </myns:sequence_1_string_unbounded>
+      <myns:sequence_unbounded_string_1>
+        <myns:subelement>sequence_unbounded_string_1</myns:subelement>
+        <myns:subelement>sequence_unbounded_string_2</myns:subelement>
+      </myns:sequence_unbounded_string_1>
+      <myns:unbounded_sequence_1_dt>
+        <myns:subelement>2012-01-01T12:34:56Z</myns:subelement>
+      </myns:unbounded_sequence_1_dt>
+      <myns:unbounded_sequence_1_dt>
+        <myns:subelement>2012-01-02T12:34:56Z</myns:subelement>
+      </myns:unbounded_sequence_1_dt>
+      <myns:sequence_1_dt_unbounded>
+        <myns:subelement>2012-01-01T12:34:56Z</myns:subelement>
+        <myns:subelement>2012-01-02T12:34:56Z</myns:subelement>
+      </myns:sequence_1_dt_unbounded>
+      <myns:sequence_unbounded_dt_1>
+        <myns:subelement>2012-01-03T12:34:56Z</myns:subelement>
+        <myns:subelement>2012-01-04T12:34:56Z</myns:subelement>
+      </myns:sequence_unbounded_dt_1>
+      <myns:sequence_sequence>
+        <myns:subsequence>
+          <myns:subelement>2016-01-01T12:34:56Z</myns:subelement>
+          <myns:subelement>2016-01-02T12:34:56Z</myns:subelement>
+        </myns:subsequence>
+        <myns:subsequence>
+          <myns:subelement>2016-01-03T12:34:56Z</myns:subelement>
+          <myns:subelement>2016-01-04T12:34:56Z</myns:subelement>
+        </myns:subsequence>
+      </myns:sequence_sequence>
+      <myns:sequence_1_unbounded_with_2_subelts>
+        <myns:subelement>sequence_1_unbounded_with_2_subelts_1</myns:subelement>
+        <myns:subelement>sequence_1_unbounded_with_2_subelts_2</myns:subelement>
+      </myns:sequence_1_unbounded_with_2_subelts>
+      <myns:sequence_1_unbounded_non_simplifiable id="id1">
+        <myns:subelement>sequence_1_unbounded_non_simplifiable_1_1</myns:subelement>
+        <myns:subelement>sequence_1_unbounded_non_simplifiable_1_2</myns:subelement>
+      </myns:sequence_1_unbounded_non_simplifiable>
+      <myns:sequence_1_unbounded_non_simplifiable id="id2">
+        <myns:subelement>sequence_1_unbounded_non_simplifiable_2_1</myns:subelement>
+        <myns:subelement>sequence_1_unbounded_non_simplifiable_2_2</myns:subelement>
+      </myns:sequence_1_unbounded_non_simplifiable>
+      <myns:sequence_unbounded_1_with_2_subelts>
+        <myns:subelement>sequence_unbounded_1_with_2_subelts_1</myns:subelement>
+      </myns:sequence_unbounded_1_with_2_subelts>
+      <myns:sequence_unbounded_1_with_2_subelts>
+        <myns:subelement>sequence_unbounded_1_with_2_subelts_2</myns:subelement>
+      </myns:sequence_unbounded_1_with_2_subelts>
+      <myns:sequence_with_attr_unbounded id="id1">
+        <myns:subelement>sequence_with_attr_unbounded_1</myns:subelement>
+      </myns:sequence_with_attr_unbounded>
+      <myns:sequence_with_attr_unbounded id="id2">
+        <myns:subelement>sequence_with_attr_unbounded_2</myns:subelement>
+      </myns:sequence_with_attr_unbounded>
+      <myns:int_complex_simplifiable>10</myns:int_complex_simplifiable>
+      <myns:int_complex_simplifiable>20</myns:int_complex_simplifiable>
+      <myns:abstract_element_realization1>
+        <myns:a_int>3</myns:a_int>
+      </myns:abstract_element_realization1>
+      <myns:abstract_element_realization1>
+        <myns:a_int>5</myns:a_int>
+      </myns:abstract_element_realization1>
+      <myns:abstract_element_realization2>
+        <myns:b_int>4</myns:b_int>
+      </myns:abstract_element_realization2>
+      <otherns:an_abstract_element_in_other_ns_realization1>
+        <otherns:a_int>3</otherns:a_int>
+      </otherns:an_abstract_element_in_other_ns_realization1>
+      <myns:any_type foo="bar">A&lt;<foo bar="baz&quot;&gt;">blow</foo><myns:blo></myns:blo>C</myns:any_type>
+      <myns:any_type_repeated><bar></bar></myns:any_type_repeated>
+      <myns:any_type_repeated><baz></baz></myns:any_type_repeated>
+      <myns:any_type_optional><baw></baw></myns:any_type_optional>
+      <myns:any_attr foo="bar">1</myns:any_attr>
+      <myns:any_attr_no_attr>2</myns:any_attr_no_attr>
+      <myns:group1_elt_1>group1_elt_1_1_1</myns:group1_elt_1>
+      <myns:group1_elt_1>group1_elt_1_1_2</myns:group1_elt_1>
+      <myns:group1_elt_2>group1_elt_2_1_1</myns:group1_elt_2>
+      <myns:group1_elt_1>group1_elt_1_2_1</myns:group1_elt_1>
+      <myns:group1_elt_2>group1_elt_2_2_1</myns:group1_elt_2>
+      <myns:group2_elt>group2_elt_1</myns:group2_elt>
+      <myns:group3_elt1>sixthelement</myns:group3_elt1>
+      <myns:group3_elt1bis>sixthelementbis</myns:group3_elt1bis>
+      <myns:group3_elt2>
+        <myns:b>sixthelement_a_b</myns:b>
+      </myns:group3_elt2>
+      <myns:group3_elt2bis>
+        <myns:b>sixthelement_a_b2</myns:b>
+      </myns:group3_elt2bis>
+      <myns:group3_elt3>
+        <myns:b2>2016-01-01T12:34:56Z</myns:b2>
+        <myns:b2>2016-01-02T12:34:56Z</myns:b2>
+      </myns:group3_elt3>
+      <myns:group3_elt1>sixthelement2</myns:group3_elt1>
+      <myns:group3_elt1>sixthelement3</myns:group3_elt1>
+      <myns:group3_elt2>
+        <myns:b>sixthelement3_a_b</myns:b>
+      </myns:group3_elt2>
+      <myns:group3_elt2bis attr="foo">
+        <myns:b>sixthelement_a_b2</myns:b>
+      </myns:group3_elt2bis>
+      <myns:group3_elt2ter attr="bar" />
+      <myns:group3_elt1>sixthelement4</myns:group3_elt1>
+      <myns:group3_elt3>
+        <myns:b2>2016-01-03T12:34:56Z</myns:b2>
+        <myns:b2>2016-01-04T12:34:56Z</myns:b2>
+      </myns:group3_elt3>
+      <myns:group4_elt>group4_elt_1</myns:group4_elt>
+      <myns:group4_elt>group4_elt_2</myns:group4_elt>
+      <myns:rec_A>
+        <myns:rec_B>
+          <myns:rec_A>
+            <myns:rec_B>
+              <myns:rec_A>
+                <myns:rec_B>
+                  <myns:rec_A>
+                    <myns:elt_A>elt_A4</myns:elt_A>
+                  </myns:rec_A>
+                  <myns:elt_B>elt_B3</myns:elt_B>
+                </myns:rec_B>
+                <myns:elt_A>elt_A3</myns:elt_A>
+              </myns:rec_A>
+              <myns:elt_B>elt_B2</myns:elt_B>
+            </myns:rec_B>
+            <myns:elt_A>elt_A2</myns:elt_A>
+          </myns:rec_A>
+          <myns:elt_B>elt_B</myns:elt_B>
+        </myns:rec_B>
+        <myns:elt_A>elt_A</myns:elt_A>
+      </myns:rec_A>
+      <myns:myext>
+        <myns:extension><foo></foo></myns:extension>
+        <myns:extension><bar></bar></myns:extension>
+      </myns:myext>
+    </myns:main_elt>
+  </ogr_gmlas:featureMember>
+</ogr_gmlas:FeatureCollection>

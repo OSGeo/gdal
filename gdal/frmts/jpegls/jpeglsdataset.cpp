@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  JPEGLS driver based on CharLS library
  * Purpose:  JPEGLS driver based on CharLS library
@@ -82,35 +81,31 @@ class JPEGLSRasterBand : public GDALPamRasterBand
   public:
 
                 JPEGLSRasterBand( JPEGLSDataset * poDS, int nBand);
-                ~JPEGLSRasterBand();
+    virtual ~JPEGLSRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
-
 
 /************************************************************************/
 /*                        JPEGLSRasterBand()                            */
 /************************************************************************/
 
-JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn)
+JPEGLSRasterBand::JPEGLSRasterBand( JPEGLSDataset *poDSIn, int nBandIn )
 
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
-    this->eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
-    this->nBlockXSize = poDSIn->nRasterXSize;
-    this->nBlockYSize = poDSIn->nRasterYSize;
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = (poDSIn->nBitsPerSample <= 8) ? GDT_Byte : GDT_Int16;
+    nBlockXSize = poDSIn->nRasterXSize;
+    nBlockYSize = poDSIn->nRasterYSize;
 }
 
 /************************************************************************/
 /*                      ~JPEGLSRasterBand()                             */
 /************************************************************************/
 
-JPEGLSRasterBand::~JPEGLSRasterBand()
-{
-}
-
+JPEGLSRasterBand::~JPEGLSRasterBand() {}
 
 /************************************************************************/
 /*                    JPEGLSGetErrorAsString()                          */
@@ -221,12 +216,12 @@ GDALColorInterp JPEGLSRasterBand::GetColorInterpretation()
 /*                        JPEGLSDataset()                          */
 /************************************************************************/
 
-JPEGLSDataset::JPEGLSDataset()
-{
-    pabyUncompressedData = NULL;
-    bHasUncompressed = FALSE;
-    nBitsPerSample = 0;
-}
+JPEGLSDataset::JPEGLSDataset() :
+    pabyUncompressedData(NULL),
+    bHasUncompressed(FALSE),
+    nBitsPerSample(0),
+    nOffset(0)
+{}
 
 /************************************************************************/
 /*                         ~JPEGLSDataset()                        */
@@ -277,7 +272,6 @@ CPLErr JPEGLSDataset::Uncompress()
         VSIFree(pabyCompressedData);
         return CE_Failure;
     }
-
 
     JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
                                      pabyCompressedData, nFileSize, NULL);
@@ -447,10 +441,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    JPEGLSDataset     *poDS;
-    int                 iBand;
-
-    poDS = new JPEGLSDataset();
+    JPEGLSDataset *poDS = new JPEGLSDataset();
     poDS->osFilename = poOpenInfo->pszFilename;
     poDS->nRasterXSize = sParams.width;
     poDS->nRasterYSize = sParams.height;
@@ -461,7 +452,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    for( int iBand = 1; iBand <= poDS->nBands; iBand++ )
     {
         poDS->SetBand( iBand, new JPEGLSRasterBand( poDS, iBand) );
 
@@ -484,7 +475,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -675,7 +666,7 @@ void GDALRegister_JPEGLS()
 "       <Value>LINE</Value>"
 "       <Value>BAND</Value>"
 "   </Option>"
-"   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, > 1 lossless'/>"
+"   <Option name='LOSS_FACTOR' type='int' default='0' description='0 = lossless, 1 = near lossless, >1 = lossy'/>"
 "</CreationOptionList>\n" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
@@ -686,4 +677,3 @@ void GDALRegister_JPEGLS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

@@ -1,6 +1,5 @@
 %{
 /******************************************************************************
- * $Id$
  *
  * Component: OGR ODS Formula Engine
  * Purpose: expression and select parser grammar.
@@ -33,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ods_formula.h"
+
+CPL_CVSID("$Id$");
 
 #define YYSTYPE  ods_formula_node*
 

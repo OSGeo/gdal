@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for viewing S57 driver data.
@@ -189,8 +188,8 @@ int main( int nArgc, char ** papszArgv )
 
         oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
 
-        OGRFeature      *poFeature;
-        int             nFeatures = 0;
+        OGRFeature *poFeature = NULL;
+        int nFeatures = 0;
 
         while( (poFeature = oReader.ReadNextFeature()) != NULL )
         {
@@ -204,4 +203,3 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
-

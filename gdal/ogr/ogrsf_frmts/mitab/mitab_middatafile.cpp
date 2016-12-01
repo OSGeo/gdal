@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.15 2010-10-12 19:02:40 aboudreault Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -83,25 +82,28 @@
 
 #include "mitab.h"
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class MIDDATAFile
  *
  *====================================================================*/
 
-MIDDATAFile::MIDDATAFile()
+MIDDATAFile::MIDDATAFile() :
+    m_fp(NULL),
+    m_pszDelimiter("\t"), // Encom 2003 (was NULL)
+    m_pszFname(NULL),
+    m_eAccessMode(TABRead),
+    // TODO(schwehr): m_szLastRead({}),
+    // TODO(schwehr): m_szSavedLine({}),
+    m_dfXMultiplier(1.0),
+    m_dfYMultiplier(1.0),
+    m_dfXDisplacement(0.0),
+    m_dfYDisplacement(0.0),
+    m_bEof(FALSE)
 {
-    m_fp = NULL;
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
-    m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
-
-    m_dfXMultiplier = 1.0;
-    m_dfYMultiplier = 1.0;
-    m_dfXDisplacement = 0.0;
-    m_dfYDisplacement = 0.0;
-    m_pszFname = NULL;
-    m_eAccessMode = TABRead;
-    m_bEof = FALSE;
 }
 
 MIDDATAFile::~MIDDATAFile()
@@ -197,17 +199,13 @@ int MIDDATAFile::Close()
     m_pszFname = NULL;
 
     return 0;
-
 }
 
 const char *MIDDATAFile::GetLine()
 {
-    const char *pszLine;
-
     if (m_eAccessMode == TABRead)
     {
-
-        pszLine = CPLReadLineL(m_fp);
+        const char *pszLine = CPLReadLineL(m_fp);
 
         if (pszLine == NULL)
         {
@@ -228,7 +226,7 @@ const char *MIDDATAFile::GetLine()
     }
     else
     {
-      CPLAssert(FALSE);
+      CPLAssert(false);
     }
     return NULL;
 }
@@ -247,7 +245,7 @@ const char *MIDDATAFile::GetLastLine()
     }
 
     // We should never get here (Read/Write mode not implemented)
-    CPLAssert(FALSE);
+    CPLAssert(false);
     return NULL;
 }
 
@@ -265,14 +263,12 @@ void MIDDATAFile::WriteLine(const char *pszFormat,...)
     }
     else
     {
-        CPLAssert(FALSE);
+        CPLAssert(false);
     }
 }
 
-
-void MIDDATAFile::SetTranslation(double dfXMul,double dfYMul,
-                                 double dfXTran,
-                                 double dfYTran)
+void MIDDATAFile::SetTranslation( double dfXMul,double dfYMul,
+                                  double dfXTran, double dfYTran )
 {
     m_dfXMultiplier = dfXMul;
     m_dfYMultiplier = dfYMul;
@@ -290,14 +286,9 @@ double MIDDATAFile::GetYTrans(double dfY)
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
 }
 
-
 GBool MIDDATAFile::IsValidFeature(const char *pszString)
 {
-    char **papszToken ;
-
-    papszToken = CSLTokenizeString(pszString);
-
-    //   printf("%s\n",pszString);
+    char **papszToken = CSLTokenizeString(pszString);
 
     if (CSLCount(papszToken) == 0)
     {
@@ -318,15 +309,12 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
 
     CSLDestroy(papszToken);
     return FALSE;
-
 }
-
 
 GBool MIDDATAFile::GetEof()
 {
     return m_bEof;
 }
-
 
 void MIDDATAFile::SetEof(GBool bEof)
 {

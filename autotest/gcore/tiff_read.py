@@ -1764,7 +1764,7 @@ def tiff_read_md1():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1813,7 +1813,7 @@ def tiff_read_md2():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1862,7 +1862,7 @@ def tiff_read_md3():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1911,7 +1911,7 @@ def tiff_read_md4():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -1960,7 +1960,7 @@ def tiff_read_md5():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2009,7 +2009,7 @@ def tiff_read_md6():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2058,7 +2058,7 @@ def tiff_read_md7():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2107,7 +2107,7 @@ def tiff_read_md8():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 4:
+    if len(metadata) != 5:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2156,7 +2156,7 @@ def tiff_read_md9():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2202,7 +2202,7 @@ def tiff_read_md10():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2251,7 +2251,7 @@ def tiff_read_md11():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2295,7 +2295,7 @@ def tiff_read_md12():
         return 'fail'
 
     metadata = ds.GetMetadataDomainList()
-    if len(metadata) != 5:
+    if len(metadata) != 6:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         return 'fail'
 
@@ -2705,6 +2705,63 @@ def tiff_read_aux():
 
     return 'success'
 
+
+def tiff_read_one_band_from_two_bands():
+
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands.tif', 'data/byte.tif', options = '-b 1 -b 1')
+    gdal.Translate('/vsimem/tiff_read_one_band_from_two_bands_dst.tif', '/vsimem/tiff_read_one_band_from_two_bands.tif', options = '-b 1')
+
+    ds = gdal.Open('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif')
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
+
+    return 'success'
+
+
+def tiff_read_jpeg_cloud_optimized():
+
+    for i in range(4):
+        ds = gdal.Open('data/byte_ovr_jpeg_tablesmode%d.tif' % i)
+        cs0 = ds.GetRasterBand(1).Checksum()
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        if cs0 != 4743 or cs1 != 1133:
+            gdaltest.post_reason('failure')
+            print(i)
+            print(cs0)
+            print(cs1)
+            return 'fail'
+        ds = None
+
+    return 'success'
+
+# This one was generated with a buggy code that emit JpegTables with mode == 1
+# when creating the overview directory but failed to properly set this mode while
+# writing the imagery. libjpeg-6b emits a 'JPEGLib:Huffman table 0x00 was not defined'
+# error while jpeg-8 works fine
+def tiff_read_corrupted_jpeg_cloud_optimized():
+
+    ds = gdal.Open('data/byte_ovr_jpeg_tablesmode_not_correctly_set_on_ovr.tif')
+    cs0 = ds.GetRasterBand(1).Checksum()
+    if cs0 != 4743:
+        gdaltest.post_reason('failure')
+        print(cs0)
+        return 'fail'
+
+    with gdaltest.error_handler():
+        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs1 == 0:
+        print('Expected error while writing overview with libjpeg-6b')
+    elif cs1 != 1133:
+        gdaltest.post_reason('failure')
+        print(cs1)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -2787,7 +2844,12 @@ gdaltest_list.append( (tiff_read_nogeoref) )
 gdaltest_list.append( (tiff_read_inconsistent_georef) )
 gdaltest_list.append( (tiff_read_gcp_internal_and_auxxml) )
 
-gdaltest_list.append( (tiff_read_aux) ) 
+gdaltest_list.append( (tiff_read_aux) )
+
+gdaltest_list.append( (tiff_read_one_band_from_two_bands) )
+
+gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
+gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 
 #gdaltest_list = [ tiff_read_aux ]
 

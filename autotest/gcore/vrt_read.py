@@ -663,8 +663,10 @@ def vrt_read_17():
   </VRTRasterBand>
 </VRTDataset>""")
 
+    # Note: AveragedSource with resampling does not give consistent results
+    # depending on the RasterIO() request
     cs = vrt_ds.GetRasterBand(1).Checksum()
-    if cs != 753:
+    if cs != 847:
         print(cs)
         return 'fail'
 
@@ -1091,6 +1093,104 @@ def vrt_read_24():
 
     return 'success'
 
+###############################################################################
+# Test GetDataCoverageStatus()
+
+def vrt_read_25():
+
+    import ogrtest
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="2000" rasterYSize="200">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="1000" yOff="30" xSize="10" ySize="20" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="1010" yOff="30" xSize="10" ySize="20" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0,0,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(1005,35,10,10)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA or pct != 100.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(100,100,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 0.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(10,10,20,20)
+    if flags != gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY or pct != 25.0:
+        gdaltest.post_reason('failure')
+        print(flags)
+        print(pct)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test consistency of RasterIO() with resampling, that is extracting different
+# sub-windows give consistent results
+
+def vrt_read_26():
+
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="22" rasterYSize="22">
+  <VRTRasterBand dataType="Byte" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="22" ySize="22" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+    import struct
+    full_data = vrt_ds.GetRasterBand(1).ReadRaster(0,0,22,22)
+    full_data = struct.unpack('B' * 22 * 22, full_data)
+
+    partial_data = vrt_ds.GetRasterBand(1).ReadRaster(1,1,1,1)
+    partial_data = struct.unpack('B' * 1 * 1, partial_data)
+
+    if partial_data[0] != full_data[22 + 1]:
+        gdaltest.post_reason('fail')
+        print(full_data)
+        print(partial_data[0])
+        print(full_data[22 + 1])
+        return 'fail'
+
+    return 'success'
+
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
     if ut is None:
@@ -1122,6 +1222,8 @@ gdaltest_list.append( vrt_read_21 )
 gdaltest_list.append( vrt_read_22 )
 gdaltest_list.append( vrt_read_23 )
 gdaltest_list.append( vrt_read_24 )
+gdaltest_list.append( vrt_read_25 )
+gdaltest_list.append( vrt_read_26 )
 
 if __name__ == '__main__':
 

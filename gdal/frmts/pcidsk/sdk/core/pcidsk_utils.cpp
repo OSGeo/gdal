@@ -399,7 +399,7 @@ std::vector<double> PCIDSK::ProjParmsFromText( std::string geosys,
             next++;
 
         // move past white space.
-        while( *next != '\0' && *next == ' ' )
+        while( *next == ' ' )
             next++;
     }
 
@@ -637,14 +637,20 @@ static void vDebug( void (*pfnDebug)(const char *),
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) realloc(pszWorkBuffer, 
-                                             nWorkBufferSize );
+            char* pszWorkBufferNew = (char *) realloc(pszWorkBuffer, 
+                                                      nWorkBufferSize );
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
 #else
             wrk_args = args;
 #endif
+            if( pszWorkBufferNew == NULL )
+            {
+                strcpy( pszWorkBuffer, "(message too large)" );
+                break;
+            }
+            pszWorkBuffer = pszWorkBufferNew;
         }
         message = pszWorkBuffer;
         free( pszWorkBuffer );

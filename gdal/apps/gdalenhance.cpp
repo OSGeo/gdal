@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Utilities
  * Purpose:  Command line application to do image enhancement.
@@ -34,6 +33,8 @@
 #include "cpl_multiproc.h"
 #include "vrtdataset.h"
 #include "commonutils.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -85,12 +86,12 @@ static void Usage()
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hDataset, hOutDS;
-    int			i;
-    const char		*pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    GDALDatasetH        hDataset, hOutDS;
+    int                 i;
+    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
     int bFormatExplicitlySet = FALSE;
-    GDALDriverH		hDriver;
-    GDALDataType	eOutputType = GDT_Unknown;
+    GDALDriverH         hDriver;
+    GDALDataType        eOutputType = GDT_Unknown;
     char                **papszCreateOptions = NULL;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nLUTBins = 256;
@@ -556,8 +557,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
             iHist = (iLUT * nHistSize) / nLUTBins;
             int nValue = (int) ((panCumHist[iHist] * nLUTBins) / nTotal);
 
-            panLUT[iLUT] = MAX(0,MIN(nLUTBins-1,nValue));
-
+            panLUT[iLUT] = std::max(0, std::min(nLUTBins - 1, nValue));
         }
 
         (*ppapanLUTs)[iBand] = panLUT;
@@ -615,8 +615,9 @@ static CPLErr EnhancerCallback( void *hCBData,
             continue;
         }
 
-        int iBin = (int) ((pafSrcImage[iPixel] - psEInfo->dfScaleMin)*dfScale);
-        iBin = MAX(0,MIN(psEInfo->nLUTBins-1,iBin));
+        int iBin = static_cast<int>(
+            (pafSrcImage[iPixel] - psEInfo->dfScaleMin) * dfScale);
+        iBin = std::max(0, std::min(psEInfo->nLUTBins - 1, iBin));
 
         if( psEInfo->panLUT )
             pabyOutImage[iPixel] = (GByte) psEInfo->panLUT[iBin];

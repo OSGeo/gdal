@@ -42,7 +42,25 @@ def isce_1():
 
     tst = gdaltest.GDALTest( 'isce', 'isce.slc', 1, 350 )
 
-    return tst.testOpen( )
+    prj = """GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        TOWGS84[0,0,0,0,0,0,0],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9108"]],
+    AUTHORITY["EPSG","4326"]]"""
+
+    return tst.testOpen( check_prj = prj,
+                         check_gt = (14.259166666666667,
+                                     0.0008333333333333334,
+                                     0.0,
+                                     38.22083333333333,
+                                     0.0,
+                                     -0.0008333333333333334) )
 
 ###############################################################################
 # Test reading of metadata from the ISCE metadata domain

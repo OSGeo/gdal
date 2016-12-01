@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Interpolate in nodata areas.
@@ -29,9 +28,21 @@
  * DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_alg.h"
+
+#include <cmath>
+#include <cstring>
+
+#include <algorithm>
+#include <string>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -330,21 +341,21 @@ end:
 /*      macro for checking whether a point is nearer than the           */
 /*      existing closest point.                                         */
 /************************************************************************/
-#define QUAD_CHECK(quad_dist, quad_value, 				\
-target_x, target_y, origin_x, origin_y, target_value )			\
-									\
-if( quad_value != nNoDataVal ) 						\
-{									\
-    double dfDx = (double)target_x - (double)origin_x;			\
-    double dfDy = (double)target_y - (double)origin_y;			\
-    double dfDistSq = dfDx * dfDx + dfDy * dfDy;			\
-    									\
-    if( dfDistSq < quad_dist*quad_dist )				\
-    {									\
-	CPLAssert( dfDistSq > 0.0 );                                    \
-        quad_dist = sqrt(dfDistSq); 					\
-        quad_value = target_value;					\
-    }									\
+#define QUAD_CHECK(quad_dist, quad_value,                               \
+target_x, target_y, origin_x, origin_y, target_value )                  \
+                                                                        \
+if( quad_value != nNoDataVal )                                          \
+{                                                                       \
+    double dfDx = (double)target_x - (double)origin_x;                  \
+    double dfDy = (double)target_y - (double)origin_y;                  \
+    double dfDistSq = dfDx * dfDx + dfDy * dfDy;                        \
+                                                                        \
+    if( dfDistSq < quad_dist*quad_dist )                                \
+    {                                                                   \
+        CPLAssert( dfDistSq > 0.0 );                                    \
+        quad_dist = sqrt(dfDistSq);                                     \
+        quad_value = target_value;                                      \
+    }                                                                   \
 }
 
 /************************************************************************/
@@ -406,7 +417,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
     GDALDataType eType;
 
     if( dfMaxSearchDist == 0.0 )
-        dfMaxSearchDist = MAX(nXSize,nYSize) + 1;
+        dfMaxSearchDist = std::max(nXSize,nYSize) + 1;
 
     int nMaxSearchDist = (int) floor(dfMaxSearchDist);
 
@@ -734,8 +745,8 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             // target value for each quadrant.
             for( iStep = 0; iStep < nThisMaxSearchDist; iStep++ )
             {
-                int iLeftX = MAX(0,iX - iStep);
-                int iRightX = MIN(nXSize-1,iX + iStep);
+                const int iLeftX = std::max(0,iX - iStep);
+                const int iRightX = std::min(nXSize - 1, iX + iStep);
 
                 // top left includes current line
                 QUAD_CHECK(adfQuadDist[0],adfQuadValue[0],
@@ -763,9 +774,9 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
                 // every four steps, recompute maximum distance.
                 if( (iStep & 0x3) == 0 )
-                    nThisMaxSearchDist = (int) floor(
-                        MAX(MAX(adfQuadDist[0],adfQuadDist[1]),
-                            MAX(adfQuadDist[2],adfQuadDist[3])) );
+                    nThisMaxSearchDist = static_cast<int>(floor(
+                        std::max(std::max(adfQuadDist[0], adfQuadDist[1]),
+                                 std::max(adfQuadDist[2], adfQuadDist[3]))));
             }
 
             double dfWeightSum = 0.0;
@@ -788,7 +799,6 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                 pabyFiltMask[iX] = 255;
                 pafScanline[iX] = (float) (dfValueSum / dfWeightSum);
             }
-
         }
 
 /* -------------------------------------------------------------------- */

@@ -54,6 +54,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_sha256.obj \
 		cpl_aws.obj \
 		cpl_vsi_error.obj \
+		cpl_cpu_features.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
@@ -62,7 +63,13 @@ GDAL_ROOT = ..
 
 !INCLUDE ..\nmake.opt
 
-EXTRAFLAGS	= 	 -I..\frmts\zlib -DHAVE_LIBZ
+!IFDEF ZLIB_EXTERNAL_LIB
+EXTRAFLAGS = $(ZLIB_INC)
+!ELSE
+EXTRAFLAGS = -I..\frmts\zlib
+!ENDIF
+
+EXTRAFLAGS	= 	 $(EXTRAFLAGS) -DHAVE_LIBZ
 
 !IFDEF LIBICONV_INCLUDE
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_ICONV $(LIBICONV_CFLAGS) $(LIBICONV_INCLUDE)
@@ -94,7 +101,7 @@ $(LIB):	$(OBJ)
 	lib /out:cpl.lib *.obj
 
 clean:
-	-del *.obj *.lib
+	-del *.obj *.lib cpl_config.h
 
 cpl_config.h:	cpl_config.h.vc
 	copy cpl_config.h.vc cpl_config.h

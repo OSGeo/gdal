@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMemLayer class.
@@ -31,6 +30,8 @@
 #include "cpl_conv.h"
 #include "ogr_mem.h"
 #include "ogr_p.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -292,7 +293,8 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         if( nFID >= m_nMaxFeatureCount )
         {
             const GIntBig nNewCount =
-                MAX(m_nMaxFeatureCount+m_nMaxFeatureCount/3+10, nFID + 1 );
+                std::max(m_nMaxFeatureCount + m_nMaxFeatureCount/3+10,
+                         nFID + 1);
             if( static_cast<GIntBig>(static_cast<size_t>(sizeof(OGRFeature *)) *
                                      nNewCount) !=
                 static_cast<GIntBig>(sizeof(OGRFeature *)) * nNewCount )
@@ -339,7 +341,6 @@ OGRErr OGRMemLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         m_papoFeatures[nFID] = poFeatureCloned;
-
     }
     else
     {
@@ -682,7 +683,8 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     OGRFieldDefn* poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
 
     if( (nFlagsIn & ALTER_TYPE_FLAG) &&
-        poFieldDefn->GetType() != poNewFieldDefn->GetType() )
+        (poFieldDefn->GetType() != poNewFieldDefn->GetType() ||
+         poFieldDefn->GetSubType() != poNewFieldDefn->GetSubType()))
     {
         if( (poNewFieldDefn->GetType() == OFTDate ||
              poNewFieldDefn->GetType() == OFTTime ||
@@ -787,7 +789,9 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             delete poIter;
         }
 
+        poFieldDefn->SetSubType(OFSTNone);
         poFieldDefn->SetType(poNewFieldDefn->GetType());
+        poFieldDefn->SetSubType(poNewFieldDefn->GetSubType());
     }
 
     if( nFlagsIn & ALTER_NAME_FLAG )
@@ -802,7 +806,6 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
 
     return OGRERR_NONE;
 }
-
 
 /************************************************************************/
 /*                          CreateGeomField()                           */
@@ -877,7 +880,7 @@ class OGRMemLayerIteratorArray: public IOGRMemLayerFeatureIterator
 
         virtual ~OGRMemLayerIteratorArray() {}
 
-       virtual OGRFeature* Next()
+       virtual OGRFeature* Next() override
        {
            while( m_iCurIdx < m_nMaxFeatureCount )
            {
@@ -903,14 +906,14 @@ class OGRMemLayerIteratorMap: public IOGRMemLayerFeatureIterator
             FeatureIterator      m_oIter;
 
     public:
-        OGRMemLayerIteratorMap(FeatureMap& oMapFeatures):
+        explicit OGRMemLayerIteratorMap(FeatureMap& oMapFeatures):
             m_oMapFeatures(oMapFeatures),
             m_oIter(oMapFeatures.begin())
         {}
 
        virtual ~OGRMemLayerIteratorMap() {}
 
-       virtual OGRFeature* Next()
+       virtual OGRFeature* Next() override
        {
            if( m_oIter != m_oMapFeatures.end() )
            {

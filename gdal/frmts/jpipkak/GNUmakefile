@@ -18,8 +18,8 @@ CPPFLAGS	:=	 $(KAKINC) -I. $(CPPFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-# kdu_cache.cpp does not appear to be built by default by the Kakadu 
-# apps makefiles, so we copy it and build it ourselves.  Perhaps this 
+# kdu_cache.cpp does not appear to be built by default by the Kakadu
+# apps makefiles, so we copy it and build it ourselves.  Perhaps this
 # won't be needed with newer versions of Kakadu.  Tested with 6.2.
 kdu_cache.cpp:	  $(KAKDIR)/apps/caching_sources/kdu_cache.cpp
 	echo "#include \"cpl_port.h\"" > kdu_cache_wrapper.h

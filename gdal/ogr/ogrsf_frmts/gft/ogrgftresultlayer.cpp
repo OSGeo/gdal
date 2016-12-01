@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GFT Translator
  * Purpose:  Implements OGRGFTResultLayer class.
@@ -35,13 +34,14 @@ CPL_CVSID("$Id$");
 /*                        OGRGFTResultLayer()                           */
 /************************************************************************/
 
-OGRGFTResultLayer::OGRGFTResultLayer(OGRGFTDataSource* poDSIn,
-                                     const char* pszSQL) : OGRGFTLayer(poDSIn)
-
+OGRGFTResultLayer::OGRGFTResultLayer( OGRGFTDataSource* poDSIn,
+                                      const char* pszSQL ) :
+    OGRGFTLayer(poDSIn),
+    osSQL( CPLString() ),
+    bGotAllRows(FALSE)
 {
+    // cppcheck-suppress useInitializationList
     osSQL = PatchSQL(pszSQL);
-
-    bGotAllRows = FALSE;
 
     poFeatureDefn = new OGRFeatureDefn( "result" );
     poFeatureDefn->Reference();
@@ -221,7 +221,8 @@ int OGRGFTResultLayer::RunSQL()
     }
     else
     {
-        bGotAllRows = bEOF = TRUE;
+        bGotAllRows = TRUE;
+        bEOF = TRUE;
         poFeatureDefn->SetGeomType( wkbNone );
     }
 
@@ -282,9 +283,15 @@ int OGRGFTResultLayer::RunSQL()
         }
 
         if (bHasSetLimit)
-            bGotAllRows = bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+        {
+            bEOF = (int)aosRows.size() < GetFeaturesToFetch();
+            bGotAllRows = bEOF;
+        }
         else
-            bGotAllRows = bEOF = TRUE;
+        {
+            bGotAllRows = TRUE;
+            bEOF = TRUE;
+        }
     }
 
     SetGeomFieldName();

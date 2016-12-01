@@ -50,19 +50,19 @@ import org.gdal.gdal.TermProgressCallback;
 
 /// <summary>
 /// A Java based sample to create GDAL raster overviews.
-/// </summary> 
+/// </summary>
 
 class GDALOverviews {
 
-	public static void usage() 
+	public static void usage()
 
-	{ 
+	{
 		System.out.println("usage: gdaloverviews {GDAL dataset name} {resamplealg} {level1} {level2} ....");
 		System.out.println("example: gdaloverviews sample.tif \"NEAREST\" 2 4");
 		System.exit(-1);
 	}
 
-    public static void main(String[] args) 
+    public static void main(String[] args)
     {
         /* -------------------------------------------------------------------- */
         /*      Register driver(s).                                             */
@@ -72,14 +72,14 @@ class GDALOverviews {
         args = gdal.GeneralCmdLineProcessor(args);
         if (args.length <= 2) usage();
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = gdal.Open( args[0], gdalconst.GA_Update );
 
-            if (ds == null) 
+            if (ds == null)
             {
                 System.out.println("Can't open " + args[0]);
                 System.exit(-1);
@@ -108,7 +108,7 @@ class GDALOverviews {
             /* -------------------------------------------------------------------- */
             /*      Displaying the raster parameters                                */
             /* -------------------------------------------------------------------- */
-            for (int iBand = 1; iBand <= ds.getRasterCount(); iBand++) 
+            for (int iBand = 1; iBand <= ds.getRasterCount(); iBand++)
             {
                 Band band = ds.GetRasterBand(iBand);
                 System.out.println("Band " + iBand + " :");
@@ -132,7 +132,7 @@ class GDALOverviews {
             System.out.println("Completed.");
             System.out.println("Use:  gdalread " + args[0] + " outfile.png [overview] to extract a particular overview!" );
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             System.out.println("Application error: " + e.getMessage());
         }

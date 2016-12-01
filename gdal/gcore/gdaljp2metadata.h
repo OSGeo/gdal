@@ -31,6 +31,8 @@
 #ifndef GDAL_JP2READER_H_INCLUDED
 #define GDAL_JP2READER_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_conv.h"
 #include "cpl_minixml.h"
 #include "cpl_vsi.h"
@@ -58,7 +60,7 @@ class CPL_DLL GDALJP2Box
     GByte      *pabyData;
 
 public:
-                GDALJP2Box( VSILFILE * = NULL );
+    explicit    GDALJP2Box( VSILFILE * = NULL );
                 ~GDALJP2Box();
 
     int         SetOffset( GIntBig nNewOffset );
@@ -196,5 +198,7 @@ public:
     static int   IsUUID_MSI(const GByte *abyUUID);
     static int   IsUUID_XMP(const GByte *abyUUID);
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

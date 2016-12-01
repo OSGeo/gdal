@@ -293,6 +293,9 @@ std::vector<double> const& CPCIDSKAPModelSegment::GetProjParams(void) const
 /************************************************************************/
 /*                        BinaryToAPInfo()                          	*/
 /************************************************************************/
+
+namespace {
+  
 /**
   * Convert the contents of the PCIDSKBuffer buf to a set of APModel
   * params
@@ -307,7 +310,6 @@ std::vector<double> const& CPCIDSKAPModelSegment::GetProjParams(void) const
   * @param map_units the map units/geosys string
   * @param utm_units the UTM units string
   */
-namespace {
     void BinaryToAPInfo(PCIDSKBuffer& buf,
                         PCIDSKAPModelEOParams*& eo_params,
                         PCIDSKAPModelIOParams*& io_params,
@@ -339,7 +341,6 @@ namespace {
     /* -------------------------------------------------------------------- */
 
         downsample = buf.GetInt(24, 3);
-        if (0 >= downsample) downsample = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Read the values					            */

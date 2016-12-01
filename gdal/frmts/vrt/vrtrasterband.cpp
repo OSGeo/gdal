@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTRasterBand
@@ -34,6 +33,8 @@
 
 #include <algorithm>
 
+/*! @cond Doxygen_Suppress */
+
 CPL_CVSID("$Id$");
 
 /************************************************************************/
@@ -46,10 +47,29 @@ CPL_CVSID("$Id$");
 /*                           VRTRasterBand()                            */
 /************************************************************************/
 
-VRTRasterBand::VRTRasterBand()
-
+VRTRasterBand::VRTRasterBand() :
+    m_bIsMaskBand(FALSE),
+    m_bNoDataValueSet(FALSE),
+    m_bHideNoDataValue(FALSE),
+    m_dfNoDataValue(-10000.0),
+    m_poColorTable(NULL),
+    m_eColorInterp(GCI_Undefined),
+    m_pszUnitType(NULL),
+    m_papszCategoryNames(NULL),
+    m_dfOffset(0.0),
+    m_dfScale(1.0),
+    m_psSavedHistograms(NULL),
+    m_poMaskBand(NULL)
 {
-    Initialize( 0, 0 );
+    // Initialize( 0, 0 );
+    poDS = NULL;
+    nBand = 0;
+    eAccess = GA_ReadOnly;
+    eDataType = GDT_Byte;
+    nRasterXSize = 0;
+    nRasterYSize = 0;
+    nBlockXSize = 0;
+    nBlockYSize = 0;
 }
 
 /************************************************************************/
@@ -383,6 +403,11 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         for( CPLXMLNode *psEntry = CPLGetXMLNode( psTree, "ColorTable" )->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
+            if( !(psEntry->eType == CXT_Element &&
+                  EQUAL(psEntry->pszValue, "Entry")) )
+            {
+                continue;
+            }
             GDALColorEntry sCEntry;
 
             sCEntry.c1 = (short) atoi(CPLGetXMLValue( psEntry, "c1", "0" ));
@@ -505,7 +530,6 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
                         pszSubclass );
             break;
         }
-
 
         if( poBand->XMLInit( psNode, pszVRTPath ) == CE_None )
         {
@@ -639,8 +663,8 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLXMLNode *psOVR_XML = CPLCreateXMLNode( psTree, CXT_Element,
                                                  "Overview" );
 
-        int              bRelativeToVRT;
-        const char      *pszRelativePath;
+        int bRelativeToVRT = FALSE;
+        const char *pszRelativePath = NULL;
         VSIStatBufL sStat;
 
         if( VSIStatExL( m_apoOverviews[iOvr].osFilename, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 )
@@ -1170,3 +1194,5 @@ int VRTRasterBand::CloseDependentDatasets()
 {
     return FALSE;
 }
+
+/*! @endcond */

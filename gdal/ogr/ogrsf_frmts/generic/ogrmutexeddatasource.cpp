@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMutexedDataSource class
@@ -27,26 +26,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DOXYGEN_SKIP
+
 #include "ogrmutexeddatasource.h"
 #include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
-OGRMutexedDataSource::OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
-                                           int bTakeOwnership,
-                                           CPLMutex* hMutexIn,
-                                           int bWrapLayersInMutexedLayer) :
-            m_poBaseDataSource(poBaseDataSource),
-            m_bHasOwnership(bTakeOwnership),
-            m_hGlobalMutex(hMutexIn),
-            m_bWrapLayersInMutexedLayer(bWrapLayersInMutexedLayer)
-{
-}
+OGRMutexedDataSource::OGRMutexedDataSource( OGRDataSource* poBaseDataSource,
+                                            int bTakeOwnership,
+                                            CPLMutex* hMutexIn,
+                                            int bWrapLayersInMutexedLayer ) :
+    m_poBaseDataSource(poBaseDataSource),
+    m_bHasOwnership(bTakeOwnership),
+    m_hGlobalMutex(hMutexIn),
+    m_bWrapLayersInMutexedLayer(bWrapLayersInMutexedLayer)
+{}
 
 OGRMutexedDataSource::~OGRMutexedDataSource()
 {
-    std::map<OGRLayer*, OGRMutexedLayer*>::iterator oIter = m_oMapLayers.begin();
-    for(; oIter != m_oMapLayers.end(); ++oIter )
+    std::map<OGRLayer*, OGRMutexedLayer*>::iterator oIter =
+        m_oMapLayers.begin();
+    for( ; oIter != m_oMapLayers.end(); ++oIter )
         delete oIter->second;
 
     if( m_bHasOwnership )
@@ -240,3 +241,5 @@ void OGRRegisterMutexedDataSource()
     delete new OGRMutexedDataSource(NULL, FALSE, NULL, FALSE);
 }
 #endif
+
+#endif /* #ifndef DOXYGEN_SKIP */

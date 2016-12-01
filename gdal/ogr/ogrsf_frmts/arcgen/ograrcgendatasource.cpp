@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc/Info Generate Translator
  * Purpose:  Implements OGRARCGENDataSource class
@@ -154,9 +153,9 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
         eType = wkbUnknown;
         CPLString osFirstX, osFirstY;
         CPLString osLastX, osLastY;
-        int bIs3D = FALSE;
-        const char* pszLine;
-        while((pszLine = CPLReadLine2L(fp,256,NULL)) != NULL)
+        bool bIs3D = false;
+        const char* pszLine = NULL;
+        while( (pszLine = CPLReadLine2L(fp,256,NULL)) != NULL )
         {
             nLineNumber ++;
             if (nLineNumber == 2)
@@ -166,7 +165,7 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
                 if (nTokens == 2 || nTokens == 3)
                 {
                     if (nTokens == 3)
-                        bIs3D = TRUE;
+                        bIs3D = true;
                     osFirstX = papszTokens[0];
                     osFirstY = papszTokens[1];
                 }
@@ -180,9 +179,9 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
                 {
                     if (osFirstX.compare(osLastX) == 0 &&
                         osFirstY.compare(osLastY) == 0)
-                        eType = (bIs3D) ? wkbPolygon25D : wkbPolygon;
+                        eType = bIs3D ? wkbPolygon25D : wkbPolygon;
                     else
-                        eType = (bIs3D) ? wkbLineString25D : wkbLineString;
+                        eType = bIs3D ? wkbLineString25D : wkbLineString;
                     break;
                 }
 

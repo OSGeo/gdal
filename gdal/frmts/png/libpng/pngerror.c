@@ -318,7 +318,7 @@ png_default_warning(png_structp png_ptr, png_const_charp warning_message)
    if (*warning_message == PNG_LITERAL_SHARP)
    {
      int offset;
-     char warning_number[16];
+     char warning_number[16] = { 0 };
      for (offset = 0; offset < 15; offset++)
      {
         warning_number[offset] = warning_message[offset + 1];

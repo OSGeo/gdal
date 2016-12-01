@@ -32,6 +32,18 @@
 
 %module gdal_array
 
+%{
+// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// since we do not pass -DDEBUG_BOOL when building the bindings
+#define DO_NOT_USE_DEBUG_BOOL
+
+// So that override is properly defined
+#ifndef GDAL_COMPILATION
+#define GDAL_COMPILATION
+#endif
+
+%}
+
 %include constraints.i
 
 %import typemaps_python.i
@@ -98,16 +110,16 @@ class NUMPYDataset : public GDALDataset
                  NUMPYDataset();
                  ~NUMPYDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( PyArrayObject *psArray );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -179,7 +191,13 @@ NUMPYDataset::~NUMPYDataset()
     }
 
     FlushCache();
+
+    // Although the module has thread disabled, we go here from GDALClose()
+    SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+
     Py_DECREF( psArray );
+
+    SWIG_PYTHON_THREAD_END_BLOCK;
 }
 
 /************************************************************************/
@@ -312,7 +330,8 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( !CSLTestBoolean(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "FALSE")) )
+    if( !CPLTestBool(CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME",
+                                        "FALSE")) )
     {
         if( CPLGetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", NULL) == NULL )
         {
@@ -476,6 +495,12 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 
 %}
 
+
+#ifdef SWIGPYTHON
+%nothread;
+#endif
+
+
 // So that SWIGTYPE_p_f_double_p_q_const__char_p_void__int is declared...
 /************************************************************************/
 /*                            TermProgress()                            */
@@ -527,10 +552,14 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     GDALRegister_NUMPY();
 
     /* I wish I had a safe way of checking the type */
-    sprintf( szString, "NUMPY:::%p", psArray );
+    snprintf( szString, sizeof(szString), "NUMPY:::%p", psArray );
     return CPLStrdup(szString);
 }
 %}
+
+#ifdef SWIGPYTHON
+%thread;
+#endif
 
 %feature( "kwargs" ) BandRasterIONumPy;
 %inline %{
@@ -634,6 +663,10 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                                    pixel_space, line_space, band_space, &sExtraArg );
   }
 %}
+
+#ifdef SWIGPYTHON
+%nothread;
+#endif
 
 %typemap(in,numinputs=0) (CPLVirtualMemShadow** pvirtualmem, int numpytypemap) (CPLVirtualMemShadow* virtualmem)
 {
@@ -1330,3 +1363,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
 
     return
 %}
+
+#ifdef SWIGPYTHON
+%thread;
+#endif

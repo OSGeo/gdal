@@ -219,6 +219,11 @@ def test_ogr2ogr_lib_8():
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
 
+    # Test also with just a string and not an array
+    ds = gdal.VectorTranslate('', srcDS, format = 'Memory', layers='poly')
+    if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -375,6 +380,20 @@ def test_ogr2ogr_lib_16():
 
     return 'success'
 
+###############################################################################
+# Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
+
+def test_ogr2ogr_lib_17():
+
+    ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    gdal.VectorTranslate(ds, gdal.OpenEx('../ogr/data/poly.shp'))
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -391,7 +410,8 @@ gdaltest_list = [
     test_ogr2ogr_lib_13,
     test_ogr2ogr_lib_14,
     test_ogr2ogr_lib_15,
-    test_ogr2ogr_lib_16
+    test_ogr2ogr_lib_16,
+    test_ogr2ogr_lib_17
     ]
 
 if __name__ == '__main__':

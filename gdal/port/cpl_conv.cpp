@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Convenience functions.
@@ -28,11 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// For uselocale
+// For uselocale, define _XOPEN_SOURCE = 700
+// but on Solaris, we don't have uselocale and we cannot have
+// std=c++11 with _XOPEN_SOURCE != 600
+#if defined(__sun__) && __cplusplus >= 201103L
+#if _XOPEN_SOURCE != 600
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+#define _XOPEN_SOURCE 600
+#endif
+#else
 #ifdef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE
 #endif
 #define _XOPEN_SOURCE 700
+#endif
 
 // For atoll (at least for NetBSD)
 #define _ISOC99_SOURCE
@@ -40,16 +50,32 @@
 #ifdef MSVC_USE_VLD
 #include <vld.h>
 #endif
+
 #include "cpl_conv.h"
+
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <clocale>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <string>
+
+#include "cpl_config.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#include <cerrno>
-#include <clocale>
-#include <cstring>
-
-/* Uncomment to get list of options that have been fetched and set */
+// Uncomment to get list of options that have been fetched and set.
 //#define DEBUG_CONFIG_OPTIONS
 
 #ifdef DEBUG_CONFIG_OPTIONS
@@ -64,12 +90,12 @@ CPL_CVSID("$Id$");
 static CPLMutex *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
-/* Used by CPLOpenShared() and friends */
+// Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
-/* Used by CPLsetlocale() */
+// Used by CPLsetlocale().
 static CPLMutex *hSetLocaleMutex = NULL;
 
 /* Note: ideally this should be added in CPLSharedFileInfo* */
@@ -189,7 +215,6 @@ void *CPLMalloc( size_t nSize )
  * @param nNewSize new size (in bytes) of memory block to allocate.
  * @return pointer to allocated memory, only NULL if nNewSize is zero.
  */
-
 
 void * CPLRealloc( void * pData, size_t nNewSize )
 
@@ -520,7 +545,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
  * Read a line of text from the given file handle, taking care
  * to capture CR and/or LF and strip off ... equivalent of
  * DKReadLine().  Pointer to an internal buffer is returned.
- * The application shouldn't free it, or depend on it's value
+ * The application shouldn't free it, or depend on its value
  * past the next call to CPLReadLine().
  *
  * Note that CPLReadLine() uses VSIFGets(), so any hooking of VSI file
@@ -578,7 +603,6 @@ const char *CPLReadLine( FILE * fp )
 
         nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
         nReadSoFar += nBytesReadThisTime;
-
     } while( nBytesReadThisTime >= 127
              && pszRLBuffer[nReadSoFar-1] != 13
              && pszRLBuffer[nReadSoFar-1] != 10 );
@@ -627,7 +651,7 @@ const char *CPLReadLineL( VSILFILE * fp )
  */
 
 const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
-                           char** /*papszOptions */ )
+                           CPL_UNUSED const char * const * papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -852,7 +876,6 @@ long CPLScanLong( const char *pszString, int nMaxLength )
     const std::string osValue( pszString, nLength );
     return atol( osValue.c_str() );
 }
-
 
 /************************************************************************/
 /*                            CPLScanULong()                            */
@@ -1368,18 +1391,13 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
  *
  * @param dfValue Numerical value to print.
  *
- * @param pszLocale Pointer to a character string containing locale name
- * ("C", "POSIX", "us_US", "ru_RU.KOI8-R" etc.). If NULL we will not
- * manipulate with locale settings and current process locale will be used for
- * printing. With the pszLocale option we can control what exact locale
- * will be used for printing a numeric value to the string (in most cases
- * it should be C/POSIX).
+ * @param pszLocale Unused.
  *
  * @return Number of characters printed.
  */
 
 int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
-                    double dfValue, const char * /* pszLocale */ )
+                    double dfValue, CPL_UNUSED const char * pszLocale )
 {
     if ( !pszBuffer )
         return 0;
@@ -1526,7 +1544,7 @@ static void CPLShowAccessedOptions()
     while(aoIter != paoGetKeys->end())
     {
         printf("%s, ", (*aoIter).c_str());
-        aoIter ++;
+        ++aoIter;
     }
     printf("\n");
 
@@ -1535,20 +1553,21 @@ static void CPLShowAccessedOptions()
     while(aoIter != paoSetKeys->end())
     {
         printf("%s, ", (*aoIter).c_str());
-        aoIter ++;
+        ++aoIter;
     }
     printf("\n");
 
     delete paoGetKeys;
     delete paoSetKeys;
-    paoGetKeys = paoSetKeys = NULL;
+    paoGetKeys = NULL;
+    paoSetKeys = NULL;
 }
 
 /************************************************************************/
 /*                       CPLAccessConfigOption()                        */
 /************************************************************************/
 
-static void CPLAccessConfigOption(const char* pszKey, bool bGet)
+static void CPLAccessConfigOption( const char* pszKey, bool bGet )
 {
     CPLMutexHolderD(&hRegisterConfigurationOptionMutex);
     if (paoGetKeys == NULL)
@@ -1636,6 +1655,8 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 /*                   CPLGetThreadLocalConfigOption()                    */
 /************************************************************************/
 
+/** Same as CPLGetConfigOption() but only with options set with
+ * CPLSetThreadLocalConfigOption() */
 const char * CPL_STDCALL
 CPLGetThreadLocalConfigOption( const char *pszKey, const char *pszDefault )
 
@@ -1782,10 +1803,9 @@ void CPL_STDCALL CPLFreeConfig()
 
 /************************************************************************/
 /*                              CPLStat()                               */
-/*                                                                      */
-/*      Same as VSIStat() except it works on "C:" as if it were         */
-/*      "C:\".                                                          */
 /************************************************************************/
+
+/** Same as VSIStat() except it works on "C:" as if it were "C:\". */
 
 int CPLStat( const char *pszPath, VSIStatBuf *psStatBuf )
 
@@ -1838,6 +1858,7 @@ proj_strtod(char *nptr, char **endptr)
 static const char*sym = "NnEeSsWw";
 static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 
+/** CPLDMSToDec */
 double CPLDMSToDec( const char *is )
 
 {
@@ -1905,13 +1926,11 @@ double CPLDMSToDec( const char *is )
     return v;
 }
 
-
 /************************************************************************/
 /*                            CPLDecToDMS()                             */
-/*                                                                      */
-/*      Translate a decimal degrees value to a DMS string with          */
-/*      hemisphere.                                                     */
 /************************************************************************/
+
+/** Translate a decimal degrees value to a DMS string with hemisphere. */
 
 const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
                          int nPrecision )
@@ -1923,7 +1942,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
         return "Invalid angle";
 
     const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
-    const double dfABSAngle = ABS(dfAngle) + dfEpsilon;
+    const double dfABSAngle = std::abs(dfAngle) + dfEpsilon;
     if (dfABSAngle > 361)
     {
         return "Invalid angle";
@@ -2010,7 +2029,7 @@ double CPLPackedDMSToDec( double dfPacked )
 {
     const double dfSign = ( dfPacked < 0.0 )? -1 : 1;
 
-    double dfSeconds = ABS( dfPacked );
+    double dfSeconds = std::abs( dfPacked );
     double dfDegrees = floor(dfSeconds / 1000000.0);
     dfSeconds -= dfDegrees * 1000000.0;
     double dfMinutes = floor(dfSeconds / 1000.0);
@@ -2044,7 +2063,7 @@ double CPLDecToPackedDMS( double dfDec )
 {
     const double dfSign = ( dfDec < 0.0 ) ? -1 : 1;
 
-    dfDec = ABS( dfDec );
+    dfDec = std::abs( dfDec );
     const double dfDegrees = floor( dfDec );
     const double dfMinutes = floor( ( dfDec - dfDegrees ) * 60.0 );
     const double dfSeconds = ( dfDec - dfDegrees ) * 3600.0 - dfMinutes * 60.0;
@@ -2056,6 +2075,7 @@ double CPLDecToPackedDMS( double dfDec )
 /*                         CPLStringToComplex()                         */
 /************************************************************************/
 
+/** Fetch the real and imaginary part of a serialized complex number */
 void CPL_DLL CPLStringToComplex( const char *pszString,
                                  double *pdfReal, double *pdfImag )
 
@@ -2070,7 +2090,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
     int iImagEnd = -1;
 
     for( int i = 0;
-         pszString[i] != '\0' && pszString[i] != ' ' && i < 100;
+         i < 100 && pszString[i] != '\0' && pszString[i] != ' ';
          i++ )
     {
         if( pszString[i] == '+' && i > 0 )
@@ -2145,7 +2165,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp;
+    FILE *fp = NULL;
 
     if( bLarge )
         fp = reinterpret_cast<FILE *>( VSIFOpenL( pszFilename, pszAccess ) );
@@ -2250,7 +2270,6 @@ void CPLCloseShared( FILE * fp )
     }
 }
 
-
 /************************************************************************/
 /*                   CPLCleanupSharedFileMutex()                        */
 /************************************************************************/
@@ -2332,7 +2351,8 @@ void CPLDumpSharedList( FILE *fp )
 /*                           CPLUnlinkTree()                            */
 /************************************************************************/
 
-/**
+/** Recursively unlink a directory.
+ *
  * @return 0 on successful completion, -1 if function fails.
  */
 
@@ -2420,6 +2440,7 @@ int CPLUnlinkTree( const char *pszPath )
 /*                            CPLCopyFile()                             */
 /************************************************************************/
 
+/** Copy a file */
 int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2481,6 +2502,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /*                            CPLCopyTree()                             */
 /************************************************************************/
 
+/** Recursively copy a tree */
 int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2558,6 +2580,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 /*                            CPLMoveFile()                             */
 /************************************************************************/
 
+/** Move a file */
 int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 
 {
@@ -2575,6 +2598,7 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 /*                             CPLSymlink()                             */
 /************************************************************************/
 
+/** Create a symbolic link */
 int CPLSymlink( const char*
 #ifndef WIN32
                 pszOldPath
@@ -2598,6 +2622,7 @@ int CPLSymlink( const char*
 /* ==================================================================== */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                             CPLLocaleC()                             */
 /************************************************************************/
@@ -2605,7 +2630,7 @@ int CPLSymlink( const char*
 CPLLocaleC::CPLLocaleC() :
     pszOldLocale(NULL)
 {
-    if( CSLTestBoolean(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
         return;
 
     pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));
@@ -2631,7 +2656,6 @@ CPLLocaleC::~CPLLocaleC()
     CPLsetlocale( LC_NUMERIC, pszOldLocale );
     CPLFree( pszOldLocale );
 }
-
 
 /************************************************************************/
 /*                        CPLThreadLocaleC()                            */
@@ -2693,7 +2717,7 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
 
 #endif
 }
-
+//! @endcond
 
 /************************************************************************/
 /*                          CPLsetlocale()                              */
@@ -2724,7 +2748,6 @@ char* CPLsetlocale (int category, const char* locale)
     // Make it thread-locale storage.
     return const_cast<char*>( CPLSPrintf("%s", pszRet) );
 }
-
 
 /************************************************************************/
 /*                       CPLCleanupSetlocaleMutex()                     */
@@ -2803,7 +2826,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 
 #if !defined(HAVE_LIBZ)
 
-void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
+void *CPLCreateZip( const char *, char ** )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -2811,33 +2834,33 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
     return NULL;
 }
 
-CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
-                           char **papszOptions )
+CPLErr CPLCreateFileInZip( void *, const char *,
+                           char ** )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
+CPLErr CPLWriteFileInZip( void *, const void *, int  )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseFileInZip( void *hZip )
+CPLErr CPLCloseFileInZip( void * )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseZip( void *hZip )
+CPLErr CPLCloseZip( void * )
 
 {
     return CE_Failure;
 }
 
-void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibDeflate( const void* , size_t , int ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )
@@ -2845,8 +2868,8 @@ void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
     return NULL;
 }
 
-void* CPLZLibInflate( const void* ptr, size_t nBytes,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibInflate( const void* , size_t ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )

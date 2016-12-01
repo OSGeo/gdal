@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GML Utils
  * Purpose:  GML reader
@@ -34,6 +33,8 @@
 #include "ogr_p.h"
 #include <string>
 #include <map>
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                GML_ExtractSrsNameFromGeometry()                      */
@@ -83,26 +84,26 @@ bool GML_IsSRSLatLongOrder(const char* pszSRSName)
     if (pszSRSName == NULL)
         return false;
 
-    if (STARTS_WITH(pszSRSName, "urn:"))
+    if (STARTS_WITH(pszSRSName, "urn:") && strstr(pszSRSName, ":4326") != NULL)
     {
-        if (strstr(pszSRSName, ":4326") != NULL)
-        {
-            /* Shortcut ... */
-            return true;
-        }
-        else
-        {
-            OGRSpatialReference oSRS;
-            if (oSRS.importFromURN(pszSRSName) == OGRERR_NONE)
-            {
-                if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
-                    return true;
-            }
-        }
+        /* Shortcut ... */
+        return true;
     }
-    return false;
+    else if( !EQUALN(pszSRSName, "EPSG:", 5) )
+    {
+        OGRSpatialReference oSRS;
+        if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
+        {
+            if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
+                return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
 }
-
 
 /************************************************************************/
 /*                GML_BuildOGRGeometryFromList_CreateCache()            */
@@ -189,6 +190,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                           bool bInvertAxisOrderIfLatLong,
                                           const char* pszDefaultSRSName,
                                           bool bConsiderEPSGAsURN,
+                                          GMLSwapCoordinatesEnum eSwapCoordinates,
                                           int nPseudoBoolGetSecondaryGeometryOption,
                                           void* hCacheSRS,
                                           bool bFaceHoleNegative)
@@ -247,6 +249,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
                                                             bInvertAxisOrderIfLatLong,
                                                             pszDefaultSRSName,
                                                             bConsiderEPSGAsURN,
+                                                            eSwapCoordinates,
                                                             nPseudoBoolGetSecondaryGeometryOption,
                                                             hCacheSRS);
                     }
@@ -280,8 +283,12 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
         SRSCache* poSRSCache = (SRSCache*)hCacheSRS;
         SRSDesc& oSRSDesc = poSRSCache->Get(pszNameLookup);
         poGeom->assignSpatialReference(oSRSDesc.poSRS);
-        if (oSRSDesc.bAxisInvert && bInvertAxisOrderIfLatLong)
+        if( (eSwapCoordinates == GML_SWAP_AUTO &&
+            oSRSDesc.bAxisInvert && bInvertAxisOrderIfLatLong) ||
+            eSwapCoordinates == GML_SWAP_YES )
+        {
             poGeom->swapXY();
+        }
     }
 
     return poGeom;
@@ -291,56 +298,49 @@ OGRGeometry* GML_BuildOGRGeometryFromList(const CPLXMLNode* const * papsGeometry
 /*                           GML_GetSRSName()                           */
 /************************************************************************/
 
-char* GML_GetSRSName(const OGRSpatialReference* poSRS, bool bLongSRS, bool *pbCoordSwap)
+char* GML_GetSRSName(const OGRSpatialReference* poSRS,
+                     OGRGMLSRSNameFormat eSRSNameFormat, bool *pbCoordSwap)
 {
     *pbCoordSwap = false;
     if (poSRS == NULL)
         return CPLStrdup("");
 
-    const char* pszAuthName = NULL;
-    const char* pszAuthCode = NULL;
-    const char* pszTarget = NULL;
-
-    if (poSRS->IsProjected())
-        pszTarget = "PROJCS";
-    else
-        pszTarget = "GEOGCS";
-
-    char szSrsName[50];
-    szSrsName[0] = 0;
-
-    pszAuthName = poSRS->GetAuthorityName( pszTarget );
-    if( NULL != pszAuthName )
+    const char* pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
+    const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
+    const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
+    if( NULL != pszAuthName && NULL != pszAuthCode )
     {
-        if( EQUAL( pszAuthName, "EPSG" ) )
+        if ( EQUAL( pszAuthName, "EPSG" ) &&
+            eSRSNameFormat != SRSNAME_SHORT &&
+            !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
+                ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
         {
-            pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-            if( NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
+            OGRSpatialReference oSRS;
+            if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
             {
-                if (bLongSRS && !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-                                  ((OGRSpatialReference*)poSRS)->EPSGTreatsAsNorthingEasting()))
-                {
-                    OGRSpatialReference oSRS;
-                    if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
-                    {
-                        if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
-                            *pbCoordSwap = true;
-                    }
-                }
-
-                if (bLongSRS)
-                {
-                    snprintf( szSrsName, sizeof(szSrsName), " srsName=\"urn:ogc:def:crs:%s::%s\"",
-                        pszAuthName, pszAuthCode );
-                }
-                else
-                {
-                    snprintf( szSrsName, sizeof(szSrsName), " srsName=\"%s:%s\"",
-                            pszAuthName, pszAuthCode );
-                }
+                if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
+                    *pbCoordSwap = true;
             }
         }
-    }
 
-    return CPLStrdup(szSrsName);
+        if (eSRSNameFormat == SRSNAME_SHORT)
+        {
+            return CPLStrdup(CPLSPrintf(
+                        " srsName=\"%s:%s\"",
+                        pszAuthName, pszAuthCode ));
+        }
+        else if (eSRSNameFormat == SRSNAME_OGC_URN)
+        {
+            return CPLStrdup(CPLSPrintf(
+                        " srsName=\"urn:ogc:def:crs:%s::%s\"",
+                        pszAuthName, pszAuthCode ));
+        }
+        else if (eSRSNameFormat == SRSNAME_OGC_URL)
+        {
+            return CPLStrdup(CPLSPrintf(
+                        " srsName=\"http://www.opengis.net/def/crs/%s/0/%s\"",
+                        pszAuthName, pszAuthCode ));
+        }
+    }
+    return CPLStrdup("");
 }

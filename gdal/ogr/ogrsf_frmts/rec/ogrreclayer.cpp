@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  EPIInfo .REC Reader
  * Purpose:  Implements OGRRECLayer class.
@@ -42,7 +41,7 @@ CPL_CVSID("$Id$");
 
 OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
                           FILE * fp, int nFieldCountIn ) :
-  poFeatureDefn(new OGRFeatureDefn( pszLayerNameIn )),
+    poFeatureDefn(new OGRFeatureDefn( pszLayerNameIn )),
     fpREC(fp),
     nStartOfData(0),
     bIsValid(FALSE),
@@ -260,7 +259,6 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 
     return poFeature;
 }
-
 
 /************************************************************************/
 /*                           GetNextFeature()                           */

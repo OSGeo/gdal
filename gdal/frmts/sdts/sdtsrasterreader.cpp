@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSRasterReader class.
@@ -47,6 +46,11 @@ SDTSRasterReader::SDTSRasterReader() :
     nYStart(0)
 {
     strcpy( szINTR, "CE" );
+    memset( szModule, 0, sizeof(szModule) );
+    memset( adfTransform, 0, sizeof(adfTransform) );
+    memset( szFMT, 0, sizeof(szFMT) );
+    memset( szUNITS, 0, sizeof(szUNITS) );
+    memset( szLabel, 0, sizeof(szLabel) );
 }
 
 /************************************************************************/
@@ -76,8 +80,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
                             const char * pszModule )
 
 {
-    strncpy( szModule, pszModule, sizeof(szModule) );
-    szModule[sizeof(szModule) - 1] = '\0';
+    snprintf( szModule, sizeof(szModule), "%s", pszModule );
 
 /* ==================================================================== */
 /*      Search the LDEF module for the requested cell module.           */
@@ -101,7 +104,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Read each record, till we find what we want.                    */
 /* -------------------------------------------------------------------- */
-    DDFRecord *poRecord;
+    DDFRecord *poRecord = NULL;
     while( (poRecord = oLDEF.ReadRecord() ) != NULL )
     {
         const char* pszCandidateModule = poRecord->GetStringSubfield("LDEF",0,"CMNM",0);
@@ -329,7 +332,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /* -------------------------------------------------------------------- */
 /*      Open the cell file.                                             */
 /* -------------------------------------------------------------------- */
-    return( oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) ) );
+    return oDDFModule.Open( poCATD->GetModuleFilePath(pszModule) );
 }
 
 /************************************************************************/
@@ -340,7 +343,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Currently we will always use sequential access.  In the         */
 /*      future we should modify the iso8211 library to support          */
 /*      seeking, and modify this to seek directly to the right          */
-/*      record once it's location is known.                             */
+/*      record once its location is known.                              */
 /************************************************************************/
 
 /**

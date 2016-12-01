@@ -43,7 +43,7 @@ import org.gdal.osr.CoordinateTransformation;
 
 /// <summary>
 /// A Java based sample to make simple transformations.
-/// </summary> 
+/// </summary>
 public class OSRTransform {
 	public static void main(String[] args) {
 		try

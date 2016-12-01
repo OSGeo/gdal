@@ -17,7 +17,7 @@ This driver requires a connection to a Postgres database. If you want to
 prepare a SQL dump to inject it later into a Postgres database, you can
 instead use the <a href="drv_pgdump.html">PostgreSQL SQL Dump driver</a> (GDAL/OGR >= 1.8.0)<p>
 
-You can find additionnal information on the driver in the <a href="drv_pg_advanced.html">Advanced OGR PostgreSQL driver Information</a> page.
+You can find additional information on the driver in the <a href="drv_pg_advanced.html">Advanced OGR PostgreSQL driver Information</a> page.
 
 <h2>Connecting to a database</h2>
 
@@ -245,6 +245,16 @@ This example shows using ogrinfo to list PostgreSQL/PostGIS layers on a differen
 
 <pre>
 ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
+</pre>
+</li>
+
+<li>
+<p>
+This example shows use of PRELUDE_STATEMENTS and CLOSING_STATEMENTS as
+destination open options of ogr2ogr.<p>
+
+<pre>
+ogrinfo "pg:dbname=mydb" poly.shp -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
 </pre>
 </li>
 

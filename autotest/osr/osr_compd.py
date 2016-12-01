@@ -366,6 +366,16 @@ def osr_compd_7():
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
+    if srs.GetTargetLinearUnits('VERT_CS') != 0.304800609601219:
+        gdaltest.post_reason( 'Didnt get expected linear units' )
+        print('%.16g' % srs.GetTargetLinearUnits('VERT_CS'))
+        return 'fail'
+
+    if srs.GetTargetLinearUnits(None) != 0.304800609601219:
+        gdaltest.post_reason( 'Didnt get expected linear units' )
+        print('%.16g' % srs.GetTargetLinearUnits(None))
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

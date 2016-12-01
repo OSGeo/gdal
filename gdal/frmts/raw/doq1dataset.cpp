@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  USGS DOQ Driver (First Generation Format)
  * Purpose:  Implementation of DOQ1Dataset
@@ -113,8 +112,10 @@ class DOQ1Dataset : public RawDataset
 {
     VSILFILE    *fpImage;       // image data file.
 
-    double      dfULX, dfULY;
-    double      dfXPixelSize, dfYPixelSize;
+    double      dfULX;
+    double      dfULY;
+    double      dfXPixelSize;
+    double      dfYPixelSize;
 
     char        *pszProjection;
 
@@ -122,8 +123,8 @@ class DOQ1Dataset : public RawDataset
                 DOQ1Dataset();
                 ~DOQ1Dataset();
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char  *GetProjectionRef( void );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char  *GetProjectionRef( void ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -139,7 +140,7 @@ DOQ1Dataset::DOQ1Dataset() :
     dfXPixelSize(0.0),
     dfYPixelSize(0.0),
     pszProjection(NULL)
-{ }
+{}
 
 /************************************************************************/
 /*                            ~DOQ1Dataset()                            */

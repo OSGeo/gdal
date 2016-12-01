@@ -1,6 +1,6 @@
 ## @class Geo::OSR
 # @brief Base class for projection related classes.
-# @details 
+# @details
 
 ## @sub @Projections()
 # @return list of known projections.
@@ -290,10 +290,10 @@
 
 ## @method GetSemiMinor()
 
-## @method GetSemiMajor() 
+## @method GetSemiMajor()
 
 ## @method GetUTMZone()
-# Get UTM zone information. 
+# Get UTM zone information.
 # @return The UTM zone (integer). In scalar context the returned value
 # is negative for southern hemisphere zones. In list context returns
 # two values ($zone, $north), where $zone is always non-negative and
@@ -320,7 +320,7 @@
 
 ## @class Geo::OSR::CoordinateTransformation
 # @brief An object for transforming from one projection to another.
-# @details 
+# @details
 
 ## @cmethod Geo::OSR::CoordinateTransformation new($src, $dst)
 # @param src a Geo::OSR::SpatialReference object

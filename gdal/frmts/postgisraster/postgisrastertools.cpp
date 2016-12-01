@@ -5,9 +5,9 @@
  * Author:   Jorge Arevalo, jorge.arevalo@deimos-space.com
  *                          jorgearevalo@libregis.org
  *
- * Author:	 David Zwarg, dzwarg@azavea.com
+ * Author:       David Zwarg, dzwarg@azavea.com
  *
- * Last changes: $Id: $
+ * Last changes: $Id$
  *
  ***********************************************************************
  * Copyright (c) 2009 - 2013, Jorge Arevalo, David Zwarg
@@ -33,6 +33,8 @@
  * SOFTWARE.
  **********************************************************************/
  #include "postgisraster.h"
+
+CPL_CVSID("$Id$");
 
  /**********************************************************************
  * \brief Replace the quotes by single quotes in the input string
@@ -72,17 +74,16 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
 
     pszOutput = (char*) CPLCalloc(nLength + 1, sizeof (char));
 
-    for (i = 0; i < nLength; i++) {
+    for (i = 0; i < nLength; i++)
+    {
         if (pszInput[i] == '\'')
             pszOutput[i] = '"';
         else
             pszOutput[i] = pszInput[i];
-
     }
 
     return pszOutput;
 }
-
 
 /***********************************************************************
  * \brief Split connection string into user, password, host, database...

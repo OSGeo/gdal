@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PlanetLabs scene driver
  * Purpose:  PlanetLabs scene driver
@@ -29,6 +28,8 @@
 
 #include "ogr_plscenes.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                         OGRPLScenesIdentify()                        */
 /************************************************************************/
@@ -37,7 +38,6 @@ static int OGRPLScenesIdentify(GDALOpenInfo* poOpenInfo)
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "PLSCENES:");
 }
-
 
 /************************************************************************/
 /*                            OGRPLScenesOpen()                         */

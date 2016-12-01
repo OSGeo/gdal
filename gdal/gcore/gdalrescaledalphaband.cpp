@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  Implementation of GDALRescaledAlphaBand, a class implementing
@@ -28,10 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                        GDALRescaledAlphaBand()                       */
 /************************************************************************/
@@ -143,3 +150,4 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                                       eBufType,
                                       nPixelSpace, nLineSpace, psExtraArg );
 }
+//! @endcond

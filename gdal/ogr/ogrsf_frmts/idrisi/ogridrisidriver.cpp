@@ -96,6 +96,9 @@ int OGRIdrisiDriver::TestCapability( const char * /* pszCap */ )
 void RegisterOGRIdrisi()
 
 {
+    if( GDALGetDriverByName( "Idrisi" ) != NULL )
+        return;
+
     OGRSFDriver* poDriver = new OGRIdrisiDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Idrisi Vector (.vct)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vct" );

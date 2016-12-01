@@ -1,6 +1,6 @@
 # We get a full absolute path to the tree in this case so that when we
 # generate the various paths in the local gdal-config file they will work
-# from anywhere in the filesystem. 
+# from anywhere in the filesystem.
 
 include ../GDALmake.opt
 
@@ -11,7 +11,7 @@ DEP_LIBS =	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST =	gdalinfo$(EXE) gdalserver$(EXE) gdal_translate$(EXE) \
 		gdaladdo$(EXE) gdalwarp$(EXE) nearblack$(EXE) gdalmanage$(EXE) \
 		gdalenhance$(EXE) gdaltransform$(EXE) gdaldem$(EXE) \
-		gdallocationinfo$(EXE) gdalsrsinfo$(EXE) 
+		gdallocationinfo$(EXE) gdalsrsinfo$(EXE)
 
 OBJ = commonutils.o gdalinfo_lib.o gdal_translate_lib.o gdalwarp_lib.o ogr2ogr_lib.o \
 	gdaldem_lib.o nearblack_lib.o gdal_grid_lib.o gdal_rasterize_lib.o gdalbuildvrt_lib.o
@@ -192,7 +192,7 @@ gdal-config:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/alg -I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts -I$(GDAL_ROOT)/frmts/vrt -I$(GDAL_ROOT)/apps"' >> gdal-config
 	echo 'CONFIG_DATA="$(GDAL_ROOT)/data"' >> gdal-config
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config
-	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config
 	cat gdal-config.in >> gdal-config
@@ -207,7 +207,7 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 	echo 'CONFIG_CFLAGS="-I$(INST_INCLUDE)"' >> gdal-config-inst
 	echo 'CONFIG_DATA="$(INST_DATA)"' >> gdal-config-inst
 	echo 'CONFIG_VERSION="'`cat ../VERSION`'"' >> gdal-config-inst
-	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config-inst
+	echo 'CONFIG_OGR_ENABLED=yes' >> gdal-config-inst  # Deprecated.  Always true.
 	echo 'CONFIG_GNM_ENABLED=$(GNM_ENABLED)' >> gdal-config-inst
 	echo 'CONFIG_FORMATS="$(GDAL_FORMATS)"' >> gdal-config-inst
 	cat gdal-config.in >> gdal-config-inst

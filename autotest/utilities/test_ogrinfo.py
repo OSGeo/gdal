@@ -665,6 +665,25 @@ PRFEDEA: String (16.0)
 
     return 'success'
 
+###############################################################################
+# Test -rl
+
+def test_ogrinfo_25():
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' -rl -q ../ogr/data/poly.shp')
+    if not (err is None or err == '') :
+        gdaltest.post_reason('got error/warning')
+        print(err)
+        return 'fail'
+    if ret.find('OGRFeature(poly):0') < 0 or ret.find('OGRFeature(poly):9') < 0:
+        gdaltest.post_reason('wrong output')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     test_ogrinfo_1,
     test_ogrinfo_2,
@@ -690,6 +709,7 @@ gdaltest_list = [
     test_ogrinfo_22,
     test_ogrinfo_23,
     test_ogrinfo_24,
+    test_ogrinfo_25,
     ]
 
 

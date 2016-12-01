@@ -1026,7 +1026,7 @@ def ogr_shape_23():
     #######################################################
     # Test writing of a polygon with an empty external ring
     layer_name = 'polygonwithemptyinternalring'
-    wkt = 'POLYGON((100 0,100 10,110 10,100 0))';
+    wkt = 'POLYGON((100 0,100 10,110 10,100 0))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
 
@@ -1040,7 +1040,7 @@ def ogr_shape_23():
     wkt = 'MULTIPOLYGON(((0 0,0 10,10 10,0 0)), ((100 0,100 10,110 10,100 0)))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
-    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))');
+    poly = ogr.CreateGeometryFromWkt('POLYGON((100 0,100 10,110 10,100 0))')
     poly.AddGeometry(ogr.Geometry( type = ogr.wkbLinearRing ))
     geom.AddGeometry(poly)
 
@@ -1189,7 +1189,7 @@ def ogr_shape_28():
 
     # Check that the hand-written value can be read back
     lyr = ds.GetLayer(0)
-    feat = lyr.GetFeature(23900000);
+    feat = lyr.GetFeature(23900000)
     if feat.GetFieldAsString(0) != 'value_over_2GB':
         print(feat.GetFieldAsString(0))
         return 'fail'
@@ -1220,7 +1220,7 @@ def ogr_shape_28():
     ds = ogr.Open('tmp/hugedbf.dbf', 1)
     gdal.SetConfigOption('SHAPE_2GB_LIMIT', None)
     lyr = ds.GetLayer(0)
-    feat = lyr.GetFeature(23900000);
+    feat = lyr.GetFeature(23900000)
     if feat.GetFieldAsString(0) != 'updated_value':
         print(feat.GetFieldAsString(0))
         return 'fail'
@@ -1410,7 +1410,7 @@ def ogr_shape_32():
     #######################################################
     # Write a geometry repeatedly.
     # File size is pre-calculated according to the geometry's size.
-    wkt = 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))';
+    wkt = 'POLYGON((0 0,0 10,10 10,0 0),(0.25 0.5,1 1.1,0.5 1,0.25 0.5))'
     geom = ogr.CreateGeometryFromWkt(wkt)
     geom.AddGeometry(ogr.Geometry( type = ogr.wkbPolygon ))
 
@@ -3428,7 +3428,10 @@ def ogr_shape_70():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
+    old_val = gdal.GetConfigOption('OGR_SHAPE_PACK_IN_PLACE')
+    gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', 'NO')
     ds.ExecuteSQL('REPACK ogr_shape_70')
+    gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
     gdal.PopErrorHandler()
     errmsg = gdal.GetLastErrorMsg()
     ds = None
@@ -4553,6 +4556,257 @@ def ogr_shape_99():
 
     return 'success'
 
+###############################################################################
+# Test REPACK with both implementations
+
+def ogr_shape_100():
+
+    old_val = gdal.GetConfigOption('OGR_SHAPE_PACK_IN_PLACE')
+
+    for variant in [ 'YES', 'NO' ]:
+
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_shape_100.shp')
+        lyr = ds.CreateLayer('ogr_shape_100')
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+        f.SetField('foo', '1')
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 1,2 2,3 3)'))
+        f.SetField('foo', '2')
+        lyr.CreateFeature(f)
+        f = None
+        lyr.DeleteFeature(0)
+        gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', variant)
+
+        f_dbf = None
+        f_shp = None
+        f_shx = None
+        if sys.platform == 'win32' and variant == 'YES':
+            # Locks the files. No way to do this on Unix easily
+            f_dbf = open('tmp/ogr_shape_100.dbf', 'rb')
+            f_shp = open('tmp/ogr_shape_100.shp', 'rb')
+            f_shx = open('tmp/ogr_shape_100.shx', 'rb')
+
+        ds.ExecuteSQL('REPACK ogr_shape_100')
+
+        del f_dbf
+        del f_shp
+        del f_shx
+
+        gdal.SetConfigOption('OGR_SHAPE_PACK_IN_PLACE', old_val)
+
+        if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+
+        for ext in [ 'dbf', 'shp', 'shx', 'cpg' ]:
+            if gdal.VSIStatL('tmp/ogr_shape_100_packed.' + ext) is not None:
+                gdaltest.post_reason('fail')
+                print(variant)
+                print(ext)
+                return 'fail'
+
+        f = lyr.GetFeature(0)
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        with gdaltest.error_handler():
+            f = lyr.GetFeature(1)
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        lyr.ResetReading()
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (3 3,4 4,5 5,6 6)'))
+        f.SetField('foo', '3')
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        ds = ogr.Open('tmp/ogr_shape_100.shp')
+        lyr = ds.GetLayer(0)
+        if lyr.GetFeatureCount() != 2:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
+            gdaltest.post_reason('fail')
+            print(variant)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(variant)
+            return 'fail'
+        ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ogr_shape_100.shp')
+
+    return 'success'
+
+###############################################################################
+# Test auto repack
+
+def ogr_shape_101():
+
+    for i in range(2):
+
+        # Auto-repack on create
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_101.shp')
+        lyr = ds.CreateLayer('ogr_shape_101')
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+        f.SetField('foo', '1')
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 1,2 2,3 3)'))
+        f.SetField('foo', '2')
+        lyr.CreateFeature(f)
+        f = None
+        lyr.DeleteFeature(0)
+
+        if i == 0:
+            ds = None
+        else:
+            ds.SyncToDisk()
+            if lyr.GetFeatureCount() != 1:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            # No-op
+            ds.ExecuteSQL('REPACK ogr_shape_101')
+
+        ds_read = ogr.Open('/vsimem/ogr_shape_101.shp')
+        lyr = ds_read.GetLayer(0)
+        if lyr.GetFeatureCount() != 1:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f.GetFID() != 0 or f['foo'] != '2' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 1,2 2,3 3)':
+            gdaltest.post_reason('fail')
+            print(i)
+            f.DumpReadable()
+            return 'fail'
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+
+        ds = None
+        ds_read = None
+
+        if i == 0:
+
+            # Auto-repack on update
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp', update = 1)
+            lyr = ds.GetLayer(0)
+
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (3 3,4 4,5 5,6 6)'))
+            f.SetField('foo', '3')
+            lyr.CreateFeature(f)
+
+            lyr.DeleteFeature(0)
+            ds = None
+
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp')
+            lyr = ds.GetLayer(0)
+            if lyr.GetFeatureCount() != 1:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f.GetFID() != 0 or f['foo'] != '3' or f.GetGeometryRef().ExportToWkt() != 'LINESTRING (3 3,4 4,5 5,6 6)':
+                gdaltest.post_reason('fail')
+                print(i)
+                f.DumpReadable()
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f is not None:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            ds = None
+
+            # Test disabling auto-repack on update
+            ds = gdal.OpenEx('/vsimem/ogr_shape_101.shp', gdal.OF_UPDATE, open_options = ['AUTO_REPACK=NO'])
+            lyr = ds.GetLayer(0)
+
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetField('foo', '4')
+            lyr.CreateFeature(f)
+
+            lyr.DeleteFeature(0)
+            ds = None
+
+            ds = ogr.Open('/vsimem/ogr_shape_101.shp')
+            lyr = ds.GetLayer(0)
+            if lyr.GetFeatureCount() != 2:
+                gdaltest.post_reason('fail')
+                print(i)
+                return 'fail'
+            f = lyr.GetNextFeature()
+            if f.GetFID() != 1 or f['foo'] != '4':
+                gdaltest.post_reason('fail')
+                print(i)
+                f.DumpReadable()
+                return 'fail'
+
+            ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_101.shp')
+
+    return 'success'
+
+###############################################################################
+# Test reading invalid .prj
+
+def ogr_shape_102():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_102.shp')
+    lyr = ds.CreateLayer('ogr_shape_102', geom_type = ogr.wkbPoint)
+    ds = None
+    gdal.FileFromMemBuffer('/vsimem/ogr_shape_102.prj', 'invalid')
+    ds = ogr.Open('/vsimem/ogr_shape_102.shp')
+    lyr = ds.GetLayer(0)
+    lyr.GetSpatialRef()
+    ds = None
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/ogr_shape_102.shp')
+
+    return 'success'
+
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4588,6 +4842,8 @@ def ogr_shape_cleanup():
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_88.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_89.shp' )
     shape_drv.DeleteDataSource( '/vsimem/ogr_shape_90.shp' )
+    if os.path.exists( 'tmp/ogr_shape_100.shp' ):
+        shape_drv.DeleteDataSource( 'tmp/ogr_shape_100.shp' )
 
     return 'success'
 
@@ -4693,9 +4949,12 @@ gdaltest_list = [
     ogr_shape_97,
     ogr_shape_98,
     ogr_shape_99,
+    ogr_shape_100,
+    ogr_shape_101,
+    ogr_shape_102,
     ogr_shape_cleanup ]
 
-#gdaltest_list = [ ogr_shape_99 ]
+# gdaltest_list = [ ogr_shape_101 ]
 
 if __name__ == '__main__':
 

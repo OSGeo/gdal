@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: jpipkakdataset.cpp 2008-10-01 nbarker $
  *
  * Project:  jpip read driver
  * Purpose:  GDAL bindings for JPIP.
@@ -36,6 +35,8 @@
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 
+CPL_CVSID("$Id$");
+
 /*
 ** The following are for testing premature stream termination support.
 ** This is a mechanism to test handling of failed or incomplete reads
@@ -54,6 +55,8 @@ static int nPSTThisInstance = -1;
 static int nPSTTargetOffset = -1;
 #endif
 
+static bool kakadu_initialized = false;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                     Set up messaging services                        */
@@ -65,13 +68,12 @@ class jpipkak_kdu_cpl_error_message : public kdu_message
 public: // Member classes
     using kdu_message::put_text;
 
-    jpipkak_kdu_cpl_error_message( CPLErr eErrClass )
-    {
-        m_eErrClass = eErrClass;
-        m_pszError = NULL;
-    }
+    explicit jpipkak_kdu_cpl_error_message( CPLErr eErrClass ) :
+        m_eErrClass ( eErrClass ),
+        m_pszError ( NULL )
+    {}
 
-    void put_text(const char *string)
+    void put_text(const char *string) override
     {
         if( m_pszError == NULL )
             m_pszError = CPLStrdup( string );
@@ -87,7 +89,7 @@ public: // Member classes
     {
     };
 
-    void flush(bool end_of_message=false)
+    void flush(bool end_of_message=false) override
     {
         if( m_pszError == NULL )
             return;
@@ -167,19 +169,20 @@ JPIPKAKRasterBand::JPIPKAKRasterBand( int nBandIn, int nDiscardLevelsIn,
 
     if( nDiscardLevels == 0 )
     {
-        int  nXSize = nRasterXSize, nYSize = nRasterYSize;
+        int nXSize = nRasterXSize;
+        int nYSize = nRasterYSize;
 
         for( int nDiscard = 1; nDiscard < nResCount; nDiscard++ )
         {
-            kdu_dims  dims;
 
-            nXSize = (nXSize+1) / 2;
-            nYSize = (nYSize+1) / 2;
+            nXSize = (nXSize + 1) / 2;
+            nYSize = (nYSize + 1) / 2;
 
             if( (nXSize+nYSize) < 128 || nXSize < 4 || nYSize < 4 )
                 continue; /* skip super reduced resolution layers */
 
             oCodeStream->apply_input_restrictions( 0, 0, nDiscard, 0, NULL );
+            kdu_dims dims;
             oCodeStream->get_dims( 0, dims );
 
             if( (dims.size.x == nXSize || dims.size.x == nXSize-1)
@@ -472,16 +475,34 @@ void JPIPKAKDataset::Deinitialize()
     bNeedReinitialize = TRUE;
 }
 
+/************************************************************************/
+/*                          KakaduInitialize()                          */
+/************************************************************************/
+
+void JPIPKAKDataset::KakaduInitialize()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize Kakadu warning/error reporting subsystem.            */
+/* -------------------------------------------------------------------- */
+    if( !kakadu_initialized )
+    {
+        kakadu_initialized = true;
+
+        jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
+        jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
+
+        kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
+        kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
+    }
+}
+
 /*****************************************/
 /*         Initialize()                  */
 /*****************************************/
 int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 {
-    // set up message handlers
-    jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
-    jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
-    kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
-    kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
+    KakaduInitialize();
 
     // create necessary http headers
     CPLString osHeaders = "HEADERS=Accept: jpp-stream";
@@ -676,7 +697,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         else
             eDT = GDT_Byte;
 
-        if( poCodestream->get_bit_depth(0) % 8 != 8
+        if( (poCodestream->get_bit_depth(0) % 8) != 0
             && poCodestream->get_bit_depth(0) < 16 )
             SetMetadataItem(
                 "NBITS",
@@ -699,7 +720,6 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 
         bYCC=TRUE;
         cod_in->get("Cycc", 0, 0, bYCC);
-
     }
     catch(...)
     {
@@ -826,7 +846,6 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
             // treat as cartesian, no geo metadata
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Parsed metadata boxes from jpip stream, geographic metadata not found - is the server using placeholders for this data?" );
-
         }
     }
     catch(...)
@@ -930,6 +949,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid Bin-ID value format");
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else if (m >= 2) {
@@ -940,6 +960,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
                     if( nCodestream < 0 )
                     {
                         bError = TRUE;
+                        delete segment;
                         return NULL;
                     }
                 }
@@ -954,6 +975,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
             if( nNextVal == -1 )
             {
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else
@@ -963,6 +985,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
             if( nNextVal == -1 )
             {
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else
@@ -1082,7 +1105,6 @@ int JPIPKAKDataset::ReadFromInput(GByte* pabyData, int nLen, int &bError )
     return res;
 }
 
-
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
@@ -1091,7 +1113,7 @@ const char *JPIPKAKDataset::GetProjectionRef()
 
 {
     if( pszProjection && *pszProjection )
-        return( pszProjection );
+        return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
 }
@@ -1356,9 +1378,14 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->pBuf = pBuf;
         ario->pAppBuf = pBuf;
 
-        ario->nAppPixelSpace = ario->nPixelSpace = nPixelSpace;
-        ario->nAppLineSpace = ario->nLineSpace = nLineSpace;
-        ario->nAppBandSpace = ario->nBandSpace = nBandSpace;
+        ario->nAppPixelSpace = nPixelSpace;
+        ario->nPixelSpace = nPixelSpace;
+
+        ario->nAppLineSpace = nLineSpace;
+        ario->nLineSpace = nLineSpace;
+
+        ario->nAppBandSpace = nBandSpace;
+        ario->nBandSpace = nBandSpace;
     }
 
     // parse options
@@ -1393,7 +1420,8 @@ JPIPKAKDataset::BeginAsyncReader(int xOff, int yOff,
         ario->nLevel = atoi(pszLevel);
     else
     {
-        int nRXSize = xSize, nRYSize = ySize;
+        int nRXSize = xSize;
+        int nRYSize = ySize;
         ario->nLevel = 0;
 
         while( ario->nLevel < nResLevels
@@ -1419,7 +1447,6 @@ void JPIPKAKDataset::EndAsyncReader(GDALAsyncReader *poARIO)
     delete poARIO;
 }
 
-
 /*****************************************/
 /*             Open()                    */
 /*****************************************/
@@ -1434,8 +1461,7 @@ GDALDataset *JPIPKAKDataset::Open(GDALOpenInfo * poOpenInfo)
         // using cpl_http for the connection
         if  (CPLHTTPEnabled() == TRUE)
         {
-            JPIPKAKDataset *poDS;
-            poDS = new JPIPKAKDataset();
+            JPIPKAKDataset *poDS = new JPIPKAKDataset();
             if (poDS->Initialize(poOpenInfo->pszFilename,FALSE))
             {
                 poDS->SetDescription( poOpenInfo->pszFilename );
@@ -1489,8 +1515,16 @@ void GDALRegister_JPIPKAK()
 JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 {
     panBandMap = NULL;
-    pAppBuf = pBuf = NULL;
+    pAppBuf = NULL;
+    pBuf = NULL;
     nDataRead = 0;
+    nAppPixelSpace = 0;
+    nAppLineSpace = 0;
+    nAppBandSpace = 0;
+    nLevel = 0;
+    nQualityLayers = 0;
+    bHighPriority = FALSE;
+    bComplete = FALSE;
 }
 
 /************************************************************************/
@@ -1909,7 +1943,6 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
 
             poJDS->poDecompressor->finish();
             CPLReleaseMutex(poJDS->pGlobalMutex);
-
         }
         catch(...)
         {
@@ -1919,7 +1952,6 @@ JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
             return GARIO_ERROR;
         }
     } // nBandsCompleted < nBandCount
-
 
 /* -------------------------------------------------------------------- */
 /*      If the application buffer is of a different type than our       */
@@ -2086,7 +2118,6 @@ static void JPIPWorkerFunc(void *req)
 
         if ((nEnd - nStart) > 0)
             nCurrentTransmissionLength = (int) MAX(bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC), nMinimumTransmissionLength);
-
 
         CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 

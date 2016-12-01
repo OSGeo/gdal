@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  GML Reader
  * Purpose:  Implementation of GMLPropertyDefn
@@ -32,31 +31,23 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                           GMLPropertyDefn                            */
 /************************************************************************/
 
 GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
-                                  const char *pszSrcElement )
-
-{
-    m_pszName = CPLStrdup( pszName );
-    if( pszSrcElement != NULL )
-    {
-        m_nSrcElementLen = strlen( pszSrcElement );
-        m_pszSrcElement = CPLStrdup( pszSrcElement );
-    }
-    else
-    {
-        m_nSrcElementLen = 0;
-        m_pszSrcElement = NULL;
-    }
-    m_eType = GMLPT_Untyped;
-    m_nWidth = 0;
-    m_nPrecision = 0;
-    m_pszCondition = NULL;
-    m_bNullable = true;
-}
+                                  const char *pszSrcElement ) :
+    m_pszName(CPLStrdup(pszName)),
+    m_eType(GMLPT_Untyped),
+    m_nWidth(0),
+    m_nPrecision(0),
+    m_pszSrcElement(pszSrcElement ? CPLStrdup(pszSrcElement) : NULL),
+    m_nSrcElementLen(pszSrcElement ? strlen(pszSrcElement) : 0),
+    m_pszCondition(NULL),
+    m_bNullable(true)
+{}
 
 /************************************************************************/
 /*                          ~GMLPropertyDefn()                          */
@@ -172,9 +163,8 @@ void GMLPropertyDefn::AnalysePropertyValue( const GMLProperty* psGMLProperty,
         {
             if( bSetWidth )
             {
-                /* grow the Width to the length of the string passed in */
-                int nWidth;
-                nWidth = static_cast<int>(strlen(pszValue));
+                // Grow the Width to the length of the string passed in.
+                const int nWidth = static_cast<int>(strlen(pszValue));
                 if ( m_nWidth < nWidth )
                     SetWidth( nWidth );
             }
@@ -215,15 +205,14 @@ GMLGeometryPropertyDefn::GMLGeometryPropertyDefn( const char *pszName,
                                                   const char *pszSrcElement,
                                                   int nType,
                                                   int nAttributeIndex,
-                                                  bool bNullable )
-{
-    m_pszName = (pszName == NULL || pszName[0] == '\0') ?
-                        CPLStrdup(pszSrcElement) : CPLStrdup(pszName);
-    m_pszSrcElement = CPLStrdup(pszSrcElement);
-    m_nGeometryType = nType;
-    m_nAttributeIndex = nAttributeIndex;
-    m_bNullable = bNullable;
-}
+                                                  bool bNullable ) :
+    m_pszName((pszName == NULL || pszName[0] == '\0') ?
+              CPLStrdup(pszSrcElement) : CPLStrdup(pszName)),
+    m_pszSrcElement(CPLStrdup(pszSrcElement)),
+    m_nGeometryType(nType),
+    m_nAttributeIndex(nAttributeIndex),
+    m_bNullable(bNullable)
+{}
 
 /************************************************************************/
 /*                       ~GMLGeometryPropertyDefn                       */

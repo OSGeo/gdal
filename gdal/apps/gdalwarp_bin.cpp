@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  High Performance Image Reprojector
  * Purpose:  Test program for high performance warper API.
@@ -55,7 +54,8 @@ gdalwarp [--help-general] [--formats]
     [-te xmin ymin xmax ymax] [-te_srs srs_def]
     [-tr xres yres] [-tap] [-ts width height]
     [-ovr level|AUTO|AUTO-n|NONE] [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
+    [-srcalpha|-nosrcalpha] [-dstalpha]
     [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
     [-cutline datasource] [-cl layer] [-cwhere expression]
     [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
@@ -168,6 +168,10 @@ as a single operating system argument.  New files will be initialized to this
 value and if possible the nodata value will be recorded in the output
 file. Use a value of <tt>None</tt> to ensure that nodata is not defined (GDAL>=1.11).
 If this argument is not used then nodata values will be copied from the source dataset (GDAL>=1.11).</dd>
+<dt> <b>-srcalpha</b>:</dt><dd> Force the last band of a source image to be
+considered as a source alpha band. </dd>
+<dt> <b>-nosrcalpha</b>:</dt><dd> Prevent the alpha band of a source image to be
+considered as such (it will be warped as a regular band) (GDAL>=2.2). </dd>
 <dt> <b>-dstalpha</b>:</dt><dd> Create an output alpha band to identify
 nodata (unset/transparent) pixels. </dd>
 <dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in
@@ -178,8 +182,9 @@ input/output operation simultaneously.</dd>
 <dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
 <dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
 <dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation option to
-the output format driver. Multiple <b>-co</b> options may be listed. See
-format specific documentation for legal creation options for each format.
+the output format driver. Multiple <b>-co</b> options may be listed. See <a class="el"
+href="formats_list.html" title="GDAL Raster Formats">format specific
+documentation for legal creation options for each format</a>
 </dd>
 
 <dt> <b>-cutline</b> <em>datasource</em>:</dt><dd>Enable use of a blend cutline from the name OGR support datasource.</dd>
@@ -381,7 +386,13 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", NULL) == NULL )
     {
+#if defined(__MACH__) && defined(__APPLE__)
+        // On Mach, the default limit is 256 files per process
+        // TODO We should eventually dynamically query the limit for all OS
+        CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "100");
+#else
         CPLSetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "450");
+#endif
     }
 
     GDALWarpAppOptionsForBinary* psOptionsForBinary = GDALWarpAppOptionsForBinaryNew();

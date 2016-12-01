@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  WMS Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -30,14 +29,15 @@
 
 #include "wmsdriver.h"
 
-GDALWMSCache::GDALWMSCache() {
-    m_cache_path = "./gdalwmscache";
-    m_postfix = "";
-    m_cache_depth = 2;
-}
+CPL_CVSID("$Id$");
 
-GDALWMSCache::~GDALWMSCache() {
-}
+GDALWMSCache::GDALWMSCache() :
+    m_cache_path("./gdalwmscache"),
+    // No need to do the default: m_postfix("");
+    m_cache_depth(2)
+{}
+
+GDALWMSCache::~GDALWMSCache() {}
 
 CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
     const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL);
@@ -69,7 +69,7 @@ CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
 
 CPLErr GDALWMSCache::Write(const char *key, const CPLString &file_name) {
     CPLString cache_file(KeyToCacheFile(key));
-    //	printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
+    // printf("GDALWMSCache::Write(%s, %s) -> %s\n", key, file_name.c_str());
     if (CPLCopyFile(cache_file.c_str(), file_name.c_str()) != CE_None) {
         MakeDirs(cache_file.c_str());
         CPLCopyFile(cache_file.c_str(), file_name.c_str());

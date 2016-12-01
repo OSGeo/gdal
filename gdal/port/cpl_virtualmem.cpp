@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_virtualmem.cpp
  * Project:  CPL - Common Portability Library
@@ -38,12 +37,18 @@
 #endif
 
 #include "cpl_virtualmem.h"
-#include "cpl_error.h"
-#include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
-#include "cpl_conv.h"
 
 #include <cassert>
+// TODO(schwehr): Should ucontext.h be included?
+// #include <ucontext.h>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef NDEBUG
 /* Non NDEBUG: we ignore the result */
@@ -82,7 +87,7 @@ struct CPLVirtualMem
     void        *pDataToFree;  // returned by mmap(), potentially lower than pData
     size_t       nSize;        // requested size (unrounded)
 
-    int          bSingleThreadUsage;
+    bool         bSingleThreadUsage;
 
     void                         *pCbkUserData;
     CPLVirtualMemFreeUserData     pfnFreeUserData;
@@ -127,9 +132,8 @@ struct CPLVirtualMem
    - other things I've not identified
 */
 
-
-#define ALIGN_DOWN(p,pagesize)  (void*)(((size_t)(p)) / (pagesize) * (pagesize))
-#define ALIGN_UP(p,pagesize)    (void*)(((size_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
+#define ALIGN_DOWN(p,pagesize)  (void*)(((GUIntptr_t)(p)) / (pagesize) * (pagesize))
+#define ALIGN_UP(p,pagesize)    (void*)(((GUIntptr_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
 
 #define DEFAULT_PAGE_SIZE       (256*256)
 #define MAXIMUM_PAGE_SIZE       (32*1024*1024)
@@ -379,7 +383,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
     ctxt->sBase.pData = ALIGN_UP(pData, nPageSize);
     ctxt->sBase.nPageSize = nPageSize;
     ctxt->sBase.nSize = nSize;
-    ctxt->sBase.bSingleThreadUsage = bSingleThreadUsage;
+    ctxt->sBase.bSingleThreadUsage = CPL_TO_BOOL(bSingleThreadUsage);
     ctxt->sBase.pfnFreeUserData = pfnFreeUserData;
     ctxt->sBase.pCbkUserData = pCbkUserData;
 
@@ -553,7 +557,6 @@ void CPLVirtualMemUnDeclareThread(CPLVirtualMem* ctxt)
     CPLReleaseMutex(ctxtVMA->hMutexThreadArray);
 #endif
 }
-
 
 /************************************************************************/
 /*                     CPLVirtualMemGetPageToFill()                     */
@@ -1931,7 +1934,6 @@ void CPLVirtualMemManagerTerminate(void) {}
 
 #endif /* HAVE_VIRTUAL_MEM_VMA */
 
-
 #ifdef HAVE_MMAP
 
 /************************************************************************/
@@ -1977,7 +1979,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     }
 #endif
 
-    int fd = (int) (size_t) VSIFGetNativeFileDescriptorL(fp);
+    int fd = (int) (GUIntptr_t) VSIFGetNativeFileDescriptorL(fp);
     if( fd == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2035,6 +2037,8 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "mmap() failed : %s", strerror(myerrno));
         VSIFree(ctxt);
+        // cppcheck things we are leaking addr
+        // cppcheck-suppress memleak
         return NULL;
     }
 
@@ -2045,7 +2049,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
     ctxt->pDataToFree = addr;
     ctxt->nSize = static_cast<size_t>(nLength);
     ctxt->nPageSize = CPLGetPageSize();
-    ctxt->bSingleThreadUsage = FALSE;
+    ctxt->bSingleThreadUsage = false;
     ctxt->pfnFreeUserData = pfnFreeUserData;
     ctxt->pCbkUserData = pCbkUserData;
 
@@ -2053,7 +2057,6 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
 }
 
 #else /* HAVE_MMAP */
-
 
 CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* /* fp */,
                                         vsi_l_offset /* nOffset */,
@@ -2067,7 +2070,6 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* /* fp */,
              "operating system / configuration");
     return NULL;
 }
-
 
 #endif /* HAVE_MMAP */
 
@@ -2211,7 +2213,7 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(CPLVirtualMem* pVMemBase,
     ctxt->pDataToFree = NULL;
     ctxt->nSize = static_cast<size_t>(nSize);
     ctxt->nPageSize = pVMemBase->nPageSize;
-    ctxt->bSingleThreadUsage = pVMemBase->bSingleThreadUsage;
+    ctxt->bSingleThreadUsage = CPL_TO_BOOL(pVMemBase->bSingleThreadUsage);
     ctxt->pfnFreeUserData = pfnFreeUserData;
     ctxt->pCbkUserData = pCbkUserData;
 

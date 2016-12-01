@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Virtual GDAL Datasets
  * Purpose:  Implementation of VRTDriver
@@ -37,6 +36,8 @@
 
 CPL_CVSID("$Id$");
 
+/*! @cond Doxygen_Suppress */
+
 /************************************************************************/
 /*                             VRTDriver()                              */
 /************************************************************************/
@@ -60,6 +61,7 @@ VRTDriver::~VRTDriver()
 
 {
     CSLDestroy( papszSourceParsers );
+    VRTDerivedRasterBand::Cleanup();
 #if 0
     if(  pDeserializerData )
     {
@@ -117,9 +119,12 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
                                  VRTSourceParser pfnParser )
 
 {
-  char szPtrValue[128] = { '\0' };
+    char szPtrValue[128] = { '\0' };
+    void* ptr;
+    CPL_STATIC_ASSERT(sizeof(pfnParser) == sizeof(void*));
+    memcpy(&ptr, &pfnParser, sizeof(void*));
     int nRet = CPLPrintPointer( szPtrValue,
-                                reinterpret_cast<void*>(pfnParser),
+                                ptr,
                                 sizeof(szPtrValue) );
     szPtrValue[nRet] = 0;
 
@@ -147,9 +152,11 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( pszParserFunc == NULL )
         return NULL;
 
-    VRTSourceParser pfnParser = reinterpret_cast<VRTSourceParser>(
-        CPLScanPointer( pszParserFunc,
-                        static_cast<int>(strlen(pszParserFunc)) ) );
+    VRTSourceParser pfnParser;
+    CPL_STATIC_ASSERT(sizeof(pfnParser) == sizeof(void*));
+    void* ptr = CPLScanPointer( pszParserFunc,
+                        static_cast<int>(strlen(pszParserFunc)) );
+    memcpy(&pfnParser, &ptr, sizeof(void*));
 
     if( pfnParser == NULL )
         return NULL;
@@ -344,7 +351,13 @@ VRTCreateCopy( const char * pszFilename,
         poVRTDS->SetMaskBand( poVRTMaskBand );
     }
 
+    CPLErrorReset();
     poVRTDS->FlushCache();
+    if( CPLGetLastErrorType() != CE_None )
+    {
+        delete poVRTDS;
+        poVRTDS = NULL;
+    }
 
     return poVRTDS;
 }
@@ -356,6 +369,9 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
+    // First register the pixel functions
+    GDALRegisterDefaultPixelFunc();
+
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
 
@@ -392,3 +408,5 @@ void GDALRegister_VRT()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
+
+/*! @endcond */

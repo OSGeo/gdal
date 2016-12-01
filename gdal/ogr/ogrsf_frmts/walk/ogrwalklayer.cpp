@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrwalklayer.cpp
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRWalkLayer class.
@@ -29,27 +28,25 @@
 
 #include "ogrwalk.h"
 
+#include <algorithm>
+
+CPL_CVSID("$Id$");
+
 /************************************************************************/
 /*                            OGRWalkLayer()                            */
 /************************************************************************/
 
-OGRWalkLayer::OGRWalkLayer( )
-
-{
-    poDS = NULL;
-
-    bGeomColumnWKB = FALSE;
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
-    panFieldOrdinals = NULL;
-
-    poStmt = NULL;
-
-    poFeatureDefn = NULL;
-    iNextShapeId = 0;
-
-    poSRS = NULL;
-}
+OGRWalkLayer::OGRWalkLayer() :
+    poFeatureDefn(NULL),
+    poStmt(NULL),
+    poSRS(NULL),
+    iNextShapeId(0),
+    poDS(NULL),
+    bGeomColumnWKB(false),
+    pszGeomColumn(NULL),
+    pszFIDColumn(NULL),
+    panFieldOrdinals(NULL)
+{}
 
 /************************************************************************/
 /*                           ~OGRWalkLayer()                            */
@@ -61,7 +58,7 @@ OGRWalkLayer::~OGRWalkLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Walk", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead,
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 
@@ -99,7 +96,8 @@ CPLErr OGRWalkLayer::BuildFeatureDefn( const char *pszLayerName,
     {
         OGRFieldDefn    oField( poStmtIn->GetColName(iCol), OFTString );
 
-        oField.SetWidth( MAX(0,poStmtIn->GetColSize( iCol )) );
+        oField.SetWidth(
+            std::max(static_cast<short>(0), poStmtIn->GetColSize( iCol )));
 
         if( pszGeomColumn != NULL
             && EQUAL(poStmtIn->GetColName(iCol),pszGeomColumn) )    //If Geometry Column, continue to next field
@@ -185,7 +183,6 @@ void OGRWalkLayer::ResetReading()
     iNextShapeId = 0;
 }
 
-
 /************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
@@ -195,9 +192,7 @@ OGRFeature *OGRWalkLayer::GetNextFeature()
 {
     while( true )
     {
-        OGRFeature      *poFeature;
-
-        poFeature = GetNextRawFeature();
+        OGRFeature *poFeature = GetNextRawFeature();
         if( poFeature == NULL )
             return NULL;
 
@@ -287,7 +282,7 @@ OGRFeature *OGRWalkLayer::GetNextRawFeature()
 
         if ( eErr != OGRERR_NONE )
         {
-            const char *pszMessage;
+            const char *pszMessage = NULL;
 
             switch ( eErr )
             {

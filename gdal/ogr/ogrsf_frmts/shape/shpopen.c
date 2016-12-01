@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $
+ * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -275,7 +275,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.73 2012-01-24 22:33:01 fwarmerdam Exp $")
+SHP_CVSID("$Id$")
 
 typedef unsigned char uchar;
 
@@ -356,7 +356,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 
 {
-    uchar     	abyHeader[100];
+    uchar     	abyHeader[100] = { 0 };
     int		i;
     int32	i32;
     double	dValue;
@@ -371,8 +371,6 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;
@@ -1261,8 +1259,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;
@@ -1891,7 +1888,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         char szError[200];
 
         snprintf( szError, sizeof(szError),
-                 "Error in psSHP->sHooks.FWrite() while writing object of %d bytes to .shp file: %s",
+                 "Error in psSHP->sHooks.FWrite() while writing object of %u bytes to .shp file: %s",
                   nRecordSize, strerror(errno) );
         psSHP->sHooks.Error( szError );
 
@@ -2101,7 +2098,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             {
                 char str[128];
                 snprintf( str, sizeof(str),
-                         "Error in fread() reading object of size %u at offset %u from .shp file",
+                         "Error in fread() reading object of size %d at offset %u from .shp file",
                          nEntitySize, psSHP->panRecOffset[hEntity] );
 
                 psSHP->sHooks.Error( str );
@@ -2185,7 +2182,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
          */
         char str[128];
         snprintf( str, sizeof(str),
-                 "Error in fread() reading object of size %u at offset %u from .shp file",
+                 "Error in fread() reading object of size %d at offset %u from .shp file",
                  nEntitySize, psSHP->panRecOffset[hEntity] );
 
         psSHP->sHooks.Error( str );
@@ -2278,7 +2275,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d.",
+                     "Corrupted .shp file : shape %d, nPoints=%u, nParts=%u.",
                      hEntity, nPoints, nParts);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2302,7 +2299,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (nRequiredSize > nEntitySize)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d, nEntitySize=%d.",
+                     "Corrupted .shp file : shape %d, nPoints=%u, nParts=%u, nEntitySize=%d.",
                      hEntity, nPoints, nParts, nEntitySize);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2334,8 +2331,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->panPartType == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                    "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
-                    "Probably broken SHP file", hEntity, nPoints, nParts );
+                    "Not enough memory to allocate requested memory (nPoints=%u, nParts=%u) for shape %d. "
+                    "Probably broken SHP file", nPoints, nParts, hEntity );
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
@@ -2495,7 +2492,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (/* nPoints < 0 || */ nPoints > 50 * 1000 * 1000)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d : nPoints = %d",
+                     "Corrupted .shp file : shape %d : nPoints = %u",
                      hEntity, nPoints);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2510,7 +2507,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (nRequiredSize > nEntitySize)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
+                     "Corrupted .shp file : shape %d : nPoints = %u, nEntitySize = %d",
                      hEntity, nPoints, nEntitySize);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2537,8 +2534,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->padfM == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
-                     "Probably broken SHP file", hEntity, nPoints );
+                     "Not enough memory to allocate requested memory (nPoints=%u) for shape %d. "
+                     "Probably broken SHP file", nPoints, hEntity );
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;

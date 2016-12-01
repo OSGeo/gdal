@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: ogrcsvlayer.cpp 17496 2009-08-02 11:54:23Z rouault $
  *
  * Project:  PCIDSK Translator
  * Purpose:  Implements OGRPCIDSKLayer class.
@@ -29,6 +28,8 @@
  ****************************************************************************/
 
 #include "pcidskdataset2.h"
+
+#include <algorithm>
 
 CPL_CVSID("$Id$");
 
@@ -68,7 +69,6 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
             poFeatureDefn->SetGeomType( wkbNone );
     } catch(...) {}
 
-
 /* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
 /* -------------------------------------------------------------------- */
@@ -100,7 +100,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                 break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
 
@@ -151,7 +151,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 /* -------------------------------------------------------------------- */
 /*      Trap pcidsk exceptions.                                         */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK Exception while initializing layer, operation likely impaired.\n%s", ex.what() );
@@ -426,7 +426,7 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -521,16 +521,18 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
             {
                 if( !bHaveExtent )
                 {
-                    psExtent->MinX = psExtent->MaxX = asVertices[i].x;
-                    psExtent->MinY = psExtent->MaxY = asVertices[i].y;
+                    psExtent->MinX = asVertices[i].x;
+                    psExtent->MaxX = asVertices[i].x;
+                    psExtent->MinY = asVertices[i].y;
+                    psExtent->MaxY = asVertices[i].y;
                     bHaveExtent = true;
                 }
                 else
                 {
-                    psExtent->MinX = MIN(psExtent->MinX,asVertices[i].x);
-                    psExtent->MaxX = MAX(psExtent->MaxX,asVertices[i].x);
-                    psExtent->MinY = MIN(psExtent->MinY,asVertices[i].y);
-                    psExtent->MaxY = MAX(psExtent->MaxY,asVertices[i].y);
+                    psExtent->MinX = std::min(psExtent->MinX, asVertices[i].x);
+                    psExtent->MaxX = std::max(psExtent->MaxX, asVertices[i].x);
+                    psExtent->MinY = std::min(psExtent->MinY, asVertices[i].y);
+                    psExtent->MaxY = std::max(psExtent->MaxY, asVertices[i].y);
                 }
             }
         }
@@ -544,7 +546,7 @@ OGRErr OGRPCIDSKLayer::GetExtent (OGREnvelope *psExtent, int bForce)
 /* -------------------------------------------------------------------- */
 /*      Trap pcidsk exceptions.                                         */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK Exception while initializing layer, operation likely impaired.\n%s", ex.what() );
@@ -574,7 +576,7 @@ OGRErr OGRPCIDSKLayer::DeleteFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -606,7 +608,7 @@ OGRErr OGRPCIDSKLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -681,7 +683,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
               break;
 
               default:
-                CPLAssert( FALSE );
+                CPLAssert( false );
                 break;
             }
         }
@@ -732,13 +734,12 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
         }
 
         poVecSeg->SetVertices( id, aoVertices );
-
     } /* try */
 
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
@@ -812,7 +813,7 @@ OGRErr OGRPCIDSKLayer::CreateField( OGRFieldDefn *poFieldDefn,
 /* -------------------------------------------------------------------- */
 /*      Trap exceptions and report as CPL errors.                       */
 /* -------------------------------------------------------------------- */
-    catch( PCIDSK::PCIDSKException ex )
+    catch( const PCIDSK::PCIDSKException& ex )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );

@@ -37,9 +37,12 @@ this file is only about 3k of object code.  */
 #include "config.h"
 #endif
 
-#include <string.h>	/* for memcpy() and memset() */
+#include <string.h>  /* for memcpy() and memset() */
 
+#include "cpl_port.h"
 #include "md5.h"
+
+CPL_CVSID("$Id$");
 
 /* Little-endian byte-swapping routines.  Note that these do not
 depend on the size of datatypes such as cvs_uint32, nor do they require
@@ -49,7 +52,7 @@ surprised if they were a performance bottleneck for MD5.  */
 
 static cvs_uint32 getu32(const unsigned char *addr)
 {
-    return (((((unsigned long)addr[3] << 8) | addr[2]) << 8)
+    return (((((cvs_uint32)addr[3] << 8) | addr[2]) << 8)
         | addr[1]) << 8 | addr[0];
 }
 
@@ -97,10 +100,10 @@ struct cvs_MD5Context *ctx,
 
     t = ctx->bits[0];
     if ((ctx->bits[0] = (t + ((cvs_uint32)len << 3)) & 0xffffffff) < t)
-        ctx->bits[1]++;	/* Carry from low to high */
+        ctx->bits[1]++;  /* Carry from low to high */
     ctx->bits[1] += len >> 29;
 
-    t = (t >> 3) & 0x3f;	/* Bytes already in shsInfo->data */
+    t = (t >> 3) & 0x3f;  /* Bytes already in shsInfo->data */
 
     /* Handle any leading odd-sized chunks */
 
@@ -177,7 +180,7 @@ struct cvs_MD5Context *ctx)
     putu32(ctx->buf[1], digest + 4);
     putu32(ctx->buf[2], digest + 8);
     putu32(ctx->buf[3], digest + 12);
-    memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
+    memset(ctx, 0, sizeof(*ctx));  /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5

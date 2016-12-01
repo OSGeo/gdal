@@ -145,6 +145,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /* -------------------------------------------------------------------- */
 typedef int *SAFile;
 
+/* SAOffset was set to vsi_l_offset in r13274.  Why is the ifndef still here? */
 #ifndef SAOffset
 typedef unsigned long SAOffset;
 #endif
@@ -222,7 +223,6 @@ typedef SHPInfo * SHPHandle;
 #define SHPT_POLYGONM   25
 #define SHPT_MULTIPOINTM 28
 #define SHPT_MULTIPATCH 31
-
 
 /* -------------------------------------------------------------------- */
 /*      Part types - everything but SHPT_MULTIPATCH just uses           */
@@ -404,7 +404,6 @@ SHPSearchDiskTree( FILE *fp,
                    double *padfBoundsMin, double *padfBoundsMax,
                    int *pnShapeCount );
 
-
 typedef struct SHPDiskTreeInfo* SHPTreeDiskHandle;
 
 SHPTreeDiskHandle SHPAPI_CALL
@@ -421,7 +420,6 @@ SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
 
 int SHPAPI_CALL
     SHPWriteTreeLL(SHPTree *hTree, const char *pszFilename, SAHooks *psHooks );
-
 
 /* -------------------------------------------------------------------- */
 /*      SBN Search API                                                  */
@@ -504,7 +502,6 @@ typedef enum {
 } DBFFieldType;
 
 #define XBASE_FLDHDR_SZ       32
-
 
 DBFHandle SHPAPI_CALL
       DBFOpen( const char * pszDBFFile, const char * pszAccess );

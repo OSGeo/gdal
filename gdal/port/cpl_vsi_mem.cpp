@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VSI Virtual File System
  * Purpose:  Implementation of Memory Buffer virtual IO functions.
@@ -28,11 +27,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include <time.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
+#include <ctime>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include <map>
+#include <string>
+#include <utility>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+
+//! @cond Doxygen_Suppress
 
 CPL_CVSID("$Id$");
 
@@ -73,14 +93,15 @@ class VSIMemFile
 {
 public:
     CPLString     osFilename;
-    int           nRefCount;
+    volatile int  nRefCount;
 
-    int           bIsDirectory;
+    bool          bIsDirectory;
 
-    int           bOwnData;
+    bool          bOwnData;
     GByte        *pabyData;
     vsi_l_offset  nLength;
     vsi_l_offset  nAllocLength;
+    vsi_l_offset  nMaxLength;
 
     time_t        mTime;
 
@@ -101,20 +122,24 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
   public:
     VSIMemFile    *poFile;
     vsi_l_offset  m_nOffset;
-    int           bUpdate;
-    int           bEOF;
-    int           bExtendFileAtNextWrite;
+    bool          bUpdate;
+    bool          bEOF;
+    bool          bExtendFileAtNextWrite;
 
-                      VSIMemHandle() : poFile(NULL), m_nOffset(0), bUpdate(0),
-                                       bEOF(0), bExtendFileAtNextWrite(0) {}
+                      VSIMemHandle() :
+                          poFile(NULL),
+                          m_nOffset(0),
+                          bUpdate(false),
+                          bEOF(false),
+                          bExtendFileAtNextWrite(false) {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Close();
-    virtual int       Truncate( vsi_l_offset nNewSize );
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Close() override;
+    virtual int       Truncate( vsi_l_offset nNewSize ) override;
 };
 
 /************************************************************************/
@@ -136,14 +161,14 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
 
     static  void     NormalizePath( CPLString & );
 
@@ -162,11 +187,12 @@ public:
 
 VSIMemFile::VSIMemFile() :
     nRefCount(0),
-    bIsDirectory(FALSE),
-    bOwnData(TRUE),
+    bIsDirectory(false),
+    bOwnData(true),
     pabyData(NULL),
     nLength(0),
-    nAllocLength(0)
+    nAllocLength(0),
+    nMaxLength(GUINTBIG_MAX)
 {
     time(&mTime);
 }
@@ -179,7 +205,8 @@ VSIMemFile::~VSIMemFile()
 
 {
     if( nRefCount != 0 )
-        CPLDebug( "VSIMemFile", "Memory file %s deleted with %d references.",
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Memory file %s deleted with %d references.",
                   osFilename.c_str(), nRefCount );
 
     if( bOwnData && pabyData )
@@ -193,6 +220,13 @@ VSIMemFile::~VSIMemFile()
 bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 
 {
+    if( nNewLength > nMaxLength )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                    "Maximum file size reached!");
+        return false;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Grow underlying array if needed.                                */
 /* -------------------------------------------------------------------- */
@@ -243,7 +277,6 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
@@ -251,7 +284,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
 int VSIMemHandle::Close()
 
 {
-    if( --(poFile->nRefCount) == 0 )
+    if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
         delete poFile;
 
     poFile = NULL;
@@ -266,7 +299,7 @@ int VSIMemHandle::Close()
 int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    bExtendFileAtNextWrite = FALSE;
+    bExtendFileAtNextWrite = false;
     if( nWhence == SEEK_CUR )
         m_nOffset += nOffset;
     else if( nWhence == SEEK_SET )
@@ -279,7 +312,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         return -1;
     }
 
-    bEOF = FALSE;
+    bEOF = false;
 
     if( m_nOffset > poFile->nLength )
     {
@@ -296,7 +329,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
         }
         else // Writable files are zero-extended by seek past end.
         {
-            bExtendFileAtNextWrite = TRUE;
+            bExtendFileAtNextWrite = true;
         }
     }
 
@@ -327,13 +360,13 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     {
         if (poFile->nLength < m_nOffset)
         {
-            bEOF = TRUE;
+            bEOF = true;
             return 0;
         }
 
         nBytesToRead = (size_t)(poFile->nLength - m_nOffset);
         nCount = nBytesToRead / nSize;
-        bEOF = TRUE;
+        bEOF = true;
     }
 
     if( nBytesToRead )
@@ -357,7 +390,7 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
     }
     if( bExtendFileAtNextWrite )
     {
-        bExtendFileAtNextWrite = FALSE;
+        bExtendFileAtNextWrite = false;
         if( !poFile->SetLength( m_nOffset ) )
             return 0;
     }
@@ -402,7 +435,7 @@ int VSIMemHandle::Truncate( vsi_l_offset nNewSize )
         return -1;
     }
 
-    bExtendFileAtNextWrite = FALSE;
+    bExtendFileAtNextWrite = false;
     if (poFile->SetLength( nNewSize ))
         return 0;
     else
@@ -434,7 +467,7 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
          iter != oFileList.end();
          ++iter )
     {
-        iter->second->nRefCount--;
+        CPLAtomicDec(&(iter->second->nRefCount));
         delete iter->second;
     }
 
@@ -456,6 +489,14 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     CPLMutexHolder oHolder( &hMutex );
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
+
+    vsi_l_offset nMaxLength = GUINTBIG_MAX;
+    size_t iPos = osFilename.find("||maxlength=");
+    if( iPos != std::string::npos )
+    {
+        nMaxLength = static_cast<vsi_l_offset>(CPLAtoGIntBig(
+                    osFilename.substr(iPos + strlen("||maxlength=")).c_str()));
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the filename we are opening, create if needed.              */
@@ -482,12 +523,14 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         poFile = new VSIMemFile;
         poFile->osFilename = osFilename;
         oFileList[poFile->osFilename] = poFile;
-        poFile->nRefCount++; // for file list
+        CPLAtomicInc(&(poFile->nRefCount)); // for file list
+        poFile->nMaxLength = nMaxLength;
     }
     // Overwrite
     else if( strstr(pszAccess, "w") )
     {
         poFile->SetLength(0);
+        poFile->nMaxLength = nMaxLength;
     }
 
     if( poFile->bIsDirectory )
@@ -503,16 +546,16 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
 
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
-    poHandle->bEOF = FALSE;
+    poHandle->bEOF = false;
     if( strstr(pszAccess,"w") || strstr(pszAccess,"+")
         || strstr(pszAccess,"a") )
-        poHandle->bUpdate = TRUE;
+        poHandle->bUpdate = true;
     else
-        poHandle->bUpdate = FALSE;
+        poHandle->bUpdate = false;
 
-    poFile->nRefCount++;
+    CPLAtomicInc(&(poFile->nRefCount));
 
-    if( strstr(pszAccess,"a") )
+    if( strstr(pszAccess, "a") )
         poHandle->m_nOffset = poFile->nLength;
 
     return poHandle;
@@ -587,7 +630,6 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
 
-
     if( oFileList.find(osFilename) == oFileList.end() )
     {
         errno = ENOENT;
@@ -596,7 +638,7 @@ int VSIMemFilesystemHandler::Unlink_unlocked( const char * pszFilename )
 
     VSIMemFile *poFile = oFileList[osFilename];
 
-    if( --(poFile->nRefCount) == 0 )
+    if( CPLAtomicDec(&(poFile->nRefCount)) == 0 )
         delete poFile;
 
     oFileList.erase( oFileList.find(osFilename) );
@@ -627,9 +669,9 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
     VSIMemFile *poFile = new VSIMemFile;
 
     poFile->osFilename = osPathname;
-    poFile->bIsDirectory = TRUE;
+    poFile->bIsDirectory = true;
     oFileList[osPathname] = poFile;
-    poFile->nRefCount++; /* referenced by file list */
+    CPLAtomicInc(&(poFile->nRefCount)); /* referenced by file list */
 
     return 0;
 }
@@ -758,7 +800,6 @@ void VSIMemFilesystemHandler::NormalizePath( CPLString &oPath )
         if( oPath[i] == '\\' )
             oPath[i] = '/';
     }
-
 }
 
 /************************************************************************/
@@ -772,6 +813,8 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
         nRet = -1;
     return nRet;
 }
+
+//! @endcond
 
 /************************************************************************/
 /*                     VSIInstallLargeFileHandler()                     */
@@ -861,9 +904,9 @@ void VSIInstallMemFileHandler()
  */
 
 VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
-                          GByte *pabyData,
-                          vsi_l_offset nDataLength,
-                          int bTakeOwnership )
+                                GByte *pabyData,
+                                vsi_l_offset nDataLength,
+                                int bTakeOwnership )
 
 {
     if( VSIFileManager::GetHandler("")
@@ -882,7 +925,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
     VSIMemFile *poFile = new VSIMemFile;
 
     poFile->osFilename = osFilename;
-    poFile->bOwnData = bTakeOwnership;
+    poFile->bOwnData = CPL_TO_BOOL(bTakeOwnership);
     poFile->pabyData = pabyData;
     poFile->nLength = nDataLength;
     poFile->nAllocLength = nDataLength;
@@ -891,7 +934,7 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         CPLMutexHolder oHolder( &poHandler->hMutex );
         poHandler->Unlink_unlocked(osFilename);
         poHandler->oFileList[poFile->osFilename] = poFile;
-        poFile->nRefCount++;
+        CPLAtomicInc(&(poFile->nRefCount));
     }
 
     return (VSILFILE *) poHandler->Open( osFilename, "r+" );
@@ -924,7 +967,7 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
     VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
         VSIFileManager::GetHandler("/vsimem/");
 
-    if (pszFilename == NULL)
+    if( pszFilename == NULL )
         return NULL;
 
     CPLString osFilename = pszFilename;
@@ -946,10 +989,10 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
             CPLDebug( "VSIMemFile",
                       "File doesn't own data in VSIGetMemFileBuffer!" );
         else
-            poFile->bOwnData = FALSE;
+            poFile->bOwnData = false;
 
         poHandler->oFileList.erase( poHandler->oFileList.find(osFilename) );
-        --(poFile->nRefCount);
+        CPLAtomicDec(&(poFile->nRefCount));
         delete poFile;
     }
 

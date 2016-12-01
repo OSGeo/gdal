@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  VFK Reader - Data block property definition
  * Purpose:  Implements VFKPropertyDefn class.
@@ -35,39 +34,37 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+CPL_CVSID("$Id$");
+
 /*!
   \brief VFKPropertyDefn constructor
 
   \param pszName property name
   \param pszType property type (original, string)
-  \param bLatin2 TRUE for "ISO-8859-2" otherwise "WINDOWS-1250" is used (only for "text" type)
+  \param bLatin2 true for "ISO-8859-2" otherwise "WINDOWS-1250" is used (only for "text" type)
 */
-VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType,
-                                 bool bLatin2)
+VFKPropertyDefn::VFKPropertyDefn( const char *pszName, const char *pszType,
+                                  bool bLatin2 ) :
+    m_pszName(CPLStrdup(pszName)),
+    m_pszType(CPLStrdup(pszType)),
+    m_pszEncoding(NULL),
+    m_nWidth(0),
+    m_nPrecision(0)
 {
-    char *poChar, *poWidth, *pszWidth;
-    int   nLength;
-
-    m_pszName = CPLStrdup(pszName);
-    m_pszType = CPLStrdup(pszType);
-
-    poWidth = poChar = m_pszType + 1;
-    for (nLength = 0; *poChar && *poChar != '.'; nLength++, poChar++)
+    char *poWidth = m_pszType + 1;
+    char *poChar = m_pszType + 1;
+    int nLength = 0;  // Used after for.
+    for( ; *poChar && *poChar != '.'; nLength++, poChar++)
         ;
 
-    /* width */
-    pszWidth = (char *) CPLMalloc(nLength+1);
+    char *pszWidth = static_cast<char *>(CPLMalloc(nLength + 1));
     strncpy(pszWidth, poWidth, nLength);
     pszWidth[nLength] = '\0';
 
-    m_nWidth  = atoi(pszWidth);
+    m_nWidth = atoi(pszWidth);
     CPLFree(pszWidth);
 
-    /* precision */
-    m_nPrecision = 0;
-
-    /* type */
-    m_pszEncoding = NULL;
+    // Type.
     if (*m_pszType == 'N') {
         if (*poChar == '.') {
             m_eFType = OFTReal;
@@ -82,18 +79,18 @@ VFKPropertyDefn::VFKPropertyDefn(const char *pszName, const char *pszType,
         }
     }
     else if (*m_pszType == 'T') {
-        /* string */
+        // String.
         m_eFType = OFTString;
         m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
     }
     else if (*m_pszType == 'D') {
-        /* date */
-        /* m_eFType = OFTDateTime; */
+        // Date.
+        // m_eFType = OFTDateTime;
         m_eFType = OFTString;
         m_nWidth = 25;
     }
     else {
-        /* unknown - string */
+        // Unknown - string.
         m_eFType = OFTString;
         m_pszEncoding = bLatin2 ? CPLStrdup("ISO-8859-2") : CPLStrdup("WINDOWS-1250");
     }
@@ -106,7 +103,7 @@ VFKPropertyDefn::~VFKPropertyDefn()
 {
     CPLFree(m_pszName);
     CPLFree(m_pszType);
-    if (m_pszEncoding)
+    if( m_pszEncoding )
         CPLFree(m_pszEncoding);
 }
 

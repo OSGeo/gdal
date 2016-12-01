@@ -10,9 +10,9 @@ class TestOsrProj4 < Test::Unit::TestCase
     assert_in_delta(srs.get_proj_parm(Gdal::Osr::SRS_PP_SCALE_FACTOR).abs(), -1.000035.abs(), 0.0000005)
   end
 
-    
+
   # Verify that we can import strings with parameter values that are exponents
-  # and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla. 
+  # and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla.
   def test_exponents()
     srs = Gdal::Osr::SpatialReference.new()
     srs.import_from_proj4("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0 +lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n +a=6378206.400000 +rf=294.978698 +nadgrids=conus,ntv1_can.dat")

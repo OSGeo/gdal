@@ -27,14 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #include "ilwisdataset.h"
 #include <cfloat>
 #include <climits>
 
+#include <algorithm>
 #include <string>
 
 #include "gdal_frmts.h"
+
+CPL_CVSID("$Id$");
 
 using std::string;
 
@@ -49,8 +51,8 @@ bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 //////////////////////////////////////////////////////////////////////
 bool CompareAsNum::operator() (const string& s1, const string& s2) const
 {
-    long Num1 = atoi(s1.c_str());
-    long Num2 = atoi(s2.c_str());
+    int Num1 = atoi(s1.c_str());
+    int Num2 = atoi(s2.c_str());
     return Num1 < Num2;
 }
 
@@ -82,22 +84,24 @@ static string GetLine(VSILFILE* fil)
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-IniFile::IniFile(const string& filenam)
+IniFile::IniFile( const string& filenameIn ) :
+    filename(filenameIn),
+    bChanged(false)  // Start tracking changes.
 {
-    filename = filenam;
     Load();
-    bChanged = false; // Start tracking changes
 }
 
 IniFile::~IniFile()
 {
-    if (bChanged)
+    if( bChanged )
     {
         Store();
         bChanged = false;
     }
 
-    for (Sections::iterator iter = sections.begin(); iter != sections.end(); ++iter)
+    for( Sections::iterator iter = sections.begin();
+         iter != sections.end();
+         ++iter )
     {
         (*(*iter).second).clear();
         delete (*iter).second;
@@ -127,16 +131,16 @@ void IniFile::SetKeyValue(const string& section, const string& key, const string
 
 string IniFile::GetKeyValue(const string& section, const string& key)
 {
-	Sections::iterator iterSect = sections.find(section);
-	if (iterSect != sections.end())
-	{
-		SectionEntries *entries = (*iterSect).second;
-		SectionEntries::iterator iterEntry = (*entries).find(key);
-		if (iterEntry != (*entries).end())
-			return (*iterEntry).second;
-	}
+    Sections::iterator iterSect = sections.find(section);
+    if (iterSect != sections.end())
+    {
+        SectionEntries *entries = (*iterSect).second;
+        SectionEntries::iterator iterEntry = (*entries).find(key);
+        if (iterEntry != (*entries).end())
+            return (*iterEntry).second;
+    }
 
-	return string();
+    return string();
 }
 
 void IniFile::RemoveKeyValue(const string& section, const string& key)
@@ -197,6 +201,7 @@ void IniFile::Load()
             break;
           case ReadFindKey:
             s = GetLine(filIni); // fall through (no break)
+            CPL_FALLTHROUGH
           case FindKey:
           {
               size_t iEqu = s.find_first_of('=');
@@ -257,11 +262,11 @@ void IniFile::Store()
 // End of the implementation of IniFile class. ///////////////////////
 //////////////////////////////////////////////////////////////////////
 
-static long longConv(double x) {
-    if ((x == rUNDEF) || (x > LONG_MAX) || (x < LONG_MIN))
+static int intConv(double x) {
+    if ((x == rUNDEF) || (x > INT_MAX) || (x < INT_MIN))
         return iUNDEF;
 
-    return (long)floor(x + 0.5);
+    return (int)floor(x + 0.5);
 }
 
 string ReadElement(string section, string entry, string filename)
@@ -275,7 +280,7 @@ string ReadElement(string section, string entry, string filename)
 
     IniFile MyIniFile (filename);
 
-    return MyIniFile.GetKeyValue(section, entry);;
+    return MyIniFile.GetKeyValue(section, entry);
 }
 
 bool WriteElement(string sSection, string sEntry,
@@ -441,12 +446,11 @@ static CPLErr GetStoreType(string pszFileName, ilwisStoreType &stStoreType)
     return CE_None;
 }
 
-
 ILWISDataset::ILWISDataset() :
+    pszProjection(CPLStrdup("")),
     bGeoDirty(FALSE),
     bNewDataset(FALSE)
 {
-    pszProjection = CPLStrdup("");
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -531,9 +535,7 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
             adfGeoTransform[4] = 0.0;
             adfGeoTransform[5] = -PixelSizeY;
         }
-
     }
-
 }
 
 /************************************************************************/
@@ -605,7 +607,7 @@ CPLErr ILWISDataset::WriteGeoReference()
 const char *ILWISDataset::GetProjectionRef()
 
 {
-   return ( pszProjection );
+   return pszProjection;
 }
 
 /************************************************************************/
@@ -630,7 +632,7 @@ CPLErr ILWISDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform,  adfGeoTransform, sizeof(double) * 6 );
-    return( CE_None );
+    return CE_None;
 }
 
 /************************************************************************/
@@ -650,13 +652,13 @@ CPLErr ILWISDataset::SetGeoTransform( double * padfTransform )
 
 static bool CheckASCII(unsigned char * buf, int size)
 {
-	for (int i = 0; i < size; ++i)
-        {
-            if (!isascii(buf[i]))
-                return false;
-        }
+    for (int i = 0; i < size; ++i)
+    {
+        if (!isascii(buf[i]))
+            return false;
+    }
 
-	return true;
+    return true;
 }
 /************************************************************************/
 /*                       Open()                                         */
@@ -682,7 +684,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     if( ilwistype.length() == 0)
         return NULL;
 
-    string sFileType;	//map or map list
+    string sFileType;  // map or map list
     int    iBandCount;
     string mapsize;
     const string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
@@ -735,8 +737,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             GetStoreType(string(poOpenInfo->pszFilename), stStoreType) != CE_None )
         {
             //CPLError( CE_Failure, CPLE_AppDefined,
-            //			"Unsupported ILWIS data file. \n"
-            //			"can't treat as raster.\n" );
+            //          "Unsupported ILWIS data file. \n"
+            //          "can't treat as raster.\n" );
             return NULL;
         }
     }
@@ -756,7 +758,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
-    int Row = 0, Col = 0;
+    int Row = 0;
+    int Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
     {
         delete poDS;
@@ -793,7 +796,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (pszGeoRef.length() != 0) && !EQUAL(pszGeoRef.c_str(),"none"))
     {
 
-        //	Fetch coordinate system
+        // Fetch coordinate system
         string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
         string pszProj;
 
@@ -834,7 +837,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename, poOpenInfo->GetSiblingFiles() );
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -881,7 +884,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Translate the data type.                                        */
-/*	Determine store type of ILWIS raster                            */
+/*      Determine store type of ILWIS raster                            */
 /* -------------------------------------------------------------------- */
     string sDomain= "value.dom";
     double stepsize = 1;
@@ -998,7 +1001,7 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
     }
 
     return poDS;
-    //return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    // return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
 /************************************************************************/
@@ -1225,18 +1228,21 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*                       ILWISRasterBand()                              */
 /************************************************************************/
 
-ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
-
+ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn ) :
+    fpRaw(NULL),
+    nSizePerPixel(0)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     string sBandName;
-    if ( EQUAL(poDSIn->pszFileType.c_str(),"Map"))
-        sBandName = string(poDSIn->osFileName);
-    else //map list
+    if( EQUAL(poDSIn->pszFileType.c_str(), "Map"))
     {
-        //Form the band name
+        sBandName = string(poDSIn->osFileName);
+    }
+    else  // Map list.
+    {
+        // Form the band name.
         char cBandName[45];
         snprintf( cBandName, sizeof(cBandName), "Map%d", nBand-1);
         sBandName = ReadElement("MapList", string(cBandName), string(poDSIn->osFileName));
@@ -1249,7 +1255,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
           sBandName = string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));
     }
 
-    if (poDSIn->bNewDataset)
+    if( poDSIn->bNewDataset )
     {
       // Called from Create():
       // eDataType is defaulted to GDT_Byte by GDALRasterBand::GDALRasterBand
@@ -1260,26 +1266,28 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn )
         eDataType = ILWIS2GDALType(psInfo.stStoreType);
     }
     else // Called from Open(), thus convert ILWIS type from ODF to eDataType
+    {
         GetILWISInfo(sBandName);
+    }
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
-    switch (psInfo.stStoreType)
+    switch( psInfo.stStoreType )
     {
       case stByte:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Byte) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Byte);
         break;
       case stInt:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Int16) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Int16) ;
         break;
       case stLong:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Int32) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Int32);
         break;
       case stFloat:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Float32) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Float32);
         break;
       case stReal:
-        nSizePerPixel = GDALGetDataTypeSize(GDT_Float64) / 8;
+        nSizePerPixel = GDALGetDataTypeSizeBytes(GDT_Float64);
         break;
     }
     ILWISOpen(sBandName);
@@ -1298,7 +1306,6 @@ ILWISRasterBand::~ILWISRasterBand()
         fpRaw = NULL;
     }
 }
-
 
 /************************************************************************/
 /*                             ILWISOpen()                             */
@@ -1327,7 +1334,7 @@ void ILWISRasterBand::ReadValueDomainProperties(string pszFileName)
         psInfo.bUseValueRange = true; // use ILWIS ValueRange object to convert from "raw" to "value"
         double rMin = psInfo.vr.get_rLo();
         double rMax = psInfo.vr.get_rHi();
-        if (rStep - (long)rStep == 0.0) // Integer values
+        if (rStep >= INT_MIN && rStep <= INT_MAX && rStep - (int)rStep == 0.0) // Integer values
         {
             if ( rMin >= 0 && rMax <= UCHAR_MAX)
               eDataType =  GDT_Byte;
@@ -1429,7 +1436,7 @@ CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
         // No match found. Assume it is a self-created domain. Read its type and decide the GDAL type.
         string pszDomainFileName = string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"dom" ));
         string domType = ReadElement("Domain", "Type", pszDomainFileName.c_str());
-        if EQUAL(domType.c_str(),"domainvalue") // is it a self-created domain of type=DomainValue?
+        if( EQUAL(domType.c_str(),"domainvalue") ) // is it a self-created domain of type=DomainValue?
         {
             ReadValueDomainProperties(pszFileName);
         }
@@ -1481,13 +1488,13 @@ CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open ILWIS data file.");
-        return( CE_Failure );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
-/*	Handle the case of a strip in a writable file that doesn't          */
-/*	exist yet, but that we want to read.  Just set to zeros and         */
-/*	return.                                                             */
+/*      Handle the case of a strip in a writable file that doesn't      */
+/*      exist yet, but that we want to read.  Just set to zeros and     */
+/*      return.                                                         */
 /* -------------------------------------------------------------------- */
     ILWISDataset* poIDS = (ILWISDataset*) poDS;
 
@@ -1555,7 +1562,7 @@ CPLErr ILWISRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
           ((double *) pImage)[iCol] = ((double *) pData)[iCol];
         break;
       default:
-        CPLAssert(0);
+        CPLAssert(false);
     }
 
     // Officially we should also translate "nodata" values, but at this point
@@ -1590,7 +1597,7 @@ void ILWISRasterBand::SetValue(void *pImage, int i, double rV) {
       ((double *) pImage)[i] = rV;
       break;
     default:
-      CPLAssert(0);
+      CPLAssert(false);
     }
 }
 
@@ -1619,7 +1626,7 @@ double ILWISRasterBand::GetValue(void *pImage, int i) {
       rV = ((double *) pImage)[i];
       break;
     default:
-      CPLAssert(0);
+      CPLAssert(false);
     }
     return rV;
 }
@@ -1834,7 +1841,7 @@ static double doubleConv(const char* s)
 
     if (strlen(begin) == 0) return rUNDEF;
     errno = 0;
-    char *endptr;
+    char *endptr = NULL;
     const double r = CPLStrtod(begin, &endptr);
     if ((0 == *endptr) && (errno==0))
         return r;
@@ -1846,17 +1853,23 @@ static double doubleConv(const char* s)
     return r;
 }
 
-ValueRange::ValueRange(string sRng) :
-    _rLo(0.0), _rHi(0.0), _rStep(0.0), _iDec(0), _r0(0.0), iRawUndef(0),
-    _iWidth(0), st(stByte)
+ValueRange::ValueRange( string sRng ) :
+    _rLo(0.0),
+    _rHi(0.0),
+    _rStep(0.0),
+    _iDec(0),
+    _r0(0.0),
+    iRawUndef(0),
+    _iWidth(0),
+    st(stByte)
 {
     char* sRange = new char[sRng.length() + 1];
-    for (unsigned int i = 0; i < sRng.length(); ++i)
+    for( unsigned int i = 0; i < sRng.length(); ++i )
         sRange[i] = sRng[i];
     sRange[sRng.length()] = 0;
 
     char *p1 = strchr(sRange, ':');
-    if (NULL == p1)
+    if( NULL == p1 )
     {
         delete[] sRange;
         init();
@@ -1864,27 +1877,31 @@ ValueRange::ValueRange(string sRng) :
     }
 
     char *p3 = strstr(sRange, ",offset=");
-    if (NULL == p3)
+    if( NULL == p3 )
         p3 = strstr(sRange, ":offset=");
     _r0 = rUNDEF;
-    if (NULL != p3) {
+    if( NULL != p3 )
+    {
         _r0 = doubleConv(p3+8);
         *p3 = 0;
     }
     char *p2 = strrchr(sRange, ':');
     _rStep = 1;
-    if (p1 != p2) { // step
+    if( p1 != p2 )
+    { // step
         _rStep = doubleConv(p2+1);
         *p2 = 0;
     }
 
     p2 = strchr(sRange, ':');
-    if (p2 != NULL) {
+    if( p2 != NULL )
+    {
         *p2 = 0;
         _rLo = CPLAtof(sRange);
         _rHi = CPLAtof(p2+1);
     }
-    else {
+    else
+    {
         _rLo = CPLAtof(sRange);
         _rHi = _rLo;
     }
@@ -1893,7 +1910,7 @@ ValueRange::ValueRange(string sRng) :
     delete [] sRange;
 }
 
-ValueRange::ValueRange(double min, double max)	// step = 1
+ValueRange::ValueRange( double min, double max )  // step = 1
 {
     _rLo = min;
     _rHi = max;
@@ -1901,7 +1918,7 @@ ValueRange::ValueRange(double min, double max)	// step = 1
     init();
 }
 
-ValueRange::ValueRange(double min, double max, double step)
+ValueRange::ValueRange( double min, double max, double step )
 {
     _rLo = min;
     _rHi = max;
@@ -1909,7 +1926,7 @@ ValueRange::ValueRange(double min, double max, double step)
     init();
 }
 
-static ilwisStoreType stNeeded(unsigned long iNr)
+static ilwisStoreType stNeeded(unsigned int iNr)
 {
     if (iNr <= 256)
         return stByte;
@@ -1923,7 +1940,7 @@ void ValueRange::init()
     init(rUNDEF);
 }
 
-void ValueRange::init(double rRaw0)
+void ValueRange::init( double rRaw0 )
 {
         _iDec = 0;
         if (_rStep < 0)
@@ -1939,7 +1956,7 @@ void ValueRange::init(double rRaw0)
         }
 
         short iBeforeDec = 1;
-        double rMax = MAX(fabs(get_rLo()), fabs(get_rHi()));
+        double rMax = std::max(fabs(get_rLo()), fabs(get_rHi()));
         if (rMax != 0)
             iBeforeDec = (short)floor(log10(rMax)) + 1;
         if (get_rLo() < 0)
@@ -1956,15 +1973,15 @@ void ValueRange::init(double rRaw0)
         }
         else {
             r = get_rHi() - get_rLo();
-            if (r <= ULONG_MAX) {
+            if (r <= UINT_MAX) {
                 r /= _rStep;
                 r += 1;
             }
             r += 1;
-            if (r > LONG_MAX)
+            if (r > INT_MAX)
                 st = stReal;
             else {
-                st = stNeeded((unsigned long)floor(r+0.5));
+                st = stNeeded((unsigned int)floor(r+0.5));
                 if (st < stByte)
                     st = stByte;
             }
@@ -2023,10 +2040,8 @@ int ValueRange::iRaw(double rValueIn)
     rValueIn /= _rStep;
     double rVal = floor(rValueIn+0.5);
     rVal -= _r0;
-    long iVal = longConv(rVal);
-    return static_cast<int>(iVal);
+    return intConv(rVal);
 }
-
 
 /************************************************************************/
 /*                    GDALRegister_ILWIS()                              */

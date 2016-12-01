@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+//! @cond Doxygen_Suppress
+
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h"
 #endif
@@ -174,7 +176,6 @@ static const struct tagname {
     { 0x0000, ""}
 };
 
-
 static const struct intr_tag {
   GInt16        tag;
   const char*   name;
@@ -233,3 +234,5 @@ extern void TIFFSwabArrayOfShort(GUInt16*, unsigned long);
 extern void TIFFSwabArrayOfLong(GUInt32*, unsigned long);
 extern void TIFFSwabArrayOfDouble(double*, unsigned long);
 CPL_C_END
+
+//! @endcond

@@ -30,6 +30,8 @@
 #ifndef GDAL_UTILS_PRIV_H_INCLUDED
 #define GDAL_UTILS_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_port.h"
 #include "gdal_utils.h"
 
@@ -145,5 +147,7 @@ struct GDALBuildVRTOptionsForBinary
 };
 
 CPL_C_END
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */

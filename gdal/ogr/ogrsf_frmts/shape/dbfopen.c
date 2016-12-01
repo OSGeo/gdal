@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $
+ * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -170,7 +170,7 @@
 #define CPLsprintf sprintf
 #endif
 
-SHP_CVSID("$Id: dbfopen.c,v 1.89 2011-07-24 05:59:25 fwarmerdam Exp $")
+SHP_CVSID("$Id$")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -207,8 +207,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 static void DBFWriteHeader(DBFHandle psDBF)
 
 {
-    unsigned char	abyHeader[XBASE_FLDHDR_SZ];
-    int		i;
+    unsigned char	abyHeader[XBASE_FLDHDR_SZ] = { 0 };
 
     if( !psDBF->bNoHeader )
         return;
@@ -218,9 +217,6 @@ static void DBFWriteHeader(DBFHandle psDBF)
 /* -------------------------------------------------------------------- */
 /*	Initialize the file header information.				*/
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < XBASE_FLDHDR_SZ; i++ )
-        abyHeader[i] = 0;
-
     abyHeader[0] = 0x03;		/* memo field? - just copying 	*/
 
     /* write out update date */
@@ -1635,8 +1631,11 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    newDBF->nRecordLength = psDBF->nRecordLength;
    newDBF->nHeaderLength = psDBF->nHeaderLength;
 
-   newDBF->pszHeader = (char *) malloc ( newDBF->nHeaderLength );
-   memcpy ( newDBF->pszHeader, psDBF->pszHeader, newDBF->nHeaderLength );
+   if( psDBF->pszHeader )
+   {
+        newDBF->pszHeader = (char *) malloc ( XBASE_FLDHDR_SZ * psDBF->nFields );
+        memcpy ( newDBF->pszHeader, psDBF->pszHeader, XBASE_FLDHDR_SZ * psDBF->nFields );
+   }
 
    newDBF->panFieldOffset = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldOffset, psDBF->panFieldOffset, sizeof(int) * psDBF->nFields );
@@ -1951,9 +1950,9 @@ DBFReorderFields( DBFHandle psDBF, int* panMap )
 
     /* a simple malloc() would be enough, but calloc() helps clang static analyzer */
     panFieldOffsetNew = (int *) calloc(sizeof(int), psDBF->nFields);
-    panFieldSizeNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
-    panFieldDecimalsNew = (int *) malloc(sizeof(int) *  psDBF->nFields);
-    pachFieldTypeNew = (char *) malloc(sizeof(char) *  psDBF->nFields);
+    panFieldSizeNew = (int *) calloc(sizeof(int),  psDBF->nFields);
+    panFieldDecimalsNew = (int *) calloc(sizeof(int), psDBF->nFields);
+    pachFieldTypeNew = (char *) calloc(sizeof(char), psDBF->nFields);
     pszHeaderNew = (char*) malloc(sizeof(char) * 32 *  psDBF->nFields);
 
     /* shuffle fields definitions */
@@ -2135,6 +2134,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
         char* pszRecord = (char *) malloc(sizeof(char) * nOldRecordLength);
         char* pszOldField = (char *) malloc(sizeof(char) * (nOldWidth + 1));
 
+        /* cppcheck-suppress uninitdata */
         pszOldField[nOldWidth] = 0;
 
         /* move records to their new positions */
@@ -2189,6 +2189,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
         char* pszRecord = (char *) malloc(sizeof(char) * psDBF->nRecordLength);
         char* pszOldField = (char *) malloc(sizeof(char) * (nOldWidth + 1));
 
+        /* cppcheck-suppress uninitdata */
         pszOldField[nOldWidth] = 0;
 
         /* move records to their new positions */

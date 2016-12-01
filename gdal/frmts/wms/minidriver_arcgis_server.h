@@ -28,46 +28,46 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-H_GDALWMSMiniDriverFactory(AGS)
+#include "wmsdriver.h"
 
-class GDALWMSMiniDriver_AGS : public GDALWMSMiniDriver
+class WMSMiniDriver_AGS : public WMSMiniDriver
 {
 public:
-    GDALWMSMiniDriver_AGS();
-    virtual ~GDALWMSMiniDriver_AGS();
+    WMSMiniDriver_AGS();
+    virtual ~WMSMiniDriver_AGS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config);
-    virtual void GetCapabilities(GDALWMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) override;
     virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri,
-                                   const GDALWMSTiledImageRequestInfo &tiri);
+                                   const GDALWMSTiledImageRequestInfo &tiri) override;
     virtual void GetTiledImageInfo(CPLString *url,
                                    const GDALWMSImageRequestInfo &iri,
                                    const GDALWMSTiledImageRequestInfo &tiri,
                                    int nXInBlock,
-                                   int nYInBlock);
-    virtual const char *GetProjectionInWKT();
+                                   int nYInBlock) override;
+    virtual const char *GetProjectionInWKT() override;
 
 protected:
-    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
+    static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
 
 protected:
     CPLString m_base_url;
-	/*
-	 * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
-	 * http://resources.arcgis.com/en/help/rest/apiref/
-	 * Parameter - format
-	 */
-	CPLString m_image_format;
-	CPLString m_transparent;
-	CPLString m_bbox_order;
-	CPLString m_irs;
+    /*
+     * png | png8 | png24 | jpg | pdf | bmp | gif | svg | png32
+     * http://resources.arcgis.com/en/help/rest/apiref/
+     * Parameter - format
+     */
+    CPLString m_image_format;
+    CPLString m_transparent;
+    CPLString m_bbox_order;
+    CPLString m_irs;
 
     CPLString m_layers;
     CPLString m_srs;
     CPLString m_crs;
     CPLString m_projection_wkt;
 
-	CPLString m_identification_tolerance;
+    CPLString m_identification_tolerance;
 };

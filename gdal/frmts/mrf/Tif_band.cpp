@@ -45,6 +45,8 @@
 
 #include "marfa.h"
 
+CPL_CVSID("$Id$");
+
 NAMESPACE_MRF_START
 
 // Returns a string in /vsimem/ + prefix + count that doesn't exist when this function gets called
@@ -78,44 +80,44 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
     CPLString fname = uniq_memfname("mrf_tif_write");
 
     GDALDataset *poTiff = poTiffDriver->Create(fname, img.pagesize.x, img.pagesize.y,
-	img.pagesize.c, img.dt, papszOptions );
+                                               img.pagesize.c, img.dt, papszOptions );
 
     // Read directly to avoid double caching in GDAL
     // Unfortunately not possible for multiple bands
     if (img.pagesize.c == 1) {
-	ret = poTiff->GetRasterBand(1)->WriteBlock(0,0,src.buffer);
+        ret = poTiff->GetRasterBand(1)->WriteBlock(0,0,src.buffer);
     } else {
-	ret = poTiff->RasterIO(GF_Write, 0,0,img.pagesize.x,img.pagesize.y,
-	    src.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-	    NULL, 0,0,0
+        ret = poTiff->RasterIO(GF_Write, 0,0,img.pagesize.x,img.pagesize.y,
+            src.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
+            NULL, 0,0,0
 #if GDAL_VERSION_MAJOR >= 2
             ,NULL
 #endif
-	    );
+            );
     }
-    if (CE_None != ret)	return ret;
+    if (CE_None != ret) return ret;
     GDALClose(poTiff);
 
     // Check that we can read the file
     if (VSIStatL(fname, &statb))
     {
-	CPLError(CE_Failure,CPLE_AppDefined,
-	    "MRF: TIFF, can't stat %s", fname.c_str());
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF, can't stat %s", fname.c_str());
         return CE_Failure;
     }
 
     if (size_t(statb.st_size) > dst.size)
     {
-	CPLError(CE_Failure,CPLE_AppDefined,
-	    "MRF: TIFF, Tiff generated is too large");
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF, Tiff generated is too large");
         return CE_Failure;
     }
 
     VSILFILE *pf = VSIFOpenL(fname,"rb");
     if (pf == NULL)
     {
-	CPLError(CE_Failure,CPLE_AppDefined,
-	    "MRF: TIFF, can't open %s", fname.c_str());
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF, can't open %s", fname.c_str());
         return CE_Failure;
     }
 
@@ -134,10 +136,10 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     VSILFILE *fp = VSIFileFromMemBuffer(fname, (GByte *)(src.buffer), src.size, false);
     // Comes back opened, but we can't use it
     if (fp)
-	VSIFCloseL(fp);
+        VSIFCloseL(fp);
     else {
-	CPLError(CE_Failure,CPLE_AppDefined,
-	    "MRF: TIFF, can't open %s as a temp file", fname.c_str());
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF, can't open %s as a temp file", fname.c_str());
         return CE_Failure;
     }
 #if GDAL_VERSION_MAJOR >= 2
@@ -147,8 +149,8 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
 #endif
     if (poTiff == NULL) {
-	CPLError(CE_Failure,CPLE_AppDefined,
-	    "MRF: TIFF, can't open page as a Tiff");
+        CPLError(CE_Failure,CPLE_AppDefined,
+            "MRF: TIFF, can't open page as a Tiff");
         VSIUnlink(fname);
         return CE_Failure;
     }
@@ -156,15 +158,15 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     CPLErr ret;
     // Bypass the GDAL caching
     if (img.pagesize.c == 1) {
-	ret = poTiff->GetRasterBand(1)->ReadBlock(0,0,dst.buffer);
+        ret = poTiff->GetRasterBand(1)->ReadBlock(0,0,dst.buffer);
     } else {
-	ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
-	    dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-	    NULL, 0,0,0
+        ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
+            dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
+            NULL, 0,0,0
 #if GDAL_VERSION_MAJOR >= 2
             ,NULL
 #endif
-	    );
+            );
     }
     GDALClose(poTiff);
     VSIUnlink(fname);
@@ -182,8 +184,9 @@ CPLErr TIF_Band::Compress(buf_mgr &dst, buf_mgr &src)
     return CompressTIF(dst,src,img, papszOptions);
 }
 
-TIF_Band::TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
-        GDALMRFRasterBand(pDS,image,b,int(level))
+TIF_Band::TIF_Band( GDALMRFDataset *pDS, const ILImage &image,
+                    int b, int level ):
+    GDALMRFRasterBand(pDS, image, b, int(level))
 {
     // Increase the page buffer by 1K in case Tiff expands data
     pDS->SetPBufferSize(image.pageSizeBytes + 1024);
@@ -191,12 +194,16 @@ TIF_Band::TIF_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level):
     // Static create options for TIFF tiles
     papszOptions = CSLAddNameValue(NULL, "COMPRESS", "DEFLATE");
     papszOptions = CSLAddNameValue(papszOptions, "TILED", "Yes");
-    papszOptions = CSLAddNameValue(papszOptions, "BLOCKXSIZE", CPLString().Printf("%d",img.pagesize.x));
-    papszOptions = CSLAddNameValue(papszOptions, "BLOCKYSIZE", CPLString().Printf("%d",img.pagesize.y));
+    papszOptions = CSLAddNameValue(papszOptions, "BLOCKXSIZE",
+                                   CPLString().Printf("%d",img.pagesize.x));
+    papszOptions = CSLAddNameValue(papszOptions, "BLOCKYSIZE",
+                                   CPLString().Printf("%d",img.pagesize.y));
     int q = img.quality / 10;
-    // Move down so the default 85 maps to 6.  This makes the maz ZLEVEL 8, which is OK
+    // Move down so the default 85 maps to 6.  This makes the maz
+    // ZLEVEL 8, which is OK.
     if (q >2) q-=2;
-    papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL", CPLString().Printf("%d",q));
+    papszOptions = CSLAddNameValue(papszOptions, "ZLEVEL",
+                                   CPLString().Printf("%d", q));
 };
 
 TIF_Band::~TIF_Band()

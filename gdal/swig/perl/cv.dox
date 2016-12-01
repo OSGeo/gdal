@@ -34,7 +34,7 @@ die "Can't create data source $dsname: $@" if $@;
 $osr = Geo::OSR::SpatialReference->new(WGS => 84);
 
 $layer = $datasource->CreateLayer(
-    Name => $lname, 
+    Name => $lname,
     SRS => $osr,
     # add the fields as in @data
     Fields => [
@@ -44,9 +44,9 @@ $layer = $datasource->CreateLayer(
     );
 
 for $item (@data) {
-    my @ring = ( $item->{points}[0], 
-                 $item->{points}[1], 
-                 $item->{points}[2], 
+    my @ring = ( $item->{points}[0],
+                 $item->{points}[1],
+                 $item->{points}[2],
                  $item->{points}[3],
                  $item->{points}[0] # close the ring
         );
@@ -61,7 +61,7 @@ for $item (@data) {
 # check that we got it ok
 
 $layer = $datasource->GetLayer($lname);
-while ($feature = $layer->GetNextFeature()) {  
+while ($feature = $layer->GetNextFeature()) {
     $feature->DumpReadable;
 }
 \endcode

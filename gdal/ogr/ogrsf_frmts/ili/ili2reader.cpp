@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Implementation of ILI2Reader class.
@@ -35,10 +34,6 @@
 
 #include "ili2reader.h"
 
-
-//from trstring.cpp/gmlreaderp.h
-char *tr_strdup( const XMLCh * );
-
 using namespace std;
 
 CPL_CVSID("$Id$");
@@ -47,7 +42,8 @@ CPL_CVSID("$Id$");
 // constants
 //
 static const char * const ILI2_TID = "TID";
-static const char * const ILI2_REF = "REF";
+static const XMLCh xmlch_ILI2_TID[] = {'T', 'I', 'D', '\0' };
+static const XMLCh ILI2_REF[] = {'R', 'E', 'F', '\0' };
 
 static const int ILI2_STRING_TYPE = 0;
 static const int ILI2_COORD_TYPE = 1;
@@ -63,7 +59,6 @@ static const char * const ILI2_POLYLINE = "POLYLINE";
 static const char * const ILI2_BOUNDARY = "BOUNDARY";
 static const char * const ILI2_AREA = "AREA";
 static const char * const ILI2_SURFACE = "SURFACE";
-
 
 //
 // helper functions
@@ -130,18 +125,15 @@ static char *getObjValue(DOMElement *elem) {
   DOMNode* child = elem->getFirstChild();
   if ((child != NULL) && (child->getNodeType() == DOMNode::TEXT_NODE))
   {
-    char* pszNodeValue = tr_strdup(child->getNodeValue());
-    return pszNodeValue;
+    return CPLStrdup(transcode(child->getNodeValue()));
   }
 
   return NULL;
 }
 
 static char *getREFValue(DOMElement *elem) {
-  XMLCh* pszIli2_ref = XMLString::transcode(ILI2_REF);
-  char* pszREFValue = tr_strdup(elem->getAttribute(pszIli2_ref));
-  XMLString::release(&pszIli2_ref);
-  return pszREFValue;
+  CPLString osREFValue(transcode(elem->getAttribute(ILI2_REF)));
+  return CPLStrdup(osREFValue);
 }
 
 static OGRPoint *getPoint(DOMElement *elem) {
@@ -412,8 +404,7 @@ static char* fieldName(DOMElement* elem) {
       CPLError(CE_Failure, CPLE_AssertionFailed, "node == NULL");
       return CPLStrdup("***bug***");
   }
-  char* pszNodeName = tr_strdup(node->getNodeName());
-  return pszNodeName;
+  return CPLStrdup(transcode(node->getNodeName()));
 }
 
 void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
@@ -484,20 +475,19 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
   }
 }
 
-
 //
 // ILI2Reader
 //
 IILI2Reader::~IILI2Reader() {
 }
 
-ILI2Reader::ILI2Reader() {
-    m_poILI2Handler = NULL;
-    m_poSAXReader = NULL;
-    m_bReadStarted = FALSE;
-
-    m_pszFilename = NULL;
-
+ILI2Reader::ILI2Reader() :
+    m_pszFilename(NULL),
+    m_poILI2Handler(NULL),
+    m_poSAXReader(NULL),
+    m_bReadStarted(FALSE),
+    m_bXercesInitialized(false)
+{
     SetupParser();
 }
 
@@ -506,11 +496,14 @@ ILI2Reader::~ILI2Reader() {
 
     CleanupParser();
 
+    if( m_bXercesInitialized )
+        OGRDeinitializeXerces();
+
     list<OGRLayer *>::const_iterator layerIt = m_listLayer.begin();
     while (layerIt != m_listLayer.end()) {
         OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
         delete tmpLayer;
-        layerIt++;
+        ++layerIt;
     }
 }
 
@@ -521,26 +514,11 @@ void ILI2Reader::SetSourceFile( const char *pszFilename ) {
 
 int ILI2Reader::SetupParser() {
 
-    static int bXercesInitialized = FALSE;
-
-    if( !bXercesInitialized )
+    if( !m_bXercesInitialized )
     {
-        try
-        {
-            XMLPlatformUtils::Initialize();
-        }
-
-        catch (const XMLException& toCatch)
-        {
-            char* msg = tr_strdup(toCatch.getMessage());
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to initialize Xerces C++ based ILI2 reader. "
-                      "Error message:\n%s\n", msg );
-            CPLFree(msg);
-
+        if( !OGRInitializeXerces() )
             return FALSE;
-        }
-        bXercesInitialized = TRUE;
+        m_bXercesInitialized = true;
     }
 
     // Cleanup any old parser.
@@ -612,10 +590,9 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
     }
     catch (const SAXException& toCatch)
     {
-        char* msg = tr_strdup(toCatch.getMessage());
         CPLError( CE_Failure, CPLE_AppDefined,
-                    "Parsing failed: %s\n", msg );
-        CPLFree(msg);
+                  "Parsing failed: %s\n",
+                  transcode(toCatch.getMessage()).c_str());
 
         return FALSE;
     }
@@ -656,19 +633,17 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
 }
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
-  bool newLayer = true;
-  OGRLayer *curLayer = NULL;
-  char *pszName = tr_strdup(elem->getTagName());
-  //CPLDebug( "OGR_ILI", "Reading layer: %s", pszName );
+  CPLString osName(transcode(elem->getTagName()));
+  //CPLDebug( "OGR_ILI", "Reading layer: %s", osName.c_str() );
 
   // test if this layer exist
-  curLayer = GetLayer(pszName);
-  newLayer = (curLayer == NULL);
+  OGRLayer* curLayer = GetLayer(osName);
+  bool newLayer = (curLayer == NULL);
 
   // add a layer
   if (newLayer) {
-    CPLDebug( "OGR_ILI", "Adding layer: %s", pszName );
-    OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(pszName);
+    CPLDebug( "OGR_ILI", "Adding layer: %s", osName.c_str() );
+    OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->SetGeomType( wkbUnknown );
     GeomFieldInfos oGeomFieldInfos;
     curLayer = new OGRILI2Layer(poFeatureDefn, oGeomFieldInfos, NULL);
@@ -691,19 +666,13 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   // assign TID
   int fIndex = feature->GetFieldIndex(ILI2_TID);
   if (fIndex != -1) {
-      XMLCh *pszIli2_tid = XMLString::transcode(ILI2_TID);
-      char *fChVal = tr_strdup(elem->getAttribute(pszIli2_tid));
-      feature->SetField(fIndex, fChVal);
-      XMLString::release(&pszIli2_tid);
-      CPLFree(fChVal);
+      feature->SetField(fIndex, transcode(elem->getAttribute(xmlch_ILI2_TID)).c_str());
   } else {
       CPLDebug( "OGR_ILI","'%s' not found", ILI2_TID);
   }
 
   SetFieldValues(feature, elem);
   CPL_IGNORE_RET_VAL(curLayer->SetFeature(feature));
-
-  CPLFree(pszName);
 
   return 0;
 }

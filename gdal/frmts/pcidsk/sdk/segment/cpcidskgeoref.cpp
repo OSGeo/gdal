@@ -842,12 +842,12 @@ static double PAK2PCI( double deg, int function )
         int       dd, mm;
         double	  ss;
 
-        sign = (int)(1.0);
+        sign = 1;
 	degrees = deg;
 
         if ( degrees < 0 )
         {
-           sign = (int)(-1.0);
+           sign = -1;
            degrees = degrees * sign;
         }
 

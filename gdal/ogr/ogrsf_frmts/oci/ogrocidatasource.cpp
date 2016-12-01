@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Oracle Spatial Driver
  * Purpose:  Implementation of the OGROCIDataSource class.
@@ -59,6 +58,8 @@ OGROCIDataSource::OGROCIDataSource()
     pszDBName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    bDSUpdate = FALSE;
+    bNoLogging = FALSE;
     poSession = NULL;
     papoSRS = NULL;
     panSRID = NULL;
@@ -126,6 +127,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
     const char *pszPassword = "";
     const char *pszDatabase = "";
     char **papszTableList = NULL;
+    const char *pszWorkspace = "";
+
     int   i;
 
     if( pszNewName[4] == '\0' )
@@ -136,6 +139,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         const char* pszTables = CSLFetchNameValue(papszOpenOptionsIn, "TABLES");
         if( pszTables )
             papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
+        pszWorkspace = CSLFetchNameValueDef(papszOpenOptions, "WORKSPACE", "");
     }
     else
     {
@@ -200,6 +204,18 @@ int OGROCIDataSource::Open( const char * pszNewName,
         return FALSE;
     }
 
+    if( ! EQUAL(pszWorkspace, "") )
+    {
+        OGROCIStringBuf oValidateCmd;
+        OGROCIStatement oValidateStmt( GetSession() );
+
+        oValidateCmd.Append( "call DBMS_WM.GotoWorkspace('" );
+        oValidateCmd.Append( pszWorkspace );
+        oValidateCmd.Append( "')" );
+
+        oValidateStmt.Execute( oValidateCmd.GetString() );
+    }
+
     pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
@@ -241,7 +257,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
     for( i = 0; papszTableList != NULL && papszTableList[i] != NULL; i++ )
     {
-        OpenTable( papszTableList[i], -1, bUpdate, FALSE );
+        OpenTable( papszTableList[i], -1, bUpdate, FALSE, papszOpenOptionsIn );
     }
 
     CSLDestroy( papszTableList );
@@ -254,7 +270,8 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /************************************************************************/
 
 int OGROCIDataSource::OpenTable( const char *pszNewName,
-                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen )
+                                 int nSRID, int bUpdate, CPL_UNUSED int bTestOpen,
+                                 char** papszOpenOptionsIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -277,6 +294,8 @@ int OGROCIDataSource::OpenTable( const char *pszNewName,
     papoLayers = (OGROCILayer **)
         CPLRealloc( papoLayers,  sizeof(OGROCILayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
+
+    poLayer->SetOptions( papszOpenOptionsIn );
 
     return TRUE;
 }
@@ -483,13 +502,15 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     poSession->CleanName( pszSafeLayerName );
     CPLDebug( "OCI", "In Create Layer ..." );
 
+    bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
     int iLayer;
 
-    if( CSLFetchBoolean( papszOptions, "TRUNCATE", FALSE ) )
+    if( CPLFetchBool( papszOptions, "TRUNCATE", false ) )
     {
         CPLDebug( "OCI", "Calling TruncateLayer for %s", pszLayerName );
         TruncateLayer( pszSafeLayerName );
@@ -526,8 +547,9 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     char szSRSId[100];
 
-    if( CSLFetchNameValue( papszOptions, "SRID" ) != NULL )
-        strcpy( szSRSId, CSLFetchNameValue( papszOptions, "SRID" ) );
+    const char* pszSRID = CSLFetchNameValue( papszOptions, "SRID" );
+    if( pszSRID != NULL )
+        snprintf( szSRSId, sizeof(szSRSId), "%s", pszSRID );
     else if( poSRS != NULL )
         snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
@@ -540,7 +562,8 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "ORA_GEOMETRY";
-    int bGeomNullable = CSLFetchBoolean(papszOptions, "GEOMETRY_NULLABLE", TRUE);
+    const bool bGeomNullable =
+        CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
 
 /* -------------------------------------------------------------------- */
 /*      Create a basic table with the FID.  Also include the            */
@@ -575,6 +598,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                      (!bGeomNullable) ? " NOT NULL":"");
         }
 
+        if (bNoLogging)
+        {
+            char     szCommand2[1024];
+
+            snprintf( szCommand2, sizeof(szCommand2), "%s", szCommand );
+
+            snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
+              "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
+              "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
+              szCommand2, pszGeometryName, pszGeometryName);
+        }
+
         if( oStatement.Execute( szCommand ) != CE_None )
         {
             CPLFree( pszSafeLayerName );
@@ -602,11 +637,14 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Set various options on the layer.                               */
 /* -------------------------------------------------------------------- */
-    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",FALSE) );
-    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+    poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
+    poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
 
-    if( CSLFetchNameValue(papszOptions,"DIM") != NULL )
-        poLayer->SetDimension( atoi(CSLFetchNameValue(papszOptions,"DIM")) );
+    const char* pszDIM = CSLFetchNameValue(papszOptions,"DIM");
+    if( pszDIM != NULL )
+        poLayer->SetDimension( atoi(pszDIM) );
+    else if( eType != wkbNone )
+        poLayer->SetDimension( (wkbFlatten(eType) == eType) ? 2 : 3 );
 
     poLayer->SetOptions( papszOptions );
     if( eType != wkbNone && !bGeomNullable )
@@ -636,6 +674,8 @@ int OGROCIDataSource::TestCapability( const char * pszCap )
         return TRUE;
     else if( EQUAL(pszCap,ODsCDeleteLayer) && bDSUpdate )
         return TRUE;
+    else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
+        return bDSUpdate;
     else
         return FALSE;
 }
@@ -652,8 +692,6 @@ OGRLayer *OGROCIDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
-
-
 
 /************************************************************************/
 /*                             ExecuteSQL()                             */
@@ -986,7 +1024,6 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return nSRSId;
 }
 
-
 /************************************************************************/
 /*                           GetLayerByName()                           */
 /************************************************************************/
@@ -998,7 +1035,7 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
     int  i, count;
 
     if ( !pszNameIn )
-	return NULL;
+        return NULL;
 
     count = GetLayerCount();
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR
  * Purpose:  Implements OGRNASDataSource class.
@@ -320,9 +319,9 @@ int OGRNASDataSource::TestCapability( const char * /* pszCap */ )
 void OGRNASDataSource::PopulateRelations()
 
 {
-    GMLFeature  *poFeature;
-
     poReader->ResetReading();
+
+    GMLFeature  *poFeature = NULL;
     while( (poFeature = poReader->NextFeature()) != NULL )
     {
         char **papszOBProperties = poFeature->GetOBProperties();

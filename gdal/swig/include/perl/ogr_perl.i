@@ -1010,7 +1010,7 @@ sub SetField {
             $arg->[6] //= 0;
             _SetField($self, $field, @$arg[0..6]);
         }
-        elsif ($type == $Geo::OGR::OFTInteger64) 
+        elsif ($type == $Geo::OGR::OFTInteger64)
         {
             SetFieldInteger64($self, $field, $arg);
         }
@@ -1022,15 +1022,15 @@ sub SetField {
         if ($type == $Geo::OGR::OFTBinary) {
             #$arg = unpack('H*', $arg); # remove when SetFieldBinary is available
             $self->SetFieldBinary($field, $arg);
-        } 
-        elsif ($type == $Geo::OGR::OFTInteger64) 
+        }
+        elsif ($type == $Geo::OGR::OFTInteger64)
         {
             SetFieldInteger64($self, $field, $arg);
         }
-        elsif ($type == $Geo::OGR::OFTInteger or $type == $Geo::OGR::OFTReal or $type == $Geo::OGR::OFTString) 
+        elsif ($type == $Geo::OGR::OFTInteger or $type == $Geo::OGR::OFTReal or $type == $Geo::OGR::OFTString)
         {
             _SetField($self, $field, $arg);
-        } 
+        }
         else {
             $type = $Geo::OGR::FieldDefn::TYPE_INT2STRING{$type};
             Geo::GDAL::error("Expected more than one argument or a reference argument for this field of type '$type'.");

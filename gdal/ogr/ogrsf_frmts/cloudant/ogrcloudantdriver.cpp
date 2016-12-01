@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CouchDB Translator
  * Purpose:  Implements OGRCouchDBDriver.
@@ -72,7 +71,6 @@ OGRDataSource *OGRCloudantDriver::Open( const char * pszFilename, int bUpdate )
 
     return poDS;
 }
-
 
 /************************************************************************/
 /*                          CreateDataSource()                          */

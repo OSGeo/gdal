@@ -12,14 +12,6 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
 		gdalpansharpen.o
 
-ifeq ($(HAVE_AVX_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_AVX_AT_COMPILE_TIME $(CPPFLAGS)
-endif
-
-ifeq ($(HAVE_SSE_AT_COMPILE_TIME),yes)
-CPPFLAGS 	:=	-DHAVE_SSE_AT_COMPILE_TIME $(CPPFLAGS)
-endif
-
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
@@ -29,10 +21,10 @@ CPPFLAGS 	:=	-DHAVE_ARMADILLO $(CPPFLAGS)
 endif
 
 ifeq ($(QHULL_SETTING),external)
-CPPFLAGS 	:=	-DEXTERNAL_QHULL $(CPPFLAGS)
+CPPFLAGS 	:=	-DEXTERNAL_QHULL -DQHULL_INCLUDE_SUBDIR_IS_LIBQHULL=$(QHULL_INCLUDE_SUBDIR_IS_LIBQHULL) $(CPPFLAGS)
 endif
 ifeq ($(QHULL_SETTING),internal)
-CPPFLAGS 	:=	-DINTERNAL_QHULL -Ilibqhull $(CPPFLAGS)
+CPPFLAGS 	:=	-DINTERNAL_QHULL $(CPPFLAGS)
 endif
 
 CPPFLAGS	:=	$(CPPFLAGS) $(OPENCL_FLAGS)
@@ -50,7 +42,7 @@ gdalgridsse.$(OBJ_EXT):   gdalgridsse.cpp
 clean:
 	$(RM) *.o $(O_OBJ)
 
-docs:	
+docs:
 	(cd ..; $(MAKE) docs)
 
 install:

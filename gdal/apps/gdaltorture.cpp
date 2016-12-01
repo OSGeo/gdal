@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: gdaltorture.cpp  $
  *
  * Project:  GDAL Utilities
  * Purpose:  Command line utility to torture GDAL API on datasets
@@ -31,7 +30,7 @@
 #include "cpl_string.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id: gdaltorture.cpp $");
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -183,7 +182,6 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
 
     GDALClose(hDS);
 }
-
 
 /************************************************************************/
 /*                       ProcessTortureTarget()                         */

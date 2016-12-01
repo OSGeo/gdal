@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  AeronavFAA Translator
  * Purpose:  Implements OGRAeronavFAADriver.
@@ -35,7 +34,6 @@ CPL_CVSID("$Id$");
 // g++ ogr/ogrsf_frmts/aeronavfaa/*.cpp -Wall -g -fPIC -shared -o ogr_AeronavFAA.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/aernovfaa -Iogr/ogrsf_frmts
 
 extern "C" void RegisterOGRAeronavFAA();
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -84,4 +82,3 @@ void RegisterOGRAeronavFAA()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

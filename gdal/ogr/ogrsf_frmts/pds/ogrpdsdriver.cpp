@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDS Translator
  * Purpose:  Implements OGRPDSDriver.
@@ -61,7 +60,6 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
     return poDS;
 }
 
-
 /************************************************************************/
 /*                           RegisterOGRPDS()                           */
 /************************************************************************/
@@ -85,4 +83,3 @@ void RegisterOGRPDS()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

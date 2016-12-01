@@ -32,6 +32,12 @@
 #include "cpl_port.h"
 #endif
 
+// Compatibility hack for non-C++11 compilers
+#if !(__cplusplus >= 201103L || _MSC_VER >= 1500)
+#define override
+#endif
+
+
 namespace PCIDSK {
 
     typedef unsigned char  uint8;

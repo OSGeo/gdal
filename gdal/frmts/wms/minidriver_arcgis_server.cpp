@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Arc GIS Server Client Driver
  * Purpose:  Implementation of Dataset and RasterBand classes for WMS
@@ -31,22 +30,19 @@
 #include "wmsdriver.h"
 #include "minidriver_arcgis_server.h"
 
-CPP_GDALWMSMiniDriverFactory(AGS)
+#include <algorithm>
 
-GDALWMSMiniDriver_AGS::GDALWMSMiniDriver_AGS()
-{
-}
+CPL_CVSID("$Id$");
 
-GDALWMSMiniDriver_AGS::~GDALWMSMiniDriver_AGS()
-{
-}
+WMSMiniDriver_AGS::WMSMiniDriver_AGS() {}
 
-CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
+WMSMiniDriver_AGS::~WMSMiniDriver_AGS() {}
+
+CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     CPLErr ret = CE_None;
     int i;
 
-    if (ret == CE_None)
     {
         const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
         if (base_url[0] != '\0')
@@ -66,43 +62,43 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
         }
     }
 
-	if (ret == CE_None)
-	{
+    if (ret == CE_None)
+    {
         m_image_format = CPLGetXMLValue(config, "ImageFormat", "png");
         m_transparent = CPLGetXMLValue(config, "Transparent","");
-		// the transparent flag needs to be "true" or "false"
-		// in lower case according to the ArcGIS Server REST API
+        // the transparent flag needs to be "true" or "false"
+        // in lower case according to the ArcGIS Server REST API
         for(i = 0; i < (int)m_transparent.size(); i++)
         {
-			m_transparent[i] = (char) tolower(m_transparent[i]);
+            m_transparent[i] = (char) tolower(m_transparent[i]);
         }
 
-		m_layers = CPLGetXMLValue(config, "Layers", "");
+        m_layers = CPLGetXMLValue(config, "Layers", "");
     }
 
-	if (ret == CE_None)
-	{
-		const char* irs = CPLGetXMLValue(config, "SRS", "102100");
+    if (ret == CE_None)
+    {
+        const char* irs = CPLGetXMLValue(config, "SRS", "102100");
 
-		if (irs != NULL)
-		{
-	        if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
-	        {
-	            m_projection_wkt = ProjToWKT(irs);
-	            m_irs = irs + 5;
-	        }
-	        else //if we have AGS code - try if it's EPSG
-		    {
-		        m_irs = irs;
-		        m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
-		    }
-		    // TODO: if we have AGS JSON
-		}
-		m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
-	}
+        if (irs != NULL)
+        {
+            if(STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
+            {
+                m_projection_wkt = ProjToWKT(irs);
+                m_irs = irs + 5;
+            }
+            else //if we have AGS code - try if it's EPSG
+            {
+                m_irs = irs;
+                m_projection_wkt = ProjToWKT("EPSG:" + m_irs);
+            }
+            // TODO: if we have AGS JSON
+        }
+        m_identification_tolerance = CPLGetXMLValue(config, "IdentificationTolerance", "2");
+    }
 
-	if (ret == CE_None)
-	{
+    if (ret == CE_None)
+    {
         const char *bbox_order = CPLGetXMLValue(config, "BBoxOrder", "xyXY");
         if (bbox_order[0] != '\0')
         {
@@ -133,7 +129,7 @@ CPLErr GDALWMSMiniDriver_AGS::Initialize(CPLXMLNode *config)
     return ret;
 }
 
-void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
+void WMSMiniDriver_AGS::GetCapabilities(WMSMiniDriverCapabilities *caps)
 {
     caps->m_capabilities_version = 1;
     caps->m_has_arb_overviews = 1;
@@ -142,7 +138,7 @@ void GDALWMSMiniDriver_AGS::GetCapabilities(GDALWMSMiniDriverCapabilities *caps)
     caps->m_max_overview_count = 32;
 }
 
-void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri)
+void WMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri)
 {
     *url = m_base_url;
 
@@ -174,15 +170,14 @@ void GDALWMSMiniDriver_AGS::ImageRequest(CPLString *url, const GDALWMSImageReque
     CPLDebug("AGS", "URL = %s\n", url->c_str());
 }
 
-void GDALWMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
+void WMSMiniDriver_AGS::TiledImageRequest(CPLString *url,
                                       const GDALWMSImageRequestInfo &iri,
                                       CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
 {
-	ImageRequest(url, iri);
+    ImageRequest(url, iri);
 }
 
-
-void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
+void WMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
@@ -243,20 +238,19 @@ void GDALWMSMiniDriver_AGS::GetTiledImageInfo(CPLString *url,
     CPLDebug("AGS", "URL = %s", url->c_str());
 }
 
-
-const char *GDALWMSMiniDriver_AGS::GetProjectionInWKT()
+const char *WMSMiniDriver_AGS::GetProjectionInWKT()
 {
     return m_projection_wkt.c_str();
 }
 
-double GDALWMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
+double WMSMiniDriver_AGS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 {
     switch (what)
     {
-        case 'x': return MIN(iri.m_x0, iri.m_x1);
-        case 'y': return MIN(iri.m_y0, iri.m_y1);
-        case 'X': return MAX(iri.m_x0, iri.m_x1);
-        case 'Y': return MAX(iri.m_y0, iri.m_y1);
+    case 'x': return std::min(iri.m_x0, iri.m_x1);
+    case 'y': return std::min(iri.m_y0, iri.m_y1);
+    case 'X': return std::max(iri.m_x0, iri.m_x1);
+    case 'Y': return std::max(iri.m_y0, iri.m_y1);
     }
     return 0.0;
 }

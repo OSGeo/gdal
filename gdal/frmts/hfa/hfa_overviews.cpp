@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Erdas Imagine Driver
  * Purpose:  Entry point for building overviews, used by non-imagine formats.
@@ -53,22 +52,22 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 /*      Determine the band datatype, and verify that all bands are      */
 /*      the same.                                                       */
 /* -------------------------------------------------------------------- */
-        int iBand;
-
-        for( iBand = 0; iBand < nBands; iBand++ )
+        for( int iBand = 0; iBand < nBands; iBand++ )
         {
             GDALRasterBand *poBand =
                 poParentDS->GetRasterBand( panBandList[iBand] );
 
             if( iBand == 0 )
+            {
                 eDT = poBand->GetRasterDataType();
+            }
             else
             {
                 if( eDT != poBand->GetRasterDataType() )
                 {
                     CPLError( CE_Failure, CPLE_NotSupported,
-                              "HFAAuxBuildOverviews() doesn't support a mixture of band"
-                              " data types." );
+                              "HFAAuxBuildOverviews() doesn't support a "
+                              "mixture of band data types." );
                     return CE_Failure;
                 }
             }
@@ -80,7 +79,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
 /*      base band.                                                      */
 /* -------------------------------------------------------------------- */
         GDALDriver *poHFADriver = (GDALDriver *) GDALGetDriverByName("HFA");
-        if (poHFADriver == NULL)
+        if( poHFADriver == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "HFA driver is unavailable." );
@@ -98,7 +97,8 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
             poHFADriver->Create( pszOvrFilename,
                                  poParentDS->GetRasterXSize(),
                                  poParentDS->GetRasterYSize(),
-                                 poParentDS->GetRasterCount(), eDT, (char **)apszOptions );
+                                 poParentDS->GetRasterCount(),
+                                 eDT, (char **)apszOptions );
 
         if( *ppoODS == NULL )
             return CE_Failure;

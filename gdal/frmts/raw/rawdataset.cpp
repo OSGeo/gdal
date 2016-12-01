@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Generic Raw Binary Driver
  * Purpose:  Implementation of RawDataset and RawRasterBand classes.
@@ -229,7 +228,6 @@ RawRasterBand::~RawRasterBand()
     CPLFree( pLineBuffer );
 }
 
-
 /************************************************************************/
 /*                             SetAccess()                              */
 /************************************************************************/
@@ -252,7 +250,10 @@ CPLErr RawRasterBand::FlushCache()
 {
     CPLErr eErr = GDALRasterBand::FlushCache();
     if( eErr != CE_None )
+    {
+        bDirty = FALSE;
         return eErr;
+    }
 
     // If we have unflushed raw, flush it to disk now.
     if ( bDirty )
@@ -307,7 +308,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to scanline %d @ " CPL_FRMT_GUIB ".",
-                  iLine, nImgOffset + (vsi_l_offset)iLine * nLineOffset );
+                  iLine, nReadStart );
             return CE_Failure;
         }
         else
@@ -1010,7 +1011,6 @@ CPLErr RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        nPixelOffset );
                     }
                 }
-
             }
 
             bDirty = TRUE;
@@ -1162,14 +1162,16 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
         static_cast<vsi_l_offset>(nRasterYSize - 1) * nLineOffset +
         (nRasterXSize - 1) * nPixelOffset + GDALGetDataTypeSizeBytes(eDataType);
 
+    const char* pszImpl = CSLFetchNameValueDef(
+            papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
     if( !bIsVSIL || VSIFGetNativeFileDescriptorL(fpRawL) == NULL ||
         !CPLIsVirtualMemFileMapAvailable() ||
         (eDataType != GDT_Byte && !bNativeOrder) ||
         static_cast<size_t>(nSize) != nSize ||
         nPixelOffset < 0 ||
         nLineOffset < 0 ||
-        CPLTestBool( CSLFetchNameValueDef(
-            papszOptions, "USE_DEFAULT_IMPLEMENTATION", "NO") ) )
+        EQUAL(pszImpl, "YES") || EQUAL(pszImpl, "ON") ||
+        EQUAL(pszImpl, "1") || EQUAL(pszImpl, "TRUE") )
     {
         return GDALRasterBand::GetVirtualMemAuto( eRWFlag, pnPixelSpace,
                                                   pnLineSpace, papszOptions);
@@ -1183,6 +1185,11 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
         NULL, NULL);
     if( pVMem == NULL )
     {
+        if( EQUAL(pszImpl, "NO") || EQUAL(pszImpl, "OFF") ||
+            EQUAL(pszImpl, "0") || EQUAL(pszImpl, "FALSE") )
+        {
+            return NULL;
+        }
         return GDALRasterBand::GetVirtualMemAuto( eRWFlag, pnPixelSpace,
                                                   pnLineSpace, papszOptions);
     }
@@ -1199,7 +1206,6 @@ CPLVirtualMem  *RawRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
 /*      RawDataset                                                      */
 /* ==================================================================== */
 /************************************************************************/
-
 
 /************************************************************************/
 /*                            RawDataset()                              */

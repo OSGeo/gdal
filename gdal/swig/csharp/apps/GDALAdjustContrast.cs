@@ -4,7 +4,7 @@
  * Name:     GDALAdjustContrast.cs
  * Project:  GDAL CSharp Interface
  * Purpose:  A sample app to demonstrate how to read the dataset into the
- *           memory, adjust the contrast of the image and write back to the 
+ *           memory, adjust the contrast of the image and write back to the
  *           dataset persistently.
  * Author:   Tamas Szekeres, szekerest@gmail.com
  *
@@ -49,11 +49,11 @@ using OSGeo.GDAL;
 /// <summary>
 /// A sample app to demonstrate how to read the dataset into the
 /// memory, adjust the contrast of the image and write back to the dataset persistently.
-/// </summary> 
+/// </summary>
 
 class GDALAdjustContrast {
-	
-	public static void usage() 
+
+	public static void usage()
 
 	{
         Console.WriteLine("usage: GDALAdjustContrast {dataset name} {contrast ratio}");
@@ -73,7 +73,7 @@ class GDALAdjustContrast {
     static DataType dataType;
     static int pixelSpace;
 
-    public static void Main(string[] args) 
+    public static void Main(string[] args)
     {
 
         if (args.Length != 2) usage();
@@ -81,7 +81,7 @@ class GDALAdjustContrast {
         // Using early initialization of System.Console
         Console.WriteLine("Adjusting the image: " + args[0]);
 
-        try 
+        try
         {
             float contrastRatio = float.Parse(args[1]);
             /* -------------------------------------------------------------------- */
@@ -93,8 +93,8 @@ class GDALAdjustContrast {
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
             Dataset ds = Gdal.Open(args[0], Access.GA_Update);
-		
-            if (ds == null) 
+
+            if (ds == null)
             {
                 Console.WriteLine("Can't open " + args[0]);
                 System.Environment.Exit(-1);
@@ -134,7 +134,7 @@ class GDALAdjustContrast {
             ds.FlushCache();
 
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Console.WriteLine("Application error: " + e.Message);
         }

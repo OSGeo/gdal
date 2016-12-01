@@ -36,14 +36,17 @@ ifeq ($(HAVE_LIBXML2),yes)
 CXXFLAGS	:=	$(CXXFLAGS) $(LIBXML2_INC) -DHAVE_LIBXML2
 endif
 
-default: mdreader-target $(OBJ:.o=.$(OBJ_EXT))
+default: mdreader-target $(OBJ:.o=.$(OBJ_EXT)) rasterio_ssse3.$(OBJ_EXT)
+
+rasterio_ssse3.$(OBJ_EXT):   rasterio_ssse3.cpp
+	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT) $(SSSE3FLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(OBJ):	gdal_priv.h gdal_proxy.h
 
 clean: mdreader-clean
 	$(RM) *.o $(O_OBJ)
 
-docs:	
+docs:
 	(cd ..; $(MAKE) docs)
 
 gdal_misc.$(OBJ_EXT):	gdal_misc.cpp gdal_version.h

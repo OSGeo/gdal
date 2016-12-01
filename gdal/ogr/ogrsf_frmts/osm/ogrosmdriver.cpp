@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGROSMDriver class.
@@ -43,7 +42,7 @@ CPL_CVSID("$Id$");
 static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if (poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0)
+    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
         return GDAL_IDENTIFY_FALSE;
 
     if( strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL )
@@ -72,7 +71,7 @@ static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGROSMDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if (poOpenInfo->eAccess == GA_Update )
+    if( poOpenInfo->eAccess == GA_Update )
         return NULL;
     if( OGROSMDriverIdentify(poOpenInfo) == FALSE )
         return NULL;
@@ -123,4 +122,3 @@ void RegisterOGROSM()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

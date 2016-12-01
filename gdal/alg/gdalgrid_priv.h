@@ -27,8 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GDALGRID_PRIV_H
+#define GDALGRID_PRIV_H
+
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
+
+//! @cond Doxygen_Suppress
 
 typedef struct
 {
@@ -46,9 +51,9 @@ typedef struct
 {
     CPLQuadTree* hQuadTree;
     double       dfInitialSearchRadius;
-    const float *pafX;
-    const float *pafY;
-    const float *pafZ;
+    float *pafX; // Aligned to be usable with AVX
+    float *pafY;
+    float *pafZ;
     GDALTriangulation* psTriangulation;
     int                nInitialFacetIdx;
     /*! Weighting power divided by 2 (pre-computation). */
@@ -60,8 +65,6 @@ typedef struct
 } GDALGridExtraParameters;
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
-int CPLHaveRuntimeSSE();
-
 CPLErr
 GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
                                         const void *poOptions,
@@ -75,8 +78,6 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
 #endif
 
 #ifdef HAVE_AVX_AT_COMPILE_TIME
-int CPLHaveRuntimeAVX();
-
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                                         const void *poOptions,
                                         GUInt32 nPoints,
@@ -87,20 +88,7 @@ CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                                         double *pdfValue,
                                         void* hExtraParamsIn );
 #endif
-#if defined(__GNUC__)
-#if defined(__x86_64)
-#define GCC_CPUID(level, a, b, c, d)            \
-  __asm__ ("xchgq %%rbx, %q1\n"                 \
-           "cpuid\n"                            \
-           "xchgq %%rbx, %q1"                   \
-       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
-       : "0" (level))
-#else
-#define GCC_CPUID(level, a, b, c, d)            \
-  __asm__ ("xchgl %%ebx, %1\n"                  \
-           "cpuid\n"                            \
-           "xchgl %%ebx, %1"                    \
-       : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
-       : "0" (level))
-#endif
-#endif
+
+//! @endcond
+
+#endif // GDALGRID_PRIV_H

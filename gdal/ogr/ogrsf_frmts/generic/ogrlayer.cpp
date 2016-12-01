@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the OGRSFLayer class.
@@ -41,22 +40,18 @@ CPL_CVSID("$Id$");
 /*                              OGRLayer()                              */
 /************************************************************************/
 
-OGRLayer::OGRLayer()
-
-{
-    m_poStyleTable = NULL;
-    m_poAttrQuery = NULL;
-    m_pszAttrQueryString = NULL;
-    m_poAttrIndex = NULL;
-    m_nRefCount = 0;
-
-    m_nFeaturesRead = 0;
-
-    m_poFilterGeom = NULL;
-    m_bFilterIsEnvelope = FALSE;
-    m_pPreparedFilterGeom = NULL;
-    m_iGeomFieldFilter = 0;
-}
+OGRLayer::OGRLayer() :
+    m_bFilterIsEnvelope(FALSE),
+    m_poFilterGeom(NULL),
+    m_pPreparedFilterGeom(NULL),
+    m_iGeomFieldFilter(0),
+    m_poStyleTable(NULL),
+    m_poAttrQuery(NULL),
+    m_pszAttrQueryString(NULL),
+    m_poAttrIndex(NULL),
+    m_nRefCount(0),
+    m_nFeaturesRead(0)
+{}
 
 /************************************************************************/
 /*                             ~OGRLayer()                              */
@@ -65,7 +60,7 @@ OGRLayer::OGRLayer()
 OGRLayer::~OGRLayer()
 
 {
-    if ( m_poStyleTable )
+    if( m_poStyleTable )
     {
         delete m_poStyleTable;
         m_poStyleTable = NULL;
@@ -171,13 +166,13 @@ int OGR_L_GetRefCount( OGRLayerH hLayer )
 GIntBig OGRLayer::GetFeatureCount( int bForce )
 
 {
-    OGRFeature     *poFeature;
-    GIntBig         nFeatureCount = 0;
-
     if( !bForce )
         return -1;
 
     ResetReading();
+
+    GIntBig nFeatureCount = 0;
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         nFeatureCount++;
@@ -224,10 +219,10 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce )
         return GetExtentInternal(iGeomField, psExtent, bForce);
 }
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce )
 
 {
-    OGRFeature  *poFeature;
     OGREnvelope oEnv;
     GBool       bExtentSet = FALSE;
 
@@ -263,6 +258,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
 /*      the features to collect geometries and build extents.           */
 /* -------------------------------------------------------------------- */
     ResetReading();
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iGeomField);
@@ -295,8 +291,9 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
     }
     ResetReading();
 
-    return (bExtentSet ? OGRERR_NONE : OGRERR_FAILURE);
+    return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                          OGR_L_GetExtent()                           */
@@ -411,6 +408,7 @@ static int ContainGeomSpecialField(swq_expr_node* expr,
 /*                AttributeFilterEvaluationNeedsGeometry()              */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 {
     if( !m_poAttrQuery )
@@ -421,6 +419,7 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
 }
+//! @endcond
 
 /************************************************************************/
 /*                      OGR_L_SetAttributeFilter()                      */
@@ -446,8 +445,6 @@ OGRErr OGR_L_SetAttributeFilter( OGRLayerH hLayer, const char *pszQuery )
 OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
 
 {
-    OGRFeature *poFeature;
-
     /* Save old attribute and spatial filters */
     char* pszOldFilter = m_pszAttrQueryString ? CPLStrdup(m_pszAttrQueryString) : NULL;
     OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
@@ -457,6 +454,8 @@ OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
     SetSpatialFilter(0, NULL);
 
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
     {
         if( poFeature->GetFID() == nFID )
@@ -498,12 +497,12 @@ OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId )
 OGRErr OGRLayer::SetNextByIndex( GIntBig nIndex )
 
 {
-    OGRFeature *poFeature;
-
     if( nIndex < 0 )
         return OGRERR_FAILURE;
 
     ResetReading();
+
+    OGRFeature *poFeature = NULL;
     while( nIndex-- > 0 )
     {
         poFeature = GetNextFeature();
@@ -783,27 +782,28 @@ OGRErr OGRLayer::ReorderField( int iOldFieldPos, int iNewFieldPos )
         return OGRERR_NONE;
 
     int* panMap = (int*) CPLMalloc(sizeof(int) * nFieldCount);
-    int i;
     if (iOldFieldPos < iNewFieldPos)
     {
         /* "0","1","2","3","4" (1,3) -> "0","2","3","1","4" */
-        for(i=0;i<iOldFieldPos;i++)
+        int i = 0;  // Used after for.
+        for( ; i < iOldFieldPos; i++ )
             panMap[i] = i;
-        for(;i<iNewFieldPos;i++)
+        for( ; i < iNewFieldPos; i++ )
             panMap[i] = i + 1;
         panMap[iNewFieldPos] = iOldFieldPos;
-        for(i=iNewFieldPos+1;i<nFieldCount;i++)
+        for( i = iNewFieldPos + 1; i < nFieldCount; i++ )
             panMap[i] = i;
     }
     else
     {
         /* "0","1","2","3","4" (3,1) -> "0","3","1","2","4" */
-        for(i=0;i<iNewFieldPos;i++)
+        for( int i = 0; i < iNewFieldPos; i++ )
             panMap[i] = i;
         panMap[iNewFieldPos] = iOldFieldPos;
-        for(i=iNewFieldPos+1;i<=iOldFieldPos;i++)
+        int i = iNewFieldPos+1;  // Used after for.
+        for( ; i <= iOldFieldPos; i++ )
             panMap[i] = i - 1;
-        for(;i<nFieldCount;i++)
+        for( ; i < nFieldCount; i++ )
             panMap[i] = i;
     }
 
@@ -1111,7 +1111,6 @@ void OGRLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
         ResetReading();
 }
 
-
 void OGRLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
 
 {
@@ -1179,7 +1178,6 @@ void OGRLayer::SetSpatialFilterRect( double dfMinX, double dfMinY,
 {
     SetSpatialFilterRect( 0, dfMinX, dfMinY, dfMaxX, dfMaxY );
 }
-
 
 void OGRLayer::SetSpatialFilterRect( int iGeomField,
                                      double dfMinX, double dfMinY,
@@ -1260,6 +1258,7 @@ void OGR_L_SetSpatialFilterRectEx( OGRLayerH hLayer,
 /*      way from the current one.                                       */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
 {
@@ -1335,6 +1334,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 
     return TRUE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           FilterGeometry()                           */
@@ -1344,6 +1344,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
 /*      envelope.                                                       */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
 
 {
@@ -1372,7 +1373,6 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
         || m_sFilterEnvelope.MaxX < sGeomEnv.MinX
         || m_sFilterEnvelope.MaxY < sGeomEnv.MinY )
         return FALSE;
-
 
 /* -------------------------------------------------------------------- */
 /*      If the filter geometry is its own envelope and if the           */
@@ -1455,6 +1455,7 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
             return TRUE;
     }
 }
+//! @endcond
 
 /************************************************************************/
 /*                         OGR_L_ResetReading()                         */
@@ -1481,6 +1482,7 @@ void OGR_L_ResetReading( OGRLayerH hLayer )
 /*      datasources can do it too if that is more appropriate.          */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
 
 {
@@ -1500,6 +1502,7 @@ OGRErr OGRLayer::InitializeIndexSupport( const char *pszFilename )
 
     return eErr;
 }
+//! @endcond
 
 /************************************************************************/
 /*                             SyncToDisk()                             */
@@ -1558,11 +1561,13 @@ OGRErr OGR_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID )
 /*                          GetFeaturesRead()                           */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 GIntBig OGRLayer::GetFeaturesRead()
 
 {
     return m_nFeaturesRead;
 }
+//! @endcond
 
 /************************************************************************/
 /*                       OGR_L_GetFeaturesRead()                        */
@@ -1890,7 +1895,9 @@ OGRErr set_result_schema(OGRLayer *pLayerResult,
             mapInput[iField] = poDefnResult->GetFieldIndex(osName);
         }
         if (!mapMethod) return ret;
+        // cppcheck-suppress nullPointer
         for( int iField = 0; iField < poDefnMethod->GetFieldCount(); iField++ ) {
+            // cppcheck-suppress nullPointer
             CPLString osName(poDefnMethod->GetFieldDefn(iField)->GetNameRef());
             if( pszMethodPrefix != NULL )
                 osName = pszMethodPrefix + osName;
@@ -2535,7 +2542,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 }
             }
             if( poIntersection->IsEmpty() ||
-                (!bKeepLowerDimGeom && 
+                (!bKeepLowerDimGeom &&
                  (x_geom->getDimension() == y_geom->getDimension() &&
                   poIntersection->getDimension() < x_geom->getDimension())) )
             {
@@ -2659,7 +2666,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
         while (OGRFeature *y = GetNextFeature()) {
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom) {delete y; continue;}
-            
+
             if (x_geom_diff) {
                 CPLErrorReset();
                 OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
@@ -3378,7 +3385,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 }
             }
             else if( poIntersection->IsEmpty() ||
-                     (!bKeepLowerDimGeom && 
+                     (!bKeepLowerDimGeom &&
                       (x_geom->getDimension() == y_geom->getDimension() &&
                        poIntersection->getDimension() < x_geom->getDimension())) )
             {

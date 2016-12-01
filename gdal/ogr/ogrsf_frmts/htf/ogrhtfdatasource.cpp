@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HTF Translator
  * Purpose:  Implements OGRHTFDataSource class
@@ -115,7 +114,6 @@ int OGRHTFDataSource::Open( const char * pszFilename )
     if (fp == NULL)
         return FALSE;
 
-    const char* pszLine;
     bool bEndOfHTFHeader = false;
     bool bIsSouth = false;
     bool bGeodeticDatumIsWGS84 = false;
@@ -132,6 +130,8 @@ int OGRHTFDataSource::Open( const char * pszFilename )
     double dfNENorthing = 0;
     std::vector<CPLString> aosMD;
     int nTotalSoundings = 0;
+
+    const char* pszLine = NULL;
     while( (pszLine = CPLReadLine2L(fp, 1024, NULL)) != NULL)
     {
         nLines ++;

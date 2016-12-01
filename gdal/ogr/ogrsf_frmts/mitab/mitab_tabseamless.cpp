@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.10 2010-07-07 19:00:15 aboudreault Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -74,6 +73,8 @@
 
 #include <ctype.h>      /* isspace() */
 
+CPL_CVSID("$Id$");
+
 /*=====================================================================
  *                      class TABSeamless
  *
@@ -89,26 +90,24 @@
  *
  *====================================================================*/
 
-
 /**********************************************************************
  *                   TABSeamless::TABSeamless()
  *
  * Constructor.
  **********************************************************************/
-TABSeamless::TABSeamless()
+TABSeamless::TABSeamless() :
+    m_pszFname(NULL),
+    m_pszPath(NULL),
+    m_eAccessMode(TABRead),
+    m_poFeatureDefnRef(NULL),
+    m_poIndexTable(NULL),
+    m_nTableNameField(-1),
+    m_nCurBaseTableId(-1),
+    m_poCurBaseTable(NULL),
+    m_bEOF(FALSE)
 {
-    m_pszFname = NULL;
-    m_pszPath = NULL;
-    m_eAccessMode = TABRead;
-    m_poFeatureDefnRef = NULL;
     m_poCurFeature = NULL;
     m_nCurFeatureId = -1;
-
-    m_poIndexTable = NULL;
-    m_nTableNameField = -1;
-    m_nCurBaseTableId = -1;
-    m_poCurBaseTable = NULL;
-    m_bEOF = FALSE;
 }
 
 /**********************************************************************
@@ -121,7 +120,6 @@ TABSeamless::~TABSeamless()
     Close();
 }
 
-
 void TABSeamless::ResetReading()
 {
     if (m_poIndexTable)
@@ -131,7 +129,6 @@ void TABSeamless::ResetReading()
     // will start from the beginning
     m_nCurFeatureId = -1;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::Open()
@@ -178,7 +175,6 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
 
     return nStatus;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::OpenForRead()
@@ -320,7 +316,6 @@ int TABSeamless::OpenForRead(const char *pszFname,
 
     return 0;
 }
-
 
 /**********************************************************************
  *                   TABSeamless::Close()
@@ -521,7 +516,6 @@ int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
     return 0;
 }
 
-
 /**********************************************************************
  *                   TABSeamless::EncodeFeatureId()
  *
@@ -536,7 +530,7 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return (((GIntBig)nTableId<<32) + nBaseFeatureId);
+    return ((GIntBig)nTableId<<32) + nBaseFeatureId;
 }
 
 int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
@@ -544,7 +538,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId>>32));
+    return (int)(nEncodedFeatureId>>32);
 }
 
 int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
@@ -552,7 +546,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
     if (nEncodedFeatureId == -1)
         return -1;
 
-    return ((int)(nEncodedFeatureId & 0xffffffff));
+    return (int)(nEncodedFeatureId & 0xffffffff);
 }
 
 /**********************************************************************
@@ -580,7 +574,6 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
             return EncodeFeatureId(m_nCurBaseTableId, nId);  // Found one!
         else
             OpenNextBaseTable();  // Skip to next tile and loop again
-
     } while (nId == -1 && !m_bEOF && m_poCurBaseTable);
 
     return -1;
@@ -637,7 +630,6 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
     return NULL;
 }
 
-
 /**********************************************************************
  *                   TABSeamless::GetLayerDefn()
  *
@@ -672,8 +664,6 @@ TABFieldType TABSeamless::GetNativeFieldType(int nFieldId)
     return TABFUnknown;
 }
 
-
-
 /**********************************************************************
  *                   TABSeamless::IsFieldIndexed()
  *
@@ -700,7 +690,6 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
     return FALSE;
 }
 
-
 /**********************************************************************
  *                   TABSeamless::GetBounds()
  *
@@ -711,9 +700,9 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::GetBounds(double &dXMin, double &dYMin,
-                       double &dXMax, double &dYMax,
-                       GBool bForce /*= TRUE*/)
+int TABSeamless::GetBounds( double &dXMin, double &dYMin,
+                            double &dXMax, double &dYMax,
+                            GBool bForce /*= TRUE*/ )
 {
     if (m_poIndexTable == NULL)
     {
@@ -745,7 +734,6 @@ OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
     }
 
     return m_poIndexTable->GetExtent(psExtent, bForce);
-
 }
 
 /**********************************************************************
@@ -784,7 +772,6 @@ GIntBig TABSeamless::GetFeatureCount(int bForce)
     return OGRLayer::GetFeatureCount(bForce);
 }
 
-
 /**********************************************************************
  *                   TABSeamless::GetSpatialRef()
  *
@@ -809,8 +796,6 @@ OGRSpatialReference *TABSeamless::GetSpatialRef()
     return m_poIndexTable->GetSpatialRef();
 }
 
-
-
 /**********************************************************************
  *                   IMapInfoFile::SetSpatialFilter()
  *
@@ -828,8 +813,6 @@ void TABSeamless::SetSpatialFilter (OGRGeometry * poGeomIn )
     if( m_poCurBaseTable )
         m_poCurBaseTable->SetSpatialFilter( poGeomIn );
 }
-
-
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -858,8 +841,6 @@ int TABSeamless::TestCapability( const char * pszCap )
         return FALSE;
 }
 
-
-
 /**********************************************************************
  *                   TABSeamless::Dump()
  *
@@ -881,7 +862,6 @@ void TABSeamless::Dump(FILE *fpOut /*=NULL*/)
     else
     {
         fprintf(fpOut, "File is opened: %s\n", m_pszFname);
-
     }
 
     fflush(fpOut);

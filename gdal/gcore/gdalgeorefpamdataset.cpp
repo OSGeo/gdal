@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALPamDataset with internal storage for georeferencing, with
@@ -30,6 +29,13 @@
 
 #include "gdalgeorefpamdataset.h"
 
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "gdal.h"
+
+//! @cond Doxygen_Suppress
 /************************************************************************/
 /*                       GDALGeorefPamDataset()                         */
 /************************************************************************/
@@ -73,6 +79,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
         CPLFree( pasGCPList );
     }
     CSLDestroy(m_papszMainMD);
+    CSLDestroy(m_papszRPC);
 }
 
 /************************************************************************/
@@ -111,7 +118,8 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
         if( m_bPixelIsPoint )
         {
             m_papszMainMD = CSLSetNameValue(m_papszMainMD,
-                                            GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
+                                            GDALMD_AREA_OR_POINT,
+                                            GDALMD_AOP_POINT);
         }
         else
         {
@@ -332,3 +340,4 @@ int GDALGeorefPamDataset::GetPAMGeorefSrcIndex()
     }
     return m_nPAMGeorefSrcIndex;
 }
+//! @endcond

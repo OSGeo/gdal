@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL Core
  * Purpose:  GDAL Client/server dataset mechanism.
@@ -62,10 +61,36 @@
 #include <sys/ioctl.h>
 #endif
 
-#include "gdal_pam.h"
-#include "gdal_rat.h"
-#include "cpl_spawn.h"
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_spawn.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "gdal_rat.h"
+#include "gdal_version.h"
 
 /*!
 \page gdal_api_proxy GDAL API Proxy
@@ -74,57 +99,67 @@
 
 (GDAL >= 1.10.0)
 
-When dealing with some file formats, particularly the drivers relying on third-party
-(potentially closed-source) libraries, it is difficult to ensure that those third-party
-libraries will be robust to hostile/corrupted datasource.
+When dealing with some file formats, particularly the drivers relying on
+third-party (potentially closed-source) libraries, it is difficult to ensure
+that those third-party libraries will be robust to hostile/corrupted datasource.
 
-The implemented solution is to have a (private) API_PROXY driver that will expose a GDALClientDataset
-object, which will forward all the GDAL API calls to another process ("server"), where the real driver
-will be effectively run. This way, if the server aborts due to a fatal error, the calling process will
-be unaffected and will report a clean error instead of aborting itself.
+The implemented solution is to have a (private) API_PROXY driver that will
+expose a GDALClientDataset object, which will forward all the GDAL API calls to
+another process ("server"), where the real driver will be effectively run. This
+way, if the server aborts due to a fatal error, the calling process will be
+unaffected and will report a clean error instead of aborting itself.
 
 \section gdal_api_proxy_enabling How to enable ?
 
-The API_PROXY mechanism can be enabled by setting the GDAL_API_PROXY config option to YES.
-The option can also be set to a list of file extensions that must be the only ones to trigger
-this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
+The API_PROXY mechanism can be enabled by setting the GDAL_API_PROXY config
+option to YES.  The option can also be set to a list of file extensions that
+must be the only ones to trigger this mechanism (e.g. GDAL_API_PROXY=ecw,sid).
 
-When enabled, datasets can be handled with GDALOpen(), GDALCreate() or GDALCreateCopy() with
-their nominal filename (or connection string).
+When enabled, datasets can be handled with GDALOpen(), GDALCreate() or
+GDALCreateCopy() with their nominal filename (or connection string).
 
-Alternatively, the API_PROXY mechanism can be used selectively on a datasource by prefixing its
-name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif", GA_ReadOnly).
+Alternatively, the API_PROXY mechanism can be used selectively on a datasource
+by prefixing its name with API_PROXY:, for example GDALOpen("API_PROXY:foo.tif",
+GA_ReadOnly).
 
 \section gdal_api_proxy_options Advanced options
 
-For now, the server launched is the gdalserver executable on Windows. On Unix, the default behaviour is
-to just fork() the current process. It is also possible to launch the gdalserver executable
-by forcing GDAL_API_PROXY_SERVER=YES.
-The full filename of the gdalserver executable can also be specified in the GDAL_API_PROXY_SERVER.
+For now, the server launched is the gdalserver executable on Windows. On Unix,
+the default behaviour is to just fork() the current process. It is also possible
+to launch the gdalserver executable by forcing GDAL_API_PROXY_SERVER=YES.  The
+full filename of the gdalserver executable can also be specified in the
+GDAL_API_PROXY_SERVER.
 
-It is also possible to connect to a gdalserver in TCP, possibly on a remote host. In that case,
-gdalserver must be launched on a host with "gdalserver -tcpserver the_tcp_port". And the client
-must set GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a IP address.
+It is also possible to connect to a gdalserver in TCP, possibly on a remote
+host. In that case, gdalserver must be launched on a host with "gdalserver
+-tcpserver the_tcp_port". And the client must set
+GDAL_API_PROXY_SERVER="hostname:the_tcp_port", where hostname is a string or a
+IP address.
 
-On Unix, gdalserver can also be launched on a Unix socket, which "gdalserver -unixserver /a/filename".
-Clients should then set GDAL_API_PROXY_SERVER to "/a/filename".
+On Unix, gdalserver can also be launched on a Unix socket, which "gdalserver
+-unixserver /a/filename".  Clients should then set GDAL_API_PROXY_SERVER to
+"/a/filename".
 
-In case of many dataset opening or creation, to avoid the cost of repeated process forking,
-a pool of unused connections is established. Each time a dataset is closed, the associated connection
-is pushed in the pool (if there's an empty bucket). When a following dataset is to be opened, one of those
-connections will be reused. This behaviour is controlled with the GDAL_API_PROXY_CONN_POOL config option
-that is set to YES by default, and will keep a maximum of 4 unused connections.
-GDAL_API_PROXY_CONN_POOL can be set to a integer value to specify the maximum number of unused connections.
+In case of many dataset opening or creation, to avoid the cost of repeated
+process forking, a pool of unused connections is established. Each time a
+dataset is closed, the associated connection is pushed in the pool (if there's
+an empty bucket). When a following dataset is to be opened, one of those
+connections will be reused. This behaviour is controlled with the
+GDAL_API_PROXY_CONN_POOL config option that is set to YES by default, and will
+keep a maximum of 4 unused connections.  GDAL_API_PROXY_CONN_POOL can be set to
+a integer value to specify the maximum number of unused connections.
 
 \section gdal_api_proxy_limitations Limitations
 
-Datasets stored in the memory virtual file system (/vsimem) or handled by the MEM driver are excluded from
-the API Proxy mechanism.
+Datasets stored in the memory virtual file system (/vsimem) or handled by the
+MEM driver are excluded from the API Proxy mechanism.
 
-Additionnaly, for GDALCreate() or GDALCreateCopy(), the VRT driver is also excluded from that mechanism.
+Additionnaly, for GDALCreate() or GDALCreateCopy(), the VRT driver is also
+excluded from that mechanism.
 
-Currently, the client dataset returned is not protected by a mutex, so it is unsafe to use it concurrently
-from multiple threads. However, it is safe to use several client datasets from multiple threads.
+Currently, the client dataset returned is not protected by a mutex, so it is
+unsafe to use it concurrently from multiple threads. However, it is safe to use
+several client datasets from multiple threads.
 
 \section gdal_api_proxy_concurrent Concurrent use of a dataset
 
@@ -145,9 +180,6 @@ would deadlock the server.
 /* Note: please at least keep the version exchange protocol unchanged ! */
 #define GDAL_CLIENT_SERVER_PROTOCOL_MAJOR 3
 #define GDAL_CLIENT_SERVER_PROTOCOL_MINOR 0
-
-#include <map>
-#include <vector>
 
 CPL_C_START
 int CPL_DLL GDALServerLoop(CPL_FILE_HANDLE fin, CPL_FILE_HANDLE fout);
@@ -392,7 +424,7 @@ class EnterObject
 
 #define CLIENT_ENTER() EnterObject o(__FUNCTION__)
 #else
-#define CLIENT_ENTER() while(0)
+#define CLIENT_ENTER() while( false )
 #endif
 
 /************************************************************************/
@@ -454,23 +486,23 @@ class GDALClientDataset: public GDALPamDataset
                                           GDALDataType eType,
                                           char ** papszOptions );
 
-                                  GDALClientDataset(GDALServerSpawnedProcess* ssp);
+                         explicit GDALClientDataset(GDALServerSpawnedProcess* ssp);
 
         static GDALClientDataset* CreateAndConnect();
 
     protected:
        virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+                                    int, int *, GDALProgressFunc, void * ) override;
        virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
     public:
-                            GDALClientDataset(GDALPipe* p);
-                            ~GDALClientDataset();
+                   explicit GDALClientDataset(GDALPipe* p);
+                   virtual ~GDALClientDataset();
 
         int                 Init(const char* pszFilename, GDALAccess eAccess,
                                  char** papszOpenOptions);
@@ -479,43 +511,43 @@ class GDALClientDataset: public GDALPamDataset
         int                 ProcessAsyncProgress();
         int                 SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
-        virtual void        FlushCache();
+        virtual void        FlushCache() override;
 
         virtual CPLErr        AddBand( GDALDataType eType,
-                                   char **papszOptions=NULL );
+                                   char **papszOptions=NULL ) override;
 
         //virtual void        SetDescription( const char * );
 
         virtual const char* GetMetadataItem( const char * pszName,
-                                             const char * pszDomain = ""  );
-        virtual char      **GetMetadata( const char * pszDomain = "" );
+                                             const char * pszDomain = ""  ) override;
+        virtual char      **GetMetadata( const char * pszDomain = "" ) override;
         virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
         virtual CPLErr      SetMetadataItem( const char * pszName,
                                              const char * pszValue,
-                                             const char * pszDomain = "" );
+                                             const char * pszDomain = "" ) override;
 
-        virtual const char* GetProjectionRef();
-        virtual CPLErr SetProjection( const char * );
+        virtual const char* GetProjectionRef() override;
+        virtual CPLErr SetProjection( const char * ) override;
 
-        virtual CPLErr GetGeoTransform( double * );
-        virtual CPLErr SetGeoTransform( double * );
+        virtual CPLErr GetGeoTransform( double * ) override;
+        virtual CPLErr SetGeoTransform( double * ) override;
 
-        virtual int    GetGCPCount();
-        virtual const char *GetGCPProjection();
-        virtual const GDAL_GCP *GetGCPs();
+        virtual int    GetGCPCount() override;
+        virtual const char *GetGCPProjection() override;
+        virtual const GDAL_GCP *GetGCPs() override;
         virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                                const char *pszGCPProjection );
+                                const char *pszGCPProjection ) override;
 
-        virtual char      **GetFileList(void);
+        virtual char      **GetFileList(void) override;
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eDT,
                                 int nBandCount, int *panBandList,
-                                char **papszOptions );
+                                char **papszOptions ) override;
 
-        virtual CPLErr          CreateMaskBand( int nFlags );
+        virtual CPLErr          CreateMaskBand( int nFlags ) override;
 
         static GDALDataset *Open( GDALOpenInfo * );
         static int          Identify( GDALOpenInfo * );
@@ -575,14 +607,14 @@ class GDALClientRasterBand : public GDALPamRasterBand
                                 GSpacing nPixelSpace, GSpacing nLineSpace );
     protected:
 
-        virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage);
-        virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+        virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
+        virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
         virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg);
+                                  GDALRasterIOExtraArg* psExtraArg) override;
 
     public:
         GDALClientRasterBand(GDALPipe* p, int iSrvBand,
@@ -590,95 +622,94 @@ class GDALClientRasterBand : public GDALPamRasterBand
                              int nRasterXSize, int nRasterYSize,
                              GDALDataType eDataType, int nBlockXSize, int nBlockYSize,
                              GByte abyCaps[16]);
-        ~GDALClientRasterBand();
+        virtual ~GDALClientRasterBand();
 
         int GetSrvBand() const { return iSrvBand; }
         int SupportsInstr(InstrEnum instr) const { return abyCaps[instr / 8] & (1 << (instr % 8)); }
 
         void ClearOverviewCache() { aMapOvrBandsCurrent.clear(); }
 
-        virtual CPLErr FlushCache();
+        virtual CPLErr FlushCache() override;
 
-        virtual void        SetDescription( const char * );
+        virtual void        SetDescription( const char * ) override;
 
         virtual const char* GetMetadataItem( const char * pszName,
-                                             const char * pszDomain = ""  );
-        virtual char      **GetMetadata( const char * pszDomain = "" );
+                                             const char * pszDomain = ""  ) override;
+        virtual char      **GetMetadata( const char * pszDomain = "" ) override;
         virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
         virtual CPLErr      SetMetadataItem( const char * pszName,
                                              const char * pszValue,
-                                             const char * pszDomain = "" );
+                                             const char * pszDomain = "" ) override;
 
-        virtual GDALColorInterp GetColorInterpretation();
-        virtual CPLErr SetColorInterpretation( GDALColorInterp );
+        virtual GDALColorInterp GetColorInterpretation() override;
+        virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
 
-        virtual char **GetCategoryNames();
-        virtual double GetNoDataValue( int *pbSuccess = NULL );
-        virtual double GetMinimum( int *pbSuccess = NULL );
-        virtual double GetMaximum(int *pbSuccess = NULL );
-        virtual double GetOffset( int *pbSuccess = NULL );
-        virtual double GetScale( int *pbSuccess = NULL );
+        virtual char **GetCategoryNames() override;
+        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+        virtual double GetMinimum( int *pbSuccess = NULL ) override;
+        virtual double GetMaximum(int *pbSuccess = NULL ) override;
+        virtual double GetOffset( int *pbSuccess = NULL ) override;
+        virtual double GetScale( int *pbSuccess = NULL ) override;
 
-        virtual GDALColorTable *GetColorTable();
-        virtual CPLErr SetColorTable( GDALColorTable * );
+        virtual GDALColorTable *GetColorTable() override;
+        virtual CPLErr SetColorTable( GDALColorTable * ) override;
 
-        virtual const char *GetUnitType();
-        virtual CPLErr SetUnitType( const char * );
+        virtual const char *GetUnitType() override;
+        virtual CPLErr SetUnitType( const char * ) override;
 
-        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0);
+        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0) override;
 
-        virtual CPLErr SetCategoryNames( char ** );
-        virtual CPLErr SetNoDataValue( double );
-        virtual CPLErr DeleteNoDataValue();
-        virtual CPLErr SetOffset( double );
-        virtual CPLErr SetScale( double );
+        virtual CPLErr SetCategoryNames( char ** ) override;
+        virtual CPLErr SetNoDataValue( double ) override;
+        virtual CPLErr DeleteNoDataValue() override;
+        virtual CPLErr SetOffset( double ) override;
+        virtual CPLErr SetScale( double ) override;
 
         virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                     double *pdfMin, double *pdfMax,
-                                    double *pdfMean, double *padfStdDev );
+                                    double *pdfMean, double *padfStdDev ) override;
         virtual CPLErr ComputeStatistics( int bApproxOK,
                                         double *pdfMin, double *pdfMax,
                                         double *pdfMean, double *pdfStdDev,
-                                        GDALProgressFunc, void *pProgressData );
+                                        GDALProgressFunc, void *pProgressData ) override;
         virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                      double dfMean, double dfStdDev );
-        virtual CPLErr ComputeRasterMinMax( int, double* );
+                                      double dfMean, double dfStdDev ) override;
+        virtual CPLErr ComputeRasterMinMax( int, double* ) override;
 
         virtual CPLErr GetHistogram( double dfMin, double dfMax,
                                      int nBuckets, GUIntBig *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData );
+                                     void *pProgressData ) override;
 
         virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                             int *pnBuckets, GUIntBig ** ppanHistogram,
                                             int bForce,
-                                            GDALProgressFunc, void *pProgressData);
+                                            GDALProgressFunc, void *pProgressData) override;
         virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                            int nBuckets, GUIntBig *panHistogram );
+                                            int nBuckets, GUIntBig *panHistogram ) override;
 
-        virtual int HasArbitraryOverviews();
-        virtual int GetOverviewCount();
-        virtual GDALRasterBand *GetOverview(int);
+        virtual int HasArbitraryOverviews() override;
+        virtual int GetOverviewCount() override;
+        virtual GDALRasterBand *GetOverview(int) override;
 
-        virtual GDALRasterBand *GetMaskBand();
-        virtual int             GetMaskFlags();
-        virtual CPLErr          CreateMaskBand( int nFlags );
+        virtual GDALRasterBand *GetMaskBand() override;
+        virtual int             GetMaskFlags() override;
+        virtual CPLErr          CreateMaskBand( int nFlags ) override;
 
         virtual CPLErr BuildOverviews( const char *, int, int *,
-                                       GDALProgressFunc, void * );
+                                       GDALProgressFunc, void * ) override;
 
-        virtual GDALRasterAttributeTable *GetDefaultRAT();
-        virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+        virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+        virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) override;
 
         virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eDT, char **papszOptions );
+                                GDALDataType eDT, char **papszOptions ) override;
         /*
-        virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig );
+        virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig ) override;
         */
-
 };
 
 /************************************************************************/
@@ -875,7 +906,6 @@ begin:
 #endif
         return GDALPipeReadSocketInternal(p, data, length);
     }
-
 }
 
 /************************************************************************/
@@ -982,7 +1012,6 @@ static int GDALPipeRead(GDALPipe* p, char** ppszStr)
     (*ppszStr)[nLength] = 0;
     return TRUE;
 }
-
 
 static int GDALPipeRead(GDALPipe* p, char*** ppapszStr)
 {
@@ -1912,7 +1941,7 @@ public:
     void* pBuffer;
     int nBufferSize;
 
-        GDALServerInstance(GDALPipe* p);
+        explicit GDALServerInstance(GDALPipe* p);
        ~GDALServerInstance();
 };
 
@@ -1930,7 +1959,6 @@ GDALServerInstance::~GDALServerInstance()
         GDALClose((GDALDatasetH)poDS);
         poDS = NULL;
     }
-
 }
 
 /************************************************************************/
@@ -2121,7 +2149,8 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         }
         else if( instr == INSTR_SetConfigOption )
         {
-            char *pszKey = NULL, *pszValue = NULL;
+            char *pszKey = NULL;
+            char *pszValue = NULL;
             if( !GDALPipeRead(p, &pszKey) ||
                 !GDALPipeRead(p, &pszValue) )
             {
@@ -2135,11 +2164,13 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         }
         else if( instr == INSTR_Progress )
         {
-            double dfProgress;
+            double dfProgress = 0.0;
             char* pszProgressMsg = NULL;
             if( !GDALPipeRead(p, &dfProgress) ||
                 !GDALPipeRead(p, &pszProgressMsg) )
                 break;
+            CPLAssert( pfnProgress );
+            // cppcheck-suppress nullPointer
             nRet = pfnProgress(dfProgress, pszProgressMsg, pProgressData);
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, nRet);
@@ -2216,6 +2247,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             GDALPipeWrite(p, poDS != NULL);
             if( poDS != NULL )
             {
+                // cppcheck-suppress knownConditionTrueFalse
                 CPLAssert(INSTR_END < 128);
                 GByte abyCaps[16]; /* 16 * 8 = 128 */
                 memset(abyCaps, 0, sizeof(abyCaps));
@@ -2252,13 +2284,13 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 GDALPipeWrite(p, poDS->GetRasterYSize());
                 int nBands = poDS->GetRasterCount();
                 GDALPipeWrite(p, nBands);
-                int i;
                 int bAllSame = TRUE;
                 GDALRasterBand* poFirstBand = NULL;
-                int nFBBlockXSize = 0, nFBBlockYSize = 0;
+                int nFBBlockXSize = 0;
+                int nFBBlockYSize = 0;
 
                 /* Check if all bands are identical */
-                for(i=0;i<nBands;i++)
+                for( int i = 0; i < nBands; i++ )
                 {
                     GDALRasterBand* poOtherBand = poDS->GetRasterBand(i+1);
                     if( strlen(poOtherBand->GetDescription()) > 0 )
@@ -2289,7 +2321,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
                 /* Transmit bands */
                 GDALPipeWrite(p, bAllSame);
-                for(i=0;i<nBands;i++)
+                for( int i = 0; i < nBands; i++ )
                 {
                     GDALRasterBand* poOtherBand = poDS->GetRasterBand(i+1);
                     if( i > 0 && bAllSame )
@@ -2620,7 +2652,6 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             GDALEmitEndOfJunkMarker(p);
             GDALPipeWrite(p, eErr );
-
         }
         else if( instr == INSTR_GetFileList )
         {
@@ -3254,7 +3285,10 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             if( !GDALPipeRead(p, &bApproxOK) ||
                 !GDALPipeRead(p, &bForce) )
                 break;
-            double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
+            double dfMin = 0.0;
+            double dfMax = 0.0;
+            double dfMean = 0.0;
+            double dfStdDev = 0.0;
             CPLErr eErr = poBand->GetStatistics(bApproxOK, bForce,
                                                 &dfMin, &dfMax, &dfMean, &dfStdDev);
             GDALEmitEndOfJunkMarker(p);
@@ -3272,7 +3306,10 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             int bApproxOK;
             if( !GDALPipeRead(p, &bApproxOK) )
                 break;
-            double dfMin = 0.0, dfMax = 0.0, dfMean = 0.0, dfStdDev = 0.0;
+            double dfMin = 0.0;
+            double dfMax = 0.0;
+            double dfMean = 0.0;
+            double dfStdDev = 0.0;
             CPLErr eErr = poBand->ComputeStatistics(bApproxOK,
                                                     &dfMin, &dfMax, &dfMean, &dfStdDev,
                                                     NULL, NULL);
@@ -4303,7 +4340,6 @@ CPLErr GDALClientDataset::AddBand( GDALDataType eType,
     return eRet;
 }
 
-
 /************************************************************************/
 /*                             AdviseRead()                             */
 /************************************************************************/
@@ -4390,7 +4426,6 @@ GDALClientRasterBand::GDALClientRasterBand(GDALPipe* pIn, int iSrvBandIn,
     eCachedBufType = GDT_Unknown;
     nCachedYStart = -1;
     nCachedLines = 0;
-
 }
 
 /************************************************************************/
@@ -5513,7 +5548,6 @@ CPLErr GDALClientRasterBand::DeleteNoDataValue()
     if( !SupportsInstr(INSTR_Band_DeleteNoDataValue) )
         return GDALPamRasterBand::DeleteNoDataValue();
 
-
     CLIENT_ENTER();
     if( !WriteInstr(INSTR_Band_DeleteNoDataValue) )
         return CE_Failure;
@@ -5863,7 +5897,8 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccessIn,
 
         while(true)
         {
-            char* pszKey = NULL, *pszVal = NULL;
+            char *pszKey = NULL;
+            char *pszVal = NULL;
             if( !GDALPipeRead(p, &pszKey) )
                 return FALSE;
             if( pszKey == NULL )
@@ -6132,7 +6167,7 @@ int GDALClientDataset::mCreateCopy( const char* pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6231,7 +6266,7 @@ int GDALClientDataset::mCreate( const char * pszFilename,
         return FALSE;
     }
 
-    if( !CSLFetchBoolean(papszOptions, "APPEND_SUBDATASET", FALSE) )
+    if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
     {
         if( !GDALClientDatasetQuietDelete(p, pszFilename) )
             return FALSE;
@@ -6329,7 +6364,7 @@ CPLErr GDALClientDataset::Delete( const char * pszFilename )
 /************************************************************************/
 static GDALDriver* poAPIPROXYDriver = NULL;
 
-static void GDALUnloadAPIPROXYDriver(CPL_UNUSED GDALDriver* poDriver)
+static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 {
     if( bRecycleChild )
     {
@@ -6360,13 +6395,14 @@ GDALDriver* GDALGetAPIPROXYDriver()
         CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
         /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
+        // cppcheck-suppress duplicateExpression
         CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
         const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
         if( atoi(pszConnPool) > 0 )
         {
             bRecycleChild = TRUE;
-            nMaxRecycled = MIN(atoi(pszConnPool), MAX_RECYCLED);
+            nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
         }
         else if( CPLTestBool(pszConnPool) )
         {

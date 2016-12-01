@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRIDBLayer class, code shared between
@@ -54,6 +53,7 @@ OGRIDBLayer::OGRIDBLayer()
 
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet.
+    poFeatureDefn = NULL;
 }
 
 /************************************************************************/
@@ -217,7 +217,6 @@ CPLErr OGRIDBLayer::BuildFeatureDefn( const char *pszLayerName,
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                            ResetReading()                            */
 /************************************************************************/
@@ -330,7 +329,6 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
 
             v->Release();
 
-
             if ( eErr != OGRERR_NONE )
             {
                 const char *pszMessage;
@@ -345,6 +343,7 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
                         break;
                     case OGRERR_CORRUPT_DATA:
                         pszMessage = "Corrupt data";
+                        break;
                     default:
                         pszMessage = "Unrecognized error";
                 }
@@ -402,23 +401,10 @@ OGRFeature *OGRIDBLayer::GetFeature( GIntBig nFeatureId )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability( const char * pszCap )
+int OGRIDBLayer::TestCapability( const char * /*pszCap*/ )
 
 {
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
-        return FALSE;
-
-    else if( EQUAL(pszCap,OLCTransactions) )
-        return FALSE;
-
-    else
-        return FALSE;
+    return FALSE;
 }
 
 /************************************************************************/

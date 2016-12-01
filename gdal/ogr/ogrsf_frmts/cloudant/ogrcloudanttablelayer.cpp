@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Cloudant Translator
  * Purpose:  Definition of classes for OGR Cloudant driver.
@@ -59,7 +58,7 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
     if( bMustWriteMetadata )
     {
         WriteMetadata();
-        bMustWriteMetadata = FALSE;
+        bMustWriteMetadata = false;
     }
 
     if (pszSpatialDDoc)
@@ -70,12 +69,12 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
 /*                   RunSpatialFilterQueryIfNecessary()                 */
 /************************************************************************/
 
-int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
+bool OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
 {
-    if (!bMustRunSpatialFilter)
-        return TRUE;
+    if( !bMustRunSpatialFilter )
+        return true;
 
-    bMustRunSpatialFilter = FALSE;
+    bMustRunSpatialFilter = false;
 
     CPLAssert(nOffset == 0);
 
@@ -101,24 +100,24 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
-        return FALSE;
+        bServerSideSpatialFilteringWorks = false;
+        return false;
     }
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) )
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         CPLError(CE_Failure, CPLE_AppDefined,
                     "FetchNextRowsSpatialFilter() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     /* Catch error for a non cloudant geo database */
-    json_object* poError = json_object_object_get(poAnswerObj, "error");
-    json_object* poReason = json_object_object_get(poAnswerObj, "reason");
+    json_object* poError = CPL_json_object_object_get(poAnswerObj, "error");
+    json_object* poReason = CPL_json_object_object_get(poAnswerObj, "reason");
 
     const char* pszError = json_object_get_string(poError);
     const char* pszReason = json_object_get_string(poReason);
@@ -128,31 +127,31 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     if (poDS->IsError(poAnswerObj, "FetchNextRowsSpatialFilter() failed"))
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
-    json_object* poRows = json_object_object_get(poAnswerObj, "rows");
+    json_object* poRows = CPL_json_object_object_get(poAnswerObj, "rows");
     if (poRows == NULL ||
         !json_object_is_type(poRows, json_type_array))
     {
         CPLDebug("Cloudant",
                     "Cloudant geo not working --> client-side spatial filtering");
-        bServerSideSpatialFilteringWorks = FALSE;
+        bServerSideSpatialFilteringWorks = false;
         CPLError(CE_Failure, CPLE_AppDefined,
                     "FetchNextRowsSpatialFilter() failed");
         json_object_put(poAnswerObj);
-        return FALSE;
+        return false;
     }
 
     int nRows = json_object_array_length(poRows);
@@ -165,10 +164,10 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
             CPLError(CE_Failure, CPLE_AppDefined,
                         "FetchNextRowsSpatialFilter() failed");
             json_object_put(poAnswerObj);
-            return FALSE;
+            return false;
         }
 
-        json_object* poId = json_object_object_get(poRow, "id");
+        json_object* poId = CPL_json_object_object_get(poRow, "id");
         const char* pszId = json_object_get_string(poId);
         if (pszId != NULL)
         {
@@ -180,9 +179,8 @@ int OGRCloudantTableLayer::RunSpatialFilterQueryIfNecessary()
 
     json_object_put(poAnswerObj);
 
-    return TRUE;
+    return true;
 }
-
 
 /************************************************************************/
 /*                          GetSpatialView()                          */
@@ -192,8 +190,6 @@ void OGRCloudantTableLayer::GetSpatialView()
 {
     if (pszSpatialView == NULL)
     {
-        char **papszTokens;
-
         if (bHasStandardSpatial < 0 || bHasStandardSpatial == FALSE)
         {
             pszSpatialView = CPLGetConfigOption("CLOUDANT_SPATIAL_FILTER" , NULL);
@@ -211,14 +207,14 @@ void OGRCloudantTableLayer::GetSpatialView()
             json_object* poAnswerObj = poDS->GET(osURI);
             bHasStandardSpatial = (poAnswerObj != NULL &&
                 json_object_is_type(poAnswerObj, json_type_object) &&
-                json_object_object_get(poAnswerObj, "st_indexes") != NULL);
+                CPL_json_object_object_get(poAnswerObj, "st_indexes") != NULL);
             json_object_put(poAnswerObj);
         }
 
         if (bHasStandardSpatial)
             pszSpatialView = "_design/SpatialView/_geo/spatial";
 
-        papszTokens =
+        char **papszTokens =
             CSLTokenizeString2( pszSpatialView, "/", 0);
 
         if ((papszTokens[0] == NULL) || (papszTokens[1] == NULL))
@@ -229,7 +225,7 @@ void OGRCloudantTableLayer::GetSpatialView()
         }
 
         const size_t nLen = strlen(papszTokens[0]) + strlen(papszTokens[1]) + 2;
-        pszSpatialDDoc = (char*) CPLCalloc(nLen, 1);
+        pszSpatialDDoc = static_cast<char *>(CPLCalloc(nLen, 1));
 
         snprintf(pszSpatialDDoc, nLen, "%s/%s", papszTokens[0], papszTokens[1]);
 
@@ -256,7 +252,6 @@ void OGRCloudantTableLayer::WriteMetadata()
     osURI += "/";
     osURI += pszSpatialDDoc;
 
-
    json_object* poDDocObj = poDS->GET(osURI);
     if (poDDocObj == NULL)
         return;
@@ -268,7 +263,7 @@ void OGRCloudantTableLayer::WriteMetadata()
         return;
     }
 
-    json_object* poError = json_object_object_get(poDDocObj, "error");
+    json_object* poError = CPL_json_object_object_get(poDDocObj, "error");
     const char* pszError = json_object_get_string(poError);
     if (pszError && strcmp(pszError, "not_found") == 0)
     {
@@ -281,7 +276,6 @@ void OGRCloudantTableLayer::WriteMetadata()
         json_object_put(poDDocObj);
         return;
     }
-
 
     if (poSRS)
     {
@@ -311,7 +305,6 @@ void OGRCloudantTableLayer::WriteMetadata()
             {
                 json_object_object_add(poDDocObj, "srsid",
                                    json_object_new_string(pszUrn));
-
             }
         }
     }
@@ -385,10 +378,10 @@ static int OGRCloudantIsNumericObject(json_object* poObj)
 
 void OGRCloudantTableLayer::LoadMetadata()
 {
-    if (bHasLoadedMetadata)
+    if( bHasLoadedMetadata )
         return;
 
-    bHasLoadedMetadata = TRUE;
+    bHasLoadedMetadata = true;
 
     if (pszSpatialDDoc == NULL)
         GetSpatialView();
@@ -411,12 +404,12 @@ void OGRCloudantTableLayer::LoadMetadata()
         return;
     }
 
-    json_object* poRev = json_object_object_get(poAnswerObj, "_rev");
+    json_object* poRev = CPL_json_object_object_get(poAnswerObj, "_rev");
     const char* pszRev = json_object_get_string(poRev);
     if (pszRev)
         osMetadataRev = pszRev;
 
-    json_object* poError = json_object_object_get(poAnswerObj, "error");
+    json_object* poError = CPL_json_object_object_get(poAnswerObj, "error");
     const char* pszError = json_object_get_string(poError);
     if (pszError && strcmp(pszError, "not_found") == 0)
     {
@@ -430,7 +423,7 @@ void OGRCloudantTableLayer::LoadMetadata()
         return;
     }
 
-    json_object* poJsonSRS = json_object_object_get(poAnswerObj, "srsid");
+    json_object* poJsonSRS = CPL_json_object_object_get(poAnswerObj, "srsid");
     const char* pszSRS = json_object_get_string(poJsonSRS);
     if (pszSRS != NULL)
     {
@@ -442,7 +435,7 @@ void OGRCloudantTableLayer::LoadMetadata()
         }
     }
 
-    json_object* poGeomType = json_object_object_get(poAnswerObj, "geomtype");
+    json_object* poGeomType = CPL_json_object_object_get(poAnswerObj, "geomtype");
     const char* pszGeomType = json_object_get_string(poGeomType);
 
      if (pszGeomType)
@@ -450,20 +443,20 @@ void OGRCloudantTableLayer::LoadMetadata()
         if (EQUAL(pszGeomType, "NONE"))
         {
             eGeomType = wkbNone;
-            bExtentValid = TRUE;
+            bExtentValid = true;
         }
         else
         {
             eGeomType = OGRFromOGCGeomType(pszGeomType);
 
-            json_object* poIs25D = json_object_object_get(poAnswerObj, "is_25D");
+            json_object* poIs25D = CPL_json_object_object_get(poAnswerObj, "is_25D");
             if (poIs25D && json_object_get_boolean(poIs25D))
                 eGeomType = wkbSetZ(eGeomType);
 
-            json_object* poExtent = json_object_object_get(poAnswerObj, "extent");
+            json_object* poExtent = CPL_json_object_object_get(poAnswerObj, "extent");
             if (poExtent && json_object_get_type(poExtent) == json_type_object)
             {
-                json_object* poBbox = json_object_object_get(poExtent, "bbox");
+                json_object* poBbox = CPL_json_object_object_get(poExtent, "bbox");
                 if (poBbox &&
                     json_object_get_type(poBbox) == json_type_array &&
                     json_object_array_length(poBbox) == 4 &&
@@ -476,17 +469,18 @@ void OGRCloudantTableLayer::LoadMetadata()
                     dfMinY = json_object_get_double(json_object_array_get_idx(poBbox, 1));
                     dfMaxX = json_object_get_double(json_object_array_get_idx(poBbox, 2));
                     dfMaxY = json_object_get_double(json_object_array_get_idx(poBbox, 3));
-                    bExtentValid = bExtentSet = TRUE;
+                    bExtentValid = true;
+                    bExtentSet = true;
                 }
             }
         }
     }
 
-    json_object* poGeoJSON = json_object_object_get(poAnswerObj, "geojson_documents");
+    json_object* poGeoJSON = CPL_json_object_object_get(poAnswerObj, "geojson_documents");
     if (poGeoJSON && json_object_is_type(poGeoJSON, json_type_boolean))
-        bGeoJSONDocument = json_object_get_boolean(poGeoJSON);
+        bGeoJSONDocument = CPL_TO_BOOL(json_object_get_boolean(poGeoJSON));
 
-    json_object* poFields = json_object_object_get(poAnswerObj, "fields");
+    json_object* poFields = CPL_json_object_object_get(poAnswerObj, "fields");
     if (poFields && json_object_is_type(poFields, json_type_array))
     {
         poFeatureDefn = new OGRFeatureDefn( osName );
@@ -508,11 +502,11 @@ void OGRCloudantTableLayer::LoadMetadata()
             json_object* poField = json_object_array_get_idx(poFields, i);
             if (poField && json_object_is_type(poField, json_type_object))
             {
-                json_object* poName = json_object_object_get(poField, "name");
+                json_object* poName = CPL_json_object_object_get(poField, "name");
                 const char* pszName = json_object_get_string(poName);
                 if (pszName)
                 {
-                    json_object* poType = json_object_object_get(poField, "type");
+                    json_object* poType = CPL_json_object_object_get(poField, "type");
                     const char* pszType = json_object_get_string(poType);
                     OGRFieldType eType = OFTString;
                     if (pszType)

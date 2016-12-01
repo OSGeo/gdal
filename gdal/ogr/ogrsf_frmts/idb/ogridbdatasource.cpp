@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRIDBDataSource class
@@ -44,6 +43,7 @@ OGRIDBDataSource::OGRIDBDataSource()
     papoLayers = NULL;
     nLayers = 0;
     poConn = 0;
+    bDSUpdate = FALSE;
 }
 
 /************************************************************************/

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Implementation of CPLKeywordParser - a class for parsing
@@ -31,10 +30,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+//! @cond Doxygen_Suppress
+
+#include "cpl_port.h"
 #include "cplkeywordparser.h"
 
-CPL_CVSID("$Id");
+#include <cctype>
+#include <cstring>
+#include <string>
+
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /* ==================================================================== */
@@ -69,7 +77,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
+/*      Read in buffer till we find END all on its own line.            */
 /* -------------------------------------------------------------------- */
     for( ; true; )
     {
@@ -211,7 +219,6 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     {
         if( !ReadWord( osValue ) )
             return FALSE;
-
     }
 
     SkipWhite();
@@ -361,3 +368,5 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
 
     return pszResult;
 }
+
+//! @endcond

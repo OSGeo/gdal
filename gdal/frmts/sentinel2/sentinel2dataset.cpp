@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Sentinel2 products
@@ -36,8 +35,10 @@
 #include "ogr_geometry.h"
 #include "gdaljp2metadata.h"
 #include "../vrt/vrtdataset.h"
-#include <set>
+
+#include <algorithm>
 #include <map>
+#include <set>
 #include <vector>
 
 #ifdef HAVE_UNISTD_H
@@ -169,9 +170,9 @@ class SENTINEL2Dataset : public VRTDataset
 
     public:
                     SENTINEL2Dataset(int nXSize, int nYSize);
-                    ~SENTINEL2Dataset();
+        virtual ~SENTINEL2Dataset();
 
-        virtual char** GetFileList();
+        virtual char** GetFileList() override;
 
         static GDALDataset *Open( GDALOpenInfo * );
         static GDALDataset *OpenL1BUserProduct( GDALOpenInfo * );
@@ -218,8 +219,7 @@ class SENTINEL2AlphaBand: public VRTSourcedRasterBand
 #else
                               int nPixelSpace, int nLineSpace
 #endif
-                              );
-
+                              ) override;
 };
 
 /************************************************************************/
@@ -230,12 +230,11 @@ SENTINEL2AlphaBand::SENTINEL2AlphaBand( GDALDataset *poDSIn, int nBandIn,
                                         GDALDataType eType,
                                         int nXSize, int nYSize,
                                         int nSaturatedVal, int nNodataVal ) :
-                            VRTSourcedRasterBand(poDSIn, nBandIn, eType,
-                                                 nXSize, nYSize),
-                            m_nSaturatedVal(nSaturatedVal),
-                            m_nNodataVal(nNodataVal)
-{
-}
+    VRTSourcedRasterBand(poDSIn, nBandIn, eType,
+                         nXSize, nYSize),
+    m_nSaturatedVal(nSaturatedVal),
+    m_nNodataVal(nNodataVal)
+{}
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -318,7 +317,8 @@ CPLErr SENTINEL2AlphaBand::IRasterIO( GDALRWFlag eRWFlag,
 /*                          SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,nYSize)
+SENTINEL2Dataset::SENTINEL2Dataset( int nXSize, int nYSize ) :
+    VRTDataset(nXSize, nYSize)
 {
     poDriver = NULL;
     SetWritable(FALSE);
@@ -328,9 +328,7 @@ SENTINEL2Dataset::SENTINEL2Dataset(int nXSize, int nYSize) : VRTDataset(nXSize,n
 /*                         ~SENTINEL2Dataset()                          */
 /************************************************************************/
 
-SENTINEL2Dataset::~SENTINEL2Dataset()
-{
-}
+SENTINEL2Dataset::~SENTINEL2Dataset() {}
 
 /************************************************************************/
 /*                            GetFileList()                             */
@@ -410,10 +408,14 @@ class SENTINEL2_CPLXMLNodeHolder
 {
     CPLXMLNode* m_psNode;
     public:
-        SENTINEL2_CPLXMLNodeHolder(CPLXMLNode* psNode) : m_psNode(psNode) {}
+        explicit SENTINEL2_CPLXMLNodeHolder(CPLXMLNode* psNode) : m_psNode(psNode) {}
        ~SENTINEL2_CPLXMLNodeHolder() { if(m_psNode) CPLDestroyXMLNode(m_psNode); }
 
-       CPLXMLNode* Release() { CPLXMLNode* psRet = m_psNode; m_psNode = NULL; return psRet; }
+       CPLXMLNode* Release() {
+           CPLXMLNode* psRet = m_psNode;
+           m_psNode = NULL;
+           return psRet;
+       }
 };
 
 /************************************************************************/
@@ -760,8 +762,9 @@ static bool SENTINEL2GetGranuleList(CPLXMLNode* psMainMTD,
                                            sizeof(szPointerFilename)));
     if (nBytes != -1)
     {
-        szPointerFilename[MIN(nBytes,
-                            static_cast<int>(sizeof(szPointerFilename)-1))] = 0;
+        const int nOffset =
+            std::min(nBytes, static_cast<int>(sizeof(szPointerFilename)-1));
+        szPointerFilename[nOffset] = '\0';
         osDirname = CPLGetDirname(szPointerFilename);
     }
 #endif
@@ -1206,7 +1209,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -1756,7 +1759,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     int nBits = 0; /* 0 = unknown yet*/
     int nValMax = 0; /* 0 = unknown yet*/
-    int nRows = 0, nCols = 0;
+    int nRows = 0;
+    int nCols = 0;
     CPLXMLNode* psGranuleDimensions =
         CPLGetXMLNode(psRoot, "=Level-1B_Granule_ID.Geometric_Info.Granule_Dimensions");
     if( psGranuleDimensions == NULL )
@@ -1842,7 +1846,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
 
     for(int nBand=1;nBand<=nBands;nBand++)
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -1906,12 +1910,12 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
             continue;
         }
 
-        GDALProxyPoolDataset* proxyDS;
-        proxyDS = new GDALProxyPoolDataset(         osTile,
-                                                    poDS->nRasterXSize,
-                                                    poDS->nRasterYSize,
-                                                    GA_ReadOnly,
-                                                    TRUE);
+        GDALProxyPoolDataset* proxyDS =
+            new GDALProxyPoolDataset( osTile,
+                                      poDS->nRasterXSize,
+                                      poDS->nRasterYSize,
+                                      GA_ReadOnly,
+                                      TRUE );
         proxyDS->AddSrcBandDescription(eDT, 128, 128);
 
         if( nBand != nAlphaBand )
@@ -2448,8 +2452,9 @@ static bool SENTINEL2GetTileInfo(const char* pszFilename,
                                     memcpy(pnHeight, pabyData, 4);
                                     CPL_MSBPTR32(pnHeight);
                                 }
-                                if( pnWidth )
+                                if( pnWidth != NULL )
                                 {
+                                    //cppcheck-suppress nullPointer
                                     memcpy(pnWidth, pabyData+4, 4);
                                     CPL_MSBPTR32(pnWidth);
                                 }
@@ -2576,7 +2581,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
     CPLStripXMLNamespace(psRoot, NULL, TRUE);
 
     std::vector<CPLString> aosGranuleList;
-    std::set<int> oSetResolutions;
     std::map<int, std::set<CPLString> > oMapResolutionsToBands;
     if( !SENTINEL2GetGranuleList(psRoot,
                                  eLevel,
@@ -2689,7 +2693,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
 
     if( osOriginalXML.size() )
     {
-        char* apszXMLMD[2];
+        char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
         apszXMLMD[1] = NULL;
         poDS->GDALDataset::SetMetadata(apszXMLMD, "xml:SENTINEL2");
@@ -2846,15 +2850,20 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
     /* Iterate over granule metadata to know the layer extent */
     /* and the location of each granule */
-    double dfMinX = 1e20, dfMinY = 1e20, dfMaxX = -1e20, dfMaxY = -1e20;
+    double dfMinX = 1.0e20;
+    double dfMinY = 1.0e20;
+    double dfMaxX = -1.0e20;
+    double dfMaxY = -1.0e20;
     std::vector<SENTINEL2GranuleInfo> aosGranuleInfoList;
     const int nDesiredResolution = (bIsPreview) ? 0 : nSubDSPrecision;
     for(size_t i=0;i<aosGranuleList.size();i++)
     {
         int nEPSGCode = 0;
-        double dfULX = 0.0, dfULY = 0.0;
+        double dfULX = 0.0;
+        double dfULY = 0.0;
         int nResolution = 0;
-        int nWidth = 0, nHeight = 0;
+        int nWidth = 0;
+        int nHeight = 0;
         if( SENTINEL2GetGranuleInfo(eLevel,
                                     aosGranuleList[i],
                                     nDesiredResolution,
@@ -2915,7 +2924,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
         CPLDebug("SENTINEL2", "Invalid EPSG code %d", nSubDSEPSGCode);
     }
 
-    double adfGeoTransform[6];
+    double adfGeoTransform[6] = { 0 };
     adfGeoTransform[0] = dfMinX;
     adfGeoTransform[1] = nSubDSPrecision;
     adfGeoTransform[2] = 0;
@@ -2935,9 +2944,9 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
     std::map<CPLString, GDALProxyPoolDataset*> oMapPVITile;
 
-    for(int nBand=1;nBand<=nBands;nBand++)
+    for( int nBand = 1; nBand <= nBands; nBand++ )
     {
-        VRTSourcedRasterBand* poBand;
+        VRTSourcedRasterBand* poBand = NULL;
 
         if( nBand != nAlphaBand )
         {
@@ -3007,7 +3016,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
                 continue;
             }
 
-            GDALProxyPoolDataset* proxyDS;
+            GDALProxyPoolDataset* proxyDS = NULL;
             if( bIsPreview )
             {
                 proxyDS = oMapPVITile[osTile];

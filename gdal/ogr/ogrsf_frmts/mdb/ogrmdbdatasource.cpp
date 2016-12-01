@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMDBDataSource class.
@@ -69,10 +68,8 @@ OGRMDBDataSource::~OGRMDBDataSource()
         delete papoLayersInvisible[i];
     CPLFree( papoLayersInvisible );
 
-
     delete poDB;
 }
-
 
 /************************************************************************/
 /*                              OpenGDB()                               */

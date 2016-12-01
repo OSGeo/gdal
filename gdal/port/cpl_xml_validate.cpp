@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement XML validation against XSD schema
@@ -27,7 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -54,9 +55,20 @@ CPL_CVSID("$Id$");
 
 #ifdef HAVE_RECENT_LIBXML2
 #include <string.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#endif
+
 #include <libxml/xmlschemas.h>
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
+
+#ifdef __clang
+#pragma clang diagnostic pop
+#endif
 
 #include "cpl_string.h"
 #include "cpl_hash_set.h"
@@ -133,7 +145,6 @@ static bool CPLHasLibXMLBug()
         "</simpleContent>"
         "</complexType>"
         "</schema>";
-
 
     xmlSchemaParserCtxtPtr pSchemaParserCtxt =
         xmlSchemaNewMemParserCtxt(szLibXMLBugTester, strlen(szLibXMLBugTester));
@@ -756,7 +767,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xml.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -774,7 +785,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -1046,7 +1057,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
  *
  * @param pszXMLFilename the filename of the XML file to validate.
  * @param pszXSDFilename the filename of the XSD schema.
- * @param papszOptions unused for now.
+ * @param papszOptions unused for now. Set to NULL.
  * @return TRUE if the XML file validates against the XML schema.
  *
  * @since GDAL 1.10.0
@@ -1054,7 +1065,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 
 int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
-                    char** /* papszOptions */ )
+                    CPL_UNUSED char** papszOptions )
 {
     char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;

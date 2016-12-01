@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SUA Translator
  * Purpose:  Implements OGRSUADriver.
@@ -125,4 +124,3 @@ void RegisterOGRSUA()
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
-

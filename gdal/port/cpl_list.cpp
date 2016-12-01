@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Name:     cpl_list.cpp
  * Project:  CPL - Common Portability Library
@@ -29,8 +28,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
 #include "cpl_list.h"
+
+#include <cstddef>
+
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 

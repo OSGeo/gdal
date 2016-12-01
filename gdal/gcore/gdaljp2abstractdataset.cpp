@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
@@ -29,10 +28,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_mdreader.h"
+#include "cpl_port.h"
 #include "gdaljp2abstractdataset.h"
+
+#include <cstring>
+
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_mdreader.h"
+#include "gdal_priv.h"
 #include "gdaljp2metadata.h"
 #include "ogrsf_frmts.h"
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                     GDALJP2AbstractDataset()                         */
@@ -86,8 +100,8 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Identify authorized georeferencing sources                      */
 /* -------------------------------------------------------------------- */
-    const char* pszGeorefSourcesOption = 
-      CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
+    const char* pszGeorefSourcesOption =
+        CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
     bool bGeorefSourcesConfigOption = pszGeorefSourcesOption != NULL;
     CPLString osGeorefSources = (pszGeorefSourcesOption) ?
         pszGeorefSourcesOption :
@@ -137,7 +151,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
                               nMSIGIndex, &nIndexUsed) ) ||
         (!(poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL) &&
          oJP2Geo.ReadAndParse( pszOverrideFilename, nGEOJP2Index, nGMLJP2Index,
-                               nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) && 
+                               nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) &&
         (nGMLJP2Index >= 0 || nGEOJP2Index >= 0 || nMSIGIndex >= 0 ||
          m_nWORLDFILEIndex >= 0) )
     {
@@ -652,3 +666,5 @@ OGRLayer* GDALJP2AbstractDataset::GetLayer( int i )
 {
     return poMemDS != NULL ? poMemDS->GetLayer(i) : NULL;
 }
+
+/*! @endcond */

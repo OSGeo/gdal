@@ -1,4 +1,4 @@
-/* $Id: tif_luv.c,v 1.41 2015-12-27 16:25:11 erouault Exp $ */
+/* $Id: tif_luv.c,v 1.43 2016-09-04 21:32:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1997 Greg Ward Larson
@@ -401,8 +401,10 @@ LogLuvDecodeStrip(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
                 return 0;
 
 	assert(cc%rowlen == 0);
-	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s))
-		bp += rowlen, cc -= rowlen;
+	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s)) {
+		bp += rowlen;
+		cc -= rowlen;
+	}
 	return (cc == 0);
 }
 
@@ -420,8 +422,10 @@ LogLuvDecodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
                 return 0;
 
 	assert(cc%rowlen == 0);
-	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s))
-		bp += rowlen, cc -= rowlen;
+	while (cc && (*tif->tif_decoderow)(tif, bp, rowlen, s)) {
+		bp += rowlen;
+		cc -= rowlen;
+	}
 	return (cc == 0);
 }
 
@@ -687,8 +691,10 @@ LogLuvEncodeStrip(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
                 return 0;
 
 	assert(cc%rowlen == 0);
-	while (cc && (*tif->tif_encoderow)(tif, bp, rowlen, s) == 1)
-		bp += rowlen, cc -= rowlen;
+	while (cc && (*tif->tif_encoderow)(tif, bp, rowlen, s) == 1) {
+		bp += rowlen;
+		cc -= rowlen;
+	}
 	return (cc == 0);
 }
 
@@ -705,8 +711,10 @@ LogLuvEncodeTile(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
                 return 0;
 
 	assert(cc%rowlen == 0);
-	while (cc && (*tif->tif_encoderow)(tif, bp, rowlen, s) == 1)
-		bp += rowlen, cc -= rowlen;
+	while (cc && (*tif->tif_encoderow)(tif, bp, rowlen, s) == 1) {
+		bp += rowlen;
+		cc -= rowlen;
+	}
 	return (cc == 0);
 }
 
@@ -1276,6 +1284,14 @@ LogL16InitState(TIFF* tif)
 	assert(sp != NULL);
 	assert(td->td_photometric == PHOTOMETRIC_LOGL);
 
+	if( td->td_samplesperpixel != 1 )
+	{
+		TIFFErrorExt(tif->tif_clientdata, module,
+		             "Sorry, can not handle LogL image with %s=%d",
+			     "Samples/pixel", td->td_samplesperpixel);
+		return 0;
+	}
+
 	/* for some reason, we can't do this in TIFFInitLogL16 */
 	if (sp->user_datafmt == SGILOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = LogL16GuessDataFmt(td);
@@ -1598,17 +1614,21 @@ LogLuvVSetField(TIFF* tif, uint32 tag, va_list ap)
 		 */
 		switch (sp->user_datafmt) {
 		case SGILOGDATAFMT_FLOAT:
-			bps = 32, fmt = SAMPLEFORMAT_IEEEFP;
+			bps = 32;
+			fmt = SAMPLEFORMAT_IEEEFP;
 			break;
 		case SGILOGDATAFMT_16BIT:
-			bps = 16, fmt = SAMPLEFORMAT_INT;
+			bps = 16;
+			fmt = SAMPLEFORMAT_INT;
 			break;
 		case SGILOGDATAFMT_RAW:
-			bps = 32, fmt = SAMPLEFORMAT_UINT;
+			bps = 32;
+			fmt = SAMPLEFORMAT_UINT;
 			TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
 			break;
 		case SGILOGDATAFMT_8BIT:
-			bps = 8, fmt = SAMPLEFORMAT_UINT;
+			bps = 8;
+			fmt = SAMPLEFORMAT_UINT;
 			break;
 		default:
 			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,

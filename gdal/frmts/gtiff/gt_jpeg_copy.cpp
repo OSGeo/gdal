@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GeoTIFF Driver
  * Purpose:  Specialized copy of JPEG content into TIFF.
@@ -37,6 +36,8 @@
 #define tmsize_t tsize_t
 #endif
 
+#include <algorithm>
+
 // Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly
 // useful for debugging purposes.
 
@@ -62,7 +63,6 @@ static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
 }
 
 #endif // defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
-
 
 #ifdef JPEG_DIRECT_COPY
 
@@ -237,7 +237,7 @@ CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
     }
 
     VSIFree(pabyJPEGData);
-    if VSIFCloseL(fpJPEG) != 0 )
+    if( VSIFCloseL(fpJPEG) != 0 )
         eErr = CE_Failure;
 
     return eErr;
@@ -354,7 +354,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
 /*                      GTIFF_ErrorExitJPEG()                           */
 /************************************************************************/
 
-static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
+static void GTIFF_ErrorExitJPEG( j_common_ptr cinfo )
 {
     jmp_buf *setjmp_buffer = (jmp_buf *) cinfo->client_data;
     char buffer[JMSG_LENGTH_MAX] = { '\0' };
@@ -374,12 +374,13 @@ static void GTIFF_ErrorExitJPEG(j_common_ptr cinfo)
 /************************************************************************/
 
 static
-void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF* hTIFF,
-                                  jpeg_decompress_struct& sDInfo,
-                                  jpeg_compress_struct& sCInfo)
+void GTIFF_Set_TIFFTAG_JPEGTABLES( TIFF* hTIFF,
+                                   jpeg_decompress_struct& sDInfo,
+                                   jpeg_compress_struct& sCInfo )
 {
     char szTmpFilename[128] = { '\0' };
-    snprintf(szTmpFilename, sizeof(szTmpFilename), "/vsimem/tables_%p", &sDInfo);
+    snprintf(szTmpFilename, sizeof(szTmpFilename),
+             "/vsimem/tables_%p", &sDInfo);
     VSILFILE* fpTABLES = VSIFOpenL(szTmpFilename, "wb+");
 
     uint16 nPhotometric = 0;
@@ -487,8 +488,8 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
         {
             long top = 1L << nBitsPerSample;
             float refbw[6] = { 0.0 };
-            refbw[1] = (float)(top-1L);
-            refbw[2] = (float)(top>>1);
+            refbw[1] = static_cast<float>(top - 1L);
+            refbw[2] = static_cast<float>(top >> 1);
             refbw[3] = refbw[1];
             refbw[4] = refbw[2];
             refbw[5] = refbw[1];
@@ -597,7 +598,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
     jpeg_create_compress(&sCInfo);
     jpeg_copy_critical_parameters(psDInfo, &sCInfo);
 
-    // ensure libjpeg won't write any extraneous markers.
+    // Ensure libjpeg won't write any extraneous markers.
     sCInfo.write_JFIF_header = FALSE;
     sCInfo.write_Adobe_marker = FALSE;
 
@@ -610,8 +611,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
     int nJPEGHeight = nBlockYSize;
     if( !bIsTiled )
     {
-        nJPEGWidth = MIN(nBlockXSize, nXSize - iX * nBlockXSize);
-        nJPEGHeight = MIN(nBlockYSize, nYSize - iY * nBlockYSize);
+        nJPEGWidth = std::min(nBlockXSize, nXSize - iX * nBlockXSize);
+        nJPEGHeight = std::min(nBlockYSize, nYSize - iY * nBlockYSize);
     }
 
     // Code partially derived from libjpeg transupp.c.
@@ -640,7 +641,8 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
         if( sCInfo.num_components == 1 )
         {
             // Force samp factors to 1x1 in this case.
-            h_samp_factor = v_samp_factor = 1;
+            h_samp_factor = 1;
+            v_samp_factor = 1;
         }
         else
         {
@@ -712,7 +714,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                                 nXBlocksToCopy * (DCTSIZE2 * sizeof(JCOEF)));
                         if( nXBlocksToCopy < compptr->width_in_blocks )
                         {
-                            memset(dst_buffer[offset_y]  + nXBlocksToCopy, 0,
+                            memset(dst_buffer[offset_y] + nXBlocksToCopy, 0,
                                    (compptr->width_in_blocks - nXBlocksToCopy) *
                                    (DCTSIZE2 * sizeof(JCOEF)));
                         }
@@ -767,7 +769,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                TIFFWriteRawTile(
                    hTIFF, iX + iY * nXBlocks,
                    pabyJPEGData,
-                   static_cast<tmsize_t>(nSize) ) )  != nSize )
+                   static_cast<tmsize_t>(nSize) ) ) != nSize )
             eErr = CE_Failure;
     }
     else
@@ -829,8 +831,9 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     {
         // If the user doesn't provide a value for JPEGMEM, be sure that at
         // least 500 MB will be used before creating the temporary file.
+        const long nMinMemory = 500 * 1024 * 1024;
         sDInfo.mem->max_memory_to_use =
-                MAX(sDInfo.mem->max_memory_to_use, 500 * 1024 * 1024);
+            std::max(sDInfo.mem->max_memory_to_use, nMinMemory);
     }
 
     jpeg_vsiio_src( &sDInfo, fpJPEG );
@@ -871,7 +874,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     }
     else
     {
-        uint32  nRowsPerStrip;
+        uint32 nRowsPerStrip = 0;
         if( !TIFFGetField( hTIFF, TIFFTAG_ROWSPERSTRIP,
                         &(nRowsPerStrip) ) )
         {

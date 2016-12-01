@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Vector polygon rasterization code.
@@ -28,19 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_alg.h"
+#include "cpl_port.h"
 #include "gdal_alg_priv.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+
+#include "gdal_alg.h"
+
+CPL_CVSID("$Id$");
 
 static int llCompareInt(const void *a, const void *b)
 {
-	return (*(const int *)a) - (*(const int *)b);
+    return (*(const int *)a) - (*(const int *)b);
 }
 
 static void llSwapDouble(double *a, double *b)
 {
-	double temp = *a;
-	*a = *b;
-	*b = temp;
+    double temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
 /************************************************************************/
@@ -147,7 +154,7 @@ No known bug
 
     /* Fix in 1.3: count a vertex only once */
     for (y=miny; y <= maxy; y++) {
-        int	partoffset = 0;
+        int partoffset = 0;
 
         dy = y +0.5; /* center height of line*/
 
@@ -206,7 +213,6 @@ No known bug
                 }
                 else /*skip top horizontal segments (they are already filled in the regular loop)*/
                     continue;
-
             }
 
             if(( dy < dy2 ) && (dy >= dy1))
@@ -226,7 +232,6 @@ No known bug
          * automatically in compile-time, with modularity preserved.
          */
         qsort(polyInts, ints, sizeof(int), llCompareInt);
-
 
         for (i=0; (i < (ints)); i+=2)
         {
@@ -291,7 +296,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             const int iX1 = (int)floor( padfX[n + j] );
             const int iY1 = (int)floor( padfY[n + j] );
 
-            double dfVariant = 0, dfVariant1 = 0;
+            double dfVariant = 0.0;
+            double dfVariant1 = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
@@ -300,8 +306,8 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
                 dfVariant1 = padfVariant[n + j];
             }
 
-            int nDeltaX = ABS( iX1 - iX );
-            int nDeltaY = ABS( iY1 - iY );
+            int nDeltaX = std::abs( iX1 - iX );
+            int nDeltaY = std::abs( iY1 - iY );
 
             // Step direction depends on line direction.
             const int nXStep = ( iX > iX1 ) ? -1 : 1;
@@ -403,7 +409,8 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
             double dfXEnd = padfX[n + j];
             double dfYEnd = padfY[n + j];
 
-            double dfVariant = 0, dfVariantEnd = 0;
+            double dfVariant = 0.0;
+            double dfVariantEnd = 0.0;
             if( padfVariant != NULL &&
                 ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
@@ -594,8 +601,7 @@ GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                     dfY += dfStepY;
                     dfVariant += dfDeltaVariant * dfStepX;
                 }
-            } // next step along segment.
-
-        } // next segment
-    } // next part
+            }  // Next step along segment.
+        }  // Next segment.
+    }  // Next part.
 }

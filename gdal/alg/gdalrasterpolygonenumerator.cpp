@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  Raster Polygon Enumerator
@@ -28,11 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_alg_priv.h"
+
+#include <cstddef>
+
 #include "cpl_conv.h"
-#include <vector>
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
+
+/*! @cond Doxygen_Suppress */
 
 /************************************************************************/
 /*                    GDALRasterPolygonEnumeratorT()                    */
@@ -290,3 +295,5 @@ void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::ProcessLine(
 template class GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest>;
 
 template class GDALRasterPolygonEnumeratorT<float, FloatEqualityTest>;
+
+/*! @endcond */

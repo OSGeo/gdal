@@ -4,18 +4,18 @@
 *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-*   2. Redistributions in binary form must reproduce the above copyright notice, 
+*   2. Redistributions in binary form must reproduce the above copyright notice,
 *      this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL), 
-*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to 
+*   3. Neither the name of the California Institute of Technology (Caltech), its operating division the Jet Propulsion Laboratory (JPL),
+*      the National Aeronautics and Space Administration (NASA), nor the names of its contributors may be used to
 *      endorse or promote products derived from this software without specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE CALIFORNIA INSTITUTE OF TECHNOLOGY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 * Copyright 2014-2015 Esri
@@ -33,10 +33,7 @@
 * limitations under the License.
 */
 
-
-
 /*
- * $Id$
  * JPEG band
  * JPEG page compression and decompression functions, gets compiled twice
  * once directly and once through inclusion from JPEG12_band.cpp
@@ -50,6 +47,8 @@
 CPL_C_START
 #include <jpeglib.h>
 CPL_C_END
+
+CPL_CVSID("$Id$");
 
 NAMESPACE_MRF_START
 
@@ -92,14 +91,13 @@ static void errorExit(j_common_ptr cinfo)
     longjmp(psErrorStruct->setjmpBuffer, 1);
 }
 
-
 /**
-*\Brief Do nothing stub function for JPEG library, called
+*\brief Do nothing stub function for JPEG library, called
 */
 static void stub_source_dec(j_decompress_ptr /*cinfo*/) {}
 
 /**
-*\Brief: This function is supposed to do refilling of the input buffer,
+*\brief: This function is supposed to do refilling of the input buffer,
 * but as we provided everything at the beginning, if it is called, then
 * we have an error.
 */
@@ -112,7 +110,7 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 }
 
 /**
-*\Brief: Do nothing stub function for JPEG library, not called
+*\brief: Do nothing stub function for JPEG library, not called
 */
 static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {};
 
@@ -126,7 +124,7 @@ static boolean empty_output_buffer(j_compress_ptr /*cinfo*/) {
 }
 
 /*
-*\Brief Compress a JPEG page in memory
+*\brief Compress a JPEG page in memory
 *
 * It handles byte or 12 bit data, grayscale, RGB, CMYK, multispectral
 *
@@ -227,18 +225,17 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     return CE_None;
 }
 
-
 /**
 *\brief In memory decompression of JPEG file
 *
-* @param data pointer to output buffer 
+* @param data pointer to output buffer
 * @param png pointer to PNG in memory
 * @param sz if non-zero, test that uncompressed data fits in the buffer.
 */
 #if defined(JPEG12_ON)
 CPLErr JPEG_Codec::DecompressJPEG12(buf_mgr &dst, buf_mgr &isrc)
 #else
-CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc) 
+CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 #endif
 
 {
@@ -259,7 +256,8 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 
     src.next_input_byte = (JOCTET *)isrc.buffer;
     src.bytes_in_buffer = isrc.size;
-    src.term_source = src.init_source = stub_source_dec;
+    src.term_source = stub_source_dec;
+    src.init_source = stub_source_dec;
     src.skip_input_data = skip_input_data_dec;
     src.fill_input_buffer = fill_input_buffer_dec;
     src.resync_to_restart = jpeg_resync_to_restart;
@@ -282,7 +280,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     // Gray and RGB for example
     // This also means that a RGB MRF can be read as grayscale and vice versa
     // If libJPEG can't convert it will throw an error
-    // 
+    //
     if (nbands == 3 && cinfo.num_components != nbands)
         cinfo.out_color_space = JCS_RGB;
     if (nbands == 1 && cinfo.num_components != nbands)
@@ -339,23 +337,29 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 }
 
 // PHOTOMETRIC == MULTISPECTRAL turns off YCbCr conversion and downsampling
-JPEG_Band::JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
+JPEG_Band::JPEG_Band( GDALMRFDataset *pDS, const ILImage &image,
+                      int b, int level ) :
+    GDALMRFRasterBand(pDS, image, b, int(level)),
+    codec(image)
 {
-    int nbands = image.pagesize.c;
+    const int nbands = image.pagesize.c;
     // Check behavior on signed 16bit.  Does the libjpeg sign extend?
 #if defined(LIBJPEG_12_H)
-    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt) {
+    if (GDT_Byte != image.dt && GDT_UInt16 != image.dt)
 #else
-    if (GDT_Byte != image.dt) {
+    if (GDT_Byte != image.dt)
 #endif
-        CPLError(CE_Failure, CPLE_NotSupported, "Data type not supported by MRF JPEG");
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by MRF JPEG");
         return;
     }
 
-    if (nbands == 3) { // Only the 3 band JPEG has storage flavors
+    if( nbands == 3 )
+    { // Only the 3 band JPEG has storage flavors
         CPLString const &pm = pDS->GetPhotometricInterpretation();
-        if (pm == "RGB" || pm == "MULTISPECTRAL") { // Explicit RGB or MS
+        if (pm == "RGB" || pm == "MULTISPECTRAL")
+        { // Explicit RGB or MS
             codec.rgb = TRUE;
             codec.sameres = TRUE;
         }
@@ -363,7 +367,7 @@ GDALMRFRasterBand(pDS, image, b, int(level)), codec(image)
             codec.sameres = TRUE;
     }
 
-    if (GDT_Byte == image.dt)
+    if( GDT_Byte == image.dt )
         codec.optimize = GetOptlist().FetchBoolean("OPTIMIZE", FALSE) != FALSE;
     else
         codec.optimize = true; // Required for 12bit

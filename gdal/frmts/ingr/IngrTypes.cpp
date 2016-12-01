@@ -1,5 +1,4 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  Intergraph Raster Format support
  * Purpose:  Types support function
@@ -34,6 +33,8 @@
 #ifdef DEBUG
 #include "stdio.h"
 #endif
+
+CPL_CVSID("$Id$");
 
 static const INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
@@ -200,7 +201,7 @@ GDALDataType CPL_STDCALL INGR_GetDataType( uint16 eCode )
 {
     for( unsigned int i = 0; i < FORMAT_TAB_COUNT; i++ )
     {
-		if( eCode == INGR_FormatTable[i].eFormatCode )
+        if( eCode == INGR_FormatTable[i].eFormatCode )
         {
             return INGR_FormatTable[i].eDataType;
         }
@@ -636,7 +637,6 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     CPLFree( pabyBuf );
 
-
 #if defined(CPL_MSB)
     for ( unsigned int i = 0; i < nEntries; i++)
     {
@@ -668,7 +668,7 @@ void CPL_STDCALL INGR_GetEnvironVColors( VSILFILE *fp,
 
     real32 fNormFactor  = ( fMaxRed > fMaxGreen ? fMaxRed : fMaxGreen );
     fNormFactor  = ( fNormFactor > fMaxBlues ? fNormFactor : fMaxBlues );
-    if (fNormFactor)
+    if (fNormFactor != 0.0f )
         fNormFactor = 255 / fNormFactor;
 
     // -------------------------------------------------------------
@@ -801,7 +801,7 @@ INGR_VirtualFile CPL_STDCALL INGR_CreateVirtualFile( const char *pszFilename,
     {
     case JPEGRGB:
         nJPGComponents = 3;
-        // fallthrough
+        CPL_FALLTHROUGH
     case JPEGGRAY:
         {
             GByte *pabyHeader = (GByte*) CPLCalloc( 1, 2048 );
@@ -920,7 +920,7 @@ int CPL_STDCALL INGR_ReadJpegQuality( VSILFILE *fp, uint32 nAppDataOfseet,
 // -----------------------------------------------------------------------------
 //                                                        INGR_Decode()
 //
-//	Decode the various RLE compression options.
+//  Decode the various RLE compression options.
 //
 //  Pass NULL as pabyDstData to obtain pnBytesConsumed and bypass decompression.
 // -----------------------------------------------------------------------------
@@ -985,7 +985,7 @@ int CPL_STDCALL INGR_DecodeRunLength( GByte *pabySrcData, GByte *pabyDstData,
         }
         else if( cAtomHead < 0 )
         {
-            const unsigned int nRun = abs( cAtomHead );
+            const unsigned int nRun = -cAtomHead;
 
             if (pabyDstData)
             {
@@ -1177,8 +1177,7 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             bHeader = false;
 
         // Fall through. We have a valid scanline header... probably.
-
-    } while(0);
+    } while( false );
 
     if( bHeader )
         iInput+=4; // 0x5900 tag, line id, line data size, skip offset
@@ -1224,7 +1223,6 @@ INGR_DecodeRunLengthBitonal( GByte *pabySrcData, GByte *pabyDstData,
             iInput--;
     }
 
-
     if( pnBytesConsumed != NULL )
         *pnBytesConsumed = iInput * 2;
 
@@ -1254,7 +1252,6 @@ INGR_DecodeRunLengthBitonalTiled( GByte *pabySrcData, GByte *pabyDstData,
     unsigned short nRun = 0;
     unsigned char  nValue = 0;
     unsigned short previous = 0;
-
 
     if( CPL_LSBWORD16(pauiSrc[0]) != 0x5900 )
     {
@@ -1435,7 +1432,7 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
 void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderOne* pLSBHeaderOne;
+    INGR_HeaderOne* pLSBHeaderOne = NULL;
 #if defined(CPL_MSB)
     pLSBHeaderOne = (INGR_HeaderOne* )CPLMalloc(sizeof(INGR_HeaderOne));
     memcpy(pLSBHeaderOne, pHeaderOne, sizeof(INGR_HeaderOne));
@@ -1553,7 +1550,7 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, const GBy
 void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderTwoA* pLSBHeaderTwo;
+    INGR_HeaderTwoA* pLSBHeaderTwo = NULL;
 #if defined(CPL_MSB)
     pLSBHeaderTwo = (INGR_HeaderTwoA* )CPLMalloc(sizeof(INGR_HeaderTwoA));
     memcpy(pLSBHeaderTwo, pHeaderTwo, sizeof(INGR_HeaderTwoA));

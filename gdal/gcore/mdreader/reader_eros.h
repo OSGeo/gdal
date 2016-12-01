@@ -49,12 +49,12 @@ class GDALMDReaderEROS: public GDALMDReaderBase
 public:
     GDALMDReaderEROS(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderEROS();
-    virtual bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    virtual bool HasRequiredFiles() const override;
+    virtual char** GetMetadataFiles() const override;
 protected:
-    virtual void LoadMetadata();
+    virtual void LoadMetadata() override;
     char** LoadImdTxtFile();
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
 protected:
     CPLString m_osIMDSourceFilename;
     CPLString m_osRPBSourceFilename;

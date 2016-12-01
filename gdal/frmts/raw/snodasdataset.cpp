@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  SNODAS driver
  * Purpose:  Implementation of SNODASDataset
@@ -60,15 +59,14 @@ class SNODASDataset : public RawDataset
                     SNODASDataset();
     virtual ~SNODASDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 };
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -82,11 +80,10 @@ class SNODASRasterBand : public RawRasterBand
             SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
     virtual ~SNODASRasterBand() {}
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
 };
-
 
 /************************************************************************/
 /*                         SNODASRasterBand()                           */
@@ -97,8 +94,7 @@ SNODASRasterBand::SNODASRasterBand( VSILFILE* fpRawIn,
     RawRasterBand( fpRawIn, 0, 2,
                    nXSize * 2, GDT_Int16,
                    !CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE)
-{
-}
+{}
 
 /************************************************************************/
 /*                          GetNoDataValue()                            */
@@ -209,9 +205,7 @@ CPLErr SNODASDataset::GetGeoTransform( double * padfTransform )
     }
 
     return GDALPamDataset::GetGeoTransform( padfTransform );
-
 }
-
 
 /************************************************************************/
 /*                            GetFileList()                             */

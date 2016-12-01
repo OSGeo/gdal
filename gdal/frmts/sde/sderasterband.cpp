@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id: sdedataset.cpp 10804 2007-02-08 23:24:59Z hobu $
  *
  * Project:  ESRI ArcSDE Raster reader
  * Purpose:  Rasterband implementation for ESRI ArcSDE Rasters
@@ -32,6 +31,7 @@
 
 #include "sderasterband.h"
 
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*  SDERasterBand implements a GDAL RasterBand for ArcSDE.  This class  */
@@ -83,7 +83,6 @@
 /*                                                                      */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                           SDERasterBand()                            */
 /************************************************************************/
@@ -128,8 +127,6 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     // nSDERasterType is set by GetRasterDataType
     this->dfDepth = MorphESRIRasterDepth(nSDERasterType);
     InitializeBand(this->nOverview);
-
-
 }
 
 /************************************************************************/
@@ -154,7 +151,6 @@ SDERasterBand::~SDERasterBand( void )
         delete poColorTable;
 }
 
-
 /************************************************************************/
 /*                             GetColorTable()                          */
 /************************************************************************/
@@ -168,7 +164,6 @@ GDALColorTable* SDERasterBand::GetColorTable(void)
         return NULL;
     }
 }
-
 
 /************************************************************************/
 /*                             GetColorInterpretation()                 */
@@ -349,7 +344,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     // grab our Dataset to limit the casting we have to do.
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
-
     // SDE manages the acquisition of raster data in "TileInfo" objects.
     // The hTile is the only heap-allocated object in this method, and
     // we should make sure to delete it at the end.  Once we get the
@@ -409,7 +403,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     int block_size = (nBlockXSize * bits_per_pixel + 7) / 8 * nBlockYSize;
     int bitmap_size = (nBlockXSize * nBlockYSize + 7) / 8;
 
-
     if (length == 0) {
         // ArcSDE says the block has no data in it.
         // Write 0's and be done with it
@@ -446,7 +439,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff,
     return CE_None ;
 }
 
-
 /* ---------------------------------------------------------------------*/
 /* Private Methods                                                      */
 
@@ -460,18 +452,13 @@ void SDERasterBand::ComputeColorTable(void)
     SE_COLORMAP_DATA_TYPE eCMap_DataType;
 
     LONG nCMapEntries;
-    void * phSDEColormapData;
-
-    unsigned char* puszSDECMapData;
-    unsigned short* pushSDECMapData;
-
-    long nSDEErr;
-
-    nSDEErr = SE_rasbandinfo_get_colormap(  *poBand,
-                                            &eCMap_Type,
-                                            &eCMap_DataType,
-                                            &nCMapEntries,
-                                            &phSDEColormapData);
+    void *phSDEColormapData = NULL;
+    long nSDEErr =
+        SE_rasbandinfo_get_colormap( *poBand,
+                                     &eCMap_Type,
+                                     &eCMap_DataType,
+                                     &nCMapEntries,
+                                     &phSDEColormapData );
     if( nSDEErr != SE_SUCCESS )
     {
         IssueSDEError( nSDEErr, "SE_rasbandinfo_get_colormap" );
@@ -480,8 +467,8 @@ void SDERasterBand::ComputeColorTable(void)
     // Assign both the short and char pointers
     // to the void*, and we'll switch and read based
     // on the eCMap_DataType
-    puszSDECMapData = (unsigned char*) phSDEColormapData;
-    pushSDECMapData = (unsigned short*) phSDEColormapData;
+    unsigned char* puszSDECMapData = (unsigned char*) phSDEColormapData;
+    unsigned short* pushSDECMapData = (unsigned short*) phSDEColormapData;
 
     poColorTable = new GDALColorTable(GPI_RGB);
 
@@ -583,7 +570,6 @@ void SDERasterBand::ComputeColorTable(void)
     SE_rasbandinfo_free_colormap(phSDEColormapData);
 }
 
-
 /************************************************************************/
 /*                           InitializeBand()                           */
 /************************************************************************/
@@ -594,7 +580,6 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
     SDEDataset *poGDS = (SDEDataset *) poDS;
 
     long nSDEErr;
-
 
     hConstraint = InitializeConstraint( NULL, NULL );
     if (!hConstraint)
@@ -635,7 +620,6 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
         return CE_Fatal;
     }
 
-
     CPLErr error = QueryRaster(hConstraint);
     if (error != CE_None)
         return error;
@@ -673,10 +657,11 @@ CPLErr SDERasterBand::InitializeBand( int nOverview )
     nBlockSize = nBlockXSize * nBlockYSize;
 
     // We're the base level
-    if (nOverview == -1) {
-        for (int i = 0; i<this->nOverviews; i++) {
+    if( nOverview == -1 )
+    {
+        for( int i = 0; i<this->nOverviews; i++ )
+        {
             papoOverviews[i]= new SDERasterBand(poGDS, nBand, i, poBand);
-
         }
     }
     return CE_None;
@@ -715,12 +700,12 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff,
         {
             IssueSDEError( nSDEErr, "SE_rasconstraint_set_interleave" );
         }
-
     }
 
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet
         if (nBlockXSize >= 0 && nBlockYSize >= 0) {
-            if (*nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
+            if (nBlockXOff != NULL && nBlockYOff != NULL &&
+                *nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
                 long nMinX, nMinY, nMaxX, nMaxY;
 
                 nMinX = *nBlockXOff;
@@ -781,7 +766,6 @@ SE_QUERYINFO& SDERasterBand::InitializeQuery( void )
     }
     return hQuery;
 }
-
 
 /************************************************************************/
 /*                             MorphESRIRasterDepth()                   */

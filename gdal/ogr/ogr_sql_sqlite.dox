@@ -26,7 +26,7 @@ refer to the following pages:
 
 The SELECT statement is used to fetch layer features (analogous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
-of features.   The layers of the datasource are analogous to tables in an 
+of features.   The layers of the datasource are analogous to tables in an
 RDBMS and feature attributes are analogous to column values.  The simplest
 form of OGR SQLITE SELECT statement looks like this:
 
@@ -75,7 +75,7 @@ returns:
 OGRFeature(SELECT):0
   EAS_ID (Real) = 168
   POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,[...],479819.84375 4765180.5))
-\endcode 
+\endcode
 
 \code
 SELECT * FROM poly
@@ -87,7 +87,7 @@ OGRFeature(SELECT):0
   EAS_ID (Real) = 168
   PRFEDEA (String) = 35043411
   POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,[...],479819.84375 4765180.5))
-\endcode 
+\endcode
 
 \subsection ogr_sql_sqlite_style OGR_STYLE special field
 
@@ -98,7 +98,7 @@ For example we can select the annotation features as:
 
 \code
 SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
-\endcode 
+\endcode
 
 \subsection ogr_sql_sqlite_spatialite Spatialite SQL functions
 
@@ -289,7 +289,7 @@ of the layers to limit the number of actual geometry intersection computations :
 SELECT city_name, region_name FROM cities, regions WHERE
     ST_Area(ST_Intersection(cities.geometry, regions.geometry)) > 0 AND
     regions.rowid IN (
-        SELECT pkid FROM idx_regions_geometry WHERE 
+        SELECT pkid FROM idx_regions_geometry WHERE
             xmax >= MbrMinX(cities.geometry) AND xmin <= MbrMaxX(cities.geometry) AND
             ymax >= MbrMinY(cities.geometry) AND ymin <= MbrMaxY(cities.geometry))
 \endcode

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: geoconcept_syscoord.c
+ * $Id: geoconcept_syscoord.c$
  *
  * Name:     geoconcept_syscoord.c
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -33,7 +33,7 @@
 #include "geoconcept_syscoord.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id: geoconcept_syscoord.c,v 1.0.0 2007-12-24 15:40:28 drichard Exp $")
+CPL_CVSID("$Id$")
 
 /* -------------------------------------------------------------------- */
 /*      GCSRS globals                                                   */
@@ -547,15 +547,16 @@ static GCSysCoord GCSRSAPI_CALL1(*) _findSysCoord_GCSRS ( GCSysCoord* theSysCoor
 
     if( fabs(GetSysCoordCentralMeridian_GCSRS(gcsc) - GetSysCoordCentralMeridian_GCSRS(theSysCoord) ) > 1e-8 )
     {
-      switch( GetSysCoordProjID_GCSRS(gcsc) )
+      /* UTM family: central meridian is the 6* zone - 183 (in degrees) */
+      if( GetSysCoordProjID_GCSRS(gcsc) == 1 &&
+          /* generic UTM definition */
+          GetSysCoordCentralMeridian_GCSRS(gcsc)==0.0 )
       {
-        case    1 : /* UTM family: central meridian is the 6* zone - 183 (in degrees) */
-          if( GetSysCoordCentralMeridian_GCSRS(gcsc)==0.0 ) /* generic UTM definition */
-          {
-            break;
-          }
-        default   :
-          continue;
+        /* go on */
+      }
+      else
+      {
+        continue;
       }
     }
     if( fabs(GetSysCoordLatitudeOfOrigin_GCSRS(gcsc) - GetSysCoordLatitudeOfOrigin_GCSRS(theSysCoord) ) > 1e-8 ) continue;

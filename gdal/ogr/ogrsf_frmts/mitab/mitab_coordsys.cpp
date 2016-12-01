@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.42 2011-06-11 00:35:00 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -118,6 +117,8 @@
 #include "mitab.h"
 #include "mitab_utils.h"
 
+CPL_CVSID("$Id$");
+
 extern const MapInfoDatumInfo asDatumInfoList[];
 extern const MapInfoSpheroidInfo asSpheroidInfoList[];
 
@@ -139,7 +140,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /* -------------------------------------------------------------------- */
 /*      Report on translation.                                          */
 /* -------------------------------------------------------------------- */
-    char        *pszWKT;
+    char *pszWKT = NULL;
 
     poSR->exportToWkt( &pszWKT );
     if( pszWKT != NULL )
@@ -169,19 +170,24 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     if( poSR == NULL )
         return NULL;
 
-    TABProjInfo     sTABProj;
-    int             nParmCount;
+    TABProjInfo sTABProj;
+    int nParmCount = 0;
     TABFile::GetTABProjFromSpatialRef(poSR, sTABProj, nParmCount);
 
 /* -------------------------------------------------------------------- */
 /*      Do coordsys lookup                                              */
 /* -------------------------------------------------------------------- */
-    double dXMin = 0.0, dYMin = 0.0, dXMax = 0.0, dYMax = 0.0;
-    int bHasBounds = FALSE;
-    if (sTABProj.nProjId > 1 &&
-        MITABLookupCoordSysBounds(&sTABProj, dXMin, dYMin, dXMax, dYMax, TRUE) == TRUE)
+    double dXMin = 0.0;
+    double dYMin = 0.0;
+    double dXMax = 0.0;
+    double dYMax = 0.0;
+    bool bHasBounds = false;
+    if( sTABProj.nProjId > 1 &&
+        MITABLookupCoordSysBounds(&sTABProj,
+                                  dXMin, dYMin,
+                                  dXMax, dYMax, true) )
     {
-        bHasBounds = TRUE;
+        bHasBounds = true;
     }
 
 /*-----------------------------------------------------------------
@@ -199,7 +205,6 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         osCoordSys.Printf(
                  "Earth Projection %d",
                  sTABProj.nProjId );
-
     }
     else
         osCoordSys.Printf(
@@ -255,7 +260,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 /* -------------------------------------------------------------------- */
 /*      Append user bounds                                              */
 /* -------------------------------------------------------------------- */
-    if (bHasBounds)
+    if( bHasBounds )
     {
         if( fabs(dXMin - (int)floor(dXMin+0.5)) < 1e-8 &&
             fabs(dYMin - (int)floor(dYMin+0.5)) < 1e-8 &&
@@ -286,28 +291,26 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         CPLFree( pszWKT );
     }
 
-    return( CPLStrdup( osCoordSys.c_str() ) );
+    return CPLStrdup( osCoordSys.c_str() );
 }
-
 
 /************************************************************************/
 /*                      MITABExtractCoordSysBounds                      */
 /*                                                                      */
-/* Return TRUE if MIF coordsys string contains a BOUNDS parameter and   */
+/* Return true if MIF coordsys string contains a BOUNDS parameter and   */
 /* Set x/y min/max values.                                              */
 /************************************************************************/
 
-GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
-                                  double &dXMin, double &dYMin,
-                                  double &dXMax, double &dYMax )
+bool MITABExtractCoordSysBounds( const char * pszCoordSys,
+                                 double &dXMin, double &dYMin,
+                                 double &dXMax, double &dYMax )
 
 {
-    char        **papszFields;
-
     if( pszCoordSys == NULL )
-        return FALSE;
+        return false;
 
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,()", TRUE, FALSE );
 
     int iBounds = CSLFindString( papszFields, "Bounds" );
 
@@ -318,13 +321,12 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
         dXMax = CPLAtof(papszFields[++iBounds]);
         dYMax = CPLAtof(papszFields[++iBounds]);
         CSLDestroy( papszFields );
-        return TRUE;
+        return true;
     }
 
     CSLDestroy( papszFields );
-    return FALSE;
+    return false;
 }
-
 
 /**********************************************************************
  *                     MITABCoordSys2TABProjInfo()
@@ -336,8 +338,6 @@ GBool MITABExtractCoordSysBounds( const char * pszCoordSys,
 int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
 
 {
-    char        **papszFields;
-
     // Set all fields to zero, equivalent of NonEarth Units "mi"
     memset(psProj, 0, sizeof(TABProjInfo));
 
@@ -351,12 +351,13 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     if( STARTS_WITH_CI(pszCoordSys, "CoordSys") )
         pszCoordSys += 9;
 
-    papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+    char **papszFields =
+        CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
 
     /*-----------------------------------------------------------------
      * Clip off Bounds information.
      *----------------------------------------------------------------*/
-    int         iBounds = CSLFindString( papszFields, "Bounds" );
+    int iBounds = CSLFindString( papszFields, "Bounds" );
 
     while( iBounds != -1 && papszFields[iBounds] != NULL )
     {
@@ -368,7 +369,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Fetch the projection.
      *----------------------------------------------------------------*/
-    char        **papszNextField;
+    char **papszNextField = NULL;
 
     if( CSLCount( papszFields ) >= 3
         && EQUAL(papszFields[0],"Earth")
@@ -438,10 +439,10 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     /*-----------------------------------------------------------------
      * Find the datum, and collect it's parameters if possible.
      *----------------------------------------------------------------*/
-        int         iDatum;
         const MapInfoDatumInfo *psDatumInfo = NULL;
 
-        for(iDatum=0; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++)
+        int iDatum = 0;  // Used after for.
+        for( ; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++ )
         {
             if( asDatumInfoList[iDatum].nMapInfoDatumID == nDatum )
             {

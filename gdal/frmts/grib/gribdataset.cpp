@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GRIB Driver
  * Purpose:  GDALDataset driver for GRIB translator for read support
@@ -30,16 +29,39 @@
  *
  */
 
+#include "cpl_port.h"
+
+#include <cerrno>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "degrib18/degrib/datasource.h"
+#include "degrib18/degrib/degrib2.h"
+#include "degrib18/degrib/filedatasource.h"
+#include "degrib18/degrib/inventory.h"
+#include "degrib18/degrib/memorydatasource.h"
+#include "degrib18/degrib/meta.h"
+#include "degrib18/degrib/myerror.h"
+#include "degrib18/degrib/type.h"
+#include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
-
-#include "degrib18/degrib/degrib2.h"
-#include "degrib18/degrib/inventory.h"
-#include "degrib18/degrib/myerror.h"
-#include "degrib18/degrib/filedatasource.h"
-#include "degrib18/degrib/memorydatasource.h"
 
 CPL_CVSID("$Id$");
 
@@ -64,8 +86,8 @@ class GRIBDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char *GetProjectionRef();
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
   private:
     void SetGribMetaData(grib_MetaData* meta);
@@ -93,17 +115,16 @@ class GRIBRasterBand : public GDALPamRasterBand
 public:
     GRIBRasterBand( GRIBDataset*, int, inventoryType* );
     virtual ~GRIBRasterBand();
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual const char *GetDescription() const;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual const char *GetDescription() const override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
     void    FindPDSTemplate();
 
     void    UncacheData();
 
 private:
-
     CPLErr       LoadData();
 
     static void ReadGribData( DataSource &, sInt4, int, double**,
@@ -374,7 +395,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
     if( nBlockYOff >= nGribDataYSize ) // off image?
         return CE_None;
 
-    const int nCopyWords = MIN(nRasterXSize,nGribDataXSize);
+    const int nCopyWords = std::min(nRasterXSize, nGribDataXSize);
 
     memcpy( pImage,
             m_Grib_Data + nGribDataXSize*(nGribDataYSize-nBlockYOff-1),
@@ -501,6 +522,11 @@ GRIBDataset::GRIBDataset() :
     fp(NULL),
     pszProjection(CPLStrdup("")),
     nCachedBytes(0),
+    // Switch caching strategy once 100 MB threshold is reached.
+    // Why 100 MB ? --> why not.
+    nCachedBytesThreshold(
+        static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
+        * 1024 * 1024),
     bCacheOnlyOneBand(FALSE),
     poLastUsedBand(NULL)
 {
@@ -510,12 +536,6 @@ GRIBDataset::GRIBDataset() :
   adfGeoTransform[3] = 0.0;
   adfGeoTransform[4] = 0.0;
   adfGeoTransform[5] = 1.0;
-
-  /* Switch caching strategy once 100 MB threshold is reached */
-  /* Why 100 MB ? --> why not ! */
-  nCachedBytesThreshold =
-      static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
-      * 1024 * 1024;
 }
 
 /************************************************************************/
@@ -765,7 +785,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo * poOpenInfo )
                                  poOpenInfo->GetSiblingFiles() );
     CPLAcquireMutex(hGRIBMutex, 1000.0);
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/

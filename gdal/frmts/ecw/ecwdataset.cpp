@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
  * Purpose:  ECW (ERDAS Wavelet Compression Format) Driver
@@ -27,6 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+// ncsjpcbuffer.h needs the min and max macros.
+#undef NOMINMAX
 
 #include "cpl_minixml.h"
 #include "gdal_ecw.h"
@@ -184,8 +186,10 @@ ECWRasterBand::ECWRasterBand( ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
         poDSIn->psFileInfo->pBands[2].nBits == 8 &&
         poDSIn->psFileInfo->pBands[3].nBits == 1 &&
         eBandInterp == GCI_AlphaBand &&
-        CSLFetchBoolean(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
-            CPLTestBool(CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", "YES")));
+        CPLFetchBool(papszOpenOptions, "1BIT_ALPHA_PROMOTION",
+            CPLTestBool(
+                CPLGetConfigOption("GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT",
+                                   "YES")));
     if( bPromoteTo8Bit )
         CPLDebug("ECW", "Fourth (alpha) band is promoted from 1 bit to 8 bit");
 
@@ -345,12 +349,16 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                 //Something went wrong during histogram computation.
                 return pamError;
             }
-        }else{
-            //No histogram, no forced computation.
+        }
+        else
+        {
+            // No histogram, no forced computation.
             return CE_Warning;
         }
-    }else {
-        //Statistics were already there and were used.
+    }
+    else
+    {
+        // Statistics were already there and were used.
         return CE_None;
     }
 }
@@ -360,7 +368,8 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
-                                           int nBuckets, GUIntBig *panHistogram )
+                                           int nBuckets,
+                                           GUIntBig *panHistogram )
 {
     //Only version 3 supports saving statistics.
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand){
@@ -370,13 +379,17 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     //determine if there are statistics in PAM file.
     double dummy;
     int dummy_i;
-    GUIntBig *dummy_histogram;
-    bool hasPAMDefaultHistogram = GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i, &dummy_histogram, FALSE, NULL, NULL) == CE_None;
-    if (hasPAMDefaultHistogram){
+    GUIntBig *dummy_histogram = NULL;
+    bool hasPAMDefaultHistogram =
+        GDALPamRasterBand::GetDefaultHistogram(
+            &dummy, &dummy, &dummy_i, &dummy_histogram,
+            FALSE, NULL, NULL) == CE_None;
+    if( hasPAMDefaultHistogram ) {
         VSIFree(dummy_histogram);
     }
 
-    //ECW SDK ignores statistics for opacity bands. So we need to compute number of bands without opacity.
+    // ECW SDK ignores statistics for opacity bands. So we need to compute
+    // number of bands without opacity.
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
     UINT32 bucketCounts[256];
     std::fill_n(bucketCounts, nStatsBandCount, 0);
@@ -706,7 +719,8 @@ CPLErr ECWRasterBand::OldIRasterIO( GDALRWFlag eRWFlag,
 /*      The ECW SDK doesn't supersample, so adjust for this case.       */
 /* -------------------------------------------------------------------- */
 
-    int          nNewXSize = nBufXSize, nNewYSize = nBufYSize;
+    int nNewXSize = nBufXSize;
+    int nNewYSize = nBufYSize;
 
     if ( nXSize < nBufXSize )
         nNewXSize = nXSize;
@@ -925,7 +939,6 @@ CPLErr ECWRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage 
 /* ==================================================================== */
 /************************************************************************/
 
-
 /************************************************************************/
 /*                            ECWDataset()                              */
 /************************************************************************/
@@ -1125,7 +1138,6 @@ NCS::CError ECWDataset::StatisticsWrite()
     bStatisticsDirty = FALSE;
 
     return error;
-
 }
 
 /************************************************************************/
@@ -2567,9 +2579,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    ECWDataset  *poDS;
-
-    poDS = new ECWDataset(bIsJPEG2000);
+    ECWDataset  *poDS = new ECWDataset(bIsJPEG2000);
     poDS->poFileView = poFileView;
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -2834,7 +2844,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     if( bIsJPEG2000 && poOpenInfo->nOpenFlags & GDAL_OF_VECTOR )
     {
         poDS->LoadVectorLayers(
-            CSLFetchBoolean(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML", FALSE));
+            CPLFetchBool(poOpenInfo->papszOpenOptions, "OPEN_REMOTE_GML",
+                         false));
 
         // If file opened in vector-only mode and there's no vector,
         // return
@@ -2846,7 +2857,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
     }
 
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -2903,9 +2914,9 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
 /************************************************************************/
 /*                   ReadFileMetaDataFromFile()                         */
 /*                                                                      */
-/* Gets relevant information from NCSFileMetadata and populates			*/
-/* GDAL metadata														*/
-/*																		*/
+/* Gets relevant information from NCSFileMetadata and populates         */
+/* GDAL metadata.                                                       */
+/*                                                                      */
 /************************************************************************/
 #if ECWSDK_VERSION >= 50
 void ECWDataset::ReadFileMetaDataFromFile()
@@ -3138,7 +3149,6 @@ int ECWTranslateFromWKT( const char *pszWKT,
 
         NCSFree( pszEPSGProj );
         NCSFree( pszEPSGDatum );
-
     }
 
 /* -------------------------------------------------------------------- */
@@ -3199,7 +3209,7 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 
 const char* ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation, int nBandNumber)
 {
-    const char *pszResult;
+    const char *pszResult = NULL;
     switch (eColorInterpretation){
     case GCI_AlphaBand:
         pszResult = NCS_BANDDESC_AllOpacity;
@@ -3304,7 +3314,8 @@ void ECWInitialize()
     if( !CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB","YES") ) )
         NCSecwSetConfig(NCSCFG_JP2_MANAGE_ICC, FALSE);
 #if ECWSDK_VERSION>= 50
-	NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT, "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
+    NCSecwSetConfig(NCSCFG_ECWP_CLIENT_HTTP_USER_AGENT,
+                    "ECW GDAL Driver/" NCS_ECWJP2_FULL_VERSION_STRING_DOT_DEL);
 #endif
 /* -------------------------------------------------------------------- */
 /*      Initialize cache memory limit.  Default is apparently 1/4 RAM.  */
@@ -3318,10 +3329,10 @@ void ECWInitialize()
         NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, (UINT32) atoi(pszEcwCacheSize) );
 
     /* -------------------------------------------------------------------- */
-    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and         */
-    /*      projection to EPSG code using internal mapping.					*/
-    /*		Version 5.x do so we provide means to achieve old		*/
-    /*		behaviour.														*/
+    /*      Version 3.x and 4.x of the ECWJP2 SDK did not resolve datum and */
+    /*      projection to EPSG code using internal mapping.                 */
+    /*      Version 5.x do so we provide means to achieve old               */
+    /*      behaviour.                                                      */
     /* -------------------------------------------------------------------- */
     #if ECWSDK_VERSION >= 50
     if( CPLTestBool( CPLGetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION","NO") ) == TRUE)
@@ -3331,7 +3342,7 @@ void ECWInitialize()
 /*      Allow configuration of a local cache based on configuration     */
 /*      options.  Setting the location turns things on.                 */
 /* -------------------------------------------------------------------- */
-    const char *pszOpt;
+    const char *pszOpt = NULL;
 
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
@@ -3366,7 +3377,6 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_TEXTURE_DITHER,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-
     pszOpt = CPLGetConfigOption( "ECW_FORCE_FILE_REOPEN", NULL );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_FORCE_FILE_REOPEN,
@@ -3386,7 +3396,6 @@ void ECWInitialize()
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
-
 
     pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
     if( pszOpt )
@@ -3437,15 +3446,13 @@ void GDALRegister_ECW()
 
 {
 #ifdef FRMT_ecw
-    GDALDriver *poDriver;
-
     if( !GDAL_CHECK_VERSION( "ECW driver" ) )
         return;
 
     if( GDALGetDriverByName( "ECW" ) != NULL )
         return;
 
-    poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription( "ECW" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
@@ -3576,7 +3583,12 @@ void GDALRegister_JP2ECW()
     poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 "
-                               "Float32 Float64" );
+                               "Float32 "
+#if ECWSDK_VERSION >= 40
+    // Crashes for sure with 3.3. Didn't try other versions
+                               "Float64"
+#endif
+                              );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"

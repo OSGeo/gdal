@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  S-57 Translator
  * Purpose:  Implements S57FileCollector() function.  This function collects
@@ -113,7 +112,6 @@ char **S57FileCollector( const char *pszDataset )
         papszRetList = CSLAddString( papszRetList, pszDataset );
         return papszRetList;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      We presumably have a catalog.  It contains paths to files       */

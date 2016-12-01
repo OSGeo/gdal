@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #ifndef CEOS_H
 #define CEOS_H
 
@@ -41,8 +40,8 @@ CPL_C_START
 
 typedef struct Link_t_struct
 {
-  struct Link_t_struct	*next;
-  void		*object;
+  struct Link_t_struct *next;
+  void          *object;
 } Link_t;
 
 #define HMalloc CPLMalloc
@@ -142,7 +141,6 @@ Link_t *AddLink( Link_t *psList, Link_t *psLink );
 #define CEOS_RADAR_FLIP_DATE 19980101
 #define CEOS_RADAR_FACILITY "CDPF-RSAT"
 
-
 typedef union
 {
     int32          Int32Code;
@@ -222,12 +220,10 @@ typedef struct
     int            Type;
 } CeosRecipeType_t;
 
-
 typedef struct
 {
     CeosRecipeType_t *Recipe;
 } CeosSARImageDescRecipe_t;
-
 
 typedef struct
 {
@@ -255,7 +251,6 @@ typedef struct
     int Increment;
     TBool PossiblyFlipped;
 } CeosRadarCalibration_t;
-
 
 /* Function prototypes */
 
@@ -305,7 +300,7 @@ void RegisterRecipes(void);
 void FreeRecipes(void);
 
 void AddRecipe( int ( *function )( CeosSARVolume_t *volume, const void *token ),
-		const void *token, const char *name );
+                const void *token, const char *name );
 
 int CeosDefaultRecipe( CeosSARVolume_t *volume, const void *token );
 int ScanSARRecipeFCN( CeosSARVolume_t *volume, const void *token );

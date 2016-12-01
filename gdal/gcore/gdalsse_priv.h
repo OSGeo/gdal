@@ -30,6 +30,8 @@
 #ifndef GDALSSE_PRIV_H_INCLUDED
 #define GDALSSE_PRIV_H_INCLUDED
 
+#ifndef DOXYGEN_SKIP
+
 #include "cpl_port.h"
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
@@ -39,6 +41,10 @@
 /* Requires SSE2 */
 #include <emmintrin.h>
 #include <string.h>
+
+#ifdef __SSE4_1__
+#include <smmintrin.h>
+#endif
 
 class XMMReg2Double
 {
@@ -182,8 +188,12 @@ class XMMReg2Double
 #else
         __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned short*)(ptr));
 #endif
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu8_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
@@ -192,8 +202,12 @@ class XMMReg2Double
         int i;
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepi16_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
         xmm_i = _mm_srai_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|sign(b)|b|sign(a)|a */
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
@@ -202,8 +216,11 @@ class XMMReg2Double
         int i;
         memcpy(&i, ptr, 4);
         __m128i xmm_i = _mm_cvtsi32_si128(i);
-        xmm_i = _mm_unpacklo_epi16(xmm_i,xmm_i); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|b|b|a|a */
-        xmm_i = _mm_srli_epi32(xmm_i, 16);       /* 0|0|0|0|b|b|a|a --> 0|0|0|0|0|b|0|a */
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu16_epi32(xmm_i);
+#else
+        xmm_i = _mm_unpacklo_epi16(xmm_i,_mm_setzero_si128()); /* 0|0|0|0|0|0|b|a --> 0|0|0|0|0|b|0|a */
+#endif
         xmm = _mm_cvtepi32_pd(xmm_i);
     }
 
@@ -216,8 +233,12 @@ class XMMReg2Double
 #else
         __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
 #endif
+#ifdef __SSE4_1__
+        xmm_i = _mm_cvtepu8_epi32(xmm_i);
+#else
         xmm_i = _mm_unpacklo_epi8(xmm_i, _mm_setzero_si128());
         xmm_i = _mm_unpacklo_epi16(xmm_i, _mm_setzero_si128());
+#endif
         low.xmm = _mm_cvtepi32_pd(xmm_i);
         high.xmm =  _mm_cvtepi32_pd(_mm_shuffle_epi32(xmm_i,_MM_SHUFFLE(3,2,3,2)));
     }
@@ -851,5 +872,7 @@ class XMMReg4Double
         high.Store2Val(ptr+2);
     }
 };
+
+#endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDALSSE_PRIV_H_INCLUDED */

@@ -7,10 +7,10 @@ require 'gdal/osr'
 class TestOsrUSGS < Test::Unit::TestCase
   def test_import_from_usgs
     srs = Gdal::Osr::SpatialReference.new()
-    srs.import_from_usgs(8, 0,  
-           [0.0, 0.0, 
-            Gdal::Gdal::dec_to_packed_dms(47.0), Gdal::Gdal::dec_to_packed_dms(62.0), 
-            Gdal::Gdal::dec_to_packed_dms(45.0), Gdal::Gdal::dec_to_packed_dms(54.5), 
+    srs.import_from_usgs(8, 0,
+           [0.0, 0.0,
+            Gdal::Gdal::dec_to_packed_dms(47.0), Gdal::Gdal::dec_to_packed_dms(62.0),
+            Gdal::Gdal::dec_to_packed_dms(45.0), Gdal::Gdal::dec_to_packed_dms(54.5),
             0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
            ],15)
 
@@ -21,7 +21,7 @@ class TestOsrUSGS < Test::Unit::TestCase
     assert_in_delta(0.0, srs.get_proj_parm(Gdal::Osr::SRS_PP_FALSE_EASTING), 0.0000005)
     assert_in_delta(0.0, srs.get_proj_parm(Gdal::Osr::SRS_PP_FALSE_NORTHING), 0.0000005)
   end
-  
+
   def test_export_to_usgs
     srs = Gdal::Osr::SpatialReference.new()
     srs.import_from_wkt('PROJCS["unnamed",GEOGCS["NAD27",

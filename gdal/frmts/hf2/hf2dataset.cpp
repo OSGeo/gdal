@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  HF2 driver
  * Purpose:  GDALDataset driver for HF2/HFZ dataset.
@@ -32,6 +31,10 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
+#include <cstdlib>
+#include <cmath>
+
+#include <algorithm>
 #include <limits>
 
 CPL_CVSID("$Id$");
@@ -61,8 +64,8 @@ class HF2Dataset : public GDALPamDataset
                  HF2Dataset();
     virtual     ~HF2Dataset();
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char* GetProjectionRef();
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -87,11 +90,10 @@ class HF2RasterBand : public GDALPamRasterBand
   public:
 
                 HF2RasterBand( HF2Dataset *, int, GDALDataType );
-               ~HF2RasterBand();
+    virtual ~HF2RasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
-
 
 /************************************************************************/
 /*                           HF2RasterBand()                            */
@@ -101,8 +103,8 @@ HF2RasterBand::HF2RasterBand( HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT 
     pafBlockData(NULL),
     nLastBlockYOff(-1)
 {
-    this->poDS = poDSIn;
-    this->nBand = nBandIn;
+    poDS = poDSIn;
+    nBand = nBandIn;
 
     eDataType = eDT;
 
@@ -166,8 +168,10 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
             CPL_LSBPTR32(&fScale);
             CPL_LSBPTR32(&fOff);
 
-            const int nTileWidth = MIN(nBlockXSize, nRasterXSize - nxoff * nBlockXSize);
-            const int nTileHeight = MIN(nBlockXSize, nRasterYSize - nBlockYOff * nBlockXSize);
+            const int nTileWidth =
+                std::min(nBlockXSize, nRasterXSize - nxoff * nBlockXSize);
+            const int nTileHeight =
+                std::min(nBlockXSize, nRasterYSize - nBlockYOff * nBlockXSize);
 
             for(int j=0;j<nTileHeight;j++)
             {
@@ -231,7 +235,8 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
         CPLFree(pabyData);
     }
 
-    const int nTileWidth = MIN(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nTileWidth =
+        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
     memcpy(pImage, pafBlockData + nBlockXOff * nBlockXSize * nBlockXSize +
                                   nYOffInTile * nBlockXSize,
            nTileWidth * sizeof(float));
@@ -303,8 +308,9 @@ int HF2Dataset::LoadBlockMap()
             CPL_LSBPTR32(&fScale);
             CPL_LSBPTR32(&fOff);
             //printf("fScale = %f, fOff = %f\n", fScale, fOff);
-            const int nCols = MIN(nTileSize, nRasterXSize - nTileSize *i);
-            const int nLines = MIN(nTileSize, nRasterYSize - nTileSize *j);
+            const int nCols = std::min(nTileSize, nRasterXSize - nTileSize * i);
+            const int nLines =
+                std::min(nTileSize, nRasterYSize - nTileSize * j);
             for(int k = 0; k < nLines; k++)
             {
                 GByte nWordSize;
@@ -464,7 +470,10 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL(fp, 28, SEEK_SET);
 
     int bHasExtent = FALSE;
-    double dfMinX = 0, dfMaxX = 0, dfMinY = 0, dfMaxY = 0;
+    double dfMinX = 0.0;
+    double dfMaxX = 0.0;
+    double dfMinY = 0.0;
+    double dfMaxY = 0.0;
     int bHasUTMZone = FALSE;
     GInt16 nUTMZone = 0;
     int bHasEPSGDatumCode = FALSE;
@@ -472,9 +481,8 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int bHasEPSGCode = FALSE;
     GInt16 nEPSGCode = 0;
     int bHasRelativePrecision = FALSE;
-    float fRelativePrecision = 0;
-    char szApplicationName[256];
-    szApplicationName[0] = 0;
+    float fRelativePrecision = 0.0f;
+    char szApplicationName[256] = { 0 };
 
     GUInt32 nExtendedHeaderOff = 0;
     while(nExtendedHeaderOff < nExtendedHeaderLen)
@@ -546,7 +554,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             bHasRelativePrecision = TRUE;
         }
         else if (strcmp(szBlockName, "app-name") == 0 &&
-                 nBlockSize < 256)
+                 nBlockSize < sizeof(szApplicationName))
         {
             VSIFReadL(szApplicationName, nBlockSize, 1, fp);
             szApplicationName[nBlockSize] = 0;
@@ -607,10 +615,10 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
             }
         }
 
-        if (bHasUTMZone && ABS(nUTMZone) >= 1 && ABS(nUTMZone) <= 60)
+        if (bHasUTMZone && std::abs(nUTMZone) >= 1 && std::abs(nUTMZone) <= 60)
         {
             bHasSRS = true;
-            oSRS.SetUTM(ABS(nUTMZone), nUTMZone > 0);
+            oSRS.SetUTM(std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0);
         }
         if (bHasSRS)
             oSRS.exportToWkt(&poDS->pszWKT);
@@ -642,7 +650,7 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, osOriginalFilename.c_str() );
-    return( poDS );
+    return poDS;
 }
 
 /************************************************************************/
@@ -654,9 +662,8 @@ CPLErr HF2Dataset::GetGeoTransform( double * padfTransform )
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
 
-    return( CE_None );
+    return CE_None;
 }
-
 
 static void WriteShort(VSILFILE* fp, GInt16 val)
 {
@@ -824,9 +831,10 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
         {
             const double dfLinear = oSRS.GetLinearUnits();
 
-            if( ABS(dfLinear - 0.3048) < 0.0000001 )
+            if( std::abs(dfLinear - 0.3048) < 0.0000001 )
                 nExtentUnits = 2;
-            else if( ABS(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) < 0.00000001 )
+            else if( std::abs(dfLinear - CPLAtof(SRS_UL_US_FOOT_CONV)) <
+                     0.00000001 )
                 nExtentUnits = 3;
             else
                 nExtentUnits = 1;
@@ -938,13 +946,14 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     {
         for(int i=0;i<nXBlocks && eErr == CE_None;i++)
         {
-            const int nReqXSize = MIN(nTileSize, nXSize - i * nTileSize);
-            const int nReqYSize = MIN(nTileSize, nYSize - j * nTileSize);
-            eErr = poSrcDS->GetRasterBand(1)->RasterIO(GF_Read,
-                                                i * nTileSize, MAX(0, nYSize - (j + 1) * nTileSize),
-                                                nReqXSize, nReqYSize,
-                                                pTileBuffer, nReqXSize, nReqYSize,
-                                                eReqDT, 0, 0, NULL);
+            const int nReqXSize = std::min(nTileSize, nXSize - i * nTileSize);
+            const int nReqYSize = std::min(nTileSize, nYSize - j * nTileSize);
+            eErr = poSrcDS->GetRasterBand(1)->RasterIO(
+                GF_Read,
+                i * nTileSize, std::max(0, nYSize - (j + 1) * nTileSize),
+                nReqXSize, nReqYSize,
+                pTileBuffer, nReqXSize, nReqYSize,
+                eReqDT, 0, 0, NULL);
             if (eErr != CE_None)
                 break;
 

@@ -84,7 +84,6 @@ class OGRDB2DataSource;
 #define DB2_DEBUG_EXIT(ogrdb2fn)
 #endif
 
-
 #define DB2ODBC_PREFIX "DB2ODBC:"
 
 #define UNKNOWN_SRID   -2
@@ -128,8 +127,7 @@ typedef enum
 #else
 #  define CPL_SQLULEN SQLUINTEGER
 #  define CPL_SQLLEN  SQLINTEGER
-#endif	/* ifdef SQLULEN */
-
+#endif  /* ifdef SQLULEN */
 
 /**
  * A class representing an ODBC database session.
@@ -156,7 +154,7 @@ protected:
 
 public:
     OGRDB2Session( );
-    ~OGRDB2Session();
+    virtual ~OGRDB2Session();
 // From CPLODBCSession
     int         EstablishSession( const char *pszDSN,
                                   const char *pszUserid,
@@ -217,13 +215,11 @@ protected:
     char         **m_papszColValues;
     CPL_SQLLEN       *m_panColValueLengths;
 
-
-
     char          *m_pszStatement;
     size_t         m_nStatementMax;
     size_t         m_nStatementLen;
 public:
-    OGRDB2Statement( OGRDB2Session * );
+    explicit OGRDB2Statement( OGRDB2Session * );
     OGRDB2Statement( );
     ~OGRDB2Statement();
     int             DB2Execute(const char *pszCallingFunction);
@@ -298,9 +294,6 @@ public:
 void OGRDB2AppendEscaped( OGRDB2Statement* poStatement,
                           const char* pszStrValue);
 
-
-
-
 /************************************************************************/
 /*                             OGRDB2Layer                              */
 /************************************************************************/
@@ -342,26 +335,26 @@ public:
     OGRDB2Layer();
     virtual             ~OGRDB2Layer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn() {
+    virtual OGRFeatureDefn *GetLayerDefn() override {
         return poFeatureDefn;
     }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual OGRErr     StartTransaction();
-    virtual OGRErr     CommitTransaction();
-    virtual OGRErr     RollbackTransaction();
+    virtual OGRErr     StartTransaction() override;
+    virtual OGRErr     CommitTransaction() override;
+    virtual OGRErr     RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn();
-    virtual const char *GetGeometryColumn();
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
     char*               GByteArrayToHexString( const GByte* pabyData,
             int nLen);
 
@@ -387,15 +380,15 @@ class OGRDB2TableLayer : public OGRDB2Layer
     int                 bPreservePrecision;
     int                 bNeedSpatialIndex;
 
-    int                 nUploadGeometryFormat;
+    //int                 nUploadGeometryFormat;
     char                *m_pszQuery;
 
     void                ClearStatement();
     OGRDB2Statement* BuildStatement(const char* pszColumns);
-    void                FreeBindBuffer(int nBindNum, void **bind_buffer);
+    static void                FreeBindBuffer(int nBindNum, void **bind_buffer);
     CPLString BuildFields();
 
-    virtual OGRDB2Statement *  GetStatement();
+    virtual OGRDB2Statement *  GetStatement() override;
 
     char               *pszTableName;
     char               *m_pszLayerName;
@@ -404,30 +397,30 @@ class OGRDB2TableLayer : public OGRDB2Layer
     OGRwkbGeometryType eGeomType;
 
 // From GPKG
-    char*                       m_pszTableName;
+    //char*                       m_pszTableName;
     int                         m_iSrs;
-    OGREnvelope*                m_poExtent;
+    //OGREnvelope*                m_poExtent;
     CPLString                   m_soColumns;
     CPLString                   m_soFilter;
     CPLString                   osQuery;
-    OGRBoolean                  m_bExtentChanged;
+    //OGRBoolean                  m_bExtentChanged;
 
-    int                         m_bInsertStatementWithFID;
+    //int                         m_bInsertStatementWithFID;
 
-    int                         bDeferredSpatialIndexCreation;
-    int                         m_bHasSpatialIndex;
-    int                         bDropRTreeTable;
-    int                         m_anHasGeometryExtension[wkbMultiSurface+1];
-    int                         m_bPreservePrecision;
-    int                         m_bTruncateFields;
-    int                         m_bDeferredCreation;
-    int                         m_iFIDAsRegularColumnIndex;
+    //int                         bDeferredSpatialIndexCreation;
+    //int                         m_bHasSpatialIndex;
+    //int                         bDropRTreeTable;
+    //int                         m_anHasGeometryExtension[wkbMultiSurface+1];
+    //int                         m_bPreservePrecision;
+    //int                         m_bTruncateFields;
+    //int                         m_bDeferredCreation;
+    //int                         m_iFIDAsRegularColumnIndex;
 
     CPLString                   m_osIdentifierLCO;
     CPLString                   m_osDescriptionLCO;
-    int                         m_bHasReadMetadataFromStorage;
+    //int                         m_bHasReadMetadataFromStorage;
     OGRErr              RegisterGeometryColumn();
-    void                BuildWhere(void);
+    void                BuildWhere();
 //    OGRErr              SyncToDisk();
 
     OGRErr              BindFieldValue(OGRDB2Statement *poStatement,
@@ -435,8 +428,8 @@ class OGRDB2TableLayer : public OGRDB2Layer
                                        int nBindNum, void **papBindBuffer);
 
 public:
-    OGRDB2TableLayer( OGRDB2DataSource * );
-    ~OGRDB2TableLayer();
+    explicit OGRDB2TableLayer( OGRDB2DataSource * );
+    virtual ~OGRDB2TableLayer();
 
     CPLErr              Initialize( const char *pszSchema,
                                     const char *pszTableName,
@@ -445,22 +438,22 @@ public:
                                     int nSRId,
                                     const char *pszSRText,
                                     OGRwkbGeometryType eType);
-    OGRErr              isFieldTypeSupported( OGRFieldType nFieldType );
+    static OGRErr              isFieldTypeSupported( OGRFieldType nFieldType );
     OGRErr              CreateSpatialIndex();
     void                DropSpatialIndex();
 
-    virtual void        ResetReading();
-    virtual GIntBig         GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig         GetFeatureCount( int ) override;
 
-    virtual OGRFeatureDefn *GetLayerDefn();
+    virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual const char* GetName();
+    virtual const char* GetName() override;
 
-    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
     virtual OGRErr      PrepareFeature( OGRFeature *poFeature, char cType );
 
     const char*         GetTableName() {
@@ -474,11 +467,11 @@ public:
     }
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     void                SetLaunderFlag( int bFlag )
     {
@@ -494,7 +487,7 @@ public:
     }
 
     int                 FetchSRSId();
-    void                CreateSpatialIndexIfNecessary();
+    //void                CreateSpatialIndexIfNecessary();
 
     int                 DropSpatialIndex(int bCalledFromSQLFunction = FALSE);
     /*
@@ -530,6 +523,7 @@ public:
                 const char* pszIdentifier,
                 const char* pszDescription );
     */
+    // cppcheck-suppress functionStatic
     OGRErr              RunDeferredCreationIfNecessary();
     /************************************************************************/
     /* GPKG methods */
@@ -543,7 +537,6 @@ private:
     void                CheckUnknownExtensions();
     int                 CreateGeometryExtensionIfNecessary(
                                 OGRwkbGeometryType eGType);
-
 };
 
 /************************************************************************/
@@ -557,21 +550,23 @@ class OGRDB2SelectLayer : public OGRDB2Layer
     void                ClearStatement();
     OGRErr              ResetStatement();
 
-    virtual OGRDB2Statement *  GetStatement();
+    virtual OGRDB2Statement *  GetStatement() override;
 
 public:
     OGRDB2SelectLayer( OGRDB2DataSource *,
                        OGRDB2Statement * );
-    ~OGRDB2SelectLayer();
+    virtual ~OGRDB2SelectLayer();
 
-    virtual void        ResetReading();
-    virtual GIntBig     GetFeatureCount( int );
+    virtual void        ResetReading() override;
+    virtual GIntBig     GetFeatureCount( int ) override;
 
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
 
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
+            { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -668,7 +663,7 @@ class OGRDB2DataSource : public GDALPamDataset
 
     CPLString           m_osWHERE;
 
-    int                 m_hTempDB;  //LATER - flag that partial_tiles exists
+    //int                 m_hTempDB;  //LATER - flag that partial_tiles exists
     CPLString           m_osTempDBFilename;
 
     int                 m_bInFlushCache;
@@ -734,7 +729,9 @@ class OGRDB2DataSource : public GDALPamDataset
     CPLErr                  WriteTile();
 
     CPLErr                  WriteTileInternal();
+    // cppcheck-suppress functionStatic
     CPLErr                  FlushRemainingShiftedTiles();
+    // cppcheck-suppress functionStatic
     CPLErr                  WriteShiftedTile(int nRow, int nCol, int iBand,
             int nDstXOffset, int nDstYOffset,
             int nDstXSize, int nDstYSize);
@@ -754,32 +751,29 @@ class OGRDB2DataSource : public GDALPamDataset
 
 public:
     OGRDB2DataSource();
-    ~OGRDB2DataSource();
+    virtual ~OGRDB2DataSource();
 //***************** For raster support
 
-    virtual char **     GetMetadata( const char *pszDomain = NULL );
+    virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual char **     GetMetadataDomainList();
+                                         const char * pszDomain = "" ) override;
+    virtual char **     GetMetadataDomainList() override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
     CPLErr              FlushCacheWithErrCode();
 
+    virtual const char* GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char* pszProjection ) override;
 
-    virtual const char* GetProjectionRef();
-    virtual CPLErr      SetProjection( const char* pszProjection );
-
-    virtual CPLErr      GetGeoTransform( double* padfGeoTransform );
-    virtual CPLErr      SetGeoTransform( double* padfGeoTransform );
-
-
+    virtual CPLErr      GetGeoTransform( double* padfGeoTransform ) override;
+    virtual CPLErr      SetGeoTransform( double* padfGeoTransform ) override;
 
     virtual CPLErr      IBuildOverviews( const char *, int, int *,
                                          int, int *,
-                                         GDALProgressFunc, void * );
+                                         GDALProgressFunc, void * ) override;
 
     OGRErr              CreateGDALAspatialExtension();
     void                SetMetadataDirty() {
@@ -787,9 +781,11 @@ public:
     }
     /*
     */
+    // cppcheck-suppress functionStatic
     OGRErr              CreateExtensionsTableIfNecessary();
+    // cppcheck-suppress functionStatic
     int                 HasExtensionsTable();
-    virtual void        FlushCache();
+    virtual void        FlushCache() override;
     static GDALDataset* CreateCopy( const char *pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict,
@@ -803,7 +799,7 @@ public:
         return m_pszCatalog;
     }
 
-    int                 ParseValue(char** pszValue, char* pszSource,
+    static int                 ParseValue(char** pszValue, char* pszSource,
                                    const char* pszKey,
                                    int nStart, int nNext, int nTerm,
                                    int bRemove);
@@ -826,37 +822,39 @@ public:
     const char          *GetName() {
         return m_pszName;
     }
-    int                 GetLayerCount();
-    OGRLayer            *GetLayer( int );
-    OGRLayer            *GetLayerByName( const char* pszLayerName );
+    int                 GetLayerCount() override;
+    OGRLayer            *GetLayer( int ) override;
+    OGRLayer            *GetLayerByName( const char* pszLayerName ) override;
 
     int                 UseGeometryColumns() {
         return bUseGeometryColumns;
     }
 
-    virtual int         DeleteLayer( int iLayer );
+    virtual int         DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,
                                        OGRSpatialReference * = NULL,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL );
+                                       char ** = NULL ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                     OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect );
-    virtual void        ReleaseResultSet( OGRLayer * poLayer );
+                                    const char *pszDialect ) override;
+    // cppcheck-suppress functionStatic
+    virtual void        ReleaseResultSet( OGRLayer * poLayer ) override;
 
     char                *LaunderName( const char *pszSrcName );
     char                *ToUpper( const char *pszSrcName );
+    // cppcheck-suppress functionStatic
     OGRErr              InitializeMetadataTables();
 
     OGRSpatialReference* FetchSRS( int nId );
     int                 FetchSRSId( OGRSpatialReference * poSRS );
 
-    OGRErr              StartTransaction(CPL_UNUSED int bForce);
-    OGRErr              CommitTransaction();
-    OGRErr              RollbackTransaction();
+    OGRErr              StartTransaction(CPL_UNUSED int bForce) override;
+    OGRErr              CommitTransaction() override;
+    OGRErr              RollbackTransaction() override;
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommitTransaction();
     OGRErr              SoftRollbackTransaction();
@@ -866,8 +864,6 @@ public:
     }
     int                 InitializeSession( const char * pszNewName,
                                            int bTestOpen );
-
-
 };
 
 /************************************************************************/
@@ -893,19 +889,19 @@ public:
                       int nTileWidth, int nTileHeight);
 
     virtual CPLErr          IReadBlock(int nBlockXOff, int nBlockYOff,
-                                       void* pData);
+                                       void* pData) override;
     virtual CPLErr          IWriteBlock(int nBlockXOff, int nBlockYOff,
-                                        void* pData);
-    virtual CPLErr          FlushCache();
+                                        void* pData) override;
+    virtual CPLErr          FlushCache() override;
 
-    virtual GDALColorTable* GetColorTable();
-    virtual CPLErr          SetColorTable(GDALColorTable* poCT);
+    virtual GDALColorTable* GetColorTable() override;
+    virtual CPLErr          SetColorTable(GDALColorTable* poCT) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr          SetColorInterpretation( GDALColorInterp ) override;
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int nIdx);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int nIdx) override;
     char*           GByteArrayToHexString( const GByte* pabyData, int nLen);
 };
 #endif /* ndef OGR_DB2_H_INCLUDED */

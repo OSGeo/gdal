@@ -120,8 +120,8 @@ def generate_libkml(filename):
         pass
 
 
-    content = """eiffer_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
-eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
+    content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
+eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
     gdal.FileFromMemBuffer("/vsimem/style.txt", content)
     style_table = ogr.StyleTable()
     style_table.LoadStyleTable("/vsimem/style.txt")
@@ -244,7 +244,7 @@ eiffer_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField("scale_y", 3)
     feat.SetField("scale_z", 4)
     feat.SetField("altitudeMode", "relativeToGround")
-    feat.SetField("model", "http://makc.googlecode.com/svn/trunk/flash/sandy_flar2/cube.dae")
+    feat.SetField("model", "http://even.rouault.free.fr/kml/gdal_2.1/dummy.dae")
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -337,7 +337,7 @@ def generate_libkml_update(filename):
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options = ['UPDATE_TARGETHREF=test_ogrlibkml.kml'])
+        options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)

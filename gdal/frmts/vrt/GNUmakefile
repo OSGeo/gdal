@@ -3,8 +3,14 @@ include ../../GDALmake.opt
 OBJ := vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o
 OBJ += vrtfilters.o vrtsourcedrasterband.o vrtrawrasterband.o
 OBJ += vrtwarped.o vrtderivedrasterband.o vrtpansharpened.o
+OBJ += pixelfunctions.o
 
 CPPFLAGS := -I../raw $(CPPFLAGS)
+
+ifeq ($(HAVE_GEOS),yes)
+CPPFLAGS        :=      -DHAVE_GEOS=1 $(CPPFLAGS)
+endif
+
 
 default: $(OBJ:.o=.$(OBJ_EXT))
 

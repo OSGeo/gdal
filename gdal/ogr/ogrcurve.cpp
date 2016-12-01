@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRCurve geometry class.
@@ -31,6 +30,8 @@
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
+
+//! @cond Doxygen_Suppress
 
 /************************************************************************/
 /*                                OGRCurve()                            */
@@ -64,6 +65,7 @@ OGRCurve& OGRCurve::operator=( const OGRCurve& other )
     }
     return *this;
 }
+//! @endcond
 
 /************************************************************************/
 /*                            getDimension()                            */

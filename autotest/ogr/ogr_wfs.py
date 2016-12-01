@@ -617,7 +617,7 @@ def ogr_wfs_geoserver_wfst():
 
     # Retrieve inserted features
     print('Retrieving created features gml:id')
-    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points");
+    sql_lyr = ds.ExecuteSQL("SELECT _LAST_INSERTED_FIDS_ FROM za:za_points")
     feat = sql_lyr.GetNextFeature()
     while feat is not None:
         gml_id = feat.GetFieldAsString(0)
@@ -3999,7 +3999,7 @@ def ogr_wfs_vsimem_wfs110_multiple_layers_same_name_different_ns():
 </xsd:schema>
 """)
 
-    lyr = ds.GetLayer(0)        
+    lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     if lyr_defn.GetFieldCount() != 2:
         gdaltest.post_reason('fail')
@@ -4455,7 +4455,7 @@ def ogr_wfs_vsimem_wfs200_multipart():
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: attachment; filename=my.json
 \r
@@ -4493,7 +4493,7 @@ Content-Disposition: attachment; filename=my.json
 """Content-Type: multipart/mixed; boundary="my_boundary"
 \r
 \r
---my_boundary 
+--my_boundary
 \r
 {
 "type":"FeatureCollection",
@@ -4716,7 +4716,7 @@ def ogr_wfs_vsimem_wfs200_join():
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="1" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
   <wfs:member>
@@ -4746,7 +4746,7 @@ def ogr_wfs_vsimem_wfs200_join():
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="1" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
   <wfs:member>
@@ -4775,7 +4775,7 @@ def ogr_wfs_vsimem_wfs200_join():
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="0" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
 </wfs:FeatureCollection>
@@ -4971,7 +4971,7 @@ xsi:schemaLocation="http://foo blabla
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="1" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
   <wfs:member>
@@ -5139,7 +5139,7 @@ def ogr_wfs_vsimem_wfs200_join_layer_with_namespace_prefix():
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="1" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
   <wfs:member>
@@ -5262,7 +5262,7 @@ def ogr_wfs_vsimem_wfs200_join_distinct():
     xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     numberMatched="unknown" numberReturned="3" timeStamp="2015-01-01T00:00:00.000Z"
-    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd 
+    xsi:schemaLocation="http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd
                         http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd
                         http://foo /vsimem/wfs200_endpoint_join?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=lyr1,lyr2">
   <wfs:member>
@@ -5352,7 +5352,7 @@ def ogr_wfs_vsimem_cleanup():
 
     return 'success'
 
-gdaltest_live_list = [ 
+gdaltest_live_list = [
     #ogr_wfs_mapserver,
     #ogr_wfs_geoserver, #FIXME: re-enable after adapting test
     #ogr_wfs_geoserver_json, #FIXME: re-enable after adapting test
@@ -5383,7 +5383,7 @@ gdaltest_live_list = [
     #ogr_wfs_test_ogrsf,
     ]
 
-gdaltest_vsimem_list = [ 
+gdaltest_vsimem_list = [
     ogr_wfs_vsimem_fail_because_not_enabled,
     ogr_wfs_vsimem_fail_because_no_get_capabilities,
     ogr_wfs_vsimem_fail_because_empty_response,
@@ -5449,4 +5449,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

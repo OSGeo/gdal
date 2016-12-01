@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRSDEDataSource class.
@@ -67,7 +66,6 @@ OGRSDEDataSource::~OGRSDEDataSource()
     int         i;
     LONG        nSDEErr;
     char       pszVersionName[SE_MAX_VERSION_LEN];
-
 
     // Commit our transactions if we were opened for update
     if (bDSUpdate && bDSUseVersionEdits && (nNextState != -2 && nState != SE_DEFAULT_STATE_ID )  ) {
@@ -209,7 +207,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
-		          "The layer name value is optional.\n"
+                  "The layer name value is optional.\n"
                   "Got '%s'",
                   pszNewName );
         return FALSE;
@@ -218,7 +216,7 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    int 	nSDEErr;
+    int nSDEErr;
     SE_ERROR    sSDEErrorInfo;
 
     nSDEErr = SE_connection_create( papszTokens[0],
@@ -248,7 +246,6 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
         bDSUseVersionEdits = FALSE;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Set unprotected concurrency policy, suitable for single         */
 /*      threaded access.                                                */
@@ -270,7 +267,6 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
     {
         OpenSpatialTable( papszTokens[5] );
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Create a new version from the parent version if we were given   */
@@ -326,7 +322,6 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 
         const char* pszVersionName= CPLSPrintf( "%s.%s", username, papszTokens[7]);
 
-
         CPLDebug("OGR_SDE", "Setting version to %s", pszVersionName);
         CPLDebug("OGR_SDE", "Opening layer %s", papszTokens[5]);
         OpenSpatialTable( papszTokens[5] );
@@ -355,7 +350,6 @@ int OGRSDEDataSource::Open( const char * pszNewName, int bUpdate )
 
     return TRUE;
 }
-
 
 /************************************************************************/
 /*                             CreateVersion()                          */
@@ -429,8 +423,9 @@ int OGRSDEDataSource::CreateVersion( const char* pszParentVersion, const char* p
                            "  Your client/server versions must not match or "
                            "you have some other major configuration problem");
             return FALSE;
-
-        } else {
+        }
+        else
+        {
             IssueSDEError( nSDEErr, "SE_version_get_info parent" );
             return FALSE;
         }
@@ -645,12 +640,10 @@ int OGRSDEDataSource::SetVersionState( const char* pszVersionName ) {
         SE_stateinfo_free(hDummyStateInfo);
         SE_stateinfo_free(hCurrentStateInfo);
         SE_stateinfo_free(hNextStateInfo);
-
     }
     return TRUE;
-
-
 }
+
 /************************************************************************/
 /*                             OpenTable()                              */
 /************************************************************************/
@@ -783,7 +776,6 @@ OGRErr OGRSDEDataSource::DeleteLayer( int iLayer )
     return OGRERR_NONE;
 }
 
-
 /************************************************************************/
 /*                            CleanupLayerCreation()                    */
 /************************************************************************/
@@ -791,7 +783,6 @@ void OGRSDEDataSource::CleanupLayerCreation(const char* pszLayerName)
 {
 
     LONG nSDEErr;
-
 
     nSDEErr = SE_registration_delete( hConnection, pszLayerName );
     if( nSDEErr != SE_SUCCESS )
@@ -807,7 +798,6 @@ void OGRSDEDataSource::CleanupLayerCreation(const char* pszLayerName)
     }
 
     CPLDebug( "OGR_SDE", "CleanupLayerCreation(%s) successful", pszLayerName );
-
 }
 
 /************************************************************************/
@@ -842,7 +832,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
             || EQUAL(pszLayerName,
                      papoLayers[iLayer]->GetLayerDefn()->GetName()) )
         {
-            if( CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
+            if( CPLFetchBool( papszOptions, "OVERWRITE", false ) )
             {
                 DeleteLayer( iLayer );
             }
@@ -883,7 +873,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         if( EQUAL(szTableName,pszLayerName)
             || EQUAL(szTableName,osFullName) )
         {
-            if( !CSLFetchBoolean( papszOptions, "OVERWRITE", FALSE ) )
+            if( !CPLFetchBool( papszOptions, "OVERWRITE", false ) )
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
@@ -914,11 +904,9 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     const char         *pszDbtuneKeyword;
     const char         *pszLayerDescription;
 
-
     pszGeometryName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if( pszGeometryName == NULL )
         pszGeometryName = "SHAPE";
-
 
     pszExpectedFIDName = CPLGetConfigOption( "SDE_FID", "OBJECTID" );
 
@@ -957,7 +945,6 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Convert the OGRSpatialReference to a SDE coordref object        */
 /* -------------------------------------------------------------------- */
@@ -972,7 +959,6 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-
 
 /* -------------------------------------------------------------------- */
 /*      Construct the layer info necessary to spatially enable          */
@@ -1041,7 +1027,6 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-
     // Set geometry column name
     nSDEErr = SE_layerinfo_set_spatial_column( hLayerInfo, pszLayerName,
                                                pszGeometryName );
@@ -1097,7 +1082,6 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         return NULL;
     }
 
-
     nSDEErr = SE_layerinfo_set_description( hLayerInfo, pszLayerDescription );
     if( nSDEErr != SE_SUCCESS )
     {
@@ -1106,7 +1090,6 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
         CleanupLayerCreation(pszLayerName);
         return NULL;
     }
-
 
     // Set grid size
     nSDEErr = SE_layerinfo_set_grid_sizes( hLayerInfo,
@@ -1194,7 +1177,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
      * If the layer creation option 'MULTIVERSION' is set, enable
      * multi-versioning for this layer
      */
-    if( CSLFetchBoolean( papszOptions, "SDE_MULTIVERSION", TRUE ) )
+    if( CPLFetchBool( papszOptions, "SDE_MULTIVERSION", true ) )
     {
         CPLDebug("OGR_SDE","Setting multiversion to true");
         nSDEErr = SE_reginfo_set_multiversion( hRegInfo, TRUE );
@@ -1252,7 +1235,7 @@ OGRSDEDataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetFIDColType( SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE );
 
     poLayer->SetUseNSTRING(
-        CSLFetchBoolean( papszOptions, "USE_NSTRING", FALSE ) );
+        CPLFetchBool( papszOptions, "USE_NSTRING", false ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -1324,7 +1307,7 @@ void OGRSDEDataSource::EnumerateSpatialTables()
 
     for( iTable = 0; iTable < nTableListCount; iTable++ )
     {
-       ICreateLayerFromRegInfo( ahTableList[iTable] );
+       CreateLayerFromRegInfo( ahTableList[iTable] );
     }
 
     SE_registration_free_info_list( nTableListCount, ahTableList );
@@ -1354,14 +1337,14 @@ void OGRSDEDataSource::OpenSpatialTable( const char* pszTableName )
     }
     else
     {
-       ICreateLayerFromRegInfo( tableinfo );
+       CreateLayerFromRegInfo( tableinfo );
     }
 
     SE_reginfo_free( tableinfo );
 }
 
 /************************************************************************/
-/*                      ICreateLayerFromRegInfo()                       */
+/*                      CreateLayerFromRegInfo()                       */
 /************************************************************************/
 
 void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
@@ -1479,7 +1462,7 @@ OGRErr OGRSDEDataSource::ConvertOSRtoSDESpatRef( OGRSpatialReference *poSRS,
                   sGenericEnvelope.maxy );
     }
 
-    if( poSRS && poSRS->IsGeographic() )
+    if( poSRS->IsGeographic() )
     {
         LONG nSDEErr;
 

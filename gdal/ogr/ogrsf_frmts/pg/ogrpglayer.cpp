@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRPGLayer class  which implements shared handling
@@ -78,30 +77,23 @@ CPL_CVSID("$Id$");
 /*                           OGRPGLayer()                               */
 /************************************************************************/
 
-OGRPGLayer::OGRPGLayer()
-
+OGRPGLayer::OGRPGLayer() :
+    poFeatureDefn(NULL),
+    nCursorPage(atoi(CPLGetConfigOption("OGR_PG_CURSOR_PAGE", "500"))),
+    iNextShapeId(0),
+    poDS(NULL),
+    pszQueryStatement(NULL),
+    pszCursorName(NULL),
+    hCursorResult(NULL),
+    bInvalidated(FALSE),
+    nResultOffset(0),
+    bWkbAsOid(FALSE),
+    pszFIDColumn(NULL),
+    bCanUseBinaryCursor(TRUE),
+    m_panMapFieldNameToIndex(NULL),
+    m_panMapFieldNameToGeomIndex(NULL)
 {
-    poDS = NULL;
-
-    bWkbAsOid = FALSE;
-    pszQueryStatement = NULL;
-
-    pszFIDColumn = NULL;
-
-    nCursorPage = atoi(CPLGetConfigOption("OGR_PG_CURSOR_PAGE", "500"));
-    iNextShapeId = 0;
-    nResultOffset = 0;
-
     pszCursorName = CPLStrdup(CPLSPrintf("OGRPGLayerReader%p", this));
-
-    hCursorResult = NULL;
-    bInvalidated = FALSE;
-
-    bCanUseBinaryCursor = TRUE;
-
-    poFeatureDefn = NULL;
-    m_panMapFieldNameToIndex = NULL;
-    m_panMapFieldNameToGeomIndex = NULL;
 }
 
 /************************************************************************/
@@ -198,18 +190,18 @@ typedef short NumericDigit;
 
 typedef struct NumericVar
 {
-        int			ndigits;		/* # of digits in digits[] - can be 0! */
-        int			weight;			/* weight of first digit */
-        int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
-        int			dscale;			/* display scale */
-        NumericDigit *digits;		/* base-NBASE digits */
+        int ndigits;           /* # of digits in digits[] - can be 0! */
+        int weight;            /* weight of first digit */
+        int sign;              /* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
+        int dscale;            /* display scale */
+        NumericDigit *digits;  /* base-NBASE digits */
 } NumericVar;
 
-#define NUMERIC_POS			0x0000
-#define NUMERIC_NEG			0x4000
-#define NUMERIC_NAN			0xC000
+#define NUMERIC_POS 0x0000
+#define NUMERIC_NEG 0x4000
+#define NUMERIC_NAN 0xC000
 
-#define DEC_DIGITS	4
+#define DEC_DIGITS 4
 /*
 * get_str_from_var() -
 *
@@ -220,11 +212,11 @@ typedef struct NumericVar
 static char *
 OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 {
-        char	   *str;
-        char	   *cp;
-        char	   *endcp;
-        int			i;
-        int			d;
+        char   *str;
+        char   *cp;
+        char   *endcp;
+        int     i;
+        int     d;
         NumericDigit dig;
         NumericDigit d1;
 
@@ -330,41 +322,40 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 
 /* Coming from j2date() in pgsql/src/backend/utils/adt/datetime.c */
 
-#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+#define POSTGRES_EPOCH_JDATE 2451545 /* == date2j(2000, 1, 1) */
 
 static
 void OGRPGj2date(int jd, int *year, int *month, int *day)
 {
-	unsigned int julian;
-	unsigned int quad;
-	unsigned int extra;
-	int			y;
+    unsigned int julian;
+    unsigned int quad;
+    unsigned int extra;
+    int y;
 
-	julian = jd;
-	julian += 32044;
-	quad = julian / 146097;
-	extra = (julian - quad * 146097) * 4 + 3;
-	julian += 60 + quad * 3 + extra / 146097;
-	quad = julian / 1461;
-	julian -= quad * 1461;
-	y = julian * 4 / 1461;
-	julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
-		+ 123;
-	y += quad * 4;
-	*year = y - 4800;
-	quad = julian * 2141 / 65536;
-	*day = julian - 7834 * quad / 256;
-	*month = (quad + 10) % 12 + 1;
+    julian = jd;
+    julian += 32044;
+    quad = julian / 146097;
+    extra = (julian - quad * 146097) * 4 + 3;
+    julian += 60 + quad * 3 + extra / 146097;
+    quad = julian / 1461;
+    julian -= quad * 1461;
+    y = julian * 4 / 1461;
+    julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
+        + 123;
+    y += quad * 4;
+    *year = y - 4800;
+    quad = julian * 2141 / 65536;
+    *day = julian - 7834 * quad / 256;
+    *month = (quad + 10) % 12 + 1;
 
-	return;
-}	/* j2date() */
-
+    return;
+}  /* j2date() */
 
 /************************************************************************/
 /*                              OGRPGdt2time()                          */
 /************************************************************************/
 
-#define USECS_PER_SEC	1000000
+#define USECS_PER_SEC 1000000
 #define USECS_PER_MIN   ((GIntBig) 60 * USECS_PER_SEC)
 #define USECS_PER_HOUR  ((GIntBig) 3600 * USECS_PER_SEC)
 #define USECS_PER_DAY   ((GIntBig) 3600 * 24 * USECS_PER_SEC)
@@ -375,32 +366,32 @@ static
 void
 OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 {
-	GIntBig		time;
+    GIntBig time;
 
-	time = jd;
+    time = jd;
 
-	*hour = (int) (time / USECS_PER_HOUR);
-	time -= (GIntBig) (*hour) * USECS_PER_HOUR;
-	*min = (int) (time / USECS_PER_MIN);
-	time -=  (GIntBig) (*min) * USECS_PER_MIN;
-	*sec = (int)time / USECS_PER_SEC;
-	*fsec = (double)(time - *sec * USECS_PER_SEC);
-}	/* dt2time() */
+    *hour = (int) (time / USECS_PER_HOUR);
+    time -= (GIntBig) (*hour) * USECS_PER_HOUR;
+    *min = (int) (time / USECS_PER_MIN);
+    time -=  (GIntBig) (*min) * USECS_PER_MIN;
+    *sec = (int)time / USECS_PER_SEC;
+    *fsec = (double)(time - *sec * USECS_PER_SEC);
+}  /* dt2time() */
 
 static
 void
 OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 {
-	double	time;
+    double time;
 
-	time = jd;
+    time = jd;
 
-	*hour = (int) (time / 3600.);
-	time -= (*hour) * 3600.;
-	*min = (int) (time / 60.);
-	time -=  (*min) * 60.;
-	*sec = (int)time;
-	*fsec = time - *sec;
+    *hour = (int) (time / 3600.);
+    time -= (*hour) * 3600.;
+    *min = (int) (time / 60.);
+    time -=  (*min) * 60.;
+    *sec = (int)time;
+    *fsec = time - *sec;
 }
 
 /************************************************************************/
@@ -409,9 +400,9 @@ OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 
 #define TMODULO(t,q,u) \
 do { \
-	(q) = ((t) / (u)); \
-	if ((q) != 0) (t) -= ((q) * (u)); \
-} while(0)
+        (q) = ((t) / (u)); \
+        if ((q) != 0) (t) -= ((q) * (u)); \
+} while( false )
 
 /* Coming from timestamp2tm() in pgsql/src/backend/utils/adt/timestamp.c */
 
@@ -419,32 +410,32 @@ static
 int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
                                       int* hour, int* min, double* pdfSec)
 {
-        GIntBig date;
-	GIntBig time;
-        int nSec;
-        double dfSec;
+    GIntBig date;
+    GIntBig time;
+    int nSec;
+    double dfSec;
 
-        time = dt;
-	TMODULO(time, date, USECS_PER_DAY);
+    time = dt;
+    TMODULO(time, date, USECS_PER_DAY);
 
-	if (time < 0)
-	{
-		time += USECS_PER_DAY;
-		date -= 1;
-	}
+    if (time < 0)
+    {
+        time += USECS_PER_DAY;
+        date -= 1;
+    }
 
-	/* add offset to go from J2000 back to standard Julian date */
-	date += POSTGRES_EPOCH_JDATE;
+    /* add offset to go from J2000 back to standard Julian date */
+    date += POSTGRES_EPOCH_JDATE;
 
-	/* Julian day routine does not work for negative Julian days */
-	if (date < 0 || date > (double) INT_MAX)
-		return -1;
+    /* Julian day routine does not work for negative Julian days */
+    if (date < 0 || date > (double) INT_MAX)
+        return -1;
 
-	OGRPGj2date((int) date, year, month, day);
-	OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
-        *pdfSec += nSec + dfSec;
+    OGRPGj2date((int) date, year, month, day);
+    OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
+    *pdfSec += nSec + dfSec;
 
-        return 0;
+    return 0;
 }
 
 #endif // defined(BINARY_CURSOR_ENABLED)
@@ -603,7 +594,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
     {
         int     iOGRField;
 
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
         int nTypeOID = PQftype(hResult, iField);
 #endif
         const char* pszFieldName = PQfname(hResult,iField);
@@ -613,7 +604,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /* -------------------------------------------------------------------- */
         if( pszFIDColumn != NULL && EQUAL(pszFieldName,pszFIDColumn) )
         {
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if ( nTypeOID == INT4OID)
@@ -639,7 +630,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif /* defined(BINARY_CURSOR_ENABLED) */
             {
                 char* pabyData = PQgetvalue(hResult,iRecord,iField);
                 /* ogr_pg_20 may crash if PostGIS is unavailable and we don't test pabyData */
@@ -733,7 +724,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 if (nLength == 0)
                     continue;
 
-                OGRGeometry * poGeom;
+                OGRGeometry * poGeom = NULL;
 
                 if( !poDS->bUseBinaryCursor &&
                     (STARTS_WITH(pabyData, "\\x00") || STARTS_WITH(pabyData, "\\x01") ||
@@ -769,12 +760,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                      EQUAL(pszFieldName,"ST_AsText") )*/
             {
                 /* Handle WKT */
-                char        *pszWKT;
-                char        *pszPostSRID;
-                OGRGeometry *poGeometry = NULL;
-
-                pszWKT = PQgetvalue( hResult, iRecord, iField );
-                pszPostSRID = pszWKT;
+                char *pszWKT = PQgetvalue( hResult, iRecord, iField );
+                char *pszPostSRID = pszWKT;
 
                 // optionally strip off PostGIS SRID identifier.  This
                 // happens if we got a raw geometry field.
@@ -786,6 +773,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         pszPostSRID++;
                 }
 
+                OGRGeometry *poGeometry = NULL;
                 if( STARTS_WITH_CI(pszPostSRID, "00") || STARTS_WITH_CI(pszPostSRID, "01") )
                 {
                     poGeometry = OGRGeometryFromHexEWKB( pszWKT, NULL,
@@ -822,9 +810,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             {
 #if defined(BINARY_CURSOR_ENABLED)
                 if (poDS->bUseBinaryCursor
-#if !defined(PG_PRE74)
                     && PQfformat( hResult, iField ) == 1
-#endif
                    )
                 {
                     int nLength = PQgetlength(hResult, iRecord, iField);
@@ -866,7 +852,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         {
             int *panList, nCount, i;
 
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if (nTypeOID == INT2ARRAYOID || nTypeOID == INT4ARRAYOID)
@@ -915,10 +901,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif
             {
-                char **papszTokens;
-                papszTokens = CSLTokenizeStringComplex(
+                char **papszTokens = CSLTokenizeStringComplex(
                     PQgetvalue( hResult, iRecord, iField ),
                     "{,}", FALSE, FALSE );
 
@@ -943,10 +928,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 
         else if( eOGRType == OFTInteger64List)
         {
-            GIntBig *panList;
-            int nCount, i;
+            int nCount = 0;
+            GIntBig *panList = NULL;
 
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if (nTypeOID == INT8ARRAYOID)
@@ -963,7 +948,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     // goto first array element
                     pData += 2 * sizeof(int);
 
-                    for( i = 0; i < nCount; i++ )
+                    for( int i = 0; i < nCount; i++ )
                     {
                         // get element size
                         int nSize = *(int *)(pData);
@@ -986,10 +971,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif
             {
-                char **papszTokens;
-                papszTokens = CSLTokenizeStringComplex(
+                char **papszTokens = CSLTokenizeStringComplex(
                     PQgetvalue( hResult, iRecord, iField ),
                     "{,}", FALSE, FALSE );
 
@@ -998,12 +982,12 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 
                 if( poFeatureDefn->GetFieldDefn(iOGRField)->GetSubType() == OFSTBoolean )
                 {
-                    for( i = 0; i < nCount; i++ )
+                    for( int i = 0; i < nCount; i++ )
                         panList[i] = EQUAL(papszTokens[i], "t");
                 }
                 else
                 {
-                    for( i = 0; i < nCount; i++ )
+                    for( int i = 0; i < nCount; i++ )
                         panList[i] = CPLAtoGIntBig(papszTokens[i]);
                 }
                 CSLDestroy( papszTokens );
@@ -1015,9 +999,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         else if( eOGRType == OFTRealList )
         {
             int nCount, i;
-            double *padfList;
+            double *padfList = NULL;
 
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 if (nTypeOID == FLOAT8ARRAYOID || nTypeOID == FLOAT4ARRAYOID)
@@ -1070,10 +1054,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif
             {
-                char **papszTokens;
-                papszTokens = CSLTokenizeStringComplex(
+                char **papszTokens = CSLTokenizeStringComplex(
                     PQgetvalue( hResult, iRecord, iField ),
                     "{,}", FALSE, FALSE );
 
@@ -1093,7 +1076,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         {
             char **papszTokens = NULL;
 
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data representation
             {
                 char * pData = PQgetvalue( hResult, iRecord, iField );
@@ -1135,7 +1118,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif
             {
                 papszTokens =
                         OGRPGTokenizeStringListFromText(PQgetvalue(hResult, iRecord, iField ));
@@ -1152,7 +1135,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                  || eOGRType == OFTTime
                  || eOGRType == OFTDateTime )
         {
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 ) // Binary data
             {
                 if ( nTypeOID == DATEOID )
@@ -1220,7 +1203,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif
             {
                 OGRField  sFieldValue;
 
@@ -1233,7 +1216,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         }
         else if( eOGRType == OFTBinary )
         {
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1)
             {
                 int nLength = PQgetlength(hResult, iRecord, iField);
@@ -1241,7 +1224,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 poFeature->SetField( iOGRField, nLength, pabyData );
             }
             else
-#endif  /* notdef PG_PRE74 */
+#endif  /* defined(BINARY_CURSOR_ENABLED) */
             {
                 int nLength = PQgetlength(hResult, iRecord, iField);
                 const char* pszBytea = (const char*) PQgetvalue( hResult, iRecord, iField );
@@ -1252,7 +1235,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
         }
         else
         {
-#if !defined(PG_PRE74) && defined(BINARY_CURSOR_ENABLED)
+#if defined(BINARY_CURSOR_ENABLED)
             if ( PQfformat( hResult, iField ) == 1 &&
                  eOGRType != OFTString ) // Binary data
             {
@@ -1345,7 +1328,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
             }
             else
-#endif /* notdef PG_PRE74 */
+#endif /* defined(BINARY_CURSOR_ENABLED) */
             {
                 if ( eOGRType == OFTInteger &&
                      poFeatureDefn->GetFieldDefn(iOGRField)->GetWidth() == 1)
@@ -1444,7 +1427,6 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex(PGresult* hResult,
         }
     }
 }
-
 
 /************************************************************************/
 /*                     SetInitialQueryCursor()                          */
@@ -1558,7 +1540,6 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         return NULL;
     }
 
-
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
@@ -1640,9 +1621,6 @@ OGRErr OGRPGLayer::SetNextByIndex( GIntBig nIndex )
 
 GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
 {
-    GByte* pabyData;
-    int iSrc=0, iDst=0;
-
     if( pszBytea == NULL )
     {
         if (pnLength) *pnLength = 0;
@@ -1654,8 +1632,10 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
         return CPLHexToBinary(pszBytea + 2, pnLength);
 
     /* +1 just to please Coverity that thinks we allocate for a null-terminate string */
-    pabyData = (GByte *) CPLMalloc(strlen(pszBytea)+1);
+    GByte* pabyData = (GByte *) CPLMalloc(strlen(pszBytea)+1);
 
+    int iSrc = 0;
+    int iDst = 0;
     while( pszBytea[iSrc] != '\0' )
     {
         if( pszBytea[iSrc] == '\\' )
@@ -1691,7 +1671,6 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
     return pabyData;
 }
 
-
 /************************************************************************/
 /*                          BYTEAToGeometry()                           */
 /************************************************************************/
@@ -1699,16 +1678,13 @@ GByte* OGRPGLayer::BYTEAToGByteArray( const char *pszBytea, int* pnLength )
 OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea, int bIsPostGIS1 )
 
 {
-    GByte       *pabyWKB;
-    int nLen=0;
-    OGRGeometry *poGeometry;
-
     if( pszBytea == NULL )
         return NULL;
 
-    pabyWKB = BYTEAToGByteArray(pszBytea, &nLen);
+    int nLen = 0;
+    GByte *pabyWKB = BYTEAToGByteArray(pszBytea, &nLen);
 
-    poGeometry = NULL;
+    OGRGeometry *poGeometry = NULL;
     OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nLen,
                                        (bIsPostGIS1) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
 
@@ -1716,21 +1692,18 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry( const char *pszBytea, int bIsPostGIS1 
     return poGeometry;
 }
 
-
 /************************************************************************/
 /*                        GByteArrayToBYTEA()                           */
 /************************************************************************/
 
 char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 {
-    char* pszTextBuf;
-
     const size_t nTextBufLen = nLen*5+1;
-    pszTextBuf = (char *) CPLMalloc(nTextBufLen);
+    char* pszTextBuf = (char *) CPLMalloc(nTextBufLen);
 
-    int  iSrc, iDst=0;
+    int iDst = 0;
 
-    for( iSrc = 0; iSrc < nLen; iSrc++ )
+    for( int iSrc = 0; iSrc < nLen; iSrc++ )
     {
         if( pabyData[iSrc] < 40 || pabyData[iSrc] > 126
             || pabyData[iSrc] == '\\' )
@@ -1753,11 +1726,9 @@ char* OGRPGLayer::GByteArrayToBYTEA( const GByte* pabyData, int nLen)
 char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int nPostGISMajor, int nPostGISMinor )
 
 {
-    int         nWkbSize = poGeometry->WkbSize();
-    GByte       *pabyWKB;
-    char        *pszTextBuf;
+    const int nWkbSize = poGeometry->WkbSize();
 
-    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+    GByte *pabyWKB = (GByte *) CPLMalloc(nWkbSize);
     if( (nPostGISMajor > 2 || (nPostGISMajor == 2 && nPostGISMinor >= 2)) &&
         wkbFlatten(poGeometry->getGeometryType()) == wkbPoint &&
         poGeometry->IsEmpty() )
@@ -1775,7 +1746,7 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int nPostGISMajor, 
         return CPLStrdup("");
     }
 
-    pszTextBuf = GByteArrayToBYTEA( pabyWKB, nWkbSize );
+    char *pszTextBuf = GByteArrayToBYTEA( pabyWKB, nWkbSize );
     CPLFree(pabyWKB);
 
     return pszTextBuf;
@@ -1788,27 +1759,25 @@ char *OGRPGLayer::GeometryToBYTEA( OGRGeometry * poGeometry, int nPostGISMajor, 
 OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
 
 {
-    PGconn      *hPGConn = poDS->GetPGConn();
-    GByte       *pabyWKB;
-    int         fd, nBytes;
-    OGRGeometry *poGeometry;
-
-#define MAX_WKB 500000
-
     if( oid == 0 )
         return NULL;
 
-    fd = lo_open( hPGConn, oid, INV_READ );
+    PGconn *hPGConn = poDS->GetPGConn();
+    const int fd = lo_open( hPGConn, oid, INV_READ );
     if( fd < 0 )
         return NULL;
 
-    pabyWKB = (GByte *) CPLMalloc(MAX_WKB);
-    nBytes = lo_read( hPGConn, fd, (char *) pabyWKB, MAX_WKB );
+    static const int MAX_WKB = 500000;
+    GByte *pabyWKB = (GByte *) CPLMalloc(MAX_WKB);
+    const int nBytes = lo_read( hPGConn, fd, (char *) pabyWKB, MAX_WKB );
     lo_close( hPGConn, fd );
 
-    poGeometry = NULL;
-    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, nBytes,
-                                       (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc );
+    OGRGeometry *poGeometry = NULL;
+    OGRGeometryFactory::createFromWkb(
+        pabyWKB, NULL, &poGeometry, nBytes,
+        poDS->sPostGISVersion.nMajor < 2
+        ? wkbVariantPostGIS1
+        : wkbVariantOldOgc );
 
     CPLFree( pabyWKB );
 
@@ -1822,21 +1791,18 @@ OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
 Oid OGRPGLayer::GeometryToOID( OGRGeometry * poGeometry )
 
 {
-    PGconn      *hPGConn = poDS->GetPGConn();
-    int         nWkbSize = poGeometry->WkbSize();
-    GByte       *pabyWKB;
-    Oid         oid;
-    int         fd, nBytesWritten;
+    PGconn *hPGConn = poDS->GetPGConn();
+    const int nWkbSize = poGeometry->WkbSize();
 
-    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+    GByte *pabyWKB = (GByte *) CPLMalloc(nWkbSize);
     if( poGeometry->exportToWkb( wkbNDR, pabyWKB,
                                  (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1 : wkbVariantOldOgc ) != OGRERR_NONE )
         return 0;
 
-    oid = lo_creat( hPGConn, INV_READ|INV_WRITE );
+    Oid oid = lo_creat( hPGConn, INV_READ|INV_WRITE );
 
-    fd = lo_open( hPGConn, oid, INV_WRITE );
-    nBytesWritten = lo_write( hPGConn, fd, (char *) pabyWKB, nWkbSize );
+    const int fd = lo_open( hPGConn, oid, INV_WRITE );
+    const int nBytesWritten = lo_write( hPGConn, fd, (char *) pabyWKB, nWkbSize );
     lo_close( hPGConn, fd );
 
     if( nBytesWritten != nWkbSize )
@@ -1921,11 +1887,8 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
     OGRPGGeomFieldDefn* poGeomFieldDefn =
         poFeatureDefn->myGetGeomFieldDefn(iGeomField);
 
-    const char* pszExtentFct;
-    if (poDS->sPostGISVersion.nMajor >= 2)
-        pszExtentFct = "ST_Extent";
-    else
-        pszExtentFct = "Extent";
+    const char* pszExtentFct =
+        poDS->sPostGISVersion.nMajor >= 2 ? "ST_Extent" : "Extent";
 
     if ( TestCapability(OLCFastGetExtent) )
     {

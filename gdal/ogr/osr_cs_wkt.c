@@ -27,15 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include <stdio.h>
 #include <string.h>
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
 #include "osr_cs_wkt.h"
-
-#include "cpl_port.h"
 
 /************************************************************************/
 /*                        osr_cs_wkt_error()                            */

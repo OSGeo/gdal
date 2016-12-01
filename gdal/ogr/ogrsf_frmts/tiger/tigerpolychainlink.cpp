@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerPolyChainLink, providing access to .RTI files.
@@ -32,7 +31,7 @@
 
 CPL_CVSID("$Id$");
 
-#define FILE_CODE "I"
+static const char FILE_CODE[] = "I";
 
 static const TigerFieldInfo rtI_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -77,7 +76,6 @@ static const TigerRecordInfo rtI_info =
     sizeof(rtI_fields) / sizeof(TigerFieldInfo),
     52
   };
-
 
 /************************************************************************/
 /*                         TigerPolyChainLink()                         */

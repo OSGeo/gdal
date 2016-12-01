@@ -1,16 +1,17 @@
-#include <stdio.h>
+#include <cstdio>
 #include "ogr_xplane_geo_utils.h"
 
-int main(int argc, char* argv[])
+int main( int /* argc */ , char* /* argv */ [])
 {
-  double latA = 49, lonA = 2;
-  double latB = 49.1, lonB = 2.1;
-  double latC, lonC;
-  double heading;
-  double distance;
+  const double latA = 49;
+  const double lonA = 2;
+  const double latB = 49.1;
+  const double lonB = 2.1;
 
-  heading = OGRXPlane_Track(latA, lonA, latB, lonB);
-  distance = OGRXPlane_Distance(latA, lonA, latB, lonB);
+  double heading = OGRXPlane_Track(latA, lonA, latB, lonB);
+  double distance = OGRXPlane_Distance(latA, lonA, latB, lonB);
+  double latC = 0.0;
+  double lonC = 0.0;
   OGRXPlane_ExtendPosition(latA, lonA, distance, heading, &latC, &lonC);
   printf("heading=%f, distance=%f\n", heading, distance);
   printf("%.15f=%.15f, %.15f=%.15f\n", latB, latC, lonB, lonC);

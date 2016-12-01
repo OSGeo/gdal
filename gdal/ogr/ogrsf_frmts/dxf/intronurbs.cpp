@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  DXF Translator
  * Purpose:  Low level spline interpolation.
@@ -12,7 +11,6 @@ to NURBS" by David F. Rogers.  More information on the book and the code is
 available at:
 
   http://www.nar-associates.com/nurbs/
-
 
 Copyright (c) 2009, David F. Rogers
 All rights reserved.
@@ -46,9 +44,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include "cpl_port.h" // in case of -DDEBUG_BOOL
 
+CPL_CVSID("$Id$");
+
 /* used by ogrdxflayer.cpp */
-void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[]);
+void rbspline2( int npts,int k,int p1,double b[],double h[],
+                bool xflag, double x[], double p[] );
 
 /************************************************************************/
 /*                                knot()                                */
@@ -65,16 +65,15 @@ void rbspline2(int npts,int k,int p1,double b[],double h[],
     x()          = array containing the knot vector
 */
 
-static void knot(int n,int c,double x[])
+static void knot( int n, int c, double x[] )
 
 {
-    int nplusc,nplus2,i;
-
-    nplusc = n + c;
-    nplus2 = n + 2;
+    const int nplusc = n + c;
+    const int nplus2 = n + 2;
 
     x[1] = 0.0;
-    for (i = 2; i <= nplusc; i++){
+    for( int i = 2; i <= nplusc; i++ )
+    {
         if ( (i > c) && (i < nplus2) )
             x[i] = x[i-1] + 1.0;
         else
@@ -88,19 +87,19 @@ static void knot(int n,int c,double x[])
 
 /*  Subroutine to generate rational B-spline basis functions--open knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
+        C code for An Introduction to NURBS
+        by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+        All rights reserved.
 
-	Name: rbais
-	Language: C
-	Subroutines called: none
-	Book reference: Chapter 4, Sec. 4. , p 296
+        Name: rbais
+        Language: C
+        Subroutines called: none
+        Book reference: Chapter 4, Sec. 4. , p 296
 
-	c        = order of the B-spline basis function
+    c        = order of the B-spline basis function
     d        = first term of the basis function recursion relation
     e        = second term of the basis function recursion relation
-	h[]	     = array containing the homogeneous weights
+    h[]      = array containing the homogeneous weights
     npts     = number of defining polygon vertices
     nplusc   = constant -- npts + c -- maximum number of knot values
     r[]      = array containing the rationalbasis functions
@@ -110,64 +109,71 @@ static void knot(int n,int c,double x[])
     x[]      = knot vector
 */
 
-static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
+static void rbasis( int c, double t, int npts,
+                    double x[], double h[], double r[] )
 
 {
-    int nplusc;
-    int i,k;
-    double d,e;
-    double sum;
+    const int nplusc = npts + c;
+
     std::vector<double> temp;
-
-    nplusc = npts + c;
-
     temp.resize( nplusc+1 );
 
-/* calculate the first order nonrational basis functions n[i]	*/
+    /* calculate the first order nonrational basis functions n[i] */
 
-    for (i = 1; i<= nplusc-1; i++){
-    	if (( t >= x[i]) && (t < x[i+1]))
+    for( int i = 1; i<= nplusc-1; i++ )
+    {
+        if (( t >= x[i]) && (t < x[i+1]))
             temp[i] = 1.0;
         else
             temp[i] = 0.0;
     }
 
-/* calculate the higher order nonrational basis functions */
+    /* calculate the higher order nonrational basis functions */
 
-    for (k = 2; k <= c; k++){
-    	for (i = 1; i <= nplusc-k; i++){
+    for( int k = 2; k <= c; k++ )
+    {
+        for ( int i = 1; i <= nplusc-k; i++ )
+        {
+            double d = 0.0;
+            double e = 0.0;
             if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
                 d = ((t-x[i])*temp[i])/(x[i+k-1]-x[i]);
-            else
-                d = 0;
+            // else
+            //    d = 0.0 ;
 
-    	    if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
+            if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
                 e = ((x[i+k]-t)*temp[i+1])/(x[i+k]-x[i+1]);
-            else
-                e = 0;
+            // else
+            //     e = 0.0;
 
-    	    temp[i] = d + e;
+            temp[i] = d + e;
         }
     }
 
-    if (t == (double)x[nplusc]){		/*    pick up last point	*/
+    if (t == (double)x[nplusc]){  /* pick up last point */
         temp[npts] = 1;
     }
 
 /* calculate sum for denominator of rational basis functions */
 
-    sum = 0.;
-    for (i = 1; i <= npts; i++){
+    double sum = 0.0;
+    for( int i = 1; i <= npts; i++ )
+    {
         sum = sum + temp[i]*h[i];
     }
 
 /* form rational basis functions and put in r vector */
 
-    for (i = 1; i <= npts; i++){
-    	if (sum != 0){
-            r[i] = (temp[i]*h[i])/(sum);}
+    for( int i = 1; i <= npts; i++ )
+    {
+        if (sum != 0)
+        {
+            r[i] = (temp[i]*h[i])/(sum);
+        }
         else
+        {
             r[i] = 0;
+        }
     }
 }
 
@@ -177,20 +183,20 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
 
 /*  Subroutine to generate a rational B-spline curve using an uniform open knot vector
 
-	C code for An Introduction to NURBS
-	by David F. Rogers. Copyright (C) 2000 David F. Rogers,
-	All rights reserved.
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
 
-	Name: rbspline.c
-	Language: C
-	Subroutines called: knot.c, rbasis.c, fmtmul.c
-	Book reference: Chapter 4, Alg. p. 297
+    Name: rbspline.c
+    Language: C
+    Subroutines called: knot.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 297
 
     b[]         = array containing the defining polygon vertices
                   b[1] contains the x-component of the vertex
                   b[2] contains the y-component of the vertex
                   b[3] contains the z-component of the vertex
-	h[]			= array containing the homogeneous weighting factors
+    h[]         = array containing the homogeneous weighting factors
     k           = order of the B-spline basis function
     nbasis      = array containing the basis functions for a single value of t
     nplusc      = number of knot values
@@ -204,54 +210,49 @@ static void rbasis(int c,double t,int npts, double x[], double h[], double r[])
     x[]         = array containing the knot vector
 */
 
-void rbspline2(int npts,int k,int p1,double b[],double h[],
-        bool xflag, double x[], double p[])
+void rbspline2( int npts,int k,int p1,double b[],double h[],
+                bool xflag, double x[], double p[] )
 
 {
-    int i,j,icount,jcount;
-    int i1;
-    int nplusc;
+    const int nplusc = npts + k;
 
-    double step;
-    double t;
-    double temp;
     std::vector<double> nbasis;
-
-    nplusc = npts + k;
-
     nbasis.resize( npts+1 );
 
 /* generate the uniform open knot vector */
 
     if( xflag == true )
-        knot(npts,k,x);
+        knot(npts, k, x);
 
-    icount = 0;
+    int icount = 0;
 
 /*    calculate the points on the rational B-spline curve */
 
-    t = 0;
-    step = ((double)x[nplusc])/((double)(p1-1));
+    double t = 0.0;
+    const double step = ((double)x[nplusc])/((double)(p1-1));
 
-    for (i1 = 1; i1<= p1; i1++){
-
-        if ((double)x[nplusc] - t < 5e-6){
+    for( int i1 = 1; i1<= p1; i1++ )
+    {
+        if( (double)x[nplusc] - t < 5e-6 )
+        {
             t = (double)x[nplusc];
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k,t,npts,x,h,&(nbasis[0]));
-        for (j = 1; j <= 3; j++){      /* generate a point on the curve */
-            jcount = j;
+        rbasis(k, t, npts, x, h, &(nbasis[0]));
+        for( int j = 1; j <= 3; j++ )
+        {      /* generate a point on the curve */
+            int jcount = j;
             p[icount+j] = 0.;
 
-            for (i = 1; i <= npts; i++){ /* Do local matrix multiplication */
-                temp = nbasis[i]*b[jcount];
+            for( int i = 1; i <= npts; i++ )
+            { /* Do local matrix multiplication */
+                const double temp = nbasis[i]*b[jcount];
                 p[icount + j] = p[icount + j] + temp;
                 jcount = jcount + 3;
             }
         }
-    	icount = icount + 3;
+        icount = icount + 3;
         t = t + step;
     }
 }

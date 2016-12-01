@@ -27,7 +27,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-
 #ifndef OGR_BNA_PARSER_INCLUDED
 #define OGR_BNA_PARSER_INCLUDED
 

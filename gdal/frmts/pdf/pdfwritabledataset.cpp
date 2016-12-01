@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  PDF driver
  * Purpose:  GDALDataset driver for PDF dataset (writable vector dataset)
@@ -37,13 +36,12 @@ CPL_CVSID("$Id$");
 /*                      PDFWritableVectorDataset()                      */
 /************************************************************************/
 
-PDFWritableVectorDataset::PDFWritableVectorDataset()
-{
-    papszOptions = NULL;
-    nLayers = 0;
-    papoLayers = NULL;
-    bModified = FALSE;
-}
+PDFWritableVectorDataset::PDFWritableVectorDataset() :
+    papszOptions(NULL),
+    nLayers(0),
+    papoLayers(NULL),
+    bModified(FALSE)
+{}
 
 /************************************************************************/
 /*                      ~PDFWritableVectorDataset()                     */
@@ -54,7 +52,7 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
     SyncToDisk();
 
     CSLDestroy(papszOptions);
-    for(int i=0;i<nLayers;i++)
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
 }
@@ -191,9 +189,25 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     const char* pszGEO_ENCODING =
         CSLFetchNameValueDef(papszOptions, "GEO_ENCODING", "ISO32000");
 
-    double dfDPI = CPLAtof(CSLFetchNameValueDef(papszOptions, "DPI", "72"));
-    if (dfDPI < 72.0)
-        dfDPI = 72.0;
+    const char* pszDPI = CSLFetchNameValue(papszOptions, "DPI");
+    double dfDPI = DEFAULT_DPI;
+    if( pszDPI != NULL )
+    {
+        dfDPI = CPLAtof(pszDPI);
+        if (dfDPI < DEFAULT_DPI)
+            dfDPI = DEFAULT_DPI;
+    }
+    else
+    {
+        dfDPI = DEFAULT_DPI;
+    }
+
+    const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
+    bool bWriteUserUnit;
+    if( pszWriteUserUnit != NULL )
+        bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
+    else
+        bWriteUserUnit = ( pszDPI == NULL );
 
     const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
 
@@ -223,7 +237,8 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     const char* pszOGRDisplayField = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_FIELD");
     const char* pszOGRDisplayLayerNames = CSLFetchNameValue(papszOptions, "OGR_DISPLAY_LAYER_NAMES");
-    int bWriteOGRAttributes = CSLFetchBoolean(papszOptions, "OGR_WRITE_ATTRIBUTES", TRUE);
+    const bool bWriteOGRAttributes =
+        CPLFetchBool(papszOptions, "OGR_WRITE_ATTRIBUTES", true);
     const char* pszOGRLinkField = CSLFetchNameValue(papszOptions, "OGR_LINK_FIELD");
 
     const char* pszOffLayers = CSLFetchNameValue(papszOptions, "OFF_LAYERS");
@@ -286,6 +301,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     oWriter.StartPage(poSrcDS,
                       dfDPI,
+                      bWriteUserUnit,
                       pszGEO_ENCODING,
                       pszNEATLINE,
                       &sMargins,

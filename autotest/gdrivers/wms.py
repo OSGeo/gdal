@@ -408,8 +408,8 @@ def wms_9():
 
     tms = """<GDAL_WMS>
     <Service name="TiledWMS">
-	<ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
-	<TiledGroupName>Global SRTM Elevation</TiledGroupName>
+        <ServerUrl>http://onearth.jpl.nasa.gov/wms.cgi?</ServerUrl>
+        <TiledGroupName>Global SRTM Elevation</TiledGroupName>
     </Service>
 </GDAL_WMS>
 """

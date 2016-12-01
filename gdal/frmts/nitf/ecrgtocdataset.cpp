@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ECRG TOC read Translator
  * Purpose:  Implementation of ECRGTOCDataset and ECRGTOCSubDataset.
@@ -63,7 +62,7 @@ typedef struct
 
 class ECRGTOCDataset : public GDALPamDataset
 {
-  char	    **papszSubDatasets;
+  char      **papszSubDatasets;
   double      adfGeoTransform[6];
 
   char      **papszFileList;
@@ -73,6 +72,7 @@ class ECRGTOCDataset : public GDALPamDataset
     {
         papszSubDatasets = NULL;
         papszFileList = NULL;
+        memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     }
 
     virtual ~ECRGTOCDataset()
@@ -81,22 +81,22 @@ class ECRGTOCDataset : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     void                AddSubDataset(const char* pszFilename,
                                       const char* pszProductTitle,
                                       const char* pszDiscId,
                                       const char* pszScale);
 
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform)
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform) override
     {
         memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void)
+    virtual const char *GetProjectionRef(void) override
     {
         return SRS_WKT_WGS84;
     }
@@ -141,7 +141,7 @@ class ECRGTOCSubDataset : public VRTDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     static GDALDataset* Build(  const char* pszProductTitle,
                                 const char* pszDiscId,
@@ -182,7 +182,7 @@ void ECRGTOCDataset::AddSubDataset( const char* pszFilename,
                                     const char* pszScale)
 
 {
-    char	szName[80];
+    char szName[80];
     const int nCount = CSLCount(papszSubDatasets ) / 2;
 
     snprintf( szName, sizeof(szName), "SUBDATASET_%d_NAME", nCount+1 );
@@ -407,16 +407,15 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
     double dfMaxY;
     double dfPixelXSize;
     double dfPixelYSize;
-    ECRGTOCSubDataset* poSubDataset;
 
     public:
-        ECRGTOCProxyRasterDataSet(ECRGTOCSubDataset* poSubDataset,
-                                  const char* fileName,
-                                  int nXSize, int nYSize,
-                                  double dfMinX, double dfMaxY,
-                                  double dfPixelXSize, double dfPixelYSize);
+        ECRGTOCProxyRasterDataSet( ECRGTOCSubDataset* /* poSubDataset */,
+                                   const char* fileName,
+                                   int nXSize, int nYSize,
+                                   double dfMinX, double dfMaxY,
+                                   double dfPixelXSize, double dfPixelYSize );
 
-        GDALDataset* RefUnderlyingDataset()
+        GDALDataset* RefUnderlyingDataset() override
         {
             GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
             if (poSourceDS)
@@ -432,7 +431,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return poSourceDS;
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }
@@ -444,26 +443,28 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
 /*                    ECRGTOCProxyRasterDataSet()                       */
 /************************************************************************/
 
-ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet
-        (ECRGTOCSubDataset* poSubDatasetIn,
-         const char* fileNameIn,
-         int nXSizeIn, int nYSizeIn,
-         double dfMinXIn, double dfMaxYIn,
-         double dfPixelXSizeIn, double dfPixelYSizeIn) :
-    /* Mark as shared since the VRT will take several references if we are in RGBA mode (4 bands for this dataset) */
-    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly, TRUE, SRS_WKT_WGS84),
+ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
+    ECRGTOCSubDataset* /* poSubDatasetIn */,
+    const char* fileNameIn,
+    int nXSizeIn, int nYSizeIn,
+    double dfMinXIn, double dfMaxYIn,
+    double dfPixelXSizeIn, double dfPixelYSizeIn ) :
+    // Mark as shared since the VRT will take several references if we are in
+    // RGBA mode (4 bands for this dataset).
+    GDALProxyPoolDataset(fileNameIn, nXSizeIn, nYSizeIn, GA_ReadOnly,
+                         TRUE, SRS_WKT_WGS84),
     checkDone(FALSE),
-    checkOK(FALSE)
+    checkOK(FALSE),
+    dfMinX(dfMinXIn),
+    dfMaxY(dfMaxYIn),
+    dfPixelXSize(dfPixelXSizeIn),
+    dfPixelYSize(dfPixelYSizeIn)
 {
-    this->poSubDataset = poSubDatasetIn;
-    this->dfMinX = dfMinXIn;
-    this->dfMaxY = dfMaxYIn;
-    this->dfPixelXSize = dfPixelXSizeIn;
-    this->dfPixelYSize = dfPixelYSizeIn;
 
-    for(int i=0;i<3;i++)
+    for( int i = 0; i < 3; i++ )
     {
-        SetBand(i + 1, new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
+        SetBand(i + 1,
+                new GDALProxyPoolRasterBand(this, i+1, GDT_Byte, nXSizeIn, 1));
     }
 }
 
@@ -471,15 +472,19 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet
 /*                    SanityCheckOK()                                   */
 /************************************************************************/
 
-#define WARN_CHECK_DS(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined,\
-    "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
+#define WARN_CHECK_DS(x) do { if (!(x)) { \
+    CPLError(CE_Warning, CPLE_AppDefined,                             \
+             "For %s, assert '" #x "' failed",                        \
+             GetDescription()); checkOK = FALSE; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
+int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
 {
-    /*int nSrcBlockXSize, nSrcBlockYSize;
-    int nBlockXSize, nBlockYSize;*/
-    double l_adfGeoTransform[6];
-    if (checkDone)
+    // int nSrcBlockXSize;
+    // int nSrcBlockYSize;
+    // int nBlockXSize;
+    // int nBlockYSize;
+    double l_adfGeoTransform[6] = {};
+    if( checkDone )
         return checkOK;
 
     checkOK = TRUE;
@@ -491,16 +496,18 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
     WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - dfPixelXSize) < 1e-10);
     WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
     WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
-                  l_adfGeoTransform[4] == 0); /* No rotation */
+                  l_adfGeoTransform[4] == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
     WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84));
-    /*poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
-    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
-    WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);*/
-    WARN_CHECK_DS(poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
+    // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
+    //                                            &nSrcBlockYSize);
+    // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    // WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
+    // WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);
+    WARN_CHECK_DS(
+        poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
 
     return checkOK;
 }
@@ -513,7 +520,7 @@ static const char* BuildFullName(const char* pszTOCFilename,
                                  const char* pszFramePath,
                                  const char* pszFrameName)
 {
-    char* pszPath;
+    char* pszPath = NULL;
     if (pszFramePath[0] == '.' &&
         (pszFramePath[1] == '/' ||pszFramePath[1] == '\\'))
         pszPath = CPLStrdup(pszFramePath + 2);
@@ -616,8 +623,12 @@ GDALDataset* ECRGTOCSubDataset::Build(  const char* pszProductTitle,
                                             aosFrameDesc[i].pszPath,
                                             aosFrameDesc[i].pszName);
 
-        double dfMinX = 0, dfMaxX = 0, dfMinY = 0, dfMaxY = 0,
-               dfPixelXSize = 0, dfPixelYSize = 0;
+        double dfMinX = 0.0;
+        double dfMaxX = 0.0;
+        double dfMinY = 0.0;
+        double dfMaxY = 0.0;
+        double dfPixelXSize = 0.0;
+        double dfPixelYSize = 0.0;
         GetExtent(aosFrameDesc[i].pszName,
                   aosFrameDesc[i].nScale, aosFrameDesc[i].nZone,
                   dfMinX, dfMaxX, dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
@@ -684,8 +695,12 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
         return NULL;
     }
 
-    double dfGlobalMinX = 0, dfGlobalMinY = 0, dfGlobalMaxX = 0, dfGlobalMaxY= 0;
-    double dfGlobalPixelXSize = 0, dfGlobalPixelYSize = 0;
+    double dfGlobalMinX = 0.0;
+    double dfGlobalMinY = 0.0;
+    double dfGlobalMaxX = 0.0;
+    double dfGlobalMaxY = 0.0;
+    double dfGlobalPixelXSize = 0.0;
+    double dfGlobalPixelYSize = 0.0;
     bool bGlobalExtentValid = false;
 
     ECRGTOCDataset* poDS = new ECRGTOCDataset();
@@ -883,9 +898,12 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
                         continue;
                     }
 
-                    double dfMinX = 0, dfMaxX = 0,
-                           dfMinY = 0, dfMaxY = 0,
-                           dfPixelXSize = 0, dfPixelYSize = 0;
+                    double dfMinX = 0.0;
+                    double dfMaxX = 0.0;
+                    double dfMinY = 0.0;
+                    double dfMaxY = 0.0;
+                    double dfPixelXSize = 0.0;
+                    double dfPixelYSize = 0.0;
                     if (!GetExtent(pszFrameName, nScale, nZone,
                                    dfMinX, dfMaxX, dfMinY, dfMaxY,
                                    dfPixelXSize, dfPixelYSize))

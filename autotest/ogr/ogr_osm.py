@@ -767,6 +767,140 @@ def ogr_osm_14():
 
     return 'success'
 
+###############################################################################
+# Test Dataset.GetNextFeature()
+
+def ogr_osm_15_progresscbk_return_true(pct, msg, user_data):
+    user_data[0] = pct
+    return 1
+
+def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
+    return 0
+
+def ogr_osm_15():
+
+    if ogrtest.osm_drv is None:
+        return 'skip'
+
+    ds = gdal.OpenEx('data/test.pbf')
+
+    if ds.TestCapability(ogr.ODsCRandomLayerRead) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    count = 0
+    last_pct = 0
+    while True:
+        f, l, pct = ds.GetNextFeature( include_pct = True )
+        if pct < last_pct:
+            gdaltest.post_reason('fail')
+            print(last_pct)
+            print(pct)
+            return 'fail'
+        last_pct = pct
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        #f.DumpReadable()
+        count += 1
+        if f.GetDefnRef().GetName() != l.GetName():
+            gdaltest.post_reason('fail')
+            f.DumpReadable()
+            print(l.GetName())
+            return 'fail'
+
+    if count != 8:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+    if last_pct != 1.0:
+        gdaltest.post_reason('fail')
+        print(last_pct)
+        return 'fail'
+
+    f, l, pct = ds.GetNextFeature( include_pct = True )
+    if f is not None or l is not None or pct != 1.0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ResetReading()
+    for i in range(count):
+        f, l = ds.GetNextFeature()
+        #f.DumpReadable()
+        if f is None or l is None:
+            gdaltest.post_reason('fail')
+            print(i)
+            return 'fail'
+
+    ds.ResetReading()
+    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_false )
+    if f is not None or l is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds.ResetReading()
+    pct_array = [ 0 ]
+    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array )
+    if f is None or l is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if pct_array[ 0 ] != 1.0:
+        gdaltest.post_reason('fail')
+        print(pct_array)
+        return 'fail'
+
+    #ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
+    #ds.ExecuteSQL('SET interest_layers = relations')
+    #def test(pct, msg, unused):
+    #    print(pct)
+    #f, l = ds.GetNextFeature( callback = test)
+    #print(f)
+
+    ds = None
+
+    return 'success'
+
+###############################################################################
+# Test laundering of tags (https://github.com/OSGeo/gdal/pull/161)
+
+def ogr_osm_16():
+
+    if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_16.osm',
+"""<osm>
+  <node id="1" lat="2" lon="49">
+    <tag k="foo:baar" v="val"/>
+    <tag k="foo:bar" v="val2"/>
+  </node>
+</osm>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_osm_16_conf.ini',
+"""#
+attribute_name_laundering=yes
+
+[points]
+attributes=foo:baar,foo:bar
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options = [ 'CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'] )
+    lyr = ds.GetLayerByName('points')
+    f = lyr.GetNextFeature()
+    if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_osm_16.osm')
+    gdal.Unlink('/vsimem/ogr_osm_16_conf.ini')
+
+    return 'success'
+
 gdaltest_list = [
     ogr_osm_1,
     ogr_osm_2,
@@ -786,6 +920,8 @@ gdaltest_list = [
     ogr_osm_test_uncompressed_dense_false_pbf,
     ogr_osm_13,
     ogr_osm_14,
+    ogr_osm_15,
+    ogr_osm_16,
     ]
 
 if __name__ == '__main__':

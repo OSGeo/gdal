@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  ESRI .hdr Driver
  * Purpose:  Implementation of EHdrDataset
@@ -78,12 +77,12 @@ class EHdrDataset : public RawDataset
     EHdrDataset();
     virtual ~EHdrDataset();
 
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -125,7 +124,7 @@ class EHdrRasterBand : public RawRasterBand
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace,
                               GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
@@ -135,19 +134,18 @@ class EHdrRasterBand : public RawRasterBand
                     int nBits);
     virtual ~EHdrRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum(int *pbSuccess = NULL ) override;
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *pdfStdDev );
+                                  double *pdfMean, double *pdfStdDev ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev );
-    virtual CPLErr SetColorTable( GDALColorTable *poNewCT );
-
+                                  double dfMean, double dfStdDev ) override;
+    virtual CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
 };
 
 /************************************************************************/
@@ -452,7 +450,6 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
     CSLDestroy( papszTokens );
     return pszResult;
 }
-
 
 /************************************************************************/
 /* ==================================================================== */
@@ -936,7 +933,6 @@ CPLErr EHdrDataset::ReadSTX()
     return CE_None;
 }
 
-
 /************************************************************************/
 /*                      GetImageRepFilename()                           */
 /************************************************************************/
@@ -1133,7 +1129,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     double dfMin = 0;
     double dfMax = 0;
 
-    const char *pszLine;
+    const char *pszLine = NULL;
     while( (pszLine = CPLReadLineL( fp )) != NULL )
     {
         nLineCount++;
@@ -1192,7 +1188,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"cellsize") )
         {
-            dfXDim = dfYDim = CPLAtofM(papszTokens[1]);
+            dfXDim = CPLAtofM(papszTokens[1]);
+            dfYDim = dfXDim;
         }
         else if( EQUAL(papszTokens[0],"nbands") )
         {
@@ -1200,8 +1197,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"layout") )
         {
-            strncpy( szLayout, papszTokens[1], sizeof(szLayout) );
-            szLayout[sizeof(szLayout)-1] = '\0';
+            snprintf( szLayout, sizeof(szLayout), "%s", papszTokens[1] );
         }
         else if( EQUAL(papszTokens[0],"NODATA_value")
                  || EQUAL(papszTokens[0],"NODATA") )
@@ -1748,7 +1744,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
             char **papszValues = CSLTokenizeString2(pszLine, "\t ",
                                                     CSLT_HONOURSTRINGS);
-
 
             if ( CSLCount(papszValues) >= 4 )
             {

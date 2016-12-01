@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema 
+    targetNamespace="http://gdal.org/ogr/gmlas"
+    xmlns:ogr_gmlas="http://gdal.org/ogr/gmlas"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified" version="1.0" >
+<xs:import namespace="http://myns" schemaLocation="gmlas_test1.xsd"/>
+<xs:element name="FeatureCollection" type="ogr_gmlas:FeatureCollectionType"/>
+<xs:complexType name="FeatureCollectionType">
+  <xs:sequence>
+    <xs:element name="featureMember" minOccurs="0" maxOccurs="unbounded">
+      <xs:complexType>
+        <xs:sequence>
+           <xs:any/>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+  </xs:sequence>
+</xs:complexType>
+</xs:schema>

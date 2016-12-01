@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Common Portability Library
  * Purpose:  Google OAuth2 Authentication Services
@@ -28,6 +27,13 @@
  ****************************************************************************/
 
 #include "cpl_http.h"
+#include "cpl_port.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -237,7 +243,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
     CPLDebug("GOA2", "Refresh Token : '%s'", osRefreshToken.c_str());
 
-    if( osRefreshToken.size() == 0)
+    if( osRefreshToken.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify a refresh token in the OAuth2 response.");
@@ -265,13 +271,13 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
  * user or http connection problems.
  *
  * @param pszRefreshToken the refresh token from GOA2GetRefreshToken().
- * @param pszScope the scope for which it is valid.
+ * @param pszScope the scope for which it is valid. Currently unused
  *
  * @return access token, to be freed with CPLFree(), null on failure.
  */
 
 char *GOA2GetAccessToken( const char *pszRefreshToken,
-                          CPL_UNUSED const char *pszScope )
+                          CPL_UNUSED const char * pszScope )
 {
 /* -------------------------------------------------------------------- */
 /*      Prepare request.                                                */
@@ -336,7 +342,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
 
     CPLDebug("GOA2", "Access Token : '%s'", osAccessToken.c_str());
 
-    if (osAccessToken.size() == 0)
+    if( osAccessToken.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to identify an access token in the OAuth2 response.");

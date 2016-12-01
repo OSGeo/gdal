@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  OGR/DODS Interface
  * Purpose:  Implements OGRDODSDataSource class.
@@ -85,9 +84,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /*      expression.                                                     */
 /* -------------------------------------------------------------------- */
     char *pszWrkURL = CPLStrdup( pszNewName + 5 );
-    char *pszFound;
-
-    pszFound = strstr(pszWrkURL,"&");
+    char *pszFound = strstr(pszWrkURL, "&");
     if( pszFound )
     {
         oConstraints = pszFound;
@@ -102,7 +99,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     }
 
     // Trim common requests.
-    int nLen = strlen(pszWrkURL);
+    int nLen = static_cast<int>(strlen(pszWrkURL));
     if( strcmp(pszWrkURL+nLen-4,".das") == 0 )
         pszWrkURL[nLen-4] = '\0';
     else if( strcmp(pszWrkURL+nLen-4,".dds") == 0 )
@@ -125,15 +122,16 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL
         && getenv("DODS_CONF") == NULL )
     {
-        static char szDODS_CONF[1000];
+        const int knBufSize = 1000;
+        static char szDODS_CONF[knBufSize];
 
-        sprintf( szDODS_CONF, "DODS_CONF=%.980s",
-                 CPLGetConfigOption( "DODS_CONF", "" ) );
+        snprintf( szDODS_CONF, knBufSize, "DODS_CONF=%.980s",
+                  CPLGetConfigOption( "DODS_CONF", "" ) );
         putenv( szDODS_CONF );
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a overridding AIS file location, apply it now.       */
+/*      If we have a overriding AIS file location, apply it now.       */
 /* -------------------------------------------------------------------- */
     if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
     {
@@ -276,10 +274,7 @@ void OGRDODSDataSource::AddLayer( OGRDODSLayer *poLayer )
 int OGRDODSDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
-        return TRUE;
-    else
-        return FALSE;
+    return EQUAL(pszCap,ODsCCreateLayer);
 }
 
 /************************************************************************/

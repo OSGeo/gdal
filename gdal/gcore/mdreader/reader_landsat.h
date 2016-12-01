@@ -54,10 +54,10 @@ class GDALMDReaderLandsat: public GDALMDReaderBase
 public:
     GDALMDReaderLandsat(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderLandsat();
-    virtual bool HasRequiredFiles() const;
-    virtual char** GetMetadataFiles() const;
+    virtual bool HasRequiredFiles() const override;
+    virtual char** GetMetadataFiles() const override;
 protected:
-    virtual void LoadMetadata();
+    virtual void LoadMetadata() override;
 protected:
     CPLString m_osIMDSourceFilename;
 };
