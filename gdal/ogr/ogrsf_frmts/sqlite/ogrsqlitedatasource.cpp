@@ -334,8 +334,6 @@ OGRSQLiteDataSource::OGRSQLiteDataSource()
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
-    int         i;
-
     for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( papoLayers[iLayer]->IsTableLayer() )
@@ -348,12 +346,14 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     SaveStatistics();
 
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
+    for( size_t i = 0; i < apoInvisibleLayers.size(); i++ )
+        delete apoInvisibleLayers[i];
 
     CPLFree( papoLayers );
 
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( papoSRS[i] != NULL )
             papoSRS[i]->Release();
@@ -1722,6 +1722,12 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
     if( poLayer != NULL )
         return poLayer;
 
+    for( size_t i=0; i<apoInvisibleLayers.size(); ++i)
+    {
+        if( EQUAL(apoInvisibleLayers[i]->GetName(), pszLayerName) )
+            return apoInvisibleLayers[i];
+    }
+
     if( !OpenTable(pszLayerName) )
         return NULL;
 
@@ -1737,6 +1743,49 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
         nLayers --;
         return NULL;
     }
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                    GetLayerByNameNotVisible()                        */
+/************************************************************************/
+
+OGRLayer *OGRSQLiteDataSource::GetLayerByNameNotVisible( const char* pszLayerName )
+
+{
+    {
+        OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
+        if( poLayer != NULL )
+            return poLayer;
+    }
+
+    for( size_t i=0; i<apoInvisibleLayers.size(); ++i)
+    {
+        if( EQUAL(apoInvisibleLayers[i]->GetName(), pszLayerName) )
+            return apoInvisibleLayers[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
+    if( poLayer->Initialize( pszLayerName, FALSE, FALSE) != CE_None )
+    {
+        delete poLayer;
+        return NULL;
+    }
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poLayer->GetLayerDefn();
+    CPLPopErrorHandler();
+    if( CPLGetLastErrorType() != 0 )
+    {
+        CPLErrorReset();
+        delete poLayer;
+        return NULL;
+    }
+    apoInvisibleLayers.push_back(poLayer);
 
     return poLayer;
 }
