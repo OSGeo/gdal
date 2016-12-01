@@ -506,6 +506,15 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         poDataset->SetGeoTransform( adfGeoTrans );
     }
 
+    if( eFormat == ph_xdem )
+    {
+        GDALRasterBand*	poFirstBand = poDataset->GetRasterBand( 1 );
+        if( poFirstBand != NULL )
+        {
+            poFirstBand->SetUnitType( "m" );//Always meters
+        }
+    }
+
     return poDataset;
 }
 
