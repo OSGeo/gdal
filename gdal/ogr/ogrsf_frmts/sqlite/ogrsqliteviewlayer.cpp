@@ -132,11 +132,11 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
                                             osUnderlyingTableName.c_str(),
                                             osUnderlyingGeometryColumn.c_str());
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osNewUnderlyingTableName);
         }
         if( poUnderlyingLayer == NULL )
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osUnderlyingTableName);
     }
     return poUnderlyingLayer;
 }
