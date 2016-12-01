@@ -36,6 +36,7 @@
 #include "cpl_error.h"
 #include <map>
 #include <set>
+#include <vector>
 
 #ifdef HAVE_SPATIALITE
   #ifdef SPATIALITE_AMALGAMATION
@@ -774,6 +775,8 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 
     void                SaveStatistics();
 
+    std::vector<OGRLayer*> apoInvisibleLayers;
+
   public:
                         OGRSQLiteDataSource();
                         ~OGRSQLiteDataSource();
@@ -792,6 +795,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
     virtual int         GetLayerCount() { return nLayers; }
     virtual OGRLayer   *GetLayer( int );
     virtual OGRLayer   *GetLayerByName( const char* );
+    OGRLayer           *GetLayerByNameNotVisible( const char* );
     virtual std::pair<OGRLayer*, IOGRSQLiteGetSpatialWhere*> GetLayerWithGetSpatialWhereByName( const char* pszName );
 
     virtual OGRLayer    *ICreateLayer( const char *pszLayerName,
