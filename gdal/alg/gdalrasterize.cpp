@@ -641,7 +641,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         bNeedToFreeTransformer = true;
 
         char** papszTransformerOptions = NULL;
-        double adfGeoTransform[6] = { 0 };
+        double adfGeoTransform[6] = { 0.0 };
         if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
             poDS->GetGCPCount() == 0 &&
             poDS->GetMetadata("RPC") == NULL )
