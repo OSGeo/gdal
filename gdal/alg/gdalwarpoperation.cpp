@@ -430,13 +430,13 @@ static void SetAlphaMax( GDALWarpOptions* psOptions,
     else if( GDALGetRasterDataType( hBand ) == GDT_UInt16 )
     {
         pszAlphaMax = "65535";
-    } else {
-        CPLDebug("WARP", "SetAlphaMax: AlphaMax not set.");
     }
 
     if( pszAlphaMax != NULL )
         psOptions->papszWarpOptions = CSLSetNameValue(
             psOptions->papszWarpOptions, pszKey, pszAlphaMax);
+    else
+        CPLDebug("WARP", "SetAlphaMax: AlphaMax not set.");
 }
 
 /************************************************************************/
