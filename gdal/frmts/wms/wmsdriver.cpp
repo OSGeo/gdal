@@ -40,6 +40,7 @@
 #include "minidriver_virtualearth.h"
 #include "minidriver_arcgis_server.h"
 #include "minidriver_iip.h"
+#include "minidriver_mrf.h"
 
 #include <limits>
 
@@ -1000,6 +1001,7 @@ void GDALRegister_WMS()
     RegisterMinidriver(VirtualEarth);
     RegisterMinidriver(AGS);
     RegisterMinidriver(IIP);
+    RegisterMinidriver(MRF);
 
     GDALDriver *poDriver = new GDALDriver();
 

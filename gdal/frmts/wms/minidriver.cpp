@@ -83,7 +83,7 @@ WMSMiniDriver *NewWMSMiniDriver(const CPLString &name) {
     return factory->New();
 }
 
-// Registeres a minidriver factory with the global minidriver manager
+// Registers a minidriver factory with the global minidriver manager
 void WMSRegisterMiniDriverFactory(WMSMiniDriverFactory *mdf) {
     g_mini_driver_manager.Register(mdf);
 }

@@ -32,9 +32,9 @@
 #ifndef WMSDRIVER_H_INCLUDED
 #define WMSDRIVER_H_INCLUDED
 
-#include <stdio.h>
-#include <math.h>
+#include <cmath>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <curl/curl.h>
 
@@ -56,11 +56,12 @@ class GDALWMSRasterBand;
 /* -------------------------------------------------------------------- */
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
-void URLAppend(CPLString *url, const char *s);
-void URLAppendF(CPLString *url, const char *s, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
-void URLAppend(CPLString *url, const CPLString &s);
+// Ensure that the url ends in ? or &
+void URLPrepare(CPLString &url);
+// void URLAppend(CPLString *url, const char *s);
+// void URLAppendF(CPLString *url, const char *s, ...) CPL_PRINT_FUNC_FORMAT (2, 3);
+// void URLAppend(CPLString *url, const CPLString &s);
 CPLString BufferToVSIFile(GByte *buffer, size_t size);
-CPLErr MakeDirs(const char *path);
 
 int StrToBool(const char *p);
 int URLSearchAndReplace (CPLString *base, const char *search, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT (3, 4);
@@ -123,26 +124,16 @@ typedef enum
 
 class WMSMiniDriverCapabilities {
 public:
-  WMSMiniDriverCapabilities() :
-      m_capabilities_version(0),
-      m_has_image_request(0),
-      m_has_tiled_image_requeset(0),
-      m_has_arb_overviews(0),
-      m_max_overview_count(-1),
-      m_overview_dim_computation_method(OVERVIEW_ROUNDED),
-      m_has_geotransform(true)
-  {}
+    // Default capabilities, suitable in most cases
+    WMSMiniDriverCapabilities() :
+        m_has_getinfo(0),
+        m_has_geotransform(1),
+        m_overview_dim_computation_method(OVERVIEW_ROUNDED)
+    {}
 
-/* Version N capabilities require all version N and earlier variables to be set to correct values */
-    int m_capabilities_version;
-
-/* Version 1 capabilities */
-    int m_has_image_request;            // 1 if ImageRequest method is implemented
-    int m_has_tiled_image_requeset;     // 1 if TiledImageRequest method is implemented
-    int m_has_arb_overviews;            // 1 if ImageRequest method supports arbitrary overviews / resolutions
-    int m_max_overview_count;               // Maximum number of overviews supported if known, -1 otherwise
+    int m_has_getinfo; // Does it have meaningful implementation
+    int m_has_geotransform;
     GDALWMSOverviewDimComputationMethod m_overview_dim_computation_method;
-    bool m_has_geotransform;
 };
 
 /* All data returned by mini-driver as pointer should remain valid for mini-driver lifetime
@@ -150,6 +141,8 @@ public:
  */
 
 // Base class for minidrivers
+// A minidriver has to implement at least the Initialize and the TiledImageRequest
+//
 class WMSMiniDriver {
 friend class GDALWMSDataset;
 public:
@@ -158,29 +151,42 @@ public:
 
 public:
     // MiniDriver specific initialization from XML, required
+    // Called once at the begining of the dataset initialization
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) = 0;
 
-public:
-    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
-    virtual void ImageRequest(CPL_UNUSED CPLString *url,
-        CPL_UNUSED const GDALWMSImageRequestInfo &iri) {};
+    // Called once at the end of the dataset initialization
+    virtual CPLErr EndInit() { return CE_None; };
 
-    virtual void TiledImageRequest(CPL_UNUSED CPLString *url,
+    // Error message returned in url, required
+    // Set error message in request.Error
+    // If tile doesn't exist serverside, set request.range to "none"
+    virtual CPLErr TiledImageRequest(CPL_UNUSED WMSHTTPRequest &,
         CPL_UNUSED const GDALWMSImageRequestInfo &iri,
-        CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) {};
+        CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) = 0;
 
-    virtual void GetTiledImageInfo(CPL_UNUSED CPLString *url,
+    // change capabilities to be used by the parent
+    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
+
+    // signal by setting the m_has_getinfo in the GetCapabilities call
+    virtual void GetTiledImageInfo(CPL_UNUSED CPLString &url,
         CPL_UNUSED const GDALWMSImageRequestInfo &iri,
         CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
         CPL_UNUSED int nXInBlock,
         CPL_UNUSED int nYInBlock) {};
 
-    // Return data projection in WKT format, NULL if unknown
     virtual const char *GetProjectionInWKT() {
+        if (m_projection_wkt.size() > 0)
+            return m_projection_wkt.c_str();
+        return NULL;
+    };
+
+    virtual char **GetMetadataDomainList() {
         return NULL;
     };
 
 protected:
+    CPLString m_base_url;
+    CPLString m_projection_wkt;
     GDALWMSDataset *m_parent_dataset;
 };
 
@@ -211,6 +217,7 @@ public:
 public:
     CPLErr Initialize(CPLXMLNode *config);
     CPLErr Write(const char *key, const CPLString &file_name);
+    // Bad name for this function, it only tests that the file is in cache and returns the real name
     CPLErr Read(const char *key, CPLString *file_name);
 
 protected:
@@ -233,15 +240,15 @@ public:
     GDALWMSDataset();
     virtual ~GDALWMSDataset();
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection(const char *proj) override;
-    virtual CPLErr GetGeoTransform(double *gt) override;
-    virtual CPLErr SetGeoTransform(double *gt) override;
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options) override;
+    virtual const char *GetProjectionRef();
+    virtual CPLErr SetProjection(const char *proj);
+    virtual CPLErr GetGeoTransform(double *gt);
+    virtual CPLErr SetGeoTransform(double *gt);
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, int band_count, int *band_map, char **options);
 
-    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" ) override;
+                                         const char * pszDomain = "" );
 
     void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
 
@@ -253,34 +260,34 @@ public:
     }
 
     void WMSSetBlockSize(int x, int y) {
-        m_block_size_x=x;
-        m_block_size_y=y;
+        m_block_size_x = x;
+        m_block_size_y = y;
     }
 
     void WMSSetRasterSize(int x, int y) {
-        nRasterXSize=x;
-        nRasterYSize=y;
+        nRasterXSize = x;
+        nRasterYSize = y;
     }
 
     void WMSSetBandsCount(int count) {
-        nBands=count;
+        nBands = count;
     }
 
-    void WMSSetClamp(bool flag=true) {
-        m_clamp_requests=flag;
+    void WMSSetClamp(bool flag = true) {
+        m_clamp_requests = flag;
     }
 
     void WMSSetDataType(GDALDataType type) {
-        m_data_type=type;
+        m_data_type = type;
     }
 
     void WMSSetDataWindow(GDALWMSDataWindow &window) {
-        m_data_window=window;
+        m_data_window = window;
     }
 
     void WMSSetDefaultBlockSize(int x, int y) {
-        m_default_block_size_x=x;
-        m_default_block_size_y=y;
+        m_default_block_size_x = x;
+        m_default_block_size_y = y;
     }
 
     void WMSSetDefaultDataWindowCoordinates(double x0, double y0, double x1, double y1) {
@@ -337,13 +344,15 @@ public:
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
+    const char * const * GetHTTPRequestOpts();
+
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer,
                              int bsx, int bsy, GDALDataType bdt,
                              int band_count, int *band_map,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
-                             GDALRasterIOExtraArg* psExtraArg) override;
+                             GDALRasterIOExtraArg* psExtraArg);
     CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
     GDALWMSDataWindow m_data_window;
@@ -364,9 +373,10 @@ protected:
     int m_offline_mode;
     int m_http_max_conn;
     int m_http_timeout;
+    char **m_http_options;
     int m_clamp_requests;
     int m_unsafeSsl;
-    std::vector<int> m_http_zeroblock_codes;
+    std::set<int> m_http_zeroblock_codes;
     int m_zeroblock_on_serverexceptions;
     CPLString m_osUserAgent;
     CPLString m_osReferer;
@@ -390,8 +400,6 @@ protected:
 
 class GDALWMSRasterBand : public GDALPamRasterBand {
     friend class GDALWMSDataset;
-
-    char**  BuildHTTPRequestOpts();
     void    ComputeRequestInfo( GDALWMSImageRequestInfo &iri,
                                 GDALWMSTiledImageRequestInfo &tiri,
                                 int x, int y);
@@ -403,33 +411,33 @@ public:
     GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band, double scale );
     virtual ~GDALWMSRasterBand();
     void AddOverview(double scale);
-    virtual double GetNoDataValue( int * ) override;
-    virtual double GetMinimum( int * ) override;
-    virtual double GetMaximum( int * ) override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options) override;
+    virtual double GetNoDataValue( int * );
+    virtual double GetMinimum( int * );
+    virtual double GetMaximum( int * );
+    virtual GDALColorTable *GetColorTable();
+    virtual CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy, GDALDataType bdt, char **options);
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
-    virtual CPLErr IReadBlock(int x, int y, void *buffer) override;
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual CPLErr IReadBlock(int x, int y, void *buffer);
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer, int bsx, int bsy, GDALDataType bdt,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg* psExtraArg) override;
-    virtual int HasArbitraryOverviews() override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int n) override;
+                             GDALRasterIOExtraArg* psExtraArg);
+    virtual int HasArbitraryOverviews();
+    virtual int GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int n);
 
-    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadataDomainList();
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" ) override;
+                                         const char * pszDomain = "" );
 
 protected:
     CPLErr ReadBlocks(int x, int y, void *buffer, int bx0, int by0, int bx1, int by1, int advise_read);
     bool IsBlockInCache(int x, int y);
-    void AskMiniDriverForBlock(CPLString *url, int x, int y);
+    CPLErr AskMiniDriverForBlock(WMSHTTPRequest &request, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
-    static CPLErr ReportWMSException(const char *file_name);
+    CPLErr ReportWMSException(const char *file_name);
 
 protected:
     GDALWMSDataset *m_parent_dataset;

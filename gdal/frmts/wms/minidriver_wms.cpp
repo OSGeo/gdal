@@ -39,10 +39,20 @@ WMSMiniDriver_WMS::WMSMiniDriver_WMS() : m_iversion(0) {}
 
 WMSMiniDriver_WMS::~WMSMiniDriver_WMS() {}
 
+static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what) {
+    switch (what) {
+    case 'x': return std::min(iri.m_x0, iri.m_x1);
+    case 'y': return std::min(iri.m_y0, iri.m_y1);
+    case 'X': return std::max(iri.m_x0, iri.m_x1);
+    case 'Y': return std::max(iri.m_y0, iri.m_y1);
+    }
+    return 0.0;
+}
+
 CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    {
+    if (ret == CE_None) {
         const char *version = CPLGetXMLValue(config, "Version", "1.1.0");
         if (version[0] != '\0') {
             m_version = version;
@@ -109,6 +119,7 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
 
     if (ret == CE_None) {
         m_image_format = CPLGetXMLValue(config, "ImageFormat", "image/jpeg");
+        m_info_format = CPLGetConfigOption("WMS_INFO_FORMAT", "application/vnd.ogc.gml");
         m_layers = CPLGetXMLValue(config, "Layers", "");
         m_styles = CPLGetXMLValue(config, "Styles", "");
         m_transparent = CPLGetXMLValue(config, "Transparent","");
@@ -142,70 +153,63 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
 }
 
 void WMSMiniDriver_WMS::GetCapabilities(WMSMiniDriverCapabilities *caps) {
-    caps->m_capabilities_version = 1;
-    caps->m_has_arb_overviews = 1;
-    caps->m_has_image_request = 1;
-    caps->m_has_tiled_image_requeset = 1;
-    caps->m_max_overview_count = 32;
+    caps->m_has_getinfo = 1;
 }
 
-void WMSMiniDriver_WMS::BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest) {
+void WMSMiniDriver_WMS::BuildURL(CPLString &url, 
+                                    const GDALWMSImageRequestInfo &iri, 
+                                    const char* pszRequest) 
+{
     // http://onearth.jpl.nasa.gov/wms.cgi?request=GetMap&width=1000&height=500&layers=modis,global_mosaic&styles=&srs=EPSG:4326&format=image/jpeg&bbox=-180.000000,-90.000000,180.000000,090.000000
-    *url = m_base_url;
-    if (m_base_url.ifind( "service=") == std::string::npos)
-        URLAppend(url, "&service=WMS");
-    URLAppendF(url, "&request=%s", pszRequest);
-    URLAppendF(url, "&version=%s", m_version.c_str());
-    URLAppendF(url, "&layers=%s", m_layers.c_str());
-    URLAppendF(url, "&styles=%s", m_styles.c_str());
-    if (m_srs.size()) URLAppendF(url, "&srs=%s", m_srs.c_str());
-    if (m_crs.size()) URLAppendF(url, "&crs=%s", m_crs.c_str());
-    if (m_transparent.size()) URLAppendF(url, "&transparent=%s", m_transparent.c_str());
-    URLAppendF(url, "&format=%s", m_image_format.c_str());
-    URLAppendF(url, "&width=%d", iri.m_sx);
-    URLAppendF(url, "&height=%d", iri.m_sy);
-    URLAppendF(url, "&bbox=%.8f,%.8f,%.8f,%.8f",
-        GetBBoxCoord(iri, m_bbox_order[0]), GetBBoxCoord(iri, m_bbox_order[1]),
-        GetBBoxCoord(iri, m_bbox_order[2]), GetBBoxCoord(iri, m_bbox_order[3]));
+    url = m_base_url;
+
+    URLPrepare(url);
+    url += "request=";
+    url += pszRequest;
+
+    if (url.ifind( "service=") == std::string::npos)
+        url += "&service=WMS";
+
+    url += CPLOPrintf("&version=%s&layers=%s&styles=%s&format=%s&width=%d&height=%d&bbox=%.8f,%.8f,%.8f,%.8f",
+                        m_version.c_str(), 
+                        m_layers.c_str(), 
+                        m_styles.c_str(),
+                        m_image_format.c_str(),
+                        iri.m_sx, 
+                        iri.m_sy,
+                        GetBBoxCoord(iri, m_bbox_order[0]), 
+                        GetBBoxCoord(iri, m_bbox_order[1]),
+                        GetBBoxCoord(iri, m_bbox_order[2]), 
+                        GetBBoxCoord(iri, m_bbox_order[3]));
+
+    if (m_srs.size() > 0) 
+        url += CPLOPrintf("&srs=%s", m_srs.c_str());
+    if (m_crs.size() > 0) 
+        url += CPLOPrintf("&crs=%s", m_crs.c_str());
+    if (m_transparent.size() > 0) 
+        url += CPLOPrintf("&transparent=%s", m_transparent.c_str());
+
 }
 
-void WMSMiniDriver_WMS::ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri) {
-    BuildURL(url, iri, "GetMap");
-    CPLDebug("WMS", "URL = %s", url->c_str());
-}
-
-void WMSMiniDriver_WMS::TiledImageRequest(CPLString *url,
+CPLErr WMSMiniDriver_WMS::TiledImageRequest(WMSHTTPRequest &request,
                                               const GDALWMSImageRequestInfo &iri,
-                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) {
-    ImageRequest(url, iri);
+                                              CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri)
+{
+    CPLString &url = request.URL;
+    BuildURL(url, iri, "GetMap");
+    return CE_None;
 }
 
-void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString *url,
+void WMSMiniDriver_WMS::GetTiledImageInfo(CPLString &url,
                                               const GDALWMSImageRequestInfo &iri,
                                               CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
                                               int nXInBlock,
                                               int nYInBlock)
 {
     BuildURL(url, iri, "GetFeatureInfo");
-    URLAppendF(url, "&query_layers=%s", m_layers.c_str());
-    URLAppendF(url, "&x=%d", nXInBlock);
-    URLAppendF(url, "&y=%d", nYInBlock);
-    const char* pszInfoFormat = CPLGetConfigOption("WMS_INFO_FORMAT", "application/vnd.ogc.gml");
-    URLAppendF(url, "&info_format=%s", pszInfoFormat);
-
-    CPLDebug("WMS", "URL = %s", url->c_str());
-}
-
-const char *WMSMiniDriver_WMS::GetProjectionInWKT() {
-    return m_projection_wkt.c_str();
-}
-
-double WMSMiniDriver_WMS::GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what) {
-    switch (what) {
-    case 'x': return std::min(iri.m_x0, iri.m_x1);
-    case 'y': return std::min(iri.m_y0, iri.m_y1);
-    case 'X': return std::max(iri.m_x0, iri.m_x1);
-    case 'Y': return std::max(iri.m_y0, iri.m_y1);
-    }
-    return 0.0;
+    url += CPLOPrintf("&query_layers=%s&x=%d&y=%d&info_format=%s", 
+                        m_layers.c_str(),
+                        nXInBlock,
+                        nYInBlock,
+                        m_info_format.c_str());
 }

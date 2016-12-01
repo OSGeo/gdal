@@ -38,40 +38,34 @@ WMSMiniDriver_IIP::~WMSMiniDriver_IIP() {}
 CPLErr WMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     CPLErr ret = CE_None;
 
-    {
-        const char *base_url = CPLGetXMLValue(config, "ServerURL", "");
-        if (base_url[0] != '\0') {
-            m_base_url = base_url;
-        } else {
-            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, IIP mini-driver: ServerURL missing.");
-            ret = CE_Failure;
-        }
+    m_base_url = CPLGetXMLValue(config, "ServerURL", "");
+    if (m_base_url.size() == 0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, IIP mini-driver: ServerURL missing.");
+        return CE_Failure;
     }
 
     return ret;
 }
 
 void WMSMiniDriver_IIP::GetCapabilities(WMSMiniDriverCapabilities *caps) {
-    caps->m_capabilities_version = 1;
-    caps->m_has_arb_overviews = 0;
-    caps->m_has_image_request = 0;
-    caps->m_has_tiled_image_requeset = 1;
-    caps->m_max_overview_count = 32;
     caps->m_overview_dim_computation_method = OVERVIEW_FLOOR;
     caps->m_has_geotransform = false;
 }
 
-void WMSMiniDriver_IIP::TiledImageRequest(
-    CPLString *url,
+CPLErr WMSMiniDriver_IIP::TiledImageRequest(
+    WMSHTTPRequest &request,
     const GDALWMSImageRequestInfo & /* iri */,
     const GDALWMSTiledImageRequestInfo &tiri)
 {
+    CPLString &url = request.URL;
+    url = m_base_url;
+    URLPrepare(url);
+
     int nTileXCount = (
         (m_parent_dataset->GetRasterXSize()
-         >> (m_parent_dataset->GetRasterBand(1)->GetOverviewCount()
-          - tiri.m_level)) + 255) / 256;
+        >> (m_parent_dataset->GetRasterBand(1)->GetOverviewCount()
+        - tiri.m_level)) + 255) / 256;
     int numTile = tiri.m_x + tiri.m_y * nTileXCount;
-
-    *url = m_base_url;
-    *url += CPLSPrintf("&jtl=%d,%d", tiri.m_level, numTile);
+    url = CPLOPrintf("jtl=%d,%d", tiri.m_level, numTile);
+    return CE_None;
 }
