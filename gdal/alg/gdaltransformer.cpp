@@ -366,7 +366,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 
     const int N_PIXELSTEP = 50;
     int nSteps = static_cast<int>(
-        static_cast<double>(std::min(nInYSize, nInXSize) / N_PIXELSTEP + 0.5));
+        static_cast<double>(std::min(nInYSize, nInXSize)) / N_PIXELSTEP + 0.5);
     if (nSteps < 20)
         nSteps = 20;
     nSteps = std::min(nSteps, 100);
