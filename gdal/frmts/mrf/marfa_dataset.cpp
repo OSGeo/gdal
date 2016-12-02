@@ -295,7 +295,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
                 CPLDestroyXMLNode(config);
                 config = NULL;
             }
-            catch (const CPLErr& e) {
+            catch (const CPLErr& ) {
                 if (config)
                     CPLDestroyXMLNode(config);
                 throw; // Rethrow
