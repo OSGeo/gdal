@@ -1470,6 +1470,77 @@ def wmts_21():
     return 'success'
 
 ###############################################################################
+# Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
+
+def wmts_22():
+
+    if gdaltest.wmts_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/wmts_22.xml', """<Capabilities>
+    <Contents>
+        <Layer>
+            <ows:WGS84BoundingBox>
+                <ows:LowerCorner>-6.38153862706 55.6179644952</ows:LowerCorner>
+                <ows:UpperCorner>60.3815386271 75.5825702342</ows:UpperCorner>
+            </ows:WGS84BoundingBox>
+            <Identifier>lyr1</Identifier>
+            <Title>My layer1</Title>
+            <Style isDefault="true">
+                <Identifier>default_style</Identifier>
+                <Title>Default style</Title>
+            </Style>
+            <TileMatrixSetLink>
+                <TileMatrixSet>tms</TileMatrixSet>
+            </TileMatrixSetLink>
+            <ResourceURL format="image/png"
+    template="/vsimem/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+        </Layer>
+        <TileMatrixSet>
+            <Identifier>tms</Identifier>
+            <ows:Identifier>tms</ows:Identifier>
+            <ows:SupportedCRS>urn:ogc:def:crs:EPSG::3067</ows:SupportedCRS>
+            <TileMatrix>
+                <ows:Identifier>13</ows:Identifier>
+                <ScaleDenominator>3571.42857143</ScaleDenominator>
+                <TopLeftCorner>-548576.0 8388608.0</TopLeftCorner>
+                <TileWidth>256</TileWidth>
+                <TileHeight>256</TileHeight>
+                <MatrixWidth>8192</MatrixWidth>
+                <MatrixHeight>8192</MatrixHeight>
+            </TileMatrix>
+        </TileMatrixSet>
+    </Contents>
+    <ServiceMetadataURL xlink:href="/vsimem/wmts_22.xml"/>
+</Capabilities>""")
+
+    ds = gdal.Open('WMTS:/vsimem/wmts_22.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 2097152:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+    if ds.RasterYSize != 2097152:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-548576.0, 1.0000000000004, 0.0, 8388608.0, 0.0, -1.0000000000004)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+    if ds.GetProjectionRef().find('3067') < 0:
+        gdaltest.post_reason('fail')
+        print(ds.GetProjectionRef())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def wmts_CleanCache():
@@ -1530,6 +1601,7 @@ gdaltest_list = [
     wmts_19,
     wmts_20,
     wmts_21,
+    wmts_22,
     wmts_cleanup ]
 
 if __name__ == '__main__':

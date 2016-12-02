@@ -38,6 +38,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <limits>
 
 extern "C" void GDALRegister_WMTS();
 
@@ -49,6 +50,14 @@ extern "C" void GDALRegister_WMTS();
 #define WMTS_WGS84_DEG_PER_METER    (180 / M_PI / SRS_WGS84_SEMIMAJOR)
 
 CPL_CVSID("$Id$");
+
+typedef enum
+{
+    AUTO,
+    LAYER_BBOX,
+    TILE_MATRIX_SET,
+    MOST_PRECISE_TILE_MATRIX
+} ExtentMethod;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1391,8 +1400,19 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             return NULL;
         }
 
+        const char* pszExtentMethod = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "EXTENT_METHOD", "AUTO");
+        ExtentMethod eExtentMethod = AUTO;
+        if( EQUAL(pszExtentMethod, "LAYER_BBOX") )
+            eExtentMethod = LAYER_BBOX;
+        else if( EQUAL(pszExtentMethod, "TILE_MATRIX_SET") )
+            eExtentMethod = TILE_MATRIX_SET;
+        else if( EQUAL(pszExtentMethod, "MOST_PRECISE_TILE_MATRIX") )
+            eExtentMethod = MOST_PRECISE_TILE_MATRIX;
+
         // Use in priority layer bounding box expressed in the SRS of the TMS
         if( (!bHasAOI || bExtendBeyondDateLine) &&
+            (eExtentMethod == AUTO || eExtentMethod == LAYER_BBOX) &&
             aoMapBoundingBox.find(oTMS.osSRS) != aoMapBoundingBox.end() )
         {
             if( !bHasAOI )
@@ -1503,9 +1523,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             }
         }
 
-        // Otherwise default to reprojection a layer bounding box expressed in
+        // Otherwise default to reproject a layer bounding box expressed in
         // another SRS
-        if( !bHasAOI && aoMapBoundingBox.size() )
+        if( !bHasAOI && aoMapBoundingBox.size()&&
+            (eExtentMethod == AUTO || eExtentMethod == LAYER_BBOX) )
         {
             std::map<CPLString, OGREnvelope>::iterator oIter = aoMapBoundingBox.begin();
             for(; oIter != aoMapBoundingBox.end(); ++oIter )
@@ -1513,6 +1534,95 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 OGRSpatialReference oSRS;
                 if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
                 {
+                    // Check if this doesn't match the most precise tile matrix
+                    // by densifying its countour
+                    const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+                    OGRCoordinateTransformation* poRevCT =
+                        OGRCreateCoordinateTransformation(&oTMS.oSRS, &oSRS);
+                    if( poRevCT != NULL )
+                    {
+                        const double dfX0 = oTM.dfTLX;
+                        const double dfY1 = oTM.dfTLY;
+                        const double dfX1 = oTM.dfTLX +
+                          oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
+                        const double dfY0 = oTM.dfTLY -
+                          oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
+                        double dfXMin = std::numeric_limits<double>::infinity();
+                        double dfYMin = std::numeric_limits<double>::infinity();
+                        double dfXMax = -std::numeric_limits<double>::infinity();
+                        double dfYMax = -std::numeric_limits<double>::infinity();
+
+                        const int NSTEPS = 20;
+                        for(int i=0;i<=NSTEPS;i++)
+                        {
+                            double dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
+                            double dfY = dfY0;
+                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            {
+                                dfXMin = std::min(dfXMin, dfX);
+                                dfYMin = std::min(dfYMin, dfY);
+                                dfXMax = std::max(dfXMax, dfX);
+                                dfYMax = std::max(dfYMax, dfY);
+                            }
+
+                            dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
+                            dfY = dfY1;
+                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            {
+                                dfXMin = std::min(dfXMin, dfX);
+                                dfYMin = std::min(dfYMin, dfY);
+                                dfXMax = std::max(dfXMax, dfX);
+                                dfYMax = std::max(dfYMax, dfY);
+                            }
+
+                            dfX = dfX0;
+                            dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
+                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            {
+                                dfXMin = std::min(dfXMin, dfX);
+                                dfYMin = std::min(dfYMin, dfY);
+                                dfXMax = std::max(dfXMax, dfX);
+                                dfYMax = std::max(dfYMax, dfY);
+                            }
+
+                            dfX = dfX1;
+                            dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
+                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            {
+                                dfXMin = std::min(dfXMin, dfX);
+                                dfYMin = std::min(dfYMin, dfY);
+                                dfXMax = std::max(dfXMax, dfX);
+                                dfYMax = std::max(dfYMax, dfY);
+                            }
+                        }
+
+                        delete poRevCT;
+
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("WMTS", "Reprojected densified bbox of most "
+                                 "precise tile matrix in %s: %g %g %g  %g",
+                                 oIter->first.c_str(),
+                                 dfXMin, dfYMin, dfXMax, dfYMax);
+#endif
+                        if( fabs(oIter->second.MinX - dfXMin) < 1e-5 *
+                              std::max(fabs(oIter->second.MinX),fabs(dfXMin)) &&
+                            fabs(oIter->second.MinY - dfYMin) < 1e-5 *
+                              std::max(fabs(oIter->second.MinY),fabs(dfYMin)) &&
+                            fabs(oIter->second.MaxX - dfXMax) < 1e-5 *
+                              std::max(fabs(oIter->second.MaxX),fabs(dfXMax)) &&
+                            fabs(oIter->second.MaxY - dfYMax) < 1e-5 *
+                              std::max(fabs(oIter->second.MaxY),fabs(dfYMax)) )
+                        {
+#ifdef DEBUG_VERBOSE
+                            CPLDebug("WMTS", "Matches layer bounding box, so "
+                                     "that one is not significant");
+#endif
+                            if( eExtentMethod == LAYER_BBOX )
+                                eExtentMethod = MOST_PRECISE_TILE_MATRIX;
+                            break;
+                        }
+                    }
+
                     OGRCoordinateTransformation* poCT =
                         OGRCreateCoordinateTransformation(&oSRS, &oTMS.oSRS);
                     if( poCT != NULL )
@@ -1548,7 +1658,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         }
 
         // Otherwise default to BoundingBox of the TMS
-        if( !bHasAOI && oTMS.bBoundingBoxValid )
+        if( !bHasAOI && oTMS.bBoundingBoxValid &&
+            (eExtentMethod == AUTO || eExtentMethod == TILE_MATRIX_SET) )
         {
             CPLDebug("WMTS", "Using TMS bounding box");
             sAOI = oTMS.sBoundingBox;
@@ -1556,7 +1667,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         }
 
         // Otherwise default to implied BoundingBox of the most precise TM
-        if( !bHasAOI )
+        if( !bHasAOI &&
+            (eExtentMethod == AUTO || eExtentMethod == MOST_PRECISE_TILE_MATRIX) )
         {
             const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
             CPLDebug("WMTS", "Using TM level %s bounding box", oTM.osIdentifier.c_str() );
@@ -1565,19 +1677,35 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             sAOI.MaxY = oTM.dfTLY;
             sAOI.MaxX = oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
             sAOI.MinY = oTM.dfTLY - oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
-            /*bHasAOI = TRUE;*/
+            bHasAOI = TRUE;
         }
-        else
+
+        if( !bHasAOI )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not determine raster extent");
+            CPLDestroyXMLNode(psXML);
+            delete poDS;
+            return NULL;
+        }
+
         {
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
             const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
 
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
-            // only clip in Y since there's a warp over dateline
-            //sAOI.MinX = std::max(sAOI.MinX, oTM.dfTLX);
+            // only clip in Y since there's a warp over dateline.
+            // Update: it sems that the content of the server has changed since
+            // initial coding. So do X clipping in default mode.
+            if( !bExtendBeyondDateLine )
+            {
+                sAOI.MinX = std::max(sAOI.MinX, oTM.dfTLX);
+                sAOI.MaxX = std::min(sAOI.MaxX,
+                    oTM.dfTLX +
+                    oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth);
+            }
             sAOI.MaxY = std::min(sAOI.MaxY, oTM.dfTLY);
-            //sAOI.MaxX = std::min(sAOI.MaxX, oTM.dfTLX + oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth);
             sAOI.MinY =
                 std::max(sAOI.MinY,
                          oTM.dfTLY -
@@ -1792,7 +1920,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             double dfDateLineX = oTM.dfTLX + oTM.nMatrixWidth * dfTileWidthUnits;
             int nSizeX1 = int(0.5+(dfDateLineX - dfULX) / oTM.dfPixelSize);
             int nSizeX2 = int(0.5+(dfLRX - dfDateLineX) / oTM.dfPixelSize);
-            if( dfDateLineX > dfLRX )
+            if( bExtendBeyondDateLine && dfDateLineX > dfLRX )
             {
                 CPLDebug("WMTS", "ExtendBeyondDateLine ignored in that case");
                 bExtendBeyondDateLine = FALSE;
@@ -2022,6 +2150,12 @@ void GDALRegister_WMTS()
 "  <Option name='TILEMATRIXSET' alias='TMS' type='string' description='Tile matrix set identifier'/>"
 "  <Option name='STYLE' type='string' description='Style identifier'/>"
 "  <Option name='EXTENDBEYONDDATELINE' type='boolean' description='Whether to enable extend-beyond-dateline behaviour' default='NO'/>"
+"  <Option name='EXTENT_METHOD' type='string-select' description='How the raster extent is computed' default='AUTO'>"
+"       <Value>AUTO</Value>"
+"       <Value>LAYER_BBOX</Value>"
+"       <Value>TILE_MATRIX_SET</Value>"
+"       <Value>MOST_PRECISE_TILE_MATRIX</Value>"
+"  </Option>"
 "</OpenOptionList>");
 
     poDriver->pfnOpen = WMTSDataset::Open;
