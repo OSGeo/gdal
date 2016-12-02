@@ -89,7 +89,7 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, CPLHTTPWriteFunc);
 
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error.data());
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]);
 
     CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options);
 }
@@ -218,7 +218,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         psRequest->ContentType = content_type ? content_type : "";
 
         if (psRequest->Error.size() == 0)
-            psRequest->Error = psRequest->m_curl_error.data();
+            psRequest->Error = &psRequest->m_curl_error[0];
 
         /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
         /* error returned, patch the status code to be 200, as it would be for http:// */
