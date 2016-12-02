@@ -43,11 +43,11 @@ def prf_2():
     ds = gdal.Open('./PRF/dem.x-dem')
 
     if ds.RasterXSize != 4330:
-        datatype.post_reason('Invalid dataset width')
+        gdaltest.post_reason('Invalid dataset width')
         return 'fail'
 
     if ds.RasterYSize != 4663:
-        datatype.post_reason('Invalid dataset height')
+        gdaltest.post_reason('Invalid dataset height')
         return 'fail'
 
     unittype = ds.GetRasterBand(1).GetUnitType()
@@ -57,8 +57,8 @@ def prf_2():
         return 'fail'
 
     datatype = ds.GetRasterBand(1).GetDataType()
-    if unittype != gdal.GDT_Float32:
-        datatype.post_reason('Failed to read datatype')
+    if datatype != gdal.GDT_Float32:
+        gdaltest.post_reason('Failed to read datatype')
         return 'fail'
     ds = None
 
