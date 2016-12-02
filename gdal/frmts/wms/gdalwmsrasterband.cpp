@@ -474,9 +474,13 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
         return NULL;
 
     CPLDebug("WMS", "URL = %s", url.c_str());
-    
+
     if (url == osMetadataItemURL)
-        return osMetadataItem.size() != 0 ? osMetadataItem : NULL;
+    {
+        // osMetadataItem.c_str() MUST be used, and not osMetadataItem,
+        // otherwise a temporary copy is returned
+        return osMetadataItem.size() != 0 ? osMetadataItem.c_str() : NULL;
+    }
 
     osMetadataItemURL = url;
 
@@ -525,7 +529,10 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
         CPLDestroyXMLNode(psXML);
 
     osMetadataItem += "</LocationInfo>";
-    return osMetadataItem;
+
+    // osMetadataItem.c_str() MUST be used, and not osMetadataItem,
+    // otherwise a temporary copy is returned
+    return osMetadataItem.c_str();
 }
 
 CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
