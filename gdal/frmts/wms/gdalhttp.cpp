@@ -216,9 +216,9 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
         psRequest->nStatus = static_cast<int>(response_code);
 
-        char *content_type;
+        char *content_type = NULL;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
-        psRequest->ContentType = content_type;
+        psRequest->ContentType = content_type ? content_type : "";
 
         if (psRequest->Error.size() == 0)
             psRequest->Error = psRequest->m_curl_error.data();
