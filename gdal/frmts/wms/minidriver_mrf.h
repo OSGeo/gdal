@@ -32,7 +32,7 @@
 //
 // Almost like pread, but no thread safety
 // Unlike pread, the first argument is a pointer to an opaque structure
-// Return of zero means an error occured (could be end of file)
+// Return of zero means an error occurred (could be end of file)
 //
 typedef size_t pread_t(void *user_data, void *buff, size_t count, off_t offset);
 
@@ -77,7 +77,7 @@ private:
 
 // Size of an image, also used as a tile or pixel location
 struct ILSize {
-    ILSize() {};
+    ILSize():  x(0), y(0), z(0), c(0), l(0) {};
     ILSize(GInt32 _x, GInt32 _y, GInt32 _z = 1, GInt32 _c = 1, GInt32 _l = -1) :
         x(_x), y(_y), z(_z), c(_c), l(_l) {};
     GInt32 x, y, z, c;
