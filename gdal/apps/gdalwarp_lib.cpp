@@ -315,6 +315,21 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
         if( pszProjection == NULL || pszProjection[0] == '\0' )
         {
+            if( pszThisTargetSRS == NULL && hCutlineSRS == NULL )
+            {
+                OGREnvelope sEnvelope;
+                OGR_G_GetEnvelope(hCutlineGeom, &sEnvelope);
+
+                dfMinX = sEnvelope.MinX;
+                dfMinY = sEnvelope.MinY;
+                dfMaxX = sEnvelope.MaxX;
+                dfMaxY = sEnvelope.MaxY;
+
+                OGR_G_DestroyGeometry(hCutlineGeom);
+
+                return CE_None;
+            }
+
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
@@ -2114,8 +2129,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     }
     else
     {
-        adfDstGeoTransform[0] = 0.0;
-        adfDstGeoTransform[3] = 0.0;
+        adfDstGeoTransform[3] += adfDstGeoTransform[5] * nLines;
         adfDstGeoTransform[5] = fabs(adfDstGeoTransform[5]);
     }
 
