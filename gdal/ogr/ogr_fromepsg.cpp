@@ -2633,7 +2633,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
                     // Arctic Polar Stereographic
                     SetAuthority( "PROJCS", "EPSG", 3995 );
                 else
-                    // Antartic Polar Stereographic
+                    // Antarctic Polar Stereographic
                     SetAuthority( "PROJCS", "EPSG", 3031 );
             }
         }
