@@ -233,6 +233,15 @@ json_object* OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNextIn)
         {
             osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
         }
+
+        if (osSQL.ifind("SELECT") != std::string::npos &&
+            osSQL.ifind(" LIMIT ") == std::string::npos)
+        {
+            osSQL += " LIMIT ";
+            osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
+            osSQL += " OFFSET ";
+            osSQL += CPLSPrintf(CPL_FRMT_GIB, iNextIn);
+        }
         return poDS->RunSQL(osSQL);
     }
     else

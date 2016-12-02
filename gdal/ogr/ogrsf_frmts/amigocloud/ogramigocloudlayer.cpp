@@ -170,8 +170,8 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
 json_object* OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
 {
     CPLString osSQL = osBaseSQL;
-    if( osSQL.ifind("SELECT") != std::string::npos &&
-        osSQL.ifind(" LIMIT ") == std::string::npos )
+    if (osSQL.ifind("SELECT") != std::string::npos &&
+        osSQL.ifind(" LIMIT ") == std::string::npos)
     {
         osSQL += " LIMIT ";
         osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
@@ -242,9 +242,8 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
     OGRFeature* poFeature = BuildFeature(poRowObj);
 
     std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(poFeature->GetFID());
-    if(it!=mFIDs.end())
+    if (it != mFIDs.end())
     {
-//        iNext = poFeature->GetFID() + 1;
         iNext = it->second.iIndex + 1;
     }
 
