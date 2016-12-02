@@ -133,14 +133,14 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
                                                     const_cast<char**>(pasRequest[i].options));
             pasRequest[i].pabyData = psResult->pabyData;
             pasRequest[i].nDataLen = psResult->nDataLen;
-            pasRequest[i].Error = psResult->pszErrBuf;
+            pasRequest[i].Error = psResult->pszErrBuf ? psResult->pszErrBuf : "";
             // Conventions are different between this module and cpl_http...
             if( psResult->pszErrBuf != NULL &&
                 strcmp(psResult->pszErrBuf, "HTTP error code : 404") == 0 )
                 pasRequest[i].nStatus = 404;
             else
                 pasRequest[i].nStatus = 200;
-            pasRequest[i].ContentType = psResult->pszContentType;
+            pasRequest[i].ContentType = psResult->pszContentType ? psResult->pszContentType : "";
             // took ownership of content, we're done with the rest
             psResult->pabyData = NULL;
             psResult->nDataLen = 0;
