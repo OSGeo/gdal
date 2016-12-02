@@ -1160,11 +1160,13 @@ static GDALGenImgProjTransformInfo* GDALCreateGenImgProjTransformerInternal()
  * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM,
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
  * method to be considered on the source dataset. Will be used for pixel/line
- * to georef transformation on the source dataset.
+ * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
+ * used to specify the identity geotransform (ungeoreference image)
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
  * GCP_POLYNOMIAL, GCP_TPS, GEOLOC_ARRAY, RPC to force only one geolocation
  * method to be considered on the target dataset.  Will be used for pixel/line
- * to georef transformation on the destination dataset.
+ * to georef transformation on the destination dataset. NO_GEOTRANSFORM can be
+ * used to specify the identity geotransform (ungeoreference image)
  * <li> RPC_HEIGHT: A fixed height to be used with RPC calculations.
  * <li> RPC_DEM: The name of a DEM file to be used with RPC calculations.
  * <li> Other RPC related options. See GDALCreateRPCTransformer()
