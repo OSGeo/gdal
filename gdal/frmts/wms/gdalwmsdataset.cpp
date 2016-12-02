@@ -61,7 +61,7 @@ GDALWMSDataset::GDALWMSDataset() :
     m_offline_mode(0),
     m_http_max_conn(0),
     m_http_timeout(0),
-    m_http_options(0),
+    m_http_options(NULL),
     m_clamp_requests(true),
     m_unsafeSsl(false),
     m_zeroblock_on_serverexceptions(0),

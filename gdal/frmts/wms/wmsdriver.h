@@ -310,7 +310,7 @@ public:
         m_default_overview_count = overview_count;
     }
 
-    void WMSSetNeedsDataWindow(int flag) {
+    void WMSSetNeedsDataWindow(bool flag) {
         m_bNeedsDataWindow = flag;
     }
 
@@ -389,7 +389,7 @@ protected:
     int m_default_tile_count_y;
     int m_default_overview_count;
 
-    int m_bNeedsDataWindow;
+    bool m_bNeedsDataWindow;
 
     CPLString m_osXML;
 };
