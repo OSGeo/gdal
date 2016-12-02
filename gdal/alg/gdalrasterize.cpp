@@ -303,7 +303,8 @@ static void GDALCollectRingsFromGeometry(
              || eFlatType == wkbMultiPolygon
              || eFlatType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poShape;
+        OGRGeometryCollection *poGC = dynamic_cast<OGRGeometryCollection *>(poShape);
+        CPLAssert(poGC != NULL);
 
         for( int i = 0; i < poGC->getNumGeometries(); i++ )
             GDALCollectRingsFromGeometry( poGC->getGeometryRef(i),
@@ -725,7 +726,8 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             gv_rasterize_one_shape( pabyChunkBuf, iY,
                                     poDS->GetRasterXSize(), nThisYChunkSize,
                                     nBandCount, eType, bAllTouched,
-                                    (OGRGeometry *) pahGeometries[iShape],
+                                    reinterpret_cast<OGRGeometry *>(
+                                                        pahGeometries[iShape]),
                                     padfGeomBurnValue + iShape*nBandCount,
                                     eBurnValueSource, eMergeAlg,
                                     pfnTransformer, pTransformArg );
@@ -930,7 +932,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
     {
-        OGRLayer *poLayer = (OGRLayer *) pahLayers[iLayer];
+        OGRLayer *poLayer = reinterpret_cast<OGRLayer *>(pahLayers[iLayer]);
 
         if ( !poLayer )
         {

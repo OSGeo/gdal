@@ -1438,7 +1438,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
             GDALGetDescription( psWO->hSrcDS ) );
 
         char** papszOpenOptions =
-            ((GDALDataset*)psWO->hSrcDS)->GetOpenOptions();
+            (reinterpret_cast<GDALDataset*>(psWO->hSrcDS))->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 

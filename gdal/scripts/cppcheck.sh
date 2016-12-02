@@ -442,6 +442,15 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
+
+for whitelisted_dir in alg/ port/; do
+    grep "cstyleCast" ${LOG_FILE} | grep $whitelisted_dir
+    if [[ $? -eq 0 ]] ; then
+        echo "cstyleCast check failed"
+        ret_code=1
+    fi
+done
+
 # Check any remaining errors
 grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "memleak," | grep -v "memleakOnRealloc" | \

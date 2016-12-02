@@ -336,7 +336,8 @@ int VSITarReader::GotoFirstFile()
 
 int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
-    VSITarEntryFileOffset* pTarEntryOffset = (VSITarEntryFileOffset*)pOffset;
+    VSITarEntryFileOffset* pTarEntryOffset =
+                    reinterpret_cast<VSITarEntryFileOffset*>(pOffset);
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
@@ -453,7 +454,8 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     }
 
     CPLString osSubFileName("/vsisubfile/");
-    VSITarEntryFileOffset* pOffset = (VSITarEntryFileOffset*) poReader->GetFileOffset();
+    VSITarEntryFileOffset* pOffset = reinterpret_cast<VSITarEntryFileOffset*>(
+                                                    poReader->GetFileOffset());
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, pOffset->m_nOffset);
     osSubFileName += "_";
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, poReader->GetFileSize());
@@ -473,7 +475,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     CPLFree(tarFilename);
     tarFilename = NULL;
 
-    return (VSIVirtualHandle* )VSIFOpenL(osSubFileName, "rb");
+    return reinterpret_cast<VSIVirtualHandle*>(VSIFOpenL(osSubFileName, "rb"));
 }
 
 //! @endcond

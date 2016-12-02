@@ -403,7 +403,8 @@ void VSIGZipHandle::SaveInfo_unlocked()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo_unlocked(this);
+        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+                                                    SaveInfo_unlocked(this);
         m_bCanSaveInfo = false;
     }
 }
@@ -418,7 +419,8 @@ VSIGZipHandle::~VSIGZipHandle()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo(this);
+        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+                                                                SaveInfo(this);
     }
 
     if( stream.state != NULL )
@@ -1910,7 +1912,8 @@ int VSIZipReader::GotoFirstFile()
 
 int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
-    VSIZipEntryFileOffset* pZipEntryOffset = (VSIZipEntryFileOffset*)pOffset;
+    VSIZipEntryFileOffset* pZipEntryOffset =
+                        reinterpret_cast<VSIZipEntryFileOffset*>(pOffset);
     if( cpl_unzGoToFilePos(unzF, &(pZipEntryOffset->m_file_pos)) != UNZ_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GotoFileOffset failed");
@@ -2129,7 +2132,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    unzFile unzF = ((VSIZipReader*)poReader)->GetUnzFileHandle();
+    unzFile unzF = reinterpret_cast<VSIZipReader*>(poReader)->
+                                                            GetUnzFileHandle();
 
     if( cpl_unzOpenCurrentFile(unzF) != UNZ_OK )
     {
@@ -2363,8 +2367,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
 
         if( !osZipInFileName.empty() )
         {
-            VSIZipWriteHandle* poRes = (VSIZipWriteHandle*)
-                OpenForWrite_unlocked(pszFilename, pszAccess);
+            VSIZipWriteHandle* poRes = reinterpret_cast<VSIZipWriteHandle*>(
+                OpenForWrite_unlocked(pszFilename, pszAccess));
             if( poRes == NULL )
             {
                 delete oMapZipWriteHandles[osZipFilename];

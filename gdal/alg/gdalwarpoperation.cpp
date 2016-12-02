@@ -819,7 +819,7 @@ CPLErr GDALChunkAndWarpImage( GDALWarpOperationH hOperation,
 {
     VALIDATE_POINTER1( hOperation, "GDALChunkAndWarpImage", CE_Failure );
 
-    return ( (GDALWarpOperation *)hOperation )->
+    return reinterpret_cast<GDALWarpOperation *>(hOperation) ->
         ChunkAndWarpImage( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 }
 
@@ -2180,7 +2180,7 @@ CPLErr GDALWarpRegionToBuffer( GDALWarpOperationH hOperation,
 {
     VALIDATE_POINTER1( hOperation, "GDALWarpRegionToBuffer", CE_Failure );
 
-    return ( (GDALWarpOperation *)hOperation )->
+    return reinterpret_cast<GDALWarpOperation *>(hOperation )->
         WarpRegionToBuffer( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                             pDataBuf, eBufDataType,
                             nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize );
