@@ -133,7 +133,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
         virtual int                 TestCapability( const char * ) override;
 
-        int                         GetFeaturesToFetch() { return 100; }
+        static  int                 GetFeaturesToFetch() { return 100; }
 };
 
 /************************************************************************/
