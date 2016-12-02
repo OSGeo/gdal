@@ -55,7 +55,7 @@ public:
         osOverview.push_back( ov );
     }
 
-    int GetOverviewCount() CPL_OVERRIDE
+    int GetOverviewCount() override
     {
         if( osOverview.size() > 0 )
         {
@@ -67,7 +67,7 @@ public:
         }
     }
 
-    GDALRasterBand* GetOverview( int i ) CPL_OVERRIDE
+    GDALRasterBand* GetOverview( int i ) override
     {
         size_t	n = static_cast<size_t>( i );
         if( n < osOverview.size() )
