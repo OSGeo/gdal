@@ -257,7 +257,8 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
         }
     }
 
-    GDALRasterBand* poPanchroBand = (GDALRasterBand*)psOptionsIn->hPanchroBand;
+    GDALRasterBand* poPanchroBand = reinterpret_cast<GDALRasterBand*>(
+                                                    psOptionsIn->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
     if( psOptionsIn->nBitDepth )
     {
@@ -298,7 +299,8 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
 
     for(int i=0;i<psOptions->nInputSpectralBands; i++)
     {
-        aMSBands.push_back((GDALRasterBand*)psOptions->pahInputSpectralBands[i]);
+        aMSBands.push_back( reinterpret_cast<GDALRasterBand*>(
+                                        psOptions->pahInputSpectralBands[i]) );
     }
 
     if( psOptions->bHasNoData )
@@ -306,7 +308,8 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
         int bNeedToWrapInVRT = FALSE;
         for(int i=0;i<psOptions->nInputSpectralBands; i++)
         {
-            GDALRasterBand* poBand = (GDALRasterBand*)psOptions->pahInputSpectralBands[i];
+            GDALRasterBand* poBand = reinterpret_cast<GDALRasterBand*>(
+                                        psOptions->pahInputSpectralBands[i]);
             int bHasNoData;
             double dfNoData = poBand->GetNoDataValue(&bHasNoData);
             if( !bHasNoData || dfNoData != psOptions->dfNoData )
@@ -328,7 +331,9 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
                 if( anInputBands.size() )
                     anInputBands[i] = i + 1;
                 poVDS->AddBand(poSrcBand->GetRasterDataType(), NULL);
-                VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*) poVDS->GetRasterBand(i+1);
+                VRTSourcedRasterBand* poVRTBand =
+                    dynamic_cast<VRTSourcedRasterBand*>(poVDS->GetRasterBand(i+1));
+                CPLAssert( poVRTBand );
                 aMSBands[i] = poVRTBand;
                 poVRTBand->SetNoDataValue(psOptions->dfNoData);
                 const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
@@ -962,7 +967,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
         return CE_Failure;
 
     // TODO: avoid allocating buffers each time
-    GDALRasterBand* poPanchroBand = (GDALRasterBand*)psOptions->hPanchroBand;
+    GDALRasterBand* poPanchroBand = reinterpret_cast<GDALRasterBand*>(
+                                                    psOptions->hPanchroBand);
     GDALDataType eWorkDataType = poPanchroBand->GetRasterDataType();
 #ifdef LIMIT_TYPES
     if( eWorkDataType != GDT_Byte && eWorkDataType != GDT_UInt16 )
@@ -1601,7 +1607,7 @@ GDALPansharpenOperationH GDALCreatePansharpenOperation(
 
 void GDALDestroyPansharpenOperation( GDALPansharpenOperationH hOperation )
 {
-    delete (GDALPansharpenOperation*)hOperation;
+    delete reinterpret_cast<GDALPansharpenOperation*>(hOperation);
 }
 
 /************************************************************************/
@@ -1639,7 +1645,8 @@ CPLErr GDALPansharpenProcessRegion( GDALPansharpenOperationH hOperation,
                                     void *pDataBuf,
                                     GDALDataType eBufDataType)
 {
-    return ((GDALPansharpenOperation*)hOperation)->ProcessRegion(nXOff, nYOff,
+    return reinterpret_cast<GDALPansharpenOperation*>(hOperation)->
+                                          ProcessRegion(nXOff, nYOff,
                                                         nXSize, nYSize,
                                                         pDataBuf, eBufDataType);
 }

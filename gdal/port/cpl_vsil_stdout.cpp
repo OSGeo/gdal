@@ -391,8 +391,8 @@ VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    VSIVirtualHandle* poHandle = (VSIVirtualHandle* )VSIFOpenL(
-            pszFilename + strlen("/vsistdout_redirect/"), pszAccess);
+    VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(
+        VSIFOpenL(pszFilename + strlen("/vsistdout_redirect/"), pszAccess));
     if (poHandle == NULL)
         return NULL;
 

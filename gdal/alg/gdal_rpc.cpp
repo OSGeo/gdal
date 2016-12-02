@@ -1709,8 +1709,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                 = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
             CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
         }
-        psTransform->poDS = (GDALDataset *)
-                                GDALOpen( psTransform->pszDEMPath, GA_ReadOnly );
+        psTransform->poDS = reinterpret_cast<GDALDataset *>(
+                                GDALOpen( psTransform->pszDEMPath, GA_ReadOnly ));
         if(psTransform->poDS != NULL && psTransform->poDS->GetRasterCount() >= 1)
         {
             psTransform->nBufferMaxRadius = atoi(CPLGetConfigOption("GDAL_RPC_DEM_BUFFER_MAX_RADIUS", "2"));

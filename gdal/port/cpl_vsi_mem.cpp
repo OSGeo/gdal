@@ -913,8 +913,9 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         == VSIFileManager::GetHandler("/vsimem/") )
         VSIInstallMemFileHandler();
 
-    VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
-        VSIFileManager::GetHandler("/vsimem/");
+    VSIMemFilesystemHandler *poHandler =
+        reinterpret_cast<VSIMemFilesystemHandler *>(
+                VSIFileManager::GetHandler("/vsimem/"));
 
     if (pszFilename == NULL)
         return NULL;
@@ -964,8 +965,9 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
                             int bUnlinkAndSeize )
 
 {
-    VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
-        VSIFileManager::GetHandler("/vsimem/");
+    VSIMemFilesystemHandler *poHandler =
+        reinterpret_cast<VSIMemFilesystemHandler *>(
+            VSIFileManager::GetHandler("/vsimem/"));
 
     if( pszFilename == NULL )
         return NULL;
