@@ -162,6 +162,11 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
+    if (osAPIKey.empty())
+    {
+        osAPIKey = OGRAMIGOCLOUDGetOptionValue(pszFilename, "API_KEY");
+    }
+
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
 
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
