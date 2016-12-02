@@ -103,4 +103,7 @@ char CPL_DLL *GOA2GetAccessToken( const char *pszRefreshToken,
 
 CPL_C_END
 
+// Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
+void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
+
 #endif /* ndef CPL_HTTP_H_INCLUDED */

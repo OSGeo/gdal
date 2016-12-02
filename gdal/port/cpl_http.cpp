@@ -42,9 +42,6 @@
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
-
-void CPLHTTPSetOptions( CURL *http_handle, char** papszOptions );
-
 // CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
 // earlier.
 #if LIBCURL_VERSION_NUM < 0x070a07
@@ -531,8 +528,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
+void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
+    CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
+
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 

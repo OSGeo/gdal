@@ -39,6 +39,7 @@
 #include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_http.h"
 
 CPL_CVSID("$Id$");
 
@@ -82,7 +83,6 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 #include <curl/curl.h>
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 
 #include <map>
