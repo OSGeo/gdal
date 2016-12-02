@@ -2496,7 +2496,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
 /* -------------------------------------------------------------------- */
     if( !bUseGrid && nFailedCount > 0 )
     {
-        bUseGrid = TRUE;
+        bUseGrid = true;
         goto TryAgainWithGrid;
     }
 
