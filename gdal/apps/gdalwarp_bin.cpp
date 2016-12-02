@@ -222,14 +222,14 @@ not yet existing target dataset, its extent will be the one of the
 original raster unless -te or -crop_to_cutline are specified.
 
 <p>
-\section gdalwarp_example EXAMPLE
+\section gdalwarp_examples EXAMPLES
 
 For instance, an eight bit spot scene stored in GeoTIFF with
 control points mapping the corners to lat/long could be warped to a UTM
 projection with a command like this:<p>
 
 \verbatim
-gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' -overwrite raw_spot.tif utm11.tif
 \endverbatim
 
 For instance, the second channel of an ASTER image stored in HDF with
@@ -237,7 +237,13 @@ control points mapping the corners to lat/long could be warped to a UTM
 projection with a command like this:<p>
 
 \verbatim
-gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+gdalwarp -overwrite HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+\endverbatim
+
+To apply a cutline on a un-georeferenced image and clip from pixel (220,60) to pixel (1160,690):<p>
+
+\verbatim
+gdalwarp -overwrite -to SRC_METHOD=NO_GEOTRANSFORM -to DST_METHOD=NO_GEOTRANSFORM -te 220 60 1160 690 -cutline cutline.csv in.png out.tif
 \endverbatim
 
 <p>
