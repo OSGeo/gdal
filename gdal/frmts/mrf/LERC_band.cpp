@@ -70,7 +70,7 @@ static CPLErr CompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img, doubl
 {
     CntZImage zImg;
     // Fill data into zImg
-#define FILL(T) CntZImgFill(zImg, (T *)(src.buffer), img)
+#define FILL(T) CntZImgFill(zImg, reinterpret_cast<T *>(src.buffer), img)
     switch (img.dt) {
     case GDT_Byte:      FILL(GByte);    break;
     case GDT_UInt16:    FILL(GUInt16);  break;
@@ -108,7 +108,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     }
 
 // Unpack from zImg to dst buffer, calling the right type
-#define UFILL(T) CntZImgUFill(zImg, (T *)(dst.buffer), img)
+#define UFILL(T) CntZImgUFill(zImg, reinterpret_cast<T *>(dst.buffer), img)
     switch (img.dt) {
     case GDT_Byte:      UFILL(GByte);   break;
     case GDT_UInt16:    UFILL(GUInt16); break;
@@ -134,15 +134,14 @@ template <typename T> static int MaskFill(BitMask2 &bitMask, T *src, const ILIma
 
     bitMask.SetSize(w, h);
     bitMask.SetAllValid();
-    T *ptr = src;
 
     // No data value
-    T ndv = T(img.NoDataValue);
+    T ndv = static_cast<T>(img.NoDataValue);
     if (!img.hasNoData) ndv = 0; // It really doesn't get called when img doesn't have NoDataValue
 
     for (int i = 0; i < h; i++)
         for (int j = 0; j < w; j++)
-            if (ndv == *ptr++) {
+            if (ndv == *src++) {
                 bitMask.SetInvalid(i, j);
                 count++;
             }
@@ -160,7 +159,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     if (img.hasNoData) { // Only build a bitmask if no data value is defined
         switch (img.dt) {
 
-#define MASK(T) ndv_count = MaskFill(bitMask, (T *)(src.buffer), img)
+#define MASK(T) ndv_count = MaskFill(bitMask, reinterpret_cast<T *>(src.buffer), img)
 
         case GDT_Byte:          MASK(GByte);    break;
         case GDT_UInt16:        MASK(GUInt16);  break;
@@ -183,8 +182,8 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
     switch (img.dt) {
 
 #define ENCODE(T) if (true) { \
-    sz = lerc2.ComputeNumBytesNeededToWrite((T *)(src.buffer), precision, ndv_count != 0);\
-    success = lerc2.Encode((T *)(src.buffer), &ptr);\
+    sz = lerc2.ComputeNumBytesNeededToWrite(reinterpret_cast<T *>(src.buffer), precision, ndv_count != 0);\
+    success = lerc2.Encode(reinterpret_cast<T *>(src.buffer), &ptr);\
     }
 
     case GDT_Byte:      ENCODE(GByte);      break;
@@ -228,7 +227,7 @@ template <typename T> static void UnMask(BitMask2 &bitMask, T *arr, const ILImag
 
 CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
-    const Byte *ptr = (Byte *)(src.buffer);
+    const Byte *ptr = reinterpret_cast<Byte *>(src.buffer);
     Lerc2::HeaderInfo hdInfo;
     Lerc2 lerc2;
     if (!lerc2.GetHeaderInfo(ptr, hdInfo))

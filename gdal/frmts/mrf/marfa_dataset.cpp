@@ -298,8 +298,7 @@ CPLErr GDALMRFDataset::IBuildOverviews(
             catch (const CPLErr& e) {
                 if (config)
                     CPLDestroyXMLNode(config);
-                // cppcheck-suppress exceptRethrowCopy
-                throw e; // Rethrow
+                throw; // Rethrow
             }
 
             // To avoid issues with blacks overviews, if the user asked to
@@ -609,10 +608,10 @@ CPLErr GDALMRFDataset::SetVersion(int version) {
     }
     // Size of one version index
     for (int bcount = 1; bcount <= nBands; bcount++) {
-        GDALMRFRasterBand *srcband = (GDALMRFRasterBand *)GetRasterBand(bcount);
+        GDALMRFRasterBand *srcband = reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(bcount));
         srcband->img.idxoffset += idxSize*verCount;
         for (int l = 0; l < srcband->GetOverviewCount(); l++) {
-            GDALMRFRasterBand *band = (GDALMRFRasterBand *)srcband->GetOverview(l);
+            GDALMRFRasterBand *band = reinterpret_cast<GDALMRFRasterBand *>(srcband->GetOverview(l));
             if( band != NULL )
                 band->img.idxoffset += idxSize*verCount;
         }
@@ -628,7 +627,8 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
         return CE_Failure;
     }
 
-    GDALMRFRasterBand *srcband = (GDALMRFRasterBand *)cds->GetRasterBand(1)->GetOverview(l);
+    GDALMRFRasterBand *srcband = 
+        reinterpret_cast<GDALMRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
 
     // Copy the sizes from this level
     full = srcband->img;
@@ -651,11 +651,9 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
     nBands = current.size.c;
 
     // Add the bands, copy constructor so they can be closed independently
-    for (int i = 1; i <= nBands; i++) {
-        GDALMRFLRasterBand *band = new GDALMRFLRasterBand((GDALMRFRasterBand *)
-            cds->GetRasterBand(i)->GetOverview(l));
-        SetBand(i, band);
-    }
+    for (int i = 1; i <= nBands; i++)
+        SetBand(i, new GDALMRFLRasterBand(reinterpret_cast<GDALMRFRasterBand *>
+                                            (cds->GetRasterBand(i)->GetOverview(l))));
     return CE_None;
 }
 
@@ -770,7 +768,6 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
         CPLString pModel = CPLGetXMLValue(node, "Model", "RGB");
 
         if ((entries > 0) && (entries < 257)) {
-            int start_idx, end_idx;
             GDALColorEntry ce_start = { 0, 0, 0, 255 }, ce_end = { 0, 0, 0, 255 };
 
             // Create it and initialize it to nothing
@@ -781,7 +778,7 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
             if (p) {
                 // Initialize the first entry
                 ce_start = GetXMLColorEntry(p);
-                start_idx = static_cast<int>(getXMLNum(p, "idx", 0));
+                int start_idx = static_cast<int>(getXMLNum(p, "idx", 0));
                 if (start_idx < 0) {
                     CPLError(CE_Failure, CPLE_AppDefined,
                         "GDAL MRF: Palette index %d not allowed", start_idx);
@@ -792,17 +789,16 @@ static CPLErr Init_Raster(ILImage &image, GDALMRFDataset *ds, CPLXMLNode *defima
                 while (NULL != (p = SearchXMLSiblings(p, "Entry"))) {
                     // For every entry, create a ramp
                     ce_end = GetXMLColorEntry(p);
-                    end_idx = static_cast<int>(getXMLNum(p, "idx", start_idx + 1));
+                    int end_idx = static_cast<int>(getXMLNum(p, "idx", start_idx + 1));
                     if ((end_idx <= start_idx) || (start_idx >= entries)) {
                         CPLError(CE_Failure, CPLE_AppDefined,
                             "GDAL MRF: Index Error at index %d", end_idx);
                         delete poColorTable;
                         return CE_Failure;
                     }
-                    poColorTable->CreateColorRamp(start_idx, &ce_start,
-                        end_idx, &ce_end);
-ce_start = ce_end;
-start_idx = end_idx;
+                    poColorTable->CreateColorRamp(start_idx, &ce_start, end_idx, &ce_end);
+                    ce_start = ce_end;
+                    start_idx = end_idx;
                 }
             }
 
@@ -1432,7 +1428,7 @@ GIntBig GDALMRFDataset::AddOverviews(int scaleIn) {
 
         // Create and register the the overviews for each band
         for (int i = 1; i <= nBands; i++) {
-            GDALMRFRasterBand *b = (GDALMRFRasterBand *)GetRasterBand(i);
+            GDALMRFRasterBand *b = reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(i));
             if (!(b->GetOverview(static_cast<int>(img.size.l) - 1)))
                 b->AddOverview(newMRFRasterBand(this, img, i, static_cast<int>(img.size.l)));
         }

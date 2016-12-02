@@ -62,27 +62,25 @@ NAMESPACE_MRF_START
 // Count is the number of items that need to be copied
 // These are separate to allow for optimization
 
-template <typename T> static void cpy_stride_in(
-    void *dst, const void *src, int c, int stride )
+template <typename T> static void cpy_stride_in(void *dst, void *src, int c, int stride)
 {
-    T *s=(T *)src;
-    T *d=(T *)dst;
+    T *s = reinterpret_cast<T *>(src);
+    T *d = reinterpret_cast<T *>(dst);
 
     while (c--) {
-        *d++=*s;
-        s+=stride;
+        *d++ = *s;
+        s += stride;
     }
 }
 
-template <typename T> static void cpy_stride_out(
-    void *dst, const void *src, int c, int stride )
+template <typename T> static void cpy_stride_out(void *dst, void *src, int c, int stride)
 {
-    T *s=(T *)src;
-    T *d=(T *)dst;
+    T *s = reinterpret_cast<T *>(src);
+    T *d = reinterpret_cast<T *>(dst);
 
     while (c--) {
-        *d=*s++;
-        d+=stride;
+        *d = *s++;
+        d += stride;
     }
 }
 
@@ -90,7 +88,7 @@ template <typename T> static void cpy_stride_out(
 template<typename T> inline int isAllVal(const T *b, size_t bytecount, double ndv)
 
 {
-    T val = (T)(ndv);
+    T val = static_cast<T>(ndv);
     size_t count = bytecount / sizeof(T);
     while (count--) {
         if (*(b++) != val) {
@@ -107,9 +105,9 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
     int isempty = false;
 
     // A case branch in a temporary macro, conversion from gdal enum to type
-#define TEST_T(GType, type)\
+#define TEST_T(GType, T)\
     case GType: \
-        isempty = isAllVal((type *)b, bytecount, ndv);\
+        isempty = isAllVal(reinterpret_cast<T *>(b), bytecount, ndv);\
         break
 
     switch (gt) {
@@ -383,7 +381,7 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
         }
 
 // Just the right mix of templates and macros make deinterleaving tidy
-#define CpySI(T) cpy_stride_in<T> (ob, (T *)poDS->GetPBuffer() + i,\
+#define CpySI(T) cpy_stride_in<T> (ob, reinterpret_cast<T *>(poDS->GetPBuffer()) + i,\
     blockSizeBytes()/sizeof(T), img.pagesize.c)
 
         // Page is already in poDS->pbuffer, not empty
@@ -415,7 +413,6 @@ CPLErr GDALMRFRasterBand::RB(int xblk, int yblk, buf_mgr /*src*/, void *buffer) 
 *
 */
 CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
-
 {
     assert(!poDS->source.empty());
     CPLDebug("MRF_IB", "FetchBlock %d,%d,0,%d, level  %d\n", xblk, yblk, nBand, m_l);
@@ -857,23 +854,22 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // Get the other bands from the block cache
     for (int iBand=0; iBand < poDS->nBands; iBand++ )
     {
-        const char *pabyThisImage=NULL;
-        GDALRasterBlock *poBlock=NULL;
+        char *pabyThisImage = NULL;
+        GDALRasterBlock *poBlock = NULL;
 
         if (iBand == nBand-1)
         {
-            pabyThisImage = (char *) buffer;
+            pabyThisImage = reinterpret_cast<char *>(buffer);
             poDS->bdirty |= bandbit();
         } else {
             GDALRasterBand *band = poDS->GetRasterBand(iBand +1);
             // Pick the right overview
             if (m_l) band = band->GetOverview(m_l -1);
-            poBlock = ((GDALMRFRasterBand *)band)
-                ->TryGetLockedBlockRef(xblk, yblk);
+            poBlock = (reinterpret_cast<GDALMRFRasterBand *>(band))->TryGetLockedBlockRef(xblk, yblk);
             if (NULL==poBlock) continue;
             // This is where the image data is for this band
 
-            pabyThisImage = (char*) poBlock->GetDataRef();
+            pabyThisImage = reinterpret_cast<char*>(poBlock->GetDataRef());
             poDS->bdirty |= bandbit(iBand);
         }
 
@@ -881,12 +877,12 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         int success;
         double val = GetNoDataValue(&success);
         if (!success) val = 0.0;
-        if (isAllVal(eDataType, (char *)pabyThisImage, blockSizeBytes(), val))
+        if (isAllVal(eDataType, pabyThisImage, blockSizeBytes(), val))
             empties |= bandbit(iBand);
 
         // Copy the data into the dataset buffer here
         // Just the right mix of templates and macros make this real tidy
-#define CpySO(T) cpy_stride_out<T> (((T *)tbuffer)+iBand, pabyThisImage,\
+#define CpySO(T) cpy_stride_out<T> ((reinterpret_cast<T *>(tbuffer))+iBand, pabyThisImage,\
                 blockSizeBytes()/sizeof(T), cstride)
 
         // Build the page in tbuffer
