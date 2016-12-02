@@ -34,8 +34,6 @@
 
 CPL_CVSID("$Id$");
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
-
 /* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
 #if LIBCURL_VERSION_NUM < 0x070a07
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
@@ -93,8 +91,7 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, psRequest->m_curl_error.data());
 
-    // CPLHTTPSetOptions does not change the option list
-    CPLHTTPSetOptions(psRequest->m_curl_handle, const_cast<char **>(psRequest->options));
+    CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options);
 }
 
 WMSHTTPRequest::~WMSHTTPRequest() {
