@@ -1971,7 +1971,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                         oWK.panUnifiedSrcValid[iWord] |=
                             oWK.papanBandSrcValid[k][iWord];
                     CPLFree( oWK.papanBandSrcValid[k] );
-                    oWK.papanBandSrcValid[i2] = NULL;
+                    oWK.papanBandSrcValid[k] = NULL;
                 }
 
                 CPLFree( oWK.papanBandSrcValid );
