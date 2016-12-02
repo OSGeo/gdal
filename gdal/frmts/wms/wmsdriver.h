@@ -151,7 +151,7 @@ public:
 
 public:
     // MiniDriver specific initialization from XML, required
-    // Called once at the begining of the dataset initialization
+    // Called once at the beginning of the dataset initialization
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) = 0;
 
     // Called once at the end of the dataset initialization
@@ -437,7 +437,7 @@ protected:
     CPLErr AskMiniDriverForBlock(WMSHTTPRequest &request, int x, int y);
     CPLErr ReadBlockFromFile(int x, int y, const char *file_name, int to_buffer_band, void *buffer, int advise_read);
     CPLErr ZeroBlock(int x, int y, int to_buffer_band, void *buffer);
-    CPLErr ReportWMSException(const char *file_name);
+    static CPLErr ReportWMSException(const char *file_name);
 
 protected:
     GDALWMSDataset *m_parent_dataset;
