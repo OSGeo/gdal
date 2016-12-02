@@ -32,6 +32,7 @@
 #define GDALHTTP_H
 
 #include "cpl_port.h"
+#include "cpl_http.h"
 
 struct WMSHTTPRequest {
     WMSHTTPRequest() 

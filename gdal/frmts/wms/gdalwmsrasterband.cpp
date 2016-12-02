@@ -156,7 +156,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
     }
 
     // Fetch all the requests, OK to call with count of 0
-    if (WMSHTTPFetchMulti(requests.data(), count) != CE_None) {
+    if (WMSHTTPFetchMulti(requests.data(), static_cast<int>(count)) != CE_None) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: CPLHTTPFetchMulti failed.");
         ret = CE_Failure;
     }
