@@ -1260,6 +1260,46 @@ def test_gdalwarp_lib_133():
     return 'success'
 
 ###############################################################################
+# Test SRC_METHOD=NO_GEOTRANSFORM and DST_METHOD=NO_GEOTRANSFORM (#6721)
+
+def test_gdalwarp_lib_134():
+
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_gdalwarp_lib_134.shp')
+    lyr = ds.CreateLayer('cutline')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((2 2,2 18,18 18,18 2,2 2))'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    src_src_ds = gdal.Open('../gcore/data/byte.tif')
+    src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
+    src_ds.GetRasterBand(1).WriteRaster( 0, 0, 20, 20, src_src_ds.GetRasterBand(1).ReadRaster() )
+    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = [ 'SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds = [1,2,4,6])
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(1,2,4-1,6-2):
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = [ 'SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], cutlineDSName = '/vsimem/test_gdalwarp_lib_134.shp', cropToCutline = True)
+    if ds is None:
+        return 'fail'
+
+    if ds.GetRasterBand(1).ReadRaster() != src_src_ds.GetRasterBand(1).ReadRaster(2,2,16,16):
+        gdaltest.post_reason('Bad checksum')
+        return 'fail'
+
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test_gdalwarp_lib_134.shp')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1341,6 +1381,7 @@ gdaltest_list = [
     test_gdalwarp_lib_131,
     test_gdalwarp_lib_132,
     test_gdalwarp_lib_133,
+    test_gdalwarp_lib_134,
     test_gdalwarp_lib_cleanup,
     ]
 

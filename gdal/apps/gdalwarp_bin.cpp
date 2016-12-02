@@ -240,13 +240,17 @@ projection with a command like this:<p>
 gdalwarp -overwrite HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
-<!-- commented out: Does not work
-To apply a cutline on a un-georeferenced image and clip from pixel (220,60) to pixel (1160,690):<p>
+(GDAL &gt;= 2.2) To apply a cutline on a un-georeferenced image and clip from pixel (220,60) to pixel (1160,690):<p>
 
 \verbatim
 gdalwarp -overwrite -to SRC_METHOD=NO_GEOTRANSFORM -to DST_METHOD=NO_GEOTRANSFORM -te 220 60 1160 690 -cutline cutline.csv in.png out.tif
 \endverbatim
--->
+
+where cutline.csv content is like:
+\verbatim
+id,WKT
+1,"POLYGON((....))"
+\endverbatim
 
 <p>
 \section gdalwarp_seealso SEE ALSO
