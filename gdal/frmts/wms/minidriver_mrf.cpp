@@ -115,7 +115,7 @@ void *SectorCache::data(size_t address) {
     }
 
     target->range.resize(m);
-    if (reader(reader_data, target->range.data(), m, static_cast<off_t>((address / m ) * m))) { // Success
+    if (reader(reader_data, &target->range[0], m, static_cast<off_t>((address / m ) * m))) { // Success
         target->uid = address / m;
         last_used = target;
         return &(last_used->range[address %m]);
