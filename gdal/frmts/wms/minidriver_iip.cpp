@@ -66,6 +66,6 @@ CPLErr WMSMiniDriver_IIP::TiledImageRequest(
         >> (m_parent_dataset->GetRasterBand(1)->GetOverviewCount()
         - tiri.m_level)) + 255) / 256;
     int numTile = tiri.m_x + tiri.m_y * nTileXCount;
-    url = CPLOPrintf("jtl=%d,%d", tiri.m_level, numTile);
+    url += CPLOPrintf("jtl=%d,%d", tiri.m_level, numTile);
     return CE_None;
 }
