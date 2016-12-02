@@ -70,7 +70,7 @@ GDALWMSDataset::GDALWMSDataset() :
     m_default_tile_count_x(1),
     m_default_tile_count_y(1),
     m_default_overview_count(-1),
-    m_bNeedsDataWindow(TRUE)
+    m_bNeedsDataWindow(true)
 {
     m_hint.m_valid = false;
     m_data_window.m_sx = -1;
