@@ -3083,7 +3083,7 @@ def ogr_shape_63():
     import struct
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/ogr_shape_63.dbf')
-    lyr = ds.CreateLayer('ogr_shape_63')
+    lyr = ds.CreateLayer('ogr_shape_63', geom_type = ogr.wkbNone)
     gdaltest.fieldname = '\xc3\xa9'
     if lyr.CreateField(ogr.FieldDefn(gdaltest.fieldname, ogr.OFTString)) != 0:
         gdaltest.post_reason('failed')
