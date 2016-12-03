@@ -488,7 +488,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /*      Eventually we will want to support arrays with more than two    */
 /*      dimensions ... but not quite yet.                               */
 /* -------------------------------------------------------------------- */
-    if( poArray->dimensions() != 2 )
+    if( poArray == NULL || poArray->dimensions() != 2 )
         return papszResultList;
 
 /* -------------------------------------------------------------------- */
@@ -1291,6 +1291,8 @@ void DODSRasterBand::HarvestDAS()
 
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    if( poDODS == NULL )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Try and fetch the corresponding DAS subtree if it exists.       */
