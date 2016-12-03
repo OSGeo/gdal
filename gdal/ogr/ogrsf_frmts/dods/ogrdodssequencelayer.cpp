@@ -880,7 +880,12 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
 /*      count of elements.                                              */
 /* -------------------------------------------------------------------- */
     if( poSuperSeq == NULL )
-        nRecordCount = dynamic_cast<Sequence *>(poTargetVar)->number_of_rows();
+    {
+        Sequence* poSeq = dynamic_cast<Sequence *>(poTargetVar);
+        if( poSeq == NULL )
+            return false;
+        nRecordCount = poSeq->number_of_rows();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise we have to count up all the target sequence           */
