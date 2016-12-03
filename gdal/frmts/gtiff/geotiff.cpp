@@ -14564,11 +14564,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
     else
     {
-        const uint32 l_nRowsPerStrip =
+        const uint32 l_nRowsPerStrip = std::min(nYSize,
             l_nBlockYSize == 0
-            ? std::min(nYSize,
-                       static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0)))
-            : l_nBlockYSize;
+            ? static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0))
+            : l_nBlockYSize );
 
         TIFFSetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, l_nRowsPerStrip );
     }
