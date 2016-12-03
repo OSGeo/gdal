@@ -12804,12 +12804,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
     else
     {
-        uint32 nRowsPerStrip;
-
-        if( nBlockYSize == 0 )
-            nRowsPerStrip = MIN(nYSize, (int)TIFFDefaultStripSize(hTIFF,0));
-        else
-            nRowsPerStrip = nBlockYSize;
+        const uint32 nRowsPerStrip = MIN(nYSize,
+            (nBlockYSize == 0
+            ? static_cast<int>(TIFFDefaultStripSize(hTIFF,0))
+            : nBlockYSize) );
 
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nRowsPerStrip );
     }
