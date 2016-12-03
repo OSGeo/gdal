@@ -4234,6 +4234,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         return CE_Warning;
     }
 
+  try
+  {
+
     // Using a factor of 2 or 4 seems to have much less rounding error
     // than 3 on the GPU.
     // Then the rounding error can cause strange artifacts under the
@@ -4250,7 +4253,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     {
         eErr = CE_Warning;
         if (warper != NULL)
-            goto free_warper;
+            throw eErr;
         return eErr;
     }
 
@@ -4263,7 +4266,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
         eErr = CE_Failure;
-        goto free_warper;
+        throw eErr;
     }
 
     /* ==================================================================== */
@@ -4277,7 +4280,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
                 eErr = CE_Failure;
-                goto free_warper;
+                throw eErr;
             }
         }
 
@@ -4287,7 +4290,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
             eErr = CE_Failure;
-            goto free_warper;
+            throw eErr;
         }
 
         err = GDALWarpKernelOpenCL_setDstImg(warper,
@@ -4299,7 +4302,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                      "OpenCL routines reported failure (%d) on line %d.",
                      static_cast<int>(err), __LINE__);
             eErr = CE_Failure;
-            goto free_warper;
+            throw eErr;
         }
     }
 
@@ -4366,7 +4369,8 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
-            return CE_Failure;
+            eErr = CE_Failure;
+            break;
         }
 
         //Update the valid & density masks because we don't do so in the kernel
@@ -4407,6 +4411,9 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
     CPLFree( padfZ );
     CPLFree( pabSuccess );
 
+    if( eErr != CE_None )
+        throw eErr;
+
     err = GDALWarpKernelOpenCL_runResamp(warper,
                                          poWK->pafUnifiedSrcDensity,
                                          poWK->panUnifiedSrcValid,
@@ -4422,7 +4429,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
         eErr = CE_Failure;
-        goto free_warper;
+        throw eErr;
     }
 
     /* ==================================================================== */
@@ -4442,7 +4449,7 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "OpenCL routines reported failure (%d) on line %d.", (int) err, __LINE__ );
                 eErr = CE_Failure;
-                goto free_warper;
+                throw eErr;
             }
 
             //Copy the data from the warper to GDAL's memory
@@ -4487,11 +4494,15 @@ static CPLErr GWKOpenCLCase( GDALWarpKernel *poWK )
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Unsupported resampling OpenCL data type %d.", (int) poWK->eWorkingDataType );
                 eErr = CE_Failure;
-                goto free_warper;
+                throw eErr;
             }
         }
     }
-free_warper:
+  }
+  catch( const CPLErr& )
+  {
+  }
+
     if((err = GDALWarpKernelOpenCL_deleteEnv(warper)) != CL_SUCCESS)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
