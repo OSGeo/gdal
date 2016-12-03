@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.48 2016-09-23 22:12:18 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.49 2016-12-02 23:05:51 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -1233,8 +1233,10 @@ PixarLogPostEncode(TIFF* tif)
 static void
 PixarLogClose(TIFF* tif)
 {
+        PixarLogState* sp = (PixarLogState*) tif->tif_data;
 	TIFFDirectory *td = &tif->tif_dir;
 
+	assert(sp != 0);
 	/* In a really sneaky (and really incorrect, and untruthful, and
 	 * troublesome, and error-prone) maneuver that completely goes against
 	 * the spirit of TIFF, and breaks TIFF, on close, we covertly
@@ -1243,8 +1245,19 @@ PixarLogClose(TIFF* tif)
 	 * readers that don't know about PixarLog, or how to set
 	 * the PIXARLOGDATFMT pseudo-tag.
 	 */
-	td->td_bitspersample = 8;
-	td->td_sampleformat = SAMPLEFORMAT_UINT;
+
+        if (sp->state&PLSTATE_INIT) {
+            /* We test the state to avoid an issue such as in
+             * http://bugzilla.maptools.org/show_bug.cgi?id=2604
+             * What appends in that case is that the bitspersample is 1 and
+             * a TransferFunction is set. The size of the TransferFunction
+             * depends on 1<<bitspersample. So if we increase it, an access
+             * out of the buffer will happen at directory flushing.
+             * Another option would be to clear those targs. 
+             */
+            td->td_bitspersample = 8;
+            td->td_sampleformat = SAMPLEFORMAT_UINT;
+        }
 }
 
 static void
