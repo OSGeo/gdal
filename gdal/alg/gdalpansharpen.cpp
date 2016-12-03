@@ -333,7 +333,8 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
                 poVDS->AddBand(poSrcBand->GetRasterDataType(), NULL);
                 VRTSourcedRasterBand* poVRTBand =
                     dynamic_cast<VRTSourcedRasterBand*>(poVDS->GetRasterBand(i+1));
-                CPLAssert( poVRTBand );
+                if( poVRTBand == NULL )
+                    return CE_Failure;
                 aMSBands[i] = poVRTBand;
                 poVRTBand->SetNoDataValue(psOptions->dfNoData);
                 const char* pszNBITS = poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
