@@ -7352,6 +7352,28 @@ def tiff_write_159():
 
     return 'success'
 
+
+###############################################################################
+# Test the Create() interface with a BLOCKYSIZE > image height
+
+def tiff_write_160():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_160.tif', 10, 10, options = ['BLOCKYSIZE=11'])
+    ds.GetRasterBand(1).Fill(255)
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_160.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 1218:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_160.tif')
+
+    return 'success'
+
 ###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
@@ -7541,10 +7563,11 @@ gdaltest_list = [
     tiff_write_157,
     tiff_write_158,
     tiff_write_159,
+    tiff_write_160,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-#gdaltest_list = [ tiff_write_1, tiff_write_159 ]
+#gdaltest_list = [ tiff_write_1, tiff_write_160 ]
 
 if __name__ == '__main__':
 
