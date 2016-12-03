@@ -1537,90 +1537,120 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     // Check if this doesn't match the most precise tile matrix
                     // by densifying its countour
                     const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
-                    OGRCoordinateTransformation* poRevCT =
-                        OGRCreateCoordinateTransformation(&oTMS.oSRS, &oSRS);
-                    if( poRevCT != NULL )
+
+                    bool bMatchFound = false;
+                    const char *pszProjectionTMS = oTMS.oSRS.GetAttrValue("PROJECTION");
+                    const char *pszProjectionBBOX = oSRS.GetAttrValue("PROJECTION");
+                    const bool bIsTMerc = (pszProjectionTMS != NULL &&
+                        EQUAL(pszProjectionTMS, SRS_PT_TRANSVERSE_MERCATOR)) ||
+                        (pszProjectionBBOX != NULL &&
+                        EQUAL(pszProjectionBBOX, SRS_PT_TRANSVERSE_MERCATOR));
+                    // If one of the 2 SRS is a TMerc, try with classical tmerc
+                    // or etmerc.
+                    for( int j = 0; j < (bIsTMerc ? 2 : 1); j++ )
                     {
-                        const double dfX0 = oTM.dfTLX;
-                        const double dfY1 = oTM.dfTLY;
-                        const double dfX1 = oTM.dfTLX +
-                          oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
-                        const double dfY0 = oTM.dfTLY -
-                          oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
-                        double dfXMin = std::numeric_limits<double>::infinity();
-                        double dfYMin = std::numeric_limits<double>::infinity();
-                        double dfXMax = -std::numeric_limits<double>::infinity();
-                        double dfYMax = -std::numeric_limits<double>::infinity();
-
-                        const int NSTEPS = 20;
-                        for(int i=0;i<=NSTEPS;i++)
+                        CPLString osOldVal =
+                            CPLGetThreadLocalConfigOption("OSR_USE_ETMERC", "");
+                        if( bIsTMerc )
                         {
-                            double dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
-                            double dfY = dfY0;
-                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                                                      (j==0) ? "NO" : "YES");
+                        }
+                        OGRCoordinateTransformation* poRevCT =
+                            OGRCreateCoordinateTransformation(&oTMS.oSRS, &oSRS);
+                        if( bIsTMerc )
+                        {
+                            CPLSetThreadLocalConfigOption("OSR_USE_ETMERC",
+                                osOldVal.empty() ? NULL : osOldVal.c_str());
+                        }
+                        if( poRevCT != NULL )
+                        {
+                            const double dfX0 = oTM.dfTLX;
+                            const double dfY1 = oTM.dfTLY;
+                            const double dfX1 = oTM.dfTLX +
+                            oTM.nMatrixWidth  * oTM.dfPixelSize * oTM.nTileWidth;
+                            const double dfY0 = oTM.dfTLY -
+                            oTM.nMatrixHeight * oTM.dfPixelSize * oTM.nTileHeight;
+                            double dfXMin = std::numeric_limits<double>::infinity();
+                            double dfYMin = std::numeric_limits<double>::infinity();
+                            double dfXMax = -std::numeric_limits<double>::infinity();
+                            double dfYMax = -std::numeric_limits<double>::infinity();
+
+                            const int NSTEPS = 20;
+                            for(int i=0;i<=NSTEPS;i++)
                             {
-                                dfXMin = std::min(dfXMin, dfX);
-                                dfYMin = std::min(dfYMin, dfY);
-                                dfXMax = std::max(dfXMax, dfX);
-                                dfYMax = std::max(dfYMax, dfY);
+                                double dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
+                                double dfY = dfY0;
+                                if( poRevCT->Transform(1, &dfX, &dfY) )
+                                {
+                                    dfXMin = std::min(dfXMin, dfX);
+                                    dfYMin = std::min(dfYMin, dfY);
+                                    dfXMax = std::max(dfXMax, dfX);
+                                    dfYMax = std::max(dfYMax, dfY);
+                                }
+
+                                dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
+                                dfY = dfY1;
+                                if( poRevCT->Transform(1, &dfX, &dfY) )
+                                {
+                                    dfXMin = std::min(dfXMin, dfX);
+                                    dfYMin = std::min(dfYMin, dfY);
+                                    dfXMax = std::max(dfXMax, dfX);
+                                    dfYMax = std::max(dfYMax, dfY);
+                                }
+
+                                dfX = dfX0;
+                                dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
+                                if( poRevCT->Transform(1, &dfX, &dfY) )
+                                {
+                                    dfXMin = std::min(dfXMin, dfX);
+                                    dfYMin = std::min(dfYMin, dfY);
+                                    dfXMax = std::max(dfXMax, dfX);
+                                    dfYMax = std::max(dfYMax, dfY);
+                                }
+
+                                dfX = dfX1;
+                                dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
+                                if( poRevCT->Transform(1, &dfX, &dfY) )
+                                {
+                                    dfXMin = std::min(dfXMin, dfX);
+                                    dfYMin = std::min(dfYMin, dfY);
+                                    dfXMax = std::max(dfXMax, dfX);
+                                    dfYMax = std::max(dfYMax, dfY);
+                                }
                             }
 
-                            dfX = dfX0 + (dfX1 - dfX0) * i / NSTEPS;
-                            dfY = dfY1;
-                            if( poRevCT->Transform(1, &dfX, &dfY) )
+                            delete poRevCT;
+#ifdef DEBUG_VERBOSE
+                            CPLDebug("WMTS", "Reprojected densified bbox of most "
+                                    "precise tile matrix in %s: %.8g %8g %8g %8g",
+                                    oIter->first.c_str(),
+                                    dfXMin, dfYMin, dfXMax, dfYMax);
+#endif
+                            if( fabs(oIter->second.MinX - dfXMin) < 1e-5 *
+                                std::max(fabs(oIter->second.MinX),fabs(dfXMin)) &&
+                                fabs(oIter->second.MinY - dfYMin) < 1e-5 *
+                                std::max(fabs(oIter->second.MinY),fabs(dfYMin)) &&
+                                fabs(oIter->second.MaxX - dfXMax) < 1e-5 *
+                                std::max(fabs(oIter->second.MaxX),fabs(dfXMax)) &&
+                                fabs(oIter->second.MaxY - dfYMax) < 1e-5 *
+                                std::max(fabs(oIter->second.MaxY),fabs(dfYMax)) )
                             {
-                                dfXMin = std::min(dfXMin, dfX);
-                                dfYMin = std::min(dfYMin, dfY);
-                                dfXMax = std::max(dfXMax, dfX);
-                                dfYMax = std::max(dfYMax, dfY);
-                            }
-
-                            dfX = dfX0;
-                            dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
-                            if( poRevCT->Transform(1, &dfX, &dfY) )
-                            {
-                                dfXMin = std::min(dfXMin, dfX);
-                                dfYMin = std::min(dfYMin, dfY);
-                                dfXMax = std::max(dfXMax, dfX);
-                                dfYMax = std::max(dfYMax, dfY);
-                            }
-
-                            dfX = dfX1;
-                            dfY = dfY0 + (dfY1 - dfY0) * i / NSTEPS;
-                            if( poRevCT->Transform(1, &dfX, &dfY) )
-                            {
-                                dfXMin = std::min(dfXMin, dfX);
-                                dfYMin = std::min(dfYMin, dfY);
-                                dfXMax = std::max(dfXMax, dfX);
-                                dfYMax = std::max(dfYMax, dfY);
+                                bMatchFound = true;
+#ifdef DEBUG_VERBOSE
+                                CPLDebug("WMTS", "Matches layer bounding box, so "
+                                        "that one is not significant");
+#endif
+                                break;
                             }
                         }
+                    }
 
-                        delete poRevCT;
-
-#ifdef DEBUG_VERBOSE
-                        CPLDebug("WMTS", "Reprojected densified bbox of most "
-                                 "precise tile matrix in %s: %g %g %g  %g",
-                                 oIter->first.c_str(),
-                                 dfXMin, dfYMin, dfXMax, dfYMax);
-#endif
-                        if( fabs(oIter->second.MinX - dfXMin) < 1e-5 *
-                              std::max(fabs(oIter->second.MinX),fabs(dfXMin)) &&
-                            fabs(oIter->second.MinY - dfYMin) < 1e-5 *
-                              std::max(fabs(oIter->second.MinY),fabs(dfYMin)) &&
-                            fabs(oIter->second.MaxX - dfXMax) < 1e-5 *
-                              std::max(fabs(oIter->second.MaxX),fabs(dfXMax)) &&
-                            fabs(oIter->second.MaxY - dfYMax) < 1e-5 *
-                              std::max(fabs(oIter->second.MaxY),fabs(dfYMax)) )
-                        {
-#ifdef DEBUG_VERBOSE
-                            CPLDebug("WMTS", "Matches layer bounding box, so "
-                                     "that one is not significant");
-#endif
-                            if( eExtentMethod == LAYER_BBOX )
-                                eExtentMethod = MOST_PRECISE_TILE_MATRIX;
-                            break;
-                        }
+                    if( bMatchFound )
+                    {
+                        if( eExtentMethod == LAYER_BBOX )
+                            eExtentMethod = MOST_PRECISE_TILE_MATRIX;
+                        break;
                     }
 
                     OGRCoordinateTransformation* poCT =
