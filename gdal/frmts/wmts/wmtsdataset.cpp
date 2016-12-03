@@ -1535,7 +1535,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 if( oSRS.SetFromUserInput(FixCRSName(oIter->first)) == OGRERR_NONE )
                 {
                     // Check if this doesn't match the most precise tile matrix
-                    // by densifying its countour
+                    // by densifying its contour
                     const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
 
                     bool bMatchFound = false;
