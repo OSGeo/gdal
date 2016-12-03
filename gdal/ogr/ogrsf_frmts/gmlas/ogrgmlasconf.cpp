@@ -225,7 +225,7 @@ static void CPL_STDCALL GMLASConfigurationErrorHandler(CPLErr /*eErr*/,
 bool GMLASConfiguration::Load(const char* pszFilename)
 {
     // Allow configuration to be inlined
-    CPLXMLNode* psRoot = STARTS_WITH(pszFilename, "<Configuration>") ?
+    CPLXMLNode* psRoot = STARTS_WITH(pszFilename, "<Configuration") ?
                                 CPLParseXMLString(pszFilename) :
                                 CPLParseXMLFile(pszFilename);
     if( psRoot == NULL )
