@@ -1091,7 +1091,7 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
                     double dfVal = elt.Double();
                     if( dfVal < std::numeric_limits<GIntBig>::min() )
                         panValues[i] = std::numeric_limits<GIntBig>::min();
-                    else if( dfVal > std::numeric_limits<GIntBig>::max() )
+                    else if( dfVal > static_cast<double>(std::numeric_limits<GIntBig>::max()) )
                         panValues[i] = std::numeric_limits<GIntBig>::max();
                     else
                         panValues[i] = (int)dfVal;
