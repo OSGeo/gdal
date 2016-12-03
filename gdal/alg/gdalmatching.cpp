@@ -235,13 +235,15 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /*      Collect reference points on each image.                         */
 /* -------------------------------------------------------------------- */
     std::vector<GDALFeaturePoint> *poFPCollection1 =
-        GatherFeaturePoints((GDALDataset *) hFirstImage, anBandMap1,
+        GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hFirstImage),
+                            anBandMap1,
                             nOctaveStart, nOctaveEnd, dfSURFThreshold);
     if( poFPCollection1 == NULL )
         return NULL;
 
     std::vector<GDALFeaturePoint> *poFPCollection2 =
-        GatherFeaturePoints((GDALDataset *) hSecondImage, anBandMap2,
+        GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hSecondImage),
+                            anBandMap2,
                             nOctaveStart, nOctaveEnd,
                             dfSURFThreshold);
 
