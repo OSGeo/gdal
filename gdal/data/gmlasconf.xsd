@@ -140,7 +140,7 @@
               <xs:element name="RemoveUnusedLayers" minOccurs="0" type="xs:boolean">
                 <xs:annotation>
                   <xs:documentation>
-                    Whether to remove any OGR layer without an feature, during the
+                    Whether to remove any OGR layer without any feature, during the
                     initial scan pass.
                     Default is false.
                   </xs:documentation>
