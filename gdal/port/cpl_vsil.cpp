@@ -1144,7 +1144,7 @@ int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
  * @return the number of bytes written or -1 on an error.
  */
 
-int VSIFPrintfL( VSILFILE *fp, const char *pszFormat, ... )
+int VSIFPrintfL( VSILFILE *fp, CPL_FORMAT_STRING(const char *pszFormat), ... )
 
 {
     va_list args;

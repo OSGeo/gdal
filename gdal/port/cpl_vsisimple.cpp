@@ -343,7 +343,7 @@ int VSIUngetc( int c, FILE * fp )
 /*      have to use vfprintf().                                         */
 /************************************************************************/
 
-int     VSIFPrintf( FILE * fp, const char * pszFormat, ... )
+int     VSIFPrintf( FILE * fp, CPL_FORMAT_STRING(const char * pszFormat), ... )
 
 {
     va_list     args;

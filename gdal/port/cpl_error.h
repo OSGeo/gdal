@@ -137,7 +137,7 @@ typedef int CPLErrorNum;
 
 #endif
 
-void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
+void CPL_DLL CPLError(CPLErr eErrClass, CPLErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)  CPL_PRINT_FUNC_FORMAT (3, 4);
 void CPL_DLL CPLErrorV(CPLErr, CPLErrorNum, const char *, va_list );
 void CPL_DLL CPLEmergencyError( const char * ) CPL_NO_RETURN;
 void CPL_DLL CPL_STDCALL CPLErrorReset( void );
@@ -168,7 +168,7 @@ void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 #ifdef WITHOUT_CPLDEBUG
 #define CPLDebug(...)  /* Eat all CPLDebug calls. */
 #else
-void CPL_DLL CPL_STDCALL CPLDebug(const char *, const char *, ...)
+void CPL_DLL CPL_STDCALL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 
