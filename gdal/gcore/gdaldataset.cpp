@@ -339,7 +339,7 @@ GDALDataset::~GDALDataset()
                 }
             }
 
-            if (poAllDatasetMap->size() == 0)
+            if (poAllDatasetMap->empty())
             {
                 delete poAllDatasetMap;
                 poAllDatasetMap = NULL;
