@@ -35,6 +35,23 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.74  2016-12-04 15:30:15  erouault
+ * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
+ * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
+ * structures extended with new members. New functions:
+ * DBFSetLastModifiedDate, SHPOpenLLEx, SHPRestoreSHX,
+ * SHPSetFastModeReadObject
+ *
+ * * sbnsearch.c: new file to implement original ESRI .sbn spatial
+ * index reading. (no write support). New functions:
+ * SBNOpenDiskTree, SBNCloseDiskTree, SBNSearchDiskTree,
+ * SBNSearchDiskTreeInteger, SBNSearchFreeIds
+ *
+ * * Makefile, makefile.vc, CMakeLists.txt, shapelib.def: updates
+ * with new file and symbols.
+ *
+ * * commit: helper script to cvs commit
+ *
  * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
  * fix memory leak on failure to open .shp (gdal #4410)
  *
@@ -296,11 +313,25 @@ typedef unsigned int	      int32;
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
-#if defined(WIN32) || defined(_WIN32)
+#ifndef USE_CPL
+#if defined(_MSC_VER)
+# if _MSC_VER < 1900
+#     define snprintf _snprintf
+# endif
+#elif defined(WIN32) || defined(_WIN32)
 #  ifndef snprintf
 #     define snprintf _snprintf
 #  endif
 #endif
+#endif
+
+#ifndef CPL_UNUSED
+#if defined(__GNUC__) && __GNUC__ >= 4
+#  define CPL_UNUSED __attribute((__unused__))
+#else
+#  define CPL_UNUSED
+#endif
+#endif  
 
 #if defined(CPL_LSB)
 #define bBigEndian FALSE
