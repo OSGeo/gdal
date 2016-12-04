@@ -10,7 +10,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This software is available under the following "MIT Style" license,
  * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
@@ -145,7 +145,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /* -------------------------------------------------------------------- */
 typedef int *SAFile;
 
-/* SAOffset was set to vsi_l_offset in r13274.  Why is the ifndef still here? */
 #ifndef SAOffset
 typedef unsigned long SAOffset;
 #endif

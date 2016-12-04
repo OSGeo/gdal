@@ -35,6 +35,23 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.90  2016-12-04 15:30:15  erouault
+ * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
+ * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
+ * structures extended with new members. New functions:
+ * DBFSetLastModifiedDate, SHPOpenLLEx, SHPRestoreSHX,
+ * SHPSetFastModeReadObject
+ *
+ * * sbnsearch.c: new file to implement original ESRI .sbn spatial
+ * index reading. (no write support). New functions:
+ * SBNOpenDiskTree, SBNCloseDiskTree, SBNSearchDiskTree,
+ * SBNSearchDiskTreeInteger, SBNSearchFreeIds
+ *
+ * * Makefile, makefile.vc, CMakeLists.txt, shapelib.def: updates
+ * with new file and symbols.
+ *
+ * * commit: helper script to cvs commit
+ *
  * Revision 1.89  2011-07-24 05:59:25  fwarmerdam
  * minimize use of CPLError in favor of SAHooks.Error()
  *
@@ -167,7 +184,19 @@
 #ifdef USE_CPL
 #include "cpl_string.h"
 #else
+
+#if defined(_MSC_VER)
+# if _MSC_VER < 1900
+#     define snprintf _snprintf
+# endif
+#elif defined(WIN32) || defined(_WIN32)
+#  ifndef snprintf
+#     define snprintf _snprintf
+#  endif
+#endif
+
 #define CPLsprintf sprintf
+#define CPLsnprintf snprintf
 #endif
 
 SHP_CVSID("$Id$")
@@ -180,7 +209,11 @@ SHP_CVSID("$Id$")
 /* File header size */
 #define XBASE_FILEHDR_SZ         32
 
+#ifdef USE_CPL
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
+#else
+#define CPL_IGNORE_RET_VAL_INT(x) x
+#endif
 
 /************************************************************************/
 /*                             SfRealloc()                              */

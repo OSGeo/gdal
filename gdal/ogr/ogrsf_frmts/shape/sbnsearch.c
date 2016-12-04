@@ -47,6 +47,18 @@ SHP_CVSID("$Id$")
 #  define FALSE 0
 #endif
 
+#ifndef USE_CPL
+#if defined(_MSC_VER)
+# if _MSC_VER < 1900
+#     define snprintf _snprintf
+# endif
+#elif defined(WIN32) || defined(_WIN32)
+#  ifndef snprintf
+#     define snprintf _snprintf
+#  endif
+#endif
+#endif
+
 #define READ_MSB_INT(ptr) \
         (((ptr)[0] << 24) | ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3])
 
