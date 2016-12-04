@@ -69,17 +69,19 @@
 
 #include <emmintrin.h>
 #define CAST_PCT(x) ((GByte*)x)
-#define ALIGN_INT_ARRAY_ON_16_BYTE(x) ( (((GUIntptr_t)(x) % 16) != 0 ) ? (int*)((GByte*)(x) + 16 - ((GUIntptr_t)(x) % 16)) : (x) )
-
+#define ALIGN_INT_ARRAY_ON_16_BYTE(x) \
+    ( (((GUIntptr_t)(x) % 16) != 0 ) \
+      ? (int*)((GByte*)(x) + 16 - ((GUIntptr_t)(x) % 16)) \
+      : (x) )
 #else
-
 #define CAST_PCT(x) x
-
 #endif
 
-#define MAKE_COLOR_CODE(r,g,b) ((r)|((g)<<8)|((b)<<16))
-
 CPL_CVSID("$Id$");
+
+static int MAKE_COLOR_CODE( int r, int g, int b ) {
+  return r | (g << 8) | (b << 16);
+}
 
 static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
                               int nCLevels );
@@ -145,8 +147,8 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
 
 {
     return GDALDitherRGB2PCTInternal( hRed, hGreen, hBlue, hTarget,
-                                hColorTable, 5, NULL, TRUE,
-                                pfnProgress, pProgressArg );
+                                      hColorTable, 5, NULL, TRUE,
+                                      pfnProgress, pProgressArg );
 }
 
 int GDALDitherRGB2PCTInternal(
@@ -167,8 +169,6 @@ int GDALDitherRGB2PCTInternal(
     VALIDATE_POINTER1( hBlue, "GDALDitherRGB2PCT", CE_Failure );
     VALIDATE_POINTER1( hTarget, "GDALDitherRGB2PCT", CE_Failure );
     VALIDATE_POINTER1( hColorTable, "GDALDitherRGB2PCT", CE_Failure );
-
-    CPLErr err = CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
@@ -208,7 +208,7 @@ int GDALDitherRGB2PCTInternal(
     int anPCTUnaligned[256+4];  // 4 for alignment on 16-byte boundary.
     int* anPCT = ALIGN_INT_ARRAY_ON_16_BYTE(anPCTUnaligned);
 #else
-    int anPCT[256*4];
+    int anPCT[256*4] = {};
 #endif
     const int nColors = GDALGetColorEntryCount( hColorTable );
 
@@ -273,11 +273,11 @@ int GDALDitherRGB2PCTInternal(
     int *panError = static_cast<int *>(
         VSI_CALLOC_VERBOSE(sizeof(int), (nXSize + 2) * 3));
 
-    if (pabyRed == NULL ||
+    if( pabyRed == NULL ||
         pabyGreen == NULL ||
         pabyBlue == NULL ||
         pabyIndex == NULL ||
-        panError == NULL)
+        panError == NULL )
     {
         CPLFree( pabyRed );
         CPLFree( pabyGreen );
@@ -331,6 +331,8 @@ int GDALDitherRGB2PCTInternal(
 /* ==================================================================== */
 /*      Loop over all scanlines of data to process.                     */
 /* ==================================================================== */
+    CPLErr err = CE_None;
+
     for( int iScanline = 0; iScanline < nYSize; iScanline++ )
     {
 /* -------------------------------------------------------------------- */
@@ -353,15 +355,16 @@ int GDALDitherRGB2PCTInternal(
 /* -------------------------------------------------------------------- */
 /*      Read source data.                                               */
 /* -------------------------------------------------------------------- */
-        err = GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1,
-                      pabyRed, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err == CE_None )
-            err = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1,
+        CPLErr err1 =
+            GDALRasterIO( hRed, GF_Read, 0, iScanline, nXSize, 1,
+                          pabyRed, nXSize, 1, GDT_Byte, 0, 0 );
+        if( err1 == CE_None )
+            err1 = GDALRasterIO( hGreen, GF_Read, 0, iScanline, nXSize, 1,
                       pabyGreen, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err == CE_None )
-            err = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1,
+        if( err1 == CE_None )
+            err1 = GDALRasterIO( hBlue, GF_Read, 0, iScanline, nXSize, 1,
                       pabyBlue, nXSize, 1, GDT_Byte, 0, 0 );
-        if( err != CE_None )
+        if( err1 != CE_None )
         {
             CPLFree( pabyRed );
             CPLFree( pabyGreen );
@@ -370,7 +373,7 @@ int GDALDitherRGB2PCTInternal(
             CPLFree( panError );
             CPLFree( pabyColorMap );
 
-            return err;
+            return err1;
         }
 
 /* -------------------------------------------------------------------- */
@@ -408,13 +411,14 @@ int GDALDitherRGB2PCTInternal(
             const int nBlueValue =
                 std::max(0, std::min(255, pabyBlue[i] + nLastBlueError));
 
-            int iIndex, nError, nSixth;
+            int iIndex = 0;
+            int nError = 0;
+            int nSixth = 0;
             if( psColorIndexMap )
             {
-                GUInt32 nColorCode = MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
+                const GUInt32 nColorCode =
+                    MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
                 GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
-                //int nCollisions = 0;
-                //static int nMaxCollisions = 0;
                 while( true )
                 {
                     if( psColorIndexMap[nIdx].nColorCode == nColorCode )
@@ -422,12 +426,13 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex;
                         break;
                     }
-                    if( (int)psColorIndexMap[nIdx].nColorCode < 0 )
+                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode) < 0 )
                     {
                         psColorIndexMap[nIdx].nColorCode = nColorCode;
-                        iIndex = FindNearestColor( nColors, anPCT,
-                                                   nRedValue, nGreenValue, nBlueValue );
-                        psColorIndexMap[nIdx].nIndex = (GByte) iIndex;
+                        iIndex = FindNearestColor(
+                            nColors, anPCT, nRedValue, nGreenValue, nBlueValue);
+                        psColorIndexMap[nIdx].nIndex =
+                            static_cast<GByte>(iIndex);
                         break;
                     }
                     if( psColorIndexMap[nIdx].nColorCode2 == nColorCode )
@@ -435,12 +440,14 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex2;
                         break;
                     }
-                    if( (int)psColorIndexMap[nIdx].nColorCode2 < 0 )
+                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode2) <
+                        0 )
                     {
                         psColorIndexMap[nIdx].nColorCode2 = nColorCode;
-                        iIndex = FindNearestColor( nColors, anPCT,
-                                                   nRedValue, nGreenValue, nBlueValue );
-                        psColorIndexMap[nIdx].nIndex2 = (GByte) iIndex;
+                        iIndex = FindNearestColor(
+                            nColors, anPCT, nRedValue, nGreenValue, nBlueValue);
+                        psColorIndexMap[nIdx].nIndex2 =
+                            static_cast<GByte>(iIndex);
                         break;
                     }
                     if( psColorIndexMap[nIdx].nColorCode3 == nColorCode )
@@ -461,7 +468,6 @@ int GDALDitherRGB2PCTInternal(
 
                     do
                     {
-                        // nCollisions ++;
                         nIdx+=257;
                         if( nIdx >= PRIME_FOR_65536 )
                             nIdx -= PRIME_FOR_65536;
@@ -472,12 +478,6 @@ int GDALDitherRGB2PCTInternal(
                            psColorIndexMap[nIdx].nColorCode2 != nColorCode&&
                            (int)psColorIndexMap[nIdx].nColorCode3 >= 0 &&
                            psColorIndexMap[nIdx].nColorCode3 != nColorCode );
-                    /*if( nCollisions > nMaxCollisions )
-                    {
-                        nMaxCollisions = nCollisions;
-                        printf("nCollisions = %d for R=%d,G=%d,B=%d\n",
-                                nCollisions, nRedValue, nGreenValue, nBlueValue);
-                    }*/
                 }
             }
             else if( pasDynamicColorMap == NULL )
