@@ -1554,7 +1554,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
         const int nFieldCount = DBFGetFieldCount( hDBF );
         for( int i = 0; i < nFieldCount; i++ )
         {
-            char szFieldName[20] = {};
+            char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
             int nWidth = 0;
             int nPrecision = 0;
 
@@ -1663,10 +1663,10 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     const int nNameSize = static_cast<int>(osFieldName.size());
     char * pszTmp =
-        CPLScanString( osFieldName, std::min( nNameSize, 10) , TRUE, TRUE);
-    char szNewFieldName[10 + 1];
-    strncpy(szNewFieldName, pszTmp, 10);
-    szNewFieldName[10] = '\0';
+        CPLScanString( osFieldName, std::min( nNameSize, XBASE_FLDNAME_LEN_WRITE) , TRUE, TRUE);
+    char szNewFieldName[XBASE_FLDNAME_LEN_WRITE + 1];
+    strncpy(szNewFieldName, pszTmp, sizeof(szNewFieldName)-1);
+    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
     if( !bApproxOK &&
         ( DBFGetFieldIndex( hDBF, szNewFieldName ) >= 0 ||
@@ -1698,9 +1698,10 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
     {
         // One hundred similar field names!!?
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Too many field names like '%s' when truncated to 10 letters "
+                  "Too many field names like '%s' when truncated to %d letters "
                   "for Shapefile format.",
-                  poFieldDefn->GetNameRef() );
+                  poFieldDefn->GetNameRef(),
+                  XBASE_FLDNAME_LEN_WRITE );
     }
 
     OGRFieldDefn oModFieldDefn(poFieldDefn);
@@ -1923,7 +1924,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     OGRFieldDefn* poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     OGRFieldType eType = poFieldDefn->GetType();
 
-    char szFieldName[20] = {};
+    // On reading we support up to 11 characters
+    char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
     int nWidth = 0;
     int nPrecision = 0;
     DBFGetFieldInfo( hDBF, iField, szFieldName, &nWidth, &nPrecision );
@@ -1979,8 +1981,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
             osFieldName = poNewFieldDefn->GetNameRef();
         }
 
-        strncpy(szFieldName, osFieldName, 10);
-        szFieldName[10] = '\0';
+        strncpy(szFieldName, osFieldName, sizeof(szFieldName)-1);
+        szFieldName[sizeof(szFieldName)-1] = '\0';
     }
     if( nFlagsIn & ALTER_WIDTH_PRECISION_FLAG )
     {
@@ -3075,7 +3077,7 @@ OGRErr OGRShapeLayer::ResizeDBF()
         OGRFieldDefn* const poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
 
         const char chNativeType = DBFGetNativeFieldType( hDBF, iField );
-        char szFieldName[20] = {};
+        char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
         int nOriWidth = 0;
         int nPrecision = 0;
         DBFGetFieldInfo( hDBF, iField, szFieldName,

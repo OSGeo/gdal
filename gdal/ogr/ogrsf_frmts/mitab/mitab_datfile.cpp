@@ -832,8 +832,8 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef* psFieldDef,
     else if (nWidth == 0)
         nWidth=254; /* char fields */
 
-    strncpy(psFieldDef->szName, pszName, 10);
-    psFieldDef->szName[10] = '\0';
+    strncpy(psFieldDef->szName, pszName, sizeof(psFieldDef->szName)-1);
+    psFieldDef->szName[sizeof(psFieldDef->szName)-1] = '\0';
     psFieldDef->eTABType = eType;
     psFieldDef->byLength = (GByte)nWidth;
     psFieldDef->byDecimals = (GByte)nPrecision;
@@ -1332,8 +1332,10 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
 
     if (nFlags & ALTER_NAME_FLAG)
     {
-        strncpy(m_pasFieldDef[iField].szName, poNewFieldDefn->GetNameRef(), 10);
-        m_pasFieldDef[iField].szName[10] = '\0';
+        strncpy(m_pasFieldDef[iField].szName, poNewFieldDefn->GetNameRef(),
+                sizeof(m_pasFieldDef[iField].szName)-1);
+        m_pasFieldDef[iField].szName[
+                            sizeof(m_pasFieldDef[iField].szName)-1] = '\0';
         /* If renaming is the only operation, then nothing more to do */
         if( nFlags == ALTER_NAME_FLAG )
         {
@@ -2349,20 +2351,24 @@ int TABDATFile::WriteTimeField(const char *pszValue,
          * "HHMMSSmmm"
          *------------------------------------------------------------*/
         char szBuf[4];
-        strncpy(szBuf,pszValue,2);
-        szBuf[2]=0;
+        const int HHLength = 2;
+        strncpy(szBuf,pszValue,HHLength);
+        szBuf[HHLength]=0;
         nHour = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+2,2);
-        szBuf[2]=0;
+        const int MMLength = 2;
+        strncpy(szBuf,pszValue+HHLength,MMLength);
+        szBuf[MMLength]=0;
         nMin = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+4,2);
-        szBuf[2]=0;
+        const int SSLength = 2;
+        strncpy(szBuf,pszValue+HHLength+MMLength,SSLength);
+        szBuf[SSLength]=0;
         nSec = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+6,3);
-        szBuf[3]=0;
+        const int mmmLength = 3;
+        strncpy(szBuf,pszValue+HHLength+MMLength+SSLength,mmmLength);
+        szBuf[mmmLength]=0;
         nMS = atoi(szBuf);
     }
     else if (strlen(pszValue) == 0)

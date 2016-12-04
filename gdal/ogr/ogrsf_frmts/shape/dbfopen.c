@@ -864,8 +864,8 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
     if( nWidth < 1 )
         return -1;
 
-    if( nWidth > 255 )
-        nWidth = 255;
+    if( nWidth > XBASE_FLD_MAX_WIDTH )
+        nWidth = XBASE_FLD_MAX_WIDTH;
 
     nOldRecordLength = psDBF->nRecordLength;
     nOldHeaderLength = psDBF->nHeaderLength;
@@ -910,10 +910,7 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
     for( i = 0; i < 32; i++ )
         pszFInfo[i] = '\0';
 
-    if( (int) strlen(pszFieldName) < 10 )
-        strncpy( pszFInfo, pszFieldName, strlen(pszFieldName));
-    else
-        strncpy( pszFInfo, pszFieldName, 10);
+    strncpy( pszFInfo, pszFieldName, XBASE_FLDNAME_LEN_WRITE );
 
     pszFInfo[11] = psDBF->pachFieldType[psDBF->nFields-1];
 
@@ -1237,6 +1234,8 @@ DBFGetRecordCount( DBFHandle psDBF )
 /*                          DBFGetFieldInfo()                           */
 /*                                                                      */
 /*      Return any requested information about the field.               */
+/*      pszFieldName must be at least XBASE_FLDNAME_LEN_READ+1 (=12)    */
+/*      bytes long.                                                     */
 /************************************************************************/
 
 DBFFieldType SHPAPI_CALL
@@ -1257,9 +1256,10 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
     {
 	int	i;
 
-	strncpy( pszFieldName, (char *) psDBF->pszHeader+iField*32, 11 );
-	pszFieldName[11] = '\0';
-	for( i = 10; i > 0 && pszFieldName[i] == ' '; i-- )
+	strncpy( pszFieldName, (char *) psDBF->pszHeader+iField*32,
+                 XBASE_FLDNAME_LEN_READ );
+	pszFieldName[XBASE_FLDNAME_LEN_READ] = '\0';
+	for( i = XBASE_FLDNAME_LEN_READ - 1; i > 0 && pszFieldName[i] == ' '; i-- )
 	    pszFieldName[i] = '\0';
     }
 
@@ -1293,7 +1293,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 {
     int	       	i, j, nRetResult = TRUE;
     unsigned char	*pabyRec;
-    char	szSField[400], szFormat[20];
+    char	szSField[XBASE_FLD_MAX_WIDTH+1], szFormat[20];
 
 /* -------------------------------------------------------------------- */
 /*	Is this a valid record?						*/
@@ -1706,20 +1706,23 @@ int SHPAPI_CALL
 DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
 
 {
-    char          name[12], name1[12], name2[12];
+    char          name[XBASE_FLDNAME_LEN_READ+1],
+                  name1[XBASE_FLDNAME_LEN_READ+1],
+                  name2[XBASE_FLDNAME_LEN_READ+1];
     int           i;
 
-    strncpy(name1, pszFieldName,11);
-    name1[11] = '\0';
+    strncpy(name1, pszFieldName,XBASE_FLDNAME_LEN_READ);
+    name1[XBASE_FLDNAME_LEN_READ] = '\0';
     str_to_upper(name1);
 
     for( i = 0; i < DBFGetFieldCount(psDBF); i++ )
     {
         DBFGetFieldInfo( psDBF, i, name, NULL, NULL );
-        strncpy(name2,name,11);
+        strncpy(name2,name,XBASE_FLDNAME_LEN_READ);
+        name2[XBASE_FLDNAME_LEN_READ] = '\0';
         str_to_upper(name2);
 
-        if(!strncmp(name1,name2,10))
+        if(!strcmp(name1,name2))
             return(i);
     }
     return(-1);
@@ -2072,8 +2075,8 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     if( nWidth < 1 )
         return -1;
 
-    if( nWidth > 255 )
-        nWidth = 255;
+    if( nWidth > XBASE_FLD_MAX_WIDTH )
+        nWidth = XBASE_FLD_MAX_WIDTH;
 
 /* -------------------------------------------------------------------- */
 /*      Assign the new field information fields.                        */
@@ -2090,10 +2093,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     for( i = 0; i < 32; i++ )
         pszFInfo[i] = '\0';
 
-    if( (int) strlen(pszFieldName) < 10 )
-        strncpy( pszFInfo, pszFieldName, strlen(pszFieldName));
-    else
-        strncpy( pszFInfo, pszFieldName, 10);
+    strncpy( pszFInfo, pszFieldName, XBASE_FLDNAME_LEN_WRITE );
 
     pszFInfo[11] = psDBF->pachFieldType[iField];
 

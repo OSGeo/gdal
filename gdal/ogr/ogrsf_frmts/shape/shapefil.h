@@ -501,7 +501,13 @@ typedef enum {
   FTInvalid
 } DBFFieldType;
 
-#define XBASE_FLDHDR_SZ       32
+#define XBASE_FLDHDR_SZ         32
+/* Shapelib read up to 11 characters, even if only 10 should normally be used */
+#define XBASE_FLDNAME_LEN_READ  11
+/* On writing, we limit to 10 characters */
+#define XBASE_FLDNAME_LEN_WRITE 10
+/* Normally only 254 characters should be used. We tolerate 255 historically */
+#define XBASE_FLD_MAX_WIDTH     255
 
 DBFHandle SHPAPI_CALL
       DBFOpen( const char * pszDBFFile, const char * pszAccess );
