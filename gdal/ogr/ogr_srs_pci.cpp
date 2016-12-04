@@ -536,10 +536,12 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
                 {
                     if( CSLCount(papszLineItems) > 3
-                        && EQUALN(papszLineItems[0], szEarthModel, 4) )
+                        && EQUALN(papszLineItems[0], szEarthModel,
+                                  sizeof(szEarthModel)-1) )
                     {
                         papszDatumDefn = papszLineItems;
-                        strncpy( szEarthModel, papszLineItems[2], 4 );
+                        strncpy( szEarthModel, papszLineItems[2],
+                                 sizeof(szEarthModel)-1 );
                         break;
                     }
                     CSLDestroy( papszLineItems );
