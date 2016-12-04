@@ -687,7 +687,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
 
         if( !bHasUserFieldMatchingFID &&
-            osFIDColName.size() && (poFeature->GetFID() != OGRNullFID || (nNextFID >= 0 && bHasJustGotNextFID)) )
+            !osFIDColName.empty() && (poFeature->GetFID() != OGRNullFID || (nNextFID >= 0 && bHasJustGotNextFID)) )
         {
             if( bMustComma )
                 osSQL += ", ";

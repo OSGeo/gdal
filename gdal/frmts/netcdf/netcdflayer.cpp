@@ -1080,7 +1080,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature* poFeature, int nMainDimId, size
         }
     }
     else if( m_nXVarID >= 0 && m_nYVarID >= 0 && m_nZVarID >= 0 &&
-             m_osProfileDimName.size() &&
+             !m_osProfileDimName.empty() &&
              nMainDimId == m_nRecordDimID )
     {
         OGRGeometry* poGeom = poFeature->GetGeometryRef();

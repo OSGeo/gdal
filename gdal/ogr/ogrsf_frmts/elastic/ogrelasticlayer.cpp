@@ -1026,7 +1026,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
     json_object_object_foreachC( poSource, it )
     {
         if( osPath.empty() &&
-            m_osFID.size() && EQUAL(m_osFID, it.key) )
+            !m_osFID.empty() && EQUAL(m_osFID, it.key) )
         {
             json_type eJSONType = json_object_get_type(it.val);
             if( eJSONType == json_type_int )

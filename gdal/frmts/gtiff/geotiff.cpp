@@ -911,7 +911,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLSetThreadLocalConfigOption(
                     "GDAL_JPEG_TO_RGB",
-                    osOldVal.size() ? osOldVal.c_str() : NULL );
+                    !osOldVal.empty() ? osOldVal.c_str() : NULL );
             }
         }
         else

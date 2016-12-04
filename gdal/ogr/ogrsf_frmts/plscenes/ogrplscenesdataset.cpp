@@ -461,9 +461,9 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     if( bUseVSICURL )
     {
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_USE_HEAD",
-                                    osOldHead.size() ? osOldHead.c_str(): NULL);
+                                    !osOldHead.empty() ? osOldHead.c_str(): NULL);
         CPLSetThreadLocalConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME",
-                                    osOldAllowedFilename.size() ? osOldAllowedFilename.c_str(): NULL);
+                                    !osOldAllowedFilename.empty() ? osOldAllowedFilename.c_str(): NULL);
     }
 
     return poOutDS;

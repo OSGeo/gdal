@@ -198,7 +198,7 @@ int OGRGFTResultLayer::RunSQL()
             poTableDefn = poTableLayer->GetLayerDefn();
 
         if (poTableLayer != NULL &&
-            poTableLayer->GetTableId().size() &&
+            !poTableLayer->GetTableId().empty() &&
             !EQUAL(osTableId, poTableLayer->GetTableId()))
         {
             osChangedSQL = osSQL;

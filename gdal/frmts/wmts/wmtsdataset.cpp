@@ -342,8 +342,8 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
 /* ==================================================================== */
     if( pszDomain != NULL && EQUAL(pszDomain,"LocationInfo") &&
         pszName != NULL && STARTS_WITH_CI(pszName, "Pixel_") &&
-        poGDS->oTMS.aoTM.size() &&
-        poGDS->osURLFeatureInfoTemplate.size() )
+        !poGDS->oTMS.aoTM.empty() &&
+        !poGDS->osURLFeatureInfoTemplate.empty() )
     {
         int iPixel, iLine;
 

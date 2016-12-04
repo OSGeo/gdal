@@ -2101,7 +2101,7 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
         bStaticFIPSMode = bFIPSMode;
 
         if( !osPEMKeyFile.empty() || !osPEMKeyPassword.empty() ||
-            osCAFile.size() || !osCRLFile.empty() )
+            !osCAFile.empty() || !osCRLFile.empty() )
         {
             options.setSSLMode(Options::kSSLRequired);
             if( !osPEMKeyFile.empty() )

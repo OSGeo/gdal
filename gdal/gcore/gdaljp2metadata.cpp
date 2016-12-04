@@ -2507,7 +2507,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     std::vector<CPLString> aosTmpFiles;
     if( !aoMetadata.empty() || !aoAnnotations.empty() || !aoGMLFiles.empty() ||
-        aoStyles.size() || !aoExtensions.empty() )
+        !aoStyles.empty() || !aoExtensions.empty() )
     {
         CPLXMLNode* psRoot = CPLParseXMLString(osDoc);
         CPLAssert(psRoot);
@@ -2776,7 +2776,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
                     if( CSLCount(papszTokens) == 2 &&
                         aoGMLFiles[i].osNamespace.empty() &&
-                        aoGMLFiles[i].osSchemaLocation.size() )
+                        !aoGMLFiles[i].osSchemaLocation.empty() )
                     {
                         osSchemaLocation += papszTokens[0];
                         osSchemaLocation += " ";
@@ -2834,7 +2834,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             if( !osSchemaLocation.empty() )
                                 osSchemaLocation += " ";
                             if( !aoGMLFiles[i].osNamespace.empty() &&
-                                aoGMLFiles[i].osSchemaLocation.size() &&
+                                !aoGMLFiles[i].osSchemaLocation.empty() &&
                                 strcmp(papszIter[0],
                                        aoGMLFiles[i].osNamespace) == 0 )
                             {

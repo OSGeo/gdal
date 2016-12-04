@@ -227,8 +227,8 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
                  i, psRequest->URL.c_str(), psRequest->nStatus,
-                 psRequest->ContentType.size() ? psRequest->ContentType.c_str() : "(null)",
-                 psRequest->Error.size() ? psRequest->Error.c_str() : "(null)");
+                 !psRequest->ContentType.empty() ? psRequest->ContentType.c_str() : "(null)",
+                 !psRequest->Error.empty() ? psRequest->Error.c_str() : "(null)");
 
         curl_multi_remove_handle(curl_multi, pasRequest->m_curl_handle);
     }
