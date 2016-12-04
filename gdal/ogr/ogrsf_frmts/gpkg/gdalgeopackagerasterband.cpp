@@ -687,7 +687,7 @@ GByte* GDALGPKGMBTilesLikePseudoDataset::ReadTile( int nRow, int nCol, GByte *pa
     char *pszSQL = sqlite3_mprintf( "SELECT tile_data FROM \"%w\" "
         "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
         m_osRasterTable.c_str(), m_nZoomLevel, GetRowFromIntoTopConvention(nRow), nCol,
-        m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+        !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "%s", pszSQL);
@@ -1720,7 +1720,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartia
                 char* pszNewSQL = sqlite3_mprintf("SELECT tile_data FROM \"%w\" "
                         "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
                         m_osRasterTable.c_str(), m_nZoomLevel, GetRowFromIntoTopConvention(nRow), nCol,
-                        m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+                        !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GPKG", "%s", pszNewSQL);
 #endif

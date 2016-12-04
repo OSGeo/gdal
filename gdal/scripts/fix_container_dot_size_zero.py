@@ -74,7 +74,7 @@ while True:
     if pos1 < 0 and pos2 < 0:
         break
     separator = ''
-    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0):
+    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0): 
         pos = pos1
         pos_after = pos + len('.size()')
         separator = '.'
@@ -121,10 +121,15 @@ while True:
             extra_space = ' '
         pos_cur = find_start_identifier_pos(content, pos - 1)
         pos_cur -= 1
-        while content[pos_cur] == ' ':
+        while content[pos_cur] == ' ' or content[pos_cur] == '\n' or \
+              content[pos_cur] == '\t':
             pos_cur -= 1
         pos_cur += 1
-        if content[pos_cur-3:pos_cur] == 'if(':
+        if (content[pos_after:].startswith(' ?') or \
+            content[pos_after:].startswith('?')) and \
+           (content[pos_cur-1] == '(' or content[pos_cur-1] == ',') :
+            non_empty = True
+        elif content[pos_cur-3:pos_cur] == 'if(':
             non_empty = True
         elif content[pos_cur-4:pos_cur] == 'if (':
             non_empty = True

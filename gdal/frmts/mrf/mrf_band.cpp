@@ -242,7 +242,7 @@ GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
 // Clean up the overviews if they exist
 GDALMRFRasterBand::~GDALMRFRasterBand()
 {
-    while( 0!=overviews.size() )
+    while( !overviews.empty() )
     {
         delete overviews[overviews.size()-1];
         overviews.pop_back();

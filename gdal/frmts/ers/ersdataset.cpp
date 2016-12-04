@@ -706,9 +706,9 @@ void ERSDataset::ReadGCPs()
     osDatum = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Datum", "" );
     osUnits = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( osProj.size() ? osProj.c_str() : "RAW",
-                        osDatum.size() ? osDatum.c_str() : "WGS84",
-                        osUnits.size() ? osUnits.c_str() : "METERS" );
+    oSRS.importFromERM( !osProj.empty() ? osProj.c_str() : "RAW",
+                        !osDatum.empty() ? osDatum.c_str() : "WGS84",
+                        !osUnits.empty() ? osUnits.c_str() : "METERS" );
 
     CPLFree( pszGCPProjection );
     oSRS.exportToWkt( &pszGCPProjection );
@@ -1054,9 +1054,9 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->osDatum = poHeader->Find( "CoordinateSpace.Datum", "" );
     poDS->osUnits = poHeader->Find( "CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( poDS->osProj.size() ? poDS->osProj.c_str() : "RAW",
-                        poDS->osDatum.size() ? poDS->osDatum.c_str() : "WGS84",
-                        poDS->osUnits.size() ? poDS->osUnits.c_str() : "METERS" );
+    oSRS.importFromERM( !poDS->osProj.empty() ? poDS->osProj.c_str() : "RAW",
+                        !poDS->osDatum.empty() ? poDS->osDatum.c_str() : "WGS84",
+                        !poDS->osUnits.empty() ? poDS->osUnits.c_str() : "METERS" );
 
     CPLFree( poDS->pszProjection );
     oSRS.exportToWkt( &(poDS->pszProjection) );

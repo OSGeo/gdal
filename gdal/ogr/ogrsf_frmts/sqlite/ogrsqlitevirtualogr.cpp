@@ -1008,7 +1008,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
              osAttributeFilter.c_str());
 #endif
 
-    if( pMyCursor->poLayer->SetAttributeFilter( osAttributeFilter.size() ?
+    if( pMyCursor->poLayer->SetAttributeFilter( !osAttributeFilter.empty() ?
                             osAttributeFilter.c_str() : NULL) != OGRERR_NONE )
     {
         sqlite3_free(pMyCursor->pVTab->zErrMsg);
