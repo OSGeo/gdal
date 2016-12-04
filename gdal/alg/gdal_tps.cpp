@@ -186,10 +186,11 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     std::map< std::pair<double, double>, int > oMapXYToIdx;
     for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
-        double afPL[2] = {
+        const double afPL[2] = {
             pasGCPList[iGCP].dfGCPPixel,
             pasGCPList[iGCP].dfGCPLine };
-        double afXY[2] = { pasGCPList[iGCP].dfGCPX, pasGCPList[iGCP].dfGCPY };
+        const double afXY[2] =
+            { pasGCPList[iGCP].dfGCPX, pasGCPList[iGCP].dfGCPY };
 
         std::map< std::pair<double, double>, int >::iterator oIter(
             oMapPixelLineToIdx.find(std::pair<double, double>(afPL[0],
@@ -261,9 +262,9 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         const char* pszWarpThreads =
             CSLFetchNameValue(papszOptions, "NUM_THREADS");
-        if (pszWarpThreads == NULL)
+        if( pszWarpThreads == NULL )
             pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-        if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+        if( EQUAL(pszWarpThreads, "ALL_CPUS") )
             nThreads = CPLGetNumCPUs();
         else
             nThreads = atoi(pszWarpThreads);
