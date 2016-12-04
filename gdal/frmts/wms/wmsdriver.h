@@ -175,7 +175,7 @@ public:
         CPL_UNUSED int nYInBlock) {};
 
     virtual const char *GetProjectionInWKT() {
-        if (m_projection_wkt.size() > 0)
+        if (!m_projection_wkt.empty())
             return m_projection_wkt.c_str();
         return NULL;
     };
