@@ -636,7 +636,7 @@ class ECWRasterBand : public GDALPamRasterBand
                    ~ECWRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual int    HasArbitraryOverviews() override { return apoOverviews.size() == 0; }
+    virtual int    HasArbitraryOverviews() override { return apoOverviews.empty(); }
     virtual int    GetOverviewCount() override { return (int)apoOverviews.size(); }
     virtual GDALRasterBand *GetOverview(int) override;
 

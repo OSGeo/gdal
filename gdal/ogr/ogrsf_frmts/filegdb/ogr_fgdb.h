@@ -314,7 +314,7 @@ public:
   FGdbDatabaseConnection* GetConnection() { return m_pConnection; }
 
   GDALDriver* GetOpenFileGDBDrv() { return m_poOpenFileGDBDrv; }
-  int         HasSelectLayers() { return m_oSetSelectLayers.size() != 0; }
+  int         HasSelectLayers() { return !m_oSetSelectLayers.empty(); }
 
   int         Close(int bCloseGeodatabase = FALSE);
   int         ReOpen();
