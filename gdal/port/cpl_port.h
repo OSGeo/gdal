@@ -915,6 +915,28 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
+#include <sal.h>
+# if _MSC_VER > 1400
+/** Macro into which to wrap the format argument of a printf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_FORMAT_STRING(arg) _Printf_format_string_ arg
+/** Macro into which to wrap the format argument of a sscanf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_SCANF_FORMAT_STRING(arg) _Scanf_format_string_ arg
+# else
+/** Macro into which to wrap the format argument of a printf-like function */
+#  define CPL_FORMAT_STRING(arg) __format_string arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+#  define CPL_SCANF_FORMAT_STRING(arg) arg
+# endif
+#else
+/** Macro into which to wrap the format argument of a printf-like function */
+# define CPL_FORMAT_STRING(arg) arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+# define CPL_SCANF_FORMAT_STRING(arg) arg
+#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 && defined(GDAL_COMPILATION) */
+
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** Qualifier to warn when the return value of a function is not used */
 #define CPL_WARN_UNUSED_RESULT                        __attribute__((warn_unused_result))

@@ -237,32 +237,32 @@ size_t CPL_DLL CPLStrnlen(const char *pszStr, size_t nMaxLen);
 /* -------------------------------------------------------------------- */
 /*      Locale independent formatting functions.                        */
 /* -------------------------------------------------------------------- */
-int CPL_DLL CPLvsnprintf(char *str, size_t size, const char* fmt,
+int CPL_DLL CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char* fmt),
                          va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
 int CPL_DLL CPLsnprintf(char *str, size_t size,
-                        const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4);
+                        CPL_FORMAT_STRING(const char* fmt), ...) CPL_PRINT_FUNC_FORMAT(3,4);
 /*! @cond Doxygen_Suppress */
 #if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
+int CPL_DLL CPLsprintf(char *str, CPL_FORMAT_STRING(const char* fmt), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
 #else
-int CPL_DLL CPLsprintf(char *str, const char* fmt, ...)
+int CPL_DLL CPLsprintf(char *str, CPL_FORMAT_STRING(const char* fmt), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 /*! @endcond */
-int CPL_DLL CPLprintf(const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+int CPL_DLL CPLprintf(CPL_FORMAT_STRING(const char* fmt), ...) CPL_PRINT_FUNC_FORMAT(1, 2);
 
 /* For some reason Doxygen_Suppress is needed to avoid warning. Not sure why */
 /*! @cond Doxygen_Suppress */
 /* caution: only works with limited number of formats */
-int CPL_DLL CPLsscanf(const char* str, const char* fmt, ...) CPL_SCAN_FUNC_FORMAT(2, 3);
+int CPL_DLL CPLsscanf(const char* str, CPL_SCANF_FORMAT_STRING(const char* fmt), ...) CPL_SCAN_FUNC_FORMAT(2, 3);
 /*! @endcond */
 
-const char CPL_DLL *CPLSPrintf(const char *fmt, ...)
+const char CPL_DLL *CPLSPrintf(CPL_FORMAT_STRING(const char *fmt), ...)
     CPL_PRINT_FUNC_FORMAT(1, 2) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
+char CPL_DLL **CSLAppendPrintf(char **papszStrList, CPL_FORMAT_STRING(const char *fmt), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLVASPrintf(char **buf, const char *fmt, va_list args )
+int CPL_DLL CPLVASPrintf(char **buf, CPL_FORMAT_STRING(const char *fmt), va_list args )
     CPL_PRINT_FUNC_FORMAT(2, 0);
 
 /* -------------------------------------------------------------------- */
@@ -403,9 +403,9 @@ public:
     /* There seems to be a bug in the way the compiler count indices...
      * Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
     CPLString &Printf(
-        const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+        CPL_FORMAT_STRING(const char *pszFormat), ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     CPLString &vPrintf(
-        const char *pszFormat, va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
+        CPL_FORMAT_STRING(const char *pszFormat), va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
@@ -422,9 +422,9 @@ public:
     CPLString &tolower( void );
 };
 
-CPLString CPL_DLL CPLOPrintf(const char *pszFormat, ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
+CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
 CPLString CPL_DLL CPLOvPrintf(
-    const char *pszFormat, va_list args) CPL_PRINT_FUNC_FORMAT (1, 0);
+    CPL_FORMAT_STRING(const char *pszFormat), va_list args) CPL_PRINT_FUNC_FORMAT (1, 0);
 
 /* -------------------------------------------------------------------- */
 /*      URL processing functions, here since they depend on CPLString.  */

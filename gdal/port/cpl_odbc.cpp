@@ -1295,7 +1295,7 @@ void CPLODBCStatement::Append( double dfValue )
  * @return FALSE if formatting fails due to result being too large.
  */
 
-int CPLODBCStatement::Appendf( const char *pszFormat, ... )
+int CPLODBCStatement::Appendf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 
 {
     va_list args;
