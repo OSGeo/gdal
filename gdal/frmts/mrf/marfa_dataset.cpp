@@ -1171,7 +1171,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
     if (pszProj && (!EQUAL(pszProj, "")))
         CPLCreateXMLElementAndValue(gtags, "Projection", pszProj);
 
-    if (!optlist.empty() ) {
+    if ( optlist.Count() != 0 ) {
         CPLString options;
         for (int i = 0; i < optlist.size(); i++) {
             options += optlist[i];
