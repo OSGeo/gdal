@@ -457,15 +457,17 @@ typedef struct
 
     int         nRecords;
 
-    int         nRecordLength;
-    int         nHeaderLength;
+    int         nRecordLength; /* Must fit on uint16 */
+    int         nHeaderLength; /* File header length (32) + field
+                                  descriptor length + spare space.
+                                  Must fit on uint16 */
     int         nFields;
     int         *panFieldOffset;
     int         *panFieldSize;
     int         *panFieldDecimals;
     char        *pachFieldType;
 
-    char        *pszHeader;
+    char        *pszHeader; /* Field descriptors */
 
     int         nCurrentRecord;
     int         bCurrentRecordModified;
@@ -501,6 +503,7 @@ typedef enum {
   FTInvalid
 } DBFFieldType;
 
+/* Field descriptor/header size */
 #define XBASE_FLDHDR_SZ         32
 /* Shapelib read up to 11 characters, even if only 10 should normally be used */
 #define XBASE_FLDNAME_LEN_READ  11

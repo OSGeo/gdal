@@ -1627,13 +1627,6 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
                   "but some DBF readers might only support 255 fields" );
     }
 
-    if( hDBF->nHeaderLength + 32 > 65535 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Cannot add more fields in DBF file.");
-        return OGRERR_FAILURE;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
@@ -1788,15 +1781,6 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 
     oModFieldDefn.SetWidth( nWidth );
     oModFieldDefn.SetPrecision( nDecimals );
-
-    if( hDBF->nRecordLength + nWidth > 65535 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s in Shape DBF file. "
-                  "Maximum record length reached.",
-                  szNewFieldName );
-        return OGRERR_FAILURE;
-    }
 
     // Suppress the dummy FID field if we have created it just before.
     if( DBFGetFieldCount( hDBF ) == 1 && poFeatureDefn->GetFieldCount() == 0 )
