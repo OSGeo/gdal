@@ -67,7 +67,7 @@ typedef struct {
     // pixel line coordinates.  Built only if needed.
     int         nBackMapWidth;
     int         nBackMapHeight;
-    double      adfBackMapGeoTransform[6]; // maps georef to pixel/line.
+    double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
     float       *pafBackMapX;
     float       *pafBackMapY;
 
@@ -86,7 +86,7 @@ typedef struct {
     int              bHasNoData;
     double           dfNoDataX;
 
-    // geolocation <-> base image mapping.
+    // Geolocation <-> base image mapping.
     double           dfPIXEL_OFFSET;
     double           dfPIXEL_STEP;
     double           dfLINE_OFFSET;
@@ -103,23 +103,20 @@ typedef struct {
 static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
 
 {
-    int nXSize = 0;
-    int nYSize = 0;
-
     const int nXSize_XBand = GDALGetRasterXSize( psTransform->hDS_X );
     const int nYSize_XBand = GDALGetRasterYSize( psTransform->hDS_X );
     const int nXSize_YBand = GDALGetRasterXSize( psTransform->hDS_Y );
     const int nYSize_YBand = GDALGetRasterYSize( psTransform->hDS_Y );
 
+    const int nXSize = nXSize_XBand;
     // TODO(schwehr): This could use an explanation.
+    int nYSize = 0;
     if( nYSize_XBand == 1 && nYSize_YBand == 1 )
     {
-        nXSize = nXSize_XBand;
         nYSize = nXSize_YBand;
     }
     else
     {
-        nXSize = nXSize_XBand;
         nYSize = nYSize_XBand;
     }
 
@@ -451,7 +448,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                         static_cast<float>(dfXSum/nCount);
                     psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] =
                         static_cast<float>(dfYSum/nCount);
-                    // Genuinely valid points will have value iMaxIter+1
+                    // Genuinely valid points will have value iMaxIter + 1.
                     // On each iteration mark newly valid points with a
                     // descending value so that it will not be used on the
                     // current iteration only on subsequent ones.
@@ -698,7 +695,7 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
         return;
 
     GDALGeoLocTransformInfo *psTransform =
-        (GDALGeoLocTransformInfo *) pTransformAlg;
+        static_cast<GDALGeoLocTransformInfo *>(pTransformAlg);
 
     CPLFree( psTransform->pafBackMapX );
     CPLFree( psTransform->pafBackMapY );
@@ -730,7 +727,7 @@ int GDALGeoLocTransform( void *pTransformArg,
                          int *panSuccess )
 {
     GDALGeoLocTransformInfo *psTransform =
-        (GDALGeoLocTransformInfo *) pTransformArg;
+        static_cast<GDALGeoLocTransformInfo *>(pTransformArg);
 
     if( psTransform->bReversed )
         bDstToSrc = !bDstToSrc;
@@ -850,7 +847,7 @@ int GDALGeoLocTransform( void *pTransformArg,
             const int iBMX = static_cast<int>(dfBMX);
             const int iBMY = static_cast<int>(dfBMY);
 
-            int iBM = iBMX + iBMY * psTransform->nBackMapWidth;
+            const int iBM = iBMX + iBMY * psTransform->nBackMapWidth;
 
             if( iBMX < 0 || iBMY < 0
                 || iBMX >= psTransform->nBackMapWidth
@@ -944,8 +941,7 @@ CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
 /*      geoloc metadata.                                                */
 /* -------------------------------------------------------------------- */
     char **papszMD = psInfo->papszGeolocationInfo;
-    CPLXMLNode *psMD= CPLCreateXMLNode( psTree, CXT_Element,
-                                        "Metadata" );
+    CPLXMLNode *psMD= CPLCreateXMLNode( psTree, CXT_Element, "Metadata" );
 
     for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
     {
