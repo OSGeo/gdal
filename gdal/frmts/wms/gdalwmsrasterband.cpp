@@ -69,7 +69,7 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band,
 }
 
 GDALWMSRasterBand::~GDALWMSRasterBand() {
-    while (m_overviews.size() != 0) {
+    while (!m_overviews.empty()) {
         delete m_overviews.back();
         m_overviews.pop_back();
     }
@@ -166,10 +166,10 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         void *p = ((request.x == x) && (request.y == y)) ? buffer : NULL;
         if (ret == CE_None) {
             int success = (request.nStatus == 200) || 
-                          (request.Range.size() != 0 && request.nStatus == 206);
+                          (!request.Range.empty() && request.nStatus == 206);
             if (success && (request.pabyData != NULL) && (request.nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(request.pabyData, request.nDataLen));
-                if (file_name.size() > 0) {
+                if (!file_name.empty()) {
                     bool wms_exception = false;
                     /* check for error xml */
                     if (request.nDataLen >= 20) {
@@ -224,9 +224,9 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                 "Add the HTTP status code to <ZeroBlockHttpCodes> to ignore this error (see http://www.gdal.org/frmt_wms.html).",
                                 request.x,
                                 request.y,
-                                request.URL.size() != 0 ? request.Error.c_str(): "(null)",
+                                !request.URL.empty() ? request.Error.c_str(): "(null)",
                                 request.nStatus,
-                                request.Error.size() != 0 ? request.Error.c_str() : "(null)");
+                                !request.Error.empty() ? request.Error.c_str() : "(null)");
                 }
             }
         }
@@ -296,7 +296,7 @@ int GDALWMSRasterBand::GetOverviewCount() {
 }
 
 GDALRasterBand *GDALWMSRasterBand::GetOverview(int n) {
-    if ((m_overviews.size() > 0) && (static_cast<size_t>(n) < m_overviews.size())) return m_overviews[n];
+    if ((!m_overviews.empty()) && (static_cast<size_t>(n) < m_overviews.size())) return m_overviews[n];
     else return NULL;
 }
 
@@ -470,7 +470,7 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
         iPixel % nBlockXSize,
         iLine % nBlockXSize);
 
-    if (url.size() == 0)
+    if (url.empty())
         return NULL;
 
     CPLDebug("WMS", "URL = %s", url.c_str());
@@ -479,7 +479,7 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
     {
         // osMetadataItem.c_str() MUST be used, and not osMetadataItem,
         // otherwise a temporary copy is returned
-        return osMetadataItem.size() != 0 ? osMetadataItem.c_str() : NULL;
+        return !osMetadataItem.empty() ? osMetadataItem.c_str() : NULL;
     }
 
     osMetadataItemURL = url;
@@ -494,7 +494,7 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
         pszRes = reinterpret_cast<const char *>(psResult->pabyData);
     CPLHTTPDestroyResult(psResult);
 
-    if (pszRes.size() == 0) {
+    if (pszRes.empty()) {
         osMetadataItem = "";
         return NULL;
     }
@@ -853,7 +853,7 @@ static double getBandValue(std::vector<double> &v,size_t idx)
 double GDALWMSRasterBand::GetNoDataValue( int *pbSuccess)
 {
     std::vector<double> &v=m_parent_dataset->vNoData;
-    if (v.size()==0)
+    if (v.empty())
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v,nBand);
@@ -862,7 +862,7 @@ double GDALWMSRasterBand::GetNoDataValue( int *pbSuccess)
 double GDALWMSRasterBand::GetMinimum( int *pbSuccess)
 {
     std::vector<double> &v=m_parent_dataset->vMin;
-    if (v.size()==0)
+    if (v.empty())
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v,nBand);
@@ -871,7 +871,7 @@ double GDALWMSRasterBand::GetMinimum( int *pbSuccess)
 double GDALWMSRasterBand::GetMaximum( int *pbSuccess)
 {
     std::vector<double> &v=m_parent_dataset->vMax;
-    if (v.size()==0)
+    if (v.empty())
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v,nBand);

@@ -321,7 +321,7 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 #endif
 
-    if( osTmpDBName.size() && bMustUnlink )
+    if( !osTmpDBName.empty() && bMustUnlink )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -368,7 +368,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
     if( fpNodes )
         VSIFCloseL(fpNodes);
-    if( osNodesFilename.size() && bMustUnlinkNodesFile )
+    if( !osNodesFilename.empty() && bMustUnlinkNodesFile )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -2935,7 +2935,7 @@ int OGROSMDataSource::Open( const char * pszFilename,
     if( bRet )
     {
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
-        if( osInterestLayers.size() )
+        if( !osInterestLayers.empty() )
         {
             delete ExecuteSQL( osInterestLayers, NULL, NULL );
         }
@@ -3366,7 +3366,7 @@ void OGROSMDataSource::AddComputedAttributes(
 {
     for(size_t i=0; i<oAttributes.size();i++)
     {
-        if( oAttributes[i].osSQL.size() )
+        if( !oAttributes[i].osSQL.empty() )
         {
             papoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
                                                         oAttributes[i].eType,
@@ -4423,7 +4423,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             for(; oIter != oSetLayers.end(); ++oIter)
             {
                 const LayerDesc& oLayerDesc = *oIter;
-                if( oLayerDesc.osDSName.size() == 0 )
+                if( oLayerDesc.osDSName.empty() )
                 {
                     if( bLayerAlreadyAdded ) osInterestLayers += ",";
                     bLayerAlreadyAdded = true;

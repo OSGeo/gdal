@@ -61,7 +61,7 @@ public:
     // binary search for the offset closes to our target or earlier.
     uint32  FindPreceding( uint32 offset )
         {
-            if( offsets.size() == 0 )
+            if( offsets.empty() )
                 return 0;
 
             uint32 start=0, end=static_cast<uint32>(offsets.size())-1;
@@ -85,7 +85,7 @@ public:
             uint32 preceding = FindPreceding( offset );
 
             // special case for empty
-            if( offsets.size() == 0 )
+            if( offsets.empty() )
             {
                 offsets.push_back( offset );
                 sizes.push_back( size );
@@ -93,7 +93,7 @@ public:
             }
                     
             // special case for before first.
-            if( offsets.size() > 0 && offset < offsets[0] )
+            if( !offsets.empty() && offset < offsets[0] )
             {
                 if( offset+size > offsets[0] )
                     return true;

@@ -64,7 +64,7 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     }
 
     m_base_url = CPLGetXMLValue(config, "ServerURL", CPLGetXMLValue(config, "ServerUrl", ""));
-    if (m_base_url.size() == 0) {
+    if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: ArcGIS Server mini-driver: ServerURL missing.");
         return CE_Failure;
     }
@@ -123,12 +123,12 @@ CPLErr WMSMiniDriver_AGS::TiledImageRequest(WMSHTTPRequest &request,
         + CPLOPrintf("&format=%s", m_image_format.c_str())
         + CPLOPrintf("&layers=%s", m_layers.c_str());
 
-    if (m_transparent.size())
+    if (!m_transparent.empty() )
         url +=  CPLOPrintf("&transparent=%s", m_transparent.c_str());
     else
         url += "&transparent=false";
 
-    if (m_time_range.size())
+    if (!m_time_range.empty() )
         url += CPLOPrintf("&time=%s", m_time_range.c_str());
     else
         url += "&time=";

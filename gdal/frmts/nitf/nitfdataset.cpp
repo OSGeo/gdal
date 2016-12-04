@@ -2390,7 +2390,7 @@ void NITFDataset::InitializeNITFDESs()
         }
     }
 
-    if (aosList.size() > 0)
+    if (!aosList.empty())
         oSpecialMD.SetMetadata( aosList.List(), pszDESsDomain );
 }
 
@@ -2500,7 +2500,7 @@ void NITFDataset::InitializeNITFTREs()
             pszTREData += (nThisTRESize + 11);
         }
 
-        if (aosList.size() > 0)
+        if (!aosList.empty())
             oSpecialMD.SetMetadata( aosList.List(), pszTREsDomain );
     }
 }
@@ -3151,7 +3151,7 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     }
 
     if( pszDomain != NULL && EQUAL(pszDomain,"OVERVIEWS")
-        && osRSetVRT.size() > 0 )
+        && !osRSetVRT.empty() )
         return osRSetVRT;
 
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
@@ -3237,7 +3237,7 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename,
         aosRSetFilenames.push_back( osTarget );
     }
 
-    if( aosRSetFilenames.size() == 0 )
+    if( aosRSetFilenames.empty() )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -3293,7 +3293,7 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
 /*      If we have been using RSets we will need to clear them first.   */
 /* -------------------------------------------------------------------- */
-    if( osRSetVRT.size() > 0 )
+    if( !osRSetVRT.empty() )
     {
         oOvManager.CleanOverviews();
         osRSetVRT = "";

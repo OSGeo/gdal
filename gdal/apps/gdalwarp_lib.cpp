@@ -1383,7 +1383,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             CPLString osDstFilename(GDALGetDescription(hDstDS));
 
             char** papszContent = NULL;
-            if( osDstFilename.size() == 0 )
+            if( osDstFilename.empty() )
                 papszContent = CSLDuplicate(GDALGetMetadata(hDstDS, "xml:VRT"));
 
             GDALClose(hDstDS);
@@ -1789,7 +1789,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 pszThisSourceSRS = "";
         }
 
-        if( osThisTargetSRS.size() == 0 )
+        if( osThisTargetSRS.empty() )
             osThisTargetSRS = pszThisSourceSRS;
 
 /* -------------------------------------------------------------------- */

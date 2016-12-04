@@ -1171,7 +1171,7 @@ int CPLValidateXML( const char* pszXMLFilename,
 
     CPLXMLSchemaPtr pSchema =
         CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
-    if( osTmpXSDFilename.size() )
+    if( !osTmpXSDFilename.empty() )
         VSIUnlink(osTmpXSDFilename);
     if( pSchema == NULL )
         return FALSE;

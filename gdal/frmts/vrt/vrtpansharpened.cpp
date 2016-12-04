@@ -516,9 +516,9 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                 if( poDataset->GetProjectionRef() )
                     osProjection = poDataset->GetProjectionRef();
 
-                if( osPanProjection.size() )
+                if( !osPanProjection.empty() )
                 {
-                    if( osProjection.size() )
+                    if( !osProjection.empty() )
                     {
                         if( osPanProjection != osProjection )
                         {
@@ -544,7 +544,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
                                  osSourceFilename.c_str());
                     }
                 }
-                else if( osProjection.size() )
+                else if( !osProjection.empty() )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Pan dataset has no projection, whereas %s has one. Results might be incorrect",
@@ -867,7 +867,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         iSpectralBand ++;
     }
 
-    if( ahSpectralBands.size() == 0 )
+    if( ahSpectralBands.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "No spectral band defined");
         goto error;
@@ -987,7 +987,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         }
     }
 
-    if( adfWeights.size() == 0 )
+    if( adfWeights.empty() )
     {
         for( int i = 0; i < static_cast<int>( ahSpectralBands.size() ); i++ )
         {
@@ -1003,7 +1003,7 @@ CPLErr VRTPansharpenedDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPa
         goto error;
     }
 
-    if( aMapDstBandToSpectralBand.size() == 0 )
+    if( aMapDstBandToSpectralBand.empty() )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No spectral band is mapped to an output band");
@@ -1651,7 +1651,7 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
 
     // Build on-the-fly overviews from overviews of pan and spectral bands
     if( poGDS->m_poPansharpener != NULL &&
-        poGDS->m_apoOverviewDatasets.size() == 0 &&
+        poGDS->m_apoOverviewDatasets.empty() &&
         poGDS->m_poMainDataset == poGDS )
     {
         GDALPansharpenOptions* psOptions = poGDS->m_poPansharpener->GetOptions();

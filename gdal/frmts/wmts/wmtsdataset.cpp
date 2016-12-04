@@ -453,7 +453,7 @@ WMTSDataset::~WMTSDataset()
 int WMTSDataset::CloseDependentDatasets()
 {
     int bRet = GDALPamDataset::CloseDependentDatasets();
-    if( apoDatasets.size() )
+    if( !apoDatasets.empty() )
     {
         for(size_t i=0;i<apoDatasets.size();i++)
             delete apoDatasets[i];
@@ -661,7 +661,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             {
                 CPLString osLowerCorner = CPLGetXMLValue(psBB, "LowerCorner", "");
                 CPLString osUpperCorner = CPLGetXMLValue(psBB, "UpperCorner", "");
-                if( osLowerCorner.size() && osUpperCorner.size() )
+                if( !osLowerCorner.empty() && !osUpperCorner.empty() )
                 {
                     char** papszLC = CSLTokenizeString(osLowerCorner);
                     char** papszUC = CSLTokenizeString(osUpperCorner);
@@ -777,7 +777,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                      osIdentifier.c_str());
             return FALSE;
         }
-        if( oTMS.aoTM.size() == 0 )
+        if( oTMS.aoTM.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find TileMatrix in TileMatrixSet '%s'",
                      osIdentifier.c_str());
@@ -1063,7 +1063,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             return NULL;
         }
         osGetCapabilitiesURL = CPLGetXMLValue(psRoot, "GetCapabilitiesUrl", "");
-        if( osGetCapabilitiesURL.size() == 0 )
+        if( osGetCapabilitiesURL.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Missing <GetCapabilitiesUrl>");
             CPLDestroyXMLNode(psGDALWMTS);
@@ -1142,7 +1142,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         else
         {
             osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
-            if( osGetCapabilitiesURL.size() )
+            if( !osGetCapabilitiesURL.empty() )
             {
                 osGetCapabilitiesURL = CPLURLAddKVP(osGetCapabilitiesURL, "service", "WMTS");
                 osGetCapabilitiesURL = CPLURLAddKVP(osGetCapabilitiesURL, "request", "GetCapabilities");
@@ -1179,10 +1179,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                      pszIdentifier);
         }
         aoSetLayers.insert(pszIdentifier);
-        if( osLayer.size() && strcmp(osLayer, pszIdentifier) != 0 )
+        if( !osLayer.empty() && strcmp(osLayer, pszIdentifier) != 0 )
             continue;
         const char* pszTitle = CPLGetXMLValue(psIter, "Title", NULL);
-        if( osSelectLayer.size() == 0 )
+        if( osSelectLayer.empty() )
         {
             osSelectLayer = pszIdentifier;
         }
@@ -1208,10 +1208,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 strcmp(psSubIter->pszValue, "Format") == 0 )
             {
                 const char* pszValue = CPLGetXMLValue(psSubIter, "", "");
-                if( osTileFormat.size() && strcmp(osTileFormat, pszValue) != 0 )
+                if( !osTileFormat.empty() && strcmp(osTileFormat, pszValue) != 0 )
                     continue;
                 nCountTileFormat ++;
-                if( osSelectTileFormat.size() == 0 ||
+                if( osSelectTileFormat.empty() ||
                     EQUAL(pszValue, "image/png") )
                 {
                     osSelectTileFormat = pszValue;
@@ -1221,10 +1221,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                      strcmp(psSubIter->pszValue, "InfoFormat") == 0 )
             {
                 const char* pszValue = CPLGetXMLValue(psSubIter, "", "");
-                if( osInfoFormat.size() && strcmp(osInfoFormat, pszValue) != 0 )
+                if( !osInfoFormat.empty() && strcmp(osInfoFormat, pszValue) != 0 )
                     continue;
                 nCountInfoFormat ++;
-                if( osSelectInfoFormat.size() == 0 ||
+                if( osSelectInfoFormat.empty() ||
                     (EQUAL(pszValue, "application/vnd.ogc.gml") &&
                      !EQUAL(osSelectInfoFormat, "application/vnd.ogc.gml/3.1.1")) ||
                     EQUAL(pszValue, "application/vnd.ogc.gml/3.1.1") )
@@ -1245,10 +1245,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 const char* pszTMS = CPLGetXMLValue(
                                             psSubIter, "TileMatrixSet", "");
-                if( osTMS.size() && strcmp(osTMS, pszTMS) != 0 )
+                if( !osTMS.empty() && strcmp(osTMS, pszTMS) != 0 )
                     continue;
                 if( strcmp(osSelectLayer, pszIdentifier) == 0 &&
-                    osSelectTMS.size() == 0 )
+                    osSelectTMS.empty() )
                 {
                     osSelectTMS = pszTMS;
                 }
@@ -1268,7 +1268,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                             psSubIter, "isDefault", "false"));
                 const char* l_pszIdentifier = CPLGetXMLValue(
                                             psSubIter, "Identifier", "");
-                if( osStyle.size() && strcmp(osStyle, l_pszIdentifier) != 0 )
+                if( !osStyle.empty() && strcmp(osStyle, l_pszIdentifier) != 0 )
                     continue;
                 const char* pszStyleTitle = CPLGetXMLValue(
                                         psSubIter, "Title", l_pszIdentifier);
@@ -1279,7 +1279,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     aosStylesTitle.insert(aosStylesTitle.begin(),
                                             CPLString(pszStyleTitle));
                     if( strcmp(osSelectLayer, l_pszIdentifier) == 0 &&
-                        osSelectStyle.size() == 0 )
+                        osSelectStyle.empty() )
                     {
                         osSelectStyle = l_pszIdentifier;
                     }
@@ -1295,7 +1295,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                       strcmp(psSubIter->pszValue, "WGS84BoundingBox") == 0) )
             {
                 CPLString osCRS = CPLGetXMLValue(psSubIter, "crs", "");
-                if( osCRS.size() == 0 )
+                if( osCRS.empty() )
                 {
                     if( strcmp(psSubIter->pszValue, "WGS84BoundingBox") == 0 )
                     {
@@ -1328,7 +1328,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 CPLString osLowerCorner = CPLGetXMLValue(psSubIter, "LowerCorner", "");
                 CPLString osUpperCorner = CPLGetXMLValue(psSubIter, "UpperCorner", "");
                 OGRSpatialReference oSRS;
-                if( osCRS.size() && osLowerCorner.size() && osUpperCorner.size() &&
+                if( !osCRS.empty() && !osLowerCorner.empty() && !osUpperCorner.empty() &&
                     oSRS.SetFromUserInput(FixCRSName(osCRS)) == OGRERR_NONE )
                 {
                     int bSwap = oSRS.EPSGTreatsAsLatLong() ||
@@ -1354,23 +1354,23 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 if( EQUAL(CPLGetXMLValue(psSubIter, "resourceType", ""), "tile") )
                 {
                     const char* pszFormat = CPLGetXMLValue(psSubIter, "format", "");
-                    if( osTileFormat.size() && strcmp(osTileFormat, pszFormat) != 0 )
+                    if( !osTileFormat.empty() && strcmp(osTileFormat, pszFormat) != 0 )
                         continue;
-                    if( osURLTileTemplate.size() == 0 )
+                    if( osURLTileTemplate.empty() )
                         osURLTileTemplate = CPLGetXMLValue(psSubIter, "template", "");
                 }
                 else if( EQUAL(CPLGetXMLValue(psSubIter, "resourceType", ""), "FeatureInfo") )
                 {
                     const char* pszFormat = CPLGetXMLValue(psSubIter, "format", "");
-                    if( osInfoFormat.size() && strcmp(osInfoFormat, pszFormat) != 0 )
+                    if( !osInfoFormat.empty() && strcmp(osInfoFormat, pszFormat) != 0 )
                         continue;
-                    if( osURLFeatureInfoTemplate.size() == 0 )
+                    if( osURLFeatureInfoTemplate.empty() )
                         osURLFeatureInfoTemplate = CPLGetXMLValue(psSubIter, "template", "");
                 }
             }
         }
         if( strcmp(osSelectLayer, pszIdentifier) == 0 &&
-            osSelectStyle.size() == 0 && aosStylesIdentifier.size() > 0 )
+            osSelectStyle.empty() && !aosStylesIdentifier.empty() )
         {
             osSelectStyle = aosStylesIdentifier[0];
         }
@@ -1411,7 +1411,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                     CPLSPrintf("SUBDATASET_%d_DESC", nIdx), osDesc);
             }
         }
-        if( aosTMS.size() && aosStylesIdentifier.size() )
+        if( !aosTMS.empty() && !aosStylesIdentifier.empty() )
             nLayerCount ++;
         else
             CPLError(CE_Failure, CPLE_AppDefined, "Missing TileMatrixSetLink and/or Style");
@@ -1430,9 +1430,9 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if( nLayerCount == 1 )
     {
-        if( osSelectLayerTitle.size() )
+        if( !osSelectLayerTitle.empty() )
             poDS->SetMetadataItem("TITLE", osSelectLayerTitle);
-        if( osSelectLayerAbstract.size() )
+        if( !osSelectLayerAbstract.empty() )
             poDS->SetMetadataItem("ABSTRACT", osSelectLayerAbstract);
 
         poDS->papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
@@ -1573,7 +1573,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
         // Otherwise default to reproject a layer bounding box expressed in
         // another SRS
-        if( !bHasAOI && aoMapBoundingBox.size()&&
+        if( !bHasAOI && !aoMapBoundingBox.empty() &&
             (eExtentMethod == AUTO || eExtentMethod == LAYER_BBOX) )
         {
             std::map<CPLString, OGREnvelope>::iterator oIter = aoMapBoundingBox.begin();
@@ -1848,7 +1848,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         oTMS.aoTM.resize(1 + nMaxZoomLevel);
         poDS->oTMS = oTMS;
 
-        if( osProjection.size() )
+        if( !osProjection.empty() )
         {
             OGRSpatialReference oSRS;
             if( oSRS.SetFromUserInput(osProjection) == OGRERR_NONE )
@@ -1859,7 +1859,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 CPLFree(pszWKT);
             }
         }
-        if( poDS->osProjection.size() == 0 )
+        if( poDS->osProjection.empty() )
         {
             // Strip AXIS
             OGR_SRSNode *poGEOGCS = oTMS.oSRS.GetAttrNode( "GEOGCS" );
@@ -1876,10 +1876,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             CPLFree(pszWKT);
         }
 
-        if( osURLTileTemplate.size() == 0 )
+        if( osURLTileTemplate.empty() )
         {
             osURLTileTemplate = GetOperationKVPURL(psXML, "GetTile");
-            if( osURLTileTemplate.size() == 0 )
+            if( osURLTileTemplate.empty() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "No RESTful nor KVP GetTile operation found");
@@ -1923,10 +1923,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             }
         }
 
-        if( osURLFeatureInfoTemplate.size() == 0 && osSelectInfoFormat.size() != 0 )
+        if( osURLFeatureInfoTemplate.empty() && !osSelectInfoFormat.empty() )
         {
             osURLFeatureInfoTemplate = GetOperationKVPURL(psXML, "GetFeatureInfo");
-            if( osURLFeatureInfoTemplate.size() != 0 )
+            if( !osURLFeatureInfoTemplate.empty() )
             {
                 osURLFeatureInfoTemplate = CPLURLAddKVP(osURLFeatureInfoTemplate, "service", "WMTS");
                 osURLFeatureInfoTemplate = CPLURLAddKVP(osURLFeatureInfoTemplate, "request", "GetFeatureInfo");
@@ -2111,7 +2111,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->apoDatasets.push_back((GDALDataset*)hVRTDS);
         }
 
-        if( poDS->apoDatasets.size() == 0 )
+        if( poDS->apoDatasets.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "No zoom level found");
             CPLDestroyXMLNode(psXML);
@@ -2127,19 +2127,19 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->osXML += "  <GetCapabilitiesUrl>" +
                      WMTSEscapeXML(osGetCapabilitiesURL) +
                      "</GetCapabilitiesUrl>\n";
-        if( osSelectLayer.size() )
+        if( !osSelectLayer.empty() )
             poDS->osXML += "  <Layer>" + WMTSEscapeXML(osSelectLayer) + "</Layer>\n";
-        if( osSelectStyle.size() )
+        if( !osSelectStyle.empty() )
             poDS->osXML += "  <Style>" + WMTSEscapeXML(osSelectStyle) + "</Style>\n";
-        if( osSelectTMS.size() )
+        if( !osSelectTMS.empty() )
             poDS->osXML += "  <TileMatrixSet>" + WMTSEscapeXML(osSelectTMS) + "</TileMatrixSet>\n";
         if( !osMaxTileMatrixIdentifier.empty() )
             poDS->osXML += "  <TileMatrix>" + WMTSEscapeXML(osMaxTileMatrixIdentifier) + "</TileMatrix>\n";
         if( nUserMaxZoomLevel >= 0 )
             poDS->osXML += "  <ZoomLevel>" + CPLString().Printf("%d", nUserMaxZoomLevel) + "</ZoomLevel>\n";
-        if( nCountTileFormat > 1 && osSelectTileFormat.size() )
+        if( nCountTileFormat > 1 && !osSelectTileFormat.empty() )
             poDS->osXML += "  <Format>" + WMTSEscapeXML(osSelectTileFormat) + "</Format>\n";
-        if( nCountInfoFormat > 1 && osSelectInfoFormat.size() )
+        if( nCountInfoFormat > 1 && !osSelectInfoFormat.empty() )
             poDS->osXML += "  <InfoFormat>" + WMTSEscapeXML(osSelectInfoFormat) + "</InfoFormat>\n";
         poDS->osXML += "  <DataWindow>\n";
         poDS->osXML += CPLSPrintf("    <UpperLeftX>%.16g</UpperLeftX>\n",

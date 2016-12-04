@@ -1542,7 +1542,7 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
     {
         // No encoding defined: we don't know.
-        if( osEncoding.size() == 0)
+        if( osEncoding.empty())
             return FALSE;
 
         if( hDBF == NULL || DBFGetFieldCount( hDBF ) == 0 )
@@ -1631,7 +1631,7 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poFieldDefn, int bApproxOK )
 /*      Normalize field name                                            */
 /* -------------------------------------------------------------------- */
     CPLString osFieldName;
-    if( osEncoding.size() )
+    if( !osEncoding.empty() )
     {
         CPLClearRecodeWarningFlags();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1939,7 +1939,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
     if( nFlagsIn & ALTER_NAME_FLAG )
     {
         CPLString osFieldName;
-        if( osEncoding.size() )
+        if( !osEncoding.empty() )
         {
             CPLClearRecodeWarningFlags();
             CPLErrorReset();
@@ -2528,7 +2528,7 @@ OGRErr OGRShapeLayer::Repack()
     CSLDestroy(papszCandidates);
     papszCandidates = NULL;
 
-    if( hDBF != NULL && osDBFName.size() == 0 )
+    if( hDBF != NULL && osDBFName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the DBF file, but we managed to "
@@ -2538,7 +2538,7 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_FAILURE;
     }
 
-    if( hSHP != NULL && osSHPName.size() == 0 )
+    if( hSHP != NULL && osSHPName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the SHP file, but we managed to "
@@ -2548,7 +2548,7 @@ OGRErr OGRShapeLayer::Repack()
         return OGRERR_FAILURE;
     }
 
-    if( hSHP != NULL && osSHXName.size() == 0 )
+    if( hSHP != NULL && osSHXName.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find the filename of the SHX file, but we managed to "
@@ -2592,7 +2592,7 @@ OGRErr OGRShapeLayer::Repack()
         }
 
         // Delete temporary .cpg file if existing.
-        if( osCPGName.size() )
+        if( !osCPGName.empty() )
         {
             CPLString oCPGTempFile =
                 CPLFormFilename(osDirname, osBasename, NULL);

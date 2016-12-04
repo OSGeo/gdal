@@ -1075,10 +1075,10 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Close and/or start sections as needed.                          */
 /* -------------------------------------------------------------------- */
-        if( osCurSection.size() && !EQUAL(osCurSection,osKeySection) )
+        if( !osCurSection.empty() && !EQUAL(osCurSection,osKeySection) )
             bOK &= VSIFPrintfL( fp, "END_GROUP = %s\n", osCurSection.c_str() ) > 0;
 
-        if( osKeySection.size() && !EQUAL(osCurSection,osKeySection) )
+        if( !osKeySection.empty() && !EQUAL(osCurSection,osKeySection) )
             bOK &= VSIFPrintfL( fp, "BEGIN_GROUP = %s\n", osKeySection.c_str() ) > 0;
 
         osCurSection = osKeySection;
@@ -1086,7 +1086,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Print out simple item.                                          */
 /* -------------------------------------------------------------------- */
-        if( osCurSection.size() )
+        if( !osCurSection.empty() )
             bOK &= VSIFPrintfL( fp, "\t%s = ", osKeyItem.c_str() ) > 0;
         else
             bOK &= VSIFPrintfL( fp, "%s = ", osKeyItem.c_str() ) > 0;
@@ -1100,7 +1100,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Close off.                                                      */
 /* -------------------------------------------------------------------- */
-    if( osCurSection.size() )
+    if( !osCurSection.empty() )
         bOK &= VSIFPrintfL( fp, "END_GROUP = %s\n", osCurSection.c_str() ) > 0;
 
     bOK &= VSIFPrintfL( fp, "END;\n" ) > 0;

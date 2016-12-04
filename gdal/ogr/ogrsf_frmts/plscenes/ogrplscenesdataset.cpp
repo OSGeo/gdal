@@ -365,7 +365,7 @@ GDALDataset* OGRPLScenesDataset::OpenRasterScene(GDALOpenInfo* poOpenInfo,
     }
     osRasterURL = pszLink ? pszLink : "";
     json_object_put(poObj);
-    if( osRasterURL.size() == 0 )
+    if( osRasterURL.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to scene %s",
                  osScene.c_str());
@@ -485,7 +485,7 @@ GDALDataset* OGRPLScenesDataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",
                                 CPLGetConfigOption("PL_API_KEY","")) );
-    if( poDS->osAPIKey.size() == 0 )
+    if( poDS->osAPIKey.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");

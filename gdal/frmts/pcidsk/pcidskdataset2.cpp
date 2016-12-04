@@ -138,7 +138,7 @@ void PCIDSK2Band::Initialize()
 PCIDSK2Band::~PCIDSK2Band()
 
 {
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
         delete apoOverviews[apoOverviews.size()-1];
         apoOverviews.pop_back();
@@ -264,7 +264,7 @@ bool PCIDSK2Band::CheckForColorTable()
 
         // If there is no metadata, assume a single PCT in a file with only
         // one raster band must be intended for it.
-        if( osDefaultPCT.size() == 0
+        if( osDefaultPCT.empty()
             && poDS != NULL
             && poDS->GetRasterCount() == 1 )
         {
@@ -275,7 +275,7 @@ bool PCIDSK2Band::CheckForColorTable()
                 poPCTSeg = NULL;
         }
         // Parse default PCT ref assuming an in file reference.
-        else if( osDefaultPCT.size() != 0
+        else if( !osDefaultPCT.empty()
                  && strstr(osDefaultPCT.c_str(),"PCT:") != NULL )
         {
             poPCTSeg = poFile->GetSegment(
@@ -496,7 +496,7 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
 /*      Clear existing overviews.                                       */
 /* -------------------------------------------------------------------- */
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
         delete apoOverviews[apoOverviews.size()-1];
         apoOverviews.pop_back();
@@ -577,7 +577,7 @@ CPLErr PCIDSK2Band::IWriteBlock( int iBlockX, int iBlockY, void *pData )
 int PCIDSK2Band::GetOverviewCount()
 
 {
-    if( apoOverviews.size() > 0 )
+    if( !apoOverviews.empty() )
         return static_cast<int>( apoOverviews.size() );
 
     return GDALPamRasterBand::GetOverviewCount();
@@ -798,7 +798,7 @@ PCIDSK2Dataset::~PCIDSK2Dataset()
 {
     FlushCache();
 
-    while( apoLayers.size() > 0 )
+    while( !apoLayers.empty() )
     {
         delete apoLayers.back();
         apoLayers.pop_back();

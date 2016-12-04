@@ -256,11 +256,11 @@ char **ERSDataset::GetMetadata( const char *pszDomain )
     if( pszDomain != NULL && EQUAL(pszDomain, "ERS") )
     {
         oERSMetadataList.Clear();
-        if (osProj.size())
+        if (!osProj.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "PROJ", osProj.c_str()));
-        if (osDatum.size())
+        if (!osDatum.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "DATUM", osDatum.c_str()));
-        if (osUnits.size())
+        if (!osUnits.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "UNITS", osUnits.c_str()));
         return oERSMetadataList.List();
     }
@@ -432,15 +432,15 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
 
     /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
-    if( osProjForced.size() )
+    if( !osProjForced.empty() )
         osProj = osProjForced;
     else
         osProj = szERSProj;
-    if( osDatumForced.size() )
+    if( !osDatumForced.empty() )
         osDatum = osDatumForced;
     else
         osDatum = szERSDatum;
-    if( osUnitsForced.size() )
+    if( !osUnitsForced.empty() )
         osUnits = osUnitsForced;
     else
         osUnits = szERSUnits;

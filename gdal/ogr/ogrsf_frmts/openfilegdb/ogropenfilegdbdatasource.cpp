@@ -238,13 +238,13 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         return FALSE;
     }
 
-    if( m_apoLayers.size() == 0 && nInterestTable >= 0 )
+    if( m_apoLayers.empty() && nInterestTable >= 0 )
     {
         if( FileExists(m_pszName) )
         {
             const char* pszLyrName = NULL;
             if( nInterestTable <= (int)aosTableNames.size()  &&
-                aosTableNames[nInterestTable-1].size() != 0 )
+                !aosTableNames[nInterestTable-1].empty() )
                 pszLyrName = aosTableNames[nInterestTable-1].c_str();
             else
                 pszLyrName = CPLSPrintf("a%08x", nInterestTable);
@@ -379,7 +379,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         }
     }
 
-    if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
+    if( m_apoLayers.empty() && nCandidateLayers > 0 &&
         nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
@@ -502,7 +502,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 
         int idx = psField->Integer;
         if( idx > 0 && idx <= static_cast<int>(aosName.size()) &&
-            aosName[idx-1].size() > 0 )
+            !aosName[idx-1].empty() )
         {
             const std::string osName(aosName[idx-1]);
             AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
@@ -510,7 +510,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         }
     }
 
-    if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
+    if( m_apoLayers.empty() && nCandidateLayers > 0 &&
         nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
@@ -1198,7 +1198,7 @@ char** OGROpenFileGDBDataSource::GetFileList()
     {
         if( strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0 )
             continue;
-        if( osFilenameRadix.size() == 0 ||
+        if( osFilenameRadix.empty() ||
             strncmp(*papszIter, osFilenameRadix, osFilenameRadix.size()) == 0 )
         {
             osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));

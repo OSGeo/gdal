@@ -180,9 +180,9 @@ CPLString OGRPLScenesLayer::BuildFilter(swq_expr_node* poNode)
             // since client-side will do that extra filtering
             CPLString osFilter1 = BuildFilter(poNode->papoSubExpr[0]);
             CPLString osFilter2 = BuildFilter(poNode->papoSubExpr[1]);
-            if( osFilter1.size() && osFilter2.size() )
+            if( !osFilter1.empty() && !osFilter2.empty() )
                 return osFilter1 + "&" + osFilter2;
-            else if( osFilter1.size() )
+            else if( !osFilter1.empty() )
                 return osFilter1;
             else
                 return osFilter2;
@@ -379,7 +379,7 @@ CPLString OGRPLScenesLayer::BuildURL(int nFeatures)
             delete poIntersection;
     }
 
-    if( osFilterURLPart.size() )
+    if( !osFilterURLPart.empty() )
     {
         if( osFilterURLPart[0] == '&' )
             osURL += osFilterURLPart;
@@ -400,7 +400,7 @@ int OGRPLScenesLayer::GetNextPage()
     poGeoJSONLayer = NULL;
     poGeoJSONDS = NULL;
 
-    if( osRequestURL.size() == 0 )
+    if( osRequestURL.empty() )
     {
         bEOF = true;
         if( !bFilterMustBeClientSideEvaluated && nFeatureCount < 0 )
@@ -532,7 +532,7 @@ OGRErr OGRPLScenesLayer::SetAttributeFilter( const char *pszQuery )
         else
         {
             CPLString osFilter = BuildFilter(poNode);
-            if( osFilter.size() )
+            if( !osFilter.empty() )
             {
                 osFilterURLPart = "&";
                 osFilterURLPart += osFilter;

@@ -77,7 +77,7 @@ size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset) {
     }
 
     int success = (request.nStatus == 200) ||
-        (request.Range.size() != 0 && request.nStatus == 206);
+        (!request.Range.empty() && request.nStatus == 206);
     if (!success || request.pabyData == NULL || request.nDataLen == 0) {
         CPLError(CE_Failure, CPLE_HttpResponse,
             "GDALWMS: Unable to download data from %s",
@@ -144,7 +144,7 @@ WMSMiniDriver_MRF::~WMSMiniDriver_MRF() {
 
 CPLErr WMSMiniDriver_MRF::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions) {
     m_base_url = CPLGetXMLValue(config, "ServerURL", "");
-    if (m_base_url.size() == 0) {
+    if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, MRF: ServerURL missing.");
         return CE_Failure;
     }
@@ -153,7 +153,7 @@ CPLErr WMSMiniDriver_MRF::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     m_idxname = CPLGetXMLValue(config, "index", "");
 
     CPLString osType(CPLGetXMLValue(config, "type", ""));
-    if (osType.size() != 0) {
+    if (!osType.empty()) {
         if (EQUAL(osType, "bundle")) {
             m_type = tBundle;
             m_parent_dataset->WMSSetDefaultOverviewCount(0);
@@ -186,7 +186,7 @@ int inline static is_url(const CPLString &value) {
 // Called after the dataset is initialized
 CPLErr WMSMiniDriver_MRF::EndInit() {
     int index_is_url = 1;
-    if (m_idxname.size()) { // Provided, could be path or URL
+    if (!m_idxname.empty() ) { // Provided, could be path or URL
         if (!is_url(m_idxname)) {
             index_is_url = 0;
             fp = VSIFOpenL(m_idxname, "rb");

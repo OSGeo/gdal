@@ -751,7 +751,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && osXSDFilename.size() == 0)
+    if( !bHaveSchema && osXSDFilename.empty())
     {
         VSIStatBufL sGFSStatBuf;
         if( bCheckAuxFile && VSIStatL( osGFSFilename, &sGFSStatBuf ) == 0 )
@@ -795,7 +795,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         char** papszTypeNames = NULL;
 
         VSIStatBufL sXSDStatBuf;
-        if (osXSDFilename.size() == 0)
+        if (osXSDFilename.empty())
         {
             osXSDFilename = CPLResetExtension( pszFilename, "xsd" );
             if( bCheckAuxFile && VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
@@ -847,7 +847,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             GMLRegistryFeatureType& oFeatureType =
                                         oNamespace.aoFeatureTypes[iTypename];
 
-                            if ( oFeatureType.osElementValue.size() )
+                            if ( !oFeatureType.osElementValue.empty() )
                                 pszElementToFind = CPLSPrintf("%s:%s>%s",
                                                               oNamespace.osPrefix.c_str(),
                                                               oFeatureType.osElementName.c_str(),
@@ -862,7 +862,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             /* confused with a top-level BasicPropertyUnit feature... */
                             if( osHeader.find(pszElementToFind) != std::string::npos )
                             {
-                                if( oFeatureType.osSchemaLocation.size() )
+                                if( !oFeatureType.osSchemaLocation.empty() )
                                 {
                                     osXSDFilename = oFeatureType.osSchemaLocation;
                                     if( STARTS_WITH(osXSDFilename, "http://") ||
@@ -2564,7 +2564,7 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
     if (poReader != NULL && EQUAL(pszSQLCommand, "SELECT ValidateSchema()"))
     {
         bool bIsValid = false;
-        if (osXSDFilename.size())
+        if (!osXSDFilename.empty() )
         {
             CPLErrorReset();
             bIsValid = CPL_TO_BOOL(CPLValidateXML(osFilename, osXSDFilename, NULL));

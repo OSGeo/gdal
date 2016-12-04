@@ -245,7 +245,7 @@ int OGRGFTResultLayer::RunSQL()
         STARTS_WITH_CI(osSQL.c_str(), "DESCRIBE"))
     {
         ParseCSVResponse(pszLine, aosRows);
-        if (aosRows.size() > 0)
+        if (!aosRows.empty())
         {
             char** papszTokens = OGRGFTCSVSplitLine(aosRows[0], ',');
             for(int i=0;papszTokens && papszTokens[i];i++)

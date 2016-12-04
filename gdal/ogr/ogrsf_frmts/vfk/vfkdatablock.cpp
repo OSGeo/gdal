@@ -978,7 +978,7 @@ int VFKDataBlock::LoadGeometryPolygon()
         bool bFound = false;
         int nCount = 0;
         int nCountMax = static_cast<int>(poLineList.size()) * 2;
-        while (poLineList.size() > 0 && nCount < nCountMax) {
+        while (!poLineList.empty() && nCount < nCountMax) {
             bool bNewRing = !bFound;
             bFound = false;
             for (VFKFeatureList::iterator iHp = poLineList.begin(), eHp = poLineList.end();

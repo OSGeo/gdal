@@ -1076,7 +1076,7 @@ CPLErr GDALECWCompressor::Initialize(
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
-        if ( osCompressionSoftware.size() > 0 ) {
+        if ( !osCompressionSoftware.empty() ) {
             psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
         }
         if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){

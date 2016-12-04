@@ -457,7 +457,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                 psFC = psChild;
             }
 
-            if( psFC == NULL && osGMLTmpFile.size() == 0 )
+            if( psFC == NULL && osGMLTmpFile.empty() )
             {
                 continue;
             }
@@ -574,7 +574,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
 
             if( !STARTS_WITH(osGMLTmpFile, "/vsicurl/") )
                 VSIUnlink(osGMLTmpFile);
-            if( osXSDTmpFile.size() )
+            if( !osXSDTmpFile.empty() )
                 VSIUnlink(osXSDTmpFile);
         }
     }

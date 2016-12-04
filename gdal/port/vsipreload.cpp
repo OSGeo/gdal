@@ -524,14 +524,14 @@ int __xstat(int ver, const char *path, struct stat *buf)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
+    if( DEBUG_VSIPRELOAD && (!osCurDir.empty() && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__xstat(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
+    if( (!osCurDir.empty() && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         std::string newpath;
-        if( (osCurDir.size() != 0 && path[0] != '/') )
+        if( (!osCurDir.empty() && path[0] != '/') )
         {
             newpath = CPLFormFilename(osCurDir.c_str(), path, NULL);
             path = newpath.c_str();
@@ -567,14 +567,14 @@ int __lxstat(int ver, const char *path, struct stat *buf)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
+    if( DEBUG_VSIPRELOAD && (!osCurDir.empty() && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__lxstat(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
+    if( (!osCurDir.empty() && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         std::string newpath;
-        if( (osCurDir.size() != 0 && path[0] != '/') )
+        if( (!osCurDir.empty() && path[0] != '/') )
         {
             newpath = CPLFormFilename(osCurDir.c_str(), path, NULL);
             path = newpath.c_str();
@@ -610,14 +610,14 @@ int __xstat64(int ver, const char *path, struct stat64 *buf)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && (osCurDir.size() != 0 && path[0] != '/') )
+    if( DEBUG_VSIPRELOAD && (!osCurDir.empty() && path[0] != '/') )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__xstat64(%s)\n", path);
-    if( (osCurDir.size() != 0 && path[0] != '/') || STARTS_WITH(path, "/vsi") )
+    if( (!osCurDir.empty() && path[0] != '/') || STARTS_WITH(path, "/vsi") )
     {
         VSIStatBufL sStatBufL;
         std::string newpath;
-        if( (osCurDir.size() != 0 && path[0] != '/') )
+        if( (!osCurDir.empty() && path[0] != '/') )
         {
             newpath = CPLFormFilename(osCurDir.c_str(), path, NULL);
             path = newpath.c_str();
@@ -917,11 +917,11 @@ int open(const char *path, int flags, ...)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 && path[0] != '/' )
+    if( DEBUG_VSIPRELOAD && !osCurDir.empty() && path[0] != '/' )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND)
     {
-        if( osCurDir.size() != 0 && path[0] != '/' )
+        if( !osCurDir.empty() && path[0] != '/' )
             fprintf(stderr, "open(%s)\n", CPLFormFilename(osCurDir.c_str(), path, NULL));
         else
             fprintf(stderr, "open(%s)\n", path);
@@ -931,7 +931,7 @@ int open(const char *path, int flags, ...)
     va_start(args, flags);
     mode_t mode = va_arg(args, mode_t);
     int fd = 0;
-    if( osCurDir.size() != 0 && path[0] != '/' && (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
+    if( !osCurDir.empty() && path[0] != '/' && (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
     {
         VSIStatBufL sStatBufL;
         char* newname = (char*)CPLFormFilename(osCurDir.c_str(), path, NULL);
@@ -973,11 +973,11 @@ int open64(const char *path, int flags, ...)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(path);
-    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 && path[0] != '/' )
+    if( DEBUG_VSIPRELOAD && !osCurDir.empty() && path[0] != '/' )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND)
     {
-        if( osCurDir.size() != 0 && path[0] != '/' )
+        if( !osCurDir.empty() && path[0] != '/' )
             fprintf(stderr, "open64(%s)\n", CPLFormFilename(osCurDir.c_str(), path, NULL));
         else
             fprintf(stderr, "open64(%s)\n", path);
@@ -987,7 +987,7 @@ int open64(const char *path, int flags, ...)
     va_start(args, flags);
     mode_t mode = va_arg(args, mode_t);
     int fd = 0;
-    if( osCurDir.size() != 0 && path[0] != '/' && (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
+    if( !osCurDir.empty() && path[0] != '/' && (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
     {
         VSIStatBufL sStatBufL;
         char* newname = (char*)CPLFormFilename(osCurDir.c_str(), path, NULL);
@@ -1166,7 +1166,7 @@ int __fxstat (int ver, int fd, struct stat *buf)
         }
     }
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__fxstat(fd=%d)\n", fd);
-    if( name.size() )
+    if( !name.empty() )
     {
         VSIStatBufL sStatBufL;
         if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__fxstat(%s)\n", name.c_str());
@@ -1246,14 +1246,14 @@ int __fxstatat (int ver, int dirfd, const char *pathname, struct stat *buf,
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(pathname);
-    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 )
+    if( DEBUG_VSIPRELOAD && !osCurDir.empty() )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "__fxstatat(dirfd=%d,pathname=%s,flags=%d)\n", dirfd, pathname, flags);
 
-    if( osCurDir.size() != 0 || STARTS_WITH(pathname, "/vsi") )
+    if( !osCurDir.empty() || STARTS_WITH(pathname, "/vsi") )
     {
         VSIStatBufL sStatBufL;
-        if( osCurDir.size() && dirfd == AT_FDCWD && pathname[0] != '/' )
+        if( !osCurDir.empty() && dirfd == AT_FDCWD && pathname[0] != '/' )
             pathname = CPLFormFilename(osCurDir.c_str(), pathname, NULL);
         const int ret = VSIStatL(pathname, &sStatBufL);
         sStatBufL.st_ino = (int)CPLHashSetHashStr(pathname);
@@ -1373,15 +1373,15 @@ DIR *opendir(const char *name)
 {
     myinit();
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(name);
-    if( DEBUG_VSIPRELOAD && osCurDir.size() != 0 )
+    if( DEBUG_VSIPRELOAD && !osCurDir.empty() )
         DEBUG_VSIPRELOAD_COND = 1;
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "opendir(%s)\n", name);
 
     DIR * ret;
-    if( osCurDir.size() != 0 || STARTS_WITH(name, "/vsi") )
+    if( !osCurDir.empty() || STARTS_WITH(name, "/vsi") )
     {
         char** papszDir;
-        if( osCurDir.size() != 0 && name[0] != '/' )
+        if( !osCurDir.empty() && name[0] != '/' )
             name = CPLFormFilename(osCurDir.c_str(), name, NULL);
         papszDir = VSIReadDir(name);
         if( papszDir == NULL )
@@ -1567,7 +1567,7 @@ int fchdir(int fd)
         }
     }
     if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "fchdir(%d)\n", fd);
-    if( name.size() )
+    if( !name.empty() )
     {
         osCurDir = name;
         if (DEBUG_VSIPRELOAD_COND) fprintf(stderr, "fchdir(%d) -> %s\n", fd, osCurDir.c_str());

@@ -2411,7 +2411,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
              strstr(pszLine, osExpectedString2.c_str()) ||
              strstr(pszLine, osExpectedString3.c_str()) ||
              strstr(pszLine, osExpectedString4.c_str()) ||
-             (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str()))))
+             (!osExpectedString_unescaped.empty() && strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
             bIsHTMLDirList = true;
             *pbGotFileList = true;
@@ -2578,7 +2578,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
                 if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
                 {
                     CPLString osKey = pszKey;
-                    if( osKey.size() && osKey[osKey.size()-1] == '/' )
+                    if( !osKey.empty() && osKey[osKey.size()-1] == '/' )
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
@@ -3903,7 +3903,7 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
     }
     UpdateHandleFromMap(poS3HandleHelper);
     CPLString osBaseURL(poS3HandleHelper->GetURL());
-    if( osBaseURL.size() && osBaseURL[osBaseURL.size()-1] == '/' )
+    if( !osBaseURL.empty() && osBaseURL[osBaseURL.size()-1] == '/' )
         osBaseURL.resize(osBaseURL.size()-1);
     delete poS3HandleHelper;
 
@@ -4028,11 +4028,11 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         CURL* hCurlHandle = GetCurlHandleFor(osBaseURL);
 
         poS3HandleHelper->AddQueryParameter("delimiter", "/");
-        if( osNextMarker.size() )
+        if( !osNextMarker.empty() )
             poS3HandleHelper->AddQueryParameter("marker", osNextMarker);
-        if( osMaxKeys.size() )
+        if( !osMaxKeys.empty() )
              poS3HandleHelper->AddQueryParameter("max-keys", osMaxKeys);
-        if( osObjectKey.size() )
+        if( !osObjectKey.empty() )
              poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
 
         VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL());

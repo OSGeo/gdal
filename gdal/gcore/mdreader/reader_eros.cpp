@@ -110,10 +110,10 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
         }
     }
 
-    if(m_osIMDSourceFilename.size())
+    if(!m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderEROS", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
-    if(m_osRPBSourceFilename.size())
+    if(!m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderEROS", "RPB Filename: %s",
               m_osRPBSourceFilename.c_str() );
 }

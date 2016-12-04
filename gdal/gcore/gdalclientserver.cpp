@@ -1239,7 +1239,7 @@ static int GDALSkipUntilEndOfJunkMarker(GDALPipe* p)
             if( nStep == nMarkerSize )
             {
                 osJunk.resize(osJunk.size() - nMarkerSize);
-                if( osJunk.size() )
+                if( !osJunk.empty() )
                     CPLDebug("GDAL", "Got junk : %s", osJunk.c_str());
                 return TRUE;
             }

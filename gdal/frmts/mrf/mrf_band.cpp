@@ -288,7 +288,7 @@ CPLErr  GDALMRFRasterBand::SetNoDataValue(double val)
 double GDALMRFRasterBand::GetNoDataValue(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vNoData;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v, nBand - 1);
@@ -297,7 +297,7 @@ double GDALMRFRasterBand::GetNoDataValue(int *pbSuccess)
 double GDALMRFRasterBand::GetMinimum(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vMin;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v, nBand - 1);
@@ -306,7 +306,7 @@ double GDALMRFRasterBand::GetMinimum(int *pbSuccess)
 double GDALMRFRasterBand::GetMaximum(int *pbSuccess)
 {
     std::vector<double> &v=poDS->vMax;
-    if (v.size() == 0)
+    if (v.empty())
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess) *pbSuccess=TRUE;
     return getBandValue(v, nBand - 1);

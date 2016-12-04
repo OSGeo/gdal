@@ -1624,7 +1624,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 /* -------------------------------------------------------------------- */
 /*      Add optional dictionary.                                        */
 /* -------------------------------------------------------------------- */
-    if( osDictBox.size() > 0 )
+    if( !osDictBox.empty() )
         apoGMLBoxes[nGMLBoxes++] =
             GDALJP2Box::CreateLabelledXMLAssoc( "CRSDictionary.gml",
                                                 osDictBox );
@@ -2339,7 +2339,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         // the matching box really exists.
         for( int i = 0; i < static_cast<int>(aoGMLFiles.size()); ++i )
         {
-            if( aoGMLFiles[i].osSchemaLocation.size() &&
+            if( !aoGMLFiles[i].osSchemaLocation.empty() &&
                 STARTS_WITH(aoGMLFiles[i].osSchemaLocation, "gmljp2://xml/") )
             {
                 const char* pszLookedLabel =
@@ -2364,7 +2364,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         }
 
         // Read custom grid coverage file.
-        if( osGridCoverageFile.size() > 0 )
+        if( !osGridCoverageFile.empty() )
         {
             CPLXMLNode* psTmp = CPLParseXMLFile(osGridCoverageFile);
             if( psTmp == NULL )
@@ -2383,7 +2383,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     CPLString osDictBox;
     CPLString osDoc;
 
-    if( osGridCoverage.size() == 0 )
+    if( osGridCoverage.empty() )
     {
 /* -------------------------------------------------------------------- */
 /*      Prepare GMLJP2RectifiedGridCoverage                             */
@@ -2506,8 +2506,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /*      Process metadata, annotations and features collections.         */
 /* -------------------------------------------------------------------- */
     std::vector<CPLString> aosTmpFiles;
-    if( aoMetadata.size() || aoAnnotations.size() || aoGMLFiles.size() ||
-        aoStyles.size() || aoExtensions.size() )
+    if( !aoMetadata.empty() || !aoAnnotations.empty() || !aoGMLFiles.empty() ||
+        aoStyles.size() || !aoExtensions.empty() )
     {
         CPLXMLNode* psRoot = CPLParseXMLString(osDoc);
         CPLAssert(psRoot);
@@ -2517,9 +2517,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i=0; i < static_cast<int>(aoMetadata.size()); ++i )
         {
             CPLXMLNode* psMetadata = NULL;
-            if( aoMetadata[i].osFile.size() )
+            if( !aoMetadata[i].osFile.empty() )
                 psMetadata = CPLParseXMLFile(aoMetadata[i].osFile);
-            else if( aoMetadata[i].osContent.size() )
+            else if( !aoMetadata[i].osContent.empty() )
                 psMetadata = CPLParseXMLString(aoMetadata[i].osContent);
             else if( aoMetadata[i].bGDALMetadata )
             {
@@ -2609,7 +2609,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         {
             // Is the file already a GML file?
             CPLXMLNode* psGMLFile = NULL;
-            if( aoGMLFiles[i].osFile.size() )
+            if( !aoGMLFiles[i].osFile.empty() )
             {
                 if( EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
                     EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "xml") )
@@ -2683,7 +2683,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
 
             CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile) : NULL;
-            if( psGMLFileRoot || aoGMLFiles[i].osRemoteResource.size() )
+            if( psGMLFileRoot || !aoGMLFiles[i].osRemoteResource.empty() )
             {
                 CPLXMLNode *node_f;
                 if( aoGMLFiles[i].bParentCoverageCollection )
@@ -2711,7 +2711,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     node_f = CPLCreateXMLNode( psGridCoverage, CXT_Element, "gmljp2:feature"  );
                 }
 
-                if( !aoGMLFiles[i].bInline || aoGMLFiles[i].osRemoteResource.size() )
+                if( !aoGMLFiles[i].bInline || !aoGMLFiles[i].osRemoteResource.empty() )
                 {
                     if( !bRootHasXLink )
                     {
@@ -2721,7 +2721,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
                 }
 
-                if( aoGMLFiles[i].osRemoteResource.size() )
+                if( !aoGMLFiles[i].osRemoteResource.empty() )
                 {
                     CPLSetXMLValue(node_f, "#xlink:href",
                                    aoGMLFiles[i].osRemoteResource.c_str());
@@ -2729,7 +2729,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
 
                 CPLString osTmpFile;
-                if( !aoGMLFiles[i].bInline || aoGMLFiles[i].osRemoteResource.size() )
+                if( !aoGMLFiles[i].bInline || !aoGMLFiles[i].osRemoteResource.empty() )
                 {
                     osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml",
                                            this,
@@ -2775,7 +2775,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     CPLString osSchemaLocation;
 
                     if( CSLCount(papszTokens) == 2 &&
-                        aoGMLFiles[i].osNamespace.size() == 0 &&
+                        aoGMLFiles[i].osNamespace.empty() &&
                         aoGMLFiles[i].osSchemaLocation.size() )
                     {
                         osSchemaLocation += papszTokens[0];
@@ -2784,9 +2784,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
 
                     else if( CSLCount(papszTokens) == 2 &&
-                                (aoGMLFiles[i].osNamespace.size() == 0 ||
+                                (aoGMLFiles[i].osNamespace.empty() ||
                                 strcmp(papszTokens[0], aoGMLFiles[i].osNamespace) == 0) &&
-                                aoGMLFiles[i].osSchemaLocation.size() == 0 )
+                                aoGMLFiles[i].osSchemaLocation.empty() )
                     {
                         VSIStatBufL sStat;
                         CPLString osXSD;
@@ -2805,7 +2805,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             osXSD = CPLFormFilename(CPLGetDirname(aoGMLFiles[i].osFile),
                                                         papszTokens[1], NULL);
                         }
-                        if( osXSD.size() )
+                        if( !osXSD.empty() )
                         {
                             GMLJP2V2BoxDesc oDesc;
                             oDesc.osFile = osXSD;
@@ -2831,9 +2831,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                              *papszIter;
                              papszIter += 2 )
                         {
-                            if( osSchemaLocation.size() )
+                            if( !osSchemaLocation.empty() )
                                 osSchemaLocation += " ";
-                            if( aoGMLFiles[i].osNamespace.size() &&
+                            if( !aoGMLFiles[i].osNamespace.empty() &&
                                 aoGMLFiles[i].osSchemaLocation.size() &&
                                 strcmp(papszIter[0],
                                        aoGMLFiles[i].osNamespace) == 0 )
@@ -3067,7 +3067,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Add optional dictionary.                                        */
 /* -------------------------------------------------------------------- */
-    if( osDictBox.size() > 0 )
+    if( !osDictBox.empty() )
         apoGMLBoxes.push_back(
             GDALJP2Box::CreateLabelledXMLAssoc( "CRSDictionary.gml",
                                                 osDictBox ) );

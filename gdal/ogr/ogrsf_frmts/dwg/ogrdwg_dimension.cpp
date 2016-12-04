@@ -298,7 +298,7 @@ the approach is as above in all these cases.
     poLabelFeature->SetGeometryDirectly( new OGRPoint( oTextPos.x, oTextPos.y ) );
 
     // Do we need to compute the dimension value?
-    if( osText.size() == 0 )
+    if( osText.empty() )
     {
         FormatDimension( osText, POINT_DIST( oArrow1.x, oArrow1.y,
                                              dfArrowX2, dfArrowY2 ) );

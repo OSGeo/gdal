@@ -185,7 +185,7 @@ void OGRUnionLayer::SetSourceLayerFieldName(const char* pszSourceLayerFieldName)
 {
     CPLAssert(poFeatureDefn == NULL);
 
-    CPLAssert(osSourceLayerFieldName.size() == 0);
+    CPLAssert(osSourceLayerFieldName.empty());
     if( pszSourceLayerFieldName != NULL )
         osSourceLayerFieldName = pszSourceLayerFieldName;
 }
@@ -261,7 +261,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
     poFeatureDefn->SetGeomType(wkbNone);
 
     int iCompareFirstIndex = 0;
-    if( osSourceLayerFieldName.size() )
+    if( !osSourceLayerFieldName.empty() )
     {
         OGRFieldDefn oField(osSourceLayerFieldName, OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
@@ -776,7 +776,7 @@ OGRFeature *OGRUnionLayer::GetFeature( GIntBig nFeatureId )
 
 OGRErr OGRUnionLayer::ICreateFeature( OGRFeature* poFeature )
 {
-    if( osSourceLayerFieldName.size() == 0 )
+    if( osSourceLayerFieldName.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "CreateFeature() not supported when SourceLayerFieldName is not set");
@@ -835,7 +835,7 @@ OGRErr OGRUnionLayer::ISetFeature( OGRFeature* poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( osSourceLayerFieldName.size() == 0 )
+    if( osSourceLayerFieldName.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SetFeature() not supported when SourceLayerFieldName is not set");
@@ -1098,7 +1098,7 @@ int  OGRUnionLayer::TestCapability( const char * pszCap )
 
     if( EQUAL(pszCap, OLCRandomWrite ) )
     {
-        if( !bPreserveSrcFID || osSourceLayerFieldName.size() == 0)
+        if( !bPreserveSrcFID || osSourceLayerFieldName.empty())
             return FALSE;
 
         for(int i = 0; i < nSrcLayers; i++)
@@ -1111,7 +1111,7 @@ int  OGRUnionLayer::TestCapability( const char * pszCap )
 
     if( EQUAL(pszCap, OLCSequentialWrite ) )
     {
-        if( osSourceLayerFieldName.size() == 0)
+        if( osSourceLayerFieldName.empty())
             return FALSE;
 
         for(int i = 0; i < nSrcLayers; i++)
@@ -1233,7 +1233,7 @@ OGRFeature* OGRUnionLayer::TranslateFromSrcLayer(OGRFeature* poSrcFeature)
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     poFeature->SetFrom(poSrcFeature, panMap, TRUE);
 
-    if( osSourceLayerFieldName.size() &&
+    if( !osSourceLayerFieldName.empty() &&
         !poFeatureDefn->GetFieldDefn(0)->IsIgnored() )
     {
         poFeature->SetField(0, papoSrcLayers[iCurLayer]->GetName());

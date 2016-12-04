@@ -43,7 +43,7 @@ CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char *
     m_base_url = CPLGetXMLValue(config, "ServerURL",
         CPLGetXMLValue(config, "ServerUrl", ""));
 
-    if (m_base_url.size() == 0) {
+    if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, TileService mini-driver: ServerURL missing.");
         ret = CE_Failure;
     }

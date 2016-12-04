@@ -248,7 +248,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
             {
                 if( isSupportedGeometryType( type ) )
                 {
-                    if( geometryTypes.size() == 0 ) geometryTypes.push_back( type );
+                    if( geometryTypes.empty() ) geometryTypes.push_back( type );
 
                     if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                         geometryTypes.end() )
@@ -260,7 +260,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
             }
             else
             {
-                if( geometryTypes.size() == 0 ) geometryTypes.push_back( type );
+                if( geometryTypes.empty() ) geometryTypes.push_back( type );
 
                 if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                     geometryTypes.end() )

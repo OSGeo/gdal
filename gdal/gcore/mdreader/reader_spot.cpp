@@ -93,7 +93,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         }
     }
 
-    if(m_osIMDSourceFilename.size())
+    if(!m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderSpot", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
 }

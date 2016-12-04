@@ -48,7 +48,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
     CPLDebug("OGRDB2DataSource::FlushMetadata","Write Metadata");
     m_bMetadataDirty = FALSE;
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
         const char* pszDescription = GetMetadataItem("DESCRIPTION");
@@ -128,7 +128,7 @@ CPLErr OGRDB2DataSource::FlushMetadata()
 
     WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
 
@@ -717,7 +717,7 @@ char **OGRDB2DataSource::GetMetadataDomainList()
 {
     CPLDebug("OGRDB2DataSource::GetMetadataDomainList","Entering");
     GetMetadata();
-    if( m_osRasterTable.size() != 0 )
+    if( !m_osRasterTable.empty() )
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
@@ -732,7 +732,7 @@ const char* OGRDB2DataSource::CheckMetadataDomain( const char* pszDomain )
 {
     DB2_DEBUG_ENTER("OGRDB2DataSource::CheckMetadataDomain");
     if( pszDomain != NULL && EQUAL(pszDomain, "GEOPACKAGE") &&
-            m_osRasterTable.size() == 0 )
+            m_osRasterTable.empty() )
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Using GEOPACKAGE for a non-raster geopackage is not supported. "
@@ -763,7 +763,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
         return GDALPamDataset::GetMetadata( pszDomain );
 
     OGRDB2Statement oStatement( GetSession() );
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
 
         oStatement.Appendf(
@@ -812,7 +812,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
             {
                 GDALMultiDomainMetadata oLocalMDMD;
                 oLocalMDMD.XMLInit(psXMLNode, FALSE);
-                if( m_osRasterTable.size() && bIsGPKGScope )
+                if( !m_osRasterTable.empty() && bIsGPKGScope )
                 {
                     oMDMD.SetMetadata( oLocalMDMD.GetMetadata(), "GEOPACKAGE" );
                 }
@@ -855,7 +855,7 @@ char **OGRDB2DataSource::GetMetadata( const char *pszDomain )
                 pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
             continue;
 
-        if( m_osRasterTable.size() && bIsGPKGScope )
+        if( !m_osRasterTable.empty() && bIsGPKGScope )
         {
             oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDIGeopackage),
                                    pszMetadata,

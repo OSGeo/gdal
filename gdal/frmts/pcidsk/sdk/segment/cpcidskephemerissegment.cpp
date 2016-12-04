@@ -456,7 +456,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /* -------------------------------------------------------------------- */
 /*  Write the fourth avhrr block onwards.                               */
 /* -------------------------------------------------------------------- */
-    if ( as->Line.size() == 0 )
+    if ( as->Line.empty() )
 	return;
 
     nBlock = 4;

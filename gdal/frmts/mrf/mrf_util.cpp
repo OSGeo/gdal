@@ -234,7 +234,7 @@ CPLString getFname(const CPLString &in, const char *ext)
 CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, const char *def)
 {
     CPLString fn = CPLGetXMLValue(node, token, "");
-    if (fn.size() == 0) // Not provided
+    if (fn.empty()) // Not provided
         return getFname(in, def);
     size_t slashPos = fn.find_first_of("\\/");
 

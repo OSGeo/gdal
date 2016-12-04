@@ -415,7 +415,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !bNotProjected || !bIsWGS84 )
         return NULL;
 
-    if( osDataFilename.size() == 0 )
+    if( osDataFilename.empty() )
         return NULL;
 
     if( !GDALCheckDatasetDimensions(nCols, nRows) )
@@ -457,9 +457,9 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = - (dfMaxY - dfMinY) / nRows;
     }
 
-    if( osDescription.size() )
+    if( !osDescription.empty() )
         poDS->SetMetadataItem("Description", osDescription);
-    if( osDataUnits.size() )
+    if( !osDataUnits.empty() )
         poDS->SetMetadataItem("Data_Units", osDataUnits);
     if( nStartYear != -1 && nStartMonth != -1 && nStartDay != -1 &&
         nStartHour != -1 && nStartMinute != -1 && nStartSecond != -1 )

@@ -141,9 +141,9 @@ OGRLayer* OGRPLScenesV1Dataset::ParseCatalog(json_object* poCatalog)
 
     OGRPLScenesV1Layer* poPLLayer = new OGRPLScenesV1Layer(
                             this, pszId, pszSpecURL, pszItemsURL, nCount);
-    if( osDisplayName.size() )
+    if( !osDisplayName.empty() )
         poPLLayer->SetMetadataItem("SHORT_DESCRIPTION", osDisplayName.c_str());
-    if( osDisplayDescription.size() )
+    if( !osDisplayDescription.empty() )
         poPLLayer->SetMetadataItem("DESCRIPTION", osDisplayDescription.c_str());
     m_papoLayers = (OGRPLScenesV1Layer**) CPLRealloc(m_papoLayers,
                                 sizeof(OGRPLScenesV1Layer*) * (m_nLayers + 1));
@@ -196,7 +196,7 @@ void OGRPLScenesV1Dataset::EstablishLayerList()
     CPLString osURL(m_osNextCatalogPageURL);
     m_osNextCatalogPageURL = "";
 
-    while( osURL.size() != 0 )
+    while( !osURL.empty() )
     {
         json_object* poObj = RunRequest(osURL);
         if( poObj == NULL )
@@ -583,7 +583,7 @@ retry:
 
     osRasterURL = pszLink ? pszLink : "";
     json_object_put(poObj);
-    if( osRasterURL.size() == 0 )
+    if( osRasterURL.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find link to scene %s",
                  osScene.c_str());
@@ -707,7 +707,7 @@ GDALDataset* OGRPLScenesV1Dataset::Open(GDALOpenInfo* poOpenInfo)
     poDS->m_osAPIKey = CSLFetchNameValueDef(papszOptions, "api_key",
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "API_KEY",
                                 CPLGetConfigOption("PL_API_KEY","")) );
-    if( poDS->m_osAPIKey.size() == 0 )
+    if( poDS->m_osAPIKey.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");

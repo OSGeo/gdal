@@ -107,7 +107,7 @@ CPLString GDALWMSCache::KeyToCacheFile(const char *key) {
     CPLString hash(MD5String(key));
     CPLString cache_file(m_cache_path);
 
-    if (cache_file.size() && (cache_file[cache_file.size() - 1] != '/')) cache_file.append(1, '/');
+    if (!cache_file.empty() && (cache_file[cache_file.size() - 1] != '/')) cache_file.append(1, '/');
     for (int i = 0; i < m_cache_depth; ++i) {
         cache_file.append(1, hash[i]);
         cache_file.append(1, '/');

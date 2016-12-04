@@ -246,7 +246,7 @@ void OGRIDFDataSource::Parse()
                     poCurLayer = m_poMemDS->CreateLayer(osTablename, NULL, wkbNone, apszOptions);
                 }
 
-                if( osAtr.size() && CSLCount(papszAtr) == CSLCount(papszFrm) )
+                if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
                 {
                     /* Note: we use AddFieldDefn() directly on the layer defn */
                     /* This works with the current implementation of the MEM driver */
@@ -702,7 +702,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
         CPLDebug("VDV", "Didn't find tbl; line");
 
     VSIFSeekL(m_fpL, nCurOffset, SEEK_SET);
-    if( osAtr.size() && osFrm.size() )
+    if( !osAtr.empty() && !osFrm.empty() )
     {
         char** papszAtr = CSLTokenizeString2(osAtr,";",
                     CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);

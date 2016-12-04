@@ -463,6 +463,8 @@ class CPL_DLL CPLStringList
     int    size() const { return Count(); }
     int    Count() const;
 
+    bool   empty() const { return Count() == 0; }
+
     CPLStringList &AddString( const char *pszNewString );
     CPLStringList &AddStringDirectly( char *pszNewString );
 

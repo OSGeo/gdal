@@ -220,7 +220,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     poFeature->SetFID( nFID );
     poFeature->SetField( FIELD_NAME_THICKNESS, poCADGeometry->getThickness() );
 
-    if( poCADGeometry->getEED().size() != 0 )
+    if( !poCADGeometry->getEED().empty() )
     {
         std::vector<std::string> asGeometryEED = poCADGeometry->getEED();
         std::string sEEDAsOneString = "";
@@ -451,7 +451,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
              */
             OGRLineString * poLS = new OGRLineString();
 
-            if( poCADLWPolyline->getBulges().size() == 0 )
+            if( poCADLWPolyline->getBulges().empty() )
             {
                 for( size_t i = 0; i < poCADLWPolyline->getVertexCount(); ++i )
                 {

@@ -156,7 +156,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*      GAliasTable.                                                    */
 /* -------------------------------------------------------------------- */
     CPLString osGFeaturesTable = GetTableNameFromType("INGRFeatures");
-    if (osGFeaturesTable.size() == 0)
+    if (osGFeaturesTable.empty())
         return FALSE;
 
     CPLString osGeometryProperties = GetTableNameFromType("INGRGeometryProperties");
@@ -189,7 +189,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     std::vector<OGRSpatialReference*> apoSRS;
-    if (osGeometryProperties.size() != 0 && osGCoordSystemTable.size() != 0)
+    if (!osGeometryProperties.empty() && !osGCoordSystemTable.empty())
     {
         std::vector<CPLString> aosGUID;
         {

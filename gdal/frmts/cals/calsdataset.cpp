@@ -230,9 +230,9 @@ CALSDataset::~CALSDataset()
 
 {
     delete poUnderlyingDS;
-    if( osTIFFHeaderFilename.size() )
+    if( !osTIFFHeaderFilename.empty() )
         VSIUnlink(osTIFFHeaderFilename);
-    if( osSparseFilename.size() )
+    if( !osSparseFilename.empty() )
         VSIUnlink(osSparseFilename);
 }
 

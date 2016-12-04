@@ -126,7 +126,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       case 100:
       {
           CPLString osSubClass = poFeature->GetFieldAsString("SubClasses");
-          if( osSubClass.size() > 0 )
+          if( !osSubClass.empty() )
               osSubClass += ":";
           osSubClass += pszValue;
           poFeature->SetField( "SubClasses", osSubClass.c_str() );
@@ -162,7 +162,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       {
           CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
 
-          if( osAggregate.size() > 0 )
+          if( !osAggregate.empty() )
               osAggregate += " ";
           osAggregate += pszValue;
 

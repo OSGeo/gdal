@@ -608,7 +608,7 @@ char **ENVIDataset::GetFileList()
     papszFileList = CSLAddString( papszFileList, pszHDRFilename );
 
     // Statistics file
-    if (osStaFilename.size() != 0)
+    if (!osStaFilename.empty())
         papszFileList = CSLAddString( papszFileList, osStaFilename );
 
     return papszFileList;

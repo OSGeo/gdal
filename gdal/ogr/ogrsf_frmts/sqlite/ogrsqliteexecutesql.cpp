@@ -187,7 +187,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
     pszStart = pszSQLCommand;
     LayerDesc oLayerDesc = OGR2SQLITEExtractLayerDesc(&pszSQLCommand);
     int bInsert = TRUE;
-    if( oLayerDesc.osDSName.size() == 0 )
+    if( oLayerDesc.osDSName.empty() )
     {
         osTruncated = pszStart;
         osTruncated.resize(pszSQLCommand - pszStart);
@@ -887,7 +887,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         OGRLayer* poLayer = NULL;
         CPLString osTableName;
         int nExtraDS = -1;
-        if( oLayerDesc.osDSName.size() == 0 )
+        if( oLayerDesc.osDSName.empty() )
         {
             poLayer = poDS->GetLayerByName(oLayerDesc.osLayerName);
             /* Might be a false positive (unlikely) */

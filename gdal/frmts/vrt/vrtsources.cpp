@@ -274,7 +274,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML( const char *pszVRTPath )
     CPLXMLNode * const psSrc =
         CPLCreateXMLNode( NULL, CXT_Element, "SimpleSource" );
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         CPLCreateXMLNode(
             CPLCreateXMLNode( psSrc, CXT_Attribute, "resampling" ),
@@ -1201,7 +1201,7 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Actually perform the IO request.                                */
 /* -------------------------------------------------------------------- */
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -1525,7 +1525,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
     if( poDS == NULL )
         return CE_Failure;
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -1676,7 +1676,7 @@ VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Load it.                                                        */
 /* -------------------------------------------------------------------- */
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -2300,7 +2300,7 @@ VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         nOutXOff, nOutYOff, nOutXSize, nOutYSize );
 #endif
 
-    if( m_osResampling.size() )
+    if( !m_osResampling.empty() )
     {
         psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
     }
@@ -2393,7 +2393,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
         }
 
         const GDALRIOResampleAlg eResampleAlgBack = psExtraArg->eResampleAlg;
-        if( m_osResampling.size() )
+        if( !m_osResampling.empty() )
         {
             psExtraArg->eResampleAlg =
                 GDALRasterIOGetResampleAlg(m_osResampling);
@@ -2410,7 +2410,7 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
                                       nWordSize *
                                       static_cast<GSpacing>(nOutXSize),
                                       psExtraArg );
-        if( m_osResampling.size() )
+        if( !m_osResampling.empty() )
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
         if( eErr != CE_None )

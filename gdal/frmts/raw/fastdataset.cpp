@@ -241,7 +241,7 @@ char** FASTDataset::GetFileList()
 
     for( int i = 0; i < 6; i++ )
     {
-        if (apoChannelFilenames[i].size() > 0)
+        if (!apoChannelFilenames[i].empty())
             papszFileList =
                 CSLAddString(papszFileList, apoChannelFilenames[i].c_str());
     }

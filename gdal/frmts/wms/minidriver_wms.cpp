@@ -110,9 +110,9 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     }
 
     if (ret == CE_None) {
-        if (m_srs.size()) {
+        if (!m_srs.empty() ) {
             m_projection_wkt = ProjToWKT(m_srs);
-        } else if (m_crs.size()) {
+        } else if (!m_crs.empty() ) {
             m_projection_wkt = ProjToWKT(m_crs);
         }
     }
@@ -182,11 +182,11 @@ void WMSMiniDriver_WMS::BuildURL(CPLString &url,
                         GetBBoxCoord(iri, m_bbox_order[2]), 
                         GetBBoxCoord(iri, m_bbox_order[3]));
 
-    if (m_srs.size() > 0) 
+    if (!m_srs.empty()) 
         url += CPLOPrintf("&srs=%s", m_srs.c_str());
-    if (m_crs.size() > 0) 
+    if (!m_crs.empty()) 
         url += CPLOPrintf("&crs=%s", m_crs.c_str());
-    if (m_transparent.size() > 0) 
+    if (!m_transparent.empty()) 
         url += CPLOPrintf("&transparent=%s", m_transparent.c_str());
 
 }

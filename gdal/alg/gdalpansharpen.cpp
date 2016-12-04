@@ -323,12 +323,12 @@ CPLErr GDALPansharpenOperation::Initialize(const GDALPansharpenOptions* psOption
             for(int i=0;i<psOptions->nInputSpectralBands; i++)
             {
                 GDALRasterBand* poSrcBand = aMSBands[i];
-                if( anInputBands.size() == 0 || i == 0 )
+                if( anInputBands.empty() || i == 0 )
                 {
                     poVDS = new VRTDataset(poSrcBand->GetXSize(), poSrcBand->GetYSize());
                     aVDS.push_back(poVDS);
                 }
-                if( anInputBands.size() )
+                if( !anInputBands.empty() )
                     anInputBands[i] = i + 1;
                 poVDS->AddBand(poSrcBand->GetRasterDataType(), NULL);
                 VRTSourcedRasterBand* poVRTBand =
@@ -1063,7 +1063,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
             return CE_Failure;
         }
 
-        if( anInputBands.size() )
+        if( !anInputBands.empty() )
         {
             // Use dataset RasterIO when possible
             eErr = aMSBands[0]->GetDataset()->RasterIO(GF_Read,
@@ -1218,7 +1218,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff,
     }
     else
     {
-        if( anInputBands.size() )
+        if( !anInputBands.empty() )
         {
             // Use dataset RasterIO when possible
             eErr = aMSBands[0]->GetDataset()->RasterIO(GF_Read,

@@ -705,7 +705,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             return NULL;
         }
 
-        if( osProjSRS.size() )
+        if( !osProjSRS.empty() )
         {
             pszProjection = GDALGetProjectionRef( hSrcDataset );
             if( pszProjection != NULL && strlen(pszProjection) > 0 )

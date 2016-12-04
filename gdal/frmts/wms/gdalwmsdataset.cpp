@@ -493,7 +493,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         const char *proj = CPLGetXMLValue(config, "Projection", "");
         if (proj[0] != '\0') {
             m_projection = ProjToWKT(proj);
-            if (m_projection.size() == 0) {
+            if (m_projection.empty()) {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Bad projection specified.");
                 ret = CE_Failure;
             }
@@ -685,18 +685,18 @@ const char * const * GDALWMSDataset::GetHTTPRequestOpts()
     if (m_http_timeout != -1)
         opts = CSLAddString(opts, CPLOPrintf("TIMEOUT=%d", m_http_timeout));
 
-    if (m_osUserAgent.size() != 0)
+    if (!m_osUserAgent.empty())
         opts = CSLAddNameValue(opts, "USERAGENT", m_osUserAgent);
     else
         opts = CSLAddString(opts, "USERAGENT=GDAL WMS driver (http://www.gdal.org/frmt_wms.html)");
 
-    if (m_osReferer.size() != 0)
+    if (!m_osReferer.empty())
         opts = CSLAddNameValue(opts, "REFERER", m_osReferer);
 
     if (m_unsafeSsl >= 1)
         opts = CSLAddString(opts, "UNSAFESSL=1");
 
-    if (m_osUserPwd.size() != 0)
+    if (!m_osUserPwd.empty())
         opts = CSLAddNameValue(opts, "USERPWD", m_osUserPwd);
 
     if (m_http_max_conn > 0)

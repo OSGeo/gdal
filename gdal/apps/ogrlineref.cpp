@@ -472,7 +472,7 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
 
     OGRLineString SubLine;
 
-    if (moParts.size() == 0)
+    if (moParts.empty())
     {
         fprintf(stderr, "Get parts for positions %f - %f failed\n", dfPosBeg, dfPosEnd);
         return OGRERR_FAILURE;

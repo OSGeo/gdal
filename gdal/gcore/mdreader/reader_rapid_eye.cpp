@@ -65,7 +65,7 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
         }
     }
 
-    if(m_osXMLSourceFilename.size())
+    if(!m_osXMLSourceFilename.empty() )
         CPLDebug( "MDReaderRapidEye", "XML Filename: %s",
               m_osXMLSourceFilename.c_str() );
 }

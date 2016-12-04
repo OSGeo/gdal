@@ -570,7 +570,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 
         try
         {
-            if( osKey.size() )
+            if( !osKey.empty() )
             {
                 const int nKeySize =
                     std::min(nMaxKeySize, static_cast<int>(osKey.size()));
@@ -814,7 +814,7 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
 
     try
     {
-        if( osKey.size() )
+        if( !osKey.empty() )
         {
             const int nKeySize =
                 std::min(nMaxKeySize, static_cast<int>(osKey.size()));
@@ -1425,7 +1425,7 @@ static CPLString GetKey(const char* pszFilename)
             // coverity [tainted_data_transitive]
             osKeyB64 = pszKey;
         }
-        if( osKeyB64.size() )
+        if( !osKeyB64.empty() )
         {
             GByte* key = (GByte*)CPLStrdup(osKeyB64);
             int nLength = CPLBase64DecodeInPlace(key);
