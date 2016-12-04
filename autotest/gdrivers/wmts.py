@@ -485,6 +485,8 @@ def wmts_13():
     for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=',
                             'WMTS:/vsimem/minimal.xml,style=',
                             'WMTS:/vsimem/minimal.xml,tilematrixset=',
+                            'WMTS:/vsimem/minimal.xml,tilematrix=',
+                            'WMTS:/vsimem/minimal.xml,zoom_level=',
                             'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=' ]:
         ds = gdal.Open(connection_str)
         if ds is None:
@@ -495,7 +497,9 @@ def wmts_13():
 
     for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=foo',
                             'WMTS:/vsimem/minimal.xml,style=bar',
-                            'WMTS:/vsimem/minimal.xml,tilematrixset=baz' ]:
+                            'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
+                            'WMTS:/vsimem/minimal.xml,tilematrix=baw',
+                            'WMTS:/vsimem/minimal.xml,zoom_level=30' ]:
         gdal.PushErrorHandler()
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
@@ -581,7 +585,7 @@ def wmts_14():
             <Identifier>tms</Identifier>
             <SupportedCRS>urn:ogc:def:crs:EPSG:6.18:3:3857</SupportedCRS>
             <TileMatrix>
-                <Identifier>0</Identifier>
+                <Identifier>tm_0</Identifier>
                 <ScaleDenominator>559082264.029</ScaleDenominator>
                 <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
                 <TileWidth>256</TileWidth>
@@ -590,7 +594,7 @@ def wmts_14():
                 <MatrixHeight>1</MatrixHeight>
             </TileMatrix>
             <TileMatrix>
-                <ows:Identifier>18</ows:Identifier>
+                <ows:Identifier>tm_18</ows:Identifier>
                 <ScaleDenominator>2132.72958385</ScaleDenominator>
                 <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
                 <TileWidth>256</TileWidth>
@@ -689,7 +693,7 @@ def wmts_14():
         return 'fail'
 
     ds = gdal.Open('/vsimem/gdal_nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', 'foo')
+    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', 'foo')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != '<LocationInfo>foo</LocationInfo>':
         gdaltest.post_reason('fail')
@@ -718,7 +722,9 @@ def wmts_14():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    for open_options in [ ['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'] ]:
+    for open_options in [ ['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30'] ]:
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('WMTS:', open_options = open_options)
         gdal.PopErrorHandler()
@@ -727,12 +733,102 @@ def wmts_14():
             return 'fail'
 
     ds = gdal.Open('WMTS:/vsimem/nominal.xml')
-    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
+    gdal.FileFromMemBuffer('/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt', '<?xml version="1.0" encoding="UTF-8"?><xml_content/>')
     res = ds.GetRasterBand(1).GetMetadataItem('Pixel_1_2', 'LocationInfo')
     if res != """<LocationInfo><xml_content />
 </LocationInfo>""":
         gdaltest.post_reason('fail')
         print(res)
+        return 'fail'
+
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['tilematrix=tm_0'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml,zoom_level=0')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    ds = gdal.OpenEx('WMTS:/vsimem/gdal_nominal.xml', open_options = ['zoom_level=0'])
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+  <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
+  <Layer>lyr1</Layer>
+  <Style>style=auto</Style>
+  <TileMatrixSet>tms</TileMatrixSet>
+  <TileMatrix>tm_0</TileMatrix>
+  <DataWindow>
+    <UpperLeftX>-20037508.3428</UpperLeftX>
+    <UpperLeftY>20037508.3428</UpperLeftY>
+    <LowerRightX>20037508.34278254</LowerRightX>
+    <LowerRightY>-20037508.34278254</LowerRightY>
+  </DataWindow>
+  <BandsCount>4</BandsCount>
+  <Cache />
+  <UnsafeSSL>true</UnsafeSSL>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+  <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
+</GDAL_WMTS>""")
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/gdal_nominal.xml', """<GDAL_WMTS>
+  <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
+  <Layer>lyr1</Layer>
+  <Style>style=auto</Style>
+  <TileMatrixSet>tms</TileMatrixSet>
+  <ZoomLevel>0</ZoomLevel>
+  <DataWindow>
+    <UpperLeftX>-20037508.3428</UpperLeftX>
+    <UpperLeftY>20037508.3428</UpperLeftY>
+    <LowerRightX>20037508.34278254</LowerRightX>
+    <LowerRightY>-20037508.34278254</LowerRightY>
+  </DataWindow>
+  <BandsCount>4</BandsCount>
+  <Cache />
+  <UnsafeSSL>true</UnsafeSSL>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+  <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
+</GDAL_WMTS>""")
+    ds = gdal.Open('WMTS:/vsimem/gdal_nominal.xml')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.RasterXSize != 256:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
         return 'fail'
 
     return 'success'

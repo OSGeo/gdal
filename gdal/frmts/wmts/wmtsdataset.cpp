@@ -151,6 +151,8 @@ class WMTSDataset : public GDALPamDataset
                                            const char* pszOperation);
     static int          ReadTMS(CPLXMLNode* psContents,
                                 const CPLString& osIdentifier,
+                                const CPLString& osMaxTileMatrixIdentifier,
+                                int nMaxZoomLevel,
                                 WMTSTileMatrixSet& oTMS);
     static int          ReadTMLimits(CPLXMLNode* psTMSLimits,
                                      std::map<CPLString, WMTSTileMatrixLimits>& aoMapTileMatrixLimits);
@@ -625,6 +627,8 @@ CPLString WMTSDataset::FixCRSName(const char* pszCRS)
 
 int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
                          const CPLString& osIdentifier,
+                         const CPLString& osMaxTileMatrixIdentifier,
+                         int nMaxZoomLevel,
                          WMTSTileMatrixSet& oTMS)
 {
     for(CPLXMLNode* psIter = psContents->psChild; psIter != NULL; psIter = psIter->psNext )
@@ -690,6 +694,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             }
         }
 
+        bool bFoundTileMatrix = false;
         for(CPLXMLNode* psSubIter = psIter->psChild; psSubIter != NULL; psSubIter = psSubIter->psNext )
         {
             if( psSubIter->eType != CXT_Element || strcmp(psSubIter->pszValue, "TileMatrix") != 0 )
@@ -747,6 +752,30 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             if( oTM.nMatrixWidth < 1 || oTM.nMatrixHeight < 1 )
                 continue;
             oTMS.aoTM.push_back(oTM);
+            if( (nMaxZoomLevel >= 0 && static_cast<int>(oTMS.aoTM.size())-1
+                                                        == nMaxZoomLevel) ||
+                (!osMaxTileMatrixIdentifier.empty() &&
+                 EQUAL(osMaxTileMatrixIdentifier, l_pszIdentifier)) )
+            {
+                bFoundTileMatrix = true;
+                break;
+            }
+        }
+        if( nMaxZoomLevel >= 0 && !bFoundTileMatrix )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find TileMatrix of zoom level %d in TileMatrixSet '%s'",
+                     nMaxZoomLevel,
+                     osIdentifier.c_str());
+            return FALSE;
+        }
+        if( !osMaxTileMatrixIdentifier.empty() && !bFoundTileMatrix )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find TileMatrix '%s' in TileMatrixSet '%s'",
+                     osMaxTileMatrixIdentifier.c_str(),
+                     osIdentifier.c_str());
+            return FALSE;
         }
         if( oTMS.aoTM.size() == 0 )
         {
@@ -948,8 +977,16 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                                     "LAYER", "");
     CPLString osTMS = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                     "TILEMATRIXSET", "");
+    CPLString osMaxTileMatrixIdentifier = CSLFetchNameValueDef(
+                                    poOpenInfo->papszOpenOptions,
+                                    "TILEMATRIX", "");
+    int nUserMaxZoomLevel = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                    "ZOOM_LEVEL",
+                                    CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                    "ZOOMLEVEL", "-1")));
     CPLString osStyle = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                     "STYLE", "");
+
     int bExtendBeyondDateLine =
         CPLFetchBool(poOpenInfo->papszOpenOptions,
                      "EXTENDBEYONDDATELINE", false);
@@ -976,6 +1013,11 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                         osLayer = pszValue;
                     else if( EQUAL(pszKey, "tilematrixset") )
                         osTMS = pszValue;
+                    else if( EQUAL(pszKey, "tilematrix") )
+                        osMaxTileMatrixIdentifier = pszValue;
+                    else if( EQUAL(pszKey, "zoom_level") ||
+                             EQUAL(pszKey, "zoomlevel") )
+                        nUserMaxZoomLevel = atoi(pszValue);
                     else if( EQUAL(pszKey, "style") )
                         osStyle = pszValue;
                     else if( EQUAL(pszKey, "extendbeyonddateline") )
@@ -1030,6 +1072,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
         osLayer = CPLGetXMLValue(psRoot, "Layer", osLayer);
         osTMS = CPLGetXMLValue(psRoot, "TileMatrixSet", osTMS);
+        osMaxTileMatrixIdentifier = CPLGetXMLValue(psRoot, "TileMatrix",
+                                                   osMaxTileMatrixIdentifier);
+        nUserMaxZoomLevel = atoi(CPLGetXMLValue(psRoot, "ZoomLevel",
+                                       CPLSPrintf("%d", nUserMaxZoomLevel)));
         osStyle = CPLGetXMLValue(psRoot, "Style", osStyle);
         osTileFormat = CPLGetXMLValue(psRoot, "Format", osTileFormat);
         osInfoFormat = CPLGetXMLValue(psRoot, "InfoFormat", osInfoFormat);
@@ -1271,7 +1317,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                         {
                             // For 13-082_WMTS_Simple_Profile/schemas/wmts/1.0/profiles/WMTSSimple/examples/wmtsGetCapabilities_response_OSM.xml
                             WMTSTileMatrixSet oTMS;
-                            if( ReadTMS(psContents, osSingleTileMatrixSet, oTMS) )
+                            if( ReadTMS(psContents, osSingleTileMatrixSet,
+                                        CPLString(), -1, oTMS) )
                             {
                                 osCRS = oTMS.osSRS;
                             }
@@ -1393,7 +1440,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->osTMS = osSelectTMS;
 
         WMTSTileMatrixSet oTMS;
-        if( !ReadTMS(psContents, osSelectTMS, oTMS) )
+        if( !ReadTMS(psContents, osSelectTMS, osMaxTileMatrixIdentifier,
+                     nUserMaxZoomLevel, oTMS) )
         {
             CPLDestroyXMLNode(psXML);
             delete poDS;
@@ -1795,6 +1843,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             delete poDS;
             return NULL;
         }
+        CPLDebug("WMTS", "Using tilematrix=%s (zoom level %d)",
+                 oTMS.aoTM[nMaxZoomLevel].osIdentifier.c_str(), nMaxZoomLevel);
         oTMS.aoTM.resize(1 + nMaxZoomLevel);
         poDS->oTMS = oTMS;
 
@@ -1922,7 +1972,8 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             const WMTSTileMatrix& oTM = oTMS.aoTM[i];
             int nRasterXSize = int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
             int nRasterYSize = int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
-            if( nRasterXSize < 128 || nRasterYSize < 128 )
+            if( !poDS->apoDatasets.empty() && 
+                (nRasterXSize < 128 || nRasterYSize < 128) )
             {
                 break;
             }
@@ -2082,6 +2133,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             poDS->osXML += "  <Style>" + WMTSEscapeXML(osSelectStyle) + "</Style>\n";
         if( osSelectTMS.size() )
             poDS->osXML += "  <TileMatrixSet>" + WMTSEscapeXML(osSelectTMS) + "</TileMatrixSet>\n";
+        if( !osMaxTileMatrixIdentifier.empty() )
+            poDS->osXML += "  <TileMatrix>" + WMTSEscapeXML(osMaxTileMatrixIdentifier) + "</TileMatrix>\n";
+        if( nUserMaxZoomLevel >= 0 )
+            poDS->osXML += "  <ZoomLevel>" + CPLString().Printf("%d", nUserMaxZoomLevel) + "</ZoomLevel>\n";
         if( nCountTileFormat > 1 && osSelectTileFormat.size() )
             poDS->osXML += "  <Format>" + WMTSEscapeXML(osSelectTileFormat) + "</Format>\n";
         if( nCountInfoFormat > 1 && osSelectInfoFormat.size() )
@@ -2178,6 +2233,8 @@ void GDALRegister_WMTS()
 "  <Option name='URL' type='string' description='URL that points to GetCapabilities response' required='YES'/>"
 "  <Option name='LAYER' type='string' description='Layer identifier'/>"
 "  <Option name='TILEMATRIXSET' alias='TMS' type='string' description='Tile matrix set identifier'/>"
+"  <Option name='TILEMATRIX' type='string' description='Tile matrix identifier of maximum zoom level. Exclusive with ZOOM_LEVEL.'/>"
+"  <Option name='ZOOM_LEVEL' alias='ZOOMLEVEL' type='int' description='Maximum zoom level. Exclusive with TILEMATRIX.'/>"
 "  <Option name='STYLE' type='string' description='Style identifier'/>"
 "  <Option name='EXTENDBEYONDDATELINE' type='boolean' description='Whether to enable extend-beyond-dateline behaviour' default='NO'/>"
 "  <Option name='EXTENT_METHOD' type='string-select' description='How the raster extent is computed' default='AUTO'>"
