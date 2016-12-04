@@ -214,7 +214,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
 
     if (!m_bIsVector)
     {
-        if( m_poParentDS == NULL && m_osRasterTable.size() &&
+        if( m_poParentDS == NULL && !m_osRasterTable.empty() &&
                 !m_bGeoTransformValid )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -847,7 +847,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         CPLDebug("OGR_DB2DataSource::Create","setting metadata PIXEL");
         GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
-        if( m_osDescription.size() )
+        if( !m_osDescription.empty() )
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
@@ -950,7 +950,7 @@ int OGRDB2DataSource::Open( GDALOpenInfo* poOpenInfo )
         if( CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE") ) {
             osSubdatasetTableName = CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE");
         }
-        if( osSubdatasetTableName.size() )
+        if( !osSubdatasetTableName.empty() )
         {
             oStatement.Appendf(" AND c.table_name='%s'", osSubdatasetTableName.c_str());
             SetPhysicalFilename( osFilename.c_str() ); //LATER

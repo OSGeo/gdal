@@ -248,7 +248,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
             CPLPushErrorHandlerEx(GMLASConfigurationErrorHandler, &aosErrors);
             int bRet = CPLValidateXML(pszFilename, pszXSD, NULL);
             CPLPopErrorHandler();
-            if( !bRet && aosErrors.size() > 0 &&
+            if( !bRet && !aosErrors.empty() &&
                 strstr(aosErrors[0].c_str(), "missing libxml2 support") == NULL )
             {
                 for(size_t i = 0; i < aosErrors.size(); i++)

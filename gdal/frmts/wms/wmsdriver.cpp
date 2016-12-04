@@ -91,17 +91,17 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", NULL);
     osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", NULL);
 
-    if (osBaseURL.size() > 0 && osBaseURL[osBaseURL.size() - 1] == '&')
+    if (!osBaseURL.empty() && osBaseURL[osBaseURL.size() - 1] == '&')
         osBaseURL.resize(osBaseURL.size() - 1);
 
-    if (osVersion.size() == 0)
+    if (osVersion.empty())
         osVersion = "1.1.1";
 
     CPLString osSRSTag;
     CPLString osSRSValue;
     if(VersionStringToInt(osVersion.c_str())>= VersionStringToInt("1.3.0"))
     {
-        if (osSRS.size())
+        if (!osSRS.empty() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "WMS version 1.3 and above expects CRS however SRS was set instead.");
@@ -111,7 +111,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        if (osCRS.size())
+        if (!osCRS.empty() )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "WMS version 1.1.1 and below expects SRS however CRS was set instead.");
@@ -120,10 +120,10 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
         osSRSTag = "SRS";
     }
 
-    if (osSRSValue.size() == 0)
+    if (osSRSValue.empty())
         osSRSValue = "EPSG:4326";
 
-    if (osBBOX.size() == 0)
+    if (osBBOX.empty())
     {
         if (osBBOXOrder.compare("yxYX") == 0)
             osBBOX = "-90,-180,90,180";
@@ -168,7 +168,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 
     int nOverviewCount = (osOverviewCount.size()) ? atoi(osOverviewCount) : 20;
 
-    if (osMinResolution.size() != 0)
+    if (!osMinResolution.empty())
     {
         double dfMinResolution = CPLAtofM(osMinResolution);
 
@@ -223,9 +223,9 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     nXSize = (int) dXSize;
     nYSize = (int) dYSize;
 
-    bool bTransparent = osTransparent.size() != 0 && CPLTestBool(osTransparent);
+    bool bTransparent = !osTransparent.empty() && CPLTestBool(osTransparent);
 
-    if (osFormat.size() == 0)
+    if (osFormat.empty())
     {
         if (!bTransparent)
         {
@@ -403,7 +403,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         }
     }
 
-    if (nLevelCount == 0 || osURL.size() == 0)
+    if (nLevelCount == 0 || osURL.empty())
         return NULL;
 
     int nXSize = 0;
@@ -777,7 +777,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLString osLayers = CPLURLGetValue(pszFilename, "LAYERS");
         CPLString osRequest = CPLURLGetValue(pszFilename, "REQUEST");
-        if (osLayers.size() != 0)
+        if (!osLayers.empty())
             config = GDALWMSDatasetGetConfigFromURL(poOpenInfo);
         else if (EQUAL(osRequest, "GetTileService"))
             return GDALWMSMetaDataset::DownloadGetTileService(poOpenInfo);

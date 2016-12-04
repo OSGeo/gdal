@@ -504,7 +504,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
         else
         {
             osSpatialWhere = oPair.second->GetSpatialWhere(nIdx, poLayer->GetFilterGeom());
-            if (osSpatialWhere.size() == 0)
+            if (osSpatialWhere.empty())
             {
                 CPLDebug("SQLITE", "Cannot get spatial where clause");
                 bSpatialFilterInSQL = FALSE;
@@ -513,21 +513,21 @@ int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()
     }
 
     CPLString osCustomWhere;
-    if( osSpatialWhere.size() != 0 )
+    if( !osSpatialWhere.empty() )
     {
         osCustomWhere = osSpatialWhere;
     }
     if( poLayer->GetAttrQueryString() != NULL && poLayer->GetAttrQueryString()[0] != '\0' )
     {
-        if( osSpatialWhere.size() != 0)
+        if( !osSpatialWhere.empty())
             osCustomWhere += " AND (";
         osCustomWhere += poLayer->GetAttrQueryString();
-        if( osSpatialWhere.size() != 0)
+        if( !osSpatialWhere.empty())
             osCustomWhere += ")";
     }
 
     /* Nothing to do */
-    if( osCustomWhere.size() == 0 )
+    if( osCustomWhere.empty() )
         return TRUE;
 
     while (i < osSQLBase.size() && osSQLBase[i] == ' ')

@@ -137,7 +137,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 
         OGRFieldDefn    oField(osFieldName, OFTString);
 
-        if( osGeomColumn.size() == 0
+        if( osGeomColumn.empty()
             && (EQUAL(osInternalType,"POINT")
                 || EQUAL(osInternalType,"IPOINT")
                 || EQUAL(osInternalType,"BOX")
@@ -229,7 +229,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
 #endif
 
         // Is this an integer primary key field?
-        if( osFIDColumn.size() == 0
+        if( osFIDColumn.empty()
             && oField.GetType() == OFTInteger
             && EQUAL(oField.GetNameRef(),"ogr_fid") )
         {
@@ -240,7 +240,7 @@ OGRFeatureDefn *OGRIngresTableLayer::ReadTableDefinition( const char *pszTable )
         poDefn->AddFieldDefn( &oField );
     }
 
-    if( osFIDColumn.size() )
+    if( !osFIDColumn.empty() )
         CPLDebug( "Ingres", "table %s has FID column %s.",
                   pszTable, osFIDColumn.c_str() );
     else
@@ -311,9 +311,9 @@ void OGRIngresTableLayer::BuildWhere()
     }
 #endif
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() == 0 )
+        if( osWHERE.empty() )
             osWHERE = "WHERE " + osQuery;
         else
             osWHERE += "&& " + osQuery;
@@ -370,7 +370,7 @@ char *OGRIngresTableLayer::BuildFields()
         && poFeatureDefn->GetFieldIndex( osFIDColumn ) == -1 )
         sprintf( pszFieldList, "%s", osFIDColumn.c_str() );
 
-    if( osGeomColumn.size() )
+    if( !osGeomColumn.empty() )
     {
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
@@ -433,7 +433,7 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCRandomRead) )
-        return osFIDColumn.size() != 0;
+        return !osFIDColumn.empty();
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
@@ -445,10 +445,10 @@ int OGRIngresTableLayer::TestCapability( const char * pszCap )
         return bUpdateAccess;
 
     else if( EQUAL(pszCap,OLCRandomWrite) )
-        return bUpdateAccess && osFIDColumn.size() != 0;
+        return bUpdateAccess && !osFIDColumn.empty();
 
     else if( EQUAL(pszCap,OLCDeleteFeature) )
-        return bUpdateAccess && osFIDColumn.size() != 0;
+        return bUpdateAccess && !osFIDColumn.empty();
 
     else
         return OGRIngresLayer::TestCapability( pszCap );
@@ -494,7 +494,7 @@ OGRErr OGRIngresTableLayer::DeleteFeature( GIntBig nFID )
 /*      We can only delete features if we have a well defined FID       */
 /*      column to target.                                               */
 /* -------------------------------------------------------------------- */
-    if( osFIDColumn.size() == 0 )
+    if( osFIDColumn.empty() )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DeleteFeature(%ld) failed.  Unable to delete features "
@@ -819,13 +819,13 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Accumulate fields to be inserted.                               */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
+    if( poFeature->GetGeometryRef() != NULL && !osGeomColumn.empty() )
     {
         osCommand = osCommand + osGeomColumn + " ";
         bNeedComma = TRUE;
     }
 
-    if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
+    if( poFeature->GetFID() != OGRNullFID && !osFIDColumn.empty() )
     {
         if( bNeedComma )
             osCommand += ", ";
@@ -857,7 +857,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     // Set the geometry
     bNeedComma = FALSE;
-    if( poFeature->GetGeometryRef() != NULL && osGeomColumn.size() )
+    if( poFeature->GetGeometryRef() != NULL && !osGeomColumn.empty() )
     {
         bNeedComma = TRUE;
         OGRErr localErr;
@@ -900,7 +900,7 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Set the FID                                                     */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetFID() != OGRNullFID && osFIDColumn.size() )
+    if( poFeature->GetFID() != OGRNullFID && !osFIDColumn.empty() )
     {
         if( bNeedComma )
             osCommand += ", ";
@@ -984,10 +984,10 @@ OGRErr OGRIngresTableLayer::ICreateFeature( OGRFeature *poFeature )
 
     oStmt.bDebug = FALSE;
 
-    if( osGeomText.size() > 0  && poDS->IsNewIngres() == FALSE )
+    if( !osGeomText.empty()  && poDS->IsNewIngres() == FALSE )
         oStmt.addInputParameter( IIAPI_LVCH_TYPE, osGeomText.size(),
                                  (GByte *) osGeomText.c_str() );
-    if( osGeomText.size() > 0 && poDS->IsNewIngres() == TRUE )
+    if( !osGeomText.empty() && poDS->IsNewIngres() == TRUE )
     {
         GByte * pabyWKB;
         int nSize = poFeature->GetGeometryRef()->WkbSize();

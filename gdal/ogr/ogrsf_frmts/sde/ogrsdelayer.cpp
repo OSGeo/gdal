@@ -636,7 +636,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         SE_SHAPE hRectShape;
         SHORT nSearchOrder = SE_SPATIAL_FIRST;
 
-        if( osAttributeFilter.size() > 0 )
+        if( !osAttributeFilter.empty() )
         {
             const char *pszOrder = CPLGetConfigOption( "OGR_SDE_SEARCHORDER",
                                                        "ATTRIBUTE_FIRST" );

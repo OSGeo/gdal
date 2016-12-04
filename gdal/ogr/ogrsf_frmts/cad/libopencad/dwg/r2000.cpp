@@ -1549,7 +1549,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         vector<CADAttrib>           blockRefAttributes;
         unique_ptr<CADInsertObject> spoBlockRef( static_cast<CADInsertObject *>( GetObject( dBlockRefHandle ) ) );
 
-        if( spoBlockRef->hAttribs.size() != 0 )
+        if( !spoBlockRef->hAttribs.empty() )
         {
             long dCurrentEntHandle = spoBlockRef->hAttribs[0].getAsLong();
             long dLastEntHandle    = spoBlockRef->hAttribs[0].getAsLong();

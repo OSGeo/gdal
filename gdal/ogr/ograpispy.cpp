@@ -153,7 +153,7 @@ static bool OGRAPISpyEnabled()
         aoSetCreatedDS.clear();
         return false;
     }
-    if( osSpyFile.size() )
+    if( !osSpyFile.empty() )
         return true;
 
     osSpyFile = pszSpyFile;
@@ -452,7 +452,7 @@ static void OGRAPISpyFlushDefered()
 
 int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
 {
-    if( !OGRAPISpyEnabled() || !bUpdate || osSnapshotPath.size() == 0 ||
+    if( !OGRAPISpyEnabled() || !bUpdate || osSnapshotPath.empty() ||
         aoSetCreatedDS.find(pszName) != aoSetCreatedDS.end() )
         return -1;
     OGRAPISpyFlushDefered();

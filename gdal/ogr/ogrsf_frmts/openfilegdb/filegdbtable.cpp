@@ -884,7 +884,7 @@ int FileGDBTable::Open(const char* pszFilename,
 
             if( eType == FGFT_OBJECTID )
             {
-                returnErrorIf(osObjectIdColName.size() > 0 );
+                returnErrorIf(!osObjectIdColName.empty() );
                 osObjectIdColName = osName;
                 continue;
             }
@@ -1266,7 +1266,7 @@ int FileGDBTable::SelectRow(int iRow)
             nRowBlobLength = (GUInt32)(-(int)nRowBlobLength);
         }
 
-        if( !(apoFields.size() == 0 && nRowBlobLength == 0) )
+        if( !(apoFields.empty() && nRowBlobLength == 0) )
         {
             /* CPLDebug("OpenFileGDB", "nRowBlobLength = %u", nRowBlobLength); */
             returnErrorAndCleanupIf(

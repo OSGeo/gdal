@@ -1827,7 +1827,7 @@ int KmlSingleDocRasterDataset::CloseDependentDatasets()
         GDALClose((GDALDatasetH) poCurTileDS);
         poCurTileDS = NULL;
     }
-    if( apoOverviews.size() > 0 )
+    if( !apoOverviews.empty() )
     {
         bRet = TRUE;
         for(size_t i = 0; i < apoOverviews.size(); i++)
@@ -2218,7 +2218,7 @@ GDALDataset* KmlSingleDocRasterDataset::Open(const char* pszFilename,
     std::vector<KmlSingleDocRasterTilesDesc> aosDescs;
     CPLString osDirname = CPLGetPath(osFilename);
     KmlSingleDocCollectTiles(psRootFolder, aosDescs, osDirname);
-    if( aosDescs.size() == 0 )
+    if( aosDescs.empty() )
         return NULL;
     int k;
     for(k = 0; k < (int)aosDescs.size(); k++)
@@ -2477,11 +2477,11 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(const char* pszFilename,
         {
             poDS->SetDescription(pszFilename);
 
-            if( osOverlayName.size() )
+            if( !osOverlayName.empty() )
             {
                 poDS->SetMetadataItem( "NAME", osOverlayName);
             }
-            if( osOverlayDescription.size() )
+            if( !osOverlayDescription.empty() )
             {
                 poDS->SetMetadataItem( "DESCRIPTION", osOverlayDescription);
             }

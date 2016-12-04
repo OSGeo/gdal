@@ -1115,7 +1115,7 @@ static int GetFieldType(const char* pszArg, int* pnSubFieldType)
              {
                  *pnSubFieldType = -1;
                  CPLString osArgSubType = pszOpenParenthesis + 1;
-                 if( osArgSubType.size() && osArgSubType[osArgSubType.size()-1] == ')' )
+                 if( !osArgSubType.empty() && osArgSubType[osArgSubType.size()-1] == ')' )
                      osArgSubType.resize(osArgSubType.size()-1);
                  for( int iSubType = 0; iSubType <= (int) OFSTMaxSubType; iSubType++ )
                  {
@@ -3020,7 +3020,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRSpatialReference* poOutputSRS = m_poOutputSRS;
     if( poOutputSRS == NULL && !m_bNullifyOutputSRS )
     {
-        if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.size() == 0 )
+        if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.empty() )
             poOutputSRS = poSrcLayer->GetSpatialRef();
         else if( anRequestedGeomFields.size() == 1 )
         {
@@ -3073,7 +3073,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         bool bForceGType = ( eGType != GEOMTYPE_UNCHANGED );
         if( !bForceGType )
         {
-            if( anRequestedGeomFields.size() == 0 )
+            if( anRequestedGeomFields.empty() )
             {
                 eGType = poSrcFDefn->GetGeomType();
             }
@@ -3122,7 +3122,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         char** papszLCOTemp = CSLDuplicate(m_papszLCO);
 
         int eGCreateLayerType = eGType;
-        if( anRequestedGeomFields.size() == 0 &&
+        if( anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount > 1 &&
             m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
         {
@@ -3136,7 +3136,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature has a single geometry column that is not nullable
         // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
@@ -3148,7 +3148,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature first geometry column is not nullable
         // and that GEOMETRY_NULLABLE creation option is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount >= 1 &&
                  !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
                  m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
@@ -3162,7 +3162,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // Special case for conversion from GMLAS driver to ensure that
         // source geometry field name will be used as much as possible
         // FIXME: why not make this general behaviour ?
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  m_poSrcDS != NULL &&
@@ -3250,7 +3250,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CSLDestroy(papszDomains);
         }
 
-        if( anRequestedGeomFields.size() == 0 &&
+        if( anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount > 1 &&
             m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
         {
@@ -3787,7 +3787,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                if( osDateLineOffset.size() )
+                if( !osDateLineOffset.empty() )
                 {
                     CPLString soOffset("DATELINEOFFSET=");
                     soOffset += osDateLineOffset;
@@ -3799,7 +3799,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                if( osDateLineOffset.size() )
+                if( !osDateLineOffset.empty() )
                 {
                     CPLString soOffset("DATELINEOFFSET=");
                     soOffset += osDateLineOffset;

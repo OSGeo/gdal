@@ -139,7 +139,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 
         if (STARTS_WITH(pszLine, "LONSA"))
         {
-            if (osLON.size() != 0)
+            if (!osLON.empty())
             {
                 CPLDebug("EDIGEO", "We only handle one lot per THF file");
                 break;
@@ -159,22 +159,22 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
         else if (STARTS_WITH(pszLine, "GDNSA"))
             aosGDN.push_back(pszLine + 8);
     }
-    if (osLON.size() == 0)
+    if (osLON.empty())
     {
         CPLDebug("EDIGEO", "LON field missing");
         return 0;
     }
-    if (osGON.size() == 0)
+    if (osGON.empty())
     {
         CPLDebug("EDIGEO", "GON field missing");
         return 0;
     }
-    if (osDIN.size() == 0)
+    if (osDIN.empty())
     {
         CPLDebug("EDIGEO", "DIN field missing");
         return 0;
     }
-    if (osSCN.size() == 0)
+    if (osSCN.empty())
     {
         CPLDebug("EDIGEO", "SCN field missing");
         return FALSE;
@@ -245,7 +245,7 @@ int OGREDIGEODataSource::ReadGEO()
 
     VSIFCloseL(fp);
 
-    if (osREL.size() == 0)
+    if (osREL.empty())
     {
         CPLDebug("EDIGEO", "REL field missing");
         return FALSE;
@@ -308,7 +308,7 @@ int OGREDIGEODataSource::ReadGEN()
 
     VSIFCloseL(fp);
 
-    if (osCM1.size() == 0 || osCM2.size() == 0)
+    if (osCM1.empty() || osCM2.empty())
         return FALSE;
 
     char** papszTokens1 = CSLTokenizeString2(osCM1.c_str(), ";", 0);
@@ -616,7 +616,7 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
         poLayer->AddFieldDefn("OGR_FONT_SIZE", OFTReal, "");
         iSIZE = poFDefn->GetFieldIndex("OGR_FONT_SIZE");
     }
-    else if (mapQAL.size() != 0)
+    else if (!mapQAL.empty())
     {
         poLayer->AddFieldDefn("CREAT_DATE", OFTInteger, "");
         poLayer->AddFieldDefn("UPDATE_DATE", OFTInteger, "");
@@ -783,7 +783,7 @@ skip_read_next_line:
             char** papszTokens = CSLTokenizeString2(pszLine + 8, ";", 0);
             if (CSLCount(papszTokens) == 4)
             {
-                if (osLnkStartType.size() == 0)
+                if (osLnkStartType.empty())
                 {
                     osLnkStartType = papszTokens[2];
                     osLnkStartName = papszTokens[3];
@@ -855,7 +855,7 @@ skip_read_next_line:
             {
                 bHasUTF8ContentOnly = CPLIsUTF8(osAttVal.c_str(), -1);
             }
-            if (osAttId.size() != 0)
+            if (!osAttId.empty())
                 aosAttIdVal.push_back( strstrType (osAttId, osAttVal) );
             osAttId = "";
             bIso8859_1 = FALSE;
@@ -869,7 +869,7 @@ skip_read_next_line:
                 if (strcmp(papszTokens[2], "ATT") == 0)
                 {
                     CPLString osAttVal = papszTokens[3];
-                    if (osAttId.size() != 0)
+                    if (!osAttId.empty())
                         aosAttIdVal.push_back( strstrType (osAttId, osAttVal) );
                     osAttId = "";
                 }
@@ -931,7 +931,7 @@ OGRFeature* OGREDIGEODataSource::CreateFeature(const CPLString& osFEA)
         }
 
         if (strcmp(poLayer->GetName(), "ID_S_OBJ_Z_1_2_2") != 0 &&
-            mapQAL.size() != 0 && fea.osQUP_RID.size() != 0)
+            !mapQAL.empty() && !fea.osQUP_RID.empty())
         {
             const std::map<CPLString, intintType>::iterator itQAL =
                                                         mapQAL.find(fea.osQUP_RID);
@@ -1171,7 +1171,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
                      "ERROR: Cannot find ARC %s", aosPARList[i].c_str());
     }
 
-    if (aoPARPtrList.size() == 0)
+    if (aoPARPtrList.empty())
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1412,7 +1412,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /* -------------------------------------------------------------------- */
 /*      Read .GEN file                                                  */
 /* -------------------------------------------------------------------- */
-    if (osGNN.size() != 0)
+    if (!osGNN.empty())
         ReadGEN();
 
 /* -------------------------------------------------------------------- */
@@ -1430,7 +1430,7 @@ void OGREDIGEODataSource::ReadEDIGEO()
 /* -------------------------------------------------------------------- */
 /*      Read .QAL file                                                  */
 /* -------------------------------------------------------------------- */
-    if (osQAN.size() != 0)
+    if (!osQAN.empty())
         ReadQAL();
 
 /* -------------------------------------------------------------------- */

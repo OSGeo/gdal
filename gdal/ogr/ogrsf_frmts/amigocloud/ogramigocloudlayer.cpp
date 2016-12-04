@@ -96,7 +96,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
     {
         poFeature = new OGRFeature(poFeatureDefn);
 
-        if( osFIDColName.size() > 0 )
+        if( !osFIDColName.empty() )
         {
             json_object* poVal = CPL_json_object_object_get(poRowObj, osFIDColName);
             if( poVal != NULL &&
@@ -198,7 +198,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
             return NULL;
         }
 
-        if( poFeatureDefn == NULL && osBaseSQL.size() == 0 )
+        if( poFeatureDefn == NULL && osBaseSQL.empty() )
         {
             GetLayerDefn();
         }

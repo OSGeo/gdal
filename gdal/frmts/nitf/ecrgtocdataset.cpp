@@ -706,7 +706,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
     ECRGTOCDataset* poDS = new ECRGTOCDataset();
     int nSubDatasets = 0;
 
-    int bLookForSubDataset = osProduct.size() != 0 && osDiscId.size() != 0;
+    int bLookForSubDataset = !osProduct.empty() && !osDiscId.empty();
 
     int nCountSubDataset = 0;
 
@@ -787,7 +787,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
 
                 if( bLookForSubDataset )
                 {
-                    if( osScale.size() )
+                    if( !osScale.empty() )
                     {
                         if( strcmp(LaunderString(pszSize), osScale.c_str()) != 0 )
                         {

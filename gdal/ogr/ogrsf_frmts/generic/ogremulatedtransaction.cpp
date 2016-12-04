@@ -256,7 +256,7 @@ OGRErr      OGRDataSourceWithTransaction::DeleteLayer(int iIndex)
     if( poLayer )
         osName = poLayer->GetName();
     OGRErr eErr = m_poBaseDataSource->DeleteLayer(iIndex);
-    if( eErr == OGRERR_NONE && osName.size())
+    if( eErr == OGRERR_NONE && !osName.empty() )
     {
         std::map<CPLString, OGRLayerWithTransaction*>::iterator oIter = m_oMapLayers.find(osName);
         if(oIter != m_oMapLayers.end())
@@ -348,7 +348,7 @@ OGRErr OGRDataSourceWithTransaction::StartTransaction(int bForce)
                  "Transactions only supported in forced mode");
         return OGRERR_UNSUPPORTED_OPERATION;
     }
-    if( m_oSetExecuteSQLLayers.size() != 0 )
+    if( !m_oSetExecuteSQLLayers.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot start transaction while a layer returned by "
@@ -380,7 +380,7 @@ OGRErr OGRDataSourceWithTransaction::CommitTransaction()
                  "No transaction in progress");
         return OGRERR_FAILURE;
     }
-    if( m_oSetExecuteSQLLayers.size() != 0 )
+    if( !m_oSetExecuteSQLLayers.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot interrupt transaction while a layer returned by "
@@ -405,7 +405,7 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
                  "No transaction in progress");
         return OGRERR_FAILURE;
     }
-    if( m_oSetExecuteSQLLayers.size() != 0 )
+    if( !m_oSetExecuteSQLLayers.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot interrupt transaction while a layer returned by "

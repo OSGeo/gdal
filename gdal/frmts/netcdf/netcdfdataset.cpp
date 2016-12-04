@@ -836,7 +836,7 @@ CPLErr netCDFRasterBand::SetScale( double dfNewScale )
 const char *netCDFRasterBand::GetUnitType()
 
 {
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
         return osUnitType;
 
     return GDALRasterBand::GetUnitType();
@@ -853,7 +853,7 @@ CPLErr netCDFRasterBand::SetUnitType( const char* pszNewValue )
 
     osUnitType = (pszNewValue != NULL ? pszNewValue : "");
 
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
     {
         // Write value if in update mode.
         if( poDS->GetAccess() == GA_Update )
@@ -5601,7 +5601,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     bDefineMode = false;
 
 #ifdef NETCDF_HAS_NC4
-    if( oListGrpName.size() )
+    if( !oListGrpName.empty() )
     {
         for(int i=0;i<nLayers;i++)
         {
@@ -6128,7 +6128,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
         bIsVectorOnly && nCount > 0 &&
-        anPotentialVectorVarID.size() != 0 &&
+        !anPotentialVectorVarID.empty() &&
         (oMapDimIdToCount.size() == 1 ||
          (EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
     {
@@ -6136,7 +6136,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         nCount = 0;
     }
 
-    if( anPotentialVectorVarID.size() != 0 &&
+    if( !anPotentialVectorVarID.empty() &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
         // Take the dimension that is referenced the most times
@@ -6256,7 +6256,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 eGType = wkbPoint25D;
             }
-            if( eGType == wkbUnknown && osGeometryField.size() == 0 )
+            if( eGType == wkbUnknown && osGeometryField.empty() )
             {
                 eGType = wkbNone;
             }
@@ -6311,11 +6311,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 poLayer->SetXYZVars( nVarXId, nVarYId, nVarZId );
             }
-            else if( osGeometryField.size() )
+            else if( !osGeometryField.empty() )
             {
                 poLayer->SetWKTGeometryField( osGeometryField );
             }
-            if( osGridMapping.size() )
+            if( !osGridMapping.empty() )
             {
                 poLayer->SetGridMapping( osGridMapping );
             }

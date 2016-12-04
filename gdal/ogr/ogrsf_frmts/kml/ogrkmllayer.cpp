@@ -341,7 +341,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     if( poDS_->GetLayerCount() == 1 && nWroteFeatureCount_ == 0 )
     {
         CPLString osRet = WriteSchema();
-        if( osRet.size() )
+        if( !osRet.empty() )
             VSIFPrintfL( fp, "%s", osRet.c_str() );
         bSchemaWritten_ = true;
 

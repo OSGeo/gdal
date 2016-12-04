@@ -81,7 +81,7 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
         // This should return somehow?
     }
 
-    if (psRequest->Range.size() != 0)
+    if (!psRequest->Range.empty())
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
 
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str()); 
@@ -217,12 +217,12 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
         psRequest->ContentType = content_type ? content_type : "";
 
-        if (psRequest->Error.size() == 0)
+        if (psRequest->Error.empty())
             psRequest->Error = &psRequest->m_curl_error[0];
 
         /* In the case of a file:// URL, curl will return a status == 0, so if there's no */
         /* error returned, patch the status code to be 200, as it would be for http:// */
-        if (psRequest->nStatus == 0 && psRequest->Error.size() == 0 && STARTS_WITH(psRequest->URL.c_str(), "file://"))
+        if (psRequest->nStatus == 0 && psRequest->Error.empty() && STARTS_WITH(psRequest->URL.c_str(), "file://"))
             psRequest->nStatus = 200;
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",

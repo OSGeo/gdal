@@ -152,7 +152,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
             CPLPopErrorHandler();
             if( !bRet )
             {
-                if( aosErrors.size() > 0 &&
+                if( !aosErrors.empty() &&
                     strstr(aosErrors[0].c_str(), "missing libxml2 support") == NULL )
                 {
                     for(size_t i = 0; i < aosErrors.size(); i++)

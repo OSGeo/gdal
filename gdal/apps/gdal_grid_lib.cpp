@@ -408,7 +408,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         OGRFeature::DestroyFeature( poFeat );
     }
 
-    if ( adfX.size() == 0 )
+    if ( adfX.empty() )
     {
         printf( "No point geometry found on layer %s, skipping.\n",
                 OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
@@ -461,7 +461,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, nBand );
 
-    if (adfX.size() == 0)
+    if (adfX.empty())
     {
         // FIXME: Should have set to nodata value instead
         GDALFillRaster( hBand, 0.0 , 0.0 );

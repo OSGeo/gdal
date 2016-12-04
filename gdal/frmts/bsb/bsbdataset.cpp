@@ -455,7 +455,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=TRANSVERSE MERCATOR")
-                 && osPP.size() > 0 )
+                 && !osPP.empty() )
         {
 
             osUnderlyingSRS.Printf(
@@ -464,7 +464,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=UNIVERSAL TRANSVERSE MERCATOR")
-                 && osPP.size() > 0 )
+                 && !osPP.empty() )
         {
             // This is not *really* UTM unless the central meridian
             // matches a zone which it does not in some (most?) maps.
@@ -473,7 +473,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                 pszGEOGCS, osPP.c_str() );
         }
 
-        else if( STARTS_WITH_CI(pszPR, "PR=POLYCONIC") && osPP.size() > 0 )
+        else if( STARTS_WITH_CI(pszPR, "PR=POLYCONIC") && !osPP.empty() )
         {
             osUnderlyingSRS.Printf(
                 "PROJCS[\"unnamed\",%s,PROJECTION[\"Polyconic\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0]]",
@@ -481,7 +481,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=LAMBERT CONFORMAL CONIC")
-                 && osPP.size() > 0 && pszKNQ != NULL )
+                 && !osPP.empty() && pszKNQ != NULL )
         {
             CPLString osP2, osP3;
 
@@ -504,7 +504,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
                     osP3.assign(pszValue+3);
             }
 
-            if( osP2.size() > 0 && osP3.size() > 0 )
+            if( !osP2.empty() && !osP3.empty() )
                 osUnderlyingSRS.Printf(
                     "PROJCS[\"unnamed\",%s,PROJECTION[\"Lambert_Conformal_Conic_2SP\"],PARAMETER[\"standard_parallel_1\",%s],PARAMETER[\"standard_parallel_2\",%s],PARAMETER[\"latitude_of_origin\",0.0],PARAMETER[\"central_meridian\",%s],PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0]]",
                     pszGEOGCS, osP2.c_str(), osP3.c_str(), osPP.c_str() );

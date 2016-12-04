@@ -39,7 +39,7 @@ CPLErr WMSMiniDriver_IIP::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
     CPLErr ret = CE_None;
 
     m_base_url = CPLGetXMLValue(config, "ServerURL", "");
-    if (m_base_url.size() == 0) {
+    if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS, IIP mini-driver: ServerURL missing.");
         return CE_Failure;
     }

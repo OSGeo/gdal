@@ -1213,7 +1213,7 @@ void createkmlliststyle(
     const CPLString& osListStyleType,
     const CPLString& osListStyleIconHref)
 {
-    if( osListStyleType.size() || osListStyleIconHref.size() )
+    if( !osListStyleType.empty() || !osListStyleIconHref.empty() )
     {
         StylePtr poKmlStyle = poKmlFactory->CreateStyle();
 
@@ -1224,7 +1224,7 @@ void createkmlliststyle(
 
         ListStylePtr poKmlListStyle = poKmlFactory->CreateListStyle();
         poKmlStyle->set_liststyle( poKmlListStyle );
-        if( osListStyleType.size() )
+        if( !osListStyleType.empty() )
         {
             if( EQUAL(osListStyleType, "check") )
                 poKmlListStyle->set_listitemtype( kmldom::LISTITEMTYPE_CHECK );
@@ -1248,7 +1248,7 @@ void createkmlliststyle(
             }
         }
 
-        if( osListStyleIconHref.size() )
+        if( !osListStyleIconHref.empty() )
         {
             ItemIconPtr poItemIcon = poKmlFactory->CreateItemIcon();
             poItemIcon->set_href( osListStyleIconHref.c_str() );

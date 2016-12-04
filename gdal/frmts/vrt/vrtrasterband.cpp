@@ -1016,7 +1016,7 @@ int VRTRasterBand::GetOverviewCount()
 
 {
     // First: overviews declared in <Overview> element
-    if( m_apoOverviews.size() > 0 )
+    if( !m_apoOverviews.empty() )
         return static_cast<int>(m_apoOverviews.size());
 
     // If not found, external .ovr overviews
@@ -1027,7 +1027,7 @@ int VRTRasterBand::GetOverviewCount()
     // If not found, implicit virtual overviews
     VRTDataset* poVRTDS = reinterpret_cast<VRTDataset *>( poDS );
     poVRTDS->BuildVirtualOverviews();
-    if( poVRTDS->m_apoOverviews.size() && poVRTDS->m_apoOverviews[0] )
+    if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
         return static_cast<int>( poVRTDS->m_apoOverviews.size() );
 
     return 0;
@@ -1041,7 +1041,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
 
 {
     // First: overviews declared in <Overview> element
-    if( m_apoOverviews.size() > 0 )
+    if( !m_apoOverviews.empty() )
     {
         if( iOverview < 0
             || iOverview >= static_cast<int>( m_apoOverviews.size() ) )
@@ -1079,7 +1079,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
     // If not found, implicit virtual overviews
     VRTDataset* poVRTDS = reinterpret_cast<VRTDataset *>( poDS );
     poVRTDS->BuildVirtualOverviews();
-    if( poVRTDS->m_apoOverviews.size() && poVRTDS->m_apoOverviews[0] )
+    if( !poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0] )
     {
         if( iOverview < 0
             || iOverview >= static_cast<int>( poVRTDS->m_apoOverviews.size() ) )

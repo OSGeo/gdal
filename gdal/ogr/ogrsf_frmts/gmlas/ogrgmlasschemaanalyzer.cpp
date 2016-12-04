@@ -187,7 +187,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
 
 CPLString GMLASSchemaAnalyzer::GetPrefix( const CPLString& osNamespaceURI )
 {
-    if( osNamespaceURI.size() == 0 )
+    if( osNamespaceURI.empty() )
         return "";
     std::map<CPLString,CPLString>::const_iterator oIter =
                                         m_oMapURIToPrefix.find(osNamespaceURI);
@@ -310,7 +310,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                                 GetNSOfLastXPathComponent(oField.GetXPath()));
                     // If the field has a namespace that is not the one of its
                     // class, then prefix its name with its namespace
-                    if( oNS.size() && oNS != oClassNS &&
+                    if( !oNS.empty() && oNS != oClassNS &&
                         !STARTS_WITH(oField.GetName(), (oNS + "_").c_str() ) )
                     {
                         bHasDoneSomeRenaming = true;
@@ -320,7 +320,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                     }
                     // If it is an attribute without a particular namespace,
                     // then suffix with _attr
-                    else if( oNS.size() == 0 &&
+                    else if( oNS.empty() &&
                              oField.GetXPath().find('@') != std::string::npos &&
                              oField.GetName().find("_attr") == std::string::npos )
                     {
@@ -2890,7 +2890,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         //      <xs:complexType>
                         //          <xs:sequence maxOccurs="unbounded">
                         if( m_bUseArrays && nAttrListSize == 0 &&
-                            oNestedClass.GetNestedClasses().size() == 0 &&
+                            oNestedClass.GetNestedClasses().empty() &&
                             oNestedClass.GetFields().size() == 1 &&
                             IsCompatibleOfArray(
                                     oNestedClass.GetFields()[0].GetType()) &&
@@ -2915,7 +2915,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         }
                         else
                         {
-                            if( aoFields.size() && bEltRepeatedParticle)
+                            if( !aoFields.empty() && bEltRepeatedParticle)
                             {
                                 // We have attributes and the sequence is
                                 // repeated

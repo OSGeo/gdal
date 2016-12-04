@@ -281,9 +281,9 @@ OGRFeature *OGREditableLayer::GetNextFeature()
 OGRErr      OGREditableLayer::SetNextByIndex( GIntBig nIndex )
 {
     if( m_poDecoratedLayer != NULL &&
-        m_oSetCreated.size() == 0 &&
-        m_oSetDeleted.size() == 0 &&
-        m_oSetEdited.size() == 0 )
+        m_oSetCreated.empty() &&
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() )
     {
         return m_poDecoratedLayer->SetNextByIndex(nIndex);
     }
@@ -546,8 +546,8 @@ GIntBig OGREditableLayer::GetFeatureCount( int bForce )
 {
     if( !m_poDecoratedLayer ) return 0;
     if( m_poAttrQuery == NULL && m_poFilterGeom == NULL &&
-        m_oSetDeleted.size() == 0 &&
-        m_oSetEdited.size() == 0 )
+        m_oSetDeleted.empty() &&
+        m_oSetEdited.empty() )
     {
         GIntBig nFC = m_poDecoratedLayer->GetFeatureCount(bForce);
         if( nFC >= 0 )
@@ -577,8 +577,8 @@ OGRErr      OGREditableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 {
     if( !m_poDecoratedLayer ) return OGRERR_FAILURE;
     int iSrcGeomFieldIdx = GetSrcGeomFieldIndex(iGeomField);
-    if( iSrcGeomFieldIdx >= 0 && m_oSetEdited.size() == 0 &&
-        m_oSetDeleted.size() == 0 )
+    if( iSrcGeomFieldIdx >= 0 && m_oSetEdited.empty() &&
+        m_oSetDeleted.empty() )
     {
         OGRErr eErr = m_poDecoratedLayer->GetExtent(iSrcGeomFieldIdx, psExtent,
                                                     bForce);
@@ -767,8 +767,8 @@ OGRErr      OGREditableLayer::SyncToDisk()
     OGRErr eErr = m_poDecoratedLayer->SyncToDisk();
     if( eErr == OGRERR_NONE )
     {
-        if( m_oSetCreated.size() == 0 && m_oSetEdited.size() == 0 &&
-            m_oSetDeleted.size() == 0 && !m_bStructureModified )
+        if( m_oSetCreated.empty() && m_oSetEdited.empty() &&
+            m_oSetDeleted.empty() && !m_bStructureModified )
         {
             return OGRERR_NONE;
         }

@@ -719,7 +719,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         const OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
 
         /* Not a standard field type... */
-        if ( (oType > OFTMaxType && osGeomColsType.size()) || EQUAL(osGeomColumnName, pszName) )
+        if ( (oType > OFTMaxType && !osGeomColsType.empty() ) || EQUAL(osGeomColumnName, pszName) )
         {
             /* Maybe it's a geometry type? */
             OGRwkbGeometryType oGeomType;
@@ -2535,14 +2535,14 @@ void OGRGeoPackageTableLayer::BuildWhere()
 
     CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
                                                m_poFilterGeom);
-    if (osSpatialWHERE.size() != 0)
+    if (!osSpatialWHERE.empty())
     {
         m_soFilter += osSpatialWHERE;
     }
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( m_soFilter.size() == 0 )
+        if( m_soFilter.empty() )
         {
             m_soFilter += osQuery;
         }
@@ -2946,9 +2946,9 @@ CPLErr OGRGeoPackageTableLayer::SetMetadata( char ** papszMetadata, const char *
     m_poDS->SetMetadataDirty();
     if( pszDomain == NULL || EQUAL(pszDomain, "") )
     {
-        if( m_osIdentifierLCO.size() )
+        if( !m_osIdentifierLCO.empty() )
             OGRLayer::SetMetadataItem("IDENTIFIER", m_osIdentifierLCO);
-        if( m_osDescriptionLCO.size() )
+        if( !m_osDescriptionLCO.empty() )
             OGRLayer::SetMetadataItem("DESCRIPTION", m_osDescriptionLCO);
     }
     return eErr;
@@ -2963,10 +2963,10 @@ CPLErr OGRGeoPackageTableLayer::SetMetadataItem( const char * pszName,
                                                  const char * pszDomain )
 {
     GetMetadata(); /* force loading from storage if needed */
-    if( m_osIdentifierLCO.size() && EQUAL(pszName, "IDENTIFIER") &&
+    if( !m_osIdentifierLCO.empty() && EQUAL(pszName, "IDENTIFIER") &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) )
         return CE_None;
-    if( m_osDescriptionLCO.size() && EQUAL(pszName, "DESCRIPTION") &&
+    if( !m_osDescriptionLCO.empty() && EQUAL(pszName, "DESCRIPTION") &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) )
         return CE_None;
     m_poDS->SetMetadataDirty();

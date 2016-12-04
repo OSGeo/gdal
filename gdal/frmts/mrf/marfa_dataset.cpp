@@ -1106,7 +1106,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
     if (!photometric.empty())
         CPLCreateXMLElementAndValue(raster, "Photometric", photometric);
 
-    if (vNoData.size() || vMin.size() || vMax.size()) {
+    if (!vNoData.empty() || !vMin.empty() || !vMax.empty() ) {
         CPLXMLNode *values = CPLCreateXMLNode(raster, CXT_Element, "DataValues");
         XMLSetAttributeVal(values, "NoData", vNoData);
         XMLSetAttributeVal(values, "min", vMin);
@@ -1171,7 +1171,7 @@ CPLXMLNode * GDALMRFDataset::BuildConfig()
     if (pszProj && (!EQUAL(pszProj, "")))
         CPLCreateXMLElementAndValue(gtags, "Projection", pszProj);
 
-    if (optlist.size()) {
+    if (!optlist.empty() ) {
         CPLString options;
         for (int i = 0; i < optlist.size(); i++) {
             options += optlist[i];
@@ -1313,7 +1313,7 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
             ci = GCI_Undefined;
 
         // New style
-        if (photometric.size()) {
+        if (!photometric.empty() ) {
             if ("MULTISPECTRAL" == photometric)
                 ci = GCI_Undefined;
         }

@@ -2615,7 +2615,7 @@ char **JPGDatasetCommon::GetFileList()
 
     LoadWorldFileOrTab();
 
-    if( osWldFilename.size() != 0 &&
+    if( !osWldFilename.empty() &&
         CSLFindString(papszFileList, osWldFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osWldFilename );

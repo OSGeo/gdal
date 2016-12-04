@@ -3062,7 +3062,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to PROJ.4 string (if not already done)            */
 /* -------------------------------------------------------------------- */
-    if( osProj4.size() == 0 )
+    if( osProj4.empty() )
     {
         char* pszProj4 = NULL;
         if( oSRS.exportToProj4( &pszProj4 ) == OGRERR_NONE )

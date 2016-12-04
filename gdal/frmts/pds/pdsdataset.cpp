@@ -683,7 +683,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     int nDetachedOffset = 0;
     bool bDetachedOffsetInBytes = false;
 
-    if( osQube.size() && osQube[0] == '(' )
+    if( !osQube.empty() && osQube[0] == '(' )
     {
         osQube = "\"";
         osQube += GetKeywordSub( osPrefix + "^" + osImageKeyword, 1 );
@@ -696,11 +696,11 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
             bDetachedOffsetInBytes = true;
     }
 
-    if( osQube.size() && osQube[0] == '"' )
+    if( !osQube.empty() && osQube[0] == '"' )
     {
         CPLString osFilename = osQube;
         CleanString( osFilename );
-        if( osFilenamePrefix.size() )
+        if( !osFilenamePrefix.empty() )
         {
             osTargetFile = osFilenamePrefix + osFilename;
         }
@@ -830,7 +830,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     const char *pszDesc = NULL;
 
     CPLString osSB = GetKeyword(osPrefix+"IMAGE.SAMPLE_BITS","");
-    if ( osSB.size() > 0 )
+    if ( !osSB.empty() )
     {
         const int itype = atoi(osSB);
         switch(itype) {
@@ -894,10 +894,10 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 
         /* Parse suffix dimensions if defined. */
         value = GetKeyword( osPrefix + "SPECTRAL_QUBE.SUFFIX_ITEMS", "" );
-        if ( value.size() > 0 )
+        if ( !value.empty() )
         {
             value = GetKeyword(osPrefix + "SPECTRAL_QUBE.SUFFIX_BYTES", "");
-            if ( value.size() > 0 )
+            if ( !value.empty() )
                 nSuffixBytes = atoi( value );
 
             nSuffixItems = atoi(
@@ -907,7 +907,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         }
 
         value = GetKeyword( osPrefix + "SPECTRAL_QUBE.CORE_NULL", "" );
-        if ( value.size() > 0 )
+        if ( !value.empty() )
             dfNoData = CPLAtofM( value );
 
         dfOffset = CPLAtofM(
@@ -1198,7 +1198,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     CleanString( osCompressedFilename );
 
     CPLString osUncompressedFilename = poDS->GetKeyword( "UNCOMPRESSED_FILE.IMAGE.NAME", "");
-    if( osUncompressedFilename.size() == 0 )
+    if( osUncompressedFilename.empty() )
         osUncompressedFilename = poDS->GetKeyword( "UNCOMPRESSED_FILE.FILE_NAME", "");
     CleanString( osUncompressedFilename );
 
@@ -1206,8 +1206,8 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osFilenamePrefix;
 
     if( EQUAL(osEncodingType, "ZIP") &&
-        osCompressedFilename.size() != 0 &&
-        osUncompressedFilename.size() != 0 )
+        !osCompressedFilename.empty() &&
+        !osUncompressedFilename.empty() )
     {
         const CPLString osPath = CPLGetPath(poDS->GetDescription());
         osCompressedFilename = CPLFormFilename( osPath, osCompressedFilename, NULL );
@@ -1221,7 +1221,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
         osEncodingType = "";
     }
 
-    if( osEncodingType.size() != 0 )
+    if( !osEncodingType.empty() )
     {
         if( !poDS->ParseCompressedImage() )
         {

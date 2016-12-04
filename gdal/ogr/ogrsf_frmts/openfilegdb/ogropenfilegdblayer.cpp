@@ -104,7 +104,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&
                 m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.size() == 0 )
+                m_poLayer->m_osDefinition.empty() )
             {
                 m_bHasBuildFieldDefn = TRUE;
                 (void) m_poLayer->BuildLayerDefinition();
@@ -117,7 +117,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             /* FileGDB v9 case */
             if( !m_bHasBuildFieldDefn &&
                 m_poLayer != NULL && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.size() == 0 )
+                m_poLayer->m_osDefinition.empty() )
             {
                 m_bHasBuildFieldDefn = TRUE;
                 (void) m_poLayer->BuildLayerDefinition();
@@ -168,7 +168,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer( const char* pszGDBFilename,
 
     m_eGeomType = eGeomType;
 
-    if( m_osDefinition.size() )
+    if( !m_osDefinition.empty() )
     {
         BuildGeometryColumnGDBv10();
     }
@@ -381,7 +381,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     }
 
     if( m_iGeomFieldIdx >= 0 &&
-        (m_osDefinition.size() == 0 ||
+        (m_osDefinition.empty() ||
          m_poFeatureDefn->OGRFeatureDefn::GetGeomFieldCount() == 0) )
     {
         /* FileGDB v9 case */
@@ -435,7 +435,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         m_poFeatureDefn->AddGeomFieldDefn(poGeomFieldDefn, FALSE);
 
         OGRSpatialReference* poSRS = NULL;
-        if( poGDBGeomField->GetWKT().size() &&
+        if( !poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{' )
         {
             poSRS = new OGRSpatialReference( poGDBGeomField->GetWKT().c_str() );
@@ -451,7 +451,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             poSRS->Dereference();
         }
     }
-    else if( m_osDefinition.size() == 0 && m_iGeomFieldIdx < 0 )
+    else if( m_osDefinition.empty() && m_iGeomFieldIdx < 0 )
     {
         m_eGeomType = wkbNone;
     }
@@ -545,7 +545,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 // a00000004.gdbtable does not match the default values (in
                 // binary) found in the field definition section of the
                 // .gdbtable of the layers themselves So check consistency.
-                if( m_osDefinition.size() && psTree == NULL )
+                if( !m_osDefinition.empty() && psTree == NULL )
                 {
                     psTree = CPLParseXMLString(m_osDefinition.c_str());
                     if( psTree != NULL )
@@ -656,7 +656,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType()
 {
     if( m_eGeomType == wkbUnknown ||
-        m_osDefinition.size() == 0 /* FileGDB v9 case */ )
+        m_osDefinition.empty() /* FileGDB v9 case */ )
     {
         (void) BuildLayerDefinition();
     }

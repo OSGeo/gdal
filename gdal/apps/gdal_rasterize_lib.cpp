@@ -283,11 +283,11 @@ static CPLErr ProcessLayer(
 /* -------------------------------------------------------------------- */
     if( bInverse )
     {
-        if( ahGeometries.size() == 0 )
+        if( ahGeometries.empty() )
         {
             for( unsigned int iBand = 0; iBand < anBandList.size(); iBand++ )
             {
-                if( adfBurnValues.size() > 0 )
+                if( !adfBurnValues.empty() )
                     adfFullBurnValues.push_back(
                         adfBurnValues[
                             std::min(iBand,
@@ -459,7 +459,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         }
     }
 
-    if (adfInitVals.size() != 0)
+    if (!adfInitVals.empty())
     {
         for( iBand = 0;
              iBand < std::min(nBandCount, static_cast<int>(adfInitVals.size()));
@@ -1095,7 +1095,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             return NULL;
         }
 
-        if( psOptions->anBandList.size() != 0 )
+        if( !psOptions->anBandList.empty() )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-b option cannot be used when creating a GDAL dataset." );
             GDALRasterizeOptionsFree(psOptions);
@@ -1104,7 +1104,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
 
         int nBandCount = 1;
 
-        if (psOptions->adfBurnValues.size() != 0)
+        if (!psOptions->adfBurnValues.empty())
             nBandCount = static_cast<int>(psOptions->adfBurnValues.size());
 
         if ((int)psOptions->adfInitVals.size() > nBandCount)
@@ -1122,7 +1122,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     }
     else
     {
-        if( psOptions->anBandList.size() == 0 )
+        if( psOptions->anBandList.empty() )
             psOptions->anBandList.push_back( 1 );
     }
 

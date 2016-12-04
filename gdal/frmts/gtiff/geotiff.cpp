@@ -13589,7 +13589,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->bHaveOffsetScale = CPL_TO_BOOL(nHaveOffsetScale);
                 poBand->dfOffset = poBand->GDALPamRasterBand::GetOffset();
             }
-            if( poBand->osUnitType.size() == 0 )
+            if( poBand->osUnitType.empty() )
             {
                 const char* pszUnitType =
                     poBand->GDALPamRasterBand::GetUnitType();
@@ -16789,7 +16789,7 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
         {
             if( !anReachedVirtualMemIO[i] )
             {
-                if( osMissing.size() ) osMissing += ",";
+                if( !osMissing.empty() ) osMissing += ",";
                 osMissing += CPLSPrintf("%d", i);
             }
         }
@@ -16999,7 +16999,7 @@ char **GTiffDataset::GetFileList()
         }
     }
 
-    if( osGeorefFilename.size() != 0 &&
+    if( !osGeorefFilename.empty() &&
         CSLFindString(papszFileList, osGeorefFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osGeorefFilename );

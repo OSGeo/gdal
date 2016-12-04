@@ -147,7 +147,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
         "host:" + osHost + "\n" +
         "x-amz-content-sha256:" + osXAMZContentSHA256 + "\n" +
         "x-amz-date:" + osTimestamp + "\n";
-    if( osAccessToken.size() )
+    if( !osAccessToken.empty() )
     {
         osCanonicalHeaders += "x-amz-security-token:";
         osCanonicalHeaders += osAccessToken;
@@ -157,7 +157,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osCanonicalRequest += osCanonicalHeaders + "\n";
 
     CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
-    if( osAccessToken.size() )
+    if( !osAccessToken.empty() )
         osSignedHeaders += ";x-amz-security-token";
     osCanonicalRequest += osSignedHeaders + "\n";
 
@@ -359,7 +359,7 @@ void VSIS3HandleHelper::RebuildURL()
         else
             m_osURL += "&";
         m_osURL += oIter->first;
-        if( oIter->second.size() )
+        if( !oIter->second.empty() )
         {
             m_osURL += "=";
             m_osURL += oIter->second;
@@ -489,7 +489,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         m_oMapQueryParameters.begin();
     for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
     {
-        if( osCanonicalQueryString.size() )
+        if( !osCanonicalQueryString.empty() )
             osCanonicalQueryString += "&";
         osCanonicalQueryString += oIter->first;
         osCanonicalQueryString += "=";
@@ -518,7 +518,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
     headers = curl_slist_append(
         headers, CPLSPrintf("x-amz-content-sha256: %s",
                             osXAMZContentSHA256.c_str()));
-    if( m_osSessionToken.size() )
+    if( !m_osSessionToken.empty() )
         headers = curl_slist_append(
             headers,
             CPLSPrintf("X-Amz-Security-Token: %s", m_osSessionToken.c_str()));

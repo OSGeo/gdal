@@ -492,7 +492,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
     if( padfZ )
         adfZ.push_back(padfZ[nPointCount-1]);
 
-    CPLAssert(aoRawPoint.size() == 0 ||
+    CPLAssert(aoRawPoint.empty() ||
               (aoRawPoint.size() >= 3 && (aoRawPoint.size() % 2) == 1));
     if( padfZ )
     {

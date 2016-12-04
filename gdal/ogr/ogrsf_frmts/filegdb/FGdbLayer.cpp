@@ -1608,7 +1608,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
         CSLDestroy(papszTokens);
     }
 
-    if (fieldname_clean.size() != 0)
+    if (!fieldname_clean.empty())
     {
         oField.SetName(fieldname_clean.c_str());
     }
@@ -2011,7 +2011,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                              "Found perfect match in ESRI SRS DB "
                              "for layer SRS. SRID is %d", nSRID);
                 }
-                else if( oaiCandidateSRS.size() == 0 )
+                else if( oaiCandidateSRS.empty() )
                 {
                      CPLDebug("FGDB",
                               "Did not found a match in ESRI SRS DB for layer SRS. "
@@ -2039,7 +2039,7 @@ static CPLXMLNode* XMLSpatialReference(OGRSpatialReference* poSRS, char** papszO
                     CPLString osCandidateSRS;
                     for(int i=0; i<(int)oaiCandidateSRS.size() && i < 10; i++)
                     {
-                        if( osCandidateSRS.size() )
+                        if( !osCandidateSRS.empty() )
                             osCandidateSRS += ", ";
                         osCandidateSRS += CPLSPrintf("%d", oaiCandidateSRS[i]);
                     }
@@ -2599,7 +2599,7 @@ bool FGdbLayer::Initialize(FGdbDataSource* pParentDataSource, Table* pTable,
             }
         }
 
-        if (m_strShapeFieldName.size() == 0)
+        if (m_strShapeFieldName.empty())
             m_pFeatureDefn->SetGeomType(wkbNone);
     }
     else
@@ -2927,7 +2927,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode* psRoot)
                 fieldTemplate.SetWidth(nLength);
             //fieldTemplate.SetPrecision(nPrecision);
             fieldTemplate.SetNullable(bNullable);
-            if( osDefault.size() )
+            if( !osDefault.empty() )
             {
                 if( ogrType == OFTString )
                 {
@@ -3087,7 +3087,7 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 
 void  FGdbLayer::ResyncIDs()
 {
-    if( m_oMapOGRFIDToFGDBFID.size() == 0 )
+    if( m_oMapOGRFIDToFGDBFID.empty() )
         return;
     if( m_pDS->Close() )
         m_pDS->ReOpen();
@@ -3432,7 +3432,7 @@ GIntBig FGdbLayer::GetFeatureCount( CPL_UNUSED int bForce )
 
     EndBulkLoad();
 
-    if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0)
+    if (m_pOGRFilterGeometry != NULL || !m_wstrWhereClause.empty())
     {
         ResetReading();
         if (m_pEnumRows == NULL)
@@ -3499,8 +3499,8 @@ OGRErr FGdbLayer::GetExtent (OGREnvelope* psExtent, int bForce)
     if( m_pTable == NULL )
         return OGRERR_FAILURE;
 
-    if (m_pOGRFilterGeometry != NULL || m_wstrWhereClause.size() != 0 ||
-        m_strShapeFieldName.size() == 0)
+    if (m_pOGRFilterGeometry != NULL || !m_wstrWhereClause.empty() ||
+        m_strShapeFieldName.empty())
     {
         const int nFieldCount = m_pFeatureDefn->GetFieldCount();
         int* pabSaveFieldIgnored = new int[nFieldCount];
@@ -3669,13 +3669,13 @@ int FGdbLayer::TestCapability( const char* pszCap )
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.size() == 0;
+        return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))
         return TRUE;
 
     else if (EQUAL(pszCap,OLCFastGetExtent))
-        return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.size() == 0;
+        return m_pOGRFilterGeometry == NULL && m_wstrWhereClause.empty();
 
     else if (EQUAL(pszCap,OLCCreateField)) /* CreateField() */
         return m_pDS->GetUpdate();

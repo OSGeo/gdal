@@ -808,7 +808,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /* -------------------------------------------------------------------- */
 /*      Does this reference the PCIDSK file itself?                     */
 /* -------------------------------------------------------------------- */
-    if( filename.size() == 0 )
+    if( filename.empty() )
     {
         *io_handle_pp = &io_handle;
         *io_mutex_pp = &io_mutex;

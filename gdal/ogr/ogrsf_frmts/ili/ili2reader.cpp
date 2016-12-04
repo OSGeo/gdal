@@ -597,7 +597,7 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
         return FALSE;
     }
 
-  if (m_missAttrs.size() != 0) {
+  if (!m_missAttrs.empty()) {
     m_missAttrs.sort();
     m_missAttrs.unique();
     string attrs = "";

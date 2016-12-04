@@ -204,7 +204,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
 
     while( poClass != NULL )
     {
-        if( osSubClasses.size() > 0 )
+        if( !osSubClasses.empty() )
             osSubClasses = ":" + osSubClasses;
 
         osSubClasses = ((const char *) poClass->name()) + osSubClasses;
@@ -289,7 +289,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
             break;
         }
 
-        if( osFullXData.size() > 0 )
+        if( !osFullXData.empty() )
             osFullXData += " ";
         osFullXData += (const char *) osXDataItem;
     }

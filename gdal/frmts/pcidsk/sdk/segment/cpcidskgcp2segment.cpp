@@ -190,7 +190,7 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     
     // This will have to change when we have proper projections support
 
-    if (pimpl_->gcps.size() > 0)
+    if (!pimpl_->gcps.empty())
     {
         pimpl_->gcps[0].GetMapUnits(pimpl_->map_units, 
             pimpl_->proj_parms);

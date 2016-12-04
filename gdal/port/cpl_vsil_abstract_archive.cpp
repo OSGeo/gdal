@@ -407,7 +407,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
             }
 
             // Remove trailing slash.
-            if( osFileInArchive.size() )
+            if( !osFileInArchive.empty() )
             {
                 char lastC = osFileInArchive[strlen(osFileInArchive) - 1];
                 if( lastC == '\\' || lastC == '/' )
@@ -510,7 +510,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
                 }
 
                 // Remove trailing slash.
-                if( osFileInArchive.size() )
+                if( !osFileInArchive.empty() )
                 {
                     const char lastC =
                         osFileInArchive[strlen(osFileInArchive) - 1];

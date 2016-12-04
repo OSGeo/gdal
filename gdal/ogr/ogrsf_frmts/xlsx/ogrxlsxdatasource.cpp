@@ -559,7 +559,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
     else if (EQUAL(pszXLSXHeaders, "DISABLE"))
         bFirstLineIsHeaders = false;
     else if( bHeaderLineCandidate &&
-             apoFirstLineTypes.size() != 0 &&
+             !apoFirstLineTypes.empty() &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
@@ -624,7 +624,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
         CPLAssert(strcmp(pszNameIn, "sheetData") == 0);
 
         if (nCurLine == 0 ||
-            (nCurLine == 1 && apoFirstLineValues.size() == 0))
+            (nCurLine == 1 && apoFirstLineValues.empty()))
         {
             /* We could remove empty sheet, but too late now */
         }
@@ -744,7 +744,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             apoFirstLineValues = apoCurLineValues;
 
     #if skip_leading_empty_rows
-            if (apoFirstLineTypes.size() == 0)
+            if (apoFirstLineTypes.empty())
             {
                 /* Skip leading empty rows */
                 apoFirstLineTypes.resize(0);
@@ -826,7 +826,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             {
                 for( size_t i = 0; i < apoCurLineValues.size(); i++ )
                 {
-                    if (apoCurLineValues[i].size())
+                    if (!apoCurLineValues[i].empty() )
                     {
                         OGRFieldType eValType = GetOGRFieldType(
                                                 apoCurLineValues[i].c_str(),
@@ -889,11 +889,11 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 void OGRXLSXDataSource::startElementCell(const char *pszNameIn,
                                          CPL_UNUSED const char **ppszAttr)
 {
-    if (osValue.size() == 0 && strcmp(pszNameIn, "v") == 0)
+    if (osValue.empty() && strcmp(pszNameIn, "v") == 0)
     {
         PushState(STATE_TEXTV);
     }
-    else if (osValue.size() == 0 && strcmp(pszNameIn, "t") == 0)
+    else if (osValue.empty() && strcmp(pszNameIn, "t") == 0)
     {
         PushState(STATE_TEXTV);
     }

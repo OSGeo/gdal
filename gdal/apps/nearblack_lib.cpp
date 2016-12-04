@@ -238,7 +238,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
     /***** set a color if there are no colors set? *****/
 
-    if ( oColors.size() == 0) {
+    if ( oColors.empty()) {
         Color oColor;
 
         /***** loop over the bands to get the right number of values *****/
@@ -834,7 +834,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 
             /***** check if the number of bands is consistent *****/
 
-            if ( psOptions->oColors.size() > 0 &&
+            if ( !psOptions->oColors.empty() &&
                  psOptions->oColors.front().size() != oColor.size() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

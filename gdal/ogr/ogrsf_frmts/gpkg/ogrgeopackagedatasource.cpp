@@ -469,7 +469,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
 {
     SetPamFlags(0);
 
-    if( m_poParentDS == NULL && m_osRasterTable.size() &&
+    if( m_poParentDS == NULL && !m_osRasterTable.empty() &&
         !m_bGeoTransformValid )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -720,7 +720,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             "c.table_name = tms.table_name WHERE data_type = 'tiles'";
         if( CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE") )
             osSubdatasetTableName = CSLFetchNameValue( poOpenInfo->papszOpenOptions, "TABLE");
-        if( osSubdatasetTableName.size() )
+        if( !osSubdatasetTableName.empty() )
         {
             char* pszTmp = sqlite3_mprintf(" AND c.table_name='%q'", osSubdatasetTableName.c_str());
             osSQL += pszTmp;
@@ -735,7 +735,7 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
             return FALSE;
         }
 
-        if( oResult.nRowCount == 0 && osSubdatasetTableName.size() )
+        if( oResult.nRowCount == 0 && !osSubdatasetTableName.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find table '%s' in GeoPackage dataset",
                      osSubdatasetTableName.c_str());
@@ -1867,7 +1867,7 @@ CPLErr GDALGeoPackageDataset::IBuildOverviews(
 char **GDALGeoPackageDataset::GetMetadataDomainList()
 {
     GetMetadata();
-    if( m_osRasterTable.size() != 0 )
+    if( !m_osRasterTable.empty() )
         GetMetadata("GEOPACKAGE");
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
@@ -1881,7 +1881,7 @@ char **GDALGeoPackageDataset::GetMetadataDomainList()
 const char* GDALGeoPackageDataset::CheckMetadataDomain( const char* pszDomain )
 {
     if( pszDomain != NULL && EQUAL(pszDomain, "GEOPACKAGE") &&
-        m_osRasterTable.size() == 0 )
+        m_osRasterTable.empty() )
     {
         CPLError(CE_Warning, CPLE_IllegalArg,
                  "Using GEOPACKAGE for a non-raster geopackage is not supported. "
@@ -1925,7 +1925,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
         return GDALPamDataset::GetMetadata( pszDomain );
 
     char* pszSQL = NULL;
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         pszSQL = sqlite3_mprintf(
             "SELECT md.metadata, md.md_standard_uri, md.mime_type, mdr.reference_scope FROM gpkg_metadata md "
@@ -1971,7 +1971,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
             {
                 GDALMultiDomainMetadata oLocalMDMD;
                 oLocalMDMD.XMLInit(psXMLNode, FALSE);
-                if( m_osRasterTable.size() && bIsGPKGScope )
+                if( !m_osRasterTable.empty() && bIsGPKGScope )
                 {
                     oMDMD.SetMetadata( oLocalMDMD.GetMetadata(), "GEOPACKAGE" );
                 }
@@ -2012,7 +2012,7 @@ char **GDALGeoPackageDataset::GetMetadata( const char *pszDomain )
             pszMimeType != NULL && EQUAL(pszMimeType, "text/xml") )
             continue;
 
-        if( m_osRasterTable.size() && bIsGPKGScope )
+        if( !m_osRasterTable.empty() && bIsGPKGScope )
         {
             oMDMD.SetMetadataItem( CPLSPrintf("GPKG_METADATA_ITEM_%d", nNonGDALMDIGeopackage),
                                    pszMetadata,
@@ -2342,7 +2342,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         return CE_Failure;
     m_bMetadataDirty = false;
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
         const char* pszDescription = GetMetadataItem("DESCRIPTION");
@@ -2404,7 +2404,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
 
     WriteMetadata(psXMLNode, m_osRasterTable.c_str() );
 
-    if( m_osRasterTable.size() )
+    if( !m_osRasterTable.empty() )
     {
         char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
 
@@ -2934,7 +2934,7 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
 
         GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
-        if( m_osDescription.size() )
+        if( !m_osDescription.empty() )
             GDALPamDataset::SetMetadataItem("DESCRIPTION", m_osDescription);
 
         const char* pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");

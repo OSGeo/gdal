@@ -45,7 +45,7 @@ WMSMiniDriver_VirtualEarth::~WMSMiniDriver_VirtualEarth() {}
 CPLErr WMSMiniDriver_VirtualEarth::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
 {
     m_base_url = CPLGetXMLValue(config, "ServerURL", "");
-    if (m_base_url.size() == 0) {
+    if (m_base_url.empty()) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "GDALWMS, VirtualEarth mini-driver: ServerURL missing.");
         return CE_Failure;

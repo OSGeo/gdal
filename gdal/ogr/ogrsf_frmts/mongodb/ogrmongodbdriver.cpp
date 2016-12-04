@@ -224,7 +224,7 @@ OGRMongoDBLayer::OGRMongoDBLayer(OGRMongoDBDataSource* poDS,
 {
     m_poDS = poDS;
     m_osQualifiedCollection = CPLSPrintf("%s.%s", m_osDatabase.c_str(), m_osCollection.c_str());
-    if( m_poDS->GetDatabase().size() )
+    if( !m_poDS->GetDatabase().empty() )
         m_poFeatureDefn = new OGRFeatureDefn(pszCollection);
     else
         m_poFeatureDefn = new OGRFeatureDefn(m_osQualifiedCollection);
@@ -280,7 +280,7 @@ void OGRMongoDBLayer::WriteOGRMetadata()
 
         b.append("layer", m_osCollection.c_str());
 
-        if( m_osFID.size() )
+        if( !m_osFID.empty() )
         {
             b.append( "fid", m_osFID.c_str() );
         }
@@ -1135,7 +1135,7 @@ OGRFeature* OGRMongoDBLayer::Translate(BSONObj& obj)
         for( BSONObj::iterator i(obj); i.more(); )
         {
             BSONElement elt(i.next());
-            if( m_osFID.size() && EQUAL(m_osFID, elt.fieldName()) )
+            if( !m_osFID.empty() && EQUAL(m_osFID, elt.fieldName()) )
             {
                 BSONType eBSONType = elt.type();
                 if( eBSONType == NumberInt )
@@ -1233,7 +1233,7 @@ OGRFeature* OGRMongoDBLayer::GetFeature(GIntBig nFID)
     if( m_poBulkBuilder )
         SyncToDisk();
 
-    if( m_osFID.size() == 0 )
+    if( m_osFID.empty() )
     {
         BSONObj oQueryAttrBak(m_oQueryAttr), oQuerySpatBak(m_oQuerySpat);
         OGRFeature* poFeature = OGRLayer::GetFeature(nFID);
@@ -1280,7 +1280,7 @@ OGRErr OGRMongoDBLayer::DeleteFeature(GIntBig nFID)
         EstablishFeatureDefn();
     if( m_poBulkBuilder )
         SyncToDisk();
-    if( m_osFID.size() == 0 )
+    if( m_osFID.empty() )
         return OGRERR_FAILURE;
 
     try
@@ -1670,7 +1670,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
         return b.obj();
     }
 
-    if( poFeature->GetFID() >= 0 && m_osFID.size() )
+    if( poFeature->GetFID() >= 0 && !m_osFID.empty() )
     {
         b.append( m_osFID.c_str(), poFeature->GetFID() );
     }
@@ -1838,7 +1838,7 @@ int OGRMongoDBLayer::TestCapability(const char* pszCap)
     else if( EQUAL(pszCap,OLCRandomRead) )
     {
         EstablishFeatureDefn();
-        return m_osFID.size() > 0;
+        return !m_osFID.empty();
     }
     else if( EQUAL(pszCap, OLCFastSpatialFilter) )
     {
@@ -1863,7 +1863,7 @@ int OGRMongoDBLayer::TestCapability(const char* pszCap)
     {
         EstablishFeatureDefn();
         return m_poDS->GetAccess() == GA_Update &&
-               m_osFID.size() > 0;
+               !m_osFID.empty();
     }
 
     return FALSE;
@@ -2024,7 +2024,7 @@ OGRLayer *OGRMongoDBDataSource::GetLayerByName(const char* pszLayerName)
     }
 
     CPLString osDatabase;
-    if( m_osDatabase.size() == 0 )
+    if( m_osDatabase.empty() )
     {
         const char* pszDot = strchr(pszLayerName, '.');
         if( pszDot == NULL )
@@ -2060,7 +2060,7 @@ OGRLayer *OGRMongoDBDataSource::GetLayerByName(const char* pszLayerName)
         }
         if( i == 0 )
         {
-            if( m_osDatabase.size() == 0 )
+            if( m_osDatabase.empty() )
                 break;
             const char* pszDot = strchr(pszLayerName, '.');
             if( pszDot == NULL )
@@ -2100,17 +2100,17 @@ int OGRMongoDBDataSource::Initialize(char** papszOpenOptions)
         bStaticAllowInvalidHostnames = bAllowInvalidHostnames;
         bStaticFIPSMode = bFIPSMode;
 
-        if( osPEMKeyFile.size() || osPEMKeyPassword.size() ||
-            osCAFile.size() || osCRLFile.size() )
+        if( !osPEMKeyFile.empty() || !osPEMKeyPassword.empty() ||
+            osCAFile.size() || !osCRLFile.empty() )
         {
             options.setSSLMode(Options::kSSLRequired);
-            if( osPEMKeyFile.size() )
+            if( !osPEMKeyFile.empty() )
                 options.setSSLPEMKeyFile(osPEMKeyFile);
             if( osPEMKeyPassword )
                 options.setSSLPEMKeyPassword(osPEMKeyPassword);
-            if( osCAFile.size() )
+            if( !osCAFile.empty() )
                 options.setSSLCAFile(osCAFile);
-            if( osCRLFile.size() )
+            if( !osCRLFile.empty() )
                 options.setSSLCRLFile(osCRLFile);
             if( bAllowInvalidCertificates )
                 options.setSSLAllowInvalidCertificates(true);
@@ -2265,10 +2265,10 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
         }
     }
 
-    if( m_osDatabase.size() == 0 )
+    if( m_osDatabase.empty() )
     {
         m_osDatabase = CSLFetchNameValueDef(papszOpenOptionsIn, "DBNAME", "");
-        /*if( m_osDatabase.size() == 0 )
+        /*if( m_osDatabase.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "No database name specified");
             return FALSE;
@@ -2320,7 +2320,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
         }
         if( pszUser && pszPassword )
         {
-            if( m_osDatabase.size() == 0 && pszAuthDBName == NULL)
+            if( m_osDatabase.empty() && pszAuthDBName == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "No database or authentication database name specified.");
@@ -2362,7 +2362,7 @@ int OGRMongoDBDataSource::Open(const char* pszFilename,
     m_bBulkInsert = CPLFetchBool(papszOpenOptionsIn, "BULK_INSERT", true);
 
     int bRet = TRUE;
-    if( m_osDatabase.size() == 0 )
+    if( m_osDatabase.empty() )
     {
         try
         {
@@ -2445,7 +2445,7 @@ OGRLayer* OGRMongoDBDataSource::ICreateLayer( const char *pszName,
                                               OGRwkbGeometryType eGType,
                                               char ** papszOptions )
 {
-    if( m_osDatabase.size() == 0 )
+    if( m_osDatabase.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot create layer/collection when dataset opened without explicit database");

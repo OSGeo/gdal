@@ -83,7 +83,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
         }
     }
 
-    if( m_osIMDSourceFilename.size() )
+    if( !m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderLandsat", "IMD Filename: %s",
                   m_osIMDSourceFilename.c_str() );
 }
