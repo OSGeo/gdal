@@ -302,7 +302,7 @@ bool GDALOctaveMap::PointIsExtremum( int row, int col, GDALOctaveLayer *bot,
 
 GDALOctaveMap::~GDALOctaveMap()
 {
-    // Clean up Octave layers
+    // Clean up Octave layers.
     for( int oct = octaveStart; oct <= octaveEnd; oct++ )
         for( int i = 0; i < INTERVALS; i++ )
             delete pMap[oct - 1][i];
