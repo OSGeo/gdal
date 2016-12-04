@@ -608,11 +608,12 @@ CPLErr GDALContourGenerator::ProcessRect(
                                    dfUpLeft > dfLoRight );
             }
             else if( nPoints1 == 1 && nPoints == 2 ) // left + top
-            { // Do not do vertical contours on the left, due to symmetry.
-              if( !(dfUpLeft == dfLevel && dfLoLeft == dfLevel) )
-                eErr = AddSegment( dfLevel,
-                                   adfX[0], adfY[0], adfX[1], adfY[1],
-                                   dfUpLeft > dfLoRight );
+            {
+                // Do not do vertical contours on the left, due to symmetry.
+                if( !(dfUpLeft == dfLevel && dfLoLeft == dfLevel) )
+                    eErr = AddSegment( dfLevel,
+                                       adfX[0], adfY[0], adfX[1], adfY[1],
+                                       dfUpLeft > dfLoRight );
             }
             else if( nPoints2 == 1 && nPoints3 == 2 ) // bottom + right
             {
@@ -627,11 +628,12 @@ CPLErr GDALContourGenerator::ProcessRect(
                                    dfLoLeft > dfUpRight );
             }
             else if( nPoints3 == 1 && nPoints == 2 ) // right + top
-            { // Do not do horizontal contours on upside, due to symmetry
-              if( !(dfUpRight == dfLevel && dfUpLeft == dfLevel) )
-                eErr = AddSegment( dfLevel,
-                                   adfX[0], adfY[0], adfX[1], adfY[1],
-                                   dfLoLeft > dfUpRight );
+            {
+                // Do not do horizontal contours on upside, due to symmetry.
+                if( !(dfUpRight == dfLevel && dfUpLeft == dfLevel) )
+                    eErr = AddSegment( dfLevel,
+                                       adfX[0], adfY[0], adfX[1], adfY[1],
+                                       dfLoLeft > dfUpRight );
             }
             else
             {
@@ -1241,7 +1243,7 @@ double GDALContourItem::DistanceSqr(
    const double dx = x0 - x1;
    const double dy = y0 - y1;
 
-   return dx*dx + dy*dy;
+   return dx * dx + dy * dy;
 }
 
 /************************************************************************/
@@ -1254,19 +1256,19 @@ int GDALContourItem::MergeCase(
 )
 {
 // --------------------------------------------------------------------
-// Try to find a match case between line ends
+// Try to find a match case between line ends.
 // Calculate all possible distances and choose the closest
-// if less than JOIN_DIST
+// if less than JOIN_DIST.
 // --------------------------------------------------------------------
 
-    // avoid sqrt()
+    // Avoid sqrt().
     const double jds = JOIN_DIST * JOIN_DIST;
 
-    // case 1 e-b
+    // Case 1 e-b.
     int cs = 1;
     double dmin = DistanceSqr( ax1, ay1, bx0, by0 );
 
-    // case 2 b-e
+    // Case 2 b-e.
     double dd = DistanceSqr( ax0, ay0, bx1, by1 );
     if( dd < dmin )
     {
@@ -1274,7 +1276,7 @@ int GDALContourItem::MergeCase(
         cs   = 2;
     }
 
-    // case 3 e-e
+    // Case 3 e-e.
     dd = DistanceSqr( ax1, ay1, bx1, by1 );
     if( dd < dmin )
     {
@@ -1282,7 +1284,7 @@ int GDALContourItem::MergeCase(
         cs   = 3;
     }
 
-    // case 4 b-b
+    // Case 4 b-b.
     dd = DistanceSqr (ax0, ay0, bx0, by0);
     if( dd < dmin )
     {
@@ -1323,7 +1325,7 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
         case 0:
             break;
 
-        case 1:  // case 1 e-b
+        case 1:  // Case 1 e-b.
             MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
             memcpy( padfX + nPoints, poOther->padfX + 1,
@@ -1339,7 +1341,7 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
             rc = true;
             break;
 
-        case 2:  // case 2 b-e
+        case 2:  // Case 2 b-e.
             MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
             memmove( padfX + poOther->nPoints - 1, padfX,
@@ -1359,7 +1361,7 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
             rc = true;
             break;
 
-        case 3:  // case 3 e-e
+        case 3:  // Case 3 e-e
             MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
             for( int i = 0; i < poOther->nPoints-1; i++ )
@@ -1377,7 +1379,7 @@ int GDALContourItem::Merge( GDALContourItem *poOther )
             rc = true;
             break;
 
-        case 4:  // case 3 b-b
+        case 4:  // Case 3 b-b.
             MakeRoomFor( nPoints + poOther->nPoints - 1 );
 
             memmove( padfX + poOther->nPoints - 1, padfX,
