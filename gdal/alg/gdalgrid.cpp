@@ -1481,7 +1481,7 @@ GDALGridLinear( const void *poOptionsIn, GUInt32 nPoints,
         const GDALGridLinearOptions *const poOptions =
             static_cast<const GDALGridLinearOptions *>(poOptionsIn);
         const double dfRadius = poOptions->dfRadius;
-        if( dfRadius == 0 )
+        if( dfRadius == 0.0 )
         {
             *pdfValue = poOptions->dfNoDataValue;
         }
@@ -1983,7 +1983,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->sXYArrays.padfX = padfX;
     psContext->sXYArrays.padfY = padfY;
     psContext->sExtraParameters.hQuadTree = NULL;
-    psContext->sExtraParameters.dfInitialSearchRadius = 0;
+    psContext->sExtraParameters.dfInitialSearchRadius = 0.0;
     psContext->sExtraParameters.pafX = pafXAligned;
     psContext->sExtraParameters.pafY = pafYAligned;
     psContext->sExtraParameters.pafZ = pafZAligned;

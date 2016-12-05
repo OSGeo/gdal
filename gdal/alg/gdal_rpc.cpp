@@ -890,7 +890,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 
         double dfX = dfRefLong;
         double dfY = dfRefLat;
-        double dfZ = 0;
+        double dfZ = 0.0;
         int nSuccess = 0;
         // Try with DEM first.
         if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
@@ -916,7 +916,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
 
         double dfX = dfRefLong;
         double dfY = dfRefLat;
-        double dfZ = 0;
+        double dfZ = 0.0;
         int nSuccess = 0;
         // Try with DEM first.
         if( GDALRPCTransform( psTransform, !(psTransform->bReversed), 1,
@@ -1067,7 +1067,7 @@ RPCInverseTransformPoint( GDALRPCTransformInfo *psTransform,
         double dfBackLine = 0.0;
 
         // Update DEMH.
-        dfDEMH = 0;
+        dfDEMH = 0.0;
         double dfDEMPixel = 0.0;
         double dfDEMLine = 0.0;
         if( !GDALRPCGetHeightAtLongLat(psTransform, dfResultX, dfResultY,
