@@ -174,8 +174,11 @@ void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
 void OGRGeomFieldDefn::SetName( const char * pszNameIn )
 
 {
-    CPLFree( pszName );
-    pszName = CPLStrdup( pszNameIn );
+    if( pszName != pszNameIn )
+    {
+        CPLFree( pszName );
+        pszName = CPLStrdup( pszNameIn );
+    }
 }
 
 /************************************************************************/

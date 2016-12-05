@@ -157,8 +157,11 @@ void OGR_Fld_Destroy( OGRFieldDefnH hDefn )
 void OGRFieldDefn::SetName( const char * pszNameIn )
 
 {
-    CPLFree( pszName );
-    pszName = CPLStrdup( pszNameIn );
+    if( pszName != pszNameIn )
+    {
+        CPLFree( pszName );
+        pszName = CPLStrdup( pszNameIn );
+    }
 }
 
 /************************************************************************/
