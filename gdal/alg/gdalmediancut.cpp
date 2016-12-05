@@ -66,7 +66,7 @@ static int MAKE_COLOR_CODE( int r, int g, int b )
     return r + g * 256 + b * 256 * 256;
 }
 
-// NOTE: if changing the size of this structure, edit
+// NOTE: If changing the size of this structure, edit
 // MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into
 // account ColorIndex in gdaldither.cpp.
 typedef struct
@@ -219,17 +219,17 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( (int)psHashHistogram[nIdx].nColorCode >= 0 &&
-                psHashHistogram[nIdx].nColorCode != nColorCode &&
-                (int)psHashHistogram[nIdx].nColorCode2 >= 0 &&
-                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-                (int)psHashHistogram[nIdx].nColorCode3 >= 0 &&
-                psHashHistogram[nIdx].nColorCode3 != nColorCode );
+        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+               psHashHistogram[nIdx].nColorCode != nColorCode &&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               psHashHistogram[nIdx].nColorCode2 != nColorCode&&
+               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
 
-static inline int* FindAndInsertColorCount(HashHistogram* psHashHistogram,
-                           GUInt32 nColorCode)
+static inline int*
+FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
 {
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
     while( true )
@@ -502,7 +502,7 @@ GDALComputeMedianCutPCTInternal(
                 int* pnColor = FindAndInsertColorCount(psHashHistogram,
                                          MAKE_COLOR_CODE(nRed, nGreen, nBlue));
                 bFirstOccurrence = ( *pnColor == 0 );
-                (*pnColor) ++;
+                (*pnColor)++;
             }
             else
             {
@@ -825,7 +825,6 @@ splitbox(Colorbox* ptr, const T* histogram,
       {
         if( nPixels != 0 && nIters > nPixels )
         {
-            // memset(hist2, 0, sizeof(hist2));
             const int rmin = ptr->rmin;
             const int rmax = ptr->rmax;
             const int gmin = ptr->gmin;
