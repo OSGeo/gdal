@@ -68,32 +68,36 @@ static int matrixInvert( int N, double input[], double output[] );
 bool VizGeorefSpline2D::grow_points()
 
 {
-    int new_max = _max_nof_points*2 + 2 + 3;
-    int i;
+    const int new_max = _max_nof_points * 2 + 2 + 3;
 
-    double *new_x = (double *) VSI_REALLOC_VERBOSE( x, sizeof(double) * new_max );
+    double *new_x = static_cast<double *>(
+        VSI_REALLOC_VERBOSE(x, sizeof(double) * new_max ));
     if( !new_x ) return false;
     x = new_x;
-    double *new_y = (double *) VSI_REALLOC_VERBOSE( y, sizeof(double) * new_max );
+    double *new_y = static_cast<double *>(
+        VSI_REALLOC_VERBOSE(y, sizeof(double) * new_max ));
     if( !new_y ) return false;
     y = new_y;
-    double *new_u = (double *) VSI_REALLOC_VERBOSE( u, sizeof(double) * new_max );
+    double *new_u = static_cast<double *>(
+        VSI_REALLOC_VERBOSE(u, sizeof(double) * new_max ));
     if( !new_u ) return false;
     u = new_u;
-    int *new_unused = (int *) VSI_REALLOC_VERBOSE( unused, sizeof(int) * new_max );
+    int *new_unused = static_cast<int *>(
+        VSI_REALLOC_VERBOSE(unused, sizeof(int) * new_max ));
     if( !new_unused ) return false;
     unused = new_unused;
-    int *new_index = (int *) VSI_REALLOC_VERBOSE( index, sizeof(int) * new_max );
+    int *new_index = static_cast<int *>(
+        VSI_REALLOC_VERBOSE(index, sizeof(int) * new_max));
     if( !new_index ) return false;
     index = new_index;
-    for( i = 0; i < _nof_vars; i++ )
+    for( int i = 0; i < _nof_vars; i++ )
     {
-        double* rhs_i_new = (double *)
-            VSI_REALLOC_VERBOSE( rhs[i], sizeof(double) * new_max );
+        double* rhs_i_new = static_cast<double *>(
+            VSI_REALLOC_VERBOSE(rhs[i], sizeof(double) * new_max));
         if( !rhs_i_new ) return false;
         rhs[i] = rhs_i_new;
-        double* coef_i_new = (double *)
-            VSI_REALLOC_VERBOSE( coef[i], sizeof(double) * new_max );
+        double* coef_i_new = static_cast<double *>(
+            VSI_REALLOC_VERBOSE(coef[i], sizeof(double) * new_max));
         if( !coef_i_new ) return false;
         coef[i] = coef_i_new;
         if( _max_nof_points == 0 )
@@ -107,7 +111,8 @@ bool VizGeorefSpline2D::grow_points()
     return true;
 }
 
-bool VizGeorefSpline2D::add_point( const double Px, const double Py, const double *Pvars )
+bool VizGeorefSpline2D::add_point( const double Px, const double Py,
+                                   const double *Pvars )
 {
     type = VIZ_GEOREF_SPLINE_POINT_WAS_ADDED;
     int i;
@@ -119,24 +124,25 @@ bool VizGeorefSpline2D::add_point( const double Px, const double Py, const doubl
     }
 
     i = _nof_points;
-    //A new point is added
+    // A new point is added.
     x[i] = Px;
     y[i] = Py;
-    for ( int j = 0; j < _nof_vars; j++ )
+    for( int j = 0; j < _nof_vars; j++ )
         rhs[j][i+3] = Pvars[j];
     _nof_points++;
     return true;
 }
 
 #if 0
-bool VizGeorefSpline2D::change_point(int index, double Px, double Py, double* Pvars)
+bool VizGeorefSpline2D::change_point( int index, double Px, double Py,
+                                      double* Pvars )
 {
-    if ( index < _nof_points )
+    if( index < _nof_points )
     {
         int i = index;
         x[i] = Px;
         y[i] = Py;
-        for ( int j = 0; j < _nof_vars; j++ )
+        for( int j = 0; j < _nof_vars; j++ )
             rhs[j][i+3] = Pvars[j];
     }
 
@@ -145,9 +151,9 @@ bool VizGeorefSpline2D::change_point(int index, double Px, double Py, double* Pv
 
 bool VizGeorefSpline2D::get_xy(int index, double& outX, double& outY)
 {
-    bool ok;
+    bool ok = false;
 
-    if ( index < _nof_points )
+    if( index < _nof_points )
     {
         ok = true;
         outX = x[index];
@@ -155,25 +161,24 @@ bool VizGeorefSpline2D::get_xy(int index, double& outX, double& outY)
     }
     else
     {
-        ok = false;
         outX = 0.0;
         outY = 0.0;
     }
 
-    return(ok);
+    return ok;
 }
 
-int VizGeorefSpline2D::delete_point(const double Px, const double Py )
+int VizGeorefSpline2D::delete_point( const double Px, const double Py )
 {
-    for ( int i = 0; i < _nof_points; i++ )
+    for( int i = 0; i < _nof_points; i++ )
     {
-        if ( ( fabs(Px - x[i]) <= _tx ) && ( fabs(Py - y[i]) <= _ty ) )
+        if( ( fabs(Px - x[i]) <= _tx ) && ( fabs(Py - y[i]) <= _ty ) )
         {
-            for ( int j = i; j < _nof_points - 1; j++ )
+            for( int j = i; j < _nof_points - 1; j++ )
             {
                 x[j] = x[j+1];
                 y[j] = y[j+1];
-                for ( int k = 0; k < _nof_vars; k++ )
+                for( int k = 0; k < _nof_vars; k++ )
                     rhs[k][j+3] = rhs[k][j+3+1];
             }
             _nof_points--;
@@ -187,10 +192,11 @@ int VizGeorefSpline2D::delete_point(const double Px, const double Py )
 
 #define SQ(x) ((x)*(x))
 
-static CPL_INLINE double VizGeorefSpline2DBase_func( const double x1, const double y1,
-                          const double x2, const double y2 )
+static CPL_INLINE double
+VizGeorefSpline2DBase_func( const double x1, const double y1,
+                            const double x2, const double y2 )
 {
-    double dist  = SQ( x2 - x1 )  + SQ( y2 - y1 );
+    const double dist = SQ( x2 - x1 )  + SQ( y2 - y1 );
     return dist != 0.0 ? dist * log( dist ) : 0.0;
 }
 
@@ -312,26 +318,34 @@ static const long long cst_0x95f64 = MAKE_WIDE_CST(0x00095f64);
 static const long long cst_0x100000 = MAKE_WIDE_CST(0x00100000);
 static const long long cst_0x3ff00000 = MAKE_WIDE_CST(0x3ff00000);
 
-/* Modified version of __ieee754_log(), less precise than log() but a bit */
-/* faster, and computing 4 log() at a time. Assumes that the values are > 0 */
+// Modified version of __ieee754_log(), less precise than log() but a bit
+// faster, and computing 4 log() at a time. Assumes that the values are > 0.
 static void FastApproxLog4Val(v2dfunion* x)
 {
-    V2DF f[2],s[2],z[2],R[2],w[2],t1[2],t2[2];
+    V2DF f[2];
+    V2DF s[2];
+    V2DF z[2];
+    V2DF R[2];
+    V2DF w[2];
+    V2DF t1[2];
+    V2DF t2[2];
     v2dfunion dk[2];
-    i64union k[2], hx[2], i[2];
+    i64union k[2];
+    i64union hx[2];
+    i64union i[2];
 
-    GET_HIGH_WORD(hx[0].i[0],x[0].d[0]);
-    GET_HIGH_WORD(hx[0].i[1],x[0].d[1]);
-    /* coverity[uninit_use] */
+    GET_HIGH_WORD(hx[0].i[0], x[0].d[0]);
+    GET_HIGH_WORD(hx[0].i[1], x[0].d[1]);
+    // coverity[uninit_use]
     k[0].li = hx[0].li & cst_expmask;
     hx[0].li &= ~cst_expmask;
     i[0].li = (hx[0].li + cst_0x95f64) & cst_0x100000;
     hx[0].li |= i[0].li ^ cst_0x3ff00000;
-    SET_HIGH_WORD(x[0].d[0],hx[0].i[0]);     /* normalize x or x/2 */
-    SET_HIGH_WORD(x[0].d[1],hx[0].i[1]);     /* normalize x or x/2 */
+    SET_HIGH_WORD(x[0].d[0],hx[0].i[0]);  // Normalize x or x/2.
+    SET_HIGH_WORD(x[0].d[1],hx[0].i[1]);  // Normalize x or x/2.
     k[0].li += i[0].li;
-    dk[0].d[0] = (double)k[0].i[0];
-    dk[0].d[1] = (double)k[0].i[1];
+    dk[0].d[0] = static_cast<double>(k[0].i[0]);
+    dk[0].d[1] = static_cast<double>(k[0].i[1]);
 
     GET_HIGH_WORD(hx[1].i[0],x[1].d[0]);
     GET_HIGH_WORD(hx[1].i[1],x[1].d[1]);
@@ -339,33 +353,37 @@ static void FastApproxLog4Val(v2dfunion* x)
     hx[1].li &= ~cst_expmask;
     i[1].li = (hx[1].li + cst_0x95f64) & cst_0x100000;
     hx[1].li |= i[1].li ^ cst_0x3ff00000;
-    SET_HIGH_WORD(x[1].d[0],hx[1].i[0]);     /* normalize x or x/2 */
-    SET_HIGH_WORD(x[1].d[1],hx[1].i[1]);     /* normalize x or x/2 */
+    SET_HIGH_WORD(x[1].d[0],hx[1].i[0]);  // Normalize x or x/2.
+    SET_HIGH_WORD(x[1].d[1],hx[1].i[1]);  // Normalize x or x/2.
     k[1].li += i[1].li;
-    dk[1].d[0] = (double)k[1].i[0];
-    dk[1].d[1] = (double)k[1].i[1];
+    dk[1].d[0] = static_cast<double>(k[1].i[0]);
+    dk[1].d[1] = static_cast<double>(k[1].i[1]);
 
     f[0] = x[0].v2-v2_one;
     s[0] = f[0]/(x[0].v2+v2_one);
     z[0] = s[0]*s[0];
     w[0] = z[0]*z[0];
-    /* coverity[ptr_arith] */
+    // coverity[ptr_arith]
     t1[0]= w[0]*(v2_Lg2+w[0]*(v2_Lg4+w[0]*v2_Lg6));
-    /* coverity[ptr_arith] */
+    // coverity[ptr_arith]
     t2[0]= z[0]*(v2_Lg1+w[0]*(v2_Lg3+w[0]*(v2_Lg5/*+w[0]*v2_Lg7*/)));
     R[0] = t2[0]+t1[0];
-    x[0].v2 = ((dk[0].v2 - v2_const1023_mul_2pow20)*v2_ln2_div_2pow20-(s[0]*(f[0]-R[0])-f[0]));
+    x[0].v2 =
+        (dk[0].v2 - v2_const1023_mul_2pow20) * v2_ln2_div_2pow20 -
+        (s[0] * (f[0] - R[0]) - f[0]);
 
     f[1] = x[1].v2-v2_one;
     s[1] = f[1]/(x[1].v2+v2_one);
     z[1] = s[1]*s[1];
     w[1] = z[1]*z[1];
-    /* coverity[ptr_arith] */
+    // coverity[ptr_arith]
     t1[1]= w[1]*(v2_Lg2+w[1]*(v2_Lg4+w[1]*v2_Lg6));
-    /* coverity[ptr_arith] */
+    // coverity[ptr_arith]
     t2[1]= z[1]*(v2_Lg1+w[1]*(v2_Lg3+w[1]*(v2_Lg5/*+w[1]*v2_Lg7*/)));
     R[1] = t2[1]+t1[1];
-    x[1].v2 = ((dk[1].v2- v2_const1023_mul_2pow20)*v2_ln2_div_2pow20-(s[1]*(f[1]-R[1])-f[1]));
+    x[1].v2 =
+        (dk[1].v2 - v2_const1023_mul_2pow20) * v2_ln2_div_2pow20 -
+        (s[1] * (f[1] - R[1]) - f[1]);
 }
 
 static CPL_INLINE void VizGeorefSpline2DBase_func4( double* res,
@@ -419,20 +437,20 @@ int VizGeorefSpline2D::solve(void)
     int p;
 
     // No points at all.
-    if ( _nof_points < 1 )
+    if( _nof_points < 1 )
     {
         type = VIZ_GEOREF_SPLINE_ZERO_POINTS;
         return(0);
     }
 
-    // Only one point
-    if ( _nof_points == 1 )
+    // Only one point.
+    if( _nof_points == 1 )
     {
         type = VIZ_GEOREF_SPLINE_ONE_POINT;
         return(1);
     }
-    // Just 2 points - it is necessarily 1D case
-    if ( _nof_points == 2 )
+    // Just 2 points - it is necessarily 1D case.
+    if( _nof_points == 2 )
     {
         _dx = x[1] - x[0];
         _dy = y[1] - y[0];
@@ -463,7 +481,7 @@ int VizGeorefSpline2D::solve(void)
     double SSyy;
     double SSxy;
 
-    for ( p = 0; p < _nof_points; p++ )
+    for( p = 0; p < _nof_points; p++ )
     {
         xx = x[p];
         yy = y[p];
@@ -486,8 +504,8 @@ int VizGeorefSpline2D::solve(void)
     SSyy = sumy2 - sumy * sumy / _nof_points;
     SSxy = sumxy - sumx * sumy / _nof_points;
 
-    if ( delx < 0.001 * dely || dely < 0.001 * delx ||
-         fabs ( SSxy * SSxy / ( SSxx * SSyy ) ) > 0.99 )
+    if( delx < 0.001 * dely || dely < 0.001 * delx ||
+        fabs ( SSxy * SSxy / ( SSxx * SSyy ) ) > 0.99 )
     {
         int p1;
 
@@ -499,7 +517,7 @@ int VizGeorefSpline2D::solve(void)
         _dx *= fact;
         _dy *= fact;
 
-        for ( p = 0; p < _nof_points; p++ )
+        for( p = 0; p < _nof_points; p++ )
         {
             double dxp = x[p] - x[0];
             double dyp = y[p] - y[0];
@@ -507,15 +525,15 @@ int VizGeorefSpline2D::solve(void)
             unused[p] = 1;
         }
 
-        for ( p = 0; p < _nof_points; p++ )
+        for( p = 0; p < _nof_points; p++ )
         {
             int min_index = -1;
-            double min_u = 0;
-            for ( p1 = 0; p1 < _nof_points; p1++ )
+            double min_u = 0.0;
+            for( p1 = 0; p1 < _nof_points; p1++ )
             {
-                if ( unused[p1] )
+                if( unused[p1] )
                 {
-                    if ( min_index < 0 || u[p1] < min_u )
+                    if( min_index < 0 || u[p1] < min_u )
                     {
                         min_index = p1;
                         min_u = u[p1];
@@ -530,18 +548,21 @@ int VizGeorefSpline2D::solve(void)
     }
 
     type = VIZ_GEOREF_SPLINE_FULL;
-    // Make the necessary memory allocations
+    // Make the necessary memory allocations.
 
     _nof_eqs = _nof_points + 3;
 
     if( _nof_eqs > INT_MAX / _nof_eqs )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too many coefficients. Computation aborted.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too many coefficients. Computation aborted.");
         return 0;
     }
 
-    double* _AA = ( double * )VSI_CALLOC_VERBOSE( _nof_eqs * _nof_eqs, sizeof( double ) );
-    double* _Ainv = ( double * )VSI_CALLOC_VERBOSE( _nof_eqs * _nof_eqs, sizeof( double ) );
+    double* _AA = static_cast<double *>(
+        VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
+    double* _Ainv = static_cast< double *>(
+        VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
 
     if( _AA == NULL || _Ainv == NULL )
     {
@@ -550,12 +571,12 @@ int VizGeorefSpline2D::solve(void)
         return 0;
     }
 
-    // Calc the values of the matrix A
-    for ( r = 0; r < 3; r++ )
-        for ( c = 0; c < 3; c++ )
+    // Calc the values of the matrix A.
+    for( r = 0; r < 3; r++ )
+        for( c = 0; c < 3; c++ )
             A(r,c) = 0.0;
 
-    for ( c = 0; c < _nof_points; c++ )
+    for( c = 0; c < _nof_points; c++ )
     {
         A(0,c+3) = 1.0;
         A(1,c+3) = x[c];
@@ -566,19 +587,19 @@ int VizGeorefSpline2D::solve(void)
         A(c+3,2) = y[c];
     }
 
-    for ( r = 0; r < _nof_points; r++ )
-        for ( c = r; c < _nof_points; c++ )
+    for( r = 0; r < _nof_points; r++ )
+        for( c = r; c < _nof_points; c++ )
         {
             A(r+3,c+3) = VizGeorefSpline2DBase_func( x[r], y[r], x[c], y[c] );
-            if ( r != c )
+            if( r != c )
                 A(c+3,r+3 ) = A(r+3,c+3);
         }
 
 #if VIZ_GEOREF_SPLINE_DEBUG
 
-    for ( r = 0; r < _nof_eqs; r++ )
+    for( r = 0; r < _nof_eqs; r++ )
     {
-        for ( c = 0; c < _nof_eqs; c++ )
+        for( c = 0; c < _nof_eqs; c++ )
             fprintf(stderr, "%f", A(r,c));
         fprintf(stderr, "\n");
     }
@@ -591,9 +612,10 @@ int VizGeorefSpline2D::solve(void)
     {
         arma::mat matA(_AA,_nof_eqs,_nof_eqs,false);
         arma::mat matRHS(_nof_eqs, _nof_vars);
-        int row, col;
-        for(row = 0; row < _nof_eqs; row++)
-            for(col = 0; col < _nof_vars; col++)
+        int row;
+        int col;
+        for( row = 0; row < _nof_eqs; row++ )
+            for( col = 0; col < _nof_vars; col++ )
                 matRHS.at(row, col) = rhs[col][row];
         arma::mat matCoefs(_nof_vars, _nof_eqs);
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
@@ -610,8 +632,8 @@ int VizGeorefSpline2D::solve(void)
         }
         else
         {
-            for(row = 0; row < _nof_eqs; row++)
-                for(col = 0; col < _nof_vars; col++)
+            for( row = 0; row < _nof_eqs; row++ )
+                for( col = 0; col < _nof_vars; col++ )
                     coef[col][row] = matCoefs.at(row, col);
         }
     }
@@ -623,7 +645,7 @@ int VizGeorefSpline2D::solve(void)
 #else
     int status = matrixInvert( _nof_eqs, _AA, _Ainv );
 
-    if ( !status )
+    if( !status )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "There is a problem inverting the interpolation matrix.");
         ret = 0;
@@ -631,11 +653,11 @@ int VizGeorefSpline2D::solve(void)
     else
     {
         // calc the coefs
-        for ( int v = 0; v < _nof_vars; v++ )
-            for ( r = 0; r < _nof_eqs; r++ )
+        for( int v = 0; v < _nof_vars; v++ )
+            for( r = 0; r < _nof_eqs; r++ )
             {
                 coef[v][r] = 0.0;
-                for ( c = 0; c < _nof_eqs; c++ )
+                for( c = 0; c < _nof_eqs; c++ )
                     coef[v][r] += Ainv(r,c) * rhs[v][c];
             }
     }
@@ -658,69 +680,69 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
      int rightP = 0;
      int found = 0;
 
-     switch ( type )
+     switch( type )
      {
      case VIZ_GEOREF_SPLINE_ZERO_POINTS :
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = 0.0;
          break;
      case VIZ_GEOREF_SPLINE_ONE_POINT :
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = rhs[v][3];
          break;
      case VIZ_GEOREF_SPLINE_TWO_POINTS :
          fact = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = ( 1 - fact ) * rhs[v][3] + fact * rhs[v][4];
          break;
      case VIZ_GEOREF_SPLINE_ONE_DIMENSIONAL :
          Pu = _dx * ( Px - x[0] ) + _dy * ( Py - y[0] );
-         if ( Pu <= u[index[0]] )
+         if( Pu <= u[index[0]] )
          {
              leftP = index[0];
              rightP = index[1];
          }
-         else if ( Pu >= u[index[_nof_points-1]] )
+         else if( Pu >= u[index[_nof_points-1]] )
          {
              leftP = index[_nof_points-2];
              rightP = index[_nof_points-1];
          }
          else
          {
-             for ( r = 1; !found && r < _nof_points; r++ )
+             for( r = 1; !found && r < _nof_points; r++ )
              {
                  leftP = index[r-1];
                  rightP = index[r];
-                 if ( Pu >= u[leftP] && Pu <= u[rightP] )
+                 if( Pu >= u[leftP] && Pu <= u[rightP] )
                      found = 1;
              }
          }
 
          fact = ( Pu - u[leftP] ) / ( u[rightP] - u[leftP] );
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = ( 1.0 - fact ) * rhs[v][leftP+3] +
                  fact * rhs[v][rightP+3];
          break;
      case VIZ_GEOREF_SPLINE_FULL :
     {
         double Pxy[2] = { Px, Py };
-        for ( v = 0; v < _nof_vars; v++ )
+        for( v = 0; v < _nof_vars; v++ )
             vars[v] = coef[v][0] + coef[v][1] * Px + coef[v][2] * Py;
 
-        for ( r = 0; r < (_nof_points & (~3)); r+=4 )
+        for( r = 0; r < (_nof_points & (~3)); r+=4 )
         {
             double dfTmp[4];
             VizGeorefSpline2DBase_func4( dfTmp, Pxy, &x[r], &y[r] );
-            for ( v= 0; v < _nof_vars; v++ )
+            for( v= 0; v < _nof_vars; v++ )
                 vars[v] += coef[v][r+3] * dfTmp[0] +
                         coef[v][r+3+1] * dfTmp[1] +
                         coef[v][r+3+2] * dfTmp[2] +
                         coef[v][r+3+3] * dfTmp[3];
         }
-        for ( ; r < _nof_points; r++ )
+        for( ; r < _nof_points; r++ )
         {
             tmp = VizGeorefSpline2DBase_func( Px, Py, x[r], y[r] );
-            for ( v= 0; v < _nof_vars; v++ )
+            for( v= 0; v < _nof_vars; v++ )
                 vars[v] += coef[v][r+3] * tmp;
         }
         break;
@@ -728,14 +750,14 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py, double *vars
      case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED :
          fprintf(stderr, " A point was added after the last solve\n");
          fprintf(stderr, " NO interpolation - return values are zero\n");
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = 0.0;
          return(0);
          break;
      case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED :
          fprintf(stderr, " A point was deleted after the last solve\n");
          fprintf(stderr, " NO interpolation - return values are zero\n");
-         for ( v = 0; v < _nof_vars; v++ )
+         for( v = 0; v < _nof_vars; v++ )
              vars[v] = 0.0;
          return(0);
          break;
@@ -765,9 +787,9 @@ static int matrixInvert( int N, double input[], double output[] )
 
 #if 0
     fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);
-    for ( row=0; row<N; row++ )
+    for( row=0; row<N; row++ )
     {
-        for ( col=0; col<N; col++ )
+        for( col=0; col<N; col++ )
         {
             fprintf(stderr, "%5.2f ", input[row*N + col ]  );
         }
@@ -779,18 +801,19 @@ static int matrixInvert( int N, double input[], double output[] )
     double* temp = (double*) new double[ tempSize ];
     double ftemp;
 
-    if (temp == NULL) {
-
-        CPLError(CE_Failure, CPLE_AppDefined, "matrixInvert(): ERROR - memory allocation failed.");
+    if( temp == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "matrixInvert(): ERROR - memory allocation failed.");
         return false;
     }
 
     // First create a double-width matrix with the input array on the left
     // and the identity matrix on the right.
 
-    for ( row=0; row<N; row++ )
+    for( row=0; row<N; row++ )
     {
-        for ( col=0; col<N; col++ )
+        for( col=0; col<N; col++ )
         {
             // Our index into the temp array is X2 because it's twice as wide
             // as the input matrix.
@@ -805,25 +828,26 @@ static int matrixInvert( int N, double input[], double output[] )
     // of temp to the identity matrix.  The inverse of input will then be
     // on the right.
 
-    int max;
-    int k=0;
-    for (k = 0; k < N; k++)
+    int max = 0;
+    int k = 0;
+    for( k = 0; k < N; k++ )
     {
-        if (k+1 < N)  // if not on the last row
+        if( k + 1 < N )  // If not on the last row.
         {
             max = k;
-            for (row = k+1; row < N; row++) // find the maximum element
+            for( row = k + 1; row < N; row++ )  // Find the maximum element.
             {
-                if (fabs( temp[row*2*N + k] ) > fabs( temp[max*2*N + k] ))
+                if( fabs( temp[row*2*N + k] ) > fabs( temp[max*2*N + k] ) )
                 {
                     max = row;
                 }
             }
 
-            if (max != k)  // swap all the elements in the two rows
+            if( max != k )  // Swap all the elements in the two rows.
             {
-                for (col=k; col<2*N; col++)
+                for( col = k; col < 2 * N; col++ )
                 {
+                    // TODO(schwehr): std::swap.
                     ftemp = temp[k*2*N + col];
                     temp[k*2*N + col] = temp[max*2*N + col];
                     temp[max*2*N + col] = ftemp;
@@ -832,25 +856,25 @@ static int matrixInvert( int N, double input[], double output[] )
         }
 
         ftemp = temp[ k*2*N + k ];
-        if ( ftemp == 0.0f ) // matrix cannot be inverted
+        if( ftemp == 0.0f )  // Matrix cannot be inverted.
         {
             delete[] temp;
             return false;
         }
 
-        for ( col=k; col<2*N; col++ )
+        for( col=k; col<2*N; col++ )
         {
             temp[ k*2*N + col ] /= ftemp;
         }
 
         int i2 = k*2*N ;
-        for ( row=0; row<N; row++ )
+        for( row=0; row<N; row++ )
         {
-            if ( row != k )
+            if( row != k )
             {
                 int i1 = row*2*N;
                 ftemp = temp[ i1 + k ];
-                for ( col=k; col<2*N; col++ )
+                for( col=k; col<2*N; col++ )
                 {
                     temp[ i1 + col ] -= ftemp * temp[ i2 + col ];
                 }
@@ -858,11 +882,11 @@ static int matrixInvert( int N, double input[], double output[] )
         }
     }
 
-    // Retrieve inverse from the right side of temp
+    // Retrieve inverse from the right side of temp.
 
-    for (row = 0; row < N; row++)
+    for( row = 0; row < N; row++ )
     {
-        for (col = 0; col < N; col++)
+        for( col = 0; col < N; col++ )
         {
             output[row*N + col] = temp[row*2*N + col + N ];
         }
@@ -870,9 +894,9 @@ static int matrixInvert( int N, double input[], double output[] )
 
 #if 0
     fprintf(stderr, "Matrix Inversion result matrix:\n");
-    for ( row=0; row<N; row++ )
+    for( row=0; row<N; row++ )
     {
-        for ( col=0; col<N; col++ )
+        for( col=0; col<N; col++ )
         {
             fprintf(stderr, "%5.2f ", output[row*N + col ]  );
         }
