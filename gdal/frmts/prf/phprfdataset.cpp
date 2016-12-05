@@ -83,10 +83,12 @@ public:
 
 class PhPrfDataset : public VRTDataset
 {
+    std::vector<GDALDataset*>    osSubTiles;
 public:
     PhPrfDataset( GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount, GDALDataType eType, const char* pszName );
     ~PhPrfDataset();
     bool AddTile( const char* pszPartName, GDALAccess eAccess, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale );
+    int CloseDependentDatasets() override;
     static int Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );
 };
@@ -107,6 +109,7 @@ PhPrfDataset::PhPrfDataset( GDALAccess _eAccess, int nSizeX, int nSizeY, int nBa
 
 PhPrfDataset::~PhPrfDataset()
 {
+    CloseDependentDatasets();
 }
 
 bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale )
@@ -145,7 +148,20 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
             poBand->AddOverview( poTileBand );
         }
     }
+
+    osSubTiles.push_back( poTileDataset );
+
     return true;
+}
+
+int PhPrfDataset::CloseDependentDatasets()
+{
+    int nDroppedRef = VRTDataset::CloseDependentDatasets();
+    for( std::vector<GDALDataset*>::iterator ii( osSubTiles.begin() ); ii != osSubTiles.end(); ++ii )
+    {
+        delete (*ii);
+    }
+    return nDroppedRef;
 }
 
 int PhPrfDataset::Identify( GDALOpenInfo* poOpenInfo )
