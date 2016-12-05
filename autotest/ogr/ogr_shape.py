@@ -4807,6 +4807,217 @@ def ogr_shape_102():
 
     return 'success'
 
+###############################################################################
+# Test handling of EOF character
+
+def check_EOF(filename, expected = True):
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f is None:
+        print('%s does not exist' % filename)
+        return False
+    size = gdal.VSIStatL(filename).size
+    content = gdal.VSIFReadL(1, size, f)
+    gdal.VSIFCloseL(f)
+    pos = content.find('\x1A'.encode('LATIN1'))
+    if expected:
+        if pos < 0:
+            print('Did not find EOF char')
+            return False
+        if pos != size - 1:
+            print('Found EOF char but not at end of file!')
+            return False
+    elif pos >= 0:
+        print('Found EOF char but we did not expect that !')
+        return False
+    return True
+
+def ogr_shape_103():
+
+    filename = '/vsimem/ogr_shape_103.dbf'
+
+    for (options, expected) in [ (['DBF_EOF_CHAR=YES'], True),
+                                ([], True),
+                                (['DBF_EOF_CHAR=NO'], False) ]:
+        # Create empty file
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Add field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Add record
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Add another field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.CreateField( ogr.FieldDefn('foo2', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Grow a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        fd = lyr.GetLayerDefn().GetFieldDefn(0)
+        new_fd = ogr.FieldDefn( fd.GetName(), fd.GetType() )
+        new_fd.SetWidth( fd.GetWidth() + 1 )
+        lyr.AlterFieldDefn(0, fd, ogr.ALTER_ALL_FLAG)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Reorder fields
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.ReorderFields([1, 0])
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Shrink a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        fd = lyr.GetLayerDefn().GetFieldDefn(0)
+        new_fd = ogr.FieldDefn( fd.GetName(), fd.GetType() )
+        new_fd.SetWidth( fd.GetWidth() + 1 )
+        lyr.AlterFieldDefn(0, fd, ogr.ALTER_ALL_FLAG)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Remove a field
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.DeleteField(0)
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+        # Create file with one field but no record
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+        # Create file with two records
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
+        lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test editing a record that is not the last one
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.SetFeature( lyr.GetNextFeature() )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        # Test editing the last record
+        ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = options)
+        lyr = ds.GetLayer(0)
+        lyr.GetNextFeature()
+        lyr.SetFeature( lyr.GetNextFeature() )
+        ds = None
+
+        if not check_EOF(filename, expected = expected):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+    # Test appending to a file without a EOF marker
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    lyr = ds.GetLayer(0)
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds.FlushCache()
+
+    if not check_EOF(filename):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+
+    # Test editing a record (that is not the last one ) in a file without a EOF marker
+    ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
+    ds = None
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    lyr = ds.GetLayer(0)
+    lyr.SetFeature( lyr.GetNextFeature() )
+    ds = None
+
+    # To document our current behaviour. Could make sense to be changed.
+    if not check_EOF(filename, expected = False):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+    return 'success'
+
+
+###############################################################################
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -4952,9 +5163,10 @@ gdaltest_list = [
     ogr_shape_100,
     ogr_shape_101,
     ogr_shape_102,
+    ogr_shape_103,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_101 ]
+# gdaltest_list = [ ogr_shape_103 ]
 
 if __name__ == '__main__':
 

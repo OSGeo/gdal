@@ -407,6 +407,8 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
         CSLFetchNameValue( papszOpenOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOpenOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOpenOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -793,6 +795,8 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */

@@ -301,6 +301,18 @@ void OGRShapeLayer::SetModificationDate( const char* pszStr )
 }
 
 /************************************************************************/
+/*                       SetWriteDBFEOFChar()                           */
+/************************************************************************/
+
+void OGRShapeLayer::SetWriteDBFEOFChar( bool b )
+{
+    if( hDBF )
+    {
+        DBFSetWriteEndOfFileChar( hDBF, b );
+    }
+}
+
+/************************************************************************/
 /*                          ConvertCodePage()                           */
 /************************************************************************/
 
@@ -3117,6 +3129,8 @@ void OGRShapeLayer::TruncateDBF()
     vsi_l_offset nNewSize =
         hDBF->nRecordLength * static_cast<SAOffset>(hDBF->nRecords)
         + hDBF->nHeaderLength;
+    if( hDBF->bWriteEndOfFileChar )
+        nNewSize ++;
     if( nNewSize < nOldSize )
     {
         CPLDebug(
