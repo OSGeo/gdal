@@ -386,8 +386,12 @@ bool CntZImage::read(Byte** ppByte,
   if (maxZErrorInFile > maxZError)
     return false;
 
-  if (onlyHeader)
-    return true;
+
+  if (onlyHeader) {
+      width_ = width;
+      height_ = height;
+      return true;
+  }
 
   if (!onlyZPart && !resizeFill0(width, height))
     return false;

@@ -449,9 +449,21 @@ int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
     CPLString fn(poOpenInfo->pszFilename);
     if (fn.find(":MRF:") != string::npos)
         return TRUE;
-    if (poOpenInfo->nHeaderBytes >= 10)
-        fn = (char *)poOpenInfo->pabyHeader;
-    return EQUALN(fn.c_str(), "<MRF_META>", 10);
+
+    if (poOpenInfo->nHeaderBytes < 10)
+        return FALSE;
+
+    const char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    fn.assign(pszHeader, pszHeader + poOpenInfo->nHeaderBytes);
+    if (STARTS_WITH(fn, "<MRF_META>"))
+        return TRUE;
+
+#if defined(LERC) // Could be single LERC tile
+    if (LERC_Band::IsLerc(fn))
+        return TRUE;
+#endif
+
+    return FALSE;
 }
 
 /**
@@ -524,10 +536,18 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     int zslice = 0;
     string fn; // Used to parse and adjust the file name
 
-    // Different ways to open it
-    if (poOpenInfo->nHeaderBytes >= 10 &&
-        EQUALN((const char *)poOpenInfo->pabyHeader, "<MRF_META>", 10)) // Regular file name
-        config = CPLParseXMLFile(pszFileName);
+    // Different ways to open an MRF
+    if (poOpenInfo->nHeaderBytes >= 10) {
+
+        const char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+        if (STARTS_WITH(pszHeader, "<MRF_META>")) // Regular file name
+            config = CPLParseXMLFile(pszFileName);
+#if defined(LERC)
+        else
+            config = LERC_Band::GetMRFConfig(poOpenInfo);
+#endif
+
+    } 
     else {
         if (EQUALN(pszFileName, "<MRF_META>", 10)) // Content as file name
             config = CPLParseXMLString(pszFileName);
@@ -921,6 +941,10 @@ VSILFILE *GDALMRFDataset::IdxFP() {
     if (ifp.FP != NULL)
         return ifp.FP;
 
+    // If name starts with '(' it is not a real file name
+    if (current.idxfname[0] == '(')
+        return NULL;
+
     const char *mode = "rb";
     ifp.acc = GF_Read;
 
@@ -971,6 +995,10 @@ VSILFILE *GDALMRFDataset::IdxFP() {
             "GDAL MRF: Timeout on fetching cloned index file %s\n", current.idxfname.c_str());
         return NULL;
     }
+
+    // If single tile, and no index file, let the caller figure it out
+    if (IsSingleTile())
+        return NULL;
 
     // Error if this is not a caching MRF
     if (source.empty()) {
@@ -1927,6 +1955,13 @@ CPLErr GDALMRFDataset::SetGeoTransform(double *gt)
     return CE_Failure;
 }
 
+bool GDALMRFDataset::IsSingleTile()
+{
+    if (current.pagecount.l != 1 || !source.empty() || NULL == DataFP())
+        return FALSE;
+    return 0 == reinterpret_cast<GDALMRFRasterBand *>(GetRasterBand(1))->GetOverviewCount();
+}
+
 /*
 *  Returns 0,1,0,0,0,1 even if it was not set
 */
@@ -1950,10 +1985,22 @@ CPLErr GDALMRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImag
 
 {
     VSILFILE *l_ifp = IdxFP();
+
     GIntBig offset = bias + IdxOffset(pos, img);
-    if (l_ifp == NULL && img.comp == IL_NONE) {
+    if (l_ifp == NULL && img.comp == IL_NONE ) {
         tinfo.size = current.pageSizeBytes;
         tinfo.offset = offset * tinfo.size;
+        return CE_None;
+    }
+
+    if (l_ifp == NULL && IsSingleTile()) {
+        tinfo.offset = 0;
+        VSILFILE *l_dfp = DataFP(); // IsSingleTile() checks that fp is valid
+        VSIFSeekL(l_dfp, 0, SEEK_END);
+        tinfo.size = VSIFTellL(l_dfp);
+
+        // It should be less than the pagebuffer
+        tinfo.size = std::min(tinfo.size, static_cast<GIntBig>(pbsize));
         return CE_None;
     }
 

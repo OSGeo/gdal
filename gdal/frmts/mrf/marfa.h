@@ -325,14 +325,6 @@ public:
     virtual CPLErr GetGeoTransform(double *gt) override;
     virtual CPLErr SetGeoTransform(double *gt) override;
 
-#ifdef unused
-    virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
-        int nBufXSize, int nBufYSize,
-        GDALDataType eDT,
-        int nBandCount, int *panBandList,
-        char **papszOptions);
-#endif
-
     virtual char **GetFileList() override;
 
     void SetColorTable(GDALColorTable *pct) { poColorTable = pct; };
@@ -374,6 +366,8 @@ protected:
 
     // Do nothing, this is not possible in an MRF
     CPLErr CleanOverviews() { return CE_None; }
+
+    bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
     GIntBig AddOverviews(int scale);
@@ -705,6 +699,12 @@ protected:
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;
     double precision;
     int version;
+    static bool IsLerc(CPLString &s) {
+        return (STARTS_WITH(s, "Lerc2 ") || STARTS_WITH(s, "CntZImage "));
+    }
+
+    // Build a MRF header for a single LERC tile
+    static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
 };
 #endif
 
