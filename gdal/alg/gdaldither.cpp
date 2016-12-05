@@ -456,7 +456,8 @@ int GDALDitherRGB2PCTInternal(
                         iIndex = psColorIndexMap[nIdx].nIndex3;
                         break;
                     }
-                    if( (int)psColorIndexMap[nIdx].nColorCode3 < 0 )
+                    if( static_cast<int>(psColorIndexMap[nIdx].nColorCode3) <
+                        0 )
                     {
                         psColorIndexMap[nIdx].nColorCode3 = nColorCode;
                         iIndex = FindNearestColor( nColors, anPCT,
@@ -473,11 +474,14 @@ int GDALDitherRGB2PCTInternal(
                         if( nIdx >= PRIME_FOR_65536 )
                             nIdx -= PRIME_FOR_65536;
                     }
-                    while( (int)psColorIndexMap[nIdx].nColorCode >= 0 &&
+                    while( static_cast<int>(psColorIndexMap[nIdx].nColorCode)
+                           >= 0 &&
                            psColorIndexMap[nIdx].nColorCode != nColorCode &&
-                           (int)psColorIndexMap[nIdx].nColorCode2 >= 0 &&
+                           static_cast<int>(psColorIndexMap[nIdx].nColorCode2)
+                           >= 0 &&
                            psColorIndexMap[nIdx].nColorCode2 != nColorCode&&
-                           (int)psColorIndexMap[nIdx].nColorCode3 >= 0 &&
+                           static_cast<int>(psColorIndexMap[nIdx].nColorCode3)
+                           >= 0 &&
                            psColorIndexMap[nIdx].nColorCode3 != nColorCode );
                 }
             }
@@ -688,7 +692,7 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
 
 {
 /* -------------------------------------------------------------------- */
-/*  Loop over all the cells in the high density cube.       */
+/*  Loop over all the cells in the high density cube.                   */
 /* -------------------------------------------------------------------- */
     for( int iBlue = 0; iBlue < nCLevels; iBlue++ )
     {
@@ -700,8 +704,9 @@ static void FindNearestColor( int nColors, int *panPCT, GByte *pabyColorMap,
                 const int nGreenValue = (iGreen * 255) / (nCLevels - 1);
                 const int nBlueValue  = (iBlue * 255) / (nCLevels - 1);
 
-                int nBestIndex = FindNearestColor( nColors, panPCT,
-                                        nRedValue, nGreenValue, nBlueValue );
+                const int nBestIndex =
+                    FindNearestColor( nColors, panPCT,
+                                      nRedValue, nGreenValue, nBlueValue );
                 pabyColorMap[iRed + iGreen*nCLevels
                              + iBlue*nCLevels*nCLevels] =
                     static_cast<GByte>(nBestIndex);
