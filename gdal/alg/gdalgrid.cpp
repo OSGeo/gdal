@@ -551,7 +551,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
 
     const GDALGridMovingAverageOptions * const poOptions =
         static_cast<const GDALGridMovingAverageOptions *>(poOptionsIn);
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -794,7 +794,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -902,7 +902,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -1735,7 +1735,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfZ );
     bool bCreateQuadTree = false;
 
-    // Starting address aligned on 32-byte boundary for AVX
+    // Starting address aligned on 32-byte boundary for AVX.
     float* pafXAligned = NULL;
     float* pafYAligned = NULL;
     float* pafZAligned = NULL;
@@ -2321,7 +2321,7 @@ CPLErr GDALGridContextProcess(
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        while( nCounter < (int)nYSize && !bStop )
+        while( nCounter < static_cast<int>(nYSize) && !bStop )
         {
             CPLCondWait(sJob.hCond, sJob.hCondMutex);
 
