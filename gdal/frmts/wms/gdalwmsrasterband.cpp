@@ -554,7 +554,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
         std::min(std::max(0, (y + 1) * nBlockYSize),
                  nRasterYSize) - std::min(std::max(0, y * nBlockYSize),
                                           nRasterYSize);
-    ds = reinterpret_cast<GDALDataset*>(GDALOpen(file_name, GA_ReadOnly));
+
+    ds = reinterpret_cast<GDALDataset*>(GDALOpenEx(file_name,
+                                                    GDAL_OF_RASTER 
+                                                    | GDAL_OF_READONLY 
+                                                    | GDAL_OF_VERBOSE_ERROR,
+                                                    NULL, 
+                                                    m_parent_dataset->m_tileOO, 
+                                                    NULL));
+
     if (ds != NULL) {
         int sx = ds->GetRasterXSize();
         int sy = ds->GetRasterYSize();

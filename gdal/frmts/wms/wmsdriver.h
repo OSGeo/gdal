@@ -374,6 +374,8 @@ protected:
     int m_http_max_conn;
     int m_http_timeout;
     char **m_http_options;
+    // Open Option list for tiles
+    char **m_tileOO;
     int m_clamp_requests;
     int m_unsafeSsl;
     std::set<int> m_http_zeroblock_codes;

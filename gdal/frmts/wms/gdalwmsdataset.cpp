@@ -62,6 +62,7 @@ GDALWMSDataset::GDALWMSDataset() :
     m_http_max_conn(0),
     m_http_timeout(0),
     m_http_options(NULL),
+    m_tileOO(NULL),
     m_clamp_requests(true),
     m_unsafeSsl(false),
     m_zeroblock_on_serverexceptions(0),
@@ -84,8 +85,8 @@ GDALWMSDataset::~GDALWMSDataset() {
     if (m_mini_driver) delete m_mini_driver;
     if (m_cache) delete m_cache;
     if (m_poColorTable) delete m_poColorTable;
-    if (m_http_options != NULL)
-        CSLDestroy(m_http_options);
+    CSLDestroy(m_http_options);
+    CSLDestroy(m_tileOO);
 }
 
 /************************************************************************/
@@ -332,12 +333,15 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         if (ret == CE_None)
         {
             const char *data_type = CPLGetXMLValue(config, "DataType", "Byte");
-            m_data_type = GDALGetDataTypeByName( data_type );
-            if ( m_data_type == GDT_Unknown || m_data_type >= GDT_TypeCount )
+            m_data_type = GDALGetDataTypeByName(data_type);
+            if (m_data_type == GDT_Unknown || m_data_type >= GDT_TypeCount)
             {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "GDALWMS: Invalid value in DataType. Data type \"%s\" is not supported.", data_type );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                    "GDALWMS: Invalid value in DataType. Data type \"%s\" is not supported.", data_type);
                 ret = CE_Failure;
+            }
+            else if (!STARTS_WITH(data_type, "Byte")) { // Valid, non-byte
+                m_tileOO = CSLSetNameValue(m_tileOO, "@DATATYPE", data_type);
             }
         }
 
