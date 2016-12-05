@@ -156,12 +156,14 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
 
 int PhPrfDataset::CloseDependentDatasets()
 {
-    int nDroppedRef = VRTDataset::CloseDependentDatasets();
+    int bDroppedRef = VRTDataset::CloseDependentDatasets();
     for( std::vector<GDALDataset*>::iterator ii( osSubTiles.begin() ); ii != osSubTiles.end(); ++ii )
     {
         delete (*ii);
+        bDroppedRef = TRUE;
     }
-    return nDroppedRef;
+    osSubTiles.clear();
+    return bDroppedRef;
 }
 
 int PhPrfDataset::Identify( GDALOpenInfo* poOpenInfo )
