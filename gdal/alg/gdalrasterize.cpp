@@ -200,7 +200,7 @@ static void GDALCollectRingsFromGeometry(
 
     const OGRwkbGeometryType eFlatType = wkbFlatten(poShape->getGeometryType());
 
-    if ( eFlatType == wkbPoint )
+    if( eFlatType == wkbPoint )
     {
         OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poShape);
         CPLAssert(poPoint != NULL);
@@ -225,7 +225,7 @@ static void GDALCollectRingsFromGeometry(
             //    aPointVariant.push_back( poPoint->getM() );
         }
     }
-    else if ( eFlatType == wkbLineString )
+    else if( eFlatType == wkbLineString )
     {
         OGRLineString *poLine = dynamic_cast<OGRLineString *>(poShape);
         CPLAssert(poLine != NULL);
@@ -236,7 +236,7 @@ static void GDALCollectRingsFromGeometry(
         aPointY.reserve( nNewCount );
         if( eBurnValueSrc != GBV_UserBurnValue )
             aPointVariant.reserve( nNewCount );
-        for ( int i = nCount - 1; i >= 0; i-- )
+        for( int i = nCount - 1; i >= 0; i-- )
         {
             aPointX.push_back( poLine->getX(i) );
             aPointY.push_back( poLine->getY(i) );
@@ -254,7 +254,7 @@ static void GDALCollectRingsFromGeometry(
         }
         aPartSize.push_back( nCount );
     }
-    else if ( EQUAL(poShape->getGeometryName(),"LINEARRING") )
+    else if( EQUAL(poShape->getGeometryName(),"LINEARRING") )
     {
         OGRLinearRing *poRing = dynamic_cast<OGRLinearRing *>(poShape);
         CPLAssert(poRing != NULL);
@@ -266,7 +266,7 @@ static void GDALCollectRingsFromGeometry(
         if( eBurnValueSrc != GBV_UserBurnValue )
             aPointVariant.reserve( nNewCount );
         int i = nCount - 1;  // Used after for.
-        for ( ; i >= 0; i-- )
+        for( ; i >= 0; i-- )
         {
             aPointX.push_back( poRing->getX(i) );
             aPointY.push_back( poRing->getY(i) );
@@ -331,7 +331,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
                         void *pTransformArg )
 
 {
-    if (poShape == NULL)
+    if( poShape == NULL )
         return;
 
     GDALRasterizeInfo sInfo;
@@ -384,11 +384,11 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
 
     // TODO - mloskot: Check if vectors are empty, otherwise it may
     // lead to undefined behavior by returning non-referencable pointer.
-    // if (!aPointX.empty())
-    //    /* fill polygon */
+    // if( !aPointX.empty() )
+    //    // Fill polygon.
     // else
-    //    /* How to report this problem? */
-    switch ( wkbFlatten(poShape->getGeometryType()) )
+    //    // How to report this problem?
+    switch( wkbFlatten(poShape->getGeometryType()) )
     {
       case wkbPoint:
       case wkbMultiPoint:
@@ -436,7 +436,7 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
               // polygon is filled using the variant from the first point of
               // the first segment. Should be removed when the code to full
               // polygons more appropriately is added.
-              if(eBurnValueSrc == GBV_UserBurnValue)
+              if( eBurnValueSrc == GBV_UserBurnValue )
               {
                   GDALdllImageLineAllTouched(
                       sInfo.nXSize, nYSize,
@@ -447,11 +447,11 @@ gv_rasterize_one_shape( unsigned char *pabyChunkBuf, int nYOff,
               }
               else
               {
-                  for ( unsigned int i = 0, n = 0;
-                        i < static_cast<unsigned int>(aPartSize.size());
-                        i++ )
+                  for( unsigned int i = 0, n = 0;
+                       i < static_cast<unsigned int>(aPartSize.size());
+                       i++ )
                   {
-                      for ( int j = 0; j < aPartSize[i]; j++ )
+                      for( int j = 0; j < aPartSize[i]; j++ )
                           aPointVariant[n++] = aPointVariant[0];
                   }
 
@@ -612,7 +612,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
     // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
-    if (poBand == NULL)
+    if( poBand == NULL )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -849,7 +849,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
     // Prototype band.
     GDALRasterBand *poBand = poDS->GetRasterBand( panBandList[0] );
-    if (poBand == NULL)
+    if( poBand == NULL )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -883,7 +883,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     if( !(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0) )
     {
         const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
-        if (nYChunkSize64 > INT_MAX)
+        if( nYChunkSize64 > INT_MAX )
             nYChunkSize = INT_MAX;
         else
           nYChunkSize = static_cast<int>(nYChunkSize64);
@@ -908,12 +908,12 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Read the image once for all layers if user requested to render  */
 /*      the whole raster in single chunk.                               */
 /* -------------------------------------------------------------------- */
-    if ( nYChunkSize == poDS->GetRasterYSize() )
+    if( nYChunkSize == poDS->GetRasterYSize() )
     {
-        if ( poDS->RasterIO( GF_Read, 0, 0, poDS->GetRasterXSize(),
-                             nYChunkSize, pabyChunkBuf,
-                             poDS->GetRasterXSize(), nYChunkSize,
-                             eType, nBandCount, panBandList, 0, 0, 0, NULL )
+        if( poDS->RasterIO( GF_Read, 0, 0, poDS->GetRasterXSize(),
+                            nYChunkSize, pabyChunkBuf,
+                            poDS->GetRasterXSize(), nYChunkSize,
+                            eType, nBandCount, panBandList, 0, 0, 0, NULL )
              != CE_None )
         {
             CPLFree( pabyChunkBuf );
@@ -934,7 +934,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     {
         OGRLayer *poLayer = reinterpret_cast<OGRLayer *>(pahLayers[iLayer]);
 
-        if ( !poLayer )
+        if( !poLayer )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Layer element number %d is NULL, skipping.", iLayer );
@@ -946,17 +946,17 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Do not force the feature count, so if driver doesn't know       */
 /*      exact number of features, go down the normal way.               */
 /* -------------------------------------------------------------------- */
-        if ( poLayer->GetFeatureCount(FALSE) == 0 )
+        if( poLayer->GetFeatureCount(FALSE) == 0 )
             continue;
 
         int iBurnField = -1;
         double *padfBurnValues = NULL;
 
-        if ( pszBurnAttribute )
+        if( pszBurnAttribute )
         {
             iBurnField =
                 poLayer->GetLayerDefn()->GetFieldIndex( pszBurnAttribute );
-            if ( iBurnField == -1 )
+            if( iBurnField == -1 )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to find field %s on layer %s, skipping.",
@@ -983,7 +983,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             bNeedToFreeTransformer = true;
 
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
-            if ( !poSRS )
+            if( !poSRS )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to fetch spatial reference on layer %s "
@@ -1043,7 +1043,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
                 nThisYChunkSize = poDS->GetRasterYSize() - iY;
 
             // Only re-read image if not a single chunk is being rendered.
-            if ( nYChunkSize < poDS->GetRasterYSize() )
+            if( nYChunkSize < poDS->GetRasterYSize() )
             {
                 eErr =
                     poDS->RasterIO( GF_Read, 0, iY,
@@ -1061,7 +1061,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             {
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
 
-                if ( pszBurnAttribute )
+                if( pszBurnAttribute )
                 {
                     const double dfAttrValue =
                         poFeat->GetFieldAsDouble( iBurnField );
@@ -1083,7 +1083,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             }
 
             // Only write image if not a single chunk is being rendered.
-            if ( nYChunkSize < poDS->GetRasterYSize() )
+            if( nYChunkSize < poDS->GetRasterYSize() )
             {
                 eErr =
                     poDS->RasterIO( GF_Write, 0, iY,
@@ -1107,7 +1107,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 
         VSIFree( padfAttrValues );
 
-        if ( bNeedToFreeTransformer )
+        if( bNeedToFreeTransformer )
         {
             GDALDestroyTransformer( pTransformArg );
             pTransformArg = NULL;
@@ -1119,7 +1119,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
 /*      Write out the image once for all layers if user requested       */
 /*      to render the whole raster in single chunk.                     */
 /* -------------------------------------------------------------------- */
-    if ( eErr == CE_None && nYChunkSize == poDS->GetRasterYSize() )
+    if( eErr == CE_None && nYChunkSize == poDS->GetRasterYSize() )
     {
         eErr = poDS->RasterIO( GF_Write, 0, 0,
                                 poDS->GetRasterXSize(), nYChunkSize,
@@ -1303,15 +1303,15 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
 /*      Do not force the feature count, so if driver doesn't know       */
 /*      exact number of features, go down the normal way.               */
 /* -------------------------------------------------------------------- */
-        if ( poLayer->GetFeatureCount(FALSE) == 0 )
+        if( poLayer->GetFeatureCount(FALSE) == 0 )
             continue;
 
         int iBurnField = -1;
-        if ( pszBurnAttribute )
+        if( pszBurnAttribute )
         {
             iBurnField =
                 poLayer->GetLayerDefn()->GetFieldIndex( pszBurnAttribute );
-            if ( iBurnField == -1 )
+            if( iBurnField == -1 )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to find field %s on layer %s, skipping.",
@@ -1334,7 +1334,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             bNeedToFreeTransformer = true;
 
             OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
-            if ( !poSRS )
+            if( !poSRS )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to fetch spatial reference on layer %s "
@@ -1364,7 +1364,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             {
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
 
-                if ( pszBurnAttribute )
+                if( pszBurnAttribute )
                     dfBurnValue = poFeat->GetFieldAsDouble( iBurnField );
 
                 gv_rasterize_one_shape( static_cast<unsigned char *>(pData), 0,
@@ -1386,7 +1386,7 @@ CPLErr GDALRasterizeLayersBuf( void *pData, int nBufXSize, int nBufYSize,
             eErr = CE_Failure;
         }
 
-        if ( bNeedToFreeTransformer )
+        if( bNeedToFreeTransformer )
         {
             GDALDestroyTransformer( pTransformArg );
             pTransformArg = NULL;
