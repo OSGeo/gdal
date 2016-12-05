@@ -490,6 +490,8 @@ typedef struct
     int         nUpdateYearSince1900; /* 0-255 */
     int         nUpdateMonth; /* 1-12 */
     int         nUpdateDay; /* 1-31 */
+
+    int         bWriteEndOfFileChar; /* defaults to TRUE */
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;
@@ -605,6 +607,8 @@ const char SHPAPI_CALL1(*)
 
 void SHPAPI_CALL
     DBFSetLastModifiedDate( DBFHandle psDBF, int nYYSince1900, int nMM, int nDD );
+
+void SHPAPI_CALL DBFSetWriteEndOfFileChar( DBFHandle psDBF, int bWriteFlag );
 
 #ifdef __cplusplus
 }

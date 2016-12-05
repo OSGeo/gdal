@@ -281,6 +281,7 @@ void RegisterOGRShape()
 "    <Value>ALL_SHAPES</Value>"
 "  </Option>"
 "  <Option name='AUTO_REPACK' type='boolean' description='Whether the shapefile should be automatically repacked when needed' default='YES'/>"
+"  <Option name='DBF_EOF_CHAR' type='boolean' description='Whether to write the 0x1A end-of-file character in DBF files' default='YES'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
@@ -313,6 +314,7 @@ void RegisterOGRShape()
 "  <Option name='SPATIAL_INDEX' type='boolean' description='To create a spatial index.' default='NO'/>"
 "  <Option name='DBF_DATE_LAST_UPDATE' type='string' description='Modification date to write in DBF header with YYYY-MM-DD format'/>"
 "  <Option name='AUTO_REPACK' type='boolean' description='Whether the shapefile should be automatically repacked when needed' default='YES'/>"
+"  <Option name='DBF_EOF_CHAR' type='boolean' description='Whether to write the 0x1A end-of-file character in DBF files' default='YES'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,

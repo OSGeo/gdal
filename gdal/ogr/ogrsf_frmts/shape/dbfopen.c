@@ -209,6 +209,11 @@ SHP_CVSID("$Id$")
 /* File header size */
 #define XBASE_FILEHDR_SZ         32
 
+#define HEADER_RECORD_TERMINATOR 0x0D
+
+/* See http://www.manmrk.net/tutorials/database/xbase/dbf.html */
+#define END_OF_FILE_CHARACTER    0x1A
+
 #ifdef USE_CPL
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 #else
@@ -287,8 +292,18 @@ static void DBFWriteHeader(DBFHandle psDBF)
     {
         char	cNewline;
 
-        cNewline = 0x0d;
+        cNewline = HEADER_RECORD_TERMINATOR;
         psDBF->sHooks.FWrite( &cNewline, 1, 1, psDBF->fp );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the file is new, add a EOF character.                        */
+/* -------------------------------------------------------------------- */
+    if( psDBF->nRecords == 0 && psDBF->bWriteEndOfFileChar )
+    {
+        char ch = END_OF_FILE_CHARACTER;
+
+        psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
     }
 }
 
@@ -321,6 +336,15 @@ static int DBFFlushRecord( DBFHandle psDBF )
                      psDBF->nCurrentRecord );
             psDBF->sHooks.Error( szMessage );
             return FALSE;
+        }
+
+        if( psDBF->nCurrentRecord == psDBF->nRecords - 1 )
+        {
+            if( psDBF->bWriteEndOfFileChar )
+            {
+                char ch = END_OF_FILE_CHARACTER;
+                psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
+            }
         }
     }
 
@@ -631,6 +655,8 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 	      psDBF->panFieldOffset[iField-1] + psDBF->panFieldSize[iField-1];
     }
 
+    DBFSetWriteEndOfFileChar( psDBF, TRUE );
+
     return( psDBF );
 }
 
@@ -803,7 +829,7 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     psDBF->nRecords = 0;
     psDBF->nFields = 0;
     psDBF->nRecordLength = 1;
-    psDBF->nHeaderLength = XBASE_FILEHDR_SZ + 1; /* + 1 for 0x1D char */
+    psDBF->nHeaderLength = XBASE_FILEHDR_SZ + 1; /* + 1 for HEADER_RECORD_TERMINATOR */
 
     psDBF->panFieldOffset = NULL;
     psDBF->panFieldSize = NULL;
@@ -825,6 +851,8 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
         strcpy( psDBF->pszCodePage, pszCodePage );
     }
     DBFSetLastModifiedDate(psDBF, 95, 7, 26); /* dummy date */
+
+    DBFSetWriteEndOfFileChar(psDBF, TRUE);
 
     return( psDBF );
 }
@@ -1021,6 +1049,17 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
         /* move record to the new place*/
         psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
         psDBF->sHooks.FWrite( pszRecord, psDBF->nRecordLength, 1, psDBF->fp );
+    }
+
+    if( psDBF->bWriteEndOfFileChar )
+    {
+        char ch = END_OF_FILE_CHARACTER;
+
+        nRecordOffset =
+            psDBF->nRecordLength * (SAOffset) psDBF->nRecords + psDBF->nHeaderLength;
+
+        psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
+        psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
     }
 
     /* free record */
@@ -1709,11 +1748,13 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
 
    newDBF->bNoHeader = TRUE;
    newDBF->bUpdated = TRUE;
+   newDBF->bWriteEndOfFileChar = psDBF->bWriteEndOfFileChar;
 
    DBFWriteHeader ( newDBF );
    DBFClose ( newDBF );
 
    newDBF = DBFOpen ( pszFilename, "rb+" );
+   newDBF->bWriteEndOfFileChar = psDBF->bWriteEndOfFileChar;
 
    return ( newDBF );
 }
@@ -1969,6 +2010,12 @@ DBFDeleteField(DBFHandle psDBF, int iField)
                               nOldRecordLength - nDeletedFieldOffset - nDeletedFieldSize,
                               1, psDBF->fp );
 
+    }
+
+    if( psDBF->bWriteEndOfFileChar )
+    {
+        char ch = END_OF_FILE_CHARACTER;
+        psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
     }
 
     /* TODO: truncate file */
@@ -2244,6 +2291,18 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             psDBF->sHooks.FWrite( pszRecord, psDBF->nRecordLength, 1, psDBF->fp );
         }
 
+        if( psDBF->bWriteEndOfFileChar )
+        {
+            char ch = END_OF_FILE_CHARACTER;
+
+            nRecordOffset =
+                psDBF->nRecordLength * (SAOffset) psDBF->nRecords + psDBF->nHeaderLength;
+
+            psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
+            psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
+        }
+        // TODO: truncate file
+
         free(pszRecord);
         free(pszOldField);
     }
@@ -2304,6 +2363,17 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
             psDBF->sHooks.FWrite( pszRecord, psDBF->nRecordLength, 1, psDBF->fp );
         }
 
+        if( psDBF->bWriteEndOfFileChar )
+        {
+            char ch = END_OF_FILE_CHARACTER;
+
+            nRecordOffset =
+                psDBF->nRecordLength * (SAOffset) psDBF->nRecords + psDBF->nHeaderLength;
+
+            psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 );
+            psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
+        }
+
         free(pszRecord);
         free(pszOldField);
     }
@@ -2313,4 +2383,13 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
     psDBF->bUpdated = TRUE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                    DBFSetWriteEndOfFileChar()                        */
+/************************************************************************/
+
+void SHPAPI_CALL DBFSetWriteEndOfFileChar( DBFHandle psDBF, int bWriteFlag )
+{
+    psDBF->bWriteEndOfFileChar = bWriteFlag;
 }
