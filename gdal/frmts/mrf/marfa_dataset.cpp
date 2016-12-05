@@ -459,8 +459,8 @@ int GDALMRFDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
 
 #if defined(LERC) // Could be single LERC tile
-    if (LERC_Band::IsLerc(fn))
-        return TRUE;
+//    if (LERC_Band::IsLerc(fn))
+//        return TRUE;
 #endif
 
     return FALSE;
