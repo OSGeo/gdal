@@ -2419,10 +2419,10 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
                 GDALProgressFunc pfnProgress, void *pProgressArg )
 {
-    GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm,poOptions,
-                                                        nPoints,
-                                                        padfX, padfY, padfZ,
-                                                        TRUE );
+    GDALGridContext* psContext = GDALGridContextCreate(eAlgorithm, poOptions,
+                                                       nPoints,
+                                                       padfX, padfY, padfZ,
+                                                       TRUE);
     CPLErr eErr = CE_Failure;
     if( psContext )
     {
