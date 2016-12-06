@@ -236,7 +236,7 @@ static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
     bool                     abOk[6] = {false,false,false,false,false,false};
     static const char* const apszGeoKeys[6] = { "A_0", "A_1", "A_2",
                                                 "B_0", "B_1", "B_2" };
-    for( const CPLXMLNode* elt = psGeorefElt->psChild; elt != NULL;	elt = elt->psNext )
+    for( const CPLXMLNode* elt = psGeorefElt->psChild; elt != NULL; elt = elt->psNext )
     {
         CPLString   osName;
         CPLString   osValue;
@@ -265,6 +265,28 @@ static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
         }
     }
     return false;
+}
+
+static bool ParseDemShift( const CPLXMLNode* psDemShiftElt, double* padfDemShift )
+{
+    bool                     abOk[6] = {false,false,false};
+    static const char* const apszDemShiftKeys[6] = { "x", "y", "z" };
+
+    for( const CPLXMLNode* elt = psDemShiftElt->psChild; elt != NULL; elt = elt->psNext )
+    {
+        CPLString   osName;
+        CPLString   osValue;
+        GetXmlNameValuePair( elt, osName, osValue );
+        for( int k = 0; k != 3; ++k )
+        {
+            if( EQUAL( osName, apszDemShiftKeys[k] ) )
+            {
+                padfDemShift[k] = CPLAtof( osValue );
+                abOk[k] = true;
+            }
+        }
+    }
+    return abOk[0] && abOk[1] && abOk[2];
 }
 
 static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
@@ -376,6 +398,15 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
     double          adfGeoTrans[6] = {0,0,0,0,0,0};
     bool            bGeoTransOk = false;
 
+    double                   adfDemShift[3] = {0,0,0};
+    bool                     bDemShiftOk = false;
+    static const int         nDemMDCount = 7;
+    bool                     abDemMetadataOk[nDemMDCount] = {false,false,false,false,false,false,false};
+    double                   adfDemMetadata[nDemMDCount] = {0,0,0,0,0,0,0};
+    static const char* const apszDemKeys[nDemMDCount] = {"XR_0", "XR_1",
+                                                         "YR_0", "YR_1",
+                                                         "ZR_0", "ZR_1",
+                                                         "BadZ" };
     if( eFormat == ph_megatiff )
     {
         osPartsExt = ".tif";
@@ -435,6 +466,22 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         if( EQUAL( osName, "GeoRef" ) )
         {
             bGeoTransOk = ParseGeoref( psElt, adfGeoTrans );
+        }
+        else
+        if( EQUAL( osName, "DemShift" ) )
+        {
+            bDemShiftOk = ParseDemShift( psElt, adfDemShift );
+        }
+        else
+        {
+            for( int n = 0; n != nDemMDCount; ++n )
+            {
+                if( EQUAL( osName, apszDemKeys[n] ) )
+                {
+                    adfDemMetadata[n] = CPLAtof( osValue );
+                    abDemMetadataOk[n] = true;
+                }
+            }
         }
     }
 
@@ -522,9 +569,45 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
     if( eFormat == ph_xdem )
     {
         GDALRasterBand*	poFirstBand = poDataset->GetRasterBand( 1 );
+
         if( poFirstBand != NULL )
         {
             poFirstBand->SetUnitType( "m" );//Always meters
+        }
+
+        if( abDemMetadataOk[0] && abDemMetadataOk[1] &&
+            abDemMetadataOk[2] && abDemMetadataOk[3] )
+        {
+            adfGeoTrans[0] = adfDemMetadata[0];
+            adfGeoTrans[1] = (adfDemMetadata[1] - adfDemMetadata[0])/nSizeX;
+            adfGeoTrans[2] = 0;
+            adfGeoTrans[3] = adfDemMetadata[3];
+            adfGeoTrans[4] = 0;
+            adfGeoTrans[5] = (adfDemMetadata[2] - adfDemMetadata[3])/nSizeY;
+
+            if( bDemShiftOk )
+            {
+                adfGeoTrans[0] += adfDemShift[0];
+                adfGeoTrans[3] += adfDemShift[1];
+            }
+
+            poDataset->SetGeoTransform( adfGeoTrans );
+        }
+
+        if( abDemMetadataOk[4] && abDemMetadataOk[5] )
+        {
+            poFirstBand->SetMetadataItem( "STATISTICS_MINIMUM", CPLSPrintf( "%f", adfDemMetadata[4] ) );
+            poFirstBand->SetMetadataItem( "STATISTICS_MAXIMUM", CPLSPrintf( "%f", adfDemMetadata[5] ) );
+        }
+
+        if( abDemMetadataOk[6] )
+        {
+            poFirstBand->SetNoDataValue( adfDemMetadata[6] );
+        }
+
+        if( bDemShiftOk )
+        {
+            poFirstBand->SetOffset( adfDemShift[2] );
         }
     }
 
