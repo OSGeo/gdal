@@ -421,7 +421,11 @@ CPLErr LERC_Band::Compress(buf_mgr &dst, buf_mgr &src)
 CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 {
     // Should have enough data pre-read
-    CPLAssert(poOpenInfo->nHeaderBytes >= static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()));
+    if(poOpenInfo->nHeaderBytes <
+        static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
+    {
+        return NULL;
+    }
 
     if (poOpenInfo->eAccess != GA_ReadOnly
         || poOpenInfo->pszFilename == NULL
