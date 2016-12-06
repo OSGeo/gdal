@@ -390,7 +390,8 @@ int GDALDitherRGB2PCTInternal(
                   std::max(0,
                            std::min(255, (pabyGreen[i] + panError[i*3+1+3]))));
               pabyBlue[i] = static_cast<GByte>(
-                  std::max(0, std::min(255,(pabyBlue[i] + panError[i*3+2+3]))));
+                  std::max(0, std::min(255,
+                                       (pabyBlue[i] + panError[i*3+2+3]))));
           }
 
           memset( panError, 0, sizeof(int) * (nXSize+2) * 3 );
@@ -607,16 +608,16 @@ static int FindNearestColor( int nColors, int *panPCT,
 
         _mm_store_si128(
             (__m128i*)anDistance,
-            _mm_sad_epu8(_mm_and_si128(pctColor,mask_low),thisColor_low));
+            _mm_sad_epu8(_mm_and_si128(pctColor, mask_low), thisColor_low));
         _mm_store_si128(
             (__m128i*)(anDistance+4),
-            _mm_sad_epu8(_mm_and_si128(pctColor,mask_high),thisColor_high));
+            _mm_sad_epu8(_mm_and_si128(pctColor, mask_high), thisColor_high));
         _mm_store_si128(
             (__m128i*)(anDistance+8),
-            _mm_sad_epu8(_mm_and_si128(pctColor2,mask_low),thisColor_low));
+            _mm_sad_epu8(_mm_and_si128(pctColor2, mask_low), thisColor_low));
         _mm_store_si128(
             (__m128i*)(anDistance+12),
-            _mm_sad_epu8(_mm_and_si128(pctColor2,mask_high),thisColor_high));
+            _mm_sad_epu8(_mm_and_si128(pctColor2, mask_high), thisColor_high));
 
         if( anDistance[0] < nBestDist )
         {
