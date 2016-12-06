@@ -492,7 +492,7 @@ void GDALPansharpenOperation::WeightedBrovey3(
 {
     if( psOptions->bHasNoData )
     {
-        WeightedBroveyWithNoData<WorkDataType,OutDataType>
+        WeightedBroveyWithNoData<WorkDataType, OutDataType>
                                 (pPanBuffer, pUpsampledSpectralBuffer,
                                  pDataBuf, nValues, nBandValues, nMaxValue);
         return;
@@ -663,16 +663,16 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
 #endif
 
 void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
-                                                     const GUInt16* pPanBuffer,
-                                                     const GUInt16* pUpsampledSpectralBuffer,
-                                                     GUInt16* pDataBuf,
-                                                     int nValues,
-                                                     int nBandValues,
-                                                     GUInt16 nMaxValue) const
+    const GUInt16* pPanBuffer,
+    const GUInt16* pUpsampledSpectralBuffer,
+    GUInt16* pDataBuf,
+    int nValues,
+    int nBandValues,
+    GUInt16 nMaxValue) const
 {
     if( psOptions->bHasNoData )
     {
-        WeightedBroveyWithNoData<GUInt16,GUInt16>
+        WeightedBroveyWithNoData<GUInt16, GUInt16>
                                 (pPanBuffer, pUpsampledSpectralBuffer,
                                  pDataBuf, nValues, nBandValues, nMaxValue);
         return;
@@ -687,7 +687,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<3,3>(
+        j = WeightedBroveyPositiveWeightsInternal<3, 3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -698,7 +698,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[2] == 2 &&
         psOptions->panOutPansharpenedBands[3] == 3 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<4,4>(
+        j = WeightedBroveyPositiveWeightsInternal<4, 4>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -708,7 +708,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<4,3>(
+        j = WeightedBroveyPositiveWeightsInternal<4, 3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -808,7 +808,7 @@ GDALPansharpenOperation::WeightedBrovey(
 }
 
 template<>
-void GDALPansharpenOperation::WeightedBrovey<GUInt16,GUInt16>(
+void GDALPansharpenOperation::WeightedBrovey<GUInt16, GUInt16>(
     const GUInt16* pPanBuffer,
     const GUInt16* pUpsampledSpectralBuffer,
     GUInt16* pDataBuf,
@@ -1432,7 +1432,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion( int nXOff, int nYOff,
                 const size_t iStartLine =
                     (static_cast<size_t>(i) * nYSize) / nTasks;
                 const size_t iNextStartLine =
-                  (static_cast<size_t>(i + 1) * nYSize) / nTasks;
+                    (static_cast<size_t>(i + 1) * nYSize) / nTasks;
                 pasJobs[i].poPansharpenOperation = this;
                 pasJobs[i].eWorkDataType = eWorkDataType;
                 pasJobs[i].eBufDataType = eBufDataType;
@@ -1507,9 +1507,12 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    GIntBig launch_time =
-        (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
-    GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
+    const GIntBig launch_time =
+        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<GIntBig>(psJob->ptv->tv_usec);
+    const GIntBig start_job =
+        static_cast<GIntBig>(tv.tv_sec) * 1000000 +
+        static_cast<GIntBig>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1543,9 +1546,12 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, NULL);
-    GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
+    const GIntBig end =
+        static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
+        static_cast<GIntBig>(tv_end.tv_usec);
     if( start_job - launch_time > 500 )
-        printf("Resample: Delay before start=" CPL_FRMT_GIB ", completion time=" CPL_FRMT_GIB "\n",
+        printf("Resample: Delay before start=" CPL_FRMT_GIB
+               ", completion time=" CPL_FRMT_GIB "\n",
                start_job - launch_time, end - start_job);
 #endif
 }
@@ -1561,9 +1567,12 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    GIntBig launch_time =
-        (GIntBig)psJob->ptv->tv_sec * 1000000 + (GIntBig)psJob->ptv->tv_usec;
-    GIntBig start_job = (GIntBig)tv.tv_sec * 1000000 + (GIntBig)tv.tv_usec;
+    const GIntBig launch_time =
+        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<GIntBig>(psJob->ptv->tv_usec);
+    const GIntBig start_job =
+        static_cast<GIntBig>(tv.tv_sec) * 1000000 +
+        static_cast<GIntBig>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1585,7 +1594,9 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, NULL);
-    GIntBig end = (GIntBig)tv_end.tv_sec * 1000000 + (GIntBig)tv_end.tv_usec;
+    const GIntBig end =
+        static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
+        static_cast<GIntBig>(tv_end.tv_usec);
     if( start_job - launch_time > 500 )
         printf("Pansharpen: Delay before start=" CPL_FRMT_GIB
                ", completion time=" CPL_FRMT_GIB "\n",
