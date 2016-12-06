@@ -190,12 +190,12 @@ int VizGeorefSpline2D::delete_point( const double Px, const double Py )
 }
 #endif
 
-CPL_INLINE template<typename T> T SQ( const T &x )
+template<typename T> static inline T SQ( const T &x )
 {
     return x * x;
 }
 
-static CPL_INLINE double
+static inline double
 VizGeorefSpline2DBase_func( const double x1, const double y1,
                             const double x2, const double y2 )
 {
