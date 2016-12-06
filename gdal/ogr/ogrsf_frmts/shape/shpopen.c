@@ -10,7 +10,7 @@
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
+ * or at the option of the licensee under the LGPL (see COPYING).  This
  * option is discussed in more detail in shapelib.html.
  *
  * --
@@ -35,6 +35,11 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.75  2016-12-05 12:44:05  erouault
+ * * Major overhaul of Makefile build system to use autoconf/automake.
+ *
+ * * Warning fixes in contrib/
+ *
  * Revision 1.74  2016-12-04 15:30:15  erouault
  * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
  * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
