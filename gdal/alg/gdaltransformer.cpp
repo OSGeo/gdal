@@ -1241,7 +1241,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const int nMinimumGcps =  pszValue ? atoi(pszValue) : -1;
 
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_TOLERANCE" );
-    const bool bRefine = pszValue == NULL;
+    const bool bRefine = pszValue != NULL;
     const double dfTolerance = bRefine ? CPLAtof(pszValue) : 0.0;
 
 /* -------------------------------------------------------------------- */
