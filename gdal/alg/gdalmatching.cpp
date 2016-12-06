@@ -34,6 +34,8 @@
 CPL_CVSID("$Id$");
 //! @endcond
 
+// TODO(schwehr): What?  This below: "0,001"
+
 /**
  * @file
  * @author Andrew Migal migal.drew@gmail.com
@@ -292,7 +294,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
 /*      output image.                                                   */
 /* -------------------------------------------------------------------- */
     const bool bGeorefOutput =
-        CPLTestBool(CSLFetchNameValueDef(papszOptions,"OUTPUT_GEOREF","NO"));
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOREF", "NO"));
 
     if( bGeorefOutput )
     {
