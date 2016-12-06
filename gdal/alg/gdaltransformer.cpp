@@ -222,7 +222,7 @@ static int GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
     }
 
     if( !bErr && !pfnTransformer( pTransformArg, FALSE, nSamplePoints,
-                             adfX, adfY, adfZ, abSuccess ) )
+                                  adfX, adfY, adfZ, abSuccess ) )
     {
         bErr = true;
     }
@@ -1242,7 +1242,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_TOLERANCE" );
     const bool bRefine = pszValue != NULL;
-    const double dfTolerance = bRefine ? CPLAtof(pszValue) : 0.0;
+    const double dfTolerance = pszValue ? CPLAtof(pszValue) : 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the transform info.                                  */
