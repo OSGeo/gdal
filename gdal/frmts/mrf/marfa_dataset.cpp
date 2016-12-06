@@ -543,8 +543,8 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (STARTS_WITH(pszHeader, "<MRF_META>")) // Regular file name
             config = CPLParseXMLFile(pszFileName);
 #if defined(LERC)
-        else
-            config = LERC_Band::GetMRFConfig(poOpenInfo);
+//        else
+//            config = LERC_Band::GetMRFConfig(poOpenInfo);
 #endif
 
     } 
