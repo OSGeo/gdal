@@ -118,11 +118,6 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
     poTileDataset = new GDALProxyPoolDataset( pszPartName, nWidth, nHeight,
                                               eAccessType, FALSE );
 
-    if( poTileDataset == NULL )
-    {
-        return false;
-    }
-
     for( int nBand = 1; nBand != GetRasterCount() + 1; ++nBand )
     {
         PhPrfBand*      poBand = dynamic_cast<PhPrfBand*>( GetRasterBand( nBand ) );
