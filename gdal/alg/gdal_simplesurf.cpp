@@ -338,6 +338,9 @@ void GDALSimpleSURF::SetDescriptor(
         }
 }
 
+// TODO(schwehr): What does "value is 0,1." mean?  Is that 0 to 1 or 0.1?
+// TODO(schwehr): 0,001?
+
 /**
  * Find corresponding points (equal points in two collections).
  *
