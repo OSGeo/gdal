@@ -315,7 +315,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      Push the sizes of merged polygon fragments into the             */
 /*      merged polygon id's count.                                      */
 /* -------------------------------------------------------------------- */
-    for( int iPoly = 0; iPoly < oFirstEnum.nNextPolygonId; iPoly++ )
+    for( int iPoly = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
+                        iPoly < oFirstEnum.nNextPolygonId; iPoly++ )
     {
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
         {
@@ -444,7 +445,9 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     int nIsolatedSmall = 0;
     int nSieveTargets = 0;
 
-    for( int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++ )
+    for( int iPoly = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
+                        oFirstEnum.panPolyValue != NULL && // for Coverity
+                        iPoly < static_cast<int>(anPolySizes.size()); iPoly++ )
     {
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
             continue;
@@ -523,7 +526,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* ==================================================================== */
     oSecondEnum.Clear();
 
-    for( int iY = 0; eErr == CE_None && iY < nYSize; iY++ )
+    for( int iY = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
+                     eErr == CE_None && iY < nYSize; iY++ )
     {
 /* -------------------------------------------------------------------- */
 /*      Read the image data.                                            */
