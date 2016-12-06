@@ -129,7 +129,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     const char *pszOpt = CSLFetchNameValue( papszOptions, "DISTUNITS" );
     if( pszOpt )
     {
-        if( EQUAL(pszOpt,"GEO") )
+        if( EQUAL(pszOpt, "GEO") )
         {
             GDALDatasetH hSrcDS = GDALGetBandDataset( hSrcBand );
             if( hSrcDS )

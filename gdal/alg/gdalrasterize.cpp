@@ -254,7 +254,7 @@ static void GDALCollectRingsFromGeometry(
         }
         aPartSize.push_back( nCount );
     }
-    else if( EQUAL(poShape->getGeometryName(),"LINEARRING") )
+    else if( EQUAL(poShape->getGeometryName(), "LINEARRING") )
     {
         OGRLinearRing *poRing = dynamic_cast<OGRLinearRing *>(poShape);
         CPLAssert(poRing != NULL);
@@ -715,9 +715,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         eErr =
             poDS->RasterIO(GF_Read,
                            0, iY, poDS->GetRasterXSize(), nThisYChunkSize,
-                           pabyChunkBuf,poDS->GetRasterXSize(),nThisYChunkSize,
+                           pabyChunkBuf,
+                           poDS->GetRasterXSize(), nThisYChunkSize,
                            eType, nBandCount, panBandList,
-                           0, 0, 0, NULL );
+                           0, 0, 0, NULL);
         if( eErr != CE_None )
             break;
 
@@ -1000,7 +1001,7 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
             if( pszProjection != NULL )
                 papszTransformerOptions = CSLSetNameValue(
                         papszTransformerOptions, "SRC_SRS", pszProjection );
-            double adfGeoTransform[6] = { 0 };
+            double adfGeoTransform[6] = {};
             if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
                 poDS->GetGCPCount() == 0 &&
                 poDS->GetMetadata("RPC") == NULL )
