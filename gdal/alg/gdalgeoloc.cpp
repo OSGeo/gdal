@@ -233,10 +233,10 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
         {
             if( bInit )
             {
-                dfMinX = std::min(dfMinX,psTransform->padfGeoLocX[i]);
-                dfMaxX = std::max(dfMaxX,psTransform->padfGeoLocX[i]);
-                dfMinY = std::min(dfMinY,psTransform->padfGeoLocY[i]);
-                dfMaxY = std::max(dfMaxY,psTransform->padfGeoLocY[i]);
+                dfMinX = std::min(dfMinX, psTransform->padfGeoLocX[i]);
+                dfMaxX = std::max(dfMaxX, psTransform->padfGeoLocX[i]);
+                dfMinY = std::min(dfMinY, psTransform->padfGeoLocY[i]);
+                dfMaxY = std::max(dfMaxY, psTransform->padfGeoLocY[i]);
             }
             else
             {
@@ -526,12 +526,12 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                                    int bReversed )
 
 {
-    if( CSLFetchNameValue(papszGeolocationInfo,"PIXEL_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo,"LINE_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo,"PIXEL_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo,"LINE_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo,"X_BAND") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo,"Y_BAND") == NULL )
+    if( CSLFetchNameValue(papszGeolocationInfo, "PIXEL_OFFSET") == NULL
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_OFFSET") == NULL
+        || CSLFetchNameValue(papszGeolocationInfo, "PIXEL_STEP") == NULL
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_STEP") == NULL
+        || CSLFetchNameValue(papszGeolocationInfo, "X_BAND") == NULL
+        || CSLFetchNameValue(papszGeolocationInfo, "Y_BAND") == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing some geolocation fields in "
@@ -972,7 +972,7 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
 
     if( psMetadata == NULL ||
         psMetadata->eType != CXT_Element
-        || !EQUAL(psMetadata->pszValue,"Metadata") )
+        || !EQUAL(psMetadata->pszValue, "Metadata") )
         return NULL;
 
     char **papszMD = NULL;
@@ -981,7 +981,7 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
          psMDI != NULL;
          psMDI = psMDI->psNext )
     {
-        if( !EQUAL(psMDI->pszValue,"MDI")
+        if( !EQUAL(psMDI->pszValue, "MDI")
             || psMDI->eType != CXT_Element
             || psMDI->psChild == NULL
             || psMDI->psChild->psNext == NULL
