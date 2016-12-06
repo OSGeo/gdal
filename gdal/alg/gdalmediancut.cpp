@@ -147,7 +147,7 @@ extern "C" int CPL_STDCALL
 GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                          GDALRasterBandH hGreen,
                          GDALRasterBandH hBlue,
-                         int (*pfnIncludePixel)(int,int,void*),
+                         int (*pfnIncludePixel)(int, int, void*),
                          int nColors,
                          GDALColorTableH hColorTable,
                          GDALProgressFunc pfnProgress,
@@ -288,7 +288,7 @@ GDALComputeMedianCutPCTInternal(
     GByte* pabyRedBand,
     GByte* pabyGreenBand,
     GByte* pabyBlueBand,
-    int (*pfnIncludePixel)(int,int,void*),
+    int (*pfnIncludePixel)(int, int, void*),
     int nColors,
     int nBits,
     T* panHistogram,  // NULL, or >= size (1<<nBits)^3 * sizeof(T) bytes.
@@ -990,7 +990,7 @@ splitbox(Colorbox* ptr, const T* histogram,
                 for( int ir = ptr->rmin; ir <= ptr->rmax; ++ir )
                 {
                     const T *iptr =
-                        HISTOGRAM(histogram,nCLevels,ir,ptr->gmin,ib);
+                        HISTOGRAM(histogram, nCLevels, ir, ptr->gmin, ib);
                     for( int ig = ptr->gmin; ig <= ptr->gmax; ++ig )
                     {
                         *histp += *iptr;
@@ -1240,7 +1240,7 @@ GDALComputeMedianCutPCTInternal<GUInt32>(
     GByte* pabyRedBand,
     GByte* pabyGreenBand,
     GByte* pabyBlueBand,
-    int (*pfnIncludePixel)(int,int,void*),
+    int (*pfnIncludePixel)(int, int, void*),
     int nColors,
     int nBits,
     GUInt32* panHistogram,
@@ -1256,7 +1256,7 @@ GDALComputeMedianCutPCTInternal<GUIntBig>(
     GByte* pabyRedBand,
     GByte* pabyGreenBand,
     GByte* pabyBlueBand,
-    int (*pfnIncludePixel)(int,int,void*),
+    int (*pfnIncludePixel)(int, int, void*),
     int nColors,
     int nBits,
     GUIntBig* panHistogram,
