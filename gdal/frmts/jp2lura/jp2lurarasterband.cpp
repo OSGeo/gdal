@@ -319,7 +319,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
-    /* Set the callback function and parameter		*/
+    /* Set the callback function and parameter      */
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
 
     error = JP2_Decompress_SetProp(poGDS->sOutputData.handle,

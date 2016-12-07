@@ -54,7 +54,7 @@ namespace PCIDSK
     public:
         CPCIDSKSegment( PCIDSKFile *file, int segment,
             const char *segment_pointer );
-        virtual	~CPCIDSKSegment();
+        virtual ~CPCIDSKSegment();
 
         void        LoadSegmentPointer( const char *segment_pointer );
         void        LoadSegmentHeader();
@@ -96,7 +96,7 @@ namespace PCIDSK
         char        segment_flag;
         std::string segment_name;
 
-        uint64	    data_offset;     // includes 1024 byte segment header.
+        uint64      data_offset;     // includes 1024 byte segment header.
         uint64      data_size;
 
         PCIDSKBuffer header;

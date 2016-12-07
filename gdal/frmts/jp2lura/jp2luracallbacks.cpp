@@ -211,8 +211,8 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
 
     long lBps = 0;
     /****************************************************/
-    /*	convert from component index to channel index	*/
-    /*	i.e. index after expanding any palette samples	*/
+    /*  convert from component index to channel index   */
+    /*  i.e. index after expanding any palette samples  */
     /****************************************************/
     if (pOutputData->lBps==0) //float
     {

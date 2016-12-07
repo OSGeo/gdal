@@ -112,7 +112,7 @@ void SysBlockMap::Initialize()
     WriteToFile( init_data.buffer, 0, init_data.buffer_size );
 #ifdef notdef
     // arbitrarily grow the segment a bit to avoid having to move it too soon.
-    WriteToFile( "\0", 8191, 1 );				       
+    WriteToFile( "\0", 8191, 1 );
 #endif
 }
 

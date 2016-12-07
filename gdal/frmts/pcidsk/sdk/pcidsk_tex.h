@@ -41,7 +41,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSK_TEX
     {
     public:
-        virtual	~PCIDSK_TEX() {}
+        virtual ~PCIDSK_TEX() {}
 
 /**
 \brief Read a text segment (SEG_TEX).

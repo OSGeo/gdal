@@ -50,7 +50,7 @@ struct Quant : public std::pair<unsigned int, unsigned int>
 {
     // This is default behavior in C++14, but not before
     bool operator<(const Quant& other) const {
-	return first < other.first;
+        return first < other.first;
     }
 };
 
