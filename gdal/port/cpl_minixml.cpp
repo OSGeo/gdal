@@ -226,8 +226,8 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 /* -------------------------------------------------------------------- */
 /*      Handle DOCTYPE.                                                 */
 /* -------------------------------------------------------------------- */
-    else if( chNext == '<'
-          && STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset,
+    else if( chNext == '<' &&
+             STARTS_WITH_CI(psContext->pszInput+psContext->nInputOffset,
                             "!DOCTYPE") )
     {
         bool bInQuotes = false;
@@ -773,19 +773,30 @@ end_processing_close:
                 // Parse stuff like <?valbuddy_schematron
                 // ../wmtsSimpleGetCapabilities.sch?>
                 if( sContext.nStackSize > 0 &&
-                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue[0] == '?' &&
-                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild == psAttr )
+                      sContext.papsStack[sContext.nStackSize - 1]
+                              .psFirstNode->pszValue[0] == '?' &&
+                      sContext.papsStack[sContext.nStackSize - 1]
+                              .psFirstNode->psChild == psAttr )
                 {
                     CPLDestroyXMLNode(psAttr);
-                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->psChild = NULL;
-                    sContext.papsStack[sContext.nStackSize-1].psLastChild = NULL;
+                    sContext.papsStack[sContext.nStackSize - 1]
+                        .psFirstNode->psChild = NULL;
+                    sContext.papsStack[sContext.nStackSize - 1].psLastChild =
+                        NULL;
 
-                    sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue = (char*)CPLRealloc(
-                        sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue,
-                        strlen(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue) + 1 + strlen(sContext.pszToken) + 1);
-                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, " ");
-                    strcat(sContext.papsStack[sContext.nStackSize-1].psFirstNode->pszValue, sContext.pszToken);
-
+                    sContext.papsStack[sContext.nStackSize - 1]
+                        .psFirstNode->pszValue = static_cast<char *>(CPLRealloc(
+                        sContext.papsStack[sContext.nStackSize - 1]
+                            .psFirstNode->pszValue,
+                        strlen(sContext.papsStack[sContext.nStackSize - 1]
+                                   .psFirstNode->pszValue) +
+                            1 + strlen(sContext.pszToken) + 1));
+                    strcat(sContext.papsStack[sContext.nStackSize - 1]
+                               .psFirstNode->pszValue,
+                           " ");
+                    strcat(sContext.papsStack[sContext.nStackSize - 1]
+                               .psFirstNode->pszValue,
+                           sContext.pszToken);
                     continue;
                 }
 
