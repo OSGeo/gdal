@@ -44,14 +44,14 @@ GNMFileNetwork::~GNMFileNetwork()
 {
     FlushCache();
 
-	for (std::map<OGRLayer*, GDALDataset*>::iterator
-		it = m_mpLayerDatasetMap.begin();
-		it != m_mpLayerDatasetMap.end(); ++it)
-	{
-		GDALClose(it->second);
-	}
+    for (std::map<OGRLayer*, GDALDataset*>::iterator
+            it = m_mpLayerDatasetMap.begin();
+            it != m_mpLayerDatasetMap.end(); ++it)
+    {
+            GDALClose(it->second);
+    }
 
-	m_mpLayerDatasetMap.clear();
+    m_mpLayerDatasetMap.clear();
 
     GDALClose(m_pGraphDS);
     GDALClose(m_pFeaturesDS);
