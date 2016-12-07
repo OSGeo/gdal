@@ -291,7 +291,7 @@ std::vector<double> const& CPCIDSKAPModelSegment::GetProjParams(void) const
 }
 
 /************************************************************************/
-/*                        BinaryToAPInfo()                          	*/
+/*                        BinaryToAPInfo()                              */
 /************************************************************************/
 
 namespace {
@@ -326,7 +326,7 @@ namespace {
         map_units.clear();
         utm_units.clear();
     /* -------------------------------------------------------------------- */
-    /*	Read the header block						    */
+    /*  Read the header block                                               */
     /* -------------------------------------------------------------------- */
     
         if(!STARTS_WITH(buf.buffer,"APMODEL "))
@@ -343,7 +343,7 @@ namespace {
         downsample = buf.GetInt(24, 3);
 
     /* -------------------------------------------------------------------- */
-    /*      Read the values					            */
+    /*      Read the values                                                 */
     /* -------------------------------------------------------------------- */
         pixels = buf.GetInt(0 * 22 + 512, 22);
         lines = buf.GetInt(1 * 22 + 512, 22);
@@ -463,7 +463,7 @@ namespace {
 
 
     /* -------------------------------------------------------------------- */
-    /*      Read the projection required					*/
+    /*      Read the projection required                                    */
     /* -------------------------------------------------------------------- */
         buf.Get(512 * 4, 16, map_units);
     

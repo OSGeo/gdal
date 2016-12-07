@@ -454,9 +454,9 @@ int CADHeader::addValue( short code, long julianday, long milliseconds )
     // julian -> unix        return (julian - 2440587.5) * 86400.0
 
     double dfSeconds = double( milliseconds ) / 1000;
-	double dfUnix = 0;
-	if(julianday != 0)
-		dfUnix = ( double( julianday ) - 2440587.5 ) * 86400.0;
+    double dfUnix = 0;
+    if(julianday != 0)
+        dfUnix = ( double( julianday ) - 2440587.5 ) * 86400.0;
     time_t fullSeconds = static_cast<time_t>( dfUnix + dfSeconds );
     return addValue( code, CADVariant( fullSeconds ) );
 }

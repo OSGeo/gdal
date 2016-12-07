@@ -12,19 +12,19 @@
 class MemoryDataSource : public DataSource
 {
 public:
-	MemoryDataSource(unsigned char * block, long length);
-	virtual ~MemoryDataSource();
-	virtual size_t DataSourceFread(void* lpBuf, size_t size, size_t count) override;
-	virtual int DataSourceFgetc() override;
-	virtual int DataSourceUngetc(int c) override;
-	virtual int DataSourceFseek(long offset, int origin) override;
-	virtual int DataSourceFeof() override;
-	virtual long DataSourceFtell() override;
+        MemoryDataSource(unsigned char * block, long length);
+        virtual ~MemoryDataSource();
+        virtual size_t DataSourceFread(void* lpBuf, size_t size, size_t count) override;
+        virtual int DataSourceFgetc() override;
+        virtual int DataSourceUngetc(int c) override;
+        virtual int DataSourceFseek(long offset, int origin) override;
+        virtual int DataSourceFeof() override;
+        virtual long DataSourceFtell() override;
 private:
-	long seekPos;
-	long blockLength;
-	bool eof;
-	unsigned char * memoryBlock;
+        long seekPos;
+        long blockLength;
+        bool eof;
+        unsigned char * memoryBlock;
 };
 
 #endif /* MEMORYDATASOURCE_H */
