@@ -1,0 +1,3 @@
+<VRTDataset rasterXSize="4096" rasterYSize="4096">
+  <VRTRasterBand dataType="Float32" band="1" />
+</VRTDataset>
