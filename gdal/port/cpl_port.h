@@ -232,11 +232,18 @@ typedef unsigned __int64 GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
+/** Signed 64 bit integer type */
+typedef GIntBig          GInt64;
+/** Unsigned 64 bit integer type */
+typedef GUIntBig         GUInt64;
+
 #elif HAVE_LONG_LONG
 
-/** 64-bit integer type */
+/** Large signed integer type (generally 64-bit integer type).
+ *  Use GInt64 when exactly 64 bit is needed */
 typedef long long        GIntBig;
-/** 64-bit unsigned integer type */
+/** Large unsigned integer type (generally 64-bit unsigned integer type).
+ *  Use GUInt64 when exactly 64 bit is needed */
 typedef unsigned long long GUIntBig;
 
 /** Minimum GIntBig value */
@@ -246,7 +253,15 @@ typedef unsigned long long GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
+// Note: we might want to use instead int64_t / uint64_t if they are available
+/** Signed 64 bit integer type */
+typedef GIntBig          GInt64;
+/** Unsigned 64 bit integer type */
+typedef GUIntBig         GUInt64;
+
 #else
+
+// NOTE: we don't really support such platforms ! Many things might break
 
 typedef long             GIntBig;
 typedef unsigned long    GUIntBig;
@@ -728,13 +743,11 @@ template<> struct CPLStaticAssert<true>
 #include <x86intrin.h>
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) ((GUInt32)(__builtin_bswap32((GUInt32)(x))))
-/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
 /** Byte-swap a 64bit unsigned integer */
-#define CPL_SWAP64(x) ((GUIntBig)(__builtin_bswap64((GUIntBig)(x))))
+#define CPL_SWAP64(x) ((GUInt64)(__builtin_bswap64((GUInt64)(x))))
 #elif defined(_MSC_VER)
 #define CPL_SWAP32(x) ((GUInt32)(_byteswap_ulong((GUInt32)(x))))
-/* Note: CPL_SWAP64 is not available on every platform. Use #ifdef CPL_SWAP64 */
-#define CPL_SWAP64(x) ((GUIntBig)(_byteswap_uint64((GUIntBig)(x))))
+#define CPL_SWAP64(x) ((GUInt64)(_byteswap_uint64((GUInt64)(x))))
 #else
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x) \
@@ -743,6 +756,18 @@ template<> struct CPLStaticAssert<true>
             (((GUInt32)(x) & (GUInt32)0x0000ff00UL) <<  8) | \
             (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
+
+#define CPL_SWAP64(x) \
+        ((GUInt64)( \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00000000000000ffULL) << 56) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x000000000000ff00ULL) << 40) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x0000000000ff0000ULL) << 24) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00000000ff000000ULL) << 8) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x000000ff00000000ULL) >> 8) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x0000ff0000000000ULL) >> 24) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00ff000000000000ULL) >> 40) | \
+            (GUInt64)(((GUInt64)(x) & (GUInt64)0xff00000000000000ULL) >> 56) ))
+
 #endif
 
 /** Byte-swap a 16 bit pointer */
@@ -789,22 +814,6 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
 }
-
-/* Until we have a safe 64 bits integer data type defined, we'll replace
- * this version of the CPL_SWAP64() macro with a less efficient one.
- */
-/*
-#define CPL_SWAP64(x) \
-        ((uint64)( \
-            (uint64)(((uint64)(x) & (uint64)0x00000000000000ffULL) << 56) | \
-            (uint64)(((uint64)(x) & (uint64)0x000000000000ff00ULL) << 40) | \
-            (uint64)(((uint64)(x) & (uint64)0x0000000000ff0000ULL) << 24) | \
-            (uint64)(((uint64)(x) & (uint64)0x00000000ff000000ULL) << 8) | \
-            (uint64)(((uint64)(x) & (uint64)0x000000ff00000000ULL) >> 8) | \
-            (uint64)(((uint64)(x) & (uint64)0x0000ff0000000000ULL) >> 24) | \
-            (uint64)(((uint64)(x) & (uint64)0x00ff000000000000ULL) >> 40) | \
-            (uint64)(((uint64)(x) & (uint64)0xff00000000000000ULL) >> 56) ))
-*/
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
