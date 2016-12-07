@@ -57,14 +57,14 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz) {
 
 
 // pread_t adapter for VSIL
-size_t pread_VSIL(void *user_data, void *buff, size_t count, off_t offset) {
+static size_t pread_VSIL(void *user_data, void *buff, size_t count, off_t offset) {
     VSILFILE *fp = reinterpret_cast<VSILFILE *>(user_data);
     VSIFSeekL(fp, offset, SEEK_SET);
     return VSIFReadL(buff, 1, count, fp);
 }
 
 // pread_t adapter for curl.  We use the multi interface to get the same options
-size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset) {
+static size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset) {
     // Use a copy of the provided request, which has the options and the URL preset
     WMSHTTPRequest request(*(reinterpret_cast<WMSHTTPRequest *>(user_data)));
     request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, 
@@ -92,6 +92,16 @@ size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset) {
     return request.nDataLen;
 }
 
+SectorCache::SectorCache(void *user_data,
+                         pread_t fn,
+                         unsigned int size,
+                         unsigned int count ) :
+    n(count + 2), m(size), reader(fn ? fn : pread_VSIL),
+    reader_data(user_data), last_used(NULL)
+{
+}
+
+
 // Returns an in-memory offset to the byte at the given address, within a sector
 // Returns NULL if the sector can't be read
 void *SectorCache::data(size_t address) {
@@ -110,6 +120,7 @@ void *SectorCache::data(size_t address) {
     }
     else { // Choose a random one to replace, but not the last used, to avoid thrashing
         do {
+            // coverity[dont_call]
             target = &(store[rand() % n]);
         } while (target == last_used);
     }
