@@ -146,14 +146,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void        *pLibrary;
-    void        *pSymbol;
-    UINT        uOldErrorMode;
+    void *pLibrary = NULL;
+    void *pSymbol = NULL;
 
-    /* Avoid error boxes to pop up (#5211, #5525) */
-    uOldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
+    // Avoid error boxes to pop up (#5211, #5525).
+    UINT uOldErrorMode =
+        SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
-#if (defined(WIN32) && _MSC_VER >= 1310) || __MSVCRT_VERSION__ >= 0x0601
+#if _MSC_VER >= 1310 || __MSVCRT_VERSION__ >= 0x0601
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
