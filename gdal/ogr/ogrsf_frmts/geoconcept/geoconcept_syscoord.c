@@ -547,15 +547,16 @@ static GCSysCoord GCSRSAPI_CALL1(*) _findSysCoord_GCSRS ( GCSysCoord* theSysCoor
 
     if( fabs(GetSysCoordCentralMeridian_GCSRS(gcsc) - GetSysCoordCentralMeridian_GCSRS(theSysCoord) ) > 1e-8 )
     {
-      switch( GetSysCoordProjID_GCSRS(gcsc) )
+      /* UTM family: central meridian is the 6* zone - 183 (in degrees) */
+      if( GetSysCoordProjID_GCSRS(gcsc) == 1 &&
+          /* generic UTM definition */
+          GetSysCoordCentralMeridian_GCSRS(gcsc)==0.0 )
       {
-        case    1 : /* UTM family: central meridian is the 6* zone - 183 (in degrees) */
-          if( GetSysCoordCentralMeridian_GCSRS(gcsc)==0.0 ) /* generic UTM definition */
-          {
-            break;
-          }
-        default   :
-          continue;
+        /* go on */
+      }
+      else
+      {
+        continue;
       }
     }
     if( fabs(GetSysCoordLatitudeOfOrigin_GCSRS(gcsc) - GetSysCoordLatitudeOfOrigin_GCSRS(theSysCoord) ) > 1e-8 ) continue;

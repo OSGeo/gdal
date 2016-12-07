@@ -33,16 +33,7 @@
 
 #include "ogr_p.h"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include "json.h"
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
-
+#include "ogr_json_header.h"
 
 CPL_CVSID("$Id$");
 
@@ -56,12 +47,12 @@ class GMLASBinInputStream : public BinInputStream
 
 public :
 
-             GMLASBinInputStream(VSILFILE* fp);
+    explicit GMLASBinInputStream(VSILFILE* fp);
     virtual ~GMLASBinInputStream();
 
-    virtual XMLFilePos curPos() const;
-    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead);
-    virtual const XMLCh* getContentType() const ;
+    virtual XMLFilePos curPos() const override;
+    virtual XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead) override;
+    virtual const XMLCh* getContentType() const override ;
 };
 
 /************************************************************************/
@@ -118,11 +109,11 @@ GMLASInputSource::GMLASInputSource(const char* pszFilename,
                                    VSILFILE* fp,
                                    bool bOwnFP,
                                    MemoryManager* const manager)
-    : InputSource(manager)
+    : InputSource(manager),
+      m_osFilename( pszFilename )
 {
     m_fp = fp;
     m_bOwnFP = bOwnFP;
-    m_osFilename = pszFilename;
     XMLCh* pFilename = XMLString::transcode(pszFilename);
     setPublicId(pFilename);
     setSystemId(pFilename);
@@ -1342,7 +1333,7 @@ void GMLASReader::startElement(
                                         m_oCurCtxt.m_poFeature->GetDefnRef() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "Inconsistant m_poLayer / m_poFeature state");
+                            "Inconsistent m_poLayer / m_poFeature state");
                 m_bParsingError = true;
                 return; 
             }
@@ -1899,7 +1890,7 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
     else
     {
         const int nRuleIdx =
-                        m_oXLinkResolver.GetMachingResolutionRule(osAttrValue);
+                        m_oXLinkResolver.GetMatchingResolutionRule(osAttrValue);
         if( nRuleIdx >= 0 )
         {
             const GMLASXLinkResolutionConf::URLSpecificResolution& oRule(
@@ -2719,7 +2710,8 @@ OGRFeature* GMLASReader::GetNextFeature( OGRGMLASLayer** ppoBelongingLayer,
 bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
                                void* pProgressData,
                                bool bRemoveUnusedLayers,
-                               bool bRemoveUnusedFields)
+                               bool bRemoveUnusedFields,
+                               std::set<CPLString>& aoSetRemovedLayerNames)
 {
     m_bInitialPass = true;
 
@@ -2791,6 +2783,7 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
             }
             else
             {
+                aoSetRemovedLayerNames.insert( poLayer->GetName() );
                 delete poLayer;
             }
         }

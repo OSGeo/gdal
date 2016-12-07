@@ -210,7 +210,7 @@ ECWRasterBand::~ECWRasterBand()
 {
     FlushCache();
 
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
         delete apoOverviews.back();
         apoOverviews.pop_back();
@@ -1406,7 +1406,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
                 osNewMetadata.AddString(*papszIter);
             papszIter ++;
         }
-        if (osNewMetadata.size() != 0)
+        if (!osNewMetadata.empty())
             return GDALPamDataset::SetMetadata(osNewMetadata.List(), pszDomain);
         else
             return CE_None;

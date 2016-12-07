@@ -28,12 +28,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-#include <cstdlib>
-#include <vector>
 
 CPL_CVSID("$Id$");
 
@@ -136,7 +150,6 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
         if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
         {
             char szMinutes[3] = { '\0', '\0', '\0' };
-            char szSeconds[64] = { '\0' };
 
             szMinutes[0] = pszDecimal[1];
             if( pszDecimal[2] >= '0' && pszDecimal[2] <= '9' )
@@ -148,6 +161,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
 
             if( strlen(pszDecimal) > 3 )
             {
+                char szSeconds[64] = { '\0' };
                 szSeconds[0] = pszDecimal[3];
                 if( pszDecimal[4] >= '0' && pszDecimal[4] <= '9' )
                 {
@@ -824,7 +838,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 /* -------------------------------------------------------------------- */
 /*      Get the parameters for this projection.                         */
 /* -------------------------------------------------------------------- */
-    double adfProjParms[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double adfProjParms[7] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
     for( int i = 0; i < 7; i++ )
     {
@@ -865,7 +879,9 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
             nUOM = 9201;
 
         if( nUOM >= 9100 && nUOM < 9200 )
+        {
             adfProjParms[i] = EPSGAngleStringToDD( pszValue, nUOM );
+        }
         else if( nUOM > 9000 && nUOM < 9100 )
         {
             double dfInMeters = 0.0;
@@ -1151,19 +1167,20 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 
     for( int iAO = 0; iAO < 7; iAO++ )
     {
+        const OGRAxisOrientation eAO = static_cast<OGRAxisOrientation>(iAO);
         if( EQUAL(papszAxis1[iAxisOrientationField],
-                  OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
-            eOAxis1 = (OGRAxisOrientation) iAO;
+                  OSRAxisEnumToName(eAO)) )
+            eOAxis1 = eAO;
         if( EQUAL(papszAxis2[iAxisOrientationField],
-                  OSRAxisEnumToName((OGRAxisOrientation) iAO)) )
-            eOAxis2 = (OGRAxisOrientation) iAO;
+                  OSRAxisEnumToName(eAO)) )
+            eOAxis2 = eAO;
 
         if( eOAxis1 == OAO_Other
             && anCodes[iAO] == atoi(papszAxis1[iAxisNameCodeField]) )
-            eOAxis1 = (OGRAxisOrientation) iAO;
+            eOAxis1 = eAO;
         if( eOAxis2 == OAO_Other
             && anCodes[iAO] == atoi(papszAxis2[iAxisNameCodeField]) )
-            eOAxis2 = (OGRAxisOrientation) iAO;
+            eOAxis2 = eAO;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1439,8 +1456,8 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /*      Set projection and parameters.                                  */
 /* -------------------------------------------------------------------- */
     int nProjMethod = 0;
-    int anParmIds[7] = { 0 };
-    double adfProjParms[7] = { 0.0 };
+    int anParmIds[7] = {};
+    double adfProjParms[7] = {};
 
     if( !EPSGGetProjTRFInfo( nPCSCode, &nProjMethod, anParmIds, adfProjParms ))
         return OGRERR_UNSUPPORTED_SRS;
@@ -1719,9 +1736,9 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
 /* -------------------------------------------------------------------- */
 /*      Set linear units.                                               */
 /* -------------------------------------------------------------------- */
-    int nUOM_CODE = atoi(CSLGetField( papszRecord,
-                                      CSVGetFileFieldId(pszFilename,
-                                                        "UOM_CODE")));
+    const int nUOM_CODE =
+        atoi(CSLGetField( papszRecord,
+                          CSVGetFileFieldId(pszFilename, "UOM_CODE")));
 
     char *pszUOMLengthName = NULL;
     double dfInMeters = 0.0;
@@ -1777,12 +1794,14 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
 /*      Fetch subinformation now before anything messes with the        */
 /*      last loaded record.                                             */
 /* -------------------------------------------------------------------- */
-    int nPCSCode = atoi(CSLGetField( papszRecord,
-                                     CSVGetFileFieldId(pszFilename,
-                                                       "CMPD_HORIZCRS_CODE")));
-    int nVertCSCode = atoi(CSLGetField( papszRecord,
-                                        CSVGetFileFieldId(pszFilename,
-                                                          "CMPD_VERTCRS_CODE")));
+    const int nPCSCode =
+        atoi(CSLGetField( papszRecord,
+                          CSVGetFileFieldId(pszFilename,
+                                            "CMPD_HORIZCRS_CODE")));
+    const int nVertCSCode =
+        atoi(CSLGetField( papszRecord,
+                          CSVGetFileFieldId(pszFilename,
+                                            "CMPD_VERTCRS_CODE")));
 
 /* -------------------------------------------------------------------- */
 /*      Set the COMPD_CS node with a name.                              */
@@ -1841,7 +1860,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 /* -------------------------------------------------------------------- */
 /*      Fetch record from the geoccs.csv or override file.              */
 /* -------------------------------------------------------------------- */
-    char szSearchKey[24] = { 0 };
+    char szSearchKey[24] = {};
     snprintf( szSearchKey, sizeof(szSearchKey), "%d", nGCSCode );
 
 // So far no override file needed.
@@ -1849,7 +1868,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 //    papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
 //                                     szSearchKey, CC_Integer );
 
-    //if( papszRecord == NULL )
+    // if( papszRecord == NULL )
     const char *pszFilename = CSVFilename( "geoccs.csv" );
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                             szSearchKey, CC_Integer );
@@ -1900,7 +1919,8 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 /*      Get the ellipsoid information.                                  */
 /* -------------------------------------------------------------------- */
     char *pszEllipsoidName = NULL;
-    double dfSemiMajor, dfInvFlattening;
+    double dfSemiMajor = 0.0;
+    double dfInvFlattening = 0.0;
 
     if( OSRGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName,
                              &dfSemiMajor, &dfInvFlattening ) != OGRERR_NONE )
@@ -1916,7 +1936,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     OGR_SRSNode *poSpheroid = new OGR_SRSNode( "SPHEROID" );
     poSpheroid->AddChild( new OGR_SRSNode( pszEllipsoidName ) );
 
-    char szValue[128] = { 0 };
+    char szValue[128] = {};
     OGRsnPrintDouble( szValue, sizeof(szValue), dfSemiMajor );
     poSpheroid->AddChild( new OGR_SRSNode(szValue) );
 
@@ -1958,7 +1978,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 #if 0
     if( EPSGGetWGS84Transform( nGeogCS, adfBursaTransform ) )
     {
-        char szValue[100] = { 0 };
+        char szValue[100] = {};
 
         OGR_SRSNode *poWGS84 = new OGR_SRSNode( "TOWGS84" );
 
@@ -2022,10 +2042,6 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     poSRS->SetAuthority( "DATUM", "EPSG", nDatumCode );
     poSRS->SetAuthority( "SPHEROID", "EPSG", nEllipsoidCode );
     poSRS->SetAuthority( "PRIMEM", "EPSG", nPMCode );
-
-    // if( nUOMAngle > 0 )
-    //     poSRS->SetAuthority( "GEOGCS|UNIT", "EPSG", nUOMAngle );
-
     poSRS->SetAuthority( "GEOCCS", "EPSG", nGCSCode );
 
     return OGRERR_NONE;
@@ -2190,7 +2206,7 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /* -------------------------------------------------------------------- */
     if( eErr == OGRERR_UNSUPPORTED_SRS )
     {
-        char szWrkDefn[100] = { 0 };
+        char szWrkDefn[100] = {};
         snprintf( szWrkDefn, sizeof(szWrkDefn), "+init=epsg:%d", nCode );
 
         char *pszNormalized = OCTProj4Normalize( szWrkDefn );
@@ -2548,45 +2564,78 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
             SetAuthority( "GEOGCS", "EPSG", nGCS );
     }
 
+    if( IsProjected() && GetAuthorityCode( "PROJCS") == NULL )
+    {
+        const char *pszProjection = GetAttrValue( "PROJECTION" );
+
 /* -------------------------------------------------------------------- */
 /*      Is this a UTM coordinate system with a common GEOGCS?           */
 /* -------------------------------------------------------------------- */
-    int nZone = 0;
-    int bNorth = FALSE;
-    if( (nZone = GetUTMZone( &bNorth )) != 0
-        && GetAuthorityCode( "PROJCS") == NULL )
-    {
-        const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
-        const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+        int nZone = 0;
+        int bNorth = FALSE;
+        if( (nZone = GetUTMZone( &bNorth )) != 0 )
+        {
+            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
 
-        if( pszAuthName == NULL || pszAuthCode == NULL )
-        {
-            // Don't exactly recognise datum.
+            if( pszAuthName == NULL || pszAuthCode == NULL )
+            {
+                // Don't exactly recognise datum.
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+            {
+                // WGS84
+                if( bNorth )
+                    SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
+                else
+                    SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
+                    && nZone >= 3 && nZone <= 22 && bNorth )
+            {
+                SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
+                    && nZone >= 3 && nZone <= 23 && bNorth )
+            {
+                SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
+            { // WGS72
+                if( bNorth )
+                    SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
+                else
+                    SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+            }
         }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+
+/* -------------------------------------------------------------------- */
+/*      Is this a Polar Stereographic system on WGS 84 ?                */
+/* -------------------------------------------------------------------- */
+        else if ( pszProjection != NULL &&
+                  EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
         {
-            // WGS84
-            if( bNorth )
-                SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
-            else
-                SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
-                 && nZone >= 3 && nZone <= 22 && bNorth )
-        {
-            SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
-                 && nZone >= 3 && nZone <= 23 && bNorth )
-        {
-            SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
-        { // WGS72
-            if( bNorth )
-                SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
-            else
-                SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+            const double dfLatOrigin = GetNormProjParm(
+                                            SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+
+            if( pszAuthName != NULL && EQUAL(pszAuthName, "EPSG") &&
+                pszAuthCode != NULL && atoi(pszAuthCode) == 4326 &&
+                fabs( fabs(dfLatOrigin ) - 71.0 ) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 )) < 1e-15 &&
+                fabs(GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) - 1.0) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 )) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 )) < 1e-15 &&
+                fabs(GetLinearUnits() - 1.0) < 1e-15 )
+            {
+                if( dfLatOrigin > 0 )
+                    // Arctic Polar Stereographic
+                    SetAuthority( "PROJCS", "EPSG", 3995 );
+                else
+                    // Antarctic Polar Stereographic
+                    SetAuthority( "PROJCS", "EPSG", 3031 );
+            }
         }
     }
 

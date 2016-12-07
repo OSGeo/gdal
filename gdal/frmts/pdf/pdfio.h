@@ -62,32 +62,32 @@ class VSIPDFFileStream: public BaseStream
         virtual ~VSIPDFFileStream();
 
 #ifdef POPPLER_0_23_OR_LATER
-        virtual BaseStream* copy();
+        virtual BaseStream* copy() override;
 #endif
 
         virtual Stream *   makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
-                                         makeSubStream_offset_type lengthA, Object *dictA);
-        virtual getPos_ret_type      getPos();
-        virtual getStart_ret_type    getStart();
+                                         makeSubStream_offset_type lengthA, Object *dictA) override;
+        virtual getPos_ret_type      getPos() override;
+        virtual getStart_ret_type    getStart() override;
 
-        virtual void       setPos(setPos_offset_type pos, int dir = 0);
-        virtual void       moveStart(moveStart_delta_type delta);
+        virtual void       setPos(setPos_offset_type pos, int dir = 0) override;
+        virtual void       moveStart(moveStart_delta_type delta) override;
 
-        virtual StreamKind getKind();
-        virtual GooString *getFileName();
+        virtual StreamKind getKind() override;
+        virtual GooString *getFileName() override;
 
-        virtual int        getChar();
-        virtual int        getUnfilteredChar ();
-        virtual int        lookChar();
+        virtual int        getChar() override;
+        virtual int        getUnfilteredChar () override;
+        virtual int        lookChar() override;
 
-        virtual void       reset();
-        virtual void       unfilteredReset ();
-        virtual void       close();
+        virtual void       reset() override;
+        virtual void       unfilteredReset () override;
+        virtual void       close() override;
 
     private:
         /* Added in poppler 0.15.0 */
-        virtual GBool hasGetChars();
-        virtual int getChars(int nChars, Guchar *buffer);
+        virtual GBool hasGetChars() override;
+        virtual int getChars(int nChars, Guchar *buffer) override;
 
         VSIPDFFileStream  *poParent;
         GooString         *poFilename;

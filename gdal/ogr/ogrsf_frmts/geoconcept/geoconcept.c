@@ -1726,14 +1726,15 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
       }
       nm= CPLStrdup(e);
       CPLDebug("GEOCONCEPT", "%d e=[%s]\n", __LINE__, e);
-      if( (theField= AddSubTypeField_GCIO(hGXT,GetTypeName_GCIO(theClass),
+      theField= AddSubTypeField_GCIO(hGXT,GetTypeName_GCIO(theClass),
                                                GetSubTypeName_GCIO(theSubType),
                                                -1,
                                                nm,
                                                -1,
                                                vUnknownItemType_GCIO,
                                                NULL,
-                                               NULL))==NULL )
+                                               NULL);
+      if( theField == NULL )
       {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Geoconcept export syntax error at line %ld.\n",
@@ -1751,9 +1752,9 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
     return Meta;
   }
   /* end of definitions ... */ /* FIXME */
-  if( (p= strstr(GetGCCache_GCIO(hGXT),k3DOBJECTMONO_GCIO)) ||
-      (p= strstr(GetGCCache_GCIO(hGXT),k3DOBJECT_GCIO))     ||
-      (p= strstr(GetGCCache_GCIO(hGXT),k2DOBJECT_GCIO)) )
+  if( (strstr(GetGCCache_GCIO(hGXT),k3DOBJECTMONO_GCIO)) ||
+      (strstr(GetGCCache_GCIO(hGXT),k3DOBJECT_GCIO))     ||
+      (strstr(GetGCCache_GCIO(hGXT),k2DOBJECT_GCIO)) )
     /* next reading will be in cache ! */
     SetGCStatus_GCIO(hGXT,vMemoStatus_GCIO);
   /* unknown pragma ... */
@@ -2176,7 +2177,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
                                                       )
 {
   GCExportFileMetadata* Meta;
-  char **pszFields, delim[2], tdst[kItemSize_GCIO];
+  char **pszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
   int whereClass, whereSubType, i, j, nbstf, nbf, nbtf, buildFeature;
   GCType* theClass;
   GCField* theField;
@@ -3049,7 +3050,10 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
                                                  )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   const char* normName;
   long id;
   GCTypeKind knd;
@@ -3243,7 +3247,10 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                                                      )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
   GCField* theField;
@@ -3419,7 +3426,10 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                                                         )
 {
   int bEOF;
-  char *k, n[kItemSize_GCIO], x[kExtraSize_GCIO], e[kExtraSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = {0};
+  char x[kExtraSize_GCIO] = {0};
+  char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
   GCField* theField;
@@ -3593,7 +3603,8 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO (
                                                        )
 {
   int eost, res;
-  char *k, n[kItemSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = { 0 };
   long id;
   GCTypeKind knd;
   GCDim sys;
@@ -3770,7 +3781,8 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO (
                                                 )
 {
   int eot, res;
-  char *k, n[kItemSize_GCIO];
+  char *k;
+  char n[kItemSize_GCIO] = { 0 };
   long id;
   GCType *theClass;
 
@@ -5263,7 +5275,8 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
     quotes= "";
   }
   delim= GetMetaDelimiter_GCIO(GetGCMeta_GCIO(H));
-  if( !(theField= GetSubTypeField_GCIO(theSubType,iField)) )
+  theField= GetSubTypeField_GCIO(theSubType,iField);
+  if( !theField )
   {
     CPLError( CE_Failure, CPLE_NotSupported,
               "Attempt to write a field #%d that does not exist on feature %s.%s.\n",

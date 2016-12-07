@@ -245,11 +245,11 @@ class ENVIDataset : public RawDataset
     int         ProcessMapinfo( const char * );
     void        ProcessRPCinfo( const char * ,int ,int);
     void        ProcessStatsFile();
-    int         byteSwapInt(int);
-    float       byteSwapFloat(float);
-    double      byteSwapDouble(double);
-    void        SetENVIDatum( OGRSpatialReference *, const char * );
-    void        SetENVIEllipse( OGRSpatialReference *, char ** );
+    static int         byteSwapInt(int);
+    static float       byteSwapFloat(float);
+    static double      byteSwapDouble(double);
+    static void        SetENVIDatum( OGRSpatialReference *, const char * );
+    static void        SetENVIEllipse( OGRSpatialReference *, char ** );
     void        WriteProjectionInfo();
     int         ParseRpcCoeffsMetaDataString( const char *psName,
                                               char *papszVal[], int& idx );
@@ -267,22 +267,22 @@ class ENVIDataset : public RawDataset
             ENVIDataset();
     virtual ~ENVIDataset();
 
-    virtual void    FlushCache( void );
-    virtual CPLErr  GetGeoTransform( double * padfTransform );
-    virtual CPLErr  SetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr  SetProjection( const char * );
-    virtual char  **GetFileList(void);
+    virtual void    FlushCache( void ) override;
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr  SetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr  SetProjection( const char * ) override;
+    virtual char  **GetFileList(void) override;
 
-    virtual void        SetDescription( const char * );
+    virtual void        SetDescription( const char * ) override;
 
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -306,9 +306,9 @@ class ENVIRasterBand : public RawRasterBand
                                 int bIsVSIL = FALSE, int bOwnsFP = FALSE );
     virtual ~ENVIRasterBand() {}
 
-    virtual void        SetDescription( const char * );
+    virtual void        SetDescription( const char * ) override;
 
-    virtual CPLErr SetCategoryNames( char ** );
+    virtual CPLErr SetCategoryNames( char ** ) override;
 };
 
 /************************************************************************/
@@ -608,7 +608,7 @@ char **ENVIDataset::GetFileList()
     papszFileList = CSLAddString( papszFileList, pszHDRFilename );
 
     // Statistics file
-    if (osStaFilename.size() != 0)
+    if (!osStaFilename.empty())
         papszFileList = CSLAddString( papszFileList, osStaFilename );
 
     return papszFileList;
@@ -1091,7 +1091,7 @@ int ENVIDataset::ParseRpcCoeffsMetaDataString(
         return FALSE;
 
     int x = 0;
-    while ((papszArr[x] != NULL) && (x < 20))
+    while ( (x < 20) && (papszArr[x] != NULL) )
     {
         papszVal[idx++] = CPLStrdup(papszArr[x]);
         x++;

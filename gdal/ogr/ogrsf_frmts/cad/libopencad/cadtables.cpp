@@ -158,7 +158,8 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
         }
     }
 
-    DebugMsg( "Readed aLayers using LayerControl object count: %zd\n", aLayers.size() );
+    DebugMsg( "Readed aLayers using LayerControl object count: %d\n",
+              static_cast<int>(aLayers.size()) );
 
     return CADErrorCodes::SUCCESS;
 }

@@ -26,9 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
-#include "cpl_multiproc.h"
+
+#include <cstddef>
 #include <new>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 
 //! @cond Doxygen_Suppress
 
@@ -42,7 +48,8 @@ static int nAllBandsKeptAlivedBlocks = 0;
 /*                       GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
-GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand* poBandIn) :
+GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(
+    GDALRasterBand* poBandIn ) :
     hSpinLock(CPLCreateLock(LOCK_SPIN)),
     psListBlocksToFree(NULL),
     hCond(CPLCreateCond()),

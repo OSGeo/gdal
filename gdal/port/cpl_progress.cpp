@@ -27,11 +27,13 @@
  ****************************************************************************/
 
 #include "cpl_progress.h"
-#include "cpl_conv.h"
 
 #include <cmath>
+#include <cstdio>
 
 #include <algorithm>
+
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 

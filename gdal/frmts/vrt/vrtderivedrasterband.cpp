@@ -115,6 +115,7 @@ static void (*PyGILState_Release)(PyGILState_STATE) = NULL;
 
 typedef struct
 {
+    //cppcheck-suppress unusedStructMember
     char big_enough[256];
 } Py_buffer;
 static int (*PyBuffer_FillInfo)(Py_buffer *view, PyObject *obj, void *buf,
@@ -891,7 +892,7 @@ class VRT_GIL_Holder
 
     public:
 
-        VRT_GIL_Holder(bool bExclusiveLock);
+        explicit VRT_GIL_Holder(bool bExclusiveLock);
         virtual ~VRT_GIL_Holder();
 };
 

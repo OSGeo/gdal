@@ -119,8 +119,8 @@ OGRFeature *OGRFMELayerDB::GetNextFeature()
     {
         if( !CreateReader() )
         {
-            return NULL;
             poDS->ReleaseSession();
+            return NULL;
         }
     }
 

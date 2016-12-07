@@ -575,6 +575,8 @@ bool OGRDODSGridLayer::ProvideDataDDS()
              iterMap++, iMap++ )
         {
             paoDimensions[iMap].poMap = dynamic_cast<Array *>(*iterMap);
+            if( paoDimensions[iMap].poMap == NULL )
+                return false;
             paoDimensions[iMap].pRawData =
                 CPLMalloc( paoDimensions[iMap].poMap->width() );
             paoDimensions[iMap].poMap->buf2val( &(paoDimensions[iMap].pRawData) );

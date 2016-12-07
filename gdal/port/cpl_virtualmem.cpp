@@ -37,14 +37,18 @@
 #endif
 
 #include "cpl_virtualmem.h"
-#include "cpl_error.h"
-#include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
-#include "cpl_conv.h"
 
 #include <cassert>
+// TODO(schwehr): Should ucontext.h be included?
+// #include <ucontext.h>
 
-CPL_CVSID("$Id:");
+#include "cpl_atomic_ops.h"
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+
+CPL_CVSID("$Id$");
 
 #ifdef NDEBUG
 /* Non NDEBUG: we ignore the result */
@@ -2033,6 +2037,8 @@ CPLVirtualMem *CPLVirtualMemFileMapNew( VSILFILE* fp,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "mmap() failed : %s", strerror(myerrno));
         VSIFree(ctxt);
+        // cppcheck things we are leaking addr
+        // cppcheck-suppress memleak
         return NULL;
     }
 

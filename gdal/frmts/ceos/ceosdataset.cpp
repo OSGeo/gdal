@@ -67,7 +67,7 @@ class CEOSRasterBand : public GDALPamRasterBand
 
                 CEOSRasterBand( CEOSDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

@@ -1399,7 +1399,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 seconds = CPL_MSBWORD32(((const GUInt32*)pData)[1]);
                 microseconds = CPL_MSBWORD32(((const GUInt32*)pData)[2]);
 
-                snprintf(szBuf, nBufLen, "%d, %d, %d", days, seconds, microseconds);
+                snprintf(szBuf, nBufLen, "%d, %u, %u", days, seconds, microseconds);
             }
             break;
         default:

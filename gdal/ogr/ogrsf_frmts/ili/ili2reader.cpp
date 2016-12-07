@@ -503,7 +503,7 @@ ILI2Reader::~ILI2Reader() {
     while (layerIt != m_listLayer.end()) {
         OGRILI2Layer *tmpLayer = (OGRILI2Layer *)*layerIt;
         delete tmpLayer;
-        layerIt++;
+        ++layerIt;
     }
 }
 
@@ -597,7 +597,7 @@ int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
         return FALSE;
     }
 
-  if (m_missAttrs.size() != 0) {
+  if (!m_missAttrs.empty()) {
     m_missAttrs.sort();
     m_missAttrs.unique();
     string attrs = "";
@@ -633,14 +633,12 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
 }
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
-  bool newLayer = true;
-  OGRLayer *curLayer = NULL;
   CPLString osName(transcode(elem->getTagName()));
   //CPLDebug( "OGR_ILI", "Reading layer: %s", osName.c_str() );
 
   // test if this layer exist
-  curLayer = GetLayer(osName);
-  newLayer = (curLayer == NULL);
+  OGRLayer* curLayer = GetLayer(osName);
+  bool newLayer = (curLayer == NULL);
 
   // add a layer
   if (newLayer) {

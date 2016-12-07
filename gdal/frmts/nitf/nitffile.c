@@ -271,8 +271,8 @@ retry_read_header:
          EQUAL(szTemp, "999999999999"))
     {
         GUIntBig nFileSize;
-        GByte abyDELIM2_L2[12];
-        GByte abyL1_DELIM1[11];
+        GByte abyDELIM2_L2[12] = { 0 };
+        GByte abyL1_DELIM1[11] = { 0 };
         int bOK;
 
         bTriedStreamingFileHeader = TRUE;
@@ -2632,15 +2632,14 @@ char **NITFGenericMetadataReadTRE(char **papszMD,
                                   int nTRESize,
                                   CPLXMLNode* psTreNode)
 {
-    int nTreLength, nTreMinLength = -1 /*, nTreMaxLength = -1 */;
     int bError = FALSE;
     int nTreOffset = 0;
     const char* pszMDPrefix;
     int nMDSize, nMDAlloc;
 
-    nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
-    nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
-    /* nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
+    int nTreLength = atoi(CPLGetXMLValue(psTreNode, "length", "-1"));
+    int nTreMinLength = atoi(CPLGetXMLValue(psTreNode, "minlength", "-1"));
+    /* int nTreMaxLength = atoi(CPLGetXMLValue(psTreNode, "maxlength", "-1")); */
 
     if( (nTreLength > 0 && nTRESize != nTreLength) ||
         (nTreMinLength > 0 && nTRESize < nTreMinLength) )
@@ -2833,10 +2832,15 @@ char **NITFGenericMetadataRead( char **papszMD,
     CPLXMLNode* psTresNode = NULL;
     CPLXMLNode* psIter = NULL;
 
-    if (psFile == NULL && psImage == NULL)
-        return papszMD;
+    if (psFile == NULL)
+    {
+        if( psImage == NULL)
+            return papszMD;
+        psTreeNode = NITFLoadXMLSpec(psImage->psFile);
+    }
+    else
+        psTreeNode = NITFLoadXMLSpec(psFile);
 
-    psTreeNode = NITFLoadXMLSpec(psFile ? psFile : psImage->psFile);
     if (psTreeNode == NULL)
         return papszMD;
 
@@ -2855,8 +2859,14 @@ char **NITFGenericMetadataRead( char **papszMD,
         {
             const char* pszName = CPLGetXMLValue(psIter, "name", NULL);
             const char* pszMDPrefix = CPLGetXMLValue(psIter, "md_prefix", NULL);
-            if (pszName != NULL && ((pszSpecificTREName == NULL && pszMDPrefix != NULL) ||
-                                    (pszSpecificTREName != NULL && strcmp(pszName, pszSpecificTREName) == 0)))
+            int bHasRightPrefix = FALSE;
+            if( pszName == NULL )
+                continue;
+            if( pszSpecificTREName == NULL )
+                bHasRightPrefix = ( pszMDPrefix != NULL );
+            else
+                bHasRightPrefix = ( strcmp(pszName, pszSpecificTREName) == 0 );
+            if ( bHasRightPrefix )
             {
                 if (psFile != NULL)
                 {

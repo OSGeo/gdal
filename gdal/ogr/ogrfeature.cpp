@@ -27,28 +27,32 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_api.h"
+#include "ogr_feature.h"
+
 #include <cerrno>
+#include <climits>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <ctime>
 
 #include <new>
 #include <vector>
 
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_time.h"
-#include "ogr_feature.h"
-#include "ogr_api.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-
-#include <json.h>
-
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+#include "ogr_json_header.h"
 
 CPL_CVSID("$Id$");
 
@@ -4417,10 +4421,6 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         return false;
 
     if( poFDefn->GetType() == OFTInteger )
-    {
-        pauFields[iField] = *puValue;
-    }
-    else if( poFDefn->GetType() == OFTInteger64 )
     {
         pauFields[iField] = *puValue;
     }

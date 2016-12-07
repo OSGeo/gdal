@@ -212,7 +212,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     int         bHasGeoreferencingAtOpening;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
                 JP2OpenJPEGDataset();
@@ -226,15 +226,15 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                            GDALProgressFunc pfnProgress,
                                            void * pProgressData );
 
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr SetGeoTransform( double* );
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr SetGeoTransform( double* ) override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
     virtual CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" );
+                             const char * pszDomain = "" ) override;
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
-                                 const char * pszDomain = "" );
+                                 const char * pszDomain = "" ) override;
 
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
@@ -243,7 +243,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
 
     static void         WriteBox(VSILFILE* fp, GDALJP2Box* poBox);
     static void         WriteGDALMetadataBox( VSILFILE* fp, GDALDataset* poSrcDS,
@@ -286,21 +286,21 @@ class JP2OpenJPEGRasterBand : public GDALPamRasterBand
                                        int nBlockXSize, int nBlockYSize );
     virtual ~JP2OpenJPEGRasterBand();
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg);
+                                  GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable* GetColorTable() { return poCT; }
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable* GetColorTable() override { return poCT; }
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int iOvrLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
 
-    virtual int HasArbitraryOverviews() { return poCT == NULL; }
+    virtual int HasArbitraryOverviews() override { return poCT == NULL; }
 };
 
 /************************************************************************/
@@ -412,6 +412,7 @@ CPLErr JP2OpenJPEGRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          pData, nBufXSize, nBufYSize, eBufType,
                                          nPixelSpace, nLineSpace, psExtraArg );
 
+    // cppcheck-suppress redundantAssignment
     poGDS->bEnoughMemoryToLoadOtherBands = TRUE;
     return eErr;
 }
@@ -1693,37 +1694,44 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nCodeStreamLength = nCodeStreamLength;
     poDS->bIs420 = bIs420;
 
-    poDS->bUseSetDecodeArea =
-        (poDS->nRasterXSize == (int)nTileW &&
-         poDS->nRasterYSize == (int)nTileH &&
-         (poDS->nRasterXSize > 1024 ||
-          poDS->nRasterYSize > 1024));
-
-    /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
-    /* are tiled with tile dimensions 2048x2048. It would be a waste of */
-    /* memory to allocate such big blocks */
-    if( poDS->nRasterXSize < (int)nTileW &&
-        poDS->nRasterYSize < (int)nTileH )
+    if( CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_TILE_AS_BLOCK", false) )
     {
-        poDS->bUseSetDecodeArea = TRUE;
-        nTileW = poDS->nRasterXSize;
-        nTileH = poDS->nRasterYSize;
-        if (nTileW > 2048) nTileW = 2048;
-        if (nTileH > 2048) nTileH = 2048;
+        poDS->bUseSetDecodeArea = false;
     }
-    else if (poDS->bUseSetDecodeArea)
+    else
     {
-        // Arbitrary threshold... ~4 million at least needed for the GRIB2
-        // images mentionned below.
-        if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+        poDS->bUseSetDecodeArea =
+            (poDS->nRasterXSize == (int)nTileW &&
+            poDS->nRasterYSize == (int)nTileH &&
+            (poDS->nRasterXSize > 1024 ||
+            poDS->nRasterYSize > 1024));
+
+        /* Sentinel2 preview datasets are 343x343 and 60m are 1830x1830, but they */
+        /* are tiled with tile dimensions 2048x2048. It would be a waste of */
+        /* memory to allocate such big blocks */
+        if( poDS->nRasterXSize < (int)nTileW &&
+            poDS->nRasterYSize < (int)nTileH )
         {
-            // Some GRIB2 JPEG2000 compressed images are a 2D image organized
-            // as a single line image...
+            poDS->bUseSetDecodeArea = TRUE;
+            nTileW = poDS->nRasterXSize;
+            nTileH = poDS->nRasterYSize;
+            if (nTileW > 2048) nTileW = 2048;
+            if (nTileH > 2048) nTileH = 2048;
         }
-        else
+        else if (poDS->bUseSetDecodeArea)
         {
-            if (nTileW > 1024) nTileW = 1024;
-            if (nTileH > 1024) nTileH = 1024;
+            // Arbitrary threshold... ~4 million at least needed for the GRIB2
+            // images mentioned below.
+            if( nTileH == 1 && nTileW < 20 * 1024 * 1024 )
+            {
+                // Some GRIB2 JPEG2000 compressed images are a 2D image organized
+                // as a single line image...
+            }
+            else
+            {
+                if (nTileW > 1024) nTileW = 1024;
+                if (nTileH > 1024) nTileH = 1024;
+            }
         }
     }
 
@@ -2313,7 +2321,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         CSLDestroy(papszTokens);
     }
-    if( adfRates.size() == 0 )
+    if( adfRates.empty() )
     {
         adfRates.push_back(100. / dfDefaultQuality);
     }
@@ -3681,6 +3689,7 @@ void GDALRegister_JP2OpenJPEG()
 "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description='Whether a 1-bit alpha channel should be promoted to 8-bit' default='YES'/>"
 "   <Option name='OPEN_REMOTE_GML' type='boolean' description='Whether to load remote vector layers referenced by a link in a GMLJP2 v2 box' default='NO'/>"
 "   <Option name='GEOREF_SOURCES' type='string' description='Comma separated list made with values INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority order for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
+"   <Option name='USE_TILE_AS_BLOCK' type='boolean' description='Whether to always use the JPEG-2000 block size as the GDAL block size' default='NO'/>"
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

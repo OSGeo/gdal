@@ -434,7 +434,7 @@ class HFADictionary
     CPLString   osDictionaryText;
     bool        bDictionaryTextDirty;
 
-                HFADictionary( const char *pszDict );
+    explicit     HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
     HFAType     *FindType( const char * );
@@ -474,7 +474,7 @@ public:
   GByte   getNumBits() const { return m_nNumBits; };
 
 private:
-  void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );
+  static void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );
   GUInt32 findMin( GByte *pNumBits );
   GUInt32 valueAsUInt32( GUInt32 index );
   void encodeValue( GUInt32 val, GUInt32 repeat );

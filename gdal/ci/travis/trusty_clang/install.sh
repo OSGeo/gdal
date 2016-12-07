@@ -14,8 +14,11 @@ cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
 cd swig/java
-cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
+cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-8-openjdk-amd64\//" > java.opt.tmp
 mv java.opt.tmp java.opt
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$JAVA_HOME/jre/bin:$PATH
+java -version
 make
 cd ../..
 cd swig/perl
@@ -23,7 +26,12 @@ make generate
 make
 cd ../..
 sudo rm -f /usr/lib/libgdal.so*
+sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 
 sudo make install
+
+# Check that override is not used in public headers
+if grep override /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h | grep -v "One can override" | grep -v cpl_port | grep -v "Use this file to override"; then echo "Error: override keyword found in public headers instead of CPL_OVERRIDE" && /bin/false; fi 
+
 sudo ldconfig
 cd ../autotest/cpp
 make -j3

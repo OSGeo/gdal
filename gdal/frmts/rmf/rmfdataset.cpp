@@ -924,20 +924,20 @@ CPLErr RMFDataset::WriteHeader()
 do {                                                    \
     GInt32  iLong = CPL_LSBWORD32( value );             \
     memcpy( (ptr) + (offset), &iLong, 4 );              \
-} while(0);
+} while( false );
 
 #define RMF_WRITE_ULONG( ptr,value, offset )            \
 do {                                                    \
     GUInt32 iULong = CPL_LSBWORD32( value );            \
     memcpy( (ptr) + (offset), &iULong, 4 );             \
-} while(0);
+} while( false );
 
 #define RMF_WRITE_DOUBLE( ptr,value, offset )           \
 do {                                                    \
     double  dfDouble = (value);                         \
     CPL_LSBPTR64( &dfDouble );                          \
     memcpy( (ptr) + (offset), &dfDouble, 8 );           \
-} while(0);
+} while( false );
 
 /* -------------------------------------------------------------------- */
 /*  Write out the main header.                                          */
@@ -1141,7 +1141,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD16(*(GInt16*)((ptr) + (offset)));          \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_ULONG(ptr, value, offset)                              \
 do {                                                                    \
@@ -1153,7 +1153,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD32(*(GUInt32*)((ptr) + (offset)));         \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_LONG(ptr, value, offset)                               \
 do {                                                                    \
@@ -1165,7 +1165,7 @@ do {                                                                    \
     {                                                                   \
         (value) = CPL_LSBWORD32(*(GInt32*)((ptr) + (offset)));          \
     }                                                                   \
-} while(0);
+} while( false );
 
 #define RMF_READ_DOUBLE(ptr, value, offset)                             \
 do {                                                                    \
@@ -1178,7 +1178,7 @@ do {                                                                    \
     {                                                                   \
         CPL_LSBPTR64(&(value));                                         \
     }                                                                   \
-} while(0);
+} while( false );
 
 /* -------------------------------------------------------------------- */
 /*  Read the main header.                                               */
@@ -1258,23 +1258,7 @@ do {                                                                    \
                 abyHeader + 248, sizeof(poDS->sHeader.abyInvisibleColors) );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[0], 280 );
         RMF_READ_DOUBLE( abyHeader, poDS->sHeader.adfElevMinMax[1], 288 );
-
-        if( poDS->sHeader.nBitDepth == 8 )
-        {
-            poDS->sHeader.dfNoData = *reinterpret_cast<char *>(abyHeader + 296);
-        }
-        else if( poDS->sHeader.nBitDepth == 16 )
-        {
-            RMF_READ_SHORT(abyHeader, poDS->sHeader.dfNoData, 296);
-        }
-        else if( poDS->sHeader.nBitDepth == 32 )
-        {
-            RMF_READ_LONG(abyHeader, poDS->sHeader.dfNoData, 296);
-        }
-        else if( poDS->sHeader.nBitDepth == 64 )
-        {
-            RMF_READ_DOUBLE(abyHeader, poDS->sHeader.dfNoData, 296);
-        }
+        RMF_READ_DOUBLE(abyHeader, poDS->sHeader.dfNoData, 296);        
 
         RMF_READ_ULONG( abyHeader, poDS->sHeader.iElevationUnit, 304 );
         poDS->sHeader.iElevationType = *(abyHeader + 308);
@@ -1806,13 +1790,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     const char *pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
     if( pszValue != NULL )
         nBlockXSize = atoi( pszValue );
-    if( nBlockXSize <= 0 )
+    if( static_cast<int>(nBlockXSize) <= 0 )
         nBlockXSize = RMF_DEFAULT_BLOCKXSIZE;
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
     if( pszValue != NULL )
         nBlockYSize = atoi( pszValue );
-    if( nBlockYSize <= 0 )
+    if( static_cast<int>(nBlockYSize) <= 0 )
         nBlockYSize = RMF_DEFAULT_BLOCKXSIZE;
 
     poDS->sHeader.nTileWidth = nBlockXSize;

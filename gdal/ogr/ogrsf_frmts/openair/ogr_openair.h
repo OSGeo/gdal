@@ -64,15 +64,15 @@ class OGROpenAirLayer : public OGRLayer
     OGRFeature *       GetNextRawFeature();
 
   public:
-                        OGROpenAirLayer(VSILFILE* fp);
+    explicit            OGROpenAirLayer(VSILFILE* fp);
                         virtual ~OGROpenAirLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -97,15 +97,15 @@ class OGROpenAirLabelLayer : public OGRLayer
     CPLString          osCEILING;
 
   public:
-                        OGROpenAirLabelLayer(VSILFILE* fp);
+    explicit            OGROpenAirLabelLayer(VSILFILE* fp);
                         virtual ~OGROpenAirLabelLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    virtual OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -125,12 +125,12 @@ class OGROpenAirDataSource : public OGRDataSource
 
     int                 Open( const char * pszFilename );
 
-    virtual const char*         GetName() { return pszName; }
+    virtual const char*         GetName() override { return pszName; }
 
-    virtual int                 GetLayerCount() { return nLayers; }
-    virtual OGRLayer*           GetLayer( int );
+    virtual int                 GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*           GetLayer( int ) override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 };
 
 bool OGROpenAirGetLatLon( const char* pszStr, double& dfLat, double& dfLon );

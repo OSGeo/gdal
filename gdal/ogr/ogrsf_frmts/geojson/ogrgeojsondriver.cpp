@@ -48,18 +48,18 @@ class OGRESRIFeatureServiceLayer: public OGRLayer
     bool            bUseSequentialFID;
 
   public:
-    OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
+    explicit OGRESRIFeatureServiceLayer( OGRESRIFeatureServiceDataset* poDS );
     virtual ~OGRESRIFeatureServiceLayer();
 
-    void ResetReading();
-    OGRFeature* GetNextFeature();
-    GIntBig GetFeatureCount( int bForce = TRUE );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
+    void ResetReading() override;
+    OGRFeature* GetNextFeature() override;
+    GIntBig GetFeatureCount( int bForce = TRUE ) override;
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
-                                   int bForce)
+                                   int bForce) override
             { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    int TestCapability( const char* pszCap );
-    OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
+    int TestCapability( const char* pszCap ) override;
+    OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn; }
 };
 
 /************************************************************************/
@@ -81,8 +81,8 @@ class OGRESRIFeatureServiceDataset: public GDALDataset
                                   OGRGeoJSONDataSource* poFirst );
     ~OGRESRIFeatureServiceDataset();
 
-    int GetLayerCount() { return 1; }
-    OGRLayer* GetLayer( int nLayer )
+    int GetLayerCount() override { return 1; }
+    OGRLayer* GetLayer( int nLayer ) override
         { return (nLayer == 0) ? poLayer : NULL; }
 
     OGRLayer* GetUnderlyingLayer() { return poCurrent->GetLayer(0); }
@@ -551,6 +551,8 @@ void RegisterOGRGeoJSON()
 "  <Option name='NATIVE_DATA' type='string' description='FeatureCollection level elements.'/>"
 "  <Option name='NATIVE_MEDIA_TYPE' type='string' description='Format of NATIVE_DATA. Must be \"application/vnd.geo+json\", otherwise NATIVE_DATA will be ignored.'/>"
 "  <Option name='RFC7946' type='boolean' description='Whether to use RFC 7946 standard. Otherwise GeoJSON 2008 initial version will be used' default='NO'/>"
+"  <Option name='WRITE_NAME' type='boolean' description='Whether to write a &quot;name&quot; property at feature collection level with layer name' default='YES'/>"
+"  <Option name='DESCRIPTION' type='string' description='(Long) description to write in a &quot;description&quot; property at feature collection level'/>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

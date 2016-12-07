@@ -134,7 +134,7 @@ class netCDFRasterBand : public GDALPamRasterBand
                                         bool bCheckIsNan=false ) ;
 
   protected:
-    CPLXMLNode *SerializeToXML( const char *pszVRTPath );
+    CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
   public:
     netCDFRasterBand( netCDFDataset *poDS,
@@ -159,17 +159,17 @@ class netCDFRasterBand : public GDALPamRasterBand
                       const int *paDimIds=NULL );
     virtual ~netCDFRasterBand();
 
-    virtual double GetNoDataValue( int * );
-    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int * ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
     // virtual CPLErr DeleteNoDataValue();
-    virtual double GetOffset( int * );
-    virtual CPLErr SetOffset( double );
-    virtual double GetScale( int * );
-    virtual CPLErr SetScale( double );
-    virtual const char *GetUnitType();
-    virtual CPLErr SetUnitType( const char * );
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual double GetOffset( int * ) override;
+    virtual CPLErr SetOffset( double ) override;
+    virtual double GetScale( int * ) override;
+    virtual CPLErr SetScale( double ) override;
+    virtual const char *GetUnitType() override;
+    virtual CPLErr SetUnitType( const char * ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -836,7 +836,7 @@ CPLErr netCDFRasterBand::SetScale( double dfNewScale )
 const char *netCDFRasterBand::GetUnitType()
 
 {
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
         return osUnitType;
 
     return GDALRasterBand::GetUnitType();
@@ -853,7 +853,7 @@ CPLErr netCDFRasterBand::SetUnitType( const char* pszNewValue )
 
     osUnitType = (pszNewValue != NULL ? pszNewValue : "");
 
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
     {
         // Write value if in update mode.
         if( poDS->GetAccess() == GA_Update )
@@ -2091,7 +2091,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 /* -------------------------------------------------------------------- */
 
     // Temp variables to use in SetGeoTransform() and SetProjection().
-    double adfTempGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    double adfTempGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
 
     char *pszTempProjection = NULL;
 
@@ -3617,14 +3617,15 @@ double *netCDFDataset::Get1DGeolocation( CPL_UNUSED const char *szDimName,
     if( papszValues == NULL )
         return NULL;
 
-    /* initialize and fill array */
+    // Initialize and fill array.
     nVarLen = CSLCount(papszValues);
-    double *pdfVarValues = (double *) CPLCalloc( nVarLen, sizeof( double ) );
+    double *pdfVarValues =
+        static_cast<double *>(CPLCalloc(nVarLen, sizeof(double)));
 
     for( int i = 0, j = 0; i < nVarLen; i++ )
     {
         if( !bBottomUp ) j = nVarLen - 1 - i;
-        else j = i; /* invert latitude values */
+        else j = i;  // Invert latitude values.
         char *pszTemp = NULL;
         pdfVarValues[j] = CPLStrtod( papszValues[i], &pszTemp );
     }
@@ -3640,7 +3641,7 @@ CPLErr netCDFDataset::SetProjection( const char * pszNewProjection )
 {
     CPLMutexHolderD(&hNCMutex);
 
-/* TODO look if proj. already defined, like in geotiff */
+    // TODO: Look if proj. already defined, like in geotiff.
     if( pszNewProjection == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "NULL projection." );
@@ -5600,7 +5601,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     bDefineMode = false;
 
 #ifdef NETCDF_HAS_NC4
-    if( oListGrpName.size() )
+    if( !oListGrpName.empty() )
     {
         for(int i=0;i<nLayers;i++)
         {
@@ -6127,7 +6128,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
         bIsVectorOnly && nCount > 0 &&
-        anPotentialVectorVarID.size() != 0 &&
+        !anPotentialVectorVarID.empty() &&
         (oMapDimIdToCount.size() == 1 ||
          (EQUAL(osFeatureType, "profile") && oMapDimIdToCount.size() == 2 && nProfileDimId >= 0)) )
     {
@@ -6135,7 +6136,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         nCount = 0;
     }
 
-    if( anPotentialVectorVarID.size() != 0 &&
+    if( !anPotentialVectorVarID.empty() &&
         (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 )
     {
         // Take the dimension that is referenced the most times
@@ -6255,7 +6256,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 eGType = wkbPoint25D;
             }
-            if( eGType == wkbUnknown && osGeometryField.size() == 0 )
+            if( eGType == wkbUnknown && osGeometryField.empty() )
             {
                 eGType = wkbNone;
             }
@@ -6310,11 +6311,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
             {
                 poLayer->SetXYZVars( nVarXId, nVarYId, nVarZId );
             }
-            else if( osGeometryField.size() )
+            else if( !osGeometryField.empty() )
             {
                 poLayer->SetWKTGeometryField( osGeometryField );
             }
-            if( osGridMapping.size() )
+            if( !osGridMapping.empty() )
             {
                 poLayer->SetGridMapping( osGridMapping );
             }

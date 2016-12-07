@@ -29,8 +29,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "swq.h"
+
+#include <cctype>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 #include "ogr_geometry.h"
 
 CPL_CVSID("$Id$");
@@ -41,7 +51,8 @@ CPL_CVSID("$Id$");
 /*      Does input match pattern?                                       */
 /************************************************************************/
 
-static int swq_test_like( const char *input, const char *pattern, char chEscape )
+static int swq_test_like( const char *input, const char *pattern,
+                          char chEscape )
 
 {
     if( input == NULL || pattern == NULL )

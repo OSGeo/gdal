@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.40 2016-11-04 09:19:13 erouault Exp $ */
+/* $Id: tif_predict.c,v 1.41 2016-11-20 22:31:22 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -797,7 +797,7 @@ PredictorPrintDir(TIFF* tif, FILE* fd, long flags)
 			case 2: fprintf(fd, "horizontal differencing "); break;
 			case 3: fprintf(fd, "floating point predictor "); break;
 		}
-		fprintf(fd, "%u (0x%x)\n", sp->predictor, sp->predictor);
+		fprintf(fd, "%d (0x%x)\n", sp->predictor, sp->predictor);
 	}
 	if (sp->printdir)
 		(*sp->printdir)(tif, fd, flags);

@@ -26,9 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_feature.h"
+#include "cpl_port.h"
 #include "ogr_api.h"
+
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 #include "ograpispy.h"
 
 CPL_CVSID("$Id$");
@@ -165,8 +174,11 @@ void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
 void OGRGeomFieldDefn::SetName( const char * pszNameIn )
 
 {
-    CPLFree( pszName );
-    pszName = CPLStrdup( pszNameIn );
+    if( pszName != pszNameIn )
+    {
+        CPLFree( pszName );
+        pszName = CPLStrdup( pszNameIn );
+    }
 }
 
 /************************************************************************/

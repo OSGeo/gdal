@@ -125,12 +125,12 @@ class PLMosaicDataset : public GDALPamDataset
                                int nBandCount, int *panBandMap,
                                GSpacing nPixelSpace, GSpacing nLineSpace,
                                GSpacing nBandSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
+                               GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(void) override;
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr      GetGeoTransform(double* padfGeoTransform);
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr      GetGeoTransform(double* padfGeoTransform) override;
 
     GDALDataset        *GetMetaTile(int tile_x, int tile_y);
 };
@@ -150,21 +150,21 @@ class PLMosaicRasterBand : public GDALRasterBand
                 PLMosaicRasterBand( PLMosaicDataset * poDS, int nBand,
                                     GDALDataType eDataType );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IRasterIO( GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void * pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType,
                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg);
+                                  GDALRasterIOExtraArg* psExtraArg) override;
 
     virtual const char     *GetMetadataItem( const char* pszName,
-                                             const char * pszDomain = "" );
+                                             const char * pszDomain = "" ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand* GetOverview(int iOvrLevel);
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview(int iOvrLevel) override;
 };
 
 /************************************************************************/
@@ -605,7 +605,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->osAPIKey = PLMosaicGetParameter(poOpenInfo, papszOptions, "api_key",
                                           CPLGetConfigOption("PL_API_KEY",""));
 
-    if( poDS->osAPIKey.size() == 0 )
+    if( poDS->osAPIKey.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing PL_API_KEY configuration option or API_KEY open option");
@@ -628,7 +628,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy(papszOptions);
     papszOptions = NULL;
 
-    if( poDS->osMosaic.size() )
+    if( !poDS->osMosaic.empty() )
     {
         if( !poDS->OpenMosaic() )
         {
@@ -690,7 +690,7 @@ static void ReplaceSubString(CPLString &osTarget,
 
 CPLString PLMosaicDataset::GetMosaicCachePath()
 {
-    if( osCachePathRoot.size() )
+    if( !osCachePathRoot.empty() )
     {
         const CPLString osCachePath(
             CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
@@ -708,7 +708,7 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
 
 void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
 {
-    if( osCachePathRoot.size() )
+    if( !osCachePathRoot.empty() )
     {
         const CPLString osCachePath(
             CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
@@ -863,7 +863,7 @@ int PLMosaicDataset::OpenMosaic()
         else
         {
             CPLString osCacheStr;
-            if( osCachePathRoot.size() )
+            if( !osCachePathRoot.empty() )
             {
                 osCacheStr = "    <Cache><Path>";
                 osCacheStr += GetMosaicCachePath();
@@ -1184,7 +1184,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         osTmpFilename = CPLFormFilename(osMosaicPath,
                 CPLSPrintf("%s_%s.tif", osMosaic.c_str(), CPLGetFilename(osTilename)), NULL);
         VSIStatBufL sStatBuf;
-        if( osCachePathRoot.size() && VSIStatL(osTmpFilename, &sStatBuf) == 0 )
+        if( !osCachePathRoot.empty() && VSIStatL(osTmpFilename, &sStatBuf) == 0 )
         {
             if( bTrustCache )
             {
@@ -1250,7 +1250,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         {
             // In case there's no temporary path or it is not writable
             // use a in-memory dataset, and limit the cache to only one
-            if( osCachePathRoot.size() && nCacheMaxSize > 1 )
+            if( !osCachePathRoot.empty() && nCacheMaxSize > 1 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot write into %s. Using /vsimem and reduce cache to 1 entry",
@@ -1343,7 +1343,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
     CPLXMLNode* psRoot = CPLCreateXMLNode(NULL, CXT_Element, "LocationInfo");
 
-    if( osLastQuadInformation.size() )
+    if( !osLastQuadInformation.empty() )
     {
         const char* const apszAllowedDrivers[2] = { "GeoJSON", NULL };
         const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };
@@ -1393,7 +1393,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         }
     }
 
-    if( osLastQuadSceneInformation.size() && pszWKT != NULL )
+    if( !osLastQuadSceneInformation.empty() && pszWKT != NULL )
     {
         const char* const apszAllowedDrivers[2] = { "GeoJSON", NULL };
         const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };

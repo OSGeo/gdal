@@ -54,9 +54,9 @@ class NDFDataset : public RawDataset
                 NDFDataset();
     virtual ~NDFDataset();
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual char **GetFileList(void);
+    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -271,7 +271,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osFilename = poDS->Get(szKey,"");
 
         // NDF1 file do not include the band filenames.
-        if( osFilename.size() == 0 )
+        if( osFilename.empty() )
         {
             char szBandExtension[15];
             snprintf( szBandExtension, sizeof(szBandExtension), "I%d", iBand+1 );

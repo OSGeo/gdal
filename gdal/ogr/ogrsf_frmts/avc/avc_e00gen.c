@@ -869,10 +869,8 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
          * (This is a little bit less efficient, but will give much easier
          *  code to read ;-)
          *------------------------------------------------------------*/
-        double  dXY[15];
+        double  dXY[15] = { 0.0 };
         int     i, nFirstValue, numValuesPerLine;
-        for(i=0; i<14; i++)
-            dXY[i] = 0.0;
 
         dXY[14] = psTxt->dHeight;
 

@@ -1570,7 +1570,7 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * feature's IntMBR. Store that value in the ObjHdr for use by
      * PrepareNewObj() to search the best node to insert the feature.
      *----------------------------------------------------------------*/
-    if ( poObjHdr && poObjHdr->m_nType != TAB_GEOM_NONE)
+    if ( poObjHdr->m_nType != TAB_GEOM_NONE)
     {
         poFeature->GetIntMBR(poObjHdr->m_nMinX, poObjHdr->m_nMinY,
                              poObjHdr->m_nMaxX, poObjHdr->m_nMaxY);
@@ -1976,15 +1976,16 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     }
 
     char szNewFieldName[31+1];  // 31 is the max characters for a field name.
-    strncpy(szNewFieldName, pszCleanName, 31);
-    szNewFieldName[31] = '\0';
+    strncpy(szNewFieldName, pszCleanName, sizeof(szNewFieldName)-1);
+    szNewFieldName[sizeof(szNewFieldName)-1] = '\0';
 
     int nRenameNum = 1;
+
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 10)
-      snprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s_%.1d", pszCleanName, nRenameNum++ );
 
     while (m_poDefn->GetFieldIndex(szNewFieldName) >= 0 && nRenameNum < 100)
-      snprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszCleanName, nRenameNum++ );
+      CPLsnprintf( szNewFieldName, sizeof(szNewFieldName), "%.29s%.2d", pszCleanName, nRenameNum++ );
 
     if (m_poDefn->GetFieldIndex(szNewFieldName) >= 0)
     {
@@ -2362,37 +2363,36 @@ int TABFile::GetBounds(double &dXMin, double &dYMin,
                        double &dXMax, double &dYMax,
                        GBool /*bForce = TRUE*/)
 {
-    TABMAPHeaderBlock *poHeader = NULL;
-
-    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != NULL)
+    if (m_poMAPFile)
     {
+        TABMAPHeaderBlock* poHeader =m_poMAPFile->GetHeaderBlock();
+        if( poHeader != NULL)
+        {
         /*-------------------------------------------------------------
          * Projection bounds correspond to the +/- 1e9 integer coord. limits
          *------------------------------------------------------------*/
-        double dX0 = 0.0;
-        double dX1 = 0.0;
-        double dY0 = 0.0;
-        double dY1 = 0.0;
-        m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
-                                  dX0, dY0);
-        m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
-                                  dX1, dY1);
+            double dX0 = 0.0;
+            double dX1 = 0.0;
+            double dY0 = 0.0;
+            double dY1 = 0.0;
+            m_poMAPFile->Int2Coordsys(-1000000000, -1000000000,
+                                    dX0, dY0);
+            m_poMAPFile->Int2Coordsys(1000000000, 1000000000,
+                                        dX1, dY1);
         /*-------------------------------------------------------------
          * ... and make sure that Min < Max
-         *------------------------------------------------------------*/
-        dXMin = std::min(dX0, dX1);
-        dXMax = std::max(dX0, dX1);
-        dYMin = std::min(dY0, dY1);
-        dYMax = std::max(dY0, dY1);
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-             "GetBounds() can be called only after dataset has been opened.");
-        return -1;
+            *------------------------------------------------------------*/
+            dXMin = std::min(dX0, dX1);
+            dXMax = std::max(dX0, dX1);
+            dYMin = std::min(dY0, dY1);
+            dYMax = std::max(dY0, dY1);
+            return 0;
+        }
     }
 
-    return 0;
+    CPLError(CE_Failure, CPLE_AppDefined,
+            "GetBounds() can be called only after dataset has been opened.");
+    return -1;
 }
 
 /**********************************************************************
@@ -2842,7 +2842,7 @@ void TABFile::Dump(FILE *fpOut /*=NULL*/)
 
             GetSpatialRef()->exportToWkt( &pszWKT );
             fprintf( fpOut, "SRS = %s\n", pszWKT );
-            OGRFree( pszWKT );
+            CPLFree( pszWKT );
         }
         fprintf(fpOut, "Associated .MAP file ...\n\n");
         m_poMAPFile->Dump(fpOut);

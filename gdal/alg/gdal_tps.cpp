@@ -27,15 +27,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "thinplatespline.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <map>
+#include <utility>
+
 #include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
-#include <map>
 
 CPL_CVSID("$Id$");
 
@@ -77,7 +86,7 @@ void* GDALCreateSimilarTPSTransformer( void *hTransformArg,
     if( dfRatioX == 1.0 && dfRatioY == 1.0 )
     {
         // We can just use a ref count, since using the source transformation
-        /// is thread-safe.
+        // is thread-safe.
         CPLAtomicInc(&(psInfo->nRefCount));
     }
     else
@@ -177,10 +186,11 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     std::map< std::pair<double, double>, int > oMapXYToIdx;
     for( int iGCP = 0; iGCP < nGCPCount; iGCP++ )
     {
-        double afPL[2] = {
+        const double afPL[2] = {
             pasGCPList[iGCP].dfGCPPixel,
             pasGCPList[iGCP].dfGCPLine };
-        double afXY[2] = { pasGCPList[iGCP].dfGCPX, pasGCPList[iGCP].dfGCPY };
+        const double afXY[2] =
+            { pasGCPList[iGCP].dfGCPX, pasGCPList[iGCP].dfGCPY };
 
         std::map< std::pair<double, double>, int >::iterator oIter(
             oMapPixelLineToIdx.find(std::pair<double, double>(afPL[0],
@@ -252,9 +262,9 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         const char* pszWarpThreads =
             CSLFetchNameValue(papszOptions, "NUM_THREADS");
-        if (pszWarpThreads == NULL)
+        if( pszWarpThreads == NULL )
             pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-        if (EQUAL(pszWarpThreads, "ALL_CPUS"))
+        if( EQUAL(pszWarpThreads, "ALL_CPUS") )
             nThreads = CPLGetNumCPUs();
         else
             nThreads = atoi(pszWarpThreads);

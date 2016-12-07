@@ -86,14 +86,14 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                               int, int *,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
     int         DescribeCoverage();
     int         ExtractGridInfo100();
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
 
-    int         ProcessError( CPLHTTPResult *psResult );
+    static int         ProcessError( CPLHTTPResult *psResult );
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
     void        FlushMemoryResult();
     CPLString   osResultFilename;
@@ -111,12 +111,12 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
-    virtual char **GetFileList(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual char **GetFileList(void) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char *pszDomain );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char *pszDomain ) override;
 };
 
 /************************************************************************/
@@ -140,19 +140,19 @@ class WCSRasterBand : public GDALPamRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
 
                    WCSRasterBand( WCSDataset *, int nBand, int iOverview );
     virtual ~WCSRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual int GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int);
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -695,7 +695,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLString osBandList;
     int       bSelectingBands = FALSE;
 
-    if( strlen(osBandIdentifier) && nBandCount > 0 )
+    if( strlen(osBandIdentifier) && nBandCount > 0 && panBandList != NULL )
     {
         int iBand;
 
@@ -1256,7 +1256,7 @@ int WCSDataset::ExtractGridInfo100()
 
         // we will default to the last - likely the most recent - entry.
 
-        if( aosTimePositions.size() > 0
+        if( !aosTimePositions.empty()
             && osDefaultTime == ""
             && osServiceURL.ifind("time=") == std::string::npos
             && osCoverageExtra.ifind("time=") == std::string::npos )
@@ -2253,7 +2253,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WCS_SDS:")
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<WCS_GDAL>")
-        && poDS->aosTimePositions.size() > 0 )
+        && !poDS->aosTimePositions.empty() )
     {
         char **papszSubdatasets = NULL;
         int iTime;

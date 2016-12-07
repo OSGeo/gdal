@@ -65,7 +65,7 @@ OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
 
     CloseDependentDatasets();
 
-    if (osTmpFileName.size() > 0)
+    if (!osTmpFileName.empty())
         VSIUnlink(osTmpFileName.c_str());
 }
 

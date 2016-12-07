@@ -75,8 +75,8 @@ class DOQ2Dataset : public RawDataset
                 DOQ2Dataset();
                 ~DOQ2Dataset();
 
-    CPLErr      GetGeoTransform( double * padfTransform );
-    const char  *GetProjectionRef( void );
+    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    const char  *GetProjectionRef( void ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

@@ -81,11 +81,13 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
 
     m_osDirName = pszFilename;
     int nInterestTable = -1;
+    unsigned int unInterestTable = 0;
     const char* pszFilenameWithoutPath = CPLGetFilename(pszFilename);
     if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
         pszFilenameWithoutPath[0] == 'a' &&
-        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1 )
     {
+        nInterestTable = static_cast<int>(unInterestTable);
         m_osDirName = CPLGetPath(m_osDirName);
     }
     else
@@ -236,13 +238,13 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         return FALSE;
     }
 
-    if( m_apoLayers.size() == 0 && nInterestTable >= 0 )
+    if( m_apoLayers.empty() && nInterestTable >= 0 )
     {
         if( FileExists(m_pszName) )
         {
             const char* pszLyrName = NULL;
             if( nInterestTable <= (int)aosTableNames.size()  &&
-                aosTableNames[nInterestTable-1].size() != 0 )
+                !aosTableNames[nInterestTable-1].empty() )
                 pszLyrName = aosTableNames[nInterestTable-1].c_str();
             else
                 pszLyrName = CPLSPrintf("a%08x", nInterestTable);
@@ -377,7 +379,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
         }
     }
 
-    if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
+    if( m_apoLayers.empty() && nCandidateLayers > 0 &&
         nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
@@ -500,7 +502,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
 
         int idx = psField->Integer;
         if( idx > 0 && idx <= static_cast<int>(aosName.size()) &&
-            aosName[idx-1].size() > 0 )
+            !aosName[idx-1].empty() )
         {
             const std::string osName(aosName[idx-1]);
             AddLayer( osName, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
@@ -508,7 +510,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
         }
     }
 
-    if( m_apoLayers.size() == 0 && nCandidateLayers > 0 &&
+    if( m_apoLayers.empty() && nCandidateLayers > 0 &&
         nCandidateLayers == nLayersSDCOrCDF )
         return FALSE;
 
@@ -584,10 +586,10 @@ class OGROpenFileGDBSingleFeatureLayer : public OGRLayer
                                                           const char *pszVal );
                virtual ~OGROpenFileGDBSingleFeatureLayer();
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -651,17 +653,17 @@ class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
                                      swq_col_def* pasColDefs);
        virtual ~OGROpenFileGDBSimpleSQLLayer();
 
-       virtual void        ResetReading();
-       virtual OGRFeature* GetNextFeature();
-       virtual OGRFeature* GetFeature( GIntBig nFeatureId );
-       virtual OGRFeatureDefn* GetLayerDefn() { return poFeatureDefn; }
-       virtual int         TestCapability( const char * );
-       virtual const char* GetFIDColumn() { return poBaseLayer->GetFIDColumn(); }
-       virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce )
+       virtual void        ResetReading() override;
+       virtual OGRFeature* GetNextFeature() override;
+       virtual OGRFeature* GetFeature( GIntBig nFeatureId ) override;
+       virtual OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn; }
+       virtual int         TestCapability( const char * ) override;
+       virtual const char* GetFIDColumn() override { return poBaseLayer->GetFIDColumn(); }
+       virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override
                             { return poBaseLayer->GetExtent(psExtent, bForce); }
-       virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+       virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-       virtual GIntBig     GetFeatureCount(int bForce);
+       virtual GIntBig     GetFeatureCount(int bForce) override;
 };
 
 /***********************************************************************/
@@ -1180,10 +1182,12 @@ char** OGROpenFileGDBDataSource::GetFileList()
     int nInterestTable = -1;
     const char* pszFilenameWithoutPath = CPLGetFilename(m_pszName);
     CPLString osFilenameRadix;
+    unsigned int unInterestTable = 0;
     if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
         pszFilenameWithoutPath[0] == 'a' &&
-        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &nInterestTable) == 1 )
+        sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1 )
     {
+        nInterestTable = static_cast<int>(unInterestTable);
         osFilenameRadix = CPLSPrintf("a%08x.", nInterestTable);
     }
 
@@ -1194,7 +1198,7 @@ char** OGROpenFileGDBDataSource::GetFileList()
     {
         if( strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0 )
             continue;
-        if( osFilenameRadix.size() == 0 ||
+        if( osFilenameRadix.empty() ||
             strncmp(*papszIter, osFilenameRadix, osFilenameRadix.size()) == 0 )
         {
             osStringList.AddString(CPLFormFilename(m_osDirName, *papszIter, NULL));

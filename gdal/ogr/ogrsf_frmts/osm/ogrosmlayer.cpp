@@ -506,6 +506,7 @@ int OGROSMLayer::AddInOtherOrAllTags( const char* pszK )
             pszColon[1] = '\0';  /* Evil but OK */
             bAddToOtherTags = ( aoSetIgnoreKeys.find(pszK) ==
                                 aoSetIgnoreKeys.end() );
+            // cppcheck-suppress redundantAssignment
             pszColon[1] = chBackup;
         }
         else

@@ -50,17 +50,32 @@
 #ifdef MSVC_USE_VLD
 #include <vld.h>
 #endif
+
 #include "cpl_conv.h"
+
+#include <cctype>
+#include <cerrno>
+#include <climits>
+#include <clocale>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <string>
+
+#include "cpl_config.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#include <cerrno>
-#include <clocale>
-#include <cmath>
-#include <cstring>
-
-/* Uncomment to get list of options that have been fetched and set */
+// Uncomment to get list of options that have been fetched and set.
 //#define DEBUG_CONFIG_OPTIONS
 
 #ifdef DEBUG_CONFIG_OPTIONS
@@ -75,12 +90,12 @@ CPL_CVSID("$Id$");
 static CPLMutex *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
-/* Used by CPLOpenShared() and friends */
+// Used by CPLOpenShared() and friends.
 static CPLMutex *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
-/* Used by CPLsetlocale() */
+// Used by CPLsetlocale().
 static CPLMutex *hSetLocaleMutex = NULL;
 
 /* Note: ideally this should be added in CPLSharedFileInfo* */
@@ -1303,15 +1318,14 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #pragma GCC diagnostic ignored "-Wformat"
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif
-    snprintf( szTemp, sizeof(szTemp), "%*I64d", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*I64u", nMaxLen, iValue );
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 # elif HAVE_LONG_LONG
-    snprintf( szTemp, sizeof(szTemp), "%*lld", nMaxLen, (long long) iValue );
-//    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue );
 #else
-    snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*lu", nMaxLen, iValue );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );
@@ -1529,7 +1543,7 @@ static void CPLShowAccessedOptions()
     while(aoIter != paoGetKeys->end())
     {
         printf("%s, ", (*aoIter).c_str());
-        aoIter ++;
+        ++aoIter;
     }
     printf("\n");
 
@@ -1538,7 +1552,7 @@ static void CPLShowAccessedOptions()
     while(aoIter != paoSetKeys->end())
     {
         printf("%s, ", (*aoIter).c_str());
-        aoIter ++;
+        ++aoIter;
     }
     printf("\n");
 
@@ -2075,7 +2089,7 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
     int iImagEnd = -1;
 
     for( int i = 0;
-         pszString[i] != '\0' && pszString[i] != ' ' && i < 100;
+         i < 100 && pszString[i] != '\0' && pszString[i] != ' ';
          i++ )
     {
         if( pszString[i] == '+' && i > 0 )
@@ -2150,7 +2164,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp;
+    FILE *fp = NULL;
 
     if( bLarge )
         fp = reinterpret_cast<FILE *>( VSIFOpenL( pszFilename, pszAccess ) );
@@ -2811,7 +2825,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 
 #if !defined(HAVE_LIBZ)
 
-void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
+void *CPLCreateZip( const char *, char ** )
 
 {
     CPLError( CE_Failure, CPLE_NotSupported,
@@ -2819,33 +2833,33 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
     return NULL;
 }
 
-CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
-                           char **papszOptions )
+CPLErr CPLCreateFileInZip( void *, const char *,
+                           char ** )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
+CPLErr CPLWriteFileInZip( void *, const void *, int  )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseFileInZip( void *hZip )
+CPLErr CPLCloseFileInZip( void * )
 
 {
     return CE_Failure;
 }
 
-CPLErr CPLCloseZip( void *hZip )
+CPLErr CPLCloseZip( void * )
 
 {
     return CE_Failure;
 }
 
-void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibDeflate( const void* , size_t , int ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )
@@ -2853,8 +2867,8 @@ void* CPLZLibDeflate( const void* ptr, size_t nBytes, int nLevel,
     return NULL;
 }
 
-void* CPLZLibInflate( const void* ptr, size_t nBytes,
-                      void* outptr, size_t nOutAvailableBytes,
+void* CPLZLibInflate( const void* , size_t ,
+                      void* , size_t ,
                       size_t* pnOutBytes )
 {
     if( pnOutBytes != NULL )

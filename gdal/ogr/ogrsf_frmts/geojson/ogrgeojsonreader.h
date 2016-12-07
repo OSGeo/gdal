@@ -34,15 +34,7 @@
 #include <ogr_core.h>
 #include "ogrsf_frmts.h"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include <json.h>
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+#include "ogr_json_header.h"
 
 #include <set>
 
@@ -148,8 +140,8 @@ class OGRGeoJSONReader
     //
     bool GenerateLayerDefn( OGRGeoJSONLayer* poLayer, json_object* poGJObject );
     bool GenerateFeatureDefn( OGRGeoJSONLayer* poLayer, json_object* poObj );
-    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeometry );
-    bool AddFeature( OGRGeoJSONLayer* poLayer, OGRFeature* poFeature );
+    static bool AddFeature( OGRGeoJSONLayer* poLayer, OGRGeometry* poGeometry );
+    static bool AddFeature( OGRGeoJSONLayer* poLayer, OGRFeature* poFeature );
 
     OGRGeometry* ReadGeometry( json_object* poObj );
     OGRFeature* ReadFeature( OGRGeoJSONLayer* poLayer, json_object* poObj );

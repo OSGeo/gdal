@@ -59,6 +59,8 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
                           GPXGeometryType gpxGeomTypeIn,
                           OGRGPXDataSource* poDSIn,
                           int bWriteModeIn ) :
+    poDS( poDSIn ),
+    gpxGeomType( gpxGeomTypeIn ),
     bWriteMode(CPL_TO_BOOL(bWriteModeIn)),
     nNextFID(0),
 #ifdef HAVE_EXPAT
@@ -95,9 +97,6 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     nDataHandlerCounter(0)
 #endif
 {
-    poDS = poDSIn;
-    gpxGeomType = gpxGeomTypeIn;
-
 #ifdef HAVE_EXPAT
     const char* gpxVersion = poDS->GetVersion();
 #endif

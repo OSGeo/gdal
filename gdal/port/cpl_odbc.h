@@ -227,7 +227,7 @@ class CPL_DLL CPLODBCStatement {
     size_t         m_nStatementLen;
 
   public:
-    CPLODBCStatement( CPLODBCSession * );
+    explicit CPLODBCStatement( CPLODBCSession * );
     ~CPLODBCStatement();
 
     /** Return statement handle */
@@ -239,7 +239,7 @@ class CPL_DLL CPLODBCStatement {
     void           Append( const char * );
     void           Append( int );
     void           Append( double );
-    int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+    int            Appendf( CPL_FORMAT_STRING(const char *), ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     /** Return statement string */
     const char    *GetCommand() { return m_pszStatement; }
 

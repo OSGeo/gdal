@@ -173,6 +173,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
                                          char *pszUnits )
 
 {
+    const int BUFFER_SIZE = 32;
     strcpy( pszProj, "RAW" );
     strcpy( pszDatum, "RAW" );
     strcpy( pszUnits, "METERS" );
@@ -213,8 +214,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     if( pszWKTDatum != NULL
         && oSRSWork.importFromDict( "ecw_cs.wkt", pszWKTDatum ) == OGRERR_NONE)
     {
-        strncpy( pszDatum, pszWKTDatum, 32 );
-        pszDatum[31] = '\0';
+        strncpy( pszDatum, pszWKTDatum, BUFFER_SIZE );
+        pszDatum[BUFFER_SIZE-1] = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -293,14 +294,14 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         if( EQUAL(pszDatum, "GDA94") && !bNorth && nZone >= 48 && nZone <= 58)
         {
-            snprintf( pszProj, 32, "MGA%02d", nZone );
+            snprintf( pszProj, BUFFER_SIZE, "MGA%02d", nZone );
         }
         else
         {
             if( bNorth )
-                snprintf( pszProj, 32, "NUTM%02d", nZone );
+                snprintf( pszProj, BUFFER_SIZE, "NUTM%02d", nZone );
             else
-                snprintf( pszProj, 32, "SUTM%02d", nZone );
+                snprintf( pszProj, BUFFER_SIZE, "SUTM%02d", nZone );
         }
     }
 
@@ -315,8 +316,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
             && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE
             && oSRSWork.IsProjected() )
         {
-            strncpy( pszProj, pszPROJCS, 32 );
-            pszProj[31] = '\0';
+            strncpy( pszProj, pszPROJCS, BUFFER_SIZE );
+            pszProj[BUFFER_SIZE-1] = '\0';
         }
     }
 
@@ -326,8 +327,8 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
 /* -------------------------------------------------------------------- */
     if( (EQUAL(pszDatum, "RAW") || EQUAL(pszProj, "RAW")) && nEPSGCode != 0 )
     {
-        snprintf( pszProj, 32, "EPSG:%d", nEPSGCode );
-        snprintf( pszDatum, 32, "EPSG:%d", nEPSGCode );
+        snprintf( pszProj, BUFFER_SIZE, "EPSG:%d", nEPSGCode );
+        snprintf( pszDatum, BUFFER_SIZE, "EPSG:%d", nEPSGCode );
     }
 
 /* -------------------------------------------------------------------- */

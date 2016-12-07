@@ -478,7 +478,7 @@ bool OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
         // the layer contents while copying so we can duplicate
         // it for any new layer definitions.
         if( nCode == 0 && EQUAL(szLineBuf,"LAYER")
-            && osTable == "LAYER" && aosDefaultLayerText.size() == 0 )
+            && osTable == "LAYER" && aosDefaultLayerText.empty() )
         {
             do {
                 anDefaultLayerCode.push_back( nCode );
@@ -675,7 +675,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
         poLayer->GetNewLineTypeMap();
 
     for( oIt = oNewLineTypes.begin();
-         oIt != oNewLineTypes.end(); oIt++ )
+         oIt != oNewLineTypes.end(); ++oIt )
     {
         WriteValue( fpIn, 0, "LTYPE" );
         WriteEntityID( fpIn );

@@ -58,7 +58,7 @@ private:
   Byte*  m_pBits;
   int   m_nRows, m_nCols;
 
-  Byte  Bit(int k) const                      { return (1 << 7) >> (k & 7); }
+  static Byte  Bit(int k)                      { return (1 << 7) >> (k & 7); }
 
   // Disable assignment op, default and copy constructor
   BitMask();

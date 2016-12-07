@@ -1302,6 +1302,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     /*-----------------------------------------------------------------
      * Handle stuff specific to derived classes
      *----------------------------------------------------------------*/
+    // cppcheck-suppress knownConditionTrueFalse
     if (GetFeatureClass() == TABFCFontPoint)
     {
         TABFontPoint *poFeature = (TABFontPoint *)this;
@@ -1311,6 +1312,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
 
         poFeature->DumpFontDef(fpOut);
     }
+    // cppcheck-suppress knownConditionTrueFalse
     if (GetFeatureClass() == TABFCCustomPoint)
     {
         TABCustomPoint *poFeature = (TABCustomPoint *)this;
@@ -3463,7 +3465,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
 
                 numRingsTotal += poPolygon->getNumInteriorRings()+1;
 
-                if (ppasSecHdrs)
+                if (ppasSecHdrs && poMapFile)
                 {
                     if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                       poMapFile, iLastSect) != 0)
@@ -3476,7 +3478,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
             poPolygon = (OGRPolygon*)poGeom;
             numRingsTotal = poPolygon->getNumInteriorRings()+1;
 
-            if (ppasSecHdrs)
+            if (ppasSecHdrs && poMapFile)
             {
                 if (AppendSecHdrs(poPolygon, *ppasSecHdrs,
                                   poMapFile, iLastSect) != 0)
@@ -7978,11 +7980,12 @@ void TABCollection::DumpMIF(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 TABDebugFeature::TABDebugFeature( OGRFeatureDefn *poDefnIn ) :
     TABFeature(poDefnIn),
-    // TODO(schwehr): m_abyBuf
     m_nSize(0),
     m_nCoordDataPtr(0),
     m_nCoordDataSize(0)
-{}
+{
+    memset( m_abyBuf, 0, sizeof(m_abyBuf) );
+}
 
 /**********************************************************************
  *                   TABDebugFeature::~TABDebugFeature()
@@ -8521,8 +8524,8 @@ void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
 
     fprintf(fpOut, "  m_nPenDefIndex         = %d\n", m_nPenDefIndex);
     fprintf(fpOut, "  m_sPenDef.nRefCount    = %d\n", m_sPenDef.nRefCount);
-    fprintf(fpOut, "  m_sPenDef.nPixelWidth  = %d\n", m_sPenDef.nPixelWidth);
-    fprintf(fpOut, "  m_sPenDef.nLinePattern = %d\n", m_sPenDef.nLinePattern);
+    fprintf(fpOut, "  m_sPenDef.nPixelWidth  = %u\n", m_sPenDef.nPixelWidth);
+    fprintf(fpOut, "  m_sPenDef.nLinePattern = %u\n", m_sPenDef.nLinePattern);
     fprintf(fpOut, "  m_sPenDef.nPointWidth  = %d\n", m_sPenDef.nPointWidth);
     fprintf(fpOut, "  m_sPenDef.rgbColor     = 0x%6.6x (%d)\n",
                                      m_sPenDef.rgbColor, m_sPenDef.rgbColor);
@@ -8739,8 +8742,8 @@ ITABFeatureFont::ITABFeatureFont() :
  **********************************************************************/
 void ITABFeatureFont::SetFontName(const char *pszName)
 {
-    strncpy( m_sFontDef.szFontName, pszName, 32);
-    m_sFontDef.szFontName[32] = '\0';
+    strncpy( m_sFontDef.szFontName, pszName, sizeof(m_sFontDef.szFontName)-1);
+    m_sFontDef.szFontName[sizeof(m_sFontDef.szFontName)-1] = '\0';
 }
 
 /**********************************************************************

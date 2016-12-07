@@ -30,12 +30,18 @@
 
 #include "cpl_error.h"
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_vsi.h"
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 #define TIMESTAMP_DEBUG
 //#define MEMORY_DEBUG
@@ -201,7 +207,7 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  * similar to printf().
  */
 
-void CPLError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
+void CPLError(CPLErr eErrClass, CPLErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 
@@ -477,7 +483,7 @@ static int CPLGetProcessMemorySize()
 #ifdef WITHOUT_CPLDEBUG
 // Do not include CPLDebug.  Only available in custom builds.
 #else
-void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
+void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszFormat), ... )
 
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();

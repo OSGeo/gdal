@@ -73,16 +73,40 @@
    at a time (read-only or write-only).
 */
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include <map>
+#include "cpl_port.h"
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
 
+#include <cerrno>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include <zlib.h>
-#include "cpl_minizip_unzip.h"
-#include "cpl_time.h"
 
 #include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_error.h"
+#include "cpl_minizip_ioapi.h"
+#include "cpl_minizip_unzip.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi_virtual.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -101,7 +125,8 @@ static const int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
 #define TRYFREE(p) {if (p) free(p);}
 
 #define CPL_VSIL_GZ_RETURN(ret)   \
-        CPLError(CE_Failure, CPLE_AppDefined, "In file %s, at line %d, return %d", __FILE__, __LINE__, ret)
+        CPLError(CE_Failure, CPLE_AppDefined, \
+                 "In file %s, at line %d, return %d", __FILE__, __LINE__, ret)
 
 // #define ENABLE_DEBUG 1
 
@@ -169,13 +194,13 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
 
     bool              IsInitOK() const { return inbuf != NULL; }
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 
     VSIGZipHandle*    Duplicate();
     bool              CloseBaseHandle();
@@ -203,16 +228,16 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
     VSIGZipHandle *OpenGZipReadOnly( const char *pszFilename,
                                      const char *pszAccess );
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+                           int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
     void  SaveInfo( VSIGZipHandle* poHandle );
     void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
@@ -378,7 +403,8 @@ void VSIGZipHandle::SaveInfo_unlocked()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo_unlocked(this);
+        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+                                                    SaveInfo_unlocked(this);
         m_bCanSaveInfo = false;
     }
 }
@@ -393,7 +419,8 @@ VSIGZipHandle::~VSIGZipHandle()
     {
         VSIFilesystemHandler *poFSHandler =
             VSIFileManager::GetHandler( "/vsigzip/" );
-        ((VSIGZipFilesystemHandler*)poFSHandler)->SaveInfo(this);
+        reinterpret_cast<VSIGZipFilesystemHandler*>(poFSHandler)->
+                                                                SaveInfo(this);
     }
 
     if( stream.state != NULL )
@@ -1156,13 +1183,13 @@ class VSIGZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual ~VSIGZipWriteHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 };
 
 /************************************************************************/
@@ -1763,7 +1790,7 @@ class VSIZipEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
 public:
         unz_file_pos m_file_pos;
 
-        VSIZipEntryFileOffset(unz_file_pos file_pos)
+        explicit VSIZipEntryFileOffset(unz_file_pos file_pos)
         {
             m_file_pos.pos_in_zip_directory = file_pos.pos_in_zip_directory;
             m_file_pos.num_of_file = file_pos.num_of_file;
@@ -1788,20 +1815,20 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         void SetInfo();
 
     public:
-        VSIZipReader(const char* pszZipFileName);
+        explicit VSIZipReader(const char* pszZipFileName);
         virtual ~VSIZipReader();
 
         int IsValid() { return unzF != NULL; }
 
         unzFile GetUnzFileHandle() { return unzF; }
 
-        virtual int GotoFirstFile();
-        virtual int GotoNextFile();
-        virtual VSIArchiveEntryFileOffset* GetFileOffset() { return new VSIZipEntryFileOffset(file_pos); }
-        virtual GUIntBig GetFileSize() { return nNextFileSize; }
-        virtual CPLString GetFileName() { return osNextFileName; }
-        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
-        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
+        virtual int GotoFirstFile() override;
+        virtual int GotoNextFile() override;
+        virtual VSIArchiveEntryFileOffset* GetFileOffset() override { return new VSIZipEntryFileOffset(file_pos); }
+        virtual GUIntBig GetFileSize() override { return nNextFileSize; }
+        virtual CPLString GetFileName() override { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() override { return nModifiedTime; }
+        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) override;
 };
 
 /************************************************************************/
@@ -1885,7 +1912,8 @@ int VSIZipReader::GotoFirstFile()
 
 int VSIZipReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
-    VSIZipEntryFileOffset* pZipEntryOffset = (VSIZipEntryFileOffset*)pOffset;
+    VSIZipEntryFileOffset* pZipEntryOffset =
+                        reinterpret_cast<VSIZipEntryFileOffset*>(pOffset);
     if( cpl_unzGoToFilePos(unzF, &(pZipEntryOffset->m_file_pos)) != UNZ_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GotoFileOffset failed");
@@ -1914,22 +1942,22 @@ class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 public:
     virtual ~VSIZipFilesystemHandler();
 
-    virtual const char* GetPrefix() { return "/vsizip"; }
-    virtual std::vector<CPLString> GetExtensions();
-    virtual VSIArchiveReader* CreateReader(const char* pszZipFileName);
+    virtual const char* GetPrefix() override { return "/vsizip"; }
+    virtual std::vector<CPLString> GetExtensions() override;
+    virtual VSIArchiveReader* CreateReader(const char* pszZipFileName) override;
 
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 
     virtual VSIVirtualHandle *OpenForWrite( const char *pszFilename,
                                             const char *pszAccess );
 
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
 
     void RemoveFromMap(VSIZipWriteHandle* poHandle);
 };
@@ -1957,13 +1985,13 @@ class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual ~VSIZipWriteHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 
     void  StartNewFile(VSIZipWriteHandle* poSubFile);
     void  StopCurrentFile();
@@ -2104,7 +2132,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    unzFile unzF = ((VSIZipReader*)poReader)->GetUnzFileHandle();
+    unzFile unzF = reinterpret_cast<VSIZipReader*>(poReader)->
+                                                            GetUnzFileHandle();
 
     if( cpl_unzOpenCurrentFile(unzF) != UNZ_OK )
     {
@@ -2155,7 +2184,7 @@ int VSIZipFilesystemHandler::Mkdir( const char *pszDirname,
                                     long /* nMode */ )
 {
     CPLString osDirname = pszDirname;
-    if( osDirname.size() != 0 && osDirname[osDirname.size() - 1] != '/' )
+    if( !osDirname.empty() && osDirname[osDirname.size() - 1] != '/' )
         osDirname += "/";
     VSIVirtualHandle* poZIPHandle = OpenForWrite(osDirname, "wb");
     if( poZIPHandle == NULL )
@@ -2319,8 +2348,8 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
     else
     {
         char** papszOptions = NULL;
-        if( (strchr(pszAccess, '+') && osZipInFileName.size() == 0) ||
-             osZipInFileName.size() != 0 )
+        if( (strchr(pszAccess, '+') && osZipInFileName.empty()) ||
+             !osZipInFileName.empty() )
         {
             VSIStatBufL sBuf;
             if( VSIStatExL(osZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0 )
@@ -2336,10 +2365,10 @@ VSIVirtualHandle* VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *ps
         oMapZipWriteHandles[osZipFilename] =
             new VSIZipWriteHandle(this, hZIP, NULL);
 
-        if( osZipInFileName.size() != 0 )
+        if( !osZipInFileName.empty() )
         {
-            VSIZipWriteHandle* poRes = (VSIZipWriteHandle*)
-                OpenForWrite_unlocked(pszFilename, pszAccess);
+            VSIZipWriteHandle* poRes = reinterpret_cast<VSIZipWriteHandle*>(
+                OpenForWrite_unlocked(pszFilename, pszAccess));
             if( poRes == NULL )
             {
                 delete oMapZipWriteHandles[osZipFilename];

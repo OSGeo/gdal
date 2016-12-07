@@ -30,8 +30,14 @@
  ******************************************************************************
  */
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "cpl_quad_tree.h"
+
+#include <cstdio>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 

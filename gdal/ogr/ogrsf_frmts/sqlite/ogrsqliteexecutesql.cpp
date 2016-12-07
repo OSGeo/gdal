@@ -187,7 +187,7 @@ static void OGR2SQLITEAddLayer( const char*& pszStart, int& nNum,
     pszStart = pszSQLCommand;
     LayerDesc oLayerDesc = OGR2SQLITEExtractLayerDesc(&pszSQLCommand);
     int bInsert = TRUE;
-    if( oLayerDesc.osDSName.size() == 0 )
+    if( oLayerDesc.osDSName.empty() )
     {
         osTruncated = pszStart;
         osTruncated.resize(pszSQLCommand - pszStart);
@@ -726,7 +726,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
                                 CPL_UNUSED const char *pszDialect )
 {
     char* pszTmpDBName = (char*) CPLMalloc(256);
-    snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", pszTmpDBName);
+    void* ptr = pszTmpDBName;
+    snprintf(pszTmpDBName, 256, "/vsimem/ogr2sqlite/temp_%p.db", ptr);
 
     OGRSQLiteDataSource* poSQLiteDS = NULL;
     int bSpatialiteDB = FALSE;
@@ -762,8 +763,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         {
             bTried = TRUE;
             char* pszCachedFilename = (char*) CPLMalloc(256);
+            void* ptrCached = pszCachedFilename;
             snprintf(pszCachedFilename, 256, "/vsimem/ogr2sqlite/reference_%p.db",
-                    pszCachedFilename);
+                     ptrCached);
             char** papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
             OGRSQLiteDataSource* poCachedDS = new OGRSQLiteDataSource();
             const int nRet = poCachedDS->Create( pszCachedFilename, papszOptions );
@@ -831,6 +833,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     if( true )
     {
 #endif // HAVE_SPATIALITE
+
+        // cppcheck-suppress redundantAssignment
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
         const int nRet = poSQLiteDS->Create( pszTmpDBName, NULL );
@@ -883,7 +887,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
         OGRLayer* poLayer = NULL;
         CPLString osTableName;
         int nExtraDS = -1;
-        if( oLayerDesc.osDSName.size() == 0 )
+        if( oLayerDesc.osDSName.empty() )
         {
             poLayer = poDS->GetLayerByName(oLayerDesc.osLayerName);
             /* Might be a false positive (unlikely) */

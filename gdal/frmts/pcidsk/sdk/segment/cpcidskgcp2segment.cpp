@@ -190,7 +190,7 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
     
     // This will have to change when we have proper projections support
 
-    if (pimpl_->gcps.size() > 0)
+    if (!pimpl_->gcps.empty())
     {
         pimpl_->gcps[0].GetMapUnits(pimpl_->map_units, 
             pimpl_->proj_parms);
@@ -275,8 +275,8 @@ void CPCIDSKGCP2Segment::RebuildSegmentData(void)
         pimpl_->seg_data.Put((*iter).GetYErr(), offset + 136, 14, "%14.4e");
         pimpl_->seg_data.Put((*iter).GetIDString(), offset + 192, 64, true );
         
-        id++;
-        iter++;
+        ++id;
+        ++iter;
     }
     
     WriteToFile(pimpl_->seg_data.buffer, 0, pimpl_->seg_data.buffer_size);

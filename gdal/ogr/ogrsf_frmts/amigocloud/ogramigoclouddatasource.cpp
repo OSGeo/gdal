@@ -164,6 +164,11 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
+    if (osAPIKey.empty())
+    {
+        osAPIKey = OGRAMIGOCLOUDGetOptionValue(pszFilename, "API_KEY");
+    }
+
     CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
 
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
@@ -182,10 +187,10 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         }
         ReleaseResultSet(poSchemaLayer);
     }
-    if( osCurrentSchema.size() == 0 )
+    if( osCurrentSchema.empty() )
         return FALSE;
 
-    if (osDatasets.size() != 0)
+    if (!osDatasets.empty())
     {
         char** papszTables = CSLTokenizeString2(osDatasets, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
@@ -228,6 +233,7 @@ int OGRAmigoCloudDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);
@@ -337,7 +343,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if (osDatasetId.size() == 0)
+    if (osDatasetId.empty())
         return OGRERR_NONE;
 
     if( !bDeferredCreation )
@@ -377,7 +383,7 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() > 0 )
+    if( !osAPIKey.empty() )
     {
         osURL += "?token=";
         osURL += osAPIKey;
@@ -477,7 +483,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() > 0 )
+    if( !osAPIKey.empty() )
     {
         osURL += "?token=";
         osURL += osAPIKey;
@@ -574,7 +580,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() > 0 )
+    if( !osAPIKey.empty() )
     {
         osURL += "?token=";
         osURL += osAPIKey;
@@ -668,7 +674,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */
     /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() > 0 )
+    if( !osAPIKey.empty() )
     {
         osSQL += "?token=";
         osSQL += osAPIKey;

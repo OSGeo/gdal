@@ -115,14 +115,14 @@ class JP2KAKDataset : public GDALJP2AbstractDataset
                               int, int *,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
   public:
                 JP2KAKDataset();
     virtual ~JP2KAKDataset();
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+                                    int, int *, GDALProgressFunc, void * ) override;
 
     static void KakaduInitialize();
     static GDALDataset *Open( GDALOpenInfo * );
@@ -161,7 +161,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
     int            HasExternalOverviews()
                    { return GDALPamRasterBand::GetOverviewCount() != 0; }
@@ -172,13 +172,13 @@ class JP2KAKRasterBand : public GDALPamRasterBand
                                   jp2_channels, JP2KAKDataset * );
     virtual ~JP2KAKRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual int    GetOverviewCount();
-    virtual GDALRasterBand *GetOverview( int );
+    virtual int    GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview( int ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 
     // internal
 
@@ -200,13 +200,12 @@ class kdu_cpl_error_message : public kdu_thread_safe_message
 public: // Member classes
     using kdu_thread_safe_message::put_text;
 
-    kdu_cpl_error_message( CPLErr eErrClass )
-    {
-        m_eErrClass = eErrClass;
-        m_pszError = NULL;
-    }
+    explicit kdu_cpl_error_message( CPLErr eErrClass ) :
+        m_eErrClass ( eErrClass ),
+        m_pszError ( NULL )
+    {}
 
-    void put_text(const char *string)
+    void put_text(const char *string) override
     {
         if( m_pszError == NULL )
             m_pszError = CPLStrdup( string );
@@ -220,7 +219,7 @@ public: // Member classes
 
     class JP2KAKException {};
 
-    void flush(bool end_of_message=false)
+    void flush(bool end_of_message=false) override
     {
         kdu_thread_safe_message::flush(end_of_message);
 
@@ -629,7 +628,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         if( poBand == NULL )
                             CPLError( CE_Fatal, CPLE_AppDefined,
                                       "Dynamic cast failed" );
-                        if( poBand->nDiscardLevels == nDiscardLevels )
+                        else if( poBand->nDiscardLevels == nDiscardLevels )
                             break;
                     }
                     if( iOver == poBaseBand->GetOverviewCount() )
@@ -886,7 +885,10 @@ CPLErr JP2KAKDataset::IBuildOverviews( const char *pszResampling,
         JP2KAKRasterBand *poBand =
             dynamic_cast<JP2KAKRasterBand *>( GetRasterBand( iBand+1 ) );
         if( poBand == NULL )
+        {
             CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
+            return CE_Failure;
+        }
         for( int i = 0; i < poBand->nOverviewCount; i++ )
             delete poBand->papoOverviewBand[i];
 
@@ -1917,7 +1919,10 @@ JP2KAKDataset::TestUseBlockIO( int nXOff, int nYOff, int nXSize, int nYSize,
     JP2KAKRasterBand *poWrkBand =
         dynamic_cast<JP2KAKRasterBand *>( GetRasterBand(1) );
     if( poWrkBand == NULL )
+    {
         CPLError( CE_Fatal, CPLE_AppDefined, "Dynamic cast failed" );
+        return FALSE;
+    }
     if( poWrkBand->HasExternalOverviews() )
     {
         int nXOff2=nXOff;
@@ -2239,6 +2244,8 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
         delete poROIImage;
 
     return bRet;
+    // For some reason thinkgs that engines and lines are leaking
+    // cppcheck-suppress memleak
 }
 
 /************************************************************************/

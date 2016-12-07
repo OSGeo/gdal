@@ -997,7 +997,7 @@ bool GMLParseXSD( const char *pszFile,
 
     CPLDestroyXMLNode( psXSDTree );
 
-    if( aosClasses.size() > 0 )
+    if( !aosClasses.empty() )
     {
         return true;
     }

@@ -230,7 +230,7 @@ public:
     SGIDataset();
     virtual ~SGIDataset();
 
-    virtual CPLErr GetGeoTransform(double*);
+    virtual CPLErr GetGeoTransform(double*) override;
     static GDALDataset* Open(GDALOpenInfo*);
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
@@ -250,9 +250,9 @@ class SGIRasterBand : public GDALPamRasterBand
 public:
     SGIRasterBand(SGIDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int, int, void*);
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock(int, int, void*) override;
+    virtual CPLErr IWriteBlock(int, int, void*) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -537,7 +537,13 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         return NULL;
 
     ImageRec tmpImage;
-    memcpy(&tmpImage, poOpenInfo->pabyHeader, 12);
+    memcpy(&tmpImage.imagic, poOpenInfo->pabyHeader + 0, 2);
+    memcpy(&tmpImage.type,   poOpenInfo->pabyHeader + 2, 1);
+    memcpy(&tmpImage.bpc,    poOpenInfo->pabyHeader + 3, 1);
+    memcpy(&tmpImage.dim,    poOpenInfo->pabyHeader + 4, 2);
+    memcpy(&tmpImage.xsize,  poOpenInfo->pabyHeader + 6, 2);
+    memcpy(&tmpImage.ysize,  poOpenInfo->pabyHeader + 8, 2);
+    memcpy(&tmpImage.zsize,  poOpenInfo->pabyHeader + 10, 2);
     tmpImage.Swap();
 
     if(tmpImage.imagic != 474)

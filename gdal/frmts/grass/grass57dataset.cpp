@@ -95,7 +95,7 @@ CPL_CVSID("$Id$");
 /*                         Grass2CPLErrorHook()                         */
 /************************************************************************/
 
-int Grass2CPLErrorHook( char * pszMessage, int bFatal )
+static int Grass2CPLErrorHook( char * pszMessage, int bFatal )
 
 {
     if( !bFatal )
@@ -133,8 +133,8 @@ class GRASSDataset : public GDALDataset
                  GRASSDataset();
                  ~GRASSDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -177,16 +177,16 @@ class GRASSRasterBand : public GDALRasterBand
                                     const char *, const char * );
     virtual        ~GRASSRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IRasterIO ( GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
                                GSpacing nPixelSpace,
                                GSpacing nLineSpace,
-                               GDALRasterIOExtraArg* psExtraArg);
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
+                               GDALRasterIOExtraArg* psExtraArg) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
   private:
     CPLErr ResetReading( struct Cell_head * );
@@ -196,21 +196,21 @@ class GRASSRasterBand : public GDALRasterBand
 /*                          GRASSRasterBand()                           */
 /************************************************************************/
 
-GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
-                                  const char * pszMapset,
-                                  const char * pszCellName )
+GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDSIn, int nBandIn,
+                                  const char * pszMapsetIn,
+                                  const char * pszCellNameIn )
 
 {
     struct Cell_head sCellInfo;
 
     // Note: GISDBASE, LOCATION_NAME ans MAPSET was set in GRASSDataset::Open
 
-    this->poDS = poDS;
-    this->nBand = nBand;
+    this->poDS = poDSIn;
+    this->nBand = nBandIn;
     this->valid = false;
 
-    this->pszCellName = G_store ( (char *) pszCellName );
-    this->pszMapset = G_store ( (char *) pszMapset );
+    this->pszCellName = G_store ( (char *) pszCellNameIn );
+    this->pszMapset = G_store ( (char *) pszMapsetIn );
 
     G_get_cellhd( (char *) pszCellName, (char *) pszMapset, &sCellInfo );
     nGRSType = G_raster_map_type( (char *) pszCellName, (char *) pszMapset );
@@ -292,15 +292,15 @@ GRASSRasterBand::GRASSRasterBand( GRASSDataset *poDS, int nBand,
         nativeNulls = true;
     }
 
-    nBlockXSize = poDS->nRasterXSize;
+    nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    G_set_window( &(((GRASSDataset *)poDS)->sCellInfo) );
+    G_set_window( &(poDSIn->sCellInfo) );
     if ( (hCell = G_open_cell_old((char *) pszCellName, (char *) pszMapset)) < 0 ) {
         CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
         return;
     }
-    G_copy((void *) &sOpenWindow, (void *) &(((GRASSDataset *)poDS)->sCellInfo), sizeof(struct Cell_head));
+    G_copy((void *) &sOpenWindow, (void *) &(poDSIn->sCellInfo), sizeof(struct Cell_head));
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a color table?                                       */
@@ -474,7 +474,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 /*                                                                      */
 /************************************************************************/
 
-CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+CPLErr GRASSRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
                                     void *pImage )
 
 {
@@ -528,7 +528,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
                                    GDALDataType eBufType,
                                    GSpacing nPixelSpace,
                                     GSpacing nLineSpace,
-                                    GDALRasterIOExtraArg* psExtraArg )
+                                    GDALRasterIOExtraArg* /*psExtraArg*/ )
 {
     /* GRASS library does that, we have only calculate and reset the region in map units
      * and if the region has changed, reopen the raster */
@@ -537,6 +537,7 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     struct Cell_head sWindow;
     struct Cell_head *psDsWindow;
 
+    if( eRWFlag != GF_Read ) return CE_Failure;
     if ( ! this->valid ) return CE_Failure;
 
     psDsWindow = &(((GRASSDataset *)poDS)->sCellInfo);
@@ -731,6 +732,9 @@ GRASSDataset::GRASSDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    pszGisdbase = NULL;
+    pszLocation = NULL;
+    pszElement = NULL;
 }
 
 /************************************************************************/

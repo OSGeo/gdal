@@ -27,7 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "reader_spot.h"
+
+#include <ctime>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "gdal_mdreader.h"
 
 CPL_CVSID("$Id$");
 
@@ -84,7 +93,7 @@ GDALMDReaderSpot::GDALMDReaderSpot(const char *pszPath,
         }
     }
 
-    if(m_osIMDSourceFilename.size())
+    if(!m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderSpot", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
 }

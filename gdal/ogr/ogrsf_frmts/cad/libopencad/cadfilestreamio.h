@@ -38,7 +38,7 @@
 class CADFileStreamIO : public CADFileIO
 {
 public:
-    CADFileStreamIO(const char* pszFilePath);
+    explicit             CADFileStreamIO(const char* pszFilePath);
     virtual             ~CADFileStreamIO();
 
     virtual const char* ReadLine() override;

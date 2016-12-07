@@ -1027,7 +1027,7 @@ class GDAL_ThreadedHttpServer(Thread):
 
     def stop(self):
         self.server.stop_server()
-        # Explictly destroy the object so that the socket is really closed
+        # Explicitly destroy the object so that the socket is really closed
         del self.server
 
     def run_server(self, timeout):

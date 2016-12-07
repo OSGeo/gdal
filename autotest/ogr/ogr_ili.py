@@ -667,7 +667,8 @@ def ogr_interlis1_13():
             gdaltest.post_reason( 'field value wrong.' )
             return 'fail'
 
-    geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606)),COMPOUNDCURVE ((747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326)))']
+    # FIXME: note this is an invalid curve polygon. The two rings are completely disjoint, so this should be a multisurface instead.
+    geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((747951.24 265833.326,747955.101 265828.716,747954.975 265827.862,747951.166 265828.348,747951.24 265833.326)),COMPOUNDCURVE ((747925.762 265857.606,747927.618 265861.533,747928.237 265860.794,747930.956 265857.547,747925.762 265857.606)))']
 
     if feat.GetGeomFieldCount() != len(geom_field_values):
         gdaltest.post_reason( 'geom field count wrong.' )
@@ -798,6 +799,20 @@ def ogr_interlis1_13():
     feat = lyr.GetNextFeature()
 
     geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((698298.028 246754.897,698295.899 246752.775,698293.113 246755.525,698295.243 246757.648),(698295.243 246757.648,698298.028 246754.897)))']
+
+    for i in range(feat.GetGeomFieldCount()):
+        geom = feat.GetGeomFieldRef(i)
+        if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
+            feat.DumpReadable()
+            return 'fail'
+
+
+    # Test assembling curves not in "right" order
+    ds = ogr.Open('data/ili/surface_complex.itf,data/ili/surface.imd')
+    lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL')
+    feat = lyr.GetNextFeature()
+
+    geom_field_values = ['CURVEPOLYGON (COMPOUNDCURVE ((747955.101 265828.716,747954.975 265827.862),(747954.975 265827.862,747951.166 265828.348,747951.24 265833.326),(747951.24 265833.326,747955.101 265828.716)))']
 
     for i in range(feat.GetGeomFieldCount()):
         geom = feat.GetGeomFieldRef(i)
@@ -1358,7 +1373,7 @@ def ogr_interlis2_4():
             ok = ogrtest.check_feature_geometry(geom, val) == 0
         if not ok:
             gdaltest.post_reason('geom check failed.')
-            print geom
+            print(geom)
             return 'fail'
 
     return 'success'

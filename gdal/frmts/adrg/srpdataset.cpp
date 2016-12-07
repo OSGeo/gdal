@@ -81,12 +81,12 @@ public:
     SRPDataset();
     virtual     ~SRPDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char **GetFileList();
+    virtual char **GetFileList() override;
 
     bool                GetFromRecord( const char* pszFileName,
                                        DDFRecord * record );
@@ -109,12 +109,12 @@ class SRPRasterBand : public GDALPamRasterBand
   public:
                             SRPRasterBand( SRPDataset *, int );
 
-    virtual CPLErr          IReadBlock( int, int, void * );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = NULL );
+    virtual double          GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/
@@ -242,7 +242,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      If this is compressed data, we read a goodly chunk of data      */
 /*      and then decode it.                                             */
 /* -------------------------------------------------------------------- */
-    else if( l_poDS->PCB != 0 )
+    else
     {
         const int nBufSize = 128*128*2;
         GByte *pabyCData = (GByte *) CPLCalloc(nBufSize,1);
@@ -851,7 +851,7 @@ char **SRPDataset::GetFileList()
 
 {
     char **papszFileList = GDALPamDataset::GetFileList();
-    if (osGENFileName.size() > 0 && osIMGFileName.size() > 0)
+    if (!osGENFileName.empty() && !osIMGFileName.empty())
     {
         CPLString osMainFilename = GetDescription();
         VSIStatBufL  sStat;
@@ -1134,7 +1134,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                     CPLString osGENFileName="";
 
                     int bFound=0;
-                    if (bFound ==0)
+
                     {
                         char** papszDirContent = VSIReadDir(osDatasetDir.c_str());
                         char** ptrDir = papszDirContent;
@@ -1154,6 +1154,7 @@ char** SRPDataset::GetGENListFromTHF(const char* pszFileName)
                             CSLDestroy(papszDirContent);
                         }
                     }
+
                     /* If not found in sub directory then search in the same directory of the THF file */
                     if (bFound ==0)
                     {
@@ -1580,8 +1581,8 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    if (osGENFileName.size() > 0 &&
-        osIMGFileName.size() > 0)
+    if (!osGENFileName.empty() &&
+        !osIMGFileName.empty())
     {
 
         if( poOpenInfo->eAccess == GA_Update )

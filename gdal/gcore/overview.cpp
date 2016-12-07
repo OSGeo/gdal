@@ -27,13 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_priv.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+
+#include <algorithm>
 #include <limits>
 #include <vector>
 
-#include "gdal_priv.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+// TODO(schwehr): Fix warning: Software emulation of SSE2.
+// #include "gdalsse_priv.h"
 #include "gdalwarper.h"
-
-#include <algorithm>
 
 CPL_CVSID("$Id$");
 

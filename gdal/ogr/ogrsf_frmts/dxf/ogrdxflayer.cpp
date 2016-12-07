@@ -126,7 +126,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       case 100:
       {
           CPLString osSubClass = poFeature->GetFieldAsString("SubClasses");
-          if( osSubClass.size() > 0 )
+          if( !osSubClass.empty() )
               osSubClass += ":";
           osSubClass += pszValue;
           poFeature->SetField( "SubClasses", osSubClass.c_str() );
@@ -162,7 +162,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       {
           CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
 
-          if( osAggregate.size() > 0 )
+          if( !osAggregate.empty() )
               osAggregate += " ";
           osAggregate += pszValue;
 
@@ -290,7 +290,7 @@ private:
     double dfDeterminant;
     double aadfInverse[4][4];
 
-    double Det2x2( double a, double b, double c, double d )
+    static double Det2x2( double a, double b, double c, double d )
     {
         return a*d - b*c;
     }
@@ -352,30 +352,30 @@ public:
     }
     }
 
-    void CrossProduct(const double *a, const double *b, double *vResult) {
+    static void CrossProduct(const double *a, const double *b, double *vResult) {
         vResult[0] = a[1] * b[2] - a[2] * b[1];
         vResult[1] = a[2] * b[0] - a[0] * b[2];
         vResult[2] = a[0] * b[1] - a[1] * b[0];
     }
 
-    void Scale2Unit(double* adfV) {
-    double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-    if (dfLen != 0)
-    {
-            adfV[0] /= dfLen;
-            adfV[1] /= dfLen;
-            adfV[2] /= dfLen;
+    static void Scale2Unit(double* adfV) {
+        double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
+        if (dfLen != 0)
+        {
+                adfV[0] /= dfLen;
+                adfV[1] /= dfLen;
+                adfV[2] /= dfLen;
+        }
     }
-    }
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *adfX, double *adfY, double *adfZ,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             for( int i = 0; i < nCount; i++ )
             {
@@ -2048,21 +2048,22 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() { return NULL; }
-    OGRSpatialReference *GetTargetCS() { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
-                   double *x, double *y, double *z )
+                   double *x, double *y, double *z ) override
         { return TransformEx( nCount, x, y, z, NULL ); }
 
     int TransformEx( int nCount,
                      double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL )
+                     int *pabSuccess = NULL ) override
         {
             for( int i = 0; i < nCount; i++ )
             {
                 x[i] *= dfXScale;
                 y[i] *= dfYScale;
-                z[i] *= dfZScale;
+                if( z )
+                    z[i] *= dfZScale;
 
                 const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
                 const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
@@ -2072,7 +2073,8 @@ public:
 
                 x[i] += dfXOffset;
                 y[i] += dfYOffset;
-                z[i] += dfZOffset;
+                if( z )
+                    z[i] += dfZOffset;
 
                 if( pabSuccess )
                     pabSuccess[i] = TRUE;

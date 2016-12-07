@@ -121,6 +121,7 @@ static void Usage(const char* pszErrorMsg)
     printf("\n");
 
     if( pszErrorMsg != NULL )
+        // cppcheck-suppress nullPointer
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -189,6 +190,8 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
 #else
 
     struct sockaddr_in sockAddrIn;
+
+    memset( &sockAddrIn, 0, sizeof(sockAddrIn) );
 
     if( pnFamily )   *pnFamily = AF_INET;
     if( pnSockType ) *pnSockType = SOCK_STREAM;
@@ -440,6 +443,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     {
         struct sockaddr_un sockAddrUnix;
         int len;
+        memset( &sockAddrUnix, 0, sizeof(sockAddrUnix) );
 
         nListenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
         if (nListenSocket < 0)
@@ -483,6 +487,8 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
         struct timeval tv;
         fd_set read_fds;
         int nMaxSocket;
+
+        memset(&tv, 0, sizeof(tv));
 
         /* Select on the listen socket, and rip zombie children every second */
         do

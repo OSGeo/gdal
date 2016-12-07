@@ -31,6 +31,7 @@
 
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -976,7 +977,7 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
             new VRTRawRasterBand( this, GetRasterCount() + 1, eType );
 
         char* l_pszVRTPath = CPLStrdup(CPLGetPath(GetDescription()));
-        if EQUAL(l_pszVRTPath, "")
+        if( EQUAL(l_pszVRTPath, "") )
         {
             CPLFree(l_pszVRTPath);
             l_pszVRTPath = NULL;
@@ -1617,7 +1618,7 @@ void VRTDataset::BuildVirtualOverviews()
     // Currently we expose virtual overviews only if the dataset is made of
     // a single SimpleSource/ComplexSource, in each band.
     // And if the underlying sources have overviews of course
-    if( m_apoOverviews.size() || m_apoOverviewsBak.size() )
+    if( !m_apoOverviews.empty() || !m_apoOverviewsBak.empty() )
         return;
 
     int nOverviews = 0;
@@ -1726,7 +1727,7 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     // Make implicit overviews invisible, but do not destroy them in case they
     // are already used.  Should the client do that?  Behaviour might undefined
     // in GDAL API?
-    if( m_apoOverviews.size() )
+    if( !m_apoOverviews.empty() )
     {
         m_apoOverviewsBak = m_apoOverviews;
         m_apoOverviews.resize(0);

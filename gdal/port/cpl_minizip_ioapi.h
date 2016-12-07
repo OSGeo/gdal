@@ -23,6 +23,8 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_vsi.h"
+#include "zlib.h"
+
 #define uLong64 vsi_l_offset
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)

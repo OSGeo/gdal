@@ -27,11 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_featurestyle.h"
 
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include <string>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_feature.h"
 
 CPL_CVSID("$Id$");
@@ -1334,14 +1345,14 @@ const char *OGR_STBL_GetLastStyleName( OGRStyleTableH hStyleTable)
 /****************************************************************************/
 
 /** Constructor */
-OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId )
+OGRStyleTool::OGRStyleTool( OGRSTClassId eClassId ) :
+    m_bModified(FALSE),
+    m_bParsed(FALSE),
+    m_dfScale(1.0),
+    m_eUnit(OGRSTUMM),
+    m_eClassId(eClassId),
+    m_pszStyleString(NULL)
 {
-    m_eClassId = eClassId;
-    m_dfScale = 1.0;
-    m_eUnit = OGRSTUMM;
-    m_pszStyleString = NULL;
-    m_bModified = FALSE;
-    m_bParsed = FALSE;
 }
 
 /************************************************************************/
@@ -1544,10 +1555,18 @@ GBool OGRStyleTool::GetRGBFromString( const char *pszColor, int &nRed,
    nTransparance = 255;
 
    // FIXME: should we really use sscanf here?
+   unsigned int unRed = 0;
+   unsigned int unGreen = 0;
+   unsigned int unBlue = 0;
+   unsigned int unTransparance = 0;
    if( pszColor )
        nCount = sscanf(pszColor, "#%2x%2x%2x%2x",
-                       &nRed, &nGreen, &nBlue, &nTransparance);
-
+                       &unRed, &unGreen, &unBlue, &unTransparance);
+   nRed = static_cast<int>(unRed);
+   nGreen = static_cast<int>(unGreen);
+   nBlue = static_cast<int>(unBlue);
+   if( nCount == 4 )
+        nTransparance = static_cast<int>(unTransparance);
    return nCount >= 3;
 }
 

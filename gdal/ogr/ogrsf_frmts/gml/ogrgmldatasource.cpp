@@ -351,7 +351,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     size_t nRead = VSIFReadL( szHeader, 1, sizeof(szHeader)-1, fp );
-    if (nRead <= 0)
+    if (nRead == 0)
     {
         if( fpToClose )
             VSIFCloseL( fpToClose );
@@ -378,7 +378,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
             return false;
 
         nRead = VSIFReadL( szHeader, 1, sizeof(szHeader) - 1, fp );
-        if (nRead <= 0)
+        if (nRead == 0)
         {
             VSIFCloseL( fpToClose );
             return false;
@@ -751,7 +751,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Can we find a GML Feature Schema (.gfs) for the input file?     */
 /* -------------------------------------------------------------------- */
-    if( !bHaveSchema && osXSDFilename.size() == 0)
+    if( !bHaveSchema && osXSDFilename.empty())
     {
         VSIStatBufL sGFSStatBuf;
         if( bCheckAuxFile && VSIStatL( osGFSFilename, &sGFSStatBuf ) == 0 )
@@ -795,7 +795,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
         char** papszTypeNames = NULL;
 
         VSIStatBufL sXSDStatBuf;
-        if (osXSDFilename.size() == 0)
+        if (osXSDFilename.empty())
         {
             osXSDFilename = CPLResetExtension( pszFilename, "xsd" );
             if( bCheckAuxFile && VSIStatExL( osXSDFilename, &sXSDStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
@@ -847,7 +847,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             GMLRegistryFeatureType& oFeatureType =
                                         oNamespace.aoFeatureTypes[iTypename];
 
-                            if ( oFeatureType.osElementValue.size() )
+                            if ( !oFeatureType.osElementValue.empty() )
                                 pszElementToFind = CPLSPrintf("%s:%s>%s",
                                                               oNamespace.osPrefix.c_str(),
                                                               oFeatureType.osElementName.c_str(),
@@ -862,7 +862,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                             /* confused with a top-level BasicPropertyUnit feature... */
                             if( osHeader.find(pszElementToFind) != std::string::npos )
                             {
-                                if( oFeatureType.osSchemaLocation.size() )
+                                if( !oFeatureType.osSchemaLocation.empty() )
                                 {
                                     osXSDFilename = oFeatureType.osSchemaLocation;
                                     if( STARTS_WITH(osXSDFilename, "http://") ||
@@ -989,7 +989,7 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                     GMLFeatureClass* poClass = *oIter;
 
                     delete poClass;
-                    oIter ++;
+                    ++oIter;
                 }
                 aosClasses.resize(0);
                 bHaveSchema = false;
@@ -1009,14 +1009,14 @@ bool OGRGMLDataSource::Open( GDALOpenInfo* poOpenInfo )
                         bHasFeatureProperties = true;
                         break;
                     }
-                    oIter ++;
+                    ++ oIter;
                 }
 
                 oIter = aosClasses.begin();
                 while (oIter != oEndIter)
                 {
                     GMLFeatureClass* poClass = *oIter;
-                    oIter ++;
+                    ++ oIter;
 
                     /* We have no way of knowing if the geometry type is 25D */
                     /* when examining the xsd only, so if there was a hint */
@@ -2515,13 +2515,13 @@ class OGRGMLSingleFeatureLayer : public OGRLayer
     int                 iNextShapeId;
 
   public:
-                        OGRGMLSingleFeatureLayer(int nVal );
+    explicit            OGRGMLSingleFeatureLayer(int nVal );
     virtual ~OGRGMLSingleFeatureLayer() { poFeatureDefn->Release(); }
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -2564,7 +2564,7 @@ OGRLayer * OGRGMLDataSource::ExecuteSQL( const char *pszSQLCommand,
     if (poReader != NULL && EQUAL(pszSQLCommand, "SELECT ValidateSchema()"))
     {
         bool bIsValid = false;
-        if (osXSDFilename.size())
+        if (!osXSDFilename.empty() )
         {
             CPLErrorReset();
             bIsValid = CPL_TO_BOOL(CPLValidateXML(osFilename, osXSDFilename, NULL));

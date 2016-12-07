@@ -75,14 +75,14 @@ class ADRGDataset : public GDALPamDataset
                  ADRGDataset();
     virtual     ~ADRGDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform );
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList();
+    virtual char      **GetFileList() override;
 
     void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
 
@@ -110,11 +110,11 @@ class ADRGRasterBand : public GDALPamRasterBand
   public:
                             ADRGRasterBand( ADRGDataset *, int );
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = NULL );
+    virtual double          GetNoDataValue( int *pbSuccess = NULL ) override;
 
 //    virtual int             GetOverviewCount();
 //    virtual GDALRasterBand* GetOverview(int i);
@@ -330,7 +330,7 @@ static unsigned int WriteSubFieldInt(VSILFILE* fd, int val, unsigned int size)
 {
     char* str = (char*)CPLMalloc(size+1);
     char formatStr[32];
-    snprintf( formatStr, sizeof(formatStr), "%%0%dd", size);
+    snprintf( formatStr, sizeof(formatStr), "%%0%ud", size);
     snprintf( str, size+1, formatStr, val);
     VSIFWriteL(str, 1, size, fd);
     CPLFree(str);
@@ -540,7 +540,9 @@ ADRGDataset::ADRGDataset() :
     fdTHF(NULL),
     bGeoTransformValid(0),
     nNextAvailableBlock(0)
-{}
+{
+    memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
+}
 
 /************************************************************************/
 /*                          ~ADRGDataset()                              */
@@ -651,7 +653,7 @@ char ** ADRGDataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
 
-    if( osGENFileName.size() > 0 && osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() && !osIMGFileName.empty() )
     {
         CPLString osMainFilename = GetDescription();
         VSIStatBufL sStat;
@@ -1532,8 +1534,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    if( osGENFileName.size() > 0 &&
-        osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() &&
+        !osIMGFileName.empty() )
     {
         if( poOpenInfo->eAccess == GA_Update )
         {
@@ -1775,7 +1777,7 @@ static void WriteGENFile_DataSetDescriptionRecord(VSILFILE* fd)
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOZ */
     sizeOfFields[nFields] += WriteSubFieldInt(fd, 1, 2); /* NOS */
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1859,7 +1861,7 @@ static void WriteGENFile_OverviewRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -1964,7 +1966,7 @@ static void WriteGENFile_GeneralInformationRecord(
         sizeOfFields[nFields] += WriteSubFieldInt(fd, TILEINDEX[i], 5);  // TSI
     }
     sizeOfFields[nFields] += WriteFieldTerminator(fd);
-    nFields++;
+    /* nFields++; */
 
     FinishWriteLeader(fd, pos, 9, 9, 3, N_ELEMENTS(sizeOfFields),
                       sizeOfFields, nameOfFields);
@@ -2127,7 +2129,7 @@ void ADRGDataset::WriteTHFFile()
             WriteLongitude(fd, LSO + nRasterXSize * adfGeoTransform[1]);  // NEO
         sizeOfFields[nFields] += WriteLatitude(fd, PSO); /* NEA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2165,7 +2167,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] +=
             WriteSubFieldStr(fd, "MIL-A-89007", 20); /* SPA */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2239,7 +2241,7 @@ void ADRGDataset::WriteTHFFile()
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS1 */
         sizeOfFields[nFields] += WriteSubFieldInt(fd, 0, 5); /* WS2 */
         sizeOfFields[nFields] += WriteFieldTerminator(fd);
-        nFields++;
+        /* nFields++; */
 
         FinishWriteLeader(fd, pos, 3, 4, 3, N_ELEMENTS(sizeOfFields),
                           sizeOfFields, nameOfFields);
@@ -2296,7 +2298,7 @@ void ADRGDataset::WriteTHFFile()
             strcat(tmp, "02.IMG");
             sizeOfFields[nFields] += WriteSubFieldStr(fd, tmp, 51); /* VFF */
             sizeOfFields[nFields] += WriteFieldTerminator(fd);
-            nFields++;
+            /* nFields++; */
         }
 
         FinishWriteLeader(fd, pos, 9, 9, 3, nTotalFields,

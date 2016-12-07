@@ -60,6 +60,11 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn, int bUpdate )
     papszAllColumns = NULL;
     bHaveLayerInfo = FALSE;
     bUseNSTRING = FALSE;
+
+    pszOwnerName = NULL;
+    pszDbTableName = NULL;
+    bVersioned = FALSE;
+    bQueryActive = FALSE;
 }
 
 /************************************************************************/
@@ -350,8 +355,15 @@ int OGRSDELayer::NeedLayerInfo()
 
         LFLOAT falsex, falsey, xyunits;
         nSDEErr = SE_coordref_get_xy( hCoordRef, &falsex, &falsey, &xyunits );
-        CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
-                  pszDbTableName, falsex, falsey, xyunits );
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_coordref_get_xy" );
+        }
+        else
+        {
+            CPLDebug( "SDE", "SE_coordref_get_xy(%s) = %g/%g/%g",
+                    pszDbTableName, falsex, falsey, xyunits );
+        }
     }
 
     return TRUE;
@@ -383,7 +395,7 @@ OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
         return wkbUnknown;
     }
 
-    int bIsMultipart = ( nShapeTypeMask & SE_MULTIPART_TYPE_MASK ? 1 : 0);
+    int bIsMultipart = (nShapeTypeMask & SE_MULTIPART_TYPE_MASK) ? 1 : 0;
     nShapeTypeMask &= ~SE_MULTIPART_TYPE_MASK;
 
     // Since we assume that all layers can bear a NULL geometry,
@@ -624,7 +636,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         SE_SHAPE hRectShape;
         SHORT nSearchOrder = SE_SPATIAL_FIRST;
 
-        if( osAttributeFilter.size() > 0 )
+        if( !osAttributeFilter.empty() )
         {
             const char *pszOrder = CPLGetConfigOption( "OGR_SDE_SEARCHORDER",
                                                        "ATTRIBUTE_FIRST" );
@@ -1188,6 +1200,7 @@ OGRErr OGRSDELayer::TranslateOGRGeometry( OGRGeometry *poGeom,
                 poDS->IssueSDEError( nSDEErr, "SE_shape_make_nil" );
                 return OGRERR_FAILURE;
             }
+            return OGRERR_NONE;
         }
 
         // Get total number of points in polygon

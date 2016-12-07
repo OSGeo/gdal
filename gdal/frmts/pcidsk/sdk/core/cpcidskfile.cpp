@@ -368,8 +368,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
     //see function BuildChildrenLayer in jtfile.cpp, the call on GDBSegNext
     //in the loop on gasTypeTable can create issue in PCIDSKSegNext 
     //(in pcic/gdbfrtms/pcidskopen.cpp)
-    snprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
-
+    CPLsnprintf( type_str, sizeof(type_str), "%03d", (type % 1000) );
     for( i = previous; i < segment_count; i++ )
     {
         if( type != SEG_UNKNOWN 
@@ -767,8 +766,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
             new_file.file = interfaces.OpenEDB( filename, "r+" );
             new_file.writable = true;
         } 
-        catch( PCIDSK::PCIDSKException ex ) {}
-        catch( std::exception ex ) {}
+        catch( const PCIDSK::PCIDSKException& ) {}
+        catch( const std::exception& ) {}
     }
 
     if( new_file.file == NULL )
@@ -809,7 +808,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 /* -------------------------------------------------------------------- */
 /*      Does this reference the PCIDSK file itself?                     */
 /* -------------------------------------------------------------------- */
-    if( filename.size() == 0 )
+    if( filename.empty() )
     {
         *io_handle_pp = &io_handle;
         *io_mutex_pp = &io_mutex;

@@ -27,6 +27,13 @@
  ****************************************************************************/
 
 #include "commonutils.h"
+
+#include <cstdio>
+#include <cstring>
+
+#include <string>
+
+#include "cpl_conv.h"
 #include "cpl_string.h"
 #include "gdal.h"
 
@@ -85,12 +92,12 @@ void CheckExtensionConsistency(const char* pszDestFilename,
             if( hDriver != hThisDrv &&
                 DoesDriverHandleExtension(hDriver, osExt) )
             {
-                if (osConflictingDriverList.size())
+                if (!osConflictingDriverList.empty() )
                     osConflictingDriverList += ", ";
                 osConflictingDriverList += GDALGetDriverShortName(hDriver);
             }
         }
-        if (osConflictingDriverList.size())
+        if (!osConflictingDriverList.empty() )
         {
             fprintf(
                 stderr,

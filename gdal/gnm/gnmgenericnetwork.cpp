@@ -1122,6 +1122,7 @@ CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVers
     {
         if(m_soSRS.size() >= nFieldSize)
         {
+            // cppcheck-suppress knownConditionTrueFalse
             if(StoreNetworkSrs() != CE_None)
                 return CE_Failure;
         }
@@ -1257,7 +1258,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
         }
         else if(EQUALN(pKey, GNM_MD_RULE, nRulePrefixLen))
         {
-            moRules[atoi(pKey + nRulePrefixLen)] = pValue;
+            moRules[atoi(pKey + nRulePrefixLen)] = GNMRule(pValue);
         }
 
         OGRFeature::DestroyFeature(poFeature);
@@ -1272,6 +1273,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
 
     if(m_soSRS.empty())
     {
+        // cppcheck-suppress knownConditionTrueFalse
         if(LoadNetworkSrs() != CE_None)
             return CE_Failure;
     }

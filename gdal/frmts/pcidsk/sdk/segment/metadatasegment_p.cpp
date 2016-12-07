@@ -67,7 +67,7 @@ MetadataSegment::~MetadataSegment()
 
 void MetadataSegment::Synchronize()
 {
-    if( loaded && update_list.size() > 0 )
+    if( loaded && !update_list.empty() )
         Save();
 }
 
@@ -248,9 +248,9 @@ void MetadataSegment::Save()
 /* -------------------------------------------------------------------- */
     std::map<std::string,std::string>::iterator it;
 
-    for( it = update_list.begin(); it != update_list.end(); it++ )
+    for( it = update_list.begin(); it != update_list.end(); ++it )
     {
-        if( it->second.size() == 0 )
+        if( it->second.empty() )
             continue;
 
         std::string line;

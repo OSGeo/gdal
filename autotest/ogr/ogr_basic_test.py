@@ -694,6 +694,32 @@ def ogr_basic_14():
     return 'success'
 
 ###############################################################################
+# Test exceptions with OGRErr return code
+
+def ogr_basic_15():
+
+    ds = ogr.Open('data/poly.shp')
+    lyr = ds.GetLayer(0)
+
+    used_exceptions_before = ogr.GetUseExceptions()
+    ogr.UseExceptions()
+    try:
+        lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    except RuntimeError as e:
+        ok = str(e).find('CreateFeature : unsupported operation on a read-only datasource') >= 0
+        if not ok:
+            print('Got: %s' + str(e))
+            return 'fail'
+        return 'success'
+    finally:
+        if used_exceptions_before == 0:
+            ogr.DontUseExceptions()
+
+    print('Expected exception')
+    return 'fail'
+
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -717,6 +743,7 @@ gdaltest_list = [
     ogr_basic_12,
     ogr_basic_13,
     ogr_basic_14,
+    ogr_basic_15,
     ogr_basic_cleanup ]
 
 #gdaltest_list = [ ogr_basic_13 ]

@@ -211,8 +211,8 @@ public:
     virtual        ~DODSDataset();
 
     // Overridden GDALDataset methods
-    CPLErr GetGeoTransform(double *padfTransform);
-    const char *GetProjectionRef();
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    const char *GetProjectionRef() override;
 
     /// Open is not a method in GDALDataset; it's the driver.
     static GDALDataset *Open(GDALOpenInfo *);
@@ -260,13 +260,13 @@ public:
                     int nOverviewFactor );
     virtual ~DODSRasterBand();
 
-    virtual int    GetOverviewCount();
-    virtual GDALRasterBand *GetOverview( int );
-    virtual CPLErr IReadBlock(int, int, void *);
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual CPLErr          SetNoDataValue( double );
-    virtual double          GetNoDataValue( int * );
+    virtual int    GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview( int ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual CPLErr          SetNoDataValue( double ) override;
+    virtual double          GetNoDataValue( int * ) override;
 };
 
 /************************************************************************/
@@ -488,7 +488,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /*      Eventually we will want to support arrays with more than two    */
 /*      dimensions ... but not quite yet.                               */
 /* -------------------------------------------------------------------- */
-    if( poArray->dimensions() != 2 )
+    if( poArray == NULL || poArray->dimensions() != 2 )
         return papszResultList;
 
 /* -------------------------------------------------------------------- */
@@ -516,7 +516,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
         iXDim = 0;
         iYDim = 1;
     }
-    else if( dim1_name == "easting" && dim2_name == "northing" )
+    else if( dim1_name == "northing" && dim2_name == "easting" )
     {
         iXDim = 1;
         iYDim = 0;
@@ -1130,6 +1130,7 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
         throw InternalErr(
             CPLSPrintf( "Could not find DDS definition for variable %s.",
                         oVarNameIn.c_str() ) );
+        // cppcheck-suppress duplicateBreak
         return;
     }
 
@@ -1290,6 +1291,8 @@ void DODSRasterBand::HarvestDAS()
 
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
+    if( poDODS == NULL )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Try and fetch the corresponding DAS subtree if it exists.       */

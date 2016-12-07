@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ################################################################################
 #  Project: OGR CAD Driver
-#  Purpose: Tests OGR CAD Driver capabilites
+#  Purpose: Tests OGR CAD Driver capabilities
 #  Author: Alexandr Borzykh, mush3d at gmail.com
 #  Author: Dmitry Baryshnikov, polimax@mail.ru
 #  Language: Python
@@ -36,10 +36,11 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
-# Check driver existance.
+# Check driver existence.
 def ogr_cad_1():
 
     gdaltest.cad_ds = None
@@ -114,7 +115,7 @@ def ogr_cad_2():
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason( 'got unexpected style string on feture 0:\n%s\ninstead of:\n%s.'
+        gdaltest.post_reason( 'got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
                               % ( feat.GetStyleString(), expected_style ) )
         return 'fail'
 
@@ -346,7 +347,7 @@ def ogr_cad_5():
     return 'success'
 
 ###############################################################################
-# Check reading of a text (point with attached 'text' attribute, and setted up
+# Check reading of a text (point with attached 'text' attribute, and set up
 # OGR feature style string to LABEL.
 def ogr_cad_6():
     if gdaltest.cad_dr is None:
@@ -417,6 +418,25 @@ def ogr_cad_8():
     return 'success'
 
 ###############################################################################
+# Open a not handled DWG version
+
+def ogr_cad_9():
+    if gdaltest.cad_dr is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/AC1018_signature.dwg')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    msg = gdal.GetLastErrorMsg()
+    if msg.find('does not support this version') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 def ogr_cad_cleanup():
     gdaltest.cad_layer = None
@@ -433,6 +453,7 @@ gdaltest_list = [
     ogr_cad_6,
     ogr_cad_7,
     ogr_cad_8,
+    ogr_cad_9,
     ogr_cad_cleanup ]
 
 if __name__ == '__main__':

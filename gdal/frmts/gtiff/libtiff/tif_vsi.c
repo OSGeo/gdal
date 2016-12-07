@@ -112,9 +112,10 @@ TIFFOpen(const char* name, const char* mode)
         char          szAccess[32];
         VSILFILE          *fp;
         TIFF          *tif;
+        char         *pszAccess = szAccess;
 
         a_out = 0;
-        szAccess[0] = '\0';
+        pszAccess[0] = '\0';
         for( i = 0; mode[i] != '\0'; i++ )
         {
             if( mode[i] == 'r'

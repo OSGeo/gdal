@@ -27,10 +27,18 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-#include <stdio.h>
 #ifdef WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -74,8 +82,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
 };
 
 /************************************************************************/
@@ -91,13 +99,13 @@ class VSIStdoutHandle CPL_FINAL : public VSIVirtualHandle
   public:
                       VSIStdoutHandle() : m_nOffset(0) {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 };
 
 /************************************************************************/
@@ -240,8 +248,8 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
 };
 
 /************************************************************************/
@@ -254,16 +262,16 @@ class VSIStdoutRedirectHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poHandle;
   public:
-                      VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle);
+              explicit VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle);
               virtual ~VSIStdoutRedirectHandle();
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Flush();
-    virtual int       Close();
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Flush() override;
+    virtual int       Close() override;
 };
 
 /************************************************************************/
@@ -383,8 +391,8 @@ VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
         return NULL;
     }
 
-    VSIVirtualHandle* poHandle = (VSIVirtualHandle* )VSIFOpenL(
-            pszFilename + strlen("/vsistdout_redirect/"), pszAccess);
+    VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(
+        VSIFOpenL(pszFilename + strlen("/vsistdout_redirect/"), pszAccess));
     if (poHandle == NULL)
         return NULL;
 

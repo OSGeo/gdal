@@ -1402,7 +1402,7 @@ OGRErr OGRPGDataSource::DeleteLayer( int iLayer )
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if (osLayerName.size() == 0)
+    if (osLayerName.empty())
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */
@@ -2225,6 +2225,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         return nUndefinedSRID;
 
     OGRSpatialReference oSRS(*poSRS);
+    // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = NULL;
 
     const char* pszAuthorityName = oSRS.GetAuthorityName(NULL);
@@ -2675,14 +2676,14 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
 
     virtual             ~OGRPGNoResetResultLayer();
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
 
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 
-    virtual OGRFeature *GetNextFeature();
+    virtual OGRFeature *GetNextFeature() override;
 
-    virtual CPLString   GetFromClauseForGetExtent() { CPLAssert(false); return ""; }
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) { poGFldDefn->nSRSId = -1; }
+    virtual CPLString   GetFromClauseForGetExtent() override { CPLAssert(false); return ""; }
+    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) override { poGFldDefn->nSRSId = -1; }
 };
 
 /************************************************************************/
@@ -2749,7 +2750,7 @@ class OGRPGMemLayerWrapper : public OGRLayer
       OGRLayer       *poMemLayer;
 
   public:
-                        OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
+                        explicit OGRPGMemLayerWrapper( GDALDataset  *poMemDSIn )
                         {
                             poMemDS = poMemDSIn;
                             poMemLayer = poMemDS->GetLayer(0);
@@ -2757,10 +2758,10 @@ class OGRPGMemLayerWrapper : public OGRLayer
 
                         virtual ~OGRPGMemLayerWrapper() { delete poMemDS; }
 
-    virtual void        ResetReading() { poMemLayer->ResetReading(); }
-    virtual OGRFeature *GetNextFeature() { return poMemLayer->GetNextFeature(); }
-    virtual OGRFeatureDefn *GetLayerDefn() { return poMemLayer->GetLayerDefn(); }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { poMemLayer->ResetReading(); }
+    virtual OGRFeature *GetNextFeature() override { return poMemLayer->GetNextFeature(); }
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poMemLayer->GetLayerDefn(); }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/

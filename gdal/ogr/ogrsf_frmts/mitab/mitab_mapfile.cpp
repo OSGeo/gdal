@@ -259,6 +259,7 @@ TABMAPFile::~TABMAPFile()
 int TABMAPFile::Open(const char *pszFname, const char* pszAccess, GBool bNoErrorMsg,
                      int nBlockSizeForCreate)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, bNoErrorMsg, nBlockSizeForCreate);
     else if( STARTS_WITH_CI(pszAccess, "w") )

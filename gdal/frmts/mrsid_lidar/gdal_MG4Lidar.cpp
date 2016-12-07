@@ -85,8 +85,8 @@ public:
    MG4LidarDataset();
    ~MG4LidarDataset();
    static GDALDataset *Open( GDALOpenInfo * );
-   CPLErr         GetGeoTransform( double * padfTransform );
-   const char *GetProjectionRef();
+   CPLErr         GetGeoTransform( double * padfTransform ) override;
+   const char *GetProjectionRef() override;
 
 protected:
    MG4PointReader *reader;
@@ -115,11 +115,11 @@ public:
    MG4LidarRasterBand( MG4LidarDataset *, int, CPLXMLNode *, const char * );
    ~MG4LidarRasterBand();
 
-   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev );
-   virtual int GetOverviewCount();
-   virtual GDALRasterBand * GetOverview( int i );
-   virtual CPLErr IReadBlock( int, int, void * );
-   virtual double GetNoDataValue( int *pbSuccess = NULL );
+   virtual CPLErr GetStatistics( int bApproxOK, int bForce, double *pdfMin, double *pdfMax, double *pdfMean, double *padfStdDev ) override;
+   virtual int GetOverviewCount() override;
+   virtual GDALRasterBand * GetOverview( int i ) override;
+   virtual CPLErr IReadBlock( int, int, void * ) override;
+   virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 
    protected:
    double getMaxValue();
@@ -138,12 +138,12 @@ public:
 /*                           MG4LidarRasterBand()                            */
 /************************************************************************/
 
-MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name )
+MG4LidarRasterBand::MG4LidarRasterBand( MG4LidarDataset *pods, int nband, CPLXMLNode *xmlBand, const char * name ) :
+    ChannelName( name )
 {
    this->poDS = pods;
    this->nBand = nband;
    this->poxmlBand = xmlBand;
-   this->ChannelName = name;
    this->Aggregation = NULL;
    nBlockXSize = pods->nBlockXSize;
    nBlockYSize = pods->nBlockYSize;
@@ -311,14 +311,13 @@ const DTYPE GetChannelElement(const ChannelData &channel, size_t idx)
 
 bool MG4LidarRasterBand::ElementPassesFilter(const PointData &pointdata, size_t i)
 {
-   bool bClassificationOK = true;
    bool bReturnNumOK = true;
 
    // Check if classification code is ok:  it was requested and it does match one of the requested codes
    const int classcode = GetChannelElement<int>(*pointdata.getChannel(CHANNEL_NAME_ClassId), i);
    char bufCode[16];
    snprintf(bufCode, sizeof(bufCode), "%d", classcode);
-   bClassificationOK = (papszFilterClassCodes == NULL ? true :
+   bool bClassificationOK = (papszFilterClassCodes == NULL ? true :
       (CSLFindString(papszFilterClassCodes,bufCode)!=-1));
 
    if (bClassificationOK)

@@ -429,7 +429,7 @@ bool GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "GMLFeatureClass::InitializeFromXML() called on %s node!",
-                  psRoot->pszValue );
+                  psRoot ? psRoot->pszValue : "(null)" );
         return false;
     }
 

@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.97 2016-09-24 23:11:55 bfriesen Exp $ */
+/* $Id: tif_getimage.c,v 1.99 2016-11-20 22:29:47 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -702,7 +702,7 @@ gtTileContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 	    this_toskew = toskew;
 	}
 
-        y += (flip & FLIP_VERTICALLY ? -(int32) nrow : (int32) nrow);
+        y += ((flip & FLIP_VERTICALLY) ? -(int32) nrow : (int32) nrow);
     }
     _TIFFfree(buf);
 
@@ -871,7 +871,7 @@ gtTileSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 			this_toskew = toskew;
 		}
 
-		y += (flip & FLIP_VERTICALLY ?-(int32) nrow : (int32) nrow);
+		y += ((flip & FLIP_VERTICALLY) ?-(int32) nrow : (int32) nrow);
 	}
 
 	if (flip & FLIP_HORIZONTALLY) {
@@ -962,7 +962,7 @@ gtStripContig(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 		pos = ((row + img->row_offset) % rowsperstrip) * scanline + \
 			((tmsize_t) img->col_offset * img->samplesperpixel);
 		(*put)(img, raster+y*w, 0, y, w, nrow, fromskew, toskew, buf + pos);
-		y += (flip & FLIP_VERTICALLY ? -(int32) nrow : (int32) nrow);
+		y += ((flip & FLIP_VERTICALLY) ? -(int32) nrow : (int32) nrow);
 	}
 
 	if (flip & FLIP_HORIZONTALLY) {
@@ -1097,7 +1097,7 @@ gtStripSeparate(TIFFRGBAImage* img, uint32* raster, uint32 w, uint32 h)
 			((tmsize_t) img->col_offset * img->samplesperpixel);
 		(*put)(img, raster+y*w, 0, y, w, nrow, fromskew, toskew, p0 + pos, p1 + pos,
 		    p2 + pos, (alpha?(pa+pos):NULL));
-		y += (flip & FLIP_VERTICALLY ? -(int32) nrow : (int32) nrow);
+		y += ((flip & FLIP_VERTICALLY) ? -(int32) nrow : (int32) nrow);
 	}
 
 	if (flip & FLIP_HORIZONTALLY) {
@@ -1440,7 +1440,7 @@ DECLAREContigPutFunc(putRGBUAcontig8bittile)
 		uint8* m;
 		for (x = w; x-- > 0;) {
 			a = pp[3];
-			m = img->UaToAa+(a<<8);
+			m = img->UaToAa+((size_t) a<<8);
 			r = m[pp[0]];
 			g = m[pp[1]];
 			b = m[pp[2]];
@@ -1511,7 +1511,7 @@ DECLAREContigPutFunc(putRGBUAcontig16bittile)
 		uint8* m;
 		for (x = w; x-- > 0;) {
 			a = img->Bitdepth16To8[wp[3]];
-			m = img->UaToAa+(a<<8);
+			m = img->UaToAa+((size_t) a<<8);
 			r = m[img->Bitdepth16To8[wp[0]]];
 			g = m[img->Bitdepth16To8[wp[1]]];
 			b = m[img->Bitdepth16To8[wp[2]]];
@@ -1642,7 +1642,7 @@ DECLARESepPutFunc(putRGBUAseparate8bittile)
 		uint8* m;
 		for (x = w; x-- > 0;) {
 			av = *a++;
-			m = img->UaToAa+(av<<8);
+			m = img->UaToAa+((size_t) av<<8);
 			rv = m[*r++];
 			gv = m[*g++];
 			bv = m[*b++];
@@ -1708,7 +1708,7 @@ DECLARESepPutFunc(putRGBUAseparate16bittile)
 		uint8* m;
 		for (x = w; x-- > 0;) {
 			a2 = img->Bitdepth16To8[*wa++];
-			m = img->UaToAa+(a2<<8);
+			m = img->UaToAa+((size_t) a2<<8);
 			r2 = m[img->Bitdepth16To8[*wr++]];
 			g2 = m[img->Bitdepth16To8[*wg++]];
 			b2 = m[img->Bitdepth16To8[*wb++]];

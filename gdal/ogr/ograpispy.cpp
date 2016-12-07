@@ -50,7 +50,7 @@ static CPLString osSpyFile;
 static FILE* fpSpyFile = NULL;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
-namespace OGRAPISpy
+namespace
 {
 
 class LayerDescription
@@ -59,7 +59,7 @@ class LayerDescription
     int iLayer;
 
     LayerDescription(): iLayer(-1) {}
-    LayerDescription( int iLayerIn ): iLayer(iLayerIn) {}
+    explicit LayerDescription( int iLayerIn ): iLayer(iLayerIn) {}
 };
 
 class DatasetDescription
@@ -69,7 +69,7 @@ class DatasetDescription
     std::map<OGRLayerH, LayerDescription> oMapLayer;
 
     DatasetDescription() : iDS(-1) {}
-    DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
+    explicit DatasetDescription( int iDSIn ) : iDS(iDSIn) {}
     ~DatasetDescription();
 };
 
@@ -87,11 +87,7 @@ class FeatureDefnDescription
     void Free();
 };
 
-}  // namespace OGRAPISpy
-
-using OGRAPISpy::LayerDescription;
-using OGRAPISpy::DatasetDescription;
-using OGRAPISpy::FeatureDefnDescription;
+}  // namespace
 
 static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
@@ -157,7 +153,7 @@ static bool OGRAPISpyEnabled()
         aoSetCreatedDS.clear();
         return false;
     }
-    if( osSpyFile.size() )
+    if( !osSpyFile.empty() )
         return true;
 
     osSpyFile = pszSpyFile;
@@ -254,7 +250,7 @@ static CPLString OGRAPISpyGetAndRegisterLayerVar( OGRDataSourceH hDS,
     if( hLayer && dd.oMapLayer.find(hLayer) == dd.oMapLayer.end() )
     {
         const int i = static_cast<int>(dd.oMapLayer.size()) + 1;
-        dd.oMapLayer[hLayer] = i;
+        dd.oMapLayer[hLayer] = LayerDescription(i);
         oGlobalMapLayer[hLayer] =
             OGRAPISpyGetDSVar(hDS) + "_" + CPLSPrintf("lyr%d", i);
     }
@@ -456,7 +452,7 @@ static void OGRAPISpyFlushDefered()
 
 int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
 {
-    if( !OGRAPISpyEnabled() || !bUpdate || osSnapshotPath.size() == 0 ||
+    if( !OGRAPISpyEnabled() || !bUpdate || osSnapshotPath.empty() ||
         aoSetCreatedDS.find(pszName) != aoSetCreatedDS.end() )
         return -1;
     OGRAPISpyFlushDefered();

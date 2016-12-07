@@ -74,7 +74,7 @@ double ReflectanceCalculator::rGetReflectance(double rRadiance, double rLat, dou
   return Reflectance;
 }
 
-double ReflectanceCalculator::rZenithAngle(double phi, double rDeclin, double l_rHourAngle) const
+double ReflectanceCalculator::rZenithAngle(double phi, double rDeclin, double l_rHourAngle)
 {
   double rCosZen = (sin(phi) * sin(rDeclin) + cos(phi)
           * cos(rDeclin) * cos(l_rHourAngle));
@@ -124,7 +124,7 @@ double ReflectanceCalculator::rSunDistance() const
   return 1 / sqrt(rE0);
 }
 
-int ReflectanceCalculator::iDaysInYear(int iYear) const
+int ReflectanceCalculator::iDaysInYear(int iYear)
 {
   bool fLeapYear = iDaysInMonth(2, iYear) == 29;
 
@@ -134,7 +134,7 @@ int ReflectanceCalculator::iDaysInYear(int iYear) const
       return 365;
 }
 
-int ReflectanceCalculator::iDaysInMonth(int iMonth, int iYear) const
+int ReflectanceCalculator::iDaysInMonth(int iMonth, int iYear)
 {
   int iDays;
 

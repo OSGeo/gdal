@@ -55,7 +55,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg );
+                                   GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
   public:
                  RawDataset();
          virtual ~RawDataset() = 0;
@@ -114,7 +114,7 @@ protected:
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
 
     int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
                                GDALDataType eBufType);
@@ -135,25 +135,25 @@ public:
 
     virtual ~RawRasterBand() /* = 0 */ ;
 
-    // should override RasterIO eventually.
+    // should CPL_OVERRIDE RasterIO eventually.
 
-    virtual CPLErr  IReadBlock( int, int, void * );
-    virtual CPLErr  IWriteBlock( int, int, void * );
+    virtual CPLErr  IReadBlock( int, int, void * ) CPL_OVERRIDE;
+    virtual CPLErr  IWriteBlock( int, int, void * ) CPL_OVERRIDE;
 
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual CPLErr SetColorTable( GDALColorTable * );
-    virtual CPLErr SetColorInterpretation( GDALColorInterp );
+    virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
+    virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
+    virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_OVERRIDE;
 
-    virtual char **GetCategoryNames();
-    virtual CPLErr SetCategoryNames( char ** );
+    virtual char **GetCategoryNames() CPL_OVERRIDE;
+    virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
 
-    virtual CPLErr  FlushCache();
+    virtual CPLErr  FlushCache() CPL_OVERRIDE;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
-                                               char **papszOptions );
+                                               char **papszOptions ) CPL_OVERRIDE;
 
     CPLErr          AccessLine( int iLine );
 

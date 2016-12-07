@@ -163,14 +163,14 @@ class HDF4ImageDataset : public HDF4Dataset
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszParmList );
-    virtual void        FlushCache( void );
-    CPLErr              GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
-    const char          *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
-    virtual int         GetGCPCount();
-    virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual void        FlushCache( void ) override;
+    CPLErr              GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr      SetGeoTransform( double * ) override;
+    const char          *GetProjectionRef() override;
+    virtual CPLErr      SetProjection( const char * ) override;
+    virtual int         GetGCPCount() override;
+    virtual const char  *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 };
 
 /************************************************************************/
@@ -197,15 +197,15 @@ class HDF4ImageRasterBand : public GDALPamRasterBand
                 HDF4ImageRasterBand( HDF4ImageDataset *, int, GDALDataType );
     virtual ~HDF4ImageRasterBand() {}
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
-    virtual double          GetNoDataValue( int * );
-    virtual CPLErr          SetNoDataValue( double );
-    virtual double          GetOffset( int *pbSuccess );
-    virtual double          GetScale( int *pbSuccess );
-    virtual const char     *GetUnitType();
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual double          GetNoDataValue( int * ) override;
+    virtual CPLErr          SetNoDataValue( double ) override;
+    virtual double          GetOffset( int *pbSuccess ) override;
+    virtual double          GetScale( int *pbSuccess ) override;
+    virtual const char     *GetUnitType() override;
 };
 
 /************************************************************************/
@@ -713,7 +713,7 @@ CPLErr HDF4ImageRasterBand::SetNoDataValue( double dfNoData )
 const char *HDF4ImageRasterBand::GetUnitType()
 
 {
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
         return osUnitType;
 
     return GDALRasterBand::GetUnitType();
@@ -785,6 +785,7 @@ HDF4ImageDataset::HDF4ImageDataset() :
     pszSubdatasetName(NULL),
     pszFieldName(NULL),
     poColorTable(NULL),
+    oSRS( OGRSpatialReference() ),
     bHasGeoTransform(false),
     pszProjection(CPLStrdup( "" )),
     pszGCPProjection(CPLStrdup( "" )),
@@ -2172,17 +2173,13 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
                   papszDimList[iXDim], papszDimList[iYDim] );
 #endif
 
-        strncpy( szPixel, papszDimList[iXDim], N_BUF_SIZE );
-        szPixel[N_BUF_SIZE - 1] = '\0';
+        snprintf( szPixel, sizeof(szPixel), "%s", papszDimList[iXDim] );
 
-        strncpy( szLine, papszDimList[iYDim], N_BUF_SIZE );
-        szLine[N_BUF_SIZE - 1] = '\0';
+        snprintf( szLine, sizeof(szLine), "%s", papszDimList[iYDim]);
 
-        strncpy( szXGeo, papszDimList[iXDim], N_BUF_SIZE );
-        szXGeo[N_BUF_SIZE - 1] = '\0';
+        snprintf( szXGeo, sizeof(szXGeo), "%s", papszDimList[iXDim]);
 
-        strncpy( szYGeo, papszDimList[iYDim], N_BUF_SIZE );
-        szYGeo[N_BUF_SIZE - 1] = '\0';
+        snprintf( szYGeo, sizeof(szYGeo), "%s", papszDimList[iYDim]);
 
         paiOffset = reinterpret_cast<int32 *>( CPLCalloc( 2, sizeof(int32) ) );
         paiIncrement
@@ -2237,11 +2234,9 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         {
             if( strstr(papszDimMap[i], papszDimList[iXDim]) )
             {
-                strncpy( szPixel, papszDimList[iXDim], N_BUF_SIZE );
-                szPixel[N_BUF_SIZE - 1] = '\0';
+                snprintf( szPixel, sizeof(szPixel), "%s", papszDimList[iXDim] );
 
-                strncpy( szXGeo, papszDimMap[i], N_BUF_SIZE );
-                szXGeo[N_BUF_SIZE - 1] = '\0';
+                snprintf( szXGeo, sizeof(szXGeo), "%s", papszDimMap[i] );
 
                 char *pszTemp = strchr( szXGeo, '/' );
                 if( pszTemp )
@@ -2249,10 +2244,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
             }
             else if( strstr(papszDimMap[i], papszDimList[iYDim]) )
             {
-                strncpy( szLine, papszDimList[iYDim], N_BUF_SIZE );
-                szLine[N_BUF_SIZE - 1] = '\0';
-                strncpy( szYGeo, papszDimMap[i], N_BUF_SIZE );
-                szYGeo[N_BUF_SIZE - 1] = '\0';
+                snprintf( szLine, sizeof(szLine), "%s", papszDimList[iYDim] );
+
+                snprintf( szYGeo, sizeof(szYGeo), "%s", papszDimMap[i] );
+
                 char *pszTemp = strchr( szYGeo, '/' );
                 if( pszTemp )
                     *pszTemp = '\0';
@@ -2394,7 +2389,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
     void *pLatticeY = NULL;
     int32 iLatticeType = 0;
     int32 iLatticeDataSize = 0;
-    if( SWfieldinfo(hSW, "LatticePoint", &l_iRank, l_aiDimSizes,
+    char pszLatticePoint[] = "LatticePoint";
+    if( SWfieldinfo(hSW, pszLatticePoint, &l_iRank, l_aiDimSizes,
                     &iLatticeType, szGeoDimList) == 0
         && l_iRank == 3
         && nXPoints == l_aiDimSizes[1]
@@ -2415,7 +2411,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         iEdges[2] = 1;
 
         pLatticeX = CPLMalloc( nLatCount * iLatticeDataSize );
-        if( SWreadfield( hSW, "LatticePoint", iStart, NULL,
+        if( SWreadfield( hSW, pszLatticePoint, iStart, NULL,
                          iEdges, (VOIDP)pLatticeX ) < 0 )
         {
             CPLDebug( "HDF4Image", "Can't read lattice field" );
@@ -2427,7 +2423,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation( int32 hSW, char **papszDimList )
         iEdges[2] = 1;
 
         pLatticeY = CPLMalloc( nLatCount * iLatticeDataSize );
-        if( SWreadfield( hSW, "LatticePoint", iStart, NULL,
+        if( SWreadfield( hSW, pszLatticePoint, iStart, NULL,
                          iEdges, (VOIDP)pLatticeY ) < 0 )
         {
             CPLDebug( "HDF4Image", "Can't read lattice field" );

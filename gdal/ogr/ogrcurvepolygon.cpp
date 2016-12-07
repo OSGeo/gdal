@@ -26,10 +26,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_api.h"
-#include "ogr_geos.h"
+#include "cpl_port.h"
 #include "ogr_geometry.h"
+
+#include <cstddef>
+
+#include "cpl_error.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_geos.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -98,8 +105,8 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 OGRGeometry *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon *poNewPolygon = (OGRCurvePolygon*)
-        OGRGeometryFactory::createGeometry(getGeometryType());
+    OGRCurvePolygon *poNewPolygon = dynamic_cast<OGRCurvePolygon *>(
+        OGRGeometryFactory::createGeometry(getGeometryType()));
     if( poNewPolygon == NULL )
         return NULL;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
@@ -186,7 +193,9 @@ const char * OGRCurvePolygon::getGeometryName() const
  * and the pointer is only valid till the polygon is next modified.  Use the
  * OGRGeometry::clone() method to make a separate copy within the application.
  *
- * Relates to the SFCOM IPolygon::get_ExteriorRing() method.
+ * Relates to the Simple Features for COM (SFCOM) IPolygon::get_ExteriorRing()
+ * method.
+ * TODO(rouault): What does that mean?
  *
  * @return pointer to external ring.  May be NULL if the OGRCurvePolygon is
  * empty.
@@ -328,7 +337,7 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
 OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
-    OGRCurve* poNewRingCloned = (OGRCurve* )poNewRing->clone();
+    OGRCurve* poNewRingCloned = dynamic_cast<OGRCurve *>(poNewRing->clone());
     if( poNewRingCloned == NULL )
         return OGRERR_FAILURE;
     OGRErr eErr = addRingDirectly(poNewRingCloned);
@@ -351,7 +360,7 @@ int OGRCurvePolygon::checkRing( OGRCurve * poNewRing ) const
 
     if( wkbFlatten(poNewRing->getGeometryType()) == wkbLineString )
     {
-        if( poNewRing->getNumPoints() == 0 || poNewRing->getNumPoints() < 4 )
+        if( poNewRing->getNumPoints() < 4 )
         {
             return FALSE;
         }
@@ -412,13 +421,19 @@ int OGRCurvePolygon::WkbSize() const
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                       addCurveDirectlyFromWkb()                      */
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
-    OGRCurvePolygon* poCP = (OGRCurvePolygon*)poSelf;
+    OGRCurvePolygon* poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
+    if( poCP == NULL )
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return OGRERR_FAILURE;
+    }
     return poCP->addRingDirectlyInternal( poCurve, FALSE );
 }
 
@@ -472,7 +487,14 @@ OGRErr OGRCurvePolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
-    return ((OGRCurvePolygon*)poSelf)->addRingDirectly(poCurve);
+    OGRCurvePolygon *poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
+    if( poCP == NULL )
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return OGRERR_FAILURE;
+    }
+    return poCP->addRingDirectly(poCurve);
 }
 
 /************************************************************************/
@@ -598,7 +620,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equal()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
@@ -613,7 +635,13 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
     if( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
 
-    OGRCurvePolygon *poOPoly = (OGRCurvePolygon *) poOther;
+    OGRCurvePolygon *poOPoly = dynamic_cast<OGRCurvePolygon *>(poOther);
+    if( poOPoly == NULL )
+    {
+        CPLError(CE_Fatal, CPLE_AppDefined,
+                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
+        return FALSE;
+    }
     return oCC.Equals( &(poOPoly->oCC) );
 }
 
@@ -721,7 +749,14 @@ OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != NULL &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
-        return ContainsPoint((OGRPoint*)poOtherGeom);
+        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
+        if( poPoint == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRPoint.");
+            return FALSE;
+        }
+        return ContainsPoint(poPoint);
     }
 
     return OGRGeometry::Contains(poOtherGeom);
@@ -737,7 +772,14 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != NULL &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
-        return ContainsPoint((OGRPoint*)poOtherGeom);
+        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
+        if( poPoint == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRPoint.");
+            return FALSE;
+        }
+        return ContainsPoint(poPoint);
     }
 
     return OGRGeometry::Intersects(poOtherGeom);
@@ -796,7 +838,7 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const
 }
 
 /************************************************************************/
-/*                      OGRSurfaceCasterToCurvePolygon()                */
+/*                      GetCasterToCurvePolygon()                       */
 /************************************************************************/
 
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const

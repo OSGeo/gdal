@@ -30,6 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_csv.h"
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -2389,7 +2390,7 @@ void NITFDataset::InitializeNITFDESs()
         }
     }
 
-    if (aosList.size() > 0)
+    if (!aosList.empty())
         oSpecialMD.SetMetadata( aosList.List(), pszDESsDomain );
 }
 
@@ -2499,7 +2500,7 @@ void NITFDataset::InitializeNITFTREs()
             pszTREData += (nThisTRESize + 11);
         }
 
-        if (aosList.size() > 0)
+        if (!aosList.empty())
             oSpecialMD.SetMetadata( aosList.List(), pszTREsDomain );
     }
 }
@@ -3150,7 +3151,7 @@ const char *NITFDataset::GetMetadataItem(const char * pszName,
     }
 
     if( pszDomain != NULL && EQUAL(pszDomain,"OVERVIEWS")
-        && osRSetVRT.size() > 0 )
+        && !osRSetVRT.empty() )
         return osRSetVRT;
 
     return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
@@ -3236,7 +3237,7 @@ int NITFDataset::CheckForRSets( const char *pszNITFFilename,
         aosRSetFilenames.push_back( osTarget );
     }
 
-    if( aosRSetFilenames.size() == 0 )
+    if( aosRSetFilenames.empty() )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -3292,7 +3293,7 @@ CPLErr NITFDataset::IBuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
 /*      If we have been using RSets we will need to clear them first.   */
 /* -------------------------------------------------------------------- */
-    if( osRSetVRT.size() > 0 )
+    if( !osRSetVRT.empty() )
     {
         oOvManager.CleanOverviews();
         osRSetVRT = "";
@@ -4466,7 +4467,7 @@ NITFDataset::NITFCreateCopy(
                 osRPC00B += pszRPC;
                 papszFullOptions = CSLAddString( papszFullOptions, osRPC00B ) ;
 
-                // If no precision loss occured during RPC conversion, then
+                // If no precision loss occurred during RPC conversion, then
                 // we can suppress it from PAM
                 if( !bPrecisionLoss )
                     nGCIFFlags &= ~GCIF_METADATA;
@@ -5289,7 +5290,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 
         const char *pszHeaderBuffer = NULL;
-        for( int iOpt2 = 0; papszList != NULL && papszList[iOpt2] != NULL; iOpt2++ ) {
+        for( int iOpt2 = 0; papszList[iOpt2] != NULL; iOpt2++ ) {
             if( !STARTS_WITH_CI(papszList[iOpt2], "HEADER_") )
                 continue;
 
@@ -5406,7 +5407,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Update the subheader and data size info in the file header.     */
 /* -------------------------------------------------------------------- */
-        snprintf( pachLT + 9*iTextSeg+0, 9+1, "%04d%05d",
+        CPLsnprintf( pachLT + 9*iTextSeg+0, 9+1, "%04d%05d",
                  static_cast<int>( sizeof( achTSH ) ), nTextLength );
 
         iTextSeg++;

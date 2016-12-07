@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.49 2016-07-10 18:00:21 erouault Exp $ */
+/* $Id: tif_read.c,v 1.50 2016-12-02 21:56:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -346,7 +346,7 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 	rowsperstrip=td->td_rowsperstrip;
 	if (rowsperstrip>td->td_imagelength)
 		rowsperstrip=td->td_imagelength;
-	stripsperplane=((td->td_imagelength+rowsperstrip-1)/rowsperstrip);
+	stripsperplane= TIFFhowmany_32_maxuint_compat(td->td_imagelength, rowsperstrip);
 	stripinplane=(strip%stripsperplane);
 	plane=(uint16)(strip/stripsperplane);
 	rows=td->td_imagelength-stripinplane*rowsperstrip;

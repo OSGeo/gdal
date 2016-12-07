@@ -80,29 +80,29 @@ class ERSDataset : public RawDataset
     CPLStringList oERSMetadataList;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
                 ERSDataset();
     virtual    ~ERSDataset();
 
-    virtual void FlushCache(void);
-    virtual CPLErr GetGeoTransform( double * padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual char **GetFileList(void);
+    virtual void FlushCache(void) override;
+    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual char **GetFileList(void) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
+                            const char *pszGCPProjection ) override;
 
-    virtual char      **GetMetadataDomainList();
+    virtual char      **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                     const char * pszDomain = "" );
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -256,11 +256,11 @@ char **ERSDataset::GetMetadata( const char *pszDomain )
     if( pszDomain != NULL && EQUAL(pszDomain, "ERS") )
     {
         oERSMetadataList.Clear();
-        if (osProj.size())
+        if (!osProj.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "PROJ", osProj.c_str()));
-        if (osDatum.size())
+        if (!osDatum.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "DATUM", osDatum.c_str()));
-        if (osUnits.size())
+        if (!osUnits.empty() )
             oERSMetadataList.AddString(CPLSPrintf("%s=%s", "UNITS", osUnits.c_str()));
         return oERSMetadataList.List();
     }
@@ -432,15 +432,15 @@ CPLErr ERSDataset::SetProjection( const char *pszSRS )
 
     /* Write the above computed values, unless they have been overridden by */
     /* the creation options PROJ, DATUM or UNITS */
-    if( osProjForced.size() )
+    if( !osProjForced.empty() )
         osProj = osProjForced;
     else
         osProj = szERSProj;
-    if( osDatumForced.size() )
+    if( !osDatumForced.empty() )
         osDatum = osDatumForced;
     else
         osDatum = szERSDatum;
-    if( osUnitsForced.size() )
+    if( !osUnitsForced.empty() )
         osUnits = osUnitsForced;
     else
         osUnits = szERSUnits;
@@ -706,9 +706,9 @@ void ERSDataset::ReadGCPs()
     osDatum = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Datum", "" );
     osUnits = poHeader->Find( "RasterInfo.WarpControl.CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( osProj.size() ? osProj.c_str() : "RAW",
-                        osDatum.size() ? osDatum.c_str() : "WGS84",
-                        osUnits.size() ? osUnits.c_str() : "METERS" );
+    oSRS.importFromERM( !osProj.empty() ? osProj.c_str() : "RAW",
+                        !osDatum.empty() ? osDatum.c_str() : "WGS84",
+                        !osUnits.empty() ? osUnits.c_str() : "METERS" );
 
     CPLFree( pszGCPProjection );
     oSRS.exportToWkt( &pszGCPProjection );
@@ -730,8 +730,8 @@ class ERSRasterBand : public RawRasterBand
                                 GDALDataType eDataType, int bNativeOrder,
                                 int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr SetNoDataValue( double );
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/
@@ -1054,9 +1054,9 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->osDatum = poHeader->Find( "CoordinateSpace.Datum", "" );
     poDS->osUnits = poHeader->Find( "CoordinateSpace.Units", "" );
 
-    oSRS.importFromERM( poDS->osProj.size() ? poDS->osProj.c_str() : "RAW",
-                        poDS->osDatum.size() ? poDS->osDatum.c_str() : "WGS84",
-                        poDS->osUnits.size() ? poDS->osUnits.c_str() : "METERS" );
+    oSRS.importFromERM( !poDS->osProj.empty() ? poDS->osProj.c_str() : "RAW",
+                        !poDS->osDatum.empty() ? poDS->osDatum.c_str() : "WGS84",
+                        !poDS->osUnits.empty() ? poDS->osUnits.c_str() : "METERS" );
 
     CPLFree( poDS->pszProjection );
     oSRS.exportToWkt( &(poDS->pszProjection) );

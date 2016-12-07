@@ -1333,7 +1333,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
             && sTABProj.adDatumParams[4] == 0.0 )
         {
             snprintf( szDatumName, sizeof(szDatumName),
-                     "MIF 999,%d,%.15g,%.15g,%.15g",
+                     "MIF 999,%u,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX,
                      sTABProj.dDatumShiftY,
@@ -1342,7 +1342,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         else
         {
             snprintf( szDatumName, sizeof(szDatumName),
-                     "MIF 9999,%d,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
+                     "MIF 9999,%u,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g,%.15g",
                      sTABProj.nEllipsoidId,
                      sTABProj.dDatumShiftX,
                      sTABProj.dDatumShiftY,

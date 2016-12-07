@@ -751,7 +751,7 @@ bool OGRCouchDBTableLayer::FetchNextRowsAttributeFilter()
         bool bOutHasStrictComparisons = false;
         osURIAttributeFilter = BuildAttrQueryURI(bOutHasStrictComparisons);
 
-        if (osURIAttributeFilter.size() == 0)
+        if (osURIAttributeFilter.empty())
         {
             CPLDebug("CouchDB",
                      "Turning to client-side attribute filtering");
@@ -905,7 +905,7 @@ GIntBig OGRCouchDBTableLayer::GetFeatureCount(int bForce)
     {
         bool bOutHasStrictComparisons = false;
         CPLString osURI = BuildAttrQueryURI(bOutHasStrictComparisons);
-        if( !bOutHasStrictComparisons && osURI.size() != 0 &&
+        if( !bOutHasStrictComparisons && !osURI.empty() &&
             strstr(osURI, "/_all_docs?") == NULL )
         {
             osURI += "&reduce=true";
@@ -1587,7 +1587,7 @@ OGRErr OGRCouchDBTableLayer::CommitTransaction()
 
     bInTransaction = false;
 
-    if (aoTransactionFeatures.size() == 0)
+    if (aoTransactionFeatures.empty())
         return OGRERR_NONE;
 
     CPLString osPost("{ \"docs\": [");
@@ -1958,7 +1958,7 @@ void OGRCouchDBTableLayer::WriteMetadata()
 
     json_object* poDoc = json_object_new_object();
 
-    if (osMetadataRev.size() > 0)
+    if (!osMetadataRev.empty())
     {
         json_object_object_add(poDoc, "_rev",
                                json_object_new_string(osMetadataRev));

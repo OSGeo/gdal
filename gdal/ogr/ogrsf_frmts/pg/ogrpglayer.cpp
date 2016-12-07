@@ -402,7 +402,7 @@ OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 do { \
         (q) = ((t) / (u)); \
         if ((q) != 0) (t) -= ((q) * (u)); \
-} while(0)
+} while( false )
 
 /* Coming from timestamp2tm() in pgsql/src/backend/utils/adt/timestamp.c */
 
@@ -1907,7 +1907,7 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
                           GetFromClauseForGetExtent().c_str() );
     }
 
-    if( osCommand.size() != 0 )
+    if( !osCommand.empty() )
     {
         if( RunGetExtentRequest(psExtent, bForce, osCommand, FALSE) == OGRERR_NONE )
             return OGRERR_NONE;

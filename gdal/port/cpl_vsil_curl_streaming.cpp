@@ -26,14 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_hash_set.h"
-#include "cpl_time.h"
-#include "cpl_aws.h"
 
 #include <algorithm>
+#include <map>
+
+#include "cpl_aws.h"
+#include "cpl_hash_set.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
 
 CPL_CVSID("$Id$");
 
@@ -41,12 +45,12 @@ CPL_CVSID("$Id$");
 
 void VSIInstallCurlStreamingFileHandler(void)
 {
-    /* not supported */
+    // Not supported.
 }
 
 void VSIInstallS3StreamingFileHandler(void)
 {
-    /* not supported */
+    // Not supported.
 }
 
 #else
@@ -56,8 +60,6 @@ void VSIInstallS3StreamingFileHandler(void)
 #include <curl/curl.h>
 
 void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
-
-#include <map>
 
 #define ENABLE_DEBUG        0
 
@@ -192,8 +194,9 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
 
     void                AcquireMutex();
     void                ReleaseMutex();
@@ -271,13 +274,13 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     VSICurlStreamingHandle(VSICurlStreamingFSHandler* poFS, const char* pszURL);
     virtual ~VSICurlStreamingHandle();
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int          Eof();
-    virtual int          Flush();
-    virtual int          Close();
+    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int          Eof() override;
+    virtual int          Flush() override;
+    virtual int          Close() override;
 
     void                 DownloadInThread();
     size_t               ReceivedBytes(GByte *buffer, size_t count, size_t nmemb);
@@ -396,8 +399,10 @@ int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
     if( curOffset >= BKGND_BUFFER_SIZE )
     {
-        if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "Invalidating cache and file size due to Seek() beyond caching zone");
+        if( ENABLE_DEBUG )
+            CPLDebug("VSICURL",
+                     "Invalidating cache and file size due to Seek() "
+                     "beyond caching zone");
         CPLFree(pCachedData);
         pCachedData = NULL;
         nCachedSize = 0;
@@ -1556,8 +1561,8 @@ class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
 protected:
-    virtual CPLString GetFSPrefix() { return "/vsis3_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL);
+    virtual CPLString GetFSPrefix() override { return "/vsis3_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle(const char* pszURL) override;
 
 public:
         VSIS3StreamingFSHandler() {}
@@ -1607,10 +1612,10 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
-        virtual bool StopReceivingBytesOnError() { return false; }
-        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError);
-        virtual bool InterpretRedirect() { return false; }
+        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb) override;
+        virtual bool StopReceivingBytesOnError() override { return false; }
+        virtual bool CanRestartOnError(const char* pszErrorMsg, bool bSetError) override;
+        virtual bool InterpretRedirect() override { return false; }
 
     public:
         VSIS3StreamingHandle(VSIS3StreamingFSHandler* poFS,
@@ -1705,7 +1710,11 @@ bool VSIS3StreamingHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetE
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * The file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
  * the configuration option VSI_CACHE_SIZE (in bytes).
@@ -1747,7 +1756,11 @@ void VSIInstallCurlStreamingFileHandler(void)
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * The file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting
  * the configuration option VSI_CACHE_SIZE (in bytes).

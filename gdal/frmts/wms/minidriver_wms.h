@@ -35,30 +35,29 @@
  */
 
 class WMSMiniDriver_WMS : public WMSMiniDriver {
-
-    void    BuildURL(CPLString *url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
-
 public:
     WMSMiniDriver_WMS();
     virtual ~WMSMiniDriver_WMS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual void GetTiledImageInfo(CPLString *url,
-                                              const GDALWMSImageRequestInfo &iri,
-                                              const GDALWMSTiledImageRequestInfo &tiri,
-                                              int nXInBlock,
-                                              int nYInBlock);
-    virtual const char *GetProjectionInWKT();
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps) override;
+
+    // Return error message in request.Error
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
+                                        const GDALWMSImageRequestInfo &iri, 
+                                        const GDALWMSTiledImageRequestInfo &tiri) override;
+
+    virtual void GetTiledImageInfo(CPLString &url,
+                                        const GDALWMSImageRequestInfo &iri,
+                                        const GDALWMSTiledImageRequestInfo &tiri,
+                                        int nXInBlock,
+                                        int nYInBlock) override;
 
 protected:
-    double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what);
+    void   BuildURL(CPLString &url, const GDALWMSImageRequestInfo &iri, const char* pszRequest);
 
 protected:
-    CPLString m_base_url;
     CPLString m_version;
     int m_iversion;
     CPLString m_layers;
@@ -66,7 +65,7 @@ protected:
     CPLString m_srs;
     CPLString m_crs;
     CPLString m_image_format;
-    CPLString m_projection_wkt;
+    CPLString m_info_format;
     CPLString m_bbox_order;
     CPLString m_transparent;
 };

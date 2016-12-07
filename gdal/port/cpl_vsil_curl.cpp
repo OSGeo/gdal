@@ -26,29 +26,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_hash_set.h"
-#include "cpl_time.h"
+#include "cpl_port.h"
 #include "cpl_vsil_curl_priv.h"
-#include "cpl_aws.h"
-#include "cpl_minixml.h"
 
 #include <algorithm>
+
+#include "cpl_aws.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
+#include "cpl_http.h"
 
 CPL_CVSID("$Id$");
 
 #ifndef HAVE_CURL
 
-void VSIInstallCurlFileHandler(void)
+void VSIInstallCurlFileHandler( void )
 {
-    /* not supported */
+    // Not supported.
 }
 
-void VSIInstallS3FileHandler(void)
+void VSIInstallS3FileHandler( void )
 {
-    /* not supported */
+    // Not supported.
 }
 
 /************************************************************************/
@@ -79,7 +83,6 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 #include <curl/curl.h>
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
 void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL);
 
 #include <map>
@@ -282,14 +285,14 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
 
@@ -360,15 +363,15 @@ class VSICurlHandle : public VSIVirtualHandle
     VSICurlHandle(VSICurlFilesystemHandler* poFS, const char* pszURL);
     virtual ~VSICurlHandle();
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
     virtual int          ReadMultiRange( int nRanges, void ** ppData,
-                                         const vsi_l_offset* panOffsets, const size_t* panSizes );
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int          Eof();
-    virtual int          Flush();
-    virtual int          Close();
+                                         const vsi_l_offset* panOffsets, const size_t* panSizes ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int          Eof() override;
+    virtual int          Flush() override;
+    virtual int          Close() override;
 
     bool                 IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize() { return GetFileSize(false); }
@@ -2408,7 +2411,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList(const char* pszFilename,
              strstr(pszLine, osExpectedString2.c_str()) ||
              strstr(pszLine, osExpectedString3.c_str()) ||
              strstr(pszLine, osExpectedString4.c_str()) ||
-             (osExpectedString_unescaped.size() != 0 && strstr(pszLine, osExpectedString_unescaped.c_str()))))
+             (!osExpectedString_unescaped.empty() && strstr(pszLine, osExpectedString_unescaped.c_str()))))
         {
             bIsHTMLDirList = true;
             *pbGotFileList = true;
@@ -2575,7 +2578,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList( const CPLString& osBaseURL,
                 if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
                 {
                     CPLString osKey = pszKey;
-                    if( osKey.size() && osKey[osKey.size()-1] == '/' )
+                    if( !osKey.empty() && osKey[osKey.size()-1] == '/' )
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
@@ -3195,21 +3198,21 @@ class VSIS3FSHandler CPL_FINAL : public VSICurlFilesystemHandler
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
 protected:
-    virtual CPLString GetFSPrefix() { return "/vsis3/"; }
-    virtual VSICurlHandle* CreateFileHandle(const char* pszURL);
+    virtual CPLString GetFSPrefix() override { return "/vsis3/"; }
+    virtual VSICurlHandle* CreateFileHandle(const char* pszURL) override;
     virtual char** GetFileList(const char *pszFilename,
                                int nMaxFiles,
-                               bool* pbGotFileList);
-    virtual CPLString GetURLFromDirname( const CPLString& osDirname );
+                               bool* pbGotFileList) override;
+    virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
 public:
         VSIS3FSHandler() {}
 
         virtual VSIVirtualHandle *Open( const char *pszFilename,
                                         const char *pszAccess,
-                                        bool bSetError );
-        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-        virtual int      Unlink( const char *pszFilename );
+                                        bool bSetError ) override;
+        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+        virtual int      Unlink( const char *pszFilename ) override;
 
         void UpdateMapFromHandle(VSIS3HandleHelper * poS3HandleHelper);
         void UpdateHandleFromMap(VSIS3HandleHelper * poS3HandleHelper);
@@ -3224,10 +3227,10 @@ class VSIS3Handle CPL_FINAL : public VSICurlHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb);
-        virtual bool CanRestartOnError(const char*, bool);
-        virtual bool UseLimitRangeGetInsteadOfHead() { return true; }
-        virtual void ProcessGetFileSizeResult(const char* pszContent);
+        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb) override;
+        virtual bool CanRestartOnError(const char*, bool) override;
+        virtual bool UseLimitRangeGetInsteadOfHead() override { return true; }
+        virtual void ProcessGetFileSizeResult(const char* pszContent) override;
 
     public:
         VSIS3Handle(VSIS3FSHandler* poFS,
@@ -3273,13 +3276,13 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
                          VSIS3HandleHelper* poS3HandleHelper);
         virtual ~VSIS3WriteHandle();
 
-        virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-        virtual vsi_l_offset Tell();
-        virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
+        virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+        virtual vsi_l_offset Tell() override;
+        virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
         virtual size_t    Write( const void *pBuffer, size_t nSize
-                                 ,size_t nMemb );
-        virtual int       Eof();
-        virtual int       Close();
+                                 ,size_t nMemb ) override;
+        virtual int       Eof() override;
+        virtual int       Close() override;
 
         bool              IsOK() { return m_pabyBuffer != NULL; }
 };
@@ -3425,7 +3428,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
                 CPLDebug("S3", "UploadId: %s", m_osUploadID.c_str());
                 CPLDestroyXMLNode(psNode);
             }
-            if( m_osUploadID.size() == 0 )
+            if( m_osUploadID.empty() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "InitiateMultipartUpload of %s failed: cannot get UploadId",
                          m_osFilename.c_str());
@@ -3798,7 +3801,7 @@ int VSIS3WriteHandle::Close()
     if( !m_bClosed )
     {
         m_bClosed = true;
-        if( m_osUploadID.size() == 0 )
+        if( m_osUploadID.empty() )
         {
             if( !m_bError && !DoSinglePartPUT() )
                 nRet = -1;
@@ -3900,7 +3903,7 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
     }
     UpdateHandleFromMap(poS3HandleHelper);
     CPLString osBaseURL(poS3HandleHelper->GetURL());
-    if( osBaseURL.size() && osBaseURL[osBaseURL.size()-1] == '/' )
+    if( !osBaseURL.empty() && osBaseURL[osBaseURL.size()-1] == '/' )
         osBaseURL.resize(osBaseURL.size()-1);
     delete poS3HandleHelper;
 
@@ -4025,11 +4028,11 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         CURL* hCurlHandle = GetCurlHandleFor(osBaseURL);
 
         poS3HandleHelper->AddQueryParameter("delimiter", "/");
-        if( osNextMarker.size() )
+        if( !osNextMarker.empty() )
             poS3HandleHelper->AddQueryParameter("marker", osNextMarker);
-        if( osMaxKeys.size() )
+        if( !osMaxKeys.empty() )
              poS3HandleHelper->AddQueryParameter("max-keys", osMaxKeys);
-        if( osObjectKey.size() )
+        if( !osObjectKey.empty() )
              poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
 
         VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL());
@@ -4071,7 +4074,9 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
             }
             else
             {
-                CPLDebug("S3", "%s", sWriteFuncData.pBuffer ? (const char*)sWriteFuncData.pBuffer : "(null)");
+                CPLDebug("S3", "%s",
+                         sWriteFuncData.pBuffer
+                         ? (const char*)sWriteFuncData.pBuffer : "(null)");
                 CPLFree(sWriteFuncData.pBuffer);
                 delete poS3HandleHelper;
                 return NULL;
@@ -4090,7 +4095,7 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
 
             CPLFree(sWriteFuncData.pBuffer);
 
-            if( osNextMarker.size() == 0 )
+            if( osNextMarker.empty() )
             {
                 delete poS3HandleHelper;
                 return osFileList.StealList();
@@ -4278,7 +4283,11 @@ void VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL)
  * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs to Amazon S3
  * signed URLs during their validity period, so as to minimize round-trips. This behaviour
  * can be disabled by setting the configuration option CPL_VSIL_CURL_USE_S3_REDIRECT to NO.
- *
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ * 
  * VSIStatL() will return the size in st_size member and file
  * nature- file or directory - in st_mode member (the later only reliable with FTP
  * resources for now).
@@ -4329,6 +4338,10 @@ void VSIInstallCurlFileHandler(void)
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration options can be
  * used to define a proxy server. The syntax to use is the one of Curl CURLOPT_PROXY,
  * CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ * 
+ * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
  *
  * On reading, the file can be cached in RAM by setting the configuration option
  * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by setting

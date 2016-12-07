@@ -29,19 +29,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdalwarper.h"
-#include "cpl_string.h"
-#include "cpl_error.h"
-#include "ogr_geometry.h"
-#include "ogr_spatialref.h"
-#include "ogr_api.h"
-#include "commonutils.h"
-#include "gdal_priv.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cctype>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <algorithm>
 #include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "gdalwarper.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -301,6 +315,21 @@ static CPLErr CropToCutline( void* hCutline, char** papszTO, int nSrcCount, GDAL
 
         if( pszProjection == NULL || pszProjection[0] == '\0' )
         {
+            if( pszThisTargetSRS == NULL && hCutlineSRS == NULL )
+            {
+                OGREnvelope sEnvelope;
+                OGR_G_GetEnvelope(hCutlineGeom, &sEnvelope);
+
+                dfMinX = sEnvelope.MinX;
+                dfMinY = sEnvelope.MinY;
+                dfMaxX = sEnvelope.MaxX;
+                dfMaxY = sEnvelope.MaxY;
+
+                OGR_G_DestroyGeometry(hCutlineGeom);
+
+                return CE_None;
+            }
+
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OGR_G_DestroyGeometry(hCutlineGeom);
             return CE_Failure;
@@ -1354,7 +1383,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             CPLString osDstFilename(GDALGetDescription(hDstDS));
 
             char** papszContent = NULL;
-            if( osDstFilename.size() == 0 )
+            if( osDstFilename.empty() )
                 papszContent = CSLDuplicate(GDALGetMetadata(hDstDS, "xml:VRT"));
 
             GDALClose(hDstDS);
@@ -1760,7 +1789,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 pszThisSourceSRS = "";
         }
 
-        if( osThisTargetSRS.size() == 0 )
+        if( osThisTargetSRS.empty() )
             osThisTargetSRS = pszThisSourceSRS;
 
 /* -------------------------------------------------------------------- */
@@ -2100,8 +2129,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
     }
     else
     {
-        adfDstGeoTransform[0] = 0.0;
-        adfDstGeoTransform[3] = 0.0;
+        adfDstGeoTransform[3] += adfDstGeoTransform[5] * nLines;
         adfDstGeoTransform[5] = fabs(adfDstGeoTransform[5]);
     }
 
@@ -2163,11 +2191,11 @@ public:
 
     void         *hSrcImageTransformer;
 
-    virtual OGRSpatialReference *GetSourceCS() { return NULL; }
-    virtual OGRSpatialReference *GetTargetCS() { return NULL; }
+    virtual OGRSpatialReference *GetSourceCS() override { return NULL; }
+    virtual OGRSpatialReference *GetTargetCS() override { return NULL; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL ) {
+                           double *x, double *y, double *z = NULL ) override {
         int nResult;
 
         int *pabSuccess = (int *) CPLCalloc(sizeof(int),nCount);
@@ -2179,7 +2207,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL ) {
+                             int *pabSuccess = NULL ) override {
         return GDALGenImgProjTransform( hSrcImageTransformer, TRUE,
                                         nCount, x, y, z, pabSuccess );
     }
@@ -2604,7 +2632,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int i = 0; i < argc; i++ )
+    for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( EQUAL(papszArgv[i],"-tps") || EQUAL(papszArgv[i],"-rpc") || EQUAL(papszArgv[i],"-geoloc")  )
         {

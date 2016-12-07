@@ -28,14 +28,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "osr_cs_wkt.h"
+#include "cpl_port.h"
+#include "ogr_srs_api.h"
+
+#include <cstdlib>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "osr_cs_wkt.h"
 
 CPL_CVSID("$Id$");
 
 // Why would fipszone and zone be parameters when they relate to a composite
-// projection which renders done into a non-zoned projection?
+// projection which renders down into a non-zoned projection?
 
 static const char * const papszParameters[] =
 {

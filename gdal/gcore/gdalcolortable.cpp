@@ -27,7 +27,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
+
+#include <cstring>
+#include <exception>
+#include <memory>
+#include <vector>
+
+#include "cpl_error.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -475,7 +484,7 @@ GDALCreateColorRamp( GDALColorTableH hTable,
 int GDALColorTable::IsSame(const GDALColorTable* poOtherCT) const
 {
     return aoEntries.size() == poOtherCT->aoEntries.size() &&
-           (aoEntries.size() == 0 ||
+           (aoEntries.empty() ||
             memcmp(&aoEntries[0], &poOtherCT->aoEntries[0], aoEntries.size()
                    * sizeof(GDALColorEntry)) == 0);
 }

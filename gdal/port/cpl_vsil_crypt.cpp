@@ -33,7 +33,11 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cstddef>
 #include <algorithm>
+
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_C_START
 void CPL_DLL VSIInstallCryptFileHandler();
@@ -542,7 +546,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
         if( fp->Read((void*)osKeyCheck.c_str(), 1, nKeyCheckSize) != nKeyCheckSize )
             return VSICryptReadError();
 
-        if( osKey.size() == 0 && pabyGlobalKey == NULL )
+        if( osKey.empty() && pabyGlobalKey == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Encryption key not defined as key/key_b64 parameter, "
@@ -566,7 +570,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle* fp, const CPLString& osKe
 
         try
         {
-            if( osKey.size() )
+            if( !osKey.empty() )
             {
                 const int nKeySize =
                     std::min(nMaxKeySize, static_cast<int>(osKey.size()));
@@ -734,14 +738,14 @@ class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
     int                  Init( const CPLString& osKey,
                                bool bWriteHeader = false );
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int          Eof();
-    virtual int          Flush();
-    virtual int          Close();
-    virtual int          Truncate( vsi_l_offset nNewSize );
+    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t       Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int          Eof() override;
+    virtual int          Flush() override;
+    virtual int          Close() override;
+    virtual int          Truncate( vsi_l_offset nNewSize ) override;
 };
 
 /************************************************************************/
@@ -810,7 +814,7 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
 
     try
     {
-        if( osKey.size() )
+        if( !osKey.empty() )
         {
             const int nKeySize =
                 std::min(nMaxKeySize, static_cast<int>(osKey.size()));
@@ -1333,11 +1337,11 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 };
 
 /************************************************************************/
@@ -1402,7 +1406,7 @@ static CPLString GetArgument(const char* pszFilename, const char* pszParamName,
 static CPLString GetKey(const char* pszFilename)
 {
     CPLString osKey = GetArgument(pszFilename, "key");
-    if( osKey.size() == 0 )
+    if( osKey.empty() )
     {
         const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY", "");
         // Do some form of validation to please Coverity
@@ -1410,10 +1414,10 @@ static CPLString GetKey(const char* pszFilename)
         // coverity [tainted_data_transitive]
         osKey = pszKey;
     }
-    if( osKey.size() == 0 || EQUAL(osKey, "GENERATE_IT") )
+    if( osKey.empty() || EQUAL(osKey, "GENERATE_IT") )
     {
         CPLString osKeyB64(GetArgument(pszFilename, "key_b64"));
-        if( osKeyB64.size() == 0 )
+        if( osKeyB64.empty() )
         {
             const char* pszKey = CPLGetConfigOption("VSICRYPT_KEY_B64", "");
             // Do some form of validation to please Coverity
@@ -1421,7 +1425,7 @@ static CPLString GetKey(const char* pszFilename)
             // coverity [tainted_data_transitive]
             osKeyB64 = pszKey;
         }
-        if( osKeyB64.size() )
+        if( !osKeyB64.empty() )
         {
             GByte* key = (GByte*)CPLStrdup(osKeyB64);
             int nLength = CPLBase64DecodeInPlace(key);
@@ -1448,11 +1452,12 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     CPLString osFilename(GetFilename(pszFilename));
 
     CPLString osKey(GetKey(pszFilename));
-    if( osKey.size() == 0 && pabyGlobalKey == NULL )
+    if( osKey.empty() && pabyGlobalKey == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Encryption key not defined as key/key_b64 parameter, "
-                "VSICRYPT_KEY/VSICRYPT_KEY_B64 configuration option or VSISetCryptKey() API");
+                "VSICRYPT_KEY/VSICRYPT_KEY_B64 configuration option or "
+                 "VSISetCryptKey() API");
         return NULL;
     }
 
@@ -1529,7 +1534,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         int nBlockSize = static_cast<int>(poBlock->BlockSize());
         delete poBlock;
 
-        if( osIV.size() != 0 )
+        if( !osIV.empty() )
         {
             if( (int)osIV.size() != nBlockSize )
             {
@@ -1920,7 +1925,7 @@ public:
 
     virtual VSIVirtualHandle *Open( const char * /* pszFilename */,
                                     const char * /* pszAccess */,
-                                    bool /* bSetError */ )
+                                    bool /* bSetError */ ) override
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
@@ -1928,7 +1933,7 @@ public:
     }
 
     virtual int Stat( const char * /* pszFilename */,
-                      VSIStatBufL * /*pStatBuf */, int /* nFlags */ )
+                      VSIStatBufL * /*pStatBuf */, int /* nFlags */ ) override
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);

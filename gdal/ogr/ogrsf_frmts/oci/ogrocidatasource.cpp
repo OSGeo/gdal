@@ -58,6 +58,8 @@ OGROCIDataSource::OGROCIDataSource()
     pszDBName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    bDSUpdate = FALSE;
+    bNoLogging = FALSE;
     poSession = NULL;
     papoSRS = NULL;
     panSRID = NULL;
@@ -600,7 +602,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
         {
             char     szCommand2[1024];
 
-            strncpy( szCommand2, szCommand, sizeof(szCommand) );
+            snprintf( szCommand2, sizeof(szCommand2), "%s", szCommand );
 
             snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
               "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "

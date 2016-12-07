@@ -31,14 +31,27 @@
 #define _GNU_SOURCE
 #endif
 
+// Include cpl_config.h BEFORE cpl_multiproc.h, as the later may undefine
+// CPL_MULTIPROC_PTHREAD for mingw case.
+
+#include "cpl_config.h"
 #include "cpl_multiproc.h"
 
-#include "cpl_conv.h"
-
-#include <time.h>
-#include <assert.h>
-
+#ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
+#  include <cassert>
+#endif
+#include <cerrno>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
 
@@ -665,7 +678,7 @@ void CPLJoinThread( CPLJoinableThread* /* hJoinableThread */ ) {}
 
 void CPLSleep( double dfWaitInSeconds )
 {
-    time_t  ltime;
+    time_t ltime;
 
     time( &ltime );
     const time_t ttime = ltime + static_cast<int>(dfWaitInSeconds + 0.5);

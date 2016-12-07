@@ -470,11 +470,11 @@ public:
         char **papszOptions,
         GDALProgressFunc pfnProgress,
         void * pProgressData );
-    virtual char **GetFileList(void);
-    virtual CPLErr GetGeoTransform( double *padfTransform );
-    virtual CPLErr SetGeoTransform( double *padfTransform );
-    virtual const char *GetProjectionRef( void );
-    virtual CPLErr SetProjection( const char *pszProjString );
+    virtual char **GetFileList(void) override;
+    virtual CPLErr GetGeoTransform( double *padfTransform ) override;
+    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
+    virtual const char *GetProjectionRef( void ) override;
+    virtual CPLErr SetProjection( const char *pszProjString ) override;
 };
 
 //  ----------------------------------------------------------------------------
@@ -497,25 +497,25 @@ public:
         GDALDataType eDataType );
     virtual ~IdrisiRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage );
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual char **GetCategoryNames();
-    virtual const char *GetUnitType();
+    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = NULL ) override;
+    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    virtual CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    virtual GDALColorTable *GetColorTable() override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual char **GetCategoryNames() override;
+    virtual const char *GetUnitType() override;
 
-    virtual CPLErr SetCategoryNames( char **papszCategoryNames );
-    virtual CPLErr SetNoDataValue( double dfNoDataValue );
-    virtual CPLErr SetColorTable( GDALColorTable *poColorTable );
-    virtual CPLErr SetUnitType( const char *pszUnitType );
+    virtual CPLErr SetCategoryNames( char **papszCategoryNames ) override;
+    virtual CPLErr SetNoDataValue( double dfNoDataValue ) override;
+    virtual CPLErr SetColorTable( GDALColorTable *poColorTable ) override;
+    virtual CPLErr SetUnitType( const char *pszUnitType ) override;
     virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev );
+                                  double dfMean, double dfStdDev ) override;
     CPLErr SetMinMax( double dfMin, double dfMax );
-    virtual GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) override;
 
     float  fMaximum;
     float  fMinimum;
@@ -1181,11 +1181,13 @@ GDALDataset *IdrisiDataset::CreateCopy( const char *pszFilename,
     // --------------------------------------------------------------------
 
     double adfGeoTransform[6];
+    if(  poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
+    {
+        poDS->SetGeoTransform(adfGeoTransform);
+    }
 
     if (!EQUAL(poSrcDS->GetProjectionRef(),""))
     {
-        poSrcDS->GetGeoTransform(adfGeoTransform);
-        poDS->SetGeoTransform(adfGeoTransform);
         poDS->SetProjection( poSrcDS->GetProjectionRef() );
     }
 
@@ -2056,7 +2058,7 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
     {
         for( int i = 0; i < poRAT->GetColumnCount(); i++ )
         {
-            if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Value")
+            if( STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Value") )
             {
                 iValue = i;
                 break;
@@ -2082,17 +2084,17 @@ CPLErr IdrisiRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
         {
             for( int i = 0; i < poRAT->GetColumnCount(); i++ )
             {
-                if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Class_Name")
+                if( STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Class_Name") )
                 {
                     iName = i;
                     break;
                 }
-                else if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Categor")
+                else if( STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Categor") )
                 {
                     iName = i;
                     break;
                 }
-                else if STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Name")
+                else if ( STARTS_WITH_CI(poRAT->GetNameOfCol( i ), "Name") )
                 {
                     iName = i;
                     break;
@@ -2282,7 +2284,7 @@ GDALRasterAttributeTable *IdrisiRasterBand::GetDefaultRAT()
 
     for( int iEntry = 0; iEntry < nEntryCount; iEntry++ )
     {
-        if EQUAL( poGDS->papszCategories[iEntry], "" )
+        if( EQUAL( poGDS->papszCategories[iEntry], "" ) )
         {
             continue; // Eliminate the empty ones
         }
@@ -2630,11 +2632,11 @@ CPLErr IdrisiGeoReference2Wkt( const char* pszFilename,
     {
         oSRS.SetMercator( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
-    else if EQUAL( pszProjName, "Transverse Mercator" )
+    else if( EQUAL( pszProjName, "Transverse Mercator" ) )
     {
         oSRS.SetTM( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
-    else if EQUAL( pszProjName, "Gauss-Kruger" )
+    else if( EQUAL( pszProjName, "Gauss-Kruger" ) )
     {
         oSRS.SetTM( dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing );
     }
@@ -2757,7 +2759,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
     //  Plane with default "Meters"
     // -----------------------------------------------------
 
-    if EQUAL( pszProjString, "" )
+    if( EQUAL( pszProjString, "" ) )
             {
                 *pszRefSystem = CPLStrdup( rstPLANE );
                 *pszRefUnit   = CPLStrdup( rstMETER );
@@ -2789,7 +2791,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         char *pszAuthName = CPLStrdup( oSRS.GetAuthorityName( "GEOGCS" ) );
         char *pszDatum    = CPLStrdup( oSRS.GetAttrValue( "DATUM" ) );
         int nGCSCode = -1;
-        if EQUAL( pszAuthName, "EPSG" )
+        if( EQUAL( pszAuthName, "EPSG" ) )
                 {
                     nGCSCode = atoi( oSRS.GetAuthorityCode( "GEOGCS" ) );
                 }
@@ -2856,7 +2858,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             const char* pszPCSCode = CSVGetField( CSVFilename( "stateplane.csv" ),
                                                  "EPSG_PCS_CODE", pszID, CC_Integer, "ID" );
             osPCSCode = (pszPCSCode) ? pszPCSCode : "";
-            if( osPCSCode.size() )
+            if( !osPCSCode.empty() )
             {
                 int nZone      = osPCSCode[osPCSCode.size() - 1] - '0';
                 int nSPCode    = atoi_nz( osPCSCode );
@@ -2898,7 +2900,8 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             //strcpy(pszNAD, "27");
             bIsOldNAD = true;
 
-        if ( (oSRS.FindProjParm("central_meridian",NULL) != -1) && (oSRS.FindProjParm("central_meridian",NULL) != -1) )
+        if ( (oSRS.FindProjParm("central_meridian",NULL) != -1) &&
+             (oSRS.FindProjParm("latitude_of_origin",NULL) != -1) )
         {
             dfLon = oSRS.GetProjParm("central_meridian");
             dfLat = oSRS.GetProjParm("latitude_of_origin");
@@ -2931,23 +2934,23 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
         //  Check for supported projections
         // ---------------------------------------------------------
 
-        if EQUAL( pszProjName, SRS_PT_MERCATOR_1SP )
+        if( EQUAL( pszProjName, SRS_PT_MERCATOR_1SP ) )
                 {
                     pszProjectionOut =  "Mercator" ;
                 }
-        if EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR )
+        else if( EQUAL( pszProjName, SRS_PT_TRANSVERSE_MERCATOR ) )
                 {
                     pszProjectionOut =  "Transverse Mercator" ;
                 }
-        else if EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP )
+        else if( EQUAL( pszProjName, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP ) )
                      {
                          pszProjectionOut =  "Lambert Conformal Conic" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR )
+        else if( EQUAL( pszProjName, SRS_PT_EQUIRECTANGULAR ) )
                      {
                          pszProjectionOut =  "Plate Carr" "\xE9" "e" ; /* 'eacute' in ISO-8859-1 */
                      }
-        else if EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA )
+        else if( EQUAL( pszProjName, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA ) )
                      {
                          double dfCenterLat = oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL );
                          if( dfCenterLat == 0.0 )
@@ -2959,26 +2962,26 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
                          else
                              pszProjectionOut =  "Lambert South Oblique Azimuthal Equal Area" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_POLAR_STEREOGRAPHIC )
+        else if( EQUAL( pszProjName, SRS_PT_POLAR_STEREOGRAPHIC ) )
                      {
                          if( oSRS.GetProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL ) > 0 )
                              pszProjectionOut =  "North Polar Stereographic" ;
                          else
                              pszProjectionOut =  "South Polar Stereographic" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_STEREOGRAPHIC )
+        else if( EQUAL( pszProjName, SRS_PT_STEREOGRAPHIC ) )
                      {
                          pszProjectionOut =  "Transverse Stereographic" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_OBLIQUE_STEREOGRAPHIC )
+        else if( EQUAL( pszProjName, SRS_PT_OBLIQUE_STEREOGRAPHIC ) )
                      {
                          pszProjectionOut =  "Oblique Stereographic" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_SINUSOIDAL )
+        else if( EQUAL( pszProjName, SRS_PT_SINUSOIDAL ) )
                      {
                          pszProjectionOut =  "Sinusoidal" ;
                      }
-        else if EQUAL( pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA )
+        else if( EQUAL( pszProjName, SRS_PT_ALBERS_CONIC_EQUAL_AREA ) )
                      {
                          pszProjectionOut =  "Alber's Equal Area Conic" ;
                      }
@@ -3110,7 +3113,7 @@ int GetStateCode( const char *pszState )
 {
     for( unsigned int i = 0; i < US_STATE_COUNT; i++ )
     {
-        if EQUAL( pszState, aoUSStateTable[i].pszName )
+        if( EQUAL( pszState, aoUSStateTable[i].pszName ) )
         {
             return aoUSStateTable[i].nCode;
         }
@@ -3176,7 +3179,7 @@ int GetUnitIndex( const char *pszUnitName )
 {
     for( int i = 0; i < (int) LINEAR_UNITS_COUNT; i++ )
     {
-        if EQUAL( pszUnitName, aoLinearUnitsConv[i].pszName )
+        if( EQUAL( pszUnitName, aoLinearUnitsConv[i].pszName ) )
         {
             return i;
         }

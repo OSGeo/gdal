@@ -54,30 +54,25 @@ class OGRGRASSLayer : public OGRLayer
                         virtual ~OGRGRASSLayer();
 
     // Layer info
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
-    GIntBig             GetFeatureCount( int );
-    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    GIntBig             GetFeatureCount( int ) override;
+    OGRErr              GetExtent(OGREnvelope *psExtent, int bForce) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    virtual OGRSpatialReference *GetSpatialRef();
-    int                 TestCapability( const char * );
+    virtual OGRSpatialReference *GetSpatialRef() override;
+    int                 TestCapability( const char * ) override;
 
     // Reading
-    void                ResetReading();
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
-    OGRFeature *        GetNextFeature();
-    OGRFeature         *GetFeature( GIntBig nFeatureId );
+    void                ResetReading() override;
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
+    OGRFeature *        GetNextFeature() override;
+    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
 
     // Filters
-    virtual OGRErr      SetAttributeFilter( const char *query );
-    virtual void        SetSpatialFilter( OGRGeometry * poGeomIn );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual OGRErr      SetAttributeFilter( const char *query ) override;
+    virtual void        SetSpatialFilter( OGRGeometry * poGeomIn ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-
-    // Write access, not supported:
-    virtual OGRErr      CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE );
-    OGRErr              ISetFeature( OGRFeature *poFeature );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
 
   private:
     char                *pszName;
@@ -139,17 +134,12 @@ class OGRGRASSDataSource : public OGRDataSource
     int                 Open( const char *, int bUpdate, int bTestOpen,
                               int bSingleNewFile = FALSE );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
-    // Not implemented (returns NULL):
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
-                                      OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
   private:
     OGRGRASSLayer     **papoLayers;
     char                *pszName;       // Date source name
@@ -174,15 +164,10 @@ class OGRGRASSDriver : public OGRSFDriver
   public:
                         virtual ~OGRGRASSDriver();
 
-    const char          *GetName();
-    OGRDataSource       *Open( const char *, int );
+    const char          *GetName() override;
+    OGRDataSource       *Open( const char *, int ) override;
 
-    int                 TestCapability( const char * );
-
-    // Not implemented (return error/NULL):
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
-    OGRErr              DeleteDataSource( const char *pszDataSource );
+    int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGRGRASS_H_INCLUDED */

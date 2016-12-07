@@ -31,17 +31,34 @@
 // We need cpl_port as first include to avoid VSIStatBufL being not
 // defined on i586-mingw32msvc.
 #include "cpl_port.h"
-
-#include "cpl_string.h"
-#include "gdal_pam.h"
 #include "gdal_frmts.h"
-#include "ogr_spatialref.h"
 
-#include <cmath>
-#include <ctype.h>
+#include <cctype>
 #include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
 #include <algorithm>
 #include <limits>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+
 
 CPL_CVSID("$Id$");
 
@@ -92,7 +109,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                 AAIGDataset();
        virtual ~AAIGDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *CommonOpen( GDALOpenInfo * poOpenInfo,
                                     GridFormat eFormat );
@@ -107,8 +124,8 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
 };
 
 /************************************************************************/
@@ -119,7 +136,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 
 class GRASSASCIIDataset : public AAIGDataset
 {
-    virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
+    virtual int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
   public:
                 GRASSASCIIDataset() : AAIGDataset() {}
@@ -146,9 +163,9 @@ class AAIGRasterBand : public GDALPamRasterBand
                    AAIGRasterBand( AAIGDataset *, int );
     virtual       ~AAIGRasterBand();
 
-    virtual double GetNoDataValue( int * );
-    virtual CPLErr SetNoDataValue( double );
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual double GetNoDataValue( int * ) override;
+    virtual CPLErr SetNoDataValue( double ) override;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -331,6 +348,7 @@ AAIGDataset::AAIGDataset() :
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+    memset( achReadBuf, 0, sizeof(achReadBuf) );
 }
 
 /************************************************************************/

@@ -27,9 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_priv.h"
-#include "cpl_multiproc.h"
+
+#include <climits>
+#include <cstddef>
 #include <new>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_vsi.h"
 
 //! @cond Doxygen_Suppress
 
@@ -58,13 +66,13 @@ class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
            explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
            virtual ~GDALArrayBandBlockCache();
 
-           virtual bool             Init();
-           virtual bool             IsInitOK();
-           virtual CPLErr           FlushCache();
-           virtual CPLErr           AdoptBlock( GDALRasterBlock * );
-           virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
-           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock );
-           virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock );
+           virtual bool             Init() override;
+           virtual bool             IsInitOK() override;
+           virtual CPLErr           FlushCache() override;
+           virtual CPLErr           AdoptBlock( GDALRasterBlock * )  override;
+           virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff ) override;
+           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock ) override;
+           virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock ) override;
 };
 
 /************************************************************************/

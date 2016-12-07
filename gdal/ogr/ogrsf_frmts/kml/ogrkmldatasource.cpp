@@ -81,7 +81,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
                     papoLayers_[i]->nWroteFeatureCount_ != 0 )
                 {
                     CPLString osRet = papoLayers_[i]->WriteSchema();
-                    if( osRet.size() )
+                    if( !osRet.empty() )
                         VSIFPrintfL( fpOutput_, "%s", osRet.c_str() );
                 }
             }

@@ -146,7 +146,9 @@ TABDATFile::TABDATFile() :
     m_bWriteHeaderInitialized(FALSE),
     m_bWriteEOF(FALSE),
     m_bUpdated(FALSE)
-    // TODO(schwehr): m_szBuffer({})
+#if HAVE_CXX11
+    , m_szBuffer{}
+#endif
 {}
 
 /**********************************************************************
@@ -168,6 +170,7 @@ TABDATFile::~TABDATFile()
 
 int TABDATFile::Open(const char *pszFname, const char* pszAccess, TABTableType eTableType)
 {
+    // cppcheck-suppress nullPointer
     if( STARTS_WITH_CI(pszAccess, "r") )
         return Open(pszFname, TABRead, eTableType);
     else if( STARTS_WITH_CI(pszAccess, "w") )
@@ -829,8 +832,8 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef* psFieldDef,
     else if (nWidth == 0)
         nWidth=254; /* char fields */
 
-    strncpy(psFieldDef->szName, pszName, 10);
-    psFieldDef->szName[10] = '\0';
+    strncpy(psFieldDef->szName, pszName, sizeof(psFieldDef->szName)-1);
+    psFieldDef->szName[sizeof(psFieldDef->szName)-1] = '\0';
     psFieldDef->eTABType = eType;
     psFieldDef->byLength = (GByte)nWidth;
     psFieldDef->byDecimals = (GByte)nPrecision;
@@ -1329,8 +1332,10 @@ int TABDATFile::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn, int nF
 
     if (nFlags & ALTER_NAME_FLAG)
     {
-        strncpy(m_pasFieldDef[iField].szName, poNewFieldDefn->GetNameRef(), 10);
-        m_pasFieldDef[iField].szName[10] = '\0';
+        strncpy(m_pasFieldDef[iField].szName, poNewFieldDefn->GetNameRef(),
+                sizeof(m_pasFieldDef[iField].szName)-1);
+        m_pasFieldDef[iField].szName[
+                            sizeof(m_pasFieldDef[iField].szName)-1] = '\0';
         /* If renaming is the only operation, then nothing more to do */
         if( nFlags == ALTER_NAME_FLAG )
         {
@@ -1772,9 +1777,9 @@ const char *TABDATFile::ReadDateField(int nWidth)
     int nDay = 0;
     int nMonth = 0;
     int nYear = 0;
-    int status = 0;
+    int status = ReadDateField(nWidth, &nYear, &nMonth, &nDay);
 
-    if ((status = ReadDateField(nWidth, &nYear, &nMonth, &nDay)) == -1)
+    if ( status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d", nYear, nMonth, nDay);
@@ -1839,9 +1844,9 @@ const char *TABDATFile::ReadTimeField(int nWidth)
     int nMinute = 0;
     int nSecond = 0;
     int nMS = 0;
-    int status = 0;
+    int status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS);
 
-    if ((status = ReadTimeField(nWidth, &nHour, &nMinute, &nSecond, &nMS)) == -1)
+    if (status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%2.2d%2.2d%2.2d%3.3d", nHour, nMinute, nSecond, nMS);
@@ -1917,10 +1922,10 @@ const char *TABDATFile::ReadDateTimeField(int nWidth)
     int nMinute = 0;
     int nSecond = 0;
     int nMS = 0;
-    int status = 0;
+    int status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
+                                    &nMinute, &nSecond, &nMS);
 
-    if ((status = ReadDateTimeField(nWidth, &nYear, &nMonth, &nDay, &nHour,
-                                    &nMinute, &nSecond, &nMS)) == -1)
+    if ( status == -1)
        return "";
 
     snprintf(m_szBuffer, sizeof(m_szBuffer), "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d%3.3d",
@@ -2346,20 +2351,24 @@ int TABDATFile::WriteTimeField(const char *pszValue,
          * "HHMMSSmmm"
          *------------------------------------------------------------*/
         char szBuf[4];
-        strncpy(szBuf,pszValue,2);
-        szBuf[2]=0;
+        const int HHLength = 2;
+        strncpy(szBuf,pszValue,HHLength);
+        szBuf[HHLength]=0;
         nHour = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+2,2);
-        szBuf[2]=0;
+        const int MMLength = 2;
+        strncpy(szBuf,pszValue+HHLength,MMLength);
+        szBuf[MMLength]=0;
         nMin = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+4,2);
-        szBuf[2]=0;
+        const int SSLength = 2;
+        strncpy(szBuf,pszValue+HHLength+MMLength,SSLength);
+        szBuf[SSLength]=0;
         nSec = atoi(szBuf);
 
-        strncpy(szBuf,pszValue+6,3);
-        szBuf[3]=0;
+        const int mmmLength = 3;
+        strncpy(szBuf,pszValue+HHLength+MMLength+SSLength,mmmLength);
+        szBuf[mmmLength]=0;
         nMS = atoi(szBuf);
     }
     else if (strlen(pszValue) == 0)

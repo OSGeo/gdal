@@ -331,11 +331,13 @@ OGRSQLiteDataSource::OGRSQLiteDataSource() :
 OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
 {
-    if( nLayers > 0 )
+    if( nLayers > 0 || !apoInvisibleLayers.empty() )
     {
         // Close any remaining iterator
         for( int i = 0; i < nLayers; i++ )
             papoLayers[i]->ResetReading();
+        for( size_t i = 0; i < apoInvisibleLayers.size(); i++ )
+            apoInvisibleLayers[i]->ResetReading();
 
         // Create spatial indices in a transaction for faster execution
         if( hDB )
@@ -358,6 +360,8 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
+    for( size_t i = 0; i < apoInvisibleLayers.size(); i++ )
+        delete apoInvisibleLayers[i];
 
     CPLFree( papoLayers );
 
@@ -1692,7 +1696,7 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
         return !bIsSpatiaLiteDB;
     else if( EQUAL(pszCap,ODsCMeasuredGeometries) )
         return TRUE;
-    else if EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer)
+    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
         return bUpdate;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return bUpdate;
@@ -1706,7 +1710,7 @@ int OGRSQLiteDataSource::TestCapability( const char * pszCap )
 
 int OGRSQLiteBaseDataSource::TestCapability( const char * pszCap )
 {
-    if EQUAL(pszCap,ODsCTransactions)
+    if( EQUAL(pszCap,ODsCTransactions) )
         return TRUE;
     else
         return GDALPamDataset::TestCapability(pszCap);
@@ -1736,6 +1740,12 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
     if( poLayer != NULL )
         return poLayer;
 
+    for( size_t i=0; i<apoInvisibleLayers.size(); ++i)
+    {
+        if( EQUAL(apoInvisibleLayers[i]->GetName(), pszLayerName) )
+            return apoInvisibleLayers[i];
+    }
+
     if( !OpenTable(pszLayerName) )
         return NULL;
 
@@ -1751,6 +1761,49 @@ OGRLayer *OGRSQLiteDataSource::GetLayerByName( const char* pszLayerName )
         nLayers --;
         return NULL;
     }
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                    GetLayerByNameNotVisible()                        */
+/************************************************************************/
+
+OGRLayer *OGRSQLiteDataSource::GetLayerByNameNotVisible( const char* pszLayerName )
+
+{
+    {
+        OGRLayer* poLayer = GDALDataset::GetLayerByName(pszLayerName);
+        if( poLayer != NULL )
+            return poLayer;
+    }
+
+    for( size_t i=0; i<apoInvisibleLayers.size(); ++i)
+    {
+        if( EQUAL(apoInvisibleLayers[i]->GetName(), pszLayerName) )
+            return apoInvisibleLayers[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRSQLiteTableLayer *poLayer = new OGRSQLiteTableLayer( this );
+    if( poLayer->Initialize( pszLayerName, FALSE, FALSE) != CE_None )
+    {
+        delete poLayer;
+        return NULL;
+    }
+    CPLErrorReset();
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    poLayer->GetLayerDefn();
+    CPLPopErrorHandler();
+    if( CPLGetLastErrorType() != 0 )
+    {
+        CPLErrorReset();
+        delete poLayer;
+        return NULL;
+    }
+    apoInvisibleLayers.push_back(poLayer);
 
     return poLayer;
 }
@@ -3009,7 +3062,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Translate SRS to PROJ.4 string (if not already done)            */
 /* -------------------------------------------------------------------- */
-    if( osProj4.size() == 0 )
+    if( osProj4.empty() )
     {
         char* pszProj4 = NULL;
         if( oSRS.exportToProj4( &pszProj4 ) == OGRERR_NONE )

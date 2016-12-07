@@ -172,7 +172,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
 
     // Buffer for xmlns:gml and srsName attributes (srsName="...")
-    char szAttributes[128] = { 0 };
+    char szAttributes[128] = {};
     size_t nAttrsLength = 0;
 
     szAttributes[0] = 0;
@@ -328,9 +328,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         // Buffer for polygon tag name + srsName attribute if set.
         const size_t nPolyTagLength = 13;
-        char* pszPolyTagName = NULL;
         const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
-        pszPolyTagName = static_cast<char *>(CPLMalloc( nPolyTagNameBufLen ));
+        char* pszPolyTagName =
+            static_cast<char *>(CPLMalloc(nPolyTagNameBufLen));
 
         // Compose Polygon tag with or without srsName attribute.
         snprintf( pszPolyTagName, nPolyTagNameBufLen,
@@ -386,7 +386,13 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
              || eFType == wkbMultiPoint
              || eFType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
+        OGRGeometryCollection *poGC =
+            dynamic_cast<OGRGeometryCollection *>(poGeometry);
+        if( poGC == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRGeometryCollection.");
+        }
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
 
@@ -1292,7 +1298,9 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         const char* pszCoordSwap =
             CSLFetchNameValue(papszOptions, "COORD_SWAP");
         if( pszCoordSwap )
+        {
             bCoordSwap = CPLTestBool(pszCoordSwap);
+        }
         else
         {
             const OGRSpatialReference* poSRS =

@@ -196,10 +196,13 @@ class TimeCode {
     long        lYear;
     long        lDay;
     long        lMillisecond;
-    char        pszString[L1B_TIMECODE_LENGTH];
+    char        szString[L1B_TIMECODE_LENGTH];
 
   public:
-    TimeCode() : lYear(0), lDay(0), lMillisecond(0) {}
+    TimeCode() : lYear(0), lDay(0), lMillisecond(0)
+    {
+        memset( szString, 0, sizeof(szString) );
+    }
 
     void SetYear(long year)
     {
@@ -218,10 +221,10 @@ class TimeCode {
     long GetMillisecond() { return lMillisecond; }
     char* PrintTime()
     {
-        snprintf(pszString, L1B_TIMECODE_LENGTH,
+        snprintf(szString, L1B_TIMECODE_LENGTH,
                  "year: %ld, day: %ld, millisecond: %ld",
                  lYear, lDay, lMillisecond);
-        return pszString;
+        return szString;
     }
 };
 #undef L1B_TIMECODE_LENGTH
@@ -296,7 +299,7 @@ class L1BDataset : public GDALPamDataset
 
     void        ProcessRecordHeaders();
     int         FetchGCPs( GDAL_GCP *, GByte *, int );
-    void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
+    static void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
     void        FetchNOAA15TimeCode(TimeCode *, const GByte *, int *);
     void        FetchTimeCode( TimeCode *psTime, const void *pRecordHeader,
                                int *peLocationIndicator );
@@ -317,12 +320,12 @@ class L1BDataset : public GDALPamDataset
                               const GByte* pabyHeader, int nHeaderBytes );
 
   public:
-                L1BDataset( L1BFileFormat );
+    explicit L1BDataset( L1BFileFormat );
     virtual ~L1BDataset();
 
-    virtual int GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
     static int  Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -343,9 +346,9 @@ class L1BRasterBand : public GDALPamRasterBand
                 L1BRasterBand( L1BDataset *, int );
 
 //    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALRasterBand *GetMaskBand() override;
+    virtual int             GetMaskFlags() override;
 };
 
 /************************************************************************/
@@ -360,9 +363,9 @@ class L1BMaskBand: public GDALPamRasterBand
 
   public:
 
-                L1BMaskBand( L1BDataset * );
+    explicit       L1BMaskBand( L1BDataset * );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -2292,8 +2295,8 @@ class L1BGeolocRasterBand: public GDALRasterBand
     public:
             L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
-            virtual double GetNoDataValue( int *pbSuccess = NULL );
+            virtual CPLErr IReadBlock(int, int, void*) override;
+            virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -2574,7 +2577,7 @@ class L1BSolarZenithAnglesDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BSolarZenithAnglesDataset(L1BDataset* poMainDS);
+       explicit L1BSolarZenithAnglesDataset(L1BDataset* poMainDS);
        virtual ~L1BSolarZenithAnglesDataset();
 
        static GDALDataset* CreateSolarZenithAnglesDS(L1BDataset* poL1BDS);
@@ -2590,8 +2593,8 @@ class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
         L1BSolarZenithAnglesRasterBand( L1BSolarZenithAnglesDataset* poDS,
                                         int nBand );
 
-        virtual CPLErr IReadBlock(int, int, void*);
-        virtual double GetNoDataValue( int *pbSuccess = NULL );
+        virtual CPLErr IReadBlock(int, int, void*) override;
+        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
@@ -2764,7 +2767,7 @@ class L1BNOAA15AnglesDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BNOAA15AnglesDataset(L1BDataset* poMainDS);
+       explicit L1BNOAA15AnglesDataset(L1BDataset* poMainDS);
        virtual ~L1BNOAA15AnglesDataset();
 
        static GDALDataset* CreateAnglesDS(L1BDataset* poL1BDS);
@@ -2779,7 +2782,7 @@ class L1BNOAA15AnglesRasterBand: public GDALRasterBand
     public:
             L1BNOAA15AnglesRasterBand(L1BNOAA15AnglesDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
+            virtual CPLErr IReadBlock(int, int, void*) override;
 };
 
 /************************************************************************/
@@ -2893,7 +2896,7 @@ class L1BCloudsDataset : public GDALDataset
     L1BDataset* poL1BDS;
 
     public:
-                L1BCloudsDataset(L1BDataset* poMainDS);
+       explicit L1BCloudsDataset(L1BDataset* poMainDS);
        virtual ~L1BCloudsDataset();
 
        static GDALDataset* CreateCloudsDS(L1BDataset* poL1BDS);
@@ -2908,7 +2911,7 @@ class L1BCloudsRasterBand: public GDALRasterBand
     public:
             L1BCloudsRasterBand(L1BCloudsDataset* poDS, int nBand);
 
-            virtual CPLErr IReadBlock(int, int, void*);
+            virtual CPLErr IReadBlock(int, int, void*) override;
 };
 
 /************************************************************************/
@@ -3155,7 +3158,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         if( pszFilename[0] == '"' )
             pszFilename ++;
         osFilename = pszFilename;
-        if( osFilename.size() > 0 && osFilename[osFilename.size()-1] == '"' )
+        if( !osFilename.empty() && osFilename[osFilename.size()-1] == '"' )
             osFilename.resize(osFilename.size()-1);
         fp = VSIFOpenL( osFilename, "rb" );
         if ( !fp )

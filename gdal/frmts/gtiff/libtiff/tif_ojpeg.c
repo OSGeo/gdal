@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.65 2016-09-04 21:32:56 erouault Exp $ */
+/* $Id: tif_ojpeg.c,v 1.66 2016-12-03 11:15:18 erouault Exp $ */
 
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
@@ -244,6 +244,7 @@ typedef enum {
 
 typedef struct {
 	TIFF* tif;
+        int decoder_ok;
 	#ifndef LIBJPEG_ENCAP_EXTERNAL
 	JMP_BUF exit_jmpbuf;
 	#endif
@@ -722,6 +723,7 @@ OJPEGPreDecode(TIFF* tif, uint16 s)
 		}
 		sp->write_curstrile++;
 	}
+	sp->decoder_ok = 1;
 	return(1);
 }
 
@@ -784,8 +786,14 @@ OJPEGPreDecodeSkipScanlines(TIFF* tif)
 static int
 OJPEGDecode(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 {
+        static const char module[]="OJPEGDecode";
 	OJPEGState* sp=(OJPEGState*)tif->tif_data;
 	(void)s;
+        if( !sp->decoder_ok )
+        {
+            TIFFErrorExt(tif->tif_clientdata,module,"Cannot decode: decoder not correctly initialized");
+            return 0;
+        }
 	if (sp->libjpeg_jpeg_query_style==0)
 	{
 		if (OJPEGDecodeRaw(tif,buf,cc)==0)

@@ -28,16 +28,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cctype>
-#include <cstdlib>
-
-#include "cpl_conv.h"
-#include "cpl_vsi.h"
-
-#include "ogr_geometry.h"
+#include "cpl_port.h"
 #include "ogr_p.h"
 
-# include "ogrsf_frmts.h"
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -921,11 +929,8 @@ void OGRFree( void * pMemory )
  * without error, return of -1 requests exit with error code.
  */
 
-/**/
-/**/
-
 int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
-                                int /* nOptions */ )
+                                CPL_UNUSED int nOptions )
 
 {
     return GDALGeneralCmdLineProcessor( nArgc, ppapszArgv, GDAL_OF_VECTOR );
@@ -1019,7 +1024,7 @@ int OGRParseDate( const char *pszInput,
             ++pszInput;
 
         psField->Date.Month = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Month <= 0 || psField->Date.Month > 12 )
+        if( psField->Date.Month == 0 || psField->Date.Month > 12 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
@@ -1030,7 +1035,7 @@ int OGRParseDate( const char *pszInput,
             ++pszInput;
 
         psField->Date.Day = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Day <= 0 || psField->Date.Day > 31 )
+        if( psField->Date.Day == 0 || psField->Date.Day > 31 )
             return FALSE;
 
         while( *pszInput >= '0' && *pszInput <= '9' )
@@ -1610,8 +1615,7 @@ double OGRFastAtof(const char* pszStr)
             return OGRCallAtofOnShortString(pszStr);
         else
         {
-            if( countFractionnal < sizeof(adfTenPower) /
-                sizeof(adfTenPower[0]) )
+            if( countFractionnal < CPL_ARRAYSIZE(adfTenPower) )
                 return dfSign * (dfVal / adfTenPower[countFractionnal]);
             else
                 return OGRCallAtofOnShortString(pszStr);

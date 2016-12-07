@@ -704,14 +704,14 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
 
         if (pIndex->aConstraint[i].usable)
         {
-            if (osQueryPatternUsable.size()) osQueryPatternUsable += " AND ";
+            if (!osQueryPatternUsable.empty() ) osQueryPatternUsable += " AND ";
             osQueryPatternUsable += pszFieldName;
             osQueryPatternUsable += pszOp;
             osQueryPatternUsable += "?";
         }
         else
         {
-            if (osQueryPatternNotUsable.size()) osQueryPatternNotUsable += " AND ";
+            if (!osQueryPatternNotUsable.empty() ) osQueryPatternNotUsable += " AND ";
             osQueryPatternNotUsable += pszFieldName;
             osQueryPatternNotUsable += pszOp;
             osQueryPatternNotUsable += "?";
@@ -1008,7 +1008,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
              osAttributeFilter.c_str());
 #endif
 
-    if( pMyCursor->poLayer->SetAttributeFilter( osAttributeFilter.size() ?
+    if( pMyCursor->poLayer->SetAttributeFilter( !osAttributeFilter.empty() ?
                             osAttributeFilter.c_str() : NULL) != OGRERR_NONE )
     {
         sqlite3_free(pMyCursor->pVTab->zErrMsg);

@@ -77,22 +77,22 @@ class RS2Dataset : public GDALPamDataset
     char        **papszExtraFiles;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
             RS2Dataset();
     virtual ~RS2Dataset();
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform( double * );
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char **GetMetadata( const char * pszDomain = "" );
-    virtual char **GetFileList(void);
+    virtual char      **GetMetadataDomainList() override;
+    virtual char **GetMetadata( const char * pszDomain = "" ) override;
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -117,7 +117,7 @@ class RS2RasterBand : public GDALPamRasterBand
                                GDALDataset *poBandFile );
     virtual     ~RS2RasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -285,7 +285,7 @@ public:
         const char *pszLUT );
     ~RS2CalibRasterBand();
 
-    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage );
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
 };
 
 /************************************************************************/

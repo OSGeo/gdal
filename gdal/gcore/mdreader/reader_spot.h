@@ -51,9 +51,9 @@ public:
     GDALMDReaderSpot(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderSpot();
 protected:
-    virtual void LoadMetadata();
+    virtual void LoadMetadata() override;
     virtual char** ReadXMLToList(CPLXMLNode* psNode, char** papszList,
-                                 const char* pszName = "");
+                                 const char* pszName = "") override;
 };
 
 #endif // READER_SPOT_H_INCLUDED

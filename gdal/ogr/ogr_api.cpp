@@ -656,12 +656,12 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
           poPoint->setY( *padfY );
           if( pabyZ != NULL )
               poPoint->setZ(*( padfZ ) );
-        break;
+          break;
       }
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
+        OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
 
         const int nSizeDouble = (int)sizeof(double);
         if( nXStride == nSizeDouble &&
@@ -675,13 +675,17 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
         {
           poSC->setNumPoints( nPointsIn );
 
+          // TODO(schwehr): Create pasX and pasY.
           for( int i = 0; i < nPointsIn; ++i )
           {
-            const double x = *(double*)((char*)pabyX + i * nXStride);
-            const double y = *(double*)((char*)pabyY + i * nYStride);
+            const double x = *reinterpret_cast<double *>(
+                reinterpret_cast<char *>(pabyX) + i * nXStride);
+            const double y = *reinterpret_cast<double *>(
+                reinterpret_cast<char *>(pabyY) + i * nYStride);
             if( pabyZ )
             {
-                const double z = *(double*)((char*)pabyZ + i * nZStride);
+                const double z = *reinterpret_cast<double *>(
+                    reinterpret_cast<char *>(pabyZ) + i * nZStride);
                 poSC->setPoint( i, x, y, z );
             }
             else
@@ -751,16 +755,16 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
           poPoint->setX(*padfX);
           poPoint->setY(*padfY);
-        if( pabyZ )
-            poPoint->setZ(*padfZ);
-        if( pabyM )
-            poPoint->setM(*padfM);
-        break;
+          if( pabyZ )
+              poPoint->setZ(*padfZ);
+          if( pabyM )
+              poPoint->setM(*padfM);
+          break;
       }
       case wkbLineString:
       case wkbCircularString:
       {
-          OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
+        OGRSimpleCurve* poSC = reinterpret_cast<OGRSimpleCurve *>(hGeom);
 
         const int nSizeDouble = static_cast<int>(sizeof(double));
         if( nXStride == nSizeDouble &&
@@ -783,12 +787,15 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
         {
           poSC->setNumPoints( nPointsIn );
 
+          // TODO(schwehr): Create pasX and pasY.
           if( !pabyZ && !pabyM )
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
+                  const double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  const double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
                   poSC->setPoint( i, x, y );
               }
           }
@@ -796,9 +803,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double z = *(double*)((char*)pabyZ + i * nZStride);
+                  const double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  const double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  const double z = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
                   poSC->setPoint( i, x, y, z );
               }
           }
@@ -806,9 +816,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  const double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  const double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  const double m = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyM) + i * nMStride);
                   poSC->setPointM( i, x, y, m );
               }
           }
@@ -816,10 +829,14 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  double x = *(double*)((char*)pabyX + i * nXStride);
-                  double y = *(double*)((char*)pabyY + i * nYStride);
-                  double z = *(double*)((char*)pabyZ + i * nZStride);
-                  double m = *(double*)((char*)pabyM + i * nMStride);
+                  const double x = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyX) + i * nXStride);
+                  const double y = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  const double z = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
+                  const double m = *reinterpret_cast<double *>(
+                      reinterpret_cast<char *>(pabyM) + i * nMStride);
                   poSC->setPoint( i, x, y, z, m );
               }
           }
@@ -1824,10 +1841,8 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
         reinterpret_cast<OGRCurve *>(hGeom)->Value(dfDistance, p);
         return reinterpret_cast<OGRGeometryH>(p);
     }
-    else
-    {
-        return NULL;
-    }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -1880,6 +1895,7 @@ void OGRSetNonLinearGeometriesEnabledFlag( int bFlag )
  * @since GDAL 2.0
  * @see OGRSetNonLinearGeometriesEnabledFlag()
  */
+
 int OGRGetNonLinearGeometriesEnabledFlag( void )
 {
     return bNonLinearGeometriesEnabled;

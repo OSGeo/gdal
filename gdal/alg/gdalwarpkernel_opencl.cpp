@@ -69,7 +69,7 @@ CPL_CVSID("$Id$");
         CPLFree(fallBackMem); \
         fallBackMem = NULL; \
     } \
-} while(0)
+} while( false )
 
 static const char* getCLErrorString(cl_int err)
 {

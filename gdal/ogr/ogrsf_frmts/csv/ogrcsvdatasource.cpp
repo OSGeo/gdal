@@ -55,7 +55,7 @@ class OGRCSVEditableLayerSynchronizer: public IOGREditableLayerSynchronizer
                    virtual ~OGRCSVEditableLayerSynchronizer();
 
             virtual OGRErr EditableSyncToDisk(OGRLayer* poEditableLayer,
-                                              OGRLayer** ppoDecoratedLayer);
+                                              OGRLayer** ppoDecoratedLayer) override;
 };
 
 /************************************************************************/
@@ -122,9 +122,9 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(OGRLayer* poEditableL
         }
     }
 
-    const bool bHasXY = ( m_poCSVLayer->GetXField().size() != 0 &&
-                          m_poCSVLayer->GetYField().size() != 0 );
-    const bool bHasZ = ( m_poCSVLayer->GetZField().size() != 0 );
+    const bool bHasXY = ( !m_poCSVLayer->GetXField().empty() &&
+                          !m_poCSVLayer->GetYField().empty() );
+    const bool bHasZ = ( !m_poCSVLayer->GetZField().empty() );
     if( bHasXY && !CPLFetchBool(m_papszOpenOptions, "KEEP_GEOM_COLUMNS", true) )
     {
         if( poCSVTmpLayer->GetLayerDefn()->GetFieldIndex(m_poCSVLayer->GetXField()) < 0 )
@@ -260,8 +260,8 @@ class OGRCSVEditableLayer: public OGREditableLayer
                             char** papszOpenOptions);
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
+                                     int bApproxOK = TRUE ) override;
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
 };
 
 /************************************************************************/

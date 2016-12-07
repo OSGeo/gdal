@@ -75,15 +75,13 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
     char	**papszMethods = NULL;
-    char	szPROJ4[512];
+    char	szPROJ4[512] = { 0 };
 
 /* -------------------------------------------------------------------- */
 /*      If there was nothing in the file return "unknown".              */
 /* -------------------------------------------------------------------- */
     if( CSLCount(psGXF->papszMapProjection) < 2 )
         return( CPLStrdup( "unknown" ) );
-
-    szPROJ4[0] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Parse the third line, looking for known projection methods.     */

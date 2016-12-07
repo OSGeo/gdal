@@ -40,7 +40,10 @@ CPL_CVSID("$Id$");
 //                                                           GeoRasterWrapper()
 //  ---------------------------------------------------------------------------
 
-GeoRasterWrapper::GeoRasterWrapper()
+GeoRasterWrapper::GeoRasterWrapper() :
+    sPyramidResampling  ( "NN" ),
+    sCompressionType    ( "NONE" ),
+    sInterleaving       ( "BSQ" )
 {
     nRasterId           = -1;
     phMetadata          = NULL;
@@ -61,11 +64,9 @@ GeoRasterWrapper::GeoRasterWrapper()
     dfYCoefficient[0]   = 0.0;
     dfYCoefficient[1]   = 1.0;
     dfYCoefficient[2]   = 0.0;
-    sCompressionType    = "NONE";
     nCompressQuality    = 75;
     bGenPyramid         = false;
     nPyramidLevels      = 0;
-    sPyramidResampling  = "NN";
     pahLocator          = NULL;
     pabyBlockBuf        = NULL;
     pabyCompressBuf     = NULL;
@@ -75,7 +76,6 @@ GeoRasterWrapper::GeoRasterWrapper()
     nCurrentLevel       = -1;
     pahLevels           = NULL;
     nLevelOffset        = 0L;
-    sInterleaving       = "BSQ";
     bUpdate             = false;
     bInitializeIO       = false;
     bFlushMetadata      = false;
@@ -93,13 +93,19 @@ GeoRasterWrapper::GeoRasterWrapper()
     bFlushBlock         = false;
     nFlushBlockSize     = 0L;
     bUniqueFound        = false;
-    sValueAttributeTab  = "";
     psNoDataList        = NULL;
     bWriteOnly          = false;
     bBlocking           = true;
     bAutoBlocking       = false;
     eModelCoordLocation = MCL_DEFAULT;
     phRPC               = NULL;
+    poConnection        = NULL;
+    iDefaultRedBand     = 0;
+    iDefaultGreenBand   = 0;
+    iDefaultBlueBand    = 0;
+    anULTCoordinate[0]  = 0;
+    anULTCoordinate[1]  = 0;
+    anULTCoordinate[2]  = 0;
 }
 
 //  ---------------------------------------------------------------------------

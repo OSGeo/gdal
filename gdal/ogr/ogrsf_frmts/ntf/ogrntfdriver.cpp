@@ -54,7 +54,7 @@ static GDALDataset *OGRNTFDriverOpen( GDALOpenInfo* poOpenInfo )
         if( !STARTS_WITH_CI(pszHeader, "01") )
             return NULL;
 
-        int j = 0;  // Used afer for.
+        int j = 0;  // Used after for.
         for( ; j < 80; j++ )
         {
             if( pszHeader[j] == 10 || pszHeader[j] == 13 )

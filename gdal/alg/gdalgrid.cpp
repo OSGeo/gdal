@@ -27,17 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cstdlib>
-#include <float.h>
-#include <limits.h>
-#include <map>
-
-#include "cpl_cpu_features.h"
-#include "cpl_vsi.h"
-#include "cpl_string.h"
-#include "cpl_worker_thread_pool.h"
+#include "cpl_port.h"
 #include "gdalgrid.h"
 #include "gdalgrid_priv.h"
+
+#include <cfloat>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+
+#include <map>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_cpu_features.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_progress.h"
+#include "cpl_quad_tree.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
+#include "gdal.h"
 
 CPL_CVSID("$Id$");
 
@@ -55,7 +67,7 @@ static const double TO_RADIANS = M_PI / 180.0;
 /*                        GDALGridGetPointBounds()                      */
 /************************************************************************/
 
-static void GDALGridGetPointBounds(const void* hFeature, CPLRectObj* pBounds)
+static void GDALGridGetPointBounds( const void* hFeature, CPLRectObj* pBounds )
 {
     const GDALGridPoint* psPoint = static_cast<const GDALGridPoint*>(hFeature);
     GDALGridXYArrays* psXYArrays = psPoint->psXYArrays;
@@ -133,7 +145,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
         static_cast<const GDALGridInverseDistanceToAPowerOptions *>(
             poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -147,7 +159,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
     const double dfPowerDiv2 = poOptions->dfPower / 2;
     const double dfSmoothing = poOptions->dfSmoothing;
     const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    double  dfNominator = 0.0;
+    double dfNominator = 0.0;
     double dfDenominator = 0.0;
     GUInt32 n = 0;
 
@@ -260,7 +272,8 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     double *pdfValue,
     void* hExtraParamsIn )
 {
-    const GDALGridInverseDistanceToAPowerNearestNeighborOptions *const poOptions =
+    const
+    GDALGridInverseDistanceToAPowerNearestNeighborOptions *const poOptions =
       static_cast<
           const GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
           poOptionsIn);
@@ -315,7 +328,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     }
     else
     {
-        for(GUInt32 i = 0; i < nPoints; i++)
+        for( GUInt32 i = 0; i < nPoints; i++ )
         {
             const double dfRX = padfX[i] - dfXPoint;
             const double dfRY = padfY[i] - dfYPoint;
@@ -538,7 +551,7 @@ GDALGridMovingAverage( const void *poOptionsIn, GUInt32 nPoints,
 
     const GDALGridMovingAverageOptions * const poOptions =
         static_cast<const GDALGridMovingAverageOptions *>(poOptionsIn);
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -627,7 +640,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
 
     const GDALGridNearestNeighborOptions * const poOptions =
         static_cast<const GDALGridNearestNeighborOptions *>(poOptionsIn);
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     double dfR12 = dfRadius1 * dfRadius2;
@@ -654,7 +667,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
         if( dfRadius1 > 0 )
             dfSearchRadius = poOptions->dfRadius1;
         CPLRectObj sAoi;
-        while(dfSearchRadius > 0)
+        while( dfSearchRadius > 0 )
         {
             sAoi.minx = dfXPoint - dfSearchRadius;
             sAoi.miny = dfYPoint - dfSearchRadius;
@@ -781,7 +794,7 @@ GDALGridDataMetricMinimum( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -889,7 +902,7 @@ GDALGridDataMetricMaximum( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -998,7 +1011,7 @@ GDALGridDataMetricRange( const void *poOptionsIn, GUInt32 nPoints,
 
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -1108,7 +1121,7 @@ GDALGridDataMetricCount( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -1209,7 +1222,7 @@ GDALGridDataMetricAverageDistance( const void *poOptionsIn, GUInt32 nPoints,
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
 
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -1313,7 +1326,7 @@ GDALGridDataMetricAverageDistancePts( const void *poOptionsIn, GUInt32 nPoints,
 
     const GDALGridDataMetricsOptions *const poOptions =
         static_cast<const GDALGridDataMetricsOptions *>(poOptionsIn);
-    // Pre-compute search ellipse parameters
+    // Pre-compute search ellipse parameters.
     const double dfRadius1 = poOptions->dfRadius1 * poOptions->dfRadius1;
     const double dfRadius2 = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12 = dfRadius1 * dfRadius2;
@@ -1433,12 +1446,13 @@ GDALGridLinear( const void *poOptionsIn, GUInt32 nPoints,
     GDALTriangulation* psTriangulation = psExtraParams->psTriangulation;
 
     int nOutputFacetIdx = -1;
-    bool bRet = CPL_TO_BOOL( GDALTriangulationFindFacetDirected(
+    const bool bRet = CPL_TO_BOOL( GDALTriangulationFindFacetDirected(
         psTriangulation, psExtraParams->nInitialFacetIdx,
         dfXPoint, dfYPoint, &nOutputFacetIdx ) );
 
     CPLAssert(nOutputFacetIdx >= 0);
-    // Reuse output facet idx as next initial index since we proceed line by line
+    // Reuse output facet idx as next initial index since we proceed line by
+    // line.
     psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
 
     if( bRet )
@@ -1467,8 +1481,10 @@ GDALGridLinear( const void *poOptionsIn, GUInt32 nPoints,
         const GDALGridLinearOptions *const poOptions =
             static_cast<const GDALGridLinearOptions *>(poOptionsIn);
         const double dfRadius = poOptions->dfRadius;
-        if( dfRadius == 0 )
+        if( dfRadius == 0.0 )
+        {
             *pdfValue = poOptions->dfNoDataValue;
+        }
         else
         {
             GDALGridNearestNeighborOptions sNeighbourOptions;
@@ -1527,8 +1543,8 @@ struct _GDALGridJob
 /*                   GDALGridProgressMultiThread()                      */
 /************************************************************************/
 
-/* Return TRUE if the computation must be interrupted */
-static int GDALGridProgressMultiThread(GDALGridJob* psJob)
+// Return TRUE if the computation must be interrupted.
+static int GDALGridProgressMultiThread( GDALGridJob* psJob )
 {
     CPLAcquireMutex(psJob->hCondMutex, 1.0);
     ++(*psJob->pnCounter);
@@ -1543,8 +1559,8 @@ static int GDALGridProgressMultiThread(GDALGridJob* psJob)
 /*                      GDALGridProgressMonoThread()                    */
 /************************************************************************/
 
-/* Return TRUE if the computation must be interrupted */
-static int GDALGridProgressMonoThread(GDALGridJob* psJob)
+// Return TRUE if the computation must be interrupted.
+static int GDALGridProgressMonoThread( GDALGridJob* psJob )
 {
     const int nCounter = ++(*psJob->pnCounter);
     if( !psJob->pfnRealProgress( nCounter / static_cast<double>(psJob->nYSize),
@@ -1561,7 +1577,7 @@ static int GDALGridProgressMonoThread(GDALGridJob* psJob)
 /*                         GDALGridJobProcess()                         */
 /************************************************************************/
 
-static void GDALGridJobProcess(void* user_data)
+static void GDALGridJobProcess( void* user_data )
 {
     GDALGridJob* const psJob = static_cast<GDALGridJob *>(user_data);
     int (*pfnProgress)(GDALGridJob* psJob) = psJob->pfnProgress;
@@ -1605,18 +1621,18 @@ static void GDALGridJobProcess(void* user_data)
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
     const int nLineSpace = nXSize * nDataTypeSize;
 
-    for ( GUInt32 nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep )
+    for( GUInt32 nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep )
     {
         const double dfYPoint = dfYMin + ( nYPoint + 0.5 ) * dfDeltaY;
 
-        for ( GUInt32 nXPoint = 0; nXPoint < nXSize; nXPoint++ )
+        for( GUInt32 nXPoint = 0; nXPoint < nXSize; nXPoint++ )
         {
             const double dfXPoint = dfXMin + ( nXPoint + 0.5 ) * dfDeltaX;
 
-            if ( (*pfnGDALGridMethod)( poOptions, nPoints, padfX, padfY, padfZ,
-                                       dfXPoint, dfYPoint,
-                                       padfValues + nXPoint,
-                                       &sExtraParameters ) != CE_None )
+            if( (*pfnGDALGridMethod)(poOptions, nPoints, padfX, padfY, padfZ,
+                                     dfXPoint, dfYPoint,
+                                     padfValues + nXPoint,
+                                     &sExtraParameters) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Gridding failed at X position %lu, Y position %lu",
@@ -1663,7 +1679,7 @@ struct GDALGridContext
     CPLWorkerThreadPool *poWorkerThreadPool;
 };
 
-static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
+static void GDALGridContextCreateQuadTree( GDALGridContext* psContext );
 
 /**
  * Creates a context to do regular gridding from the scattered data.
@@ -1695,10 +1711,10 @@ static void GDALGridContextCreateQuadTree(GDALGridContext* psContext);
  * @param padfX Input array of X coordinates.
  * @param padfY Input array of Y coordinates.
  * @param padfZ Input array of Z values.
- * @param bCallerWillKeepPointArraysAlive Whether the provided padfX, padfY, padfZ
- *        arrays will still be "alive" during the calls to GDALGridContextProcess().
- *        Setting to TRUE prevent them from being duplicated in the context.
- *        If unsure, set to FALSE.
+ * @param bCallerWillKeepPointArraysAlive Whether the provided padfX, padfY,
+ *        padfZ arrays will still be "alive" during the calls to
+ *        GDALGridContextProcess().  Setting to TRUE prevent them from being
+ *        duplicated in the context.  If unsure, set to FALSE.
  *
  * @return the context (to be freed with GDALGridContextFree()) or NULL in case
  *         or error.
@@ -1719,7 +1735,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     CPLAssert( padfZ );
     bool bCreateQuadTree = false;
 
-    // Starting address aligned on 32-byte boundary for AVX
+    // Starting address aligned on 32-byte boundary for AVX.
     float* pafXAligned = NULL;
     float* pafYAligned = NULL;
     float* pafZAligned = NULL;
@@ -1728,7 +1744,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
     GDALGridFunction pfnGDALGridMethod = NULL;
 
-    switch ( eAlgorithm )
+    switch( eAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
         {
@@ -1740,7 +1756,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             const GDALGridInverseDistanceToAPowerOptions * const poPower =
                 static_cast<const GDALGridInverseDistanceToAPowerOptions *>(
                     poOptions);
-            if ( poPower->dfRadius1 == 0.0 && poPower->dfRadius2 == 0.0 )
+            if( poPower->dfRadius1 == 0.0 && poPower->dfRadius2 == 0.0 )
             {
                 const double dfPower = poPower->dfPower;
                 const double dfSmoothing = poPower->dfSmoothing;
@@ -1755,15 +1771,21 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         CPLHaveRuntimeAVX() )
                     {
                         pafXAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
                         pafYAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
                         pafZAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
-                        if( pafXAligned != NULL && pafYAligned != NULL && pafZAligned != NULL )
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
+                        if( pafXAligned != NULL && pafYAligned != NULL &&
+                            pafZAligned != NULL )
                         {
-                            CPLDebug("GDAL_GRID", "Using AVX optimized version");
-                            pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
+                            CPLDebug("GDAL_GRID",
+                                     "Using AVX optimized version");
+                            pfnGDALGridMethod =
+                                GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
                             for( GUInt32 i = 0; i < nPoints; i++ )
                             {
                                 pafXAligned[i] = static_cast<float>(padfX[i]);
@@ -1786,19 +1808,26 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
                     if( pafXAligned == NULL &&
-                        CPLTestBool(CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
+                        CPLTestBool(
+                            CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
                     {
                         pafXAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
                         pafYAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
                         pafZAligned = static_cast<float *>(
-                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(float) * nPoints) );
-                        if( pafXAligned != NULL && pafYAligned != NULL && pafZAligned != NULL )
+                            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                                sizeof(float) * nPoints) );
+                        if( pafXAligned != NULL && pafYAligned != NULL &&
+                            pafZAligned != NULL )
                         {
-                            CPLDebug("GDAL_GRID", "Using SSE optimized version");
-                            pfnGDALGridMethod = GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
+                            CPLDebug("GDAL_GRID",
+                                     "Using SSE optimized version");
+                            pfnGDALGridMethod =
+                                GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
                             for( GUInt32 i = 0; i < nPoints; i++ )
                             {
                                 pafXAligned[i] = static_cast<float>(padfX[i]);
@@ -1840,7 +1869,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         case GGA_MovingAverage:
         {
             poOptionsNew = CPLMalloc(sizeof(GDALGridMovingAverageOptions));
-            memcpy(poOptionsNew, poOptions, sizeof(GDALGridMovingAverageOptions));
+            memcpy(poOptionsNew,
+                   poOptions,
+                   sizeof(GDALGridMovingAverageOptions));
 
             pfnGDALGridMethod = GDALGridMovingAverage;
             break;
@@ -1952,7 +1983,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->sXYArrays.padfX = padfX;
     psContext->sXYArrays.padfY = padfY;
     psContext->sExtraParameters.hQuadTree = NULL;
-    psContext->sExtraParameters.dfInitialSearchRadius = 0;
+    psContext->sExtraParameters.dfInitialSearchRadius = 0.0;
     psContext->sExtraParameters.pafX = pafXAligned;
     psContext->sExtraParameters.pafY = pafYAligned;
     psContext->sExtraParameters.pafZ = pafZAligned;
@@ -1961,7 +1992,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->padfX = pafXAligned ? NULL : const_cast<double *>(padfX);
     psContext->padfY = pafXAligned ? NULL : const_cast<double *>(padfY);
     psContext->padfZ = pafXAligned ? NULL : const_cast<double *>(padfZ);
-    psContext->bFreePadfXYZArrays = pafXAligned ? false : !bCallerWillKeepPointArraysAlive;
+    psContext->bFreePadfXYZArrays =
+        pafXAligned ? false : !bCallerWillKeepPointArraysAlive;
 
 /* -------------------------------------------------------------------- */
 /*  Create quadtree if requested and possible.                          */
@@ -2003,12 +2035,12 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 /*  Start thread pool.                                                  */
 /* -------------------------------------------------------------------- */
     const char* pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    int nThreads;
-    if (EQUAL(pszThreads, "ALL_CPUS"))
+    int nThreads = 0;
+    if( EQUAL(pszThreads, "ALL_CPUS") )
         nThreads = CPLGetNumCPUs();
     else
         nThreads = atoi(pszThreads);
-    if (nThreads > 128)
+    if( nThreads > 128 )
         nThreads = 128;
     if( nThreads > 1 )
     {
@@ -2033,7 +2065,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 /*                      GDALGridContextCreateQuadTree()                 */
 /************************************************************************/
 
-void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
+void GDALGridContextCreateQuadTree( GDALGridContext* psContext )
 {
     const GUInt32 nPoints = psContext->nPoints;
     psContext->pasGridPoints = static_cast<GDALGridPoint *>(
@@ -2057,8 +2089,8 @@ void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
             if( padfY[i] > sRect.maxy ) sRect.maxy = padfY[i];
         }
 
-        /* Initial value for search radius is the typical dimension of a */
-        /* "pixel" of the point array (assuming rather uniform distribution) */
+        // Initial value for search radius is the typical dimension of a
+        // "pixel" of the point array (assuming rather uniform distribution).
         psContext->sExtraParameters.dfInitialSearchRadius =
             sqrt((sRect.maxx - sRect.minx) *
                  (sRect.maxy - sRect.miny) / nPoints);
@@ -2087,7 +2119,7 @@ void GDALGridContextCreateQuadTree(GDALGridContext* psContext)
  *
  * @since GDAL 2.1
  */
-void GDALGridContextFree(GDALGridContext* psContext)
+void GDALGridContextFree( GDALGridContext* psContext )
 {
     if( psContext )
     {
@@ -2105,7 +2137,7 @@ void GDALGridContextFree(GDALGridContext* psContext)
         VSIFreeAligned(psContext->sExtraParameters.pafY);
         VSIFreeAligned(psContext->sExtraParameters.pafZ);
         if( psContext->sExtraParameters.psTriangulation )
-            GDALTriangulationFree( psContext->sExtraParameters.psTriangulation );
+            GDALTriangulationFree(psContext->sExtraParameters.psTriangulation);
         delete psContext->poWorkerThreadPool;
         CPLFree(psContext);
     }
@@ -2150,7 +2182,7 @@ CPLErr GDALGridContextProcess(
     CPLAssert( psContext );
     CPLAssert( pData );
 
-    if ( nXSize == 0 || nYSize == 0 )
+    if( nXSize == 0 || nYSize == 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Output raster dimensions should have non-zero size." );
@@ -2289,7 +2321,7 @@ CPLErr GDALGridContextProcess(
 /* -------------------------------------------------------------------- */
 /*      Report progress.                                                */
 /* -------------------------------------------------------------------- */
-        while( nCounter < (int)nYSize && !bStop )
+        while( nCounter < static_cast<int>(nYSize) && !bStop )
         {
             CPLCondWait(sJob.hCond, sJob.hCondMutex);
 
@@ -2387,11 +2419,11 @@ GDALGridCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                 GUInt32 nXSize, GUInt32 nYSize, GDALDataType eType, void *pData,
                 GDALProgressFunc pfnProgress, void *pProgressArg )
 {
+    GDALGridContext* psContext = GDALGridContextCreate(eAlgorithm, poOptions,
+                                                       nPoints,
+                                                       padfX, padfY, padfZ,
+                                                       TRUE);
     CPLErr eErr = CE_Failure;
-    GDALGridContext* psContext = GDALGridContextCreate( eAlgorithm,poOptions,
-                                                        nPoints,
-                                                        padfX, padfY, padfZ,
-                                                        TRUE );
     if( psContext )
     {
         eErr = GDALGridContextProcess( psContext,
@@ -2423,34 +2455,56 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
     char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
 
-    if ( CSLCount(papszParms) < 1 )
+    if( CSLCount(papszParms) < 1 )
     {
         CSLDestroy( papszParms );
         return CE_Failure;
     }
 
-    if ( EQUAL(papszParms[0], szAlgNameInvDist) )
+    if( EQUAL(papszParms[0], szAlgNameInvDist) )
+    {
         *peAlgorithm = GGA_InverseDistanceToAPower;
-    else if ( EQUAL(papszParms[0], szAlgNameInvDistNearestNeighbor) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameInvDistNearestNeighbor) )
+    {
         *peAlgorithm = GGA_InverseDistanceToAPowerNearestNeighbor;
-    else if ( EQUAL(papszParms[0], szAlgNameAverage) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameAverage) )
+    {
         *peAlgorithm = GGA_MovingAverage;
-    else if ( EQUAL(papszParms[0], szAlgNameNearest) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameNearest) )
+    {
         *peAlgorithm = GGA_NearestNeighbor;
-    else if ( EQUAL(papszParms[0], szAlgNameMinimum) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameMinimum) )
+    {
         *peAlgorithm = GGA_MetricMinimum;
-    else if ( EQUAL(papszParms[0], szAlgNameMaximum) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameMaximum) )
+    {
         *peAlgorithm = GGA_MetricMaximum;
-    else if ( EQUAL(papszParms[0], szAlgNameRange) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameRange) )
+    {
         *peAlgorithm = GGA_MetricRange;
-    else if ( EQUAL(papszParms[0], szAlgNameCount) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameCount) )
+    {
         *peAlgorithm = GGA_MetricCount;
-    else if ( EQUAL(papszParms[0], szAlgNameAverageDistance) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameAverageDistance) )
+    {
         *peAlgorithm = GGA_MetricAverageDistance;
-    else if ( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameAverageDistancePts) )
+    {
         *peAlgorithm = GGA_MetricAverageDistancePts;
-    else if ( EQUAL(papszParms[0], szAlgNameLinear) )
+    }
+    else if( EQUAL(papszParms[0], szAlgNameLinear) )
+    {
         *peAlgorithm = GGA_Linear;
+    }
     else
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
@@ -2463,7 +2517,7 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 /* -------------------------------------------------------------------- */
 /*      Parse algorithm parameters and assign defaults.                 */
 /* -------------------------------------------------------------------- */
-    switch ( *peAlgorithm )
+    switch( *peAlgorithm )
     {
         case GGA_InverseDistanceToAPower:
         default:

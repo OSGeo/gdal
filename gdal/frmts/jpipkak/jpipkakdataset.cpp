@@ -55,6 +55,8 @@ static int nPSTThisInstance = -1;
 static int nPSTTargetOffset = -1;
 #endif
 
+static bool kakadu_initialized = false;
+
 /************************************************************************/
 /* ==================================================================== */
 /*                     Set up messaging services                        */
@@ -66,13 +68,12 @@ class jpipkak_kdu_cpl_error_message : public kdu_message
 public: // Member classes
     using kdu_message::put_text;
 
-    jpipkak_kdu_cpl_error_message( CPLErr eErrClass )
-    {
-        m_eErrClass = eErrClass;
-        m_pszError = NULL;
-    }
+    explicit jpipkak_kdu_cpl_error_message( CPLErr eErrClass ) :
+        m_eErrClass ( eErrClass ),
+        m_pszError ( NULL )
+    {}
 
-    void put_text(const char *string)
+    void put_text(const char *string) override
     {
         if( m_pszError == NULL )
             m_pszError = CPLStrdup( string );
@@ -88,7 +89,7 @@ public: // Member classes
     {
     };
 
-    void flush(bool end_of_message=false)
+    void flush(bool end_of_message=false) override
     {
         if( m_pszError == NULL )
             return;
@@ -474,16 +475,34 @@ void JPIPKAKDataset::Deinitialize()
     bNeedReinitialize = TRUE;
 }
 
+/************************************************************************/
+/*                          KakaduInitialize()                          */
+/************************************************************************/
+
+void JPIPKAKDataset::KakaduInitialize()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize Kakadu warning/error reporting subsystem.            */
+/* -------------------------------------------------------------------- */
+    if( !kakadu_initialized )
+    {
+        kakadu_initialized = true;
+
+        jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
+        jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
+
+        kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
+        kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
+    }
+}
+
 /*****************************************/
 /*         Initialize()                  */
 /*****************************************/
 int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
 {
-    // set up message handlers
-    jpipkak_kdu_cpl_error_message oErrHandler( CE_Failure );
-    jpipkak_kdu_cpl_error_message oWarningHandler( CE_Warning );
-    kdu_customize_warnings(new jpipkak_kdu_cpl_error_message( CE_Warning ) );
-    kdu_customize_errors(new jpipkak_kdu_cpl_error_message( CE_Failure ) );
+    KakaduInitialize();
 
     // create necessary http headers
     CPLString osHeaders = "HEADERS=Accept: jpp-stream";
@@ -678,7 +697,7 @@ int JPIPKAKDataset::Initialize(const char* pszDatasetName, int bReinitializing )
         else
             eDT = GDT_Byte;
 
-        if( poCodestream->get_bit_depth(0) % 8 != 8
+        if( (poCodestream->get_bit_depth(0) % 8) != 0
             && poCodestream->get_bit_depth(0) < 16 )
             SetMetadataItem(
                 "NBITS",
@@ -930,6 +949,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid Bin-ID value format");
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else if (m >= 2) {
@@ -940,6 +960,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
                     if( nCodestream < 0 )
                     {
                         bError = TRUE;
+                        delete segment;
                         return NULL;
                     }
                 }
@@ -954,6 +975,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
             if( nNextVal == -1 )
             {
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else
@@ -963,6 +985,7 @@ JPIPDataSegment* JPIPKAKDataset::ReadSegment(GByte* pabyData, int nLen,
             if( nNextVal == -1 )
             {
                 bError = TRUE;
+                delete segment;
                 return NULL;
             }
             else
@@ -1495,6 +1518,13 @@ JPIPKAKAsyncReader::JPIPKAKAsyncReader()
     pAppBuf = NULL;
     pBuf = NULL;
     nDataRead = 0;
+    nAppPixelSpace = 0;
+    nAppLineSpace = 0;
+    nAppBandSpace = 0;
+    nLevel = 0;
+    nQualityLayers = 0;
+    bHighPriority = FALSE;
+    bComplete = FALSE;
 }
 
 /************************************************************************/

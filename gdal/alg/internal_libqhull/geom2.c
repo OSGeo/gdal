@@ -1322,7 +1322,8 @@ coordT qh_pointdist(pointT *point1, pointT *point2, int dim) {
   int k;
 
   dist= 0.0;
-  for (k= (dim > 0 ? dim : -dim); k--; ) {
+  k= (dim > 0 ? dim : -dim);
+  for (; k; k--) {
     diff= *point1++ - *point2++;
     dist += diff * diff;
   }

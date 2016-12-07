@@ -67,11 +67,15 @@ public:
     return other.contains(*this);
   }
 
-  void operator = (const Subset& rhs) {
-    m_x_lo = rhs.m_x_lo;
-    m_x_hi = rhs.m_x_hi;
-    m_y_lo = rhs.m_y_lo;
-    m_y_hi = rhs.m_y_hi;
+  Subset& operator = (const Subset& rhs) {
+    if( &rhs != this )
+    {
+        m_x_lo = rhs.m_x_lo;
+        m_x_hi = rhs.m_x_hi;
+        m_y_lo = rhs.m_y_lo;
+        m_y_hi = rhs.m_y_hi;
+    }
+    return *this;
   }
 
   int x_lo() const { return m_x_lo; }
@@ -114,7 +118,7 @@ protected:
                             int, int *,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
                             GSpacing nBandSpace,
-                            GDALRasterIOExtraArg* psExtraArg);
+                            GDALRasterIOExtraArg* psExtraArg) override;
 
 private:
 
@@ -125,7 +129,7 @@ private:
 
   void clear_array_cache();
 
-  r_Set<r_Ref_Any> execute(const char* string);
+  static r_Set<r_Ref_Any> execute(const char* string);
 
   void getTypes(const r_Base_Type* baseType, int &counter, int pos);
   void createBands(const char* queryString);
@@ -303,7 +307,7 @@ public:
   RasdamanRasterBand( RasdamanDataset *, int, GDALDataType type, int offset, int size, int nBlockXSize, int nBlockYSize );
   ~RasdamanRasterBand();
 
-  virtual CPLErr IReadBlock( int, int, void * );
+  virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -398,7 +402,7 @@ CPLErr RasdamanRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       }
     }
   }
-  catch (r_Error error) {
+  catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     return CPLGetLastErrorType();
   }
@@ -680,7 +684,7 @@ GDALDataset *RasdamanDataset::Open( GDALOpenInfo * poOpenInfo )
     rasDataset->databasename = databasename;
 
     return rasDataset;
-  } catch (r_Error error) {
+  } catch (const r_Error& error) {
     CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
     delete rasDataset;
     return NULL;

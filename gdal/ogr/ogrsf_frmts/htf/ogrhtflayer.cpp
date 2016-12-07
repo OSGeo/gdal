@@ -606,7 +606,7 @@ void OGRHTFLayer::SetExtent( double dfMinXIn, double dfMinYIn, double dfMaxXIn,
 /*                        OGRHTFMetadataLayer()                         */
 /************************************************************************/
 
-OGRHTFMetadataLayer::OGRHTFMetadataLayer(std::vector<CPLString> aosMDIn) :
+OGRHTFMetadataLayer::OGRHTFMetadataLayer(const std::vector<CPLString>& aosMDIn) :
     poFeatureDefn(new OGRFeatureDefn( "metadata" )),
     aosMD(aosMDIn),
     nNextFID(0)

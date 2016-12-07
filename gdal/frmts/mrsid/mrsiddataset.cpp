@@ -163,7 +163,7 @@ template <class T>
 class LTIDLLNavigator : public T
 {
 public:
-   LTIDLLNavigator(const LTIImage& image ) : T(image) {}
+   explicit LTIDLLNavigator(const LTIImage& image ) : T(image) {}
    virtual ~LTIDLLNavigator() {};
 };
 
@@ -182,7 +182,7 @@ template <class T>
 class LTIDLLCopy : public T
 {
 public:
-   LTIDLLCopy(const T& original) : T(original) {}
+   explicit LTIDLLCopy(const T& original) : T(original) {}
    virtual ~LTIDLLCopy() {};
 };
 
@@ -190,7 +190,7 @@ template <class T>
 class LTIDLLWriter : public T
 {
 public:
-    LTIDLLWriter(LTIImageStage *image) : T(image) {}
+    explicit LTIDLLWriter(LTIImageStage *image) : T(image) {}
     virtual ~LTIDLLWriter() {}
 };
 
@@ -284,21 +284,21 @@ class MrSIDDataset : public GDALJP2AbstractDataset
                                    int, int, GDALDataType, int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg);
+                                   GDALRasterIOExtraArg* psExtraArg) override;
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     virtual CPLErr      IBuildOverviews( const char *, int, int *,
-                                         int, int *, GDALProgressFunc, void * );
+                                         int, int *, GDALProgressFunc, void * ) override;
 
   public:
-                MrSIDDataset(int bIsJPEG2000);
+    explicit    MrSIDDataset(int bIsJPEG2000);
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * poOpenInfo, int bIsJP2 );
 
-    virtual char      **GetFileList();
+    virtual char      **GetFileList() override;
 
 #ifdef MRSID_ESDK
     static GDALDataset  *Create( const char * pszFilename,
@@ -337,18 +337,18 @@ class MrSIDRasterBand : public GDALPamRasterBand
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg);
+                              GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    CPLErr                  SetColorInterpretation( GDALColorInterp eNewInterp );
-    virtual double          GetNoDataValue( int * );
-    virtual int             GetOverviewCount();
-    virtual GDALRasterBand  *GetOverview( int );
+    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr                  SetColorInterpretation( GDALColorInterp eNewInterp ) override;
+    virtual double          GetNoDataValue( int * ) override;
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand  *GetOverview( int ) override;
 
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *pdfStdDev );
+                                  double *pdfMean, double *pdfStdDev ) override;
 
 #ifdef MRSID_ESDK
     virtual CPLErr          IWriteBlock( int, int, void * );
@@ -757,6 +757,8 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     nBlockXSize(0),
     nBlockYSize(0),
+    eSampleType(LTI_DATATYPE_UINT8),
+    eDataType(GDT_Byte),
     eColorSpace(LTI_COLORSPACE_INVALID)
 {
     poStream = NULL;
@@ -767,9 +769,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     poLTINav = NULL;
     poMetadata = NULL;
     poNDPixel = NULL;
-    eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
-    eDataType = GDT_Byte;
 
     poBuffer = NULL;
     bPrevBlockRead = FALSE;
@@ -1141,7 +1141,7 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
     const LTIMetadataRecord *poMetadataRec = NULL;
     poMetadata->get( pszKey, poMetadataRec );
 
-    if ( !poMetadataRec->isScalar() )
+    if ( poMetadataRec == NULL || !poMetadataRec->isScalar() )
         return FALSE;
 
     // XXX: return FALSE if we have more than one element in metadata record
@@ -1192,7 +1192,7 @@ char** MrSIDDataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
 
-    if (osMETFilename.size() != 0)
+    if (!osMETFilename.empty())
         papszFileList = CSLAddString(papszFileList, osMETFilename.c_str());
 
     return papszFileList;

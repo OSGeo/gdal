@@ -46,7 +46,14 @@
 class subfile_source : public kdu_compressed_source {
 
   public:
-    subfile_source() { file = NULL; }
+    subfile_source() :
+        capabilities( 0 ),
+        subfile_offset( 0 ),
+        subfile_size( 0 ),
+        file( NULL )
+    {
+    }
+
     ~subfile_source() { close(); }
 
     bool exists() { return (file != NULL); }
@@ -124,9 +131,9 @@ class subfile_source : public kdu_compressed_source {
           seek( 0 );
       }
 
-    int get_capabilities() { return capabilities; }
+    int get_capabilities() override { return capabilities; }
 
-    bool seek(kdu_long offset)
+    bool seek(kdu_long offset) override
       {
           assert(file != NULL);
           if( file == NULL )
@@ -141,7 +148,7 @@ class subfile_source : public kdu_compressed_source {
               return false;
       }
 
-    kdu_long get_pos()
+    kdu_long get_pos() override
       {
         if (file == NULL) return -1;
         kdu_long result = VSIFTellL( file );
@@ -149,7 +156,7 @@ class subfile_source : public kdu_compressed_source {
         return result;
       }
 
-    int read(kdu_byte *buf, int num_bytes)
+    int read(kdu_byte *buf, int num_bytes) override
       {
         assert(file != NULL);
 
@@ -157,7 +164,7 @@ class subfile_source : public kdu_compressed_source {
         return num_bytes;
       }
 
-    bool close()
+    bool close() override
       {
         if (file != NULL)
             VSIFCloseL( file );

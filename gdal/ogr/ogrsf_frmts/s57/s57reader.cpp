@@ -3266,10 +3266,11 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         //Creaing file extension
         CPLString extension;
         CPLString dirname;
+
         if( 1 <= iUpdate &&  iUpdate < 10 )
         {
             char buf[2];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("00");
             extension.append(buf);
             dirname.append(buf);
@@ -3277,7 +3278,7 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 10 <= iUpdate && iUpdate < 100 )
         {
             char buf[3];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append("0");
             extension.append(buf);
             dirname.append(buf);
@@ -3285,7 +3286,7 @@ bool S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 100 <= iUpdate && iUpdate < 1000 )
         {
             char buf[4];
-            snprintf( buf, sizeof(buf), "%i", iUpdate );
+            CPLsnprintf( buf, sizeof(buf), "%i", iUpdate );
             extension.append(buf);
             dirname.append(buf);
         }

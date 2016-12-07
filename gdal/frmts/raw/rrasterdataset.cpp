@@ -52,13 +52,13 @@ class RRASTERDataset : public RawDataset
                 RRASTERDataset();
        virtual ~RRASTERDataset();
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * );
-    virtual const char *GetProjectionRef(void);
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual const char *GetProjectionRef(void) override;
 };
 
 /************************************************************************/
@@ -80,8 +80,8 @@ class RRASTERRasterBand: public RawRasterBand
                     GDALDataType eDataType, int bNativeOrder );
 
       void SetMinMax( double dfMin, double dfMax );
-      virtual double GetMinimum( int *pbSuccess = NULL );
-      virtual double GetMaximum(int *pbSuccess = NULL );
+      virtual double GetMinimum( int *pbSuccess = NULL ) override;
+      virtual double GetMaximum(int *pbSuccess = NULL ) override;
 
 #ifdef UPDATE_SUPPORTED
   protected:
@@ -372,7 +372,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                  "Unhandled datatype=%s", osDataType.c_str() );
         return NULL;
     }
-    if( l_nBands > 1 && osBandOrder.size() == 0 )
+    if( l_nBands > 1 && osBandOrder.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing 'bandorder'" );
@@ -476,7 +476,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_osGriFilename = osGriFilename;
     poDS->m_fpImage = fpImage;
 
-    if( osProjection.size() )
+    if( !osProjection.empty() )
     {
         OGRSpatialReference oSRS;
         if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )

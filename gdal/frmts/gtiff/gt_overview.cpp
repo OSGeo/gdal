@@ -63,7 +63,9 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panBlue,
                             int nExtraSamples,
                             unsigned short *panExtraSampleValues,
-                            const char *pszMetadata )
+                            const char *pszMetadata,
+                            const char* pszJPEGQuality,
+                            const char* pszJPEGTablesMode )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -129,6 +131,20 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
 /* -------------------------------------------------------------------- */
     if( pszMetadata && strlen(pszMetadata) > 0 )
         TIFFSetField( hTIFF, TIFFTAG_GDAL_METADATA, pszMetadata );
+
+
+/* -------------------------------------------------------------------- */
+/*      Write JPEG tables if needed.                                    */
+/* -------------------------------------------------------------------- */
+    if( nCompressFlag == COMPRESSION_JPEG )
+    {
+        GTiffWriteJPEGTables( hTIFF,
+                              (nPhotometric == PHOTOMETRIC_RGB) ? "RGB" :
+                              (nPhotometric == PHOTOMETRIC_YCBCR) ? "YCBCR" :
+                                                                "MINISBLACK",
+                              pszJPEGQuality,
+                              pszJPEGTablesMode );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write directory, and return byte offset.                        */
@@ -704,7 +720,10 @@ GTIFFBuildOverviews( const char * pszFilename,
                              panRed, panGreen, panBlue,
                              0,
                              NULL, // TODO: How can we fetch extrasamples?
-                             osMetadata );
+                             osMetadata,
+                             CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ),
+                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL )
+                           );
     }
 
     if( panRed )
@@ -744,6 +763,17 @@ GTIFFBuildOverviews( const char * pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY,
                       nJpegQuality );
         GTIFFSetJpegQuality((GDALDatasetH)hODS, nJpegQuality);
+    }
+
+    if( nCompression == COMPRESSION_JPEG
+        && CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL ) != NULL )
+    {
+        const int nJpegTablesMode =
+            atoi(CPLGetConfigOption("JPEG_TABLESMODE_OVERVIEW",
+                            CPLSPrintf("%d", knGTIFFJpegTablesModeDefault)));
+        TIFFSetField( hTIFF, TIFFTAG_JPEGTABLESMODE,
+                      nJpegTablesMode );
+        GTIFFSetJpegTablesMode((GDALDatasetH)hODS, nJpegTablesMode);
     }
 
 /* -------------------------------------------------------------------- */

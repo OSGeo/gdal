@@ -2332,6 +2332,12 @@ def jp2openjpeg_45():
   </gmlcov:rangeType>
   <gmljp2:featureMember>
    <gmljp2:GMLJP2RectifiedGridCoverage gml:id="RGC_1_ID_GMLJP2_0">
+     <gml:boundedBy>
+       <gml:Envelope srsDimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
+         <gml:lowerCorner>440720 3750120</gml:lowerCorner>
+         <gml:upperCorner>441920 3751320</gml:upperCorner>
+       </gml:Envelope>
+     </gml:boundedBy>
      <gml:domainSet>
       <gml:RectifiedGrid gml:id="RGC_1_GRID_ID_GMLJP2_0" dimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/26711">
        <gml:limits>
@@ -2914,6 +2920,10 @@ def jp2openjpeg_45():
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
     if myshape_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/myshape.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+        gdaltest.post_reason('fail')
+        print(myshape_gml)
+        return 'fail'
+    if myshape_gml.find("""http://www.opengis.net/def/crs/EPSG/0/4326""") < 0:
         gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'

@@ -780,7 +780,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
                 CPLString().Printf(
                     "GeometryFromText('%s',%d) ", pszWKT, nSRSId );
 
-            OGRFree( pszWKT );
+            CPLFree( pszWKT );
         }
         else
             osCommand += "''";

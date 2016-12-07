@@ -34,20 +34,17 @@ public:
     virtual ~WMSMiniDriver_TiledWMS();
 
 public:
-    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
-    virtual void GetCapabilities(WMSMiniDriverCapabilities *caps);
-    virtual void ImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri);
-    virtual void TiledImageRequest(CPLString *url, const GDALWMSImageRequestInfo &iri, const GDALWMSTiledImageRequestInfo &tiri);
-    virtual const char *GetProjectionInWKT();
+    virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request, 
+                                const GDALWMSImageRequestInfo &iri, 
+                                const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:
     double Scale(const char *request);
     CPLString GetLowestScale(char **&list,int i);
     GDALWMSDataWindow m_data_window;
     char **m_requests;
-    CPLString m_base_url;
     CPLString m_end_url;
     int m_bsx;
     int m_bsy;
-    CPLString m_projection_wkt;
 };

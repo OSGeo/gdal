@@ -66,7 +66,11 @@
 #include <algorithm>
 #include <set>
 
-#if HAVE_CXX11
+#if HAVE_CXX11 && !defined(__MINGW32__)
+#define HAVE_CXX11_MUTEX 1
+#endif
+
+#if HAVE_CXX11_MUTEX
 #include <mutex>
 #endif
 
@@ -77,6 +81,8 @@ CPL_CVSID("$Id$");
 static bool bGlobalStripIntegerOverflow = false;
 #endif
 static bool bGlobalInExternalOvr = false;
+
+const char* const szJPEGGTiffDatasetTmpPrefix = "/vsimem/gtiffdataset_jpg_tmp_";
 
 typedef enum
 {
@@ -190,6 +196,9 @@ typedef enum
     VIRTUAL_MEM_IO_IF_ENOUGH_RAM
 } VirtualMemIOEnum;
 
+#if !defined(__MINGW32__)
+namespace {
+#endif
 typedef struct
 {
     GTiffDataset *poDS;
@@ -205,6 +214,9 @@ typedef struct
     int           nCompressedBufferSize;
     bool          bReady;
 } GTiffCompressionJob;
+#if !defined(__MINGW32__)
+}
+#endif
 
 class GTiffDataset CPL_FINAL : public GDALPamDataset
 {
@@ -218,6 +230,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     friend class GTiffSplitBitmapBand;
 
     friend void  GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality );
+    friend void  GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode );
 
     TIFF       *hTIFF;
     VSILFILE   *fpL;
@@ -472,21 +485,21 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     void        FlushCacheInternal( bool bFlushDirectory );
 
   protected:
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
   public:
              GTiffDataset();
     virtual ~GTiffDataset();
 
-    virtual const char *GetProjectionRef();
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
+    virtual const char *GetProjectionRef() override;
+    virtual CPLErr SetProjection( const char * ) override;
+    virtual CPLErr GetGeoTransform( double * ) override;
+    virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * );
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    CPLErr         SetGCPs( int, const GDAL_GCP *, const char * ) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
@@ -495,11 +508,11 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
-    virtual char **GetFileList();
+                              GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual char **GetFileList() override;
 
     virtual CPLErr IBuildOverviews( const char *, int, int *, int, int *,
-                                    GDALProgressFunc, void * );
+                                    GDALProgressFunc, void * ) override;
 
     CPLErr         OpenOffset( TIFF *, GTiffDataset **ppoActiveDSRef,
                                toff_t nDirOffset, bool bBaseIn, GDALAccess,
@@ -517,18 +530,18 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
-    virtual void    FlushCache();
+    virtual void    FlushCache() override;
 
-    virtual char  **GetMetadataDomainList();
-    virtual CPLErr  SetMetadata( char **, const char * = "" );
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char  **GetMetadataDomainList() override;
+    virtual CPLErr  SetMetadata( char **, const char * = "" ) override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual CPLErr  SetMetadataItem( const char*, const char*,
-                                     const char* = "" );
+                                     const char* = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
-    virtual void   *GetInternalHandle( const char * );
+                                         const char * pszDomain = "" ) override;
+    virtual void   *GetInternalHandle( const char * ) override;
 
-    virtual CPLErr          CreateMaskBand( int nFlags );
+    virtual CPLErr          CreateMaskBand( int nFlags ) override;
 
     // Only needed by createcopy and close code.
     static void     WriteRPC( GDALDataset *, TIFF *, int, const char *,
@@ -588,7 +601,7 @@ class GTiffJPEGOverviewDS CPL_FINAL : public GDALDataset
                               int nBandCount, int *panBandMap,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
                               GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg );
+                              GDALRasterIOExtraArg* psExtraArg ) override;
 };
 
 class GTiffJPEGOverviewBand CPL_FINAL : public GDALRasterBand
@@ -597,7 +610,7 @@ class GTiffJPEGOverviewBand CPL_FINAL : public GDALRasterBand
     GTiffJPEGOverviewBand( GTiffJPEGOverviewDS* poDS, int nBand );
     virtual ~GTiffJPEGOverviewBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -898,7 +911,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLSetThreadLocalConfigOption(
                     "GDAL_JPEG_TO_RGB",
-                    osOldVal.size() ? osOldVal.c_str() : NULL );
+                    !osOldVal.empty() ? osOldVal.c_str() : NULL );
             }
         }
         else
@@ -989,6 +1002,26 @@ void GTIFFSetJpegQuality( GDALDatasetH hGTIFFDS, int nJpegQuality )
 }
 
 /************************************************************************/
+/*                     GTIFFSetJpegTablesMode()                         */
+/* Called by GTIFFBuildOverviews() to set the jpeg tables mode on the   */
+/* of the .ovr file.                                                    */
+/************************************************************************/
+
+void GTIFFSetJpegTablesMode( GDALDatasetH hGTIFFDS, int nJpegTablesMode )
+{
+    CPLAssert(
+        EQUAL(GDALGetDriverShortName(GDALGetDatasetDriver(hGTIFFDS)), "GTIFF"));
+
+    GTiffDataset* const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
+    poDS->nJpegTablesMode = nJpegTablesMode;
+
+    poDS->ScanDirectories();
+
+    for( int i = 0; i < poDS->nOverviewCount; ++i )
+        poDS->papoOverviewDS[i]->nJpegTablesMode = nJpegTablesMode;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                            GTiffRasterBand                           */
 /* ==================================================================== */
@@ -1034,70 +1067,70 @@ public:
              GTiffRasterBand( GTiffDataset *, int );
     virtual ~GTiffRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
     virtual int IGetDataCoverageStatus( int nXOff, int nYOff,
                                         int nXSize, int nYSize,
                                         int nMaskFlagStop,
-                                        double* pdfDataPct);
+                                        double* pdfDataPct) override;
 
     virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
                               int nXOff, int nYOff, int nXSize, int nYSize,
                               void * pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) CPL_FINAL;
+                              GDALRasterIOExtraArg* psExtraArg ) override CPL_FINAL;
 
-    virtual const char *GetDescription() const CPL_FINAL;
-    virtual void        SetDescription( const char * ) CPL_FINAL;
+    virtual const char *GetDescription() const override CPL_FINAL;
+    virtual void        SetDescription( const char * ) override CPL_FINAL;
 
-    virtual GDALColorInterp GetColorInterpretation() /*CPL_FINAL*/;
-    virtual GDALColorTable *GetColorTable() /*CPL_FINAL*/;
-    virtual CPLErr          SetColorTable( GDALColorTable * ) CPL_FINAL;
-    virtual double          GetNoDataValue( int * ) CPL_FINAL;
-    virtual CPLErr          SetNoDataValue( double ) CPL_FINAL;
-    virtual CPLErr DeleteNoDataValue() CPL_FINAL;
+    virtual GDALColorInterp GetColorInterpretation() override /*CPL_FINAL*/;
+    virtual GDALColorTable *GetColorTable() override /*CPL_FINAL*/;
+    virtual CPLErr          SetColorTable( GDALColorTable * ) override CPL_FINAL;
+    virtual double          GetNoDataValue( int * ) override CPL_FINAL;
+    virtual CPLErr          SetNoDataValue( double ) override CPL_FINAL;
+    virtual CPLErr DeleteNoDataValue() override CPL_FINAL;
 
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_FINAL;
-    virtual CPLErr SetOffset( double dfNewValue ) CPL_FINAL;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_FINAL;
-    virtual CPLErr SetScale( double dfNewValue ) CPL_FINAL;
-    virtual const char* GetUnitType() CPL_FINAL;
-    virtual CPLErr SetUnitType( const char *pszNewValue ) CPL_FINAL;
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_FINAL;
+    virtual double GetOffset( int *pbSuccess = NULL ) override CPL_FINAL;
+    virtual CPLErr SetOffset( double dfNewValue ) override CPL_FINAL;
+    virtual double GetScale( int *pbSuccess = NULL ) override CPL_FINAL;
+    virtual CPLErr SetScale( double dfNewValue ) override CPL_FINAL;
+    virtual const char* GetUnitType() override CPL_FINAL;
+    virtual CPLErr SetUnitType( const char *pszNewValue ) override CPL_FINAL;
+    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override CPL_FINAL;
 
-    virtual char      **GetMetadataDomainList() CPL_FINAL;
-    virtual CPLErr  SetMetadata( char **, const char * = "" ) CPL_FINAL;
-    virtual char  **GetMetadata( const char * pszDomain = "" ) CPL_FINAL;
+    virtual char      **GetMetadataDomainList() override CPL_FINAL;
+    virtual CPLErr  SetMetadata( char **, const char * = "" ) override CPL_FINAL;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override CPL_FINAL;
     virtual CPLErr  SetMetadataItem( const char*, const char*,
-                                     const char* = "" ) CPL_FINAL;
+                                     const char* = "" ) override CPL_FINAL;
     virtual const char *GetMetadataItem(
-        const char * pszName, const char * pszDomain = "" ) CPL_FINAL;
-    virtual int    GetOverviewCount() CPL_FINAL;
-    virtual GDALRasterBand *GetOverview( int ) CPL_FINAL;
+        const char * pszName, const char * pszDomain = "" ) override CPL_FINAL;
+    virtual int    GetOverviewCount()  override CPL_FINAL;
+    virtual GDALRasterBand *GetOverview( int ) override CPL_FINAL;
 
-    virtual GDALRasterBand *GetMaskBand() CPL_FINAL;
-    virtual int             GetMaskFlags() CPL_FINAL;
-    virtual CPLErr          CreateMaskBand( int nFlags ) CPL_FINAL;
+    virtual GDALRasterBand *GetMaskBand() override CPL_FINAL;
+    virtual int             GetMaskFlags() override CPL_FINAL;
+    virtual CPLErr          CreateMaskBand( int nFlags )  override CPL_FINAL;
 
     virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
                                                int *pnPixelSpace,
                                                GIntBig *pnLineSpace,
-                                               char **papszOptions ) CPL_FINAL;
+                                               char **papszOptions )  override CPL_FINAL;
 
     virtual CPLErr  GetHistogram(
         double dfMin, double dfMax,
         int nBuckets, GUIntBig * panHistogram,
         int bIncludeOutOfRange, int bApproxOK,
-        GDALProgressFunc, void *pProgressData ) CPL_FINAL;
+        GDALProgressFunc, void *pProgressData )  override CPL_FINAL;
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                         int *pnBuckets,
                                         GUIntBig ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc,
-                                        void *pProgressData) CPL_FINAL;
+                                        void *pProgressData)  override CPL_FINAL;
 };
 
 /************************************************************************/
@@ -4608,6 +4641,15 @@ const char *GTiffRasterBand::GetMetadataItem( const char * pszName,
             return pszReturn;
         }
 
+        if( EQUAL(pszName, "IFD_OFFSET") )
+        {
+            if( !poGDS->SetDirectory() )
+                return NULL;
+
+            return CPLSPrintf( CPL_FRMT_GUIB,
+                               static_cast<GUIntBig>(poGDS->nDirOffset) );
+        }
+
         if( sscanf( pszName, "BLOCK_OFFSET_%d_%d",
                          &nBlockXOff, &nBlockYOff ) == 2 )
         {
@@ -5304,8 +5346,8 @@ class GTiffSplitBand CPL_FINAL : public GTiffRasterBand
              GTiffSplitBand( GTiffDataset *, int );
     virtual ~GTiffSplitBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -5434,10 +5476,10 @@ class GTiffRGBABand CPL_FINAL : public GTiffRasterBand
                    GTiffRGBABand( GTiffDataset *, int );
     virtual ~GTiffRGBABand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -5598,8 +5640,8 @@ class GTiffOddBitsBand : public GTiffRasterBand
                    GTiffOddBitsBand( GTiffDataset *, int );
     virtual ~GTiffOddBitsBand() {};
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -6518,8 +6560,8 @@ class GTiffBitmapBand : public GTiffOddBitsBand
                    GTiffBitmapBand( GTiffDataset *, int );
     virtual       ~GTiffBitmapBand();
 
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable *GetColorTable();
+    virtual GDALColorInterp GetColorInterpretation() override;
+    virtual GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/
@@ -6611,8 +6653,8 @@ class GTiffSplitBitmapBand CPL_FINAL : public GTiffBitmapBand
                    GTiffSplitBitmapBand( GTiffDataset *, int );
     virtual       ~GTiffSplitBitmapBand();
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual CPLErr IWriteBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -9092,6 +9134,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset)
     poODS->nJpegQuality = nJpegQuality;
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
+    poODS->nJpegTablesMode = nJpegTablesMode;
 
     if( nCompression == COMPRESSION_JPEG )
     {
@@ -9270,7 +9313,11 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset* poSrcDS)
                                     nPredictor,
                                     panRed, panGreen, panBlue,
                                     nExtraSamples, panExtraSampleValues,
-                                    osMetadata );
+                                    osMetadata,
+                                    nJpegQuality >= 0 ?
+                                        CPLSPrintf("%d", nJpegQuality) : NULL,
+                                    CPLSPrintf("%d", nJpegTablesMode)
+                                   );
 
         if( nOverviewOffset == 0 )
             eErr = CE_Failure;
@@ -9332,7 +9379,8 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                         nMaskOvrCompression, PHOTOMETRIC_MASK,
                         SAMPLEFORMAT_UINT, PREDICTOR_NONE,
                         NULL, NULL, NULL, 0, NULL,
-                        "" );
+                        "",
+                        NULL, NULL );
 
                 if( nOverviewOffset == 0 )
                 {
@@ -9437,8 +9485,8 @@ CPLErr GTiffDataset::IBuildOverviews(
     if( nBandsIn != GetRasterCount() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Generation of overviews in TIFF currently only"
-                  " supported when operating on all bands.  "
+                  "Generation of overviews in TIFF currently only "
+                  "supported when operating on all bands.  "
                   "Operation failed." );
         return CE_Failure;
     }
@@ -9632,7 +9680,10 @@ CPLErr GTiffDataset::IBuildOverviews(
                     nPredictor,
                     panRed, panGreen, panBlue,
                     nExtraSamples, panExtraSampleValues,
-                    osMetadata );
+                    osMetadata,
+                    nJpegQuality >= 0 ?
+                                        CPLSPrintf("%d", nJpegQuality) : NULL,
+                    CPLSPrintf("%d", nJpegTablesMode) );
 
             if( nOverviewOffset == 0 )
                 eErr = CE_Failure;
@@ -10947,6 +10998,7 @@ int GTiffDataset::Identify( GDALOpenInfo *poOpenInfo )
 /*                            GTIFFErrorHandler()                       */
 /************************************************************************/
 
+namespace {
 class GTIFFErrorStruct CPL_FINAL
 {
   public:
@@ -10958,6 +11010,7 @@ class GTIFFErrorStruct CPL_FINAL
     GTIFFErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
         type(eErrIn), no(noIn), msg(msgIn) {}
 };
+}
 
 static void CPL_STDCALL GTIFFErrorHandler( CPLErr eErr, CPLErrorNum no,
                                            const char* msg )
@@ -13536,7 +13589,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->bHaveOffsetScale = CPL_TO_BOOL(nHaveOffsetScale);
                 poBand->dfOffset = poBand->GDALPamRasterBand::GetOffset();
             }
-            if( poBand->osUnitType.size() == 0 )
+            if( poBand->osUnitType.empty() )
             {
                 const char* pszUnitType =
                     poBand->GDALPamRasterBand::GetUnitType();
@@ -13841,7 +13894,8 @@ static int GTiffGetJpegQuality(char** papszOptions)
 static int GTiffGetJpegTablesMode(char** papszOptions)
 {
     return atoi(CSLFetchNameValueDef( papszOptions, "JPEGTABLESMODE",
-                                   "1" /* JPEGTABLESMODE_QUANT */));
+                                      CPLSPrintf("%d",
+                                                knGTIFFJpegTablesModeDefault)));
 }
 
 /************************************************************************/
@@ -14510,11 +14564,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
     else
     {
-        const uint32 l_nRowsPerStrip =
+        const uint32 l_nRowsPerStrip = std::min(nYSize,
             l_nBlockYSize == 0
-            ? std::min(nYSize,
-                       static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0)))
-            : l_nBlockYSize;
+            ? static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0))
+            : l_nBlockYSize );
 
         TIFFSetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, l_nRowsPerStrip );
     }
@@ -14581,89 +14634,134 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     // the directory. This way we avoid a directory rewriting.
 #if defined(BIGTIFF_SUPPORT)
     if( l_nCompression == COMPRESSION_JPEG &&
-        !STARTS_WITH(pszFilename, "/vsimem/gtiffdataset_jpg_tmp_") &&
+        !STARTS_WITH(pszFilename, szJPEGGTiffDatasetTmpPrefix) &&
         CPLTestBool(
             CSLFetchNameValueDef(papszParmList, "WRITE_JPEGTABLE_TAG", "YES")) )
     {
-        CPLString osTmpFilenameIn;
-        osTmpFilenameIn.Printf("/vsimem/gtiffdataset_jpg_tmp_%p", l_hTIFF);
-        VSILFILE* fpTmp = NULL;
-        CPLString osTmp;
-        char** papszLocalParameters = NULL;
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "COMPRESS", "JPEG");
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEG_QUALITY",
-                CSLFetchNameValue(papszParmList, "JPEG_QUALITY") );
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "PHOTOMETRIC", CSLFetchNameValue(papszParmList, "PHOTOMETRIC"));
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                                               "BLOCKYSIZE", "16");
-        papszLocalParameters = CSLSetNameValue(papszLocalParameters,
-                "NBITS", CSLFetchNameValue(papszParmList, "NBITS"));
-        papszLocalParameters =
-            CSLSetNameValue(
-                papszLocalParameters,
-                "JPEGTABLESMODE",
-                CSLFetchNameValue(papszParmList, "JPEGTABLESMODE") );
-        TIFF* hTIFFTmp =
-            CreateLL( osTmpFilenameIn, 16, 16, (l_nBands <= 4) ? l_nBands : 1,
-                      eType, 0.0, papszLocalParameters, &fpTmp, osTmp );
-        CSLDestroy(papszLocalParameters);
-        if( hTIFFTmp )
-        {
-            uint16 l_nPhotometric = 0;
-            int nJpegTablesModeIn = 0;
-            TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
-            TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                          &nJpegTablesModeIn );
-            TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
-            TIFFWriteDirectory( hTIFFTmp );
-            TIFFSetDirectory( hTIFFTmp, 0 );
-            // Now, reset quality and jpegcolormode.
-            if(l_nJpegQuality > 0)
-                TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
-            if( l_nPhotometric == PHOTOMETRIC_YCBCR
-                && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                    "YES") ) )
-            {
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
-                              JPEGCOLORMODE_RGB);
-            }
-            if( nJpegTablesModeIn >= 0 )
-                TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
-                              nJpegTablesModeIn);
-
-            // TODO(schwehr): Explain all these literals.
-            GByte abyZeroData[(16*16*4*3)/2] = {};
-            int nBlockSize = 16 * 16 * ((l_nBands <= 4) ? l_nBands : 1);
-            if( l_nBitsPerSample == 12 )
-               nBlockSize = (nBlockSize * 3) / 2;
-            TIFFWriteEncodedStrip( hTIFFTmp, 0, abyZeroData, nBlockSize);
-
-            uint32 nJPEGTableSize = 0;
-            void* pJPEGTable = NULL;
-            if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
-                              &pJPEGTable) )
-                TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
-                              pJPEGTable);
-
-            float *ref = NULL;
-            if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
-                TIFFSetField(l_hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
-
-            XTIFFClose(hTIFFTmp);
-            CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
-        }
-        VSIUnlink(osTmpFilenameIn);
+        GTiffWriteJPEGTables( l_hTIFF,
+                              CSLFetchNameValue(papszParmList, "PHOTOMETRIC"),
+                              CSLFetchNameValue(papszParmList, "JPEG_QUALITY"),
+                              CSLFetchNameValue(papszParmList,
+                                                "JPEGTABLESMODE") );
     }
 #endif
 
     *pfpL = l_fpL;
 
     return l_hTIFF;
+}
+
+/************************************************************************/
+/*                      GTiffWriteJPEGTables()                          */
+/*                                                                      */
+/*      Sets the TIFFTAG_JPEGTABLES (and TIFFTAG_REFERENCEBLACKWHITE)   */
+/*      tags immediately, instead of relying on the TIFF JPEG codec     */
+/*      to write them when it starts compressing imagery. This avoids   */
+/*      an IFD rewrite at the end of the file.                          */
+/*      Must be used after having set TIFFTAG_SAMPLESPERPIXEL,          */
+/*      TIFFTAG_BITSPERSAMPLE.                                          */
+/************************************************************************/
+
+void GTiffWriteJPEGTables( TIFF* hTIFF,
+                           const char* pszPhotometric,
+                           const char* pszJPEGQuality,
+                           const char* pszJPEGTablesMode )
+{
+    // Would perhaps works with libtiff 3.X but didn't bother trying This trick
+    // creates a temporary in-memory file and fetches its JPEG tables so that
+    // we can directly set them, before tif_jpeg.c compute them at the first
+    // strip/tile writing, which is too late, since we have already crystalized
+    // the directory. This way we avoid a directory rewriting.
+#if defined(BIGTIFF_SUPPORT)
+    uint16 nBands = 0;
+    if( !TIFFGetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,
+                        &nBands ) )
+        nBands = 1;
+
+    uint16 l_nBitsPerSample = 0;
+    if( !TIFFGetField(hTIFF, TIFFTAG_BITSPERSAMPLE,
+                        &(l_nBitsPerSample)) )
+        l_nBitsPerSample = 1;
+
+    CPLString osTmpFilenameIn;
+    osTmpFilenameIn.Printf("%s%p", szJPEGGTiffDatasetTmpPrefix, hTIFF);
+    VSILFILE* fpTmp = NULL;
+    CPLString osTmp;
+    char** papszLocalParameters = NULL;
+    const int nInMemImageWidth = 16;
+    const int nInMemImageHeight = 16;
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "COMPRESS", "JPEG" );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEG_QUALITY",
+                                            pszJPEGQuality );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "PHOTOMETRIC", pszPhotometric );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "BLOCKYSIZE",
+                                            CPLSPrintf("%u", nInMemImageHeight)
+                                          );
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "NBITS",
+                                            CPLSPrintf("%u", l_nBitsPerSample));
+    papszLocalParameters = CSLSetNameValue( papszLocalParameters,
+                                            "JPEGTABLESMODE",
+                                            pszJPEGTablesMode );
+
+    TIFF* hTIFFTmp = GTiffDataset::CreateLL(
+                    osTmpFilenameIn, nInMemImageWidth, nInMemImageHeight,
+                    (nBands <= 4) ? nBands : 1,
+                    (l_nBitsPerSample <= 8) ? GDT_Byte : GDT_UInt16, 0.0,
+                    papszLocalParameters, &fpTmp, osTmp );
+    CSLDestroy(papszLocalParameters);
+    if( hTIFFTmp )
+    {
+        uint16 l_nPhotometric = 0;
+        int nJpegTablesModeIn = 0;
+        TIFFGetField( hTIFFTmp, TIFFTAG_PHOTOMETRIC, &(l_nPhotometric) );
+        TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                        &nJpegTablesModeIn );
+        TIFFWriteCheck( hTIFFTmp, FALSE, "CreateLL" );
+        TIFFWriteDirectory( hTIFFTmp );
+        TIFFSetDirectory( hTIFFTmp, 0 );
+        // Now, reset quality and jpegcolormode.
+        const int l_nJpegQuality = pszJPEGQuality ? atoi(pszJPEGQuality) : 0;
+        if(l_nJpegQuality > 0)
+            TIFFSetField(hTIFFTmp, TIFFTAG_JPEGQUALITY, l_nJpegQuality);
+        if( l_nPhotometric == PHOTOMETRIC_YCBCR
+            && CPLTestBool( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                "YES") ) )
+        {
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGCOLORMODE,
+                            JPEGCOLORMODE_RGB);
+        }
+        if( nJpegTablesModeIn >= 0 )
+            TIFFSetField( hTIFFTmp, TIFFTAG_JPEGTABLESMODE,
+                            nJpegTablesModeIn);
+
+        int nBlockSize = nInMemImageWidth * nInMemImageHeight *
+                                        ((nBands <= 4) ? nBands : 1);
+        if( l_nBitsPerSample == 12 )
+            nBlockSize = (nBlockSize * 3) / 2;
+        std::vector<GByte> abyZeroData( nBlockSize, 0 );
+        TIFFWriteEncodedStrip( hTIFFTmp, 0, &abyZeroData[0], nBlockSize);
+
+        uint32 nJPEGTableSize = 0;
+        void* pJPEGTable = NULL;
+        if( TIFFGetField( hTIFFTmp, TIFFTAG_JPEGTABLES, &nJPEGTableSize,
+                            &pJPEGTable) )
+            TIFFSetField( hTIFF, TIFFTAG_JPEGTABLES, nJPEGTableSize,
+                            pJPEGTable);
+
+        float *ref = NULL;
+        if( TIFFGetField(hTIFFTmp, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
+            TIFFSetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, ref);
+
+        XTIFFClose(hTIFFTmp);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTmp));
+    }
+    VSIUnlink(osTmpFilenameIn);
+#endif
 }
 
 /************************************************************************/
@@ -16686,14 +16784,12 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
              EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
     {
         CPLString osMissing;
-        for( int i = 0;
-             i < static_cast<int>( sizeof(anReachedVirtualMemIO) ) /
-                 sizeof(anReachedVirtualMemIO[0]) );
-             ++i )
+        for( int i = 0; i < static_cast<int>(
+                                CPL_ARRAYSIZE(anReachedVirtualMemIO)); ++i )
         {
             if( !anReachedVirtualMemIO[i] )
             {
-                if( osMissing.size() ) osMissing += ",";
+                if( !osMissing.empty() ) osMissing += ",";
                 osMissing += CPLSPrintf("%d", i);
             }
         }
@@ -16903,7 +16999,7 @@ char **GTiffDataset::GetFileList()
         }
     }
 
-    if( osGeorefFilename.size() != 0 &&
+    if( !osGeorefFilename.empty() &&
         CSLFindString(papszFileList, osGeorefFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osGeorefFilename );
@@ -16989,7 +17085,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
                 nBlockXSize, nBlockYSize,
                 bIsTiled, l_nCompression,
                 PHOTOMETRIC_MASK, PREDICTOR_NONE,
-                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "");
+                SAMPLEFORMAT_UINT, NULL, NULL, NULL, 0, NULL, "", NULL, NULL);
         if( nOffset == 0 )
             return CE_Failure;
 
@@ -17182,16 +17278,16 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
 #else
 static CPLMutex* hGTiffOneTimeInitMutex = NULL;
-#endif  // HAVE_CXX11
+#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11
+#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
 #else
     CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);

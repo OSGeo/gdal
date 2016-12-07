@@ -93,11 +93,11 @@ public:
             GDALDataset * poSrcDS, int bStrict, char **papszOptions,
             GDALProgressFunc pfnProgress, void * pProgressData);
 
-    CPLErr GetGeoTransform(double *padfTransform);
-    CPLErr SetGeoTransform(double *padfTransform);
-    void FlushCache();
-    const char *GetProjectionRef();
-    CPLErr SetProjection(const char *pszProjection);
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr SetGeoTransform(double *padfTransform) override;
+    void FlushCache() override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection(const char *pszProjection) override;
 };
 
 /************************************************************************/
@@ -118,12 +118,12 @@ public:
 
     NWT_GRDRasterBand(NWT_GRDDataset *, int, int);
 
-    virtual CPLErr IReadBlock(int, int, void *);
-    virtual CPLErr IWriteBlock(int, int, void *);
-    virtual double GetNoDataValue(int *pbSuccess);
-    virtual CPLErr SetNoDataValue(double dfNoData);
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
+    virtual double GetNoDataValue(int *pbSuccess) override;
+    virtual CPLErr SetNoDataValue(double dfNoData) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

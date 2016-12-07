@@ -362,7 +362,7 @@ int OGRElasticDataSource::Open(GDALOpenInfo* poOpenInfo)
     eAccess = poOpenInfo->eAccess;
     m_pszName = CPLStrdup(poOpenInfo->pszFilename);
     m_osURL = (STARTS_WITH_CI(m_pszName, "ES:")) ? m_pszName + 3 : m_pszName;
-    if( m_osURL.size() == 0 )
+    if( m_osURL.empty() )
     {
         const char* pszHost =
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "HOST", "localhost");
@@ -526,7 +526,7 @@ int OGRElasticDataSource::Create(const char *pszFilename,
     eAccess = GA_Update;
     m_pszName = CPLStrdup(pszFilename);
     m_osURL = (STARTS_WITH_CI(pszFilename, "ES:")) ? pszFilename + 3 : pszFilename;
-    if( m_osURL.size() == 0 )
+    if( m_osURL.empty() )
         m_osURL = "localhost:9200";
 
     const char* pszMetaFile = CPLGetConfigOption("ES_META", NULL);

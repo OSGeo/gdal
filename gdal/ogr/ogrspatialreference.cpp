@@ -27,14 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_atomic_ops.h"
-#include "cpl_csv.h"
-#include "cpl_http.h"
-#include "cpl_multiproc.h"
-#include "ogr_p.h"
+#include "cpl_port.h"
 #include "ogr_spatialref.h"
 
 #include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -253,6 +266,10 @@ OGRSpatialReference::operator=(const OGRSpatialReference &oSource)
     if( &oSource != this )
     {
         Clear();
+#ifdef CPPCHECK
+        // Otherwise cppcheck would protest that nRefCount isn't modified
+        nRefCount = (nRefCount + 1) - 1;
+#endif
 
         if( oSource.poRoot != NULL )
             poRoot = oSource.poRoot->Clone();
@@ -2589,7 +2606,7 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
 
         while( iComponentUrl != -1 )
         {
-            char searchStr[5] = {};
+            char searchStr[15] = {};
             snprintf(searchStr, sizeof(searchStr), "&%d=", iComponentUrl);
 
             const char* pszUrlEnd = strstr(pszCur, searchStr);
@@ -5572,9 +5589,11 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
         char szUTMName[128] = {};
 
         if( bNorth )
-            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Northern Hemisphere", nZone );
+            snprintf(szUTMName, sizeof(szUTMName),
+                     "UTM Zone %d, Northern Hemisphere", nZone);
         else
-            snprintf( szUTMName, sizeof(szUTMName), "UTM Zone %d, Southern Hemisphere", nZone );
+            snprintf(szUTMName, sizeof(szUTMName),
+                     "UTM Zone %d, Southern Hemisphere", nZone);
 
         SetNode( "PROJCS", szUTMName );
     }
@@ -5904,7 +5923,7 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poNode = pszTargetKey == NULL
         ? poRoot
-        : ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+        : GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;

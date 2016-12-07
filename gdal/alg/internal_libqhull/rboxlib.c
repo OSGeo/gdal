@@ -103,7 +103,7 @@ int qh_rboxpoints(FILE* fout, FILE* ferr, char* rbox_command) {
   double randmax= qh_RANDOMmax;
   char command[200], seedbuf[200];
   char *s= command, *t, *first_point= NULL;
-  time_t timedata;
+  time_t timedata = 0;
   int exitcode;
 
   if (rbox_inuse) {

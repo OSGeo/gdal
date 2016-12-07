@@ -107,7 +107,7 @@ void OGRGeoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
         return;
     }
 
-    ReadLayer(poDS, OGRGeoJSONLayer::DefaultName, poGJObject_);
+    ReadLayer(poDS, NULL, poGJObject_);
 }
 
 /************************************************************************/
@@ -158,6 +158,31 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
 
     CPLErrorReset();
 
+    // Figure out layer name
+    if( pszName == NULL )
+    {
+        if( GeoJSONObject::eFeatureCollection == objType )
+        {
+            json_object* poName = CPL_json_object_object_get(poObj, "name");
+            if( poName != NULL &&
+                json_object_get_type(poName) == json_type_string )
+            {
+                pszName = json_object_get_string(poName);
+            }
+        }
+        if( pszName == NULL )
+        {
+            const char* pszDesc = poDS->GetDescription();
+            if( strchr(pszDesc, '?') == NULL &&
+                strchr(pszDesc, '{') == NULL )
+            {
+                pszName = CPLGetBasename(pszDesc);
+            }
+        }
+        if( pszName == NULL )
+            pszName = OGRGeoJSONLayer::DefaultName;
+    }
+
     OGRGeoJSONLayer* poLayer =
       new OGRGeoJSONLayer( pszName, poSRS,
                            OGRGeoJSONLayer::DefaultGeometryType,
@@ -172,6 +197,18 @@ void OGRGeoJSONReader::ReadLayer( OGRGeoJSONDataSource* poDS,
 
         delete poLayer;
         return;
+    }
+
+    if( GeoJSONObject::eFeatureCollection == objType )
+    {
+        json_object* poDescription =
+                        CPL_json_object_object_get(poObj, "description");
+        if( poDescription != NULL &&
+            json_object_get_type(poDescription) == json_type_string )
+        {
+            poLayer->SetMetadataItem("DESCRIPTION",
+                                     json_object_get_string(poDescription));
+        }
     }
 
 /* -------------------------------------------------------------------- */

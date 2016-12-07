@@ -39,7 +39,7 @@
 class OCAD_EXTERN CADHandle final
 {
 public:
-    CADHandle( unsigned char codeIn = 0 );
+    explicit CADHandle( unsigned char codeIn = 0 );
     CADHandle( const CADHandle& other );
     CADHandle& operator=( const CADHandle& other );
 
@@ -48,7 +48,7 @@ public:
     long getAsLong() const;
     long getAsLong( const CADHandle& ref_handle ) const;
 private:
-    long getAsLong(const std::vector<unsigned char>& handle) const;
+    static long getAsLong(const std::vector<unsigned char>& handle);
 protected:
     unsigned char              code;
     std::vector<unsigned char> handleOrOffset;
@@ -64,13 +64,20 @@ public:
 
 public:
     CADVariant();
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const char * val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( int val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( short val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( double val );
     CADVariant( double x, double y, double z = 0 );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const CADHandle& val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( const std::string& val );
+    // cppcheck-suppress noExplicitConstructor
     CADVariant( time_t val );
 public:
     CADVariant( const CADVariant& orig );
@@ -85,7 +92,7 @@ public:
     double              getZ() const;
     const CADHandle&    getHandle() const;
 protected:
-    DataType       type;
+    DataType            type;
     long                decimalVal;
     double              xVal;
     double              yVal;
@@ -340,7 +347,7 @@ public:
                               0 = Off
                               1 = On */
         DRAGVS, /**< Hard-pointer ID to visual style while creating 3D
-                              solid primitives. The defualt value is NULL */
+                              solid primitives. The default value is NULL */
         DWGCODEPAGE, /**< Drawing code page; set to the system code page
                               when a new drawing is created, but not otherwise
                               maintained by AutoCAD */
@@ -680,7 +687,7 @@ public:
      */
     int              addValue( short code, const CADVariant& val );
     int              addValue( short code, const char * val );
-    int              addValue( short code, long val );
+    //int              addValue( short code, long val );
     int              addValue( short code, int val );
     int              addValue( short code, short val );
     int              addValue( short code, double val );
@@ -688,9 +695,9 @@ public:
     int              addValue( short code, bool val );
     int              addValue( short code, double x, double y, double z = 0 );
     int              addValue( short code, long julianday, long milliseconds );
-    int              getGroupCode( short code ) const;
+    static int              getGroupCode( short code );
     const CADVariant getValue( short code, const CADVariant& val = CADVariant() ) const;
-    const char * getValueName( short code ) const;
+    static const char * getValueName( short code );
     void   print() const;
     size_t getSize() const;
     short  getCode( int index ) const;

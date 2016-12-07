@@ -148,7 +148,9 @@ OGRMDBJavaEnv::~OGRMDBJavaEnv()
     }
 }
 
-#define CHECK(x, y) do {x = y; if (!x) { CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); return FALSE;} } while(0)
+#define CHECK(x, y) do {x = y; if (!x) { \
+      CPLError(CE_Failure, CPLE_AppDefined, #y " failed"); \
+      return FALSE;} } while( false )
 
 /************************************************************************/
 /*                              Init()                                  */
@@ -411,12 +413,13 @@ OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 /*                           OGRMDBTable()                              */
 /************************************************************************/
 
-OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn, jobject tableIn, const char* pszTableName )
+OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn,
+                         jobject tableIn, const char* pszTableName ) :
+    osTableName( pszTableName )
 {
     this->env = envIn;
     this->poDB = poDBIn;
     this->table = tableIn;
-    osTableName = pszTableName;
     table_iterator_obj = NULL;
     row = NULL;
 }

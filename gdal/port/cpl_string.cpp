@@ -47,8 +47,16 @@
 
 #undef WARN_STANDARD_PRINTF
 
-#include "cpl_multiproc.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cctype>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_config.h"
+#include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
 CPL_CVSID("$Id$");
@@ -961,7 +969,7 @@ static const int CPLSPrintf_BUF_Count = 10;
  * is valid only until the next call to CPLSPrintf().
  */
 
-const char *CPLSPrintf(const char *fmt, ...)
+const char *CPLSPrintf(CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 
@@ -1012,7 +1020,7 @@ const char *CPLSPrintf(const char *fmt, ...)
 /** Use CPLSPrintf() to append a new line at the end of a StringList.
  * Returns the modified StringList.
  */
-char **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
+char **CSLAppendPrintf(char **papszStrList, CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 
@@ -1030,7 +1038,7 @@ char **CSLAppendPrintf(char **papszStrList, const char *fmt, ...)
 
 /** This is intended to serve as an easy to use C callable vasprintf()
   * alternative.  Used in the GeoJSON library for instance */
-int CPLVASPrintf( char **buf, const char *fmt, va_list ap )
+int CPLVASPrintf( char **buf, CPL_FORMAT_STRING(const char *fmt), va_list ap )
 
 {
     CPLString osWork;
@@ -1120,7 +1128,7 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
   * written if size is big enough
   * @since GDAL 2.0
   */
-int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
+int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char* fmt), va_list args)
 {
     if( size == 0 )
         return vsnprintf(str, size, fmt, args);
@@ -1313,7 +1321,7 @@ int CPLvsnprintf(char *str, size_t size, const char* fmt, va_list args)
   * @since GDAL 2.0
   */
 
-int CPLsnprintf(char *str, size_t size, const char* fmt, ...)
+int CPLsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char* fmt), ...)
 {
     va_list args;
 
@@ -1340,7 +1348,7 @@ int CPLsnprintf(char *str, size_t size, const char* fmt, ...)
 ` * output buffer.
   * @since GDAL 2.0
   */
-int CPLsprintf(char *str, const char* fmt, ...)
+int CPLsprintf(char *str, CPL_FORMAT_STRING(const char* fmt), ...)
 {
     va_list args;
 
@@ -1366,7 +1374,7 @@ int CPLsprintf(char *str, const char* fmt, ...)
   * output buffer.
   * @since GDAL 2.0
   */
-int CPLprintf(const char* fmt, ...)
+int CPLprintf(CPL_FORMAT_STRING(const char* fmt), ...)
 {
     va_list wrk_args, args;
 
@@ -1428,7 +1436,7 @@ int CPLprintf(const char* fmt, ...)
   * @return the number of matched patterns;
   * @since GDAL 2.0
   */
-int CPLsscanf(const char* str, const char* fmt, ...)
+int CPLsscanf(const char* str, CPL_SCANF_FORMAT_STRING(const char* fmt), ...)
 {
     bool error = false;
     int ret = 0;
@@ -2600,6 +2608,7 @@ CPLValueType CPLGetValueType( const char* pszValue )
 
     if( bIsReal && pszAfterExponent && strlen(pszAfterExponent) > 3 )
     {
+        // cppcheck-suppress unreadVariable
         const double dfVal = CPLAtof(pszValueInit);
         if( CPLIsInf(dfVal) )
             return CPL_VALUE_STRING;

@@ -27,16 +27,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <map>
+#include "cpl_port.h"
 #include "cpl_http.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include <map>
+#include <string>
+
+#include "cpl_http.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
 
 #ifdef HAVE_CURL
 #  include <curl/curl.h>
-
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions);
-
-/* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
+// CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and
+// earlier.
 #if LIBCURL_VERSION_NUM < 0x070a07
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
 #endif
@@ -163,6 +170,11 @@ static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqI
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
  *                 Default is 30. (GDAL >= 2.0)</li>
  * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
+ * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
+ *     bundle file. By default, it will be looked in a system location. If
+ *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
+ *     environment variable is defined to use it as the CAINFO value, and as a
+ *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the TIMEOUT,
@@ -285,7 +297,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             {
                 curl_easy_cleanup(oIter->second);
                 poSessionMap->erase(oIter);
-                if( poSessionMap->size() == 0 )
+                if( poSessionMap->empty() )
                 {
                     delete poSessionMap;
                     poSessionMap = NULL;
@@ -333,9 +345,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
     CPLHTTPSetOptions(http_handle, papszOptions);
-
-    // turn off SSL verification, accept all servers with ssl
-    curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, FALSE);
 
     /* Set Headers.*/
     const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
@@ -519,8 +528,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
-void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
+void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
+    CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
+
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
@@ -651,6 +662,20 @@ void CPLHTTPSetOptions(CURL *http_handle, char** papszOptions)
     {
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
+
+    // Custom path to SSL certificates.
+    const char* pszCAInfo = CSLFetchNameValue( papszOptions, "CAINFO" );
+    if (pszCAInfo == NULL)
+        // Name of environment variable used by the curl binary
+        pszCAInfo = CPLGetConfigOption("CURL_CA_BUNDLE", NULL);
+    if (pszCAInfo == NULL)
+        // Name of environment variable used by the curl binary (tested
+        // after CURL_CA_BUNDLE
+        pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", NULL);
+    if( pszCAInfo != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
     }
 
     /* Set Referer */

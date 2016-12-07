@@ -28,8 +28,23 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "gdal_pam.h"
+
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -660,7 +675,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
 /* -------------------------------------------------------------------- */
 /*      If we are looking for a subdataset, search for its subtree not. */
 /* -------------------------------------------------------------------- */
-    if( psTree && psPam->osSubdatasetName.size() )
+    if( psTree && !psPam->osSubdatasetName.empty() )
     {
         CPLXMLNode *psSubTree = psTree->psChild;
 
@@ -745,7 +760,7 @@ CPLErr GDALPamDataset::TrySaveXML()
 /*      the subdataset tree within the whole existing pam tree,         */
 /*      after removing any old version of the same subdataset.          */
 /* -------------------------------------------------------------------- */
-    if( psPam->osSubdatasetName.size() != 0 )
+    if( !psPam->osSubdatasetName.empty() )
     {
         CPLXMLNode *psOldTree, *psSubTree;
 
@@ -988,7 +1003,7 @@ char **GDALPamDataset::GetFileList()
 {
     char **papszFileList = GDALDataset::GetFileList();
 
-    if( psPam && psPam->osPhysicalFilename.size() > 0
+    if( psPam && !psPam->osPhysicalFilename.empty()
         && CSLFindString( papszFileList, psPam->osPhysicalFilename ) == -1 )
     {
         papszFileList = CSLInsertString( papszFileList, 0,
@@ -1018,7 +1033,7 @@ char **GDALPamDataset::GetFileList()
         }
     }
 
-    if( psPam && psPam->osAuxFilename.size() > 0 &&
+    if( psPam && !psPam->osAuxFilename.empty() &&
         CSLFindString( papszFileList, psPam->osAuxFilename ) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, psPam->osAuxFilename );

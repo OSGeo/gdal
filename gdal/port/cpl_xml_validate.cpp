@@ -26,7 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
 
 CPL_CVSID("$Id$");
 
@@ -765,7 +767,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xml.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -783,7 +785,7 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
         else if( strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0 )
         {
             CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
-            if( osTmp.size() != 0 )
+            if( !osTmp.empty() )
             {
                 osURL = osTmp;
                 URL = osURL.c_str();
@@ -1168,8 +1170,8 @@ int CPLValidateXML( const char* pszXMLFilename,
     }
 
     CPLXMLSchemaPtr pSchema =
-        CPLLoadXMLSchema(osTmpXSDFilename.size() ? osTmpXSDFilename.c_str() : pszXSDFilename);
-    if( osTmpXSDFilename.size() )
+        CPLLoadXMLSchema(!osTmpXSDFilename.empty() ? osTmpXSDFilename.c_str() : pszXSDFilename);
+    if( !osTmpXSDFilename.empty() )
         VSIUnlink(osTmpXSDFilename);
     if( pSchema == NULL )
         return FALSE;

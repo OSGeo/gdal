@@ -597,8 +597,11 @@ OGRErr GMLHandler::dataHandler(const char *data, int nLen)
     }
 }
 
-#define PUSH_STATE(val) do { nStackDepth ++; CPLAssert(nStackDepth < STACK_SIZE); stateStack[nStackDepth] = val; } while(0)
-#define POP_STATE()     nStackDepth --
+#define PUSH_STATE(val) do { \
+    nStackDepth++; \
+    CPLAssert(nStackDepth < STACK_SIZE); \
+    stateStack[nStackDepth] = val; } while( false )
+#define POP_STATE()     nStackDepth--
 
 /************************************************************************/
 /*                       startElementBoundedBy()                        */
@@ -1087,7 +1090,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName, int nLenNam
         {
             m_nGeometryDepth = m_nDepth;
 
-            CPLAssert(apsXMLNode.size() == 0);
+            CPLAssert(apsXMLNode.empty());
 
             NodeLastChild sNodeLastChild;
             sNodeLastChild.psNode = NULL;

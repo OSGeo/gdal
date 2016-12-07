@@ -24,7 +24,7 @@ CPPFLAGS	:=	-I. -I.. -I../.. $(CPPFLAGS)
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target) $(O_OBJ:.o=.$(OBJ_EXT))
 
 ../../o/%.$(OBJ_EXT):	%.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean: $(foreach d,$(SUBDIRS-yes),$(d)-clean)
 	rm -f *.o $(O_OBJ)

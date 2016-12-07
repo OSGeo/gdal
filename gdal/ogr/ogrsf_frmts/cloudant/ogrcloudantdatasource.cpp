@@ -135,7 +135,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = pszFilename;
     else
         osURL = pszFilename + 9;
-    if (osURL.size() > 0 && osURL[osURL.size() - 1] == '/')
+    if (!osURL.empty() && osURL[osURL.size() - 1] == '/')
         osURL.resize(osURL.size() - 1);
 
     const char* pszUserPwd = CPLGetConfigOption("CLOUDANT_USERPWD", NULL);

@@ -161,7 +161,11 @@
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 && bUseExceptions) {
-    PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+    const char* pszMessage = CPLGetLastErrorMsg();
+    if( pszMessage[0] != '\0' )
+        PyErr_SetString( PyExc_RuntimeError, pszMessage );
+    else
+        PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
   }
 }

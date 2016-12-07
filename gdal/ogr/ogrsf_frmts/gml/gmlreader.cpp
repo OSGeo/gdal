@@ -1518,7 +1518,8 @@ bool GMLReader::SetFilteredClassName(const char* pszClassName)
     {
         for( int i = 0; i < m_nClassCount; i++ )
         {
-            if( strcmp(m_papoClass[i]->GetElementName(), pszClassName) == 0 )
+            if( strcmp(m_papoClass[i]->GetElementName(),
+                       m_pszFilteredClassName) == 0 )
             {
                 m_nFilteredClassIndex = i;
                 break;

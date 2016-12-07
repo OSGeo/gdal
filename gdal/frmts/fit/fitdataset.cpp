@@ -94,11 +94,11 @@ public:
 
     // should override RasterIO eventually.
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 //     virtual CPLErr WriteBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess );
-    virtual double GetMaximum( int *pbSuccess );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual double GetMinimum( int *pbSuccess ) override;
+    virtual double GetMaximum( int *pbSuccess ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/
@@ -801,7 +801,7 @@ template< class T >
 class DeleteGuard
 {
 public:
-    DeleteGuard( T *p ) : _ptr( p ) { }
+    explicit DeleteGuard( T *p ) : _ptr( p ) { }
     ~DeleteGuard()
     {
         delete _ptr;
@@ -827,7 +827,7 @@ template< class T >
 class FreeGuard
 {
 public:
-    FreeGuard( T *p ) : _ptr( p ) { }
+    explicit FreeGuard( T *p ) : _ptr( p ) { }
     ~FreeGuard()
     {
         if ( _ptr )

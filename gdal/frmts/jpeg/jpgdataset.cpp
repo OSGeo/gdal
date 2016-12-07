@@ -224,10 +224,10 @@ protected:
     void   LoadWorldFileOrTab();
     CPLString osWldFilename;
 
-    virtual int         CloseDependentDatasets();
+    virtual int         CloseDependentDatasets() override;
 
     virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * );
+                                    int, int *, GDALProgressFunc, void * ) override;
 
   public:
                  JPGDatasetCommon();
@@ -238,22 +238,22 @@ protected:
                                    int, int *,
                                    GSpacing nPixelSpace, GSpacing nLineSpace,
                                    GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg );
+                                   GDALRasterIOExtraArg* psExtraArg ) override;
 
-    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr GetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
+    virtual int    GetGCPCount() override;
+    virtual const char *GetGCPProjection() override;
+    virtual const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList();
-    virtual char  **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadataDomainList() override;
+    virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
+                                         const char * pszDomain = "" ) override;
 
-    virtual char **GetFileList(void);
+    virtual char **GetFileList(void) override;
 
-    virtual void FlushCache(void);
+    virtual void FlushCache(void) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -276,10 +276,10 @@ class JPGDataset : public JPGDatasetCommon
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
 
-    virtual CPLErr LoadScanline(int);
-    virtual CPLErr Restart();
-    virtual int GetDataPrecision() { return sDInfo.data_precision; }
-    virtual int GetOutColorSpace() { return sDInfo.out_color_space; }
+    virtual CPLErr LoadScanline(int) override;
+    virtual CPLErr Restart() override;
+    virtual int GetDataPrecision() override { return sDInfo.data_precision; }
+    virtual int GetOutColorSpace() override { return sDInfo.out_color_space; }
 
     int    nQLevel;
 #if !defined(JPGDataset)
@@ -306,6 +306,7 @@ class JPGDataset : public JPGDatasetCommon
                               VSILFILE* fpImage,
                               GDALDataType eDT,
                               int nQuality,
+                              bool bAppendMask,
                               GDALJPEGErrorStruct& sErrorStruct,
                               struct jpeg_compress_struct& sCInfo,
                               struct jpeg_error_mgr& sJErr,
@@ -335,14 +336,14 @@ class JPGRasterBand : public GDALPamRasterBand
                    JPGRasterBand( JPGDatasetCommon *, int );
     virtual ~JPGRasterBand() {}
 
-    virtual CPLErr IReadBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual GDALRasterBand *GetMaskBand();
-    virtual int             GetMaskFlags();
+    virtual GDALRasterBand *GetMaskBand() override;
+    virtual int             GetMaskFlags() override;
 
-    virtual GDALRasterBand *GetOverview(int i);
-    virtual int             GetOverviewCount();
+    virtual GDALRasterBand *GetOverview(int i) override;
+    virtual int             GetOverviewCount() override;
 };
 
 #if !defined(JPGDataset)
@@ -356,10 +357,10 @@ class JPGRasterBand : public GDALPamRasterBand
 class JPGMaskBand : public GDALRasterBand
 {
   protected:
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 
   public:
-                JPGMaskBand( JPGDataset *poDS );
+    explicit JPGMaskBand( JPGDataset *poDS );
     virtual ~JPGMaskBand() {}
 };
 
@@ -2614,7 +2615,7 @@ char **JPGDatasetCommon::GetFileList()
 
     LoadWorldFileOrTab();
 
-    if( osWldFilename.size() != 0 &&
+    if( !osWldFilename.empty() &&
         CSLFindString(papszFileList, osWldFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osWldFilename );
@@ -3452,10 +3453,21 @@ JPGDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     struct jpeg_error_mgr sJErr;
     GByte* pabyScanline;
 
+/* -------------------------------------------------------------------- */
+/*      Does the source have a mask?  If so, we will append it to the   */
+/*      jpeg file after the imagery.                                    */
+/* -------------------------------------------------------------------- */
+    const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
+    const bool bAppendMask =
+        !(nMaskFlags & GMF_ALL_VALID) &&
+        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
+        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
+
     // Nasty trick to avoid variable clobbering issues with setjmp/longjmp
     return CreateCopyStage2(pszFilename, poSrcDS, papszOptions,
                             pfnProgress, pProgressData,
                             fpImage, eDT, nQuality,
+                            bAppendMask,
                             sErrorStruct, sCInfo, sJErr, pabyScanline);
 }
 
@@ -3466,6 +3478,7 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
                               VSILFILE* fpImage,
                               GDALDataType eDT,
                               int nQuality,
+                              bool bAppendMask,
                               GDALJPEGErrorStruct& sErrorStruct,
                               struct jpeg_compress_struct& sCInfo,
                               struct jpeg_error_mgr& sJErr,
@@ -3606,15 +3619,6 @@ JPGDataset::CreateCopyStage2( const char * pszFilename, GDALDataset *poSrcDS,
                           (my_jpeg_write_m_header)jpeg_write_m_header,
                           (my_jpeg_write_m_byte)jpeg_write_m_byte );
 
-/* -------------------------------------------------------------------- */
-/*      Does the source have a mask?  If so, we will append it to the   */
-/*      jpeg file after the imagery.                                    */
-/* -------------------------------------------------------------------- */
-    const int nMaskFlags = poSrcDS->GetRasterBand(1)->GetMaskFlags();
-    const bool bAppendMask =
-        !(nMaskFlags & GMF_ALL_VALID) &&
-        (nBands == 1 || (nMaskFlags & GMF_PER_DATASET)) &&
-        CPLFetchBool( papszOptions, "INTERNAL_MASK", true );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
@@ -3781,9 +3785,9 @@ class GDALJPGDriver: public GDALDriver
     public:
         GDALJPGDriver() {}
 
-        char      **GetMetadata( const char * pszDomain = "" );
+        char      **GetMetadata( const char * pszDomain = "" ) override;
         const char *GetMetadataItem( const char * pszName,
-                                     const char * pszDomain = "" );
+                                     const char * pszDomain = "" ) override;
 };
 
 char** GDALJPGDriver::GetMetadata( const char * pszDomain )

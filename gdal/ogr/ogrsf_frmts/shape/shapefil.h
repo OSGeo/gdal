@@ -10,10 +10,10 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
+ * or at the option of the licensee under the LGPL (see COPYING).  This
  * option is discussed in more detail in shapelib.html.
  *
  * --
@@ -145,7 +145,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 /* -------------------------------------------------------------------- */
 typedef int *SAFile;
 
-/* SAOffset was set to vsi_l_offset in r13274.  Why is the ifndef still here? */
 #ifndef SAOffset
 typedef unsigned long SAOffset;
 #endif
@@ -457,15 +456,17 @@ typedef struct
 
     int         nRecords;
 
-    int         nRecordLength;
-    int         nHeaderLength;
+    int         nRecordLength; /* Must fit on uint16 */
+    int         nHeaderLength; /* File header length (32) + field
+                                  descriptor length + spare space.
+                                  Must fit on uint16 */
     int         nFields;
     int         *panFieldOffset;
     int         *panFieldSize;
     int         *panFieldDecimals;
     char        *pachFieldType;
 
-    char        *pszHeader;
+    char        *pszHeader; /* Field descriptors */
 
     int         nCurrentRecord;
     int         bCurrentRecordModified;
@@ -489,6 +490,8 @@ typedef struct
     int         nUpdateYearSince1900; /* 0-255 */
     int         nUpdateMonth; /* 1-12 */
     int         nUpdateDay; /* 1-31 */
+
+    int         bWriteEndOfFileChar; /* defaults to TRUE */
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;
@@ -501,7 +504,14 @@ typedef enum {
   FTInvalid
 } DBFFieldType;
 
-#define XBASE_FLDHDR_SZ       32
+/* Field descriptor/header size */
+#define XBASE_FLDHDR_SZ         32
+/* Shapelib read up to 11 characters, even if only 10 should normally be used */
+#define XBASE_FLDNAME_LEN_READ  11
+/* On writing, we limit to 10 characters */
+#define XBASE_FLDNAME_LEN_WRITE 10
+/* Normally only 254 characters should be used. We tolerate 255 historically */
+#define XBASE_FLD_MAX_WIDTH     255
 
 DBFHandle SHPAPI_CALL
       DBFOpen( const char * pszDBFFile, const char * pszAccess );
@@ -597,6 +607,8 @@ const char SHPAPI_CALL1(*)
 
 void SHPAPI_CALL
     DBFSetLastModifiedDate( DBFHandle psDBF, int nYYSince1900, int nMM, int nDD );
+
+void SHPAPI_CALL DBFSetWriteEndOfFileChar( DBFHandle psDBF, int bWriteFlag );
 
 #ifdef __cplusplus
 }

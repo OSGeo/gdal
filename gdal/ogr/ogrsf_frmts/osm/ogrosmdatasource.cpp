@@ -321,7 +321,7 @@ OGROSMDataSource::~OGROSMDataSource()
     }
 #endif
 
-    if( osTmpDBName.size() && bMustUnlink )
+    if( !osTmpDBName.empty() && bMustUnlink )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -368,7 +368,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
     if( fpNodes )
         VSIFCloseL(fpNodes);
-    if( osNodesFilename.size() && bMustUnlinkNodesFile )
+    if( !osNodesFilename.empty() && bMustUnlinkNodesFile )
     {
         const char* pszVal = CPLGetConfigOption("OSM_UNLINK_TMPFILE", "YES");
         if( !EQUAL(pszVal, "NOT_EVEN_AT_END") )
@@ -2935,9 +2935,9 @@ int OGROSMDataSource::Open( const char * pszFilename,
     if( bRet )
     {
         CPLString osInterestLayers = GetInterestLayersForDSName(GetName());
-        if( osInterestLayers.size() )
+        if( !osInterestLayers.empty() )
         {
-            ExecuteSQL( osInterestLayers, NULL, NULL );
+            delete ExecuteSQL( osInterestLayers, NULL, NULL );
         }
     }
     return bRet;
@@ -3366,7 +3366,7 @@ void OGROSMDataSource::AddComputedAttributes(
 {
     for(size_t i=0; i<oAttributes.size();i++)
     {
-        if( oAttributes[i].osSQL.size() )
+        if( !oAttributes[i].osSQL.empty() )
         {
             papoLayers[iCurLayer]->AddComputedAttribute(oAttributes[i].osName,
                                                         oAttributes[i].eType,
@@ -4217,10 +4217,10 @@ class OGROSMSingleFeatureLayer : public OGRLayer
                                                   const char *pszVal );
                         virtual ~OGROSMSingleFeatureLayer();
 
-    virtual void        ResetReading() { iNextShapeId = 0; }
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-    virtual int         TestCapability( const char * ) { return FALSE; }
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 /************************************************************************/
@@ -4300,7 +4300,7 @@ class OGROSMResultLayerDecorator : public OGRLayerDecorator
                                         osDSName(osDSNameIn),
                                         osInterestLayers(osInterestLayersIn) {}
 
-        virtual GIntBig     GetFeatureCount( int bForce = TRUE )
+        virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override
         {
             /* When we run GetFeatureCount() with SQLite SQL dialect, */
             /* the OSM dataset will be re-opened. Make sure that it is */
@@ -4423,7 +4423,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             for(; oIter != oSetLayers.end(); ++oIter)
             {
                 const LayerDesc& oLayerDesc = *oIter;
-                if( oLayerDesc.osDSName.size() == 0 )
+                if( oLayerDesc.osDSName.empty() )
                 {
                     if( bLayerAlreadyAdded ) osInterestLayers += ",";
                     bLayerAlreadyAdded = true;
@@ -4475,7 +4475,7 @@ OGRLayer * OGROSMDataSource::ExecuteSQL( const char *pszSQLCommand,
             bUseWaysIndexBackup = bUseWaysIndex;
 
             /* Update optimization parameters */
-            ExecuteSQL(osInterestLayers, NULL, NULL);
+            delete ExecuteSQL(osInterestLayers, NULL, NULL);
 
             MyResetReading();
 

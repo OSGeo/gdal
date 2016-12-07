@@ -478,7 +478,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 
     seg_data.Put(SRITModel->utmunit.c_str(),nPos+225,16);
 
-    if(SRITModel->oProjectionInfo.size() > 0)
+    if(!SRITModel->oProjectionInfo.empty())
     {
         seg_data.Put("ProjInfo: ",nPos+245,10);
         seg_data.Put(SRITModel->oProjectionInfo.c_str(),

@@ -33,15 +33,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_http.h"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include <json.h>
-#ifdef __clang
-#pragma clang diagnostic pop
-#endif
+#include "ogr_json_header.h"
 
 #include <vector>
 #include <map>
@@ -78,7 +70,7 @@ protected:
 
     OGRFeature*                 GetNextRawFeature();
     OGRFeature*                 TranslateFeature( json_object* poObj );
-    void                        ParseFieldValue(OGRFeature* poFeature,
+    static void                        ParseFieldValue(OGRFeature* poFeature,
                                                 const char* pszKey,
                                                 json_object* poValue);
 
@@ -93,21 +85,21 @@ protected:
     virtual int                 GetFeaturesToFetch() { return atoi(CPLGetConfigOption("COUCHDB_PAGE_SIZE", "500")); }
 
   public:
-                         OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
+    explicit OGRCouchDBLayer(OGRCouchDBDataSource* poDS);
     virtual ~OGRCouchDBLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature *        GetNextFeature();
+    virtual void                ResetReading() override;
+    virtual OGRFeature *        GetNextFeature() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn();
+    virtual OGRFeatureDefn *    GetLayerDefn() override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     virtual CouchDBLayerType    GetLayerType() = 0;
 
-    virtual OGRErr              SetNextByIndex( GIntBig nIndex );
+    virtual OGRErr              SetNextByIndex( GIntBig nIndex ) override;
 
-    virtual OGRSpatialReference * GetSpatialRef();
+    virtual OGRSpatialReference * GetSpatialRef() override;
 };
 
 /************************************************************************/
@@ -120,7 +112,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     bool                      bInTransaction;
     std::vector<json_object*> aoTransactionFeatures;
 
-    virtual bool              FetchNextRows();
+    virtual bool              FetchNextRows() override;
 
     int                       bHasOGRSpatial;
     bool                      bHasGeocouchUtilsMinimalSpatialView;
@@ -174,35 +166,35 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
                                  const char* pszName);
     virtual ~OGRCouchDBTableLayer();
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 
-    virtual OGRFeatureDefn *    GetLayerDefn();
+    virtual OGRFeatureDefn *    GetLayerDefn() override;
 
-    virtual const char *        GetName() { return osName.c_str(); }
+    virtual const char *        GetName() override { return osName.c_str(); }
 
-    virtual GIntBig             GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr              GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr              GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr              GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    virtual OGRFeature *        GetFeature( GIntBig nFID );
+    virtual OGRFeature *        GetFeature( GIntBig nFID ) override;
 
-    virtual void                SetSpatialFilter( OGRGeometry * );
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
+    virtual void                SetSpatialFilter( OGRGeometry * ) override;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
                 { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
-    virtual OGRErr              SetAttributeFilter( const char * );
+    virtual OGRErr              SetAttributeFilter( const char * ) override;
 
     virtual OGRErr              CreateField( OGRFieldDefn *poField,
-                                             int bApproxOK = TRUE );
-    virtual OGRErr              ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr              ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr              DeleteFeature( GIntBig nFID );
+                                             int bApproxOK = TRUE ) override;
+    virtual OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr              ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr              DeleteFeature( GIntBig nFID ) override;
 
-    virtual OGRErr              StartTransaction();
-    virtual OGRErr              CommitTransaction();
-    virtual OGRErr              RollbackTransaction();
+    virtual OGRErr              StartTransaction() override;
+    virtual OGRErr              CommitTransaction() override;
+    virtual OGRErr              RollbackTransaction() override;
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
     void                        SetInfoAfterCreation( OGRwkbGeometryType eGType,
                                                       OGRSpatialReference* poSRSIn,
@@ -216,7 +208,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
     void                        SetCoordinatePrecision( int nCoordPrecisionIn )
         { nCoordPrecision = nCoordPrecisionIn; }
 
-    virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
+    virtual CouchDBLayerType    GetLayerType() override { return COUCHDB_TABLE_LAYER; }
 
     OGRErr            DeleteFeature( const char* pszId );
 };
@@ -229,17 +221,17 @@ class OGRCouchDBRowsLayer : public OGRCouchDBLayer
 {
     bool                      bAllInOne;
 
-    virtual bool              FetchNextRows();
+    virtual bool              FetchNextRows() override;
 
     public:
-            OGRCouchDBRowsLayer( OGRCouchDBDataSource* poDS );
+            explicit OGRCouchDBRowsLayer( OGRCouchDBDataSource* poDS );
             virtual ~OGRCouchDBRowsLayer();
 
-    virtual void                ResetReading();
+    virtual void                ResetReading() override;
 
     bool                        BuildFeatureDefn();
 
-    virtual CouchDBLayerType    GetLayerType() { return COUCHDB_TABLE_LAYER; }
+    virtual CouchDBLayerType    GetLayerType() override { return COUCHDB_TABLE_LAYER; }
 };
 
 /************************************************************************/
@@ -278,24 +270,24 @@ class OGRCouchDBDataSource : public OGRDataSource
     int                 Open( const char * pszFilename,
                               int bUpdate );
 
-    virtual const char* GetName() { return pszName; }
+    virtual const char* GetName() override { return pszName; }
 
-    virtual int         GetLayerCount() { return nLayers; }
-    virtual OGRLayer*   GetLayer( int );
-    virtual OGRLayer    *GetLayerByName(const char *);
+    virtual int         GetLayerCount() override { return nLayers; }
+    virtual OGRLayer*   GetLayer( int ) override;
+    virtual OGRLayer    *GetLayerByName(const char *) override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
-    virtual OGRErr      DeleteLayer(int);
+                                     char ** papszOptions = NULL ) override;
+    virtual OGRErr      DeleteLayer(int) override;
 
     virtual OGRLayer*  ExecuteSQL( const char *pszSQLCommand,
                                    OGRGeometry *poSpatialFilter,
-                                   const char *pszDialect );
-    virtual void       ReleaseResultSet( OGRLayer * poLayer );
+                                   const char *pszDialect ) override;
+    virtual void       ReleaseResultSet( OGRLayer * poLayer ) override;
 
     bool                IsReadWrite() const { return bReadWrite; }
 
@@ -322,11 +314,11 @@ class OGRCouchDBDriver : public OGRSFDriver
   public:
     virtual ~OGRCouchDBDriver();
 
-    virtual const char*         GetName();
-    virtual OGRDataSource*      Open( const char *, int );
+    virtual const char*         GetName() override;
+    virtual OGRDataSource*      Open( const char *, int ) override;
     virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char **papszOptions );
-    virtual int                 TestCapability( const char * );
+                                                  char **papszOptions ) override;
+    virtual int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_COUCHDB_H_INCLUDED */

@@ -29,11 +29,17 @@
 
 #include "cpl_port.h"
 #include "ogr_geometry.h"
-#include "ogr_p.h"
 
+#include <cstdio>
+#include <cstring>
 #include <algorithm>
 #include <limits>
 #include <new>
+
+#include "cpl_conv.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -714,6 +720,7 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRPoint.");
+        return FALSE;
     }
     if( flags != poOPoint->flags )
         return FALSE;
@@ -771,6 +778,7 @@ OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return FALSE;
         }
         return poCurve->Contains(this);
     }
@@ -794,6 +802,7 @@ OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return FALSE;
         }
         return poCurve->Intersects(this);
     }

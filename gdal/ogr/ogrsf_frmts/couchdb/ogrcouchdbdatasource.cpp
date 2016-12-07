@@ -218,7 +218,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = pszFilename;
     else
         osURL = pszFilename + 8;
-    if (osURL.size() > 0 && osURL[osURL.size() - 1] == '/')
+    if (!osURL.empty() && osURL[osURL.size() - 1] == '/')
         osURL.resize(osURL.size() - 1);
 
     const char* pszUserPwd = CPLGetConfigOption("COUCHDB_USERPWD", NULL);
@@ -415,7 +415,7 @@ OGRLayer   *OGRCouchDBDataSource::ICreateLayer( const char *pszNameIn,
         osValidation += "\"}";
     }
 
-    if (osValidation.size())
+    if (!osValidation.empty() )
     {
         osURI = "/";
         osURI += osEscapedName;
@@ -632,7 +632,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQL( const char *pszSQLCommand,
             return NULL;
         OGRCouchDBTableLayer* poTableLayer = (OGRCouchDBTableLayer*)poLayer;
 
-        while(*pszIter && *pszIter == ' ')
+        while( *pszIter == ' ' )
             pszIter ++;
         if (!STARTS_WITH_CI(pszIter, "WHERE "))
         {
@@ -695,7 +695,7 @@ class PointerAutoFree
 {
         void * m_p;
     public:
-        PointerAutoFree(void* p) { m_p = p; }
+        explicit PointerAutoFree(void* p) { m_p = p; }
         ~PointerAutoFree() { CPLFree(m_p); }
 };
 
@@ -718,15 +718,15 @@ class OGRCouchDBOneLineLayer : public OGRLayer
                 poFeatureDefn->Release();
         }
 
-        virtual void        ResetReading() { bEnd = false;}
-        virtual OGRFeature *GetNextFeature()
+        virtual void        ResetReading() override { bEnd = false;}
+        virtual OGRFeature *GetNextFeature() override
         {
             if( bEnd ) return NULL;
             bEnd = true;
             return poFeature->Clone();
         }
-        virtual OGRFeatureDefn *GetLayerDefn() { return poFeatureDefn; }
-        virtual int         TestCapability( const char * ) { return FALSE; }
+        virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+        virtual int         TestCapability( const char * ) override { return FALSE; }
 };
 
 OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
@@ -810,7 +810,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
 
         if (strcmp(psColDef->field_name, "*") != 0)
         {
-            if (osLastFieldName.size() == 0)
+            if (osLastFieldName.empty())
                 osLastFieldName = psColDef->field_name;
             else if (strcmp(osLastFieldName, psColDef->field_name) != 0)
                 return NULL;
@@ -830,7 +830,7 @@ OGRLayer * OGRCouchDBDataSource::ExecuteSQLStats( const char *pszSQLCommand )
             return NULL;
     }
 
-    if (osLastFieldName.size() == 0)
+    if (osLastFieldName.empty())
         return NULL;
 
     /* Normalize field name */
@@ -1034,7 +1034,7 @@ char* OGRCouchDBDataSource::GetETag(const char* pszURI)
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
     papszOptions = CSLAddString(papszOptions, "NO_BODY=1");
 
-    if (osUserPwd.size())
+    if (!osUserPwd.empty() )
     {
         CPLString osUserPwdOption("USERPWD=");
         osUserPwdOption += osUserPwd;
@@ -1091,7 +1091,7 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
 
     papszOptions = CSLAddString(papszOptions, "HEADERS=Content-Type: application/json");
 
-    if (osUserPwd.size())
+    if (!osUserPwd.empty() )
     {
         CPLString osUserPwdOption("USERPWD=");
         osUserPwdOption += osUserPwd;

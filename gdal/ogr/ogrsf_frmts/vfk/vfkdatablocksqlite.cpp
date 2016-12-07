@@ -182,7 +182,7 @@ bool VFKDataBlockSQLite::SetGeometryLineString(VFKFeatureSQLite *poLine, OGRLine
     UpdateFID(poLine->GetFID(), rowIdFeat);
 
     /* store also geometry in DB */
-    CPLAssert(0 != rowIdFeat.size());
+    CPLAssert( !rowIdFeat.empty() );
     if( bValid && poReader->IsSpatial() &&
         SaveGeometryToDB(bValid ? poLine->GetGeometry() : NULL,
                          rowIdFeat[0]) != OGRERR_FAILURE )
@@ -549,7 +549,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         bool bFound = false;
         int nCount = 0;
         const int nCountMax = static_cast<int>(nLines) * 2;
-        while( poLineList.size() > 0 && nCount < nCountMax )
+        while( !poLineList.empty() && nCount < nCountMax )
         {
             bool bNewRing = !bFound;
             bFound = false;
@@ -568,7 +568,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         CPLDebug("OGR-VFK", "%s: fid = %ld nlines = %d -> nrings = %d", m_pszName,
                  iFID, (int)nLines, (int)poRingList.size());
 
-        if (poLineList.size() > 0) {
+        if (!poLineList.empty()) {
             CPLDebug("OGR-VFK",
                      "%s: unable to collect rings for polygon fid = %ld",
                      m_pszName, iFID);

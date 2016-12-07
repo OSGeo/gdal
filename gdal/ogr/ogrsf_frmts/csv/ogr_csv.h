@@ -144,24 +144,24 @@ class OGRCSVLayer : public OGRLayer
                                           const char* pszGeonamesGeomFieldPrefix = NULL,
                                           char** papszOpenOptions = NULL );
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    virtual OGRFeature* GetFeature( GIntBig nFID );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    virtual OGRFeature* GetFeature( GIntBig nFID ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
+                                     int bApproxOK = TRUE ) override;
 
     static OGRCSVCreateFieldAction PreCreateField( OGRFeatureDefn* poFeatureDefn,
                                                    OGRFieldDefn *poNewField,
                                                    int bApproxOK );
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
-                                         int bApproxOK = TRUE );
+                                         int bApproxOK = TRUE ) override;
 
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
 
     void                SetCRLF( bool bNewValue );
     void                SetWriteGeometry(OGRwkbGeometryType eGType,
@@ -170,8 +170,8 @@ class OGRCSVLayer : public OGRLayer
     void                SetCreateCSVT( bool bCreateCSVT );
     void                SetWriteBOM( bool bWriteBOM );
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE );
-    virtual OGRErr      SyncToDisk();
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr      SyncToDisk() override;
 
     OGRErr              WriteHeader();
 };
@@ -205,19 +205,19 @@ class OGRCSVDataSource : public OGRDataSource
                                    const char* pszNfdcRunwaysGeomField = NULL,
                                    const char* pszGeonamesGeomFieldPrefix = NULL );
 
-    const char          *GetName() { return pszName; }
+    const char          *GetName() override { return pszName; }
 
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
                                      OGRSpatialReference *poSpatialRef = NULL,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
+                                     char ** papszOptions = NULL ) override;
 
-    virtual OGRErr      DeleteLayer(int);
+    virtual OGRErr      DeleteLayer(int) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     void                CreateForSingleFile( const char* pszDirname,
                                              const char *pszFilename );

@@ -27,8 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "cpl_string.h"
+
+#include <cctype>
+#include <cstdarg>
+#include <cstddef>
+#include <cstring>
 #include <string>
+
+#include "cpl_config.h"
+#include "cpl_conv.h"
 
 CPL_CVSID("$Id$");
 
@@ -43,7 +52,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 /** Assign the content of the string using sprintf() */
-CPLString &CPLString::Printf( const char *pszFormat, ... )
+CPLString &CPLString::Printf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 
 {
     va_list args;
@@ -60,7 +69,7 @@ CPLString &CPLString::Printf( const char *pszFormat, ... )
 /************************************************************************/
 
 /** Assign the content of the string using vsprintf() */
-CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
+CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
 
 {
 /* -------------------------------------------------------------------- */
@@ -469,7 +478,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
 /************************************************************************/
 
 /** Return a CPLString with the content of sprintf() */
-CPLString CPLOPrintf( const char *pszFormat, ... )
+CPLString CPLOPrintf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 
 {
     va_list args;
@@ -488,7 +497,7 @@ CPLString CPLOPrintf( const char *pszFormat, ... )
 /************************************************************************/
 
 /** Return a CPLString with the content of vsprintf() */
-CPLString CPLOvPrintf( const char *pszFormat, va_list args )
+CPLString CPLOvPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
 
 {
     CPLString osTarget;

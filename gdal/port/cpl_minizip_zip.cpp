@@ -26,17 +26,20 @@
    Read zip.h for more info
 */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include "zlib.h"
-#include "cpl_conv.h"
-#include "cpl_minizip_zip.h"
 #include "cpl_port.h"
-#include "cpl_string.h"
+#include "cpl_minizip_zip.h"
 
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minizip_unzip.h"
+#include "cpl_string.h"
 
 #ifdef NO_ERRNO_H
     extern int errno;
@@ -44,7 +47,7 @@
 #   include <errno.h>
 #endif
 
-CPL_CVSID("$Id:");
+CPL_CVSID("$Id$");
 
 #ifndef VERSIONMADEBY
 # define VERSIONMADEBY   (0x0) /* platform dependent */

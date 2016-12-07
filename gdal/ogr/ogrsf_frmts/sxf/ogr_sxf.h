@@ -77,20 +77,20 @@ public:
     OGRSXFLayer(VSILFILE* fp, CPLMutex** hIOMutex, GByte nID, const char* pszLayerName, int nVer, const SXFMapDescription&  sxfMapDesc);
     virtual ~OGRSXFLayer();
 
-    virtual void                ResetReading();
-    virtual OGRFeature         *GetNextFeature();
-    virtual OGRErr              SetNextByIndex(GIntBig nIndex);
-    virtual OGRFeature         *GetFeature(GIntBig nFID);
-    virtual OGRFeatureDefn     *GetLayerDefn() { return poFeatureDefn;}
+    virtual void                ResetReading() override;
+    virtual OGRFeature         *GetNextFeature() override;
+    virtual OGRErr              SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRFeature         *GetFeature(GIntBig nFID) override;
+    virtual OGRFeatureDefn     *GetLayerDefn() override { return poFeatureDefn;}
 
-    virtual int                 TestCapability( const char * );
+    virtual int                 TestCapability( const char * ) override;
 
-    virtual GIntBig     GetFeatureCount(int bForce = TRUE);
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual GIntBig     GetFeatureCount(int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    virtual OGRSpatialReference *GetSpatialRef();
-    virtual const char* GetFIDColumn();
+    virtual OGRSpatialReference *GetSpatialRef() override;
+    virtual const char* GetFIDColumn() override;
 
     virtual GByte GetId() const { return nLayerID; };
     virtual void AddClassifyCode(unsigned nClassCode, const char *szName = NULL);
@@ -117,10 +117,10 @@ class OGRSXFDataSource : public OGRDataSource
     void FillLayers();
     void CreateLayers();
     void CreateLayers(VSILFILE* fpRSC);
-    OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);
+    static OGRErr ReadSXFInformationFlags(VSILFILE* fpSXF, SXFPassport& passport);
     OGRErr ReadSXFDescription(VSILFILE* fpSXF, SXFPassport& passport);
-    void SetVertCS(const long iVCS, SXFPassport& passport);
-    OGRErr ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport);
+    static void SetVertCS(const long iVCS, SXFPassport& passport);
+    static OGRErr ReadSXFMapDescription(VSILFILE* fpSXF, SXFPassport& passport);
     OGRSXFLayer*       GetLayerById(GByte);
 public:
                         OGRSXFDataSource();
@@ -129,12 +129,12 @@ public:
     int                 Open( const char * pszFilename,
                               int bUpdate );
 
-    virtual const char*     GetName() { return pszName; }
+    virtual const char*     GetName() override { return pszName; }
 
-    virtual int             GetLayerCount() { return static_cast<int>(nLayers); }
-    virtual OGRLayer*       GetLayer( int );
+    virtual int             GetLayerCount() override { return static_cast<int>(nLayers); }
+    virtual OGRLayer*       GetLayer( int ) override;
 
-    virtual int             TestCapability( const char * );
+    virtual int             TestCapability( const char * ) override;
     void                    CloseFile();
 };
 
@@ -147,10 +147,10 @@ class OGRSXFDriver : public OGRSFDriver
   public:
                 ~OGRSXFDriver();
 
-    const char*     GetName();
-    OGRDataSource*  Open( const char *, int );
-    OGRErr          DeleteDataSource(const char* pszName);
-    int             TestCapability(const char *);
+    const char*     GetName() override;
+    OGRDataSource*  Open( const char *, int ) override;
+    OGRErr          DeleteDataSource(const char* pszName) override;
+    int             TestCapability(const char *) override;
 };
 
 #endif

@@ -176,7 +176,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 #ifdef POPPLER_0_23_OR_LATER
                                ,XRef* xrefIn
 #endif
-        )
+        ) override
         {
             SplashOutputDev::startPage(pageNum, state
 #ifdef POPPLER_0_23_OR_LATER
@@ -187,19 +187,19 @@ class GDALPDFOutputDev : public SplashOutputDev
             memset(poBitmap->getDataPtr(), 255, poBitmap->getRowSize() * poBitmap->getHeight());
         }
 
-        virtual void stroke(GfxState * state)
+        virtual void stroke(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::stroke(state);
         }
 
-        virtual void fill(GfxState * state)
+        virtual void fill(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::fill(state);
         }
 
-        virtual void eoFill(GfxState * state)
+        virtual void eoFill(GfxState * state) override
         {
             if (bEnableVector)
                 SplashOutputDev::eoFill(state);
@@ -208,7 +208,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         virtual void drawChar(GfxState *state, double x, double y,
                               double dx, double dy,
                               double originX, double originY,
-                              CharCode code, int nBytes, Unicode *u, int uLen)
+                              CharCode code, int nBytes, Unicode *u, int uLen) override
         {
             if (bEnableText)
                 SplashOutputDev::drawChar(state, x, y, dx, dy,
@@ -216,14 +216,14 @@ class GDALPDFOutputDev : public SplashOutputDev
                                           code, nBytes, u, uLen);
         }
 
-        virtual void beginTextObject(GfxState *state)
+        virtual void beginTextObject(GfxState *state) override
         {
             if (bEnableText)
                 SplashOutputDev::beginTextObject(state);
         }
 
 #ifndef POPPLER_0_23_OR_LATER
-        virtual GBool deviceHasTextClip(GfxState *state)
+        virtual GBool deviceHasTextClip(GfxState *state) override
         {
             if (bEnableText)
                 return SplashOutputDev::deviceHasTextClip(state);
@@ -231,7 +231,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         }
 #endif
 
-        virtual void endTextObject(GfxState *state)
+        virtual void endTextObject(GfxState *state) override
         {
             if (bEnableText)
                 SplashOutputDev::endTextObject(state);
@@ -239,7 +239,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
                                    int width, int height, GBool invert,
-                                   GBool interpolate, GBool inlineImg)
+                                   GBool interpolate, GBool inlineImg) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawImageMask(state, ref, str,
@@ -260,7 +260,7 @@ class GDALPDFOutputDev : public SplashOutputDev
         virtual void setSoftMaskFromImageMask(GfxState *state,
                             Object *ref, Stream *str,
                             int width, int height, GBool invert,
-                            GBool inlineImg, double *baseMatrix)
+                            GBool inlineImg, double *baseMatrix) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::setSoftMaskFromImageMask(state, ref, str,
@@ -270,7 +270,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                 str->close();
         }
 
-        virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix)
+        virtual void unsetSoftMaskFromImageMask(GfxState *state, double *baseMatrix) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::unsetSoftMaskFromImageMask(state, baseMatrix);
@@ -279,7 +279,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
         virtual void drawImage(GfxState *state, Object *ref, Stream *str,
                                int width, int height, GfxImageColorMap *colorMap,
-                               GBool interpolate, int *maskColors, GBool inlineImg)
+                               GBool interpolate, int *maskColors, GBool inlineImg) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawImage(state, ref, str,
@@ -303,7 +303,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                      GfxImageColorMap *colorMap,
                                      GBool interpolate,
                                      Stream *maskStr, int maskWidth, int maskHeight,
-                                     GBool maskInvert, GBool maskInterpolate)
+                                     GBool maskInvert, GBool maskInterpolate) override
         {
             if (bEnableBitmap)
                 SplashOutputDev::drawMaskedImage(state, ref, str,
@@ -322,7 +322,7 @@ class GDALPDFOutputDev : public SplashOutputDev
                                          Stream *maskStr,
                                          int maskWidth, int maskHeight,
                                          GfxImageColorMap *maskColorMap,
-                                         GBool maskInterpolate)
+                                         GBool maskInterpolate) override
         {
             if (bEnableBitmap)
             {
@@ -870,7 +870,7 @@ CPLErr PDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     PDFDataset *poGDS = (PDFDataset *) poDS;
 
-    if (poGDS->aiTiles.size() )
+    if (!poGDS->aiTiles.empty() )
     {
         if ( IReadBlockFromTile(nBlockXOff, nBlockYOff,
                                 pImage) == CE_None )
@@ -1269,7 +1269,7 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
       pDoc->pages.size());
 #endif
   // Another page is used
-  if(pDoc->pages.size() != 0) {
+  if(!pDoc->pages.empty()) {
     CPLReleaseMutex(g_oPdfiumLoadDocMutex);
     return TRUE;
   }
@@ -1288,7 +1288,7 @@ int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct** doc, TPdfiumPageStruct** pa
       g_mPdfiumDatasets.size());
 #endif
   // Another document is used
-  if(g_mPdfiumDatasets.size() != 0) {
+  if(!g_mPdfiumDatasets.empty()) {
     CPLReleaseMutex(g_oPdfiumLoadDocMutex);
     return TRUE;
   }
@@ -1856,7 +1856,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
                     iPage, iPage,
                     osFilename.c_str());
 
-            if (osUserPwd.size() != 0)
+            if (!osUserPwd.empty())
             {
                 osCmd += " -upw \"";
                 osCmd += osUserPwd;
@@ -1891,7 +1891,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
             papszArgs = CSLAddString(papszArgs, "-l");
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
-            if (osUserPwd.size() != 0)
+            if (!osUserPwd.empty())
             {
                 papszArgs = CSLAddString(papszArgs, "-upw");
                 papszArgs = CSLAddString(papszArgs, osUserPwd.c_str());
@@ -2082,7 +2082,7 @@ class PDFImageRasterBand : public PDFRasterBand
 
                 PDFImageRasterBand( PDFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -2238,7 +2238,7 @@ CPLErr PDFDataset::IBuildOverviews( const char *pszResampling,
 /*      discard any concept of internal overviews when the user         */
 /*      first requests to build external overviews.                     */
 /* -------------------------------------------------------------------- */
-    if( apoOvrDS.size() )
+    if( !apoOvrDS.empty() )
     {
         apoOvrDSBackup = apoOvrDS;
         apoOvrDS.clear();
@@ -2471,7 +2471,7 @@ CPLErr PDFDataset::IRasterIO( GDALRWFlag eRWFlag,
     int nBandBlockXSize, nBandBlockYSize;
     int bReadPixels = FALSE;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
-    if( aiTiles.size() == 0 &&
+    if( aiTiles.empty() &&
         eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
         (nBufXSize > nBandBlockXSize || nBufYSize > nBandBlockYSize) &&
         eBufType == GDT_Byte && nBandCount == nBands &&
@@ -2513,7 +2513,7 @@ CPLErr PDFRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 {
     PDFDataset *poGDS = (PDFDataset *) poDS;
     int bReadPixels = FALSE;
-    if( poGDS->aiTiles.size() == 0 &&
+    if( poGDS->aiTiles.empty() &&
         eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize &&
         (nBufXSize > nBlockXSize || nBufYSize > nBlockYSize) &&
         eBufType == GDT_Byte )
@@ -2638,7 +2638,7 @@ CPLString GDALPDFParseStreamContentOnlyDrawForm(const char* pszContent)
         }
         else if (ch == ' ' || ch == '\r' || ch == '\n')
         {
-            if (osToken.size())
+            if (!osToken.empty() )
             {
                 if (nCurIdx == 0 && osToken[0] == '/')
                 {
@@ -2722,7 +2722,7 @@ int GDALPDFParseStreamContent(const char* pszContent,
         }
         else if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n')
         {
-            if (osToken.size())
+            if (!osToken.empty() )
             {
                 if (nState == STATE_INIT)
                 {
@@ -3029,7 +3029,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                         }
 #endif // DEBUG
                         osForm = GDALPDFParseStreamContentOnlyDrawForm(pszContent);
-                        if (osForm.size() == 0)
+                        if (osForm.empty())
                         {
                             /* Special case for USGS Topo PDF, like CA_Hollywood_20090811_OM_geo.pdf */
                             const char* pszOGCDo = strstr(pszContent, " /XO1 Do");
@@ -3084,7 +3084,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                             else
                             {
                                 CPLString osOCG = FindLayerOCG(poPageDict, "Orthoimage");
-                                if( osOCG.size() )
+                                if( !osOCG.empty() )
                                 {
                                     const char* pszBDCLookup = CPLSPrintf("/OC /%s BDC", osOCG.c_str());
                                     const char* pszBDC = strstr(pszContent, pszBDCLookup);
@@ -3118,7 +3118,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary* poPageDict, int* pnBands)
                         }
                     }
 
-                    if (osForm.size())
+                    if (!osForm.empty() )
                     {
                         CPLFree(pszContent);
                         pszContent = NULL;
@@ -3365,7 +3365,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
-            if (osTopLayer.size())
+            if (!osTopLayer.empty() )
                 osTopLayer = osTopLayer + "." + osName;
             else
                 osTopLayer = osName;
@@ -3385,7 +3385,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray* poArray,
             {
                 CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
                 /* coverity[copy_paste_error] */
-                if (osTopLayer.size())
+                if (!osTopLayer.empty() )
                     osCurLayer = osTopLayer + "." + osName;
                 else
                     osCurLayer = osName;
@@ -3612,7 +3612,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
             CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
-            if (osTopLayer.size())
+            if (!osTopLayer.empty() )
                 osTopLayer = osTopLayer + "." + osName;
             else
                 osTopLayer = osName;
@@ -3632,7 +3632,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray* poArray,
             if (poName != NULL && poName->GetType() == PDFObjectType_String)
             {
                 CPLString osName = PDFSanitizeLayerName(poName->GetString().c_str());
-                if (osTopLayer.size())
+                if (!osTopLayer.empty() )
                     osCurLayer = osTopLayer + "." + osName;
                 else
                     osCurLayer = osName;
@@ -4495,11 +4495,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     /* Check if the PDF is only made of regularly tiled images */
     /* (like some USGS GeoPDF production) */
-    if( dfRotation == 0.0 && poDS->asTiles.size() &&
+    if( dfRotation == 0.0 && !poDS->asTiles.empty() &&
         EQUAL(GetOption(poOpenInfo->papszOpenOptions, "LAYERS", "ALL"), "ALL") )
     {
         poDS->CheckTiledRaster();
-        if (poDS->aiTiles.size() )
+        if (!poDS->aiTiles.empty() )
             poDS->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
     }
 
@@ -4863,7 +4863,7 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 #ifdef HAVE_PODOFO
-    if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4 && poDS->aiTiles.size() == 0)
+    if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4 && poDS->aiTiles.empty())
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_PDF_BANDS=4 not supported when PDF driver is compiled against Podofo. "

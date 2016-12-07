@@ -266,7 +266,9 @@ typedef int              GPtrDiff_t;
 
 #ifdef GDAL_COMPILATION
 #if HAVE_UINTPTR_T
+#if !defined(_MSC_VER) || _MSC_VER > 1500
 #include <stdint.h>
+#endif
 typedef uintptr_t GUIntptr_t;
 #elif SIZEOF_VOIDP == 8
 typedef GUIntBig GUIntptr_t;
@@ -913,6 +915,28 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
+#include <sal.h>
+# if _MSC_VER > 1400
+/** Macro into which to wrap the format argument of a printf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_FORMAT_STRING(arg) _Printf_format_string_ arg
+/** Macro into which to wrap the format argument of a sscanf-like function.
+ * Only used if ANALYZE=1 is specified to nmake */
+#  define CPL_SCANF_FORMAT_STRING(arg) _Scanf_format_string_ arg
+# else
+/** Macro into which to wrap the format argument of a printf-like function */
+#  define CPL_FORMAT_STRING(arg) __format_string arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+#  define CPL_SCANF_FORMAT_STRING(arg) arg
+# endif
+#else
+/** Macro into which to wrap the format argument of a printf-like function */
+# define CPL_FORMAT_STRING(arg) arg
+/** Macro into which to wrap the format argument of a sscanf-like function. */
+# define CPL_SCANF_FORMAT_STRING(arg) arg
+#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 && defined(GDAL_COMPILATION) */
+
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** Qualifier to warn when the return value of a function is not used */
 #define CPL_WARN_UNUSED_RESULT                        __attribute__((warn_unused_result))
@@ -964,9 +988,29 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #ifdef __cplusplus
 
+#if HAVE_CXX11 || _MSC_VER >= 1500
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE override
+
+#else
+
+/** To be used in public headers only. For non-public headers or .cpp files,
+ * use override directly. */
+#  define CPL_OVERRIDE
+
+/* For GDAL source compilation only, ignore override if non C++11 compiler */
+#ifdef GDAL_COMPILATION
+#  define override
+#endif
+
+#endif /* HAVE_CXX11 || _MSC_VER >= 1500 */
+
 #if HAVE_CXX11
 /** C++11 final qualifier */
 #  define CPL_FINAL final
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
@@ -978,6 +1022,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #else
 /** C++11 final qualifier */
 #  define CPL_FINAL
+
 /** Helper to remove the copy and assignment constructors so that the compiler
    will not generate the default versions.
 
@@ -1050,7 +1095,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7)) && HAVE_CXX11
+#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7) && HAVE_CXX11
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else

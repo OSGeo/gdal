@@ -76,30 +76,30 @@ class OGRMemLayer : public OGRLayer
                                      OGRwkbGeometryType eGeomType );
     virtual            ~OGRMemLayer();
 
-    void                ResetReading();
-    OGRFeature *        GetNextFeature();
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex );
+    void                ResetReading() override;
+    OGRFeature *        GetNextFeature() override;
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
 
-    OGRFeature         *GetFeature( GIntBig nFeatureId );
-    OGRErr              ISetFeature( OGRFeature *poFeature );
-    OGRErr              ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
+    OGRErr              ISetFeature( OGRFeature *poFeature ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return m_poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return m_poFeatureDefn; }
 
-    GIntBig             GetFeatureCount( int );
+    GIntBig             GetFeatureCount( int ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE );
-    virtual OGRErr      DeleteField( int iField );
-    virtual OGRErr      ReorderFields( int* panMap );
+                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr      DeleteField( int iField ) override;
+    virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField,
                                         OGRFieldDefn* poNewFieldDefn,
-                                        int nFlags );
+                                        int nFlags ) override;
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
-                                         int bApproxOK = TRUE );
+                                         int bApproxOK = TRUE ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     void                SetUpdatable( bool bUpdatableIn )
         { m_bUpdatable = bUpdatableIn; }
@@ -127,17 +127,17 @@ class OGRMemDataSource : public OGRDataSource
                         OGRMemDataSource( const char *, char ** );
                         virtual ~OGRMemDataSource();
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                        OGRSpatialReference * = NULL,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL );
-    OGRErr              DeleteLayer( int iLayer );
+                                       char ** = NULL ) override;
+    OGRErr              DeleteLayer( int iLayer ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 };
 
 /************************************************************************/
@@ -149,13 +149,13 @@ class OGRMemDriver : public OGRSFDriver
   public:
     virtual ~OGRMemDriver();
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL );
+                                             char ** = NULL ) override;
 
-    int TestCapability( const char * );
+    int TestCapability( const char * ) override;
 };
 
 #endif  // ndef OGRMEM_H_INCLUDED

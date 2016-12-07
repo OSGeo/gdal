@@ -40,21 +40,22 @@ CPL_CVSID("$Id$");
 OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
                               const GMLASFeatureClass& oFC,
                               OGRGMLASLayer* poParentLayer,
-                              bool bAlwaysGenerateOGRPKId )
+                              bool bAlwaysGenerateOGRPKId ) :
+    m_poDS( poDS ),
+    m_oFC( oFC ),
+    m_bLayerDefnFinalized( false ),
+    m_poFeatureDefn( new OGRFeatureDefn( oFC.GetName() ) ),
+    m_bEOF( false ),
+    m_poReader( NULL ),
+    m_fpGML( NULL ),
+    m_nIDFieldIdx( -1 ),
+    m_bIDFieldIsGenerated( false ),
+    m_poParentLayer( poParentLayer ),
+    m_nParentIDFieldIdx( -1 )
+
 {
-    m_poDS = poDS;
-    m_oFC = oFC;
-    m_bLayerDefnFinalized = false;
-    m_poFeatureDefn = new OGRFeatureDefn( oFC.GetName() );
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
-    m_nIDFieldIdx = -1;
-    m_bIDFieldIsGenerated = false;
-    m_poParentLayer = poParentLayer;
-    m_nParentIDFieldIdx = -1;
-    m_poReader = NULL;
-    m_bEOF = false;
-    m_fpGML = NULL;
 
     SetDescription( m_poFeatureDefn->GetName() );
 

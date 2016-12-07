@@ -72,6 +72,7 @@ class ECRGTOCDataset : public GDALPamDataset
     {
         papszSubDatasets = NULL;
         papszFileList = NULL;
+        memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
     }
 
     virtual ~ECRGTOCDataset()
@@ -80,22 +81,22 @@ class ECRGTOCDataset : public GDALPamDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     void                AddSubDataset(const char* pszFilename,
                                       const char* pszProductTitle,
                                       const char* pszDiscId,
                                       const char* pszScale);
 
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform)
+    virtual CPLErr GetGeoTransform( double * padfGeoTransform) override
     {
         memcpy(padfGeoTransform, adfGeoTransform, 6 * sizeof(double));
         return CE_None;
     }
 
-    virtual const char *GetProjectionRef(void)
+    virtual const char *GetProjectionRef(void) override
     {
         return SRS_WKT_WGS84;
     }
@@ -140,7 +141,7 @@ class ECRGTOCSubDataset : public VRTDataset
         CSLDestroy(papszFileList);
     }
 
-    virtual char      **GetFileList() { return CSLDuplicate(papszFileList); }
+    virtual char      **GetFileList() override { return CSLDuplicate(papszFileList); }
 
     static GDALDataset* Build(  const char* pszProductTitle,
                                 const char* pszDiscId,
@@ -414,7 +415,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
                                    double dfMinX, double dfMaxY,
                                    double dfPixelXSize, double dfPixelYSize );
 
-        GDALDataset* RefUnderlyingDataset()
+        GDALDataset* RefUnderlyingDataset() override
         {
             GDALDataset* poSourceDS = GDALProxyPoolDataset::RefUnderlyingDataset();
             if (poSourceDS)
@@ -430,7 +431,7 @@ class ECRGTOCProxyRasterDataSet : public GDALProxyPoolDataset
             return poSourceDS;
         }
 
-        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset)
+        void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override
         {
             GDALProxyPoolDataset::UnrefUnderlyingDataset(poUnderlyingDataset);
         }
@@ -471,15 +472,19 @@ ECRGTOCProxyRasterDataSet::ECRGTOCProxyRasterDataSet(
 /*                    SanityCheckOK()                                   */
 /************************************************************************/
 
-#define WARN_CHECK_DS(x) do { if (!(x)) { CPLError(CE_Warning, CPLE_AppDefined,\
-    "For %s, assert '" #x "' failed", GetDescription()); checkOK = FALSE; } } while(0)
+#define WARN_CHECK_DS(x) do { if (!(x)) { \
+    CPLError(CE_Warning, CPLE_AppDefined,                             \
+             "For %s, assert '" #x "' failed",                        \
+             GetDescription()); checkOK = FALSE; } } while( false )
 
-int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
+int ECRGTOCProxyRasterDataSet::SanityCheckOK( GDALDataset* poSourceDS )
 {
-    /*int nSrcBlockXSize, nSrcBlockYSize;
-    int nBlockXSize, nBlockYSize;*/
-    double l_adfGeoTransform[6];
-    if (checkDone)
+    // int nSrcBlockXSize;
+    // int nSrcBlockYSize;
+    // int nBlockXSize;
+    // int nBlockYSize;
+    double l_adfGeoTransform[6] = {};
+    if( checkDone )
         return checkOK;
 
     checkOK = TRUE;
@@ -491,16 +496,18 @@ int ECRGTOCProxyRasterDataSet::SanityCheckOK(GDALDataset* poSourceDS)
     WARN_CHECK_DS(fabs(l_adfGeoTransform[1] - dfPixelXSize) < 1e-10);
     WARN_CHECK_DS(fabs(l_adfGeoTransform[5] - (-dfPixelYSize)) < 1e-10);
     WARN_CHECK_DS(l_adfGeoTransform[2] == 0 &&
-                  l_adfGeoTransform[4] == 0); /* No rotation */
+                  l_adfGeoTransform[4] == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == nRasterYSize);
     WARN_CHECK_DS(EQUAL(poSourceDS->GetProjectionRef(), SRS_WKT_WGS84));
-    /*poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
-    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-    WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
-    WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);*/
-    WARN_CHECK_DS(poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
+    // poSourceDS->GetRasterBand(1)->GetBlockSize(&nSrcBlockXSize,
+    //                                            &nSrcBlockYSize);
+    // GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    // WARN_CHECK_DS(nSrcBlockXSize == nBlockXSize);
+    // WARN_CHECK_DS(nSrcBlockYSize == nBlockYSize);
+    WARN_CHECK_DS(
+        poSourceDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte);
 
     return checkOK;
 }
@@ -699,7 +706,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
     ECRGTOCDataset* poDS = new ECRGTOCDataset();
     int nSubDatasets = 0;
 
-    int bLookForSubDataset = osProduct.size() != 0 && osDiscId.size() != 0;
+    int bLookForSubDataset = !osProduct.empty() && !osDiscId.empty();
 
     int nCountSubDataset = 0;
 
@@ -780,7 +787,7 @@ GDALDataset* ECRGTOCDataset::Build(const char* pszTOCFilename,
 
                 if( bLookForSubDataset )
                 {
-                    if( osScale.size() )
+                    if( !osScale.empty() )
                     {
                         if( strcmp(LaunderString(pszSize), osScale.c_str()) != 0 )
                         {

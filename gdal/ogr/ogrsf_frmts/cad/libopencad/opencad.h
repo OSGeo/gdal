@@ -54,7 +54,7 @@
 #ifdef OCAD_STATIC
   #define OCAD_EXTERN extern
 #else
-#   if defined (_WIN32) || defined (WINDOWS)
+#   if defined (_MSC_VER)
 #    ifdef OCAD_EXPORTS
 #      ifdef __GNUC__
 #        define OCAD_EXTERN extern __attribute__((dllexport))

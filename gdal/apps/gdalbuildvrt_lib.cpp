@@ -27,17 +27,33 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_string.h"
-#include "gdal_proxy.h"
-#include "gdal_utils.h"
-#include "gdal_utils_priv.h"
-#include "gdal_vrt.h"
-#include "vrtdataset.h"
-
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 
+#include "cpl_port.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <algorithm>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_vrt.h"
+#include "gdal_priv.h"
+#include "gdal_proxy.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_srs_api.h"
+#include "vrtdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -1508,7 +1524,7 @@ GDALBuildVRTOptions *GDALBuildVRTOptionsNew(char** papszArgv,
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
     int argc = CSLCount(papszArgv);
-    for( int iArg = 0; iArg < argc; iArg++ )
+    for( int iArg = 0; papszArgv != NULL && iArg < argc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-tileindex") && iArg + 1 < argc )
         {

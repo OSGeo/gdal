@@ -40,7 +40,6 @@ int main( int nArgc, char ** papszArgv )
 {
     OGROCISession *poSession = NULL;
     const char *pszStatement = "SELECT * FROM NEPSITE";
-    int  nColCount;
     char **papszResult;
 
     if( nArgc > 1 )

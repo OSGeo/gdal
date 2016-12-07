@@ -704,7 +704,8 @@ SE_RASCONSTRAINT& SDERasterBand::InitializeConstraint( long* nBlockXOff,
 
     if (nBlockXSize != -1 && nBlockYSize != -1) { // we aren't initialized yet
         if (nBlockXSize >= 0 && nBlockYSize >= 0) {
-            if (*nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
+            if (nBlockXOff != NULL && nBlockYOff != NULL &&
+                *nBlockXOff >= 0 &&  *nBlockYOff >= 0) {
                 long nMinX, nMinY, nMaxX, nMaxY;
 
                 nMinX = *nBlockXOff;

@@ -62,8 +62,8 @@ class SRTMHGTDataset : public GDALPamDataset
     SRTMHGTDataset();
     virtual ~SRTMHGTDataset();
 
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr GetGeoTransform(double*);
+    virtual const char *GetProjectionRef(void) override;
+    virtual CPLErr GetGeoTransform(double*) override;
 
     static int Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset* Open(GDALOpenInfo*);
@@ -88,14 +88,14 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
   public:
     SRTMHGTRasterBand(SRTMHGTDataset*, int);
 
-    virtual CPLErr IReadBlock(int, int, void*);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage);
+    virtual CPLErr IReadBlock(int, int, void*) override;
+    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
 
-    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL );
+    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
 
-    virtual const char* GetUnitType() { return "m"; }
+    virtual const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/
@@ -301,6 +301,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   strncpy(latLonValueString, &fileName[1], 2);
   int southWestLat = atoi(latLonValueString);
   memset(latLonValueString, 0, 4);
+  // cppcheck-suppress redundantCopy
   strncpy(latLonValueString, &fileName[4], 3);
   int southWestLon = atoi(latLonValueString);
 
@@ -473,11 +474,13 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Check filename.                                                 */
 /* -------------------------------------------------------------------- */
     char expectedFileName[12];
-    snprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
+
+    CPLsnprintf(expectedFileName, sizeof(expectedFileName), "%c%02d%c%03d.HGT",
              (nLLOriginLat >= 0) ? 'N' : 'S',
              (nLLOriginLat >= 0) ? nLLOriginLat : -nLLOriginLat,
              (nLLOriginLong >= 0) ? 'E' : 'W',
              (nLLOriginLong >= 0) ? nLLOriginLong : -nLLOriginLong);
+
     if (!EQUAL(expectedFileName, CPLGetFilename(pszFilename)))
     {
         CPLError( CE_Warning, CPLE_AppDefined,

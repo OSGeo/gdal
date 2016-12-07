@@ -27,8 +27,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "gdal_proxy.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 //! @cond Doxygen_Suppress
 
@@ -88,7 +100,7 @@ class GDALDatasetPool
 
         /* Caution : to be sure that we don't run out of entries, size must be at */
         /* least greater or equal than the maximum number of threads */
-        GDALDatasetPool(int maxSize);
+        explicit GDALDatasetPool(int maxSize);
         ~GDALDatasetPool();
         GDALProxyPoolCacheEntry* _RefDataset(const char* pszFileName,
                                              GDALAccess eAccess,
@@ -96,8 +108,11 @@ class GDALDatasetPool
                                              int bShared);
         void _CloseDataset(const char* pszFileName, GDALAccess eAccess);
 
+#ifdef DEBUG_PROXY_POOL
+        // cppcheck-suppress unusedPrivateFunction
         void ShowContent();
         void CheckLinks();
+#endif
 
     public:
         static void Ref();
@@ -151,6 +166,7 @@ GDALDatasetPool::~GDALDatasetPool()
     GDALSetResponsiblePIDForCurrentThread(responsiblePID);
 }
 
+#ifdef DEBUG_PROXY_POOL
 /************************************************************************/
 /*                            ShowContent()                             */
 /************************************************************************/
@@ -186,6 +202,7 @@ void GDALDatasetPool::CheckLinks()
     }
     CPLAssert(i == currentSize);
 }
+#endif
 
 /************************************************************************/
 /*                            _RefDataset()                             */

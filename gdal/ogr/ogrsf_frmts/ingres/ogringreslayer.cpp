@@ -494,7 +494,7 @@ OGRFeature *OGRIngresLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     if( iNextShapeId == 0 && poResultSet == NULL )
     {
-        CPLAssert( osQueryStatement.size() != 0 );
+        CPLAssert( !osQueryStatement.empty() );
 
         poDS->EstablishActiveLayer( this );
 

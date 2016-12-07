@@ -476,22 +476,22 @@ TIFFWriteEncodedTile(TIFF* tif, uint32 tile, void* data, tmsize_t cc)
     sample = (uint16)(tile/td->td_stripsperimage);
     if (!(*tif->tif_preencode)(tif, sample))
         return ((tmsize_t)(-1));
-        /* swab if needed - note that source buffer will be altered */
-	tif->tif_postdecode( tif, (uint8*) data, cc );
+    /* swab if needed - note that source buffer will be altered */
+    tif->tif_postdecode( tif, (uint8*) data, cc );
 
-	if (!(*tif->tif_encodetile)(tif, (uint8*) data, cc, sample))
-		return ((tmsize_t) -1);
-	if (!(*tif->tif_postencode)(tif))
-		return ((tmsize_t)(-1));
-	if (!isFillOrder(tif, td->td_fillorder) &&
-	    (tif->tif_flags & TIFF_NOBITREV) == 0)
-		TIFFReverseBits((uint8*)tif->tif_rawdata, tif->tif_rawcc);
-	if (tif->tif_rawcc > 0 && !TIFFAppendToStrip(tif, tile,
-	    tif->tif_rawdata, tif->tif_rawcc))
-		return ((tmsize_t)(-1));
-	tif->tif_rawcc = 0;
-	tif->tif_rawcp = tif->tif_rawdata;
-	return (cc);
+    if (!(*tif->tif_encodetile)(tif, (uint8*) data, cc, sample))
+            return ((tmsize_t) -1);
+    if (!(*tif->tif_postencode)(tif))
+            return ((tmsize_t)(-1));
+    if (!isFillOrder(tif, td->td_fillorder) &&
+        (tif->tif_flags & TIFF_NOBITREV) == 0)
+            TIFFReverseBits((uint8*)tif->tif_rawdata, tif->tif_rawcc);
+    if (tif->tif_rawcc > 0 && !TIFFAppendToStrip(tif, tile,
+        tif->tif_rawdata, tif->tif_rawcc))
+            return ((tmsize_t)(-1));
+    tif->tif_rawcc = 0;
+    tif->tif_rawcp = tif->tif_rawdata;
+    return (cc);
 }
 
 /*

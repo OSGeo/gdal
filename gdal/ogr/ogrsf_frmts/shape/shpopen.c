@@ -10,7 +10,7 @@
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This
+ * or at the option of the licensee under the LGPL (see COPYING).  This
  * option is discussed in more detail in shapelib.html.
  *
  * --
@@ -35,6 +35,28 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.75  2016-12-05 12:44:05  erouault
+ * * Major overhaul of Makefile build system to use autoconf/automake.
+ *
+ * * Warning fixes in contrib/
+ *
+ * Revision 1.74  2016-12-04 15:30:15  erouault
+ * * shpopen.c, dbfopen.c, shptree.c, shapefil.h: resync with
+ * GDAL Shapefile driver. Mostly cleanups. SHPObject and DBFInfo
+ * structures extended with new members. New functions:
+ * DBFSetLastModifiedDate, SHPOpenLLEx, SHPRestoreSHX,
+ * SHPSetFastModeReadObject
+ *
+ * * sbnsearch.c: new file to implement original ESRI .sbn spatial
+ * index reading. (no write support). New functions:
+ * SBNOpenDiskTree, SBNCloseDiskTree, SBNSearchDiskTree,
+ * SBNSearchDiskTreeInteger, SBNSearchFreeIds
+ *
+ * * Makefile, makefile.vc, CMakeLists.txt, shapelib.def: updates
+ * with new file and symbols.
+ *
+ * * commit: helper script to cvs commit
+ *
  * Revision 1.73  2012-01-24 22:33:01  fwarmerdam
  * fix memory leak on failure to open .shp (gdal #4410)
  *
@@ -296,11 +318,25 @@ typedef unsigned int	      int32;
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
-#if defined(WIN32) || defined(_WIN32)
+#ifndef USE_CPL
+#if defined(_MSC_VER)
+# if _MSC_VER < 1900
+#     define snprintf _snprintf
+# endif
+#elif defined(WIN32) || defined(_WIN32)
 #  ifndef snprintf
 #     define snprintf _snprintf
 #  endif
 #endif
+#endif
+
+#ifndef CPL_UNUSED
+#if defined(__GNUC__) && __GNUC__ >= 4
+#  define CPL_UNUSED __attribute((__unused__))
+#else
+#  define CPL_UNUSED
+#endif
+#endif  
 
 #if defined(CPL_LSB)
 #define bBigEndian FALSE
@@ -356,7 +392,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 
 {
-    uchar     	abyHeader[100];
+    uchar     	abyHeader[100] = { 0 };
     int		i;
     int32	i32;
     double	dValue;
@@ -371,8 +407,6 @@ void SHPAPI_CALL SHPWriteHeader( SHPHandle psSHP )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;
@@ -1261,8 +1295,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
 /* -------------------------------------------------------------------- */
 /*      Prepare header block for .shp file.                             */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < 100; i++ )
-        abyHeader[i] = 0;
+    memset( abyHeader, 0, sizeof(abyHeader) );
 
     abyHeader[2] = 0x27;				/* magic cookie */
     abyHeader[3] = 0x0a;
@@ -1891,7 +1924,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         char szError[200];
 
         snprintf( szError, sizeof(szError),
-                 "Error in psSHP->sHooks.FWrite() while writing object of %d bytes to .shp file: %s",
+                 "Error in psSHP->sHooks.FWrite() while writing object of %u bytes to .shp file: %s",
                   nRecordSize, strerror(errno) );
         psSHP->sHooks.Error( szError );
 
@@ -2101,7 +2134,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             {
                 char str[128];
                 snprintf( str, sizeof(str),
-                         "Error in fread() reading object of size %u at offset %u from .shp file",
+                         "Error in fread() reading object of size %d at offset %u from .shp file",
                          nEntitySize, psSHP->panRecOffset[hEntity] );
 
                 psSHP->sHooks.Error( str );
@@ -2185,7 +2218,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
          */
         char str[128];
         snprintf( str, sizeof(str),
-                 "Error in fread() reading object of size %u at offset %u from .shp file",
+                 "Error in fread() reading object of size %d at offset %u from .shp file",
                  nEntitySize, psSHP->panRecOffset[hEntity] );
 
         psSHP->sHooks.Error( str );
@@ -2278,7 +2311,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d.",
+                     "Corrupted .shp file : shape %d, nPoints=%u, nParts=%u.",
                      hEntity, nPoints, nParts);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2302,7 +2335,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (nRequiredSize > nEntitySize)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d, nPoints=%d, nParts=%d, nEntitySize=%d.",
+                     "Corrupted .shp file : shape %d, nPoints=%u, nParts=%u, nEntitySize=%d.",
                      hEntity, nPoints, nParts, nEntitySize);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2334,8 +2367,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->panPartType == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                    "Not enough memory to allocate requested memory (nPoints=%d, nParts=%d) for shape %d. "
-                    "Probably broken SHP file", hEntity, nPoints, nParts );
+                    "Not enough memory to allocate requested memory (nPoints=%u, nParts=%u) for shape %d. "
+                    "Probably broken SHP file", nPoints, nParts, hEntity );
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;
@@ -2495,7 +2528,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (/* nPoints < 0 || */ nPoints > 50 * 1000 * 1000)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d : nPoints = %d",
+                     "Corrupted .shp file : shape %d : nPoints = %u",
                      hEntity, nPoints);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2510,7 +2543,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         if (nRequiredSize > nEntitySize)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
+                     "Corrupted .shp file : shape %d : nPoints = %u, nEntitySize = %d",
                      hEntity, nPoints, nEntitySize);
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
@@ -2537,8 +2570,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             psShape->padfM == NULL)
         {
             snprintf(szErrorMsg, sizeof(szErrorMsg),
-                     "Not enough memory to allocate requested memory (nPoints=%d) for shape %d. "
-                     "Probably broken SHP file", hEntity, nPoints );
+                     "Not enough memory to allocate requested memory (nPoints=%u) for shape %d. "
+                     "Probably broken SHP file", nPoints, hEntity );
             psSHP->sHooks.Error( szErrorMsg );
             SHPDestroyObject(psShape);
             return NULL;

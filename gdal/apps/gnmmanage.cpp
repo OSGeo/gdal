@@ -160,7 +160,8 @@ static void Usage(int bShort = TRUE)
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
-        Usage(CPLSPrintf("%s option requires %d argument(s)", papszArgv[iArg], nExtraArg)); } while(0)
+        Usage(CPLSPrintf("%s option requires %d argument(s)", \
+                         papszArgv[iArg], nExtraArg)); } while( false )
 
 int main( int nArgc, char ** papszArgv )
 
@@ -387,7 +388,11 @@ int main( int nArgc, char ** papszArgv )
             exit(1);
         }
 
-        CPLAssert( poDriver != NULL);
+        if( poDriver == NULL )
+        {
+            CPLAssert( false );
+            exit(1);
+        }
 
         printf( "INFO: Open of `%s'\n      using driver `%s' successful.\n",
                     pszDataSource, poDriver->GetDescription() );

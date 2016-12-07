@@ -27,12 +27,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
-#include "cpl_string.h"
-#include "cpl_multiproc.h"
-#include "cpl_atomic_ops.h"
-#include <time.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
+#include <ctime>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include <map>
+#include <string>
+#include <utility>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_string.h"
 
 //! @cond Doxygen_Suppress
 
@@ -115,13 +133,13 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
                           bEOF(false),
                           bExtendFileAtNextWrite(false) {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
-    virtual vsi_l_offset Tell();
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
-    virtual int       Eof();
-    virtual int       Close();
-    virtual int       Truncate( vsi_l_offset nNewSize );
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
+    virtual vsi_l_offset Tell() override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual int       Eof() override;
+    virtual int       Close() override;
+    virtual int       Truncate( vsi_l_offset nNewSize ) override;
 };
 
 /************************************************************************/
@@ -143,14 +161,14 @@ public:
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags );
-    virtual int      Unlink( const char *pszFilename );
-    virtual int      Mkdir( const char *pszDirname, long nMode );
-    virtual int      Rmdir( const char *pszDirname );
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
-    virtual int      Rename( const char *oldpath, const char *newpath );
-    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname );
+                                    bool bSetError ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Unlink( const char *pszFilename ) override;
+    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual int      Rename( const char *oldpath, const char *newpath ) override;
+    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
 
     static  void     NormalizePath( CPLString & );
 
@@ -895,8 +913,9 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
         == VSIFileManager::GetHandler("/vsimem/") )
         VSIInstallMemFileHandler();
 
-    VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
-        VSIFileManager::GetHandler("/vsimem/");
+    VSIMemFilesystemHandler *poHandler =
+        reinterpret_cast<VSIMemFilesystemHandler *>(
+                VSIFileManager::GetHandler("/vsimem/"));
 
     if (pszFilename == NULL)
         return NULL;
@@ -946,8 +965,9 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
                             int bUnlinkAndSeize )
 
 {
-    VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *)
-        VSIFileManager::GetHandler("/vsimem/");
+    VSIMemFilesystemHandler *poHandler =
+        reinterpret_cast<VSIMemFilesystemHandler *>(
+            VSIFileManager::GetHandler("/vsimem/"));
 
     if( pszFilename == NULL )
         return NULL;

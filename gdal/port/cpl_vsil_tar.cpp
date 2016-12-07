@@ -28,6 +28,21 @@
 
 //! @cond Doxygen_Suppress
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+
+#include <cstring>
+
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+
+#include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 
 CPL_CVSID("$Id$");
@@ -54,7 +69,7 @@ public:
         CPLString m_osFileName;
 #endif
 
-        VSITarEntryFileOffset(GUIntBig nOffset)
+        explicit VSITarEntryFileOffset(GUIntBig nOffset)
         {
             m_nOffset = nOffset;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
@@ -63,11 +78,11 @@ public:
         }
 
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName)
+        VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize, const CPLString& osFileName) :
+            m_nOffset(nOffset),
+            m_nFileSize(nFileSize),
+            m_osFileName(osFileName)
         {
-            m_nOffset = nOffset;
-            m_nFileSize = nFileSize;
-            m_osFileName = osFileName;
         }
 #endif
 };
@@ -95,18 +110,18 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
 #endif
 
     public:
-        VSITarReader(const char* pszTarFileName);
+        explicit VSITarReader(const char* pszTarFileName);
         virtual ~VSITarReader();
 
         int IsValid() { return fp != NULL; }
 
-        virtual int GotoFirstFile();
-        virtual int GotoNextFile();
-        virtual VSIArchiveEntryFileOffset* GetFileOffset();
-        virtual GUIntBig GetFileSize() { return nNextFileSize; }
-        virtual CPLString GetFileName() { return osNextFileName; }
-        virtual GIntBig GetModifiedTime() { return nModifiedTime; }
-        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset);
+        virtual int GotoFirstFile() override;
+        virtual int GotoNextFile() override;
+        virtual VSIArchiveEntryFileOffset* GetFileOffset() override;
+        virtual GUIntBig GetFileSize() override { return nNextFileSize; }
+        virtual CPLString GetFileName() override { return osNextFileName; }
+        virtual GIntBig GetModifiedTime() override { return nModifiedTime; }
+        virtual int GotoFileOffset(VSIArchiveEntryFileOffset* pOffset) override;
 };
 
 /************************************************************************/
@@ -134,6 +149,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     fp = VSIFOpenL(pszTarFileName, "rb");
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     m_bIsFuzzerFriendly = false;
+    m_abyBuffer[0] = '\0';
     m_abyBufferIdx = 0;
     m_abyBufferSize = 0;
     m_nCurOffsetOld = 0;
@@ -237,7 +253,8 @@ int VSITarReader::GotoNextFile()
                 }
                 m_abyBufferIdx += (int)strlen("***NEWFILE***:");
                 int nFilenameStartIdx = m_abyBufferIdx;
-                for(; m_abyBuffer[m_abyBufferIdx] != '\n' && m_abyBufferIdx < m_abyBufferSize; ++m_abyBufferIdx)
+                for(; m_abyBufferIdx < m_abyBufferSize &&
+                      m_abyBuffer[m_abyBufferIdx] != '\n'; ++m_abyBufferIdx)
                 {
                     /* do nothing */
                 }
@@ -319,7 +336,8 @@ int VSITarReader::GotoFirstFile()
 
 int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 {
-    VSITarEntryFileOffset* pTarEntryOffset = (VSITarEntryFileOffset*)pOffset;
+    VSITarEntryFileOffset* pTarEntryOffset =
+                    reinterpret_cast<VSITarEntryFileOffset*>(pOffset);
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
@@ -348,15 +366,15 @@ int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
 class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 {
 public:
-    virtual const char* GetPrefix() { return "/vsitar"; }
-    virtual std::vector<CPLString> GetExtensions();
-    virtual VSIArchiveReader* CreateReader(const char* pszTarFileName);
+    virtual const char* GetPrefix() override { return "/vsitar"; }
+    virtual std::vector<CPLString> GetExtensions() override;
+    virtual VSIArchiveReader* CreateReader(const char* pszTarFileName) override;
 
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
-                                    bool bSetError );
+                                    bool bSetError ) override;
 };
 
 /************************************************************************/
@@ -436,7 +454,8 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     }
 
     CPLString osSubFileName("/vsisubfile/");
-    VSITarEntryFileOffset* pOffset = (VSITarEntryFileOffset*) poReader->GetFileOffset();
+    VSITarEntryFileOffset* pOffset = reinterpret_cast<VSITarEntryFileOffset*>(
+                                                    poReader->GetFileOffset());
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, pOffset->m_nOffset);
     osSubFileName += "_";
     osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, poReader->GetFileSize());
@@ -456,7 +475,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     CPLFree(tarFilename);
     tarFilename = NULL;
 
-    return (VSIVirtualHandle* )VSIFOpenL(osSubFileName, "rb");
+    return reinterpret_cast<VSIVirtualHandle*>(VSIFOpenL(osSubFileName, "rb"));
 }
 
 //! @endcond

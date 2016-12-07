@@ -537,7 +537,7 @@ void OGRGeometryFactory::destroyGeometry( OGRGeometry *poGeom )
 void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
 
 {
-    OGRGeometryFactory::destroyGeometry( (OGRGeometry *) hGeom );
+    OGRGeometryFactory::destroyGeometry(reinterpret_cast<OGRGeometry *>(hGeom));
 }
 
 /************************************************************************/
@@ -571,7 +571,8 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         if( poCurve == NULL )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRLineString.");
+                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return NULL;
         }
 
         if( !poGeom->hasCurveGeometry(TRUE) )
@@ -1280,6 +1281,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         /*      A wee bit of a warning.                                       */
         /* ------------------------------------------------------------------ */
         static int firstTime = 1;
+        // cppcheck-suppress knownConditionTrueFalse
         if( !haveGEOS() && firstTime )
         {
             CPLDebug(
@@ -1290,6 +1292,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                 "results on complex polygons.");
             firstTime = 0;
         }
+        // cppcheck-suppress knownConditionTrueFalse
         bUseFastVersion = !haveGEOS();
     }
 
@@ -2954,7 +2957,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
 /************************************************************************/
 /*                          IsPolarToWGS84()                            */
 /*                                                                      */
-/* Returns true if poCT transfroms from a projection that includes one  */
+/* Returns true if poCT transforms from a projection that includes one  */
 /* of the pole in a continuous way.                                     */
 /************************************************************************/
 
@@ -2973,7 +2976,7 @@ static bool IsPolarToWGS84( OGRCoordinateTransformation* poCT,
 
     if( poRevCT->Transform( 1, &x, &y ) &&
         // Surprisingly, pole south projects correctly back &
-        // forth for antartic polar stereographic.  Therefore, check that
+        // forth for antarctic polar stereographic.  Therefore, check that
         // the projected value is not too big.
         fabs(x) < 1e10 && fabs(y) < 1e10 &&
         poCT->Transform(1, &x, &y) &&
@@ -3099,7 +3102,7 @@ static OGRGeometry* TransformBeforePolarToWGS84(
 /************************************************************************/
 /*                        IsAntimeridianProjToWGS84()                   */
 /*                                                                      */
-/* Returns true if poCT transfroms from a projection that includes the  */
+/* Returns true if poCT transforms from a projection that includes the  */
 /* antimeridian in a continuous way.                                    */
 /************************************************************************/
 

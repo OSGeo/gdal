@@ -116,30 +116,30 @@ class OGRSDELayer : public OGRLayer
 
     int                 Initialize( const char *, const char *, const char * );
 
-    virtual void        ResetReading();
+    virtual void        ResetReading() override;
     OGRErr              ResetStream();
 
-    virtual OGRFeature *GetNextFeature();
-    virtual OGRFeature *GetFeature( GIntBig nFeatureId );
-    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeature *GetFeature( GIntBig nFeatureId ) override;
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce ) override;
+    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
-    virtual GIntBig     GetFeatureCount( int bForce );
+    virtual GIntBig     GetFeatureCount( int bForce ) override;
 
-    virtual OGRErr      SetAttributeFilter( const char *pszQuery );
+    virtual OGRErr      SetAttributeFilter( const char *pszQuery ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poFieldIn,
-                                     int bApproxOK );
+                                     int bApproxOK ) override;
 
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature );
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature );
-    virtual OGRErr      DeleteFeature( GIntBig nFID );
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
+    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual int         TestCapability( const char * );
+    virtual int         TestCapability( const char * ) override;
 
     // The following methods are not base class overrides
     //void                SetOptions( char ** );
@@ -181,18 +181,18 @@ class OGRSDEDataSource : public OGRDataSource
                                    const char *pszShapeColumn,
                                    LONG nFIDColumnType );
 
-    const char          *GetName() { return pszName; }
-    int                 GetLayerCount() { return nLayers; }
-    OGRLayer            *GetLayer( int );
+    const char          *GetName() override { return pszName; }
+    int                 GetLayerCount() override { return nLayers; }
+    OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL );
+                                      char ** = NULL ) override;
 
-    virtual OGRErr      DeleteLayer( int );
+    virtual OGRErr      DeleteLayer( int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
 
     SE_CONNECTION       GetConnection() { return hConnection; }
     LONG                GetState() {return nState; }
@@ -223,12 +223,12 @@ class OGRSDEDriver : public OGRSFDriver
   public:
     virtual ~OGRSDEDriver();
 
-    const char *GetName();
-    OGRDataSource *Open( const char *, int );
+    const char *GetName() override;
+    OGRDataSource *Open( const char *, int ) override;
 
-    int                 TestCapability( const char * );
+    int                 TestCapability( const char * ) override;
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL);
+                                             char ** = NULL) override;
 };
 
 #endif /* ndef _OGR_PG_H_INCLUDED */

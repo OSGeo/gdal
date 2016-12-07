@@ -28,18 +28,37 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "cpl_error.h"
-#include "ogr_api.h"
-#include "gdal.h"
+#include "cpl_port.h"
+#include "gdal_utils.h"
 #include "gdal_utils_priv.h"
-#include "gdal_alg.h"
-#include "commonutils.h"
+
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include <map>
+#include <string>
+#include <utility>
 #include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
 
@@ -525,57 +544,57 @@ class OGRSplitListFieldLayer : public OGRLayer
     bool                        BuildLayerDefn(GDALProgressFunc pfnProgress,
                                                 void *pProgressArg);
 
-    virtual OGRFeature          *GetNextFeature();
-    virtual OGRFeature          *GetFeature(GIntBig nFID);
-    virtual OGRFeatureDefn      *GetLayerDefn();
+    virtual OGRFeature          *GetNextFeature() override;
+    virtual OGRFeature          *GetFeature(GIntBig nFID) override;
+    virtual OGRFeatureDefn      *GetLayerDefn() override;
 
-    virtual void                 ResetReading() { poSrcLayer->ResetReading(); }
-    virtual int                  TestCapability(const char*) { return FALSE; }
+    virtual void                 ResetReading() override { poSrcLayer->ResetReading(); }
+    virtual int                  TestCapability(const char*) override { return FALSE; }
 
-    virtual GIntBig              GetFeatureCount( int bForce = TRUE )
+    virtual GIntBig              GetFeatureCount( int bForce = TRUE ) override
     {
         return poSrcLayer->GetFeatureCount(bForce);
     }
 
-    virtual OGRSpatialReference *GetSpatialRef()
+    virtual OGRSpatialReference *GetSpatialRef() override
     {
         return poSrcLayer->GetSpatialRef();
     }
 
-    virtual OGRGeometry         *GetSpatialFilter()
+    virtual OGRGeometry         *GetSpatialFilter() override
     {
         return poSrcLayer->GetSpatialFilter();
     }
 
-    virtual OGRStyleTable       *GetStyleTable()
+    virtual OGRStyleTable       *GetStyleTable() override
     {
         return poSrcLayer->GetStyleTable();
     }
 
-    virtual void                 SetSpatialFilter( OGRGeometry *poGeom )
+    virtual void                 SetSpatialFilter( OGRGeometry *poGeom ) override
     {
         poSrcLayer->SetSpatialFilter(poGeom);
     }
 
-    virtual void                 SetSpatialFilter( int iGeom, OGRGeometry *poGeom )
+    virtual void                 SetSpatialFilter( int iGeom, OGRGeometry *poGeom ) override
     {
         poSrcLayer->SetSpatialFilter(iGeom, poGeom);
     }
 
     virtual void                 SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                                       double dfMaxX, double dfMaxY )
+                                                       double dfMaxX, double dfMaxY ) override
     {
         poSrcLayer->SetSpatialFilterRect(dfMinX, dfMinY, dfMaxX, dfMaxY);
     }
 
     virtual void                 SetSpatialFilterRect( int iGeom,
                                                        double dfMinX, double dfMinY,
-                                                       double dfMaxX, double dfMaxY )
+                                                       double dfMaxX, double dfMaxY ) override
     {
         poSrcLayer->SetSpatialFilterRect(iGeom, dfMinX, dfMinY, dfMaxX, dfMaxY);
     }
 
-    virtual OGRErr               SetAttributeFilter( const char *pszFilter )
+    virtual OGRErr               SetAttributeFilter( const char *pszFilter ) override
     {
         return poSrcLayer->SetAttributeFilter(pszFilter);
     }
@@ -688,7 +707,8 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
                         break;
                     }
                     default:
-                        CPLAssert(0);
+                        // cppcheck-suppress knownConditionTrueFalse
+                        CPLAssert(false);
                         break;
                 }
                 if (nCount > pasListFields[i].nMaxOccurrences)
@@ -936,11 +956,11 @@ public:
             poSRS->Dereference();
     }
 
-    virtual OGRSpatialReference *GetSourceCS() { return poSRS; }
-    virtual OGRSpatialReference *GetTargetCS() { return poSRS; }
+    virtual OGRSpatialReference *GetSourceCS() override { return poSRS; }
+    virtual OGRSpatialReference *GetTargetCS() override { return poSRS; }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL )
+                           double *x, double *y, double *z = NULL ) override
     {
         int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
 
@@ -962,7 +982,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL )
+                             int *pabSuccess = NULL ) override
     {
         if( bUseTPS )
             return GDALTPSTransform( hTransformArg, FALSE,
@@ -996,20 +1016,20 @@ public:
         OGRCoordinateTransformation::DestroyCT(poCT2);
     }
 
-    virtual OGRSpatialReference *GetSourceCS()
+    virtual OGRSpatialReference *GetSourceCS() override
     {
         return poCT1 ? poCT1->GetSourceCS() :
                poCT2 ? poCT2->GetSourceCS() : NULL;
     }
 
-    virtual OGRSpatialReference *GetTargetCS()
+    virtual OGRSpatialReference *GetTargetCS() override
     {
         return poCT2 ? poCT2->GetTargetCS() :
                poCT1 ? poCT1->GetTargetCS() : NULL;
     }
 
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL )
+                           double *x, double *y, double *z = NULL ) override
     {
         int nResult = TRUE;
         if( poCT1 )
@@ -1021,7 +1041,7 @@ public:
 
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL )
+                             int *pabSuccess = NULL ) override
     {
         int nResult = TRUE;
         if( poCT1 )
@@ -1095,7 +1115,7 @@ static int GetFieldType(const char* pszArg, int* pnSubFieldType)
              {
                  *pnSubFieldType = -1;
                  CPLString osArgSubType = pszOpenParenthesis + 1;
-                 if( osArgSubType.size() && osArgSubType[osArgSubType.size()-1] == ')' )
+                 if( !osArgSubType.empty() && osArgSubType[osArgSubType.size()-1] == ')' )
                      osArgSubType.resize(osArgSubType.size()-1);
                  for( int iSubType = 0; iSubType <= (int) OFSTMaxSubType; iSubType++ )
                  {
@@ -3000,7 +3020,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     OGRSpatialReference* poOutputSRS = m_poOutputSRS;
     if( poOutputSRS == NULL && !m_bNullifyOutputSRS )
     {
-        if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.size() == 0 )
+        if( nSrcGeomFieldCount == 1 || anRequestedGeomFields.empty() )
             poOutputSRS = poSrcLayer->GetSpatialRef();
         else if( anRequestedGeomFields.size() == 1 )
         {
@@ -3053,7 +3073,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         bool bForceGType = ( eGType != GEOMTYPE_UNCHANGED );
         if( !bForceGType )
         {
-            if( anRequestedGeomFields.size() == 0 )
+            if( anRequestedGeomFields.empty() )
             {
                 eGType = poSrcFDefn->GetGeomType();
             }
@@ -3102,7 +3122,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         char** papszLCOTemp = CSLDuplicate(m_papszLCO);
 
         int eGCreateLayerType = eGType;
-        if( anRequestedGeomFields.size() == 0 &&
+        if( anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount > 1 &&
             m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
         {
@@ -3116,7 +3136,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature has a single geometry column that is not nullable
         // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
@@ -3128,7 +3148,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // If the source feature first geometry column is not nullable
         // and that GEOMETRY_NULLABLE creation option is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount >= 1 &&
                  !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
                  m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
@@ -3142,7 +3162,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // Special case for conversion from GMLAS driver to ensure that
         // source geometry field name will be used as much as possible
         // FIXME: why not make this general behaviour ?
-        else if( anRequestedGeomFields.size() == 0 &&
+        else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  m_poSrcDS != NULL &&
@@ -3230,7 +3250,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             CSLDestroy(papszDomains);
         }
 
-        if( anRequestedGeomFields.size() == 0 &&
+        if( anRequestedGeomFields.empty() &&
             nSrcGeomFieldCount > 1 &&
             m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
         {
@@ -3527,6 +3547,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     poDstFDefn = poDstLayer->GetLayerDefn();
 
                 /* Sanity check : if it fails, the driver is buggy */
+                // cppcheck-suppress nullPointerRedundantCheck
                 if (poDstFDefn != NULL &&
                     poDstFDefn->GetFieldCount() != nDstFieldCount + 1)
                 {
@@ -3581,8 +3602,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         CPLTestBool(CPLGetConfigOption("PG_COMMIT_WHEN_OVERWRITING", "YES")) )
     {
         CPLDebug("GDALVectorTranslate",
-                 "Forcing transaction commit as table overwriting occured");
-        // Commit when overwriting as this consumes a lot of PG ressources
+                 "Forcing transaction commit as table overwriting occurred");
+        // Commit when overwriting as this consumes a lot of PG resources
         // and could result in """out of shared memory.
         // You might need to increase max_locks_per_transaction."""" errors
         if( m_poDstDS->CommitTransaction() != OGRERR_NONE ||
@@ -3766,7 +3787,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                if( osDateLineOffset.size() )
+                if( !osDateLineOffset.empty() )
                 {
                     CPLString soOffset("DATELINEOFFSET=");
                     soOffset += osDateLineOffset;
@@ -3778,7 +3799,7 @@ static bool SetupCT( TargetLayerInfo* psInfo,
             {
                 papszTransformOptions =
                     CSLAddString(papszTransformOptions, "WRAPDATELINE=YES");
-                if( osDateLineOffset.size() )
+                if( !osDateLineOffset.empty() )
                 {
                     CPLString soOffset("DATELINEOFFSET=");
                     soOffset += osDateLineOffset;
@@ -4343,7 +4364,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->bNativeData = true;
 
     int nArgc = CSLCount(papszArgv);
-    for( int i = 0; i < nArgc; i++ )
+    for( int i = 0; papszArgv != NULL && i < nArgc; i++ )
     {
         if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
         {

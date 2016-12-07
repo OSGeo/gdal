@@ -96,7 +96,7 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
 
         if( bReport )
         {
-            printf( " %02x %5d %5d @ %d %s\n", byMagic, i,
+            printf( " %02x %5d %5d @ %u %s\n", byMagic, i,
                     psTInfo->panBlockSize[i],
                     psTInfo->panBlockOffset[i],
                     pszMessage );
