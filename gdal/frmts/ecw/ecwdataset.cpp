@@ -2924,7 +2924,7 @@ void ECWDataset::ReadFileMetaDataFromFile()
     if (psFileInfo->pFileMetaData == NULL) return;
 
     if (psFileInfo->pFileMetaData->sClassification != NULL )
-        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification).a_str());
+        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification));
     if (psFileInfo->pFileMetaData->sAcquisitionDate != NULL )
         GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
     if (psFileInfo->pFileMetaData->sAcquisitionSensorName != NULL )

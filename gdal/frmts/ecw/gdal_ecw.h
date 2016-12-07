@@ -579,9 +579,9 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
                                                int nBandCount, int* panBandMap,
                                                int nPixelSpace, int nLineSpace,
                                                int nBandSpace,
-                                               char **papszOptions);
+                                               char **papszOptions) override;
 
-    virtual void EndAsyncReader(GDALAsyncReader *);
+    virtual void EndAsyncReader(GDALAsyncReader *) override;
 #endif /* ECWSDK_VERSION > 40 */
 #if ECWSDK_VERSION >=50
     int GetFormatVersion() const {
