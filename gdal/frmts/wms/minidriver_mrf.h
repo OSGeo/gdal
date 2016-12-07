@@ -34,24 +34,21 @@
 // Unlike pread, the first argument is a pointer to an opaque structure
 // Return of zero means an error occurred (could be end of file)
 //
-typedef size_t pread_t(void *user_data, void *buff, size_t count, off_t offset);
-
-// pread_t adapters for VSIL and Range enabled curl
-pread_t pread_VSIL, pread_curl;
+typedef size_t (*pread_t)(void *user_data, void *buff, size_t count, off_t offset);
 
 //
 // A sector cache, for up to N sectors of a fixed size M
 // N has to be at least two, the user specifies extras
 // Used for session caching the remote index
 //
+namespace WMSMiniDriver_MRF_ns {
 
 class SectorCache {
 public:
     SectorCache(void *user_data,
-                pread_t *fn = pread_VSIL,
+                pread_t fn = NULL,
                 unsigned int size = 1024,
-                unsigned int count = 2)
-                : n(count + 2), m(size), reader(fn), reader_data(user_data), last_used(NULL) {}
+                unsigned int count = 2);
 
     // Fetches a pointer within the sector to the byte at the given address
     // No alignment is guaranteed, and only enough bytes to reach the end of the sector are available
@@ -68,7 +65,7 @@ private:
     unsigned int n, m;
 
     // Pointer to an pread like function
-    pread_t *reader;
+    pread_t reader;
     void *reader_data;
     // To avoid thrashing
     Sector *last_used;
@@ -83,6 +80,11 @@ struct ILSize {
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
 };
+
+}; // namespace WMSMiniDriver_MRF
+
+using WMSMiniDriver_MRF_ns::SectorCache;
+using WMSMiniDriver_MRF_ns::ILSize;
 
 class WMSMiniDriver_MRF : public WMSMiniDriver {
 public:
