@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Adam Estrada
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -438,8 +438,8 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
             {
                 if( m_osScrollID.empty() )
                     break;
-                osRequest = CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
-                               m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
+                osRequest = CPLSPrintf("%s/_search/scroll?scroll=1m&scroll_id=%s",
+                               m_poDS->GetURL(), m_osScrollID.c_str());
             }
 
             if( m_bAddPretty )
@@ -850,19 +850,27 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     {
         if( !m_osESSearch.empty() )
         {
-           osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
+            osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_poDS->m_nBatchSize);
             osPostData = m_osESSearch;
         }
         else if( m_poSpatialFilter && m_osJSONFilter.empty() )
         {
-            CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+            if( m_poDS->m_nMajorVersion >= 5 )
+            {
+                CPLString osFilter = CPLSPrintf("{ \"query\": { \"bool\": { \"filter\": %s } } }",
                                             json_object_to_json_string( m_poSpatialFilter ));
+                osPostData = osFilter;
+            }
+            else
+            {
+                CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                                json_object_to_json_string( m_poSpatialFilter ));
+                osPostData = osFilter;
+            }
             osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                           m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
-            osPostData = osFilter;
-        }
+                        m_poDS->GetURL(), m_osIndexName.c_str(),
+                        m_osMappingName.c_str(), m_poDS->m_nBatchSize);        }
         else
         {
             osRequest =
@@ -875,8 +883,8 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     else
     {
         osRequest =
-            CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
-                       m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
+            CPLSPrintf("%s/_search/scroll?scroll=1m&scroll_id=%s",
+                       m_poDS->GetURL(), m_osScrollID.c_str());
     }
 
     if( m_bAddPretty )
@@ -2013,6 +2021,12 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
 OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
 
     if( WriteMapIfNecessary() != OGRERR_NONE )
@@ -2081,6 +2095,12 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 
 OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
 
     if( !poFeature->IsFieldSet(0) )
@@ -2139,8 +2159,14 @@ bool OGRElasticLayer::PushIndex()
 /************************************************************************/
 
 OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
-                                    CPL_UNUSED int bApproxOK)
+                                    int /*bApproxOK*/)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
     ResetReading();
 
@@ -2184,9 +2210,16 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED int bApproxOK )
+OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
+                                         int /*bApproxOK*/ )
 
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
     ResetReading();
 
@@ -2283,12 +2316,11 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
         return TRUE;
 
     else if (EQUAL(pszCap, OLCSequentialWrite) ||
-             EQUAL(pszCap, OLCRandomWrite)
-    )
-        return TRUE;
+             EQUAL(pszCap, OLCRandomWrite) )
+        return m_poDS->GetAccess() == GA_Update;
     else if (EQUAL(pszCap, OLCCreateField) ||
              EQUAL(pszCap, OLCCreateGeomField) )
-        return TRUE;
+        return m_poDS->GetAccess() == GA_Update;
     else
         return FALSE;
 }
@@ -2305,28 +2337,50 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
     json_object* poResponse = NULL;
     if( !m_osESSearch.empty() )
     {
+        if( m_osESSearch[0] != '{' )
+            return OGRLayer::GetFeatureCount(bForce);
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/_search?search_type=count&pretty", m_poDS->GetURL()),
-            m_osESSearch.c_str());
+            CPLSPrintf("%s/_search?pretty", m_poDS->GetURL()),
+            ("{ \"size\": 0, " + m_osESSearch.substr(1)).c_str());
     }
     else if( m_poSpatialFilter )
     {
-        CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
-                                        json_object_to_json_string( m_poSpatialFilter ));
+        if( m_poDS->m_nMajorVersion >= 5 )
+        {
+            CPLString osFilter = CPLSPrintf("{ \"query\": { \"bool\": { \"filter\": %s } } }",
+                                            json_object_to_json_string( m_poSpatialFilter ));
+            poResponse = m_poDS->RunRequest(
+                CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+                osFilter.c_str());
+        }
+        else
+        {
+            CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                            json_object_to_json_string( m_poSpatialFilter ));
+            poResponse = m_poDS->RunRequest(
+                CPLSPrintf("%s/%s/%s/_search?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+                osFilter.c_str());
+        }
+    }
+    else if( !m_osJSONFilter.empty() )
+    {
+        if( m_osJSONFilter[0] != '{' )
+            return OGRLayer::GetFeatureCount(bForce);
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
-            osFilter.c_str());
+            CPLSPrintf("%s/%s/%s/_search?&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+            ("{ \"size\": 0, " + m_osJSONFilter.substr(1)).c_str());
     }
     else
     {
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
-            m_osJSONFilter.c_str());
+            CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
     }
 
     json_object* poCount = json_ex_get_object_by_path(poResponse, "hits.count");
     if( poCount == NULL )
         poCount = json_ex_get_object_by_path(poResponse, "hits.total");
+    if( poCount == NULL )
+        poCount = json_ex_get_object_by_path(poResponse, "count");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poResponse);
@@ -2501,10 +2555,10 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( !m_abIsGeoPoint[iGeomField] )
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
 
-    CPLString osFilter = CPLSPrintf("{ \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
+    CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
     json_object* poResponse = m_poDS->RunRequest(
-        CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty",
+        CPLSPrintf("%s/%s/%s/_search?pretty",
                    m_poDS->GetURL(), m_osIndexName.c_str(),
                    m_osMappingName.c_str()),
         osFilter.c_str());

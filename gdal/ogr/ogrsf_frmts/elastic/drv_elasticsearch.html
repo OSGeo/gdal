@@ -11,8 +11,8 @@
 
 Driver is read-write starting with GDAL 2.1 (was write only in GDAL 2.0 or earlier)<br/>
 
-As of GDAL 2.1.1, ElasticSearch 1.X and 2.X versions are supported (5.0 known
-not to work)<br/>
+As of GDAL 2.1, ElasticSearch 1.X and, partially, 2.X versions are supported
+(5.0 known not to work). GDAL 2.2 adds supports for ElasticSearch 2.X and 5.X<br/>
 
 <p>
 
@@ -102,7 +102,7 @@ However, in the current state, SQL attribute filters set with SetAttributeFilter
 are evaluated only on client-side. To enable server-side filtering, the string
 passed to SetAttributeFilter() must be a JSon object in the
 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">ElasticSearch filter syntax</a>.
-e.g. <pre>{ "filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
+e.g. <pre>{ "post_filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
 <p>
 
 Note: if defining an Elastic Search JSon filter, the spatial filter specified
@@ -150,7 +150,8 @@ types returned by the FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN first documents. I
 will also contain the _index and _type special fields to indicate the provenance
 of the features.<p>
 
-The following filter can be used to restrict the search to the "poly" index and its "FeatureCollection" type mapping:
+The following filter can be used to restrict the search to the "poly" index and
+its "FeatureCollection" type mapping (ElasticSearch 1.X and 2.X)
 <pre>
 { "filter": {
     "indices" : {
@@ -161,6 +162,25 @@ The following filter can be used to restrict the search to the "poly" index and 
              { "type": { "value": "FeatureCollection" } },
              { "term" : { "properties.EAS_ID" : 158.0 } }
            ]
+        }
+      }
+    }
+}
+</pre>
+
+For ElasticSearch 5.X (works also with 2.X) :
+<pre>
+{ "post_filter": {
+    "indices" : {
+        "no_match_query": "none",
+        "index": "poly",
+        "query": {
+          "bool": {
+            "must" : [
+              { "type": { "value": "FeatureCollection" } },
+              { "term" : { "properties.EAS_ID" : 158.0 } }
+            ]
+          }
         }
       }
     }
@@ -207,8 +227,15 @@ mapping, or mapping as serialized JSon.</li>
 <li><b>WRITE_MAPPING</b>=filename. Creates a mapping file that can be modified
 by the user prior to insert in to the index. No feature will be written.
 This option is exclusive with MAPPING.</li>
-<li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing collection with
+<li><b>OVERWRITE</b>=YES/NO. Whether to overwrite an existing type mapping with
 the layer name to be created. Defaults to NO.</li>
+<li><b>OVERWRITE_INDEX</b>=YES/NO. (GDAL &gt;= 2.2) Whether to overwrite the whole index to which
+the layer belongs to. Defaults to NO. This option is stronger than OVERWRITE.
+OVERWRITE will only proceed if the type mapping corresponding to the layer
+is the single type mapping of the index. In case there are several type mappings,
+the whole index need to be destroyed (it is unsafe to destroy a mapping and the
+documents that use it, since they might be used by other mappings. This was
+possible in ElasticSearch 1.X, but no longer in later versions).</li>
 <li><b>GEOMETRY_NAME</b>=name. Name of geometry column. Defaults to 'geometry'.</li>
 <li><b>GEOM_MAPPING_TYPE</b>=AUTO/GEO_POINT/GEO_SHAPE. Mapping type for geometry fields. Defaults to AUTO.
 GEO_POINT uses the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html">geo_point</a>
@@ -260,7 +287,7 @@ ogrinfo ES:http://example.com:9200
 
 <b>Filtering on a Elastic Search field:</b><br>
 <pre>
-ogrinfo -ro ES: my_type -where '{ "filter": { "term": { "properties.EAS_ID": 168 } } }'
+ogrinfo -ro ES: my_type -where '{ "post_filter": { "term": { "properties.EAS_ID": 168 } } }'
 </pre>
 
 <b>Using "match" query on Windows:</b><br>
