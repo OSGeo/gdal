@@ -34,6 +34,9 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <algorithm>
+#include <utility>
+
 #include "gdal_alg.h"
 
 CPL_CVSID("$Id$");
