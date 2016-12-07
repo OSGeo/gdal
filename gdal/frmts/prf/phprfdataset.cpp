@@ -23,10 +23,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cpl_minixml.h>
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <gdal_proxy.h>
-#include <cpl_minixml.h>
 #include "../vrt/vrtdataset.h"
 
 enum ph_format
@@ -46,9 +46,8 @@ class PhPrfBand : public VRTSourcedRasterBand
 public:
     PhPrfBand( GDALDataset* poDataset, int nBandCount, GDALDataType eType,
                int nXSize, int nYSize ) :
-               VRTSourcedRasterBand( poDataset, nBandCount, eType, nXSize, nYSize )
-    {
-    }
+        VRTSourcedRasterBand( poDataset, nBandCount, eType, nXSize, nYSize )
+    {}
 
     void AddOverview( GDALRasterBand* ov )
     {
@@ -69,7 +68,7 @@ public:
 
     GDALRasterBand* GetOverview( int i ) override
     {
-        size_t	n = static_cast<size_t>( i );
+        size_t n = static_cast<size_t>( i );
         if( n < osOverview.size() )
         {
             return osOverview[ n ];
@@ -85,15 +84,20 @@ class PhPrfDataset : public VRTDataset
 {
     std::vector<GDALDataset*>    osSubTiles;
 public:
-    PhPrfDataset( GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount, GDALDataType eType, const char* pszName );
+    PhPrfDataset( GDALAccess eAccess, int nSizeX, int nSizeY, int nBandCount,
+                  GDALDataType eType, const char* pszName );
     ~PhPrfDataset();
-    bool AddTile( const char* pszPartName, GDALAccess eAccess, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale );
+    bool AddTile( const char* pszPartName, GDALAccess eAccess, int nWidth,
+                  int nHeight, int nOffsetX, int nOffsetY, int nScale );
     int CloseDependentDatasets() override;
     static int Identify( GDALOpenInfo* poOpenInfo );
     static GDALDataset* Open( GDALOpenInfo* poOpenInfo );
 };
 
-PhPrfDataset::PhPrfDataset( GDALAccess _eAccess, int nSizeX, int nSizeY, int nBandCount, GDALDataType eType, const char* pszName ) : VRTDataset( nSizeX, nSizeY )
+PhPrfDataset::PhPrfDataset( GDALAccess _eAccess, int nSizeX, int nSizeY,
+                            int nBandCount, GDALDataType eType,
+                            const char* pszName ) :
+    VRTDataset( nSizeX, nSizeY )
 {
     poDriver = (GDALDriver*)GDALGetDriverByName( PH_PRF_DRIVER );
     eAccess = _eAccess;
@@ -102,7 +106,7 @@ PhPrfDataset::PhPrfDataset( GDALAccess _eAccess, int nSizeX, int nSizeY, int nBa
 
     for( int i = 0; i != nBandCount; ++i )
     {
-        PhPrfBand*	poBand = new PhPrfBand( this, i + 1, eType, nSizeX, nSizeY );
+        PhPrfBand* poBand = new PhPrfBand( this, i + 1, eType, nSizeX, nSizeY );
         SetBand( i + 1, poBand );
     }
 }
@@ -112,7 +116,9 @@ PhPrfDataset::~PhPrfDataset()
     CloseDependentDatasets();
 }
 
-bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int nWidth, int nHeight, int nOffsetX, int nOffsetY, int nScale )
+bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType,
+                            int nWidth, int nHeight
+                            , int nOffsetX, int nOffsetY, int nScale )
 {
     GDALProxyPoolDataset*   poTileDataset;
     poTileDataset = new GDALProxyPoolDataset( pszPartName, nWidth, nHeight,
@@ -120,8 +126,7 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
 
     for( int nBand = 1; nBand != GetRasterCount() + 1; ++nBand )
     {
-        PhPrfBand*      poBand = dynamic_cast<PhPrfBand*>( GetRasterBand( nBand ) );
-        GDALRasterBand* poTileBand;
+        PhPrfBand* poBand = dynamic_cast<PhPrfBand*>( GetRasterBand( nBand ) );
 
         if( poBand == NULL )
         {
@@ -130,8 +135,8 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
         }
 
         //! \todo What reason for nBlockXSize&nBlockYSize passed to AddSrcBandDescription
-        poTileDataset->AddSrcBandDescription( poBand->GetRasterDataType(), 0, 0 );
-        poTileBand = poTileDataset->GetRasterBand( nBand );
+        poTileDataset->AddSrcBandDescription(poBand->GetRasterDataType(), 0, 0);
+        GDALRasterBand* poTileBand = poTileDataset->GetRasterBand( nBand );
 
         if( 0 == nScale )
         {
@@ -152,7 +157,9 @@ bool PhPrfDataset::AddTile( const char* pszPartName, GDALAccess eAccessType, int
 int PhPrfDataset::CloseDependentDatasets()
 {
     int bDroppedRef = VRTDataset::CloseDependentDatasets();
-    for( std::vector<GDALDataset*>::iterator ii( osSubTiles.begin() ); ii != osSubTiles.end(); ++ii )
+    for( std::vector<GDALDataset*>::iterator ii( osSubTiles.begin() );
+         ii != osSubTiles.end();
+         ++ii )
     {
         delete (*ii);
         bDroppedRef = TRUE;
@@ -169,7 +176,8 @@ int PhPrfDataset::Identify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     }
 
-    if( strstr( reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "phini" ) == NULL )
+    if( strstr( reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
+                "phini" ) == NULL )
     {
         return FALSE;
     }
@@ -190,7 +198,9 @@ int PhPrfDataset::Identify( GDALOpenInfo* poOpenInfo )
 static void GetXmlNameValuePair( const CPLXMLNode* psElt, CPLString& osName,
                                  CPLString& osValue )
 {
-    for( const CPLXMLNode* psAttr = psElt->psChild; psAttr != NULL; psAttr = psAttr->psNext )
+    for( const CPLXMLNode* psAttr = psElt->psChild;
+         psAttr != NULL;
+         psAttr = psAttr->psNext )
     {
         if( psAttr->eType != CXT_Attribute ||
             psAttr->pszValue == NULL ||
@@ -211,10 +221,13 @@ static void GetXmlNameValuePair( const CPLXMLNode* psElt, CPLString& osName,
     }
 }
 
-static CPLString GetXmlAttribute( const CPLXMLNode* psElt, const CPLString& osAttrName,
+static CPLString GetXmlAttribute( const CPLXMLNode* psElt,
+                                  const CPLString& osAttrName,
                                   const CPLString& osDef = CPLString() )
 {
-    for( const CPLXMLNode* psAttr = psElt->psChild; psAttr != NULL; psAttr = psAttr->psNext )
+    for( const CPLXMLNode* psAttr = psElt->psChild;
+         psAttr != NULL;
+         psAttr = psAttr->psNext )
     {
         if( psAttr->eType != CXT_Attribute ||
             psAttr->pszValue == NULL ||
@@ -233,13 +246,15 @@ static CPLString GetXmlAttribute( const CPLXMLNode* psElt, const CPLString& osAt
 
 static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
 {
-    bool                     abOk[6] = {false,false,false,false,false,false};
+    bool abOk[6] = { false, false, false, false, false, false };
     static const char* const apszGeoKeys[6] = { "A_0", "A_1", "A_2",
                                                 "B_0", "B_1", "B_2" };
-    for( const CPLXMLNode* elt = psGeorefElt->psChild; elt != NULL; elt = elt->psNext )
+    for( const CPLXMLNode* elt = psGeorefElt->psChild;
+         elt != NULL;
+         elt = elt->psNext )
     {
-        CPLString   osName;
-        CPLString   osValue;
+        CPLString osName;
+        CPLString osValue;
         GetXmlNameValuePair( elt, osName, osValue );
         for( int k = 0; k != 6; ++k )
         {
@@ -267,15 +282,19 @@ static bool ParseGeoref( const CPLXMLNode* psGeorefElt, double* padfGeoTrans )
     return false;
 }
 
-static bool ParseDemShift( const CPLXMLNode* psDemShiftElt, double* padfDemShift )
+static bool ParseDemShift( const CPLXMLNode* psDemShiftElt,
+                           double* padfDemShift )
 {
-    bool                     abOk[6] = {false,false,false};
-    static const char* const apszDemShiftKeys[6] = { "x", "y", "z" };
+    bool abOk[6] = { false,false,false, false, false, false };
+    static const char* const apszDemShiftKeys[6] =
+        { "x", "y", "z", "", "", "" };
 
-    for( const CPLXMLNode* elt = psDemShiftElt->psChild; elt != NULL; elt = elt->psNext )
+    for( const CPLXMLNode* elt = psDemShiftElt->psChild;
+         elt != NULL;
+         elt = elt->psNext )
     {
-        CPLString   osName;
-        CPLString   osValue;
+        CPLString osName;
+        CPLString osValue;
         GetXmlNameValuePair( elt, osName, osValue );
         for( int k = 0; k != 3; ++k )
         {
@@ -291,19 +310,21 @@ static bool ParseDemShift( const CPLXMLNode* psDemShiftElt, double* padfDemShift
 
 static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
 {
-    CPLString   osType;
-    CPLString   osBytesPS;
-    CPLString   osChannels;
+    CPLString osType;
+    CPLString osBytesPS;
+    CPLString osChannels;
 
-    for( const CPLXMLNode* psChild = psElt->psChild; psChild != NULL; psChild = psChild->psNext )
+    for( const CPLXMLNode* psChild = psElt->psChild;
+         psChild != NULL;
+         psChild = psChild->psNext )
     {
         if( psChild->eType != CXT_Element )
         {
             continue;
         }
 
-        CPLString   osName;
-        CPLString   osValue;
+        CPLString osName;
+        CPLString osValue;
 
         GetXmlNameValuePair( psChild, osName, osValue );
 
@@ -311,19 +332,17 @@ static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
         {
             osType = osValue;
         }
-        else
-        if( EQUAL( osName, "bytes_ps" ) )
+        else if( EQUAL( osName, "bytes_ps" ) )
         {
             osBytesPS = osValue;
         }
-        else
-        if( EQUAL( osName, "channels" ) )
+        else if( EQUAL( osName, "channels" ) )
         {
             osChannels = osValue;
         }
     }
 
-    int	nDataTypeSize = atoi( osBytesPS );
+    const int nDataTypeSize = atoi( osBytesPS );
     if( osType == "U" )
     {
         switch( nDataTypeSize )
@@ -335,12 +354,12 @@ static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
         case 4:
             return GDT_UInt32;
         default:
-            CPLError( CE_Failure, CPLE_OpenFailed, "Unsupported datatype size %d\n", nDataTypeSize );
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unsupported datatype size %d", nDataTypeSize );
             return GDT_Unknown;
         }
     }
-    else
-    if( osType == "F" )
+    else if( osType == "F" )
     {
         switch( nDataTypeSize )
         {
@@ -349,7 +368,8 @@ static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
         case 8:
             return GDT_Float64;
         default:
-            CPLError( CE_Failure, CPLE_OpenFailed, "Unsupported datatype size %d\n", nDataTypeSize );
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unsupported datatype size %d", nDataTypeSize );
             return GDT_Unknown;
         }
     }
@@ -359,14 +379,13 @@ static GDALDataType ParseChannelsInfo( const CPLXMLNode* psElt )
 
 GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 {
-    ph_format   eFormat;
+    ph_format eFormat;
 
     if( EQUAL( CPLGetExtension(poOpenInfo->pszFilename), PH_PRF_EXT ) )
     {
         eFormat = ph_megatiff;
     }
-    else
-    if( EQUAL( CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT ) )
+    else if( EQUAL( CPLGetExtension(poOpenInfo->pszFilename), PH_DEM_EXT ) )
     {
         eFormat = ph_xdem;
     }
@@ -375,49 +394,53 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 
-    CPLXMLTreeCloser	oDoc( CPLParseXMLFile( poOpenInfo->pszFilename ) );
+    CPLXMLTreeCloser oDoc( CPLParseXMLFile( poOpenInfo->pszFilename ) );
 
     if( oDoc.get() == NULL )
     {
         return NULL;
     }
 
-    const CPLXMLNode*   psPhIni( CPLSearchXMLNode( oDoc.get(), "=phini" ) );
+    const CPLXMLNode* psPhIni( CPLSearchXMLNode( oDoc.get(), "=phini" ) );
     if( psPhIni == NULL )
     {
         return NULL;
     }
 
-    int             nSizeX = 0;
-    int             nSizeY = 0;
-    int             nBandCount = 0;
-    GDALDataType    eResultDatatype = GDT_Unknown;
-    CPLString       osPartsBasePath( CPLGetPath( poOpenInfo->pszFilename ) );
-    CPLString       osPartsPath( osPartsBasePath + "/" + CPLGetBasename( poOpenInfo->pszFilename ) );
-    CPLString       osPartsExt;
-    double          adfGeoTrans[6] = {0,0,0,0,0,0};
-    bool            bGeoTransOk = false;
+    int          nSizeX = 0;
+    int          nSizeY = 0;
+    int          nBandCount = 0;
+    GDALDataType eResultDatatype = GDT_Unknown;
+    CPLString    osPartsBasePath( CPLGetPath( poOpenInfo->pszFilename ) );
+    CPLString    osPartsPath( osPartsBasePath + "/" +
+                              CPLGetBasename( poOpenInfo->pszFilename ) );
+    CPLString    osPartsExt;
+    double       adfGeoTrans[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    bool         bGeoTransOk = false;
 
-    double                   adfDemShift[3] = {0,0,0};
-    bool                     bDemShiftOk = false;
-    static const int         nDemMDCount = 7;
-    bool                     abDemMetadataOk[nDemMDCount] = {false,false,false,false,false,false,false};
-    double                   adfDemMetadata[nDemMDCount] = {0,0,0,0,0,0,0};
-    static const char* const apszDemKeys[nDemMDCount] = {"XR_0", "XR_1",
-                                                         "YR_0", "YR_1",
-                                                         "ZR_0", "ZR_1",
-                                                         "BadZ" };
+    double       adfDemShift[3] = { 0.0, 0.0, 0.0 };
+    bool         bDemShiftOk = false;
+    const int    nDemMDCount = 7;
+    bool         abDemMetadataOk[nDemMDCount] =
+        { false, false, false, false, false, false, false };
+    double       adfDemMetadata[nDemMDCount] =
+        { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    static const char* const apszDemKeys[nDemMDCount] = { "XR_0", "XR_1",
+                                                          "YR_0", "YR_1",
+                                                          "ZR_0", "ZR_1",
+                                                          "BadZ" };
     if( eFormat == ph_megatiff )
     {
         osPartsExt = ".tif";
     }
-    else
-    if( eFormat == ph_xdem )
+    else if( eFormat == ph_xdem )
     {
         osPartsExt = ".demtif";
     }
 
-    for( const CPLXMLNode* psElt = psPhIni->psChild; psElt != NULL; psElt = psElt->psNext )
+    for( const CPLXMLNode* psElt = psPhIni->psChild;
+         psElt != NULL;
+         psElt = psElt->psNext )
     {
         if( !EQUAL(psElt->pszValue,"s") ||
             psElt->eType != CXT_Element )
@@ -425,8 +448,8 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
             continue;
         }
 
-        CPLString   osName;
-        CPLString   osValue;
+        CPLString osName;
+        CPLString osValue;
 
         GetXmlNameValuePair( psElt, osName, osValue );
 
@@ -436,10 +459,12 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    for( const CPLXMLNode* psElt = psPhIni->psChild; psElt != NULL;	psElt = psElt->psNext )
+    for( const CPLXMLNode* psElt = psPhIni->psChild;
+         psElt != NULL;
+         psElt = psElt->psNext )
     {
-        CPLString   osName;
-        CPLString   osValue;
+        CPLString osName;
+        CPLString osValue;
 
         GetXmlNameValuePair( psElt, osName, osValue );
 
@@ -447,28 +472,23 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         {
             eResultDatatype = ParseChannelsInfo( psElt );
         }
-        else
-        if( EQUAL( osName, "Width" ) )
+        else if( EQUAL( osName, "Width" ) )
         {
             nSizeX = atoi( osValue );
         }
-        else
-        if( EQUAL( osName, "Height" ) )
+        else if( EQUAL( osName, "Height" ) )
         {
             nSizeY = atoi( osValue );
         }
-        else
-        if( EQUAL( osName, "QChans" ) )
+        else if( EQUAL( osName, "QChans" ) )
         {
             nBandCount = atoi( osValue );
         }
-        else
-        if( EQUAL( osName, "GeoRef" ) )
+        else if( EQUAL( osName, "GeoRef" ) )
         {
             bGeoTransOk = ParseGeoref( psElt, adfGeoTrans );
         }
-        else
-        if( EQUAL( osName, "DemShift" ) )
+        else if( EQUAL( osName, "DemShift" ) )
         {
             bDemShiftOk = ParseDemShift( psElt, adfDemShift );
         }
@@ -487,7 +507,8 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( eResultDatatype == GDT_Unknown )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, "GDAL Dataset datatype not found\n" );
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "GDAL Dataset datatype not found" );
         return NULL;
     }
 
@@ -496,26 +517,33 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
         return NULL;
     }
 
-    PhPrfDataset*   poDataset = new PhPrfDataset( GA_ReadOnly, nSizeX, nSizeY, nBandCount, eResultDatatype, poOpenInfo->pszFilename );
+    PhPrfDataset* poDataset =
+        new PhPrfDataset( GA_ReadOnly, nSizeX, nSizeY, nBandCount,
+                          eResultDatatype, poOpenInfo->pszFilename );
 
-    if( !GDALCheckDatasetDimensions( poDataset->GetRasterXSize(), poDataset->GetRasterYSize() ) )
+    if( !GDALCheckDatasetDimensions( poDataset->GetRasterXSize(),
+                                     poDataset->GetRasterYSize() ) )
     {
         delete poDataset;
         return NULL;
     }
 
-    for( const CPLXMLNode* psElt = psPhIni->psChild; psElt != NULL;	psElt = psElt->psNext )
+    for( const CPLXMLNode* psElt = psPhIni->psChild;
+         psElt != NULL;
+         psElt = psElt->psNext )
     {
-        int	nWidth = 0;
-        int	nHeight = 0;
-        int	nOffsetX = 0;
-        int	nOffsetY = 0;
-        int	nScale = 0;
+        int nWidth = 0;
+        int nHeight = 0;
+        int nOffsetX = 0;
+        int nOffsetY = 0;
+        int nScale = 0;
 
-        for( const CPLXMLNode* psItem = psElt->psChild; psItem != NULL;	psItem = psItem->psNext )
+        for( const CPLXMLNode* psItem = psElt->psChild;
+             psItem != NULL;
+             psItem = psItem->psNext )
         {
-            CPLString   osName;
-            CPLString   osValue;
+            CPLString osName;
+            CPLString osValue;
 
             GetXmlNameValuePair( psItem, osName, osValue );
 
@@ -550,11 +578,12 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
             continue;
         }
 
-        CPLString	osPartName( osPartsPath + "/" +
-                                GetXmlAttribute( psElt, "n" ) +
-                                osPartsExt );
+        CPLString osPartName( osPartsPath + "/" +
+                              GetXmlAttribute( psElt, "n" ) +
+                              osPartsExt );
 
-        if( !poDataset->AddTile( osPartName, GA_ReadOnly, nWidth, nHeight, nOffsetX, nOffsetY, nScale ) )
+        if( !poDataset->AddTile( osPartName, GA_ReadOnly, nWidth, nHeight,
+                                 nOffsetX, nOffsetY, nScale ) )
         {
             delete poDataset;
             return NULL;
@@ -568,11 +597,11 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( eFormat == ph_xdem )
     {
-        GDALRasterBand*	poFirstBand = poDataset->GetRasterBand( 1 );
+        GDALRasterBand* poFirstBand = poDataset->GetRasterBand( 1 );
 
         if( poFirstBand != NULL )
         {
-            poFirstBand->SetUnitType( "m" );//Always meters
+            poFirstBand->SetUnitType( "m" );  // Always meters.
         }
 
         if( abDemMetadataOk[0] && abDemMetadataOk[1] &&
@@ -596,8 +625,10 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 
         if( abDemMetadataOk[4] && abDemMetadataOk[5] )
         {
-            poFirstBand->SetMetadataItem( "STATISTICS_MINIMUM", CPLSPrintf( "%f", adfDemMetadata[4] ) );
-            poFirstBand->SetMetadataItem( "STATISTICS_MAXIMUM", CPLSPrintf( "%f", adfDemMetadata[5] ) );
+            poFirstBand->SetMetadataItem(
+                "STATISTICS_MINIMUM", CPLSPrintf( "%f", adfDemMetadata[4] ) );
+            poFirstBand->SetMetadataItem(
+                "STATISTICS_MAXIMUM", CPLSPrintf( "%f", adfDemMetadata[5] ) );
         }
 
         if( abDemMetadataOk[6] )
@@ -616,21 +647,19 @@ GDALDataset* PhPrfDataset::Open( GDALOpenInfo* poOpenInfo )
 
 void GDALRegister_PRF()
 {
-    GDALDriver* poDriver;
+    if( GDALGetDriverByName( PH_PRF_DRIVER ) != NULL )
+        return;
 
-    if( GDALGetDriverByName( PH_PRF_DRIVER ) == NULL )
-    {
-        poDriver = new GDALDriver;
-        
-        poDriver->SetDescription( PH_PRF_DRIVER );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Racurs PHOTOMOD PRF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "prf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_prf.html" );
-        poDriver->pfnIdentify = PhPrfDataset::Identify;
-        poDriver->pfnOpen = PhPrfDataset::Open;
-        GDALRegisterDriver( (GDALDriverH)poDriver );
-    }
+    GDALDriver* poDriver = new GDALDriver;
+
+    poDriver->SetDescription( PH_PRF_DRIVER );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Racurs PHOTOMOD PRF" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "prf" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_prf.html" );
+    poDriver->pfnIdentify = PhPrfDataset::Identify;
+    poDriver->pfnOpen = PhPrfDataset::Open;
+    GDALRegisterDriver( (GDALDriverH)poDriver );
 }
 
