@@ -209,7 +209,7 @@ OGRCSWLayer::OGRCSWLayer( OGRCSWDataSource* poDSIn ) :
         OGRFieldDefn oField("anytext", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
     }
-    if( poDS->GetOutputSchema().size() )
+    if( !poDS->GetOutputSchema().empty() )
     {
         OGRFieldDefn oField("raw_xml", OFTString);
         poFeatureDefn->AddFieldDefn(&oField);
@@ -356,7 +356,7 @@ OGRFeature* OGRCSWLayer::GetNextFeature()
         poNewFeature->SetFID(nFeatureRead);
         delete poSrcFeature;
 
-        if( osCSWWhere.size() == 0 &&
+        if( osCSWWhere.empty() &&
             m_poAttrQuery != NULL &&
             !m_poAttrQuery->Evaluate( poNewFeature ) )
         {
@@ -441,7 +441,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
     CPLHTTPResult* psResult = NULL;
 
     CPLString osOutputSchema = poDS->GetOutputSchema();
-    if( osOutputSchema.size() )
+    if( !osOutputSchema.empty() )
         osOutputSchema = " outputSchema=\"" + osOutputSchema + "\"";
 
     CPLString osPost = CPLSPrintf(
@@ -508,7 +508,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
 
     GDALDataset* l_poBaseDS = NULL;
 
-    if( poDS->GetOutputSchema().size() )
+    if( !poDS->GetOutputSchema().empty() )
     {
         GDALDriver* poDrv = (GDALDriver*)GDALGetDriverByName("Memory");
         if( poDrv == NULL )
@@ -596,7 +596,7 @@ GDALDataset* OGRCSWLayer::FetchGetRecords()
                                                  0, 0, false, true,
                                                  false );
                     bool bLatLongOrder = true;
-                    if( osSRS.size() )
+                    if( !osSRS.empty() )
                         bLatLongOrder = GML_IsSRSLatLongOrder(osSRS);
                     if( bLatLongOrder && CPLTestBool(
                             CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG", "YES")) )
@@ -775,7 +775,7 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
     else
         osCSWWhere = "";
 
-    if (m_poAttrQuery != NULL && osCSWWhere.size() == 0)
+    if (m_poAttrQuery != NULL && osCSWWhere.empty())
     {
         CPLDebug("CSW", "Using client-side only mode for filter \"%s\"", pszFilter);
         OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
@@ -795,11 +795,11 @@ OGRErr OGRCSWLayer::SetAttributeFilter( const char * pszFilter )
 
 void OGRCSWLayer::BuildQuery()
 {
-    if( m_poFilterGeom != NULL || osCSWWhere.size() != 0 )
+    if( m_poFilterGeom != NULL || !osCSWWhere.empty() )
     {
         osQuery = "<csw:Constraint version=\"1.1.0\">";
         osQuery += "<ogc:Filter>";
-        if( m_poFilterGeom != NULL && osCSWWhere.size() != 0 )
+        if( m_poFilterGeom != NULL && !osCSWWhere.empty() )
             osQuery += "<ogc:And>";
         if( m_poFilterGeom != NULL )
         {
@@ -823,7 +823,7 @@ void OGRCSWLayer::BuildQuery()
             osQuery += "</ogc:BBOX>";
         }
         osQuery += osCSWWhere;
-        if( m_poFilterGeom != NULL && osCSWWhere.size() != 0 )
+        if( m_poFilterGeom != NULL && !osCSWWhere.empty() )
             osQuery += "</ogc:And>";
         osQuery += "</ogc:Filter>";
         osQuery += "</csw:Constraint>";

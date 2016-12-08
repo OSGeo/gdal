@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.127 2016-10-25 21:35:15 erouault Exp $ */
+/* $Id: tif_dir.c,v 1.128 2016-12-03 15:30:31 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -854,6 +854,32 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 	if( fip == NULL ) /* cannot happen since TIFFGetField() already checks it */
 	    return 0;
 	
+        if( tag == TIFFTAG_NUMBEROFINKS )
+        {
+            int i;
+            for (i = 0; i < td->td_customValueCount; i++) {
+                uint16 val;
+                TIFFTagValue *tv = td->td_customValues + i;
+                if (tv->info->field_tag != tag)
+                    continue;
+                val = *(uint16 *)tv->value;
+                /* Truncate to SamplesPerPixel, since the */
+                /* setting code for INKNAMES assume that there are SamplesPerPixel */
+                /* inknames. */
+                /* Fixes http://bugzilla.maptools.org/show_bug.cgi?id=2599 */
+                if( val > td->td_samplesperpixel )
+                {
+                    TIFFWarningExt(tif->tif_clientdata,"_TIFFVGetField",
+                                   "Truncating NumberOfInks from %u to %u",
+                                   val, td->td_samplesperpixel);
+                    val = td->td_samplesperpixel;
+                }
+                *va_arg(ap, uint16*) = val;
+                return 1;
+            }
+            return 0;
+        }
+
 	/*
 	 * We want to force the custom code to be used for custom
 	 * fields even if the tag happens to match a well known 

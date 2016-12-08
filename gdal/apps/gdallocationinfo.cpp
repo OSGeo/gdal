@@ -330,7 +330,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If no bands were requested, we will query them all.             */
 /* -------------------------------------------------------------------- */
-    if( anBandList.size() == 0 )
+    if( anBandList.empty() )
     {
         for( int i = 0; i < GDALGetRasterCount( hSrcDS ); i++ )
             anBandList.push_back( i+1 );

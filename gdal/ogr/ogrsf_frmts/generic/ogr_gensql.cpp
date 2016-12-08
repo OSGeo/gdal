@@ -1238,7 +1238,7 @@ static CPLString GetFilterForJoin(swq_expr_node* poExpr, OGRFeature* poSrcFeat,
         {
             CPLString osSubExpr = GetFilterForJoin(poExpr->papoSubExpr[i], poSrcFeat,
                                                    poJoinLayer, secondary_table);
-            if( osSubExpr.size() == 0 )
+            if( osSubExpr.empty() )
             {
                 for( --i; i >=0; i-- )
                     CPLFree( apszSubExpr[i] );
@@ -1299,7 +1299,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         //CPLDebug("OGR", "Filter = %s\n", osFilter.c_str());
 
         // if source key is null, we can't do join.
-        if( osFilter.size() == 0 )
+        if( osFilter.empty() )
         {
             apoFeatures.push_back( NULL );
             continue;

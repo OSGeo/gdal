@@ -133,7 +133,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 
         virtual int                 TestCapability( const char * ) override;
 
-        static int                  GetFeaturesToFetch() { return atoi(CPLGetConfigOption("AMIGOCLOUD_PAGE_SIZE", "500")); }
+        static  int                 GetFeaturesToFetch() { return 100; }
 };
 
 /************************************************************************/
@@ -284,7 +284,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
         static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
-        int                         IsAuthenticatedConnection() { return osAPIKey.size() != 0; }
+        int                         IsAuthenticatedConnection() { return !osAPIKey.empty(); }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
         void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
 

@@ -239,7 +239,7 @@ bool OGRShapeDataSource::Open( GDALOpenInfo* poOpenInfo,
             // We don't consume .dbf files in a directory that looks like
             // an old style Arc/Info (for PC?) that unless we found at least
             // some shapefiles.  See Bug 493.
-            if( bMightBeOldCoverage && osLayerNameSet.size() == 0 )
+            if( bMightBeOldCoverage && osLayerNameSet.empty() )
                 continue;
 
             if( strlen(pszCandidate) < 4
@@ -407,6 +407,8 @@ bool OGRShapeDataSource::OpenFile( const char *pszNewName, bool bUpdate )
         CSLFetchNameValue( papszOpenOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOpenOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOpenOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -793,6 +795,8 @@ OGRShapeDataSource::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValue( papszOptions, "DBF_DATE_LAST_UPDATE" ) );
     poLayer->SetAutoRepack(
         CPLFetchBool( papszOptions, "AUTO_REPACK", true ) );
+    poLayer->SetWriteDBFEOFChar(
+        CPLFetchBool( papszOptions, "DBF_EOF_CHAR", true ) );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -829,7 +833,7 @@ int OGRShapeDataSource::GetLayerCount()
 
 {
 #ifndef IMMEDIATE_OPENING
-    if( oVectorLayerName.size() != 0 )
+    if( !oVectorLayerName.empty() )
     {
         for( size_t i = 0; i < oVectorLayerName.size(); i++ )
         {
@@ -884,7 +888,7 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
 OGRLayer *OGRShapeDataSource::GetLayerByName( const char * pszLayerNameIn )
 {
 #ifndef IMMEDIATE_OPENING
-    if( oVectorLayerName.size() != 0 )
+    if( !oVectorLayerName.empty() )
     {
         for( int j = 0; j < nLayers; j++ )
         {

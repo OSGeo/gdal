@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2011, Adam Estrada
- * Copyright (c) 2012-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -113,7 +113,7 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
 
     AddFieldDefn("_id", OFTString, std::vector<CPLString>());
 
-    if( m_osESSearch.size() )
+    if( !m_osESSearch.empty() )
     {
         AddFieldDefn("_index", OFTString, std::vector<CPLString>());
         AddFieldDefn("_type", OFTString, std::vector<CPLString>());
@@ -158,7 +158,7 @@ void OGRElasticLayer::AddFieldDefn( const char* pszName,
     if( eSubType == OFSTBoolean )
         oFieldDefn.SetWidth(1);
     m_aaosFieldPaths.push_back(aosPath);
-    if( aosPath.size() )
+    if( !aosPath.empty() )
         m_aosMapToFieldIndex[ BuildPathFromArray(aosPath) ] = m_poFeatureDefn->GetFieldCount();
     m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
 }
@@ -231,7 +231,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
                 continue;
             }
 
-            if( aosPath.size() == 0 && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0 )
+            if( aosPath.empty() && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0 )
             {
                 std::vector<CPLString> aosNewPaths = aosPath;
                 aosNewPaths.push_back(it.key);
@@ -259,7 +259,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
             }
         }
 
-        if( aosPath.size() == 0 && EQUAL(it.key, m_poDS->GetFID()) )
+        if( aosPath.empty() && EQUAL(it.key, m_poDS->GetFID()) )
         {
             m_osFID = it.key;
         }
@@ -269,7 +269,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(json_object* poSchema,
         }
     }
 
-    if( aosPath.size() == 0 )
+    if( aosPath.empty() )
     {
         json_object* poMeta = CPL_json_object_object_get(poSchema, "_meta");
         if( poMeta && json_object_get_type(poMeta) == json_type_object )
@@ -353,7 +353,7 @@ void OGRElasticLayer::CreateFieldFromSchema(const char* pszName,
                          EQUAL(pszType, "geo_point") ? wkbPoint : wkbUnknown,
                          aosPath, EQUAL(pszType, "geo_point"));
     }
-    else if( !( aosPath.size() == 0 && m_osMappingName == "FeatureCollection" ) )
+    else if( !( aosPath.empty() && m_osMappingName == "FeatureCollection" ) )
     {
         if( m_poFeatureDefn->GetFieldIndex(osFieldName) >= 0 )
             return;
@@ -406,7 +406,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
     m_bFeatureDefnFinalized = true;
 
     int nFeatureCountToEstablishFeatureDefn = m_poDS->m_nFeatureCountToEstablishFeatureDefn;
-    if( m_osESSearch.size() && nFeatureCountToEstablishFeatureDefn <= 0 )
+    if( !m_osESSearch.empty() && nFeatureCountToEstablishFeatureDefn <= 0 )
         nFeatureCountToEstablishFeatureDefn = 1;
     std::set< std::pair<CPLString, CPLString> > oVisited;
 
@@ -423,7 +423,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
             if( bFirst )
             {
                 bFirst = false;
-                if(  m_osESSearch.size() )
+                if(  !m_osESSearch.empty() )
                 {
                     osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_poDS->m_nBatchSize);
@@ -436,10 +436,10 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
             }
             else
             {
-                if( m_osScrollID.size() == 0 )
+                if( m_osScrollID.empty() )
                     break;
-                osRequest = CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
-                               m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
+                osRequest = CPLSPrintf("%s/_search/scroll?scroll=1m&scroll_id=%s",
+                               m_poDS->GetURL(), m_osScrollID.c_str());
             }
 
             if( m_bAddPretty )
@@ -483,7 +483,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                     continue;
                 }
 
-                if( m_osESSearch.size() )
+                if( !m_osESSearch.empty() )
                 {
                     json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
                     if( poIndex == NULL || json_object_get_type(poIndex) != json_type_string )
@@ -525,7 +525,7 @@ void OGRElasticLayer::FinalizeFeatureDefn(bool bReadFeatures)
                 it.entry = NULL;
                 json_object_object_foreachC( poSource, it )
                 {
-                    if( m_osFID.size() )
+                    if( !m_osFID.empty() )
                     {
                         if( EQUAL(it.key, m_osFID) )
                             continue;
@@ -779,7 +779,7 @@ const char* OGRElasticLayer::GetFIDColumn()
 
 void OGRElasticLayer::ResetReading()
 {
-    if( m_osScrollID.size() )
+    if( !m_osScrollID.empty() )
     {
         char** papszOptions = CSLAddNameValue(NULL, "CUSTOMREQUEST", "DELETE");
         CPLHTTPResult* psResult = CPLHTTPFetch((m_poDS->GetURL() + CPLString("/_search/scroll?scroll_id=") + m_osScrollID).c_str(), papszOptions);
@@ -846,23 +846,31 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     m_iCurFeatureInPage = 0;
 
     CPLString osRequest, osPostData;
-    if( m_osScrollID.size() == 0 )
+    if( m_osScrollID.empty() )
     {
-        if( m_osESSearch.size() )
+        if( !m_osESSearch.empty() )
         {
-           osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
+            osRequest = CPLSPrintf("%s/_search?scroll=1m&size=%d",
                            m_poDS->GetURL(), m_poDS->m_nBatchSize);
             osPostData = m_osESSearch;
         }
-        else if( m_poSpatialFilter && m_osJSONFilter.size() == 0 )
+        else if( m_poSpatialFilter && m_osJSONFilter.empty() )
         {
-            CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+            if( m_poDS->m_nMajorVersion >= 5 )
+            {
+                CPLString osFilter = CPLSPrintf("{ \"query\": { \"bool\": { \"filter\": %s } } }",
                                             json_object_to_json_string( m_poSpatialFilter ));
+                osPostData = osFilter;
+            }
+            else
+            {
+                CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                                json_object_to_json_string( m_poSpatialFilter ));
+                osPostData = osFilter;
+            }
             osRequest = CPLSPrintf("%s/%s/%s/_search?scroll=1m&size=%d",
-                           m_poDS->GetURL(), m_osIndexName.c_str(),
-                           m_osMappingName.c_str(), m_poDS->m_nBatchSize);
-            osPostData = osFilter;
-        }
+                        m_poDS->GetURL(), m_osIndexName.c_str(),
+                        m_osMappingName.c_str(), m_poDS->m_nBatchSize);        }
         else
         {
             osRequest =
@@ -875,8 +883,8 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     else
     {
         osRequest =
-            CPLSPrintf("%s/_search/scroll?scroll=1m&size=%d&scroll_id=%s",
-                       m_poDS->GetURL(), m_poDS->m_nBatchSize, m_osScrollID.c_str());
+            CPLSPrintf("%s/_search/scroll?scroll=1m&scroll_id=%s",
+                       m_poDS->GetURL(), m_osScrollID.c_str());
     }
 
     if( m_bAddPretty )
@@ -939,7 +947,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
         if( pszId )
             poFeature->SetField("_id", pszId);
 
-        if( m_osESSearch.size() )
+        if( !m_osESSearch.empty() )
         {
             json_object* poIndex = CPL_json_object_object_get(poHit, "_index");
             if( poIndex != NULL && json_object_get_type(poIndex) == json_type_string )
@@ -960,7 +968,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
     }
 
     json_object_put(poResponse);
-    if( m_apoCachedFeatures.size() )
+    if( !m_apoCachedFeatures.empty() )
     {
         OGRFeature* poRet = m_apoCachedFeatures[ 0 ];
         m_apoCachedFeatures[ 0 ] = NULL;
@@ -1025,8 +1033,8 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
     CPLString osCurPath;
     json_object_object_foreachC( poSource, it )
     {
-        if( osPath.size() == 0 &&
-            m_osFID.size() && EQUAL(m_osFID, it.key) )
+        if( osPath.empty() &&
+            !m_osFID.empty() && EQUAL(m_osFID, it.key) )
         {
             json_type eJSONType = json_object_get_type(it.val);
             if( eJSONType == json_type_int )
@@ -1036,7 +1044,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
             }
         }
 
-        if( osPath.size() )
+        if( !osPath.empty() )
             osCurPath = osPath + "." + it.key;
         else
             osCurPath = it.key;
@@ -1269,7 +1277,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature* poFeature, json_object* poSource,
         }
         else if( json_object_get_type(it.val) == json_type_object &&
                  (m_poDS->m_bFlattenNestedAttributes ||
-                  (osPath.size() == 0 && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0)) )
+                  (osPath.empty() && m_osMappingName == "FeatureCollection" && strcmp(it.key, "properties") == 0)) )
         {
             BuildFeature(poFeature, it.val, osCurPath);
         }
@@ -1454,7 +1462,7 @@ CPLString OGRElasticLayer::BuildMap() {
             {
                 json_object_object_add(poContainer, pszLastComponent, geo_point);
             }
-            if( m_osPrecision.size() )
+            if( !m_osPrecision.empty() )
             {
                 json_object* field_data = json_object_new_object();
                 json_object_object_add(geo_point, "fielddata", field_data);
@@ -1469,7 +1477,7 @@ CPLString OGRElasticLayer::BuildMap() {
                                 pszLastComponent,
                                 geometry);
             json_object_object_add(geometry, "type", json_object_new_string("geo_shape"));
-            if( m_osPrecision.size() )
+            if( !m_osPrecision.empty() )
                 json_object_object_add(geometry, "precision", json_object_new_string(m_osPrecision.c_str()));
         }
     }
@@ -1477,7 +1485,7 @@ CPLString OGRElasticLayer::BuildMap() {
     json_object* poMeta = NULL;
     json_object* poGeomFields = NULL;
     json_object* poFields = NULL;
-    if( m_osFID.size() )
+    if( !m_osFID.empty() )
     {
         poMeta = json_object_new_object();
         json_object_object_add(poMeta, "fid",
@@ -1709,7 +1717,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
 
     // Check to see if the user has elected to only write out the mapping file
     // This method will only write out one layer from the vector file in cases where there are multiple layers
-    if (m_osWriteMapFilename.size()) {
+    if (!m_osWriteMapFilename.empty() ) {
         if( m_bSerializeMapping )
         {
             m_bSerializeMapping = false;
@@ -1726,7 +1734,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
     }
 
     // Check to see if we have any fields to upload to this index
-    if( m_osWriteMapFilename.size() == 0 && m_bSerializeMapping )
+    if( m_osWriteMapFilename.empty() && m_bSerializeMapping )
     {
         m_bSerializeMapping = false;
         if( !m_poDS->UploadFile(CPLSPrintf("%s/%s/%s/_mapping", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()), BuildMap()) )
@@ -1783,7 +1791,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
     {
         json_object *fieldObject = json_object_new_object();
 
-        if( poFeature->GetFID() >= 0 && m_osFID.size() )
+        if( poFeature->GetFID() >= 0 && !m_osFID.empty() )
         {
             json_object_object_add(fieldObject,
                                    m_osFID.c_str(),
@@ -2013,12 +2021,18 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 
 OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
 
     if( WriteMapIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    if (m_osWriteMapFilename.size())
+    if (!m_osWriteMapFilename.empty() )
         return OGRERR_NONE;
 
     if( poFeature->GetFID() < 0 )
@@ -2081,6 +2095,12 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 
 OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
 
     if( !poFeature->IsFieldSet(0) )
@@ -2088,7 +2108,7 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;
     }
-    if( poFeature->GetFID() < 0 && m_osFID.size() )
+    if( poFeature->GetFID() < 0 && !m_osFID.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid FID");
         return OGRERR_FAILURE;
@@ -2139,8 +2159,14 @@ bool OGRElasticLayer::PushIndex()
 /************************************************************************/
 
 OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
-                                    CPL_UNUSED int bApproxOK)
+                                    int /*bApproxOK*/)
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
     ResetReading();
 
@@ -2184,9 +2210,16 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED int bApproxOK )
+OGRErr OGRElasticLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn,
+                                         int /*bApproxOK*/ )
 
 {
+    if( m_poDS->GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dataset opened in read-only mode");
+        return OGRERR_FAILURE;
+    }
+
     FinalizeFeatureDefn();
     ResetReading();
 
@@ -2283,12 +2316,11 @@ int OGRElasticLayer::TestCapability(const char * pszCap) {
         return TRUE;
 
     else if (EQUAL(pszCap, OLCSequentialWrite) ||
-             EQUAL(pszCap, OLCRandomWrite)
-    )
-        return TRUE;
+             EQUAL(pszCap, OLCRandomWrite) )
+        return m_poDS->GetAccess() == GA_Update;
     else if (EQUAL(pszCap, OLCCreateField) ||
              EQUAL(pszCap, OLCCreateGeomField) )
-        return TRUE;
+        return m_poDS->GetAccess() == GA_Update;
     else
         return FALSE;
 }
@@ -2303,30 +2335,52 @@ GIntBig OGRElasticLayer::GetFeatureCount( int bForce )
         return OGRLayer::GetFeatureCount(bForce);
 
     json_object* poResponse = NULL;
-    if( m_osESSearch.size() )
+    if( !m_osESSearch.empty() )
     {
+        if( m_osESSearch[0] != '{' )
+            return OGRLayer::GetFeatureCount(bForce);
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/_search?search_type=count&pretty", m_poDS->GetURL()),
-            m_osESSearch.c_str());
+            CPLSPrintf("%s/_search?pretty", m_poDS->GetURL()),
+            ("{ \"size\": 0, " + m_osESSearch.substr(1)).c_str());
     }
     else if( m_poSpatialFilter )
     {
-        CPLString osFilter = CPLSPrintf("{ \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
-                                        json_object_to_json_string( m_poSpatialFilter ));
+        if( m_poDS->m_nMajorVersion >= 5 )
+        {
+            CPLString osFilter = CPLSPrintf("{ \"query\": { \"bool\": { \"filter\": %s } } }",
+                                            json_object_to_json_string( m_poSpatialFilter ));
+            poResponse = m_poDS->RunRequest(
+                CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+                osFilter.c_str());
+        }
+        else
+        {
+            CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"query\": { \"filtered\" : { \"query\" : { \"match_all\" : {} }, \"filter\": %s } } }",
+                                            json_object_to_json_string( m_poSpatialFilter ));
+            poResponse = m_poDS->RunRequest(
+                CPLSPrintf("%s/%s/%s/_search?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+                osFilter.c_str());
+        }
+    }
+    else if( !m_osJSONFilter.empty() )
+    {
+        if( m_osJSONFilter[0] != '{' )
+            return OGRLayer::GetFeatureCount(bForce);
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
-            osFilter.c_str());
+            CPLSPrintf("%s/%s/%s/_search?&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
+            ("{ \"size\": 0, " + m_osJSONFilter.substr(1)).c_str());
     }
     else
     {
         poResponse = m_poDS->RunRequest(
-            CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()),
-            m_osJSONFilter.c_str());
+            CPLSPrintf("%s/%s/%s/_count?pretty", m_poDS->GetURL(), m_osIndexName.c_str(), m_osMappingName.c_str()));
     }
 
     json_object* poCount = json_ex_get_object_by_path(poResponse, "hits.count");
     if( poCount == NULL )
         poCount = json_ex_get_object_by_path(poResponse, "hits.total");
+    if( poCount == NULL )
+        poCount = json_ex_get_object_by_path(poResponse, "count");
     if( poCount == NULL || json_object_get_type(poCount) != json_type_int )
     {
         json_object_put(poResponse);
@@ -2346,7 +2400,7 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char* pszFilter)
 {
     if( pszFilter != NULL && pszFilter[0] == '{' )
     {
-        if( m_osESSearch.size() )
+        if( !m_osESSearch.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Setting an ElasticSearch filter on a resulting layer is not supported");
@@ -2392,7 +2446,7 @@ void OGRElasticLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn )
     if( poGeomIn == NULL )
         return;
 
-    if( m_osESSearch.size() )
+    if( !m_osESSearch.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Setting a spatial filter on a resulting layer is not supported");
@@ -2501,10 +2555,10 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bFo
     if( !m_abIsGeoPoint[iGeomField] )
         return OGRLayer::GetExtentInternal(iGeomField, psExtent, bForce);
 
-    CPLString osFilter = CPLSPrintf("{ \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
+    CPLString osFilter = CPLSPrintf("{ \"size\": 0, \"aggs\" : { \"bbox\" : { \"geo_bounds\" : { \"field\" : \"%s\" } } } }",
                                     BuildPathFromArray(m_aaosGeomFieldPaths[iGeomField]).c_str() );
     json_object* poResponse = m_poDS->RunRequest(
-        CPLSPrintf("%s/%s/%s/_search?search_type=count&pretty",
+        CPLSPrintf("%s/%s/%s/_search?pretty",
                    m_poDS->GetURL(), m_osIndexName.c_str(),
                    m_osMappingName.c_str()),
         osFilter.c_str());

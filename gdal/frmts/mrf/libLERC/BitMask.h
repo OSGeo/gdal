@@ -13,7 +13,7 @@ A local copy of the license and additional notices are located with the
 source distribution at:
 http://github.com/Esri/lerc/
 Contributors:  Thomas Maurer
-	       Lucian Plesea
+               Lucian Plesea
 */
 
 #ifndef BITMASK_H
@@ -34,16 +34,16 @@ public:
   {
       m_pBits = new Byte[Size()];
       if (!m_pBits)
-	  m_nRows = m_nCols = 0;
+          m_nRows = m_nCols = 0;
       else
-	  m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
+           m_pBits[Size() - 1] = 0; // Set potential pad bytes to zero
   }
-  ~BitMask()				      { if (m_pBits) delete[] m_pBits; }
+  ~BitMask()                                  { if (m_pBits) delete[] m_pBits; }
 
   Byte  IsValid(int k) const                  { return (m_pBits[k >> 3] & Bit(k)) != 0; }
   void  SetValid(int k) const                 { m_pBits[k >> 3] |= Bit(k); }
   void  SetInvalid(int k) const               { m_pBits[k >> 3] &= ~Bit(k); }
-  int	Size() const			      { return (m_nCols * m_nRows - 1) / 8 + 1; }
+  int   Size() const                          { return (m_nCols * m_nRows - 1) / 8 + 1; }
 
   // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
   // Returns encoded size

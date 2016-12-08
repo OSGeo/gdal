@@ -1083,7 +1083,7 @@ static bool SENTINEL2GetResolutionSet(CPLXMLNode* psProductInfo,
             osName = "0" + osName;
         oMapResolutionsToBands[psBandDesc->nResolution].insert(osName);
     }
-    if( oSetResolutions.size() == 0 )
+    if( oSetResolutions.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find any band");
         return false;
@@ -1142,7 +1142,7 @@ static CPLString SENTINEL2GetBandListForResolution(
                                             oIterBandnames != oBandnames.end();
                                         ++oIterBandnames)
     {
-        if( osBandNames.size() )
+        if( !osBandNames.empty() )
             osBandNames += ", ";
         const char* pszName = *oIterBandnames;
         if( *pszName == '0' )
@@ -1207,7 +1207,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
     poDS->GDALDataset::SetMetadata(papszMD);
     CSLDestroy(papszMD);
 
-    if( osOriginalXML.size() )
+    if( !osOriginalXML.empty() )
     {
         char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
@@ -1254,7 +1254,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct( GDALOpenInfo * poOpenInfo )
     if( pszPosList != NULL )
     {
         CPLString osPolygon = SENTINEL2GetPolygonWKTFromPosList(pszPosList);
-        if( osPolygon.size() )
+        if( !osPolygon.empty() )
             poDS->GDALDataset::SetMetadataItem("FOOTPRINT", osPolygon.c_str());
     }
 
@@ -1362,7 +1362,7 @@ static CPLString SENTINEL2GetTilename(const CPLString& osGranulePath,
 
     CPLString osTile(osGranulePath);
     const char chSeparator = SENTINEL2GetPathSeparator(osTile);
-    if( osTile.size() )
+    if( !osTile.empty() )
         osTile += chSeparator;
     if( bIsPreview ||
         (psL2ABandDesc != NULL && psL2ABandDesc->eLocation == TL_QI_DATA ) )
@@ -1499,7 +1499,7 @@ static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
 
     // Parse product MTD if available
     papszMD = NULL;
-    if( osMainMTD.size() != 0 &&
+    if( !osMainMTD.empty() &&
         /* env var for debug only */
         CPLTestBool(CPLGetConfigOption("SENTINEL2_USE_MAIN_MTD", "YES")) )
     {
@@ -1579,7 +1579,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
 
     SENTINEL2DatasetContainer* poDS = new SENTINEL2DatasetContainer();
 
-    if( osOriginalXML.size() )
+    if( !osOriginalXML.empty() )
     {
         char* apszXMLMD[2];
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
@@ -1622,7 +1622,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule( const char* pszFilename,
     if( pszPosList != NULL )
     {
         CPLString osPolygon = SENTINEL2GetPolygonWKTFromPosList(pszPosList);
-        if( osPolygon.size() )
+        if( !osPolygon.empty() )
             poDS->GDALDataset::SetMetadataItem("FOOTPRINT", osPolygon.c_str());
     }
 
@@ -2110,7 +2110,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
     poDS->GDALDataset::SetMetadata(papszMD);
     CSLDestroy(papszMD);
 
-    if( osOriginalXML.size() )
+    if( !osOriginalXML.empty() )
     {
         char* apszXMLMD[2];
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
@@ -2196,7 +2196,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
     if( pszPosList != NULL )
     {
         CPLString osPolygon = SENTINEL2GetPolygonWKTFromPosList(pszPosList);
-        if( osPolygon.size() )
+        if( !osPolygon.empty() )
             poDS->GDALDataset::SetMetadataItem("FOOTPRINT", osPolygon.c_str());
     }
 
@@ -2308,7 +2308,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTile( const char* pszFilename,
     poDS->GDALDataset::SetMetadata(papszMD);
     CSLDestroy(papszMD);
 
-    if( osOriginalXML.size() )
+    if( !osOriginalXML.empty() )
     {
         char* apszXMLMD[2];
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());
@@ -2633,7 +2633,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
                 osName = "0" + osName;
             oSetBands.insert(osName);
         }
-        if( oSetBands.size() == 0 )
+        if( oSetBands.empty() )
             return NULL;
     }
     else
@@ -2641,7 +2641,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
         oSetBands = oMapResolutionsToBands[nSubDSPrecision];
     }
 
-    if( aosBands.size() == 0 )
+    if( aosBands.empty() )
     {
         for(std::set<CPLString>::const_iterator oIterBandnames = oSetBands.begin();
                                                 oIterBandnames != oSetBands.end();
@@ -2691,7 +2691,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset( GDALOpenInfo * poOpenInfo,
         return NULL;
     }
 
-    if( osOriginalXML.size() )
+    if( !osOriginalXML.empty() )
     {
         char* apszXMLMD[2] = { NULL };
         apszXMLMD[0] = const_cast<char*>(osOriginalXML.c_str());

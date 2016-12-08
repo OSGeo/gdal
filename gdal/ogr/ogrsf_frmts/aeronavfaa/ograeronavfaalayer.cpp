@@ -420,7 +420,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
     while( true )
     {
         const char* pszLine = NULL;
-        if (osLastReadLine.size() != 0)
+        if (!osLastReadLine.empty())
             pszLine = osLastReadLine.c_str();
         else
             pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
@@ -478,7 +478,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             {
                 CPLString osName = pszLine + 2;
                 osName.resize(60);
-                while(osName.size() > 0 && osName[osName.size()-1] == ' ')
+                while(!osName.empty() && osName[osName.size()-1] == ' ')
                 {
                     osName.resize(osName.size()-1);
                 }
@@ -655,7 +655,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
             osCityName.resize(pszComma - pszBegin);
             osStateName = pszComma + 2;
             osStateName.resize(78 - (pszComma + 2 - pszLine));
-            while(osStateName.size() > 0 && osStateName[osStateName.size()-1] == ' ')
+            while(!osStateName.empty() && osStateName[osStateName.size()-1] == ' ')
             {
                 osStateName.resize(osStateName.size()-1);
             }

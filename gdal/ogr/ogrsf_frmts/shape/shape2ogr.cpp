@@ -1049,7 +1049,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 
     for( int iField = 0; iField < nFieldCount; iField++ )
     {
-        char szFieldName[12] = {};
+        // On reading we support up to 11 characters
+        char szFieldName[XBASE_FLDNAME_LEN_READ+1] = {};
         int nWidth = 0;
         int nPrecision = 0;
         DBFFieldType eDBFType =

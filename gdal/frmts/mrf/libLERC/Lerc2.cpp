@@ -298,8 +298,8 @@ void Lerc2::SortQuantArray(const vector<unsigned int>& quantVec,
     sortedQuantVec.resize(numElem);
 
     for (int i = 0; i < numElem; i++) {
-	sortedQuantVec[i].first = quantVec[i];
-	sortedQuantVec[i].second = i;
+        sortedQuantVec[i].first = quantVec[i];
+        sortedQuantVec[i].second = i;
     }
     sort(sortedQuantVec.begin(), sortedQuantVec.end());
 }

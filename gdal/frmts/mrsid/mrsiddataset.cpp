@@ -1192,7 +1192,7 @@ char** MrSIDDataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
 
-    if (osMETFilename.size() != 0)
+    if (!osMETFilename.empty())
         papszFileList = CSLAddString(papszFileList, osMETFilename.c_str());
 
     return papszFileList;

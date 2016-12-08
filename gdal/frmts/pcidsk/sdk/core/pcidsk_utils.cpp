@@ -52,10 +52,10 @@ using namespace PCIDSK;
 #include <time.h>
 #include <sys/types.h>
 
-void	PCIDSK::GetCurrentDateTime( char *out_time )
+void    PCIDSK::GetCurrentDateTime( char *out_time )
 
 {
-    time_t	    clock;
+    time_t          clock;
     char            ctime_out[25];
 
     time( &clock );
@@ -507,7 +507,7 @@ std::string PCIDSK::MergeRelativePath( const PCIDSK::IOInterfaces *io_interfaces
 /* -------------------------------------------------------------------- */
 /*      Does src_filename appear to be absolute?                        */
 /* -------------------------------------------------------------------- */
-    if( src_filename.size() == 0 )
+    if( src_filename.empty() )
         return src_filename; // we can't do anything with a blank.
     else if( src_filename.size() > 2 && src_filename[1] == ':' )
         return src_filename; // has a drive letter?

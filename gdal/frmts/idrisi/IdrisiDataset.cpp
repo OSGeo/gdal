@@ -2858,7 +2858,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             const char* pszPCSCode = CSVGetField( CSVFilename( "stateplane.csv" ),
                                                  "EPSG_PCS_CODE", pszID, CC_Integer, "ID" );
             osPCSCode = (pszPCSCode) ? pszPCSCode : "";
-            if( osPCSCode.size() )
+            if( !osPCSCode.empty() )
             {
                 int nZone      = osPCSCode[osPCSCode.size() - 1] - '0';
                 int nSPCode    = atoi_nz( osPCSCode );

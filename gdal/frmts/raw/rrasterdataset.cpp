@@ -372,7 +372,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                  "Unhandled datatype=%s", osDataType.c_str() );
         return NULL;
     }
-    if( l_nBands > 1 && osBandOrder.size() == 0 )
+    if( l_nBands > 1 && osBandOrder.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing 'bandorder'" );
@@ -476,7 +476,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_osGriFilename = osGriFilename;
     poDS->m_fpImage = fpImage;
 
-    if( osProjection.size() )
+    if( !osProjection.empty() )
     {
         OGRSpatialReference oSRS;
         if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )

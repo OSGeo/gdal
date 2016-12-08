@@ -2338,7 +2338,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
                     /* If the text is of the form {stuff}, then it means we want to fetch */
                     /* the value of the field "stuff" in the feature */
-                    if( osLabelText.size() && osLabelText[0] == '{' &&
+                    if( !osLabelText.empty() && osLabelText[0] == '{' &&
                         osLabelText[osLabelText.size() - 1] == '}' )
                     {
                         osLabelText = pszStr + 1;
@@ -2804,7 +2804,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     /* -------------------------------------------------------------- */
     /*  Write label                                                   */
     /* -------------------------------------------------------------- */
-    if (osLabelText.size() && wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
+    if (!osLabelText.empty() && wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
     {
         if (osVectorDesc.nOCGTextId == 0)
             osVectorDesc.nOCGTextId = WriteOCG("Text", osVectorDesc.nOGCId);
@@ -3189,7 +3189,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
         for(size_t iVector = 0; iVector < oLayerDesc.aIds.size(); iVector ++)
         {
             CPLString osName = oLayerDesc.aFeatureNames[iVector];
-            if (osName.size())
+            if (!osName.empty() )
             {
                 VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
                             iObj);
@@ -3199,7 +3199,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
 
             VSIFPrintfL(fp, "/Vector%d Do\n", oLayerDesc.aIds[iVector]);
 
-            if (osName.size())
+            if (!osName.empty() )
             {
                 VSIFPrintfL(fp, "EMC\n");
             }
@@ -3225,7 +3225,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
                 if (oLayerDesc.aIdsText[iVector])
                 {
                     CPLString osName = oLayerDesc.aFeatureNames[iVector];
-                    if (osName.size())
+                    if (!osName.empty() )
                     {
                         VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
                                     iObj);
@@ -3233,7 +3233,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
 
                     VSIFPrintfL(fp, "/Text%d Do\n", oLayerDesc.aIdsText[iVector]);
 
-                    if (osName.size())
+                    if (!osName.empty() )
                     {
                         VSIFPrintfL(fp, "EMC\n");
                     }
@@ -3252,7 +3252,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
     /* -------------------------------------------------------------- */
     /*  Write drawing instructions for extra content.                 */
     /* -------------------------------------------------------------- */
-    if (pszExtraStream || asExtraImageDesc.size())
+    if (pszExtraStream || !asExtraImageDesc.empty() )
     {
         if (nLayerExtraId)
             VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", nLayerExtraId);
@@ -3407,7 +3407,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             oDict.Add("Font", poDictFont);
         }
 
-        if (asOCGs.size())
+        if (!asOCGs.empty() )
         {
             GDALPDFDictionaryRW* poDictProperties = new GDALPDFDictionaryRW();
             for(size_t i=0; i<asOCGs.size(); i++)
@@ -4101,7 +4101,7 @@ void GDALPDFWriter::WritePages()
              .Add("Pages", nPageResourceId, 0);
         if (nXMPId)
             oDict.Add("Metadata", nXMPId, 0);
-        if (asOCGs.size())
+        if (!asOCGs.empty() )
         {
             GDALPDFDictionaryRW* poDictOCProperties = new GDALPDFDictionaryRW();
             oDict.Add("OCProperties", poDictOCProperties);
@@ -4125,7 +4125,7 @@ void GDALPDFWriter::WritePages()
             poDictD->Add("Order", poArrayOrder);
 
             /* Build "OFF" array of D dict */
-            if( osOffLayers.size() )
+            if( !osOffLayers.empty() )
             {
                 GDALPDFArrayRW* poArrayOFF = new GDALPDFArrayRW();
                 char** papszTokens = CSLTokenizeString2(osOffLayers, ",", 0);
@@ -4158,7 +4158,7 @@ void GDALPDFWriter::WritePages()
             }
 
             /* Build "RBGroups" array of D dict */
-            if( osExclusiveLayers.size() )
+            if( !osExclusiveLayers.empty() )
             {
                 GDALPDFArrayRW* poArrayRBGroups = new GDALPDFArrayRW();
                 char** papszTokens = CSLTokenizeString2(osExclusiveLayers, ",", 0);

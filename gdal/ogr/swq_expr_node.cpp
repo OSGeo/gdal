@@ -502,7 +502,7 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             }
         }
 
-        if( osExpr.size() == 0 )
+        if( osExpr.empty() )
         {
             return CPLStrdup(CPLSPrintf("%c%c", chColumnQuote, chColumnQuote));
         }

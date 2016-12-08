@@ -713,7 +713,7 @@ CPLErr HDF4ImageRasterBand::SetNoDataValue( double dfNoData )
 const char *HDF4ImageRasterBand::GetUnitType()
 
 {
-    if( osUnitType.size() > 0 )
+    if( !osUnitType.empty() )
         return osUnitType;
 
     return GDALRasterBand::GetUnitType();

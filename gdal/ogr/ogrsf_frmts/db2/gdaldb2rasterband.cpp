@@ -573,7 +573,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
                        "WHERE zoom_level = %d AND tile_row = %d "
                        "AND tile_column = %d%s",
                        m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
-                       m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+                       !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 
 #ifdef DEBUG_SQL
     CPLDebug("OGRDB2DataSource::ReadTile2",
@@ -1542,7 +1542,7 @@ CPLErr OGRDB2DataSource::FlushRemainingShiftedTiles()
                 char* pszNewSQL = sqlite3_mprintf("SELECT tile_data FROM '%q' "
                                                   "WHERE zoom_level = %d AND tile_row = %d AND tile_column = %d%s",
                                                   m_osRasterTable.c_str(), m_nZoomLevel, nRow, nCol,
-                                                  m_osWHERE.size() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
+                                                  !m_osWHERE.empty() ? CPLSPrintf(" AND (%s)", m_osWHERE.c_str()): "");
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GPKG", "%s", pszNewSQL);
 #endif

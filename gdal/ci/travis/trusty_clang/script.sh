@@ -4,6 +4,8 @@ set -e
 
 # When run in the same process after ogr_pgeo.py (with the MDB driver), FileGDB tests fail.
 # Run it in isolation
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=$JAVA_HOME/jre/bin:$PATH
 
 cd gdal
 # Perl unit tests

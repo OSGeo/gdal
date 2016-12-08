@@ -2321,7 +2321,7 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         }
         CSLDestroy(papszTokens);
     }
-    if( adfRates.size() == 0 )
+    if( adfRates.empty() )
     {
         adfRates.push_back(100. / dfDefaultQuality);
     }

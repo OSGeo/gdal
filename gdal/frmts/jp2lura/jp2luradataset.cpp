@@ -1154,9 +1154,9 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 apoBoxes[nBoxes++] = &bpccBox;
             apoBoxes[nBoxes++] = &colrBox;
             //if (pclrBox.GetDataLength())
-            //	apoBoxes[nBoxes++] = &pclrBox;
+            //  apoBoxes[nBoxes++] = &pclrBox;
             //if (cmapBox.GetDataLength())
-            //	apoBoxes[nBoxes++] = &cmapBox;
+            //  apoBoxes[nBoxes++] = &cmapBox;
             if (cdefBox.GetDataLength())
                 apoBoxes[nBoxes++] = &cdefBox;
             if (poRes)
@@ -1452,7 +1452,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         /* set progression order */
         SetPropGeneral(cJP2_Prop_Progression, cJP2_Progression);
 
-        /* set visual weighting	*/
+        /* set visual weighting */
         SetPropGeneral(cJP2_Prop_Quality_Style, cJP2_Quality);
         SetPropGeneral(cJP2_Prop_Speed_Mode, cJP2_Speed);
         SetPropGeneral(cJP2_Prop_Coder_Options, ERROR_RESILIENCE_VALUE);
@@ -2130,7 +2130,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    /*	Decompress bitonal images as 8 bit grayscale            */
+    /*  Decompress bitonal images as 8 bit grayscale            */
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
     error = JP2_Decompress_SetProp(poDS->sOutputData.handle,

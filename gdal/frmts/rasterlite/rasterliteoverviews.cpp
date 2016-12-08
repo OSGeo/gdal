@@ -730,7 +730,7 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         return CE_Failure;
     }
 
-    if (osTableName.size() == 0)
+    if (osTableName.empty())
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */

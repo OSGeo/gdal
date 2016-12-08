@@ -88,6 +88,10 @@ M value is found to decide the appropriate layer type.</li>
 Whether the shapefile should be automatically repacked when needed, at dataset
 closing or at FlushCache()/SyncToDisk() time.</li>
 
+<li> <b>DBF_EOF_CHAR=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the .DBF should be terminated by a 0x1A end-of-file character, as in the
+DBF spec and done by other software vendors. Previous GDAL versions did not write one.</li>
+
 </ul>
 
 <h2>Spatial and Attribute Indexing</h2>
@@ -279,6 +283,10 @@ Note: behaviour of past GDAL releases was to write 1995-07-26</li>
 <li> <b>AUTO_REPACK=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
 Whether the shapefile should be automatically repacked when needed, at dataset
 closing or at FlushCache()/SyncToDisk() time.</li>
+
+<li> <b>DBF_EOF_CHAR=</b><i>YES/NO</i>: (OGR &gt;= 2.2) Default to YES in GDAL 2.2.
+Whether the .DBF should be terminated by a 0x1A end-of-file character, as in the
+DBF spec and done by other software vendors. Previous GDAL versions did not write one.</li>
 
 </ul>
 

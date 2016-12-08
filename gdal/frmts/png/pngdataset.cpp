@@ -1368,7 +1368,7 @@ char **PNGDataset::GetFileList()
 
     LoadWorldFile();
 
-    if (osWldFilename.size() != 0 &&
+    if (!osWldFilename.empty() &&
         CSLFindString(papszFileList, osWldFilename) == -1)
     {
         papszFileList = CSLAddString( papszFileList, osWldFilename );

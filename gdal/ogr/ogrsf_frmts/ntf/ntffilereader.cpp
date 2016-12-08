@@ -299,7 +299,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 
             if( iChar > 15 )
             {
-                if( osFCName.size() )
+                if( !osFCName.empty() )
                     osFCName += " : " ;
                 osFCName += poRecord->GetField(17,iChar+1);
             }
@@ -311,7 +311,7 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 
             if( iChar > 37 )
             {
-                if( osFCName.size() )
+                if( !osFCName.empty() )
                     osFCName += " : " ;
                 osFCName += poRecord->GetField(37,iChar);
             }

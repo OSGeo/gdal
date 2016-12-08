@@ -983,7 +983,7 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 if( bNewStepYSign < 0 ) dfStepY = -dfStepY;
                 nCountStepY ++;
-                if( adfStepY.size() == 0 )
+                if( adfStepY.empty() )
                 {
                     adfStepY.push_back(dfStepY);
                 }

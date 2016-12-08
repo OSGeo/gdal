@@ -167,13 +167,13 @@ void CPCIDSKToutinModelSegment::Synchronize()
 SRITInfo_t *
 CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 {
-    int		i,j,k,l;
-    SRITInfo_t 	*SRITModel;
-    bool	bVersion9;
+    int             i,j,k,l;
+    SRITInfo_t     *SRITModel;
+    bool            bVersion9;
 
 /* -------------------------------------------------------------------- */
-/*	Read the header block						*/
-/* -------------------------------------------------------------------- */    
+/*      Read the header block                                           */
+/* -------------------------------------------------------------------- */
     // We test the name of the binary segment before starting to read 
     // the buffer.
     if (!STARTS_WITH(seg_data.buffer, "MODEL   ")) 
@@ -191,7 +191,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     int nVersion = seg_data.GetInt(8,1);
     if (nVersion == 9)
     {
-	bVersion9 = true;
+        bVersion9 = true;
     }
 
 /* -------------------------------------------------------------------- */
@@ -203,7 +203,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     SRITModel->nDownSample = 1;
     if(STARTS_WITH(seg_data.Get(22,2) , "DS"))
     {
-	SRITModel->nDownSample = seg_data.GetInt(24,3); 
+        SRITModel->nDownSample = seg_data.GetInt(24,3); 
     }
 
 /* -------------------------------------------------------------------- */
@@ -269,7 +269,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the GCPs							*/
+/*      Read the GCPs                                                   */
 /* -------------------------------------------------------------------- */
     l = 0;
     k = 4;
@@ -293,18 +293,18 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     }
      
 /* -------------------------------------------------------------------- */
-/*      Call BinaryToEphemeris to get the orbital data		        */
+/*      Call BinaryToEphemeris to get the orbital data                  */
 /* -------------------------------------------------------------------- */
     SRITModel->OrbitPtr =
         BinaryToEphemeris( 512*21 );
     
 /* -------------------------------------------------------------------- */
-/*      Pass the sensor back to SRITModel				*/
+/*      Pass the sensor back to SRITModel                               */
 /* -------------------------------------------------------------------- */
     SRITModel->Sensor = SRITModel->OrbitPtr->SatelliteSensor;
 
 /* -------------------------------------------------------------------- */
-/*      Assign nSensor value						*/
+/*      Assign nSensor value                                            */
 /* -------------------------------------------------------------------- */
 
     SRITModel->nSensor = GetSensor (SRITModel->OrbitPtr);
@@ -322,7 +322,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Get the attitude data for SPOT					*/
+/*      Get the attitude data for SPOT                                  */
 /* -------------------------------------------------------------------- */
     if (SRITModel->OrbitPtr->AttitudeSeg != NULL ||
         SRITModel->OrbitPtr->RadarSeg != NULL)
@@ -372,9 +372,9 @@ void
 CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
 
 {
-    int		i,j,k,l;
-    double	dfminht,dfmaxht,dfmeanht;
-    int nPos = 0;
+    int         i,j,k,l;
+    double      dfminht,dfmaxht,dfmeanht;
+    int         nPos = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Create the data array.                                          */
@@ -385,7 +385,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     memset( seg_data.buffer , ' ', 512 * 21 );
 
 /* -------------------------------------------------------------------- */
-/*	Initialize the header.						*/
+/*      Initialize the header.                                          */
 /* -------------------------------------------------------------------- */
     nPos = 512*0;
     seg_data.Put("MODEL   9.0",0,nPos+11);
@@ -441,8 +441,8 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     }
     else
     {
-	dfminht = SRITModel->dfGCPMinHt;
-	dfmaxht = 0;
+        dfminht = SRITModel->dfGCPMinHt;
+        dfmaxht = 0;
     }
 
     dfmeanht = (dfminht + dfmaxht)/2.;
@@ -457,12 +457,12 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     {
         if (SRITModel->OrbitPtr->Type == OrbAttitude &&
             SRITModel->OrbitPtr->AttitudeSeg != NULL) 
-	{
-	    if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
+        {
+            if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
                 seg_data.Put("3",nPos+20,1);
-	}
+        }
     }
-	
+
     seg_data.Put(SRITModel->GCPUnit.c_str(),nPos+30,16);
     seg_data.Put("M",nPos+49,1);
 
@@ -473,12 +473,12 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     seg_data.Put("NEWGCP",nPos+116,6);
 
 /* -------------------------------------------------------------------- */
-/*      Write the projection parameter if necessary			*/
+/*      Write the projection parameter if necessary                     */
 /* -------------------------------------------------------------------- */
 
     seg_data.Put(SRITModel->utmunit.c_str(),nPos+225,16);
 
-    if(SRITModel->oProjectionInfo.size() > 0)
+    if(!SRITModel->oProjectionInfo.empty())
     {
         seg_data.Put("ProjInfo: ",nPos+245,10);
         seg_data.Put(SRITModel->oProjectionInfo.c_str(),
@@ -495,7 +495,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     for (j=0; j<SRITModel->nGCPCount; j++)
     {
         if (j > 255)
-	    break;
+            break;
 
         seg_data.Put(SRITModel->nGCPIds[j],nPos+10*l,5);
         seg_data.Put((int)(SRITModel->nPixel[j]+0.5),
@@ -515,7 +515,7 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     }
 
 /* -------------------------------------------------------------------- */
-/*	Add the serialized form of the EphemerisSeg_t.			*/
+/*      Add the serialized form of the EphemerisSeg_t.                  */
 /* -------------------------------------------------------------------- */
     EphemerisToBinary( SRITModel->OrbitPtr , 512*21 );
 }
@@ -617,20 +617,20 @@ int  CPCIDSKToutinModelSegment::GetSensor( EphemerisSeg_t *OrbitPtr)
             nSensor = OV5_MULTI_GEO;
     }
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN_STD"))
-        nSensor = QBIRD_PAN_STD; 	// this checking must go first
+        nSensor = QBIRD_PAN_STD;    // this checking must go first
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN_STH"))
         nSensor = QBIRD_PAN_STH;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_PAN"))
         nSensor = QBIRD_PAN;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI_STD"))
-        nSensor = QBIRD_MULTI_STD;	// this checking must go first
+        nSensor = QBIRD_MULTI_STD;  // this checking must go first
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI_STH"))
         nSensor = QBIRD_MULTI_STH;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "QBIRD_MULTI"))
         nSensor = QBIRD_MULTI;
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW1_PAN_STD") ||
         STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_PAN_STD"))
-        nSensor = WVIEW_PAN_STD; 	// this checking must go first
+        nSensor = WVIEW_PAN_STD;    // this checking must go first
     else if (STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW1_PAN") ||
         STARTS_WITH_CI(OrbitPtr->SatelliteSensor.c_str(), "WVIEW_PAN"))
         nSensor = WVIEW_PAN;

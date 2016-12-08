@@ -579,9 +579,9 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
                                                int nBandCount, int* panBandMap,
                                                int nPixelSpace, int nLineSpace,
                                                int nBandSpace,
-                                               char **papszOptions);
+                                               char **papszOptions) override;
 
-    virtual void EndAsyncReader(GDALAsyncReader *);
+    virtual void EndAsyncReader(GDALAsyncReader *) override;
 #endif /* ECWSDK_VERSION > 40 */
 #if ECWSDK_VERSION >=50
     int GetFormatVersion() const {
@@ -636,7 +636,7 @@ class ECWRasterBand : public GDALPamRasterBand
                    ~ECWRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual int    HasArbitraryOverviews() override { return apoOverviews.size() == 0; }
+    virtual int    HasArbitraryOverviews() override { return apoOverviews.empty(); }
     virtual int    GetOverviewCount() override { return (int)apoOverviews.size(); }
     virtual GDALRasterBand *GetOverview(int) override;
 

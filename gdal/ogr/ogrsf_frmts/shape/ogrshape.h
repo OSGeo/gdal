@@ -243,6 +243,7 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
         { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
     void                SetModificationDate( const char* pszStr );
     void                SetAutoRepack(bool b) { m_bAutoRepack = b; }
+    void                SetWriteDBFEOFChar(bool b);
 };
 
 /************************************************************************/

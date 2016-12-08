@@ -87,7 +87,7 @@ public:
     virtual ~GDALECWCompressor();
     virtual CNCSError WriteReadLine(UINT32 nNextLine, void **ppInputArray) override;
 #if ECWSDK_VERSION>=50
-    virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters);
+    virtual void WriteStatus(IEEE4 fPercentComplete, const NCS::CString &sStatusText, const CompressionCounters &Counters) override;
 #else
     virtual void WriteStatus(UINT32 nCurrentLine) override;
 #endif
@@ -107,9 +107,11 @@ public:
     CPLErr  WriteJP2Box( GDALJP2Box * );
     void    WriteXMLBoxes();
     CPLErr  ourWriteLineBIL(UINT16 nBands, void **ppOutputLine, UINT32 *pLineSteps = NULL);
-    virtual NCSEcwCellType WriteReadLineGetCellType() {
+#if ECWSDK_VERSION>=50
+    virtual NCSEcwCellType WriteReadLineGetCellType() override {
         return sFileInfo.eCellType;
     }
+#endif
 #ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
 #endif
@@ -1076,7 +1078,7 @@ CPLErr GDALECWCompressor::Initialize(
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
-        if ( osCompressionSoftware.size() > 0 ) {
+        if ( !osCompressionSoftware.empty() ) {
             psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
         }
         if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){

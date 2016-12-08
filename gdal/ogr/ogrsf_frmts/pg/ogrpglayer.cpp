@@ -1907,7 +1907,7 @@ OGRErr OGRPGLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce 
                           GetFromClauseForGetExtent().c_str() );
     }
 
-    if( osCommand.size() != 0 )
+    if( !osCommand.empty() )
     {
         if( RunGetExtentRequest(psExtent, bForce, osCommand, FALSE) == OGRERR_NONE )
             return OGRERR_NONE;

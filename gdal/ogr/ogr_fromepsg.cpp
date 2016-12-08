@@ -2564,45 +2564,78 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
             SetAuthority( "GEOGCS", "EPSG", nGCS );
     }
 
+    if( IsProjected() && GetAuthorityCode( "PROJCS") == NULL )
+    {
+        const char *pszProjection = GetAttrValue( "PROJECTION" );
+
 /* -------------------------------------------------------------------- */
 /*      Is this a UTM coordinate system with a common GEOGCS?           */
 /* -------------------------------------------------------------------- */
-    int nZone = 0;
-    int bNorth = FALSE;
-    if( (nZone = GetUTMZone( &bNorth )) != 0
-        && GetAuthorityCode( "PROJCS") == NULL )
-    {
-        const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
-        const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+        int nZone = 0;
+        int bNorth = FALSE;
+        if( (nZone = GetUTMZone( &bNorth )) != 0 )
+        {
+            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
 
-        if( pszAuthName == NULL || pszAuthCode == NULL )
-        {
-            // Don't exactly recognise datum.
+            if( pszAuthName == NULL || pszAuthCode == NULL )
+            {
+                // Don't exactly recognise datum.
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+            {
+                // WGS84
+                if( bNorth )
+                    SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
+                else
+                    SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
+                    && nZone >= 3 && nZone <= 22 && bNorth )
+            {
+                SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
+                    && nZone >= 3 && nZone <= 23 && bNorth )
+            {
+                SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
+            }
+            else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
+            { // WGS72
+                if( bNorth )
+                    SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
+                else
+                    SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+            }
         }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4326 )
+
+/* -------------------------------------------------------------------- */
+/*      Is this a Polar Stereographic system on WGS 84 ?                */
+/* -------------------------------------------------------------------- */
+        else if ( pszProjection != NULL &&
+                  EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
         {
-            // WGS84
-            if( bNorth )
-                SetAuthority( "PROJCS", "EPSG", 32600 + nZone );
-            else
-                SetAuthority( "PROJCS", "EPSG", 32700 + nZone );
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4267
-                 && nZone >= 3 && nZone <= 22 && bNorth )
-        {
-            SetAuthority( "PROJCS", "EPSG", 26700 + nZone ); // NAD27
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4269
-                 && nZone >= 3 && nZone <= 23 && bNorth )
-        {
-            SetAuthority( "PROJCS", "EPSG", 26900 + nZone ); // NAD83
-        }
-        else if( EQUAL(pszAuthName, "EPSG") && atoi(pszAuthCode) == 4322 )
-        { // WGS72
-            if( bNorth )
-                SetAuthority( "PROJCS", "EPSG", 32200 + nZone );
-            else
-                SetAuthority( "PROJCS", "EPSG", 32300 + nZone );
+            const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
+            const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
+            const double dfLatOrigin = GetNormProjParm(
+                                            SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
+
+            if( pszAuthName != NULL && EQUAL(pszAuthName, "EPSG") &&
+                pszAuthCode != NULL && atoi(pszAuthCode) == 4326 &&
+                fabs( fabs(dfLatOrigin ) - 71.0 ) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 )) < 1e-15 &&
+                fabs(GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) - 1.0) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 )) < 1e-15 &&
+                fabs(GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 )) < 1e-15 &&
+                fabs(GetLinearUnits() - 1.0) < 1e-15 )
+            {
+                if( dfLatOrigin > 0 )
+                    // Arctic Polar Stereographic
+                    SetAuthority( "PROJCS", "EPSG", 3995 );
+                else
+                    // Antarctic Polar Stereographic
+                    SetAuthority( "PROJCS", "EPSG", 3031 );
+            }
         }
     }
 

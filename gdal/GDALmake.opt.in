@@ -572,6 +572,7 @@ GDAL_FORMATS += idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg
 GDAL_FORMATS += coasp tsx terragen blx msgn til r northwood saga xyz hf2
 GDAL_FORMATS += kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals
 GDAL_FORMATS += safe sentinel2 derived
+GDAL_FORMATS += prf
 GDAL_FORMATS += @OPT_GDAL_FORMATS@
 
 ifneq ($(PCIDSK_SETTING),no)

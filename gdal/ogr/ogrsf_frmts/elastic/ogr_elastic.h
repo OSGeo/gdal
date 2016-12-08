@@ -191,6 +191,8 @@ class OGRElasticDataSource : public GDALDataset {
     OGRElasticLayer   **m_papoLayers;
     int                 m_nLayers;
 
+    bool                CheckVersion();
+
 public:
                             OGRElasticDataSource();
                             virtual ~OGRElasticDataSource();
@@ -203,6 +205,7 @@ public:
     int                 m_nFeatureCountToEstablishFeatureDefn;
     bool                m_bJSonField;
     bool                m_bFlattenNestedAttributes;
+    int                 m_nMajorVersion;
 
     int Open(GDALOpenInfo* poOpenInfo);
 

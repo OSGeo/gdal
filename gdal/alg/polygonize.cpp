@@ -62,7 +62,8 @@ CPL_CVSID("$Id$");
 
 class RPolygon {
 public:
-    explicit RPolygon( double dfValue ) { dfPolyValue = dfValue; nLastLineUpdated = -1; }
+    explicit RPolygon( double dfValue )
+        { dfPolyValue = dfValue; nLastLineUpdated = -1; }
 
     double           dfPolyValue;
     int              nLastLineUpdated;
@@ -169,13 +170,11 @@ void RPolygon::Merge( int iBaseString, int iSrcString, int iDirection )
 
     if( iDirection == 1 )
     {
-        // iStart = 1;
         iEnd = static_cast<int>(anString.size()) / 2;
     }
     else
     {
         iStart = static_cast<int>(anString.size()) / 2 - 2;
-        // iEnd = -1;
     }
 
     for( int i = iStart; i != iEnd; i += iDirection )
@@ -206,7 +205,7 @@ void RPolygon::AddSegment( int x1, int y1, int x2, int y2 )
     for( size_t iString = 0; iString < aanXY.size(); iString++ )
     {
         std::vector<int> &anString = aanXY[iString];
-        size_t nSSize = anString.size();
+        const size_t nSSize = anString.size();
 
         if( anString[nSSize-2] == x1
             && anString[nSSize-1] == y1 )
@@ -277,17 +276,18 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
                       RPolygon **papoPoly, int iX, int iY )
 
 {
+    // TODO(schwehr): Simplify these three vars.
     int nThisId = panThisLineId[iX];
-    int nRightId = panThisLineId[iX+1];
-    int nPreviousId = panLastLineId[iX];
-    int iXReal = iX - 1;
-
     if( nThisId != -1 )
         nThisId = panPolyIdMap[nThisId];
+    int nRightId = panThisLineId[iX+1];
     if( nRightId != -1 )
         nRightId = panPolyIdMap[nRightId];
+    int nPreviousId = panLastLineId[iX];
     if( nPreviousId != -1 )
         nPreviousId = panPolyIdMap[nPreviousId];
+
+    const int iXReal = iX - 1;
 
     if( nThisId != nPreviousId )
     {
@@ -357,16 +357,15 @@ EmitPolygonToLayer( OGRLayerH hOutLayer, int iPixValField,
              iVert >= 0;
              iVert-- )
         {
-            double dfX, dfY;
-            int    nPixelX, nPixelY;
+            const int nPixelX = anString[iVert*2];
+            const int nPixelY = anString[iVert*2+1];
 
-            nPixelX = anString[iVert*2];
-            nPixelY = anString[iVert*2+1];
-
-            dfX = padfGeoTransform[0]
+            const double dfX =
+                padfGeoTransform[0]
                 + nPixelX * padfGeoTransform[1]
                 + nPixelY * padfGeoTransform[2];
-            dfY = padfGeoTransform[3]
+            const double dfY =
+                padfGeoTransform[3]
                 + nPixelX * padfGeoTransform[4]
                 + nPixelY * padfGeoTransform[5];
 
@@ -413,18 +412,19 @@ GPMaskImageData( GDALRasterBandH hMaskBand, GByte* pabyMaskLine,
                  DataType *panImageLine )
 
 {
-    CPLErr eErr = GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
-                                pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
-    if( eErr == CE_None )
+    const CPLErr eErr =
+        GDALRasterIO( hMaskBand, GF_Read, 0, iY, nXSize, 1,
+                      pabyMaskLine, nXSize, 1, GDT_Byte, 0, 0 );
+    if( eErr != CE_None )
+        return eErr;
+
+    for( int i = 0; i < nXSize; i++ )
     {
-        for( int i = 0; i < nXSize; i++ )
-        {
-            if( pabyMaskLine[i] == 0 )
-                panImageLine[i] = GP_NODATA_MARKER;
-        }
+        if( pabyMaskLine[i] == 0 )
+            panImageLine[i] = GP_NODATA_MARKER;
     }
 
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -456,9 +456,9 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     if( !OGR_L_TestCapability( hOutLayer, OLCSequentialWrite ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Output feature layer does not appear to support creation\n"
-                  "of features in GDALPolygonize()." );
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Output feature layer does not appear to support creation "
+                 "of features in GDALPolygonize().");
         return CE_Failure;
     }
 
@@ -475,7 +475,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     GInt32 *panLastLineId = static_cast<GInt32 *>(
         VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize + 2));
     GInt32 *panThisLineId = static_cast<GInt32 *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GInt32) ,nXSize + 2));
+        VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize + 2));
 
     GByte *pabyMaskLine =
         hMaskBand != NULL
@@ -722,7 +722,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
 /* Code from:                                                                 */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool GDALFloatEquals(float A, float B)
+GBool GDALFloatEquals( float A, float B )
 {
     // This function will allow maxUlps-1 floats between A and B.
     const int maxUlps = MAX_ULPS;
@@ -736,7 +736,7 @@ GBool GDALFloatEquals(float A, float B)
     // This assignation could violate strict aliasing. It causes a warning with
     // gcc -O2. Use of memcpy preferred. Credits for Even Rouault. Further info
     // at http://trac.osgeo.org/gdal/ticket/4005#comment:6
-    int aInt;
+    int aInt = 0;
     memcpy(&aInt, &A, 4);
 
     // Make aInt lexicographically ordered as a twos-complement int.
@@ -744,7 +744,7 @@ GBool GDALFloatEquals(float A, float B)
         aInt = 0x80000000 - aInt;
 
     // Make bInt lexicographically ordered as a twos-complement int.
-    int bInt;
+    int bInt = 0;
     memcpy(&bInt, &B, 4);
 
     if( bInt < 0 )

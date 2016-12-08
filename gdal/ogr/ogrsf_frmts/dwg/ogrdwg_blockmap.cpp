@@ -94,7 +94,7 @@ void OGRDWGDataSource::ReadBlocksSection()
         else
             oBlockMap[osBlockName].poGeometry = SimplifyBlockGeometry(poColl);
 
-        if( apoFeatures.size() > 0 )
+        if( !apoFeatures.empty() )
             oBlockMap[osBlockName].apoFeatures = apoFeatures;
     }
 

@@ -1318,15 +1318,14 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #pragma GCC diagnostic ignored "-Wformat"
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif
-    snprintf( szTemp, sizeof(szTemp), "%*I64d", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*I64u", nMaxLen, iValue );
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 # elif HAVE_LONG_LONG
-    snprintf( szTemp, sizeof(szTemp), "%*lld", nMaxLen, (long long) iValue );
-//    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue );
 #else
-    snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
+    snprintf( szTemp, sizeof(szTemp), "%*lu", nMaxLen, iValue );
 #endif
 
     return CPLPrintString( pszBuffer, szTemp, nMaxLen );

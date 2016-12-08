@@ -911,7 +911,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 CPLSetThreadLocalConfigOption(
                     "GDAL_JPEG_TO_RGB",
-                    osOldVal.size() ? osOldVal.c_str() : NULL );
+                    !osOldVal.empty() ? osOldVal.c_str() : NULL );
             }
         }
         else
@@ -13589,7 +13589,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 poBand->bHaveOffsetScale = CPL_TO_BOOL(nHaveOffsetScale);
                 poBand->dfOffset = poBand->GDALPamRasterBand::GetOffset();
             }
-            if( poBand->osUnitType.size() == 0 )
+            if( poBand->osUnitType.empty() )
             {
                 const char* pszUnitType =
                     poBand->GDALPamRasterBand::GetUnitType();
@@ -14564,11 +14564,10 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
     }
     else
     {
-        const uint32 l_nRowsPerStrip =
+        const uint32 l_nRowsPerStrip = std::min(nYSize,
             l_nBlockYSize == 0
-            ? std::min(nYSize,
-                       static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0)))
-            : l_nBlockYSize;
+            ? static_cast<int>(TIFFDefaultStripSize(l_hTIFF,0))
+            : l_nBlockYSize );
 
         TIFFSetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, l_nRowsPerStrip );
     }
@@ -16790,7 +16789,7 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
         {
             if( !anReachedVirtualMemIO[i] )
             {
-                if( osMissing.size() ) osMissing += ",";
+                if( !osMissing.empty() ) osMissing += ",";
                 osMissing += CPLSPrintf("%d", i);
             }
         }
@@ -17000,7 +16999,7 @@ char **GTiffDataset::GetFileList()
         }
     }
 
-    if( osGeorefFilename.size() != 0 &&
+    if( !osGeorefFilename.empty() &&
         CSLFindString(papszFileList, osGeorefFilename) == -1 )
     {
         papszFileList = CSLAddString( papszFileList, osGeorefFilename );

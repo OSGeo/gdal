@@ -132,11 +132,11 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
                                             osUnderlyingTableName.c_str(),
                                             osUnderlyingGeometryColumn.c_str());
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osNewUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osNewUnderlyingTableName);
         }
         if( poUnderlyingLayer == NULL )
             poUnderlyingLayer =
-                (OGRSQLiteLayer*) poDS->GetLayerByName(osUnderlyingTableName);
+                (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osUnderlyingTableName);
     }
     return poUnderlyingLayer;
 }
@@ -482,15 +482,15 @@ void OGRSQLiteViewLayer::BuildWhere()
 
     CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
                                                m_poFilterGeom);
-    if (osSpatialWHERE.size() != 0)
+    if (!osSpatialWHERE.empty())
     {
         osWHERE = "WHERE ";
         osWHERE += osSpatialWHERE;
     }
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE = "WHERE ";
             osWHERE += osQuery;
@@ -515,7 +515,7 @@ int OGRSQLiteViewLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_poFilterGeom == NULL || osGeomColumn.size() == 0 ||
+        return m_poFilterGeom == NULL || osGeomColumn.empty() ||
                bHasSpatialIndex;
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))

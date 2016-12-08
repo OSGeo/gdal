@@ -210,7 +210,7 @@ ECWRasterBand::~ECWRasterBand()
 {
     FlushCache();
 
-    while( apoOverviews.size() > 0 )
+    while( !apoOverviews.empty() )
     {
         delete apoOverviews.back();
         apoOverviews.pop_back();
@@ -1406,7 +1406,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
                 osNewMetadata.AddString(*papszIter);
             papszIter ++;
         }
-        if (osNewMetadata.size() != 0)
+        if (!osNewMetadata.empty())
             return GDALPamDataset::SetMetadata(osNewMetadata.List(), pszDomain);
         else
             return CE_None;
@@ -2924,7 +2924,7 @@ void ECWDataset::ReadFileMetaDataFromFile()
     if (psFileInfo->pFileMetaData == NULL) return;
 
     if (psFileInfo->pFileMetaData->sClassification != NULL )
-        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification).a_str());
+        GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification));
     if (psFileInfo->pFileMetaData->sAcquisitionDate != NULL )
         GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
     if (psFileInfo->pFileMetaData->sAcquisitionSensorName != NULL )

@@ -642,11 +642,10 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         SkipBITSHORT( pabyBuf, nBitOffsetFromStart );
     }
 
-    int returnCode = CADErrorCodes::SUCCESS;
-
     // byte align data
     nBitOffsetFromStart = (4 + dHeaderVarsSectionLength) * 8;
 
+    int returnCode = CADErrorCodes::SUCCESS;
     unsigned short nCRC = ReadRAWSHORT( pabyBuf, nBitOffsetFromStart );
     unsigned short initial = 0xC0C1;
     unsigned short nCalculated = CalculateCRC8(
@@ -876,7 +875,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
     // Entities handling
     if( isCommonEntityType( dObjectType ) )
     {
-        struct CADCommonED stCommonEntityData; // common for all entities
+        CADCommonED stCommonEntityData; // common for all entities
 
         stCommonEntityData.nObjectSizeInBits = ReadRAWLONG( pabySectionContent, nBitOffsetFromStart );
         stCommonEntityData.hObjectHandle     = ReadHANDLE( pabySectionContent, nBitOffsetFromStart );
@@ -1612,7 +1611,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         vector<CADAttrib>           blockRefAttributes;
         unique_ptr<CADInsertObject> spoBlockRef( static_cast<CADInsertObject *>( GetObject( dBlockRefHandle ) ) );
 
-        if( spoBlockRef->hAttribs.size() != 0 )
+        if( !spoBlockRef->hAttribs.empty() )
         {
             long dCurrentEntHandle = spoBlockRef->hAttribs[0].getAsLong();
             long dLastEntHandle    = spoBlockRef->hAttribs[0].getAsLong();
@@ -1669,7 +1668,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
     return poGeometry;
 }
 
-CADBlockObject * DWGFileR2000::getBlock( long dObjectSize, struct CADCommonED stCommonEntityData,
+CADBlockObject * DWGFileR2000::getBlock( long dObjectSize, const CADCommonED& stCommonEntityData,
                                          const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADBlockObject * pBlock = new CADBlockObject();
@@ -1686,7 +1685,7 @@ CADBlockObject * DWGFileR2000::getBlock( long dObjectSize, struct CADCommonED st
     return pBlock;
 }
 
-CADEllipseObject * DWGFileR2000::getEllipse( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADEllipseObject * DWGFileR2000::getEllipse( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                              size_t& nBitOffsetFromStart )
 {
     CADEllipseObject * ellipse = new CADEllipseObject();
@@ -1717,7 +1716,7 @@ CADEllipseObject * DWGFileR2000::getEllipse( long dObjectSize, CADCommonED stCom
     return ellipse;
 }
 
-CADSolidObject * DWGFileR2000::getSolid( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADSolidObject * DWGFileR2000::getSolid( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADSolidObject * solid = new CADSolidObject();
@@ -1755,7 +1754,7 @@ CADSolidObject * DWGFileR2000::getSolid( long dObjectSize, CADCommonED stCommonE
     return solid;
 }
 
-CADPointObject * DWGFileR2000::getPoint( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADPointObject * DWGFileR2000::getPoint( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADPointObject * point = new CADPointObject();
@@ -1788,7 +1787,7 @@ CADPointObject * DWGFileR2000::getPoint( long dObjectSize, CADCommonED stCommonE
     return point;
 }
 
-CADPolyline3DObject * DWGFileR2000::getPolyLine3D( long dObjectSize, CADCommonED stCommonEntityData,
+CADPolyline3DObject * DWGFileR2000::getPolyLine3D( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                    const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADPolyline3DObject * polyline = new CADPolyline3DObject();
@@ -1811,7 +1810,7 @@ CADPolyline3DObject * DWGFileR2000::getPolyLine3D( long dObjectSize, CADCommonED
     return polyline;
 }
 
-CADRayObject * DWGFileR2000::getRay( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADRayObject * DWGFileR2000::getRay( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                      size_t& nBitOffsetFromStart )
 {
     CADRayObject * ray = new CADRayObject();
@@ -1833,7 +1832,7 @@ CADRayObject * DWGFileR2000::getRay( long dObjectSize, CADCommonED stCommonEntit
     return ray;
 }
 
-CADXLineObject * DWGFileR2000::getXLine( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADXLineObject * DWGFileR2000::getXLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADXLineObject * xline = new CADXLineObject();
@@ -1855,7 +1854,7 @@ CADXLineObject * DWGFileR2000::getXLine( long dObjectSize, CADCommonED stCommonE
     return xline;
 }
 
-CADLineObject * DWGFileR2000::getLine( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADLineObject * DWGFileR2000::getLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                        size_t& nBitOffsetFromStart )
 {
     CADLineObject * line = new CADLineObject();
@@ -1898,7 +1897,7 @@ CADLineObject * DWGFileR2000::getLine( long dObjectSize, CADCommonED stCommonEnt
     return line;
 }
 
-CADTextObject * DWGFileR2000::getText( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADTextObject * DWGFileR2000::getText( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                        size_t& nBitOffsetFromStart )
 {
     CADTextObject * text = new CADTextObject();
@@ -1964,7 +1963,7 @@ CADTextObject * DWGFileR2000::getText( long dObjectSize, CADCommonED stCommonEnt
     return text;
 }
 
-CADVertex3DObject * DWGFileR2000::getVertex3D( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADVertex3DObject * DWGFileR2000::getVertex3D( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                                size_t& nBitOffsetFromStart )
 {
     CADVertex3DObject * vertex = new CADVertex3DObject();
@@ -1983,7 +1982,7 @@ CADVertex3DObject * DWGFileR2000::getVertex3D( long dObjectSize, CADCommonED stC
     return vertex;
 }
 
-CADCircleObject * DWGFileR2000::getCircle( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADCircleObject * DWGFileR2000::getCircle( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                            size_t& nBitOffsetFromStart )
 {
     CADCircleObject * circle = new CADCircleObject();
@@ -2012,7 +2011,7 @@ CADCircleObject * DWGFileR2000::getCircle( long dObjectSize, CADCommonED stCommo
     return circle;
 }
 
-CADEndblkObject * DWGFileR2000::getEndBlock( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADEndblkObject * DWGFileR2000::getEndBlock( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                              size_t& nBitOffsetFromStart )
 {
     CADEndblkObject * endblk = new CADEndblkObject();
@@ -2026,7 +2025,7 @@ CADEndblkObject * DWGFileR2000::getEndBlock( long dObjectSize, CADCommonED stCom
     return endblk;
 }
 
-CADPolyline2DObject * DWGFileR2000::getPolyline2D( long dObjectSize, CADCommonED stCommonEntityData,
+CADPolyline2DObject * DWGFileR2000::getPolyline2D( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                    const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADPolyline2DObject * polyline = new CADPolyline2DObject();
@@ -2066,7 +2065,7 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D( long dObjectSize, CADCommonED
     return polyline;
 }
 
-CADAttribObject * DWGFileR2000::getAttributes( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADAttribObject * DWGFileR2000::getAttributes( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                                size_t& nBitOffsetFromStart )
 {
     CADAttribObject * attrib = new CADAttribObject();
@@ -2130,7 +2129,7 @@ CADAttribObject * DWGFileR2000::getAttributes( long dObjectSize, CADCommonED stC
     return attrib;
 }
 
-CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, CADCommonED stCommonEntityData,
+CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                    const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADAttdefObject * attdef = new CADAttdefObject();
@@ -2197,7 +2196,7 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn( long dObjectSize, CADCommonED
     return attdef;
 }
 
-CADLWPolylineObject * DWGFileR2000::getLWPolyLine( long dObjectSize, CADCommonED stCommonEntityData,
+CADLWPolylineObject * DWGFileR2000::getLWPolyLine( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                    const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADLWPolylineObject * polyline = new CADLWPolylineObject();
@@ -2277,7 +2276,7 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine( long dObjectSize, CADCommonED
     return polyline;
 }
 
-CADArcObject * DWGFileR2000::getArc( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADArcObject * DWGFileR2000::getArc( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                      size_t& nBitOffsetFromStart )
 {
     CADArcObject * arc = new CADArcObject();
@@ -2309,7 +2308,7 @@ CADArcObject * DWGFileR2000::getArc( long dObjectSize, CADCommonED stCommonEntit
     return arc;
 }
 
-CADSplineObject * DWGFileR2000::getSpline( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADSplineObject * DWGFileR2000::getSpline( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                            size_t& nBitOffsetFromStart )
 {
     CADSplineObject * spline = new CADSplineObject();
@@ -2372,7 +2371,7 @@ CADSplineObject * DWGFileR2000::getSpline( long dObjectSize, CADCommonED stCommo
     return spline;
 }
 
-CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, CADCommonED stCommonEntityData,
+CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
                                            const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADEntityObject * entity = new CADEntityObject(
@@ -2390,7 +2389,7 @@ CADEntityObject * DWGFileR2000::getEntity( int dObjectType, long dObjectSize, CA
     return entity;
 }
 
-CADInsertObject * DWGFileR2000::getInsert( int dObjectType, long dObjectSize, CADCommonED stCommonEntityData,
+CADInsertObject * DWGFileR2000::getInsert( int dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
                                            const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADInsertObject * insert = new CADInsertObject(
@@ -2793,7 +2792,7 @@ CADLineTypeObject * DWGFileR2000::getLineType1( long dObjectSize, const char * p
     return ltype;
 }
 
-CADMLineObject * DWGFileR2000::getMLine( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADMLineObject * DWGFileR2000::getMLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADMLineObject * mline = new CADMLineObject();
@@ -2865,7 +2864,7 @@ CADMLineObject * DWGFileR2000::getMLine( long dObjectSize, CADCommonED stCommonE
     return mline;
 }
 
-CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace( long dObjectSize, CADCommonED stCommonEntityData,
+CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                          const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADPolylinePFaceObject * polyline = new CADPolylinePFaceObject();
@@ -2887,7 +2886,7 @@ CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace( long dObjectSize, CADCo
     return polyline;
 }
 
-CADImageObject * DWGFileR2000::getImage( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADImageObject * DWGFileR2000::getImage( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADImageObject * image = new CADImageObject();
@@ -2944,7 +2943,7 @@ CADImageObject * DWGFileR2000::getImage( long dObjectSize, CADCommonED stCommonE
     return image;
 }
 
-CAD3DFaceObject * DWGFileR2000::get3DFace( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CAD3DFaceObject * DWGFileR2000::get3DFace( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                            size_t& nBitOffsetFromStart )
 {
     CAD3DFaceObject * face = new CAD3DFaceObject();
@@ -2983,7 +2982,7 @@ CAD3DFaceObject * DWGFileR2000::get3DFace( long dObjectSize, CADCommonED stCommo
     return face;
 }
 
-CADVertexMeshObject * DWGFileR2000::getVertexMesh( long dObjectSize, CADCommonED stCommonEntityData,
+CADVertexMeshObject * DWGFileR2000::getVertexMesh( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                    const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADVertexMeshObject * vertex = new CADVertexMeshObject();
@@ -3001,7 +3000,7 @@ CADVertexMeshObject * DWGFileR2000::getVertexMesh( long dObjectSize, CADCommonED
     return vertex;
 }
 
-CADVertexPFaceObject * DWGFileR2000::getVertexPFace( long dObjectSize, CADCommonED stCommonEntityData,
+CADVertexPFaceObject * DWGFileR2000::getVertexPFace( long dObjectSize, const CADCommonED& stCommonEntityData,
                                                      const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADVertexPFaceObject * vertex = new CADVertexPFaceObject();
@@ -3019,7 +3018,7 @@ CADVertexPFaceObject * DWGFileR2000::getVertexPFace( long dObjectSize, CADCommon
     return vertex;
 }
 
-CADMTextObject * DWGFileR2000::getMText( long dObjectSize, CADCommonED stCommonEntityData, const char * pabyInput,
+CADMTextObject * DWGFileR2000::getMText( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
                                          size_t& nBitOffsetFromStart )
 {
     CADMTextObject * text = new CADMTextObject();
@@ -3053,7 +3052,7 @@ CADMTextObject * DWGFileR2000::getMText( long dObjectSize, CADCommonED stCommonE
     return text;
 }
 
-CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObjectSize, CADCommonED stCommonEntityData,
+CADDimensionObject * DWGFileR2000::getDimension( short dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
                                                  const char * pabyInput, size_t& nBitOffsetFromStart )
 {
     CADCommonDimensionData stCDD;
@@ -3562,7 +3561,7 @@ CADDictionary DWGFileR2000::GetNOD()
                                 cadxRecordObject->abyDataBytes.end() );
             cadxRecord->setRecordData( xRecordData );
 
-			shared_ptr<CADDictionaryRecord> cadxRecordPtr(static_cast<CADDictionaryRecord*>(cadxRecord));
+            shared_ptr<CADDictionaryRecord> cadxRecordPtr(static_cast<CADDictionaryRecord*>(cadxRecord));
 
             stNOD.addRecord( make_pair( spoNamedDictObj->sItemNames[i], cadxRecordPtr ) );
         }

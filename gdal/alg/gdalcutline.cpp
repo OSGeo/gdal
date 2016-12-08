@@ -61,8 +61,8 @@ BlendMaskGenerator( int /* nXOff */, int /* nYOff */,
                     OGRGeometryH /* hPolygon */,
                     double /* dfBlendDist */ )
 {
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Blend distance support not available without the GEOS library.");
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Blend distance support not available without the GEOS library.");
     return CE_Failure;
 }
 #else
@@ -296,7 +296,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
     }
 
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if (hMemDriver == NULL)
+    if( hMemDriver == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALWarpCutlineMasker needs MEM driver");
@@ -340,7 +340,6 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 
     char szDataPointer[100] = {};
 
-    memset( szDataPointer, 0, sizeof(szDataPointer) );
     // cppcheck-suppress redundantCopy
     snprintf( szDataPointer, sizeof(szDataPointer), "DATAPOINTER=" );
     CPLPrintPointer(

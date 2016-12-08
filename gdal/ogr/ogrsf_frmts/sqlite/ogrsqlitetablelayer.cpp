@@ -100,7 +100,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
         }
 
         // Update geometry_columns_time.
-        if( poGeomFieldDefn->aosDisabledTriggers.size() != 0 )
+        if( !poGeomFieldDefn->aosDisabledTriggers.empty() )
         {
             char* pszSQL3 = sqlite3_mprintf(
                 "UPDATE geometry_columns_time "
@@ -958,15 +958,15 @@ void OGRSQLiteTableLayer::BuildWhere()
 
     CPLString osSpatialWHERE = GetSpatialWhere(m_iGeomFieldFilter,
                                                m_poFilterGeom);
-    if (osSpatialWHERE.size() != 0)
+    if (!osSpatialWHERE.empty())
     {
         osWHERE = "WHERE ";
         osWHERE += osSpatialWHERE;
     }
 
-    if( osQuery.size() > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE = "WHERE ";
             osWHERE += osQuery;
@@ -1049,7 +1049,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
         return OGRSQLiteLayer::GetFeatureCount( bForce );
 
     if (nFeatureCount >= 0 && m_poFilterGeom == NULL &&
-        osQuery.size() == 0 )
+        osQuery.empty() )
     {
         return nFeatureCount;
     }
@@ -1097,7 +1097,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
     {
         nResult = CPLAtoGIntBig(papszResult[1]);
 
-        if( m_poFilterGeom == NULL && osQuery.size() == 0 )
+        if( m_poFilterGeom == NULL && osQuery.empty() )
         {
             nFeatureCount = nResult;
             bStatisticsNeedsToBeFlushed = TRUE;
@@ -1183,7 +1183,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
             psExtent->MaxY = CPLAtof(papszResult[4+3]);
             eErr = OGRERR_NONE;
 
-            if( m_poFilterGeom == NULL && osQuery.size() == 0 )
+            if( m_poFilterGeom == NULL && osQuery.empty() )
             {
                 poGeomFieldDefn->bCachedExtentIsValid = TRUE;
                 bStatisticsNeedsToBeFlushed = TRUE;
@@ -1202,7 +1202,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
         eErr = OGRSQLiteLayer::GetExtent(psExtent, bForce);
     else
         eErr = OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
-    if( eErr == OGRERR_NONE && m_poFilterGeom == NULL && osQuery.size() == 0 )
+    if( eErr == OGRERR_NONE && m_poFilterGeom == NULL && osQuery.empty() )
     {
         poGeomFieldDefn->bCachedExtentIsValid = TRUE;
         bStatisticsNeedsToBeFlushed = TRUE;
@@ -2909,7 +2909,7 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
                                         poFeatureDefn->myGetGeomFieldDefn(j);
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(j);
-        if( poGeomFieldDefn->aosDisabledTriggers.size() != 0  && poGeom != NULL )
+        if( !poGeomFieldDefn->aosDisabledTriggers.empty()  && poGeom != NULL )
         {
             OGRwkbGeometryType eGeomType = poGeomFieldDefn->GetType();
             if( eGeomType != wkbUnknown && poGeom->getGeometryType() != eGeomType )
@@ -3508,7 +3508,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
         sqlite3_free_table( papszResult );
         papszResult = NULL;
 
-        if( osLastEvtDate.size() == 0 )
+        if( osLastEvtDate.empty() )
             return;
 
         osSQL.Printf("SELECT last_verified, row_count, extent_min_x, extent_min_y, "

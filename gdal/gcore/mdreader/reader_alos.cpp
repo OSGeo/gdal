@@ -147,13 +147,13 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         }
     }
 
-    if(m_osIMDSourceFilename.size())
+    if(!m_osIMDSourceFilename.empty() )
         CPLDebug( "MDReaderALOS", "IMD Filename: %s",
               m_osIMDSourceFilename.c_str() );
-    if(m_osHDRSourceFilename.size())
+    if(!m_osHDRSourceFilename.empty() )
         CPLDebug( "MDReaderALOS", "HDR Filename: %s",
               m_osHDRSourceFilename.c_str() );
-    if(m_osRPBSourceFilename.size())
+    if(!m_osRPBSourceFilename.empty() )
         CPLDebug( "MDReaderALOS", "RPB Filename: %s",
               m_osRPBSourceFilename.c_str() );
 }

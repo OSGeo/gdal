@@ -64,7 +64,7 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
-    if (osStructureFilename.size() != 0)
+    if (!osStructureFilename.empty())
     {
         ReadStructure(osStructureFilename);
     }
@@ -173,10 +173,10 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
         if (bInObjectColumn && nTokens >= 1 &&
             EQUAL(papszTokens[0], "END_OBJECT"))
         {
-            if (osColumnName.size() != 0 &&
-                osColumnDataType.size() != 0 &&
-                osColumnStartByte.size() != 0 &&
-                osColumnBytes.size() != 0)
+            if (!osColumnName.empty() &&
+                !osColumnDataType.empty() &&
+                !osColumnStartByte.empty() &&
+                !osColumnBytes.empty())
             {
                 pasFieldDesc =
                     static_cast<FieldDesc*>(
@@ -255,10 +255,10 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
 
                     OGRFieldDefn oFieldDefn(osColumnName, eFieldType);
                     if ((pasFieldDesc[nFields].eFormat == ASCII_REAL &&
-                            osColumnFormat.size() != 0 &&
+                            !osColumnFormat.empty() &&
                             osColumnFormat[0] == 'F') ||
                         (pasFieldDesc[nFields].eFormat == ASCII_INTEGER &&
-                            osColumnFormat.size() != 0 &&
+                            !osColumnFormat.empty() &&
                             osColumnFormat[0] == 'I'))
                     {
                         const char* pszFormat = osColumnFormat.c_str();
@@ -272,7 +272,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         }
                     }
                     else if (oFieldDefn.GetType() == OFTString &&
-                                osColumnFormat.size() != 0 &&
+                                !osColumnFormat.empty() &&
                                 osColumnFormat[0] == 'A')
                     {
                         const char* pszFormat = osColumnFormat.c_str();

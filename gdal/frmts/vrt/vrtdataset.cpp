@@ -1618,7 +1618,7 @@ void VRTDataset::BuildVirtualOverviews()
     // Currently we expose virtual overviews only if the dataset is made of
     // a single SimpleSource/ComplexSource, in each band.
     // And if the underlying sources have overviews of course
-    if( m_apoOverviews.size() || m_apoOverviewsBak.size() )
+    if( !m_apoOverviews.empty() || !m_apoOverviewsBak.empty() )
         return;
 
     int nOverviews = 0;
@@ -1727,7 +1727,7 @@ VRTDataset::IBuildOverviews( const char *pszResampling,
     // Make implicit overviews invisible, but do not destroy them in case they
     // are already used.  Should the client do that?  Behaviour might undefined
     // in GDAL API?
-    if( m_apoOverviews.size() )
+    if( !m_apoOverviews.empty() )
     {
         m_apoOverviewsBak = m_apoOverviews;
         m_apoOverviews.resize(0);

@@ -117,7 +117,7 @@ static VSIErrorContext *VSIGetErrorContext()
  * similar to printf().
  */
 
-void    VSIError(VSIErrorNum err_no, const char *fmt, ...)
+void    VSIError(VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 

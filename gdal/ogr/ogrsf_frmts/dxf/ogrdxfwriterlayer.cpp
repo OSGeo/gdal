@@ -727,7 +727,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
     CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
 
-    if( osLineType.size() > 0
+    if( !osLineType.empty()
         && (poDS->oHeaderDS.LookupLineType( osLineType ) != NULL
             || oNewLineTypes.count(osLineType) > 0 ) )
     {
@@ -962,7 +962,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
     CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
 
-    if( osLineType.size() > 0
+    if( !osLineType.empty()
         && (poDS->oHeaderDS.LookupLineType( osLineType ) != NULL
             || oNewLineTypes.count(osLineType) > 0 ) )
     {

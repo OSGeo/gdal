@@ -42,7 +42,8 @@ class CADWrapperRasterBand : public GDALProxyRasterBand
     virtual GDALRasterBand* RefUnderlyingRasterBand() override { return poBaseBand; }
 
   public:
-    explicit CADWrapperRasterBand( GDALRasterBand* /*poBaseBandIn*/ )
+    explicit CADWrapperRasterBand( GDALRasterBand* poBaseBandIn ) :
+                    poBaseBand( poBaseBandIn )
     {
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);

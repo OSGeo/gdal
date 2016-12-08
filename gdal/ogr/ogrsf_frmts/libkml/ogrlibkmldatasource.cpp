@@ -1723,7 +1723,7 @@ int OGRLIBKMLDataSource::CreateKml(
     char **papszOptions )
 {
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, papszOptions);
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         DocumentPtr poKmlDocument = m_poKmlFactory->CreateDocument();
         m_poKmlDSKml->set_feature( poKmlDocument );
@@ -1751,7 +1751,7 @@ int OGRLIBKMLDataSource::CreateKmz(
     char ** /* papszOptions */ )
 {
     /***** create the doc.kml  *****/
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         const char *pszUseDocKml =
             CPLGetConfigOption( "LIBKML_USE_DOC.KML", "yes" );
@@ -1794,7 +1794,7 @@ int OGRLIBKMLDataSource::CreateDir(
     m_isDir = true;
     bUpdated = true;
 
-    if( osUpdateTargetHref.size() == 0 )
+    if( osUpdateTargetHref.empty() )
     {
         const char *pszUseDocKml =
             CPLGetConfigOption( "LIBKML_USE_DOC.KML", "yes" );
@@ -1835,7 +1835,7 @@ int OGRLIBKMLDataSource::Create(
 
     osUpdateTargetHref =
         CSLFetchNameValueDef(papszOptions, "UPDATE_TARGETHREF", "");
-    if( osUpdateTargetHref.size() )
+    if( !osUpdateTargetHref.empty() )
     {
         m_poKmlUpdate = m_poKmlFactory->CreateUpdate();
         m_poKmlUpdate->set_targethref(osUpdateTargetHref.c_str());

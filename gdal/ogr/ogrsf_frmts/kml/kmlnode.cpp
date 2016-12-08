@@ -598,7 +598,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         for(unsigned int nCount = 0; nCount < pvpoChildren_->size(); nCount++)
         {
             if((*pvpoChildren_)[nCount]->sName_.compare("outerBoundaryIs") == 0 &&
-               (*pvpoChildren_)[nCount]->pvpoChildren_->size() > 0)
+               !(*pvpoChildren_)[nCount]->pvpoChildren_->empty())
             {
                 poCoor = (*(*pvpoChildren_)[nCount]->pvpoChildren_)[0];
             }
@@ -663,7 +663,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
                 poLinearRing = NULL;
 
-                if ((*pvpoChildren_)[nCount2]->pvpoChildren_->size() == 0)
+                if ((*pvpoChildren_)[nCount2]->pvpoChildren_->empty())
                     continue;
 
                 poLinearRing = new OGRLinearRing();

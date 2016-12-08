@@ -8742,8 +8742,8 @@ ITABFeatureFont::ITABFeatureFont() :
  **********************************************************************/
 void ITABFeatureFont::SetFontName(const char *pszName)
 {
-    strncpy( m_sFontDef.szFontName, pszName, 32);
-    m_sFontDef.szFontName[32] = '\0';
+    strncpy( m_sFontDef.szFontName, pszName, sizeof(m_sFontDef.szFontName)-1);
+    m_sFontDef.szFontName[sizeof(m_sFontDef.szFontName)-1] = '\0';
 }
 
 /**********************************************************************

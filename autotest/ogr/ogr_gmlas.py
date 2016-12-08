@@ -635,7 +635,7 @@ def ogr_gmlas_geometryproperty():
     lyr = ds.GetLayer(0)
     with gdaltest.error_handler():
         geom_field_count = lyr.GetLayerDefn().GetGeomFieldCount()
-    if geom_field_count != 14:
+    if geom_field_count != 15:
         gdaltest.post_reason('fail')
         print(geom_field_count)
         return 'fail'
@@ -710,6 +710,12 @@ def ogr_gmlas_geometryproperty():
         return 'fail'
     wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
     if wkt != 'GEOMETRYCOLLECTION (POINT (0 1),POINT (1 2),POINT (3 4))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex('mycustompointproperty_point')
+    wkt = f.GetGeomFieldRef(geom_idx).ExportToWkt()
+    if wkt != 'POINT (5 6)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3595,7 +3601,7 @@ def ogr_gmlas_read_fake_gmljp2():
             break
         count += 1
 
-    if count != 6:
+    if count != 5:
         gdaltest.post_reason('fail')
         print(count)
         return 'fail'

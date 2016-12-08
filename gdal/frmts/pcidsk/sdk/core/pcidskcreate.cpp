@@ -237,7 +237,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 
 /* -------------------------------------------------------------------- */
 /*      File Type, Version, and Size                                    */
-/* 	Notice: we get the first 4 characters from PCIVERSIONAME.	*/
+/*      Notice: we get the first 4 characters from PCIVERSIONAME.       */
 /* -------------------------------------------------------------------- */
         // FH1 - magic format string.
         fh.Put( "PCIDSK", 0, 8 );

@@ -172,7 +172,7 @@ int OGRCARTODataSource::Open( const char * pszFilename,
 
     CPLString osTables = OGRCARTOGetOptionValue(pszFilename, "tables");
 
-    /*if( osTables.size() == 0 && osAPIKey.size() == 0 )
+    /*if( osTables.empty() && osAPIKey.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "When not specifying tables option, CARTO_API_KEY must be defined");
@@ -197,7 +197,7 @@ int OGRCARTODataSource::Open( const char * pszFilename,
         }
         ReleaseResultSet(poSchemaLayer);
     }
-    if( osCurrentSchema.size() == 0 )
+    if( osCurrentSchema.empty() )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -226,7 +226,7 @@ int OGRCARTODataSource::Open( const char * pszFilename,
         }
     }
 
-    if( osAPIKey.size() && bUpdateIn )
+    if( !osAPIKey.empty() && bUpdateIn )
     {
         ExecuteSQLInternal(
                 "DROP FUNCTION IF EXISTS ogr_table_metadata(TEXT,TEXT); "
@@ -259,7 +259,7 @@ int OGRCARTODataSource::Open( const char * pszFilename,
                 "$$ LANGUAGE SQL");
     }
 
-    if (osTables.size() != 0)
+    if (!osTables.empty())
     {
         char** papszTables = CSLTokenizeString2(osTables, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
@@ -509,7 +509,7 @@ OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
-    if (osLayerName.size() == 0)
+    if (osLayerName.empty())
         return OGRERR_NONE;
 
     if( !bDeferredCreation )
@@ -558,7 +558,7 @@ json_object* OGRCARTODataSource::RunSQL(const char* pszUnescapedSQL)
 /* -------------------------------------------------------------------- */
 /*      Provide the API Key                                             */
 /* -------------------------------------------------------------------- */
-    if( osAPIKey.size() )
+    if( !osAPIKey.empty() )
     {
         osSQL += "&api_key=";
         osSQL += osAPIKey;

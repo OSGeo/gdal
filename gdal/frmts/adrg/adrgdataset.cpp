@@ -653,7 +653,7 @@ char ** ADRGDataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
 
-    if( osGENFileName.size() > 0 && osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() && !osIMGFileName.empty() )
     {
         CPLString osMainFilename = GetDescription();
         VSIStatBufL sStat;
@@ -1534,8 +1534,8 @@ GDALDataset *ADRGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    if( osGENFileName.size() > 0 &&
-        osIMGFileName.size() > 0 )
+    if( !osGENFileName.empty() &&
+        !osIMGFileName.empty() )
     {
         if( poOpenInfo->eAccess == GA_Update )
         {

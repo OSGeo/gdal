@@ -548,7 +548,7 @@ void OGRODSDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = true;
     }
     else if( bHeaderLineCandidate &&
-             apoFirstLineTypes.size() != 0 &&
+             !apoFirstLineTypes.empty() &&
              apoFirstLineTypes.size() == apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
@@ -623,7 +623,7 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
         CPLAssert(strcmp(pszNameIn, "table:table") == 0);
 
         if (nCurLine == 0 ||
-            (nCurLine == 1 && apoFirstLineValues.size() == 0))
+            (nCurLine == 1 && apoFirstLineValues.empty()))
         {
             /* Remove empty sheet */
             delete poCurLayer;
@@ -724,7 +724,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         if (pszFormula && STARTS_WITH(pszFormula, "of:="))
         {
             osFormula = pszFormula;
-            if (osValueType.size() == 0)
+            if (osValueType.empty())
                 osValueType = "formula";
         }
         else
@@ -774,7 +774,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
         /* empty row */
         OGRFeature* poFeature = NULL;
 
-        if (nCurLine >= 2 && apoCurLineTypes.size() == 0)
+        if (nCurLine >= 2 && apoCurLineTypes.empty())
         {
             nEmptyRowsAccumulated += nRowsRepeated;
             return;
@@ -798,7 +798,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             apoFirstLineValues = apoCurLineValues;
 
     #if skip_leading_empty_rows
-            if (apoFirstLineTypes.size() == 0)
+            if (apoFirstLineTypes.empty())
             {
                 /* Skip leading empty rows */
                 apoFirstLineTypes.resize(0);
@@ -880,7 +880,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             {
                 for(i = 0; i < apoCurLineValues.size(); i++)
                 {
-                    if (apoCurLineValues[i].size())
+                    if (!apoCurLineValues[i].empty() )
                     {
                         const OGRFieldType eValType = GetOGRFieldType(
                             apoCurLineValues[i].c_str(),
@@ -956,7 +956,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
 void OGRODSDataSource::startElementCell(const char *pszNameIn,
                                         const char ** /*ppszAttr*/)
 {
-    if (osValue.size() == 0 && strcmp(pszNameIn, "text:p") == 0)
+    if (osValue.empty() && strcmp(pszNameIn, "text:p") == 0)
     {
         PushState(STATE_TEXTP);
     }
@@ -974,7 +974,7 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
 
         for(int i = 0; i < nCellsRepeated; i++)
         {
-            if( osValue.size() )
+            if( !osValue.empty() )
                 apoCurLineValues.push_back(osValue);
             else
                 apoCurLineValues.push_back(osFormula);

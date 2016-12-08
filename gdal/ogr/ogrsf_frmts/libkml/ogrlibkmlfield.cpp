@@ -1127,7 +1127,7 @@ static const char* TrimSpaces( string& oText )
     // as it breaks round-tripping.
 
     // Trim trailing spaces.
-    while( oText.size() != 0 && oText[oText.size()-1] == ' ' )
+    while( !oText.empty() && oText[oText.size()-1] == ' ' )
         oText.resize(oText.size()-1);
 
     // Skip leading newline and spaces.

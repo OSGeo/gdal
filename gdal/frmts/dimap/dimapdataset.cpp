@@ -578,7 +578,7 @@ GDALDataset *DIMAPDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         for( CPLXMLNode *psDatasetComponent = psDatasetComponents->psChild;
-             osDIMAPFilename.size() == 0 && psDatasetComponent != NULL;
+             osDIMAPFilename.empty() && psDatasetComponent != NULL;
              psDatasetComponent = psDatasetComponent->psNext )
         {
             const char* pszComponentType =
@@ -1128,7 +1128,7 @@ int DIMAPDataset::ReadImageInformation2()
         oMapRowColumnToName[ std::pair<int,int>(1,1) ] = osImageDSFilename;
     }
 
-    if( osImageDSFilename.size() == 0 )
+    if( osImageDSFilename.empty() )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to find <DATA_FILE_PATH> in document." );
@@ -1370,7 +1370,7 @@ int DIMAPDataset::ReadImageInformation2()
     if( psProductStrip != NULL )
         SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
 
-    if( osRPCFilename.size() )
+    if( !osRPCFilename.empty() )
     {
         GDALMDReaderPleiades* poReader =
             GDALMDReaderPleiades::CreateReaderForRPC(osRPCFilename);

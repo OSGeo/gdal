@@ -1256,7 +1256,7 @@ int WCSDataset::ExtractGridInfo100()
 
         // we will default to the last - likely the most recent - entry.
 
-        if( aosTimePositions.size() > 0
+        if( !aosTimePositions.empty()
             && osDefaultTime == ""
             && osServiceURL.ifind("time=") == std::string::npos
             && osCoverageExtra.ifind("time=") == std::string::npos )
@@ -2253,7 +2253,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "WCS_SDS:")
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<WCS_GDAL>")
-        && poDS->aosTimePositions.size() > 0 )
+        && !poDS->aosTimePositions.empty() )
     {
         char **papszSubdatasets = NULL;
         int iTime;

@@ -99,7 +99,7 @@ public:
      *
      * @return X-coordinate in pixels
      */
-    int GetX();
+    int GetX() const;
 
     /**
      * Set X coordinate of point
@@ -113,7 +113,7 @@ public:
      *
      * @return Y-coordinate in pixels.
      */
-    int  GetY();
+    int GetY() const;
 
     /**
      * Set Y coordinate of point.
@@ -127,7 +127,7 @@ public:
      *
      * @return Scale for this point.
      */
-    int  GetScale();
+    int GetScale() const ;
 
     /**
      * Set scale of point.
@@ -141,7 +141,7 @@ public:
      *
      * @return Radius for this point.
      */
-    int  GetRadius();
+    int  GetRadius() const;
 
     /**
      * Set radius of point.
@@ -155,7 +155,7 @@ public:
      *
      * @return Sign for this point.
      */
-    int  GetSign();
+    int GetSign() const;
 
     /**
      * Set sign of point.

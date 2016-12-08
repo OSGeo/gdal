@@ -72,52 +72,51 @@ GDALChecksumImage( GDALRasterBandH hBand,
     const static int anPrimes[11] =
         { 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43 };
 
-    int iLine;
-    int i;
     int nChecksum = 0;
     int iPrime = 0;
-    int nCount;
-    GDALDataType eDataType = GDALGetRasterDataType( hBand );
-    int  bComplex = GDALDataTypeIsComplex( eDataType );
+    const GDALDataType eDataType = GDALGetRasterDataType(hBand);
+    const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eDataType));
 
-    if (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
-        eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64)
+    if( eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
+        eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64 )
     {
-        GDALDataType eDstDataType = (bComplex) ? GDT_CFloat64 : GDT_Float64;
+        const GDALDataType eDstDataType = bComplex ? GDT_CFloat64 : GDT_Float64;
 
         double* padfLineData = static_cast<double *>(
             VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2));
-        if (padfLineData == NULL)
+        if( padfLineData == NULL )
         {
             return 0;
         }
 
-        for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
+        for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
-            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
-                              padfLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
+            if( GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
+                              padfLineData, nXSize, 1,
+                              eDstDataType, 0, 0 ) != CE_None )
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                        "Checksum value couldn't be computed due to I/O read error.\n");
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Checksum value couldn't be computed due to "
+                         "I/O read error.");
                 break;
             }
-            nCount = (bComplex) ? nXSize * 2 : nXSize;
+            const int nCount = bComplex ? nXSize * 2 : nXSize;
 
-            for( i = 0; i < nCount; i++ )
+            for( int i = 0; i < nCount; i++ )
             {
                 double dfVal = padfLineData[i];
                 int nVal;
-                if (CPLIsNan(dfVal) || CPLIsInf(dfVal))
+                if( CPLIsNan(dfVal) || CPLIsInf(dfVal) )
                 {
-                    /* Most compilers seem to cast NaN or Inf to 0x80000000. */
-                    /* but VC7 is an exception. So we force the result */
-                    /* of such a cast */
+                    // Most compilers seem to cast NaN or Inf to 0x80000000.
+                    // but VC7 is an exception. So we force the result
+                    // of such a cast.
                     nVal = 0x80000000;
                 }
                 else
                 {
-                    /* Standard behaviour of GDALCopyWords when converting */
-                    /* from floating point to Int32 */
+                    // Standard behaviour of GDALCopyWords when converting
+                    // from floating point to Int32.
                     dfVal += 0.5;
 
                     if( dfVal < -2147483647.0 )
@@ -125,10 +124,10 @@ GDALChecksumImage( GDALRasterBandH hBand,
                     else if( dfVal > 2147483647 )
                         nVal = 2147483647;
                     else
-                        nVal = (GInt32) floor(dfVal);
+                        nVal = static_cast<GInt32>(floor(dfVal));
                 }
 
-                nChecksum += (nVal % anPrimes[iPrime++]);
+                nChecksum += nVal % anPrimes[iPrime++];
                 if( iPrime > 10 )
                     iPrime = 0;
 
@@ -140,30 +139,31 @@ GDALChecksumImage( GDALRasterBandH hBand,
     }
     else
     {
-        int  *panLineData;
-        GDALDataType eDstDataType = (bComplex) ? GDT_CInt32 : GDT_Int32;
+        const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
 
-        panLineData = (GInt32 *) VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2);
-        if (panLineData == NULL)
+        int *panLineData = static_cast<GInt32 *>(
+            VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2));
+        if( panLineData == NULL )
         {
             return 0;
         }
 
-        for( iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
+        for( int iLine = nYOff; iLine < nYOff + nYSize; iLine++ )
         {
-            if (GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
-                            panLineData, nXSize, 1, eDstDataType, 0, 0 ) != CE_None)
+            if( GDALRasterIO( hBand, GF_Read, nXOff, iLine, nXSize, 1,
+                              panLineData, nXSize, 1, eDstDataType,
+                              0, 0 ) != CE_None )
             {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Checksum value could not be computed due to I/O "
-                          "read error.\n");
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Checksum value could not be computed due to I/O "
+                         "read error.");
                 break;
             }
-            nCount = (bComplex) ? nXSize * 2 : nXSize;
+            const int nCount = bComplex ? nXSize * 2 : nXSize;
 
-            for( i = 0; i < nCount; i++ )
+            for( int i = 0; i < nCount; i++ )
             {
-                nChecksum += (panLineData[i] % anPrimes[iPrime++]);
+                nChecksum += panLineData[i] % anPrimes[iPrime++];
                 if( iPrime > 10 )
                     iPrime = 0;
 

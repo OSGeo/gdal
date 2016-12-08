@@ -52,7 +52,7 @@ FGdbDriver::FGdbDriver(): OGRSFDriver(), hMutex(NULL)
 FGdbDriver::~FGdbDriver()
 
 {
-    if( oMapConnections.size() != 0 )
+    if( !oMapConnections.empty() )
         CPLDebug("FileGDB", "Remaining %d connections. Bug?",
                  (int)oMapConnections.size());
     if( hMutex != NULL )

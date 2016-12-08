@@ -116,7 +116,7 @@ int FGdbDataSource::FixIndexes()
             size_t count = m_layers.size();
             for(size_t i = 0; i < count; ++i )
             {
-                if( m_layers[i]->m_oMapOGRFIDToFGDBFID.size() == 0)
+                if( m_layers[i]->m_oMapOGRFIDToFGDBFID.empty())
                     continue;
                 CPLString osFilter = "name = '";
                 osFilter += m_layers[i]->GetName();
@@ -316,7 +316,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         return GDBErr(hr, "Error reading Tables in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( tables.size() > 0 && ! OpenFGDBTables(L"Table", tables) )
+    if ( !tables.empty() && ! OpenFGDBTables(L"Table", tables) )
         return false;
 
     /* Find all the Feature Classes in the root */
@@ -325,7 +325,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(root));
     }
     /* Open the tables we found */
-    if ( featureclasses.size() > 0 && ! OpenFGDBTables(L"Feature Class", featureclasses) )
+    if ( !featureclasses.empty() && ! OpenFGDBTables(L"Feature Class", featureclasses) )
         return false;
 
     /* Find all the Feature Datasets in the root */
@@ -340,7 +340,7 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
         {
             return GDBErr(hr, "Error reading Feature Classes in " + WStringToString(featuredatasets[i]));
         }
-        if ( featureclasses.size() > 0 && ! OpenFGDBTables(L"Feature Class", featureclasses) )
+        if ( !featureclasses.empty() && ! OpenFGDBTables(L"Feature Class", featureclasses) )
             return false;
     }
     return true;
@@ -373,7 +373,7 @@ bool FGdbDataSource::LoadLayersOld(const std::vector<wstring> & datasetTypes,
         std::vector<wstring> childDatasets;
         m_pGeodatabase->GetChildDatasets( parent, datasetTypes[dsTypeIndex], childDatasets);
 
-        if (childDatasets.size() > 0)
+        if (!childDatasets.empty())
         {
             //it is a container of other datasets
 
