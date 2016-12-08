@@ -757,16 +757,10 @@ template<> struct CPLStaticAssert<true>
             (((GUInt32)(x) & (GUInt32)0x00ff0000UL) >>  8) | \
             (((GUInt32)(x) & (GUInt32)0xff000000UL) >> 24) ))
 
+/** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x) \
-        ((GUInt64)( \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00000000000000ffULL) << 56) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x000000000000ff00ULL) << 40) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x0000000000ff0000ULL) << 24) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00000000ff000000ULL) << 8) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x000000ff00000000ULL) >> 8) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x0000ff0000000000ULL) >> 24) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0x00ff000000000000ULL) >> 40) | \
-            (GUInt64)(((GUInt64)(x) & (GUInt64)0xff00000000000000ULL) >> 56) ))
+            (((GUInt64)(CPL_SWAP32((GUInt32)(x))) << 32) | \
+             (GUInt64)(CPL_SWAP32((GUInt32)((GUInt64)(x) >> 32))))
 
 #endif
 
