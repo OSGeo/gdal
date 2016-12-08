@@ -11464,6 +11464,15 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->bStreamingIn = bStreaming;
     poDS->nCompression = l_nCompression;
 
+    // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
+    if( poOpenInfo->AreSiblingFilesLoaded() &&
+        CSLCount( poOpenInfo->GetSiblingFiles() ) <= 1 )
+    {
+        poDS->oOvManager.TransferSiblingFiles( CSLDuplicate(
+                                            poOpenInfo->GetSiblingFiles() ) );
+        poDS->m_bHasGotSiblingFiles = true;
+    }
+
     if( poDS->OpenOffset( l_hTIFF, &(poDS->poActiveDS),
                           TIFFCurrentDirOffset(l_hTIFF), true,
                           poOpenInfo->eAccess,
