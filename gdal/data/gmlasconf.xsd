@@ -75,6 +75,39 @@
             </xs:attribute>
           </xs:complexType>
         </xs:element>
+
+        <xs:element name="SchemaAnalysisOptions" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+                Describe option that affect the Xerces schema parser.
+            </xs:documentation>
+          </xs:annotation>
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="SchemaFullChecking" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                  <xs:documentation>
+                    Whether to enable full schema constraint checking, including checking
+                    which may be time-consuming or memory intensive. Currently,
+                    particle unique attribution constraint checking and particle
+                    derivation restriction checking are controlled by this option.
+                    Defaults to true.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element name="HandleMultipleImports" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                  <xs:documentation>
+                    Whether to allow multiple schemas with the same namespace
+                    to be imported.
+                    Defaults to false.
+                  </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+
         <xs:element name="Validation" minOccurs="0">
           <xs:annotation>
             <xs:documentation>

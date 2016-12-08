@@ -50,6 +50,8 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_fpGMLParser = NULL;
     m_bLayerInitFinished = false;
     m_bValidate = false;
+    m_bSchemaFullChecking = false;
+    m_bHandleMultipleImports = false;
     m_bRemoveUnusedLayers = false;
     m_bRemoveUnusedFields = false;
     m_bFirstPassDone = false;
@@ -826,9 +828,21 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         return false;
     }
 
+    m_bSchemaFullChecking = CPLFetchBool(
+            poOpenInfo->papszOpenOptions,
+            szSCHEMA_FULL_CHECKING_OPTION,
+            m_oConf.m_bSchemaFullChecking );
+
+    m_bHandleMultipleImports = CPLFetchBool(
+            poOpenInfo->papszOpenOptions,
+            szHANDLE_MULTIPLE_IMPORTS_OPTION,
+            m_oConf.m_bHandleMultipleImports );
+
     bool bRet = oAnalyzer.Analyze( m_oCache,
                                    CPLGetDirname(m_osGMLFilename),
-                                   aoXSDs );
+                                   aoXSDs,
+                                   m_bSchemaFullChecking,
+                                   m_bHandleMultipleImports );
     if( !bRet )
     {
         return false;
@@ -965,7 +979,10 @@ GMLASReader* OGRGMLASDataSource::CreateReader( VSILFILE*& fpGML,
                       fpGML,
                       GetMapURIToPrefix(),
                       GetLayers(),
-                      false );
+                      false,
+                      std::vector<PairURIFilename>(),
+                      m_bSchemaFullChecking,
+                      m_bHandleMultipleImports );
 
     poReader->SetSwapCoordinates( GetSwapCoordinates() );
 
@@ -1217,7 +1234,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
                                  GetMapURIToPrefix(),
                                  GetLayers(),
                                  m_bValidate,
-                                 m_aoXSDsManuallyPassed );
+                                 m_aoXSDsManuallyPassed,
+                                 m_bSchemaFullChecking,
+                                 m_bHandleMultipleImports );
 
         poReaderFirstPass->SetFileSize( m_nFileSize );
 

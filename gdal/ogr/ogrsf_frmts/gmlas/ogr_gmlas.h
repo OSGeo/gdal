@@ -180,7 +180,15 @@ public:
 class GMLASErrorHandler: public ErrorHandler
 {
     public:
-        GMLASErrorHandler () : m_bFailed (false) {}
+        GMLASErrorHandler () : m_bFailed (false),
+                               m_bSchemaFullChecking (false),
+                               m_bHandleMultipleImports (false)   {}
+
+        void SetSchemaFullCheckingEnabled(bool b)
+                                            { m_bSchemaFullChecking = b; }
+
+        void SetHandleMultipleImportsEnabled(bool b)
+                                            { m_bHandleMultipleImports = b; }
 
         bool hasFailed () const { return m_bFailed; }
 
@@ -192,6 +200,8 @@ class GMLASErrorHandler: public ErrorHandler
 
     private:
         bool m_bFailed;
+        bool m_bSchemaFullChecking;
+        bool m_bHandleMultipleImports;
 
         void handle (const SAXParseException& e, CPLErr eErr);
 };
@@ -324,6 +334,12 @@ class GMLASConfiguration
 
         /** Cache directory for cached XSD schemas. */
         CPLString       m_osXSDCacheDirectory;
+
+        /** Whether to enable schema full checking. */
+        bool            m_bSchemaFullChecking;
+
+        /** Whether to allow multiple imports of the same namespace. */
+        bool            m_bHandleMultipleImports;
 
         /** Whether validation of document against schema should be done.  */
         bool            m_bValidate;
@@ -581,6 +597,9 @@ class GMLASField
         /** Documentation from schema */
         CPLString m_osDoc;
 
+        /** For elements within xs:choice */
+        bool m_bMayAppearOutOfOrder;
+
     public:
         GMLASField();
 
@@ -615,6 +634,7 @@ class GMLASField
 
         void SetIgnored() { m_bIgnored = true; }
         void SetDocumentation(const CPLString& osDoc) { m_osDoc = osDoc; }
+        void SetMayAppearOutOfOrder(bool b) { m_bMayAppearOutOfOrder = b; }
 
         static CPLString MakePKIDFieldXPathFromXLinkHrefXPath(
             const CPLString& osBaseXPath)
@@ -654,6 +674,7 @@ class GMLASField
                                                 { return m_osRelatedClassXPath; }
         bool IsIgnored() const { return m_bIgnored; }
         const CPLString& GetDocumentation() const { return m_osDoc; }
+        bool MayAppearOutOfOrder() const { return m_bMayAppearOutOfOrder; }
 
         static GMLASFieldType GetTypeFromString( const CPLString& osType );
 };
@@ -882,7 +903,9 @@ class GMLASSchemaAnalyzer
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,
-                     std::vector<PairURIFilename>& aoXSDs);
+                     std::vector<PairURIFilename>& aoXSDs,
+                     bool bSchemaFullChecking,
+                     bool bHandleMultipleImports);
         const std::vector<GMLASFeatureClass>& GetClasses() const
                 { return m_aoClasses; }
 
@@ -919,6 +942,8 @@ class OGRGMLASDataSource: public GDALDataset
         VSILFILE                      *m_fpGML;
         VSILFILE                      *m_fpGMLParser;
         bool                           m_bLayerInitFinished;
+        bool                           m_bSchemaFullChecking;
+        bool                           m_bHandleMultipleImports;
         bool                           m_bValidate;
         bool                           m_bRemoveUnusedLayers;
         bool                           m_bRemoveUnusedFields;
@@ -1364,7 +1389,9 @@ class GMLASReader : public DefaultHandler
                   const std::map<CPLString, CPLString>& oMapURIToPrefix,
                   std::vector<OGRGMLASLayer*>* papoLayers,
                   bool bValidate,
-                  const std::vector<PairURIFilename>& aoXSDs = std::vector<PairURIFilename>() );
+                  const std::vector<PairURIFilename>& aoXSDs,
+                  bool bSchemaFullChecking,
+                  bool bHandleMultipleImports );
 
         void SetLayerOfInterest( OGRGMLASLayer* poLayer );
 
@@ -1420,7 +1447,9 @@ class GMLASReader : public DefaultHandler
                                      GMLASBaseEntityResolver& oXSDEntityResolver,
                                      const CPLString& osBaseDirname,
                                      const CPLString& osXSDFilename,
-                                     Grammar** ppoGrammar = NULL );
+                                     Grammar** ppoGrammar,
+                                     bool bSchemaFullChecking,
+                                     bool bHandleMultipleImports );
 };
 
 #endif // OGR_GMLAS_INCLUDED

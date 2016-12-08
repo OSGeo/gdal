@@ -205,11 +205,27 @@ void GMLASErrorHandler::handle (const SAXParseException& e, CPLErr eErr)
     if ( resourceId == NULL || resourceId[0] == 0 )
         resourceId = e.getSystemId();
 
+    CPLString osErrorMsg(transcode(e.getMessage()));
+    if( m_bSchemaFullChecking &&
+        osErrorMsg.find("forbidden restriction of any particle") !=
+                                                            std::string::npos )
+    {
+        osErrorMsg += ". You may retry with the " +
+                      CPLString(szSCHEMA_FULL_CHECKING_OPTION) +
+                      "=NO open option";
+    }
+    else if( !m_bHandleMultipleImports && osErrorMsg.find("not found") !=
+                                                            std::string::npos )
+    {
+        osErrorMsg += ". You may retry with the " +
+                      CPLString(szHANDLE_MULTIPLE_IMPORTS_OPTION) +
+                      "=YES open option";
+    }
     CPLError(eErr, CPLE_AppDefined, "%s:%d:%d %s",
              transcode(resourceId).c_str(),
              static_cast<int>(e.getLineNumber()),
              static_cast<int>(e.getColumnNumber()),
-             transcode(e.getMessage()).c_str());
+             osErrorMsg.c_str());
 }
 
 /************************************************************************/
@@ -438,7 +454,9 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
                                    GMLASBaseEntityResolver& oXSDEntityResolver,
                                    const CPLString& osBaseDirname,
                                    const CPLString& osXSDFilename,
-                                   Grammar** ppoGrammar )
+                                   Grammar** ppoGrammar,
+                                   bool bSchemaFullChecking,
+                                   bool bHandleMultipleImports )
 {
     if( ppoGrammar != NULL )
         *ppoGrammar = NULL;
@@ -457,6 +475,11 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
         return false;
     }
 
+    poParser->setFeature (XMLUni::fgXercesSchemaFullChecking,
+                            bSchemaFullChecking);
+    poParser->setFeature( XMLUni::fgXercesHandleMultipleImports,
+                            bHandleMultipleImports );
+
     // Install a temporary entity resolved based on the current XSD
     CPLString osXSDDirname( CPLGetDirname(osModifXSDFilename) );
     if( osXSDFilename.find("http://") == 0 ||
@@ -473,6 +496,8 @@ bool GMLASReader::LoadXSDInParser( SAX2XMLReader* poParser,
 
     // Install a temporary error handler
     GMLASErrorHandler oErrorHandler;
+    oErrorHandler.SetSchemaFullCheckingEnabled( bSchemaFullChecking );
+    oErrorHandler.SetHandleMultipleImportsEnabled( bHandleMultipleImports );
     ErrorHandler* poOldErrorHandler = poParser->getErrorHandler();
     poParser->setErrorHandler( &oErrorHandler);
 
@@ -512,7 +537,9 @@ bool GMLASReader::Init(const char* pszFilename,
                        const std::map<CPLString, CPLString>& oMapURIToPrefix,
                        std::vector<OGRGMLASLayer*>* papoLayers,
                        bool bValidate,
-                       const std::vector<PairURIFilename>& aoXSDs)
+                       const std::vector<PairURIFilename>& aoXSDs,
+                       bool bSchemaFullChecking,
+                       bool bHandleMultipleImports)
 {
     m_oMapURIToPrefix = oMapURIToPrefix;
     m_papoLayers = papoLayers;
@@ -536,7 +563,6 @@ bool GMLASReader::Init(const char* pszFilename,
         // Enable validation.
         m_poSAXReader->setFeature (XMLUni::fgSAX2CoreValidation, true);
         m_poSAXReader->setFeature (XMLUni::fgXercesSchema, true);
-        m_poSAXReader->setFeature (XMLUni::fgXercesSchemaFullChecking, true);
 
         // We want all errors to be reported
         m_poSAXReader->setFeature (XMLUni::fgXercesValidationErrorAsFatal, false);
@@ -553,7 +579,10 @@ bool GMLASReader::Init(const char* pszFilename,
                 const CPLString osXSDFilename(aoXSDs[i].second);
                 if( !LoadXSDInParser( m_poSAXReader, m_oCache,
                                       oXSDEntityResolver,
-                                      osBaseDirname, osXSDFilename ) )
+                                      osBaseDirname, osXSDFilename,
+                                      NULL,
+                                      bSchemaFullChecking,
+                                      bHandleMultipleImports) )
                 {
                     return false;
                 }
@@ -1360,6 +1389,7 @@ void GMLASReader::startElement(
                         <subelement2>d</subelement>
                     </element_compound>
             */
+
             if( idx >= 0 && idx < m_nCurFieldIdx )
             {
 #ifdef DEBUG_VERBOSE
@@ -1396,7 +1426,11 @@ void GMLASReader::startElement(
             // Make sure we are in a repeated sequence, otherwise this is
             // invalid XML
             if( bPushNewFeature &&
-                !m_oCurCtxt.m_poLayer->GetFeatureClass().IsRepeatedSequence() )
+                !m_oCurCtxt.m_poLayer->GetFeatureClass().IsRepeatedSequence() &&
+                // Case of element within xs:choice
+                !(idx >= 0 && nFCFieldIdx >= 0 &&
+                    m_oCurCtxt.m_poLayer->GetFeatureClass().
+                        GetFields()[nFCFieldIdx].MayAppearOutOfOrder()) )
             {
                 bPushNewFeature = false;
                 CPLError(CE_Warning, CPLE_AppDefined,
