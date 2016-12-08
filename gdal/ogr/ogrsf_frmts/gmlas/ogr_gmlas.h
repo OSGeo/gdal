@@ -123,6 +123,7 @@ class GMLASXSDCache: public GMLASResourceCache
 class GMLASBaseEntityResolver: public EntityResolver,
                            public IGMLASInputSourceClosing
 {
+  protected:
         std::vector<CPLString> m_aosPathStack;
         GMLASXSDCache& m_oCache;
         CPLString m_osGMLVersionFound;
