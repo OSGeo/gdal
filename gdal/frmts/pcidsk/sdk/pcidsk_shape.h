@@ -108,8 +108,8 @@ namespace PCIDSK
 
         union
         {
-            float	float_val;
-            double	double_val;
+            float       float_val;
+            double      double_val;
             char       *string_val;
             int32       integer_val;
             int32      *integer_list_val;

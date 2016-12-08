@@ -50,6 +50,7 @@ GMLASField::GMLASField()
     , m_bRepetitionOnSequence(false)
     , m_bIncludeThisEltInBlob(false)
     , m_bIgnored(false)
+    , m_bMayAppearOutOfOrder(false)
 {
 }
 

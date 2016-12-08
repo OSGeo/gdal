@@ -23,6 +23,7 @@
       <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.1"><gml:pos>0 1</gml:pos></gml:Point></ogr:pointPropertyRepeated>
       <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.2"><gml:pos>1 2</gml:pos></gml:Point></ogr:pointPropertyRepeated>
       <ogr:pointPropertyRepeated><gml:Point gml:id="poly.geom.pointPropertyRepeated.3"><gml:pos>3 4</gml:pos></gml:Point></ogr:pointPropertyRepeated>
+      <ogr:myCustomPointProperty><gml:Point gml:id="poly.geom.myCustomPointProperty"><gml:pos>5 6</gml:pos></gml:Point></ogr:myCustomPointProperty>
     </ogr:test>
   </ogr:featureMember>
   <ogr:featureMember>

@@ -912,36 +912,36 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
 
 {
 /* -------------------------------------------------------------------- */
-/*	Set the size of fixed length segments.				*/
+/*      Set the size of fixed length segments.                          */
 /* -------------------------------------------------------------------- */
     int expected_data_blocks = 0;
     bool prezero = false;
 
     switch( seg_type )
     {
-      case SEG_LUT:
-	expected_data_blocks = 2;
-	break;
+    case SEG_LUT:
+        expected_data_blocks = 2;
+        break;
 
-      case SEG_PCT:
-	expected_data_blocks = 6;
-	break;
+    case SEG_PCT:
+        expected_data_blocks = 6;
+        break;
 
-      case SEG_SIG:
-	expected_data_blocks = 12;
-	break;
+    case SEG_SIG:
+        expected_data_blocks = 12;
+        break;
 
-      case SEG_GCP2:
-	// expected_data_blocks = 67;
-	// Change seg type to new GCP segment type
-	expected_data_blocks = 129;
-	break;
-	
-      case SEG_GEO:
-	expected_data_blocks = 6;
-	break;
+    case SEG_GCP2:
+        // expected_data_blocks = 67;
+        // Change seg type to new GCP segment type
+        expected_data_blocks = 129;
+        break;
 
-      case SEG_TEX:
+    case SEG_GEO:
+        expected_data_blocks = 6;
+        break;
+
+    case SEG_TEX:
         expected_data_blocks = 64;
         prezero = true;
         break;
@@ -1217,7 +1217,7 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
 /************************************************************************/
 /*
  const char *pszResampling;
- 	     Can be "NEAREST" for Nearest Neighbour resampling (the fastest),
+             Can be "NEAREST" for Nearest Neighbour resampling (the fastest),
              "AVERAGE" for block averaging or "MODE" for block mode.  This
              establishing the type of resampling to be applied when preparing
              the decimated overviews. Other methods can be set as well, but

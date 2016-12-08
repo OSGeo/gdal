@@ -44,7 +44,7 @@ namespace PCIDSK
     class PCIDSKSegment 
     {
     public:
-        virtual	~PCIDSKSegment() {}
+        virtual ~PCIDSKSegment() {}
 
         virtual void Initialize() {}
 

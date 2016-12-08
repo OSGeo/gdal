@@ -403,8 +403,8 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
                       int* pbOutAllValid )
 
 {
-    const double *padfNoData = reinterpret_cast<const double*>(pMaskFuncArg);
-    GUInt32 *panValidityMask = reinterpret_cast<GUInt32 *>(pValidityMask);
+    const double *padfNoData = static_cast<double*>(pMaskFuncArg);
+    GUInt32 *panValidityMask = static_cast<GUInt32 *>(pValidityMask);
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     *pbOutAllValid = FALSE;
@@ -423,26 +423,26 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           return
               GDALWarpNoDataMaskerT(
                   padfNoData, nPixels,
-                  reinterpret_cast<const GByte*>(*ppImageData),
+                  reinterpret_cast<GByte*>(*ppImageData),
                   panValidityMask, pbOutAllValid );
 
       case GDT_Int16:
           return
               GDALWarpNoDataMaskerT(
                    padfNoData, nPixels,
-                   reinterpret_cast<const GInt16*>(*ppImageData),
+                   reinterpret_cast<GInt16*>(*ppImageData),
                    panValidityMask, pbOutAllValid );
 
       case GDT_UInt16:
           return GDALWarpNoDataMaskerT(
                       padfNoData, nPixels,
-                      reinterpret_cast<const GUInt16*>(*ppImageData),
+                      reinterpret_cast<GUInt16*>(*ppImageData),
                       panValidityMask, pbOutAllValid );
 
       case GDT_Float32:
       {
           const float fNoData = static_cast<float>(padfNoData[0]);
-          const float *pafData = reinterpret_cast<const float*>(*ppImageData);
+          const float *pafData = reinterpret_cast<float *>(*ppImageData);
           const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(fNoData));
 
           // Nothing to do if value is out of range.
@@ -471,7 +471,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
       {
           const double dfNoData = padfNoData[0];
           const double *padfData =
-              reinterpret_cast<const double*>(*ppImageData);
+              reinterpret_cast<double *>(*ppImageData);
           const bool bIsNoDataNan = CPL_TO_BOOL(CPLIsNan(dfNoData));
 
           // Nothing to do if value is out of range.
@@ -615,7 +615,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
 
         // Make sure we have the correct alignment before doing SSE
         // On Linux x86_64, the alignment should be always correct due
-        // the alignment of malloc() being 16 byte
+        // the alignment of malloc() being 16 byte.
         const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
         if( !CPL_IS_ALIGNED(pafMask, 16) )
         {
@@ -705,6 +705,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         if( eErr != CE_None )
             return eErr;
 
+        // TODO(rouault): Is loop unrolling by hand (r34564) actually helpful?
         for( ; iPixel + 3 < nPixels; iPixel += 4 )
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
@@ -728,6 +729,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
             else
                 bOutAllOpaque = false;
         }
+
         for( ; iPixel < nPixels; iPixel++ )
         {
             pafMask[iPixel] = pafMask[iPixel] * inv_alpha_max;
@@ -880,7 +882,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
         const char *pszInitDest =
             CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" );
 
-        // Special logic for destinations being initialized on the fly.
+        // Special logic for destinations being initialized on-the-fly.
         if( pszInitDest != NULL )
         {
             memset( pafMask, 0, nPixels * sizeof(float) );
@@ -893,9 +895,9 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                                   "255" ) ));
 
 #if (defined(__x86_64) || defined(_M_X64))
-        GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
+        const GDALDataType eDT = GDALGetRasterDataType(hAlphaBand);
         // Make sure that pafMask is at least 8-byte aligned, which should
-        // normally be always the case if being a ptr returned by malloc()
+        // normally be always the case if being a ptr returned by malloc().
         if( (eDT == GDT_Byte || eDT == GDT_UInt16) &&
             CPL_IS_ALIGNED(pafMask, 8) )
         {
@@ -1438,7 +1440,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
             GDALGetDescription( psWO->hSrcDS ) );
 
         char** papszOpenOptions =
-            (reinterpret_cast<GDALDataset*>(psWO->hSrcDS))->GetOpenOptions();
+            (static_cast<GDALDataset*>(psWO->hSrcDS))->GetOpenOptions();
         GDALSerializeOpenOptionsToXML(psTree, papszOpenOptions);
     }
 

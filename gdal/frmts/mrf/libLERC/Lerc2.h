@@ -516,7 +516,7 @@ bool Lerc2::WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMin
       bool tryLut = false;
 
       if (!ComputeStats(data, i0, i0 + tileH, j0, j0 + tileW, zMin, zMax,
-	  numValidPixel, tryLut))
+            numValidPixel, tryLut))
         return false;
 
       if (numValidPixel > 0)
@@ -1026,13 +1026,13 @@ int Lerc2::TypeCode(T z, DataType& dtUsed) const
       char c = (char)z;
       int tc = (T)c == z ? 2 : (T)b == z ? 1 : 0;
       dtUsed = (DataType)(dt - tc);
-		  return tc;
+      return tc;
     }
     case DT_UShort:
     {
       int tc = (T)b == z ? 1 : 0;
       dtUsed = (DataType)(dt - 2 * tc);
-		  return tc;
+      return tc;
     }
     case DT_Int:
     {
@@ -1336,9 +1336,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         T delta = val;
 
         if (val < zMinA)
-	    zMinA = val;
+            zMinA = val;
         if (val > zMaxA)
-	    zMaxA = val;
+            zMaxA = val;
 
         if (j > 0 && m_bitMask.IsValid(k - 1))
         {

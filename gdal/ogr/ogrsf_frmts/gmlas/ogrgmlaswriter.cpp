@@ -2155,6 +2155,27 @@ bool GMLASWriter::WriteFieldRegular(
 
         if( bWriteOGRGeom )
         {
+            CPLString osExtraElt;
+            bool bGMLSurface311 = false;
+            bool bGMLCurve311 = false;
+            bool bGMLPoint311 = false;
+            if( m_osGMLVersion == "3.1.1" &&
+                MakeXPath(aoFieldComponents.back()) == "gml:Surface"  )
+            {
+                bGMLSurface311 = true;
+
+            }
+            else if( m_osGMLVersion == "3.1.1" &&
+                     MakeXPath(aoFieldComponents.back()) == "gml:Curve" )
+            {
+                bGMLCurve311 = true;
+            }
+            else if( m_osGMLVersion == "3.1.1" &&
+                     MakeXPath(aoFieldComponents.back()) == "gml:Point" )
+            {
+                bGMLPoint311 = true;
+            }
+
             const double dfGMLVersion =
                 m_osGMLVersion.empty() ? 3.2 : CPLAtof(m_osGMLVersion);
             char** papszOptions = CSLSetNameValue(NULL, "FORMAT",
@@ -2215,7 +2236,46 @@ bool GMLASWriter::WriteFieldRegular(
                 char* pszGML = OGR_G_ExportToGMLEx(
                     reinterpret_cast<OGRGeometryH>(poGeom), papszOptions);
                 if( pszGML )
-                    VSIFPrintfL(m_fpXML, "%s", pszGML);
+                {
+                    if( bGMLSurface311 && STARTS_WITH(pszGML, "<gml:Polygon>") )
+                    {
+                        char* pszEnd = strstr(pszGML, "</gml:Polygon>");
+                        if( pszEnd )
+                        {
+                            *pszEnd = '\0';
+                            VSIFPrintfL(m_fpXML,
+                                        "<gml:patches><gml:PolygonPatch>%s"
+                                        "</gml:PolygonPatch></gml:patches>",
+                                        pszGML + strlen("<gml:Polygon>"));
+                        }
+                    }
+                    else if( bGMLCurve311 && STARTS_WITH(pszGML, "<gml:LineString>") )
+                    {
+                        char* pszEnd = strstr(pszGML, "</gml:LineString>");
+                        if( pszEnd )
+                        {
+                            *pszEnd = '\0';
+                            VSIFPrintfL(m_fpXML,
+                                        "<gml:segments><gml:LineStringSegment>%s"
+                                        "</gml:LineStringSegment></gml:segments>",
+                                        pszGML + strlen("<gml:LineString>"));
+                        }
+                    }
+                    else if( bGMLPoint311 && STARTS_WITH(pszGML, "<gml:Point>") )
+                    {
+                        char* pszEnd = strstr(pszGML, "</gml:Point>");
+                        if( pszEnd )
+                        {
+                            *pszEnd = '\0';
+                            VSIFPrintfL(m_fpXML, "%s",
+                                        pszGML + strlen("<gml:Point>"));
+                        }
+                    }
+                    else
+                    {
+                        VSIFPrintfL(m_fpXML, "%s", pszGML);
+                    }
+                }
                 CPLFree(pszGML);
             }
             CSLDestroy(papszOptions);

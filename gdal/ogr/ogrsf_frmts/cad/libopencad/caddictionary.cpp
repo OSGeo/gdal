@@ -99,9 +99,9 @@ string CADDictionary::getRecordByName(const string& name) const
     {
         if( astXRecords[i].first.compare(name) == 0 )
         {
-			std::shared_ptr<CADDictionaryRecord> XRecordPtr = astXRecords[i].second;
+            std::shared_ptr<CADDictionaryRecord> XRecordPtr = astXRecords[i].second;
             if(XRecordPtr == nullptr ||
-				XRecordPtr->getType() != CADObject::XRECORD)
+               XRecordPtr->getType() != CADObject::XRECORD)
                 continue;
             CADXRecord * poXRecord = static_cast<CADXRecord*>(XRecordPtr.get() );
             return poXRecord->getRecordData();

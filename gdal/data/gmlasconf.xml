@@ -7,6 +7,10 @@
     <SchemaCache enabled="true">
         <Directory/> <!-- empty: use $HOME/.gdal/gmlas_xsd_cache by default -->
     </SchemaCache>
+    <SchemaAnalysisOptions>
+        <SchemaFullChecking>true</SchemaFullChecking>
+        <HandleMultipleImports>false</HandleMultipleImports>
+    </SchemaAnalysisOptions>
     <Validation enabled="false">
         <FailIfError>false</FailIfError>
     </Validation>

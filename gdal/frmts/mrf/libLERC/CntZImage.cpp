@@ -152,19 +152,19 @@ unsigned int CntZImage::computeNumBytesNeededToWrite(double maxZError,
       {
         // convert to bit mask
         BitMask bitMask(width_, height_);
-	// in case bitMask allocation fails
-	if (!bitMask.Size()) return 0;
+        // in case bitMask allocation fails
+        if (!bitMask.Size()) return 0;
         const CntZ* srcPtr = getData();
         for (int k = 0; k < width_ * height_ ; k++, srcPtr++)
         {
-          if (srcPtr->cnt <= 0)
+        if (srcPtr->cnt <= 0)
             bitMask.SetInvalid(k);
-	  else
-	    bitMask.SetValid(k);
+        else
+            bitMask.SetValid(k);
         }
 
         // determine numBytes needed to encode
-	numBytesOpt = static_cast<int>(bitMask.RLEsize());
+        numBytesOpt = static_cast<int>(bitMask.RLEsize());
       }
       else
       {
@@ -309,22 +309,22 @@ bool CntZImage::write(Byte** ppByte,
         const CntZ* srcPtr = getData();
         for (int k = 0; k < width_ * height_ ; k++, srcPtr++)
         {
-	  if (srcPtr->cnt <= 0)
-	    bitMask.SetInvalid(k);
-	  else
-	    bitMask.SetValid(k);
+        if (srcPtr->cnt <= 0)
+            bitMask.SetInvalid(k);
+        else
+            bitMask.SetValid(k);
         }
 
         // RLE encoding, update numBytesWritten
-	numBytesWritten = static_cast<int>(bitMask.RLEcompress(bArr));
-      }
+        numBytesWritten = static_cast<int>(bitMask.RLEcompress(bArr));
+    }
     }
     else
     {
       // encode tiles to buffer
       float maxVal;
       if (!writeTiles(zPart, maxZError, bCntsNoInt, numTilesVert, numTilesHori,
-	  bArr, numBytesWritten, maxVal))
+          bArr, numBytesWritten, maxVal))
         return false;
     }
 
@@ -437,12 +437,12 @@ bool CntZImage::read(Byte** ppByte,
       {
         // Read bit mask
         BitMask bitMask(width_, height_);
-	if (!bitMask.RLEdecompress(bArr))
-	    return false;
+        if (!bitMask.RLEdecompress(bArr))
+            return false;
 
-	CntZ* dstPtr = getData();
-	for (int k = 0; k < width_ * height_; k++, dstPtr++)
-	  dstPtr->cnt = bitMask.IsValid(k) ? 1.0f:0.0f;
+        CntZ* dstPtr = getData();
+        for (int k = 0; k < width_ * height_; k++, dstPtr++)
+            dstPtr->cnt = bitMask.IsValid(k) ? 1.0f:0.0f;
       }
     }
     else if (!readTiles(zPart, maxZErrorInFile, numTilesVert, numTilesHori, maxValInImg, bArr))
@@ -1210,22 +1210,22 @@ int CntZImage::writeVal(Byte **ppByte, float z, int numBytes)
     short s = (short)z;
     // Calculate numBytes if needed
     if (0 == numBytes)
-	numBytes = (z != (float)s) ? 4 : (s != (signed char)s) ? 2 : 1;
+        numBytes = (z != (float)s) ? 4 : (s != (signed char)s) ? 2 : 1;
 
     if (4 == numBytes) {
-	// Store as floating point, 4 bytes in LSB order
-	Byte *fp = (Byte *)&z + POFFSET(float);
-	NEXTBYTE = *ADJUST(fp);
-	NEXTBYTE = *ADJUST(fp);
-	NEXTBYTE = *ADJUST(fp);
-	NEXTBYTE = *ADJUST(fp);
-	return 4;
+        // Store as floating point, 4 bytes in LSB order
+        Byte *fp = (Byte *)&z + POFFSET(float);
+        NEXTBYTE = *ADJUST(fp);
+        NEXTBYTE = *ADJUST(fp);
+        NEXTBYTE = *ADJUST(fp);
+        NEXTBYTE = *ADJUST(fp);
+        return 4;
     }
 
     // Int types, 2 or 1 bytes
     NEXTBYTE = (Byte)s; // Lower byte first
     if (2 == numBytes)
-	NEXTBYTE = (Byte)(s >> 8); // Second byte
+        NEXTBYTE = (Byte)(s >> 8); // Second byte
     return numBytes;
 }
 
@@ -1239,17 +1239,17 @@ void CntZImage::readVal(Byte **ppByte, float &val, int numBytes)
     // Floating point, read the 4 bytes in LSB first order
     if (4 == numBytes) {
         // cppcheck-suppress unreadVariable
-	Byte *vp = ((Byte*)&val) + POFFSET(float);
-	*ADJUST(vp) = NEXTBYTE;
-	*ADJUST(vp) = NEXTBYTE;
-	*ADJUST(vp) = NEXTBYTE;
-	*ADJUST(vp) = NEXTBYTE;
-	return;
+        Byte *vp = ((Byte*)&val) + POFFSET(float);
+        *ADJUST(vp) = NEXTBYTE;
+        *ADJUST(vp) = NEXTBYTE;
+        *ADJUST(vp) = NEXTBYTE;
+        *ADJUST(vp) = NEXTBYTE;
+        return;
     }
 
     int v = (int)((signed char)NEXTBYTE); // Low byte, signed extended
     if (2 == numBytes)
-	v = (256 * (signed char)NEXTBYTE) | (v & 0xff);
+        v = (256 * (signed char)NEXTBYTE) | (v & 0xff);
     val = static_cast<float>(v);
 }
 

@@ -57,6 +57,8 @@ GMLASConfiguration::GMLASConfiguration()
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
     , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
     , m_bAllowXSDCache(ALLOW_XSD_CACHE_DEFAULT)
+    , m_bSchemaFullChecking(SCHEMA_FULL_CHECKING_DEFAULT)
+    , m_bHandleMultipleImports(HANDLE_MULTIPLE_IMPORTS_DEFAULT)
     , m_bValidate(VALIDATE_DEFAULT)
     , m_bFailIfValidationError(FAIL_IF_VALIDATION_ERROR_DEFAULT)
     , m_bExposeMetadataLayers(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT)
@@ -277,6 +279,14 @@ bool GMLASConfiguration::Load(const char* pszFilename)
             CPLGetXMLValue(psRoot, "=Configuration.SchemaCache.Directory",
                            "");
     }
+
+    m_bSchemaFullChecking = CPLGetXMLBoolValue( psRoot,
+                    "=Configuration.SchemaAnalysisOptions.SchemaFullChecking",
+                    SCHEMA_FULL_CHECKING_DEFAULT);
+
+    m_bHandleMultipleImports = CPLGetXMLBoolValue( psRoot,
+                    "=Configuration.SchemaAnalysisOptions.HandleMultipleImports",
+                    HANDLE_MULTIPLE_IMPORTS_DEFAULT);
 
     m_bValidate = CPLGetXMLBoolValue( psRoot,
                                       "=Configuration.Validation.enabled",

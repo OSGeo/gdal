@@ -41,7 +41,9 @@
 #  include <cassert>
 #endif
 #include <cerrno>
+#ifndef DEBUG_BOOL
 #include <cmath>
+#endif
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -88,18 +90,24 @@ struct _CPLLock
 #ifdef DEBUG_CONTENTION
 static GUIntBig CPLrdtsc(void)
 {
-   unsigned int a, d, x, y;
-   __asm__ volatile ("cpuid" : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
-   __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d) );
-   return ((GUIntBig )a) | (((GUIntBig )d) << 32);
+    unsigned int a;
+    unsigned int d;
+    unsigned int x;
+    unsigned int y;
+    __asm__ volatile ("cpuid" : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+    __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d) );
+    return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
 }
 
 static GUIntBig CPLrdtscp(void)
 {
-   unsigned int a, d, x, y;
-   __asm__ volatile ("rdtscp" : "=a" (a), "=d" (d) );
-   __asm__ volatile ("cpuid"  : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
-   return ((GUIntBig )a) | (((GUIntBig )d) << 32);
+    unsigned int a;
+    unsigned int d;
+    unsigned int x;
+    unsigned int y;
+    __asm__ volatile ("rdtscp" : "=a" (a), "=d" (d) );
+    __asm__ volatile ("cpuid"  : "=a" (x), "=d" (y) : "a"(0) : "cx", "bx" );
+    return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
 }
 #endif
 
@@ -109,8 +117,8 @@ static int     CPLAcquireSpinLock( CPLSpinLock* );
 static void    CPLReleaseSpinLock( CPLSpinLock* );
 static void    CPLDestroySpinLock( CPLSpinLock* );
 
-/* We don't want it to be publicly used since it solves rather tricky issues */
-/* that are better to remain hidden... */
+// We don't want it to be publicly used since it solves rather tricky issues
+// that are better to remain hidden.
 void CPLFinalizeTLS();
 
 /************************************************************************/
@@ -147,7 +155,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex,
     // fprintf() will do the job right.
     fprintf( stderr,
              "CPLMutexHolder: Request %p for pid %ld at %d/%s.\n",
-             *phMutex, reinterpret_cast<long>(CPLGetPID()), nLine, pszFile );
+             *phMutex, static_cast<long>(CPLGetPID()), nLine, pszFile );
 #else
     // TODO(schwehr): Find a better way to do handle this.
     (void)pszFile;
@@ -212,7 +220,7 @@ CPLMutexHolder::~CPLMutexHolder()
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
                  "~CPLMutexHolder: Release %p for pid %ld at %d/%s.\n",
-                 hMutex, (long) CPLGetPID(), nLine, pszFile );
+                 hMutex, static_cast<long>(CPLGetPID()), nLine, pszFile );
 #endif
         CPLReleaseMutex( hMutex );
     }
@@ -685,8 +693,7 @@ void CPLSleep( double dfWaitInSeconds )
 
     for( ; ltime < ttime; time(&ltime) )
     {
-        /* currently we just busy wait.  Perhaps we could at least block on
-           io? */
+        // Currently we just busy wait.  Perhaps we could at least block on io?
     }
 }
 
@@ -740,7 +747,7 @@ void CPLCleanupTLS()
     papTLSList = NULL;
 }
 
-/* endif CPL_MULTIPROC_STUB */
+// endif CPL_MULTIPROC_STUB
 
 #elif defined(CPL_MULTIPROC_WIN32)
 
@@ -1091,7 +1098,7 @@ void CPLUnlockFile( void *hLock )
 GIntBig CPLGetPID()
 
 {
-    return (GIntBig) GetCurrentThreadId();
+    return static_cast<GIntBig>(GetCurrentThreadId());
 }
 
 /************************************************************************/
@@ -1152,7 +1159,8 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
+                                            void *pThreadArg )
 
 {
     CPLStdCallThreadInfo *psInfo =
@@ -1175,7 +1183,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
 /*                          CPLJoinThread()                             */
 /************************************************************************/
 
-void CPLJoinThread(CPLJoinableThread* hJoinableThread)
+void CPLJoinThread( CPLJoinableThread* hJoinableThread )
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) hJoinableThread;
 
@@ -1201,10 +1209,10 @@ static DWORD nTLSKey = 0;
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
+static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
 
 {
-    void **papTLSList;
+    void **papTLSList = NULL;
 
     if( pbMemoryErrorOccurred )
         *pbMemoryErrorOccurred = FALSE;
@@ -1233,7 +1241,8 @@ static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
             if( pbMemoryErrorOccurred )
             {
                 *pbMemoryErrorOccurred = TRUE;
-                fprintf(stderr, "CPLGetTLSList() failed to allocate TLS list!\n" );
+                fprintf(stderr,
+                        "CPLGetTLSList() failed to allocate TLS list!\n" );
                 return NULL;
             }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
@@ -1283,7 +1292,7 @@ void CPLCleanupTLS()
     CPLCleanupTLSList( papTLSList );
 }
 
-/* endif CPL_MULTIPROC_WIN32 */
+// endif CPL_MULTIPROC_WIN32
 
 #elif defined(CPL_MULTIPROC_PTHREAD)
 
@@ -1306,7 +1315,7 @@ void CPLCleanupTLS()
 int CPLGetNumCPUs()
 {
 #ifdef _SC_NPROCESSORS_ONLN
-    return (int)sysconf(_SC_NPROCESSORS_ONLN);
+    return static_cast<int>(sysconf(_SC_NPROCESSORS_ONLN));
 #else
     return 1;
 #endif
@@ -1356,12 +1365,14 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     pthread_mutex_lock(&global_mutex);
     if( *phLock == NULL )
     {
-        *phLock = (CPLLock*) calloc(1, sizeof(CPLLock));
+        *phLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
         if( *phLock )
         {
             (*phLock)->eType = eType;
-            (*phLock)->u.hMutex = CPLCreateMutexInternal(true,
-                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
+            (*phLock)->u.hMutex = CPLCreateMutexInternal(
+                true,
+                eType == LOCK_RECURSIVE_MUTEX
+                ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
             if( (*phLock)->u.hMutex == NULL )
             {
                 free(*phLock);
@@ -1490,7 +1501,7 @@ CPLMutex *CPLCreateMutex()
     return CPLCreateMutexInternal(false, CPL_MUTEX_RECURSIVE);
 }
 
-CPLMutex *CPLCreateMutexEx(int nOptions)
+CPLMutex *CPLCreateMutexEx( int nOptions )
 {
     return CPLCreateMutexInternal(false, nOptions);
 }
@@ -1564,9 +1575,9 @@ void CPLDestroyMutex( CPLMutex *hMutexIn )
 /*                          CPLReinitAllMutex()                         */
 /************************************************************************/
 
-/* Used by gdalclientserver.cpp just after forking, to avoid */
-/* deadlocks while mixing threads with fork */
-void CPLReinitAllMutex();
+// Used by gdalclientserver.cpp just after forking, to avoid
+// deadlocks while mixing threads with fork.
+void CPLReinitAllMutex();  // TODO(schwehr): Put this in a header.
 void CPLReinitAllMutex()
 {
     MutexLinkedElt* psItem = psMutexList;
@@ -1583,9 +1594,10 @@ void CPLReinitAllMutex()
 /*                            CPLCreateCond()                           */
 /************************************************************************/
 
-CPLCond  *CPLCreateCond()
+CPLCond *CPLCreateCond()
 {
-    pthread_cond_t* pCond = (pthread_cond_t* )malloc(sizeof(pthread_cond_t));
+    pthread_cond_t* pCond =
+      static_cast<pthread_cond_t *>(malloc(sizeof(pthread_cond_t)));
     if (pCond && pthread_cond_init(pCond, NULL) == 0 )
         return (CPLCond*) pCond;
     fprintf(stderr, "CPLCreateCond() failed.\n");
@@ -1653,7 +1665,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 /*      to exist to be locked.                                          */
 /* -------------------------------------------------------------------- */
     const size_t nLen = strlen(pszPath) + 30;
-    char *pszLockFilename = (char *) CPLMalloc(nLen);
+    char *pszLockFilename = static_cast<char *>(CPLMalloc(nLen));
     snprintf( pszLockFilename, nLen, "%s.lock", pszPath );
 
     FILE *fpLock = fopen( pszLockFilename, "r" );
@@ -1711,6 +1723,7 @@ void CPLUnlockFile( void *hLock )
 GIntBig CPLGetPID()
 
 {
+    // TODO(schwehr): What is the correct C++ way to do this cast?
     return (GIntBig)pthread_self();
 }
 
@@ -1735,7 +1748,7 @@ static void CPLMake_key()
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **CPLGetTLSList(int* pbMemoryErrorOccurred)
+static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
 
 {
     if( pbMemoryErrorOccurred )
@@ -1804,7 +1817,7 @@ typedef struct {
 static void *CPLStdCallThreadJacket( void *pData )
 
 {
-    CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo *) pData;
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(pData);
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
     int bMemoryError = FALSE;
@@ -2462,7 +2475,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
      */
     fprintf( stderr,
              "CPLLockHolder: Request %p for pid %ld at %d/%s.\n",
-             *phLock, (long) CPLGetPID(), nLine, pszFile );
+             *phLock, static_cast<long>(CPLGetPID()), nLine, pszFile );
 #endif
 
     if( !CPLCreateOrAcquireLock( phLock, eType ) )
@@ -2475,7 +2488,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
                  "CPLLockHolder: Acquired %p for pid %ld at %d/%s.\n",
-                 *phLock, (long) CPLGetPID(), nLine, pszFile );
+                 *phLock, static_cast<long>(CPLGetPID()), nLine, pszFile );
 #endif
 
         hLock = *phLock;
@@ -2521,7 +2534,7 @@ CPLLockHolder::~CPLLockHolder()
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
                  "~CPLLockHolder: Release %p for pid %ld at %d/%s.\n",
-                 hLock, (long) CPLGetPID(), nLine, pszFile );
+                 hLock, static_cast<long>(CPLGetPID()), nLine, pszFile );
 #endif
         CPLReleaseLock( hLock );
     }

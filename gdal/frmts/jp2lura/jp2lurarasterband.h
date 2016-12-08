@@ -48,9 +48,9 @@ public:
         ~JP2LuraRasterBand();
 
         virtual CPLErr          IReadBlock(int, int, void *) override;
-        virtual CPLErr          IRasterIO(GDALRWFlag eRWFlag,	
+        virtual CPLErr          IRasterIO(GDALRWFlag eRWFlag,
                 int nXOff, int nYOff, int nXSize, int nYSize,
-                void * pData, int nBufXSize, int nBufYSize,	GDALDataType eBufType,
+                void * pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
                 GSpacing nPixelSpace, GSpacing nLineSpace,
                 GDALRasterIOExtraArg* psExtraArg) override;
 

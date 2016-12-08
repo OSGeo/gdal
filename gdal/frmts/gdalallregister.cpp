@@ -550,6 +550,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IRIS();
 #endif
 
+#ifdef FRMT_prf
+    GDALRegister_PRF();
+#endif
+
 #ifdef GNM_ENABLED
     GNMRegisterAllInternal();
 #endif
