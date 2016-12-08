@@ -1055,7 +1055,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #if !defined(_MSC_VER) && !defined(__APPLE__)
 CPL_C_START
-#ifdef WARN_STANDARD_PRINTF
+#if defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF)
 int vsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
 int snprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
 int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
