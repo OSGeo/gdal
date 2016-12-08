@@ -556,7 +556,14 @@ bool GMLASReader::Init(const char* pszFilename,
     m_poSAXReader->setLexicalHandler( this );
     m_poSAXReader->setDTDHandler( this );
 
+    m_oErrorHandler.SetSchemaFullCheckingEnabled( bSchemaFullChecking );
+    m_oErrorHandler.SetHandleMultipleImportsEnabled( bHandleMultipleImports );
     m_poSAXReader->setErrorHandler(&m_oErrorHandler);
+
+    m_poSAXReader->setFeature (XMLUni::fgXercesSchemaFullChecking,
+                            bSchemaFullChecking);
+    m_poSAXReader->setFeature( XMLUni::fgXercesHandleMultipleImports,
+                            bHandleMultipleImports );
 
     if( bValidate )
     {

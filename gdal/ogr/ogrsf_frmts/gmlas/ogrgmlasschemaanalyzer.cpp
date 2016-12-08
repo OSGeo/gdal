@@ -67,15 +67,63 @@ static bool IsCompatibleOfArray( GMLASFieldType eType )
 class GMLASPrefixMappingHander: public DefaultHandler
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
+        CPLString& m_osGMLVersionFound;
+
   public:
-        explicit GMLASPrefixMappingHander(
-                        std::map<CPLString, CPLString>& oMapURIToPrefix) :
-            m_oMapURIToPrefix( oMapURIToPrefix )
+        GMLASPrefixMappingHander(
+                        std::map<CPLString, CPLString>& oMapURIToPrefix,
+                        CPLString& osGMLVersionFound) :
+            m_oMapURIToPrefix( oMapURIToPrefix ),
+            m_osGMLVersionFound( osGMLVersionFound )
         {}
+
+        virtual void startElement(
+            const   XMLCh* const    uri,
+            const   XMLCh* const    localname,
+            const   XMLCh* const    qname,
+            const   Attributes& attrs) override;
 
         virtual void startPrefixMapping(const XMLCh* const prefix,
                                         const XMLCh* const uri) override;
 };
+
+/************************************************************************/
+/*                           startElement()                             */
+/************************************************************************/
+
+void GMLASPrefixMappingHander::startElement(
+                                    const   XMLCh* const    uri,
+                                    const   XMLCh* const    localname,
+                                    const   XMLCh* const    /*qname*/,
+                                    const   Attributes& attrs )
+{
+    if( !m_osGMLVersionFound.empty() )
+        return;
+
+    const CPLString osURI( transcode(uri) );
+    const CPLString osLocalname( transcode(localname) );
+    if( osURI == szXS_URI && osLocalname == "schema" )
+    {
+        bool bIsGML = false;
+        CPLString osVersion;
+        for(unsigned int i=0; i < attrs.getLength(); i++)
+        {
+            CPLString osAttrLocalName(transcode(attrs.getLocalName(i)));
+            if( osAttrLocalName == "targetNamespace" )
+            {
+                bIsGML = transcode(attrs.getValue(i)) == szGML_URI;
+            }
+            else if( osAttrLocalName == "version" )
+            {
+                osVersion = transcode(attrs.getValue(i));
+            }
+        }
+        if( bIsGML && !osVersion.empty() )
+        {
+            m_osGMLVersionFound = osVersion;
+        }
+    }
+}
 
 /************************************************************************/
 /*                         startPrefixMapping()                         */
@@ -112,7 +160,8 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
 static
 void CollectNamespacePrefixes(const char* pszXSDFilename,
                               VSILFILE* fpXSD,
-                              std::map<CPLString, CPLString>& oMapURIToPrefix)
+                              std::map<CPLString, CPLString>& oMapURIToPrefix,
+                              CPLString& osGMLVersionFound)
 {
     GMLASInputSource oSource(pszXSDFilename, fpXSD, false);
     // This is a bit silly but the startPrefixMapping() callback only gets
@@ -120,7 +169,7 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
     // loadGrammar(), so we have to parse the doc twice.
     SAX2XMLReader* poReader = XMLReaderFactory::createXMLReader ();
 
-    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix);
+    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix, osGMLVersionFound);
     poReader->setContentHandler(&contentHandler);
 
     GMLASErrorHandler oErrorHandler;
@@ -159,7 +208,8 @@ void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
                                              const CPLString& osFilename,
                                              VSILFILE* fp)
 {
-    CollectNamespacePrefixes(osFilename, fp, m_oMapURIToPrefix);
+    CollectNamespacePrefixes(osFilename, fp, m_oMapURIToPrefix,
+                             m_osGMLVersionFound);
     VSIFSeekL(fp, 0, SEEK_SET);
 }
 
