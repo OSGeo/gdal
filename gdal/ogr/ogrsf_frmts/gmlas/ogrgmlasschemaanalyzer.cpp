@@ -768,6 +768,11 @@ bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration* poEltDecl)
         const CPLString osSubstName(
                     transcode(poSubstGroup->getName()) );
         if( IsGMLNamespace(osSubstNS) &&
+            osSubstName == "_FeatureCollection" )
+        {
+            return false;
+        }
+        if( IsGMLNamespace(osSubstNS) &&
             (osSubstName == "AbstractFeature" ||
                 osSubstName == "_Feature") )
         {
@@ -784,7 +789,9 @@ bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration* poEltDecl)
 
 bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                   const CPLString& osBaseDirname,
-                                  std::vector<PairURIFilename>& aoXSDs)
+                                  std::vector<PairURIFilename>& aoXSDs,
+                                  bool bSchemaFullChecking,
+                                  bool bHandleMultipleImports)
 {
     GMLASUniquePtr<XMLGrammarPool> poGrammarPool(
          (new XMLGrammarPoolImpl(XMLPlatformUtils::fgMemoryManager)));
@@ -814,7 +821,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         // Enable validation.
         //
         poParser->setFeature (XMLUni::fgXercesSchema, true);
-        poParser->setFeature (XMLUni::fgXercesSchemaFullChecking, true);
+
         poParser->setFeature (XMLUni::fgXercesValidationErrorAsFatal, false);
 
         // Use the loaded grammar during parsing.
@@ -832,7 +839,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                            oXSDEntityResolver,
                                            osBaseDirname,
                                            osXSDFilename,
-                                           &poGrammar ) )
+                                           &poGrammar,
+                                           bSchemaFullChecking,
+                                           bHandleMultipleImports ) )
         {
             return false;
         }
@@ -1570,6 +1579,45 @@ static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef )
 #endif
 }
 
+
+/************************************************************************/
+/*                 GetOGRGeometryTypeFromGMLEltName()                   */
+/************************************************************************/
+
+static OGRwkbGeometryType GetOGRGeometryTypeFromGMLEltName(
+                                                    const CPLString& osEltName )
+{
+    const struct MyStruct
+    {
+        const char* pszName;
+        OGRwkbGeometryType eType;
+    } asArray[] = {
+        { "Point", wkbPoint },
+        { "Polygon", wkbPolygon },
+        { "LineString", wkbLineString },
+        { "MultiPoint", wkbMultiPoint },
+        { "MultiPolygon", wkbMultiPolygon },
+        { "MultiLineString", wkbMultiLineString },
+        { "MultiGeometry", wkbGeometryCollection },
+        { "MultiCurve", wkbMultiCurve },
+        { "MultiSurface", wkbMultiSurface },
+        { "MultiSolid", wkbUnknown },
+        { "Curve", wkbCurve },
+        { "Surface", wkbSurface },
+        { "CompositeCurve", wkbCurve },
+        { "CompositeSurface", wkbSurface },
+        { "CompositeSolid", wkbUnknown },
+        { "GeometricComplex", wkbUnknown },
+    };
+
+    for( size_t i = 0; i < CPL_ARRAYSIZE(asArray); ++i )
+    {
+        if( osEltName == asArray[i].pszName )
+            return asArray[i].eType;
+    }
+    return wkbNone;
+}
+
 /************************************************************************/
 /*                      CreateNonNestedRelationship()                  */
 /************************************************************************/
@@ -1856,6 +1904,11 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             // Special case for a GML geometry property
             if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
                 GetOGRGeometryType(poTypeDef) != wkbNone )
+            {
+                // Do nothing
+            }
+            else if( IsGMLNamespace(osEltNS) &&
+                     GetOGRGeometryTypeFromGMLEltName(osEltName) != wkbNone )
             {
                 // Do nothing
             }
@@ -2360,6 +2413,27 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 else
                     oField.SetGeomType( eGeomType );
                 oField.SetXPath( osElementXPath );
+                oField.SetDocumentation( GetAnnotationDoc( poElt ) );
+
+                oClass.AddField( oField );
+            }
+
+            else if( IsGMLNamespace(osEltNS) &&
+                     (eGeomType = GetOGRGeometryTypeFromGMLEltName(osEltName))
+                                                                    != wkbNone )
+            {
+                GMLASField oField;
+                oField.SetName( osEltName );
+                oField.SetMinOccurs( nMinOccurs );
+                oField.SetMaxOccurs( nMaxOccurs );
+
+                oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
+                oField.SetGeomType( eGeomType );
+                oField.SetArray( nMaxOccurs > 1 ||
+                                    nMaxOccurs == MAXOCCURS_UNLIMITED );
+
+                oField.SetXPath( osElementXPath );
+                oField.SetIncludeThisEltInBlob( true );
                 oField.SetDocumentation( GetAnnotationDoc( poElt ) );
 
                 oClass.AddField( oField );
@@ -3054,7 +3128,47 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 }
                 else
                 {
-                    // Shouldn't happen normally
+                    // Is it a <xs:choice maxOccurs=">1|unbounded"
+                    if (psSubModelGroup->getCompositor() ==
+                                            XSModelGroup::COMPOSITOR_CHOICE)
+                    {
+                        std::set<XSModelGroup*>
+                            oSetNewVisitedModelGroups(oSetVisitedModelGroups);
+                        GMLASFeatureClass oTmpClass;
+                        oTmpClass.SetName( oClass.GetName() );
+                        oTmpClass.SetXPath( oClass.GetXPath() );
+                        if( !ExploreModelGroup( psSubModelGroup,
+                                                NULL,
+                                                oTmpClass,
+                                                nRecursionCounter + 1,
+                                                oSetNewVisitedModelGroups,
+                                                poModel,
+                                                oMapCountOccurrencesOfSameName ) )
+                        {
+                            return false;
+                        }
+                        bool bHasArray = false;
+                        std::vector<GMLASField>& oTmpFields =
+                                                        oTmpClass.GetFields();
+                        for( size_t j = 0; j < oTmpFields.size(); ++j )
+                        {
+                            if( oTmpFields[j].IsArray() )
+                            {
+                                bHasArray = true;
+                                break;
+                            }
+                        }
+                        if( !bHasArray )
+                        {
+                            for( size_t j = 0; j < oTmpFields.size(); ++j )
+                            {
+                                oTmpFields[j].SetMayAppearOutOfOrder( true );
+                                oClass.AddField( oTmpFields[j] );
+                            }
+                            return true;
+                        }
+                    }
+
                     nGroup ++;
                     osGroupName = CPLSPrintf("_group%d", nGroup);
                 }
