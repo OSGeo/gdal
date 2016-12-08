@@ -54,20 +54,20 @@ enum CADVersions
 
 enum CADErrorCodes
 {
-    SUCCESS = 0, /**< operation successfully executed */
-    FILE_OPEN_FAILED, /**< failed to open CAD file */
-    UNSUPPORTED_VERSION, /**< unsupported CAD file version */
-    FILE_PARSE_FAILED, /**< failed to parse file */
-    SECTION_LOCATOR_READ_FAILED, /**< failed to read section locator */
+    SUCCESS = 0,                /**< operation successfully executed */
+    FILE_OPEN_FAILED,           /**< failed to open CAD file */
+    UNSUPPORTED_VERSION,        /**< unsupported CAD file version */
+    FILE_PARSE_FAILED,          /**< failed to parse file */
+    SECTION_LOCATOR_READ_FAILED,/**< failed to read section locator */
     HEADER_SECTION_READ_FAILED, /**< failed to read header section */
-    CLASSES_SECTION_READ_FAILED, /**< failed to read classes section */
+    CLASSES_SECTION_READ_FAILED,/**< failed to read classes section */
     TABLES_SECTION_READ_FAILED, /**< failed to read tables section */
     BLOCKS_SECTION_READ_FAILED, /**< failed to read blocks section */
-    ENTITIES_SECTION_READ_FAILED, /**< failed to read entities section */
+    ENTITIES_SECTION_READ_FAILED,/**< failed to read entities section */
     OBJECTS_SECTION_READ_FAILED, /**< failed to read objects section */
     THUMBNAILIMAGE_SECTION_READ_FAILED, /**< failed to read thumbnailimage section */
-    TABLE_READ_FAILED, /**< failed to read table*/
-    VALUE_EXISTS                    /**< the value already exist in the header */
+    TABLE_READ_FAILED,          /**< failed to read table*/
+    VALUE_EXISTS                /**< the value already exist in the header */
 };
 
 OCAD_EXTERN int GetVersion();

@@ -127,34 +127,26 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
         unique_ptr<CADEntityObject> spEntityObj( static_cast<CADEntityObject *>(
                                                          pCADFile->GetObject( dCurrentEntHandle, true )) );
 
-        if( dCurrentEntHandle == dLastEntHandle )
+        if( spEntityObj == nullptr )
         {
-            if( nullptr != spEntityObj )
-                FillLayer( spEntityObj.get() );
-            else
-            {
-#ifdef _DEBUG
-                assert( 0 );
-#endif //_DEBUG
-            }
+            DebugMsg( "Entity object is null\n" );
+            break;
+        } 
+        else if ( dCurrentEntHandle == dLastEntHandle )
+        {
+            FillLayer( spEntityObj.get() );
             break;
         }
 
-        /* This check may look excessive, but if something goes wrong way -
-         * some part of geometries will be parsed. */
-        if( spEntityObj != nullptr )
-        {
-            FillLayer( spEntityObj.get() );
+        FillLayer( spEntityObj.get() );
 
-            if( spEntityObj->stCed.bNoLinks )
-                ++dCurrentEntHandle;
-            else
-                dCurrentEntHandle = spEntityObj->stChed.hNextEntity.getAsLong( spEntityObj->stCed.hObjectHandle );
-        } else
+        if( spEntityObj->stCed.bNoLinks )
         {
-#ifdef _DEBUG
-            assert( 0 );
-#endif //_DEBUG
+            ++dCurrentEntHandle;
+        }
+        else
+        {
+            dCurrentEntHandle = spEntityObj->stChed.hNextEntity.getAsLong( spEntityObj->stCed.hObjectHandle );
         }
     }
 
