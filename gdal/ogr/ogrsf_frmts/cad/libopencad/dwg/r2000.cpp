@@ -83,7 +83,8 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         DebugMsg( "Header variables section length: %d\n",
                   static_cast<int>(dHeaderVarsSectionLength) );
 
-    pabyBuf = new char[dHeaderVarsSectionLength + dSizeOfSectionSize + 2]; // Add extra 2 bytes
+    pabyBuf = new char[dHeaderVarsSectionLength + dSizeOfSectionSize + 10]; // Add extra 10 bytes
+    memset (pabyBuf, 0, dHeaderVarsSectionLength + dSizeOfSectionSize + 10);
     memcpy (pabyBuf, &dHeaderVarsSectionLength, dSizeOfSectionSize);
     pFileIO->Read( pabyBuf + dSizeOfSectionSize, dHeaderVarsSectionLength + 2 );
     size_t nBitOffsetFromStart = dSizeOfSectionSize * 8;
@@ -636,7 +637,6 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     if( memcmp( pabyBuf, DWGConstants::HeaderVariablesEnd,
                          DWGConstants::SentinelLength ) )
     {
-        delete[] pabyBuf;
         std::cerr << "File is corrupted (HEADERVARS section ending sentinel "
                           "doesn't match.)\n";
         returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
@@ -670,8 +670,9 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         DebugMsg( "Classes section length: %d\n",
                   static_cast<int>(dSectionSize) );
 
-        char * pabySectionContent = new char[dSectionSize + dSizeOfSectionSize + 2]; // Add extra 2 bytes
-        memcpy (pabySectionContent, &dSectionSize, dSizeOfSectionSize);
+        char * pabySectionContent = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
+        memset (pabySectionContent, 0, dSectionSize + dSizeOfSectionSize + 10);
+        memcpy (pabySectionContent, &dSectionSize, dSizeOfSectionSize);        
         pFileIO->Read( pabySectionContent + dSizeOfSectionSize, dSectionSize + 2 );
         size_t dBitOffsetFromStart = dSizeOfSectionSize * 8;
         size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
@@ -751,7 +752,8 @@ int DWGFileR2000::CreateFileMap()
         if( dSectionSize == dSizeOfSectionSize )
             break; // last section is empty.
 
-        char * pabySectionContent  = new char[dSectionSize + dSizeOfSectionSize + 2]; // Add extra 2 bytes
+        char * pabySectionContent  = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
+        memset (pabySectionContent, 0, dSectionSize + dSizeOfSectionSize + 10);
         memcpy(pabySectionContent, &dSectionSizeOriginal, dSizeOfSectionSize);
         size_t nRecordsInSection   = 0;
 
