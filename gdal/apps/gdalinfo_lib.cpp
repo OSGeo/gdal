@@ -53,18 +53,8 @@
 #include "gdal_priv.h"
 #include "gdal_rat.h"
 #include "ogr_api.h"
+#include "ogr_json_header.h"
 #include "ogr_srs_api.h"
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include "json.h"
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
 #include "ogrgeojsonwriter.h"
 
 using std::vector;
