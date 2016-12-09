@@ -1661,7 +1661,7 @@ void HFAField::DumpInstValue( FILE *fpOut,
     }
 
     if( nEntries > MAX_ENTRY_REPORT )
-        printf( "%s ... remaining instances omitted ...\n", pszPrefix );
+         CPL_IGNORE_RET_VAL(VSIFPrintf( fpOut, "%s ... remaining instances omitted ...\n", pszPrefix ) );
 
     if( nEntries == 0 )
         CPL_IGNORE_RET_VAL(

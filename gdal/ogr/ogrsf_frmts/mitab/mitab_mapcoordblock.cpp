@@ -544,7 +544,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         pasHdrs[i].nVertexOffset = (pasHdrs[i].nDataOffset -
                                     nTotalHdrSizeUncompressed ) / 8;
 #ifdef TABDUMP
-        printf("READING pasHdrs[%d] @ %d = \n"
+        printf("READING pasHdrs[%d] @ %d = \n"/*ok*/
                "              { numVertices = %d, numHoles = %d, \n"
                "                nXMin=%d, nYMin=%d, nXMax=%d, nYMax=%d,\n"
                "                nDataOffset=%d, nVertexOffset=%d }\n",
@@ -552,7 +552,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
                pasHdrs[i].nXMin, pasHdrs[i].nYMin, pasHdrs[i].nXMax,
                pasHdrs[i].nYMax, pasHdrs[i].nDataOffset,
                pasHdrs[i].nVertexOffset);
-        printf("                dX = %d, dY = %d  (center = %d , %d)\n",
+        printf("                dX = %d, dY = %d  (center = %d , %d)\n",/*ok*/
                pasHdrs[i].nXMax - pasHdrs[i].nXMin,
                pasHdrs[i].nYMax - pasHdrs[i].nYMin,
                m_nComprOrgX, m_nComprOrgY);
@@ -611,7 +611,7 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
          * Write the coord. section header blocks
          *------------------------------------------------------------*/
 #ifdef TABDUMP
-        printf("WRITING pasHdrs[%d] @ %d = \n"
+        printf("WRITING pasHdrs[%d] @ %d = \n"/*ok*/
                "              { numVertices = %d, numHoles = %d, \n"
                "                nXMin=%d, nYMin=%d, nXMax=%d, nYMax=%d,\n"
                "                nDataOffset=%d, nVertexOffset=%d }\n",
@@ -619,7 +619,7 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
                pasHdrs[i].nXMin, pasHdrs[i].nYMin, pasHdrs[i].nXMax,
                pasHdrs[i].nYMax, pasHdrs[i].nDataOffset,
                pasHdrs[i].nVertexOffset);
-        printf("                dX = %d, dY = %d  (center = %d , %d)\n",
+        printf("                dX = %d, dY = %d  (center = %d , %d)\n",/*ok*/
                pasHdrs[i].nXMax - pasHdrs[i].nXMin,
                pasHdrs[i].nYMax - pasHdrs[i].nYMin,
                m_nComprOrgX, m_nComprOrgY);

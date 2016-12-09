@@ -606,7 +606,7 @@ void OGRSpatialReference::dumpReadable()
     char *pszPrettyWkt = NULL;
 
     exportToPrettyWkt( &pszPrettyWkt, FALSE );
-    printf( "%s\n", pszPrettyWkt );
+    printf( "%s\n", pszPrettyWkt );/*ok*/
     CPLFree( pszPrettyWkt );
 }
 

@@ -4598,7 +4598,7 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
             const GUInt16 nAlphaRatioLow = nAlphaRatio & HIDDEN_ALPHA_HALF_MASK;
             const GUInt16 nAlphaRatioHigh =
                 nAlphaRatio >> HIDDEN_ALPHA_HALF_WIDTH;
-            // printf("alpha0=%f, alpha1=%f, alpha2=%f, dfRatio=%f, "
+            // printf("alpha0=%f, alpha1=%f, alpha2=%f, dfRatio=%f, "/*ok*/
             //        "nAlphaRatio = %u\n",
             //        alpha0, alpha1, alpha2, dfRatio, nAlphaRatio);
 
@@ -4725,12 +4725,12 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         dfMaxDeltaAlpha * 1e-4 : dfMaxDeltaAlpha/10;
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-    printf("----------------------------\n");
-    printf("Curve beginning at offset i = %d\n", i);
-    printf("Initial alpha ratio = %u\n", nAlphaRatioRef);
-    printf("Initial R = %.16g, cx = %.16g, cy = %.16g\n", R_1, cx_1, cy_1);
-    printf("dfScale = %f\n", dfScale);
-    printf("bInitialConstantStep = %d, "
+    printf("----------------------------\n");/*ok*/
+    printf("Curve beginning at offset i = %d\n", i);/*ok*/
+    printf("Initial alpha ratio = %u\n", nAlphaRatioRef);/*ok*/
+    printf("Initial R = %.16g, cx = %.16g, cy = %.16g\n", R_1, cx_1, cy_1);/*ok*/
+    printf("dfScale = %f\n", dfScale);/*ok*/
+    printf("bInitialConstantStep = %d, "/*ok*/
             "fabs(dfDeltaAlpha10 - dfDeltaAlpha21)=%.8g, "
             "dfMaxDeltaAlpha = %.8f, "
             "dfDeltaEpsilon = %.8f (%.8f)\n",
@@ -4766,7 +4766,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                                 alpha0_2, alpha1_2, alpha2_2)) )
         {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("End of curve at j=%d\n : straight line", j);
+            printf("End of curve at j=%d\n : straight line", j);/*ok*/
 #endif
             break;
         }
@@ -4776,7 +4776,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         const double dfRelDiffCy = fabs(cy_1 - cy_2) * dfInvScale;
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("j=%d: R = %.16g, cx = %.16g, cy = %.16g, "
+        printf("j=%d: R = %.16g, cx = %.16g, cy = %.16g, "/*ok*/
                "rel_diff_R=%.8g rel_diff_cx=%.8g rel_diff_cy=%.8g\n",
                j, R_2, cx_2, cy_2, dfRelDiffR, dfRelDiffCx, dfRelDiffCy);
 #endif
@@ -4787,7 +4787,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
             dfDeltaAlpha10 * (alpha1_2 - alpha0_2) < 0.0 )
         {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("End of curve at j=%d\n", j);
+            printf("End of curve at j=%d\n", j);/*ok*/
 #endif
             break;
         }
@@ -4798,7 +4798,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                 std::min(std::min(fabs(log10(dfRelDiffR)),
                                   fabs(log10(dfRelDiffCx))),
                          fabs(log10(dfRelDiffCy)));
-            // printf("dfLogRelDiff = %f, dfLastLogRelDiff=%f, "
+            // printf("dfLogRelDiff = %f, dfLastLogRelDiff=%f, "/*ok*/
             //        "dfLogRelDiff - dfLastLogRelDiff=%f\n",
             //         dfLogRelDiff, dfLastLogRelDiff,
             //         dfLogRelDiff - dfLastLogRelDiff);
@@ -4807,7 +4807,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                 dfLogRelDiff < dfLastLogRelDiff - 2.0 )
             {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                printf("End of curve at j=%d. Significant different in "
+                printf("End of curve at j=%d. Significant different in "/*ok*/
                        "relative error w.r.t previous points\n", j);
 #endif
                 break;
@@ -4822,7 +4822,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
               dfStep21 < 2.0 * dfMaxDeltaAlpha) )
         {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("End of curve at j=%d: dfStep10=%f, dfStep21=%f, "
+            printf("End of curve at j=%d: dfStep10=%f, dfStep21=%f, "/*ok*/
                    "2*dfMaxDeltaAlpha=%f\n",
                    j, dfStep10, dfStep21, 2 * dfMaxDeltaAlpha);
 #endif
@@ -4836,7 +4836,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                                       p1.getY()) << HIDDEN_ALPHA_HALF_WIDTH) |
                 (OGRGF_GetHiddenValue(p2.getX(), p2.getY()));
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("j=%d, nAlphaRatioReversed = %u\n",
+            printf("j=%d, nAlphaRatioReversed = %u\n",/*ok*/
                    j, nAlphaRatioReversed);
 #endif
             if( !bFoundFFFFFFFFPattern && nAlphaRatioReversed == 0xFFFFFFFF )
@@ -4862,7 +4862,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                     nCountValidAlphaRatio > 10 )
                 {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                    printf("End of curve at j=%d: "
+                    printf("End of curve at j=%d: "/*ok*/
                            "fabs(dfLastValidAlpha - alpha0_1)=%f, "
                            "nCountValidAlphaRatio=%d\n",
                            j,
@@ -4877,7 +4877,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                             dfLastValidAlpha -= dfMaxDeltaAlpha;
                             j--;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf("--> corrected as fabs(dfLastValidAlpha - "
+                            printf("--> corrected as fabs(dfLastValidAlpha - "/*ok*/
                                    "alpha0_1)=%f, j=%d\n",
                                    fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
@@ -4891,7 +4891,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                             dfLastValidAlpha += dfMaxDeltaAlpha;
                             j--;
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf( "--> corrected as fabs(dfLastValidAlpha - "
+                            printf( "--> corrected as fabs(dfLastValidAlpha - "/*ok*/
                                     "alpha0_1)=%f, j=%d\n",
                                     fabs(dfLastValidAlpha - alpha0_1), j);
 #endif
@@ -4902,7 +4902,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                 }
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                printf( "j=%d, nAlphaRatioReversed = %u --> inconsistent "
+                printf( "j=%d, nAlphaRatioReversed = %u --> inconsistent "/*ok*/
                         "values across arc. Don't use it\n",
                         j, nAlphaRatioReversed);
 #endif
@@ -4918,7 +4918,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         // This is OK if we don't detect the right point or fail
         // to detect it.
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("j=%d A(0,1)-maxDelta=%.8f A(1,2)-maxDelta=%.8f "
+        printf("j=%d A(0,1)-maxDelta=%.8f A(1,2)-maxDelta=%.8f "/*ok*/
                "x1=%.8f y1=%.8f x2=%.8f y2=%.8f x3=%.8f y3=%.8f\n",
                j, fabs(dfStep10 - dfMaxDeltaAlpha),
                fabs(dfStep21 - dfMaxDeltaAlpha),
@@ -4936,7 +4936,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
             {
                 OGRPoint pMid;
                 poLS->getPoint(iMidPoint, &pMid);
-                printf("Midpoint detected at j = %d, iMidPoint = %d, "
+                printf("Midpoint detected at j = %d, iMidPoint = %d, "/*ok*/
                        "x=%.8f y=%.8f\n",
                        j, iMidPoint, pMid.getX(), pMid.getY());
             }
@@ -4952,12 +4952,12 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     bValidAlphaRatio &= bFoundFFFFFFFFPattern && bFoundReversedAlphaRatioRef;
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-    printf("bValidAlphaRatio=%d bFoundFFFFFFFFPattern=%d, "
+    printf("bValidAlphaRatio=%d bFoundFFFFFFFFPattern=%d, "/*ok*/
            "bFoundReversedAlphaRatioRef=%d\n",
            static_cast<int>(bValidAlphaRatio),
            static_cast<int>(bFoundFFFFFFFFPattern),
            static_cast<int>(bFoundReversedAlphaRatioRef));
-    printf("alpha0_1=%f dfLastValidAlpha=%f\n",
+    printf("alpha0_1=%f dfLastValidAlpha=%f\n",/*ok*/
             alpha0_1, dfLastValidAlpha);
 #endif
 
@@ -4998,7 +4998,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
     if( bValidAlphaRatio )
     {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("Using alpha ratio...\n");
+        printf("Using alpha ratio...\n");/*ok*/
 #endif
         double dfAlphaMid = 0.0;
         if( OGRGF_NeedSwithArcOrder(p0.getX(), p0.getY(),
@@ -5006,7 +5006,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                                     poFinalPoint->getY()) )
         {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("Switching angles\n");
+            printf("Switching angles\n");/*ok*/
 #endif
             dfAlphaMid = dfLastValidAlpha + nAlphaRatioRef *
                     (alpha0_1 - dfLastValidAlpha) / HIDDEN_ALPHA_SCALE;
@@ -5073,7 +5073,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                 double dfBestRError =
                     fabs(R_1 - DISTANCE(dfXMid, dfYMid, cx_1, cy_1));
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                printf("initial_error=%f\n", dfBestRError);
+                printf("initial_error=%f\n", dfBestRError);/*ok*/
 #endif
                 int iBestX = 0;
                 int iBestY = 0;
@@ -5112,7 +5112,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
                                 fabs(R_1 - DISTANCE(dfCandidateX, dfCandidateY,
                                                     cx_1, cy_1));
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-                            printf("x=%d y=%d error=%f besterror=%f\n",
+                            printf("x=%d y=%d error=%f besterror=%f\n",/*ok*/
                                    static_cast<int>(dfXMid + iX),
                                    static_cast<int>(dfYMid + iY),
                                    dfRError, dfBestRError);
@@ -5147,7 +5147,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         }
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("dfAlphaMid=%f, x_mid = %f, y_mid = %f\n",
+        printf("dfAlphaMid=%f, x_mid = %f, y_mid = %f\n",/*ok*/
                dfLastValidAlpha, dfXMid, dfYMid);
 #endif
     }
@@ -5158,7 +5158,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         !EQUAL(poLS->getGeometryName(), "LINEARRING") )
     {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("Full circle of a non-polygonal zone\n");
+        printf("Full circle of a non-polygonal zone\n");/*ok*/
 #endif
         poLS->getPoint((i + j + 2) / 4, &p1);
         poCS->addPoint(&p1);
@@ -5194,8 +5194,8 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
         poLS->getPoint(iMidPoint, &p1);
         poCS->addPoint(&p1);
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-        printf("Using detected midpoint...\n");
-        printf("x_mid = %f, y_mid = %f\n", p1.getX(), p1.getY());
+        printf("Using detected midpoint...\n");/*ok*/
+        printf("x_mid = %f, y_mid = %f\n", p1.getX(), p1.getY());/*ok*/
 #endif
         }
         // Otherwise pick up the mid point between both extremities.
@@ -5204,15 +5204,15 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
             poLS->getPoint((i + j + 1) / 2, &p1);
             poCS->addPoint(&p1);
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-            printf("Pickup 'random' midpoint at index=%d...\n",
+            printf("Pickup 'random' midpoint at index=%d...\n",/*ok*/
                    (i + j + 1) / 2);
-            printf("x_mid = %f, y_mid = %f\n", p1.getX(), p1.getY());
+            printf("x_mid = %f, y_mid = %f\n", p1.getX(), p1.getY());/*ok*/
 #endif
         }
         poCS->addPoint(poFinalPoint);
 
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING
-    printf("----------------------------\n");
+    printf("----------------------------\n");/*ok*/
 #endif
 
     if( j + 2 >= poLS->getNumPoints() )

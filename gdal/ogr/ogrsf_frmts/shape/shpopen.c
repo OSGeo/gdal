@@ -167,7 +167,7 @@
  * avoid c++ comments
  *
  * Revision 1.38  2002/05/07 16:43:39  warmerda
- * Removed debugging printf.
+ * Removed debugging printf()
  *
  * Revision 1.37  2002/04/10 17:35:22  warmerda
  * fixed bug in ring reversal code

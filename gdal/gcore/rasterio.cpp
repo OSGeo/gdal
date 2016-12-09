@@ -280,7 +280,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
          && bUseIntegerRequestCoords )
     {
 #if DEBUG_VERBOSE
-        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
+        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",/*ok*/
                 nXOff, nYOff, nXSize, nYSize,
                 static_cast<int>(eRWFlag) );
 #endif

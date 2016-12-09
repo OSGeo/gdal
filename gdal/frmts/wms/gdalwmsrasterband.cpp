@@ -39,7 +39,7 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band,
     m_color_interp(GCI_Undefined)
 {
 #ifdef DEBUG_VERBOSE
-    printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n",
+    printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n",/*ok*/
            this, parent_dataset, band, scale);
 #endif
 

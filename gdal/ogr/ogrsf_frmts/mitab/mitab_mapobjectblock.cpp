@@ -1047,7 +1047,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
 #ifdef TABDUMP
-    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n",
+    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n",/*ok*/
            m_nCoordDataSize, m_nCoordBlockPtr);
 #endif
 
@@ -1089,7 +1089,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
 #ifdef TABDUMP
-    printf("PLINE/REGION: id=%d, type=%d, "
+    printf("PLINE/REGION: id=%d, type=%d, "/*ok*/
            "CoordBlockPtr=%d, CoordDataSize=%d, numLineSect=%d, bSmooth=%d\n",
            m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize,
            m_numLineSections, m_bSmooth);
@@ -1706,7 +1706,7 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nCoordDataSize = m_nNumPoints * nPointSize;
 
 #ifdef TABDUMP
-    printf("MULTIPOINT: id=%d, type=%d, "
+    printf("MULTIPOINT: id=%d, type=%d, "/*ok*/
            "CoordBlockPtr=%d, CoordDataSize=%d, numPoints=%d\n",
            m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize, m_nNumPoints);
 #endif
@@ -1998,7 +1998,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
 #ifdef TABDUMP
-    printf("COLLECTION: id=%d, type=%d (0x%x), "
+    printf("COLLECTION: id=%d, type=%d (0x%x), "/*ok*/
            "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
            "numPlineSections=%d (size=%d+%d), numPoints=%d (size=%d+%d)\n",
            m_nId, m_nType, m_nType, m_nCoordBlockPtr,
@@ -2042,7 +2042,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
 #ifdef TABDUMP
-    printf("COLLECTION: READING ComprOrg @ %d\n",
+    printf("COLLECTION: READING ComprOrg @ %d\n",/*ok*/
            poObjBlock->GetCurAddress());
 #endif
         // Compressed coordinate origin
@@ -2058,7 +2058,7 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         TABSaturatedAdd(m_nMaxX, m_nComprOrgX);
         TABSaturatedAdd(m_nMaxY, m_nComprOrgY);
 #ifdef TABDUMP
-    printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n",
+    printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n",/*ok*/
            m_nComprOrgX, m_nComprOrgY);
 #endif
     }
@@ -2150,7 +2150,7 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
 #ifdef TABDUMP
-    printf("COLLECTION: WRITING ComprOrgX,Y= (%d,%d) @ %d\n",
+    printf("COLLECTION: WRITING ComprOrgX,Y= (%d,%d) @ %d\n",/*ok*/
            m_nComprOrgX, m_nComprOrgY, poObjBlock->GetCurAddress());
 #endif
         // Compressed coordinate origin

@@ -3299,7 +3299,7 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
 #ifdef TABDUMP
-    printf("TABRegion::WriteGeometryToMAPFile(): ComprOrgX,Y= (%d,%d)\n",
+    printf("TABRegion::WriteGeometryToMAPFile(): ComprOrgX,Y= (%d,%d)\n",/*ok*/
            m_nComprOrgX, m_nComprOrgY);
 #endif
         /*-------------------------------------------------------------

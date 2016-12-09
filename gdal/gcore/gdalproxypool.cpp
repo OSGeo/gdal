@@ -177,7 +177,7 @@ void GDALDatasetPool::ShowContent()
     int i = 0;
     while(cur)
     {
-        printf("[%d] pszFileName=%s, refCount=%d, responsiblePID=%d\n",
+        printf("[%d] pszFileName=%s, refCount=%d, responsiblePID=%d\n",/*ok*/
                i, cur->pszFileName, cur->refCount, (int)cur->responsiblePID);
         i++;
         cur = cur->next;

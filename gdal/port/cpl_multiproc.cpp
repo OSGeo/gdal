@@ -389,7 +389,7 @@ static void CPLCleanupTLSList( void **papTLSList )
 
 {
 #ifdef DEBUG_VERBOSE
-    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+    /*ok*/printf( "CPLCleanupTLSList(%p)\n", papTLSList );
 #endif
 
     if( papTLSList == NULL )

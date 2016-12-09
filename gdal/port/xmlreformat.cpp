@@ -41,7 +41,7 @@ int main( int argc, char **argv )
         fp = stdin;
     else if( argv[1][0] == '-' )
     {
-        printf( "Usage: xmlreformat [filename]\n" );
+        printf( "Usage: xmlreformat [filename]\n" );/*ok*/
         exit( 0 );
     }
     else
@@ -49,7 +49,7 @@ int main( int argc, char **argv )
         fp = fopen( argv[1], "rt" );
         if( fp == NULL )
         {
-            printf( "Failed to open file %s.\n", argv[1] );
+            printf( "Failed to open file %s.\n", argv[1] );/*ok*/
             exit( 1 );
         }
     }
@@ -71,7 +71,7 @@ int main( int argc, char **argv )
     if( poTree != NULL )
     {
         char *pszRawXML = CPLSerializeXMLTree( poTree );
-        printf( "%s", pszRawXML );
+        printf( "%s", pszRawXML );/*ok*/
         CPLFree( pszRawXML );
         CPLDestroyXMLNode( poTree );
     }

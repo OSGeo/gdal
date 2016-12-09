@@ -1538,23 +1538,23 @@ static void CPLShowAccessedOptions()
 {
     std::set<CPLString>::iterator aoIter;
 
-    printf("Configuration options accessed in reading : "),
+    printf("Configuration options accessed in reading : "),/*ok*/
     aoIter = paoGetKeys->begin();
     while(aoIter != paoGetKeys->end())
     {
-        printf("%s, ", (*aoIter).c_str());
+        printf("%s, ", (*aoIter).c_str());/*ok*/
         ++aoIter;
     }
-    printf("\n");
+    printf("\n");/*ok*/
 
-    printf("Configuration options accessed in writing : "),
+    printf("Configuration options accessed in writing : "); /*ok*/
     aoIter = paoSetKeys->begin();
     while(aoIter != paoSetKeys->end())
     {
-        printf("%s, ", (*aoIter).c_str());
+        printf("%s, ", (*aoIter).c_str()); /*ok*/
         ++aoIter;
     }
-    printf("\n");
+    printf("\n"); /*ok*/
 
     delete paoGetKeys;
     delete paoSetKeys;

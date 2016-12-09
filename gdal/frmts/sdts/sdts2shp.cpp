@@ -60,7 +60,7 @@ WriteAttrRecordToDBF( DBFHandle hDBF, int nRecord,
 static void Usage()
 
 {
-    printf( "Usage: sdts2shp CATD_filename [-o shapefile_name]\n"
+    printf( "Usage: sdts2shp CATD_filename [-o shapefile_name]\n" /*ok*/
             "                [-m module_name] [-v]\n"
             "\n"
             "Modules include `LE01', `PC01', `NP01' and `ARDF'\n" );
@@ -100,7 +100,7 @@ int main( int nArgc, char ** papszArgv )
             bVerbose = TRUE;
         else
         {
-            printf( "Incomplete, or unsupported option `%s'\n\n",
+            printf( "Incomplete, or unsupported option `%s'\n\n",/*ok*/
                     papszArgv[i] );
             Usage();
         }
@@ -137,16 +137,16 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( bVerbose )
     {
-        printf( "Layers:\n" );
+        printf( "Layers:\n" );/*ok*/
         for( i = 0; i < oTransfer.GetLayerCount(); i++ )
         {
             int         iCATDEntry = oTransfer.GetLayerCATDEntry(i);
 
-            printf( "  %s: `%s'\n",
+            printf( "  %s: `%s'\n",/*ok*/
                     oTransfer.GetCATD()->GetEntryModule(iCATDEntry),
                     oTransfer.GetCATD()->GetEntryTypeDesc(iCATDEntry) );
         }
-        printf( "\n" );
+        printf( "\n" );/*ok*/"
     }
 
 /* -------------------------------------------------------------------- */
@@ -643,7 +643,7 @@ AddPrimaryAttrToDBFSchema( DBFHandle hDBF, SDTSTransfer *poTransfer,
 
         if( poAttrReader == NULL )
         {
-            printf( "Unable to open attribute module %s, skipping.\n" ,
+            printf( "Unable to open attribute module %s, skipping.\n" ,/*ok*/
                     papszModuleList[iModule] );
             continue;
         }

@@ -980,7 +980,7 @@ static const char* PDFEnterPasswordFromConsoleIfNeeded(const char* pszUserPwd)
     if (EQUAL(pszUserPwd, "ASK_INTERACTIVE"))
     {
         static char szPassword[81];
-        printf( "Enter password (will be echo'ed in the console): " );
+        printf( "Enter password (will be echo'ed in the console): " );/*ok*/
         if (NULL == fgets( szPassword, sizeof(szPassword), stdin ))
         {
             fprintf(stderr, "WARNING: Error getting password.\n");

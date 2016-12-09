@@ -786,7 +786,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     // Update a georef file.
 
 #ifdef DEBUG_VERBOSE
-    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );
+    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );/*ok*/
 #endif
 
     if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")

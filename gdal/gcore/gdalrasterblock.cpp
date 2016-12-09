@@ -731,17 +731,17 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
     {
         if ( poBlock->GetBand() == poBand )
         {
-            printf("Cache has still blocks of band %p\n", poBand);
-            printf("Band : %d\n", poBand->GetBand());
-            printf("nRasterXSize = %d\n", poBand->GetXSize());
-            printf("nRasterYSize = %d\n", poBand->GetYSize());
+            printf("Cache has still blocks of band %p\n", poBand);/*ok*/
+            printf("Band : %d\n", poBand->GetBand());/*ok*/
+            printf("nRasterXSize = %d\n", poBand->GetXSize());/*ok*/
+            printf("nRasterYSize = %d\n", poBand->GetYSize());/*ok*/
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            printf("nBlockXSize = %d\n", nBlockXSize);
-            printf("nBlockYSize = %d\n", nBlockYSize);
-            printf("Dataset : %p\n", poBand->GetDataset());
+            printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
+            printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
+            printf("Dataset : %p\n", poBand->GetDataset());/*ok*/
             if( poBand->GetDataset() )
-                printf("Dataset : %s\n",
+                printf("Dataset : %s\n",/*ok*/
                        poBand->GetDataset()->GetDescription());
         }
     }
@@ -1134,26 +1134,26 @@ void GDALRasterBlock::DumpAll()
          poBlock != NULL;
          poBlock = poBlock->poNext )
     {
-        printf("Block %d\n", iBlock);
+        printf("Block %d\n", iBlock);/*ok*/
         poBlock->DumpBlock();
-        printf("\n");
+        printf("\n");/*ok*/
         iBlock++;
     }
 }
 
 void GDALRasterBlock::DumpBlock()
 {
-    printf("  Lock count = %d\n", nLockCount);
-    printf("  bDirty = %d\n", static_cast<int>(bDirty));
-    printf("  nXOff = %d\n", nXOff);
-    printf("  nYOff = %d\n", nYOff);
-    printf("  nXSize = %d\n", nXSize);
-    printf("  nYSize = %d\n", nYSize);
-    printf("  eType = %d\n", eType);
-    printf("  Band %p\n", GetBand());
-    printf("  Band %d\n", GetBand()->GetBand());
+    printf("  Lock count = %d\n", nLockCount);/*ok*/
+    printf("  bDirty = %d\n", static_cast<int>(bDirty));/*ok*/
+    printf("  nXOff = %d\n", nXOff);/*ok*/
+    printf("  nYOff = %d\n", nYOff);/*ok*/
+    printf("  nXSize = %d\n", nXSize);/*ok*/
+    printf("  nYSize = %d\n", nYSize);/*ok*/
+    printf("  eType = %d\n", eType);/*ok*/
+    printf("  Band %p\n", GetBand());/*ok*/
+    printf("  Band %d\n", GetBand()->GetBand());/*ok*/
     if( GetBand()->GetDataset() )
-        printf("  Dataset = %s\n",
+        printf("  Dataset = %s\n",/*ok*/
                GetBand()->GetDataset()->GetDescription());
 }
 #endif  // if 0

@@ -1400,7 +1400,7 @@ int CPLprintf(CPL_FORMAT_STRING(const char* fmt), ...)
 #endif
 
     if( ret < int(sizeof(szBuffer))-1 )
-        ret = printf("%s", szBuffer);
+        ret = printf("%s", szBuffer); /*ok*/
     else
     {
 #ifdef va_copy

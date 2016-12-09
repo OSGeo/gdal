@@ -1300,7 +1300,6 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             CPL_IGNORE_RET_VAL(VSIFWriteL(output, pageBytes, 1, fpImage));
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
-//             printf("progress %f\n", perc);
             if( !pfnProgress( perc, NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );

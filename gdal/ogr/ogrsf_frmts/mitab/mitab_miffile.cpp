@@ -160,7 +160,7 @@
  * ResetReading() when reading forward.
  *
  * Revision 1.19  2000/07/04 01:50:40  warmerda
- * Removed unprotected debugging printf.
+ * Removed unprotected debugging printf()
  *
  * Revision 1.18  2000/06/28 00:32:04  warmerda
  * Make GetFeatureCountByType() actually work if bForce is TRUE

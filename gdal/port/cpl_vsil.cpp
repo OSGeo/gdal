@@ -1139,7 +1139,7 @@ int VSIFTruncateL( VSILFILE * fp, vsi_l_offset nNewSize )
  * Analog of the POSIX fprintf() call.
  *
  * @param fp file handle opened with VSIFOpenL().
- * @param pszFormat the printf style format string.
+ * @param pszFormat the printf() style format string.
  *
  * @return the number of bytes written or -1 on an error.
  */
@@ -1568,7 +1568,8 @@ VSIFileManager *VSIFileManager::Get()
     {
         nConstructerPID = static_cast<GPtrDiff_t>(CPLGetPID());
 #ifdef DEBUG_VERBOSE
-        printf("Thread %d: VSIFileManager in construction\n", nConstructerPID);
+        printf("Thread %d: VSIFileManager in construction\n",/*ok*/
+               nConstructerPID);
 #endif
         poManager = new VSIFileManager;
         VSIInstallLargeFileHandler();
@@ -1591,7 +1592,7 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallCryptFileHandler();
 
 #ifdef DEBUG_VERBOSE
-        printf("Thread %d: VSIFileManager construction finished\n",
+        printf("Thread %d: VSIFileManager construction finished\n",/*ok*/
                nConstructerPID);
 #endif
         nConstructerPID = 0;

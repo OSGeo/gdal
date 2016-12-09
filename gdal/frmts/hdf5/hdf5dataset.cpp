@@ -556,7 +556,8 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         {
             hid_t hGroupID = H5I_INVALID_HID;  // Identifier of group.
             if( ( hGroupID = H5Gopen( hHDF5, pszObjName ) ) == -1  ) {
-                printf( "Error: unable to access \"%s\" group.\n",
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "unable to access \"%s\" group.\n",
                         pszObjName );
                 return -1;
             }
@@ -594,7 +595,8 @@ herr_t HDF5CreateGroupObjs( hid_t hHDF5, const char *pszObjName,
         {
             hid_t hDatasetID = H5I_INVALID_HID;  // Identifier of dataset.
             if( ( hDatasetID = H5Dopen( hHDF5, pszObjName ) ) == -1  ) {
-                printf( "Error: unable to access \"%s\" dataset.\n",
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "unable to access \"%s\" dataset.\n",
                         pszObjName );
                 return -1;
             }
@@ -920,7 +922,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
         EQUAL( poH5Objects->pszUnderscorePath,pszDatasetPath ) ) {
 
 #ifdef DEBUG_VERBOSE
-      printf("found it! %p\n", poH5Objects);
+        printf("found it! %p\n", poH5Objects); /*ok*/
 #endif
         return poH5Objects;
     }
@@ -957,7 +959,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
         EQUAL( poH5Objects->pszName,pszDatasetName ) ) {
 
 #ifdef DEBUG_VERBOSE
-        printf("found it! %p\n", poH5Objects);
+        printf("found it! %p\n", poH5Objects); /*ok*/
 #endif
         return poH5Objects;
     }
@@ -1079,7 +1081,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup->pszUnderscorePath = NULL;
 
     if( hHDF5 < 0 )  {
-        printf( "hHDF5 <0!!\n" );
+        CPLError(CE_Failure, CPLE_AppDefined, "hHDF5 <0!!" );
         return CE_None;
     }
 
@@ -1094,7 +1096,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
         H5Gclose( hGroupID );
     hGroupID = H5Gopen( hHDF5, "/" );
     if( hGroupID < 0 ){
-        printf( "hGroupID <0!!\n" );
+        CPLError(CE_Failure, CPLE_AppDefined, "hGroupId <0!!" );
         return CE_None;
     }
 

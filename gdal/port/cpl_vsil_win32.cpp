@@ -244,8 +244,8 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
 
-        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );
-        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",
+        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
+        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",/*ok*/
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
         errno = ErrnoFromGetLastError();

@@ -412,19 +412,19 @@ void VSIShowMemStats()
     char* pszShowMemStats = getenv("CPL_SHOW_MEM_STATS");
     if (pszShowMemStats == NULL || pszShowMemStats[0] == '\0' )
         return;
-    printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",
+    printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",/*ok*/
             (GUIntBig)nCurrentTotalAllocs);
-    printf("Maximum VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",
+    printf("Maximum VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",/*ok*/
             (GUIntBig)nMaxTotalAllocs);
-    printf("Number of calls to VSIMalloc()  : " CPL_FRMT_GUIB "\n",
+    printf("Number of calls to VSIMalloc()  : " CPL_FRMT_GUIB "\n",/*ok*/
             nVSIMallocs);
-    printf("Number of calls to VSICalloc()  : " CPL_FRMT_GUIB "\n",
+    printf("Number of calls to VSICalloc()  : " CPL_FRMT_GUIB "\n",/*ok*/
             nVSICallocs);
-    printf("Number of calls to VSIRealloc() : " CPL_FRMT_GUIB "\n",
+    printf("Number of calls to VSIRealloc() : " CPL_FRMT_GUIB "\n",/*ok*/
             nVSIReallocs);
-    printf("Number of calls to VSIFree()    : " CPL_FRMT_GUIB "\n",
+    printf("Number of calls to VSIFree()    : " CPL_FRMT_GUIB "\n",/*ok*/
             nVSIFrees);
-    printf("VSIMalloc + VSICalloc - VSIFree : " CPL_FRMT_GUIB "\n",
+    printf("VSIMalloc + VSICalloc - VSIFree : " CPL_FRMT_GUIB "\n",/*ok*/
             nVSIMallocs + nVSICallocs - nVSIFrees);
 }
 #endif

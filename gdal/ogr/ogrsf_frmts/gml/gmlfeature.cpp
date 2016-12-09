@@ -162,27 +162,27 @@ void GMLFeature::SetPropertyDirectly( int iIndex, char *pszValue )
 
 void GMLFeature::Dump( CPL_UNUSED FILE * fp )
 {
-    printf( "GMLFeature(%s):\n", m_poClass->GetName() );
+    printf( "GMLFeature(%s):\n", m_poClass->GetName() );/*ok*/
 
     if( m_pszFID != NULL )
-        printf( "  FID = %s\n", m_pszFID );
+        printf( "  FID = %s\n", m_pszFID );/*ok*/
 
     for( int i = 0; i < m_nPropertyCount; i++ )
     {
         const GMLProperty * psGMLProperty = GetProperty( i );
-        printf( "  %s = ", m_poClass->GetProperty( i )->GetName());
+        printf( "  %s = ", m_poClass->GetProperty( i )->GetName());/*ok*/
         for ( int j = 0; j < psGMLProperty->nSubProperties; j ++)
         {
-            if (j > 0) printf(", ");
-            printf("%s", psGMLProperty->papszSubProperties[j]);
+            if (j > 0) printf(", ");/*ok*/
+            printf("%s", psGMLProperty->papszSubProperties[j]);/*ok*/
         }
-        printf("\n");
+        printf("\n");/*ok*/
     }
 
     for( int i=0; i < m_nGeometryCount; i++ )
     {
         char* pszXML = CPLSerializeXMLTree(m_papsGeometry[i]);
-        printf( "  %s\n", pszXML );
+        printf( "  %s\n", pszXML );/*ok*/
         CPLFree(pszXML);
     }
 }

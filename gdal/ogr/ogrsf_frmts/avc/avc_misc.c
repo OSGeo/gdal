@@ -424,7 +424,7 @@ int  AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision, AVCFileType
     static int numExpDigits=-1;
     int        nLen = 0;
 
-    /* WIN32 systems' printf for floating point output generates 3
+    /* WIN32 systems' printf() for floating point output generates 3
      * digits exponents (ex: 1.23E+012), but E00 files must have 2 digits
      * exponents (ex: 1.23E+12).
      * Run a test (only once per prg execution) to establish the number
