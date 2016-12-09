@@ -76,7 +76,8 @@ static const int anPrimes[] =
  *
  * The free function is used to free elements inserted in the hash set,
  * when the hash set is destroyed, when elements are removed or replaced.
- * If fnFreeEltFunc is NULL, elements inserted into the hash set will not be freed.
+ * If fnFreeEltFunc is NULL, elements inserted into the hash set will not be
+ * freed.
  *
  * @param fnHashFunc hash function. May be NULL.
  * @param fnEqualFunc equal function. May be NULL.
@@ -90,8 +91,8 @@ CPLHashSet* CPLHashSetNew( CPLHashSetHashFunc fnHashFunc,
                            CPLHashSetFreeEltFunc fnFreeEltFunc )
 {
     CPLHashSet* set = static_cast<CPLHashSet *>(CPLMalloc(sizeof(CPLHashSet)));
-    set->fnHashFunc = (fnHashFunc) ? fnHashFunc : CPLHashSetHashPointer;
-    set->fnEqualFunc = (fnEqualFunc) ? fnEqualFunc : CPLHashSetEqualPointer;
+    set->fnHashFunc = fnHashFunc ? fnHashFunc : CPLHashSetHashPointer;
+    set->fnEqualFunc = fnEqualFunc ? fnEqualFunc : CPLHashSetEqualPointer;
     set->fnFreeEltFunc = fnFreeEltFunc;
     set->nSize = 0;
     set->tabList = static_cast<CPLList**>(CPLCalloc(sizeof(CPLList*), 53));
@@ -511,7 +512,7 @@ int CPLHashSetRemoveDeferRehash( CPLHashSet* set, const void* elt )
 unsigned long CPLHashSetHashPointer( const void* elt )
 {
     return static_cast<unsigned long>(
-        (GUIntptr_t)(elt));
+        reinterpret_cast<GUIntptr_t>(const_cast<void *>(elt)));
 }
 
 /************************************************************************/
