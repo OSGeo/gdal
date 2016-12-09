@@ -111,7 +111,7 @@ CPL_C_END
 # endif
 #endif /* MRSID_ESDK */
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
