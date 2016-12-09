@@ -144,8 +144,9 @@ int CPL_DLL CPLTestBoolean( const char *pszValue );
 #ifdef __cplusplus
 #ifdef DO_NOT_USE_DEBUG_BOOL
 #define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
-#define CPLFetchBool(list,key,default) CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
-#else
+#define CPLFetchBool(list,key,default) \
+    CPL_TO_BOOL(CSLFetchBoolean(list,key,default))
+#else /* DO_NOT_USE_DEBUG_BOOL */
 /* Prefer these for C++ code. */
 #ifdef DEBUG_BOOL
 extern "C++" {
@@ -195,15 +196,15 @@ char CPL_DLL ** CSLParseCommandLine(const char* pszCommandLine);
 
 /** Scheme for CPLEscapeString()/CPLUnescapeString() for backlash quoting */
 #define CPLES_BackslashQuotable 0
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML */
 #define CPLES_XML               1
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for URL encoding */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for URL */
 #define CPLES_URL               2
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for SQL escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for SQL */
 #define CPLES_SQL               3
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV escaping */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for CSV */
 #define CPLES_CSV               4
-/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML escaping (preserving quotes) */
+/** Scheme for CPLEscapeString()/CPLUnescapeString() for XML (preserves quotes) */
 #define CPLES_XML_BUT_QUOTES    5
 
 char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
@@ -237,32 +238,41 @@ size_t CPL_DLL CPLStrnlen(const char *pszStr, size_t nMaxLen);
 /* -------------------------------------------------------------------- */
 /*      Locale independent formatting functions.                        */
 /* -------------------------------------------------------------------- */
-int CPL_DLL CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char* fmt),
-                         va_list args) CPL_PRINT_FUNC_FORMAT (3, 0);
-int CPL_DLL CPLsnprintf(char *str, size_t size,
-                        CPL_FORMAT_STRING(const char* fmt), ...) CPL_PRINT_FUNC_FORMAT(3,4);
+int CPL_DLL CPLvsnprintf( char *str, size_t size,
+                          CPL_FORMAT_STRING(const char* fmt),
+                          va_list args )
+    CPL_PRINT_FUNC_FORMAT(3, 0 );
+int CPL_DLL CPLsnprintf( char *str, size_t size,
+                         CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(3, 4);
 /*! @cond Doxygen_Suppress */
 #if defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-int CPL_DLL CPLsprintf(char *str, CPL_FORMAT_STRING(const char* fmt), ...)
-    CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
+int CPL_DLL CPLsprintf( char *str, CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf instead");
 #else
-int CPL_DLL CPLsprintf(char *str, CPL_FORMAT_STRING(const char* fmt), ...)
+int CPL_DLL CPLsprintf( char *str, CPL_FORMAT_STRING(const char* fmt), ... )
     CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 /*! @endcond */
-int CPL_DLL CPLprintf(CPL_FORMAT_STRING(const char* fmt), ...) CPL_PRINT_FUNC_FORMAT(1, 2);
+int CPL_DLL CPLprintf( CPL_FORMAT_STRING(const char* fmt), ... )
+    CPL_PRINT_FUNC_FORMAT(1, 2);
 
 /* For some reason Doxygen_Suppress is needed to avoid warning. Not sure why */
 /*! @cond Doxygen_Suppress */
 /* caution: only works with limited number of formats */
-int CPL_DLL CPLsscanf(const char* str, CPL_SCANF_FORMAT_STRING(const char* fmt), ...) CPL_SCAN_FUNC_FORMAT(2, 3);
+int CPL_DLL CPLsscanf( const char* str,
+                       CPL_SCANF_FORMAT_STRING(const char* fmt), ... )
+    CPL_SCAN_FUNC_FORMAT(2, 3);
 /*! @endcond */
 
-const char CPL_DLL *CPLSPrintf(CPL_FORMAT_STRING(const char *fmt), ...)
+const char CPL_DLL *CPLSPrintf( CPL_FORMAT_STRING(const char *fmt), ... )
     CPL_PRINT_FUNC_FORMAT(1, 2) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL **CSLAppendPrintf(char **papszStrList, CPL_FORMAT_STRING(const char *fmt), ...)
+char CPL_DLL **CSLAppendPrintf( char **papszStrList,
+                                CPL_FORMAT_STRING(const char *fmt), ... )
     CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLVASPrintf(char **buf, CPL_FORMAT_STRING(const char *fmt), va_list args )
+int CPL_DLL CPLVASPrintf( char **buf,
+                          CPL_FORMAT_STRING(const char *fmt), va_list args )
     CPL_PRINT_FUNC_FORMAT(2, 0);
 
 /* -------------------------------------------------------------------- */
@@ -296,11 +306,11 @@ char CPL_DLL *CPLRecodeFromWChar(
 wchar_t CPL_DLL *CPLRecodeToWChar(
     const char *pszSource, const char *pszSrcEncoding,
     const char *pszDstEncoding ) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLIsUTF8(const char* pabyData, int nLen);
+int CPL_DLL CPLIsUTF8( const char* pabyData, int nLen );
 char CPL_DLL *CPLForceToASCII(
     const char* pabyData, int nLen,
-    char chReplacementChar) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
+    char chReplacementChar ) CPL_WARN_UNUSED_RESULT;
+int CPL_DLL CPLStrlenUTF8( const char *pszUTF8Str );
 
 CPL_C_END
 
@@ -388,7 +398,8 @@ public:
     void Clear() { resize(0); }
 
     /** Assign specified string and take ownership of it (assumed to be
-     * allocated with CPLMalloc()). NULL can be safely passed to clear the string */
+     * allocated with CPLMalloc()). NULL can be safely passed to clear the
+     * string. */
     void Seize(char *pszValue)
     {
         if (pszValue == NULL )
@@ -403,9 +414,11 @@ public:
     /* There seems to be a bug in the way the compiler count indices...
      * Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
     CPLString &Printf(
-        CPL_FORMAT_STRING(const char *pszFormat), ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
+        CPL_FORMAT_STRING(const char *pszFormat), ... )
+        CPL_PRINT_FUNC_FORMAT (2, 3);
     CPLString &vPrintf(
-        CPL_FORMAT_STRING(const char *pszFormat), va_list args ) CPL_PRINT_FUNC_FORMAT(2, 0);
+        CPL_FORMAT_STRING(const char *pszFormat), va_list args )
+        CPL_PRINT_FUNC_FORMAT(2, 0);
     CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
@@ -422,9 +435,11 @@ public:
     CPLString &tolower( void );
 };
 
-CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... ) CPL_PRINT_FUNC_FORMAT (1, 2);
+CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... )
+    CPL_PRINT_FUNC_FORMAT (1, 2);
 CPLString CPL_DLL CPLOvPrintf(
-    CPL_FORMAT_STRING(const char *pszFormat), va_list args) CPL_PRINT_FUNC_FORMAT (1, 0);
+    CPL_FORMAT_STRING(const char *pszFormat), va_list args)
+    CPL_PRINT_FUNC_FORMAT (1, 0);
 
 /* -------------------------------------------------------------------- */
 /*      URL processing functions, here since they depend on CPLString.  */
