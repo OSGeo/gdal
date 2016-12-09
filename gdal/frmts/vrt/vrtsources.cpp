@@ -2741,8 +2741,9 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     }
     else
     {
-        // TODO(schwehr): Why not use CPLError?  Or at least fprintf(stderr?
-        printf( "%d,%d  %d,%d, %d,%d %d,%d %d,%d\n",
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "VRTFuncSource::RasterIO() - Irregular request." );
+        CPLDebug("VRT", "Irregular request: %d,%d  %d,%d, %d,%d %d,%d %d,%d",
                 static_cast<int>(nPixelSpace)*8,
                 GDALGetDataTypeSize(eBufType),
                 static_cast<int>(nLineSpace),
@@ -2751,8 +2752,7 @@ VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
                 nBufYSize, nYSize,
                 static_cast<int>(eBufType),
                 static_cast<int>(eType) );
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "VRTFuncSource::RasterIO() - Irregular request." );
+
         return CE_Failure;
     }
 }

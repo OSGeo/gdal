@@ -377,16 +377,16 @@ static const GByte *_AVCJapanese2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
          */
         psDBCSInfo->nDBCSEncoding = _AVCDetectJapaneseEncoding(pszLine);
 
-/*
+#if 0
         if (psDBCSInfo->nDBCSEncoding == AVC_CODE_JAP_SHIFTJIS)
         {
-            printf("Found Japanese Shift-JIS encoding\n");
+            printf("Found Japanese Shift-JIS encoding\n");/*ok*/
         }
         else if (psDBCSInfo->nDBCSEncoding == AVC_CODE_JAP_EUC)
         {
-            printf("Found Japanese EUC encoding\n");
+            printf("Found Japanese EUC encoding\n");/*ok*/
         }
-*/
+#endif
     }
 
     for(iDst=0; *pszLine && iDst < nMaxOutputLen; pszLine++)

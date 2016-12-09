@@ -274,7 +274,7 @@ void SysVirtualFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
     uint64 buffer_offset = 0;
 #if 0
-    printf("Requesting region at %llu of size %llu\n", offset, size);
+    printf("Requesting region at %llu of size %llu\n", offset, size);/*ok*/
 #endif
     while( buffer_offset < size )
     {
@@ -533,7 +533,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
             GrowVirtualFile(i + current_start);
         }
 
-        printf("Coalescing the read of %d blocks\n", count_to_read);
+        printf("Coalescing the read of %d blocks\n", count_to_read);/*ok*/
 #endif
 
         // Perform the actual read
@@ -543,7 +543,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
         std::size_t data_size = block_size * count_to_read;
 
 #if 0
-        printf("Reading %d bytes at offset %d in buffer\n", data_size, buffer_off);
+        printf("Reading %d bytes at offset %d in buffer\n", data_size, buffer_off);/*ok*/
 #endif
 
         data_seg_obj->ReadFromFile( ((uint8*)buffer) + buffer_off,

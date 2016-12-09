@@ -227,7 +227,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 {
     int field_size;
     char * temp_buf = NULL;
-    char printf_format[ 20 ];
+    char szPrintfFormat[ 20 ];
 
     field_size = 0;
     sscanf(&format[1], "%d", &field_size);
@@ -263,22 +263,22 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
     case 'i':
     case 'I':
 	/* Integer data type */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c",format+1, 'd');
-	snprintf( temp_buf, field_size+1, printf_format, *(int *) value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c",format+1, 'd');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(int *) value);
 	break;
 
     case 'f':
     case 'F':
 	/* Double precision floating point data type */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'g');
-	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'g');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
 	break;
 
     case 'e':
     case 'E':
 	/* Double precision floating point data type (forced exponent) */
-	snprintf( printf_format, sizeof(printf_format), "%%%s%c", format+1, 'e');
-	snprintf( temp_buf, field_size+1, printf_format, *(double *)value);
+	snprintf( szPrintfFormat, sizeof(szPrintfFormat), "%%%s%c", format+1, 'e');
+	snprintf( temp_buf, field_size+1, szPrintfFormat, *(double *)value);
 	break;
 
     case 'a':

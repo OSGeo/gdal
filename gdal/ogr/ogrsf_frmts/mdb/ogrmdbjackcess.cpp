@@ -749,34 +749,34 @@ void OGRMDBTable::DumpTable()
     int nCols = static_cast<int>(apoColumnNames.size());
     while(GetNextRow())
     {
-        printf("Row = %d\n", iRow ++);
+        printf("Row = %d\n", iRow ++);/*ok*/
         for(int i=0;i<nCols;i++)
         {
-            printf("%s = ", apoColumnNames[i].c_str());
+            printf("%s = ", apoColumnNames[i].c_str());/*ok*/
             if (apoColumnTypes[i] == MDB_Float ||
                 apoColumnTypes[i] == MDB_Double)
             {
-                printf("%.15f\n", GetColumnAsDouble(i));
+                printf("%.15f\n", GetColumnAsDouble(i));/*ok*/
             }
             else if (apoColumnTypes[i] == MDB_Boolean ||
                      apoColumnTypes[i] == MDB_Byte ||
                      apoColumnTypes[i] == MDB_Short ||
                      apoColumnTypes[i] == MDB_Int)
             {
-                printf("%d\n", GetColumnAsInt(i));
+                printf("%d\n", GetColumnAsInt(i));/*ok*/
             }
             else if (apoColumnTypes[i] == MDB_Binary ||
                      apoColumnTypes[i] == MDB_OLE)
             {
                 int nBytes;
                 GByte* pData = GetColumnAsBinary(i, &nBytes);
-                printf("(%d bytes)\n", nBytes);
+                printf("(%d bytes)\n", nBytes);/*ok*/
                 CPLFree(pData);
             }
             else
             {
                 char* val = GetColumnAsString(i);
-                printf("'%s'\n", val);
+                printf("'%s'\n", val);/*ok*/
                 CPLFree(val);
             }
         }

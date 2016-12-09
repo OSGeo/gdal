@@ -3002,7 +3002,7 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
         const double dfError2 = fabs(x[i] - xtemp) + fabs(y[i] - ytemp);
         if( dfError2 > 4 /*10 * psATInfo->dfMaxError*/ )
         {
-            printf("Error = %f on (%f, %f)\n", dfError2,  x_ori, y_ori);
+            /*ok*/printf("Error = %f on (%f, %f)\n", dfError2,  x_ori, y_ori);
         }
 #endif
         panSuccess[i] = TRUE;

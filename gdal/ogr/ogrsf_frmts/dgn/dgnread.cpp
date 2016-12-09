@@ -1819,7 +1819,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
                                  anRegion+3, anRegion+4, anRegion+5 ) )
         {
 #ifdef notdef
-            printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",
+            printf( "panRegion[%d]=%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\n",/*ok*/
                     psDGN->element_count,
                     anRegion[0] - 2147483648.0,
                     anRegion[1] - 2147483648.0,

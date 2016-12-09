@@ -1550,7 +1550,7 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void* pUserData)
         static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
         static_cast<GIntBig>(tv_end.tv_usec);
     if( start_job - launch_time > 500 )
-        printf("Resample: Delay before start=" CPL_FRMT_GIB
+        /*ok*/printf("Resample: Delay before start=" CPL_FRMT_GIB
                ", completion time=" CPL_FRMT_GIB "\n",
                start_job - launch_time, end - start_job);
 #endif
@@ -1598,7 +1598,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void* pUserData)
         static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
         static_cast<GIntBig>(tv_end.tv_usec);
     if( start_job - launch_time > 500 )
-        printf("Pansharpen: Delay before start=" CPL_FRMT_GIB
+        /*ok*/printf("Pansharpen: Delay before start=" CPL_FRMT_GIB
                ", completion time=" CPL_FRMT_GIB "\n",
                start_job - launch_time, end - start_job);
 #endif

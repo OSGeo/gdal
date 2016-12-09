@@ -479,7 +479,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    /* printf("poOpenInfo->pszFilename %s\n",poOpenInfo->pszFilename); */
     char **papszName =
         CSLTokenizeString2(  poOpenInfo->pszFilename,
                              ":", CSLT_HONOURSTRINGS|CSLT_PRESERVEESCAPES );

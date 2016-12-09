@@ -181,19 +181,19 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     PH_DATA* hd = (PH_DATA*)&_main_header;
     for (int i=0; i < 6; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);
+        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
 
     for (i=0; i < 5; i++) {
-        printf("%s %s %s", hdi->name, hdi->size, hdi->address);
+        printf("%s %s %s", hdi->name, hdi->size, hdi->address);/*ok*/
         hdi++;
     }
     hd = (PH_DATA*)(&_main_header.totalFileSize);
     for (int i=0; i < 19; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);
+        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
 #endif // DEBUG
@@ -212,8 +212,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         }
     }
 #ifdef DEBUG
-    printf("Data: %u %u\n", _f_data_offset, _f_data_size);
-    printf("Header: %u %u\n", _f_header_offset, _f_header_size);
+    printf("Data: %u %u\n", _f_data_offset, _f_data_size);/*ok*/
+    printf("Header: %u %u\n", _f_header_offset, _f_header_size);/*ok*/
 #endif // DEBUG
 
     unsigned int lines;
@@ -229,7 +229,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     _columns -= cols - 1;
 
 #ifdef DEBUG
-    printf("lines = %u, cols = %u\n", _lines, _columns);
+    printf("lines = %u, cols = %u\n", _lines, _columns);/*ok*/
 #endif // DEBUG
 
     int records_per_line = 0;
@@ -243,7 +243,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     }
 
 #ifdef DEBUG
-    printf("reading a total of %d records per line\n", records_per_line);
+    printf("reading a total of %d records per line\n", records_per_line);/*ok*/
 #endif // DEBUG
 
     // extract time fields, assume that SNIT is the correct field:
@@ -265,10 +265,10 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4)
         {
-            printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
+            printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);/*ok*/
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20) {
-            printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
+            printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n",/*ok*/ _calibration[i].cal_offset);
         }
     }
 #endif

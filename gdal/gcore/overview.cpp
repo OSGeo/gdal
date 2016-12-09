@@ -1641,11 +1641,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
 #if 0
         if( nSrcPixelStart < nChunkXOff && nChunkXOff > 0 )
         {
-            printf( "truncated iDstPixel = %d\n", iDstPixel );
+            printf( "truncated iDstPixel = %d\n", iDstPixel );/*ok*/
         }
         if( nSrcPixelStop > nChunkRightXOff && nChunkRightXOff < nSrcWidth )
         {
-            printf( "truncated iDstPixel = %d\n", iDstPixel );
+            printf( "truncated iDstPixel = %d\n", iDstPixel );/*ok*/
         }
 #endif
         const int nSrcPixelCount = nSrcPixelStop - nSrcPixelStart;
@@ -1795,11 +1795,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         if( nSrcLineStart < nChunkYOff &&
             nChunkYOff > 0 )
         {
-            printf( "truncated iDstLine = %d\n", iDstLine );
+            printf( "truncated iDstLine = %d\n", iDstLine );/*ok*/
         }
         if( nSrcLineStop > nChunkBottomYOff && nChunkBottomYOff < nSrcHeight )
         {
-            printf( "truncated iDstLine = %d\n", iDstLine );
+            printf( "truncated iDstLine = %d\n", iDstLine );/*ok*/
         }
 #endif
         const int nSrcLineCount = nSrcLineStop - nSrcLineStart;

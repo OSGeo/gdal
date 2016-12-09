@@ -81,17 +81,17 @@ public:
 /************************************************************************/
 void RPolygon::Dump() const
 {
-    printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
+    /*ok*/printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
             dfPolyValue, nLastLineUpdated );
 
     for( size_t iString = 0; iString < aanXY.size(); iString++ )
     {
         const std::vector<int> &anString = aanXY[iString];
 
-        printf( "  String %d:\n", (int) iString );
+        /*ok*/printf( "  String %d:\n", (int) iString );
         for( size_t iVert = 0; iVert < anString.size(); iVert += 2 )
         {
-            printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
+            /*ok*/printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
         }
     }
 }

@@ -2944,11 +2944,6 @@ static bool GWKCubicResampleNoMasks4SampleT( GDALWarpKernel *poWK, int iBand,
 
 static double GWKLanczosSinc( double dfX )
 {
-    /*if( fabs(dfX) > 3.0 )
-    {
-        printf("%f\n", dfX);
-        return 0;
-    }*/
     if ( dfX == 0.0 )
         return 1.0;
 

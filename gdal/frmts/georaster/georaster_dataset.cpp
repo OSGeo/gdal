@@ -1155,7 +1155,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        printf( "Output dataset: (georaster:%s/%s@%s,%s,%d) on %s%s,%s\n",
+        CPLDebug("GEOR", "Output dataset: (georaster:%s/%s@%s,%s,%d) on %s%s,%s",
             poDstDS->poGeoRaster->poConnection->GetUser(),
             poDstDS->poGeoRaster->poConnection->GetPassword(),
             poDstDS->poGeoRaster->poConnection->GetServer(),

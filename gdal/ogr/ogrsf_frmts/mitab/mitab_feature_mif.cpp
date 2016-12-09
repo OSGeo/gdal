@@ -2447,7 +2447,7 @@ int TABCollection::WriteGeometryToMIFFile(MIDDATAFile *fp)
 int TABDebugFeature::ReadGeometryFromMIFFile( MIDDATAFile *fp )
 {
     // Go to the first line of the next feature.
-    printf("%s\n", fp->GetLastLine());
+    printf("%s\n", fp->GetLastLine());/*ok*/
 
     const char *pszLine = NULL;
     while (((pszLine = fp->GetLine()) != NULL) &&

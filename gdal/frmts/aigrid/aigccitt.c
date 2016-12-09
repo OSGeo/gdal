@@ -1311,7 +1311,7 @@ static const char* StateNames[] = {
     int t;								\
     NeedBits8(wid,eoflab);						\
     TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,/*ok*/ 	\
 	   StateNames[TabEnt->State], TabEnt->Param);			\
     for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
@@ -1323,7 +1323,7 @@ static const char* StateNames[] = {
     int t;								\
     NeedBits16(wid,eoflab);						\
     TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,/*ok*/ 	\
 	   StateNames[TabEnt->State], TabEnt->Param);			\
     for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
@@ -1334,7 +1334,7 @@ static const char* StateNames[] = {
 
 #define SETVAL(x) do {							\
     *pa++ = RunLength + (x);						\
-    printf("SETVAL: %d\t%d\n", RunLength + (x), a0);			\
+    printf("SETVAL: %d\t%d\n", RunLength + (x), a0);	/*ok*/     	\
     a0 += x;								\
     RunLength = 0;							\
 } while (0)
@@ -1751,8 +1751,8 @@ Fax3DecodeRLE(Fax3BaseState* tif, unsigned char *buf, int occ,
         RunLength = 0;
         pa = thisrun;
 #ifdef FAX3_DEBUG
-        printf("\nBitAcc=%08X, BitsAvail = %d\n", BitAcc, BitsAvail);
-        printf("-------------------- \n");
+        printf("\nBitAcc=%08X, BitsAvail = %d\n", BitAcc, BitsAvail);/*ok*/
+        printf("-------------------- \n");/*ok*/
         fflush(stdout);
 #endif
 

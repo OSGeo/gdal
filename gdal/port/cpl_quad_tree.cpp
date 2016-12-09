@@ -761,13 +761,13 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
     if (psNode->nNumSubNodes)
     {
         for(int count=nIndentLevel;--count>=0;)
-            printf("  ");
-        printf("SubhQuadTrees :\n");
+            printf("  "); /*ok*/
+        printf("SubhQuadTrees :\n"); /*ok*/
         for(int i=0; i<psNode->nNumSubNodes; i++ )
         {
             for(int count=nIndentLevel+1;--count>=0;)
-                printf("  ");
-            printf("SubhQuadTree %d :\n", i+1);
+                printf("  "); /*ok*/
+            printf("SubhQuadTree %d :\n", i+1); /*ok*/
             CPLQuadTreeDumpNode(psNode->apSubNode[i], nIndentLevel + 2,
                                 pfnDumpFeatureFunc, pUserData);
         }
@@ -775,8 +775,8 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
     if (psNode->nFeatures)
     {
         for(int count=nIndentLevel;--count>=0;)
-            printf("  ");
-        printf("Leaves (%d):\n", psNode->nFeatures);
+            printf("  "); /*ok*/
+        printf("Leaves (%d):\n", psNode->nFeatures); /*ok*/
         for(int i=0; i<psNode->nFeatures; i++)
         {
             if (pfnDumpFeatureFunc)
@@ -785,8 +785,8 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode,
             else
             {
                 for(int count=nIndentLevel + 1;--count>=0;)
-                    printf("  ");
-                printf("%p\n", psNode->pahFeatures[i]);
+                    printf("  "); /*ok*/
+                printf("%p\n", psNode->pahFeatures[i]); /*ok*/
             }
         }
     }

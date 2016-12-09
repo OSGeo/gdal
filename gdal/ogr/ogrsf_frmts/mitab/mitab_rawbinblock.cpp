@@ -1042,7 +1042,7 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
                     nOffset, nValue, nValue,
                     n16Val1, n16Val2, fValue, dValue);
 
-    printf("\t[%c%c%c%c]\n", isprint(pcValue[0])?pcValue[0]:'.',
+    fprintf(fpOut, "\t[%c%c%c%c]\n", isprint(pcValue[0])?pcValue[0]:'.',
                              isprint(pcValue[1])?pcValue[1]:'.',
                              isprint(pcValue[2])?pcValue[2]:'.',
                              isprint(pcValue[3])?pcValue[3]:'.');

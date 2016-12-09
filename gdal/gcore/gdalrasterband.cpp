@@ -1074,19 +1074,19 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
     if( poBandBlockCache == NULL || !poBandBlockCache->IsInitOK() )
     {
         if( poBandBlockCache == NULL )
-            printf("poBandBlockCache == NULL\n");
+            printf("poBandBlockCache == NULL\n");/*ok*/
         else
-            printf("!poBandBlockCache->IsInitOK()\n");
-        printf("caller = %s\n", pszCaller);
-        printf("GDALRasterBand: %p\n", this);
-        printf("GDALRasterBand: nBand=%d\n", nBand);
-        printf("nRasterXSize = %d\n", nRasterXSize);
-        printf("nRasterYSize = %d\n", nRasterYSize);
-        printf("nBlockXSize = %d\n", nBlockXSize);
-        printf("nBlockYSize = %d\n", nBlockYSize);
+            printf("!poBandBlockCache->IsInitOK()\n");/*ok*/
+        printf("caller = %s\n", pszCaller);/*ok*/
+        printf("GDALRasterBand: %p\n", this);/*ok*/
+        printf("GDALRasterBand: nBand=%d\n", nBand);/*ok*/
+        printf("nRasterXSize = %d\n", nRasterXSize);/*ok*/
+        printf("nRasterYSize = %d\n", nRasterYSize);/*ok*/
+        printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
+        printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
         poBlock->DumpBlock();
         if( GetDataset() != NULL )
-            printf("Dataset: %s\n", GetDataset()->GetDescription());
+            printf("Dataset: %s\n", GetDataset()->GetDescription());/*ok*/
         GDALRasterBlock::Verify();
         abort();
     }

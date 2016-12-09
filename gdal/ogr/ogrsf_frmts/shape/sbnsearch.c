@@ -712,8 +712,8 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
                         bMaxX < bNodeMinX || bMaxY < bNodeMinY ||
                         bMinX > bNodeMaxX || bMinY > bNodeMaxY )
                     {
-                        /*printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);
-                        printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
+                        /* printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);*/
+                        /* printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
                         hSBN->sHooks.Error(
                             "Invalid shape bounding box in bin" );
                         free(psNode->pabyShapeDesc);

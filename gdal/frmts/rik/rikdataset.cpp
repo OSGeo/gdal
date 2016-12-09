@@ -224,7 +224,7 @@ static int GetNextLZWCode( int codeBits,
     }
 
 #if RIK_PIXEL_DEBUG
-    printf( "c%03X\n", ret );
+    printf( "c%03X\n", ret );/*ok*/
 #endif
 
     return ret;
@@ -249,7 +249,7 @@ static void OutputPixel( GByte pixel,
     imagePos++;
 
 #if RIK_PIXEL_DEBUG
-    printf( "_%02X %d\n", pixel, imagePos );
+    printf( "_%02X %d\n", pixel, imagePos );/*ok*/
 #endif
 
     // Check if we need to change line
@@ -257,7 +257,7 @@ static void OutputPixel( GByte pixel,
     if( imagePos == lineBreak )
     {
 #if RIK_PIXEL_DEBUG
-        printf( "\n%d\n", imageLine );
+        printf( "\n%d\n", imageLine );/*ok*/
 #endif
 
         imagePos = 0;

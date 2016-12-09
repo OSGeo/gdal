@@ -1404,7 +1404,7 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
             }
         }
 #if DEBUG_VERBOSE
-        printf("style[%lu] = %d\n",
+        printf("style[%lu] = %d\n",/*ok*/
                apoStyles.size(), static_cast<int>(eType.eType));
 #endif
 
