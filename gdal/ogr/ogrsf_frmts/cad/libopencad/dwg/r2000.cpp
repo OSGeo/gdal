@@ -84,8 +84,8 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
                   static_cast<int>(dHeaderVarsSectionLength) );
 
     pabyBuf = new char[dHeaderVarsSectionLength + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-    memset (pabyBuf, 0, dHeaderVarsSectionLength + dSizeOfSectionSize + 10);
     memcpy (pabyBuf, &dHeaderVarsSectionLength, dSizeOfSectionSize);
+    memset (pabyBuf + dSizeOfSectionSize, 0, dHeaderVarsSectionLength + 10);
     pFileIO->Read( pabyBuf + dSizeOfSectionSize, dHeaderVarsSectionLength + 2 );
     size_t nBitOffsetFromStart = dSizeOfSectionSize * 8;
 
@@ -671,8 +671,8 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
                   static_cast<int>(dSectionSize) );
 
         char * pabySectionContent = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-        memset (pabySectionContent, 0, dSectionSize + dSizeOfSectionSize + 10);
-        memcpy (pabySectionContent, &dSectionSize, dSizeOfSectionSize);        
+        memcpy (pabySectionContent, &dSectionSize, dSizeOfSectionSize);
+        memset (pabySectionContent + dSizeOfSectionSize, 0, dSectionSize + 10);
         pFileIO->Read( pabySectionContent + dSizeOfSectionSize, dSectionSize + 2 );
         size_t dBitOffsetFromStart = dSizeOfSectionSize * 8;
         size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
@@ -753,8 +753,8 @@ int DWGFileR2000::CreateFileMap()
             break; // last section is empty.
 
         char * pabySectionContent  = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-        memset (pabySectionContent, 0, dSectionSize + dSizeOfSectionSize + 10);
         memcpy(pabySectionContent, &dSectionSizeOriginal, dSizeOfSectionSize);
+        memset (pabySectionContent + dSizeOfSectionSize, 0, dSectionSize + 10);
         size_t nRecordsInSection   = 0;
 
         // read section datsa
@@ -813,19 +813,15 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
-    size_t nSectionSize = dObjectSize + nBitOffsetFromStart / 8 + 2;
-    unique_ptr<char[]> sectionContentPtr( new char[nSectionSize + 64] ); // 64 is extra buffer size
+    dObjectSize += nBitOffsetFromStart / 8 + 2;
+    unique_ptr<char[]> sectionContentPtr( new char[dObjectSize + 64] ); // 64 is extra buffer size
     char * pabySectionContent = sectionContentPtr.get();
     pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
-    pFileIO->Read( pabySectionContent, nSectionSize );
+    pFileIO->Read( pabySectionContent, static_cast<size_t>(dObjectSize) );
 
     nBitOffsetFromStart = 0;
-    dObjectSize = ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
+    /* Unused dObjectSize = */ ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
     short dObjectType = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart );
-
-    // Increase object size. This need for CRC validation
-    dObjectSize = static_cast<unsigned int>( nSectionSize );
-
     if( dObjectType >= 500 )
     {
         CADClass cadClass = oClasses.getClassByNum( dObjectType );
