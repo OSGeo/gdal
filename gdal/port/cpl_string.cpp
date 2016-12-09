@@ -160,8 +160,9 @@ int CSLCount( const char * const *papszStrList )
 /*                            CSLGetField()                             */
 /************************************************************************/
 
-/** Fetches the indicated field, being careful not to crash if the field
- *doesn't exist within this string list.
+/**
+ * Fetches the indicated field, being careful not to crash if the field
+ * doesn't exist within this string list.
  *
  * The returned pointer should not be freed, and doesn't necessarily last long.
  */
@@ -1020,7 +1021,8 @@ const char *CPLSPrintf(CPL_FORMAT_STRING(const char *fmt), ...)
 /** Use CPLSPrintf() to append a new line at the end of a StringList.
  * Returns the modified StringList.
  */
-char **CSLAppendPrintf(char **papszStrList, CPL_FORMAT_STRING(const char *fmt), ...)
+char **CSLAppendPrintf(char **papszStrList,
+                       CPL_FORMAT_STRING(const char *fmt), ...)
 {
     va_list args;
 
@@ -1112,7 +1114,8 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
 /************************************************************************/
 
 #define call_native_snprintf(type) \
-    local_ret = snprintf(str + offset_out, size - offset_out, localfmt, va_arg(wrk_args, type))
+    local_ret = snprintf(str + offset_out, size - offset_out, localfmt, \
+                         va_arg(wrk_args, type))
 
 /** vsnprintf() wrapper that is not sensitive to LC_NUMERIC settings.
   *
@@ -1128,7 +1131,8 @@ static const char* CPLvsnprintf_get_end_of_formatting(const char* fmt)
   * written if size is big enough
   * @since GDAL 2.0
   */
-int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char* fmt), va_list args)
+int CPLvsnprintf(char *str, size_t size,
+                 CPL_FORMAT_STRING(const char* fmt), va_list args)
 {
     if( size == 0 )
         return vsnprintf(str, size, fmt, args);
