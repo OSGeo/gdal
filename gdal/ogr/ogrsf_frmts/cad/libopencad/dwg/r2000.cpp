@@ -813,7 +813,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
-    dObjectSize += nBitOffsetFromStart / 8 + 2;
+    dObjectSize += static_cast<unsigned int>(nBitOffsetFromStart / 8 + 2);
     unique_ptr<char[]> sectionContentPtr( new char[dObjectSize + 64] ); // 64 is extra buffer size
     char * pabySectionContent = sectionContentPtr.get();
     pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
