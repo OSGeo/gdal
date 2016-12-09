@@ -35,7 +35,7 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include "epsilon.h"
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
