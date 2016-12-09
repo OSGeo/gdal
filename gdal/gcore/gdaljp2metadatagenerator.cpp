@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
