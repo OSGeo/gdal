@@ -61,7 +61,7 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include "json.h"
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
