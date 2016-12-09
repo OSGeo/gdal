@@ -66,7 +66,7 @@ CPL_CVSID("$Id$");
 #include <libxml/parserInternals.h>
 #include <libxml/catalog.h>
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
@@ -1157,7 +1157,9 @@ int CPLValidateXML( const char* pszXMLFilename,
                 "   <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n",
                 pszWFSSchemaNamespace, pszWFSSchemaLocation));
             CPL_IGNORE_RET_VAL(VSIFPrintfL(
-                fpMEM, "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n", pszEscapedXSDFilename));
+                fpMEM,
+                "   <xs:import namespace=\"ignored\" schemaLocation=\"%s\"/>\n",
+                pszEscapedXSDFilename));
             if( pszGMLSchemaLocation )
                 CPL_IGNORE_RET_VAL(VSIFPrintfL(
                     fpMEM,
@@ -1170,7 +1172,9 @@ int CPLValidateXML( const char* pszXMLFilename,
     }
 
     CPLXMLSchemaPtr pSchema =
-        CPLLoadXMLSchema(!osTmpXSDFilename.empty() ? osTmpXSDFilename.c_str() : pszXSDFilename);
+        CPLLoadXMLSchema(!osTmpXSDFilename.empty()
+                         ? osTmpXSDFilename.c_str()
+                         : pszXSDFilename);
     if( !osTmpXSDFilename.empty() )
         VSIUnlink(osTmpXSDFilename);
     if( pSchema == NULL )
