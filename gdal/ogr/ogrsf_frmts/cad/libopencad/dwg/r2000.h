@@ -87,80 +87,148 @@ protected:
     virtual int CreateFileMap() override;
 
     CADObject   * GetObject( long dHandle, bool bHandlesOnly = false ) override;
-    CADGeometry * GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle = 0 ) override;
+    CADGeometry * GetGeometry( size_t iLayerIndex, long dHandle,
+                               long dBlockRefHandle = 0 ) override;
 
     CADDictionary GetNOD() override;
 protected:
-    CADBlockObject           * getBlock( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
+    CADBlockObject * getBlock( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput,
+                               size_t& nBitOffsetFromStart );
+    CADEllipseObject * getEllipse( unsigned int dObjectSize,
+                                   const CADCommonED& stCommonEntityData,
+                                   const char * pabyInput,
+                                   size_t& nBitOffsetFromStart );
+    CADSolidObject * getSolid( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADPointObject * getPoint( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADPolyline3DObject * getPolyLine3D( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         const char * pabyInput,
                                          size_t& nBitOffsetFromStart );
-    CADEllipseObject         * getEllipse( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
+    CADRayObject * getRay( unsigned int dObjectSize,
+                           const CADCommonED& stCommonEntityData,
+                           const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADXLineObject * getXLine( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADLineObject * getLine( unsigned int dObjectSize,
+                             const CADCommonED& stCommonEntityData,
+                             const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADTextObject * getText( unsigned int dObjectSize,
+                             const CADCommonED& stCommonEntityData,
+                             const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADVertex3DObject * getVertex3D( unsigned int dObjectSize,
+                                     const CADCommonED& stCommonEntityData,
+                                     const char * pabyInput,
+                                     size_t& nBitOffsetFromStart );
+    CADCircleObject * getCircle( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 const char * pabyInput,
+                                 size_t& nBitOffsetFromStart );
+    CADEndblkObject * getEndBlock( unsigned int dObjectSize,
+                                   const CADCommonED& stCommonEntityData,
+                                   const char * pabyInput,
+                                   size_t& nBitOffsetFromStart );
+    CADPolyline2DObject * getPolyline2D( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         const char * pabyInput,
+                                         size_t& nBitOffsetFromStart );
+    CADAttribObject * getAttributes( unsigned int dObjectSize,
+                                     const CADCommonED& stCommonEntityData,
+                                     const char * pabyInput,
+                                     size_t& nBitOffsetFromStart );
+    CADAttdefObject * getAttributesDefn( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         const char * pabyInput,
+                                         size_t& nBitOffsetFromStart );
+    CADLWPolylineObject * getLWPolyLine( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         const char * pabyInput,
+                                         size_t& nBitOffsetFromStart );
+    CADArcObject * getArc( unsigned int dObjectSize,
+                           const CADCommonED& stCommonEntityData,
+                           const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADSplineObject * getSpline( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADEntityObject * getEntity( int dObjectType, unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADInsertObject * getInsert( int dObjectType, unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 const char * pabyInput, size_t& nBitOffsetFromStart );
+    CADDictionaryObject * getDictionary( unsigned int dObjectSize,
+                                         const char * pabyInput,
+                                         size_t& nBitOffsetFromStart );
+    CADXRecordObject * getXRecord( unsigned int dObjectSize,
+                                   const char * pabyInput,
+                                   size_t& nBitOffsetFromStart );
+    CADLayerObject * getLayerObject( unsigned int dObjectSize,
+                                     const char * pabyInput,
+                                     size_t& nBitOffsetFromStart );
+    CADLayerControlObject * getLayerControl( unsigned int dObjectSize,
+                                             const char * pabyInput,
+                                             size_t& nBitOffsetFromStart );
+    CADBlockControlObject * getBlockControl( unsigned int dObjectSize,
+                                             const char * pabyInput,
+                                             size_t& nBitOffsetFromStart );
+    CADBlockHeaderObject * getBlockHeader( unsigned int dObjectSize,
+                                           const char * pabyInput,
                                            size_t& nBitOffsetFromStart );
-    CADSolidObject           * getSolid( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart );
-    CADPointObject           * getPoint( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart );
-    CADPolyline3DObject      * getPolyLine3D( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                              size_t& nBitOffsetFromStart );
-    CADRayObject             * getRay( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                       size_t& nBitOffsetFromStart );
-    CADXLineObject           * getXLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart );
-    CADLineObject            * getLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                        size_t& nBitOffsetFromStart );
-    CADTextObject            * getText( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                        size_t& nBitOffsetFromStart );
-    CADVertex3DObject        * getVertex3D( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                            size_t& nBitOffsetFromStart );
-    CADCircleObject          * getCircle( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                          size_t& nBitOffsetFromStart );
-    CADEndblkObject          * getEndBlock( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                            size_t& nBitOffsetFromStart );
-    CADPolyline2DObject      * getPolyline2D( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                              size_t& nBitOffsetFromStart );
-    CADAttribObject          * getAttributes( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                              size_t& nBitOffsetFromStart );
-    CADAttdefObject          * getAttributesDefn( long dObjectSize, const CADCommonED& stCommonEntityData,
-                                                  const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADLWPolylineObject      * getLWPolyLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                              size_t& nBitOffsetFromStart );
-    CADArcObject             * getArc( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                       size_t& nBitOffsetFromStart );
-    CADSplineObject          * getSpline( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                          size_t& nBitOffsetFromStart );
-    CADEntityObject          * getEntity( int dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
-                                          const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADInsertObject          * getInsert( int dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
-                                          const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADDictionaryObject      * getDictionary( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADXRecordObject         * getXRecord( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADLayerObject           * getLayerObject( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADLayerControlObject    * getLayerControl( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADBlockControlObject    * getBlockControl( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADBlockHeaderObject     * getBlockHeader( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADLineTypeControlObject * getLineTypeControl( long dObjectSize, const char * pabyInput,
+    CADLineTypeControlObject * getLineTypeControl( unsigned int dObjectSize,
+                                                   const char * pabyInput,
                                                    size_t& nBitOffsetFromStart );
-    CADLineTypeObject        * getLineType1( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADMLineObject           * getMLine( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart );
-    CADPolylinePFaceObject   * getPolylinePFace( long dObjectSize, const CADCommonED& stCommonEntityData,
-                                                 const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADImageObject           * getImage( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart );
-    CAD3DFaceObject          * get3DFace( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                          size_t& nBitOffsetFromStart );
-    CADVertexMeshObject      * getVertexMesh( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                              size_t& nBitOffsetFromStart );
-    CADVertexPFaceObject     * getVertexPFace( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
+    CADLineTypeObject * getLineType1( unsigned int dObjectSize,
+                                      const char * pabyInput,
+                                      size_t& nBitOffsetFromStart );
+    CADMLineObject * getMLine( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput,
+                               size_t& nBitOffsetFromStart );
+    CADPolylinePFaceObject * getPolylinePFace( unsigned int dObjectSize,
+                                               const CADCommonED& stCommonEntityData,
+                                               const char * pabyInput,
                                                size_t& nBitOffsetFromStart );
-    CADDimensionObject       * getDimension( short dObjectType, long dObjectSize, const CADCommonED& stCommonEntityData,
-                                             const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADMTextObject           * getMText( long dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
+    CADImageObject * getImage( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput,
+                               size_t& nBitOffsetFromStart );
+    CAD3DFaceObject * get3DFace( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 const char * pabyInput,
+                                 size_t& nBitOffsetFromStart );
+    CADVertexMeshObject * getVertexMesh( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         const char * pabyInput,
                                          size_t& nBitOffsetFromStart );
-    CADImageDefObject        * getImageDef( long dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart );
-    CADImageDefReactorObject * getImageDefReactor( long dObjectSize, const char * pabyInput,
+    CADVertexPFaceObject * getVertexPFace( unsigned int dObjectSize,
+                                           const CADCommonED& stCommonEntityData,
+                                           const char * pabyInput,
+                                           size_t& nBitOffsetFromStart );
+    CADDimensionObject * getDimension( short dObjectType, unsigned int dObjectSize,
+                                       const CADCommonED& stCommonEntityData,
+                                       const char * pabyInput,
+                                       size_t& nBitOffsetFromStart );
+    CADMTextObject * getMText( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               const char * pabyInput,
+                               size_t& nBitOffsetFromStart );
+    CADImageDefObject * getImageDef( unsigned int dObjectSize,
+                                     const char * pabyInput,
+                                     size_t& nBitOffsetFromStart );
+    CADImageDefReactorObject * getImageDefReactor( unsigned int dObjectSize,
+                                                   const char * pabyInput,
                                                    size_t& nBitOffsetFromStart );
-    void                     fillCommonEntityHandleData( CADEntityObject * pEnt, const char * pabyInput,
+    void fillCommonEntityHandleData( CADEntityObject * pEnt, const char * pabyInput,
                                                          size_t& nBitOffsetFromStart );
+    unsigned short validateEntityCRC(const char * pabyInput,
+        unsigned int dObjectSize, size_t & nBitOffsetFromStart,
+        const char * entityName = "ENTITY", bool bSwapEndianness = false );
 protected:
     int                               imageSeeker;
     std::vector<SectionLocatorRecord> sectionLocatorRecords;

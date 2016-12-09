@@ -722,7 +722,7 @@ short CADObject::getCRC() const
     return CRC;
 }
 
-void CADObject::setCRC( short value )
+void CADObject::setCRC( unsigned short value )
 {
     CRC = value;
 }
