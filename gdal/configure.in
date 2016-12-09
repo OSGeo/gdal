@@ -4937,11 +4937,14 @@ if test "$with_mdb" = "yes" ; then
         AC_MSG_ERROR("--with-java must be specified.")
     fi
 
-    AC_ARG_WITH(jvm-lib,          [  --with-jvm-lib=[ARG]        ARG points to Java libjvm path],,)
+    AC_ARG_WITH(jvm-lib,          [  --with-jvm-lib=[ARG]        ARG is dlopen or points to Java libjvm path],,)
 
     AC_ARG_WITH(jvm-lib-add-rpath,[  --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)],,)
 
-    if test "x$with_jvm_lib" != "x"; then
+    if test "x$with_jvm_lib" = "xdlopen"; then
+        AC_DEFINE_UNQUOTED(JVM_LIB_DLOPEN, 1, [Define to 1 if libjvm.so should be dlopen'd])
+        JVM_LIB="-ldl"
+    elif test "x$with_jvm_lib" != "x"; then
         if test -d "$with_jvm_lib"; then
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$with_jvm_lib"

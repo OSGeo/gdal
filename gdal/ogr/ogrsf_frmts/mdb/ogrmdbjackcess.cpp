@@ -30,6 +30,11 @@
 
 CPL_CVSID("$Id$");
 
+#if JVM_LIB_DLOPEN
+#include <limits.h>
+#include <stdio.h>
+#endif
+
 static JavaVM *jvm_static = NULL;
 static JNIEnv *env_static = NULL;
 
@@ -162,9 +167,51 @@ int OGRMDBJavaEnv::Init()
     {
         JavaVM* vmBuf[1];
         jsize nVMs;
+        int ret = 0;
+
+#if JVM_LIB_DLOPEN
+        const char *jvmLibPtr = "libjvm.so";
+        char jvmLib[PATH_MAX];
+
+        /* libjvm.so's location is hard to predict so
+           ${JAVA_HOME}/bin/java -XshowSettings is executed to find
+           its location. If JAVA_HOME is not set then java is executed
+           from the PATH instead. This is POSIX-compliant code. */
+        FILE *javaCmd = popen("\"${JAVA_HOME}${JAVA_HOME:+/bin/}java\" -XshowSettings 2>&1 | sed -n '/\\bsun\\.boot\\.library\\.path =/s:.* = \\(.*\\):\\1/server/libjvm.so:p'", "r");
+
+        if (javaCmd != NULL)
+        {
+            size_t javaCmdRead = fread(jvmLib, 1, PATH_MAX, javaCmd);
+            ret = pclose(javaCmd);
+
+            if (ret == 0 && javaCmdRead >= 2)
+            {
+                /* Chomp the new line */
+                jvmLib[javaCmdRead - 1] = '\0';
+                jvmLibPtr = jvmLib;
+            }
+        }
+
+        CPLDebug("MDB", "Trying %s", jvmLibPtr);
+        jint (*pfnJNI_GetCreatedJavaVMs)(JavaVM **, jsize, jsize *);
+        pfnJNI_GetCreatedJavaVMs = (jint (*)(JavaVM **, jsize, jsize *))
+            CPLGetSymbol(jvmLibPtr, "JNI_GetCreatedJavaVMs");
+
+        if (pfnJNI_GetCreatedJavaVMs == NULL)
+        {
+            CPLDebug("MDB", "Cannot find JNI_GetCreatedJavaVMs function");
+            return FALSE;
+        }
+        else
+        {
+            ret = pfnJNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs);
+        }
+#else
+        ret = JNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs);
+#endif
 
         /* Are we already called from Java ? */
-        if (JNI_GetCreatedJavaVMs(vmBuf, 1, &nVMs) == JNI_OK && nVMs == 1)
+        if (ret == JNI_OK && nVMs == 1)
         {
             jvm = vmBuf[0];
             if (jvm->GetEnv((void **)&env, JNI_VERSION_1_2) == JNI_OK)
@@ -195,11 +242,22 @@ int OGRMDBJavaEnv::Init()
                 args.nOptions = 0;
             args.ignoreUnrecognized = JNI_FALSE;
 
-            int ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#if JVM_LIB_DLOPEN
+            jint (*pfnJNI_CreateJavaVM)(JavaVM **, void **, void *);
+            pfnJNI_CreateJavaVM = (jint (*)(JavaVM **, void **, void *))
+                CPLGetSymbol(jvmLibPtr, "JNI_CreateJavaVM");
+
+            if (pfnJNI_CreateJavaVM == NULL)
+                return FALSE;
+            else
+                ret = pfnJNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#else
+            ret = JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+#endif
 
             CPLFree(pszClassPathOption);
 
-            if (ret != 0 || jvm == NULL || env == NULL)
+            if (ret != JNI_OK || jvm == NULL || env == NULL)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "JNI_CreateJavaVM failed (%d)", ret);
                 return FALSE;
