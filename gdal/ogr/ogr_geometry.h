@@ -170,7 +170,7 @@ class CPL_DLL OGRGeometry
     virtual int getDimension() const = 0;
     virtual int getCoordinateDimension() const;
     int CoordinateDimension() const;
-    virtual OGRBoolean  IsEmpty() const;
+    virtual OGRBoolean  IsEmpty() const = 0;
     virtual OGRBoolean  IsValid() const;
     virtual OGRBoolean  IsSimple() const;
     /*! Returns whether the geometry has a Z component. */

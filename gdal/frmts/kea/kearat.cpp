@@ -575,7 +575,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             }
             catch(kealib::KEAException &e)
             {
-                fprintf(stderr,"Failed to read/write attribute table: %s %d %d %ld\n", e.what(), iStartRow, iLength, m_poKEATable->getSize() );
+                //fprintf(stderr,"Failed to read/write attribute table: %s %d %d %ld\n", e.what(), iStartRow, iLength, m_poKEATable->getSize() );
                 CPLError( CE_Failure, CPLE_AppDefined, "Failed to read/write attribute table: %s", e.what() );
                 return CE_Failure;
             }

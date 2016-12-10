@@ -393,7 +393,7 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
                         sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
                         sizeof(int) + ((len%2) ? sizeof(int) : 0)) );
                 if( accumulator == 0xDEADBEEF )
-                    fprintf(stderr, "%s", "");
+                    fprintf(stderr, "%s", ""); /*ok*/
         }
 }
 

@@ -1565,8 +1565,9 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             if( CPLTestBool(CPLGetConfigOption("VSICRYPT_DISPLAY_GENERATED_KEY",
                                                "TRUE")) )
             {
-                fprintf(stderr, "BASE64 key '%s' has been generated, and installed in "
-                        "the VSICRYPT_KEY_B64 configuration option.\n", pszB64);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "BASE64 key '%s' has been generated, and installed in "
+                        "the VSICRYPT_KEY_B64 configuration option.", pszB64);
             }
             CPLSetConfigOption("VSICRYPT_KEY_B64", pszB64);
             CPLFree(pszB64);

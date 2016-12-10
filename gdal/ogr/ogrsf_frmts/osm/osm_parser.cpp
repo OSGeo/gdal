@@ -316,8 +316,8 @@ bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
             if( !(strcmp(pszTxt, "OsmSchema-V0.6") == 0 ||
                   strcmp(pszTxt, "DenseNodes") == 0) )
             {
-                fprintf(stderr,
-                        "Error: unsupported required feature : %s\n",
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Error: unsupported required feature : %s",
                         pszTxt);
                 VSIFree(pszTxt);
                 GOTO_END_ERROR;  // TODO(schwehr): Get rid of goto.

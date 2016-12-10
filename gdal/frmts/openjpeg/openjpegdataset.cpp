@@ -460,14 +460,6 @@ void JP2OpenJPEGDataset::JP2OpenJPEGReadBlockInThread(void* userdata)
     int nPair;
     JobStruct* poJob = (JobStruct*) userdata;
 
-    /*void* pDummy = VSIMalloc(128*1024);
-    if( pDummy == NULL )
-    {
-        fprintf(stderr, "Out of memory in thread\n");
-        poJob->bSuccess = false;
-        return;
-    }*/
-
     JP2OpenJPEGDataset* poGDS = poJob->poGDS;
     int nBand = poJob->nBand;
     int nPairs = (int)poJob->oPairs.size();

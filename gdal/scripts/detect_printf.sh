@@ -12,4 +12,15 @@ else
     echo "OK: no suspicious printf found."
 fi
 
+
+echo "Checking for fprintf(stderr,) statements..."
+grep fprintf -r  alg gnm port ogr gcore frmts --include="*.cpp" | grep stderr | grep -v -G "/[/|*][ ]*fprintf" | grep -v "/*ok" | grep -v sdts2shp | grep -v degrib18  | grep -v 8211view | grep -v 8211createfromxml | grep -v 8211dump | grep -v pcidskexception | grep -v vsipreload | grep -v fprintfstderr | grep -v cpl_multiproc | grep -v "truncation occurred" | grep -v xmlreformat | grep -v cpl_error
+
+if [[ $? -eq 0 ]] ; then
+    echo "FAIL: suspicious fprintf(stder,...) found. Remove or tag it with /*ok*/"
+    ret_code=1
+else
+    echo "OK: no suspicious fprintf(stder,...) found."
+fi
+
 exit $ret_code

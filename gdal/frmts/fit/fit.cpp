@@ -34,14 +34,14 @@ CPL_CVSID("$Id$");
 GDALDataType fitDataType(int dtype) {
     switch (dtype) {
     case 1: // iflBit   /* single-bit */
-        fprintf(stderr,
-                "GDAL unsupported data type (single-bit) in fitDataType\n");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "GDAL unsupported data type (single-bit) in fitDataType");
         return GDT_Unknown;
     case 2: // iflUChar    /* unsigned character (byte) */
         return GDT_Byte;
     case 4: // iflChar     /* signed character (byte) */
-        fprintf(stderr,
-                "GDAL unsupported data type (signed char) in fitDataType\n");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                "GDAL unsupported data type (signed char) in fitDataType");
         return GDT_Unknown;
 //         return Byte;
     case 8: // iflUShort   /* unsigned short integer (nominally 16 bits) */

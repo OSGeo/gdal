@@ -282,7 +282,7 @@ void GDALVirtualMem::DoIOPixelInterleaved(
 
     GetXYBand(nOffset, x, y, band);
 #ifdef DEBUG_VERBOSE
-    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf(stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
             eRWFlag, static_cast<int>(nOffset), x, y, band);
 #endif
 
@@ -467,7 +467,7 @@ void GDALVirtualMem::DoIOBandSequential(
     int band = 0;
     GetXYBand(nOffset, x, y, band);
 #if DEBUG_VERBOSE
-    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",
+    fprintf( stderr, "eRWFlag=%d, nOffset=%d, x=%d, y=%d, band=%d\n",/*ok*/
              eRWFlag, static_cast<int>(nOffset), x, y, band );
 #endif
 

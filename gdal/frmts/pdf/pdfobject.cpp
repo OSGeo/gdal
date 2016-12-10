@@ -301,7 +301,8 @@ void GDALPDFObject::Serialize(CPLString& osStr)
         case PDFObjectType_Array: GetArray()->Serialize(osStr); return;
         case PDFObjectType_Dictionary: GetDictionary()->Serialize(osStr); return;
         case PDFObjectType_Unknown:
-        default: fprintf(stderr, "Serializing unknown object !\n"); return;
+        default: CPLError(CE_Warning, CPLE_AppDefined,
+                          "Serializing unknown object !"); return;
     }
 }
 
@@ -329,7 +330,8 @@ GDALPDFObjectRW* GDALPDFObject::Clone()
         case PDFObjectType_Array: return GDALPDFObjectRW::CreateArray(GetArray()->Clone());
         case PDFObjectType_Dictionary: return GDALPDFObjectRW::CreateDictionary(GetDictionary()->Clone());
         case PDFObjectType_Unknown:
-        default: fprintf(stderr, "Cloning unknown object !\n"); return NULL;
+        default: CPLError(CE_Warning, CPLE_AppDefined,
+                          "Cloning unknown object !"); return NULL;
     }
 }
 
@@ -643,7 +645,7 @@ GDALPDFObjectRW* GDALPDFObjectRW::CreateArray(GDALPDFArrayRW* poArray)
 
 const char* GDALPDFObjectRW::GetTypeNameNative()
 {
-    fprintf(stderr, "Should not go here");
+    CPLError(CE_Failure, CPLE_AppDefined, "Should not go here");
     return "";
 }
 

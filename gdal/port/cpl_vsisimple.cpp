@@ -437,7 +437,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
     size_t nMul = nCount * nSize;
     if( nCount != 0 && nMul / nCount != nSize )
     {
-        fprintf(stderr, "Overflow in VSICalloc(%d, %d)\n",
+        fprintf(stderr, "Overflow in VSICalloc(%d, %d)\n",/*ok*/
                 (int)nCount, (int)nSize);
         return NULL;
     }
@@ -493,7 +493,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nMul > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p"
+            fprintf(stderr, "Thread[%p] VSICalloc(%d,%d) = %p"/*ok*/
 #ifdef DEBUG_VSIMALLOC_STATS
                          ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
@@ -597,7 +597,7 @@ void *VSIMalloc( size_t nSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nSize > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p"
+            fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p"/*ok*/
 #ifdef DEBUG_VSIMALLOC_STATS
                     ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
@@ -759,7 +759,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nNewSize > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p"
+            fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p"/*ok*/
 #ifdef DEBUG_VSIMALLOC_STATS
                     ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
@@ -829,7 +829,7 @@ void VSIFree( void * pData )
 #ifdef DEBUG_VSIMALLOC_VERBOSE
         if( nOldSize > THRESHOLD_PRINT )
         {
-            fprintf(stderr, "Thread[%p] VSIFree(%p, (%d bytes))\n",
+            fprintf(stderr, "Thread[%p] VSIFree(%p, (%d bytes))\n",/*ok*/
                     (void*)CPLGetPID(), pData, (int)nOldSize);
         }
 #endif
