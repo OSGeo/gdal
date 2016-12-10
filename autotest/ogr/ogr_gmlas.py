@@ -3268,6 +3268,35 @@ def ogr_gmlas_writer_gml_assign_srs():
         print(content)
         return 'fail'
 
+    # No geometry, but to test that the proxied ExecuteSQL() works
+
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml', open_options = [ 'EXPOSE_METADATA_LAYERS=YES' ])
+    tmp_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer.db', src_ds, format = 'SQLite')
+    src_ds = None
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_ref0.xml', tmp_ds, \
+                                  format = 'GMLAS', \
+                                  dstSRS = 'EPSG:32631', \
+                                  reproject = False, \
+                                  datasetCreationOptions = ['WRAPPING=GMLAS_FEATURECOLLECTION'] )
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_asrs.xml', tmp_ds, \
+                                  format = 'GMLAS', \
+                                  dstSRS = 'EPSG:32631', \
+                                  reproject = False, \
+                                  datasetCreationOptions = ['WRAPPING=GMLAS_FEATURECOLLECTION'] )
+    tmp_ds = None
+    gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
+
+    if gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size != gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size)
+        print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/gmlas_test1_generated_ref0.xml')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_ref0.xsd')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xml')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xsd')
+
     return 'success'
 
 ###############################################################################
