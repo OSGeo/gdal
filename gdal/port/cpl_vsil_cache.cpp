@@ -205,14 +205,12 @@ int VSICachedFile::Seek( vsi_l_offset nReqOffset, int nWhence )
 
     if( nWhence == SEEK_SET )
     {
-        // use offset directly.
+        // Use offset directly.
     }
-
     else if( nWhence == SEEK_CUR )
     {
         nReqOffset += nOffset;
     }
-
     else if( nWhence == SEEK_END )
     {
         nReqOffset += nFileSize;
@@ -460,8 +458,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         VSICacheChunk * poBlock = oMapOffsetToCache[iBlock];
         if( poBlock == NULL )
         {
-            /* We can reach that point when the amount to read exceeds */
-            /* the cache size */
+            // We can reach that point when the amount to read exceeds
+            // the cache size.
             LoadBlocks(iBlock, 1,
                        static_cast<GByte *>(pBuffer) + nAmountCopied,
                        std::min(nSize * nCount - nAmountCopied, m_nChunkSize));
