@@ -47,7 +47,7 @@ typedef int (*VSICurlReadCbkFunc) (VSILFILE* fp, void *pabyBuffer,
 /* callback. */
 int VSICurlInstallReadCbk( VSILFILE* fp, VSICurlReadCbkFunc pfnReadCbk,
                            void* pfnUserData,
-                           int bStopOnInterruptUntilUninstall);
+                           int bStopOnInterruptUntilUninstall );
 int VSICurlUninstallReadCbk( VSILFILE* fp );
 
 #endif // CPL_VSIL_CURL_PRIV_H_INCLUDED
