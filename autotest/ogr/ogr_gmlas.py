@@ -3231,6 +3231,46 @@ def ogr_gmlas_writer_gml():
     return 'success'
 
 ###############################################################################
+# Test writing support with geometries and -a_srs
+
+def ogr_gmlas_writer_gml_assign_srs():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas_geometryproperty_gml32_no_error.gml',
+                    open_options = [ 'EXPOSE_METADATA_LAYERS=YES', '@HASH=hash' ])
+    tmp_ds = gdal.VectorTranslate('', src_ds, format = 'Memory')
+    src_ds = None
+
+    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
+        format = 'GMLAS', \
+        dstSRS = 'EPSG:32631', \
+        reproject = False)
+    tmp_ds = None
+
+    if ret_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_gml.xml', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
+
+    if content.find('http://www.opengis.net/def/crs/EPSG/0/32631') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test writing support with geometries with original XML content preserved
 
 def ogr_gmlas_writer_gml_original_xml():
@@ -3670,6 +3710,7 @@ gdaltest_list = [
     ogr_gmlas_writer_check_xml_xsd,
     ogr_gmlas_writer_check_xml_read_back,
     ogr_gmlas_writer_gml,
+    ogr_gmlas_writer_gml_assign_srs,
     ogr_gmlas_writer_gml_original_xml,
     ogr_gmlas_writer_options,
     ogr_gmlas_writer_errors,

@@ -58,6 +58,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$");
@@ -1203,6 +1204,304 @@ GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTran
     return psOptions;
 }
 
+class GDALVectorTranslateWrappedDataset: public GDALDataset
+{
+                GDALDataset* m_poBase;
+                OGRSpatialReference* m_poOutputSRS;
+                bool m_bTransform;
+
+                std::vector<OGRLayer*> m_apoLayers;
+                std::vector<OGRLayer*> m_apoHiddenLayers;
+
+                GDALVectorTranslateWrappedDataset(
+                                    GDALDataset* poBase,
+                                    OGRSpatialReference* poOutputSRS,
+                                    bool bTransform);
+public:
+
+       virtual ~GDALVectorTranslateWrappedDataset();
+
+       virtual int GetLayerCount() override
+                        { return static_cast<int>(m_apoLayers.size()); }
+       virtual OGRLayer* GetLayer(int nIdx) override;
+       virtual OGRLayer* GetLayerByName(const char* pszName) override;
+
+       virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect ) override;
+       virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
+
+       static GDALVectorTranslateWrappedDataset* New(
+                                          GDALDataset* poBase,
+                                          OGRSpatialReference* poOutputSRS,
+                                          bool bTransform );
+};
+
+class GDALVectorTranslateWrappedLayer: public OGRLayerDecorator
+{
+    std::vector<OGRCoordinateTransformation*> m_apoCT;
+    OGRFeatureDefn* m_poFDefn;
+
+            GDALVectorTranslateWrappedLayer(OGRLayer* poBaseLayer,
+                                            bool bOwnBaseLayer);
+            OGRFeature* TranslateFeature(OGRFeature* poSrcFeat);
+public:
+
+        virtual ~GDALVectorTranslateWrappedLayer();
+        virtual OGRFeatureDefn* GetLayerDefn() override { return m_poFDefn; }
+        virtual OGRFeature* GetNextFeature() override;
+        virtual OGRFeature* GetFeature(GIntBig nFID) override;
+
+        static GDALVectorTranslateWrappedLayer* New(
+                                        OGRLayer* poBaseLayer,
+                                        bool bOwnBaseLayer,
+                                        OGRSpatialReference* poOutputSRS,
+                                        bool bTransform);
+};
+
+GDALVectorTranslateWrappedLayer::GDALVectorTranslateWrappedLayer(
+                    OGRLayer* poBaseLayer, bool bOwnBaseLayer) :
+        OGRLayerDecorator(poBaseLayer, bOwnBaseLayer),
+        m_apoCT( poBaseLayer->GetLayerDefn()->GetGeomFieldCount(), NULL ),
+        m_poFDefn( NULL )
+{
+}
+
+GDALVectorTranslateWrappedLayer* GDALVectorTranslateWrappedLayer::New(
+                    OGRLayer* poBaseLayer,
+                    bool bOwnBaseLayer,
+                    OGRSpatialReference* poOutputSRS,
+                    bool bTransform )
+{
+    GDALVectorTranslateWrappedLayer* poNew =
+                new GDALVectorTranslateWrappedLayer(poBaseLayer, bOwnBaseLayer);
+    poNew->m_poFDefn = poBaseLayer->GetLayerDefn()->Clone();
+    poNew->m_poFDefn->Reference();
+    if( poOutputSRS )
+    {
+        for( int i=0; i < poNew->m_poFDefn->GetGeomFieldCount(); i++ )
+        {
+            if( bTransform )
+            {
+                OGRSpatialReference* poSourceSRS =
+                    poBaseLayer->GetLayerDefn()->
+                                        GetGeomFieldDefn(i)->GetSpatialRef();
+                if( poSourceSRS == NULL )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Layer %s has no source SRS for geometry field %s",
+                             poBaseLayer->GetName(),
+                             poBaseLayer->GetLayerDefn()->
+                                        GetGeomFieldDefn(i)->GetNameRef());
+                    delete poNew;
+                    return NULL;
+                }
+                else
+                {
+                    poNew->m_apoCT[i] = OGRCreateCoordinateTransformation(
+                                                                   poSourceSRS,
+                                                                   poOutputSRS);
+                    if( poNew->m_apoCT[i] == NULL )
+                    {
+                        char        *pszWKT = NULL;
+
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                            "Failed to create coordinate transformation between the\n"
+                            "following coordinate systems.  This may be because they\n"
+                            "are not transformable, or because projection services\n"
+                            "(PROJ.4 DLL/.so) could not be loaded." );
+
+                        poSourceSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Source:\n%s", pszWKT );
+                        CPLFree(pszWKT);
+
+                        poOutputSRS->exportToPrettyWkt( &pszWKT, FALSE );
+                        CPLError( CE_Failure, CPLE_AppDefined, 
+                                  "Target:\n%s", pszWKT );
+                        CPLFree(pszWKT);
+
+                        delete poNew;
+                        return NULL;
+                    }
+                }
+            }
+            poNew->m_poFDefn->GetGeomFieldDefn(i)->SetSpatialRef( poOutputSRS );
+        }
+    }
+    return poNew;
+}
+
+GDALVectorTranslateWrappedLayer::~GDALVectorTranslateWrappedLayer()
+{
+    if( m_poFDefn )
+        m_poFDefn->Release();
+    for( size_t i = 0; i < m_apoCT.size(); ++i )
+        delete m_apoCT[i];
+}
+
+OGRFeature* GDALVectorTranslateWrappedLayer::GetNextFeature()
+{
+    return TranslateFeature(OGRLayerDecorator::GetNextFeature());
+}
+
+OGRFeature* GDALVectorTranslateWrappedLayer::GetFeature(GIntBig nFID)
+{
+    return TranslateFeature(OGRLayerDecorator::GetFeature(nFID));
+}
+
+OGRFeature* GDALVectorTranslateWrappedLayer::TranslateFeature(
+                                                    OGRFeature* poSrcFeat )
+{
+    if( poSrcFeat == NULL )
+        return NULL;
+    OGRFeature* poNewFeat = new OGRFeature(m_poFDefn);
+    poNewFeat->SetFrom(poSrcFeat);
+    poNewFeat->SetFID(poSrcFeat->GetFID());
+    for( int i=0; i < poNewFeat->GetGeomFieldCount(); i++ )
+    {
+        OGRGeometry* poGeom = poNewFeat->GetGeomFieldRef(i);
+        if( poGeom )
+        {
+            if( m_apoCT[i] )
+                poGeom->transform( m_apoCT[i] );
+            poGeom->assignSpatialReference(
+                    m_poFDefn->GetGeomFieldDefn(i)->GetSpatialRef() );
+        }
+    }
+    delete poSrcFeat;
+    return poNewFeat;
+}
+
+
+GDALVectorTranslateWrappedDataset::GDALVectorTranslateWrappedDataset(
+                                    GDALDataset* poBase,
+                                    OGRSpatialReference* poOutputSRS,
+                                    bool bTransform):
+                                                m_poBase(poBase),
+                                                m_poOutputSRS(poOutputSRS),
+                                                m_bTransform(bTransform)
+{
+    SetDescription( poBase->GetDescription() );
+    if( poBase->GetDriver() )
+    {
+        poDriver = new GDALDriver();
+        poDriver->SetDescription( poBase->GetDriver()->GetDescription() );
+    }
+}
+
+GDALVectorTranslateWrappedDataset* GDALVectorTranslateWrappedDataset::New(
+                        GDALDataset* poBase,
+                        OGRSpatialReference* poOutputSRS,
+                        bool bTransform )
+{
+    GDALVectorTranslateWrappedDataset* poNew =
+                                new GDALVectorTranslateWrappedDataset(
+                                                                poBase,
+                                                                poOutputSRS,
+                                                                bTransform);
+    for(int i = 0; i < poBase->GetLayerCount(); i++ )
+    {
+        OGRLayer* poLayer = GDALVectorTranslateWrappedLayer::New(
+                            poBase->GetLayer(i), false, poOutputSRS, bTransform);
+        if(poLayer == NULL )
+        {
+            delete poNew;
+            return NULL;
+        }
+        poNew->m_apoLayers.push_back(poLayer);
+    }
+    return poNew;
+}
+
+GDALVectorTranslateWrappedDataset::~GDALVectorTranslateWrappedDataset()
+{
+    delete poDriver;
+    for(size_t i = 0; i < m_apoLayers.size(); i++ )
+    {
+        delete m_apoLayers[i];
+    }
+    for(size_t i = 0; i < m_apoHiddenLayers.size(); i++ )
+    {
+        delete m_apoHiddenLayers[i];
+    }
+}
+
+OGRLayer* GDALVectorTranslateWrappedDataset::GetLayer(int i)
+{
+    if( i < 0 || i >= static_cast<int>(m_apoLayers.size()) )
+        return NULL;
+    return m_apoLayers[i];
+}
+
+OGRLayer* GDALVectorTranslateWrappedDataset::GetLayerByName(const char* pszName)
+{
+    for(size_t i = 0; i < m_apoLayers.size(); i++ )
+    {
+        if( strcmp(m_apoLayers[i]->GetName(), pszName) == 0 )
+            return m_apoLayers[i];
+    }
+    for(size_t i = 0; i < m_apoHiddenLayers.size(); i++ )
+    {
+        if( strcmp(m_apoHiddenLayers[i]->GetName(), pszName) == 0 )
+            return m_apoHiddenLayers[i];
+    }
+    for(size_t i = 0; i < m_apoLayers.size(); i++ )
+    {
+        if( EQUAL(m_apoLayers[i]->GetName(), pszName) )
+            return m_apoLayers[i];
+    }
+    for(size_t i = 0; i < m_apoHiddenLayers.size(); i++ )
+    {
+        if( EQUAL(m_apoHiddenLayers[i]->GetName(), pszName) )
+            return m_apoHiddenLayers[i];
+    }
+
+    OGRLayer* poLayer = m_poBase->GetLayerByName(pszName);
+    if( poLayer == NULL )
+        return NULL;
+    poLayer = GDALVectorTranslateWrappedLayer::New(
+                                poLayer, false, m_poOutputSRS, m_bTransform);
+    if( poLayer == NULL )
+        return NULL;
+
+    // Replicate source dataset behaviour: if the fact of calling
+    // GetLayerByName() on a initially hidden layer makes it visible through
+    // GetLayerCount()/GetLayer(), do the same. Otherwise we are going to
+    // maintain it hidden as well.
+    for( int i = 0; i < m_poBase->GetLayerCount(); i++ )
+    {
+        if( m_poBase->GetLayer(i) == poLayer )
+        {
+            m_apoLayers.push_back(poLayer);
+            return poLayer;
+        }
+    }
+    m_apoHiddenLayers.push_back(poLayer);
+    return poLayer;
+}
+
+
+OGRLayer *  GDALVectorTranslateWrappedDataset::ExecuteSQL(
+                                        const char *pszStatement,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect )
+{
+    OGRLayer* poLayer = m_poBase->ExecuteSQL(pszStatement,
+                                                poSpatialFilter, pszDialect);
+    if( poLayer == NULL )
+        return NULL;
+    return GDALVectorTranslateWrappedLayer::New(
+                                poLayer, true, m_poOutputSRS, m_bTransform);
+}
+
+void GDALVectorTranslateWrappedDataset:: ReleaseResultSet(
+                                                    OGRLayer * poResultsSet )
+{
+    delete poResultsSet;
+}
+
+
 /************************************************************************/
 /*                     GDALVectorTranslateCreateCopy()                  */
 /************************************************************************/
@@ -1214,6 +1513,9 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
                                     const GDALVectorTranslateOptions* psOptions)
 {
     const char* const szErrorMsg = "%s not supported by this output driver";
+    GDALDataset* poWrkSrcDS = poDS;
+    OGRSpatialReference oOutputSRS; // Leave it in global scope
+
     if( psOptions->bSkipFailures )
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-skipfailures");
@@ -1237,11 +1539,6 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
     if( psOptions->bAddMissingFields )
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-addfields");
-        return NULL;
-    }
-    if( psOptions->pszOutputSRSDef )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-a_srs/-t_srs");
         return NULL;
     }
     if( psOptions->pszSourceSRSDef )
@@ -1401,6 +1698,22 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
         return NULL;
     }
 
+    if( psOptions->pszOutputSRSDef )
+    {
+        if( oOutputSRS.SetFromUserInput( psOptions->pszOutputSRSDef ) !=
+                                                                OGRERR_NONE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Failed to process SRS definition: %s",
+                      psOptions->pszOutputSRSDef );
+            return NULL;
+        }
+        poWrkSrcDS = GDALVectorTranslateWrappedDataset::New(
+            poDS, &oOutputSRS, psOptions->bTransform);
+        if( poWrkSrcDS == NULL )
+            return NULL;
+    }
+
     if( psOptions->pszWHERE )
     {
         // Hack for GMLAS driver
@@ -1411,6 +1724,8 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "-where not supported by this output driver "
                          "without explicit layer name(s)");
+                if( poWrkSrcDS != poDS )
+                    delete poWrkSrcDS;
                 return NULL;
             }
             else
@@ -1429,15 +1744,17 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-where");
+            if( poWrkSrcDS != poDS )
+                delete poWrkSrcDS;
             return NULL;
         }
     }
 
     if( psOptions->hSpatialFilter )
     {
-        for( int i=0; i<poDS->GetLayerCount();++i)
+        for( int i=0; i<poWrkSrcDS->GetLayerCount();++i)
         {
-            OGRLayer* poSrcLayer = poDS->GetLayer(i);
+            OGRLayer* poSrcLayer = poWrkSrcDS->GetLayer(i);
             if( poSrcLayer &&
                 poSrcLayer->GetLayerDefn()->GetGeomFieldCount() > 0 &&
                 (psOptions->papszLayers == NULL ||
@@ -1490,6 +1807,8 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
             CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg,
                      "Specifying layers");
             CSLDestroy(papszDSCO);
+            if( poWrkSrcDS != poDS )
+                delete poWrkSrcDS;
             return NULL;
         }
     }
@@ -1509,11 +1828,15 @@ static GDALDataset* GDALVectorTranslateCreateCopy(
         }
     }
 
-    GDALDataset* poOut = poDriver->CreateCopy(pszDest, poDS, FALSE,
+    GDALDataset* poOut = poDriver->CreateCopy(pszDest, poWrkSrcDS, FALSE,
                                               papszDSCO,
                                               psOptions->pfnProgress,
                                               psOptions->pProgressData);
     CSLDestroy(papszDSCO);
+
+    if( poWrkSrcDS != poDS )
+        delete poWrkSrcDS;
+
     return poOut;
 }
 

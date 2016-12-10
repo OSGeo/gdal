@@ -3,9 +3,7 @@ GDAL_ROOT	=	..
 
 XTRAOBJ =	$(SETARGV)
 
-XTRAFLAGS =	-I..\gcore -I..\port -I..\frmts\vrt -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts  $(GEOS_CFLAGS) -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
-
-EXTRAFLAGS =    -I..\frmts\vrt -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson
+XTRAFLAGS =	-I..\gcore -I..\port -I..\frmts\vrt -I..\alg -I..\ogr -I..\ogr\ogrsf_frmts  $(GEOS_CFLAGS) -I..\ogr\ogrsf_frmts\geojson\libjson -I..\ogr\ogrsf_frmts\geojson -I..\ogr\ogrsf_frmts\generic
 
 !INCLUDE ..\nmake.opt
 
