@@ -85,7 +85,7 @@ static VSIErrorContext *VSIGetErrorContext()
         psCtx = static_cast<VSIErrorContext *>(
           VSICalloc( sizeof(VSIErrorContext), 1) );
         if (psCtx == NULL) {
-            fprintf(stderr,
+            fprintf(stderr, /*ok*/
                     "Out of memory attempting to record a VSI error.\n");
             return NULL;
         }

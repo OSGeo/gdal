@@ -65,17 +65,19 @@ const char* BNA_FeatureTypeToStr(BNAFeatureType featureType)
   }
 }
 
+#ifdef DEBUG_VERBOSE
 void BNA_Display(BNARecord* record)
 {
-  fprintf(stderr, "\"%s\", \"%s\", \"%s\", %s\n",
+  fprintf(stderr, "\"%s\", \"%s\", \"%s\", %s\n", /*ok*/
           record->ids[0] ? record->ids[0] : "",
           record->ids[1] ? record->ids[1] : "",
           record->ids[2] ? record->ids[2] : "",
           BNA_FeatureTypeToStr(record->featureType));
   for( int i = 0; i < record->nCoords; i++ )
-    fprintf( stderr, "%f, %f\n", record->tabCoords[i][0],
+    fprintf( stderr, "%f, %f\n", record->tabCoords[i][0], /*ok*/
              record->tabCoords[i][1] );
 }
+#endif
 
 /*
 For a description of the format, see http://www.softwright.com/faq/support/boundary_file_bna_format.html

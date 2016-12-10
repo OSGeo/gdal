@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_error.h"
 
 #include "msg_reader_core.h"
 #include "msg_basic_types.h"
@@ -127,7 +128,8 @@ Msg_reader_core::Msg_reader_core( const char* fname ) :
     FILE* fin = fopen(fname, "rb");
     if( !fin )
     {
-        fprintf(stderr, "Could not open file %s\n", fname);
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Could not open file %s", fname);
         return;
     }
     read_metadata_block(fin);

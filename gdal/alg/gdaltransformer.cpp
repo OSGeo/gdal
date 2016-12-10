@@ -2767,11 +2767,11 @@ static int GDALApproxTransformInternal( void *pCBData, int bDstToSrc,
 #endif
 
 #ifdef DEBUG_APPROX_TRANSFORMER
-    fprintf(stderr, "start (%.3f,%.3f) -> (%.3f,%.3f)\n",
+    fprintf(stderr, "start (%.3f,%.3f) -> (%.3f,%.3f)\n",/*ok*/
             x[0], y[0], xSMETransformed[0], ySMETransformed[0]);
-    fprintf(stderr, "middle (%.3f,%.3f) -> (%.3f,%.3f)\n",
+    fprintf(stderr, "middle (%.3f,%.3f) -> (%.3f,%.3f)\n",/*ok*/
             x[nMiddle], y[nMiddle], xSMETransformed[1], ySMETransformed[1]);
-    fprintf(stderr, "end (%.3f,%.3f) -> (%.3f,%.3f)\n",
+    fprintf(stderr, "end (%.3f,%.3f) -> (%.3f,%.3f)\n",/*ok*/
             x[nPoints-1], y[nPoints-1], xSMETransformed[2], ySMETransformed[2]);
 #endif
 
@@ -3083,7 +3083,7 @@ int GDALApproxTransform( void *pCBData, int bDstToSrc, int nPoints,
 end:
 #ifdef DEBUG_APPROX_TRANSFORMER
     for( int i = 0; i < nPoints; i++ )
-        fprintf(stderr, "[%d] (%.10f,%.10f) %d\n",
+        fprintf(stderr, "[%d] (%.10f,%.10f) %d\n",/*ok*/
                 i, x[i], y[i], panSuccess[i]);
 #endif
 

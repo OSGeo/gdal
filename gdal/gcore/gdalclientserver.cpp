@@ -441,7 +441,7 @@ CPL_UNUSED
     SetCurrentDirectory(pszCWD);
 #else
     if(chdir(pszCWD) != 0)
-        fprintf(stderr, "chdir(%s) failed\n", pszCWD);
+        fprintf(stderr, "chdir(%s) failed\n", pszCWD);/*ok*/
 #endif
 }
 
@@ -2067,7 +2067,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         }
 
 #ifdef DEBUG_VERBOSE
-        fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");
+        fprintf(stderr, "[%d] %s\n", (int)getpid(), (instr >= 0 && instr < INSTR_END) ? apszInstr[instr] : "unknown");/*ok*/
 #endif
 
         GDALRasterBand* poBand = NULL;
@@ -2105,7 +2105,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
                 break;
             if( bClientIsLSB != CPL_IS_LSB )
             {
-                fprintf(stderr, "Server does not understand client endianness.\n");
+                fprintf(stderr, "Server does not understand client endianness.\n");/*ok*/
                 break;
             }
 

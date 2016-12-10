@@ -1869,7 +1869,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     if( poFSPT->GetRepeatCount() != 1 )
     {
 #ifdef DEBUG
-        fprintf( stderr,
+        fprintf( stderr, /*ok*/
                  "Point features with other than one spatial linkage.\n" );
         poFRecord->Dump( stderr );
 #endif

@@ -86,7 +86,7 @@ SysBlockMap::~SysBlockMap()
     }
     catch( const PCIDSKException& e )
     {
-        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",
+        fprintf(stderr, "Exception in SysBlockMap::~SysBlockMap(): %s\n",/*ok*/
                 e.what());
     }
 }

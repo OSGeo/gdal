@@ -447,7 +447,7 @@ NWT_GRID *nwtOpenGrid( char *filename )
 
     if( fp == NULL )
     {
-        fprintf( stderr, "\nCan't open %s\n", filename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Can't open %s", filename );
         return NULL;
     }
 
@@ -469,7 +469,8 @@ NWT_GRID *nwtOpenGrid( char *filename )
         pGrd->cFormat = 0x80;        //  grc classified type
     else
     {
-        fprintf( stderr, "\nUnhandled Northwood format type = %0xd\n",
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unhandled Northwood format type = %0xd",
                  nwtHeader[4] );
         if( pGrd )
             free( pGrd );

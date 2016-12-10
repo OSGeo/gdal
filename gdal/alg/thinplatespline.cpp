@@ -604,8 +604,8 @@ int VizGeorefSpline2D::solve()
     for( r = 0; r < _nof_eqs; r++ )
     {
         for( c = 0; c < _nof_eqs; c++ )
-            fprintf(stderr, "%f", A(r, c));
-        fprintf(stderr, "\n");
+            fprintf(stderr, "%f", A(r, c));/*ok*/
+        fprintf(stderr, "\n");/*ok*/
     }
 
 #endif
@@ -757,8 +757,9 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     }
     case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED:
     {
-        fprintf(stderr, " A point was added after the last solve\n");
-        fprintf(stderr, " NO interpolation - return values are zero\n");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A point was added after the last solve."
+                 " NO interpolation - return values are zero");
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
@@ -766,8 +767,9 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     }
     case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED:
     {
-        fprintf(stderr, " A point was deleted after the last solve\n");
-        fprintf(stderr, " NO interpolation - return values are zero\n");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A point was deleted after the last solve."
+                 " NO interpolation - return values are zero");
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
@@ -798,14 +800,14 @@ static int matrixInvert( int N, double input[], double output[] )
     // "left" and "right" halves of this array.
 
 #if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);
+    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);/*ok*/
     for( int row = 0; row < N; row++ )
     {
         for( int col = 0; col < N; col++ )
         {
-            fprintf(stderr, "%5.2f ", input[row*N + col]);
+            fprintf(stderr, "%5.2f ", input[row*N + col]);/*ok*/
         }
-        fprintf(stderr, "\n");
+        fprintf(stderr, "\n");/*ok*/
     }
 #endif
 
@@ -901,14 +903,14 @@ static int matrixInvert( int N, double input[], double output[] )
     delete [] temp;
 
 #if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion result matrix:\n");
+    fprintf(stderr, "Matrix Inversion result matrix:\n");/*ok*/
     for( int row = 0; row < N; row++ )
     {
         for( int col = 0; col < N; col++ )
         {
-            fprintf(stderr, "%5.2f ", output[row*N + col]);
+            fprintf(stderr, "%5.2f ", output[row*N + col]);/*ok*/
         }
-        fprintf(stderr, "\n");
+        fprintf(stderr, "\n");/*ok*/
     }
 #endif
 
