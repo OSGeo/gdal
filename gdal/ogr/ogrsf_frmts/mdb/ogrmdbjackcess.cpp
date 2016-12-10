@@ -170,25 +170,39 @@ int OGRMDBJavaEnv::Init()
         int ret = 0;
 
 #if JVM_LIB_DLOPEN
-        const char *jvmLibPtr = "libjvm.so";
+#  if defined(__APPLE__) && defined(__MACH__)
+#    define SO_EXT "dylib"
+#  else
+#    define SO_EXT "so"
+#  endif
+        const char *jvmLibPtr = "libjvm." SO_EXT;
         char jvmLib[PATH_MAX];
 
         /* libjvm.so's location is hard to predict so
            ${JAVA_HOME}/bin/java -XshowSettings is executed to find
            its location. If JAVA_HOME is not set then java is executed
            from the PATH instead. This is POSIX-compliant code. */
-        FILE *javaCmd = popen("\"${JAVA_HOME}${JAVA_HOME:+/bin/}java\" -XshowSettings 2>&1 | sed -n '/\\bsun\\.boot\\.library\\.path =/s:.* = \\(.*\\):\\1/server/libjvm.so:p'", "r");
+        FILE *javaCmd = popen("\"${JAVA_HOME}${JAVA_HOME:+/bin/}java\" -XshowSettings 2>&1 | grep 'sun.boot.library.path'", "r");
 
         if (javaCmd != NULL)
         {
-            size_t javaCmdRead = fread(jvmLib, 1, PATH_MAX, javaCmd);
+            char szTmp[PATH_MAX];
+            size_t javaCmdRead = fread(szTmp, 1, sizeof(szTmp), javaCmd);
             ret = pclose(javaCmd);
 
             if (ret == 0 && javaCmdRead >= 2)
             {
                 /* Chomp the new line */
-                jvmLib[javaCmdRead - 1] = '\0';
-                jvmLibPtr = jvmLib;
+                szTmp[javaCmdRead - 1] = '\0';
+                const char* pszPtr = strchr(szTmp, '=');
+                if( pszPtr )
+                {
+                    pszPtr ++;
+                    while( *pszPtr == ' ' )
+                        pszPtr ++;
+                    snprintf(jvmLib, sizeof(jvmLib), "%s/server/libjvm." SO_EXT, pszPtr);
+                    jvmLibPtr = jvmLib;
+                }
             }
         }
 
