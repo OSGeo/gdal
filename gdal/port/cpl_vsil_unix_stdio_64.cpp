@@ -151,14 +151,14 @@ public:
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
-    virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Rename( const char *oldpath, const char *newpath ) override;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-    virtual int      Rmdir( const char *pszDirname ) override;
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
-    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
+    virtual int     Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                          int nFlags ) override;
+    virtual int     Unlink( const char *pszFilename ) override;
+    virtual int     Rename( const char *oldpath, const char *newpath ) override;
+    virtual int     Mkdir( const char *pszDirname, long nMode ) override;
+    virtual int     Rmdir( const char *pszDirname ) override;
+    virtual char  **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
+    virtual GIntBig GetDiskFreeSpace( const char* pszDirname ) override;
     virtual int SupportsSparseFiles( const char* pszPath ) override;
 
 #ifdef VSI_COUNT_BYTES_READ
@@ -182,29 +182,31 @@ class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
     bool          bAtEOF;
     // In a+ mode, disable any optimization since the behaviour of the file
     // pointer on Mac and other BSD system is to have a seek() to the end of
-    // file and thus a call to our Seek(0, SEEK_SET) before a read will be a no-op
+    // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
+    // no-op.
     bool          bModeAppendReadWrite;
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
     VSIUnixStdioFilesystemHandler *poFS;
 #endif
   public:
-                      VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn,
-                                         FILE* fpIn, bool bReadOnlyIn,
-                                         bool bModeAppendReadWriteIn);
+                   VSIUnixStdioHandle( VSIUnixStdioFilesystemHandler *poFSIn,
+                                       FILE* fpIn, bool bReadOnlyIn,
+                                       bool bModeAppendReadWriteIn );
 
-    virtual int       Seek( vsi_l_offset nOffsetIn, int nWhence ) override;
+    virtual int    Seek( vsi_l_offset nOffsetIn, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
-    virtual int       Truncate( vsi_l_offset nNewSize ) override;
-    virtual void     *GetNativeFileDescriptor() override {
+    virtual size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t Write( const void *pBuffer, size_t nSize,
+                          size_t nMemb ) override;
+    virtual int    Eof() override;
+    virtual int    Flush() override;
+    virtual int    Close() override;
+    virtual int    Truncate( vsi_l_offset nNewSize ) override;
+    virtual void  *GetNativeFileDescriptor() override {
         return reinterpret_cast<void *>(static_cast<size_t>(fileno(fp))); }
-    virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                            vsi_l_offset nLength ) override;
+    virtual VSIRangeStatus GetRangeStatus( vsi_l_offset nOffset,
+                                           vsi_l_offset nLength ) override;
 };
 
 /************************************************************************/
@@ -256,13 +258,13 @@ int VSIUnixStdioHandle::Seek( vsi_l_offset nOffsetIn, int nWhence )
 {
     bAtEOF = false;
 
-    // seeks that do nothing are still surprisingly expensive with MSVCRT.
+    // Seeks that do nothing are still surprisingly expensive with MSVCRT.
     // try and short circuit if possible.
     if( !bModeAppendReadWrite && nWhence == SEEK_SET && nOffsetIn == m_nOffset )
         return 0;
 
-    // on a read-only file, we can avoid a lseek() system call to be issued
-    // if the next position to seek to is within the buffered page
+    // On a read-only file, we can avoid a lseek() system call to be issued
+    // if the next position to seek to is within the buffered page.
     if( bReadOnly && nWhence == SEEK_SET )
     {
         if( nOffsetIn > m_nOffset && nOffsetIn < 4096 + m_nOffset )
@@ -414,7 +416,7 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     bLastOpWrite = false;
     bLastOpRead = true;
 
-    if (nResult != nCount)
+    if( nResult != nCount )
     {
         errno = 0;
         vsi_l_offset nNewOffset = VSI_FTELL64( fp );
@@ -520,7 +522,8 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
                                                     )
 {
 #ifdef FS_IOC_FIEMAP
-    // fiemap IOCTL documented at https://www.kernel.org/doc/Documentation/filesystems/fiemap.txt
+    // fiemap IOCTL documented at
+    // https://www.kernel.org/doc/Documentation/filesystems/fiemap.txt
 
     // The fiemap struct contains a "variable length" array at its end
     // As we are interested in only one extent, we allocate the base size of
@@ -528,7 +531,9 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
     GByte abyBuffer[sizeof(struct fiemap) + sizeof(struct fiemap_extent)];
     int fd = fileno(fp);
     struct fiemap *psExtentMap = (struct fiemap *)&abyBuffer;
-    memset(psExtentMap, 0, sizeof(struct fiemap) + sizeof(struct fiemap_extent));
+    memset(psExtentMap,
+           0,
+           sizeof(struct fiemap) + sizeof(struct fiemap_extent));
     psExtentMap->fm_start = nOffset;
     psExtentMap->fm_length = nLength;
     psExtentMap->fm_extent_count = 1;
@@ -558,7 +563,9 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
     static bool bMessageEmitted = false;
     if( !bMessageEmitted )
     {
-        CPLDebug("VSI", "Sorry: GetExtentStatus() not implemented for this operating system");
+        CPLDebug("VSI",
+                 "Sorry: GetExtentStatus() not implemented for "
+                 "this operating system");
         bMessageEmitted = true;
     }
     return VSI_RANGE_STATUS_UNKNOWN;
@@ -618,7 +625,10 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
 
     if( fp == NULL )
     {
-        if(bSetError) { VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError)); }
+        if(bSetError)
+        {
+            VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError));
+        }
         errno = nError;
         return NULL;
     }
@@ -712,14 +722,14 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx( const char *pszPath,
                                                  int nMaxFiles )
 
 {
-    if (strlen(pszPath) == 0)
+    if( strlen(pszPath) == 0 )
         pszPath = ".";
 
-    CPLStringList  oDir;
+    CPLStringList oDir;
     DIR *hDir = opendir(pszPath);
-    if ( hDir != NULL )
+    if( hDir != NULL )
     {
-        // we want to avoid returning NULL for an empty list.
+        // We want to avoid returning NULL for an empty list.
         oDir.Assign( static_cast<char**>( CPLCalloc(2,sizeof(char*)) ) );
 
         struct dirent *psDirEntry;
@@ -734,9 +744,8 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx( const char *pszPath,
     }
     else
     {
-        /* Should we generate an error???
-         * For now we'll just return NULL (at the end of the function)
-         */
+        // Should we generate an error???
+        // For now we'll just return NULL (at the end of the function).
     }
 
     return oDir.StealList();
@@ -792,11 +801,13 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
             case 0x3153464a: // jfs
             case 0x5346544e: // ntfs
             case 0x9123683e: // brfs
-            case 0x6969: // nfs: NFS < 4.2 supports creating sparse files (but reading them not efficiently)
+            // nfs: NFS < 4.2 supports creating sparse files (but reading them
+            // not efficiently).
+            case 0x6969:
             case 0x01021994: // tmpfs
                 return TRUE;
 
-            case 0x4d44: /* msdos */
+            case 0x4d44: // msdos
                 return FALSE;
 
             default:
@@ -816,7 +827,9 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
     static bool bMessageEmitted = false;
     if( !bMessageEmitted )
     {
-        CPLDebug("VSI", "Sorry: SupportsSparseFiles() not implemented for this operating system");
+        CPLDebug("VSI",
+                 "Sorry: SupportsSparseFiles() not implemented "
+                 "for this operating system");
         bMessageEmitted = true;
     }
     return FALSE;
@@ -828,7 +841,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
 /*                            AddToTotal()                              */
 /************************************************************************/
 
-void VSIUnixStdioFilesystemHandler::AddToTotal(vsi_l_offset nBytes)
+void VSIUnixStdioFilesystemHandler::AddToTotal( vsi_l_offset nBytes )
 {
     CPLMutexHolder oHolder(&hMutex);
     nTotalBytesRead += nBytes;
@@ -846,6 +859,6 @@ void VSIInstallLargeFileHandler()
     VSIFileManager::InstallHandler( "", new VSIUnixStdioFilesystemHandler() );
 }
 
-#endif /* ndef WIN32 */
+#endif  // ndef WIN32
 
 //! @endcond
