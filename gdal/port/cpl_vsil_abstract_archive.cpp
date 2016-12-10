@@ -92,9 +92,10 @@ VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler()
 VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 
 {
-    std::map<CPLString,VSIArchiveContent*>::const_iterator iter;
-
-    for( iter = oFileList.begin(); iter != oFileList.end(); ++iter )
+    for( std::map<CPLString, VSIArchiveContent*>::const_iterator iter =
+             oFileList.begin();
+         iter != oFileList.end();
+         ++iter )
     {
         delete iter->second;
     }
@@ -116,6 +117,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
     VSIStatBufL sStat;
     if( VSIStatL(archiveFilename, &sStat) != 0 )
         return NULL;
+
     if( oFileList.find(archiveFilename) != oFileList.end() )
     {
         VSIArchiveContent* content = oFileList[archiveFilename];
@@ -163,7 +165,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
         CPLString osFileName = poReader->GetFileName();
         const char* fileName = osFileName.c_str();
 
-        /* Remove ./ pattern at the beginning of a filename */
+        // Remove ./ pattern at the beginning of a filename.
         if( fileName[0] == '.' && fileName[1] == '/' )
         {
             fileName += 2;
@@ -172,7 +174,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
         }
 
         char* pszStrippedFileName = CPLStrdup(fileName);
-        char* pszIter;
+        char* pszIter = NULL;
         for( pszIter = pszStrippedFileName;*pszIter;pszIter++ )
         {
             if( *pszIter == '\\' )
@@ -183,7 +185,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
             strlen(fileName) > 0 && fileName[strlen(fileName)-1] == '/';
         if( bIsDir )
         {
-            /* Remove trailing slash */
+            // Remove trailing slash.
             pszStrippedFileName[strlen(fileName)-1] = 0;
         }
 
@@ -191,7 +193,7 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
         {
             oSet.insert(pszStrippedFileName);
 
-            /* Add intermediate directory structure */
+            // Add intermediate directory structure.
             for( pszIter = pszStrippedFileName; *pszIter; pszIter++ )
             {
                 if( *pszIter == '/' )
@@ -216,11 +218,12 @@ const VSIArchiveContent* VSIArchiveFilesystemHandler::GetContentOfArchive(
                         content->entries[content->nEntries].bIsDir = TRUE;
                         content->entries[content->nEntries].file_pos = NULL;
 #ifdef DEBUG_VERBOSE
+                        const int nEntries = content->nEntries;
                         CPLDebug(
                             "VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes",
-                            content->nEntries+1,
-                            content->entries[content->nEntries].fileName,
-                            content->entries[content->nEntries].uncompressed_size);
+                            content->nEntries + 1,
+                            content->entries[nEntries].fileName,
+                            content->entries[nEntries].uncompressed_size);
 #endif
                         content->nEntries++;
                     }
@@ -299,7 +302,7 @@ static CPLString CompactFilename( const char* pszArchiveInFileNameIn )
 {
     char* pszArchiveInFileName = CPLStrdup(pszArchiveInFileNameIn);
 
-    /* Replace a/../b by b and foo/a/../b by foo/b */
+    // Replace a/../b by b and foo/a/../b by foo/b.
     while(true)
     {
         char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
@@ -338,7 +341,7 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
 
     int i = 0;
 
-    // Detect extended syntax: /vsiXXX/{archive_filename}/file_in_archive
+    // Detect extended syntax: /vsiXXX/{archive_filename}/file_in_archive.
     if( pszFilename[strlen(GetPrefix())+ 1] == '{' )
     {
         pszFilename += strlen(GetPrefix()) + 1;
@@ -434,10 +437,11 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
     while( pszFilename[i] )
     {
         const std::vector<CPLString> oExtensions = GetExtensions();
-        std::vector<CPLString>::const_iterator iter;
         int nToSkip = 0;
 
-        for( iter = oExtensions.begin(); iter != oExtensions.end(); ++iter )
+        for( std::vector<CPLString>::const_iterator iter = oExtensions.begin();
+             iter != oExtensions.end();
+             ++iter )
         {
             const CPLString& osExtension = *iter;
             if( EQUALN(pszFilename + i,
@@ -784,7 +788,7 @@ char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
                  strchr(fileName, '/') == NULL &&
                  strchr(fileName, '\\') == NULL )
         {
-            /* Only list toplevel files and directories */
+            // Only list toplevel files and directories.
 #ifdef DEBUG_VERBOSE
             CPLDebug("VSIArchive", "Add %s as in directory %s\n",
                      fileName, pszDirname);
