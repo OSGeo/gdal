@@ -66,8 +66,6 @@ typedef struct {
     // CPLRealloc() below.
 } VSIErrorContext;
 
-static void VSIErrorV(VSIErrorNum, const char *, va_list );
-
 /************************************************************************/
 /*                         CPLGetErrorContext()                         */
 /************************************************************************/
@@ -84,7 +82,7 @@ static VSIErrorContext *VSIGetErrorContext()
 
     if( psCtx == NULL )
     {
-      psCtx = reinterpret_cast<VSIErrorContext *>(
+        psCtx = static_cast<VSIErrorContext *>(
           VSICalloc( sizeof(VSIErrorContext), 1) );
         if (psCtx == NULL) {
             fprintf(stderr,
@@ -99,39 +97,11 @@ static VSIErrorContext *VSIGetErrorContext()
     return psCtx;
 }
 
-/**********************************************************************
- *                          VSIError()
- **********************************************************************/
-
-/**
- * Report an VSI filesystem error.
- *
- * This function records an error in the filesystem that may or may not be
- * used in the future, for example converted into a CPLError. This allows
- * filesystem errors to be available to error handling functionality, but
- * reported only when necessary.
- *
- * @param err_no the error number (VSIE_*) from cpl_vsi_error.h.
- * @param fmt a printf() style format string.  Any additional arguments
- * will be treated as arguments to fill in this format in a manner
- * similar to printf().
- */
-
-void    VSIError(VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
-{
-    va_list args;
-
-    // Expand the error message
-    va_start(args, fmt);
-    VSIErrorV( err_no, fmt, args );
-    va_end(args);
-}
-
 /************************************************************************/
 /*                             VSIErrorV()                              */
 /************************************************************************/
 
-void    VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
+static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
     if( psCtx == NULL )
@@ -151,7 +121,7 @@ void    VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 #endif
 
         int nPreviousSize = 0;
-        int nPR;
+        int nPR = 0;
         while( ((nPR = CPLvsnprintf(
                      psCtx->szLastErrMsg+nPreviousSize,
                      psCtx->nLastErrMsgMax-nPreviousSize, fmt, wrk_args )) == -1
@@ -175,12 +145,39 @@ void    VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 
         va_end( wrk_args );
     }
-#else
-    // !HAVE_VSNPRINTF
+#else // !HAVE_VSNPRINTF
     CPLvsnprintf( psCtx->szLastErrMsg, psCtx->nLastErrMsgMax, fmt, args);
 #endif
 
     psCtx->nLastErrNo = err_no;
+}
+
+/**********************************************************************
+ *                          VSIError()
+ **********************************************************************/
+
+/**
+ * Report an VSI filesystem error.
+ *
+ * This function records an error in the filesystem that may or may not be
+ * used in the future, for example converted into a CPLError. This allows
+ * filesystem errors to be available to error handling functionality, but
+ * reported only when necessary.
+ *
+ * @param err_no the error number (VSIE_*) from cpl_vsi_error.h.
+ * @param fmt a printf() style format string.  Any additional arguments
+ * will be treated as arguments to fill in this format in a manner
+ * similar to printf().
+ */
+
+void VSIError( VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ... )
+{
+    va_list args;
+
+    // Expand the error message.
+    va_start(args, fmt);
+    VSIErrorV( err_no, fmt, args );
+    va_end(args);
 }
 
 /**********************************************************************
@@ -190,8 +187,8 @@ void    VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 /**
  * Erase any traces of previous errors.
  *
- * This is used to clear out the latest file system error when it is either translated
- * into a CPLError call or when it is determined to be ignorable.
+ * This is used to clear out the latest file system error when it is either
+ * translated into a CPLError call or when it is determined to be ignorable.
  */
 
 void CPL_STDCALL VSIErrorReset()
@@ -266,9 +263,12 @@ const char* CPL_STDCALL VSIGetLastErrorMsg()
  * @return TRUE if a CPLError was issued, or FALSE if not.
  */
 
-int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErrorNo) {
-    int err = VSIGetLastErrorNo();
-    switch(err) {
+int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
+                                       CPLErrorNum eDefaultErrorNo )
+{
+    const int err = VSIGetLastErrorNo();
+    switch(err)
+    {
         case VSIE_None:
             return FALSE;
         case VSIE_FileError:
@@ -278,22 +278,28 @@ int CPL_DLL CPL_STDCALL VSIToCPLError(CPLErr eErrClass, CPLErrorNum eDefaultErro
             CPLError(eErrClass, CPLE_HttpResponse, "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSAccessDenied:
-            CPLError(eErrClass, CPLE_AWSAccessDenied, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSAccessDenied,
+                     "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSBucketNotFound:
-            CPLError(eErrClass, CPLE_AWSBucketNotFound, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSBucketNotFound,
+                     "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSObjectNotFound:
-            CPLError(eErrClass, CPLE_AWSObjectNotFound, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSObjectNotFound,
+                     "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSInvalidCredentials:
-            CPLError(eErrClass, CPLE_AWSInvalidCredentials, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSInvalidCredentials,
+                     "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSSignatureDoesNotMatch:
-            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch, "%s", VSIGetLastErrorMsg());
+            CPLError(eErrClass, CPLE_AWSSignatureDoesNotMatch,
+                     "%s", VSIGetLastErrorMsg());
             break;
         default:
-            CPLError(eErrClass, CPLE_HttpResponse, "A filesystem error with code %d occurred", err);
+            CPLError(eErrClass, CPLE_HttpResponse,
+                     "A filesystem error with code %d occurred", err);
             break;
     }
 
