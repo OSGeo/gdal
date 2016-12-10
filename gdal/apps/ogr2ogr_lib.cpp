@@ -1262,7 +1262,8 @@ public:
 GDALVectorTranslateWrappedLayer::GDALVectorTranslateWrappedLayer(
                     OGRLayer* poBaseLayer, bool bOwnBaseLayer) :
         OGRLayerDecorator(poBaseLayer, bOwnBaseLayer),
-        m_apoCT( poBaseLayer->GetLayerDefn()->GetGeomFieldCount(), NULL ),
+        m_apoCT( poBaseLayer->GetLayerDefn()->GetGeomFieldCount(),
+                 static_cast<OGRCoordinateTransformation*>(NULL) ),
         m_poFDefn( NULL )
 {
 }
