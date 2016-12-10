@@ -56,40 +56,39 @@
 #include <malloc.h> // For _aligned_malloc
 #endif
 
-/* Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(), */
-/* VSICalloc(), VSIFree(), VSIStrdup() */
-//#define DEBUG_VSIMALLOC
+// Uncomment to check consistent usage of VSIMalloc(), VSIRealloc(),
+// VSICalloc(), VSIFree(), VSIStrdup().
+// #define DEBUG_VSIMALLOC
 
-/* Uncomment to compute memory usage statistics. */
-/* DEBUG_VSIMALLOC must also be defined */
-//#define DEBUG_VSIMALLOC_STATS
+// Uncomment to compute memory usage statistics.
+// DEBUG_VSIMALLOC must also be defined.
+// #define DEBUG_VSIMALLOC_STATS
 
-/* Highly experimental, and likely buggy. Do not use, except for fixing it! */
-/* DEBUG_VSIMALLOC must also be defined */
-//#define DEBUG_VSIMALLOC_MPROTECT
+// Highly experimental, and likely buggy. Do not use, except for fixing it!
+// DEBUG_VSIMALLOC must also be defined.
+// #define DEBUG_VSIMALLOC_MPROTECT
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
 #include <sys/mman.h>
 #endif
 
-/* Uncomment to print every memory allocation or deallocation. */
-/* DEBUG_VSIMALLOC must also be defined */
-//#define DEBUG_VSIMALLOC_VERBOSE
+// Uncomment to print every memory allocation or deallocation.
+// DEBUG_VSIMALLOC must also be defined.
+// #define DEBUG_VSIMALLOC_VERBOSE
 
-/* Number of bytes of the malloc/calloc/free that triggers a debug trace. Can be 0 for all allocs */
+// Number of bytes of the malloc/calloc/free that triggers a debug trace.
+// Can be 0 for all allocs.
 #define THRESHOLD_PRINT 10000
 
-/* Uncomment to print GDAL block cache use. */
-/* Only used if DEBUG_VSIMALLOC_VERBOSE is enabled */
-//#define DEBUG_BLOCK_CACHE_USE
+// Uncomment to print GDAL block cache use.
+// Only used if DEBUG_VSIMALLOC_VERBOSE is enabled.
+// #define DEBUG_BLOCK_CACHE_USE
 
 #ifdef DEBUG_BLOCK_CACHE_USE
 extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 #endif
 
 CPL_CVSID("$Id$");
-
-/* for stat() */
 
 /* Unix or Windows NT/2000/XP */
 #if !defined(WIN32)
@@ -99,9 +98,6 @@ CPL_CVSID("$Id$");
 #  include <fcntl.h>
 #  include <direct.h>
 #endif
-
-#include <sys/stat.h>
-#include <time.h>
 
 /************************************************************************/
 /*                              VSIFOpen()                              */
@@ -160,8 +156,8 @@ int VSIFSeek( FILE * fp, long nOffset, int nWhence )
 
 {
 #ifdef DEBUG
-    /* To workaround Coverity strange warning about potential negative seek */
-    /* CID 1340084 when called from dgnwrite.cpp */
+    // To workaround Coverity strange warning about potential negative seek
+    // CID 1340084 when called from dgnwrite.cpp.
     if( nWhence == SEEK_SET && nOffset < 0 )
         return -1;
 #endif
@@ -296,7 +292,7 @@ void VSIFFlush( FILE * fp )
     // from VSIDebug.
     const int nError = errno;
     VSIDebug2( "VSIRewind(%p) errno = %d", fp, nError );
-    if ( result != 0 )
+    if( result != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Flush failed.  errno = %d",
                   nError);
@@ -343,10 +339,10 @@ int VSIUngetc( int c, FILE * fp )
 /*      have to use vfprintf().                                         */
 /************************************************************************/
 
-int     VSIFPrintf( FILE * fp, CPL_FORMAT_STRING(const char * pszFormat), ... )
+int VSIFPrintf( FILE * fp, CPL_FORMAT_STRING(const char * pszFormat), ... )
 
 {
-    va_list     args;
+    va_list args;
 
     va_start( args, pszFormat );
     const int nReturn = vfprintf( fp, pszFormat, args );
@@ -396,11 +392,6 @@ static GUIntBig nVSICallocs = 0;
 static GUIntBig nVSIReallocs = 0;
 static GUIntBig nVSIFrees = 0;
 
-/*size_t GetMaxTotalAllocs()
-{
-    return nMaxTotalAllocs;
-}*/
-
 /************************************************************************/
 /*                         VSIShowMemStats()                            */
 /************************************************************************/
@@ -410,7 +401,7 @@ void VSIShowMemStats();
 void VSIShowMemStats()
 {
     char* pszShowMemStats = getenv("CPL_SHOW_MEM_STATS");
-    if (pszShowMemStats == NULL || pszShowMemStats[0] == '\0' )
+    if( pszShowMemStats == NULL || pszShowMemStats[0] == '\0' )
         return;
     printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n",/*ok*/
             (GUIntBig)nCurrentTotalAllocs);
@@ -444,34 +435,37 @@ void *VSICalloc( size_t nCount, size_t nSize )
 {
 #ifdef DEBUG_VSIMALLOC
     size_t nMul = nCount * nSize;
-    if (nCount != 0 && nMul / nCount != nSize)
+    if( nCount != 0 && nMul / nCount != nSize )
     {
         fprintf(stderr, "Overflow in VSICalloc(%d, %d)\n",
                 (int)nCount, (int)nSize);
         return NULL;
     }
-    if (nMaxPeakAllocSize < 0)
+    if( nMaxPeakAllocSize < 0 )
     {
         char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
-        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+        nMaxPeakAllocSize = pszMaxPeakAllocSize ? atoi(pszMaxPeakAllocSize) : 0;
         char* pszMaxCumulAllocSize = getenv("CPL_MAX_CUMUL_ALLOC_SIZE");
-        nMaxCumulAllocSize = (pszMaxCumulAllocSize) ? atoi(pszMaxCumulAllocSize) : 0;
+        nMaxCumulAllocSize =
+            pszMaxCumulAllocSize ? atoi(pszMaxCumulAllocSize) : 0;
     }
-    if (nMaxPeakAllocSize > 0 && (GIntBig)nMul > nMaxPeakAllocSize)
+    if( nMaxPeakAllocSize > 0 && (GIntBig)nMul > nMaxPeakAllocSize )
         return NULL;
 #ifdef DEBUG_VSIMALLOC_STATS
-    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nMul > nMaxCumulAllocSize)
+    if( nMaxCumulAllocSize > 0 &&
+        (GIntBig)nCurrentTotalAllocs + (GIntBig)nMul > nMaxCumulAllocSize )
         return NULL;
 #endif
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* ptr = NULL;
     const size_t nPageSize = getpagesize();
-    const size_t nRequestedSize = (3 * sizeof(void*) + nMul + nPageSize - 1) & ~(nPageSize - 1);
+    const size_t nRequestedSize =
+        (3 * sizeof(void*) + nMul + nPageSize - 1) & ~(nPageSize - 1);
     if( nRequestedSize < nMul )
         return NULL;
     posix_memalign((void**)&ptr, nPageSize, nRequestedSize);
-    if (ptr == NULL)
+    if( ptr == NULL )
         return NULL;
     memset(ptr + 2 * sizeof(void*), 0, nMul);
 #else
@@ -479,7 +473,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
     if( nRequestedSize < nMul )
         return NULL;
     char* ptr = (char*) calloc(1, nRequestedSize);
-    if (ptr == NULL)
+    if( ptr == NULL )
         return NULL;
 #endif
 
@@ -508,23 +502,25 @@ void *VSICalloc( size_t nCount, size_t nSize )
                          ", mal+cal-free = %d"
 #endif
                          "\n",
-                (void*)CPLGetPID(), (int)nCount, (int)nSize, ptr + 2 * sizeof(void*)
+                    (void*)CPLGetPID(),
+                    (int)nCount,
+                    (int)nSize, ptr + 2 * sizeof(void*)
 #ifdef DEBUG_VSIMALLOC_STATS
-                , (GUIntBig)(nCurrentTotalAllocs + nMul)
+                    , (GUIntBig)(nCurrentTotalAllocs + nMul)
 #ifdef DEBUG_BLOCK_CACHE_USE
-                , GDALGetCacheUsed64()
+                    , GDALGetCacheUsed64()
 #endif
-                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+                    , (int)(nVSIMallocs + nVSICallocs - nVSIFrees)
 #endif
                 );
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSICallocs ++;
-        if (nMaxTotalAllocs == 0)
+        if( nMaxTotalAllocs == 0 )
             atexit(VSIShowMemStats);
         nCurrentTotalAllocs += nMul;
-        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+        if( nCurrentTotalAllocs > nMaxTotalAllocs )
             nMaxTotalAllocs = nCurrentTotalAllocs;
 #endif
     }
@@ -553,24 +549,27 @@ void *VSIMalloc( size_t nSize )
 void *VSIMalloc( size_t nSize )
 
 {
-    if (nMaxPeakAllocSize < 0)
+    if( nMaxPeakAllocSize < 0 )
     {
         char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
-        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+        nMaxPeakAllocSize = pszMaxPeakAllocSize ? atoi(pszMaxPeakAllocSize) : 0;
         char* pszMaxCumulAllocSize = getenv("CPL_MAX_CUMUL_ALLOC_SIZE");
-        nMaxCumulAllocSize = (pszMaxCumulAllocSize) ? atoi(pszMaxCumulAllocSize) : 0;
+        nMaxCumulAllocSize =
+            pszMaxCumulAllocSize ? atoi(pszMaxCumulAllocSize) : 0;
     }
-    if (nMaxPeakAllocSize > 0 && (GIntBig)nSize > nMaxPeakAllocSize)
+    if( nMaxPeakAllocSize > 0 && (GIntBig)nSize > nMaxPeakAllocSize )
         return NULL;
 #ifdef DEBUG_VSIMALLOC_STATS
-    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nSize > nMaxCumulAllocSize)
+    if( nMaxCumulAllocSize > 0 &&
+        (GIntBig)nCurrentTotalAllocs + (GIntBig)nSize > nMaxCumulAllocSize )
         return NULL;
 #endif  // DEBUG_VSIMALLOC_STATS
 
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* ptr = NULL;
     const size_t nPageSize = getpagesize();
-    const size_t nRequestedSize = (3 * sizeof(void*) + nSize + nPageSize - 1) & ~(nPageSize - 1);
+    const size_t nRequestedSize =
+        (3 * sizeof(void*) + nSize + nPageSize - 1) & ~(nPageSize - 1);
     if( nRequestedSize < nSize )
         return NULL;
     posix_memalign((void**)&ptr, nPageSize, nRequestedSize );
@@ -580,7 +579,7 @@ void *VSIMalloc( size_t nSize )
         return NULL;
     char* ptr = (char*) malloc(nRequestedSize);
 #endif  // DEBUG_VSIMALLOC_MPROTECT
-    if (ptr == NULL)
+    if( ptr == NULL )
         return NULL;
     ptr[0] = 'V';
     ptr[1] = 'S';
@@ -600,30 +599,31 @@ void *VSIMalloc( size_t nSize )
         {
             fprintf(stderr, "Thread[%p] VSIMalloc(%d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
-                         ", current_cumul = " CPL_FRMT_GUIB
+                    ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
-                         ", block_cache_used = " CPL_FRMT_GIB
+                    ", block_cache_used = " CPL_FRMT_GIB
 #endif
-                         ", mal+cal-free = %d"
+                    ", mal+cal-free = %d"
 #endif
-                         "\n",
-                (void*)CPLGetPID(), (int)nSize, ptr + 2 * sizeof(void*)
+                    "\n",
+                    (void*)CPLGetPID(),
+                    (int)nSize, ptr + 2 * sizeof(void*)
 #ifdef DEBUG_VSIMALLOC_STATS
-                , (GUIntBig)(nCurrentTotalAllocs + nSize)
+                    , (GUIntBig)(nCurrentTotalAllocs + nSize)
 #ifdef DEBUG_BLOCK_CACHE_USE
-                , GDALGetCacheUsed64()
+                    , GDALGetCacheUsed64()
 #endif
-                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+                    , (int)(nVSIMallocs + nVSICallocs - nVSIFrees)
 #endif
                 );
         }
 #endif  // DEBUG_VSIMALLOC_VERBOSE
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIMallocs ++;
-        if (nMaxTotalAllocs == 0)
+        if( nMaxTotalAllocs == 0 )
             atexit(VSIShowMemStats);
         nCurrentTotalAllocs += nSize;
-        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+        if( nCurrentTotalAllocs > nMaxTotalAllocs )
             nMaxTotalAllocs = nCurrentTotalAllocs;
 #endif  // DEBUG_VSIMALLOC_STATS
     }
@@ -634,17 +634,18 @@ void *VSIMalloc( size_t nSize )
 
 static void VSICheckMarkerBegin(char* ptr)
 {
-    if (memcmp(ptr, "VSIM", 4) != 0)
+    if( memcmp(ptr, "VSIM", 4) != 0 )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
-                 "Inconsistent use of VSI memory allocation primitives for %p : %c%c%c%c",
+                 "Inconsistent use of VSI memory allocation primitives "
+                 "for %p : %c%c%c%c",
                  ptr, ptr[0], ptr[1], ptr[2], ptr[3]);
     }
 }
 
 static void VSICheckMarkerEnd(char* ptr, size_t nEnd)
 {
-    if (memcmp(ptr + nEnd, "EVSI", 4) != 0)
+    if( memcmp(ptr + nEnd, "EVSI", 4) != 0 )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "Memory has been written after the end of %p", ptr);
@@ -662,7 +663,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 
 {
 #ifdef DEBUG_VSIMALLOC
-    if (pData == NULL)
+    if( pData == NULL )
         return VSIMalloc(nNewSize);
 
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
@@ -673,15 +674,17 @@ void * VSIRealloc( void * pData, size_t nNewSize )
     memcpy(&nOldSize, ptr + sizeof(void*), sizeof(void*));
     VSICheckMarkerEnd(ptr, 2 * sizeof(void*) + nOldSize);
 
-    if (nMaxPeakAllocSize < 0)
+    if( nMaxPeakAllocSize < 0 )
     {
         char* pszMaxPeakAllocSize = getenv("CPL_MAX_PEAK_ALLOC_SIZE");
-        nMaxPeakAllocSize = (pszMaxPeakAllocSize) ? atoi(pszMaxPeakAllocSize) : 0;
+        nMaxPeakAllocSize = pszMaxPeakAllocSize ? atoi(pszMaxPeakAllocSize) : 0;
     }
-    if (nMaxPeakAllocSize > 0 && (GIntBig)nNewSize > nMaxPeakAllocSize)
+    if( nMaxPeakAllocSize > 0 && (GIntBig)nNewSize > nMaxPeakAllocSize )
         return NULL;
 #ifdef DEBUG_VSIMALLOC_STATS
-    if (nMaxCumulAllocSize > 0 && (GIntBig)nCurrentTotalAllocs + (GIntBig)nNewSize - (GIntBig)nOldSize > nMaxCumulAllocSize)
+    if( nMaxCumulAllocSize > 0 &&
+        (GIntBig)nCurrentTotalAllocs + (GIntBig)nNewSize -
+        (GIntBig)nOldSize > nMaxCumulAllocSize )
         return NULL;
 #endif
 
@@ -693,7 +696,8 @@ void * VSIRealloc( void * pData, size_t nNewSize )
 #ifdef DEBUG_VSIMALLOC_MPROTECT
     char* newptr = NULL;
     const size_t nPageSize = getpagesize();
-    const size_t nRequestedSize = (nNewSize + 3 * sizeof(void*) + nPageSize - 1) & ~(nPageSize - 1);
+    const size_t nRequestedSize =
+        (nNewSize + 3 * sizeof(void*) + nPageSize - 1) & ~(nPageSize - 1);
     if( nRequestedSize < nNewSize )
     {
         ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
@@ -703,7 +707,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
         return NULL;
     }
     posix_memalign((void**)&newptr, nPageSize, nRequestedSize);
-    if (newptr == NULL)
+    if( newptr == NULL )
     {
         ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
         ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
@@ -732,7 +736,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
         return NULL;
     }
     void* newptr = realloc(ptr, nRequestedSize);
-    if (newptr == NULL)
+    if( newptr == NULL )
     {
         ptr[2 * sizeof(void*) + nOldSize + 0] = 'E';
         ptr[2 * sizeof(void*) + nOldSize + 1] = 'V';
@@ -757,29 +761,32 @@ void * VSIRealloc( void * pData, size_t nNewSize )
         {
             fprintf(stderr, "Thread[%p] VSIRealloc(%p, %d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
-                         ", current_cumul = " CPL_FRMT_GUIB
+                    ", current_cumul = " CPL_FRMT_GUIB
 #ifdef DEBUG_BLOCK_CACHE_USE
-                         ", block_cache_used = " CPL_FRMT_GIB
+                    ", block_cache_used = " CPL_FRMT_GIB
 #endif
-                         ", mal+cal-free = %d"
+                    ", mal+cal-free = %d"
 #endif
-                         "\n",
-                (void*)CPLGetPID(), pData, (int)nNewSize, ptr + 2 * sizeof(void*)
+                    "\n",
+                    (void*)CPLGetPID(),
+                    pData,
+                    (int)nNewSize,
+                    ptr + 2 * sizeof(void*)
 #ifdef DEBUG_VSIMALLOC_STATS
-                , (GUIntBig)(nCurrentTotalAllocs - nOldSize + nNewSize)
+                    , (GUIntBig)(nCurrentTotalAllocs - nOldSize + nNewSize)
 #ifdef DEBUG_BLOCK_CACHE_USE
-                , GDALGetCacheUsed64()
+                    , GDALGetCacheUsed64()
 #endif
-                ,(int)(nVSIMallocs + nVSICallocs - nVSIFrees)
+                    , (int)(nVSIMallocs + nVSICallocs - nVSIFrees)
 #endif
-                );
+                    );
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
         nVSIReallocs ++;
         nCurrentTotalAllocs -= nOldSize;
         nCurrentTotalAllocs += nNewSize;
-        if (nCurrentTotalAllocs > nMaxTotalAllocs)
+        if( nCurrentTotalAllocs > nMaxTotalAllocs )
             nMaxTotalAllocs = nCurrentTotalAllocs;
 #endif
     }
@@ -799,7 +806,7 @@ void VSIFree( void * pData )
 
 {
 #ifdef DEBUG_VSIMALLOC
-    if (pData == NULL)
+    if( pData == NULL )
         return;
 
     char* ptr = ((char*)pData) - 2 * sizeof(void*);
@@ -917,7 +924,8 @@ void* VSIMallocAlignedAuto( size_t nSize )
 /************************************************************************/
 
 /** See VSIMallocAlignedAuto() */
-void *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile, int nLine )
+void *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile,
+                                   int nLine )
 {
     void* pRet = VSIMallocAlignedAuto(nSize);
     if( pRet == NULL && nSize != 0 )
@@ -965,7 +973,7 @@ char *VSIStrdup( const char * pszString )
 {
     const size_t nSize = strlen(pszString) + 1;
     char* ptr = static_cast<char*>( VSIMalloc(nSize) );
-    if (ptr == NULL)
+    if( ptr == NULL )
         return NULL;
     memcpy(ptr, pszString, nSize);
     return ptr;
@@ -979,20 +987,21 @@ static size_t VSICheckMul2( size_t mul1, size_t mul2, bool *pbOverflowFlag,
                             const char* pszFile, int nLine )
 {
     const size_t res = mul1 * mul2;
-    if (mul1 != 0)
+    if( mul1 != 0 )
     {
-        if (res / mul1 == mul2)
+        if( res / mul1 == mul2 )
         {
-            if (pbOverflowFlag)
+            if( pbOverflowFlag )
                 *pbOverflowFlag = FALSE;
             return res;
         }
         else
         {
-            if (pbOverflowFlag)
+            if( pbOverflowFlag )
                 *pbOverflowFlag = TRUE;
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
+                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB
+                     " * " CPL_FRMT_GUIB,
                      pszFile ? pszFile : "(unknown file)",
                      nLine,
                      (GUIntBig)mul1, (GUIntBig)mul2);
@@ -1000,7 +1009,7 @@ static size_t VSICheckMul2( size_t mul1, size_t mul2, bool *pbOverflowFlag,
     }
     else
     {
-        if (pbOverflowFlag)
+        if( pbOverflowFlag )
              *pbOverflowFlag = FALSE;
     }
     return 0;
@@ -1014,15 +1023,15 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3,
                             bool *pbOverflowFlag,
                             const char* pszFile, int nLine )
 {
-    if (mul1 != 0)
+    if( mul1 != 0 )
     {
         const size_t res = mul1 * mul2;
-        if (res / mul1 == mul2)
+        if( res / mul1 == mul2 )
         {
             const size_t res2 = res * mul3;
-            if (mul3 != 0)
+            if( mul3 != 0 )
             {
-                if (res2 / mul3 == res)
+                if( res2 / mul3 == res )
                 {
                     if( pbOverflowFlag )
                         *pbOverflowFlag = false;
@@ -1086,8 +1095,9 @@ void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 )
  VSIMalloc3 allocates (nSize1 * nSize2 * nSize3) bytes.
  In case of overflow of the multiplication, or if memory allocation fails, a
  NULL pointer is returned and a CE_Failure error is raised with CPLError().
- If nSize1 == 0 || nSize2 == 0 || nSize3 == 0, a NULL pointer will also be returned.
- CPLFree() or VSIFree() can be used to free memory allocated by this function.
+ If nSize1 == 0 || nSize2 == 0 || nSize3 == 0, a NULL pointer will also be
+ returned.  CPLFree() or VSIFree() can be used to free memory allocated by this
+ function.
 */
 void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 {
@@ -1115,11 +1125,13 @@ void *VSIMallocVerbose( size_t nSize, const char* pszFile, int nLine )
 /*                          VSIMalloc2Verbose()                         */
 /************************************************************************/
 
-void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile, int nLine )
+void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile,
+                         int nLine )
 {
     bool bOverflowFlag = false;
-    size_t nSizeToAllocate = VSICheckMul2( nSize1, nSize2, &bOverflowFlag, pszFile, nLine );
-    if (bOverflowFlag || nSizeToAllocate == 0)
+    size_t nSizeToAllocate =
+        VSICheckMul2( nSize1, nSize2, &bOverflowFlag, pszFile, nLine );
+    if( bOverflowFlag || nSizeToAllocate == 0 )
         return NULL;
 
     void* pRet = VSIMalloc(nSizeToAllocate);
@@ -1143,7 +1155,7 @@ void *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3,
     bool bOverflowFlag = false;
     size_t nSizeToAllocate = VSICheckMul3( nSize1, nSize2, nSize3,
                                            &bOverflowFlag, pszFile, nLine );
-    if (bOverflowFlag || nSizeToAllocate == 0)
+    if( bOverflowFlag || nSizeToAllocate == 0 )
         return NULL;
 
     void* pRet = VSIMalloc(nSizeToAllocate);
@@ -1160,7 +1172,8 @@ void *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3,
 /*                          VSICallocVerbose()                          */
 /************************************************************************/
 
-void *VSICallocVerbose(  size_t nCount, size_t nSize, const char* pszFile, int nLine )
+void *VSICallocVerbose( size_t nCount, size_t nSize, const char* pszFile,
+                        int nLine )
 {
     void* pRet = VSICalloc(nCount, nSize);
     if( pRet == NULL && nCount != 0 && nSize != 0 )
@@ -1177,7 +1190,8 @@ void *VSICallocVerbose(  size_t nCount, size_t nSize, const char* pszFile, int n
 /*                          VSIReallocVerbose()                         */
 /************************************************************************/
 
-void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile, int nLine )
+void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile,
+                         int nLine )
 {
     void* pRet = VSIRealloc(pOldPtr, nNewSize);
     if( pRet == NULL && nNewSize != 0 )
@@ -1316,10 +1330,10 @@ char *VSIStrerror( int nErrno )
  * @return the total physical RAM in bytes (or 0 in case of failure).
  * @since GDAL 2.0
  */
-GIntBig CPLGetPhysicalRAM(void)
+GIntBig CPLGetPhysicalRAM( void )
 {
-    long nPhysPages = sysconf(_SC_PHYS_PAGES);
-    long nPageSize =  sysconf(_SC_PAGESIZE);
+    const long nPhysPages = sysconf(_SC_PHYS_PAGES);
+    const long nPageSize =  sysconf(_SC_PAGESIZE);
     if( nPhysPages < 0 || nPageSize < 0 )
         return 0;
     return static_cast<GIntBig>(nPhysPages) * nPageSize;
@@ -1343,13 +1357,13 @@ GIntBig CPLGetPhysicalRAM(void)
 
 #elif defined(WIN32)
 
-/* GlobalMemoryStatusEx requires _WIN32_WINNT >= 0x0500 */
+// GlobalMemoryStatusEx requires _WIN32_WINNT >= 0x0500.
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
 #endif
 #include <windows.h>
 
-GIntBig CPLGetPhysicalRAM(void)
+GIntBig CPLGetPhysicalRAM( void )
 {
     MEMORYSTATUSEX statex;
     statex.ullTotalPhys = 0;
@@ -1360,7 +1374,7 @@ GIntBig CPLGetPhysicalRAM(void)
 
 #else
 
-GIntBig CPLGetPhysicalRAM(void)
+GIntBig CPLGetPhysicalRAM( void )
 {
     static bool bOnce = false;
     if( !bOnce )
@@ -1383,10 +1397,11 @@ GIntBig CPLGetPhysicalRAM(void)
  *
  * Note: This memory may already be partly used by other processes.
  *
- * @return the total physical RAM, usable by a process, in bytes (or 0 in case of failure).
+ * @return the total physical RAM, usable by a process, in bytes (or 0
+ * in case of failure).
  * @since GDAL 2.0
  */
-GIntBig  CPLGetUsablePhysicalRAM(void)
+GIntBig CPLGetUsablePhysicalRAM( void )
 {
     GIntBig nRAM = CPLGetPhysicalRAM();
 #if SIZEOF_VOIDP == 4
