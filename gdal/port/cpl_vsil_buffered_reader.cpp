@@ -325,7 +325,7 @@ size_t VSIBufferedReaderHandle::Read( void *pBuffer, size_t nSize,
             std::min(nReadInFile, static_cast<size_t>(MAX_BUFFER_SIZE)));
         nBufferOffset = nCurOffset + nReadInFile - nBufferSize;
         memcpy(pabyBuffer,
-               (GByte*)pBuffer + nReadInFile - nBufferSize,
+               static_cast<GByte *>(pBuffer) + nReadInFile - nBufferSize,
                nBufferSize);
 
         nCurOffset += nReadInFile;
