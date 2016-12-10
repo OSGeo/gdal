@@ -214,9 +214,6 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-/**/
-/**/
-
 int CPL_STDCALL GDALTermProgress( double dfComplete,
                                   const char * /* pszMessage */,
                                   void * /* pProgressArg */ )
