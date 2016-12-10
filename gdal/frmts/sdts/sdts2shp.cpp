@@ -146,7 +146,7 @@ int main( int nArgc, char ** papszArgv )
                     oTransfer.GetCATD()->GetEntryModule(iCATDEntry),
                     oTransfer.GetCATD()->GetEntryTypeDesc(iCATDEntry) );
         }
-        printf( "\n" );/*ok*/"
+        printf( "\n" );/*ok*/
     }
 
 /* -------------------------------------------------------------------- */
