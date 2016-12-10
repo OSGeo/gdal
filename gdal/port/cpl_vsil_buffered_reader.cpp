@@ -44,6 +44,7 @@
 #endif
 
 #include <algorithm>
+#include <vector>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -64,13 +65,13 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     bool              bEOF;
     vsi_l_offset      nCheatFileSize;
 
-    int               SeekBaseTo(vsi_l_offset nTargetOffset);
+    int               SeekBaseTo( vsi_l_offset nTargetOffset );
 
   public:
-    explicit VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle);
-    VSIBufferedReaderHandle(VSIVirtualHandle* poBaseHandle,
-                            const GByte* pabyBeginningContent,
-                            vsi_l_offset nCheatFileSizeIn);
+    explicit VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle );
+    VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle,
+                             const GByte* pabyBeginningContent,
+                             vsi_l_offset nCheatFileSizeIn );
     virtual ~VSIBufferedReaderHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
@@ -212,14 +213,18 @@ int VSIBufferedReaderHandle::SeekBaseTo( vsi_l_offset nTargetOffset )
     nCurOffset = m_poBaseHandle->Tell();
     if( nCurOffset > nTargetOffset )
         return FALSE;
-    char abyTemp[8192] = {};
+
+    const vsi_l_offset nMaxOffset = 8192;
+
+    std::vector<char> oTemp(nMaxOffset, 0);
+    char *pabyTemp = &oTemp[0];
+
     while( true )
     {
-        const vsi_l_offset nMaxOffset = 8192;
-        const int nToRead =
-            static_cast<int>(std::min(nMaxOffset, nTargetOffset - nCurOffset));
-        const int nRead =
-            static_cast<int>(m_poBaseHandle->Read(abyTemp, 1, nToRead ));
+        const vsi_l_offset nToRead =
+            std::min(nMaxOffset, nTargetOffset - nCurOffset);
+        const vsi_l_offset nRead = m_poBaseHandle->Read(pabyTemp, 1, nToRead);
+
         nCurOffset += nRead;
 
         if( nRead < nToRead )
@@ -227,7 +232,7 @@ int VSIBufferedReaderHandle::SeekBaseTo( vsi_l_offset nTargetOffset )
             bEOF = true;
             return FALSE;
         }
-        if( nToRead < 8192 )
+        if( nToRead < nMaxOffset )
             break;
     }
     return TRUE;
