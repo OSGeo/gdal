@@ -146,7 +146,7 @@ def DontUseExceptions(*args):
   return _gdal.DontUseExceptions(*args)
 
 def VSIFReadL(*args):
-  """VSIFReadL(int nMembSize, int nMembCount, VSILFILE * fp) -> int"""
+  """VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE * fp) -> unsigned int"""
   return _gdal.VSIFReadL(*args)
 def _is_str_or_unicode(o):
     return isinstance(o, str) or str(type(o)) == "<type 'unicode'>"

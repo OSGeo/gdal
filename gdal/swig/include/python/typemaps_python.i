@@ -1136,7 +1136,12 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = PyList_Size(pyList) - 2;
+    if( PyList_Size(pyList) > INT_MAX )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+        return NULL;
+    }
+    nChildCount = static_cast<int>(PyList_Size(pyList)) - 2;
     if( nChildCount < 0 )
     {
         PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );

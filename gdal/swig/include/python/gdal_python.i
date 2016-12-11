@@ -95,10 +95,10 @@
 
 %apply ( void **outPythonObject ) { (void **buf ) };
 %inline %{
-int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
+unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int nMembCount, VSILFILE *fp)
 {
     GUIntBig buf_size = (GUIntBig)nMembSize * nMembCount;
-    if( nMembSize < 0 || nMembCount < 0 || buf_size > 0xFFFFFFFFU )
+    if( buf_size > 0xFFFFFFFFU )
    {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big request");
         *buf = NULL;
@@ -127,7 +127,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyBytes_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #else
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
@@ -144,7 +144,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyString_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #endif
 }
 %}
