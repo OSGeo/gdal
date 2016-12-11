@@ -55,7 +55,7 @@
 
 CPL_CVSID("$Id$");
 
-template<typename T> T* HISTOGRAM( T *h, int n, int r, int g, int b )
+template<typename T> static T* HISTOGRAM( T *h, int n, int r, int g, int b )
 {
     const int index = (r * n + g) * n + b;
     return &h[index];
