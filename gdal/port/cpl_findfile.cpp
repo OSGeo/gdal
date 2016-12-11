@@ -79,7 +79,7 @@ static FindFileTLS* CPLGetFindFileTLS()
             CPLGetTLSEx( CTLS_FINDFILE, &bMemoryError ) );
     if( bMemoryError )
         return NULL;
-    if (pTLSData == NULL)
+    if( pTLSData == NULL )
     {
         pTLSData = static_cast<FindFileTLS *>(
             VSI_CALLOC_VERBOSE(1, sizeof(FindFileTLS) ) );
@@ -201,7 +201,7 @@ void CPLPushFileFinder( CPLFileFinder pfnFinder )
 
 {
     FindFileTLS* pTLSData = CPLFinderInit();
-    if (pTLSData == NULL )
+    if( pTLSData == NULL )
         return;
 
     pTLSData->papfnFinders = static_cast<CPLFileFinder *>(

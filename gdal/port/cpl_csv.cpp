@@ -332,7 +332,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter )
         /* If the last token is an empty token, then we have to catch
          * it now, otherwise we won't reenter the loop and it will be lost.
          */
-        if ( *pszString == '\0' && *(pszString-1) == chDelimiter )
+        if( *pszString == '\0' && *(pszString-1) == chDelimiter )
         {
             papszRetListNew = CSLAddStringMayFail( papszRetList, "" );
             if( papszRetListNew == NULL )
@@ -517,22 +517,24 @@ static void CSVIngest( const char *pszFilename )
  *
  * @return ',', ';', ' ' or '\t'
  */
-char CSVDetectSeperator (const char* pszLine)
+char CSVDetectSeperator( const char* pszLine )
 {
-    bool    bInString = false;
-    char    chDelimiter = '\0';
-    int     nCountSpace = 0;
+    bool bInString = false;
+    char chDelimiter = '\0';
+    int nCountSpace = 0;
 
     for( ; *pszLine != '\0'; pszLine++ )
     {
         if( !bInString && ( *pszLine == ',' || *pszLine == ';'
                             || *pszLine == '\t'))
         {
-            if (chDelimiter == '\0')
-                chDelimiter = *pszLine;
-            else if (chDelimiter != *pszLine)
+            if( chDelimiter == '\0' )
             {
-                /* The separator is not consistent on the line. */
+                chDelimiter = *pszLine;
+            }
+            else if( chDelimiter != *pszLine )
+            {
+                // The separator is not consistent on the line.
                 CPLDebug( "CSV", "Inconsistent separator. '%c' and '%c' found. "
                           "Using ',' as default",
                           chDelimiter, *pszLine);
@@ -558,7 +560,7 @@ char CSVDetectSeperator (const char* pszLine)
         }
     }
 
-    if (chDelimiter == '\0')
+    if( chDelimiter == '\0' )
     {
         if( nCountSpace > 0 )
             chDelimiter = ' ';
@@ -632,7 +634,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
         char* pszWorkLineTmp = static_cast<char *>(
             VSIRealloc(pszWorkLine,
                        nWorkLineLength + nLineLen + 2) );
-        if (pszWorkLineTmp == NULL)
+        if( pszWorkLineTmp == NULL )
             break;
         pszWorkLine = pszWorkLineTmp;
         // The newline gets lost in CPLReadLine().
@@ -713,7 +715,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
         char* pszWorkLineTmp = static_cast<char *>(
             VSIRealloc(pszWorkLine,
                        nWorkLineLength + nLineLen + 2) );
-        if (pszWorkLineTmp == NULL)
+        if( pszWorkLineTmp == NULL )
             break;
 
         pszWorkLine = pszWorkLineTmp;
@@ -1292,7 +1294,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     DefaultCSVFileNameTLS* pTLSData =
         static_cast<DefaultCSVFileNameTLS *>(
             CPLGetTLSEx( CTLS_CSVDEFAULTFILENAME, &bMemoryError ) );
-    if (pTLSData == NULL && !bMemoryError)
+    if( pTLSData == NULL && !bMemoryError )
     {
         pTLSData = static_cast<DefaultCSVFileNameTLS *>(
             VSI_CALLOC_VERBOSE( 1, sizeof(DefaultCSVFileNameTLS) ) );

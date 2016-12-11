@@ -132,7 +132,8 @@ static CPLErrorContext *CPLGetErrorContext()
     {
         psCtx = reinterpret_cast<CPLErrorContext *>(
             VSICalloc( sizeof(CPLErrorContext), 1) );
-        if (psCtx == NULL) {
+        if( psCtx == NULL )
+        {
             fprintf(stderr, "Out of memory attempting to report error.\n");
             return NULL;
         }
@@ -435,7 +436,7 @@ static int CPLGetProcessMemorySize()
         return -1;
     int nRet = -1;
     char szLine[128] = {};
-    while (fgets(szLine, sizeof(szLine), fp) != NULL)
+    while( fgets(szLine, sizeof(szLine), fp) != NULL )
     {
         if( STARTS_WITH(szLine, "VmSize:") )
         {
@@ -535,7 +536,7 @@ void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszForma
         // convinced this is standard behaviour, so we'll get rid of it
         // carefully
 
-        if (pszMessage[strlen(pszMessage) -1 ] == '\n')
+        if( pszMessage[strlen(pszMessage) -1 ] == '\n' )
         {
             pszMessage[strlen(pszMessage) - 1] = 0; // blow it out
         }
@@ -801,7 +802,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     static int nCount = 0;
     static int nMaxErrors = -1;
 
-    if (eErrClass != CE_Debug)
+    if( eErrClass != CE_Debug )
     {
         if( nMaxErrors == -1 )
         {
@@ -810,7 +811,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         }
 
         nCount++;
-        if (nCount > nMaxErrors && nMaxErrors > 0 )
+        if( nCount > nMaxErrors && nMaxErrors > 0 )
             return;
     }
 
@@ -840,7 +841,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     else
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
-    if (eErrClass != CE_Debug
+    if( eErrClass != CE_Debug
         && nMaxErrors > 0
         && nCount == nMaxErrors )
     {
@@ -906,7 +907,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                 fclose( fpLog );
 
                 // Generate sequenced log file names, inserting # before ext.
-                if (strrchr(cpl_log, '.') == NULL)
+                if( strrchr(cpl_log, '.') == NULL )
                 {
                     snprintf( pszPath, nPathLen, "%s_%d%s", cpl_log, i++,
                              ".log" );
@@ -916,7 +917,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                     size_t pos = 0;
                     char *cpl_log_base = CPLStrdup(cpl_log);
                     pos = strcspn(cpl_log_base, ".");
-                    if (pos > 0)
+                    if( pos > 0 )
                     {
                         cpl_log_base[pos] = '\0';
                     }
@@ -959,7 +960,7 @@ void CPLTurnFailureIntoWarning( int bOn )
         return;
     }
     psCtx->nFailureIntoWarning += (bOn) ? 1 : -1;
-    if (psCtx->nFailureIntoWarning < 0)
+    if( psCtx->nFailureIntoWarning < 0 )
     {
         CPLDebug( "CPL", "Wrong nesting of CPLTurnFailureIntoWarning(TRUE) / "
                   "CPLTurnFailureIntoWarning(FALSE)" );
