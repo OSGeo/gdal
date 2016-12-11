@@ -116,15 +116,15 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 // We use a ./configure test to determine whether this builtins are available.
 // as it appears that the GCC 4.1 version used on debian etch is broken when
 // linking such instructions.
-int CPLAtomicAdd(volatile int* ptr, int increment)
+int CPLAtomicAdd( volatile int* ptr, int increment )
 {
-  if (increment > 0)
+  if( increment > 0 )
     return __sync_add_and_fetch(ptr, increment);
 
   return __sync_sub_and_fetch(ptr, -increment);
 }
 
-int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 {
     return __sync_bool_compare_and_swap (ptr, oldval, newval);
 }
@@ -139,7 +139,7 @@ int CPLAtomicAdd(volatile int* ptr, int increment)
     return *ptr;
 }
 
-int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 {
     if( *ptr == oldval )
     {
