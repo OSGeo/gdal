@@ -186,7 +186,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     CPLHTTPResult * psResult =
         CPLHTTPFetch( GOOGLE_AUTH_URL "/token", oOptions);
 
-    if (psResult == NULL)
+    if( psResult == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -206,8 +206,8 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         return NULL;
     }
 
-    if (psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL)
+    if( psResult->pabyData == NULL ||
+        psResult->pszErrBuf != NULL )
     {
         if( psResult->pszErrBuf != NULL )
             CPLDebug( "GOA2", "%s", psResult->pszErrBuf );
@@ -304,11 +304,11 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
 /* -------------------------------------------------------------------- */
     CPLHTTPResult *psResult = CPLHTTPFetch(GOOGLE_AUTH_URL "/token", oOptions);
 
-    if (psResult == NULL)
+    if( psResult == NULL )
         return NULL;
 
-    if (psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL)
+    if( psResult->pabyData == NULL ||
+        psResult->pszErrBuf != NULL )
     {
         if( psResult->pszErrBuf != NULL )
             CPLDebug( "GFT", "%s", psResult->pszErrBuf );
