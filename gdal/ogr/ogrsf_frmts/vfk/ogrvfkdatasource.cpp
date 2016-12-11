@@ -70,7 +70,7 @@ OGRVFKDataSource::~OGRVFKDataSource()
 */
 int OGRVFKDataSource::Open(const char *pszFileName, int bTestOpen)
 {
-    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly );
+    GDALOpenInfo *poOpenInfo = new GDALOpenInfo(pszFileName, GA_ReadOnly);
 
     if (poOpenInfo->fpL == NULL) {
         if (!bTestOpen)

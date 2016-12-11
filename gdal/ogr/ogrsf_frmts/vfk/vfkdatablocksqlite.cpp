@@ -1078,3 +1078,20 @@ const char *VFKDataBlockSQLite::GetKey() const
 
     return NULL;
 }
+
+/*!
+  \brief Get geometry SQL type (for geometry_columns table)
+
+  \return geometry_type as integer
+*/
+int VFKDataBlockSQLite::GetGeometrySQLType() const
+{
+    if (m_nGeometryType == wkbPolygon)
+        return 3;
+    else if (m_nGeometryType == wkbLineString)
+        return 2;
+    else if (m_nGeometryType == wkbPoint)
+        return 1;
+    
+    return 0; /* unknown geometry type */
+}
