@@ -214,7 +214,7 @@ static const sqlite3_io_methods OGRSQLiteIOMethods =
     NULL,  // xShmLock
     NULL,  // xShmBarrier
     NULL,  // xShmUnmap
-#if SQLITE_VERSION_NUMBER >= 3008002L /* perhaps older too ? */
+#if SQLITE_VERSION_NUMBER >= 3007017L /* perhaps older too ? */
     NULL,  // xFetch
     NULL,  // xUnfetch
 #endif
