@@ -69,9 +69,9 @@ static const unsigned char CPLBase64DecodeChar[256] = {
     /* a-z */
     26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,
     51,
-    /* not Base64 characters */
+    // Not Base64 characters.
     64,64,64,64,64,
-    /* not Base64 characters (upper 128 characters) */
+    // Not Base64 characters (upper 128 characters).
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
@@ -90,35 +90,44 @@ static const unsigned char CPLBase64DecodeChar[256] = {
  *
  * Returns length of decoded array or 0 on failure.
  */
-int CPLBase64DecodeInPlace(GByte* pszBase64)
+int CPLBase64DecodeInPlace( GByte* pszBase64 )
 {
-    if (pszBase64 && *pszBase64) {
+    if( pszBase64 && *pszBase64 )
+    {
         unsigned char *p = pszBase64;
         int offset_1 = 0;
         int offset_2 = 0;
 
-        /* Drop illegal chars first */
-        for ( ; pszBase64[offset_1]; ++offset_1) {
+        // Drop illegal chars first.
+        for( ; pszBase64[offset_1]; ++offset_1 )
+        {
             unsigned char c = pszBase64[offset_1];
-            if ( (CPLBase64DecodeChar[c] != 64) || (c == '=') ) {
+            if( (CPLBase64DecodeChar[c] != 64) || (c == '=') )
+            {
                 pszBase64[offset_2++] = c;
             }
         }
 
-        for (int idx = 0; idx < offset_2; idx += 4) {
+        for( int idx = 0; idx < offset_2; idx += 4 )
+        {
             unsigned char b1 = CPLBase64DecodeChar[pszBase64[idx]];
             unsigned char b2 = 0;
             unsigned char c3 = 'A';
             unsigned char c4 = 'A';
 
-            if (idx + 3 < offset_2) {
+            if( idx + 3 < offset_2 )
+            {
                 b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
                 c3 = pszBase64[idx+2];
                 c4 = pszBase64[idx+3];
-            } else if (idx + 2 < offset_2) {
+            }
+            else if( idx + 2 < offset_2 )
+            {
                 b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
                 c3 = pszBase64[idx+2];
-            } else if (idx + 1 < offset_2) {
+            }
+            else if( idx + 1 < offset_2 )
+            {
                 b2 = CPLBase64DecodeChar[pszBase64[idx+1]];
                 c3 = 'A';
             }  // Else: Use the default values.
@@ -127,16 +136,18 @@ int CPLBase64DecodeInPlace(GByte* pszBase64)
             const unsigned char b4 = CPLBase64DecodeChar[c4];
 
             *p++ = ( (b1 << 2) | (b2 >> 4) );
-            if (p - pszBase64 == offset_1)
+            if( p - pszBase64 == offset_1 )
                 break;
-            if (c3 != '=') {
+            if( c3 != '=' )
+            {
                 *p++ = ( ((b2 & 0xf) << 4) | (b3 >> 2) );
-                if (p - pszBase64 == offset_1)
+                if( p - pszBase64 == offset_1 )
                     break;
             }
-            if (c4 != '=') {
+            if( c4 != '=' )
+            {
                 *p++ = ( ((b3 & 0x3) << 6) | b4);
-                if (p - pszBase64 == offset_1)
+                if( p - pszBase64 == offset_1 )
                     break;
             }
         }
@@ -195,11 +206,13 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode) {
 
     std::string result("");
     int array3_idx = 0;
-    while (nDataLen--) {
+    while( nDataLen-- )
+    {
         charArray3[array3_idx++] = *(pabyBytesToEncode++);
 
-        if (array3_idx == kCharArray3Size) {
-            unsigned char charArray4[kCharArray4Size];
+        if( array3_idx == kCharArray3Size )
+        {
+            unsigned char charArray4[kCharArray4Size] = {};
 
             charArray4[0] = (charArray3[0] & 0xfc) >> 2;
             charArray4[1] = ((charArray3[0] & 0x03) << 4)
@@ -208,7 +221,8 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode) {
                 + ((charArray3[2] & 0xc0) >> 6);
             charArray4[3] = charArray3[2] & 0x3f;
 
-            for (int idx = 0; idx < kCharArray4Size; ++idx) {
+            for( int idx = 0; idx < kCharArray4Size; ++idx )
+            {
                 result += base64Chars[charArray4[idx]];
             }
 
@@ -216,12 +230,14 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode) {
         }
     }
 
-    if (array3_idx) {
-        for (int idx = array3_idx; idx < kCharArray3Size; ++idx) {
+    if( array3_idx )
+    {
+        for( int idx = array3_idx; idx < kCharArray3Size; ++idx )
+        {
             charArray3[idx] = '\0';
         }
 
-        unsigned char charArray4[kCharArray4Size];
+        unsigned char charArray4[kCharArray4Size] = {};
         charArray4[0] = (charArray3[0]  & 0xfc) >> 2;
         charArray4[1] = ((charArray3[0] & 0x03) << 4)
             + ((charArray3[1] & 0xf0) >> 4);
@@ -229,11 +245,12 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode) {
             + ((charArray3[2] & 0xc0) >> 6);
         charArray4[3] = charArray3[2] & 0x3f;
 
-        for (int idx = 0; idx < (array3_idx + 1); ++idx) {
+        for( int idx = 0; idx < (array3_idx + 1); ++idx )
+        {
             result += base64Chars[charArray4[idx]];
         }
 
-        while (array3_idx++ < kCharArray3Size)
+        while( array3_idx++ < kCharArray3Size )
             result += '=';
     }
 
