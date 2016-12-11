@@ -973,7 +973,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 /*! @endcond */
 
-#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
+#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP) && !defined(__INTEL_COMPILER)
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
