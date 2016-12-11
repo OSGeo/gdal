@@ -367,24 +367,24 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 /* -------------------------------------------------------------------- */
     if( Failed(
         OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
-                    (dvoid **)&nOCIType, 0, OCI_ATTR_DATA_TYPE, hError ),
+                    &nOCIType, 0, OCI_ATTR_DATA_TYPE, hError ),
         "OCIAttrGet(Type)" ) )
         return CE_Failure;
 
     if( Failed(
         OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
-                    (dvoid **)&nOCILen, 0, OCI_ATTR_DATA_SIZE, hError ),
+                    &nOCILen, 0, OCI_ATTR_DATA_SIZE, hError ),
         "OCIAttrGet(Size)" ) )
         return CE_Failure;
 
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, (dvoid **)&pszColName,
+        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &pszColName,
                     &nColLen, OCI_ATTR_NAME, hError ),
         "OCIAttrGet(Name)") )
         return CE_Failure;
 
     if( Failed(
-        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, (dvoid **)&bOCINull,
+        OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &bOCINull,
                     0, OCI_ATTR_IS_NULL, hError ),
         "OCIAttrGet(Null)") )
         return CE_Failure;
@@ -426,12 +426,12 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
             sb1  nScale;
 
             if( Failed(
-                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, (dvoid **)&byPrecision,
+                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &byPrecision,
                             0, OCI_ATTR_PRECISION, hError ),
                 "OCIAttrGet(Precision)" ) )
                 return CE_Failure;
             if( Failed(
-                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, (dvoid **)&nScale,
+                OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &nScale,
                             0, OCI_ATTR_SCALE, hError ),
                 "OCIAttrGet(Scale)") )
                 return CE_Failure;
