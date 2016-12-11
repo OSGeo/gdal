@@ -263,7 +263,7 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
     if( hCOAMutex == NULL )
     {
         hCOAMutex = CPLCreateMutex();
-        if (hCOAMutex == NULL)
+        if( hCOAMutex == NULL )
         {
             *phMutex = NULL;
             return FALSE;
@@ -316,7 +316,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     if( hCOAMutex == NULL )
     {
         hCOAMutex = CPLCreateMutex();
-        if (hCOAMutex == NULL)
+        if( hCOAMutex == NULL )
         {
             *phLock = NULL;
             return FALSE;
@@ -917,10 +917,10 @@ typedef struct
 CPLCond  *CPLCreateCond()
 {
     Win32Cond* psCond = (Win32Cond*) malloc(sizeof(Win32Cond));
-    if (psCond == NULL)
+    if( psCond == NULL )
         return NULL;
     psCond->hInternalMutex = CPLCreateMutex();
-    if (psCond->hInternalMutex == NULL)
+    if( psCond->hInternalMutex == NULL )
     {
         free(psCond);
         return NULL;
@@ -944,7 +944,7 @@ void  CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
     Win32Cond* psCond = (Win32Cond*) hCond;
 
     HANDLE hEvent = (HANDLE) CPLGetTLS(CTLS_WIN32_COND);
-    if (hEvent == NULL)
+    if( hEvent == NULL )
     {
         hEvent = CreateEvent(NULL, /* security attributes */
                              0,    /* manual reset = no */
@@ -991,7 +991,7 @@ void  CPLCondSignal( CPLCond *hCond )
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
-    if (psIter != NULL)
+    if( psIter != NULL )
     {
         SetEvent(psIter->hEvent);
         psCond->psWaiterList = psIter->psNext;
@@ -1013,7 +1013,7 @@ void  CPLCondBroadcast( CPLCond *hCond )
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
-    while (psIter != NULL)
+    while( psIter != NULL )
     {
         WaiterItem* psNext = psIter->psNext;
         SetEvent(psIter->hEvent);
@@ -1118,7 +1118,7 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 
     psInfo->pfnMain( psInfo->pAppData );
 
-    if (psInfo->hThread == NULL)
+    if( psInfo->hThread == NULL )
         CPLFree( psInfo ); /* Only for detached threads */
 
     CPLCleanupTLS();
@@ -1471,7 +1471,7 @@ static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
 {
     MutexLinkedElt* psItem = static_cast<MutexLinkedElt *>(
         malloc(sizeof(MutexLinkedElt)) );
-    if (psItem == NULL)
+    if( psItem == NULL )
     {
         fprintf(stderr, "CPLCreateMutexInternal() failed.\n");
         return NULL;
@@ -1581,7 +1581,7 @@ void CPLReinitAllMutex();  // TODO(schwehr): Put this in a header.
 void CPLReinitAllMutex()
 {
     MutexLinkedElt* psItem = psMutexList;
-    while(psItem != NULL )
+    while( psItem != NULL )
     {
         CPLInitMutex(psItem);
         psItem = psItem->psNext;
@@ -1598,7 +1598,7 @@ CPLCond *CPLCreateCond()
 {
     pthread_cond_t* pCond =
       static_cast<pthread_cond_t *>(malloc(sizeof(pthread_cond_t)));
-    if (pCond && pthread_cond_init(pCond, NULL) == 0 )
+    if( pCond && pthread_cond_init(pCond, NULL) == 0 )
         return (CPLCond*) pCond;
     fprintf(stderr, "CPLCreateCond() failed.\n");
     free(pCond);
@@ -1754,7 +1754,7 @@ static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
     if( pbMemoryErrorOccurred )
         *pbMemoryErrorOccurred = FALSE;
 
-    if ( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
+    if( pthread_once(&oTLSKeySetup, CPLMake_key) != 0 )
     {
         if( pbMemoryErrorOccurred )
         {
@@ -1833,7 +1833,7 @@ static void *CPLStdCallThreadJacket( void *pData )
 
     psInfo->pfnMain( psInfo->pAppData );
 
-    if (!psInfo->bJoinable)
+    if( !psInfo->bJoinable )
         CPLFree( psInfo );
 
     return NULL;
@@ -2278,8 +2278,9 @@ CPLLock *CPLCreateLock( CPLLockType eType )
         case LOCK_ADAPTIVE_MUTEX:
         {
             CPLMutex* hMutex = CPLCreateMutexEx(
-                (eType == LOCK_RECURSIVE_MUTEX) ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
-            if(!hMutex)
+                eType == LOCK_RECURSIVE_MUTEX
+                ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
+            if( !hMutex )
                 return NULL;
             CPLReleaseMutex(hMutex);
             CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
