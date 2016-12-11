@@ -3276,10 +3276,10 @@ static void GDALPythonFreeCStr(void* ptr, int bToFree)
 
 
 
-int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
+unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int nMembCount, VSILFILE *fp)
 {
     GUIntBig buf_size = (GUIntBig)nMembSize * nMembCount;
-    if( nMembSize < 0 || nMembCount < 0 || buf_size > 0xFFFFFFFFU )
+    if( buf_size > 0xFFFFFFFFU )
    {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big request");
         *buf = NULL;
@@ -3308,7 +3308,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyBytes_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #else
     *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
     if (*buf == NULL)
@@ -3325,7 +3325,7 @@ int wrapper_VSIFReadL( void **buf, int nMembSize, int nMembCount, VSILFILE *fp)
         _PyString_Resize(&o, nRet * nMembSize);
         *buf = o;
     }
-    return nRet;
+    return static_cast<unsigned int>(nRet);
 #endif
 }
 
@@ -3421,24 +3421,44 @@ SWIG_CanCastAsInteger(double *d, double min, double max) {
 
 
 SWIGINTERN int
-SWIG_AsVal_long (PyObject *obj, long* val)
+SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
 {
+#if PY_VERSION_HEX < 0x03000000
   if (PyInt_Check(obj)) {
-    if (val) *val = PyInt_AsLong(obj);
-    return SWIG_OK;
-  } else if (PyLong_Check(obj)) {
-    long v = PyLong_AsLong(obj);
+    long v = PyInt_AsLong(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else
+#endif
+  if (PyLong_Check(obj)) {
+    unsigned long v = PyLong_AsUnsignedLong(obj);
     if (!PyErr_Occurred()) {
       if (val) *val = v;
       return SWIG_OK;
     } else {
       PyErr_Clear();
+#if PY_VERSION_HEX >= 0x03000000
+      {
+        long v = PyLong_AsLong(obj);
+        if (!PyErr_Occurred()) {
+          if (v < 0) {
+            return SWIG_OverflowError;
+          }
+        } else {
+          PyErr_Clear();
+        }
+      }
+#endif
     }
   }
 #ifdef SWIG_PYTHON_CAST_MODE
   {
     int dispatch = 0;
-    long v = PyInt_AsLong(obj);
+    unsigned long v = PyLong_AsUnsignedLong(obj);
     if (!PyErr_Occurred()) {
       if (val) *val = v;
       return SWIG_AddCast(SWIG_OK);
@@ -3448,8 +3468,8 @@ SWIG_AsVal_long (PyObject *obj, long* val)
     if (!dispatch) {
       double d;
       int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
-      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, LONG_MIN, LONG_MAX)) {
-	if (val) *val = (long)(d);
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
 	return res;
       }
     }
@@ -3460,18 +3480,25 @@ SWIG_AsVal_long (PyObject *obj, long* val)
 
 
 SWIGINTERN int
-SWIG_AsVal_int (PyObject * obj, int *val)
+SWIG_AsVal_unsigned_SS_int (PyObject * obj, unsigned int *val)
 {
-  long v;
-  int res = SWIG_AsVal_long (obj, &v);
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
   if (SWIG_IsOK(res)) {
-    if ((v < INT_MIN || v > INT_MAX)) {
+    if ((v > UINT_MAX)) {
       return SWIG_OverflowError;
     } else {
-      if (val) *val = static_cast< int >(v);
+      if (val) *val = static_cast< unsigned int >(v);
     }
   }  
   return res;
+}
+
+
+SWIGINTERNINLINE PyObject*
+  SWIG_From_unsigned_SS_int  (unsigned int value)
+{
+  return PyInt_FromSize_t((size_t) value);
 }
 
 
@@ -3708,6 +3735,61 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
   }
 
 
+SWIGINTERN int
+SWIG_AsVal_long (PyObject *obj, long* val)
+{
+  if (PyInt_Check(obj)) {
+    if (val) *val = PyInt_AsLong(obj);
+    return SWIG_OK;
+  } else if (PyLong_Check(obj)) {
+    long v = PyLong_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      PyErr_Clear();
+    }
+  }
+#ifdef SWIG_PYTHON_CAST_MODE
+  {
+    int dispatch = 0;
+    long v = PyInt_AsLong(obj);
+    if (!PyErr_Occurred()) {
+      if (val) *val = v;
+      return SWIG_AddCast(SWIG_OK);
+    } else {
+      PyErr_Clear();
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, LONG_MIN, LONG_MAX)) {
+	if (val) *val = (long)(d);
+	return res;
+      }
+    }
+  }
+#endif
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_int (PyObject * obj, int *val)
+{
+  long v;
+  int res = SWIG_AsVal_long (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if ((v < INT_MIN || v > INT_MAX)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< int >(v);
+    }
+  }  
+  return res;
+}
+
+
 retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_SQL) {
     return CPLEscapeString(bin_string, len, scheme);
 }
@@ -3822,12 +3904,12 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 
 int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 {
-    if (nLen < size * memb)
+    if (nLen < static_cast<GIntBig>(size) * memb)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
-    return VSIFWriteL(pBuf, size, memb, fp);
+    return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 
 SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
@@ -4051,65 +4133,6 @@ SWIGINTERN void CPLVirtualMemShadow_GetAddr(CPLVirtualMemShadow *self,void **ppt
         *pdatatype = self->eBufType;
         *preadonly = self->bReadOnly;
     }
-
-SWIGINTERN int
-SWIG_AsVal_unsigned_SS_long (PyObject *obj, unsigned long *val) 
-{
-#if PY_VERSION_HEX < 0x03000000
-  if (PyInt_Check(obj)) {
-    long v = PyInt_AsLong(obj);
-    if (v >= 0) {
-      if (val) *val = v;
-      return SWIG_OK;
-    } else {
-      return SWIG_OverflowError;
-    }
-  } else
-#endif
-  if (PyLong_Check(obj)) {
-    unsigned long v = PyLong_AsUnsignedLong(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_OK;
-    } else {
-      PyErr_Clear();
-#if PY_VERSION_HEX >= 0x03000000
-      {
-        long v = PyLong_AsLong(obj);
-        if (!PyErr_Occurred()) {
-          if (v < 0) {
-            return SWIG_OverflowError;
-          }
-        } else {
-          PyErr_Clear();
-        }
-      }
-#endif
-    }
-  }
-#ifdef SWIG_PYTHON_CAST_MODE
-  {
-    int dispatch = 0;
-    unsigned long v = PyLong_AsUnsignedLong(obj);
-    if (!PyErr_Occurred()) {
-      if (val) *val = v;
-      return SWIG_AddCast(SWIG_OK);
-    } else {
-      PyErr_Clear();
-    }
-    if (!dispatch) {
-      double d;
-      int res = SWIG_AddCast(SWIG_AsVal_double (obj,&d));
-      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
-	if (val) *val = (unsigned long)(d);
-	return res;
-      }
-    }
-  }
-#endif
-  return SWIG_TypeError;
-}
-
 
 SWIGINTERNINLINE int
 SWIG_AsVal_size_t (PyObject * obj, size_t *val)
@@ -4505,7 +4528,7 @@ SWIGINTERN void GDALDatasetShadow_EndAsyncReader(GDALDatasetShadow *self,GDALAsy
   }
 SWIGINTERN CPLVirtualMemShadow *GDALDatasetShadow_GetVirtualMem(GDALDatasetShadow *self,GDALRWFlag eRWFlag,int nXOff,int nYOff,int nXSize,int nYSize,int nBufXSize,int nBufYSize,GDALDataType eBufType,int band_list,int *pband_list,int bIsBandSequential,size_t nCacheSize,size_t nPageSizeHint,char **options=NULL){
         int nPixelSpace;
-        GIntBig nBandSpace;
+        int nBandSpace;
         if( bIsBandSequential != 0 && bIsBandSequential != 1 )
             return NULL;
         if( band_list == 0 )
@@ -4518,7 +4541,7 @@ SWIGINTERN CPLVirtualMemShadow *GDALDatasetShadow_GetVirtualMem(GDALDatasetShado
         else
         {
             nBandSpace = GDALGetDataTypeSize(eBufType) / 8;
-            nPixelSpace  = nBandSpace * band_list;
+            nPixelSpace = nBandSpace * band_list;
         }
         CPLVirtualMem* vmem = GDALDatasetGetVirtualMem( self,
                                          eRWFlag,
@@ -5803,7 +5826,12 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = PyList_Size(pyList) - 2;
+    if( PyList_Size(pyList) > INT_MAX )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+        return NULL;
+    }
+    nChildCount = static_cast<int>(PyList_Size(pyList)) - 2;
     if( nChildCount < 0 )
     {
         PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
@@ -5903,22 +5931,6 @@ GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
       ds = NULL;
   }
   return (GDALDatasetShadow*) ds;
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_unsigned_SS_int (PyObject * obj, unsigned int *val)
-{
-  unsigned long v;
-  int res = SWIG_AsVal_unsigned_SS_long (obj, &v);
-  if (SWIG_IsOK(res)) {
-    if ((v > UINT_MAX)) {
-      return SWIG_OverflowError;
-    } else {
-      if (val) *val = static_cast< unsigned int >(v);
-    }
-  }  
-  return res;
 }
 
 
@@ -6398,35 +6410,35 @@ fail:
 SWIGINTERN PyObject *_wrap_VSIFReadL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   void **arg1 = (void **) 0 ;
-  int arg2 ;
-  int arg3 ;
+  unsigned int arg2 ;
+  unsigned int arg3 ;
   VSILFILE *arg4 = (VSILFILE *) 0 ;
   void *pyObject1 = NULL ;
-  int val2 ;
+  unsigned int val2 ;
   int ecode2 = 0 ;
-  int val3 ;
+  unsigned int val3 ;
   int ecode3 = 0 ;
   int res4 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  int result;
+  unsigned int result;
   
   {
     /* %typemap(in,numinputs=0) ( void **outPythonObject ) ( void *pyObject1 = NULL ) */
     arg1 = &pyObject1;
   }
   if (!PyArg_ParseTuple(args,(char *)"OOO:VSIFReadL",&obj0,&obj1,&obj2)) SWIG_fail;
-  ecode2 = SWIG_AsVal_int(obj0, &val2);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(obj0, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFReadL" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFReadL" "', argument " "2"" of type '" "unsigned int""'");
   } 
-  arg2 = static_cast< int >(val2);
-  ecode3 = SWIG_AsVal_int(obj1, &val3);
+  arg2 = static_cast< unsigned int >(val2);
+  ecode3 = SWIG_AsVal_unsigned_SS_int(obj1, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFReadL" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFReadL" "', argument " "3"" of type '" "unsigned int""'");
   } 
-  arg3 = static_cast< int >(val3);
+  arg3 = static_cast< unsigned int >(val3);
   res4 = SWIG_ConvertPtr(obj2,SWIG_as_voidptrptr(&arg4), 0, 0);
   if (!SWIG_IsOK(res4)) {
     SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFReadL" "', argument " "4"" of type '" "VSILFILE *""'"); 
@@ -6437,7 +6449,7 @@ SWIGINTERN PyObject *_wrap_VSIFReadL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (int)wrapper_VSIFReadL(arg1,arg2,arg3,arg4);
+      result = (unsigned int)wrapper_VSIFReadL(arg1,arg2,arg3,arg4);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -6449,7 +6461,7 @@ SWIGINTERN PyObject *_wrap_VSIFReadL(PyObject *SWIGUNUSEDPARM(self), PyObject *a
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  resultobj = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
   {
     /* %typemap(argout) ( void **outPythonObject ) */
     Py_XDECREF(resultobj);
@@ -31194,7 +31206,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GetUseExceptions", _wrap_GetUseExceptions, METH_VARARGS, (char *)"GetUseExceptions() -> int"},
 	 { (char *)"UseExceptions", _wrap_UseExceptions, METH_VARARGS, (char *)"UseExceptions()"},
 	 { (char *)"DontUseExceptions", _wrap_DontUseExceptions, METH_VARARGS, (char *)"DontUseExceptions()"},
-	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(int nMembSize, int nMembCount, VSILFILE * fp) -> int"},
+	 { (char *)"VSIFReadL", _wrap_VSIFReadL, METH_VARARGS, (char *)"VSIFReadL(unsigned int nMembSize, unsigned int nMembCount, VSILFILE * fp) -> unsigned int"},
 	 { (char *)"Debug", _wrap_Debug, METH_VARARGS, (char *)"Debug(char const * msg_class, char const * message)"},
 	 { (char *)"SetErrorHandler", _wrap_SetErrorHandler, METH_VARARGS, (char *)"SetErrorHandler(char const * pszCallbackName=None) -> CPLErr"},
 	 { (char *)"PushErrorHandler", _wrap_PushErrorHandler, METH_VARARGS, (char *)"PushErrorHandler(CPLErrorHandler pfnErrorHandler=0) -> CPLErr"},
