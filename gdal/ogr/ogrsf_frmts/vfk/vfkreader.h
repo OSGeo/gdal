@@ -54,8 +54,10 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 #define FID_COLUMN   "ogr_fid"
 #define GEOM_COLUMN  "geometry"
 
-#define VFK_DB_HEADER   "vfk_header"
-#define VFK_DB_TABLE    "vfk_tables"
+#define VFK_DB_HEADER_TABLE      "vfk_header"
+#define VFK_DB_TABLE             "vfk_tables"
+#define VFK_DB_GEOMETRY_TABLE    "geometry_columns"
+#define VFK_DB_SPATIAL_REF_TABLE "spatial_ref_sys"
 
 enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
 
@@ -338,6 +340,9 @@ public:
     VFKFeatureSQLite    *GetFeature( const char **, GUIntBig *, int,
                                      bool = false);
     VFKFeatureSQLiteList GetFeatures(const char **, GUIntBig *, int);
+
+    int                  GetGeometrySQLType() const;
+
 };
 
 /************************************************************************/
