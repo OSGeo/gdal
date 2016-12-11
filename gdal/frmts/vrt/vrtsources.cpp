@@ -2408,6 +2408,16 @@ CPLErr VRTComplexSource::RasterIOInternal( int nReqXOff, int nReqYOff,
     return CE_None;
 }
 
+// Explicitly instantiate template method, as it is used in another file.
+template
+CPLErr VRTComplexSource::RasterIOInternal<float>( int nReqXOff, int nReqYOff,
+                                    int nReqXSize, int nReqYSize,
+                                    void *pData, int nOutXSize, int nOutYSize,
+                                    GDALDataType eBufType,
+                                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg* psExtraArg,
+                                    GDALDataType eWrkDataType );
+
 /************************************************************************/
 /*                             GetMinimum()                             */
 /************************************************************************/
