@@ -389,7 +389,7 @@ else
     HAVE_GCC_ATOMIC_BUILTINS=no
     AC_MSG_RESULT([no])
 fi
-rm -f atomicbuiltins.* atomicbuiltins
+rm -rf atomicbuiltins.* atomicbuiltins
 
 AC_SUBST(HAVE_GCC_ATOMIC_BUILTINS,$HAVE_GCC_ATOMIC_BUILTINS)
 
@@ -410,7 +410,7 @@ else
     HAVE_GCC_BSWAP=no
     AC_MSG_RESULT([no])
 fi
-rm -f bswapbuiltins.* bswapbuiltins
+rm -rf bswapbuiltins.* bswapbuiltins
 
 AC_SUBST(HAVE_GCC_BSWAP,$HAVE_GCC_BSWAP)
 
@@ -499,7 +499,7 @@ if test "$with_sse" = "yes" -o "$with_sse" = ""; then
         CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectsse*
+    rm -rf detectsse*
 else
     AC_MSG_RESULT([no])
 fi
@@ -570,7 +570,7 @@ if test "$with_ssse3" = "yes" -o "$with_ssse3" = ""; then
         CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectssse3*
+    rm -rf detectssse3*
 else
     AC_MSG_RESULT([no])
 fi
@@ -646,7 +646,7 @@ if test "$with_avx" = "yes" -o "$with_avx" = ""; then
         CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectavx*
+    rm -rf detectavx*
 else
     AC_MSG_RESULT([no])
 fi
