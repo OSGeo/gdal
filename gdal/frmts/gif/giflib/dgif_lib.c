@@ -29,7 +29,7 @@
 #  include <sys/stat.h>
 #endif /* _MSC_VER || __MSDOS__ */
 
-#if defined(unix) || defined(__unix__) || defined(__sun__)
+#if defined(unix) || defined(__unix__) || defined(__sun__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
