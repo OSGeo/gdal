@@ -175,7 +175,7 @@ static void CPLHashSetClearInternal( CPLHashSet* set, bool bFinalize )
         CPLList* cur = set->tabList[i];
         while( cur )
         {
-            if (set->fnFreeEltFunc)
+            if( set->fnFreeEltFunc )
                 set->fnFreeEltFunc(cur->pData);
             CPLList* psNext = cur->psNext;
             if( bFinalize )
@@ -262,12 +262,12 @@ void CPLHashSetForeach( CPLHashSet* set,
                         void* user_data )
 {
     CPLAssert(set != NULL);
-    if (!fnIterFunc) return;
+    if( !fnIterFunc ) return;
 
     for( int i = 0; i < set->nAllocatedSize; i++ )
     {
         CPLList* cur = set->tabList[i];
-        while(cur)
+        while( cur )
         {
             if( !fnIterFunc(cur->pData, user_data) )
                 return;
@@ -354,7 +354,7 @@ int CPLHashSetInsert( CPLHashSet* set, void* elt )
 {
     CPLAssert(set != NULL);
     void** pElt = CPLHashSetFindPtr(set, elt);
-    if (pElt)
+    if( pElt )
     {
         if( set->fnFreeEltFunc )
             set->fnFreeEltFunc(*pElt);
@@ -373,7 +373,7 @@ int CPLHashSetInsert( CPLHashSet* set, void* elt )
 
     const unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
 #ifdef HASH_DEBUG
-    if (set->tabList[nHashVal])
+    if( set->tabList[nHashVal] )
         set->nCollisions++;
 #endif
 
@@ -435,7 +435,7 @@ bool CPLHashSetRemoveInternal( CPLHashSet* set, const void* elt,
     {
         if( set->fnEqualFunc(cur->pData, elt) )
         {
-            if (prev)
+            if( prev )
                 prev->psNext = cur->psNext;
             else
                 set->tabList[nHashVal] = cur->psNext;
@@ -547,14 +547,14 @@ int CPLHashSetEqualPointer( const void* elt1, const void* elt2 )
 
 unsigned long CPLHashSetHashStr( const void *elt )
 {
-    if (elt == NULL)
+    if( elt == NULL )
         return 0;
 
     const unsigned char* pszStr = static_cast<const unsigned char *>(elt);
     unsigned long hash = 0;
 
     int c = 0;
-    while ((c = *pszStr++) != '\0')
+    while( (c = *pszStr++) != '\0' )
         hash = c + (hash << 6) + (hash << 16) - hash;
 
     return hash;

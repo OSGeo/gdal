@@ -1389,7 +1389,7 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
             if( psNext != NULL )
             {
                 CPLXMLNode* psIter = psNode->psChild;
-                while(psIter->psNext != NULL)
+                while( psIter->psNext != NULL )
                     psIter = psIter->psNext;
                 psIter->psNext = psNext;
             }
