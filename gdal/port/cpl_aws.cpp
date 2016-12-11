@@ -94,13 +94,13 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
     for( size_t i = 0; i < osURL.size(); i++ )
     {
         char ch = osURL[i];
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+        if( (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
             (ch >= '0' && ch <= '9') ||
-            ch == '_' || ch == '-' || ch == '~' || ch == '.')
+            ch == '_' || ch == '-' || ch == '~' || ch == '.' )
         {
             osRet += ch;
         }
-        else if (ch == '/')
+        else if( ch == '/' )
         {
             if( bEncodeSlash )
                 osRet += "%2F";
@@ -540,7 +540,7 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
-        if(bSetError)
+        if( bSetError )
         {
             VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg);
         }
