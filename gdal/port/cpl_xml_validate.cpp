@@ -281,7 +281,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
                     "gml:CategoryExtentType") == 0 )
     {
         CPLXMLNode* psIter2 = psIter->psChild;
-        while(psIter2)
+        while( psIter2 )
         {
             if( psIter2->eType == CXT_Attribute &&
                 strcmp(psIter2->pszValue, "type") == 0 )

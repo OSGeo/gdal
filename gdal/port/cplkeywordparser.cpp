@@ -193,24 +193,24 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
             osValue += osWord;
             const char* pszIter = osWord.c_str();
             bool bInQuote = false;
-            while(*pszIter != '\0')
+            while( *pszIter != '\0' )
             {
-                if (*pszIter == '"')
+                if( *pszIter == '"' )
                     bInQuote = !bInQuote;
-                else if (!bInQuote)
+                else if( !bInQuote )
                 {
-                    if (*pszIter == '(')
+                    if( *pszIter == '(' )
                         nDepth ++;
-                    else if (*pszIter == ')')
+                    else if( *pszIter == ')' )
                     {
                         nDepth --;
-                        if (nDepth == 0)
+                        if( nDepth == 0 )
                             break;
                     }
                 }
                 pszIter ++;
             }
-            if (*pszIter == ')' && nDepth == 0)
+            if( *pszIter == ')' && nDepth == 0 )
                 break;
         }
     }

@@ -326,7 +326,7 @@ CPLString &CPLString::toupper()
 CPLString &CPLString::tolower()
 
 {
-    for(size_t i = 0; i < size(); i++ )
+    for( size_t i = 0; i < size(); i++ )
         (*this)[i] = (char) ::tolower( (*this)[i] );
 
     return *this;
@@ -400,13 +400,13 @@ CPLString CPLURLGetValue(const char* pszURL, const char* pszKey)
     CPLString osKey(pszKey);
     osKey += "=";
     size_t nKeyPos = CPLString(pszURL).ifind(osKey);
-    if (nKeyPos != std::string::npos && nKeyPos > 0 &&
-        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&'))
+    if( nKeyPos != std::string::npos && nKeyPos > 0 &&
+        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&') )
     {
         CPLString osValue(pszURL + nKeyPos + strlen(osKey));
         const char* pszValue = osValue.c_str();
         const char* pszSep = strchr(pszValue, '&');
-        if (pszSep)
+        if( pszSep )
         {
             osValue.resize(pszSep - pszValue);
         }
@@ -432,27 +432,27 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
                        const char* pszValue)
 {
     CPLString osURL(pszURL);
-    if (strchr(osURL, '?') == NULL)
+    if( strchr(osURL, '?') == NULL )
         osURL += "?";
     pszURL = osURL.c_str();
 
     CPLString osKey(pszKey);
     osKey += "=";
     size_t nKeyPos = osURL.ifind(osKey);
-    if (nKeyPos != std::string::npos && nKeyPos > 0 &&
-        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&'))
+    if( nKeyPos != std::string::npos && nKeyPos > 0 &&
+        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&') )
     {
         CPLString osNewURL(osURL);
         osNewURL.resize(nKeyPos);
-        if (pszValue)
+        if( pszValue )
         {
             osNewURL += osKey;
             osNewURL += pszValue;
         }
         const char* pszNext = strchr(pszURL + nKeyPos, '&');
-        if (pszNext)
+        if( pszNext )
         {
-            if (osNewURL[osNewURL.size()-1] == '&'
+            if( osNewURL[osNewURL.size()-1] == '&'
                 || osNewURL[osNewURL.size()-1] == '?' )
                 osNewURL += pszNext + 1;
             else
@@ -462,9 +462,9 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
     }
     else
     {
-        if (pszValue)
+        if( pszValue )
         {
-            if (osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?')
+            if( osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?' )
                 osURL += '&';
             osURL += osKey;
             osURL += pszValue;
