@@ -450,7 +450,7 @@ XYZDataset::XYZDataset() :
     nZIndex(-1),
     nMinTokens(0),
     nLineNum(0),
-    nDataLineNum(((GIntBig)0x7FFFFFFF) << 32 | 0xFFFFFFFF),
+    nDataLineNum(GINTBIG_MAX),
     bSameNumberOfValuesPerLine(TRUE),
     dfMinZ(0),
     dfMaxZ(0)

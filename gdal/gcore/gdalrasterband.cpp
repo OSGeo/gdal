@@ -3802,6 +3802,8 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(
         bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
 }
 
+#ifdef CPL_HAS_GINT64
+
 /************************************************************************/
 /*                         GDALUInt128                                  */
 /************************************************************************/
@@ -4639,6 +4641,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
 
 #endif // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
 
+#endif // CPL_HAS_GINT64
+
 /************************************************************************/
 /*                         ComputeStatistics()                          */
 /************************************************************************/
@@ -4884,6 +4888,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
               nSampleRate += 1;
         }
 
+#ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
         // intermediate computations. Only possible if the number of pixels
         // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
@@ -5020,6 +5025,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 "Failed to compute statistics, no valid pixels found in sampling." );
             return CE_Failure;
         }
+#endif
 
         for( int iSampleBlock = 0;
              iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
