@@ -78,16 +78,17 @@ static size_t
 CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 
 {
-    CPLHTTPResultWithLimit *psResultWithLimit = (CPLHTTPResultWithLimit *) reqInfo;
+    CPLHTTPResultWithLimit *psResultWithLimit =
+        static_cast<CPLHTTPResultWithLimit *>(reqInfo);
     CPLHTTPResult* psResult = psResultWithLimit->psResult;
 
     int nBytesToWrite = static_cast<int>(nmemb)*static_cast<int>(size);
     int nNewSize = psResult->nDataLen + nBytesToWrite + 1;
     if( nNewSize > psResult->nDataAlloc )
     {
-        psResult->nDataAlloc = (int) (nNewSize * 1.25 + 100);
-        GByte* pabyNewData = (GByte *) VSIRealloc(psResult->pabyData,
-                                                  psResult->nDataAlloc);
+        psResult->nDataAlloc = static_cast<int>(nNewSize * 1.25 + 100);
+        GByte* pabyNewData = static_cast<GByte *>(
+            VSIRealloc(psResult->pabyData, psResult->nDataAlloc));
         if( pabyNewData == NULL )
         {
             VSIFree(psResult->pabyData);
@@ -118,15 +119,19 @@ CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
 /************************************************************************/
 /*                           CPLHdrWriteFct()                           */
 /************************************************************************/
-static size_t CPLHdrWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
+static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
+                              void *reqInfo )
 {
-    CPLHTTPResult *psResult = (CPLHTTPResult *) reqInfo;
-    // copy the buffer to a char* and initialize with zeros (zero terminate as well)
-    char* pszHdr = (char*)CPLCalloc(nmemb + 1, size);
-    CPLPrintString(pszHdr, (char *)buffer, static_cast<int>(nmemb) * static_cast<int>(size));
+    CPLHTTPResult *psResult = static_cast<CPLHTTPResult *>(reqInfo);
+    // Copy  the buffer  to a  char* and  initialize with  zeros (zero
+    // terminate as well).
+    char* pszHdr = static_cast<char *>(CPLCalloc(nmemb + 1, size));
+    CPLPrintString(pszHdr, static_cast<char *>(buffer),
+                   static_cast<int>(nmemb) * static_cast<int>(size));
     char *pszKey = NULL;
     const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
-    psResult->papszHeaders = CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    psResult->papszHeaders =
+        CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
     CPLFree(pszHdr);
     CPLFree(pszKey);
     return nmemb;
@@ -195,47 +200,56 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")) )
     {
         CPLString osURL(pszURL);
-        const char* pszCustomRequest = CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
+        const char* pszCustomRequest =
+            CSLFetchNameValue( papszOptions, "CUSTOMREQUEST" );
         if( pszCustomRequest != NULL )
         {
             osURL += "&CUSTOMREQUEST=";
             osURL += pszCustomRequest;
         }
         const char* pszPost = CSLFetchNameValue( papszOptions, "POSTFIELDS" );
-        if( pszPost != NULL ) /* Hack: we append post content to filename */
+        if( pszPost != NULL ) // Hack: We append post content to filename.
         {
             osURL += "&POSTFIELDS=";
             osURL += pszPost;
         }
         vsi_l_offset nLength = 0;
-        CPLHTTPResult* psResult = (CPLHTTPResult* )CPLCalloc(1, sizeof(CPLHTTPResult));
+        CPLHTTPResult* psResult =
+            static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
         GByte* pabyData = VSIGetMemFileBuffer( osURL, &nLength, FALSE );
         if( pabyData == NULL )
         {
             CPLDebug("HTTP", "Cannot find %s", osURL.c_str());
             psResult->nStatus = 1;
-            psResult->pszErrBuf = CPLStrdup(CPLSPrintf("HTTP error code : %d", 404));
+            psResult->pszErrBuf =
+                CPLStrdup(CPLSPrintf("HTTP error code : %d", 404));
             CPLError( CE_Failure, CPLE_AppDefined, "%s", psResult->pszErrBuf );
         }
         else if( nLength != 0 )
         {
             psResult->nDataLen = static_cast<int>(nLength);
-            psResult->pabyData = (GByte*) CPLMalloc((size_t)nLength + 1);
+            psResult->pabyData = static_cast<GByte *>(
+                CPLMalloc(static_cast<size_t>(nLength) + 1));
             memcpy(psResult->pabyData, pabyData, (size_t)nLength);
             psResult->pabyData[(size_t)nLength] = 0;
         }
 
         if( psResult->pabyData != NULL &&
-            STARTS_WITH((const char*)psResult->pabyData, "Content-Type: ") )        {
-            const char* pszContentType = (const char*)psResult->pabyData + strlen("Content-type: ");
+            STARTS_WITH((const char*)psResult->pabyData, "Content-Type: ") )
+        {
+            const char* pszContentType =
+                (const char*)psResult->pabyData + strlen("Content-type: ");
             const char* pszEOL = strchr(pszContentType, '\r');
             if( pszEOL )
                 pszEOL = strchr(pszContentType, '\n');
             if( pszEOL )
             {
                 size_t nContentLength = pszEOL - pszContentType;
-                psResult->pszContentType = (char*)CPLMalloc(nContentLength + 1);
-                memcpy(psResult->pszContentType, pszContentType, nContentLength);
+                psResult->pszContentType =
+                    static_cast<char *>(CPLMalloc(nContentLength + 1));
+                memcpy(psResult->pszContentType,
+                       pszContentType,
+                       nContentLength);
                 psResult->pszContentType[nContentLength] = 0;
             }
         }
@@ -324,7 +338,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*      Setup the request.                                              */
 /* -------------------------------------------------------------------- */
     char szCurlErrBuf[CURL_ERROR_SIZE+1];
-    CPLHTTPResult *psResult;
     struct curl_slist *headers=NULL;
 
     const char* pszArobase = strchr(pszURL, '@');
@@ -344,7 +357,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLDebug( "HTTP", "Fetch(%s)", pszURL );
     }
 
-    psResult = (CPLHTTPResult *) CPLCalloc(1,sizeof(CPLHTTPResult));
+    CPLHTTPResult *psResult =
+        static_cast<CPLHTTPResult *>(CPLCalloc(1,sizeof(CPLHTTPResult)));
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
@@ -909,9 +923,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     while( true )
     {
         psResult->nMimePartCount++;
-        psResult->pasMimePart = (CPLMimePart *)
+        psResult->pasMimePart = static_cast<CPLMimePart *>(
             CPLRealloc(psResult->pasMimePart,
-                       sizeof(CPLMimePart) * psResult->nMimePartCount );
+                       sizeof(CPLMimePart) * psResult->nMimePartCount));
 
         CPLMimePart *psPart = psResult->pasMimePart+psResult->nMimePartCount-1;
 

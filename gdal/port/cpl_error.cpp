@@ -899,8 +899,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         else if( cpl_log != NULL )
         {
             size_t nPathLen = strlen(cpl_log) + 20;
-            char* pszPath
-                = static_cast<char *>( CPLMalloc(nPathLen) );
+            char* pszPath = static_cast<char *>(CPLMalloc(nPathLen));
             strcpy(pszPath, cpl_log);
 
             int i = 0;
