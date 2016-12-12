@@ -96,9 +96,9 @@ CPLStringList::CPLStringList( const CPLStringList &oOther )
 /*                             operator=()                              */
 /************************************************************************/
 
-CPLStringList &CPLStringList::operator=(const CPLStringList& oOther)
+CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 {
-    if (this != &oOther)
+    if( this != &oOther )
     {
         Assign( oOther.papszList, FALSE );
 
@@ -340,7 +340,7 @@ CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
                                             const char *pszValue )
 
 {
-    if (pszKey == NULL || pszValue==NULL)
+    if( pszKey == NULL || pszValue==NULL )
         return *this;
 
     MakeOurOwnCopy();
@@ -591,7 +591,7 @@ int CPLStringList::FindName( const char *pszKey ) const
         const int iMiddle = (iEnd + iStart) / 2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if (EQUALN(pszMiddle, pszKey, nKeyLen)
+        if( EQUALN(pszMiddle, pszKey, nKeyLen )
             && (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':') )
             return iMiddle;
 
