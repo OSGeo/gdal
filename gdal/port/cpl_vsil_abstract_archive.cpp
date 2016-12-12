@@ -303,15 +303,15 @@ static CPLString CompactFilename( const char* pszArchiveInFileNameIn )
     char* pszArchiveInFileName = CPLStrdup(pszArchiveInFileNameIn);
 
     // Replace a/../b by b and foo/a/../b by foo/b.
-    while(true)
+    while( true )
     {
         char* pszPrevDir = strstr(pszArchiveInFileName, "/../");
         if( pszPrevDir == NULL || pszPrevDir == pszArchiveInFileName )
             break;
 
         char* pszPrevSlash = pszPrevDir - 1;
-        while(pszPrevSlash != pszArchiveInFileName &&
-                *pszPrevSlash != '/')
+        while( pszPrevSlash != pszArchiveInFileName &&
+               *pszPrevSlash != '/' )
             pszPrevSlash --;
         if( pszPrevSlash == pszArchiveInFileName )
             memmove(pszArchiveInFileName,
