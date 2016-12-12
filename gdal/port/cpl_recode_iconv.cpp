@@ -87,7 +87,7 @@ char *CPLRecodeIconv( const char *pszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if ( sConv == (iconv_t)-1 )
+    if( sConv == (iconv_t)-1 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Recode from %s to %s failed with the error: \"%s\".",
@@ -109,22 +109,23 @@ char *CPLRecodeIconv( const char *pszSource,
     char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
     char *pszDstBuf = pszDestination;
 
-    while ( nSrcLen > 0 )
+    while( nSrcLen > 0 )
     {
         size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if ( nConverted == (size_t)-1 )
+        if( nConverted == (size_t)-1 )
         {
-            if ( errno == EILSEQ )
+            if( errno == EILSEQ )
             {
                 // Skip the invalid sequence in the input string.
-                if (!bHaveWarned1)
+                if( !bHaveWarned1 )
                 {
                     bHaveWarned1 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "One or several characters couldn't be converted correctly from %s to %s.\n"
-                            "This warning will not be emitted anymore",
+                             "One or several characters couldn't be converted "
+                             "correctly from %s to %s.  "
+                             "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
                 nSrcLen--;
@@ -132,7 +133,7 @@ char *CPLRecodeIconv( const char *pszSource,
                 continue;
             }
 
-            else if ( errno == E2BIG )
+            else if( errno == E2BIG )
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
@@ -188,9 +189,9 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      What is the source length.                                      */
 /* -------------------------------------------------------------------- */
-    size_t  nSrcLen = 0;
+    size_t nSrcLen = 0;
 
-    while ( pwszSource[nSrcLen] != 0 )
+    while( pwszSource[nSrcLen] != 0 )
         nSrcLen++;
 
 /* -------------------------------------------------------------------- */
@@ -200,7 +201,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /*      source is UTF16 then we need to pack down into 2 byte           */
 /*      characters before passing to iconv().                           */
 /* -------------------------------------------------------------------- */
-    int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
+    const int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
 
     if( nTargetCharWidth < 1 )
     {
@@ -230,7 +231,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
 
-    if ( sConv == (iconv_t)-1 )
+    if( sConv == (iconv_t)-1 )
     {
         CPLFree( pszIconvSrcBuf );
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -259,30 +260,31 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
     char *pszDstBuf = pszDestination;
 
-    while ( nSrcLen > 0 )
+    while( nSrcLen > 0 )
     {
-        size_t  nConverted =
+        size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if ( nConverted == (size_t)-1 )
+        if( nConverted == (size_t)-1 )
         {
-            if ( errno == EILSEQ )
+            if( errno == EILSEQ )
             {
                 // Skip the invalid sequence in the input string.
                 nSrcLen--;
                 pszSrcBuf += sizeof(wchar_t);
-                if (!bHaveWarned2)
+                if( !bHaveWarned2 )
                 {
                     bHaveWarned2 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "One or several characters couldn't be converted correctly from %s to %s.\n"
-                            "This warning will not be emitted anymore",
+                             "One or several characters couldn't be converted "
+                             "correctly from %s to %s.  "
+                             "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
                 continue;
             }
 
-            else if ( errno == E2BIG )
+            else if( errno == E2BIG )
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
