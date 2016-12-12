@@ -232,10 +232,16 @@ typedef unsigned __int64 GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
+#define CPL_HAS_GINT64 1
+
 /** Signed 64 bit integer type */
 typedef GIntBig          GInt64;
 /** Unsigned 64 bit integer type */
 typedef GUIntBig         GUInt64;
+
+#define GINT64_MIN      GINTBIG_MIN
+#define GINT64_MAX      GINTBIG_MAX
+#define GUINT64_MAX     GUINTBIG_MAX
 
 #elif HAVE_LONG_LONG
 
@@ -253,11 +259,23 @@ typedef unsigned long long GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
-// Note: we might want to use instead int64_t / uint64_t if they are available
+/*! @cond Doxygen_Suppress */
+#define CPL_HAS_GINT64 1
+/*! @endcond */
+
+/* Note: we might want to use instead int64_t / uint64_t if they are available */
+
 /** Signed 64 bit integer type */
 typedef GIntBig          GInt64;
 /** Unsigned 64 bit integer type */
 typedef GUIntBig         GUInt64;
+
+/** Minimum GInt64 value */
+#define GINT64_MIN      GINTBIG_MIN
+/** Maximum GInt64 value */
+#define GINT64_MAX      GINTBIG_MAX
+/** Minimum GUInt64 value */
+#define GUINT64_MAX     GUINTBIG_MAX
 
 #else
 
