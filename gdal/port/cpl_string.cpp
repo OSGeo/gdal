@@ -338,8 +338,8 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
         if( nLines + 1 >= nAllocatedLines )
         {
             nAllocatedLines = 16 + nAllocatedLines * 2;
-            char** papszStrListNew
-                = static_cast<char**>(
+            char** papszStrListNew =
+                static_cast<char**>(
                     VSIRealloc( papszStrList,
                                 nAllocatedLines * sizeof(char*) ) );
             if( papszStrListNew == NULL )
@@ -500,7 +500,7 @@ char **CSLInsertStrings( char **papszStrList, int nInsertAtLineNo,
     const int nDstLines = nSrcLines + nToInsert;
 
     // Allocate room for the new strings.
-    papszStrList = reinterpret_cast<char**>(
+    papszStrList = static_cast<char**>(
         CPLRealloc( papszStrList, (nDstLines+1) * sizeof(char*) ) );
 
     // Make sure the array is NULL-terminated.  It may not be if
@@ -836,7 +836,7 @@ char ** CSLTokenizeString2( const char * pszString,
     const bool bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES) != 0;
     const bool bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES) != 0;
 
-    char *pszToken = reinterpret_cast<char *>( CPLCalloc(10,1) );
+    char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
     int nTokenMax = 10;
 
     while( *pszString != '\0' )
@@ -947,8 +947,7 @@ char ** CSLTokenizeString2( const char * pszString,
     {
         // Prefer to return empty lists as a pointer to
         // a null pointer since some client code might depend on this.
-        oRetList.Assign(
-            reinterpret_cast<char **>( CPLCalloc(sizeof(char*),1) ) );
+        oRetList.Assign(static_cast<char **>(CPLCalloc(sizeof(char*), 1)));
     }
 
     return oRetList.StealList();
@@ -1752,7 +1751,7 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
 
             if( ppszKey != NULL )
             {
-                *ppszKey = reinterpret_cast<char *>( CPLMalloc(i+1) );
+                *ppszKey = static_cast<char *>(CPLMalloc(i + 1));
                 strncpy( *ppszKey, pszNameValue, i );
                 (*ppszKey)[i] = '\0';
                 while( i > 0 &&
@@ -2185,7 +2184,7 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 
     if( iOut == nLength + 1 )
         return pszOutput;
-    return reinterpret_cast<char*>(CPLRealloc( pszOutput, iOut ));
+    return static_cast<char*>(CPLRealloc( pszOutput, iOut));
 }
 
 /************************************************************************/
@@ -2212,11 +2211,10 @@ char *CPLEscapeString( const char *pszInput, int nLength,
 char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 
 {
-    int iOut=0;
+    int iOut = 0;
 
     // TODO: Why times 4?
-    char *pszOutput = reinterpret_cast<char *>(
-        CPLMalloc(4 * strlen(pszInput) + 1) );
+    char *pszOutput = static_cast<char *>(CPLMalloc(4 * strlen(pszInput) + 1));
     pszOutput[0] = '\0';
 
     if( nScheme == CPLES_BackslashQuotable )
@@ -2429,7 +2427,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
 char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 
 {
-    char *pszHex = reinterpret_cast<char *>( CPLMalloc(nBytes * 2 + 1 ) );
+    char *pszHex = static_cast<char *>(CPLMalloc(nBytes * 2 + 1));
     pszHex[nBytes*2] = '\0';
 
     static const char achHex[] = "0123456789ABCDEF";
