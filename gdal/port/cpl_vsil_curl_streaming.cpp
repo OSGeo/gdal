@@ -116,7 +116,7 @@ void RingBuffer::Write(void* pBuffer, size_t nSize)
     size_t nEndOffset = (nOffset + nLength) % nCapacity;
     const size_t nSz = std::min(nSize, nCapacity - nEndOffset);
     memcpy(pabyBuffer + nEndOffset, pBuffer, nSz);
-    if (nSz < nSize)
+    if( nSz < nSize )
         memcpy(pabyBuffer, (GByte*)pBuffer + nSz, nSize - nSz);
 
     nLength += nSize;
@@ -126,11 +126,11 @@ void RingBuffer::Read(void* pBuffer, size_t nSize)
 {
     CPLAssert(nSize <= nLength);
 
-    if (pBuffer)
+    if( pBuffer )
     {
         const size_t nSz = std::min(nSize, nCapacity - nOffset);
         memcpy(pBuffer, pabyBuffer + nOffset, nSz);
-        if (nSz < nSize)
+        if( nSz < nSize )
             memcpy((GByte*)pBuffer + nSz, pabyBuffer, nSize - nSz);
     }
 
@@ -351,7 +351,7 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     StopDownload();
 
     CPLFree(m_pszURL);
-    if (hCurlHandle != NULL)
+    if( hCurlHandle != NULL )
         curl_easy_cleanup(hCurlHandle);
 
     CPLFree(pCachedData);
@@ -412,11 +412,11 @@ int VSICurlStreamingHandle::Seek( vsi_l_offset nOffset, int nWhence )
         ReleaseMutex();
     }
 
-    if (nWhence == SEEK_SET)
+    if( nWhence == SEEK_SET )
     {
         curOffset = nOffset;
     }
-    else if (nWhence == SEEK_CUR)
+    else if( nWhence == SEEK_CUR )
     {
         curOffset = curOffset + nOffset;
     }
@@ -453,24 +453,25 @@ static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t coun
 
     char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer,
                                           psStruct->nSize + nSize + 1);
-    if (pNewBuffer)
+    if( pNewBuffer )
     {
         psStruct->pBuffer = pNewBuffer;
         memcpy(psStruct->pBuffer + psStruct->nSize, buffer, nSize);
         psStruct->pBuffer[psStruct->nSize + nSize] = '\0';
-        if (psStruct->bIsHTTP && psStruct->bIsInHeader)
+        if( psStruct->bIsHTTP && psStruct->bIsInHeader )
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
-            if (STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
-                STARTS_WITH_CI(pszLine, "HTTP/1.1 "))
+            if( STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
+                STARTS_WITH_CI(pszLine, "HTTP/1.1 ") )
                 psStruct->nHTTPCode = atoi(pszLine + 9);
 
-            if (pszLine[0] == '\r' || pszLine[0] == '\n')
+            if( pszLine[0] == '\r' || pszLine[0] == '\n' )
             {
-                if (psStruct->bDownloadHeaderOnly)
+                if( psStruct->bDownloadHeaderOnly )
                 {
                     /* If moved permanently/temporarily, go on. Otherwise stop now*/
-                    if (!(psStruct->nHTTPCode == 301 || psStruct->nHTTPCode == 302))
+                    if( !(psStruct->nHTTPCode == 301 ||
+                          psStruct->nHTTPCode == 302) )
                         return 0;
                 }
                 else
@@ -498,7 +499,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     WriteFuncStruct sWriteFuncHeaderData;
 
     AcquireMutex();
-    if (bHasComputedFileSize)
+    if( bHasComputedFileSize )
     {
         vsi_l_offset nRet = fileSize;
         ReleaseMutex();
@@ -509,7 +510,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 #if LIBCURL_VERSION_NUM < 0x070B00
     /* Curl 7.10.X doesn't manage to unset the CURLOPT_RANGE that would have been */
     /* previously set, so we have to reinit the connection handle */
-    if (hCurlHandle)
+    if( hCurlHandle )
     {
         curl_easy_cleanup(hCurlHandle);
         hCurlHandle = curl_easy_init();
@@ -526,7 +527,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     /* http://a.tiles.mapbox.com/v3/ doesn't accept HEAD, so let's start a GET */
     /* and interrupt is as soon as the header is found */
     CPLString osVerb;
-    if (strstr(m_pszURL, ".tiles.mapbox.com/") != NULL)
+    if( strstr(m_pszURL, ".tiles.mapbox.com/") != NULL )
     {
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hLocalHandle, CURLOPT_HEADERFUNCTION, VSICurlStreamingHandleWriteFuncForHeader);
@@ -570,27 +571,27 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     eExists = EXIST_UNKNOWN;
     bHasComputedFileSize = TRUE;
 
-    if (STARTS_WITH(m_pszURL, "ftp"))
+    if( STARTS_WITH(m_pszURL, "ftp") )
     {
-        if (sWriteFuncData.pBuffer != NULL &&
-            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: "))
+        if( sWriteFuncData.pBuffer != NULL &&
+            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: ") )
         {
             const char* pszBuffer = sWriteFuncData.pBuffer + strlen("Content-Length: ");
             eExists = EXIST_YES;
             fileSize = CPLScanUIntBig(pszBuffer, static_cast<int>(sWriteFuncData.nSize - strlen("Content-Length: ")));
-            if (ENABLE_DEBUG)
+            if( ENABLE_DEBUG )
                 CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
                         m_pszURL, fileSize);
         }
     }
 
-    if (eExists != EXIST_YES)
+    if( eExists != EXIST_YES )
     {
         CURLcode code = curl_easy_getinfo(hLocalHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize );
-        if (code == 0)
+        if( code == 0 )
         {
             eExists = EXIST_YES;
-            if (dfSize < 0)
+            if( dfSize < 0 )
                 fileSize = 0;
             else
                 fileSize = (GUIntBig)dfSize;
@@ -605,7 +606,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
         long response_code = 0;
         curl_easy_getinfo(hLocalHandle, CURLINFO_HTTP_CODE, &response_code);
-        if (response_code != 200)
+        if( response_code != 200 )
         {
             eExists = EXIST_NO;
             fileSize = 0;
@@ -615,16 +616,16 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         /* curl will retry with an URL with slash added */
         char *pszEffectiveURL = NULL;
         curl_easy_getinfo(hLocalHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
-        if (pszEffectiveURL != NULL &&
+        if( pszEffectiveURL != NULL &&
             strncmp(m_pszURL, pszEffectiveURL, strlen(m_pszURL)) == 0 &&
-            pszEffectiveURL[strlen(m_pszURL)] == '/')
+            pszEffectiveURL[strlen(m_pszURL)] == '/' )
         {
             eExists = EXIST_YES;
             fileSize = 0;
             bIsDirectory = TRUE;
         }
 
-        if (ENABLE_DEBUG)
+        if( ENABLE_DEBUG )
             CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
                     m_pszURL, fileSize, (int)response_code);
     }
@@ -646,7 +647,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     vsi_l_offset nRet = fileSize;
     ReleaseMutex();
 
-    if (hCurlHandle == NULL)
+    if( hCurlHandle == NULL )
         hCurlHandle = hLocalHandle;
     else
         curl_easy_cleanup(hLocalHandle);
@@ -660,7 +661,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
 int VSICurlStreamingHandle::Exists()
 {
-    if (eExists == EXIST_UNKNOWN)
+    if( eExists == EXIST_UNKNOWN )
     {
         /* Consider that only the files whose extension ends up with one that is */
         /* listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server */
@@ -670,23 +671,24 @@ int VSICurlStreamingHandle::Exists()
         /* gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl_streaming/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif */
         const char* pszAllowedExtensions =
             CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
-        if (pszAllowedExtensions)
+        if( pszAllowedExtensions )
         {
             char** papszExtensions = CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
             size_t nURLLen = strlen(m_pszURL);
             bool bFound = false;
-            for(int i=0;papszExtensions[i] != NULL;i++)
+            for( int i = 0; papszExtensions[i] != NULL; i++ )
             {
                 size_t nExtensionLen = strlen(papszExtensions[i]);
-                if (nURLLen > nExtensionLen &&
-                    EQUAL(m_pszURL + nURLLen - nExtensionLen, papszExtensions[i]))
+                if( nURLLen > nExtensionLen &&
+                    EQUAL(m_pszURL + nURLLen - nExtensionLen,
+                          papszExtensions[i]) )
                 {
                     bFound = true;
                     break;
                 }
             }
 
-            if (!bFound)
+            if( !bFound )
             {
                 eExists = EXIST_NO;
                 fileSize = 0;
@@ -740,7 +742,7 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t
     size_t nSize = count * nmemb;
     nBodySize += nSize;
 
-    if (ENABLE_DEBUG)
+    if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Receiving %d bytes...", (int)nSize);
 
     if( bHasCandidateFileSize && bCanTrustCandidateFileSize && !bHasComputedFileSize )
@@ -749,38 +751,38 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t
         CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->fileSize = fileSize = nCandidateFileSize;
         cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
-        if (ENABLE_DEBUG)
+        if( ENABLE_DEBUG )
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
         m_poFS->ReleaseMutex();
     }
 
     AcquireMutex();
-    if (eExists == EXIST_UNKNOWN)
+    if( eExists == EXIST_UNKNOWN )
     {
         m_poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->eExists = eExists = EXIST_YES;
         m_poFS->ReleaseMutex();
     }
-    else if (eExists == EXIST_NO && StopReceivingBytesOnError() )
+    else if( eExists == EXIST_NO && StopReceivingBytesOnError() )
     {
         ReleaseMutex();
         return 0;
     }
 
-    while(true)
+    while( true )
     {
         size_t nFree = oRingBuffer.GetCapacity() - oRingBuffer.GetSize();
-        if (nSize <= nFree)
+        if( nSize <= nFree )
         {
             oRingBuffer.Write(buffer, nSize);
 
             /* Signal to the consumer that we have added bytes to the buffer */
             CPLCondSignal(hCondProducer);
 
-            if (bAskDownloadEnd)
+            if( bAskDownloadEnd )
             {
-                if (ENABLE_DEBUG)
+                if( ENABLE_DEBUG )
                     CPLDebug("VSICURL", "Download interruption asked");
 
                 ReleaseMutex();
@@ -797,17 +799,19 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t
             /* Signal to the consumer that we have added bytes to the buffer */
             CPLCondSignal(hCondProducer);
 
-            if (ENABLE_DEBUG)
-                CPLDebug("VSICURL", "Waiting for reader to consume some bytes...");
+            if( ENABLE_DEBUG )
+                CPLDebug("VSICURL",
+                         "Waiting for reader to consume some bytes...");
 
-            while(oRingBuffer.GetSize() == oRingBuffer.GetCapacity() && !bAskDownloadEnd)
+            while( oRingBuffer.GetSize() == oRingBuffer.GetCapacity() &&
+                   !bAskDownloadEnd )
             {
                 CPLCondWait(hCondConsumer, hRingBufferMutex);
             }
 
-            if (bAskDownloadEnd)
+            if( bAskDownloadEnd )
             {
-                if (ENABLE_DEBUG)
+                if( ENABLE_DEBUG )
                     CPLDebug("VSICURL", "Download interruption asked");
 
                 ReleaseMutex();
@@ -825,9 +829,12 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count, size_t
 /*                 VSICurlStreamingHandleReceivedBytes()                */
 /************************************************************************/
 
-static size_t VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count,
+                                                  size_t nmemb, void *req)
 {
-    return ((VSICurlStreamingHandle*)req)->ReceivedBytes((GByte*)buffer, count, nmemb);
+    return
+        ((VSICurlStreamingHandle*)req)->
+            ReceivedBytes((GByte*)buffer, count, nmemb);
 }
 
 /************************************************************************/
@@ -836,22 +843,24 @@ static size_t VSICurlStreamingHandleReceivedBytes(void *buffer, size_t count, si
 
 #define HEADER_SIZE 32768
 
-size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, size_t nmemb)
+size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
+                                                    size_t nmemb )
 {
     size_t nSize = count * nmemb;
-    if (ENABLE_DEBUG)
+    if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Receiving %d bytes for header...", (int)nSize);
 
     /* Reset buffer if we have followed link after a redirect */
-    if (nSize >=9 && InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302) &&
+    if( nSize >=9 && InterpretRedirect() &&
+        (nHTTPCode == 301 || nHTTPCode == 302) &&
         (STARTS_WITH_CI((const char*)buffer, "HTTP/1.0 ") ||
-         STARTS_WITH_CI((const char*)buffer, "HTTP/1.1 ")))
+         STARTS_WITH_CI((const char*)buffer, "HTTP/1.1 ")) )
     {
         nHeaderSize = 0;
         nHTTPCode = 0;
     }
 
-    if (nHeaderSize < HEADER_SIZE)
+    if( nHeaderSize < HEADER_SIZE )
     {
         const size_t nSz = std::min(nSize, HEADER_SIZE - nHeaderSize);
         memcpy(pabyHeaderData + nHeaderSize, buffer, nSz);
@@ -862,13 +871,13 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
 
         AcquireMutex();
 
-        if (eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
+        if( eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
             strchr((const char*)pabyHeaderData, '\n') != NULL &&
             (STARTS_WITH_CI((const char*)pabyHeaderData, "HTTP/1.0 ") ||
-                STARTS_WITH_CI((const char*)pabyHeaderData, "HTTP/1.1 ")))
+                STARTS_WITH_CI((const char*)pabyHeaderData, "HTTP/1.1 ")) )
         {
             nHTTPCode = atoi((const char*)pabyHeaderData + 9);
-            if (ENABLE_DEBUG)
+            if( ENABLE_DEBUG )
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
             /* If moved permanently/temporarily, go on */
@@ -881,7 +890,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
             }
         }
 
-        if ( !(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) && !bHasComputedFileSize)
+        if( !(InterpretRedirect() && (nHTTPCode == 301 || nHTTPCode == 302)) &&
+            !bHasComputedFileSize )
         {
             /* Caution: when gzip compression is enabled, the content-length is the compressed */
             /* size, which we are not interested in, so we must not take it into account. */
@@ -892,9 +902,13 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
             {
                 const char* pszVal = pszContentLength + strlen("Content-Length: ");
                 bHasCandidateFileSize = TRUE;
-                nCandidateFileSize = CPLScanUIntBig(pszVal, static_cast<int>(pszEndOfLine - pszVal));
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "Has found candidate file size = " CPL_FRMT_GUIB, nCandidateFileSize);
+                nCandidateFileSize =
+                    CPLScanUIntBig(pszVal,
+                                   static_cast<int>(pszEndOfLine - pszVal));
+                if( ENABLE_DEBUG )
+                    CPLDebug("VSICURL",
+                             "Has found candidate file size = " CPL_FRMT_GUIB,
+                             nCandidateFileSize);
             }
 
             const char* pszContentEncoding = strstr((const char*)pabyHeaderData, "Content-Encoding: ");
@@ -904,8 +918,10 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count, 
                 const char* pszVal = pszContentEncoding + strlen("Content-Encoding: ");
                 if( STARTS_WITH(pszVal, "gzip") )
                 {
-                    if (ENABLE_DEBUG)
-                        CPLDebug("VSICURL", "GZip compression enabled --> cannot trust candidate file size");
+                    if( ENABLE_DEBUG )
+                        CPLDebug("VSICURL",
+                                 "GZip compression enabled --> "
+                                 "cannot trust candidate file size");
                     bCanTrustCandidateFileSize = FALSE;
                 }
             }
@@ -939,7 +955,7 @@ void VSICurlStreamingHandle::DownloadInThread()
 
     static bool bHasCheckVersion = false;
     static bool bSupportGZip = false;
-    if (!bHasCheckVersion)
+    if( !bHasCheckVersion )
     {
         bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
         bHasCheckVersion = true;
@@ -950,7 +966,7 @@ void VSICurlStreamingHandle::DownloadInThread()
         curl_easy_setopt(hCurlHandle, CURLOPT_ENCODING, "gzip");
     }
 
-    if (pabyHeaderData == NULL)
+    if( pabyHeaderData == NULL )
         pabyHeaderData = (GByte*) CPLMalloc(HEADER_SIZE + 1);
     nHeaderSize = 0;
     nBodySize = 0;
@@ -976,13 +992,13 @@ void VSICurlStreamingHandle::DownloadInThread()
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
 
     AcquireMutex();
-    if (!bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize)
+    if( !bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize )
     {
         m_poFS->AcquireMutex();
         CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
         cachedFileProp->fileSize = fileSize = nBodySize;
         cachedFileProp->bHasComputedFileSize = bHasComputedFileSize = TRUE;
-        if (ENABLE_DEBUG)
+        if( ENABLE_DEBUG )
             CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
         m_poFS->ReleaseMutex();
     }
@@ -1006,15 +1022,15 @@ static void VSICurlDownloadInThread(void* pArg)
 
 void VSICurlStreamingHandle::StartDownload()
 {
-    if (bDownloadInProgress || bDownloadStopped)
+    if( bDownloadInProgress || bDownloadStopped )
         return;
 
-    //if (ENABLE_DEBUG)
+    // if( ENABLE_DEBUG )
     {
         CPLDebug("VSICURL", "Start download for %s", m_pszURL);
     }
 
-    if (hCurlHandle == NULL)
+    if( hCurlHandle == NULL )
         hCurlHandle = curl_easy_init();
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
@@ -1028,9 +1044,9 @@ void VSICurlStreamingHandle::StartDownload()
 
 void VSICurlStreamingHandle::StopDownload()
 {
-    if (hThread)
+    if( hThread )
     {
-        //if (ENABLE_DEBUG)
+        // if( ENABLE_DEBUG )
         {
             CPLDebug("VSICURL", "Stop download for %s", m_pszURL);
         }
