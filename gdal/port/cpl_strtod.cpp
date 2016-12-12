@@ -157,20 +157,20 @@ double CPLAtofM( const char *nptr )
 /*                      CPLReplacePointByLocalePoint()                  */
 /************************************************************************/
 
-static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
+static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
 {
 #if defined(__ANDROID__)
     static char byPoint = 0;
-    if (byPoint == 0)
+    if( byPoint == 0 )
     {
         char szBuf[16];
         snprintf(szBuf, sizeof(szBuf), "%.1f", 1.0);
         byPoint = szBuf[1];
     }
-    if (point != byPoint)
+    if( point != byPoint )
     {
         const char* pszPoint = strchr(pszNumber, point);
-        if (pszPoint)
+        if( pszPoint )
         {
             char* pszNew = CPLStrdup(pszNumber);
             pszNew[pszPoint - pszNumber] = byPoint;
@@ -179,17 +179,17 @@ static char* CPLReplacePointByLocalePoint(const char* pszNumber, char point)
     }
 #else  // ndef __ANDROID__
     struct lconv *poLconv = localeconv();
-    if ( poLconv
-         && poLconv->decimal_point
-         && poLconv->decimal_point[0] != '\0' )
+    if( poLconv
+        && poLconv->decimal_point
+        && poLconv->decimal_point[0] != '\0' )
     {
         char byPoint = poLconv->decimal_point[0];
 
-        if (point != byPoint)
+        if( point != byPoint )
         {
             const char* pszLocalePoint = strchr(pszNumber, byPoint);
             const char* pszPoint = strchr(pszNumber, point);
-            if (pszPoint || pszLocalePoint)
+            if( pszPoint || pszLocalePoint )
             {
                 char* pszNew = CPLStrdup(pszNumber);
                 if( pszLocalePoint )
@@ -231,10 +231,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     while( *nptr == ' ' )
         nptr ++;
 
-    if (nptr[0] == '-')
+    if( nptr[0] == '-' )
     {
-        if (strcmp(nptr, "-1.#QNAN") == 0 ||
-            strcmp(nptr, "-1.#IND") == 0)
+        if( strcmp(nptr, "-1.#QNAN") == 0 ||
+            strcmp(nptr, "-1.#IND") == 0 )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             // While it is possible on some platforms to flip the sign
@@ -243,16 +243,16 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             return std::numeric_limits<double>::quiet_NaN();
         }
 
-        if (strcmp(nptr,"-inf") == 0 ||
-            STARTS_WITH_CI(nptr, "-1.#INF"))
+        if( strcmp(nptr,"-inf") == 0 ||
+            STARTS_WITH_CI(nptr, "-1.#INF") )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return -std::numeric_limits<double>::infinity();
         }
     }
-    else if (nptr[0] == '1')
+    else if( nptr[0] == '1' )
     {
-        if (strcmp(nptr, "1.#QNAN") == 0)
+        if( strcmp(nptr, "1.#QNAN") == 0 )
         {
             if( endptr ) *endptr = (char*)nptr + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();
@@ -263,12 +263,12 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             return std::numeric_limits<double>::infinity();
         }
     }
-    else if (nptr[0] == 'i' && strcmp(nptr,"inf") == 0)
+    else if( nptr[0] == 'i' && strcmp(nptr,"inf") == 0 )
     {
         if( endptr ) *endptr = (char*)nptr + strlen(nptr);
         return std::numeric_limits<double>::infinity();
     }
-    else if (nptr[0] == 'n' && strcmp(nptr,"nan") == 0)
+    else if( nptr[0] == 'n' && strcmp(nptr,"nan") == 0 )
     {
         if( endptr ) *endptr = (char*)nptr + strlen(nptr);
         return std::numeric_limits<double>::quiet_NaN();
@@ -285,10 +285,10 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     const double dfValue = strtod( pszNumber, endptr );
     const int nError = errno;
 
-    if ( endptr )
+    if( endptr )
         *endptr = (char *)nptr + (*endptr - pszNumber);
 
-    if (pszNumber != (char*) nptr)
+    if( pszNumber != (char*) nptr )
         CPLFree( pszNumber );
 
     errno = nError;
@@ -355,10 +355,10 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
     double dfValue = strtof( pszNumber, endptr );
     const int nError = errno;
 
-    if ( endptr )
+    if( endptr )
         *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if (pszNumber != nptr)
+    if( pszNumber != nptr )
         CPLFree( pszNumber );
 
     errno = nError;
