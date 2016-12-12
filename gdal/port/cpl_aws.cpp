@@ -496,6 +496,8 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osCanonicalQueryString += CPLAWSURLEncode(oIter->second);
     }
 
+    const CPLString osHost(m_bUseVirtualHosting
+        ? CPLString(m_osBucket + "." + m_osAWSS3Endpoint) : m_osAWSS3Endpoint);
     const CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
         m_osSecretAccessKey,
         m_osAccessKeyId,
@@ -503,8 +505,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         m_osAWSRegion,
         "s3",
         osVerb,
-        m_bUseVirtualHosting
-        ? m_osBucket + "." + m_osAWSS3Endpoint : m_osAWSS3Endpoint,
+        osHost,
         m_bUseVirtualHosting
         ? ("/" + m_osObjectKey).c_str() :
         ("/" + m_osBucket + "/" + m_osObjectKey).c_str(),
