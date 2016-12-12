@@ -1342,15 +1342,45 @@ StatBuf_swigregister(StatBuf)
 
 
 def VSIStatL(*args):
-  """VSIStatL(char const * utf8_path, int nFlags=0) -> int"""
+  """
+  VSIStatL(char const * utf8_path, int nFlags=0) -> int
+  Get filesystem object info.
+
+  Fetches status information about a filesystem object (file, directory, etc).
+  The returned information is placed in the VSIStatBufL structure.
+  For portability, only use the st_size (size in bytes) and st_mode (file type).
+  This method is similar to VSIStat(), but will work on large files on systems where this requires special calls."""
   return _gdal.VSIStatL(*args)
 
 def VSIFOpenL(*args):
-  """VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE *"""
+  """
+  VSIFOpenL(char const * utf8_path, char const * pszMode) -> VSILFILE *
+  Open file.
+  This function opens a file with the desired access. Large files (larger than 2GB) should be supported.
+  Binary access is always implied and the "b" does not need to be included in the pszAccess string.
+  Note that the "VSILFILE *" returned since GDAL 1.8.0 by this function is NOT a standard C library FILE *,
+  and cannot be used with any functions other than the "VSI*L" family of functions. They aren't "real" FILE objects.
+  On windows it is possible to define the configuration option GDAL_FILE_IS_UTF8 to have pszFilename treated as being
+  in the local encoding instead of UTF-8, restoring the pre-1.8.0 behavior of VSIFOpenL().
+  This method goes through the VSIFileHandler virtualization and may work on unusual filesystems such as in memory.
+  Analog of the POSIX fopen() function. 
+  """
   return _gdal.VSIFOpenL(*args)
 
 def VSIFOpenExL(*args):
-  """VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *"""
+  """
+  VSIFOpenExL(char const * utf8_path, char const * pszMode, int bSetError) -> VSILFILE *
+  Open file.
+  This function opens a file with the desired access. Large files (larger than 2GB) should be supported.
+  Binary access is always implied and the "b" does not need to be included in the pszAccess string.
+  Note that the "VSILFILE *" returned by this function is NOT a standard C library FILE *, and cannot be used
+  with any functions other than the "VSI*L" family of functions. They aren't "real" FILE objects.
+  On windows it is possible to define the configuration option GDAL_FILE_IS_UTF8 to have pszFilename
+  treated as being in the local encoding instead of UTF-8, restoring the pre-1.8.0 behavior of VSIFOpenL().
+  This method goes through the VSIFileHandler virtualization and may work on unusual filesystems such as in memory.
+  Analog of the POSIX fopen() function.
+
+  """
   return _gdal.VSIFOpenExL(*args)
 
 def VSIFCloseL(*args):
