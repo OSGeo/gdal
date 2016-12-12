@@ -216,6 +216,8 @@ static bool CPLVirtualMemManagerInit();
 /*                           fprintfstderr()                            */
 /************************************************************************/
 
+// TODO(schwehr): Add a comment as to why this is needed.  Can this be
+// replaced with one of the standard functions or a CPL funtion?
 static void fprintfstderr(const char* fmt, ...)
 {
     char buffer[80];
@@ -608,10 +610,12 @@ void* CPLVirtualMemGetPageToFill(CPLVirtualMemVMA* ctxt, void* start_page_addr)
 /************************************************************************/
 
 static
-void CPLVirtualMemAddPage(CPLVirtualMemVMA* ctxt, void* target_addr, void* pPageToFill,
-                       OpType opType, pthread_t hRequesterThread)
+void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
+                           void* pPageToFill,
+                           OpType opType, pthread_t hRequesterThread )
 {
-    int iPage = static_cast<int>(((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+    const int iPage = static_cast<int>(
+       ((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
     if( ctxt->nLRUSize == ctxt->nCacheMaxSizeInPages )
     {
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE

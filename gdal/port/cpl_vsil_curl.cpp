@@ -3934,7 +3934,8 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
     }
     else
     {
-        return VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+        return
+            VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
     }
 }
 
