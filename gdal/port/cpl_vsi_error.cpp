@@ -84,7 +84,8 @@ static VSIErrorContext *VSIGetErrorContext()
     {
         psCtx = static_cast<VSIErrorContext *>(
           VSICalloc( sizeof(VSIErrorContext), 1) );
-        if (psCtx == NULL) {
+        if( psCtx == NULL )
+        {
             fprintf(stderr, /*ok*/
                     "Out of memory attempting to record a VSI error.\n");
             return NULL;
@@ -267,7 +268,7 @@ int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
                                        CPLErrorNum eDefaultErrorNo )
 {
     const int err = VSIGetLastErrorNo();
-    switch(err)
+    switch( err )
     {
         case VSIE_None:
             return FALSE;
