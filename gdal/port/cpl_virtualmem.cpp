@@ -216,8 +216,13 @@ static bool CPLVirtualMemManagerInit();
 /*                           fprintfstderr()                            */
 /************************************************************************/
 
-// TODO(schwehr): Add a comment as to why this is needed.  Can this be
-// replaced with one of the standard functions or a CPL funtion?
+// This function may be called from signal handlers where most functions
+// from the C library are unsafe to be called. fprintf() is clearly one
+// of those functions (see
+// http://stackoverflow.com/questions/4554129/linux-glibc-can-i-use-fprintf-in-signal-handler)
+// vsnprintf() is *probably* safer with respect to that (but there is no
+// guarantee though)
+// write() is async-signal-safe 
 static void fprintfstderr(const char* fmt, ...)
 {
     char buffer[80];
@@ -228,13 +233,14 @@ static void fprintfstderr(const char* fmt, ...)
     int offset = 0;
     while( true )
     {
-        int ret = write(2, buffer + offset, strlen(buffer + offset));
+        const size_t nSizeToWrite = strlen(buffer + offset);
+        int ret = static_cast<int>(write(2, buffer + offset, nSizeToWrite));
         if( ret < 0 && errno == EINTR )
         {
         }
         else
         {
-            if( ret == static_cast<int>(strlen(buffer + offset)) )
+            if( ret == static_cast<int>(nSizeToWrite) )
                 break;
             offset += ret;
         }
@@ -714,7 +720,7 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
                 if( ctxt->pahThreads[i] != hRequesterThread )
                 {
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
-                    fprintfstderr("stopping thread %X\n", ctxt->pahThreads[i]); */
+                    fprintfstderr("stopping thread %X\n", ctxt->pahThreads[i]);
 #endif
                     IGNORE_OR_ASSERT_IN_DEBUG(
                         pthread_kill( ctxt->pahThreads[i], SIGUSR1 ) == 0);
