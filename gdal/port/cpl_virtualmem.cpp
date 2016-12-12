@@ -224,11 +224,12 @@ static void fprintfstderr(const char* fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
     int offset = 0;
-    while(true)
+    while( true )
     {
         int ret = write(2, buffer + offset, strlen(buffer + offset));
         if( ret < 0 && errno == EINTR )
-            ;
+        {
+        }
         else
         {
             if( ret == static_cast<int>(strlen(buffer + offset)) )
@@ -329,7 +330,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
             {
                 nPageSize >>= 1;
                 nbits ++;
-            } while(nPageSize > 0);
+            } while( nPageSize > 0 );
             nPageSize = (size_t)1 << (nbits - 1);
             if( nPageSize < (size_t)nPageSizeHint )
                 nPageSize <<= 1;
@@ -356,7 +357,7 @@ CPLVirtualMem* CPLVirtualMemNew(size_t nSize,
     }
 
     size_t nCacheMaxSizeInPages = 0;
-    while(true)
+    while( true )
     {
         /* /proc/self/maps must not have more than 65K lines */
         nCacheMaxSizeInPages = (nCacheSize + 2 * nPageSize - 1) / nPageSize;
@@ -689,7 +690,7 @@ void CPLVirtualMemAddPage(CPLVirtualMemVMA* ctxt, void* target_addr, void* pPage
         IGNORE_OR_ASSERT_IN_DEBUG(pRet == target_addr);
 
 #else
-        if (ctxt->nThreads > 1 )
+        if( ctxt->nThreads > 1 )
         {
             /* Pause threads that share this mem view */
             CPLAtomicInc(&nWaitHelperThread);
@@ -811,12 +812,12 @@ static OpType CPLVirtualMemGetOpTypeImm(GByte val_rip)
 /* the page in writable mode if the mapping allows it */
 
 #if defined(__x86_64__) || defined(__i386__)
-static OpType CPLVirtualMemGetOpType(const GByte* rip)
+static OpType CPLVirtualMemGetOpType( const GByte* rip )
 {
     OpType opType = OP_UNKNOWN;
 
 #if defined(__x86_64__) || defined(__i386__)
-    switch(rip[0])
+    switch( rip[0] )
     {
         case 0x00: /* add %al,(%rax) */
         case 0x01: /* add %eax,(%rax) */
@@ -838,7 +839,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
 
         case 0x0f:
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0xb6: /* movzbl (%rax),%eax */
                 case 0xb7: /* movzwl (%rax),%eax */
@@ -889,7 +890,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
             break;
         case 0x40:
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x00: /* add %spl,(%rax) */
                     opType = OP_STORE;
@@ -923,7 +924,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
         case 0x46: /* reg=%r8b/%r8w, X = %rax,%r8,1 */
         case 0x47: /* reg=%r8b/%r8w, X = %r8,%r8,1 */
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x00: /* add regb,(X) */
                 case 0x01: /* add regl,(X) */
@@ -935,7 +936,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                     break;
                 case 0x0f:
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0xb6: /* movzbl (X),regl */
                         case 0xb7: /* movzwl (X),regl */
@@ -1003,7 +1004,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
         case 0x4e: /* reg=%r8, X=%rax,%r8,1 */
         case 0x4f: /* reg=%r8, X=%r8,%r8,1 */
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x01: /* add reg,(X) */
                     opType = OP_STORE;
@@ -1020,7 +1021,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                     break;
                 case 0x0f:
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0xc3: /* movnti reg,(X) */
                             opType = OP_STORE;
@@ -1091,7 +1092,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
 #endif
         case 0x66:
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x01: /* add %ax,(%rax) */
                     opType = OP_STORE;
@@ -1101,7 +1102,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                     break;
                 case 0x0f:
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x2e: /* ucomisd (%rax),%xmm0 */
                             opType = OP_LOAD;
@@ -1141,7 +1142,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                 case 0x46: /* reg = %r8w (or %xmm8), X = %rax,%r8,1 */
                 case 0x47: /* reg = %r8w (or %xmm8), X = %r8,%r8,1 */
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x01: /* add reg,(X) */
                             opType = OP_STORE;
@@ -1151,7 +1152,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                             break;
                         case 0x0f:
                         {
-                            switch(rip[3])
+                            switch( rip[3] )
                             {
                                 case 0x2e: /* ucomisd (X),reg */
                                     opType = OP_LOAD;
@@ -1285,11 +1286,11 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
         }
         case 0xf2: /* SSE 2 */
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x0f:
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x10: /* movsd (%rax),%xmm0 */
                             opType = OP_LOAD;
@@ -1323,11 +1324,11 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                 case 0x46: /* reg=%xmm8, X=%rax,%r8,1 */
                 case 0x47: /* reg=%xmm8, X=%r8,%r8,1 */
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x0f:
                         {
-                            switch(rip[3])
+                            switch( rip[3] )
                             {
                                 case 0x10: /* movsd (X),reg */
                                     opType = OP_LOAD;
@@ -1365,11 +1366,11 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
         }
         case 0xf3:
         {
-            switch(rip[1])
+            switch( rip[1] )
             {
                 case 0x0f: /* SSE 2 */
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x10: /* movss (%rax),%xmm0 */
                             opType = OP_LOAD;
@@ -1397,11 +1398,11 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                 case 0x46: /* reg=%xmm8, X = %rax,%r8,1 */
                 case 0x47: /* reg=%xmm8, X = %r8,%r8,1 */
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0x0f: /* SSE 2 */
                         {
-                            switch(rip[3])
+                            switch( rip[3] )
                             {
                                 case 0x10: /* movss (X),reg */
                                     opType = OP_LOAD;
@@ -1427,7 +1428,7 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
                 }
                 case 0x48:
                 {
-                    switch(rip[2])
+                    switch( rip[2] )
                     {
                         case 0xa5: /* rep movsq %ds:(%rsi),%es:(%rdi) */
                             opType = OP_MOVS_RSI_RDI;
@@ -1471,13 +1472,14 @@ static OpType CPLVirtualMemGetOpType(const GByte* rip)
 /*                    CPLVirtualMemManagerPinAddrInternal()             */
 /************************************************************************/
 
-static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* msg)
+static int
+CPLVirtualMemManagerPinAddrInternal( CPLVirtualMemMsgToWorkerThread* msg )
 {
     char wait_ready;
     char response_buf[4];
 
     /* Wait for the helper thread to be ready to process another request */
-    while(true)
+    while( true )
     {
         const int ret =
             static_cast<int>(read( pVirtualMemManager->pipefd_wait_thread[0],
@@ -1499,7 +1501,7 @@ static int CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread* m
     IGNORE_OR_ASSERT_IN_DEBUG(nRetWrite == sizeof(*msg));
 
     /* Wait that the helper thread has fixed the fault */
-    while(true)
+    while( true )
     {
         const int ret =
             static_cast<int>(read(pVirtualMemManager->pipefd_from_thread[0],
@@ -1532,15 +1534,15 @@ void CPLVirtualMemPin(CPLVirtualMem* ctxt,
         return;
 
     CPLVirtualMemMsgToWorkerThread msg;
-    size_t i = 0, n;
 
     memset(&msg, 0, sizeof(msg));
     msg.hRequesterThread = pthread_self();
     msg.opType = (bWriteOp) ? OP_STORE : OP_LOAD;
 
     char* pBase = (char*)ALIGN_DOWN(pAddr, ctxt->nPageSize);
-    n = ((char*)pAddr - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
-    for(i=0; i<n; i++)
+    const size_t n =
+        ((char*)pAddr - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
+    for( size_t i = 0; i < n; i++ )
     {
         msg.pFaultAddr = (char*) pBase + i * ctxt->nPageSize;
         CPLVirtualMemManagerPinAddrInternal(&msg);
@@ -1647,11 +1649,9 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
 /*                      CPLVirtualMemManagerThread()                    */
 /************************************************************************/
 
-static void CPLVirtualMemManagerThread(void* unused_param)
+static void CPLVirtualMemManagerThread( void* /* unused_param */ )
 {
-    (void)unused_param;
-
-    while(true)
+    while( true )
     {
         char i_m_ready = 1;
         CPLVirtualMemVMA* ctxt = NULL;
@@ -1881,8 +1881,10 @@ void CPLVirtualMemManagerTerminate(void)
     CPLJoinThread(pVirtualMemManager->hHelperThread);
 
     /* Cleanup everything */
-    while(pVirtualMemManager->nVirtualMemCount > 0)
-        CPLVirtualMemFree((CPLVirtualMem*)pVirtualMemManager->pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]);
+    while( pVirtualMemManager->nVirtualMemCount > 0 )
+        CPLVirtualMemFree(
+            (CPLVirtualMem*)pVirtualMemManager->
+                pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]);
     CPLFree(pVirtualMemManager->pasVirtualMem);
 
     close(pVirtualMemManager->pipefd_to_thread[0]);
