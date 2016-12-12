@@ -247,7 +247,6 @@ CPLSpawnedProcess* CPLSpawnAsync(
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
     CPLString osCommandLine;
-    CPLSpawnedProcess* p = NULL;
 
     if( papszArgv == NULL )
     {
@@ -349,14 +348,18 @@ CPLSpawnedProcess* CPLSpawnAsync(
     if( bCreateErrorPipe )
         CloseHandle(pipe_err[OUT_FOR_PARENT]);
 
-    p = (CPLSpawnedProcess*)CPLMalloc(sizeof(CPLSpawnedProcess));
-    p->hProcess = piProcInfo.hProcess;
-    p->nProcessId = piProcInfo.dwProcessId;
-    p->hThread = piProcInfo.hThread;
-    p->fin = pipe_out[IN_FOR_PARENT];
-    p->fout = pipe_in[OUT_FOR_PARENT];
-    p->ferr = pipe_err[IN_FOR_PARENT];
-    return p;
+    {
+        CPLSpawnedProcess* p = static_cast<CPLSpawnedProcess *>(
+            CPLMalloc(sizeof(CPLSpawnedProcess)));
+        p->hProcess = piProcInfo.hProcess;
+        p->nProcessId = piProcInfo.dwProcessId;
+        p->hThread = piProcInfo.hThread;
+        p->fin = pipe_out[IN_FOR_PARENT];
+        p->fout = pipe_in[OUT_FOR_PARENT];
+        p->ferr = pipe_err[IN_FOR_PARENT];
+
+        return p;
+    }
 
 err_pipe:
     CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
@@ -698,7 +701,18 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
             if( bHasActions )
                 posix_spawn_file_actions_destroy(&actions);
             CPLError(CE_Failure, CPLE_AppDefined, "posix_spawnp() failed");
-            goto err;
+            CSLDestroy(papszArgvDup);
+            for( int i = 0; i < 2; i++ )
+            {
+                if( pipe_in[i] >= 0 )
+                    close(pipe_in[i]);
+                if( pipe_out[i] >= 0 )
+                    close(pipe_out[i]);
+                if( pipe_err[i] >= 0 )
+                    close(pipe_err[i]);
+            }
+
+            return NULL;
         }
 
         CSLDestroy(papszArgvDup);
@@ -728,7 +742,8 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
     }
 #endif // #ifdef HAVE_POSIX_SPAWNP
 
-    pid_t pid;
+    pid_t pid = 0;
+
 #if defined(HAVE_VFORK) && !defined(HAVE_POSIX_SPAWNP)
     if( papszArgv != NULL && !bDup2In && !bDup2Out && !bDup2Err )
     {
@@ -808,13 +823,9 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
         p->ferr = pipe_err[IN_FOR_PARENT];
         return p;
     }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
-        goto err;
-    }
 
-err:
+    CPLError(CE_Failure, CPLE_AppDefined, "Fork failed");
+
     CSLDestroy(papszArgvDup);
     for( int i = 0; i < 2; i++ )
     {
