@@ -1254,7 +1254,7 @@ const char *CSVGetField( const char * pszFilename,
 typedef struct
 {
     char szPath[512];
-    bool  bCSVFinderInitialized;
+    bool bCSVFinderInitialized;
 } DefaultCSVFileNameTLS;
 
 const char * GDALDefaultCSVFilename( const char *pszBasename )
