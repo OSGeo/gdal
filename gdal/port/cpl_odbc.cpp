@@ -98,14 +98,14 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             CPLAssert( NULL != pszEnvHome );
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
-            // Set ODBCSYSINI variable pointing to HOME location
+            // Set ODBCSYSINI variable pointing to HOME location.
             const size_t nLen = strlen(pszEnvHome) + 12;
-            pszEnvIni = (char *)CPLMalloc( nLen );
+            pszEnvIni = static_cast<char *>(CPLMalloc(nLen));
 
             snprintf( pszEnvIni, nLen, "ODBCSYSINI=%s", pszEnvHome );
-            /* a 'man putenv' shows that we cannot free pszEnvIni */
-            /* because the pointer is used directly by putenv in old glibc */
-            /* coverity[tainted_string] */
+            // A 'man putenv' shows that we cannot free pszEnvIni
+            // because the pointer is used directly by putenv in old glibc.
+            // coverity[tainted_string]
             putenv( pszEnvIni );
 
             CPLDebug( "ODBC", "%s", pszEnvIni );
@@ -574,23 +574,32 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate per column information.                                */
 /* -------------------------------------------------------------------- */
-    m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (CPL_SQLLEN *) CPLCalloc(sizeof(CPL_SQLLEN),(m_nColCount+1));
+    m_papszColNames =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
+    m_papszColValues =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
+    m_panColValueLengths = static_cast<CPL_SQLLEN *>(
+        CPLCalloc(sizeof(CPL_SQLLEN), m_nColCount + 1));
 
-    m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
-    m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_panColType =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_papszColTypeNames =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
+    m_panColSize =
+        static_cast<CPL_SQLULEN *>(CPLCalloc(sizeof(CPL_SQLULEN), m_nColCount));
+    m_panColPrecision =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_panColNullable =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_papszColColumnDef =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
 /* -------------------------------------------------------------------- */
     for( SQLUSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        SQLCHAR     szName[256];
+        SQLCHAR  szName[256] = {};
         SQLSMALLINT nNameLength = 0;
 
         if( Failed( SQLDescribeCol(m_hStmt, iCol+1,
@@ -938,7 +947,8 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                         cbDataLen -= 2; // trimming the extra terminators
             }
 
-            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
+            m_papszColValues[iCol] =
+                static_cast<char *>(CPLMalloc(cbDataLen + 2));
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
             m_papszColValues[iCol][cbDataLen+1] = '\0';
@@ -980,9 +990,9 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     nChunkLen = cbDataLen;
                 szWrkData[nChunkLen] = '\0';
 
-                m_papszColValues[iCol] = (char *)
+                m_papszColValues[iCol] = static_cast<char *>(
                     CPLRealloc( m_papszColValues[iCol],
-                                m_panColValueLengths[iCol] + nChunkLen + 2 );
+                                m_panColValueLengths[iCol] + nChunkLen + 2 ));
                 memcpy( m_papszColValues[iCol] + m_panColValueLengths[iCol],
                         szWrkData, nChunkLen );
                 m_panColValueLengths[iCol] += nChunkLen;
@@ -993,7 +1003,8 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         else
         {
             m_panColValueLengths[iCol] = cbDataLen;
-            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+2);
+            m_papszColValues[iCol] =
+                static_cast<char *>(CPLMalloc(cbDataLen + 2));
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
             m_papszColValues[iCol][cbDataLen+1] = '\0';
@@ -1187,12 +1198,13 @@ void CPLODBCStatement::Append( const char *pszText )
         m_nStatementMax = (m_nStatementLen + nTextLen) * 2 + 100;
         if( m_pszStatement == NULL )
         {
-            m_pszStatement = (char *) VSIMalloc(m_nStatementMax);
+            m_pszStatement = static_cast<char *>(VSIMalloc(m_nStatementMax));
             m_pszStatement[0] = '\0';
         }
         else
         {
-            m_pszStatement = (char *) CPLRealloc(m_pszStatement, m_nStatementMax);
+            m_pszStatement = static_cast<char *>(
+                CPLRealloc(m_pszStatement, m_nStatementMax));
         }
     }
 
@@ -1217,10 +1229,11 @@ void CPLODBCStatement::Append( const char *pszText )
 void CPLODBCStatement::AppendEscaped( const char *pszText )
 
 {
-    size_t  iIn, iOut ,nTextLen = strlen(pszText);
-    char    *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 1);
+    const size_t nTextLen = strlen(pszText);
+    char *pszEscapedText = static_cast<char *>(VSIMalloc(nTextLen*2 + 1));
 
-    for( iIn = 0, iOut = 0; iIn < nTextLen; iIn++ )
+    size_t iOut = 0;  // Used after for.
+    for( size_t iIn = 0; iIn < nTextLen; iIn++ )
     {
         switch( pszText[iIn] )
         {
@@ -1461,15 +1474,23 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
     m_nColCount = 500;
 
-    m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_papszColNames =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
+    m_papszColValues =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
 
-    m_panColType = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
-    m_panColSize = (CPL_SQLULEN *) CPLCalloc(sizeof(CPL_SQLULEN),m_nColCount);
-    m_panColPrecision = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_panColNullable = (SQLSMALLINT *) CPLCalloc(sizeof(SQLSMALLINT),m_nColCount);
-    m_papszColColumnDef = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_panColType =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_papszColTypeNames =
+        static_cast<char **>(CPLCalloc(sizeof(char *), m_nColCount + 1));
+    m_panColSize =
+        static_cast<CPL_SQLULEN *>(CPLCalloc(sizeof(CPL_SQLULEN), m_nColCount));
+    m_panColPrecision =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_panColNullable =
+        static_cast<SQLSMALLINT *>(CPLCalloc(sizeof(SQLSMALLINT), m_nColCount));
+    m_papszColColumnDef =
+        static_cast<char **>(CPLCalloc(sizeof(char *),m_nColCount + 1));
 
 /* -------------------------------------------------------------------- */
 /*      Establish columns to use for key information.                   */
