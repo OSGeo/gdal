@@ -537,21 +537,7 @@ int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
 
     CPLAssert( NULL != pszGeoData_ );
 
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
-        if( fp == NULL )
-        {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Update not supported because file is not writable");
-            return FALSE;
-        }
-        else
-        {
-            bUpdatable_ = true;
-        }
-        VSIFCloseL(fp);
-    }
+    bUpdatable_ = ( poOpenInfo->eAccess == GA_Update );
 
     return TRUE;
 }
