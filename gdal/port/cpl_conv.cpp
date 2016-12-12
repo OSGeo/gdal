@@ -171,7 +171,7 @@ void *CPLMalloc( size_t nSize )
     {
         /* coverity[dead_error_begin] */
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLMalloc(%ld): Silly size requested.\n",
+                  "CPLMalloc(%ld): Silly size requested.",
                   static_cast<long>(nSize) );
         return NULL;
     }
@@ -186,7 +186,7 @@ void *CPLMalloc( size_t nSize )
         }
 
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLMalloc(): Out of memory allocating %ld bytes.\n",
+                  "CPLMalloc(): Out of memory allocating %ld bytes.",
                   static_cast<long>(nSize) );
     }
 
@@ -229,7 +229,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     {
         /* coverity[dead_error_begin] */
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLRealloc(%ld): Silly size requested.\n",
+                  "CPLRealloc(%ld): Silly size requested.",
                   static_cast<long>( nNewSize ) );
         return NULL;
     }
@@ -254,7 +254,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         }
         else
             CPLError( CE_Fatal, CPLE_OutOfMemory,
-                      "CPLRealloc(): Out of memory allocating %ld bytes.\n",
+                      "CPLRealloc(): Out of memory allocating %ld bytes.",
                       static_cast<long>( nNewSize ) );
     }
 
@@ -289,12 +289,12 @@ char *CPLStrdup( const char * pszString )
     if( pszString == NULL )
         pszString = "";
 
-    char *pszReturn
-        = reinterpret_cast<char *>( CPLMalloc(strlen(pszString) + 1 ) );
+    char *pszReturn =
+        static_cast<char *>( CPLMalloc(strlen(pszString) + 1 ) );
     if( pszReturn == NULL )
     {
         CPLError( CE_Fatal, CPLE_OutOfMemory,
-                  "CPLStrdup(): Out of memory allocating %ld bytes.\n",
+                  "CPLStrdup(): Out of memory allocating %ld bytes.",
                   static_cast<long>( strlen(pszString) ) );
     }
 
@@ -495,7 +495,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
 
     if( pnAlloc == NULL )
     {
-        pnAlloc = reinterpret_cast<GUInt32 *>( VSI_MALLOC_VERBOSE(200) );
+        pnAlloc = static_cast<GUInt32 *>( VSI_MALLOC_VERBOSE(200) );
         if( pnAlloc == NULL )
             return NULL;
         *pnAlloc = 196;
@@ -518,7 +518,7 @@ static char *CPLReadLineBuffer( int nRequiredSize )
             return NULL;
         }
 
-        GUInt32* pnAllocNew = reinterpret_cast<GUInt32 *>(
+        GUInt32* pnAllocNew = static_cast<GUInt32 *>(
             VSI_REALLOC_VERBOSE( pnAlloc, nNewSize ) );
         if( pnAllocNew == NULL )
         {
@@ -823,7 +823,7 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( !nMaxLength )
         return CPLStrdup( "" );
 
-    char *pszBuffer = reinterpret_cast<char *>( CPLMalloc( nMaxLength + 1 ) );
+    char *pszBuffer = static_cast<char *>(CPLMalloc( nMaxLength + 1 ));
     if( !pszBuffer )
         return NULL;
 
@@ -1125,13 +1125,13 @@ void *CPLScanPointer( const char *pszString, int nMaxLength )
 
 double CPLScanDouble( const char *pszString, int nMaxLength )
 {
-    char        szValue[32];
-    char        *pszValue;
+    char szValue[32] = {};
+    char *pszValue = NULL;
 
     if( nMaxLength + 1 < static_cast<int>( sizeof(szValue) ) )
         pszValue = szValue;
     else
-        pszValue = reinterpret_cast<char *>( CPLMalloc( nMaxLength + 1 ) );
+        pszValue = static_cast<char *>(CPLMalloc( nMaxLength + 1 ));
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -1457,11 +1457,11 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, const char *pszLocale )
 {
-    char *pszTemp = reinterpret_cast<char *>(
-        CPLMalloc( (nMaxLen + 1) * sizeof(char) ) );
+    char *pszTemp = static_cast<char *>(
+        CPLMalloc((nMaxLen + 1) * sizeof(char)));
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
-    char        *pszCurLocale = NULL;
+    char *pszCurLocale = NULL;
 
     if( pszLocale || EQUAL( pszLocale, "" ) )
     {
@@ -2184,10 +2184,10 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 /* -------------------------------------------------------------------- */
     nSharedFileCount++;
 
-    pasSharedFileList = reinterpret_cast<CPLSharedFileInfo *>(
+    pasSharedFileList = static_cast<CPLSharedFileInfo *>(
         CPLRealloc( (void *) pasSharedFileList,
                     sizeof(CPLSharedFileInfo) * nSharedFileCount ) );
-    pasSharedFileListExtra = reinterpret_cast<CPLSharedFileInfoExtra *>(
+    pasSharedFileListExtra = static_cast<CPLSharedFileInfoExtra *>(
         CPLRealloc( (void *) pasSharedFileListExtra,
                     sizeof(CPLSharedFileInfoExtra) * nSharedFileCount ) );
 
@@ -2466,8 +2466,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /*      Prepare buffer.                                                 */
 /* -------------------------------------------------------------------- */
     const size_t nBufferSize = 1024 * 1024;
-    GByte *pabyBuffer
-        = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nBufferSize) );
+    GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBufferSize));
     if( pabyBuffer == NULL )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpNew ));
@@ -2522,9 +2521,10 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
     }
     if( VSIStatL( pszNewPath, &sStatBuf ) == 0 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "It seems that a file system object called '%s' already exists.",
-                  pszNewPath );
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "It seems that a file system object called '%s' already exists.",
+            pszNewPath);
 
         return -1;
     }
