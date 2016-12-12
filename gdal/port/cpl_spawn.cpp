@@ -240,14 +240,6 @@ CPLSpawnedProcess* CPLSpawnAsync(
     int bCreateErrorPipe,
     char** /* papszOptions */)
 {
-    HANDLE pipe_in[2] = {NULL, NULL};
-    HANDLE pipe_out[2] = {NULL, NULL};
-    HANDLE pipe_err[2] = {NULL, NULL};
-    SECURITY_ATTRIBUTES saAttr;
-    PROCESS_INFORMATION piProcInfo;
-    STARTUPINFO siStartInfo;
-    CPLString osCommandLine;
-
     if( papszArgv == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -255,10 +247,16 @@ CPLSpawnedProcess* CPLSpawnAsync(
         return NULL;
     }
 
+    SECURITY_ATTRIBUTES saAttr;
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = NULL;
 
+    // TODO(schwehr): Move these to where they are used after gotos are removed.
+    HANDLE pipe_out[2] = { NULL, NULL };
+    HANDLE pipe_err[2] = { NULL, NULL };
+
+    HANDLE pipe_in[2] = { NULL, NULL };
     if( bCreateInputPipe )
     {
         if( !CreatePipe(&pipe_in[IN_FOR_PARENT], &pipe_in[OUT_FOR_PARENT],
@@ -292,7 +290,9 @@ CPLSpawnedProcess* CPLSpawnAsync(
             goto err_pipe;
     }
 
+    PROCESS_INFORMATION piProcInfo;
     memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
+    STARTUPINFO siStartInfo;
     memset(&siStartInfo, 0, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.hStdInput =
@@ -306,6 +306,7 @@ CPLSpawnedProcess* CPLSpawnAsync(
         ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
+    CPLString osCommandLine;
     for( int i = 0; papszArgv[i] != NULL; i++ )
     {
         if( i > 0 )
