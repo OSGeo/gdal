@@ -255,6 +255,7 @@ CPLSpawnedProcess* CPLSpawnAsync(
     // TODO(schwehr): Move these to where they are used after gotos are removed.
     HANDLE pipe_out[2] = { NULL, NULL };
     HANDLE pipe_err[2] = { NULL, NULL };
+    CPLString osCommandLine;
 
     HANDLE pipe_in[2] = { NULL, NULL };
     if( bCreateInputPipe )
@@ -306,7 +307,6 @@ CPLSpawnedProcess* CPLSpawnAsync(
         ? pipe_err[OUT_FOR_PARENT] : GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-    CPLString osCommandLine;
     for( int i = 0; papszArgv[i] != NULL; i++ )
     {
         if( i > 0 )
