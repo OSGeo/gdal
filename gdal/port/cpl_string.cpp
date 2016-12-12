@@ -87,7 +87,7 @@ char **CSLAddString( char **papszStrList, const char *pszNewString )
 /** Same as CSLAddString() but may return NULL in case of (memory) failure */
 char **CSLAddStringMayFail( char **papszStrList, const char *pszNewString )
 {
-    if (pszNewString == NULL)
+    if( pszNewString == NULL )
         return papszStrList;    /* Nothing to do!*/
 
     char* pszDup = VSI_STRDUP_VERBOSE(pszNewString);
@@ -98,7 +98,7 @@ char **CSLAddStringMayFail( char **papszStrList, const char *pszNewString )
     char** papszStrListNew = NULL;
     int nItems = 0;
 
-    if (papszStrList == NULL)
+    if( papszStrList == NULL )
         papszStrListNew = static_cast<char**>(
             VSI_CALLOC_VERBOSE( 2, sizeof(char*) ) );
     else
@@ -142,12 +142,12 @@ char **CSLAddStringMayFail( char **papszStrList, const char *pszNewString )
  */
 int CSLCount( const char * const *papszStrList )
 {
-    if (!papszStrList)
+    if( !papszStrList )
         return 0;
 
     int nItems=0;
 
-    while(*papszStrList != NULL)
+    while( *papszStrList != NULL )
     {
         ++nItems;
         ++papszStrList;
@@ -342,7 +342,7 @@ char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
                 = static_cast<char**>(
                     VSIRealloc( papszStrList,
                                 nAllocatedLines * sizeof(char*) ) );
-            if (papszStrListNew == NULL)
+            if( papszStrListNew == NULL )
             {
                 CPL_IGNORE_RET_VAL( VSIFCloseL(fp) );
                 CPLReadLineL( NULL );
@@ -810,7 +810,7 @@ char ** CSLTokenizeStringComplex( const char * pszString,
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS );
 
     for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; ++i )
-        printf( "arg %d: '%s'", papszTokens[i] );
+        printf( "arg %d: '%s'", papszTokens[i] );  // ok
 
     CSLDestroy( papszTokens );
 \endcode
@@ -916,9 +916,9 @@ char ** CSLTokenizeString2( const char * pszString,
          */
         if( !bInString && bStripEndSpaces )
         {
-            while ( nTokenLen
-                    && isspace(
-                        static_cast<unsigned char>( pszToken[nTokenLen - 1]) ) )
+            while( nTokenLen
+                   && isspace(
+                       static_cast<unsigned char>( pszToken[nTokenLen - 1]) ) )
                 nTokenLen--;
         }
 
@@ -1794,7 +1794,7 @@ char **CSLFetchNameValueMultiple( char **papszStrList, const char *pszName )
 
     const size_t nLen = strlen(pszName);
     char **papszValues = NULL;
-    while(*papszStrList != NULL)
+    while( *papszStrList != NULL )
     {
         if( EQUALN(*papszStrList, pszName, nLen)
             && ( (*papszStrList)[nLen] == '=' ||
@@ -1871,7 +1871,7 @@ char **CSLSetNameValue( char **papszList,
 
     const size_t nLen = strlen(pszName);
     char **papszPtr = papszList;
-    while(papszPtr && *papszPtr != NULL)
+    while( papszPtr && *papszPtr != NULL )
     {
         if( EQUALN(*papszPtr, pszName, nLen)
             && ( (*papszPtr)[nLen] == '=' ||
@@ -2278,7 +2278,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 3;
 
-                while(true)
+                while( true )
                 {
                     ch = pszInput[iIn++];
                     if( ch >= 'a' && ch <= 'f' )
@@ -2305,7 +2305,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
                 wchar_t anVal[2] = {0 , 0};
                 iIn += 2;
 
-                while(true)
+                while( true )
                 {
                     ch = pszInput[iIn ++];
                     if( ch >= '0' && ch <= '9' )
@@ -2551,7 +2551,7 @@ CPLValueType CPLGetValueType( const char* pszValue )
     const char* pszAfterExponent = NULL;
     bool bFoundMantissa = false;
 
-    for(; *pszValue != '\0'; ++pszValue )
+    for( ; *pszValue != '\0'; ++pszValue )
     {
         if( isdigit( *pszValue))
         {
@@ -2661,7 +2661,7 @@ size_t CPLStrlcpy(char* pszDest, const char* pszSrc, size_t nDestSize)
     const char* pszSrcIter = pszSrc;
 
     --nDestSize;
-    while(nDestSize != 0 && *pszSrcIter != '\0')
+    while( nDestSize != 0 && *pszSrcIter != '\0' )
     {
         *pszDestIter = *pszSrcIter;
         ++pszDestIter;
@@ -2713,7 +2713,7 @@ size_t CPLStrlcat( char* pszDest, const char* pszSrc, size_t nDestSize )
 {
     char* pszDestIter = pszDest;
 
-    while(nDestSize != 0 && *pszDestIter != '\0')
+    while( nDestSize != 0 && *pszDestIter != '\0' )
     {
         ++pszDestIter;
         --nDestSize;
