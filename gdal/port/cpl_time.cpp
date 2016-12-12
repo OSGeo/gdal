@@ -89,7 +89,8 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
         return pRet;
     }
 
-    while (rem < 0) {
+    while( rem < 0 )
+    {
         rem += SECSPERDAY;
         --days;
     }
@@ -103,16 +104,16 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     */
     pRet->tm_sec = static_cast<int>( rem % SECSPERMIN );
     pRet->tm_wday = static_cast<int>( (EPOCH_WDAY + days) % DAYSPERWEEK );
-    if (pRet->tm_wday < 0)
+    if( pRet->tm_wday < 0 )
         pRet->tm_wday += DAYSPERWEEK;
 
     int y = EPOCH_YEAR;
     int yleap = 0;
-    while ( days < 0
-            || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] ) )
+    while( days < 0
+           || days >= static_cast<GIntBig>( year_lengths[yleap = isleap(y)] ) )
     {
         int newy = y + static_cast<int>( days / DAYSPERNYEAR );
-        if (days < 0)
+        if( days < 0 )
             --newy;
         days -= (newy - y) * DAYSPERNYEAR +
             LEAPS_THROUGH_END_OF(newy - 1) -
@@ -124,7 +125,7 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
     pRet->tm_yday = static_cast<int>( days );
     const int* ip = mon_lengths[yleap];
 
-    for (pRet->tm_mon = 0;
+    for( pRet->tm_mon = 0;
          days >= static_cast<GIntBig>( ip[pRet->tm_mon] );
          ++(pRet->tm_mon) )
         days = days - static_cast<GIntBig>( ip[pRet->tm_mon] );
@@ -152,10 +153,10 @@ struct tm * CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm* pRet)
  *         GIntBig, or -1 if the time cannot be represented.
  */
 
-GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
+GIntBig CPLYMDHMSToUnixTime( const struct tm *brokendowntime )
 {
 
-  if (brokendowntime->tm_mon < 0 || brokendowntime->tm_mon >= 12)
+  if( brokendowntime->tm_mon < 0 || brokendowntime->tm_mon >= 12 )
     return -1;
 
   /* Number of days of the current month */
