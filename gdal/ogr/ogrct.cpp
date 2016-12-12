@@ -979,6 +979,18 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
                              int *pabSuccess )
 
 {
+    // Workaround potential bugs in proj.4 such as
+    // the one of https://github.com/OSGeo/proj.4/commit/
+    //                              bc7453d1a75aab05bdff2c51ed78c908e3efa3cd
+    for( int i = 0; i < nCount; i++ )
+    {
+        if( CPLIsNan(x[i]) || CPLIsNan(y[i]) )
+        {
+            x[i] = HUGE_VAL;
+            y[i] = HUGE_VAL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Potentially transform to radians.                               */
 /* -------------------------------------------------------------------- */
