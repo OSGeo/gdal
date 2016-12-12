@@ -123,7 +123,7 @@ void CPL_SHA256Init(CPL_SHA256Context * sc)
         sc->bufferLength = 0U;
 }
 
-static GUInt32 burnStack(int size)
+static GUInt32 burnStack( int size )
 {
         GByte buf[128];
         GUInt32 ret = 0;
@@ -132,8 +132,8 @@ static GUInt32 burnStack(int size)
         for( size_t i = 0; i < sizeof(buf); i++ )
             ret += ret * buf[i];
         size -= sizeof(buf);
-        if (size > 0)
-                ret += burnStack(size);
+        if( size > 0 )
+            ret += burnStack(size);
         return ret;
 }
 
@@ -147,7 +147,8 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 
         W = buf;
 
-        for ( int i = 15; i >= 0; i-- ) {
+        for( int i = 15; i >= 0; i-- )
+        {
                 *(W++) = BYTESWAP(*cbuf);
                 cbuf++;
         }
@@ -157,7 +158,8 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
         W7 = &buf[9];
         W2 = &buf[14];
 
-        for ( int i = 47; i >= 0; i-- ) {
+        for( int i = 47; i >= 0; i-- )
+        {
                 *(W++) = sigma1(*W2) + *(W7++) + sigma0(*W15) + *(W16++);
                 W2++;
                 W15++;
@@ -180,22 +182,25 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 #endif                          /* !CPL_SHA256_UNROLL */
 
 #if CPL_SHA256_UNROLL == 1
-        for ( int i = 63; i >= 0; i-- )
+        for( int i = 63; i >= 0; i-- )
                 DO_ROUND();
 #elif CPL_SHA256_UNROLL == 2
-        for ( int i = 31; i >= 0; i-- ) {
+        for( int i = 31; i >= 0; i-- )
+        {
                 DO_ROUND();
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 4
-        for ( int i = 15; i >= 0; i-- ) {
+        for( int i = 15; i >= 0; i-- )
+        {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 8
-        for ( int i = 7; i >= 0; i-- ) {
+        for( int i = 7; i >= 0; i-- )
+        {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -206,7 +211,8 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 16
-        for ( int i = 3; i >= 0; i-- ) {
+        for( int i = 3; i >= 0; i-- )
+        {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -225,7 +231,8 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
                 DO_ROUND();
         }
 #elif CPL_SHA256_UNROLL == 32
-        for ( int i = 1; i >= 0; i-- ) {
+        for( int i = 1; i >= 0; i-- )
+        {
                 DO_ROUND();
                 DO_ROUND();
                 DO_ROUND();
@@ -340,15 +347,14 @@ static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 
 void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
 {
-        GUInt32 bufferBytesLeft;
-        GUInt32 bytesToCopy;
         int needBurn = 0;
 
-        if (sc->bufferLength) {
-                bufferBytesLeft = 64U - sc->bufferLength;
+        if( sc->bufferLength )
+        {
+                GUInt32 bufferBytesLeft = 64U - sc->bufferLength;
 
-                bytesToCopy = bufferBytesLeft;
-                if (bytesToCopy > len)
+                GUInt32 bytesToCopy = bufferBytesLeft;
+                if( bytesToCopy > len )
                         bytesToCopy = (GUInt32)len;
 
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, bytesToCopy);
@@ -359,14 +365,16 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
                 data = ((GByte *) data) + bytesToCopy;
                 len -= bytesToCopy;
 
-                if (sc->bufferLength == 64U) {
+                if( sc->bufferLength == 64U )
+                {
                         CPL_SHA256Guts(sc, sc->buffer.words);
                         needBurn = 1;
                         sc->bufferLength = 0U;
                 }
         }
 
-        while (len > 63U) {
+        while( len > 63U )
+        {
                 sc->totalLength += 512U;
 
                 CPL_SHA256Guts(sc, (const GUInt32 *)data);
@@ -376,7 +384,8 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
                 len -= 64U;
         }
 
-        if (len) {
+        if( len )
+        {
                 memcpy(&sc->buffer.bytes[sc->bufferLength], data, len);
 
                 sc->totalLength += (GUInt32)len * 8U;
@@ -384,10 +393,12 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
                 sc->bufferLength += (GUInt32)len;
         }
 
-        if (needBurn)
+        if( needBurn )
         {
                 // Clean stack state of CPL_SHA256Guts()
-                // We add dummy side effects to avoid burnStack() to be optimized away (#6157)
+
+                // We add dummy side effects to avoid burnStack() to be
+                // optimized away (#6157).
                 static GUInt32 accumulator = 0;
                 accumulator += burnStack( static_cast<int>(
                         sizeof(GUInt32[74]) + sizeof(GUInt32 *[6]) +
@@ -399,20 +410,20 @@ void CPL_SHA256Update(CPL_SHA256Context * sc, const void *data, size_t len)
 
 void CPL_SHA256Final(CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE])
 {
-        GUInt32 bytesToPad;
-        GUInt64 lengthPad;
 
-        bytesToPad = 120U - sc->bufferLength;
-        if (bytesToPad > 64U)
+        GUInt32 bytesToPad = 120U - sc->bufferLength;
+        if( bytesToPad > 64U )
                 bytesToPad -= 64U;
 
-        lengthPad = BYTESWAP64(sc->totalLength);
+        GUInt64 lengthPad = BYTESWAP64(sc->totalLength);
 
         CPL_SHA256Update(sc, padding, bytesToPad);
         CPL_SHA256Update(sc, &lengthPad, 8U);
 
-        if (hash) {
-            for ( int i = 0; i < CPL_SHA256_HASH_WORDS; i++ ) {
+        if( hash )
+        {
+            for( int i = 0; i < CPL_SHA256_HASH_WORDS; i++ )
+            {
                 *((GUInt32 *) hash) = BYTESWAP(sc->hash[i]);
                 hash += 4;
             }
