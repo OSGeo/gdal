@@ -130,7 +130,7 @@ static CPLErrorContext *CPLGetErrorContext()
 
     if( psCtx == NULL )
     {
-        psCtx = reinterpret_cast<CPLErrorContext *>(
+        psCtx = static_cast<CPLErrorContext *>(
             VSICalloc( sizeof(CPLErrorContext), 1) );
         if( psCtx == NULL )
         {
@@ -208,7 +208,8 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  * similar to printf().
  */
 
-void CPLError(CPLErr eErrClass, CPLErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
+void CPLError( CPLErr eErrClass, CPLErrorNum err_no,
+               CPL_FORMAT_STRING(const char *fmt), ... )
 {
     va_list args;
 
@@ -289,10 +290,10 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                 {
                     psCtx->nLastErrMsgMax *= 3;
                     psCtx = static_cast<CPLErrorContext *> (
-                        CPLRealloc( psCtx,
-                                    sizeof(CPLErrorContext)
-                                    - DEFAULT_LAST_ERR_MSG_SIZE
-                                    + psCtx->nLastErrMsgMax + 1));
+                        CPLRealloc(psCtx,
+                                   sizeof(CPLErrorContext)
+                                   - DEFAULT_LAST_ERR_MSG_SIZE
+                                   + psCtx->nLastErrMsgMax + 1));
                     CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
                 }
                 psCtx->szLastErrMsg[nPreviousSize] = '\n';
@@ -316,10 +317,10 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 #endif
             psCtx->nLastErrMsgMax *= 3;
             psCtx = static_cast<CPLErrorContext *> (
-                CPLRealloc( psCtx,
-                            sizeof(CPLErrorContext)
-                            - DEFAULT_LAST_ERR_MSG_SIZE
-                            + psCtx->nLastErrMsgMax + 1) );
+                CPLRealloc(psCtx,
+                           sizeof(CPLErrorContext)
+                           - DEFAULT_LAST_ERR_MSG_SIZE
+                           + psCtx->nLastErrMsgMax + 1));
             CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
         }
 
@@ -484,7 +485,8 @@ static int CPLGetProcessMemorySize()
 #ifdef WITHOUT_CPLDEBUG
 // Do not include CPLDebug.  Only available in custom builds.
 #else
-void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszFormat), ... )
+void CPLDebug( const char * pszCategory,
+               CPL_FORMAT_STRING(const char * pszFormat), ... )
 
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
