@@ -1023,7 +1023,7 @@ size_t VSICryptFileHandle::Read( void *pBuffer, size_t nSize, size_t nMemb )
     if( !FlushDirty() )
         return 0;
 
-    while(nToRead > 0)
+    while( nToRead > 0 )
     {
         if( nCurPos >= nWBOffset && nCurPos < nWBOffset + nWBSize )
         {
