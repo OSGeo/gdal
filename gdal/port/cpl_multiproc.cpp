@@ -329,7 +329,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 
     if( *phLock == NULL )
     {
-        *phLock = (CPLLock*) calloc(1, sizeof(CPLLock));
+        *phLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
         if( *phLock )
         {
             (*phLock)->eType = eType;
@@ -801,11 +801,11 @@ CPLMutex *CPLCreateMutex()
 
     return (CPLMutex *) hMutex;
 #else
-    CRITICAL_SECTION *pcs;
 
-    /* Do not use CPLMalloc() since its debugging infrastructure */
-    /* can call the CPL*Mutex functions... */
-    pcs = (CRITICAL_SECTION *)malloc(sizeof(*pcs));
+    // Do not use CPLMalloc() since its debugging infrastructure
+    // can call the CPL*Mutex functions.
+    CRITICAL_SECTION *pcs =
+        static_cast<CRITICAL_SECTION *>(malloc(sizeof(*pcs)));
     if( pcs )
     {
       InitializeCriticalSectionAndSpinCount(pcs, 4000);
@@ -916,7 +916,7 @@ typedef struct
 
 CPLCond  *CPLCreateCond()
 {
-    Win32Cond* psCond = (Win32Cond*) malloc(sizeof(Win32Cond));
+    Win32Cond* psCond = static_cast<Win32Cond *>(malloc(sizeof(Win32Cond)));
     if( psCond == NULL )
         return NULL;
     psCond->hInternalMutex = CPLCreateMutex();
@@ -934,7 +934,7 @@ CPLCond  *CPLCreateCond()
 /*                            CPLCondWait()                             */
 /************************************************************************/
 
-static void CPLTLSFreeEvent(void* pData)
+static void CPLTLSFreeEvent( void* pData )
 {
     CloseHandle((HANDLE)pData);
 }
@@ -958,7 +958,7 @@ void  CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
     /* Insert the waiter into the waiter list of the condition */
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
-    WaiterItem* psItem = (WaiterItem*)malloc(sizeof(WaiterItem));
+    WaiterItem* psItem = static_cast<WaiterItem *>(malloc(sizeof(WaiterItem)));
     CPLAssert(psItem != NULL);
 
     psItem->hEvent = hEvent;
@@ -1045,7 +1045,8 @@ void  CPLDestroyCond( CPLCond *hCond )
 void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
 {
-    char *pszLockFilename = (char *) CPLMalloc(strlen(pszPath) + 30);
+    char *pszLockFilename =
+        static_cast<char *>(CPLMalloc(strlen(pszPath) + 30));
     snprintf( pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath );
 
     HANDLE hLockFile =
@@ -1137,8 +1138,8 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-    CPLStdCallThreadInfo *psInfo =
-        (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
+        CPLCalloc(sizeof(CPLStdCallThreadInfo), 1));
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
     psInfo->hThread = NULL;
@@ -1163,8 +1164,8 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
                                             void *pThreadArg )
 
 {
-    CPLStdCallThreadInfo *psInfo =
-        (CPLStdCallThreadInfo*) CPLCalloc(sizeof(CPLStdCallThreadInfo),1);
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
+        CPLCalloc(sizeof(CPLStdCallThreadInfo), 1));
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
 
@@ -1235,7 +1236,7 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
     papTLSList = (void **) TlsGetValue( nTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        papTLSList = static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX*2));
         if( papTLSList == NULL )
         {
             if( pbMemoryErrorOccurred )
@@ -1768,7 +1769,7 @@ static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
     void **papTLSList = (void **) pthread_getspecific( oTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = (void **) VSICalloc(sizeof(void*),CTLS_MAX*2);
+        papTLSList = static_cast<void **>(VSICalloc(sizeof(void*),CTLS_MAX*2));
         if( papTLSList == NULL )
         {
             if( pbMemoryErrorOccurred )
@@ -1860,11 +1861,8 @@ error:
 int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
-
-    CPLStdCallThreadInfo *psInfo;
-    pthread_attr_t hThreadAttr;
-
-    psInfo = (CPLStdCallThreadInfo*) VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo),1);
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
+        VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo), 1));
     if( psInfo == NULL )
         return -1;
     psInfo->pAppData = pThreadArg;
@@ -1883,6 +1881,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     }
 #endif
 
+    pthread_attr_t hThreadAttr;
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_DETACHED );
     if( pthread_create( &(psInfo->hThread), &hThreadAttr,
@@ -1927,13 +1926,12 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 /*                      CPLCreateJoinableThread()                       */
 /************************************************************************/
 
-CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThreadArg )
+CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
+                                            void *pThreadArg )
 
 {
-    CPLStdCallThreadInfo *psInfo;
-    pthread_attr_t hThreadAttr;
-
-    psInfo = (CPLStdCallThreadInfo*) VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo),1);
+    CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
+        VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo), 1));
     if( psInfo == NULL )
         return NULL;
     psInfo->pAppData = pThreadArg;
@@ -1952,6 +1950,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain, void *pThread
     }
 #endif
 
+    pthread_attr_t hThreadAttr;
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
     if( pthread_create( &(psInfo->hThread), &hThreadAttr,
@@ -2067,7 +2066,8 @@ struct _CPLSpinLock
 
 CPLSpinLock  *CPLCreateSpinLock( void )
 {
-    CPLSpinLock* psSpin = (CPLSpinLock*)malloc(sizeof(CPLSpinLock));
+    CPLSpinLock* psSpin =
+        static_cast<CPLSpinLock *>(malloc(sizeof(CPLSpinLock)));
     if( psSpin != NULL &&
         pthread_spin_init(&(psSpin->spin), PTHREAD_PROCESS_PRIVATE) == 0 )
     {
@@ -2099,7 +2099,7 @@ int  CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
     pthread_mutex_lock(&global_mutex);
     if( *ppsLock == NULL )
     {
-        *ppsLock = (CPLLock*) calloc(1, sizeof(CPLLock));
+        *ppsLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
         if( *ppsLock != NULL )
         {
             (*ppsLock)->eType = LOCK_SPIN;
@@ -2283,7 +2283,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             if( !hMutex )
                 return NULL;
             CPLReleaseMutex(hMutex);
-            CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            CPLLock* psLock = static_cast<CPLLock *>(malloc(sizeof(CPLLock)));
             if( psLock == NULL )
             {
                 fprintf(stderr, "CPLCreateLock() failed.\n");
@@ -2302,7 +2302,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
             CPLSpinLock* hSpinLock = CPLCreateSpinLock();
             if( !hSpinLock )
                 return NULL;
-            CPLLock* psLock = (CPLLock*)malloc(sizeof(CPLLock));
+            CPLLock* psLock = static_cast<CPLLock *>(malloc(sizeof(CPLLock)));
             if( psLock == NULL )
             {
                 fprintf(stderr, "CPLCreateLock() failed.\n");

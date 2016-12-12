@@ -1211,7 +1211,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
         return NULL;
     }
 
-    CPLZip* psZip = (CPLZip*)CPLMalloc(sizeof(CPLZip));
+    CPLZip* psZip = static_cast<CPLZip *>(CPLMalloc(sizeof(CPLZip)));
     psZip->hZip = hZip;
     psZip->papszFilenames = papszFilenames;
     return psZip;
@@ -1271,7 +1271,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         const GUInt16 nDataLength = 1 + 4 +
                                     static_cast<GUInt16>(strlen(pszFilename));
         nExtraLength = 2 + 2 + nDataLength;
-        pabyExtra = reinterpret_cast<GByte*>(CPLMalloc(nExtraLength));
+        pabyExtra = static_cast<GByte*>(CPLMalloc(nExtraLength));
         const GUInt16 nHeaderIdLE = CPL_LSBWORD16(0x7075);
         memcpy(pabyExtra, &nHeaderIdLE, 2);
         const GUInt16 nDataLengthLE = CPL_LSBWORD16(nDataLength);
