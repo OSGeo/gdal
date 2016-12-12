@@ -53,8 +53,8 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
 {
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
-        wchar_t *pwszPathBuf = (wchar_t*)
-            CPLCalloc(nMaxLength+1,sizeof(wchar_t));
+        wchar_t *pwszPathBuf = static_cast<wchar_t *>(
+            CPLCalloc(nMaxLength+1,sizeof(wchar_t)));
 
         if( GetModuleFileNameW( NULL, pwszPathBuf, nMaxLength ) == 0 )
         {
