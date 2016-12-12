@@ -362,7 +362,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
     if( iExtStart == iFileStart )
         iExtStart = strlen(pszFullFilename)-1;
 
-    if (CPLStrlcpy( pszStaticResult, pszFullFilename+iExtStart+1,
+    if( CPLStrlcpy( pszStaticResult, pszFullFilename+iExtStart+1,
                     CPL_PATH_BUF_SIZE )
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
@@ -395,7 +395,7 @@ char *CPLGetCurrentDir()
 #endif
 
     char *pszDirPath = static_cast<char *>( VSI_MALLOC_VERBOSE( nPathMax ) );
-    if ( !pszDirPath )
+    if( !pszDirPath )
         return NULL;
 
     return getcwd( pszDirPath, nPathMax );
@@ -432,11 +432,11 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 /* -------------------------------------------------------------------- */
 /*      First, try and strip off any existing extension.                */
 /* -------------------------------------------------------------------- */
-    if ( CPLStrlcpy( pszStaticResult, pszPath, CPL_PATH_BUF_SIZE )
-         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
+    if( CPLStrlcpy( pszStaticResult, pszPath, CPL_PATH_BUF_SIZE )
+        >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
-    if (*pszStaticResult)
+    if( *pszStaticResult )
     {
         for( size_t i = strlen(pszStaticResult) - 1; i > 0; i-- )
         {
@@ -556,11 +556,11 @@ const char *CPLFormFilename( const char * pszPath,
     {
         // FIXME? Would be better to ask the filesystems what it
         // prefers as directory separator?
-        if (strcmp(pszPath, "/vsimem") == 0 ||
+        if( strcmp(pszPath, "/vsimem") == 0 ||
             STARTS_WITH(pszPath, "/vsimem/") ||
             STARTS_WITH(pszPath, "/vsicurl/") ||
             STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
-            STARTS_WITH(pszPath, "/vsizip/"))
+            STARTS_WITH(pszPath, "/vsizip/") )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -740,10 +740,10 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
     {
         // FIXME: Better to ask the filesystems what it
         // prefers as directory separator?
-        const char* pszAddedPathSep;
-        if (strcmp(pszStaticResult, "/vsimem") == 0 ||
+        const char* pszAddedPathSep = NULL;
+        if( strcmp(pszStaticResult, "/vsimem") == 0 ||
             STARTS_WITH(pszStaticResult, "/vsicurl/") ||
-            STARTS_WITH(pszStaticResult, "/vsimem/"))
+            STARTS_WITH(pszStaticResult, "/vsimem/") )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -918,7 +918,7 @@ const char *CPLCleanTrailingSlash( const char *pszPath )
                    && pszPath < pszStaticResult + CPL_PATH_BUF_SIZE) );
 
     const size_t iPathLength = strlen(pszPath);
-    if (iPathLength >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
+    if( iPathLength >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )
         return CPLStaticBufferTooSmall(pszStaticResult);
 
     CPLStrlcpy( pszStaticResult, pszPath, iPathLength+1 );
