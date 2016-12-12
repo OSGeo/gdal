@@ -166,7 +166,7 @@ int CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* fout,
 
 int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
 {
-    GByte* pabyData = reinterpret_cast<GByte *>( data );
+    GByte* pabyData = static_cast<GByte *>(data);
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -185,7 +185,7 @@ int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
 
 int CPLPipeWrite( CPL_FILE_HANDLE fout, const void* data, int length )
 {
-    const GByte* pabyData = (const GByte*)data;
+    const GByte* pabyData = static_cast<const GByte *>(data);
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -212,8 +212,8 @@ static void FillFileFromPipe(CPL_FILE_HANDLE pipe_fd, VSILFILE* fout)
             break;
         if( nRead <= 0 )
             break;
-        int nWritten = (int)VSIFWriteL(buf, 1, nRead, fout);
-        if( nWritten < (int)nRead )
+        const int nWritten = static_cast<int>(VSIFWriteL(buf, 1, nRead, fout));
+        if( nWritten < static_cast<int>(nRead) )
             break;
     }
 }
@@ -410,7 +410,7 @@ int CPLSpawnAsyncFinish(CPLSpawnedProcess* p, int bWait, int /* bKill */ )
     CPLSpawnAsyncCloseErrorFileHandle(p);
     CPLFree(p);
 
-    return (int)exitCode;
+    return static_cast<int>(exitCode);
 }
 
 /************************************************************************/
@@ -465,7 +465,7 @@ void CPLSpawnAsyncCloseErrorFileHandle(CPLSpawnedProcess* p)
  */
 int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
 {
-    GByte* pabyData = reinterpret_cast<GByte*>( data );
+    GByte* pabyData = static_cast<GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -506,7 +506,7 @@ int CPLPipeRead( CPL_FILE_HANDLE fin, void* data, int length )
  */
 int CPLPipeWrite( CPL_FILE_HANDLE fout, const void* data, int length )
 {
-    const GByte* pabyData = reinterpret_cast<const GByte*>( data );
+    const GByte* pabyData = static_cast<const GByte*>( data );
     int nRemain = length;
     while( nRemain > 0 )
     {
@@ -603,9 +603,6 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
     int pipe_in[2] = { -1, -1 };
     int pipe_out[2] = { -1, -1 };
     int pipe_err[2] = { -1, -1 };
-    bool bDup2In = CPL_TO_BOOL(bCreateInputPipe);
-    bool bDup2Out = CPL_TO_BOOL(bCreateOutputPipe);
-    bool bDup2Err = CPL_TO_BOOL(bCreateErrorPipe);
 
     if( (bCreateInputPipe && pipe(pipe_in)) ||
         (bCreateOutputPipe && pipe(pipe_out)) ||
@@ -614,6 +611,10 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
         CPLError(CE_Failure, CPLE_AppDefined, "Could not create pipe");
         return NULL;
     }
+
+    bool bDup2In = CPL_TO_BOOL(bCreateInputPipe);
+    bool bDup2Out = CPL_TO_BOOL(bCreateOutputPipe);
+    bool bDup2Err = CPL_TO_BOOL(bCreateErrorPipe);
 
     char** papszArgvDup = CSLDuplicate( const_cast<char **>( papszArgv ) );
 
@@ -687,11 +688,11 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
             bHasActions = true;
         }
 
-        pid_t pid;
+        pid_t pid = 0;
         if( posix_spawnp(&pid, papszArgvDup[0],
                          bHasActions ? &actions : NULL,
                          NULL,
-                         reinterpret_cast<char* const*>( papszArgvDup ),
+                         papszArgvDup,
                          environ) != 0 )
         {
             if( bHasActions )
@@ -761,7 +762,7 @@ CPLSpawnedProcess* CPLSpawnAsync( int (*pfnMain)(CPL_FILE_HANDLE,
             if( bDup2Err )
                 dup2(pipe_err[OUT_FOR_PARENT], fileno(stderr));
 
-            execvp(papszArgvDup[0], (char* const*) papszArgvDup);
+            execvp(papszArgvDup[0], papszArgvDup);
 
             _exit(1);
         }
