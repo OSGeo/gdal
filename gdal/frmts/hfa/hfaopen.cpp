@@ -2506,7 +2506,7 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
             continue;
 
         const int columnDataPtr = poColumn->GetIntField( "columnDataPtr" );
-        if( columnDataPtr == 0 )
+        if( columnDataPtr <= 0 )
             continue;
 
 /* -------------------------------------------------------------------- */
@@ -2531,7 +2531,10 @@ char ** HFAGetMetadata( HFAHandle hHFA, int nBand )
             }
 
             if( VSIFSeekL( hHFA->fp, columnDataPtr, SEEK_SET ) != 0 )
+            {
+                CPLFree( pszMDValue );
                 continue;
+            }
 
             const int nMDBytes = static_cast<int>(
                 VSIFReadL( pszMDValue, 1, nMaxNumChars, hHFA->fp ));
