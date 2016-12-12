@@ -78,18 +78,18 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
     CPLAssert( NULL != pszDriver );
 
     // Try to install driver to system-wide location
-    if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
-                    ODBC_FILENAME_MAX, NULL, fRequest,
-                    &m_nUsageCount ) )
+    if( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
+                                     ODBC_FILENAME_MAX, NULL, fRequest,
+                                     &m_nUsageCount ) )
     {
-        const WORD nErrorNum = 1; // TODO - a function param?
+        const WORD nErrorNum = 1;  // TODO - a function param?
         CPL_UNUSED RETCODE cRet = SQL_ERROR;
 
         // Failure is likely related to no write permissions to
-        // system-wide default location, so try to install to HOME
+        // system-wide default location, so try to install to HOME.
 
         static char* pszEnvIni = NULL;
-        if (pszEnvIni == NULL)
+        if( pszEnvIni == NULL )
         {
             // Read HOME location
             char* pszEnvHome = NULL;
@@ -111,10 +111,10 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
             CPLDebug( "ODBC", "%s", pszEnvIni );
         }
 
-        // Try to install ODBC driver in new location
-        if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
-                ODBC_FILENAME_MAX, NULL, fRequest,
-                &m_nUsageCount ) )
+        // Try to install ODBC driver in new location.
+        if( FALSE == SQLInstallDriverEx(pszDriver, NULL, m_szPathOut,
+                                        ODBC_FILENAME_MAX, NULL, fRequest,
+                                        &m_nUsageCount) )
         {
             cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                             m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
@@ -133,11 +133,12 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 /*                           RemoveDriver()                             */
 /************************************************************************/
 
-int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemoveDSN )
+int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName,
+                                          int fRemoveDSN )
 {
     CPLAssert( NULL != pszDriverName );
 
-    if ( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
+    if( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
     {
         const WORD nErrorNum = 1; // TODO - a function param?
 
@@ -188,8 +189,9 @@ int CPLODBCSession::CloseSession()
 {
     if( m_hDBC!=NULL )
     {
-        if ( IsInTransaction() )
-            CPLError( CE_Warning, CPLE_AppDefined, "Closing session with active transactions." );
+        if( IsInTransaction() )
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Closing session with active transactions." );
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
@@ -215,15 +217,16 @@ int CPLODBCSession::ClearTransaction()
 {
 #if (ODBCVER >= 0x0300)
 
-    if (m_bAutoCommit)
+    if( m_bAutoCommit )
         return TRUE;
 
     SQLUINTEGER bAutoCommit;
     /* See if we already in manual commit mode */
-    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+    if( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit,
+                                   sizeof(SQLUINTEGER), NULL) ) )
         return FALSE;
 
-    if (bAutoCommit == SQL_AUTOCOMMIT_OFF)
+    if( bAutoCommit == SQL_AUTOCOMMIT_OFF )
     {
         /* switch the connection to auto commit mode (default) */
         if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0 ) ) )
@@ -249,13 +252,15 @@ int CPLODBCSession::BeginTransaction()
 
     SQLUINTEGER bAutoCommit;
     /* See if we already in manual commit mode */
-    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+    if( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit,
+                                   sizeof(SQLUINTEGER), NULL) ) )
         return FALSE;
 
-    if (bAutoCommit == SQL_AUTOCOMMIT_ON)
+    if( bAutoCommit == SQL_AUTOCOMMIT_ON )
     {
-        /* switch the connection to manual commit mode */
-        if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 ) ) )
+        // Switch the connection to manual commit mode.
+        if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT,
+                                       (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 ) ) )
             return FALSE;
     }
 
@@ -276,7 +281,7 @@ int CPLODBCSession::CommitTransaction()
 {
 #if (ODBCVER >= 0x0300)
 
-    if (m_bInTransaction)
+    if( m_bInTransaction )
     {
         if( Failed( SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_COMMIT ) ) )
         {
@@ -299,7 +304,7 @@ int CPLODBCSession::RollbackTransaction()
 {
 #if (ODBCVER >= 0x0300)
 
-    if (m_bInTransaction)
+    if( m_bInTransaction )
     {
         /* Rollback should not hide the previous error so Failed() is not called. */
         int nRetCode = SQLEndTran( SQL_HANDLE_DBC, m_hDBC, SQL_ROLLBACK );
@@ -530,9 +535,9 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
         Append( pszStatement );
     }
 
-#if (ODBCVER >= 0x0300)
+#if( ODBCVER >= 0x0300 )
 
-    if ( !m_poSession->IsInTransaction() )
+    if( !m_poSession->IsInTransaction() )
     {
         /* commit pending transactions and set to autocommit mode*/
         m_poSession->ClearTransaction();
@@ -588,12 +593,12 @@ int CPLODBCStatement::CollectResultsInfo()
         SQLCHAR     szName[256];
         SQLSMALLINT nNameLength = 0;
 
-        if ( Failed( SQLDescribeCol(m_hStmt, iCol+1,
-                                    szName, sizeof(szName), &nNameLength,
-                                    m_panColType + iCol,
-                                    m_panColSize + iCol,
-                                    m_panColPrecision + iCol,
-                                    m_panColNullable + iCol) ) )
+        if( Failed( SQLDescribeCol(m_hStmt, iCol+1,
+                                   szName, sizeof(szName), &nNameLength,
+                                   m_panColType + iCol,
+                                   m_panColSize + iCol,
+                                   m_panColPrecision + iCol,
+                                   m_panColNullable + iCol) ) )
             return FALSE;
 
         szName[nNameLength] = '\0';  // Paranoid; the string should be
@@ -602,9 +607,9 @@ int CPLODBCStatement::CollectResultsInfo()
 
         // SQLDescribeCol() fetches just a subset of column attributes.
         // In addition to above data we need data type name.
-        if ( Failed( SQLColAttribute(m_hStmt, iCol + 1, SQL_DESC_TYPE_NAME,
-                                     szName, sizeof(szName),
-                                     &nNameLength, NULL) ) )
+        if( Failed( SQLColAttribute(m_hStmt, iCol + 1, SQL_DESC_TYPE_NAME,
+                                    szName, sizeof(szName),
+                                    &nNameLength, NULL) ) )
             return FALSE;
 
         szName[nNameLength] = '\0';  // Paranoid
@@ -852,7 +857,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         nRetCode = SQLFetch( m_hStmt );
         if( Failed(nRetCode) )
         {
-            if ( nRetCode != SQL_NO_DATA )
+            if( nRetCode != SQL_NO_DATA )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
@@ -865,7 +870,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         nRetCode = SQLFetchScroll(m_hStmt, (SQLSMALLINT) nOrientation, nOffset);
         if( Failed(nRetCode) )
         {
-            if ( nRetCode == SQL_NO_DATA )
+            if( nRetCode == SQL_NO_DATA )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
@@ -904,7 +909,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
         if( Failed( nRetCode ) )
         {
-            if ( nRetCode == SQL_NO_DATA )
+            if( nRetCode == SQL_NO_DATA )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
@@ -924,11 +929,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             if( cbDataLen >= (CPL_SQLLEN)(sizeof(szWrkData)-1) )
             {
                 cbDataLen = (CPL_SQLLEN)(sizeof(szWrkData)-1);
-                if (nFetchType == SQL_C_CHAR)
-                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0))
+                if( nFetchType == SQL_C_CHAR )
+                    while( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0) )
                         --cbDataLen; // trimming the extra terminators: bug 990
-                else if (nFetchType == SQL_C_WCHAR)
-                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)
+                else if( nFetchType == SQL_C_WCHAR )
+                    while( (cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0 )
                         && (szWrkData[cbDataLen - 2] == 0))
                         cbDataLen -= 2; // trimming the extra terminators
             }
@@ -961,14 +966,14 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     || cbDataLen == SQL_NO_TOTAL )
                 {
                     nChunkLen = sizeof(szWrkData)-1;
-                    if (nFetchType == SQL_C_CHAR)
-                        while ( (nChunkLen > 1)
-                                && (szWrkData[nChunkLen - 1] == 0) )
+                    if( nFetchType == SQL_C_CHAR )
+                        while( (nChunkLen > 1)
+                               && (szWrkData[nChunkLen - 1] == 0) )
                             --nChunkLen;  // trimming the extra terminators
-                    else if (nFetchType == SQL_C_WCHAR)
-                        while ( (nChunkLen > 1)
-                                && (szWrkData[nChunkLen - 1] == 0)
-                                && (szWrkData[nChunkLen - 2] == 0) )
+                    else if( nFetchType == SQL_C_WCHAR )
+                        while( (nChunkLen > 1)
+                               && (szWrkData[nChunkLen - 1] == 0)
+                               && (szWrkData[nChunkLen - 2] == 0) )
                             nChunkLen -= 2;  // trimming the extra terminators
                 }
                 else
@@ -1000,7 +1005,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
             char *pszTarget = m_papszColValues[iCol];
             size_t iEnd = strlen(pszTarget);
 
-            while ( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
+            while( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
                 pszTarget[--iEnd] = '\0';
         }
 
@@ -1420,7 +1425,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
 #if (ODBCVER >= 0x0300)
 
-    if ( !m_poSession->IsInTransaction() )
+    if( !m_poSession->IsInTransaction() )
     {
         /* commit pending transactions and set to autocommit mode*/
         m_poSession->ClearTransaction();
@@ -1510,7 +1515,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 #if (ODBCVER >= 0x0300)
         SQLGetData( m_hStmt, SQLColumns_COLUMN_DEF, SQL_C_CHAR,
                     szWrkData, sizeof(szWrkData)-1, &cbDataLen );
-        if (cbDataLen > 0)
+        if( cbDataLen > 0 )
             m_papszColColumnDef[iCol] = CPLStrdup(szWrkData);
 #endif
     }
@@ -1555,7 +1560,7 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
 
 #if (ODBCVER >= 0x0300)
 
-    if ( !m_poSession->IsInTransaction() )
+    if( !m_poSession->IsInTransaction() )
     {
         /* commit pending transactions and set to autocommit mode*/
         m_poSession->ClearTransaction();
@@ -1605,7 +1610,7 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
 
 #if (ODBCVER >= 0x0300)
 
-    if ( !m_poSession->IsInTransaction() )
+    if( !m_poSession->IsInTransaction() )
     {
         /* commit pending transactions and set to autocommit mode*/
         m_poSession->ClearTransaction();
