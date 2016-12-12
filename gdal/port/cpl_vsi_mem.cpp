@@ -532,7 +532,10 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
         && strstr(pszAccess, "a") == NULL
         && poFile == NULL )
     {
-        if(bSetError) { VSIError(VSIE_FileError, "No such file or directory"); }
+        if( bSetError )
+        {
+            VSIError(VSIE_FileError, "No such file or directory");
+        }
         errno = ENOENT;
         return NULL;
     }
