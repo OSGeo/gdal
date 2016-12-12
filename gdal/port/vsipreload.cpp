@@ -1114,7 +1114,7 @@ ssize_t read( int fd, void *buf, size_t count )
     if( DEBUG_VSIPRELOAD_COND && DEBUG_OUTPUT_READ && ret < 40 )
     {
         fprintf(stderr, "read() : ");
-        for(int i=0;i<ret;i++)
+        for( int i = 0; i < ret; i++ )
         {
             if( ((unsigned char*)buf)[i] >= 'A' &&
                 ((unsigned char*)buf)[i] <= 'Z' )
