@@ -182,16 +182,21 @@ int GDALJP2Box::ReadBox()
         if( VSIFReadL( abyXLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
-        if( sizeof(nBoxLength) == 8 )
+#ifdef CPL_HAS_GINT64
+        CPL_MSBPTR64( abyXLBox );
+        memcpy( &nBoxLength, abyXLBox, 8 );
+#else
+        // In case we lack a 64 bit integer type
+        if( abyXLBox[0] != 0 || abyXLBox[1] != 0 || abyXLBox[2] != 0 ||
+            abyXLBox[3] != 0 )
         {
-            CPL_MSBPTR64( abyXLBox );
-            memcpy( &nBoxLength, abyXLBox, 8 );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Box size requires a 64 bit integer type");
+            return FALSE;
         }
-        else
-        {
-            CPL_MSBPTR32( abyXLBox+4 );
-            memcpy( &nBoxLength, abyXLBox+4, 4 );
-        }
+        CPL_MSBPTR32( abyXLBox+4 );
+        memcpy( &nBoxLength, abyXLBox+4, 4 );
+#endif
         if( nBoxLength < 0 )
         {
             CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);

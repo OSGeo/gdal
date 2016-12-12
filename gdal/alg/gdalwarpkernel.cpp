@@ -2647,11 +2647,11 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte* ptr)
 static CPL_INLINE __m128 XMMLoad4Values(const GUInt16* ptr)
 {
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-    GUIntBig i;
+    GUInt64 i;
     memcpy(&i, ptr, 8);
     __m128i xmm_i =  _mm_cvtsi64_si128(s);
 #else
-    __m128i xmm_i =  _mm_cvtsi64_si128(*(GUIntBig*)(ptr));
+    __m128i xmm_i =  _mm_cvtsi64_si128(*(GUInt64*)(ptr));
 #endif
     // Zero extend 4 packed unsigned 16-bit integers in a to packed
     // 32-bit integers.

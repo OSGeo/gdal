@@ -7471,7 +7471,7 @@ bool GTiffDataset::HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
     // once. Select the largest natural integer type for the architecture.
 #if SIZEOF_VOIDP == 8 || defined(__x86_64__)
     // We test __x86_64__ for x32 arch where SIZEOF_VOIDP == 4
-    typedef GUIntBig WordType;
+    typedef GUInt64 WordType;
 #else
     typedef unsigned int WordType;
 #endif
@@ -11094,7 +11094,13 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
     vsi_l_offset nMaxOffset = 0;
     if( bBigTIFF )
     {
-        GUIntBig nTmp = 0;
+#ifndef CPL_HAS_GINT64
+        CPLError(CE_Failure, CPLE_NotSupported, "BigTIFF not supported");
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
+        VSIUnlink(osTmpFilename);
+        return false;
+#else
+        GUInt64 nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 8, 8);
         if( bSwap ) CPL_SWAP64PTR(&nTmp);
         if( nTmp != 16 )
@@ -11154,9 +11160,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
             {
                 memcpy(&nTmp, pabyBuffer + 24 + i * 20 + 12, 8);
                 if( bSwap ) CPL_SWAP64PTR(&nTmp);
-                if( nTmp >
-                    static_cast<GUIntBig>(
-                        (static_cast<GIntBig>(INT_MAX) << 32) - nTagSize) )
+                if( nTmp > GUINT64_MAX - nTagSize )
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
@@ -11168,6 +11172,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
                     nMaxOffset = nTmp + nTagSize;
             }
         }
+#endif
     }
     else
     {
