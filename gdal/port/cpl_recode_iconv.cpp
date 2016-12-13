@@ -106,7 +106,8 @@ char *CPLRecodeIconv( const char *pszSource,
     size_t nSrcLen = strlen( pszSource );
     size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t nDstLen = nDstCurLen;
-    char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
+    char *pszDestination =
+        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
     char *pszDstBuf = pszDestination;
 
     while( nSrcLen > 0 )
@@ -140,7 +141,7 @@ char *CPLRecodeIconv( const char *pszSource,
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
                 pszDestination =
-                    (char *)CPLRealloc( pszDestination, nDstCurLen );
+                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
                 nDstLen += nDstCurLen - nTmp;
                 continue;
@@ -212,7 +213,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         return CPLStrdup("");
     }
 
-    GByte *pszIconvSrcBuf = (GByte*) CPLCalloc((nSrcLen+1),nTargetCharWidth);
+    GByte *pszIconvSrcBuf =
+        static_cast<GByte *>(CPLCalloc((nSrcLen+1),nTargetCharWidth));
 
     for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {
@@ -257,7 +259,8 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
     size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t nDstLen = nDstCurLen;
-    char *pszDestination = (char *)CPLCalloc( nDstCurLen, sizeof(char) );
+    char *pszDestination =
+        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
     char *pszDstBuf = pszDestination;
 
     while( nSrcLen > 0 )
@@ -291,7 +294,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
                 pszDestination =
-                    (char *)CPLRealloc( pszDestination, nDstCurLen );
+                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
                 nDstLen += nDstCurLen - nTmp;
                 continue;

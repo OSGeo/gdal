@@ -1424,7 +1424,7 @@ DIR *opendir( const char *name )
             VSIStatBufL sStatBufL;
             if( VSIStatL(name, &sStatBufL) == 0 && S_ISDIR(sStatBufL.st_mode) )
             {
-                papszDir = (char**) CPLMalloc(sizeof(char*));
+                papszDir = static_cast<char **>(CPLMalloc(sizeof(char*)));
                 papszDir[0] = NULL;
             }
         }
@@ -1432,7 +1432,7 @@ DIR *opendir( const char *name )
             ret = NULL;
         else
         {
-            VSIDIR* mydir = (VSIDIR*)malloc(sizeof(VSIDIR));
+            VSIDIR* mydir = static_cast<VSIDIR *>(malloc(sizeof(VSIDIR)));
             mydir->pszDirname = CPLStrdup(name);
             mydir->papszDir = papszDir;
             mydir->nIter = 0;
@@ -1443,7 +1443,9 @@ DIR *opendir( const char *name )
         }
     }
     else
+    {
         ret = pfnopendir(name);
+    }
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "opendir(%s) -> %p\n", name, ret);
     return ret;

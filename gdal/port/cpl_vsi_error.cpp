@@ -83,7 +83,7 @@ static VSIErrorContext *VSIGetErrorContext()
     if( psCtx == NULL )
     {
         psCtx = static_cast<VSIErrorContext *>(
-          VSICalloc( sizeof(VSIErrorContext), 1) );
+            VSICalloc( sizeof(VSIErrorContext), 1) );
         if( psCtx == NULL )
         {
             fprintf(stderr, /*ok*/

@@ -188,7 +188,8 @@ typedef enum
  * in other places in memory or in on-disk temporary file.
  *
  * @param pabyKey key. Might be NULL to clear previously set key.
- * @param nKeySize length of the key in bytes. Might be 0 to clear previously set key.
+ * @param nKeySize length of the key in bytes. Might be 0 to clear
+ * previously set key.
  *
  * @see VSIInstallCryptFileHandler() for documentation on /vsicrypt/
  */
@@ -207,7 +208,7 @@ void VSISetCryptKey( const GByte* pabyKey, int nKeySize )
     }
     if( pabyKey )
     {
-        pabyGlobalKey = (GByte*) CPLMalloc(nKeySize);
+        pabyGlobalKey = static_cast<GByte *>(CPLMalloc(nKeySize));
         memcpy(pabyGlobalKey, pabyKey, nKeySize);
         nGlobalKeySize = nKeySize;
     }
@@ -837,7 +838,7 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
         return FALSE;
     }
 
-    pabyWB = (GByte*)CPLCalloc(1, poHeader->nSectorSize);
+    pabyWB = static_cast<GByte *>(CPLCalloc(1, poHeader->nSectorSize));
 
     if( (poHeader->nSectorSize % nBlockSize) != 0 )
     {
@@ -849,7 +850,8 @@ int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
     if( poHeader->eMode == MODE_CBC_CTS && poHeader->nSectorSize < 2 * nBlockSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Sector size (%d) should be at least twice larger than the block size (%d) in CBC_CTS.",
+                 "Sector size (%d) should be at least twice larger than "
+                 "the block size (%d) in CBC_CTS.",
                  poHeader->nSectorSize, nBlockSize);
         return FALSE;
     }

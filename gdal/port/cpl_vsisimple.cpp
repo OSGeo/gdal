@@ -106,9 +106,8 @@ CPL_CVSID("$Id$");
 FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
 
 {
-    FILE *fp = NULL;
-
 #if defined(WIN32)
+    FILE *fp = NULL;
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
@@ -122,8 +121,14 @@ FILE *VSIFOpen( const char * pszFilename, const char * pszAccess )
         CPLFree( pwszAccess );
     }
     else
+    {
+        // Are the casts really necessary?
+        fp = fopen(const_cast<char *>(pszFilename),
+                   const_cast<char *>(pszAccess));
+    }
+#else
+    FILE *fp = fopen(pszFilename, pszAccess);
 #endif
-    fp = fopen( (char *) pszFilename, (char *) pszAccess );
 
 #ifdef VSI_DEBUG
     // Capture the error from fopen to avoid being overwritten by errors
@@ -472,7 +477,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
     const size_t nRequestedSize = 3 * sizeof(void*) + nMul;
     if( nRequestedSize < nMul )
         return NULL;
-    char* ptr = (char*) calloc(1, nRequestedSize);
+    char* ptr = static_cast<char *>(calloc(1, nRequestedSize));
     if( ptr == NULL )
         return NULL;
 #endif
@@ -516,7 +521,7 @@ void *VSICalloc( size_t nCount, size_t nSize )
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
-        nVSICallocs ++;
+        nVSICallocs++;
         if( nMaxTotalAllocs == 0 )
             atexit(VSIShowMemStats);
         nCurrentTotalAllocs += nMul;
@@ -577,7 +582,7 @@ void *VSIMalloc( size_t nSize )
     const size_t nRequestedSize = 3 * sizeof(void*) + nSize;
     if( nRequestedSize < nSize )
         return NULL;
-    char* ptr = (char*) malloc(nRequestedSize);
+    char* ptr = static_cast<char *>(malloc(nRequestedSize));
 #endif  // DEBUG_VSIMALLOC_MPROTECT
     if( ptr == NULL )
         return NULL;
@@ -619,7 +624,7 @@ void *VSIMalloc( size_t nSize )
         }
 #endif  // DEBUG_VSIMALLOC_VERBOSE
 #ifdef DEBUG_VSIMALLOC_STATS
-        nVSIMallocs ++;
+        nVSIMallocs++;
         if( nMaxTotalAllocs == 0 )
             atexit(VSIShowMemStats);
         nCurrentTotalAllocs += nSize;
@@ -783,7 +788,7 @@ void * VSIRealloc( void * pData, size_t nNewSize )
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
-        nVSIReallocs ++;
+        nVSIReallocs++;
         nCurrentTotalAllocs -= nOldSize;
         nCurrentTotalAllocs += nNewSize;
         if( nCurrentTotalAllocs > nMaxTotalAllocs )
@@ -834,7 +839,7 @@ void VSIFree( void * pData )
         }
 #endif
 #ifdef DEBUG_VSIMALLOC_STATS
-        nVSIFrees ++;
+        nVSIFrees++;
         nCurrentTotalAllocs -= nOldSize;
 #endif
     }

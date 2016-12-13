@@ -466,17 +466,20 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
         pwszFilename[1] == ':' &&
         (pwszFilename[2] == '\\' || pwszFilename[2] == '/' ) )
     {
-        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
-                    (4 + nLen + 1) * sizeof(wchar_t));
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc( pwszFilename, (4 + nLen + 1) * sizeof(wchar_t)));
         memmove( pwszFilename + 4, pwszFilename, (nLen+1) * sizeof(wchar_t));
     }
     else
     {
-        wchar_t* pwszCurDir = (wchar_t*) CPLMalloc(32768 * sizeof(wchar_t));
+        // TODO(schwehr): 32768 should be a symbolic constant.
+        wchar_t* pwszCurDir =
+            static_cast<wchar_t *>(CPLMalloc(32768 * sizeof(wchar_t)));
         DWORD nCurDirLen = GetCurrentDirectoryW( 32768, pwszCurDir );
         CPLAssert(nCurDirLen < 32768);
-        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
-                    (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t));
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc(pwszFilename,
+                       (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t)));
         int nOffset = 0;
         if( pwszFilename[0] == '.' &&
             (pwszFilename[1] == '/' || pwszFilename[1] == '\\') )

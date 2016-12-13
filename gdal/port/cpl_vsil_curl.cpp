@@ -574,11 +574,11 @@ static void VSICURLInitWriteFuncStruct(WriteFuncStruct   *psStruct,
 static size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
                                       size_t nmemb, void *req )
 {
-    WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
+    WriteFuncStruct* psStruct = static_cast<WriteFuncStruct *>(req);
     const size_t nSize = count * nmemb;
 
-    char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer,
-                                          psStruct->nSize + nSize + 1);
+    char* pNewBuffer = static_cast<char *>(
+        VSIRealloc(psStruct->pBuffer, psStruct->nSize + nSize + 1));
     if( pNewBuffer )
     {
         psStruct->pBuffer = pNewBuffer;
@@ -1885,7 +1885,8 @@ const CachedRegion*
 VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                                                  vsi_l_offset nFileOffsetStart)
 {
-    nFileOffsetStart = (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
+    nFileOffsetStart =
+        (nFileOffsetStart / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
     VSILFILE* fp = VSIFOpenL(VSICurlGetCacheFileName(), "rb");
     if( fp )
     {
@@ -1894,9 +1895,11 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
         while( true )
         {
             unsigned long pszURLHashCached = 0;
-            if( VSIFReadL(&pszURLHashCached, sizeof(unsigned long), 1, fp) == 0 )
+            if( VSIFReadL(&pszURLHashCached, sizeof(unsigned long),
+                          1, fp) == 0 )
                 break;
-            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset), 1, fp) == 0)
+            if( VSIFReadL(&nFileOffsetStartCached, sizeof(vsi_l_offset),
+                          1, fp) == 0)
                 break;
             size_t nSizeCached = 0;
             if( VSIFReadL(&nSizeCached, sizeof(size_t), 1, fp) == 0)
@@ -1905,10 +1908,11 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                 nFileOffsetStart == nFileOffsetStartCached )
             {
                 if( ENABLE_DEBUG )
-                    CPLDebug("VSICURL", "Got data at offset " CPL_FRMT_GUIB " from disk" , nFileOffsetStart);
+                    CPLDebug("VSICURL", "Got data at offset "
+                             CPL_FRMT_GUIB " from disk", nFileOffsetStart);
                 if( nSizeCached )
                 {
-                    char* pBuffer = (char*) CPLMalloc(nSizeCached);
+                    char* pBuffer = static_cast<char *>(CPLMalloc(nSizeCached));
                     if( VSIFReadL(pBuffer, 1, nSizeCached, fp) != nSizeCached )
                     {
                         CPLFree(pBuffer);
@@ -2035,23 +2039,29 @@ void  VSICurlFilesystemHandler::AddRegion(const char* pszURL,
     if( nRegions == N_MAX_REGIONS )
     {
         psRegion = papsRegions[N_MAX_REGIONS-1];
-        memmove(papsRegions + 1, papsRegions, (N_MAX_REGIONS-1) * sizeof(CachedRegion*));
+        memmove(papsRegions + 1,
+                papsRegions,
+                (N_MAX_REGIONS-1) * sizeof(CachedRegion*));
         papsRegions[0] = psRegion;
         CPLFree(psRegion->pData);
     }
     else
     {
-        papsRegions = (CachedRegion**) CPLRealloc(papsRegions, (nRegions + 1) * sizeof(CachedRegion*));
+        papsRegions = static_cast<CachedRegion **>(
+            CPLRealloc(papsRegions, (nRegions + 1) * sizeof(CachedRegion*)));
         if( nRegions )
-            memmove(papsRegions + 1, papsRegions, nRegions * sizeof(CachedRegion*));
+            memmove(papsRegions + 1,
+                    papsRegions,
+                    nRegions * sizeof(CachedRegion*));
         nRegions ++;
-        papsRegions[0] = psRegion = (CachedRegion*) CPLMalloc(sizeof(CachedRegion));
+        psRegion = static_cast<CachedRegion *>(CPLMalloc(sizeof(CachedRegion)));
+        papsRegions[0] = psRegion;
     }
 
     psRegion->pszURLHash = pszURLHash;
     psRegion->nFileOffsetStart = nFileOffsetStart;
     psRegion->nSize = nSize;
-    psRegion->pData = (nSize) ? (char*) CPLMalloc(nSize) : NULL;
+    psRegion->pData = nSize ? static_cast<char *>(CPLMalloc(nSize)) : NULL;
     if( nSize )
         memcpy(psRegion->pData, pData, nSize);
 
@@ -3218,8 +3228,10 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
 
     CPLMutexHolder oHolder( &hMutex );
 
-    /* If we know the file exists and is not a directory, then don't try to list its content */
-    CachedFileProp* cachedFileProp = GetCachedFileProp(GetURLFromDirname(osDirname));
+    // If we know the file exists and is not a directory,
+    // then don't try to list its content.
+    CachedFileProp* cachedFileProp =
+        GetCachedFileProp(GetURLFromDirname(osDirname));
     if( cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory )
     {
         if( pbGotFileList )
@@ -3230,9 +3242,11 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
     CachedDirList* psCachedDirList = cacheDirList[osDirname];
     if( psCachedDirList == NULL )
     {
-        psCachedDirList = (CachedDirList*) CPLMalloc(sizeof(CachedDirList));
-        psCachedDirList->papszFileList = GetFileList(osDirname, nMaxFiles,
-                                                     &psCachedDirList->bGotFileList);
+        psCachedDirList =
+            static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
+        psCachedDirList->papszFileList =
+            GetFileList(osDirname, nMaxFiles,
+                        &psCachedDirList->bGotFileList);
         cacheDirList[osDirname] = psCachedDirList;
     }
 
@@ -3384,12 +3398,12 @@ VSIS3WriteHandle::VSIS3WriteHandle(VSIS3FSHandler* poFS,
         m_nOffsetInXML(0),
         m_bError(false)
 {
-    int nChunkSizeMB = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50"));
+    const int nChunkSizeMB = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50"));
     if( nChunkSizeMB <= 0 || nChunkSizeMB > 1000 )
         m_nBufferSize = 0;
     else
         m_nBufferSize = nChunkSizeMB * 1024 * 1024;
-    m_pabyBuffer = (GByte*)VSIMalloc(m_nBufferSize);
+    m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
     if( m_pabyBuffer == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,

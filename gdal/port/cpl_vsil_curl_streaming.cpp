@@ -90,9 +90,9 @@ class RingBuffer
         void Read(void* pBuffer, size_t nSize);
 };
 
-RingBuffer::RingBuffer(size_t nCapacityIn)
+RingBuffer::RingBuffer( size_t nCapacityIn )
 {
-    pabyBuffer = (GByte*)CPLMalloc(nCapacityIn);
+    pabyBuffer = static_cast<GByte*>(CPLMalloc(nCapacityIn));
     nCapacity = nCapacityIn;
     nOffset = 0;
     nLength = 0;
@@ -109,7 +109,7 @@ void RingBuffer::Reset()
     nLength = 0;
 }
 
-void RingBuffer::Write(void* pBuffer, size_t nSize)
+void RingBuffer::Write( void* pBuffer, size_t nSize )
 {
     CPLAssert(nLength + nSize <= nCapacity);
 
@@ -446,13 +446,15 @@ static void VSICURLStreamingInitWriteFuncStruct(WriteFuncStruct   *psStruct)
 /*                 VSICurlStreamingHandleWriteFuncForHeader()           */
 /************************************************************************/
 
-static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t
+VSICurlStreamingHandleWriteFuncForHeader( void *buffer, size_t count,
+                                          size_t nmemb, void *req )
 {
-    WriteFuncStruct* psStruct = (WriteFuncStruct*) req;
+    WriteFuncStruct* psStruct = static_cast<WriteFuncStruct *>(req);
     size_t nSize = count * nmemb;
 
-    char* pNewBuffer = (char*) VSIRealloc(psStruct->pBuffer,
-                                          psStruct->nSize + nSize + 1);
+    char* pNewBuffer = static_cast<char*>(
+        VSIRealloc(psStruct->pBuffer, psStruct->nSize + nSize + 1));
     if( pNewBuffer )
     {
         psStruct->pBuffer = pNewBuffer;
@@ -469,7 +471,8 @@ static size_t VSICurlStreamingHandleWriteFuncForHeader(void *buffer, size_t coun
             {
                 if( psStruct->bDownloadHeaderOnly )
                 {
-                    /* If moved permanently/temporarily, go on. Otherwise stop now*/
+                    // If moved permanently/temporarily, go on.
+                    // Otherwise stop now.
                     if( !(psStruct->nHTTPCode == 301 ||
                           psStruct->nHTTPCode == 302) )
                         return 0;
@@ -915,7 +918,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
             pszEndOfLine = pszContentEncoding ? strchr(pszContentEncoding, '\n') : NULL;
             if( bHasCandidateFileSize && pszEndOfLine != NULL )
             {
-                const char* pszVal = pszContentEncoding + strlen("Content-Encoding: ");
+                const char* pszVal =
+                    pszContentEncoding + strlen("Content-Encoding: ");
                 if( STARTS_WITH(pszVal, "gzip") )
                 {
                     if( ENABLE_DEBUG )
@@ -937,9 +941,13 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
 /*                 VSICurlStreamingHandleReceivedBytesHeader()          */
 /************************************************************************/
 
-static size_t VSICurlStreamingHandleReceivedBytesHeader(void *buffer, size_t count, size_t nmemb, void *req)
+static size_t
+VSICurlStreamingHandleReceivedBytesHeader( void *buffer, size_t count,
+                                           size_t nmemb, void *req )
 {
-    return ((VSICurlStreamingHandle*)req)->ReceivedBytesHeader((GByte*)buffer, count, nmemb);
+    return
+        static_cast<VSICurlStreamingHandle *>(req)->
+            ReceivedBytesHeader(static_cast<GByte *>(buffer), count, nmemb);
 }
 
 /************************************************************************/
@@ -967,16 +975,18 @@ void VSICurlStreamingHandle::DownloadInThread()
     }
 
     if( pabyHeaderData == NULL )
-        pabyHeaderData = (GByte*) CPLMalloc(HEADER_SIZE + 1);
+        pabyHeaderData = static_cast<GByte *>(CPLMalloc(HEADER_SIZE + 1));
     nHeaderSize = 0;
     nBodySize = 0;
     nHTTPCode = 0;
 
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, this);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, VSICurlStreamingHandleReceivedBytesHeader);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                     VSICurlStreamingHandleReceivedBytesHeader);
 
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, this);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlStreamingHandleReceivedBytes);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                     VSICurlStreamingHandleReceivedBytes);
 
     char szCurlErrBuf[CURL_ERROR_SIZE+1];
     szCurlErrBuf[0] = '\0';
@@ -1081,18 +1091,19 @@ void VSICurlStreamingHandle::StopDownload()
 
 void VSICurlStreamingHandle::PutRingBufferInCache()
 {
-    if (nRingBufferFileOffset >= BKGND_BUFFER_SIZE)
+    if( nRingBufferFileOffset >= BKGND_BUFFER_SIZE )
         return;
 
     AcquireMutex();
 
     /* Cache any remaining bytes available in the ring buffer */
     size_t nBufSize = oRingBuffer.GetSize();
-    if ( nBufSize > 0 )
+    if( nBufSize > 0 )
     {
-        if (nRingBufferFileOffset + nBufSize > BKGND_BUFFER_SIZE)
-            nBufSize = (size_t) (BKGND_BUFFER_SIZE - nRingBufferFileOffset);
-        GByte* pabyTmp = (GByte*) CPLMalloc(nBufSize);
+        if( nRingBufferFileOffset + nBufSize > BKGND_BUFFER_SIZE )
+            nBufSize =
+                static_cast<size_t>(BKGND_BUFFER_SIZE - nRingBufferFileOffset);
+        GByte* pabyTmp = static_cast<GByte *>(CPLMalloc(nBufSize));
         oRingBuffer.Read(pabyTmp, nBufSize);
 
         /* Signal to the producer that we have ingested some bytes */
@@ -1110,13 +1121,14 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, size_t const nMemb )
+size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize,
+                                     size_t const nMemb )
 {
     GByte* pabyBuffer = (GByte*)pBuffer;
     const size_t nBufferRequestSize = nSize * nMemb;
     const vsi_l_offset curOffsetOri = curOffset;
     const vsi_l_offset nRingBufferFileOffsetOri = nRingBufferFileOffset;
-    if (nBufferRequestSize == 0)
+    if( nBufferRequestSize == 0 )
         return 0;
     size_t nRemaining = nBufferRequestSize;
 
@@ -1125,18 +1137,18 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     const vsi_l_offset fileSizeLocal = fileSize;
     ReleaseMutex();
 
-    if (bHasComputedFileSizeLocal && curOffset >= fileSizeLocal)
+    if( bHasComputedFileSizeLocal && curOffset >= fileSizeLocal )
     {
         CPLDebug("VSICURL", "Read attempt beyond end of file");
         bEOF = TRUE;
     }
-    if (bEOF)
+    if( bEOF )
         return 0;
 
-    if (curOffset < nRingBufferFileOffset)
+    if( curOffset < nRingBufferFileOffset )
         PutRingBufferInCache();
 
-    if (ENABLE_DEBUG)
+    if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Read [" CPL_FRMT_GUIB ", " CPL_FRMT_GUIB "[ in %s",
                  curOffset, curOffset + nBufferRequestSize, m_pszURL);
 
@@ -1157,11 +1169,15 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             CachedFileProp* cachedFileProp = poFS->GetCachedFileProp(pszURL);
             if( cachedFileProp->nChecksumOfFirst1024Bytes == 0 )
             {
-                cachedFileProp->nChecksumOfFirst1024Bytes = nRecomputedChecksumOfFirst1024Bytes;
+                cachedFileProp->nChecksumOfFirst1024Bytes =
+                    nRecomputedChecksumOfFirst1024Bytes;
             }
-            else if( nRecomputedChecksumOfFirst1024Bytes != cachedFileProp->nChecksumOfFirst1024Bytes )
+            else if( nRecomputedChecksumOfFirst1024Bytes !=
+                     cachedFileProp->nChecksumOfFirst1024Bytes )
             {
-                CPLDebug("VSICURL", "Invalidating previously cached file size. First bytes of file have changed!");
+                CPLDebug("VSICURL",
+                         "Invalidating previously cached file size. "
+                         "First bytes of file have changed!");
                 AcquireMutex();
                 bHasComputedFileSize = FALSE;
                 cachedFileProp->bHasComputedFileSize = FALSE;
@@ -1173,30 +1189,32 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
     }
 #endif
 
-    /* Can we use the cache ? */
+    // Can we use the cache?
     if( pCachedData != NULL && curOffset < nCachedSize )
     {
         const size_t nSz =
             std::min(nRemaining, static_cast<size_t>(nCachedSize - curOffset));
-        if (ENABLE_DEBUG)
+        if( ENABLE_DEBUG )
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                     (int)curOffset, (int)(curOffset + nSz), m_pszURL);
+                     static_cast<int>(curOffset),
+                     static_cast<int>(curOffset + nSz), m_pszURL);
         memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
         nRemaining -= nSz;
     }
 
-    /* Is the request partially covered by the cache and going beyond file size ? */
-    if ( pCachedData != NULL && bHasComputedFileSizeLocal &&
-         curOffset <= nCachedSize &&
-         curOffset + nRemaining > fileSizeLocal &&
-         fileSize == nCachedSize )
+    // Is the request partially covered by the cache and going beyond file size?
+    if( pCachedData != NULL && bHasComputedFileSizeLocal &&
+        curOffset <= nCachedSize &&
+        curOffset + nRemaining > fileSizeLocal &&
+        fileSize == nCachedSize )
     {
-        size_t nSz = (size_t) (nCachedSize - curOffset);
-        if (ENABLE_DEBUG && nSz != 0)
+        size_t nSz = static_cast<size_t>(nCachedSize - curOffset);
+        if( ENABLE_DEBUG && nSz != 0 )
             CPLDebug("VSICURL", "Using cache for [%d, %d[ in %s",
-                    (int)curOffset, (int)(curOffset + nSz), m_pszURL);
+                     static_cast<int>(curOffset),
+                     static_cast<int>(curOffset + nSz), m_pszURL);
         memcpy(pabyBuffer, pCachedData + curOffset, nSz);
         pabyBuffer += nSz;
         curOffset += nSz;
@@ -1204,17 +1222,17 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         bEOF = TRUE;
     }
 
-    /* Has a Seek() being done since the last Read() ? */
-    if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
+    // Has a Seek() being done since the last Read()?
+    if( !bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset )
     {
-        /* Backward seek : we need to restart the download from the start */
-        if (curOffset < nRingBufferFileOffset)
+        // Backward seek: Need to restart the download from the beginning.
+        if( curOffset < nRingBufferFileOffset )
             StopDownload();
 
         StartDownload();
 
-#define SKIP_BUFFER_SIZE    32768
-        GByte* pabyTmp = (GByte*)CPLMalloc(SKIP_BUFFER_SIZE);
+        const vsi_l_offset SKIP_BUFFER_SIZE = 32768;
+        GByte* pabyTmp = static_cast<GByte *>(CPLMalloc(SKIP_BUFFER_SIZE));
 
         CPLAssert(curOffset >= nRingBufferFileOffset);
         vsi_l_offset nBytesToSkip = curOffset - nRingBufferFileOffset;
@@ -1223,67 +1241,69 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             vsi_l_offset nBytesToRead = nBytesToSkip;
 
             AcquireMutex();
-            if (nBytesToRead > oRingBuffer.GetSize())
+            if( nBytesToRead > oRingBuffer.GetSize() )
                 nBytesToRead = oRingBuffer.GetSize();
-            if (nBytesToRead > SKIP_BUFFER_SIZE)
+            if( nBytesToRead > SKIP_BUFFER_SIZE )
                 nBytesToRead = SKIP_BUFFER_SIZE;
-            oRingBuffer.Read(pabyTmp, (size_t)nBytesToRead);
+            oRingBuffer.Read(pabyTmp, static_cast<size_t>(nBytesToRead));
 
-            /* Signal to the producer that we have ingested some bytes */
+            // Signal to the producer that we have ingested some bytes.
             CPLCondSignal(hCondConsumer);
             ReleaseMutex();
 
-            if (nBytesToRead)
-                AddRegion(nRingBufferFileOffset, (size_t)nBytesToRead, pabyTmp);
+            if( nBytesToRead )
+                AddRegion(nRingBufferFileOffset,
+                          static_cast<size_t>(nBytesToRead), pabyTmp);
 
             nBytesToSkip -= nBytesToRead;
             nRingBufferFileOffset += nBytesToRead;
 
-            if (nBytesToRead == 0 && nBytesToSkip != 0)
+            if( nBytesToRead == 0 && nBytesToSkip != 0 )
             {
-                if (ENABLE_DEBUG)
-                    CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
+                if( ENABLE_DEBUG )
+                    CPLDebug("VSICURL",
+                             "Waiting for writer to produce some bytes...");
 
                 AcquireMutex();
                 while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
-                int bBufferEmpty = (oRingBuffer.GetSize() == 0);
+                const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
                 ReleaseMutex();
 
-                if (bBufferEmpty && !bDownloadInProgress)
+                if( bBufferEmpty && !bDownloadInProgress )
                     break;
             }
         }
 
         CPLFree(pabyTmp);
 
-        if (nBytesToSkip != 0)
+        if( nBytesToSkip != 0 )
         {
             bEOF = TRUE;
             return 0;
         }
     }
 
-    if (!bEOF && nRemaining > 0)
+    if( !bEOF && nRemaining > 0 )
     {
         StartDownload();
         CPLAssert(curOffset == nRingBufferFileOffset);
     }
 
-    /* Fill the destination buffer from the ring buffer */
+    // Fill the destination buffer from the ring buffer.
     while(!bEOF && nRemaining > 0)
     {
         AcquireMutex();
         size_t nToRead = oRingBuffer.GetSize();
-        if (nToRead > nRemaining)
+        if( nToRead > nRemaining )
             nToRead = nRemaining;
         oRingBuffer.Read(pabyBuffer, nToRead);
 
-        /* Signal to the producer that we have ingested some bytes */
+        // Signal to the producer that we have ingested some bytes.
         CPLCondSignal(hCondConsumer);
         ReleaseMutex();
 
-        if (nToRead)
+        if( nToRead )
             AddRegion(curOffset, nToRead, pabyBuffer);
 
         nRemaining -= nToRead;
@@ -1291,10 +1311,11 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         curOffset += nToRead;
         nRingBufferFileOffset += nToRead;
 
-        if (nToRead == 0 && nRemaining != 0)
+        if( nToRead == 0 && nRemaining != 0 )
         {
-            if (ENABLE_DEBUG)
-                CPLDebug("VSICURL", "Waiting for writer to produce some bytes...");
+            if( ENABLE_DEBUG )
+                CPLDebug("VSICURL",
+                         "Waiting for writer to produce some bytes...");
 
             AcquireMutex();
             while(oRingBuffer.GetSize() == 0 && bDownloadInProgress)
@@ -1302,31 +1323,34 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             int bBufferEmpty = (oRingBuffer.GetSize() == 0);
             ReleaseMutex();
 
-            if (bBufferEmpty && !bDownloadInProgress)
+            if( bBufferEmpty && !bDownloadInProgress )
                 break;
         }
     }
 
-    if (ENABLE_DEBUG)
+    if( ENABLE_DEBUG )
         CPLDebug("VSICURL", "Read(%d) = %d",
-                (int)nBufferRequestSize, (int)(nBufferRequestSize - nRemaining));
+                 static_cast<int>(nBufferRequestSize),
+                 static_cast<int>(nBufferRequestSize - nRemaining));
     size_t nRet = (nBufferRequestSize - nRemaining) / nSize;
-    if (nRet < nMemb)
+    if( nRet < nMemb )
         bEOF = TRUE;
 
-    /* Give a chance to specialized filesystem to deal with errors to redirect */
-    /* elsewhere */
+    // Give a chance to specialized filesystem to deal with errors to redirect
+    // elsewhere.
     if( curOffsetOri == 0 && nRingBufferFileOffsetOri == 0 &&
         !StopReceivingBytesOnError() &&
         eExists == EXIST_NO && nRemaining < nBufferRequestSize )
     {
         const size_t nErrorBufferMaxSize = 4096;
-        GByte* pabyErrorBuffer = (GByte*)CPLMalloc(nErrorBufferMaxSize + 1);
+        GByte* pabyErrorBuffer =
+            static_cast<GByte *>(CPLMalloc(nErrorBufferMaxSize + 1));
         size_t nRead = nBufferRequestSize - nRemaining;
         size_t nErrorBufferSize = std::min(nErrorBufferMaxSize, nRead);
         memcpy( pabyErrorBuffer, pBuffer, nErrorBufferSize );
         if( nRead < nErrorBufferMaxSize )
-            nErrorBufferSize += Read( pabyErrorBuffer + nRead, 1, nErrorBufferMaxSize - nRead );
+            nErrorBufferSize += Read(pabyErrorBuffer + nRead, 1,
+                                     nErrorBufferMaxSize - nRead);
         pabyErrorBuffer[nErrorBufferSize] = 0;
         StopDownload();
         if( CanRestartOnError((const char*)pabyErrorBuffer, true) )
@@ -1341,7 +1365,8 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
             ReleaseMutex();
             nCachedSize = 0;
             m_poFS->AcquireMutex();
-            CachedFileProp* cachedFileProp = m_poFS->GetCachedFileProp(m_pszURL);
+            CachedFileProp* cachedFileProp =
+                m_poFS->GetCachedFileProp(m_pszURL);
             cachedFileProp->bHasComputedFileSize = FALSE;
             cachedFileProp->fileSize = 0;
             cachedFileProp->eExists = EXIST_UNKNOWN;
@@ -1350,7 +1375,8 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize, s
         }
         else
         {
-            CPLDebug("VSICURL", "Error buffer: %s", (const char*)pabyErrorBuffer);
+            CPLDebug("VSICURL", "Error buffer: %s",
+                     reinterpret_cast<char *>(pabyErrorBuffer));
             nRet = 0;
         }
 
@@ -1368,23 +1394,24 @@ void VSICurlStreamingHandle::AddRegion( vsi_l_offset nFileOffsetStart,
                                         size_t nSize,
                                         GByte *pData )
 {
-    if (nFileOffsetStart >= BKGND_BUFFER_SIZE)
+    if( nFileOffsetStart >= BKGND_BUFFER_SIZE )
         return;
 
-    if (pCachedData == NULL)
-        pCachedData = (GByte*) CPLMalloc(BKGND_BUFFER_SIZE);
+    if( pCachedData == NULL )
+      pCachedData = static_cast<GByte *>(CPLMalloc(BKGND_BUFFER_SIZE));
 
-    if (nFileOffsetStart <= nCachedSize &&
-        nFileOffsetStart + nSize > nCachedSize)
+    if( nFileOffsetStart <= nCachedSize &&
+        nFileOffsetStart + nSize > nCachedSize )
     {
         const size_t nSz =
             std::min(nSize,
                      static_cast<size_t>(BKGND_BUFFER_SIZE - nFileOffsetStart));
-        if (ENABLE_DEBUG)
+        if( ENABLE_DEBUG )
             CPLDebug("VSICURL", "Writing [%d, %d[ in cache for %s",
-                     (int)nFileOffsetStart, (int)(nFileOffsetStart + nSz), m_pszURL);
+                     static_cast<int>(nFileOffsetStart),
+                     static_cast<int>(nFileOffsetStart + nSz), m_pszURL);
         memcpy(pCachedData + nFileOffsetStart, pData, nSz);
-        nCachedSize = (size_t) (nFileOffsetStart + nSz);
+        nCachedSize = static_cast<size_t>(nFileOffsetStart + nSz);
     }
 }
 /************************************************************************/
@@ -1478,12 +1505,14 @@ void VSICurlStreamingFSHandler::ReleaseMutex()
 
 /* Should be called under the FS Lock */
 
-CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL)
+CachedFileProp *
+VSICurlStreamingFSHandler::GetCachedFileProp( const char* pszURL )
 {
     CachedFileProp* cachedFileProp = cacheFileSize[pszURL];
-    if (cachedFileProp == NULL)
+    if( cachedFileProp == NULL )
     {
-        cachedFileProp = (CachedFileProp*) CPLMalloc(sizeof(CachedFileProp));
+        cachedFileProp =
+            static_cast<CachedFileProp *>(CPLMalloc(sizeof(CachedFileProp)));
         cachedFileProp->eExists = EXIST_UNKNOWN;
         cachedFileProp->bHasComputedFileSize = FALSE;
         cachedFileProp->fileSize = 0;
@@ -1501,7 +1530,8 @@ CachedFileProp*  VSICurlStreamingFSHandler::GetCachedFileProp(const char* pszURL
 /*                          CreateFileHandle()                          */
 /************************************************************************/
 
-VSICurlStreamingHandle* VSICurlStreamingFSHandler::CreateFileHandle(const char* pszURL)
+VSICurlStreamingHandle *
+VSICurlStreamingFSHandler::CreateFileHandle( const char* pszURL )
 {
     return new VSICurlStreamingHandle(this, pszURL);
 }
@@ -1514,17 +1544,19 @@ VSIVirtualHandle* VSICurlStreamingFSHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
                                                    bool /* bSetError */ )
 {
-    if (strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL)
+    if( strchr(pszAccess, 'w') != NULL ||
+        strchr(pszAccess, '+') != NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Only read-only mode is supported for %s", GetFSPrefix().c_str());
+                 "Only read-only mode is supported for %s",
+                 GetFSPrefix().c_str());
         return NULL;
     }
 
-    VSICurlStreamingHandle* poHandle = CreateFileHandle(pszFilename + GetFSPrefix().size());
-    /* If we didn't get a filelist, check that the file really exists */
-    if (poHandle == NULL || !poHandle->Exists())
+    VSICurlStreamingHandle* poHandle =
+        CreateFileHandle(pszFilename + GetFSPrefix().size());
+    // If we didn't get a filelist, check that the file really exists.
+    if( poHandle == NULL || !poHandle->Exists() )
     {
         delete poHandle;
         return NULL;
