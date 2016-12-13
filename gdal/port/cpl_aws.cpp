@@ -71,7 +71,7 @@ static CPLString CPLGetLowerCaseHex( const GByte *pabyData, size_t nBytes )
 CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes )
 {
     GByte hash[CPL_SHA256_HASH_SIZE] = {};
-    CPL_SHA256((const GByte*)pabyData, nBytes, hash);
+    CPL_SHA256(static_cast<const GByte *>(pabyData), nBytes, hash);
     return CPLGetLowerCaseHex(hash, CPL_SHA256_HASH_SIZE);
 }
 
