@@ -1867,7 +1867,7 @@ double CPLDMSToDec( const char *is )
     while( isspace(static_cast<unsigned char>(sign = *is)) )
         ++is;
 
-    char *p = const_cast<char *>( is );
+    const char *p = is;
     char work[64];
     char *s = work;
     int n = sizeof(work);
