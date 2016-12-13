@@ -1912,12 +1912,22 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection, SRS_PT_ROBINSON) )
     {
+        // Workaround a bug in proj.4 :
+        // https://github.com/OSGeo/proj.4/commit/
+        //                              bc7453d1a75aab05bdff2c51ed78c908e3efa3cd
+        const double dfLon0 = GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+        const double dfX0 = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        const double dfY0 = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+        if( CPLIsNan(dfLon0) || CPLIsNan(dfX0) || CPLIsNan(dfY0) )
+        {
+            return OGRERR_FAILURE;
+        }
         CPLsnprintf(
              szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
              "+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-             GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
-             GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
-             GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+             dfLon0,
+             dfX0,
+             dfY0 );
     }
     else if( EQUAL(pszProjection, SRS_PT_VANDERGRINTEN) )
     {
