@@ -41,12 +41,12 @@ CPL_CVSID("$Id$");
 
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
-  return OSAtomicAdd32(increment, (int*)(ptr));
+    return OSAtomicAdd32(increment, (int*)(ptr));
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 {
-  return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
+    return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
 }
 
 #elif defined(_MSC_VER)
@@ -106,7 +106,7 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
     : "r" (newval), "m" (*ptr), "a" (oldval)
     : "memory");
 
-    return (int) ret;
+    return static_cast<int>(ret);
 }
 
 #elif defined(HAVE_GCC_ATOMIC_BUILTINS)
