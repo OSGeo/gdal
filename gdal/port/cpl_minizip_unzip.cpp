@@ -166,13 +166,15 @@ typedef struct
    IN assertion: the stream s has been successfully opened for reading.
 */
 
-static int unzlocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def, voidpf filestream, int *pi)
+static int unzlocal_getByte( const zlib_filefunc_def* pzlib_filefunc_def,
+                             voidpf filestream, int *pi )
 {
     unsigned char c = 0;
-    int err = (int)ZREAD(*pzlib_filefunc_def,filestream,&c,1);
+    const int err =
+        static_cast<int>(ZREAD(*pzlib_filefunc_def, filestream, &c, 1));
     if (err==1)
     {
-        *pi = (int)c;
+        *pi = static_cast<int>(c);
         return UNZ_OK;
     }
     else
@@ -376,13 +378,15 @@ static uLong64 unzlocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc
 
         uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
                      (BUFREADCOMMENT+4) : (uLong)(uSizeFile-uReadPos);
-        if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
+        if( ZSEEK(*pzlib_filefunc_def, filestream, uReadPos,
+                  ZLIB_FILEFUNC_SEEK_SET) != 0 )
             break;
 
         if (ZREAD(*pzlib_filefunc_def,filestream,buf,uReadSize)!=uReadSize)
             break;
 
-        for( int i=(int)uReadSize-3; (i--)>0;)
+        // TODO(schwehr): Fix where the decrement is in this for loop.
+        for( int i = static_cast<int>(uReadSize)  -3; (i--) > 0; )
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) &&
                 ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
             {
@@ -401,8 +405,9 @@ static uLong64 unzlocal_SearchCentralDir(const zlib_filefunc_def* pzlib_filefunc
   Locate the Central directory 64 of a zipfile (at the end, just before
     the global comment)
 */
-static uLong64 unzlocal_SearchCentralDir64(const zlib_filefunc_def* pzlib_filefunc_def,
-                                      voidpf filestream)
+static uLong64
+unzlocal_SearchCentralDir64( const zlib_filefunc_def* pzlib_filefunc_def,
+                             voidpf filestream )
 {
     unsigned char* buf;
     uLong64 uSizeFile;
@@ -442,7 +447,7 @@ static uLong64 unzlocal_SearchCentralDir64(const zlib_filefunc_def* pzlib_filefu
         if (ZREAD(*pzlib_filefunc_def,filestream,buf,uReadSize)!=uReadSize)
             break;
 
-        for( int i=(int)uReadSize-3; (i--)>0; )
+        for( int i =static_cast<int>(uReadSize) - 3; (i--) > 0; )
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) &&
                 ((*(buf+i+2))==0x06) && ((*(buf+i+3))==0x07))
             {
@@ -1365,7 +1370,8 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
     if (pfile_in_zip_read_info==NULL)
         return UNZ_INTERNALERROR;
 
-    pfile_in_zip_read_info->read_buffer=(char*)ALLOC(UNZ_BUFSIZE);
+    pfile_in_zip_read_info->read_buffer =
+        static_cast<char *>(ALLOC(UNZ_BUFSIZE));
     pfile_in_zip_read_info->offset_local_extrafield = offset_local_extrafield;
     pfile_in_zip_read_info->size_local_extrafield = size_local_extrafield;
     pfile_in_zip_read_info->pos_local_extrafield=0;
@@ -1380,7 +1386,7 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
     pfile_in_zip_read_info->stream_initialised=0;
 
     if (method!=NULL)
-        *method = (int)s->cur_file_info.compression_method;
+        *method = static_cast<int>(s->cur_file_info.compression_method);
 
     if (level!=NULL)
     {
@@ -1714,7 +1720,8 @@ extern int ZEXPORT cpl_unzeof (unzFile file)
   the return value is the number of bytes copied in buf, or (if <0)
     the error code
 */
-extern int ZEXPORT cpl_unzGetLocalExtrafield (unzFile file, voidp buf, unsigned len)
+extern int ZEXPORT cpl_unzGetLocalExtrafield ( unzFile file, voidp buf,
+                                               unsigned len )
 {
     unz_s* s;
     file_in_zip_read_info_s* pfile_in_zip_read_info;
@@ -1733,12 +1740,12 @@ extern int ZEXPORT cpl_unzGetLocalExtrafield (unzFile file, voidp buf, unsigned 
                 pfile_in_zip_read_info->pos_local_extrafield);
 
     if (buf==NULL)
-        return (int)size_to_read;
+      return static_cast<int>(size_to_read);
 
     if (len>size_to_read)
-        read_now = (uInt)size_to_read;
+        read_now = static_cast<uInt>(size_to_read);
     else
-        read_now = (uInt)len ;
+      read_now = static_cast<uInt>(len);
 
     if (read_now==0)
         return 0;
@@ -1755,7 +1762,7 @@ extern int ZEXPORT cpl_unzGetLocalExtrafield (unzFile file, voidp buf, unsigned 
               buf,read_now)!=read_now)
         return UNZ_ERRNO;
 
-    return (int)read_now;
+    return static_cast<int>(read_now);
 }
 
 /*
@@ -1826,7 +1833,7 @@ extern int ZEXPORT cpl_unzGetGlobalComment (unzFile file, char * szComment, uLon
 
     if ((szComment != NULL) && (uSizeBuf > s->gi.size_comment))
         *(szComment+s->gi.size_comment)='\0';
-    return (int)uReadThis;
+    return static_cast<int>(uReadThis);
 }
 
 /* Additions by RX '2004 */

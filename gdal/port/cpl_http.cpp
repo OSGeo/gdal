@@ -230,15 +230,17 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
             psResult->nDataLen = static_cast<int>(nLength);
             psResult->pabyData = static_cast<GByte *>(
                 CPLMalloc(static_cast<size_t>(nLength) + 1));
-            memcpy(psResult->pabyData, pabyData, (size_t)nLength);
-            psResult->pabyData[(size_t)nLength] = 0;
+            memcpy(psResult->pabyData, pabyData, static_cast<size_t>(nLength));
+            psResult->pabyData[static_cast<size_t>(nLength)] = 0;
         }
 
         if( psResult->pabyData != NULL &&
-            STARTS_WITH((const char*)psResult->pabyData, "Content-Type: ") )
+            STARTS_WITH(reinterpret_cast<char *>(psResult->pabyData),
+                        "Content-Type: ") )
         {
             const char* pszContentType =
-                (const char*)psResult->pabyData + strlen("Content-type: ");
+                reinterpret_cast<char *>(psResult->pabyData) +
+                strlen("Content-type: ");
             const char* pszEOL = strchr(pszContentType, '\r');
             if( pszEOL )
                 pszEOL = strchr(pszContentType, '\n');
@@ -426,7 +428,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*      If 502, 503 or 504 status code retry this HTTP call until max   */
 /*      retry has been reached                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszRetryDelay = CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
+    const char *pszRetryDelay =
+        CSLFetchNameValue( papszOptions, "RETRY_DELAY" );
     if( pszRetryDelay == NULL )
         pszRetryDelay = CPLGetConfigOption( "GDAL_HTTP_RETRY_DELAY", "30" );
     const char *pszMaxRetries = CSLFetchNameValue( papszOptions, "MAX_RETRY" );
@@ -444,7 +447,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
-        psResult->nStatus = (int) curl_easy_perform( http_handle );
+        psResult->nStatus = static_cast<int>(curl_easy_perform(http_handle));
 
 /* -------------------------------------------------------------------- */
 /*      Fetch content-type if possible.                                 */
@@ -900,8 +903,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
-    char *pszNext = (char *)
-        strstr((const char *) psResult->pabyData,osBoundary.c_str());
+    char *pszNext =
+        strstr(reinterpret_cast<char *>(psResult->pabyData),
+               osBoundary.c_str());
 
     if( pszNext == NULL )
     {
@@ -970,10 +974,12 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Work out the data block size.                                   */
 /* -------------------------------------------------------------------- */
-        psPart->pabyData = (GByte *) pszNext;
+        psPart->pabyData = reinterpret_cast<GByte *>(pszNext);
 
-        int nBytesAvail = psResult->nDataLen -
-            static_cast<int>(pszNext - (const char *) psResult->pabyData);
+        int nBytesAvail =
+            psResult->nDataLen -
+            static_cast<int>(
+                pszNext - reinterpret_cast<char *>(psResult->pabyData));
 
         while( nBytesAvail > 0
                && (*pszNext != '-'
@@ -986,11 +992,14 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         if( nBytesAvail == 0 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Error while parsing multipart content (at line %d)", __LINE__);
+                     "Error while parsing multipart content (at line %d)",
+                     __LINE__);
             return FALSE;
         }
 
-        psPart->nDataLen = static_cast<int>(pszNext - (const char *) psPart->pabyData);
+        psPart->nDataLen =
+            static_cast<int>(
+                pszNext - reinterpret_cast<char *>(psPart->pabyData));
         pszNext += strlen(osBoundary);
 
         if( STARTS_WITH(pszNext, "--") )
@@ -1005,7 +1014,8 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                        "Error while parsing multipart content (at line %d)", __LINE__);
+                     "Error while parsing multipart content (at line %d)",
+                     __LINE__);
             return FALSE;
         }
     }

@@ -314,14 +314,15 @@ static uLong ziplocal_TmzDateToDosDate( const tm_zip *ptm,
 
 /****************************************************************************/
 
-static int ziplocal_getByte(const zlib_filefunc_def* pzlib_filefunc_def,
-                            voidpf filestream, int *pi)
+static int ziplocal_getByte( const zlib_filefunc_def* pzlib_filefunc_def,
+                             voidpf filestream, int *pi )
 {
     unsigned char c = 0;
-    int err = (int)ZREAD(*pzlib_filefunc_def,filestream,&c,1);
+    const int err =
+        static_cast<int>(ZREAD(*pzlib_filefunc_def, filestream, &c, 1));
     if (err==1)
     {
-        *pi = (int)c;
+        *pi = static_cast<int>(c);
         return ZIP_OK;
     }
     else
@@ -419,13 +420,14 @@ static uLong ziplocal_SearchCentralDir(
 
         uLong uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
                      (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
-        if (ZSEEK(*pzlib_filefunc_def,filestream,uReadPos,ZLIB_FILEFUNC_SEEK_SET)!=0)
+        if( ZSEEK(*pzlib_filefunc_def, filestream, uReadPos,
+                  ZLIB_FILEFUNC_SEEK_SET) != 0 )
             break;
 
         if (ZREAD(*pzlib_filefunc_def,filestream,buf,uReadSize)!=uReadSize)
             break;
 
-        for (int i=(int)uReadSize-3; (i--)>0;)
+        for( int i = static_cast<int>(uReadSize) - 3; (i--) > 0;)
             if (((*(buf+i))==0x50) && ((*(buf+i+1))==0x4b) &&
                 ((*(buf+i+2))==0x05) && ((*(buf+i+3))==0x06))
             {

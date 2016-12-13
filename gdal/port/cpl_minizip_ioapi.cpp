@@ -59,8 +59,9 @@ static
 uLong ZCALLBACK fread_file_func ( voidpf /* opaque */, voidpf stream,
                                   void* buf, uLong size )
 {
-    uLong ret;
-    ret = (uLong)VSIFReadL(buf, 1, (size_t)size, (VSILFILE *)stream);
+    uLong ret =
+        static_cast<uLong>(VSIFReadL(buf, 1, static_cast<size_t>(size),
+                                     static_cast<VSILFILE *>(stream)));
     return ret;
 }
 
@@ -68,8 +69,9 @@ static
 uLong ZCALLBACK fwrite_file_func ( voidpf /* opaque */, voidpf stream,
                                    const void* buf, uLong size )
 {
-    uLong ret;
-    ret = (uLong)VSIFWriteL(buf, 1, (size_t)size, (VSILFILE *)stream);
+    uLong ret =
+        static_cast<uLong>(VSIFWriteL(buf, 1, static_cast<size_t>(size),
+                                      static_cast<VSILFILE *>(stream)));
     return ret;
 }
 

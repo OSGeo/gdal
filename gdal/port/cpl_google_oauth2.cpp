@@ -193,8 +193,9 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 /*      One common mistake is to try and reuse the auth token.          */
 /*      After the first use it will return invalid_grant.               */
 /* -------------------------------------------------------------------- */
-    if( psResult->pabyData != NULL
-        && strstr((const char *) psResult->pabyData,"invalid_grant") != NULL)
+    if( psResult->pabyData != NULL &&
+        strstr(reinterpret_cast<char *>(psResult->pabyData), "invalid_grant")
+        != NULL )
     {
         CPLString osURL;
         osURL.Seize( GOA2GetAuthorizationURL(pszScope) );
@@ -221,7 +222,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     }
 
     CPLDebug( "GOA2", "Access Token Response:\n%s",
-              (const char *) psResult->pabyData );
+              reinterpret_cast<char *>(psResult->pabyData) );
 
 /* -------------------------------------------------------------------- */
 /*      This response is in JSON and will look something like:          */
@@ -235,7 +236,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 }
 */
     CPLStringList oResponse = ParseSimpleJson(
-        (const char *) psResult->pabyData );
+        reinterpret_cast<char *>(psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
 
     CPLString osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );
@@ -322,7 +323,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
     }
 
     CPLDebug( "GOA2", "Refresh Token Response:\n%s",
-              (const char *) psResult->pabyData );
+              reinterpret_cast<char *>(psResult->pabyData) );
 
 /* -------------------------------------------------------------------- */
 /*      This response is in JSON and will look something like:          */
@@ -335,7 +336,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
 }
 */
     CPLStringList oResponse = ParseSimpleJson(
-        (const char *) psResult->pabyData );
+        reinterpret_cast<char *>(psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
 
     CPLString osAccessToken = oResponse.FetchNameValueDef( "access_token", "" );

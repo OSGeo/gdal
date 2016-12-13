@@ -72,6 +72,7 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle,
                              const GByte* pabyBeginningContent,
                              vsi_l_offset nCheatFileSizeIn );
+    // TODO(schwehr): Add override when support dropped for VS2008.
     virtual ~VSIBufferedReaderHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
