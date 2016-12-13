@@ -72,7 +72,7 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
     VSIBufferedReaderHandle( VSIVirtualHandle* poBaseHandle,
                              const GByte* pabyBeginningContent,
                              vsi_l_offset nCheatFileSizeIn );
-    virtual ~VSIBufferedReaderHandle() override;
+    virtual ~VSIBufferedReaderHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
