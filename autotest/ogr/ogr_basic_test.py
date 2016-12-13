@@ -729,7 +729,7 @@ def ogr_basic_16_make_geom():
 
 def ogr_basic_16_gen_list(N):
     for i in range(N):
-        geom = ogr_basic_16_make_geom()
+        ogr_basic_16_make_geom()
         yield i
 
 def ogr_basic_16():
