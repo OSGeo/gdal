@@ -599,6 +599,7 @@ def vsizip_14():
 
     fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
     try:
+        cp866_filename = ''
         exec("cp866_filename = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
     except:
         cp866_filename = '\u0430\u0431\u0432\u0433\u0434\u0435'
