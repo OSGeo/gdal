@@ -253,7 +253,7 @@ static void fprintfstderr(const char* fmt, ...)
 /*              CPLVirtualMemManagerRegisterVirtualMem()                */
 /************************************************************************/
 
-static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA* ctxt)
+static bool CPLVirtualMemManagerRegisterVirtualMem( CPLVirtualMemVMA* ctxt )
 {
     if( !CPLVirtualMemManagerInit() )
         return false;
@@ -285,7 +285,7 @@ static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA* ctxt)
 /*               CPLVirtualMemManagerUnregisterVirtualMem()             */
 /************************************************************************/
 
-static void CPLVirtualMemManagerUnregisterVirtualMem(CPLVirtualMemVMA* ctxt)
+static void CPLVirtualMemManagerUnregisterVirtualMem( CPLVirtualMemVMA* ctxt )
 {
     CPLAcquireMutex(hVirtualMemManagerMutex, 1000.0);
     for( int i=0; i < pVirtualMemManager->nVirtualMemCount; i++ )
@@ -294,9 +294,11 @@ static void CPLVirtualMemManagerUnregisterVirtualMem(CPLVirtualMemVMA* ctxt)
         {
             if( i < pVirtualMemManager->nVirtualMemCount - 1 )
             {
-                memmove( pVirtualMemManager->pasVirtualMem + i,
-                         pVirtualMemManager->pasVirtualMem + i + 1,
-                    sizeof(CPLVirtualMem*) * (pVirtualMemManager->nVirtualMemCount - i - 1) );
+                memmove(
+                    pVirtualMemManager->pasVirtualMem + i,
+                    pVirtualMemManager->pasVirtualMem + i + 1,
+                    sizeof(CPLVirtualMem*) *
+                    (pVirtualMemManager->nVirtualMemCount - i - 1) );
             }
             pVirtualMemManager->nVirtualMemCount --;
             break;
@@ -540,7 +542,7 @@ void CPLVirtualMemDeclareThread( CPLVirtualMem* ctxt )
     CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);
-    ctxtVMA->pahThreads = static_cast<pthread_t *>
+    ctxtVMA->pahThreads = static_cast<pthread_t *>(
         CPLRealloc(ctxtVMA->pahThreads,
                    (ctxtVMA->nThreads + 1) * sizeof(pthread_t)));
     ctxtVMA->pahThreads[ctxtVMA->nThreads] = pthread_self();
