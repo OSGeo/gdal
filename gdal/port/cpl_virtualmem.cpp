@@ -265,7 +265,7 @@ static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA* ctxt)
         VSI_REALLOC_VERBOSE(
             pVirtualMemManager->pasVirtualMem,
             sizeof(CPLVirtualMemVMA *) *
-            (pVirtualMemManager->nVirtualMemCount + 1));
+            (pVirtualMemManager->nVirtualMemCount + 1)));
     if( pasVirtualMemNew == NULL )
     {
         bSuccess = false;
