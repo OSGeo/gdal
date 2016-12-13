@@ -133,17 +133,19 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
  * @param pData User data to pass to the job function.
  * @return true in case of success.
  */
-bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
+bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 {
     CPLAssert( !aWT.empty() );
 
-    CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob));
+    CPLWorkerThreadJob* psJob = static_cast<CPLWorkerThreadJob *>(
+        VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob)));
     if( psJob == NULL )
         return false;
     psJob->pfnFunc = pfnFunc;
     psJob->pData = pData;
 
-    CPLList* psItem = (CPLList*) VSI_MALLOC_VERBOSE(sizeof(CPLList));
+    CPLList* psItem =
+        static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
     if( psItem == NULL )
     {
         VSIFree(psJob);
@@ -159,9 +161,8 @@ bool CPLWorkerThreadPool::SubmitJob(CPLThreadFunc pfnFunc, void* pData)
 
     if( psWaitingWorkerThreadsList )
     {
-        CPLWorkerThread* psWorkerThread;
-
-        psWorkerThread = (CPLWorkerThread*)psWaitingWorkerThreadsList->pData;
+        CPLWorkerThread* psWorkerThread =
+            (CPLWorkerThread*)psWaitingWorkerThreadsList->pData;
 
         CPLAssert( psWorkerThread->bMarkedAsWaiting );
         psWorkerThread->bMarkedAsWaiting = FALSE;
@@ -220,7 +221,8 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
         psJob->pfnFunc = pfnFunc;
         psJob->pData = apData[i];
 
-        CPLList* psItem = (CPLList*) VSI_MALLOC_VERBOSE(sizeof(CPLList));
+        CPLList* psItem =
+            static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
         if( psItem == NULL )
         {
             VSIFree(psJob);
@@ -418,7 +420,8 @@ void CPLWorkerThreadPool::DeclareJobFinished()
 /*                             GetNextJob()                             */
 /************************************************************************/
 
-CPLWorkerThreadJob* CPLWorkerThreadPool::GetNextJob(CPLWorkerThread* psWorkerThread)
+CPLWorkerThreadJob *
+CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
 {
     while(true)
     {
@@ -446,7 +449,8 @@ CPLWorkerThreadJob* CPLWorkerThreadPool::GetNextJob(CPLWorkerThread* psWorkerThr
             nWaitingWorkerThreads ++;
             CPLAssert(nWaitingWorkerThreads <= (int)aWT.size());
 
-            CPLList* psItem = (CPLList*) VSI_MALLOC_VERBOSE(sizeof(CPLList));
+            CPLList* psItem =
+                static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
             if( psItem == NULL )
             {
                 eState = CPLWTS_ERROR;

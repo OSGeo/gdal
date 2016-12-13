@@ -2715,7 +2715,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     if( outptr == NULL )
     {
         nTmpSize = 2 * nBytes;
-        pszTmp = (char*) VSIMalloc(nTmpSize + 1);
+        pszTmp = static_cast<char *>(VSIMalloc(nTmpSize + 1));
         if( pszTmp == NULL )
         {
             inflateEnd(&strm);
@@ -2748,7 +2748,8 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
 
             size_t nAlreadyWritten = nTmpSize - strm.avail_out;
             nTmpSize = nTmpSize * 2;
-            char* pszTmpNew = (char*) VSIRealloc(pszTmp, nTmpSize + 1);
+            char* pszTmpNew =
+                static_cast<char *>(VSIRealloc(pszTmp, nTmpSize + 1));
             if( pszTmpNew == NULL )
             {
                 VSIFree(pszTmp);

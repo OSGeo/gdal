@@ -147,10 +147,10 @@ char *CPLRecodeStub( const char *pszSource,
     if( strcmp(pszSrcEncoding,CPL_ENC_ISO8859_1) == 0
         && strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
-        int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
+        const int nCharCount = static_cast<int>(strlen(pszSource));
+        char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount * 2 + 1));
 
-        utf8froma( pszResult, nCharCount*2+1, pszSource, nCharCount );
+        utf8froma(pszResult, nCharCount * 2 + 1, pszSource, nCharCount);
 
         return pszResult;
     }
@@ -162,9 +162,9 @@ char *CPLRecodeStub( const char *pszSource,
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
+        char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount + 1));
 
-        utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
+        utf8toa(pszSource, nCharCount, pszResult, nCharCount + 1);
 
         return pszResult;
     }
@@ -204,9 +204,9 @@ char *CPLRecodeStub( const char *pszSource,
     if( strcmp(pszDstEncoding,CPL_ENC_UTF8) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = (char *) CPLCalloc(1,nCharCount*2+1);
+        char *pszResult = static_cast<char *>(CPLCalloc(1, nCharCount * 2 + 1));
 
-        if( EQUAL( pszSrcEncoding, "CP437") ) /* For ZIP file handling */
+        if( EQUAL( pszSrcEncoding, "CP437") ) // For ZIP file handling.
         {
             bool bIsAllPrintableASCII = true;
             for( int i = 0; i <nCharCount; i++ )
@@ -229,7 +229,8 @@ char *CPLRecodeStub( const char *pszSource,
         {
             bHaveWarned1 = true;
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Recode from %s to UTF-8 not supported, treated as ISO8859-1 to UTF-8.",
+                      "Recode from %s to UTF-8 not supported, "
+                      "treated as ISO8859-1 to UTF-8.",
                       pszSrcEncoding );
         }
 
@@ -246,17 +247,18 @@ char *CPLRecodeStub( const char *pszSource,
         && strcmp(pszDstEncoding,CPL_ENC_ISO8859_1) == 0 )
     {
         int nCharCount = static_cast<int>(strlen(pszSource));
-        char *pszResult = (char *) CPLCalloc(1,nCharCount+1);
+        char *pszResult = static_cast<char *>(CPLCalloc(1,nCharCount + 1));
 
         if( !bHaveWarned2 )
         {
             bHaveWarned2 = true;
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Recode from UTF-8 to %s not supported, treated as UTF-8 to ISO8859-1.",
+                      "Recode from UTF-8 to %s not supported, "
+                      "treated as UTF-8 to ISO8859-1.",
                       pszDstEncoding );
         }
 
-        utf8toa( pszSource, nCharCount, pszResult, nCharCount+1 );
+        utf8toa(pszSource, nCharCount, pszResult, nCharCount + 1);
 
         return pszResult;
     }
@@ -336,11 +338,9 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      Allocate destination buffer plenty big.                         */
 /* -------------------------------------------------------------------- */
-    char *pszResult;
-    int nDstBufSize, nDstLen;
-
-    nDstBufSize = nSrcLen * 4 + 1;
-    pszResult = (char *) CPLMalloc(nDstBufSize); // nearly worst case.
+    const int nDstBufSize = nSrcLen * 4 + 1;
+    // Nearly worst case.
+    char *pszResult = static_cast<char *>(CPLMalloc(nDstBufSize));
 
     if( nSrcLen == 0 )
     {
@@ -351,7 +351,8 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
 /* -------------------------------------------------------------------- */
 /*      Convert, and confirm we had enough space.                       */
 /* -------------------------------------------------------------------- */
-    nDstLen = utf8fromwc( pszResult, nDstBufSize, pwszSource, nSrcLen );
+    const int nDstLen =
+        utf8fromwc( pszResult, nDstBufSize, pwszSource, nSrcLen );
     if( nDstLen >= nDstBufSize )
     {
         CPLAssert( false ); // too small!
@@ -438,7 +439,8 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
 /*      Do the UTF-8 to UCS-2 recoding.                                 */
 /* -------------------------------------------------------------------- */
     int nSrcLen = static_cast<int>(strlen(pszUTF8Source));
-    wchar_t *pwszResult = (wchar_t *) CPLCalloc(sizeof(wchar_t),nSrcLen+1);
+    wchar_t *pwszResult =
+        static_cast<wchar_t *>(CPLCalloc(sizeof(wchar_t), nSrcLen + 1));
 
     utf8towc( pszUTF8Source, nSrcLen, pwszResult, nSrcLen+1 );
 
@@ -1260,8 +1262,8 @@ unsigned utf8tomb( const char* src, unsigned srclen,
     unsigned ret;
     if( length >= 1024 )
     {
-      buf = (wchar_t*)(malloc((length+1)*sizeof(wchar_t)));
-      utf8towc(src, srclen, buf, length+1);
+        buf = static_cast<wchar_t *>(malloc((length + 1) * sizeof(wchar_t)));
+        utf8towc(src, srclen, buf, length + 1);
     }
     if( dstlen )
     {
@@ -1277,13 +1279,13 @@ unsigned utf8tomb( const char* src, unsigned srclen,
     if( buf != lbuf ) free((void*)buf);
     return ret;
 #else
-    wchar_t lbuf[1024];
+    wchar_t lbuf[1024] = {};
     wchar_t* buf = lbuf;
     unsigned length = utf8towc(src, srclen, buf, 1024);
     if( length >= 1024 )
     {
-      buf = (wchar_t*)(malloc((length+1)*sizeof(wchar_t)));
-      utf8towc(src, srclen, buf, length+1);
+        buf = static_cast<wchar_t *>(malloc((length + 1) * sizeof(wchar_t)));
+        utf8towc(src, srclen, buf, length+1);
     }
     int ret = 0;
     if( dstlen )
@@ -1336,33 +1338,32 @@ unsigned utf8frommb(char* dst, unsigned dstlen,
 #ifdef _WIN32
     wchar_t lbuf[1024] = {};
     wchar_t* buf = lbuf;
-    unsigned length;
     unsigned ret;
-    length =
+    const unsigned length =
       MultiByteToWideChar(GetACP(), 0, src, srclen, buf, 1024);
     if( length >= 1024 )
     {
       length = MultiByteToWideChar(GetACP(), 0, src, srclen, 0, 0);
-      buf = (wchar_t*)(malloc(length*sizeof(wchar_t)));
+      buf = static_cast<wchar_t *>(malloc(length * sizeof(wchar_t)));
       MultiByteToWideChar(GetACP(), 0, src, srclen, buf, length);
     }
     ret = utf8fromwc(dst, dstlen, buf, length);
-    if( buf != lbuf ) free((void*)buf);
+    if( buf != lbuf ) free(buf);
     return ret;
 #else
     wchar_t lbuf[1024] = {};
     wchar_t* buf = lbuf;
-    int length = mbstowcs(buf, src, 1024);
+    const int length = mbstowcs(buf, src, 1024);
     if( length >= 1024 )
     {
       length = mbstowcs(0, src, 0)+1;
-      buf = (wchar_t*)(malloc(length*sizeof(unsigned short)));
+      buf = static_cast<wchar_t *>(malloc(length*sizeof(unsigned short)));
       mbstowcs(buf, src, length);
     }
     if( length >= 0 )
     {
       const unsigned ret = utf8fromwc(dst, dstlen, buf, length);
-      if( buf != lbuf ) free((void*)buf);
+      if( buf != lbuf ) free(buf);
       return ret;
     }
     // Errors in conversion return the UTF-8 unchanged.

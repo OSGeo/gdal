@@ -69,7 +69,8 @@ CPLString &CPLString::Printf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 /************************************************************************/
 
 /** Assign the content of the string using vsprintf() */
-CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
+CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
+                               va_list args )
 
 {
 /* -------------------------------------------------------------------- */
@@ -78,7 +79,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
 /* -------------------------------------------------------------------- */
 
 #if !defined(HAVE_VSNPRINTF)
-    char *pszBuffer = (char *) CPLMalloc(30000);
+    char *pszBuffer = static_cast<char *>(CPLMalloc(30000));
     if( CPLvsnprintf( pszBuffer, 30000, pszFormat, args) > 29998 )
     {
         CPLError( CE_Fatal, CPLE_AppDefined,
@@ -107,7 +108,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = reinterpret_cast<char *>(
+        char *pszWorkBuffer = static_cast<char *>(
             CPLMalloc(nWorkBufferSize));
 
 #ifdef va_copy
@@ -121,8 +122,8 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer,
-                                                nWorkBufferSize );
+            pszWorkBuffer = static_cast<char *>(
+                CPLRealloc(pszWorkBuffer, nWorkBufferSize));
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
