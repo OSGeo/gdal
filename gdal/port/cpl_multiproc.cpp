@@ -64,7 +64,9 @@ CPL_CVSID("$Id$");
 //#define DEBUG_MUTEX
 
 #if defined(DEBUG) && (defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__)))
+#ifndef DEBUG_CONTENTION
 #define DEBUG_CONTENTION
+#endif
 #endif
 
 typedef struct _CPLSpinLock CPLSpinLock;
@@ -88,7 +90,7 @@ struct _CPLLock
 };
 
 #ifdef DEBUG_CONTENTION
-static GUIntBig CPLrdtsc(void)
+static GUIntBig CPLrdtsc( void )
 {
     unsigned int a;
     unsigned int d;
@@ -359,7 +361,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
 }
 #endif  // ndef MUTEX_NONE
 
-#endif /* CPL_MULTIPROC_PTHREAD */
+#endif  // CPL_MULTIPROC_PTHREAD
 
 /************************************************************************/
 /*                      CPLCleanupMasterMutex()                         */
@@ -710,7 +712,8 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
         *pbMemoryErrorOccurred = FALSE;
     if( papTLSList == NULL )
     {
-        papTLSList = static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX*2));
+        papTLSList =
+            static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX * 2));
         if( papTLSList == NULL )
         {
             if( pbMemoryErrorOccurred )
@@ -832,7 +835,7 @@ int CPLAcquireMutex( CPLMutex *hMutexIn, double dfWaitInSeconds )
 #ifdef USE_WIN32_MUTEX
     HANDLE hMutex = (HANDLE) hMutexIn;
     const DWORD hr =
-        WaitForSingleObject( hMutex, (int) (dfWaitInSeconds * 1000) );
+        WaitForSingleObject(hMutex, static_cast<int>(dfWaitInSeconds * 1000));
 
     return hr != WAIT_TIMEOUT;
 #else
@@ -1236,7 +1239,8 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
     papTLSList = (void **) TlsGetValue( nTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX*2));
+        papTLSList =
+            static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX * 2));
         if( papTLSList == NULL )
         {
             if( pbMemoryErrorOccurred )
@@ -1279,12 +1283,10 @@ void CPLFinalizeTLS()
 void CPLCleanupTLS()
 
 {
-    void **papTLSList;
-
     if( !bTLSKeySetup )
         return;
 
-    papTLSList = (void **) TlsGetValue( nTLSKey );
+    void **papTLSList = (void **) TlsGetValue( nTLSKey );
     if( papTLSList == NULL )
         return;
 
@@ -2016,10 +2018,12 @@ void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 void CPLSleep( double dfWaitInSeconds )
 
 {
-    struct timespec sRequest, sRemain;
+    struct timespec sRequest;
+    struct timespec sRemain;
 
-    sRequest.tv_sec = (int) floor(dfWaitInSeconds);
-    sRequest.tv_nsec = (int) ((dfWaitInSeconds - sRequest.tv_sec)*1000000000);
+    sRequest.tv_sec = static_cast<int>(floor(dfWaitInSeconds));
+    sRequest.tv_nsec =
+        static_cast<int>((dfWaitInSeconds - sRequest.tv_sec) * 1000000000);
     nanosleep( &sRequest, &sRemain );
 }
 
@@ -2390,8 +2394,9 @@ void  CPLReleaseLock( CPLLock* psLock )
     GUIntBig nIters = 0;
     if( psLock->bDebugPerf && psLock->nStartTime )
     {
-        GUIntBig nStopTime = CPLrdtscp();
-        GIntBig nDiffTime = (GIntBig)(nStopTime - psLock->nStartTime);
+        const GUIntBig nStopTime = CPLrdtscp();
+        const GIntBig nDiffTime =
+            static_cast<GIntBig>(nStopTime - psLock->nStartTime);
         if( nDiffTime > psLock->nMaxDiff )
         {
             bHitMaxDiff = true;
@@ -2409,7 +2414,8 @@ void  CPLReleaseLock( CPLLock* psLock )
     else
         CPLReleaseMutex( psLock->u.hMutex );
 #ifdef DEBUG_CONTENTION
-    if( psLock->bDebugPerf && (bHitMaxDiff || (psLock->nIters % 1000000) == (1000000-1) ))
+    if( psLock->bDebugPerf &&
+        (bHitMaxDiff || (psLock->nIters % 1000000) == (1000000-1) ))
     {
         CPLDebug("LOCK", "Lock contention : max = " CPL_FRMT_GIB ", avg = %.0f",
                  nMaxDiff, dfAvgDiff);

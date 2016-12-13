@@ -555,8 +555,6 @@ void CPLDebug( const char * pszCategory,
     strcat( pszMessage, szVmSize );
 #endif
 
-    // sprintf(pszMessage,"[%d] ", (int)getpid());
-
 /* -------------------------------------------------------------------- */
 /*      Add the category.                                               */
 /* -------------------------------------------------------------------- */

@@ -2101,7 +2101,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
     if( !VSIIngestFile( NULL, pszFilename, &pabyOut, NULL, -1 ) )
         return NULL;
 
-    char *pszDoc = (char*) pabyOut;
+    char *pszDoc = reinterpret_cast<char *>(pabyOut);
 
 /* -------------------------------------------------------------------- */
 /*      Parse it.                                                       */
@@ -2157,7 +2157,7 @@ int CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
 /* -------------------------------------------------------------------- */
 /*      Write file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( VSIFWriteL( pszDoc, 1, (size_t)nLength, fp ) != nLength )
+    if( VSIFWriteL(pszDoc, 1, static_cast<size_t>(nLength), fp ) != nLength )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to write whole XML document (%.500s).",
