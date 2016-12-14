@@ -423,7 +423,7 @@ GDALWarpNoDataMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
           return
               GDALWarpNoDataMaskerT(
                   padfNoData, nPixels,
-                  reinterpret_cast<GByte*>(*ppImageData),
+                  *ppImageData,  // Already a GByte *.
                   panValidityMask, pbOutAllValid );
 
       case GDT_Int16:
