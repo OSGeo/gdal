@@ -600,7 +600,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
 /*      If there are no quotes, then this is the simple case.           */
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszLine,'\"') == NULL )
+    if( strchr(pszLine, '\"') == NULL )
         return CSVSplitLine( pszLine, chDelimiter );
 
 /* -------------------------------------------------------------------- */
@@ -681,7 +681,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
 /*      If there are no quotes, then this is the simple case.           */
 /*      Parse, and return tokens.                                       */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszLine,'\"') == NULL )
+    if( strchr(pszLine, '\"') == NULL )
         return CSVSplitLine( pszLine, chDelimiter );
 
 /* -------------------------------------------------------------------- */
@@ -1280,7 +1280,7 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
             if( nFullLen > nBasenameLen
                 && strcmp(psTable->pszFilename+nFullLen-nBasenameLen,
                           pszBasename) == 0
-                && strchr("/\\",psTable->pszFilename[+nFullLen-nBasenameLen-1])
+                && strchr("/\\", psTable->pszFilename[+nFullLen-nBasenameLen-1])
                           != NULL )
             {
                 return psTable->pszFilename;

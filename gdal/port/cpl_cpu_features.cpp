@@ -76,12 +76,12 @@ static void inline __cpuid( int cpuinfo[4], int level )
         push   esi
 
         mov    esi,cpuinfo
-        mov    eax,level
+        mov    eax, level
         cpuid
         mov    dword ptr [esi], eax
-        mov    dword ptr [esi+4],ebx
-        mov    dword ptr [esi+8],ecx
-        mov    dword ptr [esi+0Ch],edx
+        mov    dword ptr [esi+4], ebx
+        mov    dword ptr [esi+8], ecx
+        mov    dword ptr [esi+0Ch], edx
 
         pop    esi
         pop    ebx
@@ -141,22 +141,22 @@ bool CPLHaveRuntimeSSSE3()
 
 bool CPLHaveRuntimeAVX()
 {
-    int cpuinfo[4] = {0,0,0,0};
+    int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
 
-    /* Check OSXSAVE feature */
+    // Check OSXSAVE feature.
     if( (cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
     {
         return false;
     }
 
-    /* Check AVX feature */
+    // Check AVX feature.
     if( (cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
     {
         return false;
     }
 
-    /* Issue XGETBV and check the XMM and YMM state bit */
+    // Issue XGETBV and check the XMM and YMM state bit.
     unsigned int nXCRLow;
     unsigned int nXCRHigh;
     __asm__ ("xgetbv" : "=a" (nXCRLow), "=d" (nXCRHigh) : "c" (0));
@@ -174,22 +174,22 @@ bool CPLHaveRuntimeAVX()
 
 bool CPLHaveRuntimeAVX()
 {
-    int cpuinfo[4] = {0,0,0,0};
+    int cpuinfo[4] = { 0, 0, 0, 0 };
     CPL_CPUID(1, cpuinfo);
 
-    /* Check OSXSAVE feature */
+    // Check OSXSAVE feature.
     if( (cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0 )
     {
         return false;
     }
 
-    /* Check AVX feature */
+    // Check AVX feature.
     if( (cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0 )
     {
         return false;
     }
 
-    /* Issue XGETBV and check the XMM and YMM state bit */
+    // Issue XGETBV and check the XMM and YMM state bit.
     unsigned __int64 xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
     if( (xcrFeatureMask & ( BIT_XMM_STATE | BIT_YMM_STATE )) !=
                           ( BIT_XMM_STATE | BIT_YMM_STATE ) )
