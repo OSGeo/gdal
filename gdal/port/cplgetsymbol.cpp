@@ -169,10 +169,10 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
     if( pLibrary <= (void*)HINSTANCE_ERROR )
     {
-        LPVOID      lpMsgBuf = NULL;
-        int         nLastError = GetLastError();
+        LPVOID lpMsgBuf = NULL;
+        int nLastError = GetLastError();
 
-        /* Restore old error mode */
+        // Restore old error mode.
         SetErrorMode(uOldErrorMode);
 
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -188,7 +188,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    /* Restore old error mode */
+    // Restore old error mode.
     SetErrorMode(uOldErrorMode);
 
     pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
@@ -196,14 +196,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     if( pSymbol == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Can't find requested entry point: %s\n", pszSymbolName );
+                  "Can't find requested entry point: %s", pszSymbolName );
         return NULL;
     }
 
     return( pSymbol );
 }
 
-#endif /* def _WIN32 */
+#endif  // def _WIN32
 
 /* ==================================================================== */
 /*      Dummy implementation.                                           */
