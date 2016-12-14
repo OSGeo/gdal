@@ -2318,6 +2318,10 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
 /* -------------------------------------------------------------------- */
 /*      Get the index id from stateplane.csv.                           */
 /* -------------------------------------------------------------------- */
+
+    if( !bNAD83 && nZone > INT_MAX - 10000 )
+        return OGRERR_FAILURE;
+
     const int nAdjustedId = bNAD83 ? nZone : nZone + 10000;
 
 /* -------------------------------------------------------------------- */
