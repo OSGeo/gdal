@@ -1027,7 +1027,7 @@ int open64( const char *path, int flags, ... )
     {
         VSIStatBufL sStatBufL;
         char* newname =
-            const_cast<char *>(CPLFormFilename(osCurDir.c_str(), path, NULL)(;
+            const_cast<char *>(CPLFormFilename(osCurDir.c_str(), path, NULL));
         if( strchr(osCurDir.c_str(), '/') != NULL && strcmp(path, "..") == 0 )
         {
             char* lastslash = strrchr(newname, '/');
@@ -1486,7 +1486,7 @@ static bool filldir( VSIDIR* mydir )
     mydir->ent.d_off = 0;
     mydir->ent.d_reclen = sizeof(mydir->ent);
     VSIStatBufL sStatBufL;
-    VSIStatL(CPLFormFilename(mydir->pszDirname, pszName, NULL), &sStatBufL);
+    CPL_IGNORE_RET_VAL(VSIStatL(CPLFormFilename(mydir->pszDirname, pszName, NULL), &sStatBufL));
     if( DEBUG_VSIPRELOAD_COND && S_ISDIR(sStatBufL.st_mode) )
         fprintf(stderr, "%s is dir\n", pszName);
     mydir->ent.d_type = S_ISDIR(sStatBufL.st_mode) ? DT_DIR :
