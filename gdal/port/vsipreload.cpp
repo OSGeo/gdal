@@ -967,7 +967,8 @@ int open( const char *path, int flags, ... )
         (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
     {
         VSIStatBufL sStatBufL;
-        char* newname = (char*)CPLFormFilename(osCurDir.c_str(), path, NULL);
+        char* newname =
+            const_cast<char *>(CPLFormFilename(osCurDir.c_str(), path, NULL));
         if( strchr(osCurDir.c_str(), '/') != NULL && strcmp(path, "..") == 0 )
         {
             char* lastslash = strrchr(newname, '/');
@@ -1025,7 +1026,8 @@ int open64( const char *path, int flags, ... )
         (flags & 3) == O_RDONLY && (flags & O_DIRECTORY) != 0 )
     {
         VSIStatBufL sStatBufL;
-        char* newname = (char*)CPLFormFilename(osCurDir.c_str(), path, NULL);
+        char* newname =
+            const_cast<char *>(CPLFormFilename(osCurDir.c_str(), path, NULL)(;
         if( strchr(osCurDir.c_str(), '/') != NULL && strcmp(path, "..") == 0 )
         {
             char* lastslash = strrchr(newname, '/');
