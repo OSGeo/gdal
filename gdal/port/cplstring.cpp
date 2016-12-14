@@ -117,7 +117,8 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
 #else
         wrk_args = args;
 #endif
-        while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
+        while( (nPR = CPLvsnprintf(pszWorkBuffer, nWorkBufferSize, pszFormat,
+                                   wrk_args))
                >= nWorkBufferSize-1
                || nPR == -1 )
         {
@@ -228,7 +229,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
     if( pszDstEncoding == NULL )
         pszDstEncoding = CPL_ENC_UTF8;
 
-    if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
+    if( strcmp(pszSrcEncoding, pszDstEncoding) == 0 )
         return *this;
 
     char *pszRecoded = CPLRecode( c_str(),
@@ -268,7 +269,8 @@ size_t CPLString::ifind( const std::string & str, size_t pos ) const
  *
  * @param s substring to find.
  * @param nPos offset in the string at which the search starts.
- * @return the position of the substring in the string or std::string::npos if not found.
+ * @return the position of the substring in the string or std::string::npos if
+ * not found.
  * @since GDAL 1.9.0
  */
 
@@ -288,7 +290,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
     {
         if( chFirst == ::tolower(*pszHaystack) )
         {
-            if( EQUALN(pszHaystack,s,nTargetLen) )
+            if( EQUALN(pszHaystack, s, nTargetLen) )
                 return nPos;
         }
 
@@ -363,7 +365,7 @@ CPLString &CPLString::replaceAll( const std::string &osBefore,
 CPLString &CPLString::replaceAll( char chBefore,
                                   const std::string &osAfter )
 {
-    return replaceAll(std::string(&chBefore,1), osAfter);
+    return replaceAll(std::string(&chBefore, 1), osAfter);
 }
 
 /**
