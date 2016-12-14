@@ -55,7 +55,7 @@ CPL_CVSID("$Id$");
 // list of named persistent http sessions
 
 #ifdef HAVE_CURL
-static std::map<CPLString,CURL*>* poSessionMap = NULL;
+static std::map<CPLString, CURL*>* poSessionMap = NULL;
 static CPLMutex *hSessionMapMutex = NULL;
 #endif
 
@@ -290,7 +290,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLMutexHolder oHolder( &hSessionMapMutex );
 
         if( poSessionMap == NULL )
-            poSessionMap = new std::map<CPLString,CURL*>;
+            poSessionMap = new std::map<CPLString, CURL *>;
         if( poSessionMap->count( osSessionName ) == 0 )
         {
             (*poSessionMap)[osSessionName] = curl_easy_init();
@@ -310,7 +310,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
         if( poSessionMap )
         {
-            std::map<CPLString,CURL*>::iterator oIter = poSessionMap->find( osSessionName );
+            std::map<CPLString, CURL *>::iterator oIter =
+                poSessionMap->find( osSessionName );
             if( oIter != poSessionMap->end() )
             {
                 curl_easy_cleanup(oIter->second);
@@ -360,7 +361,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
     CPLHTTPResult *psResult =
-        static_cast<CPLHTTPResult *>(CPLCalloc(1,sizeof(CPLHTTPResult)));
+        static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
 
     curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
 
@@ -569,9 +570,11 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
         curl_easy_setopt(http_handle, CURLOPT_VERBOSE, 1);
 
-    const char *pszHttpVersion = CSLFetchNameValue( papszOptions, "HTTP_VERSION");
+    const char *pszHttpVersion =
+        CSLFetchNameValue( papszOptions, "HTTP_VERSION");
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
-        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0 );
+        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                         CURL_HTTP_VERSION_1_0);
 
     /* Support control over HTTPAUTH */
     const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
@@ -582,14 +585,14 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 
     /* CURLOPT_HTTPAUTH is defined in curl 7.11.0 or newer */
 #if LIBCURL_VERSION_NUM >= 0x70B00
-    else if( EQUAL(pszHttpAuth,"BASIC") )
+    else if( EQUAL(pszHttpAuth, "BASIC") )
         curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC );
-    else if( EQUAL(pszHttpAuth,"NTLM") )
+    else if( EQUAL(pszHttpAuth, "NTLM") )
         curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_NTLM );
-    else if( EQUAL(pszHttpAuth,"ANY") )
+    else if( EQUAL(pszHttpAuth, "ANY") )
         curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
 #ifdef CURLAUTH_GSSNEGOTIATE
-    else if( EQUAL(pszHttpAuth,"NEGOTIATE") )
+    else if( EQUAL(pszHttpAuth, "NEGOTIATE") )
         curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_GSSNEGOTIATE );
 #endif
     else
@@ -625,14 +628,14 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     if( pszProxy == NULL )
         pszProxy = CPLGetConfigOption("GDAL_HTTP_PROXY", NULL);
     if( pszProxy )
-        curl_easy_setopt(http_handle,CURLOPT_PROXY,pszProxy);
+        curl_easy_setopt(http_handle, CURLOPT_PROXY, pszProxy);
 
     const char* pszProxyUserPwd =
         CSLFetchNameValue( papszOptions, "PROXYUSERPWD" );
     if( pszProxyUserPwd == NULL )
         pszProxyUserPwd = CPLGetConfigOption("GDAL_HTTP_PROXYUSERPWD", NULL);
     if( pszProxyUserPwd )
-        curl_easy_setopt(http_handle,CURLOPT_PROXYUSERPWD,pszProxyUserPwd);
+        curl_easy_setopt(http_handle, CURLOPT_PROXYUSERPWD, pszProxyUserPwd);
 
     // Support control over PROXYAUTH.
     const char *pszProxyAuth = CSLFetchNameValue( papszOptions, "PROXYAUTH" );
@@ -644,13 +647,13 @@ void CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     }
     // CURLOPT_PROXYAUTH is defined in curl 7.11.0 or newer.
 #if LIBCURL_VERSION_NUM >= 0x70B00
-    else if( EQUAL(pszProxyAuth,"BASIC") )
+    else if( EQUAL(pszProxyAuth, "BASIC") )
         curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_BASIC );
-    else if( EQUAL(pszProxyAuth,"NTLM") )
+    else if( EQUAL(pszProxyAuth, "NTLM") )
         curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_NTLM );
-    else if( EQUAL(pszProxyAuth,"DIGEST") )
+    else if( EQUAL(pszProxyAuth, "DIGEST") )
         curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_DIGEST );
-    else if( EQUAL(pszProxyAuth,"ANY") )
+    else if( EQUAL(pszProxyAuth, "ANY") )
         curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
     else
     {
@@ -801,17 +804,21 @@ void CPLHTTPCleanup()
 
     {
         CPLMutexHolder oHolder( &hSessionMapMutex );
-        std::map<CPLString,CURL*>::iterator oIt;
         if( poSessionMap )
         {
-            for( oIt=poSessionMap->begin(); oIt != poSessionMap->end(); oIt++ )
+            for( std::map<CPLString, CURL *>::iterator oIt =
+                     poSessionMap->begin();
+                 oIt != poSessionMap->end();
+                 oIt++ )
+            {
                 curl_easy_cleanup( oIt->second );
+            }
             delete poSessionMap;
             poSessionMap = NULL;
         }
     }
 
-    // not quite a safe sequence.
+    // Not quite a safe sequence.
     CPLDestroyMutex( hSessionMapMutex );
     hSessionMapMutex = NULL;
 #endif
@@ -874,7 +881,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
     const char *pszBound = NULL;
 
     if( psResult->pszContentType != NULL )
-        pszBound = strstr(psResult->pszContentType,"boundary=");
+        pszBound = strstr(psResult->pszContentType, "boundary=");
 
     if( pszBound == NULL )
     {
@@ -940,7 +947,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
         while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         {
-            char *pszEOL = strstr(pszNext,"\n");
+            char *pszEOL = strstr(pszNext, "\n");
 
             if( pszEOL == NULL )
             {
@@ -983,7 +990,7 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 
         while( nBytesAvail > 0
                && (*pszNext != '-'
-                   || strncmp(pszNext,osBoundary,strlen(osBoundary)) != 0) )
+                   || strncmp(pszNext, osBoundary, strlen(osBoundary)) != 0) )
         {
             pszNext++;
             nBytesAvail--;
