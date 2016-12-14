@@ -115,7 +115,7 @@ char *CPLRecodeIconv( const char *pszSource,
         size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if( nConverted == (size_t)-1 )
+        if( nConverted == static_cast<size_t>(-1) )
         {
             if( errno == EILSEQ )
             {
@@ -219,9 +219,10 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {
         if( nTargetCharWidth == 1 )
-            pszIconvSrcBuf[iSrc] = (GByte) pwszSource[iSrc];
+            pszIconvSrcBuf[iSrc] = static_cast<GByte>(pwszSource[iSrc]);
         else if( nTargetCharWidth == 2 )
-            ((short *)pszIconvSrcBuf)[iSrc] = (short) pwszSource[iSrc];
+            ((short *)pszIconvSrcBuf)[iSrc] =
+                static_cast<short>(pwszSource[iSrc]);
         else if( nTargetCharWidth == 4 )
             ((GInt32 *)pszIconvSrcBuf)[iSrc] = pwszSource[iSrc];
     }
@@ -265,10 +266,10 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
 
     while( nSrcLen > 0 )
     {
-        size_t nConverted =
+        const size_t nConverted =
             iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
 
-        if( nConverted == (size_t)-1 )
+        if( nConverted == static_cast<size_t>(-1) )
         {
             if( errno == EILSEQ )
             {
