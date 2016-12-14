@@ -833,7 +833,7 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( bTrimSpaces )
     {
         size_t i = strlen( pszBuffer );
-        while( i-- > 0 && isspace((unsigned char)pszBuffer[i]) )
+        while( i-- > 0 && isspace(static_cast<unsigned char>(pszBuffer[i])) )
             pszBuffer[i] = '\0';
     }
 
@@ -1540,7 +1540,7 @@ static void CPLShowAccessedOptions()
 {
     std::set<CPLString>::iterator aoIter;
 
-    printf("Configuration options accessed in reading : "),/*ok*/
+    printf("Configuration options accessed in reading : "), /*ok*/
     aoIter = paoGetKeys->begin();
     while( aoIter != paoGetKeys->end() )
     {
@@ -1945,7 +1945,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     if( CPLIsNan(dfAngle) )
         return "Invalid angle";
 
-    const double dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
+    const double dfEpsilon = (0.5 / 3600.0) * pow(0.1, nPrecision);
     const double dfABSAngle = std::abs(dfAngle) + dfEpsilon;
     if( dfABSAngle > 361.0 )
     {
@@ -1959,10 +1959,10 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     if( dfSeconds > dfEpsilon * 3600.0 )
         dfSeconds -= dfEpsilon * 3600.0;
 
-    const char  *pszHemisphere;
-    if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
+    const char *pszHemisphere = NULL;
+    if( EQUAL(pszAxis, "Long") && dfAngle < 0.0 )
         pszHemisphere = "W";
-    else if( EQUAL(pszAxis,"Long") )
+    else if( EQUAL(pszAxis, "Long") )
         pszHemisphere = "E";
     else if( dfAngle < 0.0 )
         pszHemisphere = "S";
@@ -2152,13 +2152,13 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 /* -------------------------------------------------------------------- */
 /*      Is there an existing file we can use?                           */
 /* -------------------------------------------------------------------- */
-    const bool bReuse = EQUAL(pszAccess,"rb") || EQUAL(pszAccess, "rb+");
+    const bool bReuse = EQUAL(pszAccess, "rb") || EQUAL(pszAccess, "rb+");
 
     for( int i = 0; bReuse && i < nSharedFileCount; i++ )
     {
-        if( strcmp(pasSharedFileList[i].pszFilename,pszFilename) == 0
+        if( strcmp(pasSharedFileList[i].pszFilename, pszFilename) == 0
             && !bLarge == !pasSharedFileList[i].bLarge
-            && EQUAL(pasSharedFileList[i].pszAccess,pszAccess)
+            && EQUAL(pasSharedFileList[i].pszAccess, pszAccess)
             && nPID == pasSharedFileListExtra[i].nPID)
         {
             pasSharedFileList[i].nRefCount++;
@@ -2402,7 +2402,7 @@ int CPLUnlinkTree( const char *pszPath )
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
-            if( EQUAL(papszItems[i],".") || EQUAL(papszItems[i],"..") )
+            if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
             char *pszSubPath = CPLStrdup(
@@ -2544,7 +2544,7 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 
         for( int i = 0; papszItems != NULL && papszItems[i] != NULL; i++ )
         {
-            if( EQUAL(papszItems[i],".") || EQUAL(papszItems[i],"..") )
+            if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
             char *pszNewSubPath = CPLStrdup(
@@ -2634,13 +2634,13 @@ int CPLSymlink( const char*
 CPLLocaleC::CPLLocaleC() :
     pszOldLocale(NULL)
 {
-    if( CPLTestBool(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC","NO")) )
+    if( CPLTestBool(CPLGetConfigOption("GDAL_DISABLE_CPLLOCALEC", "NO")) )
         return;
 
-    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));
-    if( EQUAL(pszOldLocale,"C")
-        || EQUAL(pszOldLocale,"POSIX")
-        || CPLsetlocale(LC_NUMERIC,"C") == NULL )
+    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC, NULL));
+    if( EQUAL(pszOldLocale, "C")
+        || EQUAL(pszOldLocale, "POSIX")
+        || CPLsetlocale(LC_NUMERIC, "C") == NULL )
     {
         CPLFree( pszOldLocale );
         pszOldLocale = NULL;
@@ -2679,10 +2679,10 @@ CPLThreadLocaleC::CPLThreadLocaleC()
     if( pszOldLocale )
         pszOldLocale = CPLStrdup(pszOldLocale);
 #else
-    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC,NULL));
-    if( EQUAL(pszOldLocale,"C")
-        || EQUAL(pszOldLocale,"POSIX")
-        || CPLsetlocale(LC_NUMERIC,"C") == NULL )
+    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC, NULL));
+    if( EQUAL(pszOldLocale, "C")
+        || EQUAL(pszOldLocale, "POSIX")
+        || CPLsetlocale(LC_NUMERIC, "C") == NULL )
     {
         CPLFree( pszOldLocale );
         pszOldLocale = NULL;
@@ -2813,7 +2813,7 @@ int CPLCheckForFile( char *pszFilename, char **papszSiblingFiles )
 
     for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
     {
-        if( EQUAL(papszSiblingFiles[i],osFileOnly) )
+        if( EQUAL(papszSiblingFiles[i], osFileOnly) )
         {
             strcpy( pszFilename + strlen(pszFilename) - strlen(osFileOnly),
                     papszSiblingFiles[i] );
