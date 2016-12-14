@@ -96,8 +96,8 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck,"\r\nEND;\r\n") != NULL
-            || strstr(pszCheck,"\nEND;\n") != NULL )
+        if( strstr(pszCheck, "\r\nEND;\r\n") != NULL
+            || strstr(pszCheck, "\nEND;\n") != NULL )
             break;
     }
 
@@ -123,7 +123,7 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
         if( !ReadPair( osName, osValue ) )
             return FALSE;
 
-        if( EQUAL(osName,"BEGIN_GROUP") || EQUAL(osName,"GROUP") )
+        if( EQUAL(osName, "BEGIN_GROUP") || EQUAL(osName, "GROUP") )
         {
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
                 return FALSE;
@@ -159,13 +159,13 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
     SkipWhite();
 
-    if( EQUAL(osName,"END") )
+    if( EQUAL(osName, "END") )
         return TRUE;
 
     if( *pszHeaderNext != '=' )
     {
         // ISIS3 does not have anything after the end group/object keyword.
-        if( EQUAL(osName,"End_Group") || EQUAL(osName,"End_Object") )
+        if( EQUAL(osName, "End_Group") || EQUAL(osName, "End_Object") )
             return TRUE;
         else
             return FALSE;

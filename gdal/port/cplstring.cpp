@@ -278,8 +278,8 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 
 {
     const char *pszHaystack = c_str();
-    char chFirst = (char) ::tolower( s[0] );
-    size_t nTargetLen = strlen(s);
+    const char chFirst = static_cast<char>(::tolower(s[0]));
+    const size_t nTargetLen = strlen(s);
 
     if( nPos > size() )
         nPos = size();
@@ -313,7 +313,7 @@ CPLString &CPLString::toupper()
 
 {
     for( size_t i = 0; i < size(); i++ )
-        (*this)[i] = (char) ::toupper( (*this)[i] );
+        (*this)[i] = static_cast<char>(::toupper((*this)[i]));
 
     return *this;
 }
@@ -330,7 +330,7 @@ CPLString &CPLString::tolower()
 
 {
     for( size_t i = 0; i < size(); i++ )
-        (*this)[i] = (char) ::tolower( (*this)[i] );
+        (*this)[i] = static_cast<char>(::tolower((*this)[i]));
 
     return *this;
 }
