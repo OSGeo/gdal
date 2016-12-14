@@ -352,7 +352,7 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
     psCtx->nLastErrNo = err_no;
     psCtx->eLastErrType = eErrClass;
 
-    if( CPLGetConfigOption("CPL_LOG_ERRORS",NULL) != NULL )
+    if( CPLGetConfigOption("CPL_LOG_ERRORS", NULL) != NULL )
         CPLDebug( "CPLError", "%s", psCtx->szLastErrMsg );
 
 /* -------------------------------------------------------------------- */
@@ -467,7 +467,7 @@ static int CPLGetProcessMemorySize()
  * The category argument is used in conjunction with the CPL_DEBUG
  * environment variable to establish if the message should be displayed.
  * If the CPL_DEBUG environment variable is not set, no debug messages
- * are emitted (use CPLError(CE_Warning,...) to ensure messages are displayed).
+ * are emitted (use CPLError(CE_Warning, ...) to ensure messages are displayed).
  * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
  * debug messages are shown.  Otherwise only messages whose category appears
  * somewhere within the CPL_DEBUG value are displayed (as determined by
@@ -507,7 +507,7 @@ void CPLDebug( const char * pszCategory,
         size_t i = 0;
         for( i = 0; pszDebug[i] != '\0'; i++ )
         {
-            if( EQUALN(pszCategory,pszDebug+i,nLen) )
+            if( EQUALN(pszCategory, pszDebug+i, nLen) )
                 break;
         }
 
@@ -828,7 +828,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
             const char* pszAccess = "wt";
             if( CPLGetConfigOption( "CPL_LOG_APPEND", NULL ) != NULL )
                 pszAccess = "at";
-            fpLog = fopen( CPLGetConfigOption("CPL_LOG",""), pszAccess );
+            fpLog = fopen( CPLGetConfigOption("CPL_LOG", ""), pszAccess );
             if( fpLog == NULL )
                 fpLog = stderr;
         }
@@ -890,7 +890,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         const char *cpl_log = CPLGetConfigOption("CPL_LOG", NULL );
 
         fpLog = stderr;
-        if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )
+        if( cpl_log != NULL && EQUAL(cpl_log, "OFF") )
         {
             fpLog = NULL;
         }
