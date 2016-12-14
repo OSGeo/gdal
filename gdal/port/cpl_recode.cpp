@@ -34,15 +34,17 @@ CPL_CVSID("$Id$");
 
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeIconv( const char *, const char *, const char * )
+    CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharIconv( const wchar_t *,
                                       const char *, const char * );
 extern wchar_t *CPLRecodeToWCharIconv( const char *,
                                        const char *, const char * );
-#endif /* CPL_RECODE_ICONV */
+#endif  // CPL_RECODE_ICONV
 
 extern void CPLClearRecodeStubWarningFlags();
-extern char *CPLRecodeStub( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeStub( const char *, const char *, const char * )
+    CPL_RETURNS_NONNULL;
 extern char *CPLRecodeFromWCharStub( const wchar_t *,
                                      const char *, const char * );
 extern wchar_t *CPLRecodeToWCharStub( const char *,
@@ -59,7 +61,8 @@ extern int CPLIsUTF8Stub( const char *, int );
  * The only guaranteed supported encodings are CPL_ENC_UTF8, CPL_ENC_ASCII
  * and CPL_ENC_ISO8859_1. Currently, the following conversions are supported :
  * <ul>
- *  <li>CPL_ENC_ASCII -> CPL_ENC_UTF8 or CPL_ENC_ISO8859_1 (no conversion in fact)</li>
+ *  <li>CPL_ENC_ASCII -> CPL_ENC_UTF8 or CPL_ENC_ISO8859_1 (no conversion in
+ *  fact)</li>
  *  <li>CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8</li>
  *  <li>CPL_ENC_UTF8 -> CPL_ENC_ISO8859_1</li>
  * </ul>
@@ -110,9 +113,9 @@ char CPL_DLL *CPLRecode( const char *pszSource,
     {
         return CPLRecodeIconv( pszSource, pszSrcEncoding, pszDstEncoding );
     }
-#else /* CPL_RECODE_STUB */
+#else  // CPL_RECODE_STUB
     return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
-#endif /* CPL_RECODE_ICONV */
+#endif  // CPL_RECODE_ICONV
 }
 
 /************************************************************************/
@@ -167,10 +170,10 @@ char CPL_DLL *CPLRecodeFromWChar( const wchar_t *pwszSource,
     return CPLRecodeFromWCharIconv( pwszSource,
                                     pszSrcEncoding, pszDstEncoding );
 
-#else /* CPL_RECODE_STUB */
+#else  // CPL_RECODE_STUB
     return CPLRecodeFromWCharStub( pwszSource,
                                    pszSrcEncoding, pszDstEncoding );
-#endif /* CPL_RECODE_ICONV */
+#endif  // CPL_RECODE_ICONV
 }
 
 /************************************************************************/
@@ -226,9 +229,9 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
     return CPLRecodeToWCharIconv( pszSource,
                                   pszSrcEncoding, pszDstEncoding );
 
-#else /* CPL_RECODE_STUB */
+#else  // CPL_RECODE_STUB
     return CPLRecodeToWCharStub( pszSource, pszSrcEncoding, pszDstEncoding );
-#endif /* CPL_RECODE_ICONV */
+#endif  // CPL_RECODE_ICONV
 }
 
 /************************************************************************/
@@ -245,7 +248,7 @@ wchar_t CPL_DLL *CPLRecodeToWChar( const char *pszSource,
  *
  * @since GDAL 1.7.0
  */
-int CPLIsUTF8(const char* pabyData, int nLen)
+int CPLIsUTF8( const char* pabyData, int nLen )
 {
     return CPLIsUTF8Stub( pabyData, nLen );
 }
@@ -262,8 +265,9 @@ int CPLIsUTF8(const char* pabyData, int nLen)
  * @param pabyData input string to test
  * @param nLen length of the input string, or -1 if the function must compute
  *             the string length. In which case it must be null terminated.
+
  * @param chReplacementChar character which will be used when the input stream
- *                          contains a non ASCII character. Must be valid ASCII !
+ *                          contains a non ASCII character. Must be valid ASCII!
  *
  * @return a new string that must be freed with CPLFree().
  *
@@ -356,7 +360,8 @@ void CPLClearRecodeWarningFlags()
  * @return the number of UTF-8 characters.
  */
 
-int CPLStrlenUTF8(const char *pszUTF8Str) {
+int CPLStrlenUTF8( const char *pszUTF8Str )
+{
     int nCharacterCount = 0;
     for( int i = 0; pszUTF8Str[i] != '\0'; ++i )
     {
