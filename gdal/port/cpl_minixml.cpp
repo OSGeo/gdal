@@ -150,7 +150,7 @@ static bool ReallocToken( ParseContext *psContext )
 
     psContext->nTokenMaxSize *= 2;
     char* pszToken = static_cast<char *>(
-        VSIRealloc(psContext->pszToken,psContext->nTokenMaxSize));
+        VSIRealloc(psContext->pszToken, psContext->nTokenMaxSize));
     if( pszToken == NULL )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -395,7 +395,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         }
 
         // Do we need to unescape it?
-        if( strchr(psContext->pszToken,'&') != NULL )
+        if( strchr(psContext->pszToken, '&') != NULL )
         {
             int nLength = 0;
             char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
@@ -423,7 +423,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         }
 
         // Do we need to unescape it?
-        if( strchr(psContext->pszToken,'&') != NULL )
+        if( strchr(psContext->pszToken, '&') != NULL )
         {
             int nLength = 0;
             char *pszUnescaped = CPLUnescapeString( psContext->pszToken,
@@ -948,7 +948,7 @@ end_processing_close:
 #endif
         {
             CPLError( CE_Failure, CPLE_AppDefined,
-                      "Parse error at EOF, not all elements have been closed,"
+                      "Parse error at EOF, not all elements have been closed, "
                       "starting with %.500s",
                       sContext.papsStack[sContext.nStackSize-1].
                           psFirstNode->pszValue );
@@ -988,7 +988,7 @@ static bool _GrowBuffer( size_t nNeeded,
 {
     if( nNeeded+1 >= *pnMaxLength )
     {
-        *pnMaxLength = std::max(*pnMaxLength * 2,nNeeded + 1);
+        *pnMaxLength = std::max(*pnMaxLength * 2, nNeeded + 1);
         char* pszTextNew =
             static_cast<char *>(VSIRealloc(*ppszText, *pnMaxLength));
         if( pszTextNew == NULL )
@@ -1447,7 +1447,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 /* -------------------------------------------------------------------- */
     if( (psRoot->eType == CXT_Element
          || psRoot->eType == CXT_Attribute)
-        && EQUAL(pszElement,psRoot->pszValue) )
+        && EQUAL(pszElement, psRoot->pszValue) )
         return psRoot;
 
 /* -------------------------------------------------------------------- */
@@ -1458,7 +1458,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
     {
         if( (psChild->eType == CXT_Element
              || psChild->eType == CXT_Attribute)
-            && EQUAL(pszElement,psChild->pszValue) )
+            && EQUAL(pszElement, psChild->pszValue) )
             return psChild;
 
         if( psChild->psChild != NULL )
@@ -1556,7 +1556,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
         for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType != CXT_Text
-                && EQUAL(papszTokens[iToken],psChild->pszValue) )
+                && EQUAL(papszTokens[iToken], psChild->pszValue) )
                 break;
         }
 
@@ -1958,7 +1958,7 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
              psChild = psChild->psNext )
         {
             if( psChild->eType != CXT_Text
-                && EQUAL(pszName,psChild->pszValue) )
+                && EQUAL(pszName, psChild->pszValue) )
                 break;
         }
 
@@ -2034,7 +2034,7 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
         {
             if( pszNamespace != NULL )
             {
-                if( EQUALN(pszNamespace,psRoot->pszValue,nNameSpaceLen)
+                if( EQUALN(pszNamespace, psRoot->pszValue, nNameSpaceLen)
                     && psRoot->pszValue[nNameSpaceLen] == ':' )
                 {
                     memmove(psRoot->pszValue, psRoot->pszValue+nNameSpaceLen+1,
