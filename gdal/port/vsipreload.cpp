@@ -464,7 +464,7 @@ size_t fread( void *ptr, size_t size, size_t nmemb, FILE *stream )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fread(stream=%p,size=%d,nmemb=%d)\n",
-                stream, (int)size, (int)nmemb);
+                stream, static_cast<int>(size), static_cast<int>(nmemb));
     size_t ret = 0;
     if( fpVSIL )
         ret = VSIFReadL(ptr, size, nmemb, fpVSIL);
@@ -472,7 +472,8 @@ size_t fread( void *ptr, size_t size, size_t nmemb, FILE *stream )
         ret = pfnfread(ptr, size, nmemb, stream);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fread(stream=%p,size=%d,nmemb=%d) -> %d\n",
-                stream, (int)size, (int)nmemb, (int)ret);
+                stream, static_cast<int>(size), static_cast<int>(nmemb),
+                static_cast<int>(ret));
     return ret;
 }
 
@@ -487,7 +488,7 @@ size_t fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fwrite(stream=%p,size=%d,nmemb=%d)\n",
-                stream, (int)size, (int)nmemb);
+                stream, static_cast<int>(size), static_cast<int>(nmemb));
     size_t ret = 0;
     if( fpVSIL != NULL )
         ret = VSIFWriteL(ptr, size, nmemb, fpVSIL);
@@ -495,7 +496,8 @@ size_t fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream )
         ret = pfnfwrite(ptr, size, nmemb, stream);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fwrite(stream=%p,size=%d,nmemb=%d) -> %d\n",
-                stream, (int)size, (int)nmemb, (int)ret);
+                stream, static_cast<int>(size), static_cast<int>(nmemb),
+                static_cast<int>(ret));
     return ret;
 }
 
@@ -553,13 +555,15 @@ int __xstat( int ver, const char *path, struct stat *buf )
             path = newpath.c_str();
         }
         const int ret = VSIStatL(path, &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(path);
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(path));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__xstat(%s) ret = 0, mode = %d, size=%d\n",
-                path, sStatBufL.st_mode, (int)sStatBufL.st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__xstat(%s) ret = 0, mode = %d, size=%d\n",
+                        path, sStatBufL.st_mode,
+                        static_cast<int>(sStatBufL.st_size));
         }
         return ret;
     }
@@ -596,13 +600,15 @@ int __lxstat( int ver, const char *path, struct stat *buf )
             path = newpath.c_str();
         }
         const int ret = VSIStatL(path, &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(path);
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(path));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__lxstat(%s) ret = 0, mode = %d, size=%d\n",
-                path, sStatBufL.st_mode, (int)sStatBufL.st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__lxstat(%s) ret = 0, mode = %d, size=%d\n",
+                        path, sStatBufL.st_mode,
+                        static_cast<int>(sStatBufL.st_size));
         }
         return ret;
     }
@@ -639,13 +645,14 @@ int __xstat64( int ver, const char *path, struct stat64 *buf )
             path = newpath.c_str();
         }
         const int ret = VSIStatL(path, &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(path);
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(path));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf64(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__xstat64(%s) ret = 0, mode = %d, size = %d\n",
-                path, buf->st_mode, (int)buf->st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__xstat64(%s) ret = 0, mode = %d, size = %d\n",
+                        path, buf->st_mode, static_cast<int>(buf->st_size));
         }
         return ret;
     }
@@ -664,7 +671,7 @@ int fseeko64( FILE *stream, off64_t off, int whence )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fseeko64(stream=%p, off=%d, whence=%d)\n",
-                stream, (int)off, whence);
+                stream, static_cast<int>(off), whence);
     if( fpVSIL != NULL )
         return VSIFSeekLHelper(fpVSIL, off, whence);
     else
@@ -682,7 +689,7 @@ int fseeko( FILE *stream, off_t off, int whence )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fseeko(stream=%p, off=%d, whence=%d)\n",
-                stream, (int)off, whence);
+                stream, static_cast<int>(off), whence);
     if( fpVSIL != NULL )
         return VSIFSeekLHelper(fpVSIL, off, whence);
     else
@@ -700,7 +707,7 @@ int fseek( FILE *stream, off_t off, int whence )
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
         fprintf(stderr, "fseek(stream=%p, off=%d, whence=%d)\n",
-                stream, (int)off, whence);
+                stream, static_cast<int>(off), whence);
     if( fpVSIL != NULL )
         return VSIFSeekLHelper(fpVSIL, off, whence);
     else
@@ -1105,7 +1112,8 @@ ssize_t read( int fd, void *buf, size_t count )
     VSILFILE* fpVSIL = getVSILFILE(fd);
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
-        fprintf(stderr, "read(fd=%d, count=%d)\n", fd, (int)count);
+        fprintf(stderr, "read(fd=%d, count=%d)\n",
+                fd, static_cast<int>(count));
     ssize_t ret = 0;
     if( fpVSIL != NULL )
         ret = VSIFReadL(buf, 1, count, fpVSIL);
@@ -1124,7 +1132,8 @@ ssize_t read( int fd, void *buf, size_t count )
         }
         fprintf(stderr, "\n");
     }
-    if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr, "read() -> %d\n", (int)ret);
+    if( DEBUG_VSIPRELOAD_COND )
+        fprintf(stderr, "read() -> %d\n", static_cast<int>(ret));
     return ret;
 }
 
@@ -1138,7 +1147,8 @@ ssize_t write( int fd, const void *buf, size_t count )
     VSILFILE* fpVSIL = getVSILFILE(fd);
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
     if( DEBUG_VSIPRELOAD_COND )
-        fprintf(stderr, "write(fd=%d, count=%d)\n", fd, (int)count);
+        fprintf(stderr, "write(fd=%d, count=%d)\n",
+                fd, static_cast<int>(count));
     if( fpVSIL != NULL )
         return VSIFWriteL(buf, 1, count, fpVSIL);
     else
@@ -1203,13 +1213,14 @@ int __fxstat( int ver, int fd, struct stat *buf )
         if( DEBUG_VSIPRELOAD_COND )
             fprintf(stderr, "__fxstat(%s)\n", name.c_str());
         int ret = VSIStatL(name.c_str(), &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(name.c_str());
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(name.c_str()));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__fxstat ret = 0, mode = %d, size = %d\n",
-                sStatBufL.st_mode, (int)sStatBufL.st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__fxstat ret = 0, mode = %d, size = %d\n",
+                        sStatBufL.st_mode, static_cast<int>(sStatBufL.st_size));
         }
         return ret;
     }
@@ -1221,13 +1232,14 @@ int __fxstat( int ver, int fd, struct stat *buf )
             name = oMapVSIToString[fpVSIL];
         }
         int ret = VSIStatL(name.c_str(), &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(name.c_str());
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(name.c_str()));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__fxstat ret = 0, mode = %d, size = %d\n",
-                sStatBufL.st_mode, (int)sStatBufL.st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__fxstat ret = 0, mode = %d, size = %d\n",
+                        sStatBufL.st_mode, static_cast<int>(sStatBufL.st_size));
         }
         return ret;
     }
@@ -1254,13 +1266,14 @@ int __fxstat64( int ver, int fd, struct stat64 *buf )
             name = oMapVSIToString[fpVSIL];
         }
         int ret = VSIStatL(name.c_str(), &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(name.c_str());
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(name.c_str()));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf64(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__fxstat64 ret = 0, mode = %d, size = %d\n",
-                buf->st_mode, (int)buf->st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__fxstat64 ret = 0, mode = %d, size = %d\n",
+                        buf->st_mode, static_cast<int>(buf->st_size));
         }
         return ret;
     }
@@ -1290,13 +1303,14 @@ int __fxstatat( int ver, int dirfd, const char *pathname, struct stat *buf,
         if( !osCurDir.empty() && dirfd == AT_FDCWD && pathname[0] != '/' )
             pathname = CPLFormFilename(osCurDir.c_str(), pathname, NULL);
         const int ret = VSIStatL(pathname, &sStatBufL);
-        sStatBufL.st_ino = (int)CPLHashSetHashStr(pathname);
+        sStatBufL.st_ino = static_cast<int>(CPLHashSetHashStr(pathname));
         if( ret == 0 )
         {
             copyVSIStatBufLToBuf(&sStatBufL, buf);
-            if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-                "__fxstatat(%s) ret = 0, mode = %d, size = %d\n",
-                pathname, buf->st_mode, (int)buf->st_size);
+            if( DEBUG_VSIPRELOAD_COND )
+                fprintf(stderr,
+                        "__fxstatat(%s) ret = 0, mode = %d, size = %d\n",
+                        pathname, buf->st_mode, static_cast<int>(buf->st_size));
         }
         return ret;
     }
@@ -1315,8 +1329,10 @@ off_t lseek( int fd, off_t off, int whence )
     off_t ret;
     VSILFILE* fpVSIL = getVSILFILE(fd);
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
-    if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-        "lseek(fd=%d, off=%d, whence=%d)\n", fd, (int)off, whence);
+    if( DEBUG_VSIPRELOAD_COND )
+        fprintf(stderr,
+                "lseek(fd=%d, off=%d, whence=%d)\n",
+                fd, static_cast<int>(off), whence);
     if( fpVSIL != NULL )
     {
         VSIFSeekLHelper(fpVSIL, off, whence);
@@ -1325,7 +1341,7 @@ off_t lseek( int fd, off_t off, int whence )
     else
         ret = pfnlseek(fd, off, whence);
     if( DEBUG_VSIPRELOAD_COND )
-        fprintf(stderr, "lseek() -> ret = %d\n", (int)ret);
+        fprintf(stderr, "lseek() -> ret = %d\n", static_cast<int>(ret));
     return ret;
 }
 
@@ -1339,8 +1355,10 @@ off64_t lseek64( int fd, off64_t off, int whence )
     off_t ret;
     VSILFILE* fpVSIL = getVSILFILE(fd);
     int DEBUG_VSIPRELOAD_COND = GET_DEBUG_VSIPRELOAD_COND(fpVSIL);
-    if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-        "lseek64(fd=%d, off=%d, whence=%d)\n", fd, (int)off, whence);
+    if( DEBUG_VSIPRELOAD_COND )
+        fprintf(stderr,
+                "lseek64(fd=%d, off=%d, whence=%d)\n",
+                fd, static_cast<int>(off), whence);
     if( fpVSIL != NULL )
     {
         VSIFSeekLHelper(fpVSIL, off, whence);
@@ -1348,8 +1366,9 @@ off64_t lseek64( int fd, off64_t off, int whence )
     }
     else
         ret = pfnlseek64(fd, off, whence);
-    if( DEBUG_VSIPRELOAD_COND ) fprintf(stderr,
-        "lseek64() -> ret = %d\n", (int)ret);
+    if( DEBUG_VSIPRELOAD_COND )
+        fprintf(stderr,
+                "lseek64() -> ret = %d\n", static_cast<int>(ret));
     return ret;
 }
 

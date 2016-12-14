@@ -54,11 +54,12 @@ int main( int argc, char **argv )
         }
     }
 
-    int nLen = fread( szXML, 1, sizeof(szXML), fp );
-    if( nLen >= (int) sizeof(szXML)-2 ) {
+    int nLen = static_cast<int>(fread(szXML, 1, sizeof(szXML), fp));
+    if( nLen >= static_cast<int>(sizeof(szXML)) - 2 )
+    {
         fprintf( stderr,
                  "xmlreformat fixed sized buffer (%d bytes) exceeded.\n",
-                 (int) sizeof(szXML) );
+                 static_cast<int>(sizeof(szXML)) );
         exit(1);
     }
 
