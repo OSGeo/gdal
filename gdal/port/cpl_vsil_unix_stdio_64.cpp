@@ -765,7 +765,6 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char*
 #ifdef HAVE_STATVFS
 
 #if defined(UNIX_STDIO_64)
-    d
     struct statvfs64 buf;
     if( statvfs64(pszDirname, &buf) == 0 )
     {
