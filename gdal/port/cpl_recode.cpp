@@ -318,15 +318,15 @@ char CPL_DLL *CPLForceToASCII( const char* pabyData, int nLen,
 int CPLEncodingCharSize( const char *pszEncoding )
 
 {
-    if( EQUAL(pszEncoding,CPL_ENC_UTF8) )
+    if( EQUAL(pszEncoding, CPL_ENC_UTF8) )
         return 1;
-    else if( EQUAL(pszEncoding,CPL_ENC_UTF16) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UTF16) )
         return 2;
-    else if( EQUAL(pszEncoding,CPL_ENC_UCS2) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UCS2) )
         return 2;
-    else if( EQUAL(pszEncoding,CPL_ENC_UCS4) )
+    else if( EQUAL(pszEncoding, CPL_ENC_UCS4) )
         return 4;
-    else if( EQUAL(pszEncoding,CPL_ENC_ASCII) )
+    else if( EQUAL(pszEncoding, CPL_ENC_ASCII) )
         return 1;
     else if( STARTS_WITH_CI(pszEncoding, "ISO-8859-") )
         return 1;
