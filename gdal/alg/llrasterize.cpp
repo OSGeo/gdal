@@ -425,9 +425,9 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             }
 
             // Skip segments that are off the target region.
-            if( (dfY < 0 && dfYEnd < 0)
+            if( (dfY < 0.0 && dfYEnd < 0.0)
                 || (dfY > nRasterYSize && dfYEnd > nRasterYSize)
-                || (dfX < 0 && dfXEnd < 0)
+                || (dfX < 0.0 && dfXEnd < 0.0)
                 || (dfX > nRasterXSize && dfXEnd > nRasterXSize) )
                 continue;
 
@@ -547,7 +547,9 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 }
                 if( dfYEnd >= nRasterYSize )
                 {
-                    dfXEnd += ( dfYEnd - (double)nRasterYSize ) / dfSlope;
+                    dfXEnd +=
+                        (dfYEnd - static_cast<double>(nRasterYSize)) / dfSlope;
+                    // Clang Static Analizer claims dfYEnd from here never read.
                     dfYEnd = nRasterXSize;
                 }
             }
@@ -563,6 +565,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 if( dfYEnd < 0.0 )
                 {
                     dfXEnd -= ( dfYEnd - 0 ) / dfSlope;
+                    // Clang Static Analizer claims dfYEnd from here never read.
                     dfYEnd = 0.0;
                 }
             }
