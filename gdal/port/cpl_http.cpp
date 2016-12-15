@@ -394,7 +394,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     sResultWithLimit.psResult = psResult;
     sResultWithLimit.nMaxFileSize = 0;
     const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
-                                                    "MAX_FILE_SIZE");
+                                                   "MAX_FILE_SIZE");
     if( pszMaxFileSize != NULL )
     {
         sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);

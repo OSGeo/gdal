@@ -477,10 +477,10 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
  * an extension if desired.
  *
  * <pre>
- * CPLFormFilename("abc/xyz","def", ".dat" ) == "abc/xyz/def.dat"
+ * CPLFormFilename("abc/xyz", "def", ".dat" ) == "abc/xyz/def.dat"
  * CPLFormFilename(NULL,"def", NULL ) == "def"
- * CPLFormFilename(NULL,"abc/def.dat", NULL ) == "abc/def.dat"
- * CPLFormFilename("/abc/xyz/","def.dat", NULL ) == "/abc/xyz/def.dat"
+ * CPLFormFilename(NULL, "abc/def.dat", NULL ) == "abc/def.dat"
+ * CPLFormFilename("/abc/xyz/", "def.dat", NULL ) == "/abc/xyz/def.dat"
  * </pre>
  *
  * @param pszPath directory path to the directory containing the file.  This
@@ -694,11 +694,11 @@ const char *CPLFormCIFilename( const char * pszPath,
  *
  * Examples:
  * <pre>
- * CPLProjectRelativeFilename("abc/def","tmp/abc.gif") == "abc/def/tmp/abc.gif"
- * CPLProjectRelativeFilename("abc/def","/tmp/abc.gif") == "/tmp/abc.gif"
+ * CPLProjectRelativeFilename("abc/def", "tmp/abc.gif") == "abc/def/tmp/abc.gif"
+ * CPLProjectRelativeFilename("abc/def", "/tmp/abc.gif") == "/tmp/abc.gif"
  * CPLProjectRelativeFilename("/xy", "abc.gif") == "/xy/abc.gif"
- * CPLProjectRelativeFilename("/abc/def","../abc.gif") == "/abc/def/../abc.gif"
- * CPLProjectRelativeFilename("C:\WIN","abc.gif") == "C:\WIN\abc.gif"
+ * CPLProjectRelativeFilename("/abc/def", "../abc.gif") == "/abc/def/../abc.gif"
+ * CPLProjectRelativeFilename("C:\WIN", "abc.gif") == "C:\WIN\abc.gif"
  * </pre>
  *
  * @param pszProjectDir the directory relative to which the secondary files
@@ -838,7 +838,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /*      One simple case is when the base dir is '.' and the target      */
 /*      filename is relative.                                           */
 /* -------------------------------------------------------------------- */
-    if( (nBasePathLen == 0 || EQUAL(pszBaseDir,"."))
+    if( (nBasePathLen == 0 || EQUAL(pszBaseDir, "."))
         && CPLIsFilenameRelative(pszTarget) )
     {
         if( pbGotRelative != NULL )
@@ -863,7 +863,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 /*      If we don't have a common path prefix, then we can't get a      */
 /*      relative path.                                                  */
 /* -------------------------------------------------------------------- */
-    if( !EQUALN(pszBaseDir,pszTarget,nBasePathLen)
+    if( !EQUALN(pszBaseDir, pszTarget, nBasePathLen)
         || (pszTarget[nBasePathLen] != '\\'
             && pszTarget[nBasePathLen] != '/') )
     {
@@ -972,7 +972,7 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
 /*      matches the old name, to rename to the new name.                */
 /* -------------------------------------------------------------------- */
     if( CSLCount(papszFileList) == 1
-        && strcmp(pszOldFilename,papszFileList[0]) == 0 )
+        && strcmp(pszOldFilename, papszFileList[0]) == 0 )
     {
         return CSLAddString( NULL, pszNewFilename );
     }
@@ -995,8 +995,8 @@ char **CPLCorrespondingPaths( const char *pszOldFilename,
             const CPLString osFilePath = CPLGetPath( papszFileList[i] );
             const CPLString osFileName = CPLGetFilename( papszFileList[i] );
 
-            if( !EQUALN(osFileName,osOldBasename,osOldBasename.size())
-                || !EQUAL(osFilePath,osOldPath)
+            if( !EQUALN(osFileName, osOldBasename, osOldBasename.size())
+                || !EQUAL(osFilePath, osOldPath)
                 || osFileName[osOldBasename.size()] != '.' )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
