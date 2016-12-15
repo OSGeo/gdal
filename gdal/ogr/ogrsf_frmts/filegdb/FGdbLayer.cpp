@@ -1383,9 +1383,16 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
             int nShapeSize = 0;
             OGRErr err;
 
-            if( m_bCreateMultipatch && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+            const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+            if( m_bCreateMultipatch && (eType == wkbMultiPolygon ||
+                                        eType == wkbMultiSurface ||
+                                        eType == wkbTIN ||
+                                        eType == wkbPolyhedralSurface ||
+                                        eType == wkbGeometryCollection) )
             {
                 err = OGRWriteMultiPatchToShapeBin( poGeom, &pabyShape, &nShapeSize );
+                if( err == OGRERR_UNSUPPORTED_OPERATION )
+                    err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
             }
             else
             {
@@ -2314,6 +2321,9 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     else if ( CSLFetchNameValue( papszOptions, "OID_NAME") != NULL )
         fid_name = CSLFetchNameValue( papszOptions, "OID_NAME");
 
+    m_bCreateMultipatch = CPLTestBool(CSLFetchNameValueDef(
+                                    papszOptions, "CREATE_MULTIPATCH", "NO"));
+
     /* Figure out our geometry type */
     if ( eType != wkbNone )
     {
@@ -2324,9 +2334,19 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z, &has_m) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
 
-        if( wkbFlatten(eType) == wkbMultiPolygon &&
-            CPLTestBool(CSLFetchNameValueDef(papszOptions, "CREATE_MULTIPATCH", "NO")) )
+        if( wkbFlatten(eType) == wkbMultiPolygon && m_bCreateMultipatch )
         {
+            esri_type = "esriGeometryMultiPatch";
+            has_z = true;
+        }
+        // For TIN and PolyhedralSurface, default to create a multipatch,
+        // unless the user explictly disabled it
+        else if( (wkbFlatten(eType) == wkbTIN ||
+                  wkbFlatten(eType) == wkbPolyhedralSurface ) &&
+                 CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                                  "CREATE_MULTIPATCH", "YES")) )
+        {
+            m_bCreateMultipatch = true;
             esri_type = "esriGeometryMultiPatch";
             has_z = true;
         }
@@ -2500,7 +2520,6 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     m_papszOptions = CSLDuplicate(papszOptions);
-    m_bCreateMultipatch = CPLTestBool(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
 
     // Default to YES here assuming ogr2ogr scenario
     m_bBulkLoadAllowed = CPLTestBool(CPLGetConfigOption("FGDB_BULK_LOAD", "YES"));

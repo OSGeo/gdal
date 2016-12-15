@@ -2320,6 +2320,68 @@ def ogr_dxf_32():
     return 'success'
 
 ###############################################################################
+# Polyface Mesh tests
+
+def ogr_dxf_33():
+    ds = ogr.Open('data/polyface.dxf')
+    layer = ds.GetLayer(0)
+    feat = layer.GetNextFeature()
+    if feat.Layer != '0':
+        return 'fail #1'
+
+    geom = feat.GetGeometryRef()
+    if geom.GetGeometryType() != ogr.wkbPolyhedralSurfaceZ:
+        gdaltest.post_reason( 'did not get expected geometry type; got %s instead of wkbPolyhedralSurface', geom.GetGeometryType() )
+        return 'fail #2'
+
+    wkt_string = geom.ExportToIsoWkt()
+    wkt_string_expected = 'POLYHEDRALSURFACE Z (((0 0 0,1 0 0,1 1 0,0 1 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 0 0,1 1 0,1 1 1,1 0 1,1 0 0)),((1 1 0,1 1 1,0 1 1,0 1 0,1 1 0)),((0 0 0,0 1 0,0 1 1,0 0 1,0 0 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
+    if wkt_string != wkt_string_expected:
+        gdaltest.post_reason( 'did not get expected WKT of extracted geometry')
+        return 'fail'
+
+    faces = geom.GetGeometryCount()
+    if faces != 6:
+        gdaltest.post_reason( 'did not get expected number of faces, got %d instead of %d', faces, 6)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Writing Triangle geometry and checking if it is written properly
+
+def ogr_dxf_34():
+    ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/triangle_test.dxf' )
+    lyr = ds.CreateLayer( 'entities' )
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,0 1,1 0,0 0))' ) )
+
+    lyr.CreateFeature( dst_feat )
+    dst_feat = None
+
+    lyr = None
+    ds = None
+
+    # Read back.
+    ds = ogr.Open('tmp/triangle_test.dxf')
+    lyr = ds.GetLayer(0)
+
+    # Check first feature
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+    expected_wkt = 'POLYGON ((0 0,0 1,1 0,0 0))'
+    received_wkt = geom.ExportToWkt()
+
+    if expected_wkt != received_wkt:
+        gdaltest.post_reason( 'did not get expected geometry back')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('tmp/triangle_test.dxf' )
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2364,6 +2426,8 @@ gdaltest_list = [
     ogr_dxf_30,
     ogr_dxf_31,
     ogr_dxf_32,
+    ogr_dxf_33,
+    ogr_dxf_34,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

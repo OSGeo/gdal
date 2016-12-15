@@ -919,7 +919,15 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
                       "Feature gets NULL geometry assigned." );
         }
 
-        json_object_object_add( poObj, "coordinates", poObjGeom);
+        if( poObjGeom != NULL )
+        {
+            json_object_object_add( poObj, "coordinates", poObjGeom);
+        }
+        else
+        {
+            json_object_put(poObj);
+            poObj = NULL;
+        }
     }
 
     return poObj;

@@ -25,12 +25,12 @@ EXTRAFLAGS = $(EXTRAFLAGS) $(XERCES_INCLUDE) -DHAVE_XERCES
 
 OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib ogrsf_frmts\ogrsf_frmts_sup.lib
 OBJ_OGR	=	ogrgeometryfactory.obj ogrpoint.obj ogrcurve.obj ogrsurface.obj ogr_api.obj \
-		ogrlinestring.obj ogrpolygon.obj ogrlinearring.obj \
+		ogrlinestring.obj ogrtriangle.obj ogrpolygon.obj ogrlinearring.obj \
 		ogrutils.obj ogrgeometry.obj ogrgeometrycollection.obj \
 		ogrmultipolygon.obj ogrmultilinestring.obj ogr_opt.obj \
 		ogrmultipoint.obj ogrcircularstring.obj ogrcompoundcurve.obj \
-		ogrcurvepolygon.obj ogrcurvecollection.obj ogrmultisurface.obj \
-		ogrmulticurve.obj ogrfeature.obj ogrfeaturedefn.obj \
+		ogrcurvepolygon.obj ogrtriangulatedsurface.obj ogrcurvecollection.obj ogrmultisurface.obj \
+		ogrmulticurve.obj ogrpolyhedralsurface.obj ogrfeature.obj ogrfeaturedefn.obj \
 		ogrfielddefn.obj ogr_srsnode.obj ogrspatialreference.obj \
 		ogr_srs_proj4.obj ogr_fromepsg.obj ogrct.obj \
 		ogrfeaturestyle.obj ogr_srs_esri.obj ogrfeaturequery.obj \

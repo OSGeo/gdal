@@ -1037,6 +1037,8 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( nTotalShapeCount == 0
         && wkbFlatten(eRequestedGeomType) == wkbUnknown
+        && hSHP != NULL
+        && hSHP->nShapeType != SHPT_MULTIPATCH
         && poFeature->GetGeometryRef() != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
@@ -1110,24 +1112,28 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
           case wkbPolygon:
           case wkbMultiPolygon:
+          case wkbTriangle:
             nShapeType = SHPT_POLYGON;
             eRequestedGeomType = wkbPolygon;
             break;
 
           case wkbPolygon25D:
           case wkbMultiPolygon25D:
+          case wkbTriangleZ:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygon25D;
             break;
 
           case wkbPolygonM:
           case wkbMultiPolygonM:
+          case wkbTriangleM:
             nShapeType = SHPT_POLYGONM;
             eRequestedGeomType = wkbPolygonM;
             break;
 
           case wkbPolygonZM:
           case wkbMultiPolygonZM:
+          case wkbTriangleZM:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygonZM;
             break;
@@ -1135,6 +1141,41 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
           default:
             nShapeType = -1;
             break;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbTIN ||
+            wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface )
+        {
+            nShapeType = SHPT_MULTIPATCH;
+            eRequestedGeomType = wkbUnknown;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+        {
+            OGRGeometryCollection *poGC =
+                            dynamic_cast<OGRGeometryCollection *>(poGeom);
+            bool bIsMultiPatchCompatible = false;
+            for( int iGeom = 0; poGC != NULL &&
+                                iGeom < poGC->getNumGeometries(); iGeom++ )
+            {
+                OGRwkbGeometryType eSubGeomType =
+                    wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
+                if( eSubGeomType == wkbTIN ||
+                    eSubGeomType == wkbPolyhedralSurface )
+                {
+                    bIsMultiPatchCompatible = true;
+                }
+                else if( eSubGeomType != wkbMultiPolygon )
+                {
+                    bIsMultiPatchCompatible = false;
+                    break;
+                }
+            }
+            if( bIsMultiPatchCompatible )
+            {
+                nShapeType = SHPT_MULTIPATCH;
+                eRequestedGeomType = wkbUnknown;
+            }
         }
 
         if( nShapeType != -1 )

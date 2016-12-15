@@ -227,7 +227,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
 
             // FIXME: in case the geometry is a GeometryCollection, we should
             // inspect its subgeometries to see if there's non-linear ones.
-            if( OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
+            if( wkbFlatten(poGeom->getGeometryType()) > wkbGeometryCollection )
                 CreateGeometryExtensionIfNecessary(poGeom->getGeometryType());
         }
         /* NULL geometry */
@@ -2120,6 +2120,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
                     "AND column_name='%q' AND extension_name NOT IN ('gpkg_geom_CIRCULARSTRING', "
                     "'gpkg_geom_COMPOUNDCURVE', 'gpkg_geom_CURVEPOLYGON', 'gpkg_geom_MULTICURVE', "
                     "'gpkg_geom_MULTISURFACE', 'gpkg_geom_CURVE', 'gpkg_geom_SURFACE', "
+                    "'gpkg_geom_POLYHEDRALSURFACE', 'gpkg_geom_TIN', 'gpkg_geom_TRIANGLE', "
                     "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', 'gpkg_srs_id_trigger'))"
 #ifdef WORKAROUND_SQLITE3_BUGS
                     " OR 0"
@@ -2176,7 +2177,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryType eGType)
 {
     eGType = wkbFlatten(eGType);
-    CPLAssert(eGType <= wkbTIN);
+    CPLAssert(eGType <= wkbTriangle);
     if( m_abHasGeometryExtension[eGType] )
         return true;
 
@@ -2198,6 +2199,14 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(OGRwkbGeometryT
 
     if( err != OGRERR_NONE )
     {
+        if( eGType == wkbPolyhedralSurface ||
+            eGType == wkbTIN || eGType == wkbTriangle )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Registering non-standard gpkg_geom_%s extension",
+                     pszGeometryType);
+        }
+
         /* Register the table in gpkg_extensions */
         pszSQL = sqlite3_mprintf(
                     "INSERT INTO gpkg_extensions "
@@ -2622,8 +2631,7 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
     if ( err != OGRERR_NONE )
         return OGRERR_FAILURE;
 
-    if( OGR_GT_IsNonLinear( eGType ) || wkbFlatten(eGType) == wkbCurve ||
-        wkbFlatten(eGType) == wkbSurface )
+    if( wkbFlatten(eGType) > wkbGeometryCollection )
     {
         CreateGeometryExtensionIfNecessary(eGType);
     }

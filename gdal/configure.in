@@ -3881,6 +3881,19 @@ if test "${HAVE_GEOS}" = "yes" ; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl Check if SFCGAL library is available.
+dnl ---------------------------------------------------------------------------
+
+SFCGAL_INIT(1.2.2)
+HAVE_SFCGAL_RESULT="no"
+if test "${HAVE_SFCGAL}" = "yes" ; then
+
+  AC_MSG_NOTICE([Using C API from SFCGAL $SFCGAL_VERSION])
+  LIBS="${SFCGAL_LIBS} ${LIBS}"
+  HAVE_SFCGAL_RESULT="yes"
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl Check if QHull library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -5390,6 +5403,7 @@ fi
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS_RESULT}])
+LOC_MSG([  SFCGAL support:            ${HAVE_SFCGAL_RESULT}])
 LOC_MSG([  QHull support:             ${QHULL_SETTING}])
 LOC_MSG([  Poppler support:           ${HAVE_POPPLER}])
 LOC_MSG([  Podofo support:            ${HAVE_PODOFO}])

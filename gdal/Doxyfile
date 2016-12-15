@@ -945,6 +945,8 @@ PREDEFINED             = HAVE_DLFCN_H \
                          HAVE_CURL \
                          CPL_UNUSED= \
                          UNUSED_IF_NO_GEOS= \
+                         UNUSED_IF_NO_SFCGAL= \
+                         UNUSED_PARAMETER= \
                          isinf \
                          HAVE_LIBXML2 \
                          HAVE_RECENT_LIBXML2 \

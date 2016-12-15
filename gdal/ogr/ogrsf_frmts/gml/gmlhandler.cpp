@@ -429,14 +429,18 @@ static const char* const apszGMLGeometryElements[] =
     "Point",
     "Polygon",
     "PolygonPatch",
+    "PolyhedralSurface",
     "SimplePolygon", /* GML 3.3 compact encoding */
     "SimpleRectangle", /* GML 3.3 compact encoding */
     "SimpleTriangle", /* GML 3.3 compact encoding */
     "SimpleMultiPoint", /* GML 3.3 compact encoding */
     "Solid",
     "Surface",
+    "Tin",
     "TopoCurve",
-    "TopoSurface"
+    "TopoSurface",
+    "Triangle",
+    "TriangulatedSurface"
 };
 
 #define GML_GEOMETRY_TYPE_COUNT  \

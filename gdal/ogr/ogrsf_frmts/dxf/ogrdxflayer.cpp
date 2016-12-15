@@ -1148,9 +1148,9 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
-    if( (nPolylineFlag & (16 ^ 64)) != 0 )
+    if( (nPolylineFlag & 16) != 0 )
     {
-        CPLDebug( "DXF", "Polygon/polyface mesh not supported." );
+        CPLDebug( "DXF", "Polygon mesh not supported." );
         delete poFeature;
         return NULL;
     }
@@ -1163,8 +1163,15 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
     double dfZ = 0.0;
     double dfBulge = 0.0;
     int nVertexFlag = 0;
+    DXFSmoothPolyline   smoothPolyline;
+    int                 vertexIndex71 = 0;
+    int                 vertexIndex72 = 0;
+    int                 vertexIndex73 = 0;
+    int                 vertexIndex74 = 0;
+    OGRPoint **papoPoints = NULL;
+    int nPoints = 0;
+    OGRPolyhedralSurface *poPS = new OGRPolyhedralSurface();
 
-    DXFSmoothPolyline smoothPolyline;
     smoothPolyline.setCoordinateDimension(2);
 
     while( nCode == 0 && !EQUAL(szLineBuf,"SEQEND") )
@@ -1209,10 +1216,94 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
                 nVertexFlag = atoi(szLineBuf);
                 break;
 
+              case 71:
+                vertexIndex71 = atoi(szLineBuf);
+                break;
+
+              case 72:
+                vertexIndex72 = atoi(szLineBuf);
+                break;
+
+              case 73:
+                vertexIndex73 = atoi(szLineBuf);
+                break;
+
+              case 74:
+                vertexIndex74 = atoi(szLineBuf);
+                break;
+
               default:
                 break;
             }
         }
+
+        if (((nVertexFlag & 64) != 0) && ((nVertexFlag & 128) != 0))
+        {
+            // add the point to the list of points
+            OGRPoint *poPoint = new OGRPoint(dfX, dfY, dfZ);
+            OGRPoint** papoNewPoints = (OGRPoint **) VSI_REALLOC_VERBOSE( papoPoints,
+                                                     sizeof(void*) * (nPoints+1) );
+
+            papoPoints = papoNewPoints;
+            papoPoints[nPoints] = poPoint;
+            nPoints++;
+        }
+
+        // Note - If any index out of vertexIndex71, vertexIndex72, vertexIndex73 or vertexIndex74
+        // is negative, it means that the line starting from that vertex is invisible
+
+        if (nVertexFlag == 128)
+        {
+            // create a polygon and add it to the Polyhedral Surface
+            OGRLinearRing *poLR = new OGRLinearRing();
+            int iPoint = 0;
+            int startPoint = -1;
+            poLR->set3D(TRUE);
+            if (vertexIndex71 > 0 && vertexIndex71 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex71-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex71-1]);
+                iPoint++;
+                vertexIndex71 = 0;
+            }
+            if (vertexIndex72 > 0 && vertexIndex72 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex72-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex72-1]);
+                iPoint++;
+                vertexIndex72 = 0;
+            }
+            if (vertexIndex73 > 0 && vertexIndex73 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex73-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex73-1]);
+                iPoint++;
+                vertexIndex73 = 0;
+            }
+            if (vertexIndex74 > 0 && vertexIndex74 <= nPoints)
+            {
+                if (startPoint == -1)
+                    startPoint = vertexIndex74-1;
+                poLR->setPoint(iPoint,papoPoints[vertexIndex74-1]);
+                iPoint++;
+                vertexIndex74 = 0;
+            }
+
+            // complete the ring
+            poLR->setPoint(iPoint,papoPoints[startPoint]);
+
+            OGRPolygon *poPolygon = new OGRPolygon();
+            poPolygon->addRing((OGRCurve *)poLR);
+
+            poPS->addGeometryDirectly((OGRGeometry *)poPolygon);
+
+            // delete the ring to prevent leakage
+            delete poLR;
+        }
+
         if( nCode < 0 )
         {
             DXF_LAYER_READER_ERROR();
@@ -1232,9 +1323,28 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Close polyline if necessary.                                    */
-/* -------------------------------------------------------------------- */
+    // delete the list of points
+    if( papoPoints != NULL )
+    {
+        for (int i = 0; i < nPoints; i++)
+            delete papoPoints[i];
+        CPLFree(papoPoints);
+        nPoints = 0;
+        papoPoints = NULL;
+    }
+
+    if (poPS->getNumGeometries() > 0)
+    {
+        poFeature->SetGeometryDirectly((OGRGeometry *)poPS);
+        return poFeature;
+    }
+
+    else
+        delete poPS;
+
+    /* -------------------------------------------------------------------- */
+    /*      Close polyline if necessary.                                    */
+    /* -------------------------------------------------------------------- */
     if(nPolylineFlag & 0x01)
         smoothPolyline.Close();
 

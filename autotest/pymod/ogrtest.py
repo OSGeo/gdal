@@ -32,7 +32,7 @@ from osgeo import ogr
 import gdaltest
 
 geos_flag = None
-
+sfcgal_flag = None
 
 ###############################################################################
 def check_features_against_list( layer, field_name, value_list ):
@@ -182,3 +182,14 @@ def have_geos():
         geos_flag = pnt1.Union( pnt2 ) is not None
 
     return geos_flag
+
+###############################################################################
+def have_sfcgal():
+    global sfcgal_flag
+
+    if sfcgal_flag is None:
+        pnt1 = ogr.CreateGeometryFromWkt( 'POINT(10 20 30)' )
+        pnt2 = ogr.CreateGeometryFromWkt( 'POINT(40 50 60)' )
+        sfcgal_flag = pnt1.Distance3D( pnt2 ) >= 0
+
+    return sfcgal_flag

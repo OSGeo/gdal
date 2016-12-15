@@ -61,6 +61,9 @@ static const OGRGeomTypeName asGeomTypeNames[] = { /* 25D versions are implicit 
     { wkbMultiSurface, "wkbMultiSurface" },
     { wkbCurve, "wkbCurve" },
     { wkbSurface, "wkbSurface" },
+    { wkbPolyhedralSurface, "wkbPolyhedralSurface" },
+    { wkbTIN, "wkbTIN" },
+    { wkbTriangle, "wkbTriangle" },
     { wkbNone, "wkbNone" },
     { wkbNone, NULL }
 };

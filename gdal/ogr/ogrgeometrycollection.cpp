@@ -1384,3 +1384,29 @@ OGRGeometryCollection* OGRGeometryCollection::TransferMembersAndDestroy(
     return poDst;
 }
 //! @endcond
+
+/************************************************************************/
+/*                        CastToGeometryCollection()                    */
+/************************************************************************/
+
+/**
+ * \brief Cast to geometry collection.
+ *
+ * This methods cast a derived class of geometry collection to a plain
+ * geometry collection.
+ *
+ * The passed in geometry is consumed and a new one returned (or NULL in case
+ * of failure).
+ *
+ * @param poSrc the input geometry - ownership is passed to the method.
+ * @return new geometry.
+ * @since GDAL 2.2
+ */
+
+OGRGeometryCollection* OGRGeometryCollection::CastToGeometryCollection(
+                                                OGRGeometryCollection* poSrc )
+{
+    if( wkbFlatten(poSrc->getGeometryType()) == wkbGeometryCollection )
+        return poSrc;
+    return TransferMembersAndDestroy(poSrc, new OGRGeometryCollection());
+}

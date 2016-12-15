@@ -760,7 +760,7 @@ void OGRSimpleCurve::setM( int iPoint, double mIn )
  * @param poPoint the point to assign to the new vertex.
  */
 
-void OGRSimpleCurve::addPoint( OGRPoint * poPoint )
+void OGRSimpleCurve::addPoint( const OGRPoint * poPoint )
 
 {
     if( poPoint->getCoordinateDimension() < 3 )

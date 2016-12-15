@@ -3085,13 +3085,15 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 return poPoly;
             }
             int* panPartType = (int*) VSI_MALLOC_VERBOSE(sizeof(int) * nParts);
+            int* panPartStart = (int*) VSI_MALLOC_VERBOSE(sizeof(int) * nParts);
             double* padfXYZ =  (double*) VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints);
             double* padfX = padfXYZ;
             double* padfY = padfXYZ + nPoints;
             double* padfZ = padfXYZ + 2 * nPoints;
-            if( panPartType == NULL || padfXYZ == NULL  )
+            if( panPartType == NULL || panPartStart == NULL || padfXYZ == NULL  )
             {
                 VSIFree(panPartType);
+                VSIFree(panPartStart);
                 VSIFree(padfXYZ);
                 returnError();
             }
@@ -3101,6 +3103,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 if( !ReadVarUInt32(pabyCur, pabyEnd, nPartType) )
                 {
                     VSIFree(panPartType);
+                    VSIFree(panPartStart);
                     VSIFree(padfXYZ);
                     returnError();
                 }
@@ -3113,6 +3116,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                              pabyCur, pabyEnd, nPoints, dx, dy) )
             {
                 VSIFree(panPartType);
+                VSIFree(panPartStart);
                 VSIFree(padfXYZ);
                 returnError();
             }
@@ -3124,6 +3128,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                                 pabyCur, pabyEnd, nPoints, dz) )
                 {
                     VSIFree(panPartType);
+                    VSIFree(panPartStart);
                     VSIFree(padfXYZ);
                     returnError();
                 }
@@ -3133,31 +3138,21 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 memset(padfZ, 0, nPoints * sizeof(double));
             }
 
-            OGRMultiPolygon* poMP = new OGRMultiPolygon();
-            poMP->setCoordinateDimension(3);
-            OGRPolygon* poLastPoly = NULL;
-            int iAccPoints = 0;
-            for(i=0;i<nParts;i++)
-            {
-                OGRCreateFromMultiPatchPart(poMP, poLastPoly,
-                                            panPartType[i],
-                                            (int) panPointCount[i],
-                                            padfX + iAccPoints,
-                                            padfY + iAccPoints,
-                                            padfZ + iAccPoints);
-                iAccPoints += (int) panPointCount[i];
-            }
-
-            if( poLastPoly != NULL )
-            {
-                poMP->addGeometryDirectly( poLastPoly );
-                poLastPoly = NULL;
-            }
+            panPartStart[0] = 0;
+            for( i = 1; i < nParts; ++i )
+                panPartStart[i] = panPartStart[i-1] + panPointCount[i-1];
+            OGRGeometry* poRet = OGRCreateFromMultiPatch(
+                                            static_cast<int>(nParts),
+                                            panPartStart,
+                                            panPartType,
+                                            static_cast<int>(nPoints),
+                                            padfX, padfY, padfZ );
 
             VSIFree(panPartType);
+            VSIFree(panPartStart);
             VSIFree(padfXYZ);
 
-            return poMP;
+            return poRet;
             // cppcheck-suppress duplicateBreak
             break;
         }

@@ -35,6 +35,7 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
@@ -710,6 +711,11 @@ OGRBoolean OGRCurvePolygon::IsEmpty() const
 
 void OGRCurvePolygon::segmentize( double dfMaxLength )
 {
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+        return;
+    }
     oCC.segmentize(dfMaxLength);
 }
 

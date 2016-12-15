@@ -677,6 +677,11 @@ OPENCL_LIB
 OPENCL_FLAGS
 QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 QHULL_SETTING
+SFCGAL_CONFIG
+SFCGAL_VERSION
+HAVE_SFCGAL
+SFCGAL_CFLAGS
+SFCGAL_LIBS
 GEOS_CONFIG
 GEOS_VERSION
 HAVE_GEOS
@@ -1017,6 +1022,7 @@ with_sde_version
 with_epsilon
 with_webp
 with_geos
+with_sfcgal
 with_qhull
 with_opencl
 with_opencl_include
@@ -1797,6 +1803,8 @@ Optional Packages:
   --with-epsilon=ARG    Include EPSILON support (ARG=no, yes or libepsilon install root path)
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
+                          path)
+  --with-sfcgal=ARG       Include SFCGAL support (ARG=yes, no or sfcgal-config
                           path)
   --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
@@ -30670,6 +30678,281 @@ fi
 
 
 
+
+
+
+
+
+
+# Check whether --with-sfcgal was given.
+if test "${with_sfcgal+set}" = set; then :
+  withval=$with_sfcgal;
+fi
+
+
+  ac_sfcgal_config_auto=no
+
+  if test x"$with_sfcgal" = x"no" ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: SFCGAL support disabled" >&5
+$as_echo "SFCGAL support disabled" >&6; }
+    SFCGAL_CONFIG=no
+
+  elif test x"$with_sfcgal" = x"yes" -o x"$with_sfcgal" = x"" ; then
+
+    # Extract the first word of "sfcgal-config", so it can be a program name with args.
+set dummy sfcgal-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_SFCGAL_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $SFCGAL_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SFCGAL_CONFIG="$SFCGAL_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SFCGAL_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_SFCGAL_CONFIG" && ac_cv_path_SFCGAL_CONFIG="no"
+  ;;
+esac
+fi
+SFCGAL_CONFIG=$ac_cv_path_SFCGAL_CONFIG
+if test -n "$SFCGAL_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SFCGAL_CONFIG" >&5
+$as_echo "$SFCGAL_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    ac_sfcgal_config_auto=yes
+
+  else
+
+   ac_sfcgal_config=`basename "$with_sfcgal"`
+   ac_sfcgal_config_dir=`$as_dirname -- "$with_sfcgal" ||
+$as_expr X"$with_sfcgal" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$with_sfcgal" : 'X\(//\)[^/]' \| \
+	 X"$with_sfcgal" : 'X\(//\)$' \| \
+	 X"$with_sfcgal" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$with_sfcgal" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)[^/].*/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+
+   # Extract the first word of ""$ac_sfcgal_config"", so it can be a program name with args.
+set dummy "$ac_sfcgal_config"; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_SFCGAL_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$SFCGAL_CONFIG"; then
+  ac_cv_prog_SFCGAL_CONFIG="$SFCGAL_CONFIG" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in "$ac_sfcgal_config_dir"
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    if test "$as_dir/$ac_word$ac_exec_ext" = "
+   "; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_SFCGAL_CONFIG="$with_sfcgal"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_SFCGAL_CONFIG
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set SFCGAL_CONFIG to just the basename; use the full file name.
+    shift
+    ac_cv_prog_SFCGAL_CONFIG="$as_dir/$ac_word${1+' '}$@"
+  fi
+fi
+  test -z "$ac_cv_prog_SFCGAL_CONFIG" && ac_cv_prog_SFCGAL_CONFIG="no"
+fi
+fi
+SFCGAL_CONFIG=$ac_cv_prog_SFCGAL_CONFIG
+if test -n "$SFCGAL_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SFCGAL_CONFIG" >&5
+$as_echo "$SFCGAL_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+  fi
+
+  if test x"$SFCGAL_CONFIG" != x"no" ; then
+
+    min_sfcgal_version=1.2.2
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SFCGAL version >= $min_sfcgal_version" >&5
+$as_echo_n "checking for SFCGAL version >= $min_sfcgal_version... " >&6; }
+
+    sfcgal_major_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1/'`
+    sfcgal_minor_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\2/'`
+    sfcgal_micro_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\3/'`
+
+    req_major=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1/'`
+    req_minor=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\2/'`
+    req_micro=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\3/'`
+
+    version_ok="no"
+    ac_req_version=`expr $req_major \* 100000 \+  $req_minor \* 100 \+ $req_micro`
+    ac_sfcgal_version=`expr $sfcgal_major_version \* 100000 \+  $sfcgal_minor_version \* 100 \+ $sfcgal_micro_version`
+
+    if test $ac_req_version -le $ac_sfcgal_version; then
+        version_ok="yes"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    fi
+
+    if test $version_ok = "no"; then
+
+      HAVE_SFCGAL="no"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+      if test $ac_sfcgal_config_auto = "yes" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: SFCGAL was found on your system, but sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version. SFCGAL support disabled." >&5
+$as_echo "$as_me: WARNING: SFCGAL was found on your system, but sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version. SFCGAL support disabled." >&2;}
+      else
+        as_fn_error $? "sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version or configure --without-sfcgal" "$LINENO" 5
+      fi
+
+    else
+
+      HAVE_SFCGAL="no"
+
+      SFCGAL_LIBS="`${SFCGAL_CONFIG} --libs`"
+      SFCGAL_CFLAGS="`${SFCGAL_CONFIG} --cflags`"
+      SFCGAL_VERSION="`${SFCGAL_CONFIG} --version`"
+
+      ax_save_LIBS="${LIBS}"
+      LIBS=${SFCGAL_LIBS}
+      ax_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${SFCGAL_CFLAGS}"
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sfcgal_version in -lSFCGAL" >&5
+$as_echo_n "checking for sfcgal_version in -lSFCGAL... " >&6; }
+if ${ac_cv_lib_SFCGAL_sfcgal_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lSFCGAL
+       $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sfcgal_version ();
+int
+main ()
+{
+return sfcgal_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_SFCGAL_sfcgal_version=yes
+else
+  ac_cv_lib_SFCGAL_sfcgal_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_SFCGAL_sfcgal_version" >&5
+$as_echo "$ac_cv_lib_SFCGAL_sfcgal_version" >&6; }
+if test "x$ac_cv_lib_SFCGAL_sfcgal_version" = xyes; then :
+  HAVE_SFCGAL="yes"
+else
+  HAVE_SFCGAL="no"
+fi
+
+
+
+      if test x"$HAVE_SFCGAL" = "xno"; then
+          SFCGAL_CFLAGS=""
+      fi
+
+      CFLAGS="${ax_save_CFLAGS}"
+      LIBS="${ax_save_LIBS}"
+
+    fi
+
+  fi
+
+HAVE_SFCGAL_RESULT="no"
+if test "${HAVE_SFCGAL}" = "yes" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from SFCGAL $SFCGAL_VERSION" >&5
+$as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
+  LIBS="${SFCGAL_LIBS} ${LIBS}"
+  HAVE_SFCGAL_RESULT="yes"
+fi
+
+
+
 # Check whether --with-qhull was given.
 if test "${with_qhull+set}" = set; then :
   withval=$with_qhull;
@@ -36062,6 +36345,9 @@ echo "  INFORMIX DataBlade support:${HAVE_IDB}"
 
 
 echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
+
+
+echo "  SFCGAL support:            ${HAVE_SFCGAL_RESULT}"
 
 
 echo "  QHull support:             ${QHULL_SETTING}"

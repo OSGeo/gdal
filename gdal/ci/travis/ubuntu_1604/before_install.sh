@@ -24,6 +24,7 @@ sudo chroot "$chroot" apt-get install -y doxygen texlive-latex-base
 sudo chroot "$chroot" apt-get install -y make
 sudo chroot "$chroot" apt-get install -y python-dev
 sudo chroot "$chroot" apt-get install -y g++
+sudo chroot "$chroot" apt-get install -y libsfcgal-dev
 wget http://llvm.org/releases/3.9.0/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 tar xJf clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 

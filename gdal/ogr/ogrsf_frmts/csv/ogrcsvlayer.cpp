@@ -750,6 +750,26 @@ void OGRCSVLayer::BuildFeatureDefn( const char* pszNfdcGeomField,
                 oGeomFieldDefn.SetType(wkbMultiLineString);
             else if( strstr(pszFieldName, "_MULTIPOLYGON") )
                 oGeomFieldDefn.SetType(wkbMultiPolygon);
+             else if( strstr(pszFieldName, "_CIRCULARSTRING") )
+                oGeomFieldDefn.SetType(wkbCircularString);
+            else if( strstr(pszFieldName, "_COMPOUNDCURVE") )
+                oGeomFieldDefn.SetType(wkbCompoundCurve);
+            else if( strstr(pszFieldName, "_CURVEPOLYGON") )
+                oGeomFieldDefn.SetType(wkbCurvePolygon);
+            else if( strstr(pszFieldName, "_CURVE") )
+                oGeomFieldDefn.SetType(wkbCurve);
+            else if( strstr(pszFieldName, "_SURFACE") )
+                oGeomFieldDefn.SetType(wkbSurface);
+            else if( strstr(pszFieldName, "_MULTICURVE") )
+                oGeomFieldDefn.SetType(wkbMultiCurve);
+            else if( strstr(pszFieldName, "_MULTISURFACE") )
+                oGeomFieldDefn.SetType(wkbMultiSurface);
+            else if( strstr(pszFieldName, "_POLYHEDRALSURFACE") )
+                oGeomFieldDefn.SetType(wkbPolyhedralSurface);
+            else if( strstr(pszFieldName, "_TIN") )
+                oGeomFieldDefn.SetType(wkbTIN);
+            else if( strstr(pszFieldName, "_TRIANGLE") )
+                oGeomFieldDefn.SetType(wkbTriangle);
 
             poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
             if( !bKeepGeomColumns )

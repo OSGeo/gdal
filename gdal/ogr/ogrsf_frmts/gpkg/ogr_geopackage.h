@@ -314,7 +314,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     // m_bHasSpatialIndex cannot be bool.  -1 is unset.
     int                         m_bHasSpatialIndex;
     bool                        m_bDropRTreeTable;
-    bool                        m_abHasGeometryExtension[wkbTIN+1];
+    bool                        m_abHasGeometryExtension[wkbTriangle+1];
     bool                        m_bPreservePrecision;
     bool                        m_bTruncateFields;
     bool                        m_bDeferredCreation;
