@@ -975,9 +975,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
 /*      Polygon / PolygonPatch / Rectangle                              */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"Polygon") ||
-        EQUAL(pszBaseGeometry,"PolygonPatch") ||
-        EQUAL(pszBaseGeometry,"Rectangle"))
+    if( EQUAL(pszBaseGeometry, "Polygon") ||
+        EQUAL(pszBaseGeometry, "PolygonPatch") ||
+        EQUAL(pszBaseGeometry, "Rectangle"))
     {
         // Find outer ring.
         const CPLXMLNode *psChild =
@@ -1170,30 +1170,31 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /*      Triangle                                                        */
 /* -------------------------------------------------------------------- */
 
-    if( EQUAL(pszBaseGeometry,"Triangle"))
+    if( EQUAL(pszBaseGeometry, "Triangle"))
     {
-        const CPLXMLNode *psChild;
-
         // Find outer ring.
-        psChild = FindBareXMLChild( psNode, "outerBoundaryIs" );
-        if (psChild == NULL)
+        const CPLXMLNode *psChild =
+            FindBareXMLChild( psNode, "outerBoundaryIs" );
+        if( psChild == NULL )
            psChild = FindBareXMLChild( psNode, "exterior");
 
         psChild = GetChildElement(psChild);
         if( psChild == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Empty Triangle");
+            CPLError(CE_Failure, CPLE_AppDefined, "Empty Triangle");
             return new OGRTriangle();
         }
 
         // Translate outer ring and add to Triangle.
-        OGRGeometry* poGeom = GML2OGRGeometry_XMLNode_Internal( psChild,
-                                              nPseudoBoolGetSecondaryGeometryOption,
-                                              nRecLevel + 1, nSRSDimension,
-                                              pszSRSName );
+        OGRGeometry* poGeom =
+            GML2OGRGeometry_XMLNode_Internal(
+                psChild,
+                nPseudoBoolGetSecondaryGeometryOption,
+                nRecLevel + 1, nSRSDimension,
+                pszSRSName);
         if( poGeom == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior ring");
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid exterior ring");
             return NULL;
         }
 
@@ -3425,8 +3426,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
-                && (EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") ||
-                    EQUAL(BareGMLElement(psChild->pszValue),"Rectangle")))
+                && (EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") ||
+                    EQUAL(BareGMLElement(psChild->pszValue), "Rectangle")))
             {
                 OGRGeometry *poGeom =
                     GML2OGRGeometry_XMLNode_Internal(
@@ -3438,7 +3439,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     return NULL;
                 }
 
-                OGRwkbGeometryType eGeomType =
+                const OGRwkbGeometryType eGeomType =
                     wkbFlatten(poGeom->getGeometryType());
 
                 if( poResultPoly == NULL )
@@ -3447,7 +3448,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 {
                     if( poMS == NULL )
                     {
-                        if( wkbFlatten(poResultPoly->getGeometryType()) == wkbPolygon &&
+                        if( wkbFlatten(poResultPoly->getGeometryType()) ==
+                            wkbPolygon &&
                             eGeomType == wkbPolygon )
                             poMS = new OGRMultiPolygon();
                         else
@@ -3482,7 +3484,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
             }
             else if( psChild->eType == CXT_Element
-                    && EQUAL(BareGMLElement(psChild->pszValue),"Triangle"))
+                    && EQUAL(BareGMLElement(psChild->pszValue), "Triangle"))
             {
                 OGRGeometry *poGeom =
                     GML2OGRGeometry_XMLNode_Internal(
@@ -3494,7 +3496,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     return NULL;
                 }
 
-                OGRwkbGeometryType eGeomType = wkbFlatten(poGeom->getGeometryType());
+                const OGRwkbGeometryType eGeomType =
+                    wkbFlatten(poGeom->getGeometryType());
 
                 if( poResultTri == NULL )
                     poResultTri = poGeom;
@@ -3502,33 +3505,34 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 {
                     if( poTIN == NULL )
                     {
-                        if( wkbFlatten(poResultTri->getGeometryType()) == wkbTriangle &&
+                        if( wkbFlatten(poResultTri->getGeometryType()) ==
+                            wkbTriangle &&
                             eGeomType == wkbTriangle )
                             poTIN = new OGRTriangulatedSurface();
-                        #ifdef DEBUG
+#ifdef DEBUG
                         OGRErr eErr =
-                        #endif
+#endif
                           poTIN->addGeometryDirectly( poResultTri );
                         CPLAssert(eErr == OGRERR_NONE);
                         poResultTri = poTIN;
                     }
-                    #ifdef DEBUG
+#ifdef DEBUG
                     OGRErr eErr =
-                    #endif
+#endif
                       poTIN->addGeometryDirectly( poGeom );
                     CPLAssert(eErr == OGRERR_NONE);
                 }
             }
         }
 
-        if (poResultTri == NULL && poResultPoly == NULL)
+        if( poResultTri == NULL && poResultPoly == NULL )
             return NULL;
 
-        if (poResultTri == NULL)
+        if( poResultTri == NULL )
             return poResultPoly;
-        else if (poResultPoly == NULL)
+        else if( poResultPoly == NULL )
             return poResultTri;
-        else if (poResultTri != NULL && poResultPoly != NULL)
+        else if( poResultTri != NULL && poResultPoly != NULL )
         {
             poGC = new OGRGeometryCollection();
             poGC->addGeometryDirectly(poResultTri);
@@ -3582,21 +3586,18 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
 /*      PolyhedralSurface                                               */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"PolyhedralSurface"))
+    if( EQUAL(pszBaseGeometry, "PolyhedralSurface") )
     {
-        const CPLXMLNode *psChild;
-        const CPLXMLNode *psParent;
-
-        // Find polygonPatches
-        psParent = FindBareXMLChild( psNode, "polygonPatches" );
-        if (psParent == NULL)
+        // Find polygonPatches.
+        const CPLXMLNode *psParent =
+            FindBareXMLChild( psNode, "polygonPatches" );
+        if( psParent == NULL )
         {
-            if (GetChildElement(psNode) == NULL)
+            if( GetChildElement(psNode) == NULL )
             {
-                // this is empty PolyhedralSurface
+                // This is empty PolyhedralSurface.
                 return new OGRPolyhedralSurface();
             }
-
             else
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -3605,33 +3606,34 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
         }
 
-        psChild = GetChildElement(psParent);
+        const CPLXMLNode *psChild = GetChildElement(psParent);
         if( psChild == NULL )
         {
-            // this is empty PolyhedralSurface
+            // This is empty PolyhedralSurface.
             return new OGRPolyhedralSurface();
         }
-        
-        else if (psChild != NULL && !EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch"))
+        else if( psChild != NULL &&
+                 !EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing <PolygonPatch> for %s.", pszBaseGeometry );
             return NULL;
         }
 
-        // each psParent has the tags corresponding to <gml:polygonPatches>
-        // each psChild has the tags corresponding to <gml:PolygonPatch>
-        // each PolygonPatch has a set of polygons enclosed in a OGRPolyhedralSurface
+        // Each psParent has the tags corresponding to <gml:polygonPatches>
+        // Each psChild has the tags corresponding to <gml:PolygonPatch>
+        // Each PolygonPatch has a set of polygons enclosed in a
+        // OGRPolyhedralSurface.
         OGRPolyhedralSurface *poPS = NULL;
         OGRGeometryCollection *poGC = new OGRGeometryCollection();
         OGRGeometry *poResult = NULL;
-        for (; psParent != NULL; psParent = psParent->psNext)
+        for( ; psParent != NULL; psParent = psParent->psNext )
         {
             poPS = new OGRPolyhedralSurface();
             for( ; psChild != NULL; psChild = psChild->psNext )
             {
                 if( psChild->eType == CXT_Element
-                    && EQUAL(BareGMLElement(psChild->pszValue),"PolygonPatch") )
+                    && EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
                 {
                     OGRGeometry *poPolygon =
                         GML2OGRGeometry_XMLNode_Internal(
@@ -3640,18 +3642,23 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( poPolygon == NULL )
                     {
                         delete poPS;
-                        CPLError( CE_Failure, CPLE_AppDefined, "Wrong geometry type for %s.", pszBaseGeometry );
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Wrong geometry type for %s.",
+                                  pszBaseGeometry );
                         return NULL;
                     }
 
-                    else if( wkbFlatten(poPolygon->getGeometryType()) == wkbPolygon )
+                    else if( wkbFlatten(poPolygon->getGeometryType()) ==
+                             wkbPolygon )
                     {
                         poPS->addGeometryDirectly( poPolygon );
                     }
                     else
                     {
                         delete poPS;
-                        CPLError( CE_Failure, CPLE_AppDefined, "Wrong geometry type for %s.", pszBaseGeometry );
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Wrong geometry type for %s.",
+                                  pszBaseGeometry );
                         return NULL;
                     }
                 }
@@ -3659,12 +3666,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             poGC->addGeometryDirectly(poPS);
         }
 
-        if (poGC->getNumGeometries() == 0)
+        if( poGC->getNumGeometries() == 0 )
         {
             delete poGC;
             return NULL;
         }
-        else if ( poPS != NULL && poGC->getNumGeometries() == 1)
+        else if( poPS != NULL && poGC->getNumGeometries() == 1 )
         {
             poResult = poPS->clone();
             delete poGC;
@@ -3744,8 +3751,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /*      SimplePolygon, SimpleRectangle, SimpleTriangle                  */
 /*      (GML 3.3 compact encoding)                                      */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszBaseGeometry,"SimplePolygon") ||
-        EQUAL(pszBaseGeometry,"SimpleRectangle") )
+    if( EQUAL(pszBaseGeometry, "SimplePolygon") ||
+        EQUAL(pszBaseGeometry, "SimpleRectangle") )
     {
         OGRLinearRing *poRing = new OGRLinearRing();
 
@@ -3762,9 +3769,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         return poPolygon;
     }
 
-    if( EQUAL(pszBaseGeometry,"SimpleTriangle") )
+    if( EQUAL(pszBaseGeometry, "SimpleTriangle") )
     {
-        OGRLinearRing   *poRing = new OGRLinearRing();
+        OGRLinearRing *poRing = new OGRLinearRing();
 
         if( !ParseGMLCoordinates( psNode, poRing, nSRSDimension ) )
         {
