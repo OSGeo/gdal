@@ -214,7 +214,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
     }
 
     GByte *pszIconvSrcBuf =
-        static_cast<GByte *>(CPLCalloc((nSrcLen+1),nTargetCharWidth));
+        static_cast<GByte *>(CPLCalloc((nSrcLen + 1), nTargetCharWidth));
 
     for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
     {

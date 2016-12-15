@@ -633,7 +633,7 @@ static void CPLQuadTreeCollectFeatures(const CPLQuadTree *hQuadTree,
   {
       *pnMaxFeatures = (*pnFeatureCount + psNode->nFeatures) * 2 + 20;
       *pppFeatureList = static_cast<void **>(
-          CPLRealloc(*pppFeatureList,sizeof(void*) * *pnMaxFeatures) );
+          CPLRealloc(*pppFeatureList, sizeof(void*) * *pnMaxFeatures) );
   }
 
   /* -------------------------------------------------------------------- */
