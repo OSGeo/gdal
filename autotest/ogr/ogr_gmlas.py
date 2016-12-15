@@ -1871,6 +1871,26 @@ def ogr_gmlas_dataset_getnextfeature():
             gdaltest.post_reason('fail')
             return 'fail'
 
+    # Test iterating over metadata layers on XSD-only based dataset
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=data/gmlas_test1.xsd', 'EXPOSE_METADATA_LAYERS=YES'])
+    count = 0
+    last_l = None
+    while True:
+        f, l = ds.GetNextFeature()
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        count += 1
+        last_l = l
+
+    if count == 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+
     return 'success'
 
 ###############################################################################
