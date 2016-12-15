@@ -155,6 +155,9 @@
 /* Define to 1 if you have the statvfs' function. */
 #undef HAVE_STATVFS
 
+/* Define to 1 if you have the `statvfs64' function. */
+#undef HAVE_STATVFS64
+
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 
