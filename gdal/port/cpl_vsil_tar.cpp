@@ -141,6 +141,9 @@ static bool VSIIsTGZ(const char* pszFilename)
 /*                           VSITarReader()                             */
 /************************************************************************/
 
+// TODO(schwehr): What is this ***NEWFILE*** thing?
+// And make it a symbolic constant.
+
 VSITarReader::VSITarReader(const char* pszTarFileName) :
     nCurOffset(0),
     nNextFileSize(0),
@@ -184,7 +187,8 @@ VSIArchiveEntryFileOffset* VSITarReader::GetFileOffset()
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
-        return new VSITarEntryFileOffset(nCurOffset, nNextFileSize, osNextFileName);
+        return new VSITarEntryFileOffset(nCurOffset, nNextFileSize,
+                                         osNextFileName);
     }
 #endif
     return new VSITarEntryFileOffset(nCurOffset);
@@ -205,7 +209,8 @@ int VSITarReader::GotoNextFile()
             {
                 if( m_abyBufferSize == 0 )
                 {
-                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer, 1, 2048, fp));
+                    m_abyBufferSize = static_cast<int>(
+                        VSIFReadL(m_abyBuffer, 1, 2048, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                 }
@@ -228,16 +233,24 @@ int VSITarReader::GotoNextFile()
                         return FALSE;
                     }
                     memcpy(m_abyBuffer, m_abyBuffer + 1024, 1024);
-                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
+                    m_abyBufferSize = static_cast<int>(
+                         VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                     m_abyBufferIdx = 0;
                     m_abyBufferSize += 1024;
                 }
             }
-            if( ((m_abyBufferSize == 2048 && m_abyBufferIdx < m_abyBufferSize - ((int)strlen("***NEWFILE***:")+64)) ||
-                 (m_abyBufferSize < 2048 && m_abyBufferIdx < m_abyBufferSize - ((int)strlen("***NEWFILE***:")+2))) &&
-                memcmp( m_abyBuffer + m_abyBufferIdx, "***NEWFILE***:", strlen("***NEWFILE***:")) == 0 )
+            if( ((m_abyBufferSize == 2048 &&
+                  m_abyBufferIdx <
+                  m_abyBufferSize -
+                  (static_cast<int>(strlen("***NEWFILE***:")) + 64)) ||
+                 (m_abyBufferSize < 2048 &&
+                  m_abyBufferIdx < m_abyBufferSize -
+                  (static_cast<int>(strlen("***NEWFILE***:"))+2))) &&
+                memcmp( m_abyBuffer + m_abyBufferIdx,
+                        "***NEWFILE***:",
+                        strlen("***NEWFILE***:")) == 0 )
             {
                 if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
                 {
@@ -251,12 +264,12 @@ int VSITarReader::GotoNextFile()
                         return TRUE;
                     }
                 }
-                m_abyBufferIdx += (int)strlen("***NEWFILE***:");
+                m_abyBufferIdx += static_cast<int>(strlen("***NEWFILE***:"));
                 int nFilenameStartIdx = m_abyBufferIdx;
                 for(; m_abyBufferIdx < m_abyBufferSize &&
                       m_abyBuffer[m_abyBufferIdx] != '\n'; ++m_abyBufferIdx)
                 {
-                    /* do nothing */
+                    // Do nothing.
                 }
                 if( m_abyBufferIdx < m_abyBufferSize )
                 {
@@ -299,7 +312,7 @@ int VSITarReader::GotoNextFile()
     nCurOffset = VSIFTellL(fp);
 
     const GUIntBig nBytesToSkip = ((nNextFileSize + 511) / 512) * 512;
-    if( nBytesToSkip > (~((GUIntBig)0)) - nCurOffset )
+    if( nBytesToSkip > (~(static_cast<GUIntBig>(0))) - nCurOffset )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
         return FALSE;
