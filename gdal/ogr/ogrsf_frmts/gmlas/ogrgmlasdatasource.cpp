@@ -1082,7 +1082,17 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                 *pdfProgressPct = 1.0;
             if( ppoBelongingLayer != NULL )
                 *ppoBelongingLayer = NULL;
-            return NULL;
+            m_bEndOfReaderLayers = true;
+            if( !m_apoRequestedMetadataLayers.empty() )
+            {
+                m_nCurMetadataLayerIdx = 0;
+                return GetNextFeature( ppoBelongingLayer, pdfProgressPct,
+                                    pfnProgress, pProgressData );
+            }
+            else
+            {
+                return NULL;
+            }
         }
     }
 
