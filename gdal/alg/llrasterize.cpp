@@ -549,8 +549,9 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 {
                     dfXEnd +=
                         (dfYEnd - static_cast<double>(nRasterYSize)) / dfSlope;
-                    // Clang Static Analizer claims dfYEnd from here never read.
-                    dfYEnd = nRasterXSize;
+                    // dfYEnd is no longer used afterwards, but for
+                    // consistency it should be:
+                    // dfYEnd = nRasterXSize;
                 }
             }
             else
@@ -565,8 +566,9 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
                 if( dfYEnd < 0.0 )
                 {
                     dfXEnd -= ( dfYEnd - 0 ) / dfSlope;
-                    // Clang Static Analizer claims dfYEnd from here never read.
-                    dfYEnd = 0.0;
+                    // dfYEnd is no longer used afterwards, but for
+                    // consistency it should be:
+                    // dfYEnd = 0.0;
                 }
             }
 
