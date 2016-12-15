@@ -764,7 +764,7 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char*
     GIntBig nRet = -1;
 #ifdef HAVE_STATVFS
 
-#if defined(UNIX_STDIO_64) && !(defined(__MACH__) && defined(__APPLE__))
+#ifdef HAVE_STATVFS64
     struct statvfs64 buf;
     if( statvfs64(pszDirname, &buf) == 0 )
     {
