@@ -40,8 +40,8 @@
 #include <memory>
 #include <string>
 
-#if defined(__sun__) && __GNUC__ == 4 && __GNUC_MINOR__ == 8
-// gcc 4.8 on Solaris 11.3 doesn't have std::string
+#if (defined(__sun__) || defined(__FreeBSD__)) && __GNUC__ == 4 && __GNUC_MINOR__ == 8
+// gcc 4.8 on Solaris 11.3 or FreeBSD 11 doesn't have std::string
 #include <sstream>
 template <typename T> std::string to_string(T val)
 {
