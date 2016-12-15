@@ -236,12 +236,12 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( nCurOffset + nBytesRequested > nBytesAvailable )
     {
         const size_t nExtraBytes =
-            (size_t) (nCurOffset + nBytesRequested - nBytesAvailable);
+            static_cast<size_t>(nCurOffset + nBytesRequested - nBytesAvailable);
         // Recurse to get the rest of the request.
 
         const GUIntBig nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
-        size_t nBytesRead =
+        const size_t nBytesRead =
             this->Read( ((char *) pBuffer) + nBytesRequested - nExtraBytes,
                         1, nExtraBytes );
         nCurOffset = nCurOffsetSave;
@@ -359,17 +359,17 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 {
     CPLAssert( STARTS_WITH_CI(pszFilename, "/vsisparse/") );
 
-    if( !EQUAL(pszAccess,"r") && !EQUAL(pszAccess,"rb") )
+    if( !EQUAL(pszAccess, "r") && !EQUAL(pszAccess, "rb") )
     {
         errno = EACCES;
         return NULL;
     }
 
-    /* Arbitrary number */
+    // Arbitrary number.
     if( GetRecCounter() == 32 )
         return NULL;
 
-    CPLString osSparseFilePath = pszFilename + 11;
+    const CPLString osSparseFilePath = pszFilename + 11;
 
 /* -------------------------------------------------------------------- */
 /*      Does this file even exist?                                      */
@@ -402,8 +402,8 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         if( psRegion->eType != CXT_Element )
             continue;
 
-        if( !EQUAL(psRegion->pszValue,"SubfileRegion")
-            && !EQUAL(psRegion->pszValue,"ConstantRegion") )
+        if( !EQUAL(psRegion->pszValue, "SubfileRegion")
+            && !EQUAL(psRegion->pszValue, "ConstantRegion") )
             continue;
 
         SFRegion oRegion;
@@ -427,7 +427,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
             CPLScanUIntBig( CPLGetXMLValue(psRegion, "RegionLength", "0"), 32);
 
         oRegion.byValue = static_cast<GByte>(
-            atoi(CPLGetXMLValue(psRegion,"Value", "0")));
+            atoi(CPLGetXMLValue(psRegion, "Value", "0")));
 
         poHandle->aoRegions.push_back( oRegion );
     }
@@ -437,7 +437,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /*      explicit in file.                                               */
 /* -------------------------------------------------------------------- */
     poHandle->nOverallLength =
-        CPLScanUIntBig( CPLGetXMLValue(psXMLRoot,"Length","0" ), 32);
+        CPLScanUIntBig( CPLGetXMLValue(psXMLRoot, "Length", "0" ), 32);
     if( poHandle->nOverallLength == 0 )
     {
         for( unsigned int i = 0; i < poHandle->aoRegions.size(); i++ )
