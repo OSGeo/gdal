@@ -898,10 +898,12 @@ void* VSIMallocAligned( size_t nAlignment, size_t nSize )
     // Detect overflow.
     if( nSize + nAlignment < nSize )
         return NULL;
+    // TODO(schwehr): C++11 has std::aligned_storage, alignas, and related.
     GByte* pabyData = static_cast<GByte*>(VSIMalloc( nSize + nAlignment ));
     if( pabyData == NULL )
         return NULL;
-    size_t nShift = nAlignment - (static_cast<size_t>(pabyData) % nAlignment);
+    size_t nShift =
+        nAlignment - (reinterpret_cast<size_t>(pabyData) % nAlignment);
     GByte* pabyAligned = pabyData + nShift;
     // Guaranteed to fit on a byte since nAlignment < 256.
     pabyAligned[-1] = static_cast<GByte>(nShift);
