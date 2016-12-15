@@ -1140,7 +1140,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         // Free tag buffer.
         CPLFree( pszElemOpen );
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Polyhedral Surface                                              */
 /* -------------------------------------------------------------------- */
