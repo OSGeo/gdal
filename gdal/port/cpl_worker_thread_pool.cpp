@@ -436,8 +436,11 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
         {
             psJobQueue = psTopJobIter->psNext;
 
-            //CPLDebug("JOB", "%p got a job", psWorkerThread);
-            CPLWorkerThreadJob* psJob = (CPLWorkerThreadJob*)psTopJobIter->pData;
+#if DEBUG_VERBOSE
+            CPLDebug("JOB", "%p got a job", psWorkerThread);
+#endif
+            CPLWorkerThreadJob* psJob =
+                (CPLWorkerThreadJob*)psTopJobIter->pData;
             CPLReleaseMutex(hMutex);
             CPLFree(psTopJobIter);
             return psJob;
@@ -447,7 +450,7 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
         {
             psWorkerThread->bMarkedAsWaiting = TRUE;
             nWaitingWorkerThreads ++;
-            CPLAssert(nWaitingWorkerThreads <= (int)aWT.size());
+            CPLAssert(nWaitingWorkerThreads <= static_cast<int>(aWT.size()));
 
             CPLList* psItem =
                 static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
@@ -464,22 +467,29 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
             psItem->psNext = psWaitingWorkerThreadsList;
             psWaitingWorkerThreadsList = psItem;
 
-            //CPLAssert( CPLListCount(psWaitingWorkerThreadsList) == nWaitingWorkerThreads);
+#if DEBUG_VERBOSE
+            CPLAssert(CPLListCount(psWaitingWorkerThreadsList) ==
+                      nWaitingWorkerThreads);
+#endif
         }
 
         CPLCondSignal(hCond);
 
         CPLAcquireMutex(psWorkerThread->hMutex, 1000.0);
-        //CPLDebug("JOB", "%p sleeping", psWorkerThread);
+#if DEBUG_VERBOSE
+        CPLDebug("JOB", "%p sleeping", psWorkerThread);
+#endif
         CPLReleaseMutex(hMutex);
 
         CPLCondWait( psWorkerThread->hCond, psWorkerThread->hMutex );
 
+        // TODO(rouault): Explain or delete.
         //CPLWorkerThreadJob* psJob = psWorkerThread->psNextJob;
         //psWorkerThread->psNextJob = NULL;
 
         CPLReleaseMutex(psWorkerThread->hMutex);
 
+        // TODO(rouault): Explain or delete.
         //if( psJob )
         //    return psJob;
     }
