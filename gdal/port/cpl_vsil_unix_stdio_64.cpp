@@ -766,7 +766,7 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace( const char*
     struct statvfs buf;
     if( statvfs(pszDirname, &buf) == 0 )
     {
-        nRet = static_cast<GIntBig>(buf.f_frsize * buf.f_bavail);
+        nRet = static_cast<GIntBig>(buf.f_frsize * static_cast<GUIntBig>(buf.f_bavail));
     }
 #endif
     return nRet;
