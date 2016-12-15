@@ -299,7 +299,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( unsigned char * pabyData,
 
 OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
                                             unsigned char * pabyData,
-                                            OGRwkbVariant eWkbVariant ) const
+                                            OGRwkbVariant /*eWkbVariant*/ ) const
 
 {
 /* -------------------------------------------------------------------- */
@@ -311,15 +311,7 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
 /*      Set the geometry feature type, ensuring that 3D flag is         */
 /*      preserved.                                                      */
 /* -------------------------------------------------------------------- */
-    GUInt32 nGType = getGeometryType();
-
-    if ( eWkbVariant == wkbVariantIso )
-        nGType = getIsoGeometryType();
-    else
-    {
-        eWkbVariant = wkbVariantIso;
-        nGType = getIsoGeometryType();
-    }
+    GUInt32 nGType = getIsoGeometryType();
 
     if( OGR_SWAP( eByteOrder ) )
     {

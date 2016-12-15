@@ -1184,6 +1184,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             {
                 DXF_LAYER_READER_ERROR();
                 delete poFeature;
+                delete poPS;
+                // delete the list of points
+                for (int i = 0; i < nPoints; i++)
+                    delete papoPoints[i];
+                CPLFree(papoPoints);
+
                 return NULL;
             }
 
@@ -1252,7 +1258,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         // Note - If any index out of vertexIndex71, vertexIndex72, vertexIndex73 or vertexIndex74
         // is negative, it means that the line starting from that vertex is invisible
 
-        if (nVertexFlag == 128)
+        if (nVertexFlag == 128 && papoPoints != NULL)
         {
             // create a polygon and add it to the Polyhedral Surface
             OGRLinearRing *poLR = new OGRLinearRing();
@@ -1298,7 +1304,7 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
             OGRPolygon *poPolygon = new OGRPolygon();
             poPolygon->addRing((OGRCurve *)poLR);
 
-            poPS->addGeometryDirectly((OGRGeometry *)poPolygon);
+            poPS->addGeometryDirectly(poPolygon);
 
             // delete the ring to prevent leakage
             delete poLR;
@@ -1308,6 +1314,11 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         {
             DXF_LAYER_READER_ERROR();
             delete poFeature;
+            delete poPS;
+            // delete the list of points
+            for (int i = 0; i < nPoints; i++)
+                delete papoPoints[i];
+            CPLFree(papoPoints);
             return NULL;
         }
 
@@ -1317,20 +1328,16 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
         dfBulge = 0.0;
     }
 
+    // delete the list of points
+    for (int i = 0; i < nPoints; i++)
+        delete papoPoints[i];
+    CPLFree(papoPoints);
+
     if(smoothPolyline.IsEmpty())
     {
         delete poFeature;
+        delete poPS;
         return NULL;
-    }
-
-    // delete the list of points
-    if( papoPoints != NULL )
-    {
-        for (int i = 0; i < nPoints; i++)
-            delete papoPoints[i];
-        CPLFree(papoPoints);
-        nPoints = 0;
-        papoPoints = NULL;
     }
 
     if (poPS->getNumGeometries() > 0)

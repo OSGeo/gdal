@@ -3496,19 +3496,13 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     return NULL;
                 }
 
-                const OGRwkbGeometryType eGeomType =
-                    wkbFlatten(poGeom->getGeometryType());
-
                 if( poResultTri == NULL )
                     poResultTri = poGeom;
                 else
                 {
                     if( poTIN == NULL )
                     {
-                        if( wkbFlatten(poResultTri->getGeometryType()) ==
-                            wkbTriangle &&
-                            eGeomType == wkbTriangle )
-                            poTIN = new OGRTriangulatedSurface();
+                        poTIN = new OGRTriangulatedSurface();
 #ifdef DEBUG
                         OGRErr eErr =
 #endif
@@ -3572,7 +3566,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         psChild, nPseudoBoolGetSecondaryGeometryOption,
                         nRecLevel + 1, nSRSDimension, pszSRSName );
                 if( poTriangle == NULL )
+                {
+                    delete poTIN;
                     return NULL;
+                }
                 else
                 {
                     poTIN->addGeometryDirectly( poTriangle );
@@ -3642,6 +3639,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( poPolygon == NULL )
                     {
                         delete poPS;
+                        delete poGC;
                         CPLError( CE_Failure, CPLE_AppDefined,
                                   "Wrong geometry type for %s.",
                                   pszBaseGeometry );
@@ -3656,6 +3654,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     else
                     {
                         delete poPS;
+                        delete poGC;
                         CPLError( CE_Failure, CPLE_AppDefined,
                                   "Wrong geometry type for %s.",
                                   pszBaseGeometry );

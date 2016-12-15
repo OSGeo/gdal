@@ -732,6 +732,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return false;
         }
 
         char szCoordinate[256] = {};
@@ -816,6 +817,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             {
                 CPLError(CE_Fatal, CPLE_AppDefined,
                          "dynamic_cast failed.  Expected OGRLineString.");
+                return false;
             }
 
             AppendGML3CoordinateList( poLineString, bCoordSwap,
@@ -846,6 +848,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRSimpleCurve.");
+            return false;
         }
         // SQL MM has a unique type for arc and circle, GML does not.
         if( poSC->getNumPoints() == 3 &&
@@ -906,6 +909,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCompoundCurve.");
+            return false;
         }
         for( int i = 0; i < poCC->getNumCurves(); i++ )
         {
@@ -937,6 +941,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
+            return false;
         }
 
         // Buffer for polygon tag name + srsName attribute if set.
@@ -1015,6 +1020,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRTriangle.");
+            return false;
         }
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:Triangle>" );
@@ -1059,6 +1065,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRGeometryCollection.");
+            return false;
         }
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;
@@ -1154,6 +1161,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPolyhedralSurface.");
+            return false;
         }
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:PolyhedralSurface" );
@@ -1214,6 +1222,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRTriangulatedSurface.");
+            return false;
         }
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:TriangulatedSurface" );
