@@ -8,7 +8,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  vm_ram = ENV['VAGRANT_VM_RAM'] || 1024
+  vm_ram = ENV['VAGRANT_VM_RAM'] || 2048
   vm_cpu = ENV['VAGRANT_VM_CPU'] || 2
 
   config.vm.box = "precise64"
@@ -58,6 +58,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libpoppler-dev",
     "libspatialite-dev",
     "gpsbabel",
+    "libboost-all-dev",
+    "libgmp-dev",
+    "libmpfr-dev",
     "swig",
     "libhdf4-alt-dev",
     "libhdf5-serial-dev",
@@ -106,6 +109,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "sfcgal.sh",
       "swig-1.3.40.sh",
       "libkml.sh",
       "openjpeg.sh",

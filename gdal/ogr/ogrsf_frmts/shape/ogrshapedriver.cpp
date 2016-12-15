@@ -305,6 +305,7 @@ void RegisterOGRShape()
 "    <Value>ARCZM</Value>"
 "    <Value>POLYGONZM</Value>"
 "    <Value>MULTIPOINTZM</Value>"
+"    <Value>MULTIPATCH</Value>"
 "    <Value>NONE</Value>"
 "    <Value>NULL</Value>"
 "  </Option>"

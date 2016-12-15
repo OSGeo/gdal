@@ -39,6 +39,7 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -624,16 +625,16 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
         if( eWkbVariant == wkbVariantIso )
         {
             if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-                *ppszDstText = CPLStrdup("POLYGON ZM EMPTY");
+                *ppszDstText = CPLStrdup((CPLString(getGeometryName()) + " ZM EMPTY").c_str());
             else if( flags & OGR_G_MEASURED )
-                *ppszDstText = CPLStrdup("POLYGON M EMPTY");
+                *ppszDstText = CPLStrdup((CPLString(getGeometryName()) + " M EMPTY").c_str());
             else if( flags & OGR_G_3D )
-                *ppszDstText = CPLStrdup("POLYGON Z EMPTY");
+                *ppszDstText = CPLStrdup((CPLString(getGeometryName()) + " Z EMPTY").c_str());
             else
-                *ppszDstText = CPLStrdup("POLYGON EMPTY");
+                *ppszDstText = CPLStrdup((CPLString(getGeometryName()) + " EMPTY").c_str());
         }
         else
-            *ppszDstText = CPLStrdup("POLYGON EMPTY");
+            *ppszDstText = CPLStrdup((CPLString(getGeometryName()) + " EMPTY").c_str());
         return OGRERR_NONE;
     }
 
@@ -686,8 +687,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = static_cast<char *>(
-        VSI_MALLOC_VERBOSE(nCumulativeLength + nNonEmptyRings + 16));
+    *ppszDstText = (char *) VSI_MALLOC_VERBOSE(
+        nCumulativeLength + nNonEmptyRings + strlen(getGeometryName()) + strlen(" ZM ()") + 1);
 
     if( *ppszDstText == NULL )
     {
@@ -701,16 +702,16 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
     if( eWkbVariant == wkbVariantIso )
     {
         if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-            strcpy( *ppszDstText, "POLYGON ZM (" );
+            strcpy( *ppszDstText, (CPLString(getGeometryName()) + " ZM (").c_str() );
         else if( flags & OGR_G_MEASURED )
-            strcpy( *ppszDstText, "POLYGON M (" );
+            strcpy( *ppszDstText, (CPLString(getGeometryName()) + " M (").c_str() );
         else if( flags & OGR_G_3D )
-            strcpy( *ppszDstText, "POLYGON Z (" );
+            strcpy( *ppszDstText, (CPLString(getGeometryName()) + " Z (").c_str() );
         else
-            strcpy( *ppszDstText, "POLYGON (" );
+            strcpy( *ppszDstText, (CPLString(getGeometryName()) + " (").c_str() );
     }
     else
-        strcpy( *ppszDstText, "POLYGON (" );
+        strcpy( *ppszDstText, (CPLString(getGeometryName()) + " (").c_str() );
     nCumulativeLength = strlen(*ppszDstText);
 
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )

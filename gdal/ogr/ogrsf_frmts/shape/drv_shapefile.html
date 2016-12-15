@@ -258,11 +258,11 @@ emitted when the 2GB limit is reached.</p>
 
 <li><b>SHPT=type</b>: Override the type of shapefile created.  Can be
 one of NULL for a simple .dbf file with no .shp file, POINT, ARC,
-POLYGON or MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ
+POLYGON or MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
 for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured geometries;
 and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D measured
 geometries. The measure support was added in GDAL 2.1. MULTIPATCH
-files are not supported.</li>
+files are supported since GDAL 2.2.</li>
 
 <li> <b>ENCODING=</b><i>value</i>: set the encoding value in the DBF file. The
 default value is "LDID/87".  It is not clear what other values may be

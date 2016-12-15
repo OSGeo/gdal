@@ -951,7 +951,13 @@ def ogr_pg_20():
         ( 'MULTIPOLYGON(((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))',
           'MULTIPOLYGON ZM (((0 0 0 1,4 0 0 1,4 4 0 1,0 4 0 1,0 0 0 1),(1 1 0 5,2 1 0 5,2 2 0 5,1 2 0 5,1 1 0 5)),((-1 -1 0 10,-1 -2 0 10,-2 -2 0 10,-2 -1 0 10,-1 -1 0 10)))' ),
         ( 'GEOMETRYCOLLECTION(POINT(2 3 11 101),LINESTRING(2 3 12 102,3 4 13 103))',
-          'GEOMETRYCOLLECTION ZM (POINT ZM (2 3 11 101),LINESTRING ZM (2 3 12 102,3 4 13 103))' )
+          'GEOMETRYCOLLECTION ZM (POINT ZM (2 3 11 101),LINESTRING ZM (2 3 12 102,3 4 13 103))'),
+        ( 'TRIANGLE ((0 0 0 0,100 0 100 1,0 100 100 0,0 0 0 0))',
+          'TRIANGLE ZM ((0 0 0 0,100 0 100 1,0 100 100 0,0 0 0 0))' ),
+        ( 'TIN (((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0)))',
+          'TIN ZM (((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0)))' ),
+        ( 'POLYHEDRALSURFACE (((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0)),((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0)),((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0)),((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0)),((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0)))',
+          'POLYHEDRALSURFACE ZM (((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0)),((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0)),((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0)),((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0)),((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0)),((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0)))')
     )
 
     # This layer is also used in ogr_pg_21() test.
@@ -1038,6 +1044,104 @@ def ogr_pg_21():
     gdaltest.pg_ds.ReleaseResultSet(layer)
     layer = None
 
+    return 'success'
+
+###############################################################################
+# Check if the sub geometries of TIN and POLYHEDRALSURFACE are valid
+
+def ogr_pg_21_subgeoms():
+
+    if gdaltest.pg_ds is None or not gdaltest.pg_has_postgis:
+        return 'skip'
+
+    subgeom_PS = [  'POLYGON ZM ((0 0 0 0,0 0 1 0,0 1 1 0,0 1 0 0,0 0 0 0))',
+                    'POLYGON ZM ((0 0 0 0,0 1 0 0,1 1 0 0,1 0 0 0,0 0 0 0))',
+                    'POLYGON ZM ((0 0 0 0,1 0 0 0,1 0 1 0,0 0 1 0,0 0 0 0))',
+                    'POLYGON ZM ((1 1 0 0,1 1 1 0,1 0 1 0,1 0 0 0,1 1 0 0))',
+                    'POLYGON ZM ((0 1 0 0,0 1 1 0,1 1 1 0,1 1 0 0,0 1 0 0))',
+                    'POLYGON ZM ((0 0 1 0,1 0 1 0,1 1 1 0,0 1 1 0,0 0 1 0))' ]
+
+    subgeom_TIN = [ 'TRIANGLE ZM ((0 0 0 0,0 0 1 0,0 1 0 0,0 0 0 0))',
+                    'TRIANGLE ZM ((0 0 0 0,0 1 0 0,1 1 0 0,0 0 0 0))' ]
+
+    layer = gdaltest.pg_ds.GetLayerByName( 'testgeom' )
+    for i in range(8,10):
+        feat = layer.GetFeature(i)
+        geom = feat.GetGeometryRef()
+        if geom is None:
+            gdaltest.post_reason( 'did not get the expected geometry')
+            return 'fail'
+        if geom.GetGeometryName() == "POLYHEDRALSURFACE":
+            for j in range(0, geom.GetGeometryCount()):
+                sub_geom = geom.GetGeometryRef(j)
+                subgeom_wkt = sub_geom.ExportToIsoWkt()
+                if subgeom_wkt != subgeom_PS[j]:
+                    gdaltest.post_reason( 'did not get the expected subgeometry, expected %s' % (subgeom_PS[j]))
+                    return 'fail'
+        if geom.GetGeometryName() == "TIN":
+            for j in range(0, geom.GetGeometryCount()):
+                sub_geom = geom.GetGeometryRef(j)
+                subgeom_wkt = sub_geom.ExportToIsoWkt()
+                if subgeom_wkt != subgeom_TIN[j]:
+                    gdaltest.post_reason( 'did not get the expected subgeometry, expected %s' % (subgeom_TIN[j]))
+                    return 'fail'
+        feat.Destroy()
+        feat = None
+
+    return 'success'
+
+###############################################################################
+# Check if the 3d geometries of TIN, Triangle and POLYHEDRALSURFACE are valid
+
+def ogr_pg_21_3d_geometries():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run:
+        return 'skip'
+
+    connection_string = "dbname=autotest"
+
+    gdaltest.pg_ds = ogr.Open( 'PG:' + connection_string, update = 1 )
+
+    gdaltest.pg_ds.ExecuteSQL( "CREATE TABLE zgeoms (field_no integer)" )
+    sql_lyr = gdaltest.pg_ds.ExecuteSQL( "SELECT AddGeometryColumn('public','zgeoms','wkb_geometry',-1,'GEOMETRY',3)" )
+    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
+    wkt_list = ['POLYHEDRALSURFACE (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))',
+                'TIN (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
+                'TRIANGLE ((48 36 84,32 54 64,86 11 54,48 36 84))' ]
+
+    wkt_expected = ['POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))',
+                    'TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))',
+                    'TRIANGLE Z ((48 36 84,32 54 64,86 11 54,48 36 84))' ]
+
+    for i in range(0,3):
+        gdaltest.pg_ds.ExecuteSQL( "INSERT INTO zgeoms (field_no, wkb_geometry) VALUES (%d,GeomFromEWKT('%s'))" % ( i, wkt_list[i] ) )
+
+    gdaltest.pg_ds.Destroy()
+    gdaltest.pg_ds = None
+
+    try:
+        gdaltest.pg_ds = ogr.Open( 'PG:' + connection_string, update = 1 )
+    except:
+        gdaltest.pg_ds = None
+        gdaltest.post_reason( 'Cannot open the dataset' )
+        return 'fail'
+
+    layer = gdaltest.pg_ds.GetLayerByName( 'zgeoms' )
+    if layer is None:
+        gdaltest.post_reason( 'No layer received' )
+        return 'fail'
+
+    for i in range (0, 3):
+        feat = layer.GetFeature(i)
+        geom = feat.GetGeometryRef()
+
+        wkt = geom.ExportToIsoWkt()
+
+        if (wkt != wkt_expected[i]):
+            gdaltest.post_reason( 'Unexpected WKT, expected %s and got %s' % ( wkt_expected[i], wkt) )
+            return 'fail'
+
+    gdaltest.pg_ds.ExecuteSQL( "DROP TABLE zgeoms" )
     return 'success'
 
 ###############################################################################
@@ -3719,6 +3823,7 @@ def ogr_pg_71():
                  'CIRCULARSTRING (0 1,2 3,4 5)',
                  'CIRCULARSTRING Z (0 1 2,4 5 6,7 8 9)',
                  'COMPOUNDCURVE EMPTY',
+                 'TRIANGLE ((0 0 0,100 0 100,0 100 100,0 0 0))',
                  'COMPOUNDCURVE ((0 1,2 3,4 5))',
                  'COMPOUNDCURVE Z ((0 1 2,4 5 6,7 8 9))',
                  'COMPOUNDCURVE ((0 1,2 3,4 5),CIRCULARSTRING (4 5,6 7,8 9))',
@@ -5459,6 +5564,8 @@ gdaltest_list_internal = [
     ogr_pg_18,
     ogr_pg_20,
     ogr_pg_21,
+    ogr_pg_21_subgeoms,
+    ogr_pg_21_3d_geometries,
     ogr_pg_22,
     ogr_pg_23,
     ogr_pg_24,

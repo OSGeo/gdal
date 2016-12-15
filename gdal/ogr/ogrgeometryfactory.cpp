@@ -37,6 +37,7 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
@@ -297,6 +298,10 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     {
         poGeom = new OGRPolygon();
     }
+    else if( STARTS_WITH_CI(szToken,"TRIANGLE") )
+    {
+        poGeom = new OGRTriangle();
+    }
     else if( STARTS_WITH_CI(szToken, "GEOMETRYCOLLECTION") )
     {
         poGeom = new OGRGeometryCollection();
@@ -333,6 +338,17 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     {
         poGeom = new OGRMultiSurface();
     }
+
+    else if( STARTS_WITH_CI(szToken,"POLYHEDRALSURFACE") )
+    {
+        poGeom = new OGRPolyhedralSurface();
+    }
+
+    else if( STARTS_WITH_CI(szToken,"TIN") )
+    {
+        poGeom = new OGRTriangulatedSurface();
+    }
+
     else
     {
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -467,6 +483,15 @@ OGRGeometryFactory::createGeometry( OGRwkbGeometryType eGeometryType )
       case wkbMultiSurface:
           return new (std::nothrow) OGRMultiSurface();
 
+      case wkbTriangle:
+          return new (std::nothrow) OGRTriangle();
+
+      case wkbPolyhedralSurface:
+          return new (std::nothrow) OGRPolyhedralSurface();
+
+      case wkbTIN:
+          return new (std::nothrow) OGRTriangulatedSurface();
+
       default:
           return NULL;
     }
@@ -583,6 +608,12 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         return poPoly;
     }
 
+    // base polygon or triangle
+    if( OGR_GT_IsSubClassOf( eGeomType, wkbPolygon ) )
+    {
+        return OGRSurface::CastToPolygon((OGRSurface*)poGeom);
+    }
+
     if( OGR_GT_IsCurve(eGeomType) &&
         ((OGRCurve*)poGeom)->getNumPoints() >= 3 &&
         ((OGRCurve*)poGeom)->get_IsClosed() )
@@ -602,6 +633,19 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
             delete poGeom;
         }
         return poPolygon;
+    }
+
+    if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
+    {
+        OGRPolyhedralSurface* poPS = reinterpret_cast<OGRPolyhedralSurface*>(
+                                                                       poGeom);
+        if( poPS->getNumGeometries() == 1 )
+        {
+            poGeom = OGRSurface::CastToPolygon(
+              reinterpret_cast<OGRSurface*>(poPS->getGeometryRef(0)->clone()));
+            delete poPS;
+            return poGeom;
+        }
     }
 
     if( eGeomType != wkbGeometryCollection
@@ -727,15 +771,21 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
             poGC = poNewGC;
         }
 
+        bool bCanConvertToMultiPoly = true;
         for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             OGRwkbGeometryType eSubGeomType =
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if( eSubGeomType != wkbPolygon )
                 bAllPoly = false;
+            if( eSubGeomType != wkbMultiPolygon && eSubGeomType != wkbPolygon &&
+                eSubGeomType != wkbPolyhedralSurface && eSubGeomType != wkbTIN )
+            {
+                bCanConvertToMultiPoly = false;
+            }
         }
 
-        if( !bAllPoly )
+        if( !bCanConvertToMultiPoly )
             return poGeom;
 
         OGRMultiPolygon *poMP = new OGRMultiPolygon();
@@ -743,8 +793,24 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 
         while( poGC->getNumGeometries() > 0 )
         {
-            poMP->addGeometryDirectly( poGC->getGeometryRef(0) );
+            OGRGeometry* poSubGeom = poGC->getGeometryRef(0);
             poGC->removeGeometry( 0, FALSE );
+            if( bAllPoly )
+            {
+                poMP->addGeometryDirectly( poSubGeom );
+            }
+            else
+            {
+                poSubGeom = forceToMultiPolygon( poSubGeom );
+                OGRMultiPolygon* poSubMP = dynamic_cast<OGRMultiPolygon*>(
+                                                                    poSubGeom);
+                while( poSubMP != NULL && poSubMP->getNumGeometries() > 0 )
+                {
+                    poMP->addGeometryDirectly( poSubMP->getGeometryRef(0) );
+                    poSubMP->removeGeometry( 0, FALSE );
+                }
+                delete poSubMP;
+            }
         }
 
         delete poGC;
@@ -760,6 +826,20 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         poMP->addGeometryDirectly( poPoly );
         delete poGeom;
         return poMP;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is PolyhedralSurface or TIN, then pretend it is a         */
+/*      multipolygon.                                                   */
+/* -------------------------------------------------------------------- */
+    if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
+    {
+        return OGRPolyhedralSurface::CastToMultiPolygon((OGRPolyhedralSurface*)poGeom);
+    }
+
+    if( eGeomType == wkbTriangle )
+    {
+        return forceToMultiPolygon( forceToPolygon( poGeom ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -992,11 +1072,11 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
 /*      Convert polygons into a multilinestring.                        */
 /* -------------------------------------------------------------------- */
-    if( eGeomType == wkbPolygon || eGeomType == wkbCurvePolygon )
+    if( OGR_GT_IsSubClassOf(eGeomType, wkbCurvePolygon ) )
     {
         OGRMultiLineString *poMP = new OGRMultiLineString();
         OGRPolygon *poPoly = NULL;
-        if( eGeomType == wkbPolygon )
+        if( OGR_GT_IsSubClassOf(eGeomType, wkbPolygon) )
             poPoly = (OGRPolygon *) poGeom;
         else
         {
@@ -1031,6 +1111,16 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         delete poPoly;
 
         return poMP;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is PolyhedralSurface or TIN, then pretend it is a         */
+/*      multipolygon.                                                   */
+/* -------------------------------------------------------------------- */
+    if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
+    {
+        poGeom = forceToMultiPolygon(poGeom);
+        eGeomType = wkbMultiPolygon;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4013,6 +4103,174 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         return poRet;
     }
 
+    if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) &&
+        (eTargetType == wkbMultiSurface ||
+         eTargetType == wkbGeometryCollection) )
+    {
+        return forceTo( forceTo( poGeom, wkbMultiPolygon, papszOptions),
+                        eTargetType, papszOptions );
+    }
+
+    if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) &&
+        eTargetType == wkbGeometryCollection )
+    {
+        OGRGeometryCollection* poGC =
+                        dynamic_cast<OGRGeometryCollection*>(poGeom);
+        if( poGC == NULL )
+            return poGeom;
+        return OGRGeometryCollection::CastToGeometryCollection(poGC);
+    }
+
+    if( eType == wkbTriangle && eTargetType == wkbPolyhedralSurface )
+    {
+        OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+        poPS->assignSpatialReference( poGeom->getSpatialReference() );
+        poPS->addGeometryDirectly( OGRTriangle::CastToPolygon(poGeom) );
+        return poPS;
+    }
+    else if( eType == wkbPolygon && eTargetType == wkbPolyhedralSurface )
+    {
+        OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+        poPS->assignSpatialReference( poGeom->getSpatialReference() );
+        poPS->addGeometryDirectly( poGeom );
+        return poPS;
+    }
+    else if( eType == wkbMultiPolygon && eTargetType == wkbPolyhedralSurface )
+    {
+        OGRMultiPolygon* poMP = reinterpret_cast<OGRMultiPolygon*>(poGeom);
+        OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        {
+            poPS->addGeometry( poMP->getGeometryRef(i) );
+        }
+        delete poGeom;
+        return poPS;
+    }
+    else if( eType == wkbTIN && eTargetType == wkbPolyhedralSurface )
+    {
+        poGeom = OGRTriangulatedSurface::CastToPolyhedralSurface(
+                    (OGRTriangulatedSurface*)poGeom);
+    }
+    else if( eType == wkbCurvePolygon && eTargetType == wkbPolyhedralSurface )
+    {
+        return forceTo( forceTo( poGeom, wkbPolygon, papszOptions ),
+                        eTargetType, papszOptions );
+    }
+    else if( eType == wkbMultiSurface && eTargetType == wkbPolyhedralSurface )
+    {
+        return forceTo( forceTo( poGeom, wkbMultiPolygon, papszOptions ),
+                        eTargetType, papszOptions );
+    }
+
+    else if( eType == wkbTriangle && eTargetType == wkbTIN )
+    {
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->assignSpatialReference( poGeom->getSpatialReference() );
+        poTS->addGeometryDirectly( poGeom );
+        return poTS;
+    }
+    else if( eType == wkbPolygon && eTargetType == wkbTIN )
+    {
+        OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+        OGRLinearRing* poLR = poPoly->getExteriorRing();
+        if( !(poLR != NULL && poLR->getNumPoints() == 4 &&
+                poPoly->getNumInteriorRings() == 0) )
+        {
+            return poGeom;
+        }
+        OGRErr eErr = OGRERR_NONE;
+        OGRTriangle* poTriangle = new OGRTriangle(*poPoly, eErr);
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->assignSpatialReference( poGeom->getSpatialReference() );
+        poTS->addGeometryDirectly( poTriangle );
+        delete poGeom;
+        return poTS;
+    }
+    else if( eType == wkbMultiPolygon && eTargetType == wkbTIN )
+    {
+        OGRMultiPolygon* poMP = reinterpret_cast<OGRMultiPolygon*>(poGeom);
+        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
+                                                    poMP->getGeometryRef(i) );
+            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            if( !(poLR != NULL && poLR->getNumPoints() == 4 &&
+                  poPoly->getNumInteriorRings() == 0) )
+            {
+                return poGeom;
+            }
+        }
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->assignSpatialReference( poGeom->getSpatialReference() );
+        for( int i = 0; i < poMP->getNumGeometries(); ++i )
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
+                                                    poMP->getGeometryRef(i) );
+            OGRErr eErr = OGRERR_NONE;
+            poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
+        }
+        delete poGeom;
+        return poTS;
+    }
+    else if( eType == wkbPolyhedralSurface && eTargetType == wkbTIN )
+    {
+        OGRPolyhedralSurface* poPS = reinterpret_cast<OGRPolyhedralSurface*>(poGeom);
+        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
+                                                    poPS->getGeometryRef(i) );
+            OGRLinearRing* poLR = poPoly->getExteriorRing();
+            if( !(poLR != NULL && poLR->getNumPoints() == 4 &&
+                  poPoly->getNumInteriorRings() == 0) )
+            {
+                return poGeom;
+            }
+        }
+        OGRTriangulatedSurface* poTS = new OGRTriangulatedSurface();
+        poTS->assignSpatialReference( poGeom->getSpatialReference() );
+        for( int i = 0; i < poPS->getNumGeometries(); ++i )
+        {
+            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
+                                                    poPS->getGeometryRef(i) );
+            OGRErr eErr = OGRERR_NONE;
+            poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
+        }
+        delete poGeom;
+        return poTS;
+    }
+
+    else if( eType == wkbPolygon && eTargetType == wkbTriangle )
+    {
+        OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+        OGRLinearRing* poLR = poPoly->getExteriorRing();
+        if( !(poLR != NULL && poLR->getNumPoints() == 4 &&
+                poPoly->getNumInteriorRings() == 0) )
+        {
+            return poGeom;
+        }
+        OGRErr eErr = OGRERR_NONE;
+        OGRTriangle* poTriangle = new OGRTriangle(*poPoly, eErr);
+        delete poGeom;
+        return poTriangle;
+    }
+
+    if( eTargetType == wkbTriangle || eTargetType == wkbTIN ||
+        eTargetType == wkbPolyhedralSurface )
+    {
+        OGRGeometry* poPoly = forceTo( poGeom, wkbPolygon, papszOptions );
+        if( poPoly == poGeom )
+            return poGeom;
+        return forceTo( poPoly, eTargetType, papszOptions );
+    }
+
+    if( eType == wkbTriangle && eTargetType == wkbGeometryCollection )
+    {
+        OGRGeometryCollection* poGC = new OGRGeometryCollection();
+        poGC->assignSpatialReference(poGeom->getSpatialReference());
+        poGC->addGeometryDirectly(poGeom);
+        return poGC;
+    }
+
     // Promote single to multi.
     if( !OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) &&
          OGR_GT_IsSubClassOf(OGR_GT_GetCollection(eType), eTargetType) )
@@ -4070,6 +4328,11 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         OGRGeometry* poTmp = forceTo(poGeom, wkbPolygon, papszOptions);
         if( wkbFlatten(poTmp->getGeometryType()) != eType)
             return forceTo(poTmp, eTargetType, papszOptions);
+    }
+    else if( eType == wkbTriangle && eTargetType == wkbCurvePolygon )
+    {
+        return OGRSurface::CastToCurvePolygon(
+            reinterpret_cast<OGRSurface*>(OGRTriangle::CastToPolygon(poGeom)) );
     }
     else if( eType == wkbPolygon && eTargetType == wkbCurvePolygon )
     {

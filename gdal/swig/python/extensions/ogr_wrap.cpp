@@ -4502,6 +4502,9 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbMultiSurface:
             case wkbCurve:
             case wkbSurface:
+            case wkbTriangle:
+            case wkbTIN:
+            case wkbPolyhedralSurface:
             case wkbNone:
             /*case wkbLinearRing:*/
             case wkbCircularStringZ:
@@ -4511,6 +4514,9 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbMultiSurfaceZ:
             case wkbCurveZ:
             case wkbSurfaceZ:
+            case wkbTriangleZ:
+            case wkbTINZ:
+            case wkbPolyhedralSurfaceZ:
             case wkbPoint25D:
             case wkbLineString25D:
             case wkbPolygon25D:
@@ -4532,6 +4538,9 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbMultiSurfaceM:
             case wkbCurveM:
             case wkbSurfaceM:
+            case wkbTriangleM:
+            case wkbTINM:
+            case wkbPolyhedralSurfaceM:
             case wkbPointZM:
             case wkbLineStringZM:
             case wkbPolygonZM:
@@ -4546,6 +4555,9 @@ SWIGINTERN void OGRFeatureShadow_SetFieldString(OGRFeatureShadow *self,int id,ch
             case wkbMultiSurfaceZM:
             case wkbCurveZM:
             case wkbSurfaceZM:
+            case wkbTriangleZM:
+            case wkbTINZM:
+            case wkbPolyhedralSurfaceZM:
                 return TRUE;
             default:
                 CPLError(CE_Failure, CPLE_IllegalArg, "Illegal geometry type value");
@@ -5111,6 +5123,9 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_SymmetricDifference(OGRGeometryS
 SWIGINTERN double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Distance(self, other);
   }
+SWIGINTERN double OGRGeometryShadow_Distance3D(OGRGeometryShadow *self,OGRGeometryShadow *other){
+    return OGR_G_Distance3D(self, other);
+  }
 SWIGINTERN void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
@@ -5536,6 +5551,17 @@ SWIGINTERN PyObject *wkbTIN_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObjec
 }
 
 
+SWIGINTERN PyObject *wkbTriangle_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "wkbTriangle",SWIG_From_int(static_cast< int >(17)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *wkbNone_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -5653,6 +5679,17 @@ SWIGINTERN PyObject *wkbTINZ_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObje
   d = PyModule_GetDict(module);
   if (!d) return NULL;
   SWIG_Python_SetConstant(d, "wkbTINZ",SWIG_From_int(static_cast< int >(1016)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *wkbTriangleZ_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "wkbTriangleZ",SWIG_From_int(static_cast< int >(1017)));
   return SWIG_Py_Void();
 }
 
@@ -5833,6 +5870,17 @@ SWIGINTERN PyObject *wkbTINM_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObje
 }
 
 
+SWIGINTERN PyObject *wkbTriangleM_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "wkbTriangleM",SWIG_From_int(static_cast< int >(2017)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *wkbPointZM_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -6005,6 +6053,17 @@ SWIGINTERN PyObject *wkbTINZM_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObj
   d = PyModule_GetDict(module);
   if (!d) return NULL;
   SWIG_Python_SetConstant(d, "wkbTINZM",SWIG_From_int(static_cast< int >(3016)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *wkbTriangleZM_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "wkbTriangleZM",SWIG_From_int(static_cast< int >(3017)));
   return SWIG_Py_Void();
 }
 
@@ -26126,6 +26185,60 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Distance3D(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  double result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_Distance3D",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Distance3D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Geometry_Distance3D" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRGeometryShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (double)OGRGeometryShadow_Distance3D(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_From_double(static_cast< double >(result));
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Empty(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -29452,6 +29565,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"wkbSurface_swigconstant", wkbSurface_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolyhedralSurface_swigconstant", wkbPolyhedralSurface_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbTIN_swigconstant", wkbTIN_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"wkbTriangle_swigconstant", wkbTriangle_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbNone_swigconstant", wkbNone_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbLinearRing_swigconstant", wkbLinearRing_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbCircularStringZ_swigconstant", wkbCircularStringZ_swigconstant, METH_VARARGS, NULL},
@@ -29463,6 +29577,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"wkbSurfaceZ_swigconstant", wkbSurfaceZ_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolyhedralSurfaceZ_swigconstant", wkbPolyhedralSurfaceZ_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbTINZ_swigconstant", wkbTINZ_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"wkbTriangleZ_swigconstant", wkbTriangleZ_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPointM_swigconstant", wkbPointM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbLineStringM_swigconstant", wkbLineStringM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolygonM_swigconstant", wkbPolygonM_swigconstant, METH_VARARGS, NULL},
@@ -29479,6 +29594,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"wkbSurfaceM_swigconstant", wkbSurfaceM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolyhedralSurfaceM_swigconstant", wkbPolyhedralSurfaceM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbTINM_swigconstant", wkbTINM_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"wkbTriangleM_swigconstant", wkbTriangleM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPointZM_swigconstant", wkbPointZM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbLineStringZM_swigconstant", wkbLineStringZM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolygonZM_swigconstant", wkbPolygonZM_swigconstant, METH_VARARGS, NULL},
@@ -29495,6 +29611,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"wkbSurfaceZM_swigconstant", wkbSurfaceZM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolyhedralSurfaceZM_swigconstant", wkbPolyhedralSurfaceZM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbTINZM_swigconstant", wkbTINZM_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"wkbTriangleZM_swigconstant", wkbTriangleZM_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPoint25D_swigconstant", wkbPoint25D_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbLineString25D_swigconstant", wkbLineString25D_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"wkbPolygon25D_swigconstant", wkbPolygon25D_swigconstant, METH_VARARGS, NULL},
@@ -34302,6 +34419,7 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"the distance between the geometries or -1 if an error occurs. \n"
 		""},
+	 { (char *)"Geometry_Distance3D", _wrap_Geometry_Distance3D, METH_VARARGS, (char *)"Geometry_Distance3D(Geometry self, Geometry other) -> double"},
 	 { (char *)"Geometry_Empty", _wrap_Geometry_Empty, METH_VARARGS, (char *)"\n"
 		"Geometry_Empty(Geometry self)\n"
 		"\n"

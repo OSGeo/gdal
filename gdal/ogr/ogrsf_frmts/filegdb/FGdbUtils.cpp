@@ -192,6 +192,13 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
             break;
         }
 
+        case wkbTIN:
+        case wkbPolyhedralSurface:
+        {
+            *gdbType = "esriGeometryMultiPatch";
+            break;
+        }
+
         default:
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Cannot map OGRwkbGeometryType (%s) to ESRI type",

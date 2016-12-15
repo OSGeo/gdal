@@ -558,8 +558,15 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         pszGeometry =
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-
-        VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        if( pszGeometry != NULL )
+        {
+            VSIFPrintfL( fp, "      %s\n", pszGeometry );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Export of geometry to KML failed");
+        }
         CPLFree( pszGeometry );
 
         poWGS84Geom->getEnvelope( &sGeomBounds );

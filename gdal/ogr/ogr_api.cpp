@@ -1329,6 +1329,11 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
         return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
             getNumGeometries();
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+            getNumGeometries();
+    }
     else
     {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep
@@ -1396,6 +1401,12 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
             reinterpret_cast<OGRGeometryCollection *>(hGeom)->
                 getGeometryRef(iSubGeom));
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRGeometryH> (
+            reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+                getGeometryRef(iSubGeom));
+    }
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1460,6 +1471,11 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
         eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            addGeometry(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        eErr = reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
             addGeometry(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
 
@@ -1576,6 +1592,11 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
         return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            removeGeometry(iGeom, bDelete);
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
             removeGeometry(iGeom, bDelete);
     }
     else

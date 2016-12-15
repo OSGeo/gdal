@@ -3146,8 +3146,15 @@ static OGRwkbGeometryType ConvertType(GeomTypeConversion eGeomTypeConversion,
     OGRwkbGeometryType eRetType = eGType;
     if ( eGeomTypeConversion == GTC_PROMOTE_TO_MULTI )
     {
-        if( !OGR_GT_IsSubClassOf(eGType, wkbGeometryCollection) )
+        if( eGType == wkbTriangle || eGType == wkbTIN ||
+            eGType == wkbPolyhedralSurface )
+        {
+            eRetType = wkbMultiPolygon;
+        }
+        else if( !OGR_GT_IsSubClassOf(eGType, wkbGeometryCollection) )
+        {
             eRetType = OGR_GT_GetCollection(eGType);
+        }
     }
     else if ( eGeomTypeConversion == GTC_CONVERT_TO_LINEAR )
         eRetType = OGR_GT_GetLinear(eGType);

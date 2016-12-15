@@ -1618,6 +1618,7 @@ def ogr_geojson_35():
     ds = gdaltest.geojson_drv.CreateDataSource('/vsimem/ogr_geojson_35.json')
     lyr = ds.CreateLayer('foo')
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(1)
     geom = ogr.Geometry(ogr.wkbPoint)
     geom.AddPoint_2D(-1.79769313486231571e+308, -1.79769313486231571e+308)
     feat.SetGeometry(geom)
@@ -1626,12 +1627,14 @@ def ogr_geojson_35():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(2)
     geom = ogr.Geometry(ogr.wkbPoint)
     geom.AddPoint(-1.7e308 * 2, 1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(3)
     geom = ogr.Geometry(ogr.wkbLineString)
     geom.AddPoint_2D(0,0)
     geom.AddPoint_2D(-1.7e308 * 2, 1.7e308 * 2) # evaluates to -inf, inf
@@ -1639,6 +1642,7 @@ def ogr_geojson_35():
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(4)
     geom = ogr.Geometry(ogr.wkbPolygon)
     geom2 = ogr.Geometry(ogr.wkbLinearRing)
     geom2.AddPoint_2D(0,0)
@@ -1648,6 +1652,7 @@ def ogr_geojson_35():
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(5)
     geom = ogr.Geometry(ogr.wkbMultiPoint)
     geom2 = ogr.Geometry(ogr.wkbPoint)
     geom2.AddPoint_2D(0,0)
@@ -1658,6 +1663,7 @@ def ogr_geojson_35():
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(6)
     geom = ogr.Geometry(ogr.wkbMultiLineString)
     geom2 = ogr.Geometry(ogr.wkbLineString)
     geom2.AddPoint_2D(0,0)
@@ -1668,6 +1674,7 @@ def ogr_geojson_35():
     lyr.CreateFeature(feat)
 
     feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(7)
     geom = ogr.Geometry(ogr.wkbMultiPolygon)
     geom2 = ogr.Geometry(ogr.wkbPolygon)
     geom3 = ogr.Geometry(ogr.wkbLinearRing)
@@ -1695,30 +1702,11 @@ def ogr_geojson_35():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-    if data.find('"type": "Point", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-    if data.find('"type": "LineString", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-    if data.find('"type": "Polygon", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-    if data.find('"type": "MultiPoint", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-    if data.find('"type": "MultiLineString", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
-    if data.find('"type": "MultiPolygon", "coordinates": null }') == -1:
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+    for id in range(2,8):
+        if data.find('{ "type": "Feature", "id": %d, "properties": { }, "geometry": null }' % id) == -1:
+            gdaltest.post_reason('fail')
+            print(data)
+            return 'fail'
 
     return 'success'
 

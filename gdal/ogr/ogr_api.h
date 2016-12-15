@@ -175,6 +175,7 @@ OGRGeometryH CPL_DLL OGR_G_PointOnSurface( OGRGeometryH ) CPL_WARN_UNUSED_RESULT
 OGRGeometryH CPL_DLL OGR_G_Difference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_SymDifference( OGRGeometryH, OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 double CPL_DLL OGR_G_Distance( OGRGeometryH, OGRGeometryH );
+double CPL_DLL OGR_G_Distance3D( OGRGeometryH, OGRGeometryH );
 double CPL_DLL OGR_G_Length( OGRGeometryH );
 double CPL_DLL OGR_G_Area( OGRGeometryH );
 int    CPL_DLL OGR_G_Centroid( OGRGeometryH, OGRGeometryH );

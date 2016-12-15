@@ -1,3 +1,15 @@
+MIGRATION GUIDE FROM GDAL 2.1 to GDAL 2.2
+-----------------------------------------
+
+A) RFC 64: Triangle, Polyhedral surface and TIN
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc64_triangle_polyhedralsurface_tin
+
+Vector drivers can now return geometries of type wkbPolyhedralSurface, wkbTIN
+and wkbTriangle; and their Z, M and ZM variants (as well as for the type of
+geometry fields). Client code, as well as out-of-tree drivers that support
+writing geometries, must be ready to deal with them.
+
 MIGRATION GUIDE FROM GDAL 2.0 to GDAL 2.1
 ------------------------------------------
 

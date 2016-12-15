@@ -148,6 +148,9 @@ wkbPolyhedralSurface = _ogr.wkbPolyhedralSurface
 _ogr.wkbTIN_swigconstant(_ogr)
 wkbTIN = _ogr.wkbTIN
 
+_ogr.wkbTriangle_swigconstant(_ogr)
+wkbTriangle = _ogr.wkbTriangle
+
 _ogr.wkbNone_swigconstant(_ogr)
 wkbNone = _ogr.wkbNone
 
@@ -180,6 +183,9 @@ wkbPolyhedralSurfaceZ = _ogr.wkbPolyhedralSurfaceZ
 
 _ogr.wkbTINZ_swigconstant(_ogr)
 wkbTINZ = _ogr.wkbTINZ
+
+_ogr.wkbTriangleZ_swigconstant(_ogr)
+wkbTriangleZ = _ogr.wkbTriangleZ
 
 _ogr.wkbPointM_swigconstant(_ogr)
 wkbPointM = _ogr.wkbPointM
@@ -229,6 +235,9 @@ wkbPolyhedralSurfaceM = _ogr.wkbPolyhedralSurfaceM
 _ogr.wkbTINM_swigconstant(_ogr)
 wkbTINM = _ogr.wkbTINM
 
+_ogr.wkbTriangleM_swigconstant(_ogr)
+wkbTriangleM = _ogr.wkbTriangleM
+
 _ogr.wkbPointZM_swigconstant(_ogr)
 wkbPointZM = _ogr.wkbPointZM
 
@@ -276,6 +285,9 @@ wkbPolyhedralSurfaceZM = _ogr.wkbPolyhedralSurfaceZM
 
 _ogr.wkbTINZM_swigconstant(_ogr)
 wkbTINZM = _ogr.wkbTINZM
+
+_ogr.wkbTriangleZM_swigconstant(_ogr)
+wkbTriangleZM = _ogr.wkbTriangleZM
 
 _ogr.wkbPoint25D_swigconstant(_ogr)
 wkbPoint25D = _ogr.wkbPoint25D
@@ -6816,6 +6828,11 @@ class Geometry(_object):
         the distance between the geometries or -1 if an error occurs. 
         """
         return _ogr.Geometry_Distance(self, *args)
+
+
+    def Distance3D(self, *args):
+        """Distance3D(Geometry self, Geometry other) -> double"""
+        return _ogr.Geometry_Distance3D(self, *args)
 
 
     def Empty(self, *args):

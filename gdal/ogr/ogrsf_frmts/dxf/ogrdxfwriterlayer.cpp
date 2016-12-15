@@ -625,7 +625,8 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Polygons are written with on entity per ring.                   */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+    if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
+        || wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
     {
         OGRPolygon *poPoly = (OGRPolygon *) poGeom;
         OGRErr eErr;
@@ -892,8 +893,11 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Do we now have a geometry we can work with?                     */
 /* -------------------------------------------------------------------- */
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon )
+    if( wkbFlatten(poGeom->getGeometryType()) != wkbPolygon &&
+        wkbFlatten(poGeom->getGeometryType()) != wkbTriangle )
+    {
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write as a hatch.                                               */
@@ -1134,7 +1138,8 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
         return WritePOLYLINE( poFeature );
 
     else if( eGType == wkbPolygon
-             || eGType == wkbMultiPolygon )
+             || eGType == wkbTriangle
+             || eGType == wkbMultiPolygon)
     {
         if( bWriteHatch )
             return WriteHATCH( poFeature );

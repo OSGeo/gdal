@@ -790,7 +790,26 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                 delete poGeomTmp;
             }
             else
-                pszGeometry = poGeom->exportToGML(papszOptions);
+            {
+                if( wkbFlatten(poGeom->getGeometryType()) == wkbTriangle )
+                {
+                    pszGeometry = poGeom->exportToGML(papszOptions);
+
+                    const char* pszGMLID = poDS->IsGML32Output() ?
+                        CPLSPrintf(" gml:id=\"%s\"",
+                                   CSLFetchNameValue(papszOptions, "GMLID")) : "";
+                    char* pszNewGeom = CPLStrdup(CPLSPrintf(
+                        "<gml:TriangulatedSurface%s><gml:patches>%s</gml:patches></gml:TriangulatedSurface>",
+                        pszGMLID,
+                        pszGeometry));
+                    CPLFree(pszGeometry);
+                    pszGeometry = pszNewGeom;
+                }
+                else
+                {
+                    pszGeometry = poGeom->exportToGML(papszOptions);
+                }
+            }
             CSLDestroy(papszOptions);
             if( pszGeometry )
             {
@@ -803,11 +822,16 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
                                     poFieldDefn->GetNameRef() );
                 else
                     poDS->PrintLine( fp, "<%s:%s>%s</%s:%s>",
-                                    pszPrefix, poFieldDefn->GetNameRef(),
-                                    pszGeometry,
-                                    pszPrefix, poFieldDefn->GetNameRef() );
-                CPLFree( pszGeometry );
+                                     pszPrefix, poFieldDefn->GetNameRef(),
+                                     pszGeometry,
+                                     pszPrefix, poFieldDefn->GetNameRef() );
             }
+            else
+            {
+                 CPLError(CE_Failure, CPLE_AppDefined,
+                     "Export of geometry to GML failed");
+            }
+            CPLFree( pszGeometry );
         }
     }
 

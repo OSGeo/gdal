@@ -299,6 +299,11 @@ OCI_INCLUDE	= @OCI_INCLUDE@
 HAVE_GEOS       =       @HAVE_GEOS@
 GEOS_CFLAGS     =       @GEOS_CFLAGS@
 
+# SFCGAL Support
+
+HAVE_SFCGAL       =       @HAVE_SFCGAL@
+SFCGAL_CFLAGS     =       @SFCGAL_CFLAGS@
+
 # QHull Support
 
 QHULL_SETTING   =       @QHULL_SETTING@

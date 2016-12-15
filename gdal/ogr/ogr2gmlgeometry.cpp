@@ -604,7 +604,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                     const char* pszGMLId,
                                     int nSRSDimensionLocFlags,
                                     bool bForceLineStringAsLinearRing,
-                                    const char* pszNamespaceDecl )
+                                    const char* pszNamespaceDecl,
+                                    const char* pszOverridenElementName )
 
 {
 
@@ -916,7 +917,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          bCoordSwap,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags,
-                                         false, NULL) )
+                                         false, NULL, NULL) )
                 return false;
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:curveMember>" );
@@ -939,14 +940,18 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         }
 
         // Buffer for polygon tag name + srsName attribute if set.
-        const size_t nPolyTagLength = 13;
+        const char* pszElemName = pszOverridenElementName ?
+                                        pszOverridenElementName : "Polygon";
+        const size_t nPolyTagLength = 7 + strlen(pszElemName);
         const size_t nPolyTagNameBufLen = nPolyTagLength + nAttrsLength + 1;
         char* pszPolyTagName =
             static_cast<char *>(CPLMalloc(nPolyTagNameBufLen));
 
         // Compose Polygon tag with or without srsName attribute.
         snprintf( pszPolyTagName, nPolyTagNameBufLen,
-                  "<gml:Polygon%s>", szAttributes );
+                  "<gml:%s%s>",
+                  pszElemName,
+                  szAttributes );
 
         AppendString( ppszText, pnLength, pnMaxLength,
                       pszPolyTagName );
@@ -966,7 +971,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          true, eSRSNameFormat, bCoordSwap,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags,
-                                         true, NULL) )
+                                         true, NULL, NULL) )
             {
                 return false;
             }
@@ -987,15 +992,55 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          bCoordSwap,
                                          bLineStringAsCurve,
                                          NULL, nSRSDimensionLocFlags,
-                                         true, NULL) )
+                                         true, NULL, NULL) )
                 return false;
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:interior>" );
         }
 
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElemName );
+        AppendString( ppszText, pnLength, pnMaxLength, ">" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*     Triangle                                                         */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbTriangle )
+    {
+        const OGRTriangle *poTri =
+                                dynamic_cast<const OGRTriangle *>(poGeometry);
+        if( poTri == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRTriangle.");
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:Triangle>" );
+
+        if( poTri->getExteriorRingCurve() != NULL )
+        {
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "<gml:exterior>" );
+
+            if( !OGR2GML3GeometryAppend( poTri->getExteriorRingCurve(), poSRS,
+                                         ppszText, pnLength,
+                                         pnMaxLength, true, eSRSNameFormat,
+                                         bCoordSwap,
+                                         bLineStringAsCurve,
+                                         NULL, nSRSDimensionLocFlags,
+                                         true, NULL, NULL) )
+            {
+                return false;
+            }
+
+            AppendString( ppszText, pnLength, pnMaxLength,
+                          "</gml:exterior>" );
+        }
+
         AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:Polygon>" );
+                      "</gml:Triangle>" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1077,7 +1122,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          true, eSRSNameFormat, bCoordSwap,
                                          bLineStringAsCurve,
                                          pszGMLIdSub, nSRSDimensionLocFlags,
-                                         false, NULL ) )
+                                         false, NULL, NULL ) )
             {
                 CPLFree(pszGMLIdSub);
                 return false;
@@ -1095,6 +1140,114 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         // Free tag buffer.
         CPLFree( pszElemOpen );
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Polyhedral Surface                                              */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbPolyhedralSurface)
+    {
+        // The patches enclosed in a single <gml:polygonPatches> tag need to be co-planar.
+        // TODO - enforce the condition within this implementation
+        const OGRPolyhedralSurface *poPS =
+            dynamic_cast<const OGRPolyhedralSurface *>(poGeometry);
+        if( poPS == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRPolyhedralSurface.");
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:PolyhedralSurface" );
+        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
+        AppendString( ppszText, pnLength, pnMaxLength, "><gml:polygonPatches>" );
+
+        for( int iMember = 0; iMember < poPS->getNumGeometries(); iMember++)
+        {
+            const OGRGeometry *poMember = poPS->getGeometryRef( iMember );
+            char* pszGMLIdSub = NULL;
+            if (pszGMLId != NULL)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
+            if( !OGR2GML3GeometryAppend( poMember, poSRS,
+                                         ppszText, pnLength,
+                                         pnMaxLength, true, eSRSNameFormat,
+                                         bCoordSwap,
+                                         bLineStringAsCurve,
+                                         NULL, nSRSDimensionLocFlags,
+                                         false, NULL, "PolygonPatch" ) )
+            {
+                CPLFree(pszGMLIdSub);
+                return false;
+            }
+
+            CPLFree(pszGMLIdSub);
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "</gml:polygonPatches>" );
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "</gml:PolyhedralSurface>" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      TIN                                                             */
+/* -------------------------------------------------------------------- */
+    else if( eFType == wkbTIN)
+    {
+        // OGR uses the following hierarchy for TriangulatedSurface -
+
+        // <gml:TriangulatedSurface>
+        //     <gml:patches>
+        //         <gml:Triangle>
+        //             <gml:exterior>
+        //                 <gml:LinearRing>
+        //                     <gml:posList srsDimension=...>...</gml:posList>
+        //                 </gml:LinearRing>
+        //             </gml:exterior>
+        //         </gml:Triangle>
+        //     </gml:patches>
+        // </gml:TriangulatedSurface>
+
+        // <gml:trianglePatches> is deprecated, so write feature is not enabled for <gml:trianglePatches>
+        const OGRTriangulatedSurface *poTIN =
+            dynamic_cast<const OGRTriangulatedSurface *>(poGeometry);
+        if( poTIN == NULL )
+        {
+            CPLError(CE_Fatal, CPLE_AppDefined,
+                     "dynamic_cast failed.  Expected OGRTriangulatedSurface.");
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:TriangulatedSurface" );
+        AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
+        AppendString( ppszText, pnLength, pnMaxLength, "><gml:patches>" );
+
+        for( int iMember = 0; iMember < poTIN->getNumGeometries(); iMember++)
+        {
+            const OGRGeometry *poMember = poTIN->getGeometryRef( iMember );
+
+            char* pszGMLIdSub = NULL;
+            if (pszGMLId != NULL)
+                pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
+
+            if( !OGR2GML3GeometryAppend( poMember, poSRS,
+                                         ppszText, pnLength,
+                                         pnMaxLength, true, eSRSNameFormat,
+                                         bCoordSwap,
+                                         bLineStringAsCurve,
+                                         NULL, nSRSDimensionLocFlags,
+                                         false, NULL, NULL) )
+            {
+                CPLFree(pszGMLIdSub);
+                return false;
+            }
+
+            CPLFree(pszGMLIdSub);
+        }
+
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:patches>" );
+        AppendString( ppszText, pnLength, pnMaxLength,
+                      "</gml:TriangulatedSurface>" );
+    }
+
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported geometry type %s",
@@ -1335,7 +1488,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
                                      bCoordSwap,
                                      bLineStringAsCurve, pszGMLId,
                                      nSRSDimensionLocFlags, false,
-                                     pszNamespaceDecl ))
+                                     pszNamespaceDecl, NULL ))
         {
             CPLFree( pszText );
             return NULL;

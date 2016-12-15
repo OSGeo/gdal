@@ -1643,7 +1643,7 @@ def ogr_shape_39():
     lyr = ds.GetLayer(0)
     feat_read = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10)),((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0)),((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2)))'),
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (TIN (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10))),TIN (((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0))),MULTIPOLYGON (((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2))))'),
                                 max_error = 0.000000001 ) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
@@ -5016,6 +5016,48 @@ def ogr_shape_103():
 
     return 'success'
 
+###############################################################################
+# Test writing MULTIPATCH
+
+def ogr_shape_104():
+
+    for (wkt, lyr_type, options, expected_wkt) in \
+                [ ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [],  None ],
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None], # triangle fan
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None], # triangle strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], 'GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))),TIN Z (((1 1 3,0 1 2,4 4 5,1 1 3))))'], # no fan no strip
+                  ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [],  'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))' ],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, [ 'SHPT=MULTIPATCH' ], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+               ]:
+
+        if expected_wkt is None:
+            expected_wkt = wkt
+
+        filename = '/vsimem/ogr_shape_104.shp'
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_104', geom_type = lyr_type, options = options)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry( ogr.CreateGeometryFromWkt( wkt ) )
+        lyr.CreateFeature(f)
+        ds = None
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(wkt, lyr_type, options)
+            f.DumpReadable()
+            return 'fail'
+        ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+    return 'success'
 
 ###############################################################################
 def ogr_shape_cleanup():
@@ -5164,9 +5206,10 @@ gdaltest_list = [
     ogr_shape_101,
     ogr_shape_102,
     ogr_shape_103,
+    ogr_shape_104,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_103 ]
+# gdaltest_list = [ ogr_shape_104 ]
 
 if __name__ == '__main__':
 
