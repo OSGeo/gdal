@@ -1183,6 +1183,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             if (poBaseDS)
             {
                 poBaseLayer = poBaseDS->GetLayer(0);
+                if(poBaseLayer == NULL)
+                    return NULL;
                 poBaseLayer->ResetReading();
 
                 /* Check that the layer field definition is consistent with the one */
