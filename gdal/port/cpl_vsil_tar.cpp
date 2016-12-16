@@ -248,6 +248,7 @@ int VSITarReader::GotoNextFile()
                  (m_abyBufferSize < 2048 &&
                   m_abyBufferIdx < m_abyBufferSize -
                   (static_cast<int>(strlen("***NEWFILE***:"))+2))) &&
+                m_abyBufferIdx >= 0 && // makes CSA happy, but useless
                 memcmp( m_abyBuffer + m_abyBufferIdx,
                         "***NEWFILE***:",
                         strlen("***NEWFILE***:")) == 0 )
