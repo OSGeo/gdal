@@ -93,14 +93,16 @@ double CPLAtofDelim(const char *nptr, char point)
  * (decimal point). Use CPLAtofDelim() function if you want to specify
  * custom delimiter.
  *
- * IMPORTANT NOTE.
- * Existence of this function does not mean you should always use it.
- * Sometimes you should use standard locale aware atof(3) and its family. When
- * you need to process the user's input (for example, command line parameters)
- * use atof(3), because the user works in a localized environment and the user's input will
+ * IMPORTANT NOTE:
+ *
+ * Existence of this function does not mean you should always use it.  Sometimes
+ * you should use standard locale aware atof(3) and its family. When you need to
+ * process the user's input (for example, command line parameters) use atof(3),
+ * because the user works in a localized environment and the user's input will
  * be done according to the locale set. In particular that means we should not
- * make assumptions about character used as decimal delimiter, it can be
- * either "." or ",".
+ * make assumptions about character used as decimal delimiter, it can be either
+ * "." or ",".
+ *
  * But when you are parsing some ASCII file in predefined format, you most
  * likely need CPLAtof(), because such files distributed across the systems
  * with different locales and floating point representation should be
@@ -229,24 +231,24 @@ static char* CPLReplacePointByLocalePoint( const char* pszNumber, char point )
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
     while( *nptr == ' ' )
-        nptr ++;
+        nptr++;
 
     if( nptr[0] == '-' )
     {
         if( strcmp(nptr, "-1.#QNAN") == 0 ||
             strcmp(nptr, "-1.#IND") == 0 )
         {
-            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             // While it is possible on some platforms to flip the sign
             // of NAN to negative, this function will always return a positive
             // quiet (non-signalling) NaN.
             return std::numeric_limits<double>::quiet_NaN();
         }
 
-        if( strcmp(nptr,"-inf") == 0 ||
+        if( strcmp(nptr, "-inf") == 0 ||
             STARTS_WITH_CI(nptr, "-1.#INF") )
         {
-            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return -std::numeric_limits<double>::infinity();
         }
     }
@@ -254,23 +256,23 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     {
         if( strcmp(nptr, "1.#QNAN") == 0 )
         {
-            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+            if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();
         }
         if( STARTS_WITH_CI(nptr, "1.#INF") )
         {
-            if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+            if( endptr ) *endptr = const_cast<char*>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::infinity();
         }
     }
-    else if( nptr[0] == 'i' && strcmp(nptr,"inf") == 0 )
+    else if( nptr[0] == 'i' && strcmp(nptr, "inf") == 0 )
     {
-        if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+        if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
         return std::numeric_limits<double>::infinity();
     }
-    else if( nptr[0] == 'n' && strcmp(nptr,"nan") == 0 )
+    else if( nptr[0] == 'n' && strcmp(nptr, "nan") == 0 )
     {
-        if( endptr ) *endptr = (char*)nptr + strlen(nptr);
+        if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
@@ -286,9 +288,9 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     const int nError = errno;
 
     if( endptr )
-        *endptr = (char *)nptr + (*endptr - pszNumber);
+        *endptr = const_cast<char *>(nptr) + (*endptr - pszNumber);
 
-    if( pszNumber != (char*) nptr )
+    if( pszNumber != const_cast<char *>(nptr) )
         CPLFree( pszNumber );
 
     errno = nError;
