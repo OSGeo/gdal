@@ -265,26 +265,31 @@ int VSITarReader::GotoNextFile()
                     }
                 }
                 m_abyBufferIdx += static_cast<int>(strlen("***NEWFILE***:"));
-                int nFilenameStartIdx = m_abyBufferIdx;
-                for(; m_abyBufferIdx < m_abyBufferSize &&
-                      m_abyBuffer[m_abyBufferIdx] != '\n'; ++m_abyBufferIdx)
+                const int nFilenameStartIdx = m_abyBufferIdx;
+                for( ; m_abyBufferIdx < m_abyBufferSize &&
+                       m_abyBuffer[m_abyBufferIdx] != '\n';
+                     ++m_abyBufferIdx)
                 {
                     // Do nothing.
                 }
                 if( m_abyBufferIdx < m_abyBufferSize )
                 {
-                    osNextFileName.assign( (const char*)(m_abyBuffer + nFilenameStartIdx), m_abyBufferIdx - nFilenameStartIdx );
+                    osNextFileName.assign(
+                        (const char*)(m_abyBuffer + nFilenameStartIdx),
+                        m_abyBufferIdx - nFilenameStartIdx);
                     nCurOffset = VSIFTellL(fp);
                     nCurOffset -= m_abyBufferSize;
                     nCurOffset += m_abyBufferIdx + 1;
                 }
             }
             else
-                m_abyBufferIdx ++;
+            {
+                m_abyBufferIdx++;
+            }
         }
     }
 #endif
-    char abyHeader[512];
+    char abyHeader[512] = {};
     if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
         return FALSE;
 
