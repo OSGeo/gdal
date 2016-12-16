@@ -685,7 +685,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     int    iBandCount;
     std::string mapsize;
     const std::string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
-    const std::string sBaseName = std::string(CPLGetBasename(poOpenInfo->pszFilename) );
+    //const std::string sBaseName = std::string(CPLGetBasename(poOpenInfo->pszFilename) );
     const std::string sPath = std::string(CPLGetPath( poOpenInfo->pszFilename));
 
     //Verify whether it is a map list or a map
@@ -728,7 +728,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         sFileType = "Map";
         iBandCount = 1;
         mapsize = ReadElement("Map", "Size", poOpenInfo->pszFilename);
-        std::string sMapType = ReadElement("Map", "Type", poOpenInfo->pszFilename);
+        //std::string sMapType = ReadElement("Map", "Type", poOpenInfo->pszFilename);
         ilwisStoreType stStoreType;
         if (
             GetStoreType(std::string(poOpenInfo->pszFilename), stStoreType) != CE_None )
@@ -1091,18 +1091,18 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         //Form the image file name, create the object definition file.
         std::string pszODFName;
-        std::string pszDataBaseName;
+        //std::string pszDataBaseName;
         if (nBands == 1)
         {
             pszODFName = std::string(CPLFormFilename(pszPath.c_str(),pszBaseName.c_str(),"mpr"));
-            pszDataBaseName = pszBaseName;
+            //pszDataBaseName = pszBaseName;
         }
         else
         {
             char szName[100];
             snprintf(szName, sizeof(szName), "%s_band_%d", pszBaseName.c_str(),iBand + 1 );
             pszODFName = std::string(CPLFormFilename(pszPath.c_str(),szName,"mpr"));
-            pszDataBaseName = std::string(szName);
+            //pszDataBaseName = std::string(szName);
         }
 /* -------------------------------------------------------------------- */
 /*      Write data definition file for each band (.mpr)                 */
@@ -1129,7 +1129,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Loop over image, copy the image data.                           */
 /* -------------------------------------------------------------------- */
         //For file name for raw data, and create binary files.
-        std::string pszDataFileName = CPLResetExtension(pszODFName.c_str(), "mp#" );
+        //std::string pszDataFileName = CPLResetExtension(pszODFName.c_str(), "mp#" );
 
         fpData = desBand->fpRaw;
         if( fpData == NULL )
