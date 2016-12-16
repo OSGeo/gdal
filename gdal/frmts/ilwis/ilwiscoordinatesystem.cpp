@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$");
 
-using std::string;
+namespace GDAL {
 
 typedef struct
 {
@@ -48,11 +48,6 @@ typedef struct
                 double semiMajor;
                 double invFlattening;
 } IlwisEllips;
-
-string ReadElement(string section, string entry, string filename);
-bool WriteElement(string sSection, string sEntry, string fn, string sValue);
-bool WriteElement(string sSection, string sEntry, string fn, int nValue);
-bool WriteElement(string sSection, string sEntry, string fn, double dValue);
 
 static const IlwisDatums iwDatums[] =
 {
@@ -243,7 +238,7 @@ static const IlwisEllips iwEllips[] =
 #endif
 
 /* ==================================================================== */
-/*      Some "standard" strings.                                        */
+/*      Some "standard" std::strings.                                        */
 /* ==================================================================== */
 
 static const char ILW_False_Easting[] = "False Easting";
@@ -256,9 +251,9 @@ static const char ILW_Scale_Factor[] = "Scale Factor";
 static const char ILW_Latitude_True_Scale[] = "Latitude of True Scale";
 static const char ILW_Height_Persp_Center[] = "Height Persp. Center";
 
-static double ReadPrjParms(string section, string entry, string filename)
+static double ReadPrjParms(std::string section, std::string entry, std::string filename)
 {
-    string str = ReadElement(section, entry, filename);
+    std::string str = ReadElement(section, entry, filename);
     //string str="";
     if (str.length() != 0)
         return CPLAtof(str.c_str());
@@ -266,14 +261,14 @@ static double ReadPrjParms(string section, string entry, string filename)
     return 0.0;
 }
 
-static int fetchParms(string csyFileName, double * padfPrjParams)
+static int fetchParms(std::string csyFileName, double * padfPrjParams)
 {
     //Fill all projection parameters with zero
     for ( int i = 0; i < 13; i++ )
         padfPrjParams[i] = 0.0;
 
-    string pszProj = ReadElement("CoordSystem", "Projection", csyFileName);
-    string pszEllips = ReadElement("CoordSystem", "Ellipsoid", csyFileName);
+    std::string pszProj = ReadElement("CoordSystem", "Projection", csyFileName);
+    std::string pszEllips = ReadElement("CoordSystem", "Ellipsoid", csyFileName);
 
     //fetch info about a custom ellipsoid
     if( STARTS_WITH_CI(pszEllips.c_str(), "User Defined") )
@@ -312,7 +307,7 @@ static int fetchParms(string csyFileName, double * padfPrjParams)
  * --- Gauss Colombia
  * --- Gauss-Boaga Italy
 **/
-static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
+static int mapTMParms(std::string sProj, double dfZone, double &dfFalseEasting, double &dfCentralMeridian)
 {
     if( STARTS_WITH_CI(sProj.c_str(), "Gauss-Krueger Germany") )
     {
@@ -350,7 +345,7 @@ static int mapTMParms(string sProj, double dfZone, double &dfFalseEasting, doubl
  * Compute the scale factor from Latitude_Of_True_Scale parameter.
  *
 **/
-static void scaleFromLATTS( string sEllips, double phits, double &scale )
+static void scaleFromLATTS( std::string sEllips, double phits, double &scale )
 {
     if( STARTS_WITH_CI(sEllips.c_str(), "Sphere") )
     {
@@ -389,11 +384,11 @@ static void scaleFromLATTS( string sEllips, double phits, double &scale )
  * @param csyFileName Name of .csy file
 **/
 
-CPLErr ILWISDataset::ReadProjection( string csyFileName )
+CPLErr ILWISDataset::ReadProjection( std::string csyFileName )
 {
-    string pszEllips;
-    string pszDatum;
-    string pszProj;
+    std::string pszEllips;
+    std::string pszDatum;
+    std::string pszProj;
 
     //translate ILWIS pre-defined coordinate systems
     if( STARTS_WITH_CI(csyFileName.c_str(), "latlon.csy"))
@@ -606,7 +601,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     }
     else if( STARTS_WITH_CI(pszProj.c_str(), "UTM") )
     {
-        string pszNH = ReadElement("Projection", "Northern Hemisphere", csyFileName);
+        std::string pszNH = ReadElement("Projection", "Northern Hemisphere", csyFileName);
         oSRS.SetProjCS("UTM");
         if( STARTS_WITH_CI(pszNH.c_str(), "Yes") )
             oSRS.SetUTM( (int) padfPrjParams[11], 1);
@@ -730,7 +725,7 @@ CPLErr ILWISDataset::ReadProjection( string csyFileName )
     return CE_None;
 }
 
-static void WriteFalseEastNorth(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteFalseEastNorth(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteElement("Projection", ILW_False_Easting, csFileName,
                  oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0));
@@ -738,13 +733,13 @@ static void WriteFalseEastNorth(string csFileName, const OGRSpatialReference& oS
                  oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0));
 }
 
-static void WriteProjectionName(string csFileName, string stProjection)
+static void WriteProjectionName(std::string csFileName, std::string stProjection)
 {
     WriteElement("CoordSystem", "Type", csFileName, "Projection");
     WriteElement("CoordSystem", "Projection", csFileName, stProjection);
 }
 
-static void WriteUTM(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteUTM(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     int bNorth;
 
@@ -758,7 +753,7 @@ static void WriteUTM(string csFileName, const OGRSpatialReference& oSRS)
     WriteElement("Projection", "Zone", csFileName, nZone);
 }
 
-static void WriteAlbersConicEqualArea(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteAlbersConicEqualArea(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Albers EqualArea Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -772,7 +767,7 @@ static void WriteAlbersConicEqualArea(string csFileName, const OGRSpatialReferen
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-static void WriteAzimuthalEquidistant(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteAzimuthalEquidistant(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Azimuthal Equidistant");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -783,7 +778,7 @@ static void WriteAzimuthalEquidistant(string csFileName, const OGRSpatialReferen
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
-static void WriteCylindricalEqualArea(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteCylindricalEqualArea(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Central Cylindrical");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -791,7 +786,7 @@ static void WriteCylindricalEqualArea(string csFileName, const OGRSpatialReferen
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteCassiniSoldner(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteCassiniSoldner(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Cassini");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -802,7 +797,7 @@ static void WriteCassiniSoldner(string csFileName, const OGRSpatialReference& oS
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
-static void WriteStereographic(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteStereographic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Stereographic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -814,7 +809,7 @@ static void WriteStereographic(string csFileName, const OGRSpatialReference& oSR
                  oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0));
 }
 
-static void WriteEquidistantConic(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteEquidistantConic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Equidistant Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -828,7 +823,7 @@ static void WriteEquidistantConic(string csFileName, const OGRSpatialReference& 
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-static void WriteTransverseMercator(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteTransverseMercator(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Transverse Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -840,7 +835,7 @@ static void WriteTransverseMercator(string csFileName, const OGRSpatialReference
                  oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0));
 }
 
-static void WriteGnomonic(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteGnomonic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Gnomonic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -850,7 +845,7 @@ static void WriteGnomonic(string csFileName, const OGRSpatialReference& oSRS)
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-static void WriteLambertConformalConic(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteLambertConformalConic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -861,7 +856,7 @@ static void WriteLambertConformalConic(string csFileName, const OGRSpatialRefere
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
-static void WriteLambertConformalConic2SP(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteLambertConformalConic2SP(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Conformal Conic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -876,7 +871,7 @@ static void WriteLambertConformalConic2SP(string csFileName, const OGRSpatialRef
                  oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
 }
 
-static void WriteLambertAzimuthalEqualArea(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteLambertAzimuthalEqualArea(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Lambert Azimuthal EqualArea");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -886,7 +881,7 @@ static void WriteLambertAzimuthalEqualArea(string csFileName, const OGRSpatialRe
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-static void WriteMercator_1SP(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteMercator_1SP(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Mercator");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -896,7 +891,7 @@ static void WriteMercator_1SP(string csFileName, const OGRSpatialReference& oSRS
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-static void WriteMillerCylindrical(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteMillerCylindrical(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Miller");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -904,7 +899,7 @@ static void WriteMillerCylindrical(string csFileName, const OGRSpatialReference&
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteMolleweide(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteMolleweide(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Mollweide");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -912,7 +907,7 @@ static void WriteMolleweide(string csFileName, const OGRSpatialReference& oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteOrthographic(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteOrthographic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Orthographic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -922,7 +917,7 @@ static void WriteOrthographic(string csFileName, const OGRSpatialReference& oSRS
                  oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
 }
 
-static void WritePlateRectangle(string csFileName, const OGRSpatialReference& oSRS)
+static void WritePlateRectangle(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Plate Rectangle");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -933,7 +928,7 @@ static void WritePlateRectangle(string csFileName, const OGRSpatialReference& oS
     WriteElement("Projection", ILW_Latitude_True_Scale, csFileName, "0.0000000000");
 }
 
-static void WritePolyConic(string csFileName, const OGRSpatialReference& oSRS)
+static void WritePolyConic(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "PolyConic");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -944,7 +939,7 @@ static void WritePolyConic(string csFileName, const OGRSpatialReference& oSRS)
     WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000");
 }
 
-static void WriteRobinson(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteRobinson(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Robinson");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -952,7 +947,7 @@ static void WriteRobinson(string csFileName, const OGRSpatialReference& oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteSinusoidal(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteSinusoidal(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "Sinusoidal");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -960,7 +955,7 @@ static void WriteSinusoidal(string csFileName, const OGRSpatialReference& oSRS)
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteVanderGrinten(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteVanderGrinten(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "VanderGrinten");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -968,7 +963,7 @@ static void WriteVanderGrinten(string csFileName, const OGRSpatialReference& oSR
                  oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
 }
 
-static void WriteGeoStatSat(string csFileName, const OGRSpatialReference& oSRS)
+static void WriteGeoStatSat(std::string csFileName, const OGRSpatialReference& oSRS)
 {
     WriteProjectionName(csFileName, "GeoStationary Satellite");
     WriteFalseEastNorth(csFileName, oSRS);
@@ -995,9 +990,9 @@ CPLErr ILWISDataset::WriteProjection()
     OGRSpatialReference *poGeogSRS = NULL;
     char                *pszP = pszProjection;
 
-    string csFileName = CPLResetExtension(osFileName, "csy" );
-    string pszBaseName = string(CPLGetBasename( osFileName ));
-    string pszPath = string(CPLGetPath( osFileName ));
+    std::string csFileName = CPLResetExtension(osFileName, "csy" );
+    std::string pszBaseName = std::string(CPLGetBasename( osFileName ));
+    std::string pszPath = std::string(CPLGetPath( osFileName ));
     bool bProjection = ((pszProjection != NULL) && (strlen(pszProjection)>0));
     bool bHaveSRS;
     if( bProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
@@ -1008,9 +1003,9 @@ CPLErr ILWISDataset::WriteProjection()
         bHaveSRS = false;
 
     const IlwisDatums   *piwDatum = iwDatums;
-    string pszEllips;
-    string pszDatum;
-    string pszProj;
+    std::string pszEllips;
+    std::string pszDatum;
+    std::string pszProj;
 
 /* -------------------------------------------------------------------- */
 /*      Collect datum/ellips information.                                      */
@@ -1020,8 +1015,8 @@ CPLErr ILWISDataset::WriteProjection()
         poGeogSRS = oSRS.CloneGeogCS();
     }
 
-    string grFileName = CPLResetExtension(osFileName, "grf" );
-    string csy;
+    std::string grFileName = CPLResetExtension(osFileName, "grf" );
+    std::string csy;
     if( poGeogSRS )
     {
         csy = pszBaseName + ".csy";
@@ -1179,3 +1174,5 @@ CPLErr ILWISDataset::WriteProjection()
 
     return CE_None;
 }
+
+} // namespace GDAL
