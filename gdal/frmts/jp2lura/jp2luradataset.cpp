@@ -1488,12 +1488,6 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         idata.poSrcDS = poSrcDS;
         idata.pProgressData = pProgressData;
         idata.pfnProgress = pfnProgress;
-#if SIZEOF_UNSIGNED_LONG == 8
-        idata.bLinux64Hack = CPLTestBool(
-                        CPLGetConfigOption("JP2LURA_LINUX64_HACK", "YES"));
-#else
-        idata.bLinux64Hack = false;
-#endif
 
         SetPropGeneral(cJP2_Prop_Input_Parameter,
                        reinterpret_cast<JP2_Property_Value>(&idata));
@@ -2229,13 +2223,6 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                     ulTileH, poDS->nRasterYSize);
         ulTileH = poDS->nRasterYSize;
     }
-
-#if SIZEOF_UNSIGNED_LONG == 8
-    poDS->sOutputData.bLinux64Hack = CPLTestBool(
-                        CPLGetConfigOption("JP2LURA_LINUX64_HACK", "YES"));
-#else
-    poDS->sOutputData.bLinux64Hack = false;
-#endif
 
     int nTileW = static_cast<int>(ulTileW);
     int nTileH = static_cast<int>(ulTileH);

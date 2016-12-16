@@ -279,7 +279,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
 #ifdef DEBUG_VERBOSE
         CPLString osLineValues;
 #endif
-        const unsigned int nSpaceMantissa = (pOutputData->bLinux64Hack) ? 8 : 4;
+        const unsigned int nSpaceMantissa = 4;
         for (unsigned long i = 0; i < ulNum; i++)
         {
             float_uint_union* f = (float_uint_union*)(&pucStart[i*4]);
@@ -316,19 +316,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Decompress_Write(
     }
     else
     {
-        if( ulBytesFromLura < 4 || !pOutputData->bLinux64Hack )
-        {
-            memcpy(pucStart, pucData, ulBytesFromLura * ulNum);
-        }
-        else
-        {
-            // On Linux 64bit, spacing of 32 bit samples is 8 byte.
-            for (unsigned long i = 0; i<ulNum * 4; i += 4)
-            {
-                *reinterpret_cast<unsigned int*>(pucStart + i) =
-                            *reinterpret_cast<unsigned int*>(pucData + i * 2);
-            }
-        }
+        memcpy(pucStart, pucData, ulBytesFromLura * ulNum);
     }
 
 
@@ -401,48 +389,41 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
     }
     GDALDataType eDataType = poBand->GetRasterDataType();
 
-    unsigned long ulBps = 0;
     unsigned long ulBpsRead = 0;
     switch (eDataType)
     {
         case GDT_Byte:
         {
-            ulBps = 8;
             ulBpsRead = 8;
             //Signed = 0;
             break;
         }
         case GDT_UInt16:
         {
-            ulBps = 16;
             ulBpsRead = 16;
             //Signed = 0;
             break;
         }
         case GDT_Int16:
         {
-            ulBps = 16;
             ulBpsRead = 16;
             //Signed = 1;
             break;
         }
         case GDT_UInt32:
         {
-            ulBps = 28;
             ulBpsRead = 32;
             //Signed = 0;
             break;
         }
         case GDT_Int32:
         {
-            ulBps = 28;
             ulBpsRead = 32;
             //Signed = 1;
             break;
         }
         case GDT_Float32:
         {
-            ulBps = 32;
             ulBpsRead = 32;
             //Signed = 1;
             break;
@@ -484,8 +465,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
         int exponent;
         int sign;
 
-        // On Linux 64bit, spacing of 32 bit samples is 8 byte.
-        const unsigned long nSpaceMantissa = (idata->bLinux64Hack) ? 8 : 4;
+        const unsigned long nSpaceMantissa = 4;
         for (int i = 0; i < (int) ulNum; i++)
         {
             float *ptr = (float*)(&pucPos[i * 4]);
@@ -513,20 +493,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
     }
     else
     {
-        if (ulBps == 8 || ulBps == 16 || !idata->bLinux64Hack )
-        {
-            memcpy(pucData, pucPos, ulBytes * ulNum);
-        }
-
-        else
-        {
-            // On Linux 64bit, spacing of 32 bit samples is 8 byte.
-            for (unsigned long i = 0; i<ulNum * 4; i += 4)
-            {
-                *reinterpret_cast<unsigned int*>(pucData + i * 2) =
-                                *reinterpret_cast<unsigned int*>(pucPos + i);
-            }
-        }
+        memcpy(pucData, pucPos, ulBytes * ulNum);
     }
 
     VSIFree(pucPos);
