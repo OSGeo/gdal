@@ -29,18 +29,9 @@
 #ifndef ILWISDATASET_H_INCLUDED
 #define ILWISDATASET_H_INCLUDED
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4786)
-#pragma warning(disable : 4503)
-#endif
-
 #include "gdal_pam.h"
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
-
-#ifdef WIN32
-#include  <io.h>
-#endif
 
 #include <cstdio>
 #include <cstdlib>
