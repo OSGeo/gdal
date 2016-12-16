@@ -164,7 +164,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osCanonicalRequest += osXAMZContentSHA256;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osCanonicalRequest='%s'\n", osCanonicalRequest.c_str());
+    CPLDebug("S3", "osCanonicalRequest='%s'", osCanonicalRequest.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -185,14 +185,14 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osStringToSign += CPLGetLowerCaseHexSHA256(osCanonicalRequest);
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osStringToSign='%s'\n", osStringToSign.c_str());
+    CPLDebug("S3", "osStringToSign='%s'", osStringToSign.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Compute signing key.                                            */
 /* -------------------------------------------------------------------- */
-    GByte abySigningKeyIn[CPL_SHA256_HASH_SIZE];
-    GByte abySigningKeyOut[CPL_SHA256_HASH_SIZE];
+    GByte abySigningKeyIn[CPL_SHA256_HASH_SIZE] = {};
+    GByte abySigningKeyOut[CPL_SHA256_HASH_SIZE] = {};
 
     CPLString osFirstKey(CPLString("AWS4") + osSecretAccessKey);
     CPL_HMAC_SHA256( osFirstKey.c_str(), osFirstKey.size(),
@@ -218,13 +218,13 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 #ifdef DEBUG_VERBOSE
     CPLString osSigningKey(CPLGetLowerCaseHex(abySigningKeyIn,
                                               CPL_SHA256_HASH_SIZE));
-    CPLDebug("S3", "osSigningKey='%s'\n", osSigningKey.c_str());
+    CPLDebug("S3", "osSigningKey='%s'", osSigningKey.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Compute signature.                                              */
 /* -------------------------------------------------------------------- */
-    GByte abySignature[CPL_SHA256_HASH_SIZE];
+    GByte abySignature[CPL_SHA256_HASH_SIZE] = {};
     CPL_HMAC_SHA256( abySigningKeyIn, CPL_SHA256_HASH_SIZE,
                      osStringToSign, osStringToSign.size(),
                      abySignature);
@@ -232,7 +232,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                              CPL_SHA256_HASH_SIZE));
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osSignature='%s'\n", osSignature.c_str());
+    CPLDebug("S3", "osSignature='%s'", osSignature.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -257,7 +257,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osAuthorization += osSignature;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osAuthorization='%s'\n", osAuthorization.c_str());
+    CPLDebug("S3", "osAuthorization='%s'", osAuthorization.c_str());
 #endif
 
     return osAuthorization;
@@ -272,7 +272,7 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
     struct tm brokenDown;
     CPLUnixTimeToYMDHMS(time(NULL), &brokenDown);
 
-    char szTimeStamp[4+2+2+1+2+2+2+1+1];
+    char szTimeStamp[4+2+2+1+2+2+2+1+1] = {};
     snprintf(szTimeStamp, sizeof(szTimeStamp), "%04d%02d%02dT%02d%02d%02dZ",
             brokenDown.tm_year + 1900,
             brokenDown.tm_mon + 1,
