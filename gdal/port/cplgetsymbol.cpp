@@ -89,10 +89,7 @@ CPL_CVSID("$Id$");
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void        *pLibrary;
-    void        *pSymbol;
-
-    pLibrary = dlopen(pszLibrary, RTLD_LAZY);
+    void *pLibrary = dlopen(pszLibrary, RTLD_LAZY);
     if( pLibrary == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -100,7 +97,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         return NULL;
     }
 
-    pSymbol = dlsym( pLibrary, pszSymbolName );
+    void *pSymbol = dlsym( pLibrary, pszSymbolName );
 
 #if (defined(__APPLE__) && defined(__MACH__))
     /* On mach-o systems, C symbols have a leading underscore and depending
@@ -109,7 +106,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
      */
     if( pSymbol == NULL )
     {
-        char withUnder[256];
+        char withUnder[256] = {};
         snprintf(withUnder, sizeof(withUnder), "_%s", pszSymbolName);
         pSymbol = dlsym( pLibrary, withUnder );
     }

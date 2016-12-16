@@ -81,7 +81,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /* -------------------------------------------------------------------- */
     for( ; true; )
     {
-        char szChunk[513];
+        char szChunk[513] = {};
         const size_t nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
 
         szChunk[nBytesRead] = '\0';
@@ -90,7 +90,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         if( nBytesRead < 512 )
             break;
 
-        const char *pszCheck;
+        const char *pszCheck = NULL;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
@@ -116,7 +116,8 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 
 {
-    CPLString osName, osValue;
+    CPLString osName;
+    CPLString osValue;
 
     for( ; true; )
     {
@@ -125,7 +126,7 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 
         if( EQUAL(osName, "BEGIN_GROUP") || EQUAL(osName, "GROUP") )
         {
-            if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
+            if( !ReadGroup((CPLString(pszPathPrefix) + osValue + ".").c_str()) )
                 return FALSE;
         }
         else if( STARTS_WITH_CI(osName, "END") )
@@ -178,7 +179,7 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     osValue = "";
 
     // Handle value lists like:     Name   = (Red, Red)
-    // or list of lists like : TLCList = ( (0,  0.000000), (8299,  4.811014) );
+    // or list of lists like: TLCList = ( (0, 0.000000), (8299, 4.811014) );
     if( *pszHeaderNext == '(' )
     {
         CPLString osWord;
@@ -335,7 +336,7 @@ void CPLKeywordParser::SkipWhite()
         }
 
         // Skip # style comments
-        if( *pszHeaderNext == '#'  )
+        if( *pszHeaderNext == '#' )
         {
             pszHeaderNext += 1;
 
