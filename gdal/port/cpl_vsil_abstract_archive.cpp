@@ -312,7 +312,7 @@ static CPLString CompactFilename( const char* pszArchiveInFileNameIn )
         char* pszPrevSlash = pszPrevDir - 1;
         while( pszPrevSlash != pszArchiveInFileName &&
                *pszPrevSlash != '/' )
-            pszPrevSlash --;
+            pszPrevSlash--;
         if( pszPrevSlash == pszArchiveInFileName )
             memmove(pszArchiveInFileName,
                     pszPrevDir + 4,
@@ -349,10 +349,10 @@ char* VSIArchiveFilesystemHandler::SplitFilename( const char *pszFilename,
         while( pszFilename[i] )
         {
             if( pszFilename[i] == '{' )
-                nCountCurles ++;
+                nCountCurles++;
             else if( pszFilename[i] == '}' )
             {
-                nCountCurles --;
+                nCountCurles--;
                 if( nCountCurles == 0 )
                     break;
             }
@@ -630,7 +630,7 @@ int VSIArchiveFilesystemHandler::Stat( const char *pszFilename,
     if( strlen(osFileInArchive) != 0 )
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("VSIArchive", "Looking for %s %s\n",
+        CPLDebug("VSIArchive", "Looking for %s %s",
                  archiveFilename, osFileInArchive.c_str());
 #endif
 
@@ -777,7 +777,7 @@ char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
                     tmpFileName[strlen(tmpFileName)-1] = 0;
                 }
 #ifdef DEBUG_VERBOSE
-                CPLDebug("VSIArchive", "Add %s as in directory %s\n",
+                CPLDebug("VSIArchive", "Add %s as in directory %s",
                          tmpFileName + lenInArchiveSubDir + 1, pszDirname);
 #endif
                 oDir.AddString(tmpFileName + lenInArchiveSubDir + 1);
@@ -790,7 +790,7 @@ char** VSIArchiveFilesystemHandler::ReadDirEx( const char *pszDirname,
         {
             // Only list toplevel files and directories.
 #ifdef DEBUG_VERBOSE
-            CPLDebug("VSIArchive", "Add %s as in directory %s\n",
+            CPLDebug("VSIArchive", "Add %s as in directory %s",
                      fileName, pszDirname);
 #endif
             oDir.AddString(fileName);
