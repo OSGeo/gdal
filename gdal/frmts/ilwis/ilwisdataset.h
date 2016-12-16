@@ -221,4 +221,4 @@ bool WriteElement(const std::string& sSection, const std::string& sEntry, const 
 
 } // namespace GDAL
 
-#endif // ILWISDATASET_H_INCLUDED 
+#endif // ILWISDATASET_H_INCLUDED
