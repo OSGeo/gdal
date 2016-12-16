@@ -7375,6 +7375,58 @@ def tiff_write_160():
     return 'success'
 
 ###############################################################################
+# Test setting GCPs on an image with already a geotransform and vice-versa (#6751)
+
+def tiff_write_161():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_161.tif', 1, 1)
+    ds.SetGeoTransform([0,1,2,3,4,5])
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
+    src_ds = gdal.Open( 'data/gcps.vrt' )
+    with gdaltest.error_handler():
+        if ds.SetGCPs(src_ds.GetGCPs(), '') != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if ds.GetGeoTransform(can_return_null = True) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
+    if len(ds.GetGCPs()) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGeoTransform(can_return_null = True) is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        if ds.SetGeoTransform([0,1,2,3,4,5]) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_write_161.tif', gdal.GA_Update)
+    if len(ds.GetGCPs()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGeoTransform() != (0.0, 1.0, 2.0, 3.0, 4.0, 5.0):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdaltest.tiff_drv.Delete( '/vsimem/tiff_write_161.tif')
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7564,10 +7616,11 @@ gdaltest_list = [
     tiff_write_158,
     tiff_write_159,
     tiff_write_160,
+    tiff_write_161,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-#gdaltest_list = [ tiff_write_1, tiff_write_160 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_161 ]
 
 if __name__ == '__main__':
 
