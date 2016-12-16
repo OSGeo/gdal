@@ -175,9 +175,9 @@ static linkedlist_datablock_internal* allocate_new_datablock()
                  ALLOC(sizeof(linkedlist_datablock_internal));
     if (ldi!=NULL)
     {
-        ldi->next_datablock = NULL ;
-        ldi->filled_in_this_block = 0 ;
-        ldi->avail_in_this_block = SIZEDATA_INDATABLOCK ;
+        ldi->next_datablock = NULL;
+        ldi->filled_in_this_block = 0;
+        ldi->avail_in_this_block = SIZEDATA_INDATABLOCK;
     }
     return ldi;
 }
@@ -227,7 +227,7 @@ static int add_data_in_datablock(linkedlist_data*ll,
             ldi->next_datablock = allocate_new_datablock();
             if (ldi->next_datablock == NULL)
                 return ZIP_INTERNALERROR;
-            ldi = ldi->next_datablock ;
+            ldi = ldi->next_datablock;
             ll->last_block = ldi;
         }
 
@@ -243,7 +243,7 @@ static int add_data_in_datablock(linkedlist_data*ll,
 
         ldi->filled_in_this_block += copy_this;
         ldi->avail_in_this_block -= copy_this;
-        from_copy += copy_this ;
+        from_copy += copy_this;
         len -= copy_this;
     }
     return ZIP_OK;
@@ -416,7 +416,7 @@ static uLong ziplocal_SearchCentralDir(
             uBackRead = uMaxBack;
         else
             uBackRead+=BUFREADCOMMENT;
-        uLong uReadPos = uSizeFile-uBackRead ;
+        uLong uReadPos = uSizeFile-uBackRead;
 
         uLong uReadSize = ((BUFREADCOMMENT+4) < (uSizeFile-uReadPos)) ?
                      (BUFREADCOMMENT+4) : (uSizeFile-uReadPos);
@@ -717,7 +717,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     zi->ci.stream_initialised = 0;
     zi->ci.pos_in_buffered_data = 0;
     zi->ci.raw = raw;
-    zi->ci.pos_local_header = (uLong) ZTELL(zi->z_filefunc,zi->filestream) ;
+    zi->ci.pos_local_header = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
     zi->ci.size_centralheader = SIZECENTRALHEADER + size_filename +
                                       size_extrafield_global + size_comment;
     zi->ci.central_header = (char*)ALLOC((uInt)zi->ci.size_centralheader);
@@ -1099,7 +1099,7 @@ extern int ZEXPORT cpl_zipClose (
     centraldir_pos_inzip = (uLong) ZTELL(zi->z_filefunc,zi->filestream);
     if (err==ZIP_OK)
     {
-        linkedlist_datablock_internal* ldi = zi->central_dir.first_block ;
+        linkedlist_datablock_internal* ldi = zi->central_dir.first_block;
         while (ldi!=NULL)
         {
             if ((err==ZIP_OK) && (ldi->filled_in_this_block>0))
