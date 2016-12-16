@@ -669,7 +669,7 @@ const char *CPLReadLine2L( VSILFILE * fp, int nMaxCars,
 /* -------------------------------------------------------------------- */
     char *pszRLBuffer = NULL;
     const size_t nChunkSize = 40;
-    char szChunk[nChunkSize];
+    char szChunk[nChunkSize] = {};
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
     size_t nChunkBytesConsumed = 0;
@@ -827,7 +827,7 @@ char *CPLScanString( const char *pszString, int nMaxLength,
     if( !pszBuffer )
         return NULL;
 
-    strncpy( pszBuffer, pszString,  nMaxLength );
+    strncpy( pszBuffer, pszString, nMaxLength );
     pszBuffer[nMaxLength] = '\0';
 
     if( bTrimSpaces )
@@ -1062,7 +1062,7 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
 
 void *CPLScanPointer( const char *pszString, int nMaxLength )
 {
-    char  szTemp[128];
+    char szTemp[128] = {};
 
 /* -------------------------------------------------------------------- */
 /*      Compute string into local buffer, and terminate it.             */
@@ -1186,7 +1186,7 @@ int CPLPrintString( char *pszDest, const char *pszSrc, int nMaxLen )
         return 1;
     }
 
-    int  nChars = 0;
+    int nChars = 0;
     char *pszTemp = pszDest;
 
     while( nChars < nMaxLen && *pszSrc )
@@ -1271,7 +1271,7 @@ int CPLPrintInt32( char *pszBuffer, GInt32 iValue, int nMaxLen )
     if( nMaxLen >= 64 )
         nMaxLen = 63;
 
-    char szTemp[64];
+    char szTemp[64] = {};
 
 #if UINT_MAX == 65535
     snprintf( szTemp, sizeof(szTemp), "%*ld", nMaxLen, iValue );
@@ -1310,7 +1310,7 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
     if( nMaxLen >= 64 )
         nMaxLen = 63;
 
-    char szTemp[64];
+    char szTemp[64] = {};
 
 #if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
 /* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
@@ -1360,7 +1360,7 @@ int CPLPrintPointer( char *pszBuffer, void *pValue, int nMaxLen )
     if( nMaxLen >= 64 )
         nMaxLen = 63;
 
-    char szTemp[64];
+    char szTemp[64] = {};
 
     snprintf( szTemp, sizeof(szTemp), "%p", pValue );
 
@@ -1403,7 +1403,7 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
         return 0;
 
     const int double_buffer_size = 64;
-    char szTemp[double_buffer_size];
+    char szTemp[double_buffer_size] = {};
 
     CPLsnprintf( szTemp, double_buffer_size, pszFormat, dfValue );
     szTemp[double_buffer_size - 1] = '\0';
@@ -1523,7 +1523,7 @@ void CPLVerifyConfiguration()
     if( reinterpret_cast<GByte *>( &nTest )[3] != 1 )
 #endif
         CPLError( CE_Fatal, CPLE_AppDefined,
-                  "CPLVerifyConfiguration(): byte order set wrong.\n" );
+                  "CPLVerifyConfiguration(): byte order set wrong." );
 }
 
 #ifdef DEBUG_CONFIG_OPTIONS
@@ -1868,11 +1868,11 @@ double CPLDMSToDec( const char *is )
         ++is;
 
     const char *p = is;
-    char work[64];
+    char work[64] = {};
     char *s = work;
     int n = sizeof(work);
     for( ;
-         isgraph(*p) && --n ; )
+         isgraph(*p) && --n; )
         *s++ = *p++;
     *s = '\0';
     // It is possible that a really odd input (like lots of leading
@@ -1969,7 +1969,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     else
         pszHemisphere = "N";
 
-    char szFormat[30];
+    char szFormat[30] = {};
     CPLsnprintf( szFormat, sizeof(szFormat),
                  "%%3dd%%2d\'%%%d.%df\"%s",
                  nPrecision+3, nPrecision, pszHemisphere );
@@ -2845,7 +2845,7 @@ CPLErr CPLCreateFileInZip( void *, const char *,
     return CE_Failure;
 }
 
-CPLErr CPLWriteFileInZip( void *, const void *, int  )
+CPLErr CPLWriteFileInZip( void *, const void *, int )
 
 {
     return CE_Failure;

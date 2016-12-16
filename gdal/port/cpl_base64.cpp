@@ -203,7 +203,7 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
 
     const int kCharArray3Size = 3;
     const int kCharArray4Size = 4;
-    unsigned char charArray3[kCharArray3Size];
+    unsigned char charArray3[kCharArray3Size] = {};
 
     std::string result("");
     int array3_idx = 0;
@@ -239,7 +239,7 @@ char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
         }
 
         unsigned char charArray4[kCharArray4Size] = {};
-        charArray4[0] = (charArray3[0]  & 0xfc) >> 2;
+        charArray4[0] = (charArray3[0] & 0xfc) >> 2;
         charArray4[1] = ((charArray3[0] & 0x03) << 4)
             + ((charArray3[1] & 0xf0) >> 4);
         charArray4[2] = ((charArray3[1] & 0x0f) << 2)

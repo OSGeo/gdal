@@ -592,7 +592,7 @@ char **CSVReadParseLine2( FILE * fp, char chDelimiter )
     if( fp == NULL )
         return NULL;
 
-    const char  *pszLine = CPLReadLine( fp );
+    const char *pszLine = CPLReadLine( fp );
     if( pszLine == NULL )
         return NULL;
 
@@ -673,7 +673,7 @@ char **CSVReadParseLine2L( VSILFILE * fp, char chDelimiter )
     if( fp == NULL )
         return NULL;
 
-    const char  *pszLine = CPLReadLineL( fp );
+    const char *pszLine = CPLReadLineL( fp );
     if( pszLine == NULL )
         return NULL;
 
@@ -1415,7 +1415,7 @@ put into CSVDirName).  <p>
 static const char *CSVFileOverride( const char * pszInput )
 
 {
-    static char         szPath[1024];
+    static char szPath[1024] = {};
 
 #ifdef WIN32
     sprintf( szPath, "%s\\%s", CSVDirName, pszInput );
