@@ -200,15 +200,15 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
                 else if( !bInQuote )
                 {
                     if( *pszIter == '(' )
-                        nDepth ++;
+                        nDepth++;
                     else if( *pszIter == ')' )
                     {
-                        nDepth --;
+                        nDepth--;
                         if( nDepth == 0 )
                             break;
                     }
                 }
-                pszIter ++;
+                pszIter++;
             }
             if( *pszIter == ')' && nDepth == 0 )
                 break;

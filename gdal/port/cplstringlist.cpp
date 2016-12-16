@@ -512,8 +512,8 @@ static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
             return -1;
         else if( cha > chb )
             return 1;
-        pszItera ++;
-        pszIterb ++;
+        pszItera++;
+        pszIterb++;
     }
 }
 
