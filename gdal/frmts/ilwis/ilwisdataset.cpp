@@ -266,13 +266,13 @@ static int intConv(double x) {
     return (int)floor(x + 0.5);
 }
 
-std::string ReadElement(std::string section, std::string entry, std::string filename)
+std::string ReadElement(const std::string& section, const std::string& entry, const std::string& filename)
 {
-    if (section.length() == 0)
+    if (section.empty())
         return std::string();
-    if (entry.length() == 0)
+    if (entry.empty())
         return std::string();
-    if (filename.length() == 0)
+    if (filename.empty())
         return std::string();
 
     IniFile MyIniFile (filename);
@@ -280,10 +280,10 @@ std::string ReadElement(std::string section, std::string entry, std::string file
     return MyIniFile.GetKeyValue(section, entry);
 }
 
-bool WriteElement(std::string sSection, std::string sEntry,
-                             std::string fn, std::string sValue)
+bool WriteElement(const std::string& sSection, const std::string& sEntry,
+                  const std::string& fn, const std::string& sValue)
 {
-    if (0 == fn.length())
+    if (fn.empty())
         return false;
 
     IniFile MyIniFile (fn);
@@ -292,10 +292,10 @@ bool WriteElement(std::string sSection, std::string sEntry,
     return true;
 }
 
-bool WriteElement(std::string sSection, std::string sEntry,
-                             std::string fn, int nValue)
+bool WriteElement(const std::string& sSection, const std::string&sEntry,
+                  const std::string& fn, int nValue)
 {
-    if (0 == fn.length())
+    if (fn.empty())
         return false;
 
     char strdouble[45];
@@ -304,10 +304,10 @@ bool WriteElement(std::string sSection, std::string sEntry,
     return WriteElement(sSection, sEntry, fn, sValue);
 }
 
-bool WriteElement(std::string sSection, std::string sEntry,
-                             std::string fn, double dValue)
+bool WriteElement(const std::string& sSection, const std::string&sEntry,
+                  const std::string& fn, double dValue)
 {
-    if (0 == fn.length())
+    if (fn.empty())
         return false;
 
     char strdouble[45];
@@ -316,7 +316,7 @@ bool WriteElement(std::string sSection, std::string sEntry,
     return WriteElement(sSection, sEntry, fn, sValue);
 }
 
-static CPLErr GetRowCol(std::string str,int &Row, int &Col)
+static CPLErr GetRowCol(const std::string& str,int &Row, int &Col)
 {
     std::string delimStr = " ,;";
     size_t iPos = str.find_first_of(delimStr);
@@ -476,7 +476,7 @@ ILWISDataset::~ILWISDataset()
 /*      the transform coefficients from the extent and pixelsize        */
 /************************************************************************/
 
-void ILWISDataset::CollectTransformCoef(std::string &pszRefName)
+void ILWISDataset::CollectTransformCoef(std::string& pszRefName)
 
 {
     pszRefName = "";
@@ -488,7 +488,7 @@ void ILWISDataset::CollectTransformCoef(std::string &pszRefName)
 
     //Capture the geotransform, only if the georef is not 'none',
     //otherwise, the default transform should be returned.
-    if( (georef.length() != 0) && !EQUAL(georef.c_str(),"none"))
+    if( !georef.empty() && !EQUAL(georef.c_str(),"none"))
     {
         //Form the geo-referencing name
         std::string pszBaseName = std::string(CPLGetBasename(georef.c_str()) );
@@ -678,7 +678,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     std::string ilwistype = ReadElement("Ilwis", "Type", poOpenInfo->pszFilename);
-    if( ilwistype.length() == 0)
+    if( ilwistype.empty())
         return NULL;
 
     std::string sFileType;  // map or map list
@@ -703,7 +703,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             std::string sBandName = ReadElement("MapList", std::string(cBandName), poOpenInfo->pszFilename);
             std::string pszBandBaseName = std::string(CPLGetBasename(sBandName.c_str()) );
             std::string pszBandPath = std::string(CPLGetPath( sBandName.c_str()));
-            if ( 0 == pszBandPath.length() )
+            if ( pszBandPath.empty() )
             {
                 sBandName = std::string(CPLFormFilename(sPath.c_str(),
                                                    pszBandBaseName.c_str(),"mpr" ));
@@ -790,14 +790,14 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Translation from ILWIS coordinate system definition             */
 /* -------------------------------------------------------------------- */
-    if( (pszGeoRef.length() != 0) && !EQUAL(pszGeoRef.c_str(),"none"))
+    if( !pszGeoRef.empty() && !EQUAL(pszGeoRef.c_str(),"none"))
     {
 
         // Fetch coordinate system
         std::string csy = ReadElement("GeoRef", "CoordSystem", pszGeoRef);
         std::string pszProj;
 
-        if( (csy.length() != 0) && !EQUAL(csy.c_str(),"unknown.csy"))
+        if( !csy.empty() && !EQUAL(csy.c_str(),"unknown.csy"))
         {
 
             //Form the coordinate system file name
@@ -809,7 +809,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 csy = std::string(CPLFormFilename(pszPath.c_str(),
                                              pszBaseName.c_str(),"csy" ));
                 pszProj = ReadElement("CoordSystem", "Type", csy);
-                if (pszProj.length() == 0 ) //default to projection
+                if (pszProj.empty() ) //default to projection
                     pszProj = "Projection";
             }
             else
@@ -1246,7 +1246,7 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDSIn, int nBandIn ) :
         std::string sInputPath = std::string(CPLGetPath( poDSIn->osFileName));
         std::string sBandPath = std::string(CPLGetPath( sBandName.c_str()));
         std::string sBandBaseName = std::string(CPLGetBasename( sBandName.c_str()));
-        if ( 0==sBandPath.length() )
+        if ( sBandPath.empty() )
             sBandName = std::string(CPLFormFilename(sInputPath.c_str(),sBandBaseName.c_str(),"mpr" ));
         else
           sBandName = std::string(CPLFormFilename(sBandPath.c_str(),sBandBaseName.c_str(),"mpr" ));
@@ -1307,7 +1307,7 @@ ILWISRasterBand::~ILWISRasterBand()
 /************************************************************************/
 /*                             ILWISOpen()                             */
 /************************************************************************/
-void ILWISRasterBand::ILWISOpen( std::string pszFileName )
+void ILWISRasterBand::ILWISOpen( const std::string& pszFileName )
 {
     ILWISDataset* dataset = (ILWISDataset*) poDS;
     std::string pszDataFile
@@ -1321,7 +1321,7 @@ void ILWISRasterBand::ILWISOpen( std::string pszFileName )
 /************************************************************************/
 // Helper function for GetILWISInfo, to avoid code-duplication
 // Unfortunately with side-effect (changes members psInfo and eDataType)
-void ILWISRasterBand::ReadValueDomainProperties(std::string pszFileName)
+void ILWISRasterBand::ReadValueDomainProperties(const std::string& pszFileName)
 {
     std::string rangeString = ReadElement("BaseMap", "Range", pszFileName.c_str());
     psInfo.vr = ValueRange(rangeString);
@@ -1367,7 +1367,7 @@ void ILWISRasterBand::ReadValueDomainProperties(std::string pszFileName)
 /*                       GetILWISInfo()                                 */
 /************************************************************************/
 // Calculates members psInfo and eDataType
-CPLErr ILWISRasterBand::GetILWISInfo(std::string pszFileName)
+CPLErr ILWISRasterBand::GetILWISInfo(const std::string& pszFileName)
 {
     // Fill the psInfo struct with defaults.
     // Get the store type from the ODF
@@ -1850,7 +1850,7 @@ static double doubleConv(const char* s)
     return r;
 }
 
-ValueRange::ValueRange( std::string sRng ) :
+ValueRange::ValueRange( const std::string& sRng ) :
     _rLo(0.0),
     _rHi(0.0),
     _rStep(0.0),
