@@ -239,8 +239,8 @@ public:
     virtual int      Rmdir( const char *pszDirname ) override;
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
-    void  SaveInfo( VSIGZipHandle* poHandle );
-    void  SaveInfo_unlocked( VSIGZipHandle* poHandle );
+    void SaveInfo( VSIGZipHandle* poHandle );
+    void SaveInfo_unlocked( VSIGZipHandle* poHandle );
 };
 
 /************************************************************************/
@@ -299,7 +299,7 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
 /*                     CloseBaseHandle()                                */
 /************************************************************************/
 
-bool  VSIGZipHandle::CloseBaseHandle()
+bool VSIGZipHandle::CloseBaseHandle()
 {
     bool bRet = true;
     if( m_poBaseHandle )
@@ -362,7 +362,8 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     stream.next_out = outbuf = NULL;
     stream.avail_in = stream.avail_out = 0;
 
-    stream.next_in  = inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
+    inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
+    stream.next_in = inbuf;
 
     int err = inflateInit2(&(stream), -MAX_WBITS);
     // windowBits is passed < 0 to tell that there is no zlib header.
@@ -523,18 +524,19 @@ void VSIGZipHandle::check_header()
         len = static_cast<uInt>(get_byte());
         len += static_cast<uInt>(get_byte()) << 8;
         // len is garbage if EOF but the loop below will quit anyway.
-        while( len-- != 0 && get_byte() != EOF ) ;
+        while( len-- != 0 && get_byte() != EOF ) {}
     }
 
     int c = 0;
     if( (flags & ORIG_NAME) != 0 )
     {
         // Skip the original file name.
-        while( (c = get_byte()) != 0 && c != EOF ) ;
+        while( (c = get_byte()) != 0 && c != EOF ) {}
     }
     if( (flags & COMMENT) != 0 )
-    {   // skip the .gz file comment.
-        while ((c = get_byte()) != 0 && c != EOF) ;
+    {
+        // skip the .gz file comment.
+        while ((c = get_byte()) != 0 && c != EOF) {}
     }
     if( (flags & HEAD_CRC) != 0 )
     {
@@ -840,8 +842,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
             VSILFILE* fpCacheLength = VSIFOpenL(osCacheFilename.c_str(), "wb");
             if( fpCacheLength )
             {
-                char szBuffer[32];
-                szBuffer[31] = 0;
+                char szBuffer[32] = {};
 
                 CPLPrintUIntBig(szBuffer, m_compressed_size, 31);
                 char* pszFirstNonSpace = szBuffer;
@@ -929,9 +930,9 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                 memcpy (stream.next_out, stream.next_in, n);
                 next_out += n;
                 stream.next_out = next_out;
-                stream.next_in   += n;
+                stream.next_in += n;
                 stream.avail_out -= n;
-                stream.avail_in  -= n;
+                stream.avail_in -= n;
                 nRead += n;
             }
             if( stream.avail_out > 0 )
@@ -1187,7 +1188,6 @@ class VSIGZipWriteHandle CPL_FINAL : public VSIVirtualHandle
     bool               bAutoCloseBaseHandle;
 
   public:
-
     VSIGZipWriteHandle( VSIVirtualHandle* poBaseHandle, bool bRegularZLib,
                         bool bAutoCloseBaseHandleIn );
 
@@ -1225,7 +1225,7 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     sStream.next_out = NULL;
     sStream.avail_in = sStream.avail_out = 0;
 
-    sStream.next_in  = pabyInBuf;
+    sStream.next_in = pabyInBuf;
 
     if( deflateInit2( &sStream, Z_DEFAULT_COMPRESSION,
                       Z_DEFLATED, bRegularZLib ? MAX_WBITS : -MAX_WBITS, 8,
@@ -1237,7 +1237,7 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     {
         if( !bRegularZLib )
         {
-            char header[11];
+            char header[11] = {};
 
             // Write a very simple .gz header:
             snprintf( header, sizeof(header),
@@ -1333,7 +1333,7 @@ size_t VSIGZipWriteHandle::Read( void * /* pBuffer */,
                                  size_t /* nMemb */ )
 {
     CPLError(CE_Failure, CPLE_NotSupported,
-             "VSIFReadL is not supported on GZip write streams\n");
+             "VSIFReadL is not supported on GZip write streams");
     return 0;
 }
 
@@ -1476,13 +1476,13 @@ VSIGZipFilesystemHandler::~VSIGZipFilesystemHandler()
 /*                            SaveInfo()                                */
 /************************************************************************/
 
-void VSIGZipFilesystemHandler::SaveInfo(  VSIGZipHandle* poHandle )
+void VSIGZipFilesystemHandler::SaveInfo( VSIGZipHandle* poHandle )
 {
     CPLMutexHolder oHolder(&hMutex);
     SaveInfo_unlocked(poHandle);
 }
 
-void VSIGZipFilesystemHandler::SaveInfo_unlocked(  VSIGZipHandle* poHandle )
+void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
 {
     CPLAssert(poHandle->GetBaseFileName() != NULL);
 
@@ -1877,9 +1877,10 @@ VSIZipReader::~VSIZipReader()
 
 void VSIZipReader::SetInfo()
 {
-    char fileName[8193];
+    char fileName[8193] = {};
     unz_file_info file_info;
-    cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName, sizeof(fileName) - 1, NULL, 0, NULL, 0);
+    cpl_unzGetCurrentFileInfo( unzF, &file_info, fileName, sizeof(fileName) - 1,
+                               NULL, 0, NULL, 0 );
     fileName[sizeof(fileName) - 1] = '\0';
     osNextFileName = fileName;
     nNextFileSize = file_info.uncompressed_size;
@@ -1889,7 +1890,8 @@ void VSIZipReader::SetInfo()
     brokendowntime.tm_hour = file_info.tmu_date.tm_hour;
     brokendowntime.tm_mday = file_info.tmu_date.tm_mday;
     brokendowntime.tm_mon = file_info.tmu_date.tm_mon;
-    brokendowntime.tm_year = file_info.tmu_date.tm_year - 1900; /* the minizip conventions differs from the Unix one */
+    // The minizip conventions differs from the Unix one.
+    brokendowntime.tm_year = file_info.tmu_date.tm_year - 1900;
     nModifiedTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
     cpl_unzGetFilePos(unzF, &this->file_pos);
@@ -1973,8 +1975,10 @@ public:
                                             const char *pszAccess );
 
     virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles )
+        override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
 
     void RemoveFromMap(VSIZipWriteHandle* poHandle);
 };
@@ -1995,7 +1999,6 @@ class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
    vsi_l_offset             nCurOffset;
 
   public:
-
     VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
                        void *hZIP,
                        VSIZipWriteHandle* poParent );
@@ -2004,13 +2007,15 @@ class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Read( void *pBuffer, size_t nSize,
+                            size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize,
+                             size_t nMemb ) override;
     virtual int       Eof() override;
     virtual int       Flush() override;
     virtual int       Close() override;
 
-    void  StartNewFile(VSIZipWriteHandle* poSubFile);
+    void  StartNewFile( VSIZipWriteHandle* poSubFile );
     void  StopCurrentFile();
     void* GetHandle() { return m_hZIP; }
     VSIZipWriteHandle* GetChildInWriting() { return poChildInWriting; };
@@ -2544,7 +2549,7 @@ int VSIZipWriteHandle::Close()
 /*                           StopCurrentFile()                          */
 /************************************************************************/
 
-void  VSIZipWriteHandle::StopCurrentFile()
+void VSIZipWriteHandle::StopCurrentFile()
 {
     if( poChildInWriting )
         poChildInWriting->Close();
@@ -2555,7 +2560,7 @@ void  VSIZipWriteHandle::StopCurrentFile()
 /*                           StartNewFile()                             */
 /************************************************************************/
 
-void  VSIZipWriteHandle::StartNewFile(VSIZipWriteHandle* poSubFile)
+void VSIZipWriteHandle::StartNewFile( VSIZipWriteHandle* poSubFile )
 {
     poChildInWriting = poSubFile;
 }

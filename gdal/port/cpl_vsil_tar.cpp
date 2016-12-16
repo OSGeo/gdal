@@ -158,11 +158,12 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     m_nCurOffsetOld = 0;
     if( fp != NULL )
     {
-        GByte abySignature[24];
+        GByte abySignature[24] = {};
         m_bIsFuzzerFriendly =
             (VSIFReadL(abySignature, 1, 24, fp) == 24) &&
             (memcmp(abySignature, "FUZZER_FRIENDLY_ARCHIVE\n", 24) == 0 ||
-             memcmp(abySignature, "***NEWFILE***:", strlen("***NEWFILE***:")) == 0);
+             memcmp(abySignature, "***NEWFILE***:",
+                    strlen("***NEWFILE***:")) == 0);
         CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_SET));
     }
 #endif
@@ -248,7 +249,7 @@ int VSITarReader::GotoNextFile()
                  (m_abyBufferSize < 2048 &&
                   m_abyBufferIdx < m_abyBufferSize -
                   (static_cast<int>(strlen("***NEWFILE***:"))+2))) &&
-                m_abyBufferIdx >= 0 && // makes CSA happy, but useless
+                m_abyBufferIdx >= 0 &&  // Make CSA happy, but useless.
                 memcmp( m_abyBuffer + m_abyBufferIdx,
                         "***NEWFILE***:",
                         strlen("***NEWFILE***:")) == 0 )
