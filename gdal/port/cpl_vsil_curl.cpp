@@ -790,9 +790,10 @@ retry:
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, VSICurlHandleWriteFunc);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                     VSICurlHandleWriteFunc);
 
-    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
@@ -1090,7 +1091,7 @@ retry:
         sWriteFuncHeaderData.nEndOffset = cachedFileProp->fileSize - 1;
     }
 
-    char rangeStr[512];
+    char rangeStr[512] = {};
     snprintf(rangeStr, sizeof(rangeStr),
              CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, startOffset,
             sWriteFuncHeaderData.nEndOffset);
@@ -1100,7 +1101,7 @@ retry:
 
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
 
-    char szCurlErrBuf[CURL_ERROR_SIZE+1];
+    char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
@@ -1326,7 +1327,7 @@ retry:
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSICurlHandle::Read( void * const pBufferIn, size_t const  nSize,
+size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                             size_t const  nMemb )
 {
     size_t nBufferRequestSize = nSize * nMemb;
@@ -1524,7 +1525,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
             CPLDebug("VSICURL", "Downloading %s, ..., %s (" CPL_FRMT_GUIB
                      " bytes, %s)...",
                      osFirstRange.c_str(), osLastRange.c_str(),
-                     (GUIntBig)nTotalReqSize, pszURL);
+                     static_cast<GUIntBig>(nTotalReqSize), pszURL);
     }
 
     curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
@@ -2111,10 +2112,10 @@ VSICurlFilesystemHandler::GetRegion( const char* pszURL,
 /*                          AddRegion()                                 */
 /************************************************************************/
 
-void  VSICurlFilesystemHandler::AddRegion( const char* pszURL,
-                                           vsi_l_offset nFileOffsetStart,
-                                           size_t nSize,
-                                           const char *pData )
+void VSICurlFilesystemHandler::AddRegion( const char* pszURL,
+                                          vsi_l_offset nFileOffsetStart,
+                                          size_t nSize,
+                                          const char *pData )
 {
     CPLMutexHolder oHolder( &hMutex );
 
@@ -2788,7 +2789,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
             {
                 const char* pszKey = CPLGetXMLValue(psIter, "Prefix", NULL);
-                if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0  )
+                if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0 )
                 {
                     CPLString osKey = pszKey;
                     if( !osKey.empty() && osKey[osKey.size()-1] == '/' )
@@ -2941,7 +2942,8 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
         time_t sTime;
         time(&sTime);
         struct tm currentBrokendowntime;
-        CPLUnixTimeToYMDHMS((GIntBig)sTime, &currentBrokendowntime);
+        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(sTime),
+                            &currentBrokendowntime);
         brokendowntime.tm_year = currentBrokendowntime.tm_year;
         brokendowntime.tm_hour = atoi(pszHourOrYear);
         brokendowntime.tm_min = atoi(pszHourOrYear + 3);
@@ -3184,8 +3186,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
-        char szCurlErrBuf[CURL_ERROR_SIZE+1];
-        szCurlErrBuf[0] = '\0';
+        char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
         curl_easy_perform(hCurlHandle);
@@ -4497,8 +4498,8 @@ int VSICurlInstallReadCbk( VSILFILE* fp,
                            void* pfnUserData,
                            int bStopOnInterruptUntilUninstall )
 {
-  return reinterpret_cast<VSICurlHandle *>(fp)->
-      InstallReadCbk(pfnReadCbk, pfnUserData, bStopOnInterruptUntilUninstall);
+    return reinterpret_cast<VSICurlHandle *>(fp)->
+        InstallReadCbk(pfnReadCbk, pfnUserData, bStopOnInterruptUntilUninstall);
 }
 
 /************************************************************************/
