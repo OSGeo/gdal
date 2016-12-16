@@ -184,7 +184,9 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
         CPLFree(psToFree);
     }
     else
+    {
         CPLReleaseMutex(hMutex);
+    }
 
     return true;
 }

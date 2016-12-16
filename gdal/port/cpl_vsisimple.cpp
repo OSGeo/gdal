@@ -1227,7 +1227,7 @@ void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile,
 /*                          VSIStrdupVerbose()                          */
 /************************************************************************/
 
-char *VSIStrdupVerbose(  const char* pszStr, const char* pszFile, int nLine )
+char *VSIStrdupVerbose( const char* pszStr, const char* pszFile, int nLine )
 {
     char* pRet = VSIStrdup(pszStr);
     if( pRet == NULL )
@@ -1352,7 +1352,7 @@ char *VSIStrerror( int nErrno )
 GIntBig CPLGetPhysicalRAM( void )
 {
     const long nPhysPages = sysconf(_SC_PHYS_PAGES);
-    const long nPageSize =  sysconf(_SC_PAGESIZE);
+    const long nPageSize = sysconf(_SC_PAGESIZE);
     if( nPhysPages < 0 || nPageSize < 0 )
         return 0;
     return static_cast<GIntBig>(nPhysPages) * nPageSize;
