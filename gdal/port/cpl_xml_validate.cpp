@@ -817,13 +817,20 @@ xmlParserInputPtr CPLExternalEntityLoader( const char * URL,
             URL += 16;
         else
             URL += 7;
+
         if( URL[0] == '/' && URL[1] != '\0' && URL[2] == ':' && URL[3] == '/' )
+        {
             // Windows.
             ++URL;
-        else if( URL[0] == '/' )  // Unix.
-            ;
+        }
+        else if( URL[0] == '/' )
+        {
+            // Unix.
+        }
         else
+        {
             return pfnLibXMLOldExtranerEntityLoader(URL, ID, context);
+        }
     }
 
     CPLString osModURL;
@@ -1067,7 +1074,7 @@ int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
                     CPL_UNUSED char** papszOptions )
 {
-    char szHeader[2048];  // TODO(schwehr): Get this off of the stack.
+    char szHeader[2048] = {};  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;
 
     if( pszXMLFilename[0] == '<' )
