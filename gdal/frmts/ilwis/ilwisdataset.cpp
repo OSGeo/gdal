@@ -221,6 +221,8 @@ void IniFile::Load()
         }
     }
 
+    bChanged = false;
+
     VSIFCloseL(filIni);
 }
 
