@@ -298,7 +298,7 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                 }
                 psCtx->szLastErrMsg[nPreviousSize] = '\n';
                 psCtx->szLastErrMsg[nPreviousSize+1] = '0';
-                nPreviousSize ++;
+                nPreviousSize++;
             }
         }
 
@@ -443,7 +443,7 @@ static int CPLGetProcessMemorySize()
         {
             const char* pszPtr = szLine;
             while( !(*pszPtr == '\0' || (*pszPtr >= '0' && *pszPtr <= '9')) )
-                 pszPtr ++;
+                 pszPtr++;
             nRet = atoi(pszPtr);
             break;
         }
@@ -583,7 +583,7 @@ void CPLDebug( const char * pszCategory,
         while( *pszIter != ' ' && *pszIter != '\0' )
         {
             *pszIter = 'X';
-            pszIter ++;
+            pszIter++;
         }
     }
 

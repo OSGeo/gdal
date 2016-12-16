@@ -977,10 +977,10 @@ static int CPLAtoGIntBigExHasOverflow(const char* pszString, GIntBig nVal)
     if( strlen(pszString) <= 18 )
         return FALSE;
     while( *pszString == ' ' )
-        pszString ++;
+        pszString++;
     if( *pszString == '+' )
-        pszString ++;
-    char szBuffer[32];
+        pszString++;
+    char szBuffer[32] = {};
 /* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
@@ -1033,7 +1033,7 @@ GIntBig CPLAtoGIntBigEx( const char* pszString, int bWarn, int *pbOverflow )
                      pszString);
         }
         while( *pszString == ' ' )
-            pszString ++;
+            pszString++;
         return (*pszString == '-' ) ? GINTBIG_MIN : GINTBIG_MAX;
     }
     else if( pbOverflow ) *pbOverflow = FALSE;
@@ -2257,7 +2257,7 @@ void CPLCloseShared( FILE * fp )
     CPLFree( pasSharedFileList[i].pszFilename );
     CPLFree( pasSharedFileList[i].pszAccess );
 
-    nSharedFileCount --;
+    nSharedFileCount--;
     memmove( (void *) (pasSharedFileList + i),
              (void *) (pasSharedFileList + nSharedFileCount),
              sizeof(CPLSharedFileInfo) );

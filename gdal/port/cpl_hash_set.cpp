@@ -155,7 +155,7 @@ static void CPLHashSetReturnListElt( CPLHashSet* set, CPLList* psList )
     {
         psList->psNext = set->psRecyclingList;
         set->psRecyclingList = psList;
-        set->nRecyclingListSize ++;
+        set->nRecyclingListSize++;
     }
     else
     {
@@ -302,7 +302,7 @@ static void CPLHashSetRehash( CPLHashSet* set )
                 set->fnHashFunc(cur->pData) % nNewAllocatedSize;
 #ifdef HASH_DEBUG
             if( newTabList[nNewHashVal] )
-                set->nCollisions ++;
+                set->nCollisions++;
 #endif
             CPLList* psNext = cur->psNext;
             cur->psNext = newTabList[nNewHashVal];
@@ -446,7 +446,7 @@ bool CPLHashSetRemoveInternal( CPLHashSet* set, const void* elt,
             CPLHashSetReturnListElt(set, cur);
 #ifdef HASH_DEBUG
             if( set->tabList[nHashVal] )
-                set->nCollisions --;
+                set->nCollisions--;
 #endif
             set->nSize--;
             return true;
