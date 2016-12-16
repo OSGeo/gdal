@@ -336,7 +336,7 @@ CPLStringList &CPLStringList::AddString( const char *pszNewString )
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::AddNameValue( const char  *pszKey,
+CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
                                             const char *pszValue )
 
 {

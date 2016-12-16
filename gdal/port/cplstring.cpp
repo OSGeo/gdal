@@ -101,7 +101,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
     wrk_args = args;
 #endif
 
-    char szModestBuffer[500];
+    char szModestBuffer[500] = {};
     szModestBuffer[0] = '\0';
     int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
                              wrk_args );
@@ -174,7 +174,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
     // presumably long enough for any number.
     const size_t buf_size = 512;
-    char szWork[buf_size];
+    char szWork[buf_size] = {};
 
     CPLsnprintf( szWork, buf_size, pszFormat, dfValue );
 
