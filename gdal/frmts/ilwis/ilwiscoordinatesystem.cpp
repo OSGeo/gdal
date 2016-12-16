@@ -992,7 +992,7 @@ CPLErr ILWISDataset::WriteProjection()
 
     std::string csFileName = CPLResetExtension(osFileName, "csy" );
     std::string pszBaseName = std::string(CPLGetBasename( osFileName ));
-    std::string pszPath = std::string(CPLGetPath( osFileName ));
+    //std::string pszPath = std::string(CPLGetPath( osFileName ));
     bool bProjection = ((pszProjection != NULL) && (strlen(pszProjection)>0));
     bool bHaveSRS;
     if( bProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
@@ -1003,9 +1003,9 @@ CPLErr ILWISDataset::WriteProjection()
         bHaveSRS = false;
 
     const IlwisDatums   *piwDatum = iwDatums;
-    std::string pszEllips;
+    //std::string pszEllips;
     std::string pszDatum;
-    std::string pszProj;
+    //std::string pszProj;
 
 /* -------------------------------------------------------------------- */
 /*      Collect datum/ellips information.                                      */
@@ -1035,7 +1035,7 @@ CPLErr ILWISDataset::WriteProjection()
             piwDatum++;
         } // End of searching for matching datum.
         WriteElement("CoordSystem", "Width", csFileName, 28);
-        pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
+       // pszEllips = poGeogSRS->GetAttrValue( "GEOGCS|DATUM|SPHEROID" );
         double a = poGeogSRS->GetSemiMajor();
         /* b = */ poGeogSRS->GetSemiMinor();
         double f = poGeogSRS->GetInvFlattening();
