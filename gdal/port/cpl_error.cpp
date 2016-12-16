@@ -55,11 +55,11 @@ static bool gbCatchDebug = true;
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
-  20000
+    20000
 #else
-  500
+    500
 #endif
-  ;
+    ;
 
 typedef struct errHandler
 {
@@ -948,7 +948,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
  *                      CPLTurnFailureIntoWarning()                   *
  **********************************************************************/
 
-/**  Whether failures should be turned into warnings.
+/** Whether failures should be turned into warnings.
  */
 void CPLTurnFailureIntoWarning( int bOn )
 {
@@ -1215,8 +1215,8 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
 
 {
     CPLError( CE_Fatal, CPLE_AssertionFailed,
-              "Assertion `%s' failed\n"
-              "in file `%s', line %d\n",
+              "Assertion `%s' failed "
+              "in file `%s', line %d",
               pszExpression, pszFile, iLine );
 
     // Just to please compiler so it is aware the function does not return.
